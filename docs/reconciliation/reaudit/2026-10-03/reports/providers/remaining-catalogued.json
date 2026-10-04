@@ -1,7 +1,7 @@
 {
   "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
   "status": "delegated_only",
-  "count": 13,
+  "count": 11,
   "paths": [
     "supabase/functions/_shared/ai-conversation-pipeline.ts",
     "supabase/functions/_shared/ai-image-input.ts",
@@ -10,12 +10,20 @@
     "supabase/functions/ai-conversation-analysis/index.ts",
     "supabase/functions/ai-conversation-summary/index.ts",
     "supabase/functions/ai-enhance-message/index.ts",
-    "supabase/functions/ai-suggest-reply/index.ts",
-    "supabase/functions/chatbot-l1/index.ts",
     "supabase/functions/classify-audio-meme/index.ts",
     "supabase/functions/classify-emoji/index.ts",
     "supabase/functions/classify-sticker/index.ts",
     "supabase/functions/gmail-oauth/index.ts"
   ],
-  "note": "12 AI paths belong to infra; gmail-oauth belongs to root. No remaining unassigned production path in the providers lot."
+  "delegated_selected_ranges": [
+    "supabase/functions/ai-suggest-reply/index.ts",
+    "supabase/functions/chatbot-l1/index.ts"
+  ],
+  "frontend_delegations": [
+    "src/hooks/integrations/useCatalogQuickSearch.ts",
+    "src/hooks/integrations/useWhatsAppStatus.ts"
+  ],
+  "pending_provider_followup": [],
+  "test_roster": "test-review-roster.json",
+  "note": "13 backend paths have full review delegated: 12 AI to infra and gmail-oauth to root; two AI paths have selected ranges here, leaving eleven catalogued only. Frontend delegations are explicit. All assigned production lots and all 76 test-roster files completed. No pending provider followup; database peer assistance is recorded separately."
 }

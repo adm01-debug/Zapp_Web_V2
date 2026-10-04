@@ -18,6 +18,7 @@ PROBES=json.loads((OUT/'probes/results.json').read_text())
 PASS2_PROBES=json.loads((OUT/'probes/pass2/results.json').read_text())
 PASS3_PROBES=json.loads((OUT/'probes/pass3/results.json').read_text())
 PASS4_PROBES=json.loads((OUT/'probes/pass4/results.json').read_text())
+PASS5_PROBES=json.loads((OUT/'probes/pass5/results.json').read_text())
 F=[]
 def ev(path,start,end,claim):
  raw=checked_source_bytes(path); n=len(raw.decode().splitlines()); assert 1<=start<=end<=n,(path,start,end,n)
@@ -373,6 +374,7 @@ F[42]['offline_reproduction']['probe_ids'] += ['sticker_close_leaves_upload']
 
 # Additional cross-consumer evidence and readable spacing in human descriptions.
 F[8]['evidence'] += [ev('src/components/inbox/ConversationListSidebar.tsx',297,303,'Sidebar passa queueId, mas fecha após callback resolvido.'),ev('src/hooks/chat/useConversationActions.ts',177,190,'Consumer de lista resolve também quando operação falha/não suporta connection.')]
+exec(compile((OUT/'pass5_findings.py').read_text(),str(OUT/'pass5_findings.py'),'exec'),globals())
 def tidy(value):
  return re.sub(r'(?<=[0-9])(?=[a-záéíóúãõç])',' ',re.sub(r'(?<=[a-záéíóúãõç])(?=[0-9])',' ',value))
 for f in F:
@@ -388,6 +390,9 @@ for f in F:
   f['offline_reproduction']['commands']=commands
   f['offline_reproduction']['command']='\n'.join(commands)
   f['offline_reproduction']['method']='Código real TypeScript e trechos TSX com fronteiras simuladas; ver probes/pass4/README.md e, nas extensões, também pass3/README.md.'
+ if f['offline_reproduction']['probe_ids'] and all(p in {x['id'] for x in PASS5_PROBES['results']} for p in f['offline_reproduction']['probe_ids']):
+  f['offline_reproduction']['command']=f'node --disable-warning=ExperimentalWarning {OUT}/probes/pass5/run.mjs'
+  f['offline_reproduction']['method']='Código real TypeScript/TSX com estado, promessas e fronteiras locais controladas. Ver probes/pass5/README.md; sem DOM, microfone, clipboard ou serviço reais.'
  for k in ['title','cause','consumer_and_precondition','observable_effect','previous_finding_relationship','limitations']:
   f[k]=tidy(f[k])
  f['acceptance_criteria']=[tidy(x) for x in f['acceptance_criteria']]
@@ -395,7 +400,17 @@ for f in F:
 
 # Blob comparison covers every file read or cited, without treating equality as semantic review.
 journal=[json.loads(s) for s in (OUT/'read-journal.jsonl').read_text().splitlines()]
-paths=sorted({r['path'] for r in journal}|{e['path'] for f in F for e in f['evidence']})
+test_review_path=OUT/'test-review.json'
+test_review=json.loads(test_review_path.read_text()) if test_review_path.exists() else None
+test_support_path=OUT/'test-support-reviewed.json'
+test_support=json.loads(test_support_path.read_text()) if test_support_path.exists() else None
+test_paths={row['path'] for row in test_review['files'] if row['review_status']=='SEMANTIC_REVIEW_COMPLETE'} if test_review else set()
+support_paths={row['path'] for row in test_support['files']} if test_support else set()
+shell_review=json.loads((OUT/'shell-review.json').read_text()) if (OUT/'shell-review.json').exists() else None
+shell_support=json.loads((OUT/'shell-support-reviewed.json').read_text()) if (OUT/'shell-support-reviewed.json').exists() else None
+shell_paths={row['path'] for row in shell_review['files'] if row['review_status']=='SEMANTIC_FILE_REVIEW'} if shell_review else set()
+shell_support_paths={row['path'] for row in shell_support['files']} if shell_support else set()
+paths=sorted({r['path'] for r in journal}|{e['path'] for f in F for e in f['evidence']}|test_paths|support_paths|shell_paths|shell_support_paths)
 comparisons=[]
 for p in paths:
  raw=checked_source_bytes(p); blob=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
@@ -405,7 +420,7 @@ for p in paths:
 comparison_by_path={i['path']:i for i in comparisons}
 for f in F:
  f['baseline_comparison']={'baseline_sha':BASE,'current_sha':SHA,'all_evidence_files_identical_to_baseline':all(comparison_by_path[e['path']]['identical_to_baseline'] for e in f['evidence']),'classification':'lacuna descoberta na reauditoria, sem atribuição de regressão ao HEAD atual'}
-meta={'schema_version':'1.0','area':'Inbox/Chat usuário','source_root':str(ROOT),'source_sha':SHA,'baseline_sha':BASE,'generated_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'finding_count':len(F),'states':dict(collections.Counter(f['state'] for f in F)),'severities':dict(collections.Counter(f['severity'] for f in F)),'offline_probes':len(PROBES['results'])+len(PASS2_PROBES['results'])+len(PASS3_PROBES['results'])+len(PASS4_PROBES['results']),'probe_integrity':PROBES['integrity'],'pass2_probe_integrity':PASS2_PROBES['integrity'],'pass3_probe_integrity':PASS3_PROBES['integrity'],'pass4_probe_integrity':PASS4_PROBES['integrity'],'read_only_source':True,'no_external_service_calls':True}
+meta={'schema_version':'1.0','area':'Inbox/Chat usuário','source_root':str(ROOT),'source_sha':SHA,'baseline_sha':BASE,'generated_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'finding_count':len(F),'states':dict(collections.Counter(f['state'] for f in F)),'severities':dict(collections.Counter(f['severity'] for f in F)),'offline_probes':len(PROBES['results'])+len(PASS2_PROBES['results'])+len(PASS3_PROBES['results'])+len(PASS4_PROBES['results'])+len(PASS5_PROBES['results']),'probe_integrity':PROBES['integrity'],'pass2_probe_integrity':PASS2_PROBES['integrity'],'pass3_probe_integrity':PASS3_PROBES['integrity'],'pass4_probe_integrity':PASS4_PROBES['integrity'],'pass5_probe_integrity':PASS5_PROBES['integrity'],'read_only_source':True,'no_external_service_calls':True}
 (OUT/'findings.json').write_text(json.dumps({**meta,'findings':F},ensure_ascii=False,indent=2)+'\n')
 (OUT/'baseline-comparison.json').write_text(json.dumps({'baseline_sha':BASE,'current_sha':SHA,'files':comparisons},ensure_ascii=False,indent=2)+'\n')
 
@@ -577,10 +592,48 @@ targeted.update({
  'supabase/migrations/20260511233306_0e3f3b66-5585-4762-af6b-549c050f6275.sql':('DELETE policy for own/assigned whatsapp-media; explicit admin/supervisor branch',[(88,100)],'Só esta policy foi lida aqui. Agente database confirmou ausência de DROP/ALTER posterior da DELETE; estado vivo e demais policies não foram consultados.'),
  'supabase/migrations/20260905030000_private_media_buckets.sql':('private bucket update and documented signed-read contract',[(1,11)],'DDL integral curto lido como contrato de privacidade; não valida execução no Storage vivo.'),
 })
+pass5_path=OUT/'pass5-reviewed.json'
+if pass5_path.exists():
+ pass5_review=json.loads(pass5_path.read_text())
+ assert pass5_review['source_sha']==SHA
+ for p,row in pass5_review['files'].items():
+  target=semantic if row['review_level']=='semantic' else targeted
+  target[p]=('; '.join(row['reviewed_symbols']),[(r['line_start'],r['line_end']) for r in row['reviewed_ranges']],' '.join(row['remaining_gaps']))
 for p in paths:
  if '/__tests__/' in p:
   ranges=[(r['start'],r['end']) for r in journal if r['path']==p]
   targeted[p]=('test cases/mocks/assertions nos trechos indicados',ranges,'Leitura de teste não equivale a execução de Vitest nem prova da integração; dependências de frontend não instaladas no snapshot.')
+if test_review:
+ assert test_review['source_head']==SHA
+ for row in test_review['files']:
+  if row['review_status']!='SEMANTIC_REVIEW_COMPLETE':continue
+  raw=checked_source_bytes(row['path'])
+  assert hashlib.sha256(raw).hexdigest()==row['source_sha256']
+  assert len(raw.decode().splitlines())==row['line_count']
+  semantic[row['path']]=('test assertions; fixtures and mocks; reviewer='+row.get('reviewer','inbox')+'; '+row['adjudication'],[(1,row['line_count'])],' '.join(row['limits'])+' Suíte não executada nesta auditoria.')
+if test_support:
+ assert test_support['source_head']==SHA
+ for row in test_support['files']:
+  raw=checked_source_bytes(row['path'])
+  assert hashlib.sha256(raw).hexdigest()==row['source_sha256']
+  assert len(raw.decode().splitlines())==row['line_count']
+  target=semantic if row['review_level']=='semantic' else targeted
+  target[row['path']]=(row['reviewed_contract'],[(1,row['line_count'])],row['limits'])
+if shell_review:
+ assert shell_review['source_head']==SHA
+ for row in shell_review['files']:
+  if row['review_status']!='SEMANTIC_FILE_REVIEW':continue
+  raw=checked_source_bytes(row['path'])
+  assert hashlib.sha256(raw).hexdigest()==row['source_sha256']
+  assert len(raw.decode().splitlines())==row['line_end']
+  semantic[row['path']]=('shell setup/fixtures; SQL/assertions; cleanup; reviewer='+row['reviewer']+'; '+' '.join(row['adjudication']),[(1,row['line_end'])],row['limits']+' Script não executado nesta auditoria.')
+if shell_support:
+ assert shell_support['source_head']==SHA
+ for row in shell_support['files']:
+  raw=checked_source_bytes(row['path'])
+  assert hashlib.sha256(raw).hexdigest()==row['source_sha256']
+  assert len(raw.decode().splitlines())==row['line_count']
+  semantic[row['path']]=(row['reviewed_contract'],[(1,row['line_count'])],row['limits'])
 # Inventory only for remaining direct Inbox files, with explicit exclusion/delegation flags.
 universe=set(paths)
 for prefix in ['src/components/inbox','src/hooks/chat','src/hooks/inbox','src/hooks/realtime']:
@@ -598,7 +651,7 @@ for p in sorted(universe):
  covered_ids=[f['id'] for f in F if any(e['path']==p for e in f['evidence'])]
  coverage.append({'path':p,'review_level':level,'reviewed_symbols':[s.strip() for s in symbols.split(';') if s.strip()],'reviewed_ranges':ranges,'remaining_gaps':[gap],'finding_ids':covered_ids,'line_count':n,'baseline_comparison':comparison_by_path.get(p),'inventory_only':level=='structural'})
 counts=dict(collections.Counter(c['review_level'] for c in coverage))
-(OUT/'coverage.json').write_text(json.dumps({**meta,'coverage_rule':'semantic = contratos/símbolos listados efetivamente lidos e rastreados; targeted = trechos/consumidores específicos; structural = somente path, sem alegação de revisão de funções. Journal contém pedidos de leitura, inclusive lotes truncados, e não é usado sozinho como prova semântica.','review_counts':counts,'files':coverage,'global_gaps':['Não houve UI/browser/DOM real, execução de Vitest nem chamadas de rede/banco/provedor.','Não houve medição de carga/latência/cardinalidade produtiva.','Time Chat, autenticação global, backend de providers/DB, IA tools e ContactDetails ficaram com outros agentes.','Grafo ausente neste snapshot. Inventário e igualdade de blobs não equivalem a revisão de todas as funções.']},ensure_ascii=False,indent=2)+'\n')
+(OUT/'coverage.json').write_text(json.dumps({**meta,'coverage_rule':'semantic = contratos/símbolos listados efetivamente lidos e rastreados; targeted = trechos/consumidores específicos; structural = somente path, sem alegação de revisão de funções. Journal contém pedidos de leitura, inclusive lotes truncados, e não é usado sozinho como prova semântica.','review_counts':counts,'files':coverage,'global_gaps':['Não houve UI/browser/DOM real, execução de Vitest nem chamadas de rede/banco/provedor.','Não houve medição de carga/latência/cardinalidade produtiva.','Team Chat, autenticação global e backend de providers/DB pertencem a outros agentes. Ferramentas IA e ContactDetails têm cobertura compartilhada: este relatório delimita seus próprios trechos e componentes complementares.','Grafo ausente neste snapshot. Inventário e igualdade de blobs não equivalem a revisão de todas as funções.']},ensure_ascii=False,indent=2)+'\n')
 
 lines=[f'# Reauditoria Inbox/Chat — {SHA[:12]}','',
  f'**Resultado: {len(F)} achados — {meta["states"].get("confirmado estaticamente",0)} confirmados estaticamente e {meta["states"].get("lacuna",0)} lacuna(s); '+', '.join(f'{meta["severities"].get(s,0)} {s}' for s in ['P1','P2','P3'])+f'. Foram executadas {meta["offline_probes"]} probes offline, todas com asserções satisfeitas.**','',
@@ -638,11 +691,27 @@ lines += ['','### Terceira passagem: communication','',f'O lote fechou os corpos
 for p in PASS3_PROBES['results']: lines.append(f'| {p["id"]} | {p["description"]} |')
 lines += ['','### Quarta passagem: biblioteca de mídia e stickers','',f'O recorte de seis arquivos em media-library/sticker-picker foi lido integralmente, incluindo helpers, CRUD, upload, estado e consumidores diretos. O barrel de exports é leitura estrutural de contrato, sem corpo de função. Foram adicionados cinco achados, R2-INB-049–053, e estendidas as famílias 042/043 para os mesmos defeitos encontrados em outro picker/administrador. Os 39 achados iniciais permanecem literalmente iguais e os 41 probes anteriores não foram alterados. Mais {len(PASS4_PROBES["results"])} provas ficam em pass4, com {PASS4_PROBES["integrity"]["source_blobs_verified"]} arquivos fixados e dois controles negativos de proveniência.','', 'AIGenerateDialog já tinha MOD040 do revisor IA; a nova prova cobre falha de INSERT depois do upload. A biblioteca administrativa é explicitamente isenta do volume de conversa (E37); isso não foi tratado como bug. A referência compartilhada e a miniatura sem assinatura são efeitos distintos: apagar o objeto pode danificar mensagem original, enquanto deixar o objeto privado sem resolver já quebra o preview.','', '| Probe adicional | Observação |', '|---|---|']
 for p in PASS4_PROBES['results']: lines.append(f'| {p["id"]} | {p["description"]} |')
+lines += ['','### Quinta passagem: saldo funcional de Inbox/Chat e seis hooks finais','',
+ f'O ledger pass5-reviewed.json contém {len(pass5_review["files"])} registros próprios com nível, símbolos e faixas efetivamente lidos. Foram fechados os corpos restantes do recorte de produção Inbox/Chat e os seis hooks adicionais de inbox/realtime/voice, incluindo seus consumidores diretos. ChatPopup foi conferido integralmente, linhas 1–300. O saldo de produção é calculado por união com os componentes já integrais de outros revisores, sem atribuir sua leitura a este agente.',
+ f'Foram acrescentados 11 achados, R2-INB-054–064, e {len(PASS5_PROBES["results"])} casos offline. Os 53 achados do checkpoint pass4 permanecem literalmente iguais e os 49 casos anteriores permanecem com os mesmos bytes/hashes. O runner pass5 exige HEAD e {PASS5_PROBES["integrity"]["source_blobs_verified"]} blobs antes de avaliar código; os dois controles negativos de proveniência passaram.',
+ 'A prova de Sussurro é condicional: targetAgentId falta se o componente for montado, mas não foi demonstrada uma ação que abra o estado whisper inicialmente false. Não foi criada falha confirmada de jornada ativa nem declaração de dead code. A transferência em RealtimeCollaboration é evidência complementar de R2-INB-009 e também não gera nova contagem. As duas distinções e suas evidências pinadas estão em pass5-notes.json.',
+ 'No lote de seis hooks, useVisiblePolling conserva coalescência, follow-up manual e cancelamento; seus consumidores verificam o sinal após await. useInboxUIState normaliza a aba removida e captura indisponibilidade de storage. O truncamento de useInboxFilterTags continua pertencendo a TRA-011. Falta de response.ok em logVoiceCommand fica limite de telemetria, sem exigir que logs bloqueiem a UI. O alerta local/global só ganhou R2-INB-064 após rastrear os handlers e a montagem: o Dashboard produz ai dinamicamente, o que afastou a hipótese de ausência universal do alvo.',
+ (f'O lote finito de testes está em {test_review["status"]}: {test_review["counts"].get("SEMANTIC_REVIEW_COMPLETE",0)}/125 arquivos adjudicados, {test_review["actual_lines_read"]}/18903 linhas lidas. Cada entrada de test-review.json e test-review.md separa assertions, fixtures/mocks, resultado da análise e limites. Roster e journal isolados não contam como revisão; a suíte não foi executada.' if test_review else 'O lote de 125 arquivos de testes será adjudicado separadamente; este checkpoint não afirma revisão integral deles.'),
+ '', '| Probe adicional | Observação |','|---|---|']
+for p in PASS5_PROBES['results']: lines.append(f'| {p["id"]} | {p["description"]} |')
+lines += ['', '### Evidência complementar sem nova contagem','']
+for note in PASS5_NOTES:
+ lines += [f'**{note["id"]} — {note["kind"]}.** '+note['assessment'],'']
+ for evidence in note['evidence']:
+  lines.append(f'- `{evidence["path"]}:{evidence["line_start"]}–{evidence["line_end"]}` — {evidence["claim"]} SHA `{SHA[:12]}`; blob `{evidence["blob_sha"]}`.')
+ lines += ['', '**Critério/limite.** '+note['acceptance']+' '+note['limits'],'']
+if shell_review:
+ lines += ['', '### Lote final de shell e suporte SQL', '', f'O roster shell está em {shell_review["status"]}: {shell_review["reviewed_files"]}/{shell_review["total_files"]} arquivos e {shell_review["actual_lines_read"]}/3553 linhas. Cada arquivo tem adjudicação de setup, fixture, SQL/assertions, cleanup, pins e revisor em shell-review.json/md. Seis arquivos são leitura Inbox e seis revisão peer Database; autoria preservada. Nenhum shell/Docker/SQL foi executado. O checker SQL de blacklist foi lido integralmente (41 linhas), com alcance e limites separados em shell-support-reviewed.json.', '', 'Os testes comportamentais locais com migrations e contrapesos positivos permanecem reconhecidos como tais. O merge da fixture sem trigger de identidade de notas não contradiz R2-DB-016; as negativas anon em tabela ainda vazia e os testes de supressão por SQL copiado têm limites específicos registrados. A revisão peer também identificou que team-receipts-membership replica policy INSERT mais estrita que a vencedora posterior, portanto seu controle não refuta R2-DB-011/TC-009; V23 draft-step usa ON_ERROR_STOP=0 e executa chamadas como postgres com helper staff constante. Não foram criados findings por ausência genérica de testes.', '']
 lines += ['', '## Cobertura efetiva e lacunas','',
  f'coverage.json contém {len(coverage)} paths: {counts.get("semantic",0)} semantic, {counts.get("targeted",0)} targeted e {counts.get("structural",0)} structural. Cada arquivo lista símbolos/trechos de fato revisados, achados relacionados e lacunas. **Structural significa inventário apenas e não conta como revisão de função.**',
  'Read-journal.jsonl é um rastro de pedidos de leitura: alguns lotes iniciais tiveram truncamento, corrigido por releituras direcionadas e por rebaixamento honesto de cobertura em targeted. O journal isolado não demonstra que todo o conteúdo solicitado foi analisado.',
- 'Permanecem sem validação dinâmica: medidas/foco/propagação de DOM real, acessibilidade e navegação física, codecs e microfone, reconexão/replay de realtime, carga real e disputas entre operadores, permissões de Storage/RLS e provider. Componentes auxiliares/folhas restantes constam como structural ou targeted; o inventário não foi promovido automaticamente a revisão semântica.',
- 'Áreas delegadas: Team Chat; auth/usuários/ContactDetails; backend/integrações e schema; IA tools e Agenda. Agendamento de Composer (este relatório), disponibilidade do executor (providers) e leitura global da Agenda (agente complementar) são contratos distintos.',
+ 'Permanecem sem validação dinâmica: medidas/foco/propagação de DOM real, acessibilidade e navegação física, codecs e microfone, reconexão/replay de realtime, carga real e disputas entre operadores, permissões de Storage/RLS e provider. O saldo de corpos de produção de components/inbox e hooks/chat foi fechado dentro deste recorte, considerando as faixas próprias e os três componentes já integrais de providers. Outros arquivos, testes e trechos delegados continuam marcados conforme a leitura efetiva; o inventário não foi promovido automaticamente a revisão semântica.',
+ 'Áreas delegadas: Team Chat; autenticação/usuários; backend/integrações e schema; núcleo IA e Agenda. ContactDetails e folhas de ferramentas IA tiveram cobertura complementar delimitada nesta passagem. Agendamento de Composer (este relatório), disponibilidade do executor (providers) e leitura global da Agenda (agente complementar) são contratos distintos.',
  '', '## Controles positivos e suspeitas descartadas','',
  '- RealtimeInboxView e ChatPopup usam key por contato no ChatPanel. Não foi alegada aplicação genérica de respostas IA ou state do Composer de um contato em outro sem precondição adicional.',
  '- useForwardMedia tem cópia por destino, resultados por par e verificação de enqueue antes de limpar objeto. A rota real de Arquivos não foi confundida com o no-op do balão.',

@@ -1,0 +1,89 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "execution": "Local Node/TypeScript with bounded synthetic inputs and explicit mocks; source untouched.",
+  "sources": [
+    {
+      "path": "src/hooks/business/useWarRoomAlerts.ts",
+      "git_blob_sha": "90d833076f1458795bacb9f9e636e933abe56aea"
+    },
+    {
+      "path": "src/hooks/dashboard/useTodayHourlyVolume.ts",
+      "git_blob_sha": "9c92c3024435ee5ac37efa08a502918a272ed776"
+    },
+    {
+      "path": "src/hooks/business/useDemandPrediction.ts",
+      "git_blob_sha": "efefaa72acbddb4f9e2e4402068cd32aebe30c6b"
+    }
+  ],
+  "probes": [
+    {
+      "id": "R2-MOD-074",
+      "kind": "actual_hook_effects_with_bounded_cache_republication",
+      "result": {
+        "breaches": 60,
+        "cycles": [
+          {
+            "cycle": 1,
+            "visible_alerts": 50,
+            "total_persisted_alerts": 53,
+            "inserted": 1,
+            "invalidations": 1
+          },
+          {
+            "cycle": 2,
+            "visible_alerts": 50,
+            "total_persisted_alerts": 54,
+            "inserted": 2,
+            "invalidations": 2
+          },
+          {
+            "cycle": 3,
+            "visible_alerts": 50,
+            "total_persisted_alerts": 55,
+            "inserted": 3,
+            "invalidations": 3
+          }
+        ],
+        "query_limits": [
+          50,
+          50,
+          50
+        ]
+      },
+      "limitation": "Three finite cycles, not an infinite runtime test. Insert/read success and realtime delivery are controlled preconditions; query cache republishes the changed first page. Source SQL independently permits duplicates for admin/supervisor."
+    },
+    {
+      "id": "R2-MOD-075",
+      "kind": "actual_aggregate_with_explicit_UTC_calendar_stubs",
+      "result": {
+        "now": "2026-10-04T01:30:00.000Z",
+        "sql_bucket_day": "2026-10-03",
+        "sql_bucket_hour": 22,
+        "sql_count": 7,
+        "frontend_current_hour": 1,
+        "frontend_current_hour_count": 0,
+        "count_in_previous_day": 7
+      },
+      "limitation": "The original aggregate runs with explicit Date-based UTC stubs for the three date-fns calls; no date-fns package or SQL executed. SQL timezone is independently fixed from the winning migration."
+    },
+    {
+      "id": "R2-MOD-076",
+      "kind": "actual_demand_hook_with_fixed_historical_buckets",
+      "result": {
+        "current_point": {
+          "time": "12:30",
+          "actual": 10,
+          "predicted": 10,
+          "lower": 10,
+          "upper": 10,
+          "isPrediction": false
+        },
+        "selected_current_actual": 30,
+        "final_prediction": 20,
+        "reported_trend": "down",
+        "comparison_to_current_point": "20 > 10 (up)"
+      },
+      "limitation": "Historical buckets are query fixtures; exact generator/insights body executed. No statistical or forecasting quality certification, database or visual chart."
+    }
+  ]
+}

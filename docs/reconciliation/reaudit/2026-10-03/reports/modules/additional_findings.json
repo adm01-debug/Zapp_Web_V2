@@ -1869,5 +1869,782 @@
     "limitations": [
       "Fluxo validado estaticamente, sem browser. Extensão da família anterior de controles cosméticos; causa e callback específicos não constavam dos 104 achados."
     ]
+  },
+  {
+    "id": "R2-MOD-066",
+    "severity": "P2",
+    "title": "Fallback de imagem volta à URL quebrada e o erro persiste ao trocar de foto",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Abrir uma galeria com URL principal indisponível e fallback válido; ou falhar ambas as URLs e selecionar outra imagem válida sem desmontar a galeria.",
+    "cause": "ProductThumb usa um único stage para decidir tanto a origem da imagem quanto o carregamento. onLoad troca error-src por loaded, fazendo effectiveSrc voltar a src; o estado também não acompanha mudanças de src/fallbackSrc.",
+    "observed_behavior": "Após o erro principal, a seleção muda para fallbackSrc. Quando o fallback carrega, onLoad seleciona outra vez a URL principal quebrada, permitindo repetir o ciclo erro/carregamento. Depois de error-fallback, o componente retorna somente o ícone mesmo que a galeria altere src para uma foto válida. ProductDetailDialog reutiliza ProductThumb sem key entre as fotos.",
+    "impact": "O fallback não se estabiliza e uma falha de mídia pode deixar outras fotos válidas da galeria invisíveis. Não foi medido tráfego de rede ou custo externo.",
+    "recommendation": "Separar a origem selecionada do estado de carregamento, manter o fallback após seu load e reiniciar o ciclo quando a identidade da imagem mudar. Considerar eventos atrasados de URLs anteriores.",
+    "acceptance": [
+      "Falhar a principal e carregar o fallback mantém o fallback visível sem selecionar de novo a principal.",
+      "Falhar as duas origens e navegar para outra foto válida faz o novo src ser carregado.",
+      "Trocar src durante carregamento não permite que evento da imagem antiga determine o estado da nova."
+    ],
+    "evidence": [
+      [
+        "src/components/catalog/catalogShared.tsx",
+        261,
+        294,
+        "State machine e origem derivados do mesmo stage"
+      ],
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        149,
+        160,
+        "ProductThumb reutilizado sem key"
+      ],
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        174,
+        214,
+        "Navegação e miniaturas alteram a imagem atual"
+      ],
+      [
+        "src/components/catalog/__tests__/catalogShared.test.tsx",
+        136,
+        170,
+        "Testes não disparam load no fallback ou rerender com outro src"
+      ]
+    ],
+    "limitations": [
+      "Probe isolado de callbacks/JSX em objeto, sem DOM nem decoder de imagens. A falha de URL é precondição sintética.",
+      "Distinto de R2-MOD-047, que trata índice fora do novo conjunto de imagens. Aqui até um índice válido pode deixar de exibir mídia."
+    ]
+  },
+  {
+    "id": "R2-MOD-067",
+    "severity": "P2",
+    "title": "Templates WhatsApp são apresentados como oficiais com aprovação escolhida localmente",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Usuário alcança wa-templates e tem uma operação de criação/edição local aceita pelas permissões e constraints vigentes.",
+    "cause": "WhatsAppTemplatesManager promete templates oficiais aprovados, mas o seletor permite escolher approved/rejected/pending e o hook persiste esse texto diretamente em whatsapp_templates. Não existe verificação de aprovação na cadeia acionada pelo botão Criar/Atualizar.",
+    "observed_behavior": "Escolher Aprovado e salvar envia status=approved no INSERT/UPDATE local. A consulta lê esse mesmo registro e STATUS_BADGES converte o valor em Aprovado. A ação não consulta nem submete a um provedor; o estado visual deriva exclusivamente da escolha do usuário.",
+    "impact": "O catálogo transmite uma certificação externa que esse fluxo não comprova. Isso pode orientar indevidamente preparação e seleção de mensagens; não se afirma que esse template seja usado por um sender externo no repositório.",
+    "recommendation": "Distinguir templates locais de templates oficiais e tratar a aprovação externa como dado sincronizado, sem edição livre. Se não houver integração disponível, informar a limitação no fluxo e manter o cadastro como rascunho local.",
+    "acceptance": [
+      "Uma edição manual não pode transformar um rascunho local em aprovação oficial.",
+      "Cada estado oficial exibido tem origem e identidade do provedor verificáveis ou é rotulado explicitamente como estado local.",
+      "O botão e o feedback descrevem com precisão se salvam localmente ou submetem para aprovação."
+    ],
+    "evidence": [
+      [
+        "src/pages/ViewRouter.tsx",
+        75,
+        79,
+        "Rota atual para o manager"
+      ],
+      [
+        "src/components/catalog/WhatsAppTemplatesManager.tsx",
+        35,
+        42,
+        "Promessa de templates oficiais aprovados"
+      ],
+      [
+        "src/components/catalog/WhatsAppTemplatesManager.tsx",
+        157,
+        181,
+        "Status externo livre no formulário"
+      ],
+      [
+        "src/hooks/integrations/useWhatsAppTemplates.ts",
+        37,
+        41,
+        "Badge Aprovado derivado do texto local"
+      ],
+      [
+        "src/hooks/integrations/useWhatsAppTemplates.ts",
+        63,
+        74,
+        "Leitura da tabela local"
+      ],
+      [
+        "src/hooks/integrations/useWhatsAppTemplates.ts",
+        87,
+        120,
+        "INSERT/UPDATE e toast sem submissão externa"
+      ]
+    ],
+    "limitations": [
+      "Não foi consultada conta Meta nem realizada submissão. Não se afirma ausência de sistemas externos fora do repositório.",
+      "Providers revisou o mesmo hook e delegou a este achado a divergência de produto/estado; o contrato de created_by é tratado separadamente pelo revisor responsável."
+    ]
+  },
+  {
+    "id": "R2-MOD-068",
+    "severity": "P1",
+    "title": "Roundtrip de Chatbot grava JSON como string e reabre o grafo vazio",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "INSERT/UPDATE de um fluxo de chatbot é aceito; posteriormente ele é consultado e aberto no editor. Salvar novamente o editor vazio concretiza a substituição persistente.",
+    "cause": "useChatbotFlows aplica JSON.stringify a nodes/edges/variables apesar de as colunas serem JSONB. A query apenas faz cast de tipo. ChatbotFlowEditor aceita somente arrays e substitui strings por []; não existe normalizador de JSON na cadeia SQL vigente revisada.",
+    "observed_behavior": "A criação padrão envia a string JSON que contém o nó inicial. A consulta devolve o escalar string, o card conta zero nós e o editor exibe Fluxo vazio. O botão Salvar repassa [] ao update, que grava a string \"[]\", substituindo o conteúdo antes codificado. Um fluxo salvo com vários nós sofre o mesmo roundtrip; duplicar uma string também pode acrescentar outra camada de codificação.",
+    "impact": "Nós e conexões desaparecem da representação ao reabrir e podem ser apagados persistentemente quando o usuário salva o editor. A falha independe de haver executor externo do grafo.",
+    "recommendation": "Enviar arrays/objetos nativos para JSONB; validar o shape na leitura; migrar cuidadosamente strings existentes e impedir sobrescrita silenciosa quando o conteúdo não puder ser interpretado.",
+    "acceptance": [
+      "Criar um fluxo e reabri-lo preserva seu nó inicial e o tipo JSON de nodes/edges.",
+      "Salvar e reabrir um grafo com condições e várias conexões preserva integralmente a estrutura e os valores.",
+      "Registros legados codificados como string são recuperados sem sobrescrita e erros de shape mantêm o conteúdo original recuperável."
+    ],
+    "evidence": [
+      [
+        "src/hooks/integrations/useChatbotFlows.ts",
+        53,
+        81,
+        "Leitura sem parse e criação com stringify"
+      ],
+      [
+        "src/hooks/integrations/useChatbotFlows.ts",
+        90,
+        104,
+        "Atualização com stringify"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowEditor.tsx",
+        21,
+        32,
+        "Strings viram arrays vazios"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowEditor.tsx",
+        65,
+        67,
+        "Salvar o estado do editor"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowsView.tsx",
+        72,
+        92,
+        "Duplicação e entrega dos arrays ao update"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowsView.tsx",
+        164,
+        168,
+        "Contagem como zero para string"
+      ],
+      [
+        "supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql",
+        40,
+        56,
+        "Colunas JSONB nativas"
+      ],
+      [
+        "supabase/migrations/20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql",
+        82,
+        82,
+        "Trigger efetivo somente timestamp"
+      ],
+      [
+        "src/hooks/__tests__/useChatbotFlows.test.tsx",
+        21,
+        41,
+        "Fixtures devolvem arrays, sem roundtrip do payload real"
+      ],
+      [
+        "src/hooks/__tests__/useChatbotFlows.test.tsx",
+        64,
+        87,
+        "Teste de criação só confere tabela; listas locais de tipos não exercitam contrato"
+      ]
+    ],
+    "limitations": [
+      "Descoberta do stringify comunicada por Providers, consumidor examinado por modules, tipos/trigger vencedores confirmados por Database.",
+      "Probe preserva escalares no mock de transporte e executa callbacks originais. Não executa PostgreSQL, RLS, React real nem um fluxo de produção.",
+      "IA-CHATBOT-001 anterior trata seleção de conexão/histórico no endpoint L1; não cobre este roundtrip do editor de grafos."
+    ]
+  },
+  {
+    "id": "R2-MOD-069",
+    "severity": "P2",
+    "title": "Editor de Chatbot oferece condição, ação e transferência sem configuração correspondente",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Criar ou editar um grafo no editor de Chatbot e adicionar um nó Condição, Ação ou Transferir. O contrato de persistência é independente do problema de codificação de R2-MOD-068.",
+    "cause": "AddNodeDialog oferece todos os tipos declarados; addNode inicializa só label/content/options/delaySeconds. EditNodeDialog expõe label para todos, conteúdo/opções apenas para mensagem/pergunta e segundos apenas para delay. Não há campos nem callbacks para condition, action, transferTo ou a condição do edge.",
+    "observed_behavior": "Um nó Condição, Ação ou Transferir criado pela interface fica sem sua regra, ação ou destino. Editar permite apenas trocar o nome e Salvar não valida esse conteúdo obrigatório para representar a operação. O indicador de etapas considera somente a existência de start, quantidade de nós e conexões, podendo alcançar Salvar com esses nós incompletos.",
+    "impact": "O usuário consegue desenhar e salvar símbolos dessas operações, mas não consegue definir o que elas devem fazer através dos controles disponíveis. O efeito sobre execução externa não foi afirmado nem testado.",
+    "recommendation": "Implementar os editores específicos e validação coerente para cada tipo suportado; enquanto a operação não estiver implementada, apresentá-la como indisponível em vez de aceitar uma configuração vazia.",
+    "acceptance": [
+      "Cada tipo disponibilizado pode receber todos os seus dados através da UI, incluindo regra de condição, ação e destino de transferência.",
+      "Salvar rejeita nós incompletos com indicação do campo e mantém o draft para correção.",
+      "A configuração continua igual após salvar/reabrir e a ligação condicional mantém a regra selecionada."
+    ],
+    "evidence": [
+      [
+        "src/hooks/integrations/useChatbotFlows.ts",
+        9,
+        30,
+        "Campos declarados de nó e condição de aresta"
+      ],
+      [
+        "src/components/chatbot/ChatbotNodeDialogs.tsx",
+        14,
+        46,
+        "Tipos ofertados para adicionar"
+      ],
+      [
+        "src/components/chatbot/ChatbotNodeDialogs.tsx",
+        61,
+        94,
+        "Editor só implementa nome, mensagem/pergunta e atraso"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowEditor.tsx",
+        28,
+        47,
+        "Progresso e criação dos tipos com dados genéricos"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowEditor.tsx",
+        65,
+        67,
+        "Salvar sem validação da configuração"
+      ]
+    ],
+    "limitations": [
+      "Não se afirma que haja um executor genérico do grafo neste repositório; a falha comprovada é o contrato de autoria da interface.",
+      "IA-CHATBOT-001 anterior é sobre o endpoint L1. Esse endpoint e seu trigger ai_l1 não provam execução dos grafos montados nesta interface."
+    ]
+  },
+  {
+    "id": "R2-MOD-070",
+    "severity": "P2",
+    "title": "Gerar Voz chama a listagem de vozes e anuncia geração sem áudio",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Abrir o laboratório de voz em Configurações; enviar um nome não vazio; JWT/cota/configuração aceitos e listagem de vozes do provedor retorna 2xx.",
+    "cause": "ElevenLabsVoiceDesign envia action=generate. O endpoint só diferencia preview e create; qualquer outra ação cai na listagem GET /v1/voices. O frontend não exige audioContent nem uma identidade de voz antes de anunciar sucesso.",
+    "observed_behavior": "O clique Gerar Voz não entra em create-previews nem create-voice-from-preview. Recebe a lista de vozes, não atualiza audioUrl e dispara Voz gerada com sucesso. A descrição, nome e texto são ignorados pelo ramo escolhido.",
+    "impact": "O usuário recebe confirmação de uma geração que não foi solicitada ao provedor. O fluxo atual não cria nem produz a prévia solicitada, mesmo com credenciais e rede válidas.",
+    "recommendation": "Alinhar o fluxo de UI com preview e create, interpretar o schema de retorno e guardar generated_voice_id quando necessário. O endpoint deve rejeitar action desconhecida; o frontend deve exigir resultado compatível antes de mostrar sucesso.",
+    "acceptance": [
+      "Gerar prévia alcança a ação preview e renderiza áudio retornado no schema aceito.",
+      "Criar voz usa a identidade de prévia selecionada e só confirma após resposta de criação.",
+      "action desconhecida retorna erro explícito; uma lista de vozes não é aceita como resultado de geração."
+    ],
+    "evidence": [
+      [
+        "src/components/settings/SettingsView.tsx",
+        160,
+        172,
+        "Montagem no laboratório de voz"
+      ],
+      [
+        "src/components/voice/ElevenLabsVoiceDesign.tsx",
+        22,
+        63,
+        "Payload generate e toast sem audioContent"
+      ],
+      [
+        "supabase/functions/elevenlabs-voice-design/index.ts",
+        20,
+        45,
+        "Ramo preview"
+      ],
+      [
+        "supabase/functions/elevenlabs-voice-design/index.ts",
+        48,
+        83,
+        "Ramo create e default de listagem"
+      ]
+    ],
+    "limitations": [
+      "Providers confirmou o endpoint e delegou este contrato à revisão frontend, evitando duplicação de ID API.",
+      "Probe executa o callback da UI e o dispatch original da Edge com mocks de auth/cota e fetch, sem chamadas externas ou validação de credenciais reais."
+    ]
+  },
+  {
+    "id": "R2-MOD-071",
+    "severity": "P2",
+    "title": "Repetir conversão de áudio após erro do codificador fica aguardando o script que já falhou",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Na mesma sessão, o primeiro carregamento de /vendor/lamejs-1.2.1.min.js dispara error (ou load sem disponibilizar window.lamejs); o usuário ou o próximo arquivo tenta converter novamente. Não ocorre outro evento espontâneo no elemento já encerrado.",
+    "cause": "loadLamejs limpa apenas lamejsLoadPromise no catch. O script com data-lamejs=1 continua no documento. A segunda chamada o encontra sem o global e só acrescenta listeners load/error, sem substituir/recarregar o elemento nem limitar a espera.",
+    "observed_behavior": "A primeira conversão devolve encoder-unavailable e permite o fallback do consumidor. A próxima não dispara outro carregamento nem alcança o fallback, pois o await de loadLamejs fica pendente. useMediaUpload mantém bulkUploading até sair do laço e useAudioMemes só limpa uploading no finally posterior ao await.",
+    "impact": "Uma falha transitória inicial impede as conversões seguintes na mesma página. Um lote com mais de um áudio pode ficar preso a partir do próximo item; o upload individual posterior também pode permanecer ocupado até recarregar a página ou algum código externo emitir outro evento.",
+    "recommendation": "Remover ou substituir o elemento que falhou ao limpar a promessa, limpar seus listeners e iniciar uma nova tentativa efetiva. Limitar a espera e garantir que todos os caminhos retornem um resultado discriminado para o consumidor encerrar o estado ocupado.",
+    "acceptance": [
+      "Após um error controlado, a segunda tentativa cria ou reinicia um carregamento e pode resolver com o codificador disponível.",
+      "Um lote não fica preso no segundo áudio depois do fallback do primeiro; erro definitivo retorna encoder-unavailable e encerra o estado ocupado.",
+      "load sem window.lamejs, falha repetida e chamadas concorrentes encerram de forma determinada sem listeners acumulados em elementos já terminados."
+    ],
+    "evidence": [
+      [
+        "src/utils/audioToMp3.ts",
+        38,
+        74,
+        "Elemento existente, listeners e limpeza exclusiva da promessa"
+      ],
+      [
+        "src/utils/audioToMp3.ts",
+        115,
+        121,
+        "Await do loader antes do resultado discriminado"
+      ],
+      [
+        "src/components/settings/media-library/useMediaUpload.ts",
+        41,
+        55,
+        "Lote aguardando conversão por item"
+      ],
+      [
+        "src/components/settings/media-library/useMediaUpload.ts",
+        80,
+        88,
+        "Fim do estado ocupado apenas depois do laço"
+      ],
+      [
+        "src/hooks/communication/useAudioMemes.ts",
+        98,
+        109,
+        "Upload individual aguarda conversão"
+      ],
+      [
+        "src/hooks/communication/useAudioMemes.ts",
+        152,
+        156,
+        "Finally só é alcançado após encerramento do await"
+      ]
+    ],
+    "limitations": [
+      "Probe executa o loader original com listeners simulados e um único evento error. Verifica que a repetição não cria outro carregamento nem timeout e fica pendente sem novo evento; não mede espera infinita num navegador.",
+      "Não pressupõe erro permanente do arquivo estático nem problema no conteúdo do fornecedor. A precondição é falha pontual de carregamento ou ausência do global; O probe deste achado não executa public/vendor; a avaliação separada do codec está em vendor/report.md.",
+      "Inbox confirmou a fronteira useMediaUpload sem finding duplicado. Busca literal em FINDINGS.json anterior não encontrou loadLamejs, audioToMp3, lamejs ou mp3; a distinção também foi conferida no catálogo anterior."
+    ]
+  },
+  {
+    "id": "R2-MOD-072",
+    "severity": "P2",
+    "title": "Atualização automática recarrega ao ocultar a aba sem preservar edição ou sessão ativa",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "O monitor ativo em main recebe um buildId diferente enquanto há edição ainda não salva (por exemplo no editor de automações) ou uma chamada SIP em curso. A aba já está hidden ou passa a hidden após o aviso.",
+    "cause": "A decisão do monitor usa somente document.visibilityState. O ramo hidden chama location.reload e o ramo visible arma a mesma recarga no primeiro visibilitychange hidden. Não consulta estado de edição, operação em andamento ou sessão de chamada, nem persiste/aguarda os consumidores antes de recarregar.",
+    "observed_behavior": "A aplicação pode recarregar automaticamente ao usuário apenas alternar de aba. O editor de automações guarda os campos em useState e só invoca persistência em Salvar; essas alterações em memória não são recuperadas pelo fluxo mostrado. CallSessionProvider inicia seu reducer do estado inicial, e useSipClient cria CallEngine/SipCallAdapter em memória; o monitor não condiciona a recarga ao término da sessão.",
+    "impact": "Perda de uma edição ainda não salva no consumidor demonstrado. A interrupção de uma ligação ativa é uma inferência da destruição da página e do transporte mantido em memória, confirmada na revisão do kernel pelo root; não foi feita ligação real. Ocultar a aba não demonstra que não há trabalho ativo.",
+    "recommendation": "Coordenar a atualização com operações e rascunhos ativos. Adiar recarga automática enquanto houver chamada/edição não preservada; oferecer atualização explícita ou salvar e restaurar estado verificável antes de recarregar. Não usar visibilidade como única evidência de inatividade.",
+    "acceptance": [
+      "Com edição não salva no editor de automações, detectar build novo e ocultar a aba não descarta os campos.",
+      "Uma chamada ativa não é encerrada por alternar a aba após detectar atualização; a atualização ocorre quando a sessão estiver liberada ou por ação explícita informada.",
+      "Sem operação ou edição pendente, o monitor mantém o comportamento de recuperação previsto.",
+      "O teste de atualização combina o monitor com o estado de um consumidor; apenas contar reloads na mudança de visibilidade não prova preservação de trabalho."
+    ],
+    "evidence": [
+      [
+        "src/main.tsx",
+        9,
+        17,
+        "Ativação incondicional do monitor"
+      ],
+      [
+        "src/lib/deployment-update.ts",
+        27,
+        36,
+        "Decisão por visibilidade e handler de recarga"
+      ],
+      [
+        "src/lib/deployment-update.ts",
+        49,
+        70,
+        "Build novo arma recarga automática ou recarrega imediatamente"
+      ],
+      [
+        "src/components/automations/AutomationEditorDialog.tsx",
+        20,
+        34,
+        "Draft em memória e persistência somente em Salvar"
+      ],
+      [
+        "src/components/automations/AutomationEditorDialog.tsx",
+        48,
+        54,
+        "Alteração dos campos escreve somente estado local"
+      ],
+      [
+        "src/components/automations/AutomationsManager.tsx",
+        33,
+        38,
+        "Mutation invocada pelo save explícito"
+      ],
+      [
+        "src/providers/CallSessionProvider.tsx",
+        235,
+        253,
+        "Sessão inicial do provider"
+      ],
+      [
+        "src/hooks/communication/useSipClient.ts",
+        26,
+        65,
+        "CallEngine/SipCallAdapter criados no ciclo React"
+      ],
+      [
+        "src/lib/__tests__/deployment-update.test.ts",
+        59,
+        92,
+        "Testes exigem reload em hidden sem consumidor com trabalho pendente"
+      ]
+    ],
+    "limitations": [
+      "Fonte estática e testes existentes lidos, sem executar reload do navegador ou chamada SIP. O efeito no transporte é inferido, não medido.",
+      "Não se generaliza perda a todo rascunho: email e outros consumidores podem ter persistência específica. O editor de automações é o contraexemplo concreto usado aqui.",
+      "MOD027 trata saída SPA do wizard e debounce; o wizard possui beforeunload próprio. Este achado trata a ação global automática do monitor e não supõe que esse guard específico seja inexistente.",
+      "Root revisou o kernel de chamadas e confirmou ausência de reidratação de transporte SIP vivo após reload; persistência de histórico não equivale a restabelecer a ligação."
+    ]
+  },
+  {
+    "id": "R2-MOD-073",
+    "severity": "P2",
+    "code_origin": "third_party_vendored",
+    "title": "Detector de ataques do codec ignora oito posições de análise por índices fracionários",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "O caminho CBR/psymodel da integração atual avalia um vetor de ataques com pico acima do limiar em uma das posições 1, 2, 4, 5, 7, 8, 10 ou 11. A prova isola esse vetor interno; não pressupõe que todo áudio dispare o caso nem quantifica sua frequência.",
+    "cause": "L3psycho_anal_ns inicializa ta e ya com quatro posições inteiras, mas usa F/3 diretamente como índice nos laços que agrupam doze ataques e nove energias. Para F não múltiplo de três, ta[F/3] é undefined e o guard 0 == ta[F/3] falha; ya[1+F/3] += Ga escreve uma propriedade fracionária NaN, sem acumular no grupo inteiro.",
+    "observed_behavior": "Nos doze vetores sintéticos de pico único, o trecho original marca somente posições 0, 3, 6 e 9. No trecho original de energia, F=1 cria a propriedade 1.3333333333333333 com NaN e mantém os quatro acumuladores inteiros em zero. Os quatro flags inteiros alimentam S e a seleção posterior de blocos. O consumidor converte para mono/44100 e cria Mp3Encoder(1,44100,128); quality=3 ativa psymodel e o CBR padrão seleciona essa rotina.",
+    "impact": "A análise interna de transientes e agrupamento de energia não considera todos os subintervalos que seus laços percorrem, podendo escolher blocos com informação incompleta. A divergência numérica e o alcance do ramo são confirmados; perda audível, corrupção final do arquivo e magnitude da diferença de qualidade não foram demonstradas.",
+    "recommendation": "Corrigir os índices de grupo para inteiros na cópia vendorizada ou substituir por uma versão verificada que corrija esse contrato. Antes da troca, comparar com a fonte upstream fixada e validar vetores de transiente, decodificação e propriedades do MP3; não tratar uma simples emissão de bytes como certificação de fidelidade.",
+    "acceptance": [
+      "Todas as doze posições de pico único são atribuídas ao grupo inteiro correto e ao ordinal esperado, preservando a regra de primeiro ataque por grupo.",
+      "Os nove subintervalos de energia alimentam somente três índices inteiros de grupo; nenhum acumulador NaN ou chave fracionária é criado.",
+      "O teste usa trechos ou API da versão real distribuída, com hash fixado, e cobre o caminho mono/44100/128 usado pelo produto.",
+      "Uma validação independente decodifica o MP3 de vetores conhecidos e compara decisões de bloco/qualidade com uma referência antes de declarar impacto audível resolvido."
+    ],
+    "evidence": [
+      [
+        "public/vendor/lamejs-1.2.1.min.js",
+        204,
+        204,
+        "Índices fracionários dos laços de ataque e energia no código original"
+      ],
+      [
+        "public/vendor/lamejs-1.2.1.min.js",
+        201,
+        216,
+        "Estado e consumo dos quatro flags pela decisão de blocos em L3psycho_anal_ns"
+      ],
+      [
+        "public/vendor/lamejs-1.2.1.min.js",
+        169,
+        177,
+        "Frame escolhe rotina NS no caminho CBR e consome o tipo de bloco"
+      ],
+      [
+        "public/vendor/lamejs-1.2.1.min.js",
+        247,
+        272,
+        "CBR padrão e quality=3 com psymodel ativo"
+      ],
+      [
+        "public/vendor/lamejs-1.2.1.min.js",
+        305,
+        307,
+        "Wrapper público fixa quality=3 e recebe argumentos da aplicação"
+      ],
+      [
+        "src/utils/audioToMp3.ts",
+        157,
+        192,
+        "Downmix, reamostragem e API mono/44100/128 ativa"
+      ]
+    ],
+    "external_probes": [
+      {
+        "artifact": "vendor/proofs.json",
+        "probe_id": "VENDOR-P01",
+        "script": "vendor_probes.cjs"
+      },
+      {
+        "artifact": "vendor/proofs.json",
+        "probe_id": "VENDOR-P02",
+        "script": "vendor_probes.cjs"
+      }
+    ],
+    "limitations": [
+      "Código de terceiro vendorizado: um achado de contrato numérico, separado das microfuncionalidades autorais e dos 208 corpos lidos.",
+      "Probes executam exatamente os dois fragmentos extraídos do AST original, com vetores sintéticos; não são uma simulação completa da análise psicoacústica.",
+      "VENDOR-P03 apenas comprova emissão não vazia pela API real para silêncio/seno curtos e término do segundo flush. Nenhum MP3 foi decodificado ou ouvido, nem avaliado em navegador, com áudio longo, por benchmark ou fuzzing.",
+      "O ramo VBR contém a mesma forma de indexação, mas não ganha outro ID e não é necessário para o caminho CBR demonstrado.",
+      "A comparação com os 104 achados anteriores não localizou este contrato nem referências a lamejs/psicoacústica/Mp3Encoder; isso não prova ausência de leitura prévia do fornecedor."
+    ]
+  },
+  {
+    "id": "R2-MOD-074",
+    "severity": "P2",
+    "title": "Monitor do War Room recria alertas continuamente quando violações superam a página de 50",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Um admin/supervisor mantém o War Room montado, a consulta retorna mais de 50 violações SLA, e SELECT/INSERT/realtime ou refetch de alertas funcionam. Cada nova gravação entra entre os 50 alertas unread mais recentes.",
+    "cause": "O monitor compara breaches.length com o número de alertas source=sla-monitor de uma consulta limitada a 50. A tabela não tem UNIQUE por source/incidente e o insert não recebe chave de idempotência. O efeito depende de alerts e executa a checagem imediatamente sempre que essa página muda.",
+    "observed_behavior": "Cada INSERT em warroom_alerts invalida a query pelo callback realtime; a página mais recente muda, mas continua com no máximo 50 itens. Para breaches.length>50, a condição de nova inserção continua verdadeira. A republicação da página rearma a checagem, criando outro alerta para as mesmas violações. Mesmo sem entrega realtime imediata, o refetch de 30 segundos pode continuar o ciclo enquanto as precondições persistirem.",
+    "impact": "Acúmulo de alertas críticos redundantes, consultas/gravações repetidas e som/notificações a cada nova linha. A quantidade de inserts depende da latência/revalidação; não foi medido um volume de produção. Dispensa de alertas não resolve a causa de comparação de contagens.",
+    "recommendation": "Modelar a identidade de uma violação/incidente e deduplicar no banco, consultando o conjunto de violações ainda relevante. Separar o monitor da quantidade de linhas de uma página de apresentação; usar produtor único ou operação idempotente e respeitar encerramento/dispensa do incidente.",
+    "acceptance": [
+      "Com 60 violações e pelo menos 50 alertas existentes, repetir refetch e eventos INSERT não cria novos alertas para incidentes já representados.",
+      "Dois clientes admin abertos simultaneamente produzem no máximo um alerta por incidente/chave de janela definida.",
+      "Erro de inserção e de leitura é exposto/recuperável sem transformar página parcial em sinal de necessidade de alertar.",
+      "O teste cruza o limite de 50 e republica a página após insert; não basta usar lista de violações vazia."
+    ],
+    "evidence": [
+      [
+        "src/hooks/business/useWarRoomAlerts.ts",
+        48,
+        60,
+        "Página unread limitada a 50 e refetch de 30 segundos"
+      ],
+      [
+        "src/hooks/business/useWarRoomAlerts.ts",
+        63,
+        95,
+        "INSERT invalida query e emite som/push"
+      ],
+      [
+        "src/hooks/business/useWarRoomAlerts.ts",
+        103,
+        129,
+        "Comparação de contagens, insert sem chave e efeito dependente de alerts"
+      ],
+      [
+        "src/components/dashboard/WarRoomDashboard.tsx",
+        34,
+        47,
+        "Consumidor monta o monitor e exibe seus alertas"
+      ],
+      [
+        "supabase/migrations/20260317212204_a83746c2-5108-4b79-b3b3-6b4d15df28e8.sql",
+        62,
+        86,
+        "PK aleatória, ausência de unique de source e publicação realtime"
+      ],
+      [
+        "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql",
+        62,
+        66,
+        "Política vigente permite INSERT de admin/supervisor"
+      ],
+      [
+        "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+        58,
+        83,
+        "Fixture de SLA vazia não exercita criação/deduplicação"
+      ]
+    ],
+    "external_probes": [
+      {
+        "artifact": "final-frontend-proofs.json",
+        "probe_id": "R2-MOD-074",
+        "script": "final_frontend_probes.cjs"
+      }
+    ],
+    "limitations": [
+      "Probe executa o hook original em três ciclos finitos de efeitos com SELECT/INSERT/cache/realtime simulados, 60 violações e página de 50. Não executa React, banco, som ou notificações reais e não alega uma execução infinita medida.",
+      "Database confirmou o estado vencedor: somente PK(id) e FK dismissed_by, sem trigger de deduplicação, e grant/policy de INSERT para authenticated admin/supervisor. Disponibilidade de ambiente não foi testada.",
+      "Root confirmou que seus achados de filas/SLA não cobrem este monitor. MOD030/031 tratam indicadores e controle visual de atualização, sem a cadeia de criação de alertas."
+    ]
+  },
+  {
+    "id": "R2-MOD-075",
+    "severity": "P2",
+    "title": "Volume por hora combina buckets de São Paulo com dia e hora do navegador",
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "DASH-METRICS-001"
+    ],
+    "prior_note": "Estende a família de métricas do Dashboard com um contrato temporal específico não descrito: RPC hourly correta em São Paulo versus agregador cliente em outro fuso. Não é a regressão SQL de dashboard_contact_counts.",
+    "preconditions": "O navegador está em fuso diferente de America/Sao_Paulo e o instante pertence a outro dia ou hora local. A RPC dashboard_hourly_volume devolve os buckets em São Paulo conforme a definição vencedora.",
+    "cause": "aggregateHourlyVolume usa startOfDay/format/getHours locais para hoje, hora atual e os sete dias. Os buckets day/hour não incluem offset e já foram derivados por SQL em America/Sao_Paulo. O cliente compara identidades temporais incompatíveis.",
+    "observed_behavior": "Às 2026-10-04T01:30Z, o bucket corrente de São Paulo é 2026-10-03/22. Em UTC, o agregador chama hoje de 2026-10-04 e hora atual de 1: coloca a contagem no dia anterior da série de sete dias e deixa a hora corrente em zero. VolumeChart usa esses dados em Hoje, Conversas reais e no gráfico por dia.",
+    "impact": "A mesma atividade pode aparecer como dia anterior, em hora deslocada ou sem volume atual conforme o fuso do dispositivo. Filtros do topo já usam o fuso do aplicativo, portanto a mesma tela pode apresentar recortes temporais incompatíveis.",
+    "recommendation": "Usar explicitamente o fuso do aplicativo tanto na identificação de hoje/hora quanto na criação das chaves de dias, ou receber do servidor o relógio/identidade do bucket corrente. Preservar a distinção entre data de calendário e timestamp.",
+    "acceptance": [
+      "O mesmo instante e conjunto de buckets produz resultado idêntico em navegador UTC, America/Sao_Paulo e outro fuso.",
+      "O bucket 2026-10-03/22 às 2026-10-04T01:30Z é reconhecido como corrente de São Paulo; não migra para ontem por configuração do dispositivo.",
+      "Testes incluem virada do dia e não geram tanto fixture quanto expectativa com o mesmo relógio local incorreto."
+    ],
+    "evidence": [
+      [
+        "src/hooks/dashboard/useTodayHourlyVolume.ts",
+        18,
+        50,
+        "Chaves locais, getHours e comparação de buckets"
+      ],
+      [
+        "src/hooks/dashboard/useTodayHourlyVolume.ts",
+        63,
+        74,
+        "RPC ativa e transformação no retorno"
+      ],
+      [
+        "supabase/migrations/20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql",
+        92,
+        120,
+        "Definição hourly vencedora: day/hour e janela em São Paulo"
+      ],
+      [
+        "src/components/dashboard/overview/VolumeChart.tsx",
+        46,
+        68,
+        "Consumo das séries por hora/dia"
+      ],
+      [
+        "src/hooks/dashboard/useDashboardUrlFilters.ts",
+        32,
+        44,
+        "Períodos do topo usam helpers do dia do aplicativo"
+      ],
+      [
+        "src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts",
+        4,
+        21,
+        "Fixture e relógio no mesmo fuso local"
+      ]
+    ],
+    "external_probes": [
+      {
+        "artifact": "final-frontend-proofs.json",
+        "probe_id": "R2-MOD-075",
+        "script": "final_frontend_probes.cjs"
+      }
+    ],
+    "limitations": [
+      "Probe executa o agregador original com Date UTC e stubs transparentes dos três helpers date-fns; não executa pacote date-fns, SQL nem navegador. A divergência é também direta no uso de getHours e nas chaves de data.",
+      "Database confirmou que a definição 20260925221406 é vencedora para esta assinatura e que a janela SQL também usa São Paulo. Não se acusa a RPC de um fuso incorreto.",
+      "Não generaliza o defeito a todos os filtros de data: useDashboardUrlFilters usa os helpers de calendário do aplicativo."
+    ]
+  },
+  {
+    "id": "R2-MOD-076",
+    "severity": "P2",
+    "title": "Previsão de demanda usa o ponto de quatro horas atrás como valor atual e chama média histórica de dado real",
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "DASH-CONTROLS-001",
+      "DASH-METRICS-001"
+    ],
+    "prior_note": "Mantém a família anterior de rótulos/proxies do Dashboard, acrescentando seleção do ponto -4h e apresentação de médias como actual. A heurística de confiança95%/capacidade35 já era conhecida e não é contada novamente.",
+    "preconditions": "Dashboard monta DemandPrediction sem externalData, seu uso ativo. As médias históricas da hora atual e de quatro horas antes diferem; o ponto final previsto fica entre elas no contraexemplo.",
+    "cause": "O gerador preenche actual com a mesma média por hora dos sete dias, sem consulta dos valores reais do dia. A lista começa em -4h. O cálculo de currentActual usa find do primeiro ponto não preditivo, em vez do ponto da hora corrente, e a tendência compara o último previsto contra essa base antiga.",
+    "observed_behavior": "Com média de 30 às 08h, 10 às 12h atuais e 20 às 16h futuras, o hook informa currentActual=30 e tendência down. A própria série tem 10 no ponto das 12h, para o qual 20 seria crescimento. O consumidor apresenta esses pontos como Atual/Dados Reais e a tendência no card.",
+    "impact": "O operador pode receber tendência invertida e interpretar a média da semana como volume observado hoje. A prévia depende da população histórica e não demonstra variação real de atividade.",
+    "recommendation": "Separar séries observadas por data/hora da média histórica e identificar explicitamente o ponto corrente. Calcular a tendência contra a base temporal e estatística declarada no produto, com ausência de dados distinta de zero; se a intenção for somente média histórica, ajustar nomes e rótulos.",
+    "acceptance": [
+      "No contraexemplo 30/10/20, a comparação com o ponto corrente usa 10 e retorna crescimento.",
+      "actual contém observação do período atual ou é renomeado de modo que a UI não o apresente como Dados Reais.",
+      "Consulta vazia, erro e histórico insuficiente não afirmam tendência válida ou capacidade sem dados.",
+      "Confiança estatística só é apresentada se corresponder a um método validado; essa exigência já constava no achado anterior."
+    ],
+    "evidence": [
+      [
+        "src/hooks/business/useDemandPrediction.ts",
+        23,
+        47,
+        "Série -4h..0 preenchida por média histórica e futuro"
+      ],
+      [
+        "src/hooks/business/useDemandPrediction.ts",
+        53,
+        74,
+        "Agregação da contagem dos sete dias por hora"
+      ],
+      [
+        "src/hooks/business/useDemandPrediction.ts",
+        78,
+        86,
+        "find escolhe primeiro ponto e define tendência"
+      ],
+      [
+        "src/components/dashboard/DemandPrediction.tsx",
+        30,
+        40,
+        "Tooltip Atual para a média"
+      ],
+      [
+        "src/components/dashboard/DemandPrediction.tsx",
+        82,
+        92,
+        "Consumidor da tendência"
+      ],
+      [
+        "src/components/dashboard/DemandPrediction.tsx",
+        129,
+        133,
+        "Legenda Dados Reais"
+      ],
+      [
+        "src/components/dashboard/DashboardView.tsx",
+        218,
+        224,
+        "Consumidor atual sem externalData"
+      ]
+    ],
+    "external_probes": [
+      {
+        "artifact": "final-frontend-proofs.json",
+        "probe_id": "R2-MOD-076",
+        "script": "final_frontend_probes.cjs"
+      }
+    ],
+    "limitations": [
+      "Probe usa buckets históricos sintéticos, executando o gerador e o cálculo de insights reais. Não avalia qualidade preditiva, estatística, SQL ou visualização em navegador.",
+      "A chamada atual não fornece externalData; a hipótese de crash com externalData sem previsões permanece contrato dirigido, sem impacto ativo afirmado.",
+      "Outros limites do mesmo pipeline — query sem paginação, previsão sem filtros do topo e perda de data em VolumeChart — são preservados como observação relacionada, sem multiplicar IDs."
+    ]
+  },
+  {
+    "id": "R2-MOD-077",
+    "severity": "P2",
+    "title": "Histórico de transcrições oferece Todo período e busca sobre uma única página implícita",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "O usuário tem mais transcrições de áudio visíveis do que o teto efetivo de uma resposta PostgREST. O registro procurado está fora da primeira página ordenada por created_at descendente.",
+    "cause": "fetchTranscriptions faz uma única consulta sem range/paginação e sem obter total. Todo período, busca por transcrição/nome/telefone e agrupamento são aplicados somente ao array devolvido; a tela não tem próxima página nem sinal de truncação.",
+    "observed_behavior": "O histórico mostra a quantidade da primeira resposta como número de transcrições/contatos. A busca de um áudio antigo ou um contato cuja primeira transcrição está fora dela retorna Nenhum resultado encontrado, embora existam registros elegíveis. Atualizar repete a mesma consulta inicial.",
+    "impact": "Histórico e busca incompletos sem mecanismo para acessar registros omitidos. O usuário pode concluir que uma transcrição antiga não existe ou que um contato não tem áudios transcritos.",
+    "recommendation": "Implementar paginação estável e filtragem no servidor, com contagem/indicação explícita do conjunto exibido; ou carregar todas as páginas de forma controlada antes de afirmar busca global. Tratar erro separadamente de conjunto vazio.",
+    "acceptance": [
+      "Uma fixture acima do teto de resposta permite localizar uma transcrição da página posterior por texto, nome e telefone.",
+      "Todo período e os contadores deixam claro se mostram um recorte; a próxima página é acessível sem perder filtros/agrupamento.",
+      "Ordenação inclui desempate estável e não duplica/omite registros na transição de páginas.",
+      "Uma falha de consulta não é apresentada como inexistência de transcrições."
+    ],
+    "evidence": [
+      [
+        "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+        30,
+        47,
+        "Consulta única sem range e catch apenas no log"
+      ],
+      [
+        "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+        51,
+        76,
+        "Filtro/busca/agrupamento locais"
+      ],
+      [
+        "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+        104,
+        128,
+        "Contadores, Todo período e Atualizar"
+      ],
+      [
+        "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+        132,
+        145,
+        "Vazio ou grupos sem navegação de páginas"
+      ]
+    ],
+    "limitations": [
+      "Contrato estático; o teto numérico de produção não foi lido nem aplicado. O achado é condicionado à população exceder o teto efetivo, sem afirmar que uma conta real já o excede.",
+      "Não acusa a geração da transcrição nem as permissões do endpoint ai-transcribe-audio, cobertas pelo agente de provedores. A causa está no consumidor de histórico.",
+      "Erro inicial convertido em Nenhuma transcrição é uma observação adicional da mesma tela, não um novo ID de falha genérica de loading/error."
+    ]
   }
 ]

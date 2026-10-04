@@ -11,7 +11,7 @@ const integrity=JSON.parse(fs.readFileSync(integrityArg,'utf8'));
 fs.mkdirSync(out,{recursive:true});
 const allPaths=new Set(integrity.files.map(f=>f.path));
 const files=[],functions=[],calls=[];
-const isTest=p=>/(^|\/)(__tests__|tests|e2e|qa|fixtures|test)\/|\.(test|spec|unit|integration)\.|(^|\/)_?test[-_]?utils\.[^/]+$/i.test(p);
+const isTest=p=>/(^|\/)(__tests__|tests|e2e|qa|fixtures|test)\/|\.(test|spec|unit|integration)\.|_test\.[cm]?[jt]sx?$|(^|\/)_?test[-_]?utils\.[^/]+$/i.test(p);
 function layer(p){if(p.startsWith('src/'))return 'frontend';if(p.startsWith('supabase/functions/'))return 'edge';if(p.startsWith('scripts/'))return 'scripts';if(p.startsWith('infrastructure/'))return 'infrastructure';if(isTest(p))return 'tests';return 'configuration_or_other';}
 function declaredName(n,sf){
   if(n.name)return n.name.getText(sf).slice(0,120);

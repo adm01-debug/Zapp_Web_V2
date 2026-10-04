@@ -1,14 +1,14 @@
-# Reauditoria de provedores e Edge Functions — checkpoint consolidado
+# Reauditoria de provedores, integrações e Edge Functions — produção e roster de testes concluídos
 
 **Fonte:** `da307ba5626dce892f0b37cb6762463f55d14a96`. **Baseline anterior:** `2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6`. Commits adicionais lidos: X028 `4e73c7767858f00c577c29efd8cc86f5bea117a9` e X030 `da307ba5626dce892f0b37cb6762463f55d14a96`. Relatório baseado exclusivamente no checkout identificado; nenhuma alteração de fonte.
 
 ## Resultado e limites
 
-Foram consolidados **46 registros**: 42 confirmados por leitura estática, 1 hipótese condicionada e 3 gap de execução. Prioridades sugeridas: P1: 8, P2: 36, P3: 2. A prioridade considera a consequência e as precondições descritas em cada registro; não afirma exploração em produção.
+Foram consolidados **66 registros**: 60 confirmados por leitura estática, 1 hipótese condicionada e 5 gap de execução. Prioridades sugeridas: P1: 8, P2: 54, P3: 4. A prioridade considera a consequência e as precondições descritas em cada registro; não afirma exploração em produção.
 
 Os achados mais urgentes são autorização de ações do provedor, autenticidade dos webhooks, durabilidade do opt-out, controle de destino de downloads e avanço indevido do cursor Gmail. X028 melhora receipts e await de Talk X; os consumidores Multiplix e a recuperação de efeitos incompletos continuam com lacunas. X030 usa a fonte configurável e token por instância na confirmação, mas perde a distinção entre ausência de opt-out e falha de consulta, e não verifica a resposta HTTP da confirmação.
 
-A investigação executou **30 probes determinísticos offline**, todos com resultado esperado. Nenhuma chamada real de rede, banco ou leitura de ambiente ocorreu nos probes. As fontes foram importadas sem alterações; as dependências remotas de serve/createClient são fronteiras em memória. P14 executa o statement exato do heartbeat contra thenable lazy; não deve ser descrito como execução do SDK remoto. P16/P17 compõem os blocos exatos de seleção/download com helpers reais, sem executar o schema ou a API STT. P18 executa o handler auto-close integral. P19–P21 executam handlers de inspeção Multiplix com projeção SELECT e teto de linhas simulados, sem router nem RLS live. P22 testa cancelamento do adaptador de envio; P23/P24 executam AI Proxy com guard de quota simulado recusando a mesma identidade em modo normal. P25–P28 executam handlers de conversão, diagnóstico e relatório completos: HMAC real, relógio controlado e fronteiras SQL/provedor simuladas. P29/P30 executam callbacks de hooks React completos com importações, estado, promises e timers em memória, sem os efeitos de montagem. Os pins SQL/frontend extras são verificados antes de qualquer avaliação da aplicação. Os scripts e resultados incluem HEAD e hashes SHA-256 dos arquivos pertinentes.
+A investigação executou **44 probes determinísticos offline**, todos com resultado esperado. Nenhuma chamada real de rede, banco ou leitura de ambiente ocorreu nos probes. As fontes foram importadas sem alterações; as dependências remotas de serve/createClient são fronteiras em memória. P14 executa o statement exato do heartbeat contra thenable lazy; não deve ser descrito como execução do SDK remoto. P16/P17 compõem os blocos exatos de seleção/download com helpers reais, sem executar o schema ou a API STT. P18 executa o handler auto-close integral. P19–P21 executam handlers de inspeção Multiplix com projeção SELECT e teto de linhas simulados, sem router nem RLS live. P22 testa cancelamento do adaptador de envio; P23/P24 executam AI Proxy com guard de quota simulado recusando a mesma identidade em modo normal. P25–P28 executam handlers de conversão, diagnóstico e relatório completos: HMAC real, relógio controlado e fronteiras SQL/provedor simuladas. P29/P30 executam callbacks de hooks React completos com importações, estado, promises e timers em memória, sem os efeitos de montagem. P31 avalia o prefixo completo de dados/callbacks do editor Flow e os statements de navegação extraídos do JSX, sem renderizar DOM. P32/P33 avaliam os hooks completos de insights e busca, com queries/tempo em memória. P34–P38 executam os quatro handlers finais com DB/ambiente/Resend/cron e rate limiter em memória: segredo opcional, downgrade de bloqueio e limpeza, falso bloqueio confirmado, e-mail mensal repetido e limites reais/redação do collector CSP. O schema recebe apenas fixtures previamente válidas; SQL é modelado, não executado. P39 executa o prefixo completo de estado/loading do GmailWebhookMonitor, comprovando dados válidos substituídos por zero/vazio após três erros, sem renderizar JSX. P40/P41 compõem o menu e o diálogo de grupos com os hooks integrais; P42 compõe o banner com o handler Evolution inteiro; P43 cruza cadastro pendente e projeção do inbox; P44 executa monitor de quarentena e store real com timers controlados. Os pins SQL/frontend extras são verificados antes de qualquer avaliação da aplicação. Os scripts e resultados incluem HEAD e hashes SHA-256 dos arquivos pertinentes.
 
 ## Índice de achados
 
@@ -35,7 +35,7 @@ A investigação executou **30 probes determinísticos offline**, todos com resu
 | R2-API-019 | P2 | confirmed_static | Webhook WhatsApp oficial confirma entrada sem persistir mensagem e pode rebaixar status |
 | R2-API-020 | P3 | confirmed_static | Distribuição A/B por hash depende da ordem não especificada das variantes |
 | R2-API-021 | P1 | confirmed_static | Autenticidade dos webhooks permanece apenas observada em caminhos públicos |
-| R2-API-022 | P1 | confirmed_static | Rotinas de e-mail, relatório, encerramento e recuperação executam privilégio de servidor sem autorizar o chamador |
+| R2-API-022 | P1 | confirmed_static | Rotinas privilegiadas de e-mail, manutenção e integração não autorizam o chamador |
 | R2-API-023 | P2 | confirmed_static | Relatório agendado avança last_sent_at e anuncia sucesso após falha de envio |
 | R2-API-024 | P2 | confirmed_static | Diálogo ElevenLabs envia script e omite o campo inputs obrigatório do provedor |
 | R2-API-025 | P2 | confirmed_static | Geração musical envia duração no nome e unidade do contrato de efeitos sonoros |
@@ -55,11 +55,31 @@ A investigação executou **30 probes determinísticos offline**, todos com resu
 | R2-API-039 | P2 | confirmed_static | Resposta e polling antigos misturam identidades no diálogo de QR Code |
 | R2-API-040 | P2 | confirmed_static | Editor de privacidade envia padrões locais sem carregar a configuração atual |
 | R2-API-041 | P2 | confirmed_static | Desativar integração esconde o único botão capaz de persistir a desativação |
-| R2-API-042 | P2 | confirmed_static | Envio e sincronização de grupos contam erro lógico do proxy como sucesso |
+| R2-API-042 | P2 | confirmed_static | Grupos e banner de reconexão contam erro lógico Evolution como sucesso |
 | R2-API-043 | P2 | confirmed_static | Painel de saúde exclui chamadas de IA registradas fora de ai-proxy |
 | R2-API-044 | P2 | gap | Aquecimento e limite de número têm configuração local sem motor identificado |
 | R2-API-045 | P2 | gap | Mensagem automática fora do expediente é persistida sem consumidor de entrega identificado |
 | R2-API-046 | P2 | confirmed_static | Exclusão de provedor promete fallback automático que o roteamento não executa |
+| R2-API-047 | P2 | confirmed_static | Tela Sentry confirma ativação e métricas sem executar integração |
+| R2-API-048 | P2 | confirmed_static | Teste de conexão Bitrix ignora a URL e o domínio informados na tela |
+| R2-API-049 | P2 | confirmed_static | Insights Talk X escolhem engajamento por contagem e deixam concluídas fora do alerta |
+| R2-API-050 | P2 | confirmed_static | Reabrir WhatsApp Flow pode sobrescrever telas que já foram salvas |
+| R2-API-051 | P2 | confirmed_static | Pasta de figurinhas pessoais falha para administradores com vários perfis visíveis |
+| R2-API-052 | P3 | confirmed_static | Limpar a busca de conhecimento não cancela o debounce pendente |
+| R2-API-053 | P2 | confirmed_static | Operações de emoji e exclusão de conteúdo confirmam sucesso sem verificar persistência |
+| R2-API-054 | P2 | gap | Upload de documentos da base de conhecimento não tem processamento até a IA demonstrado |
+| R2-API-055 | P3 | confirmed_static | Contador de uso da figurinha pessoal descarta a operação PostgREST |
+| R2-API-056 | P2 | confirmed_static | Alerta de rate limit substitui bloqueio permanente por expiração de quinze minutos |
+| R2-API-057 | P2 | confirmed_static | Alerta e notificação afirmam bloqueio mesmo quando gravar blocked_ips falha |
+| R2-API-058 | P2 | confirmed_static | Alerta mensal de custo repete e-mail em cada execução diária do cron |
+| R2-API-059 | P2 | confirmed_static | Telas Gmail convertem falha de consulta em conta desconectada ou histórico vazio |
+| R2-API-060 | P2 | confirmed_static | Botão Arquivar da thread Gmail legada está habilitado sem ação |
+| R2-API-061 | P2 | confirmed_static | Enviar mensagem pelo menu de um grupo já selecionado retira esse grupo dos destinatários |
+| R2-API-062 | P2 | confirmed_static | Broadcast de grupos apaga texto e destinatários mesmo quando todos os envios falham |
+| R2-API-063 | P2 | confirmed_static | Painéis Omnichannel apresentam cadastro pendente como canal conectado e fixam WhatsApp em um |
+| R2-API-064 | P2 | confirmed_static | Inbox Omnichannel projeta contatos limitados sem carregar nem abrir conversas |
+| R2-API-065 | P2 | gap | Cadastro de canais adicionais e regras de roteamento não têm executor versionado demonstrado |
+| R2-API-066 | P2 | confirmed_static | Monitor de quarentena conserva decisão antiga após liberação e para em erro transitório |
 
 ## Evidência detalhada
 
@@ -599,15 +619,15 @@ A investigação executou **30 probes determinísticos offline**, todos com resu
 
 **Limite da conclusão.** Shadow é intencional nos comentários; intenção de rollout não equivale a controle efetivo. Não houve tentativa de acesso sem autorização a endpoint real.
 
-### R2-API-022 — Rotinas de e-mail, relatório, encerramento e recuperação executam privilégio de servidor sem autorizar o chamador
+### R2-API-022 — Rotinas privilegiadas de e-mail, manutenção e integração não autorizam o chamador
 
 **P1 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
 
-**Precondição.** A chamada é admitida pelo gateway; um usuário válido sem papel administrativo já basta como precondição conservadora. send-email requer Resend configurado; auto-close requer configuração habilitada e contatos elegíveis; relatório exige conhecer um reportId existente. Não foi verificado o estado do gateway implantado. Para recuperação de áudio, há mensagens elegíveis e credenciais de Storage/provedor; dry_run pode retornar metadados mesmo sem recuperação.
+**Precondição.** A chamada é admitida pelo gateway; um usuário válido sem papel administrativo já basta como precondição conservadora. send-email requer Resend configurado; auto-close requer configuração habilitada e contatos elegíveis; relatório exige conhecer um reportId existente. Não foi verificado o estado do gateway implantado. Para recuperação de áudio, há mensagens elegíveis e credenciais de Storage/provedor; dry_run pode retornar metadados mesmo sem recuperação. Em send-rate-limit-alert, INTERNAL_ALERT_SECRET está ausente/vazio e a chamada de usuário comum é admitida pelo gateway; quando o segredo existe, seu gate funciona. cleanup-rate-limit-logs não tem gate local, mas seus DELETEs se limitam a logs antigos, bloqueios temporários vencidos e alertas antigos resolvidos.
 
-**Comportamento observado.** send-email aceita destinatários, assunto, corpo, reply_to, cópias e anexos do payload e usa a chave Resend sem getUser/requireAuth/role. O remetente fixo e o rate limit por IP não autorizam a ação. send-scheduled-report lê a configuração e dados agregados com service role, envia e devolve reportData sem verificar o papel. auto-close-conversations seleciona e modifica contatos globalmente com service role sem segredo de cron nem usuário autorizado. recover-corrupted-audios também não tem auth/role/segredo de cron: varre áudio global, aceita batch_size/offset/dry_run do chamador e, por padrão, tenta sobrescrever Storage e media_url. dry_run revela a instância e uma amostra de IDs externos.
+**Comportamento observado.** send-email aceita destinatários, assunto, corpo, reply_to, cópias e anexos do payload e usa a chave Resend sem getUser/requireAuth/role. O remetente fixo e o rate limit por IP não autorizam a ação. send-scheduled-report lê a configuração e dados agregados com service role, envia e devolve reportData sem verificar o papel. auto-close-conversations seleciona e modifica contatos globalmente com service role sem segredo de cron nem usuário autorizado. recover-corrupted-audios também não tem auth/role/segredo de cron: varre áudio global, aceita batch_size/offset/dry_run do chamador e, por padrão, tenta sobrescrever Storage e media_url. dry_run revela a instância e uma amostra de IDs externos. send-rate-limit-alert torna o segredo opcional e confia em IP, contador e decisão blocked fornecidos no corpo para escritas service role. cleanup-rate-limit-logs cria service client sem autorizar usuário nem cron. P34 confirmou o primeiro caminho e a rejeição correta quando o segredo está configurado; P35 executou a limpeza com usuário admitido, sem segredo local.
 
-**Efeito.** Chamadores admitidos podem usar o relay do projeto para conteúdo e destinatários arbitrários, disparar relatório conhecido e obter seus agregados, ou antecipar o encerramento global. A política SQL de scheduled_reports restringe leitura a admin/supervisor, por isso não se presume que um agente consiga enumerar IDs pelo frontend. A rotina de recuperação permite iniciar trabalho e alterações globais de mídia fora do papel administrativo.
+**Efeito.** Chamadores admitidos podem usar o relay do projeto para conteúdo e destinatários arbitrários, disparar relatório conhecido e obter seus agregados, ou antecipar o encerramento global. A política SQL de scheduled_reports restringe leitura a admin/supervisor, por isso não se presume que um agente consiga enumerar IDs pelo frontend. A rotina de recuperação permite iniciar trabalho e alterações globais de mídia fora do papel administrativo. A configuração sem segredo permite forjar eventos de segurança e decisões de bloqueio na tabela com privilégio de servidor. O chamador da limpeza pode antecipar a retenção que o endpoint já codifica; não se alega DELETE arbitrário ou remoção de todo histórico.
 
 **Evidência de fonte:**
 - [supabase/functions/send-email/index.ts:4–48](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-email/index.ts#L4) — `handler, IP limit and Resend payload`; SHA-256 `d5d01911fd0dbfe6c7c5f40f4b6e49832af7be76f8cadafe727ee55cc3955d83`.
@@ -618,6 +638,11 @@ A investigação executou **30 probes determinísticos offline**, todos com resu
 - [supabase/functions/recover-corrupted-audios/index.ts:42–61](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/recover-corrupted-audios/index.ts#L42) — `unguarded service selection`; SHA-256 `dd6f1d50dfdbfa10d3385cbcc123af43904718d8372212c0d7b55f3e0383c1ac`.
 - [supabase/functions/recover-corrupted-audios/index.ts:83–87](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/recover-corrupted-audios/index.ts#L83) — `dry-run metadata`; SHA-256 `dd6f1d50dfdbfa10d3385cbcc123af43904718d8372212c0d7b55f3e0383c1ac`.
 - [supabase/functions/recover-corrupted-audios/index.ts:119–125](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/recover-corrupted-audios/index.ts#L119) — `storage overwrite and message update`; SHA-256 `dd6f1d50dfdbfa10d3385cbcc123af43904718d8372212c0d7b55f3e0383c1ac`.
+- [supabase/functions/send-rate-limit-alert/index.ts:11–29](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-rate-limit-alert/index.ts#L11) — `optional internal gate`; SHA-256 `68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63`.
+- [supabase/functions/send-rate-limit-alert/index.ts:32–83](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-rate-limit-alert/index.ts#L32) — `caller-chosen privileged security effects`; SHA-256 `68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63`.
+- [supabase/functions/cleanup-rate-limit-logs/index.ts:4–31](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/cleanup-rate-limit-logs/index.ts#L4) — `unguarded maintenance and bounded deletion predicates`; SHA-256 `9ceed7013a9237cd19adb2b5b608478d2fc2d9f244141d7b658de7d9b45961ac`.
+
+**Probes:** P34, P35.
 
 **Aceite da correção:**
 - Exigir identidade e autorização de ação antes do uso da chave Resend ou cliente service.
@@ -625,6 +650,8 @@ A investigação executou **30 probes determinísticos offline**, todos com resu
 - Invites usam template e destinatário vinculados ao fluxo de convite autorizado.
 - Agente comum não envia e-mail arbitrário, não recebe reportData de terceiros e não dispara encerramento; nenhum efeito ocorre após rejeição.
 - Recuperação de mídia exige autorização administrativa antes de scan/download/upload, incluindo dry_run; migrate-media-storage já possui gate administrativo e é controle negativo desta revisão.
+- Ausência de configuração de credencial interna não habilita escrita de alertas/bloqueios; falhar fechado ou exigir autorização administrativa verificada.
+- Limpeza exige identidade de cron ou papel de manutenção e conserva os limites de retenção; usuário comum não inicia as escritas.
 
 **Relações, sem duplicar:** R2-AUTH-015.
 
@@ -1121,13 +1148,13 @@ A investigação executou **30 probes determinísticos offline**, todos com resu
 
 **Limite da conclusão.** Não se usa integração indisponível no modo GO para afirmar este efeito; a precondição exige um backend que suporte a configuração.
 
-### R2-API-042 — Envio e sincronização de grupos contam erro lógico do proxy como sucesso
+### R2-API-042 — Grupos e banner de reconexão contam erro lógico Evolution como sucesso
 
 **P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
 
-**Precondição.** O proxy Evolution retorna HTTP 200 com envelope error=true para rejeição/indisponibilidade do provedor; o cliente Supabase entrega error=null e data com esse envelope. Fluxo de grupos tem uma conexão válida.
+**Precondição.** O proxy Evolution retorna HTTP 200 com envelope error=true para rejeição/indisponibilidade do provedor; o cliente Supabase entrega error=null e data com esse envelope. Fluxo de grupos tem uma conexão válida. No EvolutionDisconnectBanner, uma instância desconectada é visível e a janela de manutenção está ativa; esse é um envelope de recusa determinístico do próprio handler.
 
-**Comportamento observado.** handleBroadcast descarta data e incrementa sent sempre que error de transporte é nulo; depois limpa a seleção. handleAutoSync também ignora error=true, converte o envelope em array vazio e exibe sucesso. P30 executou o hook completo com erro sintético do provedor: enviou toast Mensagem enviada para 1 grupo(s) e limpou a seleção; sync informou 0 grupo(s) sincronizados como sucesso.
+**Comportamento observado.** handleBroadcast descarta data e incrementa sent sempre que error de transporte é nulo; depois limpa a seleção. handleAutoSync também ignora error=true, converte o envelope em array vazio e exibe sucesso. P30 executou o hook completo com erro sintético do provedor: enviou toast Mensagem enviada para 1 grupo(s) e limpou a seleção; sync informou 0 grupo(s) sincronizados como sucesso. O banner também descarta data de invoke. P42 compôs seu callback com o handler Evolution integral: a manutenção retornou HTTP200/error=true e impediu toda chamada ao provedor, mas a UI anunciou Reconectando.
 
 **Efeito.** O usuário recebe confirmação de entrega ou sincronização que não ocorreu. A limpeza dos alvos dificulta distinguir falha de aceite e torna uma nova tentativa menos segura. Erros de upsert também são apenas logados, sem entrar em totalErrors.
 
@@ -1137,14 +1164,17 @@ A investigação executou **30 probes determinísticos offline**, todos com resu
 - [supabase/functions/_shared/evolution-api-proxy.ts:193–217](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/_shared/evolution-api-proxy.ts#L193) — `HTTP200 error envelope`; SHA-256 `a5c696eeebe4107ac547ce292da2b577620573e691aacdd2a08b3de3b3075816`.
 - [src/hooks/evolution/useEvolutionApiCore.ts:31–39](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/evolution/useEvolutionApiCore.ts#L31) — `shared caller correctly rejects error=true`; SHA-256 `346ad35e1d77c8cf75a186d1121a18681bd7f82e81f3b56852e6e69cbe8ef354`.
 - [src/hooks/chat/useGroupsManager.ts:35–37](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/chat/useGroupsManager.ts#L35) — `active groups actions consumer`; SHA-256 `f8f32ebbf2196b6f278c44bc9839e43f39b762a755ac877882a10207390e6055`.
+- [src/components/alerts/EvolutionDisconnectBanner.tsx:49–63](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/alerts/EvolutionDisconnectBanner.tsx#L49) — `reconnection only checks transport error`; SHA-256 `79d5aacdea9384712bc0af435e62f3bf3bed1c6774585506e802e1f0af7e9465`.
+- [supabase/functions/evolution-api/index.ts:82–98](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/evolution-api/index.ts#L82) — `maintenance refuses with HTTP200 error envelope`; SHA-256 `227d16c9e5431bfc0bae0cf833e1d0b0fcce5e822f98ffbc25be7f27865e0cdd`.
 
-**Probes:** P30.
+**Probes:** P30, P42.
 
 **Aceite da correção:**
 - Usar um único decodificador de erro de transporte, erro lógico e resultado indeterminado do provedor.
 - Envelope error=true nunca incrementa enviados nem emite sucesso de sincronização.
 - Manter identificação dos alvos recusados para nova tentativa e preservar separadamente os já aceitos.
 - Contabilizar falhas de persistência no resultado parcial da sincronização.
+- Rejeição de manutenção no banner é exibida como tal e não anuncia reconexão; preservar o gate que impediu I/O.
 
 **Limite da conclusão.** O probe intercepta invoke e não envia mensagens. Não afirma que aceite HTTP do provedor já comprova entrega ao destinatário.
 
@@ -1243,6 +1273,532 @@ A investigação executou **30 probes determinísticos offline**, todos com resu
 
 **Limite da conclusão.** A exclusão precisa ser aceita; não se presume contorno de FK/RLS. A cadeia SQL vigente e ausência de trigger DELETE foram conferidas pela frente database; não houve alteração real de configuração.
 
+### R2-API-047 — Tela Sentry confirma ativação e métricas sem executar integração
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Usuário abre Sentry pelo hub, informa qualquer DSN não vazio e pressiona Ativar Monitoramento. O próprio hub classifica Sentry como Disponível, sem o aviso de demonstração usado em n8n.
+
+**Comportamento observado.** handleConnect apenas seta isConnected=true e emite sucesso. Eventos vêm de mockErrors fixo, Crash-free é literal 99.2% e Resolver só altera o array local. DSN, ambiente e switches não chegam a persistência, SDK nem API pelo componente.
+
+**Efeito.** A tela apresenta monitoramento ativo, estatísticas e resolução como resultados operacionais sem ter executado essas ações. Isso pode ocultar a necessidade de configurar a integração verdadeira. Não se afirma que toda a aplicação careça de observabilidade: errorReporter/audit_logs são componentes distintos.
+
+**Evidência de fonte:**
+- [src/components/integrations/SentryIntegrationView.tsx:30–69](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/SentryIntegrationView.tsx#L30) — `mock data and local connect/resolve`; SHA-256 `ce5ea90c11ed9cce41a6c5f7c22a5b8872353149ba3570c642e912ad035700f6`.
+- [src/components/integrations/SentryIntegrationView.tsx:120–151](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/SentryIntegrationView.tsx#L120) — `activation button and fixed crash-free`; SHA-256 `ce5ea90c11ed9cce41a6c5f7c22a5b8872353149ba3570c642e912ad035700f6`.
+- [src/components/integrations/IntegrationsHub.tsx:25–31](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/IntegrationsHub.tsx#L25) — `Sentry available label`; SHA-256 `6d8bea6fcdf95fe6cfa696285a4341cf88c69752021d4b68ae99d3b2f18f0910`.
+- [src/components/integrations/IntegrationsHub.tsx:55–61](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/IntegrationsHub.tsx#L55) — `active Sentry view mount`; SHA-256 `6d8bea6fcdf95fe6cfa696285a4341cf88c69752021d4b68ae99d3b2f18f0910`.
+
+**Aceite da correção:**
+- Conectar e verificar o SDK/serviço configurado, persistir opções autorizadas e carregar métricas reais com janela/fonte, ou rotular e bloquear a demonstração.
+- Ativação recusada ou DSN não validado não gera estado Ativo.
+- Resolver exige aceite remoto, e métricas sintéticas nunca aparecem como dados do ambiente.
+
+**Limite da conclusão.** A observabilidade real fora deste componente não foi desconsiderada. Nenhum DSN, SDK remoto ou evento real foi acessado.
+
+### R2-API-048 — Teste de conexão Bitrix ignora a URL e o domínio informados na tela
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Operador digita a configuração do portal B, enquanto o servidor possui BITRIX_WEBHOOK_URL de A, ou ainda não possui a variável. O chamador tem autorização para o teste no handler Bitrix.
+
+**Comportamento observado.** webhookUrl serve somente para liberar o botão e validar que há texto; domain não é usado pelo teste. invoke envia action=list/entityType=lead/filters sem URL ou domínio. O backend usa exclusivamente sua configuração de ambiente. Não há ação de salvar esses dois campos no componente.
+
+**Efeito.** Um sucesso pode validar o portal A e ser apresentado como a conexão recém-informada B; inversamente, uma URL válida digitada não configura um servidor sem credencial. A tela não estabelece a configuração que instrui o usuário a informar.
+
+**Evidência de fonte:**
+- [src/components/integrations/BitrixIntegrationView.tsx:12–45](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/BitrixIntegrationView.tsx#L12) — `local configuration and test request`; SHA-256 `6e3700d44ed305789226bc317cbe2af246510804d14787d4cff0f39e726fcb3d`.
+- [src/components/integrations/BitrixIntegrationView.tsx:68–101](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/BitrixIntegrationView.tsx#L68) — `configuration controls`; SHA-256 `6e3700d44ed305789226bc317cbe2af246510804d14787d4cff0f39e726fcb3d`.
+- [supabase/functions/bitrix-api/index.ts:45–62](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/bitrix-api/index.ts#L45) — `server-only URL and parsed body`; SHA-256 `7f699943d5e2155e0deff5f93499e801ec6b16614e38d7d36ac235943f0b39dc`.
+- [supabase/functions/bitrix-api/index.ts:217–232](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/bitrix-api/index.ts#L217) — `fixed configured target`; SHA-256 `7f699943d5e2155e0deff5f93499e801ec6b16614e38d7d36ac235943f0b39dc`.
+
+**Aceite da correção:**
+- Definir um fluxo administrativo de configuração e testar exatamente a configuração salva, sem permitir que um caller comum escolha URL arbitrária do servidor.
+- Se a configuração continuar exclusiva do ambiente, remover entradas sem efeito e identificar no resultado o portal que foi efetivamente testado.
+- Fixture com A configurado e B digitado não pode confirmar B a partir da resposta de A.
+
+**Relações, sem duplicar:** R2-API-018.
+
+**Limite da conclusão.** Diferente de R2-API-018, que trata sucesso indevido das ações especiais backend. Esta falha persiste quando o endpoint list e a resposta do provedor funcionam corretamente.
+
+### R2-API-049 — Insights Talk X escolhem engajamento por contagem e deixam concluídas fora do alerta
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Campanhas elegíveis têm quantidades de enviados diferentes, e há campanhas concluídas recentes. A view final contém campaign_name/id; status da campanha é TEXT sob CHECK que admite completed, não finished.
+
+**Comportamento observado.** O insight Mensagem com maior engajamento ordena por replied_count, toma só a primeira linha e apresenta sua taxa. P32 devolveu campanha Volume com 5/100 e Taxa com 4/10: a recomendação escolheu 5% e ignorou 40%. O mesmo hook conta campanhas de status finished para liberar o insight de cliques; o CHECK vigente impede esse estado e o ramo fica sem candidatos. As consultas descartam error, logo faltas de leitura também viram ausência de insight.
+
+**Efeito.** As recomendações podem orientar reutilização de uma campanha de taxa menor e omitir o alerta de poucos cliques mesmo havendo concluídas elegíveis. O nome de coluna não é o problema: a revisão SQL confirmou que as colunas consultadas existem.
+
+**Evidência de fonte:**
+- [src/hooks/integrations/useTalkXInsights.ts:56–87](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useTalkXInsights.ts#L56) — `winner selection and finished filter`; SHA-256 `255fb469415d1f0255226c5285c2cd50ce5fd7c606f2bc5281079ca2b0c17d0b`.
+- [src/hooks/integrations/useTalkXInsights.ts:106–130](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useTalkXInsights.ts#L106) — `highest-engagement and click claims`; SHA-256 `255fb469415d1f0255226c5285c2cd50ce5fd7c606f2bc5281079ca2b0c17d0b`.
+- [supabase/migrations/20260929420000_fix_talkx_transition_overload_and_status_check.sql:28–30](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260929420000_fix_talkx_transition_overload_and_status_check.sql#L28) — `campaign status CHECK`; SHA-256 `fe157dbb5db2d02ccc96f5adcc68ca1b897e98ea78f6942d32d54ca0b6ea1320`.
+- [src/components/talkx/TalkXOverview.tsx:174–190](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/TalkXOverview.tsx#L174) — `insight display consumer`; SHA-256 `bf9650dcc7f7b730541013234c890a2443c26d6c52e5562c4c5d476e181971ad`.
+- [src/components/talkx/TalkXAnalytics.tsx:425–440](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/TalkXAnalytics.tsx#L425) — `analytics insight consumer`; SHA-256 `8ecd688313d1f5840d006ba261c2f9e026cb9fb664f4443092bba6846dc8562d`.
+
+**Probes:** P32.
+
+**Aceite da correção:**
+- Definir a métrica de engajamento e classificar candidatos por essa mesma métrica, com denominador/amostra mínimo e desempate explícitos.
+- Usar o vocabulário de status vigente e correlacionar cliques/enviados/campanhas ao mesmo conjunto.
+- 5/100 não vence 4/10 sob regra de maior taxa; três completed sem cliques alcançam o ramo de alerta.
+- Erros de leitura não são apresentados como base suficiente para ausência de recomendação.
+
+**Limite da conclusão.** Query builder e dados de campanhas são fixtures; não executa SQL/RLS. finished produz comparação sem resultados em TEXT, não erro de enum. A proposta de estatística não exige um método probabilístico específico.
+
+### R2-API-050 — Reabrir WhatsApp Flow pode sobrescrever telas que já foram salvas
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Operador abre um Flow pela lista, adiciona uma tela com gravação bem-sucedida, volta à lista e reabre o mesmo Flow sem remontar a página; depois faz outra edição normal.
+
+**Comportamento observado.** updateFlowScreens atualiza selectedFlow e a tabela, mas não atualiza flows, fonte da lista. Voltar apenas limpa selectedFlow; clicar no card reusa o objeto antigo de flows. A próxima edição envia o array screens inteiro desse snapshot antigo. P31 executou os callbacks reais: a persistência aceitou duas telas e depois recebeu uma tela na edição após reabrir.
+
+**Efeito.** Uma navegação normal pode excluir telas já persistidas sem erro de rede nem resposta fora de ordem. O editor não informa que retomou uma versão antiga. Há ainda erros de UPDATE ignorados, mas a perda demonstrada não depende deles.
+
+**Evidência de fonte:**
+- [src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx:62–74](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx#L62) — `list snapshot loaded only by fetch`; SHA-256 `4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242`.
+- [src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx:102–137](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx#L102) — `selected-only update and whole-array writes`; SHA-256 `4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242`.
+- [src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx:150–152](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx#L150) — `reopen from stale card`; SHA-256 `4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242`.
+- [src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx:194–202](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx#L194) — `back only clears selection`; SHA-256 `4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242`.
+
+**Probes:** P31.
+
+**Aceite da correção:**
+- Usar uma fonte de estado coerente por Flow, atualizar/invalidate a lista após salvar e revalidar a versão ao reabrir.
+- Verificar o aceite do UPDATE e impedir que snapshot anterior sobrescreva versão mais recente sem conflito visível.
+- Adicionar segunda tela→voltar→reabrir→editar mantém ambas no editor e no armazenamento.
+
+**Limite da conclusão.** Probe avalia o prefixo completo de dados/callbacks do componente e os statements exatos de navegação extraídos do JSX; não renderiza DOM. Persistência e hooks são fronteiras em memória.
+
+### R2-API-051 — Pasta de figurinhas pessoais falha para administradores com vários perfis visíveis
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Usuário admin/supervisor pode ver duas ou mais linhas de profiles pela policy vigente. Ele abre PersonalStickers. Para agente comum que só enxerga o próprio perfil, esta precondição não se aplica.
+
+**Comportamento observado.** A query my-profile-stickers usa select(id,name).single() sem filtrar user_id. Múltiplas linhas geram erro de singularidade e profile fica ausente. A lista de figurinhas permanece desabilitada e handleUpload retorna silenciosamente sem profile.id. O consumidor mostra uma pasta vazia e botão de adicionar, sem apresentar o erro dessa query.
+
+**Efeito.** Administradores/supervisores podem não acessar sua própria pasta nem enviar novas figurinhas, embora possuam permissão. Não há seleção demonstrada de outro perfil: o caso observado por contrato é falha por cardinalidade, não roubo de identidade.
+
+**Evidência de fonte:**
+- [src/hooks/integrations/usePersonalStickers.ts:13–36](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/usePersonalStickers.ts#L13) — `unscoped singular profile query and dependent operations`; SHA-256 `2b160727cdb76663161e690639d19ff1e7de3a08b853c0f625ea20c19ef4c0a5`.
+- [src/components/inbox/stickers/PersonalStickers.tsx:18–39](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/stickers/PersonalStickers.tsx#L18) — `consumer profile and add controls`; SHA-256 `be11e5fc2d771b4f17d01fd8a5646693626226d0ed66d250ef57553c44a69c19`.
+- [src/components/inbox/stickers/PersonalStickers.tsx:51–57](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/stickers/PersonalStickers.tsx#L51) — `empty state conceals profile error`; SHA-256 `be11e5fc2d771b4f17d01fd8a5646693626226d0ed66d250ef57553c44a69c19`.
+- [supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql:6–12](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql#L6) — `own and admin/supervisor profile visibility`; SHA-256 `d021a3812e7d2e1401dcfe6c6e7b66f038d7e8f13f347e32ddd92b77ddbae6b9`.
+
+**Aceite da correção:**
+- Resolver profile por user_id do usuário autenticado ou reutilizar o profile canônico do Auth.
+- Expor loading/error da resolução de identidade e não anunciar pasta vazia quando a identidade falhou.
+- Fixtures admin com vários perfis e agente com um perfil retornam sempre o perfil do próprio usuário.
+
+**Fonte primária externa:** [https://supabase.com/docs/reference/javascript/single](https://supabase.com/docs/reference/javascript/single).
+
+**Limite da conclusão.** Policies vencedoras corroboradas por auth/database e trechos lidos localmente; não foi executado PostgREST real. A documentação oficial exige exatamente uma linha para single(). Não se afirma que todos os agentes comuns falhem.
+
+### R2-API-052 — Limpar a busca de conhecimento não cancela o debounce pendente
+
+**P3 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Usuário digita pelo menos dois caracteres e aciona Limpar antes de transcorrerem os 300 ms do debounce.
+
+**Comportamento observado.** clear esvazia query e debouncedQuery, mas não cancela debounceRef. O callback antigo restaura a consulta efetiva depois da limpeza. P33 executou o hook: input vazio, queryKey com o termo anterior, consulta novamente habilitada e hasResults=true. O painel renderiza resultados apenas por hasResults, sem exigir query visível.
+
+**Efeito.** A limpeza pode parecer não funcionar: resultados de uma pesquisa cancelada reaparecem sob campo vazio e pode ocorrer uma consulta desnecessária. A cleanup de unmount e o cancelamento ao digitar outro termo existem; falta o caminho clear.
+
+**Evidência de fonte:**
+- [src/hooks/integrations/useKnowledgeBaseSearch.ts:24–31](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useKnowledgeBaseSearch.ts#L24) — `debounce and unmount cleanup`; SHA-256 `e0fd5d06fc1b4cc4073359d0438b439b5b4ddac975a3fbef19479f12310d6047`.
+- [src/hooks/integrations/useKnowledgeBaseSearch.ts:34–58](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useKnowledgeBaseSearch.ts#L34) — `query enabled and clear`; SHA-256 `e0fd5d06fc1b4cc4073359d0438b439b5b4ddac975a3fbef19479f12310d6047`.
+- [src/components/inbox/KnowledgeBaseSearchPanel.tsx:44–65](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/KnowledgeBaseSearchPanel.tsx#L44) — `clear control and unconditional hasResults renderer`; SHA-256 `ded296bc26c296a64c67a9d29fd1de6caafc142fb35e4ea33dbae81b5aff7b7e`.
+
+**Probes:** P33.
+
+**Aceite da correção:**
+- Cancelar e zerar o timer ao limpar; invalidar a geração de qualquer resposta pendente quando necessário.
+- Limpar antes de 300 ms mantém query efetiva vazia e não reativa a consulta antiga.
+- Resultados só são exibidos quando correspondem à pesquisa atual.
+
+**Limite da conclusão.** Tempo, React Query e estado controlados em memória; não houve consulta real nem renderização DOM.
+
+### R2-API-053 — Operações de emoji e exclusão de conteúdo confirmam sucesso sem verificar persistência
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Uma chamada Supabase resolve com error para UPDATE/DELETE em custom_emojis, knowledge_base_articles ou whatsapp_flows. No ramo de emoji, Storage e tabela podem ter resultados diferentes.
+
+**Comportamento observado.** Custom emoji altera estado otimista para favorito/categoria/exclusão e descarta os resultados; categoria e exclusão sempre anunciam sucesso. deleteArticle e deleteFlow também descartam o resultado do DELETE e emitem removido. A exclusão de emoji tenta Storage antes da linha e também ignora seu resultado.
+
+**Efeito.** A UI pode representar alteração/exclusão que não ocorreu. Se Storage aceita e a tabela recusa, a linha continua apontando para arquivo removido; se Storage recusa e a linha é removida, sobra arquivo sem a referência da tabela. Esses efeitos são condicionais, não presumidos em toda operação.
+
+**Evidência de fonte:**
+- [src/hooks/integrations/useCustomEmojis.ts:125–145](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useCustomEmojis.ts#L125) — `optimistic favorite/category/delete and ignored results`; SHA-256 `01d79225188ea46336b266d7757a18acdc1a309c284c18055bc65e24aaa9f1b3`.
+- [src/components/inbox/CustomEmojiPicker.tsx:190–200](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/CustomEmojiPicker.tsx#L190) — `active management controls`; SHA-256 `7975688fd09bbe740ff2e84f72c9eae89a7eac11caf247bdf86b055bafc8f7bf`.
+- [src/hooks/integrations/useKnowledgeBase.ts:65–69](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useKnowledgeBase.ts#L65) — `deleteArticle ignores error`; SHA-256 `c20dd80252a8454fa04ee60fee6437855ccced91a2ccb699486ef63ba42d15f8`.
+- [src/components/knowledge/KnowledgeBaseView.tsx:88–90](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/knowledge/KnowledgeBaseView.tsx#L88) — `delete article control`; SHA-256 `2d905343870adbd854231d2664f729f5c408ac3d7ff98e6a22d0633a59a15235`.
+- [src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx:96–100](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx#L96) — `deleteFlow ignores error`; SHA-256 `4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242`.
+
+**Aceite da correção:**
+- Concluir estado de sucesso somente após aceite da persistência; em falha, reverter/revalidar estado otimista e mostrar erro recuperável.
+- Definir fluxo recuperável para remoção de Storage e metadado, com rastreio da etapa pendente.
+- Resultados error em cada etapa não geram toast de sucesso; cenários de falha parcial não deixam referências quebradas sem possibilidade de recuperação.
+
+**Limite da conclusão.** Classificação estática dos ramos de erro; nenhum arquivo ou registro real foi alterado. O create/update de artigo verifica error e foi preservado como controle positivo.
+
+### R2-API-054 — Upload de documentos da base de conhecimento não tem processamento até a IA demonstrado
+
+**P2 · gap · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Administrador envia um documento pela Base de Conhecimento, apresentada como forma de treinar a IA. O upload e o INSERT são aceitos; eventual extrator/automação externo não versionado permanece desconhecido.
+
+**Comportamento observado.** uploadFile grava bytes e cria knowledge_base_files sem article_id nem extracted_text. A tabela inicia processing_status=pending. Não há consumidor localizado em Edge/scripts nem trigger/função SQL vigente que processe os arquivos. Os caminhos de IA lidos usam knowledge_base_articles publicados, não o conteúdo desses uploads. A policy de leitura de arquivos para agentes depende de article_id ligado a artigo publicado.
+
+**Efeito.** O documento pode permanecer apenas armazenado, sem entrar no contexto da IA nem tornar-se base publicada para os agentes. O uso de artigos escritos manualmente existe e não é negado por este gap.
+
+**Evidência de fonte:**
+- [src/components/knowledge/KnowledgeBaseView.tsx:51–66](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/knowledge/KnowledgeBaseView.tsx#L51) — `training/upload promise and indexed counts`; SHA-256 `2d905343870adbd854231d2664f729f5c408ac3d7ff98e6a22d0633a59a15235`.
+- [src/hooks/integrations/useKnowledgeBase.ts:71–88](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useKnowledgeBase.ts#L71) — `upload and metadata only`; SHA-256 `c20dd80252a8454fa04ee60fee6437855ccced91a2ccb699486ef63ba42d15f8`.
+- [supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql:43–66](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql#L43) — `article/file schema and pending state`; SHA-256 `321cb5da936ae109ff860ca7d59fb60a3bd644f0b172c6ee7dbbb323ca60b65e`.
+- [supabase/migrations/20260318121647_fab9b2a8-44aa-441b-b05d-7b917e113eab.sql:42–47](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260318121647_fab9b2a8-44aa-441b-b05d-7b917e113eab.sql#L42) — `file visibility depends on published article`; SHA-256 `c921b5b1580e846024d49a4268c16cd7d064e81c9d3f8970720539d341b44ad6`.
+- [supabase/functions/ai-suggest-reply/index.ts:33–51](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/ai-suggest-reply/index.ts#L33) — `published articles source`; SHA-256 `4c90f4ed62d870269d012d8ead3d77a2531fd03291579a8fd4678275925f8a9a`.
+
+**Aceite da correção:**
+- Versionar ou comprovar o pipeline de extração→artigo/índice→publicação e registrar progresso/erros por arquivo.
+- Arquivo enviado deve produzir conteúdo recuperável pela busca/contexto IA autorizado antes de anunciar disponibilidade como conhecimento.
+- Sem pipeline configurado, explicar que o arquivo está somente armazenado; preservar criação manual de artigos e tratamento de erro de upload.
+
+**Limite da conclusão.** Gap do conjunto versionado, corroborado por database. Nenhum documento real foi enviado nem modelo real foi chamado; não se exclui extrator externo não fornecido.
+
+### R2-API-055 — Contador de uso da figurinha pessoal descarta a operação PostgREST
+
+**P3 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Pasta pessoal resolve corretamente o profile e handleSend chama incrementUseCount após selecionar uma figurinha. O cliente usa o contrato lazy/thenable de PostgREST.
+
+**Comportamento observado.** incrementUseCount constrói from(stickers).update(...).eq(...) e descarta o builder, sem await, then ou consumo retornado ao chamador. O SDK só despacha ao consumir a PromiseLike; o valor de use_count não é incrementado por esse caminho.
+
+**Efeito.** O contador pessoal permanece desatualizado mesmo quando a operação de envio de fato acontece. Isso é um efeito de contabilidade de uso, separado da falha de identidade para administradores em R2-API-051 e do heartbeat que usa o mesmo contrato em R2-API-013.
+
+**Evidência de fonte:**
+- [src/hooks/integrations/usePersonalStickers.ts:79–81](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/usePersonalStickers.ts#L79) — `discarded use count update`; SHA-256 `2b160727cdb76663161e690639d19ff1e7de3a08b853c0f625ea20c19ef4c0a5`.
+- [src/components/inbox/stickers/PersonalStickers.tsx:26–26](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/stickers/PersonalStickers.tsx#L26) — `send calls incrementUseCount`; SHA-256 `be11e5fc2d771b4f17d01fd8a5646693626226d0ed66d250ef57553c44a69c19`.
+
+**Aceite da correção:**
+- Consumir a operação e tratar seu erro, com atualização atômica do contador se houver concorrência.
+- Definir se uso significa seleção, aceite ou entrega e registrar somente o evento escolhido.
+- Seleção/envio aceito incrementa uma vez; erro não fabrica contagem.
+
+**Relações, sem duplicar:** R2-API-013, R2-API-051.
+
+**Fonte primária externa:** [https://github.com/supabase/supabase-js/blob/master/packages/core/postgrest-js/src/PostgrestBuilder.ts](https://github.com/supabase/supabase-js/blob/master/packages/core/postgrest-js/src/PostgrestBuilder.ts).
+
+**Limite da conclusão.** Sem novo probe redundante: o contrato lazy foi demonstrado em P14 e a fonte primária foi lida. A tag remota exata v2.87.1 não foi executada; não se afirma entrega real pela presença do callback.
+
+### R2-API-056 — Alerta de rate limit substitui bloqueio permanente por expiração de quinze minutos
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Existe blocked_ips para o IP com is_permanent=true e expires_at=null, criado pelo fluxo administrativo. Uma chamada de send-rate-limit-alert é admitida e validada com blocked=true para o mesmo IP. O problema também ocorre com segredo interno correto; não depende de falta de autenticação.
+
+**Comportamento observado.** O UPSERT conflita por ip_address e escreve incondicionalmente is_permanent=false, expires_at=agora+15 minutos, motivo e datas novos. A cadeia SQL revisada pela frente database não contém trigger ou constraint que preserve a decisão permanente. P35 executou o handler completo com alerta legítimo e depois cleanup-rate-limit-logs, que apagou a linha tornada temporária após 16 minutos.
+
+**Efeito.** Um evento automático menos restritivo apaga a duração e a justificativa da decisão administrativa. A rotina de limpeza passa a poder remover esse registro. O impacto sobre requisições efetivamente permitidas depende de um consumidor de bloqueios: não foi demonstrado enforcement local ativo nem inspecionado serviço externo.
+
+**Evidência de fonte:**
+- [src/components/security/BlockedIPDialogs.tsx:29–38](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/security/BlockedIPDialogs.tsx#L29) — `permanent block creation`; SHA-256 `c727f47521bf679b42abc2e03c585d463e840606bb98efa1d468bc6fce8ef613`.
+- [supabase/functions/send-rate-limit-alert/index.ts:50–66](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-rate-limit-alert/index.ts#L50) — `unconditional temporary UPSERT`; SHA-256 `68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63`.
+- [supabase/migrations/20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql:33–44](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql#L33) — `unique IP and independent permanent/expiry fields`; SHA-256 `cc618235ad1abaee18f7f91b14287f018fdb39ce7a02b9e04175530c88726d04`.
+- [supabase/functions/cleanup-rate-limit-logs/index.ts:21–25](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/cleanup-rate-limit-logs/index.ts#L21) — `delete expired nonpermanent row`; SHA-256 `9ceed7013a9237cd19adb2b5b608478d2fc2d9f244141d7b658de7d9b45961ac`.
+
+**Probes:** P35.
+
+**Aceite da correção:**
+- Preservar bloqueio permanente e seu motivo/autoria quando chegar alerta temporário.
+- Aplicar extensão de prazo de forma atômica, sem reduzir prazo administrativo mais longo.
+- Cenário com bloqueio permanente seguido de alerta automático permanece permanente e não é removido pela limpeza.
+- Separar o registro de eventos de rate limit da decisão administrativa de bloqueio.
+
+**Relações, sem duplicar:** R2-API-022, R2-AUTH-022.
+
+**Limite da conclusão.** O probe modela o UPSERT e os predicados sob a unicidade SQL pinada, sem executar PostgreSQL. Não afirma desbloqueio de um IP real nem eficácia de enforcement que não apareceu na fonte.
+
+### R2-API-057 — Alerta e notificação afirmam bloqueio mesmo quando gravar blocked_ips falha
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Chamada válida com blocked=true; INSERT de security_alerts funciona, mas UPSERT de blocked_ips retorna erro. O exemplo determinístico permite também a inserção da notificação para tornar o efeito visível.
+
+**Comportamento observado.** O handler grava primeiro um alerta dizendo que o IP foi bloqueado. Erro no UPSERT é apenas logado; a notificação de administrador mantém metadata.blocked=true e o endpoint retorna HTTP200 com success=true. P36 deixou blocked_ips vazio, mas obteve alerta e notificação afirmando bloqueio. A leitura de admins e o INSERT de notifications também não têm seus erros examinados.
+
+**Efeito.** A interface e o chamador recebem uma confirmação de controle de segurança que não foi persistido. Se a falha for parcial, não existe no retorno a distinção entre alerta registrado, bloqueio aplicado e notificação enviada, dificultando uma retomada correta.
+
+**Evidência de fonte:**
+- [supabase/functions/send-rate-limit-alert/index.ts:32–48](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-rate-limit-alert/index.ts#L32) — `alert claims blocking before block write`; SHA-256 `68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63`.
+- [supabase/functions/send-rate-limit-alert/index.ts:50–87](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-rate-limit-alert/index.ts#L50) — `ignored block and notification errors / success response`; SHA-256 `68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63`.
+
+**Probes:** P36.
+
+**Aceite da correção:**
+- Somente afirmar bloqueio depois de confirmar a decisão persistida.
+- Retornar resultado separado para alerta, bloqueio e notificações; erros não devem virar success=true integral.
+- Tornar a decisão e o evento correspondente transacionais/idempotentes ou persistir um efeito pendente recuperável.
+- Erro do UPSERT não produz notificação de bloqueio aplicado, e o chamador recebe falha ou parcial explícito.
+
+**Relações, sem duplicar:** R2-API-022, R2-API-056.
+
+**Limite da conclusão.** Confirmação falsa está demonstrada no handler completo com fronteiras em memória; não comprova que qualquer bloqueio legítimo impediria tráfego, nem que o banco real retornou esse erro.
+
+### R2-API-058 — Alerta mensal de custo repete e-mail em cada execução diária do cron
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Canal de e-mail está habilitado com CRON_SECRET correspondente ao Vault e chave Resend válida; o consumo do mês permanece acima de 400 e ocorrem pelo menos dois ticks diários. O estado real dos segredos não foi lido; a documentação registra que o canal falha fechado enquanto não for configurado.
+
+**Comportamento observado.** A documentação promete um alerta por mês e a função SQL consulta notifications como ledger mensal. Entretanto, o job chama net.http_post após notify_searchbox_budget independentemente de seu retorno. A Edge só consulta o consumo e envia o e-mail; não consulta/grava ledger de envio nem transmite chave idempotente. P37 simulou dois dias do mesmo mês com notificação mensal existente e interceptou dois POSTs de e-mail.
+
+**Efeito.** O canal app pode emitir apenas um alerta enquanto o mesmo canal de e-mail repete o aviso a cada dia acima do limiar. Isso desvia do aceite mensal documentado e gera ruído/custo de envio; não é uma alegação de envio real nem de alteração no preço da Mapbox.
+
+**Evidência de fonte:**
+- [docs/mapa/USO_SEARCHBOX.md:119–130](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/mapa/USO_SEARCHBOX.md#L119) — `monthly alert contract across channels`; SHA-256 `52e2c8d07854e2bf24cd830c2ecd8f2e4f426769aaa28ae244be2ed380cfe227`.
+- [supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql:25–41](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql#L25) — `monthly notification ledger`; SHA-256 `09e0326b04428ab480b2948fbb52c970a4d339ed78f0fbdb0f6d7526618ac01f`.
+- [supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql:65–78](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql#L65) — `daily independent email invocation`; SHA-256 `09e0326b04428ab480b2948fbb52c970a4d339ed78f0fbdb0f6d7526618ac01f`.
+- [supabase/functions/searchbox-budget-alert/index.ts:19–24](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/searchbox-budget-alert/index.ts#L19) — `fail-closed cron secret`; SHA-256 `2909d2324bfb71d4e298c370280b8cdd45d77a1b2a9ca044dc7092394bbfa1d1`.
+- [supabase/functions/searchbox-budget-alert/index.ts:28–62](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/searchbox-budget-alert/index.ts#L28) — `threshold and unconditional email once above it`; SHA-256 `2909d2324bfb71d4e298c370280b8cdd45d77a1b2a9ca044dc7092394bbfa1d1`.
+
+**Probes:** P37.
+
+**Aceite da correção:**
+- Dar ao canal de e-mail identidade mensal e confirmação própria, com decisão atômica antes do envio e resultado durável.
+- Dois ticks bem sucedidos no mesmo mês não repetem o e-mail; falha confirmada permite retry e resultado incerto requer conciliação.
+- Preservar fail-closed por segredo e propagação de recusa HTTP do Resend.
+- A documentação e os canais devem concordar sobre frequência de alerta; se a regra desejada for diária, declarar e aprovar a mudança de contrato.
+
+**Relações, sem duplicar:** R2-INF-016.
+
+**Limite da conclusão.** Cron e SQL foram lidos, não executados. O handler foi executado com data/segredo/provedor em memória e ledger preexistente; secret de produção permanece desconhecido. A exposição de erro 500 deste endpoint continua sob INF-016, sem ID duplicado.
+
+### R2-API-059 — Telas Gmail convertem falha de consulta em conta desconectada ou histórico vazio
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Consulta de contas, contagem ou mensagens falha. No cartão/thread, a query termina sem dados úteis em cache e o hook expõe accountsError/messagesError; no monitor, a RPC e/ou os counts retornam error em vez de lançar exceção JavaScript.
+
+**Comportamento observado.** GmailWebhookMonitor descarta error das três respostas e aplica data||[] e count||0. Seu catch não captura esses resultados normais do SDK. P39 primeiro carregou 1 conta/12 threads/4 não lidas; após falha nas três consultas, o estado virou 0/0/0, loading=false e nenhum aviso. GmailIntegrationCard não consome accountsLoading/accountsError e mostra Desconectado para activeAccount ausente. EmailThreadView descarta messagesError e, terminado loading, apresenta Sem mensagens para o array padrão vazio.
+
+**Efeito.** Indisponibilidade, recusa de consulta ou erro de sessão é apresentada como ausência de contas ou mensagens. O usuário pode reconectar uma conta que ainda existe, e o monitor de sincronização deixa de distinguir dados desconhecidos de contagem real zero.
+
+**Evidência de fonte:**
+- [src/components/admin/GmailWebhookMonitor.tsx:32–58](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/admin/GmailWebhookMonitor.tsx#L32) — `loadData drops RPC/count errors`; SHA-256 `1f839b9b9bb8343775512665a17347a82daffce7d947c7a8f5a4647bcb6a9424`.
+- [src/components/admin/GmailWebhookMonitor.tsx:99–135](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/admin/GmailWebhookMonitor.tsx#L99) — `zero counters and no-account branch`; SHA-256 `1f839b9b9bb8343775512665a17347a82daffce7d947c7a8f5a4647bcb6a9424`.
+- [src/components/integrations/GmailIntegrationCard.tsx:10–30](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/GmailIntegrationCard.tsx#L10) — `missing account treated as disconnected`; SHA-256 `485d27d86c0986e45237d3b3cf55b914e700dab79065a2dacbcf3f12e5efb641`.
+- [src/hooks/integrations/useGmail.ts:32–48](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L32) — `accounts error is exposed by query`; SHA-256 `b10234263d58ee6e657c0f873997a968bc5e9a56ced63bac65fe4273222ecdf2`.
+- [src/hooks/integrations/useGmail.ts:143–151](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L143) — `messages error is exposed by query`; SHA-256 `b10234263d58ee6e657c0f873997a968bc5e9a56ced63bac65fe4273222ecdf2`.
+- [src/components/gmail/EmailThreadView.tsx:156–164](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L156) — `consumer omits messagesError`; SHA-256 `d5286686f6d37a3221d7bcf61fa3872df108d0382f5eac01a25ff9969a3154bb`.
+- [src/components/gmail/EmailThreadView.tsx:239–245](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L239) — `error becomes empty state`; SHA-256 `d5286686f6d37a3221d7bcf61fa3872df108d0382f5eac01a25ff9969a3154bb`.
+
+**Probes:** P39.
+
+**Aceite da correção:**
+- Consumir error e loading antes de derivar ausência de conta ou contagem zero.
+- Monitor deve preservar último dado conhecido com indicação de desatualização ou mostrar indisponível; erro não deve sobrescrever contagem com zero.
+- Thread sem mensagens e consulta fracassada têm estados e ações de recuperação diferentes.
+- Repetir fixture de dados válidos seguida de três erros; mostrar erro/retry e não alegar desconexão ou ausência real.
+
+**Relações, sem duplicar:** R2-COM-007, R2-COM-010.
+
+**Limite da conclusão.** P39 executa prefixo integral de estado/loading e callback de consulta, com React/Supabase em memória, sem renderizar JSX. Os outros dois consumidores são evidência estática. Não afirma falha atual de uma conta real nem ausência de error handling no hook compartilhado, que expõe os erros corretamente.
+
+### R2-API-060 — Botão Arquivar da thread Gmail legada está habilitado sem ação
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Usuário autorizado acessa a view gmail, seleciona uma thread e usa o botão Arquivar no cabeçalho da EmailThreadView. A view está no roteador e no menu, e GmailInboxView ainda monta esse componente legado.
+
+**Comportamento observado.** O Button com ícone Archive e tooltip Arquivar não recebe onClick, não é submit de formulário nem tem ação equivalente no container. O hook já oferece operações de labels, mas este consumidor não liga nenhuma delas ao botão.
+
+**Efeito.** O controle anunciado não arquiva a conversa nem informa indisponibilidade. O clique termina sem mudança persistida, feedback ou estado de progresso nesse fluxo ainda roteável.
+
+**Evidência de fonte:**
+- [src/pages/ViewRouter.tsx:89–92](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/ViewRouter.tsx#L89) — `gmail and monitor routes`; SHA-256 `6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530`.
+- [src/components/gmail/GmailInboxView.tsx:15–38](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/GmailInboxView.tsx#L15) — `selected thread mounts legacy view`; SHA-256 `de19f21aac96450f1b64e6feeedd2146bca7bf09fcff58a1172955a8c3ba328a`.
+- [src/components/gmail/EmailThreadView.tsx:208–218](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L208) — `enabled archive button without handler`; SHA-256 `d5286686f6d37a3221d7bcf61fa3872df108d0382f5eac01a25ff9969a3154bb`.
+
+**Aceite da correção:**
+- Conectar a ação ao contrato de arquivamento autorizado da thread e atualizar a lista após confirmação.
+- Se a ação não estiver disponível, removê-la ou desabilitá-la com indicação clara.
+- Clique único executa a operação uma vez; erro conserva estado e é exibido, sucesso retira a thread da caixa conforme regra de produto.
+
+**Relações, sem duplicar:** R2-COM-007.
+
+**Limite da conclusão.** Leitura estática suficiente; não foi criado teste que apenas espelha a ausência de onClick. Não se infere do botão Excluir uma regra de apagar a thread inteira: esse comportamento distinto permanece fora deste achado.
+
+### R2-API-061 — Enviar mensagem pelo menu de um grupo já selecionado retira esse grupo dos destinatários
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** O grupo A já está selecionado e o usuário usa Enviar mensagem no menu desse mesmo card. Se B também estiver selecionado, o conjunto resultante ainda permite confirmar um envio para B.
+
+**Comportamento observado.** O callback do menu chama toggleGroupSelection(group.id) e abre o diálogo de envio em massa. toggle remove IDs já selecionados. P40 executou o callback exato com seleção A/B, abriu o menu de A e obteve somente B; ao simular confirmação, o hook real de broadcast endereçou B.
+
+**Efeito.** A ação contextual exclui justamente o grupo escolhido. Com apenas A selecionado o diálogo abre sem destinatários; com outros grupos, esses permanecem como público. O diálogo mostra contagem e nomes, portanto o erro pode ser percebido antes de confirmar; não se afirma envio oculto ou sem confirmação.
+
+**Evidência de fonte:**
+- [src/components/groups/GroupsView.tsx:234–237](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/groups/GroupsView.tsx#L234) — `contextual send toggles selection`; SHA-256 `b43110db8781696eb31ea512116c40a0b39e282e2c7030dec0b8b6e450be153e`.
+- [src/hooks/chat/useGroupsManager.ts:45–51](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/chat/useGroupsManager.ts#L45) — `toggle removes existing ID`; SHA-256 `f8f32ebbf2196b6f278c44bc9839e43f39b762a755ac877882a10207390e6055`.
+- [src/hooks/groups/actions.ts:88–101](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/groups/actions.ts#L88) — `broadcast resolves current selected set`; SHA-256 `b6713ab51c47df06ef5f26a1669f8a9ebec75bb90250b75b6e960be0b7c8809e`.
+- [src/components/groups/GroupsView.tsx:285–290](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/groups/GroupsView.tsx#L285) — `visible recipient confirmation`; SHA-256 `b43110db8781696eb31ea512116c40a0b39e282e2c7030dec0b8b6e450be153e`.
+
+**Probes:** P40.
+
+**Aceite da correção:**
+- A ação de enviar para um grupo estabelece explicitamente o público pretendido, sem alternar inclusão acidentalmente.
+- Se o produto quiser incluir o grupo no envio em massa, usar adição idempotente; se quiser envio individual, definir somente aquele ID.
+- Abrir o menu do grupo A já selecionado mantém A como alvo e não converte o envio em somente B.
+- Conservar revisão visível de destinatários antes do disparo.
+
+**Relações, sem duplicar:** R2-API-042.
+
+**Limite da conclusão.** Callback/hook reais com estado e transporte simulados. P40 só chama o broadcast após uma confirmação explícita na fixture; nenhuma mensagem externa foi enviada.
+
+### R2-API-062 — Broadcast de grupos apaga texto e destinatários mesmo quando todos os envios falham
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Grupo com conexão selecionado; o envio retorna erro de transporte ou não há instância utilizável. O usuário já digitou a mensagem e confirma o diálogo.
+
+**Comportamento observado.** handleBroadcast conta failed, limpa selectedGroups incondicionalmente e resolve void. onBroadcast não recebe resultado: após await, fecha o diálogo e zera broadcastMessage. P41 fez o único envio retornar error não nulo; houve aviso de zero enviados/uma falha, mas texto e seleção foram apagados.
+
+**Efeito.** A falha é avisada, porém o usuário perde os dados necessários para corrigir e tentar novamente. Em sucesso parcial, falta um conjunto persistido de alvos recusados e o público inteiro é descartado. É distinto do sucesso falso de API042: aqui o erro é reconhecido e mesmo assim o rascunho se perde.
+
+**Evidência de fonte:**
+- [src/hooks/groups/actions.ts:88–108](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/groups/actions.ts#L88) — `failed accounting, unconditional clear and void result`; SHA-256 `b6713ab51c47df06ef5f26a1669f8a9ebec75bb90250b75b6e960be0b7c8809e`.
+- [src/components/groups/GroupsView.tsx:54–60](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/groups/GroupsView.tsx#L54) — `unconditional dialog close and draft clear`; SHA-256 `b43110db8781696eb31ea512116c40a0b39e282e2c7030dec0b8b6e450be153e`.
+
+**Probes:** P41.
+
+**Aceite da correção:**
+- Retornar resultado por grupo ao consumidor e preservar texto/alvos recusados.
+- Limpar o rascunho apenas quando o envio definido como concluído tiver confirmação suficiente ou quando o usuário o descartar.
+- Sucesso parcial distingue aceitos, recusados e incertos para evitar retry integral.
+- Fixture de falha total mantém o diálogo e seu texto; fixture parcial permite retentar somente os alvos decididos como seguros.
+
+**Relações, sem duplicar:** R2-API-042, R2-API-061.
+
+**Limite da conclusão.** O probe modela erro efetivo na fronteira invoke e executa callbacks reais, sem DOM e sem envio. Não presume que sucesso de transporte garanta entrega final.
+
+### R2-API-063 — Painéis Omnichannel apresentam cadastro pendente como canal conectado e fixam WhatsApp em um
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Administrador consegue inserir um novo channel_connections via OmnichannelManager; o default SQL vigente is_active=true é aplicado e status permanece pending_setup. O usuário abre a aba Canais do OmnichannelInbox. A contagem WhatsApp independe de haver zero, uma ou várias conexões reais.
+
+**Comportamento observado.** O cadastro grava pending_setup sem is_active. loadConnections filtra apenas is_active=true, e o resultado recebe título Canais Conectados e ponto verde. P43 compôs os callbacks de criação/leitura e o default SQL pinado: o canal pending_setup entrou nessa lista. No Manager, a contagem WhatsApp é a constante 1 e a tela vazia declara que os canais WhatsApp já estão ativos sem consultá-los.
+
+**Efeito.** Uma configuração local incompleta passa a ser representada como conexão operacional. O operador recebe informação incorreta sobre disponibilidade e quantidade de canais, mesmo sem qualquer conexão com o provedor demonstrada.
+
+**Evidência de fonte:**
+- [src/components/omnichannel/OmnichannelManager.tsx:59–83](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelManager.tsx#L59) — `create pending channel`; SHA-256 `0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa`.
+- [supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql:9–26](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql#L9) — `is_active default independent of status`; SHA-256 `e7dff0c87e70ea763ebdc2caa12c75dbaf7ea898c6e206df646da36f7ae7fa9a`.
+- [src/components/omnichannel/OmnichannelInbox.tsx:49–55](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L49) — `active-only connection filter`; SHA-256 `fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe`.
+- [src/components/omnichannel/OmnichannelInbox.tsx:267–285](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L267) — `connected label and green indicator`; SHA-256 `fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe`.
+- [src/components/omnichannel/OmnichannelManager.tsx:171–177](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelManager.tsx#L171) — `unverified active WhatsApp assertion`; SHA-256 `0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa`.
+- [src/components/omnichannel/OmnichannelManager.tsx:214–224](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelManager.tsx#L214) — `constant WhatsApp count`; SHA-256 `0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa`.
+
+**Probes:** P43.
+
+**Aceite da correção:**
+- Separar cadastro habilitado de conexão operacional e mostrar pending_setup como pendente.
+- Derivar contagem WhatsApp da fonte autorizada com estado de erro/ausência explícito.
+- Canal recém-criado sem credenciais não aparece como conectado.
+- Testar zero, duas conexões e estados pendente/desconectado sem substituir ausência por uma constante.
+
+**Limite da conclusão.** SQL default foi confirmado na cadeia pela frente database, não aplicado em banco real. Nenhuma verificação real de credenciais, conexão ou capacidade dos canais foi efetuada.
+
+### R2-API-064 — Inbox Omnichannel projeta contatos limitados sem carregar nem abrir conversas
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Usuário autorizado abre a aba Canais da view omni-inbox e tem contatos visíveis. Pode haver contatos sem mensagens, mensagens não lidas ou mais de 200 cadastros visíveis.
+
+**Comportamento observado.** loadUnifiedInbox lê somente 200 contacts ordenados por updated_at. Cada cadastro vira UnifiedMessage com lastMessage vazio, unread=false e status=open, usando a data do cadastro; não consulta histórico nem estado da conversa. A busca e os contadores são locais a essa amostra. Os cards de conversa têm cursor-pointer, mas nenhum onClick ou navegação. P43 mostrou que um contato sem mensagem produz uma linha de inbox, sem consulta a messages.
+
+**Efeito.** A tela promete todas as conversas, mas apresenta uma amostra de cadastros, nunca marca não lidas por esse caminho e não permite entrar na conversa. Contatos fora da amostra não aparecem na busca. A aba Email Chat monta o fluxo de e-mail existente e não está incluída nessa ausência funcional.
+
+**Evidência de fonte:**
+- [src/components/omnichannel/OmnichannelInbox.tsx:58–94](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L58) — `contact-only bounded projection`; SHA-256 `fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe`.
+- [src/components/omnichannel/OmnichannelInbox.tsx:104–111](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L104) — `search only loaded sample`; SHA-256 `fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe`.
+- [src/components/omnichannel/OmnichannelInbox.tsx:150–153](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L150) — `all conversations promise`; SHA-256 `fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe`.
+- [src/components/omnichannel/OmnichannelInbox.tsx:228–259](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L228) — `conversation rows without open action`; SHA-256 `fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe`.
+- [src/components/omnichannel/OmnichannelInbox.tsx:295–298](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L295) — `separate working email consumer`; SHA-256 `fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe`.
+
+**Probes:** P43.
+
+**Aceite da correção:**
+- Consumir projeção canônica de conversas com última mensagem, não lidas e estado derivados dos dados autorizados.
+- Paginar ou declarar a amostra e executar busca sobre o universo pretendido.
+- Permitir abrir a conversa no canal correspondente ou apresentar claramente uma lista de contatos com finalidade diferente.
+- Contatos sem histórico, conversa não lida e mais de 200 itens têm representação correta e navegação verificável.
+
+**Limite da conclusão.** O probe executa callbacks e projeção com dados em memória. Não testa provedores adicionais nem afirma inexistência dos inboxes WhatsApp/Email já presentes em outras views.
+
+### R2-API-065 — Cadastro de canais adicionais e regras de roteamento não têm executor versionado demonstrado
+
+**P2 · gap · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** Administrador usa OmnichannelManager para cadastrar Instagram/Telegram/Messenger/Webchat/Gmail ou cria uma regra em ChannelRoutingRules. INSERTs/RLS funcionam. Não foi inspecionado eventual N8N/VPS ou serviço externo não versionado.
+
+**Comportamento observado.** O Manager insere nome/tipo/status=pending_setup e orienta configurar credenciais, mas a tela só oferece criar/remover, sem fluxo de configuração/ativação. As regras persistem canal/fila/prioridade/is_active e só são lidas pelo próprio CRUD. Busca dos nomes em todos os entrypoints Edge não localizou consumidor; a frente database confirmou zero referência a channel_routing_rules nos 311 corpos SQL vencedores e nenhum trigger nessa tabela. channel_connections tem apenas o trigger de updated_at nessa cadeia.
+
+**Efeito.** A evidência local termina no cadastro. Não demonstra que credenciais sejam configuradas, que mensagens desses novos canais entrem/saiam ou que a fila escolhida seja aplicada. O status de concluído de tal integração ou regra não pode ser sustentado apenas pelo sucesso do INSERT.
+
+**Evidência de fonte:**
+- [src/components/omnichannel/OmnichannelManager.tsx:59–85](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelManager.tsx#L59) — `pending registration and instruction to configure credentials`; SHA-256 `0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa`.
+- [src/components/omnichannel/OmnichannelManager.tsx:180–205](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelManager.tsx#L180) — `only delete operation on channel card`; SHA-256 `0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa`.
+- [src/components/omnichannel/ChannelRoutingRules.tsx:33–43](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/ChannelRoutingRules.tsx#L33) — `rules read by own editor`; SHA-256 `5485f2eee9ce5e3fda2575857cc976fb2fbcf179e35738cb731bc978721873cd`.
+- [src/components/omnichannel/ChannelRoutingRules.tsx:85–104](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/ChannelRoutingRules.tsx#L85) — `local rule insert`; SHA-256 `5485f2eee9ce5e3fda2575857cc976fb2fbcf179e35738cb731bc978721873cd`.
+- [src/components/omnichannel/ChannelRoutingRules.tsx:155–160](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/ChannelRoutingRules.tsx#L155) — `routing effect promised`; SHA-256 `5485f2eee9ce5e3fda2575857cc976fb2fbcf179e35738cb731bc978721873cd`.
+- [supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql:47–71](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql#L47) — `routing DDL and connection updated_at trigger`; SHA-256 `e7dff0c87e70ea763ebdc2caa12c75dbaf7ea898c6e206df646da36f7ae7fa9a`.
+
+**Aceite da correção:**
+- Identificar e versionar o executor que aplica as regras, incluindo autorização, precedência e ausência de fila.
+- Fornecer fluxo de configuração e diagnóstico de credenciais/capacidades por canal, ou marcar a função como cadastro ainda sem execução.
+- Provar uma mensagem de um canal implementado chegando à fila escolhida, com identidade/correlação e falha observável.
+- Se o motor é externo, anexar contrato, versão implantada e evidência operacional sanitizada; não presumir que precise ser reimplementado no frontend.
+
+**Relações, sem duplicar:** R2-API-063, R2-API-064.
+
+**Limite da conclusão.** Gap de cobertura operacional na fonte, não prova de inexistência de toda integração fora do repositório. Gmail OAuth/Email e WhatsApp possuem fluxos separados; o achado não os declara ausentes. Busca dirigida de src/Edge e confirmação da cadeia SQL sustentam o limite.
+
+### R2-API-066 — Monitor de quarentena conserva decisão antiga após liberação e para em erro transitório
+
+**P2 · confirmed_static · HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`**
+
+**Precondição.** VPS/proxy de media_quarantine está configurado e uma consulta inicial funciona; registro pending/deleted já está no cache. Depois ocorre liberação/whitelist, inclusive em outro cliente, ou uma consulta lança erro transitório. Configuração real não foi consultada.
+
+**Comportamento observado.** O monitor consulta só pending/deleted e aplica upsertMany, que não remove nem atualiza registros ausentes do resultado. Uma decisão allowed/whitelisted deixa de ser recebida e o cache conserva a anterior. O painel useQuarantineMedia também faz apenas upsertMany depois do reload. Além disso, qualquer exceção no tick seta disabledRef=true e impede novo timer. P44 executou monitor e store reais: depois de liberação omitida pelo filtro, pending permaneceu; após uma exceção, não restou polling.
+
+**Efeito.** O selo de segurança no MessageBubble pode continuar acusando pendência/ameaça após revisão e parar de refletir novas decisões até reset ou atualização explícita que traga o registro. Trata-se de estado exibido: o badge não é um mecanismo de autorização e o player de mídia é montado separadamente.
+
+**Evidência de fonte:**
+- [src/providers/QuarantineMonitorProvider.tsx:54–75](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/providers/QuarantineMonitorProvider.tsx#L54) — `filtered poll and append-only cache hydration`; SHA-256 `31d0b8fcf2e54f93bb660692a67d6c3d5e37f2e373c4caed946b8bf55630d482`.
+- [src/providers/QuarantineMonitorProvider.tsx:91–110](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/providers/QuarantineMonitorProvider.tsx#L91) — `disable on error and timer lifecycle`; SHA-256 `31d0b8fcf2e54f93bb660692a67d6c3d5e37f2e373c4caed946b8bf55630d482`.
+- [src/lib/quarantineStore.ts:37–47](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/quarantineStore.ts#L37) — `upsert does not reconcile missing records`; SHA-256 `c43d2a796900cc38e3a950e5caf8cec718e7d2176f562308b361658de16d0c04`.
+- [src/hooks/integrations/useQuarantineMedia.ts:103–108](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useQuarantineMedia.ts#L103) — `panel also upserts filtered list`; SHA-256 `03ab979bfef9f686b0603b22e864899add827d370c1db118fcb60dba9bbc6e63`.
+- [src/hooks/integrations/useQuarantineMedia.ts:124–139](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useQuarantineMedia.ts#L124) — `decision followed by filtered reload`; SHA-256 `03ab979bfef9f686b0603b22e864899add827d370c1db118fcb60dba9bbc6e63`.
+- [src/components/security/QuarantineBadge.tsx:11–27](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/security/QuarantineBadge.tsx#L11) — `badge labels derive cached decision`; SHA-256 `297250d9128093814ccde804ea49b2e7f049eb2bd89d3c02b6021f7ac74a94fa`.
+- [src/components/inbox/chat/MessageBubble.tsx:164–174](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/chat/MessageBubble.tsx#L164) — `badge mounted beside media rendering`; SHA-256 `36a6d92d027703add8af782b8ff10032e29e6276e0c3ccec334cbcd1502ef7a1`.
+
+**Probes:** P44.
+
+**Aceite da correção:**
+- Propagar mudanças para allowed/whitelisted e reconciliar por ID/versão, sem inferir liberação apenas porque um registro saiu da janela de 500.
+- Distinguir notConfigured permanente de falhas transitórias, com retry/backoff e estado de atualização observável.
+- Após liberação, o selo reflete a decisão atual no cliente que só recebe polling; uma falha temporária não desliga o monitor para toda a sessão.
+- Conservar cancelamento ao desmontar e limpar dados por identidade; o selo nunca substitui controle de acesso real à mídia.
+
+**Limite da conclusão.** VPS, ClamAV, storage e efeitos externos da decisão não foram exercidos. O probe usa respostas autoritativas em memória e store real; não afirma bloqueio/desbloqueio efetivo do arquivo. O caminho notConfigured é intencional e não foi tratado como falha.
+
 ## Achados anteriores e divisão entre frentes
 
 Os seguintes registros foram preservados como antecedentes, sem serem recontados como falhas novas:
@@ -1261,24 +1817,36 @@ Os seguintes registros foram preservados como antecedentes, sem serem recontados
 - **R2-DB-015** — Retry de recipient outcome_unknown mantém provider_dispatch_started_at e a seleção normal o exclui; o claim direto possui outra regra. Achado de fila estacionada pertence à frente database, não é envio duplicado automático.
 - **R2-COM-009/R2-COM-010** — gmail-oauth foi revisto integralmente pela frente communication/root: state ausente/inválido não barra exchange e escritas storeTokens/disconnect não verificam erro. Somente referência, sem duplicar achados ou atribuir a leitura a providers.
 - **R2-AUTH-035** — useWhatsAppStatus e consumidores de perfil/status ficaram com auth: conversão de notSupported GO em vazio e estado fixo Offline não foram duplicados nesta frente.
+- **R2-INF-016** — searchbox-budget-alert expõe error.message em Response 500; o gate insuficiente e esse exemplo pertencem à frente infra. Este lote completou a leitura integral do endpoint sem clonar o finding.
+- **R2-COM-007/R2-COM-011** — EmailThreadView também usa última mensagem da consulta sem paginação (178–180) e sanitizeEmailHtml (45–53/116–120). Os defeitos de paginação e imagem protocol-relative permanecem em communication; só consumidor legado foi confirmado.
 
 ## Cobertura efetivamente revisada
 
 `coverage.json` contém hashes, faixas e símbolos por arquivo. Uma importação ou busca de chamada não é leitura integral do arquivo. Os arquivos com leitura semântica integral desta frente são:
 
-`supabase/functions/evolution-webhook/index.ts`, `supabase/functions/_shared/evolution-webhook-msg-handlers.ts`, `supabase/functions/_shared/evolution-webhook-messages.ts`, `supabase/functions/_shared/evolution-helpers.ts`, `supabase/functions/_shared/evolution-go-adapter.ts`, `supabase/functions/_shared/evolution-go-routes.ts`, `supabase/functions/_shared/evolution-send.ts`, `supabase/functions/_shared/evolution-media.ts`, `supabase/functions/_shared/evolution-api-proxy.ts`, `supabase/functions/evolution-api/index.ts`, `supabase/functions/message-delivery/index.ts`, `supabase/functions/_shared/talkx-reply.ts`, `supabase/functions/_shared/talkx-window.ts`, `supabase/functions/_shared/talkx-resume-policy.ts`, `supabase/functions/talkx-scheduler/index.ts`, `supabase/functions/talkx-send/process-recipient.ts`, `supabase/functions/multiplix-send/index.ts`, `supabase/functions/gmail-webhook/index.ts`, `supabase/functions/_shared/gmail-helpers.ts`, `supabase/functions/gmail-sync/index.ts`, `supabase/functions/gmail-cron-sync/index.ts`, `supabase/functions/gmail-send/index.ts`, `supabase/functions/crm-integration/index.ts`, `supabase/functions/_shared/crm-integration-contract.ts`, `supabase/functions/bitrix-api/index.ts`, `supabase/functions/whatsapp-webhook/index.ts`, `supabase/functions/get-call-recording/index.ts`, `supabase/functions/sync-call-records/index.ts`, `supabase/functions/public-api/index.ts`, `supabase/functions/get-mapbox-token/index.ts`, `supabase/functions/get-sip-password/index.ts`, `supabase/functions/send-email/index.ts`, `supabase/functions/send-scheduled-report/index.ts`, `supabase/functions/auto-close-conversations/index.ts`, `supabase/functions/elevenlabs-webhook/index.ts`, `supabase/functions/elevenlabs-scribe-token/index.ts`, `supabase/functions/elevenlabs-agent-token/index.ts`, `supabase/functions/elevenlabs-tts/index.ts`, `supabase/functions/elevenlabs-tts-stream/index.ts`, `supabase/functions/elevenlabs-sfx/index.ts`, `supabase/functions/elevenlabs-dialogue/index.ts`, `supabase/functions/elevenlabs-sts/index.ts`, `supabase/functions/elevenlabs-voice-design/index.ts`, `supabase/functions/ai-jobs-worker/index.ts`, `supabase/functions/_shared/cron-secret-auth.ts`, `supabase/functions/_shared/ai-jobs.ts`, `supabase/functions/_shared/effect-reconcile.ts`, `supabase/functions/external-db-proxy/index.ts`, `supabase/functions/external-db-bridge/index.ts`, `supabase/functions/evolution-sync/index.ts`, `supabase/functions/connection-health-check/index.ts`, `supabase/functions/_shared/evolution-sync-actions.ts`, `supabase/functions/_shared/edge-boot.ts`, `supabase/functions/_shared/ai-auth.ts`, `supabase/functions/_shared/ai-audio-authz.ts`, `supabase/functions/_shared/ai-guards.ts`, `supabase/functions/_shared/ssrf.ts`, `supabase/functions/ai-transcribe-audio/index.ts`, `supabase/functions/talkx-send/index.ts`, `supabase/functions/_shared/evolution-webhook-handlers.ts`, `supabase/functions/multiplix-dispatch/index.ts`, `supabase/functions/multiplix-dispatch/actions/audience.ts`, `supabase/functions/multiplix-dispatch/actions/blocks.ts`, `supabase/functions/multiplix-dispatch/actions/inspect.ts`, `supabase/functions/multiplix-dispatch/actions/lifecycle.ts`, `supabase/functions/multiplix-dispatch/actions/listing.ts`, `supabase/functions/_shared/messaging/index.ts`, `supabase/functions/_shared/messaging/phone.ts`, `supabase/functions/_shared/messaging/timing.ts`, `supabase/functions/_shared/validation.ts`, `supabase/functions/_shared/messaging/media.ts`, `supabase/functions/_shared/messaging/eligibility.ts`, `supabase/functions/_shared/messaging/errors.ts`, `supabase/functions/_shared/messaging/evolution-go.ts`, `supabase/functions/_shared/messaging/personalize.ts`, `supabase/functions/_shared/messaging/types.ts`, `supabase/functions/_shared/secure-random.ts`, `supabase/functions/_shared/multiplix-eligibility.ts`, `supabase/functions/ai-proxy/index.ts`, `supabase/functions/_shared/ai-usage.ts`, `supabase/functions/ai-auto-tag/index.ts`, `supabase/functions/_shared/ai-response-contracts.ts`, `supabase/functions/_shared/secure-egress.ts`, `supabase/functions/_shared/postgrest-filters.ts`, `supabase/functions/_shared/talkx-delivery-connection.ts`, `supabase/functions/_shared/ai-routing.ts`, `supabase/functions/_shared/ai-capabilities.ts`, `supabase/functions/_shared/ai-providers.ts`, `supabase/functions/_shared/ai-generate.ts`, `supabase/functions/_shared/ai-budget.ts`, `supabase/functions/_shared/ai-values.ts`, `supabase/functions/_shared/ai-vocabulary.ts`, `supabase/functions/_shared/ai-json.ts`, `supabase/functions/_shared/notification-events.ts`, `supabase/functions/_shared/voice-copilot-authz.ts`, `supabase/functions/_shared/contracts.ts`, `supabase/functions/_shared/deno-types.ts`, `supabase/functions/_shared/email-font-stack.ts`, `supabase/functions/_shared/evolution-types.ts`, `supabase/functions/multiplix-audience/index.ts`, `supabase/functions/multiplix-voices/index.ts`, `supabase/functions/batch-fetch-avatars/index.ts`, `supabase/functions/recover-corrupted-audios/index.ts`, `supabase/functions/migrate-media-storage/index.ts`, `supabase/functions/talkx-report/index.ts`, `supabase/functions/talkx-link/index.ts`, `supabase/functions/_shared/gmail-mime.ts`, `supabase/functions/_shared/webhook-signature.ts`, `supabase/functions/voice-agent/index.ts`, `supabase/functions/voice-changer/index.ts`, `supabase/functions/voice-copilot-action/index.ts`, `supabase/functions/sentiment-alert/index.ts`, `supabase/functions/fetch-link-preview/index.ts`, `supabase/functions/webhook-diagnostic/index.ts`, `supabase/functions/promogifts-catalog/index.ts`, `supabase/functions/_shared/schemas.ts`, `supabase/functions/_shared/hmac-validation.ts`, `src/hooks/chat/useScheduledMessages.ts`, `src/components/settings/ai-providers/useAIProviders.ts`, `src/hooks/inbox/useConnectionsManager.ts`, `src/hooks/groups/actions.ts`, `src/hooks/groups/types.ts`, `src/hooks/groups/index.ts`, `src/hooks/chat/useGroupsManager.ts`, `src/components/connections/ConnectionsView.tsx`, `src/components/connections/ConnectionCard.tsx`, `src/components/connections/InstanceSettingsDialog.tsx`, `src/components/connections/InstanceSettingsTabContent.tsx`, `src/components/connections/ConnectionQueuesDialog.tsx`, `src/components/connections/IntegrationsPanel.tsx`, `src/components/connections/BusinessHoursDialog.tsx`, `src/components/connections/BusinessHoursIndicator.tsx`, `src/components/connections/NumberReputationMonitor.tsx`, `src/components/settings/AIProvidersManager.tsx`, `src/components/settings/ai-providers/types.ts`, `src/components/settings/ai-providers/AIProviderCard.tsx`, `src/components/settings/ai-providers/AIProviderFormDialog.tsx`, `src/components/settings/ai-providers/AIProviderHealthPanel.tsx`, `src/hooks/integrations/useEvolutionApi.ts`, `src/hooks/evolution/useEvolutionApiCore.ts`, `src/hooks/evolution/useEvolutionInstance.ts`, `src/hooks/evolution/useEvolutionIntegrations.ts`, `src/hooks/business/useBusinessHours.ts`, `src/hooks/inbox/useConnectionQueues.ts`, `supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql`, `supabase/migrations/20251220182411_dd03d6a1-4f98-410e-a411-1f2486626de2.sql`.
+`supabase/functions/evolution-webhook/index.ts`, `supabase/functions/_shared/evolution-webhook-msg-handlers.ts`, `supabase/functions/_shared/evolution-webhook-messages.ts`, `supabase/functions/_shared/evolution-helpers.ts`, `supabase/functions/_shared/evolution-go-adapter.ts`, `supabase/functions/_shared/evolution-go-routes.ts`, `supabase/functions/_shared/evolution-send.ts`, `supabase/functions/_shared/evolution-media.ts`, `supabase/functions/_shared/evolution-api-proxy.ts`, `supabase/functions/evolution-api/index.ts`, `supabase/functions/message-delivery/index.ts`, `supabase/functions/_shared/talkx-reply.ts`, `supabase/functions/_shared/talkx-window.ts`, `supabase/functions/_shared/talkx-resume-policy.ts`, `supabase/functions/talkx-scheduler/index.ts`, `supabase/functions/talkx-send/process-recipient.ts`, `supabase/functions/multiplix-send/index.ts`, `supabase/functions/gmail-webhook/index.ts`, `supabase/functions/_shared/gmail-helpers.ts`, `supabase/functions/gmail-sync/index.ts`, `supabase/functions/gmail-cron-sync/index.ts`, `supabase/functions/gmail-send/index.ts`, `supabase/functions/crm-integration/index.ts`, `supabase/functions/_shared/crm-integration-contract.ts`, `supabase/functions/bitrix-api/index.ts`, `supabase/functions/whatsapp-webhook/index.ts`, `supabase/functions/get-call-recording/index.ts`, `supabase/functions/sync-call-records/index.ts`, `supabase/functions/public-api/index.ts`, `supabase/functions/get-mapbox-token/index.ts`, `supabase/functions/get-sip-password/index.ts`, `supabase/functions/send-email/index.ts`, `supabase/functions/send-scheduled-report/index.ts`, `supabase/functions/auto-close-conversations/index.ts`, `supabase/functions/elevenlabs-webhook/index.ts`, `supabase/functions/elevenlabs-scribe-token/index.ts`, `supabase/functions/elevenlabs-agent-token/index.ts`, `supabase/functions/elevenlabs-tts/index.ts`, `supabase/functions/elevenlabs-tts-stream/index.ts`, `supabase/functions/elevenlabs-sfx/index.ts`, `supabase/functions/elevenlabs-dialogue/index.ts`, `supabase/functions/elevenlabs-sts/index.ts`, `supabase/functions/elevenlabs-voice-design/index.ts`, `supabase/functions/ai-jobs-worker/index.ts`, `supabase/functions/_shared/cron-secret-auth.ts`, `supabase/functions/_shared/ai-jobs.ts`, `supabase/functions/_shared/effect-reconcile.ts`, `supabase/functions/external-db-proxy/index.ts`, `supabase/functions/external-db-bridge/index.ts`, `supabase/functions/evolution-sync/index.ts`, `supabase/functions/connection-health-check/index.ts`, `supabase/functions/_shared/evolution-sync-actions.ts`, `supabase/functions/_shared/edge-boot.ts`, `supabase/functions/_shared/ai-auth.ts`, `supabase/functions/_shared/ai-audio-authz.ts`, `supabase/functions/_shared/ai-guards.ts`, `supabase/functions/_shared/ssrf.ts`, `supabase/functions/ai-transcribe-audio/index.ts`, `supabase/functions/talkx-send/index.ts`, `supabase/functions/_shared/evolution-webhook-handlers.ts`, `supabase/functions/multiplix-dispatch/index.ts`, `supabase/functions/multiplix-dispatch/actions/audience.ts`, `supabase/functions/multiplix-dispatch/actions/blocks.ts`, `supabase/functions/multiplix-dispatch/actions/inspect.ts`, `supabase/functions/multiplix-dispatch/actions/lifecycle.ts`, `supabase/functions/multiplix-dispatch/actions/listing.ts`, `supabase/functions/_shared/messaging/index.ts`, `supabase/functions/_shared/messaging/phone.ts`, `supabase/functions/_shared/messaging/timing.ts`, `supabase/functions/_shared/validation.ts`, `supabase/functions/_shared/messaging/media.ts`, `supabase/functions/_shared/messaging/eligibility.ts`, `supabase/functions/_shared/messaging/errors.ts`, `supabase/functions/_shared/messaging/evolution-go.ts`, `supabase/functions/_shared/messaging/personalize.ts`, `supabase/functions/_shared/messaging/types.ts`, `supabase/functions/_shared/secure-random.ts`, `supabase/functions/_shared/multiplix-eligibility.ts`, `supabase/functions/ai-proxy/index.ts`, `supabase/functions/_shared/ai-usage.ts`, `supabase/functions/ai-auto-tag/index.ts`, `supabase/functions/_shared/ai-response-contracts.ts`, `supabase/functions/_shared/secure-egress.ts`, `supabase/functions/_shared/postgrest-filters.ts`, `supabase/functions/_shared/talkx-delivery-connection.ts`, `supabase/functions/_shared/ai-routing.ts`, `supabase/functions/_shared/ai-capabilities.ts`, `supabase/functions/_shared/ai-providers.ts`, `supabase/functions/_shared/ai-generate.ts`, `supabase/functions/_shared/ai-budget.ts`, `supabase/functions/_shared/ai-values.ts`, `supabase/functions/_shared/ai-vocabulary.ts`, `supabase/functions/_shared/ai-json.ts`, `supabase/functions/_shared/notification-events.ts`, `supabase/functions/_shared/voice-copilot-authz.ts`, `supabase/functions/_shared/contracts.ts`, `supabase/functions/_shared/deno-types.ts`, `supabase/functions/_shared/email-font-stack.ts`, `supabase/functions/_shared/evolution-types.ts`, `supabase/functions/multiplix-audience/index.ts`, `supabase/functions/multiplix-voices/index.ts`, `supabase/functions/batch-fetch-avatars/index.ts`, `supabase/functions/recover-corrupted-audios/index.ts`, `supabase/functions/migrate-media-storage/index.ts`, `supabase/functions/talkx-report/index.ts`, `supabase/functions/talkx-link/index.ts`, `supabase/functions/_shared/gmail-mime.ts`, `supabase/functions/_shared/webhook-signature.ts`, `supabase/functions/voice-agent/index.ts`, `supabase/functions/voice-changer/index.ts`, `supabase/functions/voice-copilot-action/index.ts`, `supabase/functions/sentiment-alert/index.ts`, `supabase/functions/fetch-link-preview/index.ts`, `supabase/functions/webhook-diagnostic/index.ts`, `supabase/functions/promogifts-catalog/index.ts`, `supabase/functions/csp-report/index.ts`, `supabase/functions/send-rate-limit-alert/index.ts`, `supabase/functions/cleanup-rate-limit-logs/index.ts`, `supabase/functions/searchbox-budget-alert/index.ts`, `supabase/functions/_shared/schemas.ts`, `supabase/functions/_shared/hmac-validation.ts`, `src/hooks/chat/useScheduledMessages.ts`, `src/hooks/integrations/useBitrixApi.ts`, `src/components/settings/ai-providers/useAIProviders.ts`, `src/hooks/inbox/useConnectionsManager.ts`, `src/hooks/groups/actions.ts`, `src/hooks/groups/types.ts`, `src/hooks/groups/index.ts`, `src/hooks/chat/useGroupsManager.ts`, `src/components/connections/ConnectionsView.tsx`, `src/components/connections/ConnectionCard.tsx`, `src/components/connections/InstanceSettingsDialog.tsx`, `src/components/connections/InstanceSettingsTabContent.tsx`, `src/components/connections/ConnectionQueuesDialog.tsx`, `src/components/connections/IntegrationsPanel.tsx`, `src/components/connections/BusinessHoursDialog.tsx`, `src/components/connections/BusinessHoursIndicator.tsx`, `src/components/connections/NumberReputationMonitor.tsx`, `src/components/settings/AIProvidersManager.tsx`, `src/components/settings/ai-providers/types.ts`, `src/components/settings/ai-providers/AIProviderCard.tsx`, `src/components/settings/ai-providers/AIProviderFormDialog.tsx`, `src/components/settings/ai-providers/AIProviderHealthPanel.tsx`, `src/hooks/integrations/useEvolutionApi.ts`, `src/hooks/evolution/useEvolutionApiCore.ts`, `src/hooks/evolution/useEvolutionInstance.ts`, `src/hooks/evolution/useEvolutionIntegrations.ts`, `src/hooks/business/useBusinessHours.ts`, `src/hooks/inbox/useConnectionQueues.ts`, `src/hooks/evolution/useEvolutionGroups.ts`, `src/hooks/evolution/useEvolutionMessaging.ts`, `src/hooks/evolution/index.ts`, `src/hooks/integrations/index.ts`, `src/hooks/integrations/evolutionApi.types.ts`, `src/hooks/integrations/useExternalEvolution.ts`, `src/hooks/integrations/useSyncToCRM.ts`, `src/hooks/integrations/useMetaCAPIData.ts`, `src/hooks/integrations/useQuarantineForMessage.ts`, `src/hooks/integrations/useChatbotFlows.ts`, `src/hooks/integrations/useKnowledgeBase.ts`, `src/hooks/integrations/useKnowledgeBaseSearch.ts`, `src/hooks/integrations/useTalkXInsights.ts`, `src/hooks/integrations/useTalkXConnectionStatus.ts`, `src/hooks/integrations/useTalkXCommandItems.ts`, `src/hooks/integrations/useWhatsAppTemplates.ts`, `src/hooks/integrations/usePersonalStickers.ts`, `src/hooks/integrations/useCustomEmojis.ts`, `src/components/integrations/IntegrationsHub.tsx`, `src/components/integrations/BitrixIntegrationView.tsx`, `src/components/integrations/N8nIntegrationView.tsx`, `src/components/integrations/SentryIntegrationView.tsx`, `src/components/integrations/GoogleCalendarIntegration.tsx`, `src/components/whatsapp-flows/FlowComponentPreview.tsx`, `src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx`, `src/components/knowledge/KnowledgeBaseView.tsx`, `src/components/inbox/KnowledgeBaseSearchPanel.tsx`, `src/components/inbox/stickers/PersonalStickers.tsx`, `src/components/inbox/CustomEmojiPicker.tsx`, `src/components/keyboard/CommandPaletteHost.tsx`, `src/lib/quarantineStore.ts`, `src/adapters/evolutionAdapter.ts`, `src/services/evolution.service.ts`, `src/integrations/supabase/externalClient.ts`, `src/hooks/system/useCRMIntegrationEnabled.ts`, `src/components/inbox/contact-details/AIInsightsWidget.tsx`, `src/services/index.ts`, `src/components/integrations/GmailIntegrationCard.tsx`, `src/components/admin/GmailWebhookMonitor.tsx`, `src/components/gmail/EmailThreadView.tsx`, `src/components/groups/GroupsView.tsx`, `src/providers/QuarantineMonitorProvider.tsx`, `src/components/alerts/EvolutionDisconnectBanner.tsx`, `src/components/omnichannel/OmnichannelManager.tsx`, `src/components/omnichannel/OmnichannelInbox.tsx`, `src/components/omnichannel/ChannelRoutingRules.tsx`, `src/components/security/QuarantineBadge.tsx`, `supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql`, `supabase/config.toml`, `vercel.json`, `supabase/migrations/20260930760000_searchbox_usage_daily.sql`, `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql`, `supabase/migrations/20260828210000_get_own_gmail_accounts_filter_active.sql`, `supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql`, `supabase/migrations/20251220182411_dd03d6a1-4f98-410e-a411-1f2486626de2.sql`, `src/components/email/__tests__/EmailChatBubble.test.tsx`, `src/components/email/__tests__/EmailChatReplyBar.test.tsx`, `src/components/email/__tests__/EmailChatThread.test.tsx`, `src/components/email/__tests__/EmailThreadList.test.tsx`, `src/components/gmail/__tests__/EmailThreadView.test.tsx`, `src/components/gmail/__tests__/ThreadListItem.test.tsx`, `src/hooks/__tests__/useBitrixApi.test.ts`, `src/hooks/__tests__/useEvolutionApi.test.ts`, `src/hooks/__tests__/useWhatsAppStatus.test.ts`, `src/hooks/crm/__tests__/useAgentPresence.test.ts`, `src/hooks/integrations/__tests__/useGmail.test.ts`, `src/hooks/integrations/__tests__/useMultiplixDispatches.edge.test.tsx`, `src/lib/__tests__/crmIntegration.test.ts`, `src/lib/__tests__/emailHtml.test.ts`, `src/lib/__tests__/webhookStatusPriority.test.ts`, `src/pages/__tests__/ViewRouter.multiplix-gate.test.tsx`, `supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts`, `supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts`, `supabase/functions/_shared/__tests__/ai-auth.test.ts`, `supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts`, `supabase/functions/_shared/__tests__/ai-response-contracts.test.ts`, `supabase/functions/_shared/__tests__/ai-vocabulary.test.ts`, `supabase/functions/_shared/__tests__/chatbot-l1-output.test.ts`, `supabase/functions/_shared/__tests__/crm-integration-contract.test.ts`, `supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts`, `supabase/functions/_shared/__tests__/effect-reconcile.test.ts`, `supabase/functions/_shared/__tests__/evolution-call-events.test.ts`, `supabase/functions/_shared/__tests__/evolution-go-routes.test.ts`, `supabase/functions/_shared/__tests__/evolution-webhook-connection-risk.test.ts`, `supabase/functions/_shared/__tests__/f58-item-receipts.test.ts`, `supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts`, `supabase/functions/_shared/__tests__/gmail-send-schema.test.ts`, `supabase/functions/_shared/__tests__/messaging-errors.test.ts`, `supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts`, `supabase/functions/_shared/__tests__/multiplix-eligibility.test.ts`, `supabase/functions/_shared/__tests__/secure-egress.test.ts`, `supabase/functions/_shared/__tests__/talkx-reply-window.test.ts`, `supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts`, `supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts`, `supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts`, `supabase/functions/_shared/__tests__/voice-copilot-authz.test.ts`, `supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts`, `supabase/functions/_shared/__tests__/webhook-signature.test.ts`, `supabase/functions/_shared/ai-generate.test.ts`, `supabase/functions/_shared/ai-usage.test.ts`, `supabase/functions/_shared/messaging/__tests__/eligibility.test.ts`, `supabase/functions/_shared/messaging/__tests__/media.test.ts`, `supabase/functions/_shared/messaging/__tests__/personalize.test.ts`, `supabase/functions/_shared/messaging/__tests__/phone.test.ts`, `supabase/functions/ai-jobs-worker/index.test.ts`, `supabase/functions/crm-integration/index.test.ts`, `supabase/functions/multiplix-audience/index.test.ts`, `supabase/functions/multiplix-dispatch/actions/__tests__/audience.test.ts`, `supabase/functions/multiplix-dispatch/actions/__tests__/blocks.test.ts`, `supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts`, `supabase/functions/multiplix-dispatch/actions/__tests__/lifecycle.test.ts`, `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts`, `supabase/functions/multiplix-send/index.test.ts`, `supabase/functions/multiplix-voices/index.test.ts`, `supabase/functions/promogifts-catalog/index.actions.test.ts`, `supabase/functions/promogifts-catalog/index.test.ts`, `supabase/functions/talkx-link/index.test.ts`, `supabase/functions/talkx-scheduler/index.test.ts`, `supabase/functions/talkx-send/_test-utils.ts`, `supabase/functions/talkx-send/index.test.ts`, `supabase/functions/talkx-send/v20-daily-limit.test.ts`, `supabase/functions/talkx-send/x019-connection-budget.test.ts`, `supabase/functions/talkx-send/x020-variavel-precedencia.test.ts`, `tests/contracts/crm-sentiment-boundary.contract.test.ts`, `tests/contracts/email-sender-domains.contract.test.ts`, `tests/contracts/evolution-private-storage-url.test.ts`, `tests/contracts/multiplix-audience.contract.test.ts`, `tests/contracts/multiplix-dispatch-domain-api.contract.test.ts`, `tests/contracts/multiplix-dispatch-no-secret-leak.contract.test.ts`, `tests/contracts/multiplix-dispatch-write-path.contract.test.ts`, `tests/contracts/webhooks-versioning.contract.test.ts`, `supabase/functions/_shared/__fixtures__/evolution-call-offer.json`, `supabase/functions/_shared/__fixtures__/evolution-call-accept.json`, `supabase/functions/_shared/__fixtures__/evolution-call-reject.json`, `supabase/functions/_shared/__fixtures__/evolution-call-terminate.json`, `scripts/db-audit/ai-block03-vocabulary-contract.test.sh`, `scripts/db-audit/catalog-manifest.test.sh`, `scripts/db-audit/check-mcp-exec-acl.test.sh`, `scripts/db-audit/check-reconcile-ledger-drift.test.sh`, `scripts/db-audit/check-webhook-failures-acl.test.sh`, `scripts/db-audit/inbox-contact-authorization.test.sh`, `scripts/db-audit/l11-departments-acl-escrita.test.sh`, `scripts/db-audit/talkx-events-contract.test.sh`, `scripts/db-audit/talkx-settings-rls.test.sh`, `scripts/db-audit/talkx-template-history-behavior.test.sh`, `scripts/db-audit/talkx-v15-replied-count-guard.test.sh`, `scripts/db-audit/wa-tag-and-status-authorization.test.sh`.
 
 A segunda passagem completou o handler `talkx-send/index.ts` e as ações Multiplix de inspeção, público, blocos, ciclo e listagem. Schemas, helpers de autenticação e consumidores auxiliares ainda parciais têm faixas explícitas no JSON. Não se chama todo handler envolvente de revisado porque uma microfunção foi lida.
 
 ### Áreas que ainda ficaram apenas catalogadas nesta frente
 
-- Os 13 arquivos ainda catalogados nesta frente têm responsável explícito: 12 arquivos IA com infra e gmail-oauth com root. A união global deve usar a cobertura desses responsáveis sem atribuir leitura a providers.
+### Roster de testes
+
+Estado: **COMPLETE**. 76 de 76 arquivos lidos integralmente (19010 de 19010 linhas); nenhuma suíte executada.
+
+`test-review.json` e `test-review.md` registram por arquivo as asserções, mocks, fixtures, adjudicação, limites, hashes e faixas. A presença do teste e a atribuição no roster não contam como leitura. Ausência genérica de casos não é contada como novo achado.
+
+- 13 arquivos backend têm revisão integral delegada: 12 IA com infra e gmail-oauth com root. Dois IA receberam leitura pontual de Knowledge Base aqui; os demais continuam na lista catalogued_only. A união global usa os responsáveis sem atribuir suas leituras integrais a providers.
 
 - Geração/budget, kernels, Talk X, Multiplix, Evolution, rotinas de mídia, schemas/HMAC, utilitários de voz, catálogo e diagnósticos do lote providers foram percorridos integralmente na segunda passagem.
 
-- Lote connections, settings/ai-providers, useConnectionsManager e groups concluído; useWhatsAppStatus pertence à frente auth. Ampliação para lacunas de hooks/evolution, hooks/integrations, components/integrations e whatsapp-flows em andamento, registrada separadamente ao ler os arquivos.
+- Lotes connections, settings/ai-providers, useConnectionsManager e groups concluídos; useWhatsAppStatus pertence à frente auth. Ampliação para os corpos pendentes de hooks/evolution, hooks/integrations, components/integrations e whatsapp-flows concluída, incluindo o tail GmailIntegrationCard; useCatalogQuickSearch continua delegado a grill.
 
 - Configuração implantada, payloads reais de cada versão Evolution, agendadores e efeitos/triggers de bancos externos permanecem sem evidência operacional.
+
+- Lote final de quatro endpoints (csp-report, send-rate-limit-alert, cleanup-rate-limit-logs, searchbox-budget-alert) e três arquivos de suporte Evolution/CRM concluído. GmailIntegrationCard, GmailWebhookMonitor e EmailThreadView legado também concluídos. Lote de seis canais/provedores concluído. O roster de 76 arquivos de testes foi lido integralmente e registrado separadamente em test-review.json, sem execução de suítes.
+
+- Gate final de linguagens: os 12 scripts shell / 3.558 linhas do roster providers foram lidos integralmente, incluindo SQL/Node embutido, asserts, fixtures e cleanup. Nenhum script, Docker ou SQL foi executado; journal shell-review.json.
 
 ### Lista explícita de arquivos apenas catalogados
 
@@ -1290,8 +1858,6 @@ A lista é deliberadamente completa para permitir união com a cobertura AST/glo
 - `supabase/functions/ai-conversation-analysis/index.ts`
 - `supabase/functions/ai-conversation-summary/index.ts`
 - `supabase/functions/ai-enhance-message/index.ts`
-- `supabase/functions/ai-suggest-reply/index.ts`
-- `supabase/functions/chatbot-l1/index.ts`
 - `supabase/functions/classify-audio-meme/index.ts`
 - `supabase/functions/classify-emoji/index.ts`
 - `supabase/functions/classify-sticker/index.ts`
@@ -1306,6 +1872,10 @@ A lista é deliberadamente completa para permitir união com a cobertura AST/glo
 - `reproduce-media-ai-control.mjs` / `media-ai-control-probe-results.json`: P22, presença ignora cancelamento; P23/P24, teste de IA evita cota e log, com controle normal recusado.
 - `reproduce-final-endpoints.mjs` / `final-endpoints-probe-results.json`: P25, timestamp renovado sem alterar HMAC; P26, defaults incompatíveis com RPC; P27, tráfego de A atribuído a B; P28, 2500 ignorados viram 2000 ignorados e 500 pendentes no e-mail interceptado.
 - `reproduce-frontend-providers.mjs` / `frontend-providers-probe-results.json`: P29, resposta/polling de A alteram QR e status de B e deixam timer sem referência; P30, erro lógico do proxy gera sucesso em envio e sincronização de grupos. Blobs dos hooks são validados contra o manifesto antes da avaliação.
+- `reproduce-frontend-persistence.mjs` / `frontend-persistence-probe-results.json`: P31, reabertura de Flow sobrescreve duas telas com snapshot de uma; P32, campanha de 5% é recomendada apesar de candidata de 40% e completed não passa pelo filtro finished; P33, Limpar não cancela a busca pendente. Frontend e CHECK SQL têm pins adicionais antes da avaliação.
+- `reproduce-security-maintenance.mjs` / `security-maintenance-probe-results.json`: P34, ausência de segredo abre gate; P35, bloqueio permanente vira temporário e é removido; P36, bloqueio recusado gera alerta/notificação/success; P37, dois dias do mês enviam dois e-mails; P38, controles positivos de método, tamanho do stream, redação, batch e rate limit CSP.
+- `reproduce-gmail-monitor.mjs` / `gmail-monitor-probe-results.json`: P39, erro das três leituras apaga o último estado válido e produz zero/vazio. Blob frontend pinado antes de avaliar o callback de leitura; não executa React DOM.
+- `reproduce-channel-consumers.mjs` / `channel-consumers-probe-results.json`: P40, menu remove grupo escolhido; P41, envio recusado perde rascunho; P42, manutenção é bloqueada no backend e anunciada como reconexão; P43, cadastro pending_setup contado como conectado e contato sintetizado em conversa; P44, selo de quarentena mantém decisão velha e polling para após uma exceção. Todos os frontend/SQL avaliados têm pins anteriores à avaliação.
 - `verify-source.mjs`: antes de qualquer import da aplicação, compara HEAD real e blobs Git/tamanhos de todo o prefixo supabase/functions mais config com source-integrity.json. Abrange todos os módulos locais transitivos dos probes; não lê arquivos de ambiente.
 - `findings.json`: dados normalizáveis, pinados ao HEAD; `coverage.json`: cobertura por faixa/símbolo; `build_report.py`: gerador desta documentação.
 
@@ -1314,3 +1884,13 @@ A referência oficial Gmail history.list distingue `nextPageToken` de `historyId
 O guia oficial de background tasks do Supabase exige preservar a execução da Promise quando se quer trabalho posterior à resposta; ele não cria atomicidade de efeitos. O source oficial PostgrestBuilder implementa fetch no consumo de `then`; a URL de master foi recuperada, a tag exata v2.87.1 não foi baixada. Essa diferença está marcada em R2-API-013.
 
 Não foram realizados deploy, mutation de banco real, contato a provedores, envio de mensagens, leitura de secrets nem alteração do checkout. O relatório não fecha aceites operacionais que dependem dessas evidências.
+
+## Apoio final à frente database
+
+Leitura adicional concluída de 20 arquivos / 1419 linhas do slice zero-based [32,52) do roster database. `database-peer-test-review.json` contém autoria, hashes, faixas, asserções, mocks e limites por arquivo. Este apoio não aumenta a contagem de 76 testes do roster próprio e não executou suítes. Nenhum achado novo foi contado.
+
+## Gate final de linguagens — scripts shell
+
+Estado **COMPLETE**: 12/12 arquivos, 3558/3558 linhas lidas integralmente. `shell-review.json` e `shell-review.md` registram autoria, SHA-256, blob do HEAD, faixas, SQL/Node embutido, asserções, fixtures, cleanup e adjudicação. Nenhum shell, Docker, SQL, suíte ou novo probe foi executado. Permanecem 76 testes próprios, 66 achados e 44 probes prévios.
+
+Os contratos de migrations reais e controles negativos foram preservados como evidência positiva estática. Os loci de SQL copiado no contrato X021, helpers de papel simplificados e DROP de RPC nunca criada no fixture V15 foram encaminhados à família TC-011/GOV003; não foram multiplicados em novos IDs API. O journal não transforma chamadas de scripts a migrations em leitura integral dessas migrations.

@@ -314,3 +314,308 @@
 {"path": "src/hooks/chat/useConversationAnalyses.ts", "start": 1, "end": 136, "total_lines": 136}
 {"path": "src/hooks/chat/useLatestAnalysis.ts", "start": 1, "end": 42, "total_lines": 42}
 {"path": "src/components/inbox/tabs/AiTab.tsx", "start": 1, "end": 190, "total_lines": 190}
+{"path": "src/components/inbox/VoiceChanger.tsx", "start": 1, "end": 237, "total_lines": 237}
+{"path": "src/components/inbox/VoiceChangerPicker.tsx", "start": 1, "end": 165, "total_lines": 310}
+{"path": "src/components/inbox/VoiceChangerPicker.tsx", "start": 160, "end": 310, "total_lines": 310}
+{"path": "src/components/inbox/TextToAudioButton.tsx", "start": 1, "end": 260, "total_lines": 260}
+{"path": "src/components/inbox/VoiceSelector.tsx", "start": 1, "end": 213, "total_lines": 213}
+{"path": "src/components/inbox/AudioMessagePlayer.tsx", "start": 1, "end": 192, "total_lines": 192}
+{"path": "src/components/inbox/AudioRecorder.tsx", "start": 181, "end": 282, "total_lines": 282}
+{"path": "src/components/inbox/search/GlobalSearchResults.tsx", "start": 1, "end": 125, "total_lines": 125}
+{"path": "src/components/inbox/search/GlobalSearchFilters.tsx", "start": 1, "end": 117, "total_lines": 117}
+{"path": "src/components/inbox/chat/ChatSearchResultsList.tsx", "start": 1, "end": 65, "total_lines": 65}
+{"path": "src/components/inbox/chat/ChatSearchFilters.tsx", "start": 1, "end": 142, "total_lines": 142}
+{"path": "src/components/inbox/InboxFilters.tsx", "start": 1, "end": 316, "total_lines": 316}
+{"path": "src/components/inbox/ContactTypeFilter.tsx", "start": 1, "end": 229, "total_lines": 229}
+{"path": "src/components/inbox/ConversationListSidebar.tsx", "start": 1, "end": 160, "total_lines": 307}
+{"path": "src/components/inbox/conversation-list/StatusChips.tsx", "start": 1, "end": 87, "total_lines": 87}
+{"path": "src/components/inbox/SwipeableListItem.tsx", "start": 1, "end": 144, "total_lines": 144}
+{"path": "src/components/inbox/swipeActions.ts", "start": 1, "end": 48, "total_lines": 48}
+{"path": "src/components/inbox/ConversationListSidebar.tsx", "start": 1, "end": 88, "total_lines": 307}
+{"path": "src/components/inbox/ConversationListSidebar.tsx", "start": 161, "end": 307, "total_lines": 307}
+{"path": "src/hooks/inbox/useInboxFilters.ts", "start": 1, "end": 115, "total_lines": 191}
+{"path": "src/components/inbox/VirtualizedRealtimeList.tsx", "start": 1, "end": 214, "total_lines": 622}
+{"path": "src/components/inbox/VirtualizedRealtimeList.tsx", "start": 211, "end": 430, "total_lines": 622}
+{"path": "src/components/inbox/VirtualizedRealtimeList.tsx", "start": 425, "end": 622, "total_lines": 622}
+{"path": "src/components/inbox/ForwardMessageDialog.tsx", "start": 146, "end": 196, "total_lines": 302}
+{"path": "src/components/inbox/FileUploader.tsx", "start": 176, "end": 235, "total_lines": 235}
+{"path": "src/components/inbox/InteractiveMessageBuilder.tsx", "start": 180, "end": 247, "total_lines": 247}
+{"path": "src/components/inbox/TransferDialog.tsx", "start": 191, "end": 335, "total_lines": 335}
+{"path": "src/components/inbox/CloseConversationDialog.tsx", "start": 1, "end": 58, "total_lines": 207}
+{"path": "src/components/inbox/CloseConversationDialog.tsx", "start": 129, "end": 207, "total_lines": 207}
+{"path": "src/components/inbox/RealtimeInboxView.tsx", "start": 223, "end": 234, "total_lines": 376}
+{"path": "src/components/inbox/RealtimeInboxView.tsx", "start": 335, "end": 376, "total_lines": 376}
+{"path": "src/components/inbox/ScheduleMessageDialog.tsx", "start": 166, "end": 206, "total_lines": 206}
+{"path": "src/components/inbox/LocationMessage.tsx", "start": 1, "end": 254, "total_lines": 254}
+{"path": "src/components/inbox/ReplyQuote.tsx", "start": 1, "end": 152, "total_lines": 152}
+{"path": "src/components/inbox/InteractiveMessage.tsx", "start": 1, "end": 140, "total_lines": 268}
+{"path": "src/components/inbox/InteractiveMessage.tsx", "start": 141, "end": 268, "total_lines": 268}
+{"path": "src/components/inbox/chat/LinkPreviewCard.tsx", "start": 1, "end": 120, "total_lines": 120}
+{"path": "src/components/inbox/LinkPreview.tsx", "start": 1, "end": 104, "total_lines": 104}
+{"path": "src/components/inbox/linkPreviewUtils.ts", "start": 1, "end": 61, "total_lines": 61}
+{"path": "src/components/inbox/chat/HighlightedText.tsx", "start": 1, "end": 123, "total_lines": 123}
+{"path": "src/components/inbox/tabs/FileThumb.tsx", "start": 1, "end": 204, "total_lines": 204}
+{"path": "src/components/inbox/tabs/FileCard.tsx", "start": 1, "end": 121, "total_lines": 121}
+{"path": "src/components/inbox/tabs/FileDetailPanel.tsx", "start": 1, "end": 104, "total_lines": 104}
+{"path": "src/components/inbox/tabs/FileActionsMenu.tsx", "start": 1, "end": 47, "total_lines": 47}
+{"path": "src/components/inbox/tabs/fileDisplay.ts", "start": 1, "end": 67, "total_lines": 67}
+{"path": "src/components/inbox/tabs/FilesTableView.tsx", "start": 1, "end": 180, "total_lines": 180}
+{"path": "src/components/inbox/tabs/FilesListView.tsx", "start": 1, "end": 125, "total_lines": 125}
+{"path": "src/components/inbox/tabs/filesSort.ts", "start": 1, "end": 59, "total_lines": 59}
+{"path": "src/components/inbox/tabs/FilesSelectionBar.tsx", "start": 1, "end": 108, "total_lines": 108}
+{"path": "src/components/inbox/tabs/FilesColumnSelector.tsx", "start": 1, "end": 114, "total_lines": 114}
+{"path": "src/components/inbox/tabs/FilesLayoutPopover.tsx", "start": 1, "end": 102, "total_lines": 102}
+{"path": "src/components/inbox/tabs/FilesToolbar.tsx", "start": 1, "end": 109, "total_lines": 109}
+{"path": "src/components/inbox/chat/messageUtils.tsx", "start": 1, "end": 79, "total_lines": 79}
+{"path": "src/components/inbox/chat/ChatHeader.tsx", "start": 1, "end": 213, "total_lines": 213}
+{"path": "src/components/inbox/chat/ChatHeaderToolbar.tsx", "start": 1, "end": 79, "total_lines": 79}
+{"path": "src/components/inbox/chat/ConversationTabs.tsx", "start": 1, "end": 107, "total_lines": 107}
+{"path": "src/components/inbox/chat/PinnedConversationsStack.tsx", "start": 1, "end": 104, "total_lines": 104}
+{"path": "src/components/inbox/resolveActiveTab.ts", "start": 1, "end": 34, "total_lines": 34}
+{"path": "src/components/inbox/tabs/Crm360Tab.tsx", "start": 1, "end": 303, "total_lines": 303}
+{"path": "src/components/inbox/ConversationMemoryPanel.tsx", "start": 1, "end": 252, "total_lines": 252}
+{"path": "src/components/inbox/LeadRiskScorePanel.tsx", "start": 1, "end": 149, "total_lines": 149}
+{"path": "src/components/inbox/ContactPurchasesPanel.tsx", "start": 1, "end": 134, "total_lines": 134}
+{"path": "src/components/inbox/NewConversationModal.tsx", "start": 1, "end": 127, "total_lines": 127}
+{"path": "src/components/inbox/RealtimeTranscription.tsx", "start": 1, "end": 195, "total_lines": 195}
+{"path": "src/components/inbox/WhisperMode.tsx", "start": 1, "end": 194, "total_lines": 194}
+{"path": "src/components/inbox/MediaVolumeControl.tsx", "start": 1, "end": 198, "total_lines": 198}
+{"path": "src/components/inbox/collaboration/InternalNotesPanel.tsx", "start": 1, "end": 117, "total_lines": 117}
+{"path": "src/components/inbox/collaboration/ViewersIndicator.tsx", "start": 1, "end": 126, "total_lines": 126}
+{"path": "src/components/inbox/collaboration/MentionInput.tsx", "start": 1, "end": 86, "total_lines": 86}
+{"path": "src/components/inbox/collaboration/HandoffDialog.tsx", "start": 1, "end": 94, "total_lines": 94}
+{"path": "src/components/inbox/RealtimeCollaboration.tsx", "start": 1, "end": 47, "total_lines": 47}
+{"path": "src/components/inbox/QueuePositionNotifier.tsx", "start": 1, "end": 54, "total_lines": 54}
+{"path": "src/components/inbox/AgentReassignmentPanel.tsx", "start": 1, "end": 62, "total_lines": 62}
+{"path": "src/components/inbox/stickers/StickerManager.tsx", "start": 1, "end": 191, "total_lines": 191}
+{"path": "src/components/inbox/tabs/TasksTab.tsx", "start": 1, "end": 169, "total_lines": 169}
+{"path": "src/components/inbox/SLAIndicator.tsx", "start": 1, "end": 161, "total_lines": 161}
+{"path": "src/components/inbox/BusinessHoursBadge.tsx", "start": 1, "end": 35, "total_lines": 35}
+{"path": "src/components/inbox/summary/useSummaryTts.ts", "start": 1, "end": 62, "total_lines": 62}
+{"path": "src/components/inbox/summary/SummaryResult.tsx", "start": 1, "end": 96, "total_lines": 96}
+{"path": "src/components/inbox/ai-tools/KeyPointsTab.tsx", "start": 1, "end": 75, "total_lines": 75}
+{"path": "src/components/inbox/ai-tools/SentimentTab.tsx", "start": 1, "end": 140, "total_lines": 140}
+{"path": "src/components/inbox/ai-tools/SummaryTab.tsx", "start": 1, "end": 106, "total_lines": 106}
+{"path": "src/components/inbox/ai-tools/ToneSelector.tsx", "start": 1, "end": 52, "total_lines": 52}
+{"path": "src/components/inbox/ai-tools/VisionIcon.tsx", "start": 1, "end": 36, "total_lines": 36}
+{"path": "src/components/inbox/AISuggestions.tsx", "start": 1, "end": 230, "total_lines": 230}
+{"path": "src/components/inbox/chat/AIRewriteButton.tsx", "start": 1, "end": 135, "total_lines": 135}
+{"path": "src/components/inbox/chat/AIEnhanceButton.tsx", "start": 1, "end": 174, "total_lines": 174}
+{"path": "src/components/inbox/tabs/ContactStatsStrip.tsx", "start": 1, "end": 100, "total_lines": 100}
+{"path": "src/components/inbox/tabs/CommercialSummaryStrip.tsx", "start": 1, "end": 38, "total_lines": 38}
+{"path": "src/components/inbox/tabs/OpenDealsList.tsx", "start": 1, "end": 60, "total_lines": 60}
+{"path": "src/components/inbox/tabs/SectionCard.tsx", "start": 1, "end": 71, "total_lines": 71}
+{"path": "src/components/inbox/tabs/KpiStrip.tsx", "start": 1, "end": 56, "total_lines": 56}
+{"path": "src/components/inbox/tabs/SalesViewTab.tsx", "start": 1, "end": 46, "total_lines": 46}
+{"path": "src/components/inbox/tabs/TabBanner.tsx", "start": 1, "end": 64, "total_lines": 64}
+{"path": "src/components/inbox/ContactDetailsResponsive.tsx", "start": 1, "end": 33, "total_lines": 33}
+{"path": "src/components/inbox/AnalysisBadges.tsx", "start": 1, "end": 83, "total_lines": 83}
+{"path": "src/components/inbox/chat/RichTextToolbar.tsx", "start": 1, "end": 119, "total_lines": 119}
+{"path": "src/components/inbox/chat/InputExtraTools.tsx", "start": 1, "end": 121, "total_lines": 121}
+{"path": "src/components/inbox/chat/MarkdownPreview.tsx", "start": 1, "end": 45, "total_lines": 45}
+{"path": "src/components/inbox/chat/ChatQuickRepliesPopover.tsx", "start": 1, "end": 70, "total_lines": 70}
+{"path": "src/components/inbox/chat/InputPreviewBars.tsx", "start": 1, "end": 52, "total_lines": 52}
+{"path": "src/components/inbox/chat/QuickActionChips.tsx", "start": 1, "end": 99, "total_lines": 99}
+{"path": "src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx", "start": 1, "end": 24, "total_lines": 24}
+{"path": "src/components/inbox/interactive-builder/MessagePreview.tsx", "start": 1, "end": 60, "total_lines": 60}
+{"path": "src/components/inbox/MessagePreview.tsx", "start": 1, "end": 179, "total_lines": 179}
+{"path": "src/components/inbox/SentimentIndicator.tsx", "start": 1, "end": 199, "total_lines": 199}
+{"path": "src/components/inbox/DeletedMessagePlaceholder.tsx", "start": 1, "end": 78, "total_lines": 78}
+{"path": "src/components/inbox/MessageStatus.tsx", "start": 1, "end": 70, "total_lines": 70}
+{"path": "src/components/inbox/SpeedSelector.tsx", "start": 1, "end": 69, "total_lines": 69}
+{"path": "src/components/inbox/TypingIndicator.tsx", "start": 1, "end": 321, "total_lines": 321}
+{"path": "src/components/inbox/NewMessageIndicator.tsx", "start": 1, "end": 174, "total_lines": 174}
+{"path": "src/components/inbox/InboxEmptyChat.tsx", "start": 1, "end": 55, "total_lines": 55}
+{"path": "src/components/inbox/chat/ChatDragOverlay.tsx", "start": 1, "end": 36, "total_lines": 36}
+{"path": "src/components/inbox/chat/ChatWatermark.tsx", "start": 1, "end": 10, "total_lines": 10}
+{"path": "src/components/inbox/conversation-list/ConversationGroupHeader.tsx", "start": 1, "end": 17, "total_lines": 17}
+{"path": "src/components/inbox/KeyboardShortcutsHelp.tsx", "start": 1, "end": 90, "total_lines": 90}
+{"path": "src/components/inbox/MessageContextMenu.tsx", "start": 1, "end": 239, "total_lines": 239}
+{"path": "src/components/inbox/MessageReactions.tsx", "start": 151, "end": 197, "total_lines": 284}
+{"path": "src/components/inbox/MessageReactions.tsx", "start": 191, "end": 247, "total_lines": 284}
+{"path": "src/components/inbox/MessageReactions.tsx", "start": 248, "end": 284, "total_lines": 284}
+{"path": "src/components/inbox/contact-details/ContactActionButtons.tsx", "start": 150, "end": 184, "total_lines": 209}
+{"path": "src/components/inbox/contact-details/ContactAccordionSections.tsx", "start": 102, "end": 117, "total_lines": 193}
+{"path": "src/components/inbox/ChatPanel.tsx", "start": 277, "end": 296, "total_lines": 320}
+{"path": "src/components/inbox/RealtimeInboxView.tsx", "start": 335, "end": 347, "total_lines": 376}
+{"path": "src/pages/ChatPopup.tsx", "start": 210, "end": 269, "total_lines": 300}
+{"path": "src/components/inbox/quick-replies/QuickReplyDialog.tsx", "start": 1, "end": 87, "total_lines": 87}
+{"path": "src/components/inbox/QuickRepliesManager.tsx", "start": 1, "end": 127, "total_lines": 127}
+{"path": "src/components/inbox/ContactTypeFilter.tsx", "start": 1, "end": 141, "total_lines": 229}
+{"path": "src/components/inbox/ContactTypeFilter.tsx", "start": 212, "end": 229, "total_lines": 229}
+{"path": "src/components/inbox/conversation-list/StatusChips.tsx", "start": 1, "end": 87, "total_lines": 87}
+{"path": "src/components/inbox/tabs/FileThumb.tsx", "start": 80, "end": 142, "total_lines": 204}
+{"path": "src/components/inbox/tabs/FileDetailPanel.tsx", "start": 1, "end": 104, "total_lines": 104}
+{"path": "src/hooks/chat/useContactMedia.ts", "start": 1, "end": 275, "total_lines": 302}
+{"path": "src/hooks/storage/useResolvedStorageUrl.ts", "start": 1, "end": 120, "total_lines": 120}
+{"path": "src/hooks/chat/useContactMedia.ts", "start": 276, "end": 302, "total_lines": 302}
+{"path": "src/components/inbox/tabs/FilesTab.tsx", "start": 90, "end": 155, "total_lines": 370}
+{"path": "src/components/inbox/tabs/FilesTab.tsx", "start": 285, "end": 320, "total_lines": 370}
+{"path": "src/components/settings/SettingsView.tsx", "start": 128, "end": 151, "total_lines": 236}
+{"path": "src/components/inbox/VirtualizedRealtimeList.tsx", "start": 97, "end": 112, "total_lines": 622}
+{"path": "src/components/inbox/VirtualizedRealtimeList.tsx", "start": 305, "end": 326, "total_lines": 622}
+{"path": "src/hooks/inbox/useInboxFilters.ts", "start": 75, "end": 94, "total_lines": 191}
+{"path": "src/hooks/inbox/useRealtimeInbox.ts", "start": 36, "end": 52, "total_lines": 229}
+{"path": "src/components/inbox/VoiceChangerPicker.tsx", "start": 1, "end": 196, "total_lines": 310}
+{"path": "src/components/inbox/TextToAudioButton.tsx", "start": 1, "end": 121, "total_lines": 260}
+{"path": "src/components/inbox/chat/ChatInputToolbars.tsx", "start": 42, "end": 83, "total_lines": 188}
+{"path": "src/components/inbox/__tests__/StatusChips.test.tsx", "start": 1, "end": 72, "total_lines": 72}
+{"path": "src/hooks/inbox/useInboxFilters.ts", "start": 1, "end": 31, "total_lines": 191}
+{"path": "src/components/inbox/RealtimeInboxView.tsx", "start": 70, "end": 106, "total_lines": 376}
+{"path": "src/components/inbox/VirtualizedRealtimeList.tsx", "start": 415, "end": 438, "total_lines": 622}
+{"path": "src/components/inbox/chat/ChatInputArea.tsx", "start": 105, "end": 130, "total_lines": 279}
+{"path": "src/components/inbox/useChatMediaSending.ts", "start": 89, "end": 144, "total_lines": 144}
+{"path": "src/components/inbox/chat/ChatInputArea.tsx", "start": 140, "end": 158, "total_lines": 279}
+{"path": "src/components/inbox/ChatPanel.tsx", "start": 297, "end": 303, "total_lines": 320}
+{"path": "src/components/inbox/chat/useChatPanelHandlers.ts", "start": 265, "end": 279, "total_lines": 287}
+{"path": "src/components/inbox/tabs/__tests__/FileThumb.test.tsx", "start": 1, "end": 181, "total_lines": 236}
+{"path": "docs/COMPLETE_SYSTEM_FEATURES.md", "start": 84, "end": 184, "total_lines": 844}
+{"path": "src/components/settings/SettingsView.tsx", "start": 180, "end": 199, "total_lines": 236}
+{"path": "src/components/inbox/stickers/StickerCategoryBar.tsx", "start": 1, "end": 98, "total_lines": 98}
+{"path": "src/integrations/supabase/types.ts", "start": 2305, "end": 2324, "total_lines": 12336}
+{"path": "src/integrations/supabase/types.ts", "start": 6054, "end": 6091, "total_lines": 12336}
+{"path": "src/components/inbox/chat/useChatPanelHandlers.ts", "start": 10, "end": 54, "total_lines": 287}
+{"path": "src/components/inbox/ChatPanel.tsx", "start": 135, "end": 177, "total_lines": 320}
+{"path": "src/components/inbox/chat/ChatDialogs.tsx", "start": 20, "end": 73, "total_lines": 73}
+{"path": "src/components/inbox/ChatPanel.tsx", "start": 60, "end": 136, "total_lines": 320}
+{"path": "src/components/inbox/ChatPanel.tsx", "start": 176, "end": 251, "total_lines": 320}
+{"path": "src/hooks/inbox/useRealtimeSentimentAlerts.ts", "start": 1, "end": 118, "total_lines": 118}
+{"path": "src/hooks/inbox/useInboxUIState.ts", "start": 1, "end": 72, "total_lines": 72}
+{"path": "src/hooks/inbox/useInboxFilterTags.ts", "start": 1, "end": 17, "total_lines": 17}
+{"path": "src/hooks/realtime/useVisiblePolling.ts", "start": 1, "end": 50, "total_lines": 50}
+{"path": "src/hooks/voice/retry.ts", "start": 1, "end": 55, "total_lines": 55}
+{"path": "src/hooks/voice/logVoiceCommand.ts", "start": 1, "end": 48, "total_lines": 48}
+{"path": "src/components/notifications/RealtimeSentimentAlertProvider.tsx", "start": 1, "end": 12, "total_lines": 12}
+{"path": "src/hooks/communication/useVoiceAgent.ts", "start": 60, "end": 160, "total_lines": 297}
+{"path": "src/hooks/system/useRateLimitLogs.ts", "start": 1, "end": 97, "total_lines": 97}
+{"path": "src/components/diagnostics/ConnectionHealthPanel.tsx", "start": 25, "end": 93, "total_lines": 270}
+{"path": "src/hooks/__tests__/useVisiblePolling.test.tsx", "start": 75, "end": 136, "total_lines": 136}
+{"path": "src/hooks/inbox/useInboxUIState.test.ts", "start": 1, "end": 35, "total_lines": 35}
+{"path": "src/components/inbox/InboxFilters.tsx", "start": 67, "end": 110, "total_lines": 316}
+{"path": "src/components/inbox/InboxFilters.tsx", "start": 158, "end": 229, "total_lines": 316}
+{"path": "src/hooks/__tests__/sentimentAlerts.behavior.test.ts", "start": 24, "end": 120, "total_lines": 153}
+{"path": "src/hooks/voice/processTranscript.ts", "start": 1, "end": 43, "total_lines": 43}
+{"path": "src/components/inbox/quick-replies/QuickReplyDialog.tsx", "start": 1, "end": 47, "total_lines": 87}
+{"path": "src/components/inbox/QuickRepliesManager.tsx", "start": 20, "end": 65, "total_lines": 127}
+{"path": "src/components/inbox/QuickRepliesManager.tsx", "start": 102, "end": 127, "total_lines": 127}
+{"path": "src/components/inbox/quick-replies/QuickReplyCardList.tsx", "start": 55, "end": 108, "total_lines": 115}
+{"path": "src/components/inbox/ContactTypeFilter.tsx", "start": 22, "end": 96, "total_lines": 229}
+{"path": "src/hooks/inbox/useInboxFilters.ts", "start": 73, "end": 128, "total_lines": 191}
+{"path": "src/components/settings/SettingsView.tsx", "start": 128, "end": 151, "total_lines": 236}
+{"path": "src/components/settings/SettingsView.tsx", "start": 180, "end": 199, "total_lines": 236}
+{"path": "src/hooks/inbox/useInboxFilters.ts", "start": 153, "end": 174, "total_lines": 191}
+{"path": "src/components/inbox/conversation-list/StatusChips.tsx", "start": 20, "end": 52, "total_lines": 87}
+{"path": "src/components/inbox/VirtualizedRealtimeList.tsx", "start": 307, "end": 330, "total_lines": 622}
+{"path": "src/components/inbox/VirtualizedRealtimeList.tsx", "start": 415, "end": 443, "total_lines": 622}
+{"path": "src/components/inbox/tabs/FileDetailPanel.tsx", "start": 20, "end": 62, "total_lines": 104}
+{"path": "src/components/inbox/tabs/FileThumb.tsx", "start": 82, "end": 120, "total_lines": 204}
+{"path": "src/components/inbox/LeadRiskScorePanel.tsx", "start": 135, "end": 149, "total_lines": 149}
+{"path": "src/components/inbox/stickers/StickerCategoryBar.tsx", "start": 40, "end": 62, "total_lines": 98}
+{"path": "src/App.tsx", "start": 19, "end": 64, "total_lines": 154}
+{"path": "src/hooks/inbox/useSentimentAlerts.ts", "start": 1, "end": 135, "total_lines": 135}
+{"path": "src/components/dashboard/DashboardView.tsx", "start": 44, "end": 65, "total_lines": 240}
+{"path": "src/components/dashboard/DashboardView.tsx", "start": 150, "end": 181, "total_lines": 240}
+{"path": "src/App.tsx", "start": 100, "end": 147, "total_lines": 154}
+{"path": "src/components/inbox/AIConversationAssistant.tsx", "start": 40, "end": 108, "total_lines": 362}
+{"path": "src/pages/ViewRouter.tsx", "start": 35, "end": 64, "total_lines": 258}
+{"path": "src/pages/ViewRouter.tsx", "start": 118, "end": 167, "total_lines": 258}
+{"path": "src/components/inbox/AIConversationAssistant.tsx", "start": 133, "end": 164, "total_lines": 362}
+{"path": "src/components/inbox/chat/ChatDialogs.tsx", "start": 58, "end": 73, "total_lines": 73}
+{"path": "src/components/inbox/AIConversationAssistant.tsx", "start": 164, "end": 195, "total_lines": 362}
+{"path": "src/components/inbox/chat/ChatToolPanels.tsx", "start": 20, "end": 44, "total_lines": 70}
+{"path": "src/components/dashboard/overview/DashboardTabs.tsx", "start": 1, "end": 48, "total_lines": 48}
+{"path": "docs/COMPLETE_SYSTEM_FEATURES.md", "start": 180, "end": 192, "total_lines": 844}
+{"path": "docs/COMPLETE_SYSTEM_FEATURES.md", "start": 432, "end": 445, "total_lines": 844}
+{"path": "src/components/inbox/WhisperMode.tsx", "start": 90, "end": 114, "total_lines": 194}
+{"path": "src/adapters/__tests__/inboxAdapter.test.ts", "start": 1, "end": 23, "total_lines": 23, "test_roster_index": 1, "git_blob_sha": "1b3f72a75e4bba34afda22b06cd34e8b8e6d40b9", "source_sha256": "00f37771246f739888831dc70c741903115948522987c069e82cd65a1df5c015"}
+{"path": "src/components/catalog/__tests__/ContactSelectionStep.test.tsx", "start": 1, "end": 286, "total_lines": 286, "test_roster_index": 2, "git_blob_sha": "5f701167bb88e1d294485a3bfea1ea693c56c72c", "source_sha256": "a70071d2d930f25120b3689fd675b8dc1873a47f985c4fab3d7e9b71d4fb8aea"}
+{"path": "src/components/contacts/__tests__/BulkActionsBar.test.tsx", "start": 1, "end": 132, "total_lines": 132, "test_roster_index": 3, "git_blob_sha": "6169b5dea117e36293b4f31b909a7a54dc2a1f28", "source_sha256": "099b49cf5206697935b6a6c0b9ec2ecb3669acb899128e8bc50ed8fe91ef253b"}
+{"path": "src/components/contacts/__tests__/BulkActionsBarTypeGate.test.tsx", "start": 1, "end": 75, "total_lines": 75, "test_roster_index": 4, "git_blob_sha": "e78e70c24e5d6779103b1a9a36c75ea62588dab3", "source_sha256": "f3b242783c707af5c0f4f3d9e9a871985f71eb13ae2dad1b9a6b5dab2cfac505"}
+{"path": "src/components/contacts/__tests__/CT51_52_sendProduct.test.tsx", "start": 1, "end": 231, "total_lines": 231, "test_roster_index": 5, "git_blob_sha": "9aeeecda5771684a1ed52c1dab14ac25d6a3e530", "source_sha256": "036dd8d5d00b4994b27c574b33af70c2fa0a3ddc90bfce97c40b685c89e08570"}
+{"path": "src/components/contacts/__tests__/ContactCatalogSendHistory.test.tsx", "start": 1, "end": 68, "total_lines": 68, "test_roster_index": 6, "git_blob_sha": "8c353069087c04e6fb7aede2563f8fb3a8666a90", "source_sha256": "f541d18adf8ea1f369b06d04746cc14f8100740b19a27adec469c6e897e65864"}
+{"path": "src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx", "start": 1, "end": 90, "total_lines": 90, "test_roster_index": 7, "git_blob_sha": "ad9c146f2e0f44edab54c4124460b1a25885a543", "source_sha256": "31100001f964a7db6b187c02e32c998e73be7dee4cf92dbf02f46d554b61d9e9"}
+{"path": "src/components/contacts/__tests__/ContactDeletePermission.test.tsx", "start": 1, "end": 96, "total_lines": 96, "test_roster_index": 8, "git_blob_sha": "27b9b6fb307c878dd3afc27173afaecdfb492992", "source_sha256": "a0160f4054382c3a1baac00fbf5089dc6f1460c7fc0ee2f46e04005fa79f77b4"}
+{"path": "src/components/contacts/__tests__/ContactEngagementScore.test.tsx", "start": 1, "end": 154, "total_lines": 154, "test_roster_index": 9, "git_blob_sha": "82ec78cae9f0d2543833f853f9d66cc757401954", "source_sha256": "a1e2ec4860055a35761dcd6d15da4288fda8933ba7cc365b1856de7adbe54675"}
+{"path": "src/components/contacts/__tests__/ContactFormEndereco.integration.test.tsx", "start": 1, "end": 226, "total_lines": 226, "test_roster_index": 10, "git_blob_sha": "06aeb4506cd390c78b249f805536d861f540a79f", "source_sha256": "e0d6d8209652385a467e66f66595e3b0ead5d7f7c3e035cba0638a11254bdbf9"}
+{"path": "src/components/contacts/__tests__/ContactFormEndereco.test.tsx", "start": 1, "end": 326, "total_lines": 326, "test_roster_index": 11, "git_blob_sha": "2305cb0d2bf2fd3385e2463d064e768f17c3f275", "source_sha256": "d59b6796a1248b8e598ad389b9bc6706bcb63cd9e411417aa2a009d21a2a5284"}
+{"path": "src/components/contacts/__tests__/ContactKanbanAggregates.test.tsx", "start": 1, "end": 88, "total_lines": 88, "test_roster_index": 12, "git_blob_sha": "24a56be79a4da9f3502f9e1e0244c08f3d263daa", "source_sha256": "02fc1d44ad520af1ecc1e291d2ec2dd69bb62f768efc2d8da95cb38ce48bec20"}
+{"path": "src/lib/__fixtures__/mapbox/suggest-avenida-paulista-1000.json", "start": 1, "end": 10, "total_lines": 10}
+{"path": "src/lib/__fixtures__/mapbox/suggest-xbz.json", "start": 1, "end": 10, "total_lines": 10}
+{"path": "src/lib/__fixtures__/mapbox/retrieve-xbz-brindes.json", "start": 1, "end": 19, "total_lines": 19}
+{"path": "src/lib/__fixtures__/mapbox/forward-avenida-paulista-1000.json", "start": 1, "end": 11, "total_lines": 11}
+{"path": "src/components/contacts/__tests__/ContactMergePermission.test.tsx", "start": 1, "end": 114, "total_lines": 114, "test_roster_index": 13, "git_blob_sha": "a8b966254ae4427514bf4016ee2b533c152d0edb", "source_sha256": "449b4cefb5db0079c38be2d9a69faba2cdba0b994ac0adfa554b5041e5fb34cd"}
+{"path": "src/components/contacts/__tests__/ContactOpenChat.test.tsx", "start": 1, "end": 57, "total_lines": 57, "test_roster_index": 14, "git_blob_sha": "5f72f32b4eb9dffa8f4266d7a92ae6183072f23e", "source_sha256": "1aa1e34575e17cb267961328675eab1e8ae2ba59e74b6fa048ec4c9439f336b4"}
+{"path": "src/components/contacts/__tests__/ContactRegionMap.test.tsx", "start": 1, "end": 175, "total_lines": 175, "test_roster_index": 15, "git_blob_sha": "5b35ff1dc8dafd16c80d8c79eb515d6f41f0eab3", "source_sha256": "7d67323e5cba5749b40356f78dbc5e859a52b255ca9b0d9087ebc9843cf70745"}
+{"path": "src/components/contacts/__tests__/ContactStatsCards.test.tsx", "start": 1, "end": 87, "total_lines": 87, "test_roster_index": 16, "git_blob_sha": "cebc182213e2bb39f369188e9b4b426f7be514f3", "source_sha256": "d2064369def7e3cbff50fb42178b295ef96c7602bae21c4246e79653aff9a7bb"}
+{"path": "src/components/contacts/__tests__/ContactToolbar.test.tsx", "start": 1, "end": 111, "total_lines": 111, "test_roster_index": 17, "git_blob_sha": "35b3b7a0452dddd4f585c469e158b589be5702ea", "source_sha256": "703902f171921827f371b154abb8284f00b9a58a4092065332a54c7fd67603e1"}
+{"path": "src/components/contacts/__tests__/ContactTypeTabs.test.tsx", "start": 1, "end": 37, "total_lines": 37, "test_roster_index": 18, "git_blob_sha": "e85318b62abf1e7a1ccd3bf9f83d79272c06e352", "source_sha256": "bbe2b7037402c21f65d2e63196624233eec4688f314c5dd7d3b009f85f0506fa"}
+{"path": "src/components/contacts/__tests__/FilterPresets.test.tsx", "start": 1, "end": 64, "total_lines": 64, "test_roster_index": 20, "git_blob_sha": "9473bc2a2b1f3caae2d20c2408fbd8cdd6d4fa46", "source_sha256": "fbafcdd95165414f99759ca3707901f6e21e50043b25da56cfb9a52a3ab3977a"}
+{"path": "src/components/contacts/__tests__/contactDeleteFixtures.tsx", "start": 1, "end": 42, "total_lines": 42, "test_roster_index": 21, "git_blob_sha": "4fd84cd760d2f58fa1a1d3033da74b82860d2b03", "source_sha256": "d02e2e537a2053b12f73da4521cf682eded04343327479609234653d980c5ea6"}
+{"path": "src/components/contacts/__tests__/contactTypeConfig.test.ts", "start": 1, "end": 28, "total_lines": 28, "test_roster_index": 22, "git_blob_sha": "522bbd72600f8bd3293147cbdee216b40faaed17", "source_sha256": "50b438bae5c6bd789191b87623d09f1b3bf8978509253b37ea9fc7025a24b8a8"}
+{"path": "src/components/contacts/__tests__/ExternalDataIntegration.test.tsx", "start": 1, "end": 309, "total_lines": 309, "test_roster_index": 19, "git_blob_sha": "104582fe6106f0b30216b2fa78838467405dde00", "source_sha256": "b4585ad9b3d074a6eefdfd186905d661ce1a322852d29338e75e8bf59de27b06"}
+{"path": "src/components/contacts/__tests__/useContactFormValidation.test.ts", "start": 1, "end": 348, "total_lines": 348, "test_roster_index": 23, "git_blob_sha": "a71caec19b0f5c81fc620c7543fd4ec9f43d287c", "source_sha256": "1c5226641fae23eca194747c6fe39348d00cf65ca39d35923d95937337f3ffd6"}
+{"path": "src/components/contacts/__tests__/useContactsCRUD.test.tsx", "start": 1, "end": 393, "total_lines": 393, "test_roster_index": 24, "git_blob_sha": "7a21f2bee287ef1c636e56ed73c790a6c354db7e", "source_sha256": "f22b6d3d5dc17d002104aa173ce74881ca681f4df7a0c0cc0024627a44c5eb14"}
+{"path": "src/components/contacts/__tests__/useContactsViewState.test.tsx", "start": 1, "end": 122, "total_lines": 122, "test_roster_index": 25, "git_blob_sha": "79cff7d9fa79ddd56a5c61850aaf21db8cff3d59", "source_sha256": "8af05be3efce9b8244be53e470abf6a4e5fcac5c7e2b8560f9734e47b0d70f5d"}
+{"path": "src/components/email/__tests__/EmailChatInbox.test.tsx", "start": 1, "end": 117, "total_lines": 117, "test_roster_index": 26, "git_blob_sha": "d09a31c25ac4965a2dde4514654491c814f73376", "source_sha256": "b0577ad6a44c0536808dcb2102808790ff3268c455e80c75af1a2acb7823049b"}
+{"path": "src/components/email/__tests__/EmailContactPanel.test.tsx", "start": 1, "end": 334, "total_lines": 334, "test_roster_index": 27, "git_blob_sha": "f46a43d171f5693c39d11bcea6568f2eb0e8d3b3", "source_sha256": "cce4c97c6f8836dfd2b2395f2d0bdac7b3e63272ad543f9a1b5328b3a4ca70e6"}
+{"path": "src/components/gmail/__tests__/EmailComposer.test.tsx", "start": 1, "end": 255, "total_lines": 255, "test_roster_index": 28, "git_blob_sha": "94a9fc78b5b3b0a94abbd5da9d4a4ab5a6d31acf", "source_sha256": "6c40956cbcec028dc94d29682b1c8f7eb0312c148b37a8a043ff42a31425dabe"}
+{"path": "src/components/gmail/__tests__/GmailInboxView.test.tsx", "start": 1, "end": 255, "total_lines": 255, "test_roster_index": 29, "git_blob_sha": "ebe72def5331f7dc91f04cc796d316513cd56a3f", "source_sha256": "e92b00b87aacf558342ca51f860f1b3a03ac98240fad737b2b478e1a1a49a5cf"}
+{"path": "src/components/settings/media-library/useMediaLibrary.ts", "start": 30, "end": 78, "total_lines": 255}
+{"path": "src/components/settings/media-library/useMediaLibrary.ts", "start": 96, "end": 130, "total_lines": 255}
+{"path": "src/components/inbox/__tests__/AIConversationAssistant.ia048.test.tsx", "start": 1, "end": 171, "total_lines": 171, "test_roster_index": 30, "git_blob_sha": "cdddab0015def1c6bf90cbf083284c98f0cd2637", "source_sha256": "f753251e8c067cd298673d2fda632f8903e8b96a0b8593848f3a8ad7b6b5ba92"}
+{"path": "src/components/inbox/__tests__/AISuggestions.ia048.test.tsx", "start": 1, "end": 119, "total_lines": 119, "test_roster_index": 31, "git_blob_sha": "745f4a85e31b6b9c9843d1edcbfdcbe69182c4ae", "source_sha256": "fbeba7ab6724760a63a40c6c97151edcd65a52832c58971eaf8fb2aee60729e4"}
+{"path": "src/components/inbox/__tests__/CloseConversationDialog.test.tsx", "start": 1, "end": 75, "total_lines": 75, "test_roster_index": 32, "git_blob_sha": "7c86c4a5dbed490c6f2f15deb3736e1ea97b34f6", "source_sha256": "6c35a4f4efabc52bc34131392897ae8f048342a9e7a49bf338cbe07f426888f9"}
+{"path": "src/components/inbox/__tests__/ConversationListSidebar.test.tsx", "start": 1, "end": 213, "total_lines": 213, "test_roster_index": 33, "git_blob_sha": "aad0cf1642d6b1032818dea04ca7697a4ccfd009", "source_sha256": "197d0b2babb06ef9abfca30bd564c775021f696816947712e941bddb1f4d543b"}
+{"path": "src/components/inbox/__tests__/ConversationMemoryPanel.test.tsx", "start": 1, "end": 160, "total_lines": 160, "test_roster_index": 34, "git_blob_sha": "7bda74489180a02738efc57376375764a0c2d1cc", "source_sha256": "f23d5ca7ccfac1f81a7fd1242675b584171d48fa831e2e3705e9080c5c3f3702"}
+{"path": "src/components/inbox/__tests__/ConversationSummary.ia048.test.tsx", "start": 1, "end": 126, "total_lines": 126, "test_roster_index": 35, "git_blob_sha": "89337232769182f7b3b6b2f3237057f60a9bada9", "source_sha256": "8d70d115049f46d9a3ad2b8b3ee9a11c42e7efe9a8373c776eac298e5854d6c7"}
+{"path": "src/components/inbox/__tests__/ConversationSummary.test.tsx", "start": 1, "end": 128, "total_lines": 128, "test_roster_index": 36, "git_blob_sha": "8c002e1b921b446c01cae581365cbcce16c26b5c", "source_sha256": "8ca4c5da097ebd99237df7d7557aa8cc7fb4c47725651200e58d5e8781f95aef"}
+{"path": "src/components/inbox/__tests__/ConversationTabs.test.tsx", "start": 1, "end": 189, "total_lines": 189, "test_roster_index": 37, "git_blob_sha": "fbc9801d5fa89f14e73141dcf6c09218bcac9119", "source_sha256": "f8250064e9e6bedb02e0c0f9ab1def40073bca2e3505bd896635e96d9ca2d8f6"}
+{"path": "src/components/inbox/__tests__/ImagePreviewDownload.test.tsx", "start": 1, "end": 110, "total_lines": 110, "test_roster_index": 38, "git_blob_sha": "d02a8697fab8aa176b61c62bda936d6f1287826d", "source_sha256": "c6afdb9a4f361077d4604d68c1e74f78480fd437e8c92d32b07537a0b6d6ea8a"}
+{"path": "src/components/inbox/__tests__/ImagePreviewSize.test.tsx", "start": 1, "end": 122, "total_lines": 122, "test_roster_index": 39, "git_blob_sha": "9410dabe576fe601527393dd9fbedb2e9c8c3891", "source_sha256": "72eec1e62586b31d966f7e4e28f19587963d5b5043a360f3c135a38ac8d905f2"}
+{"path": "src/components/inbox/__tests__/LocationMessage.test.tsx", "start": 1, "end": 211, "total_lines": 211, "test_roster_index": 40, "git_blob_sha": "9d06fe3e25eb6bd19e8ba391eb06ac838192b83d", "source_sha256": "01fadbaa587808e4b2c40dc526769e3fdc13b7e28741cb945f52cec27a014af1"}
+{"path": "src/components/inbox/__tests__/LocationPicker.integration.test.tsx", "start": 1, "end": 260, "total_lines": 260, "test_roster_index": 41, "git_blob_sha": "4fb5dc4a77db7e4cb6211fe88680f10d95a720ff", "source_sha256": "67c2c58ec09cc749f90e6492255dc082a2633b1affbf80cd86fa5360ff00a19c"}
+{"path": "src/components/inbox/__tests__/LocationPicker.test.tsx", "start": 1, "end": 310, "total_lines": 634, "test_roster_index": 42, "git_blob_sha": "bf3f90ddfc6dd3e478836d9a3a9e5e780aebfc56", "source_sha256": "a66280707c462bb1fa0f7f684a91e67df9e2dcb773b49e1143085c3b55d9241c"}
+{"path": "src/lib/__fixtures__/mapbox/suggest-asdkjh.json", "start": 1, "end": 3, "total_lines": 3}
+{"path": "src/lib/__fixtures__/mapbox/rate-limit-429.json", "start": 1, "end": 3, "total_lines": 3}
+{"path": "src/components/inbox/__tests__/LocationPicker.test.tsx", "start": 311, "end": 634, "total_lines": 634, "test_roster_index": 42, "git_blob_sha": "bf3f90ddfc6dd3e478836d9a3a9e5e780aebfc56", "source_sha256": "a66280707c462bb1fa0f7f684a91e67df9e2dcb773b49e1143085c3b55d9241c"}
+{"path": "src/components/inbox/__tests__/MediaVolume.test.tsx", "start": 1, "end": 525, "total_lines": 525, "test_roster_index": 43, "git_blob_sha": "fe4dba36d2845f31ee8a68ce9a5b428dacdb46cd", "source_sha256": "7f641ed66857132054b82aeea05990a339baf10bd155e7bad07c4cd51c8ffdbb"}
+{"path": "src/components/inbox/__tests__/PlaybackSpeed.test.tsx", "start": 1, "end": 379, "total_lines": 379, "test_roster_index": 44, "git_blob_sha": "08c2b55d948d4d62840cd40980705c5792fdc173", "source_sha256": "db435fbe3c68f50af430da6ae84bfd3b826a881bd2bfe49a13d126bde2e7e8af"}
+{"path": "src/components/inbox/__tests__/SLAIndicator.test.tsx", "start": 1, "end": 224, "total_lines": 224, "test_roster_index": 45, "git_blob_sha": "24eb2f3d0ab02ecb1e9e8ea921947ff50750e031", "source_sha256": "365ba235c15438736321fa66db001aead50180088f7e43b5ebc0401bbfaec593"}
+{"path": "src/components/inbox/__tests__/StatusChips.test.tsx", "start": 1, "end": 72, "total_lines": 72, "test_roster_index": 46, "git_blob_sha": "80c01e2750da240ea311c81d9f31d0df35b5f5e0", "source_sha256": "aff736d10dd89e62fa30ce7f581d2c2ebd79c8861ce5bcf90954dd799ad64efc"}
+{"path": "src/components/inbox/__tests__/TransferDialog.test.tsx", "start": 1, "end": 63, "total_lines": 63, "test_roster_index": 47, "git_blob_sha": "f242668d13059cd8b928ccc87cc81fb31da36f71", "source_sha256": "f97612ba16dae206b52ce383a5d8f2515b10496ed077d50313bbf3ce282b129d"}
+{"path": "src/components/inbox/__tests__/resolveActiveTab.test.ts", "start": 1, "end": 31, "total_lines": 31, "test_roster_index": 48, "git_blob_sha": "91b7af22163bae9755f250754cb12dca8e779fcd", "source_sha256": "f34c0ee45155a4b21f669ebcb7cbf72111a5433703ec73990c94b9fa61f3ab5e"}
+{"path": "src/test/volumeControlMocks.ts", "start": 1, "end": 35, "total_lines": 35}
+{"path": "src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx", "start": 1, "end": 157, "total_lines": 157, "test_roster_index": 49, "git_blob_sha": "ac50ce39aa3a1fecefb8db853c9cec9f24d2ad71", "source_sha256": "c9017f90f2c809cbd6a69a11b72c070f201d2088e96986d6a8618a4b06ecfec8"}
+{"path": "src/components/inbox/chat/__tests__/ChatPanelHeader.test.tsx", "start": 1, "end": 195, "total_lines": 195, "test_roster_index": 50, "git_blob_sha": "84be23f320873a3eca05b04012a2e21df814cf8d", "source_sha256": "6451af273a349b11d5ba1af83ea0cc235d9ada8c640c6e974cc82734a1bc4556"}
+{"path": "src/components/inbox/chat/__tests__/ChatSearchBar.test.tsx", "start": 1, "end": 362, "total_lines": 362, "test_roster_index": 51, "git_blob_sha": "39d151d3f6a63beca9e4a9cd0d4ff55e2ff89f1a", "source_sha256": "2bf20e85dfd2376ea2e7144bfecf4c0b51980393515f01cc8044b08f60e9abd1"}
+{"path": "src/components/inbox/chat/__tests__/ChatWatermark.test.tsx", "start": 1, "end": 25, "total_lines": 25, "test_roster_index": 52, "git_blob_sha": "0e119488a21257d19c208b082bd66173af695232", "source_sha256": "6be968027dbb48c56e884264585e92ade6cecf4c098a8154aa5bb4ce145eea0b"}
+{"path": "src/components/inbox/chat/__tests__/ConversationTabs.test.tsx", "start": 1, "end": 103, "total_lines": 103, "test_roster_index": 53, "git_blob_sha": "0278ecf817082a7e35bedee1f2b80d50fcaabb0c", "source_sha256": "6682f739412f5a01fff21ec9a02d9e9a64695ace2e361fb023afbcc083b2ded6"}
+{"path": "src/components/inbox/chat/__tests__/HighlightedText.test.tsx", "start": 1, "end": 44, "total_lines": 44, "test_roster_index": 54, "git_blob_sha": "55c0e875de858225aa614e05061002c95e5ab651", "source_sha256": "0a14be403ca21280038606e49ea4eacd2f7ef04268aa6a0646c49015ffc14920"}
+{"path": "src/components/inbox/chat/__tests__/PinnedConversationsStack.test.tsx", "start": 1, "end": 41, "total_lines": 41, "test_roster_index": 55, "git_blob_sha": "b532fc20f6e14555f84bde921045542aa0f9e2c2", "source_sha256": "29f1961365383e6187a2799ab9efc7a8d9c5000e450284fd8ddb9bd8a76b707a"}
+{"path": "src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx", "start": 1, "end": 111, "total_lines": 111, "test_roster_index": 56, "git_blob_sha": "fd032f79256cc2265031d49dd388dcd22eedc8ed", "source_sha256": "2a66c38da8ec2aeea9ee311ef49e3d7ed163f7b869fc53575ce924e06d6f4ffa"}
+{"path": "src/components/inbox/contact-details/__tests__/ContactHeaderSection.test.tsx", "start": 1, "end": 427, "total_lines": 427, "test_roster_index": 57, "git_blob_sha": "7d7414773bc55b04697e0df44f9f38d5de40f42e", "source_sha256": "486e7e260cdcae34e745f9fc1c020235cb2a4b5a426ab3e81ba784789276f488"}
+{"path": "src/components/inbox/contact-details/__tests__/ContactInfoSection.test.tsx", "start": 1, "end": 64, "total_lines": 64, "test_roster_index": 58, "git_blob_sha": "947b34742ae70eb7c6e2b92d94a878a6351d8b35", "source_sha256": "58049d841fb4d5db71b431b5d8df867c6c02dc897c29bbe30f8a4090a2e65090"}
+{"path": "src/components/inbox/contact-details/__tests__/EditContactDialog.test.tsx", "start": 1, "end": 493, "total_lines": 493, "test_roster_index": 59, "git_blob_sha": "ed7aad67797007ea9d5f665a94794cb0cfa4fb3a", "source_sha256": "b28aadbc9ed45783b1357cf5cec717eafb3f4508c98c11c0640f4ee5069743c9"}
+{"path": "src/components/inbox/contact-details/__tests__/StoryViewer.test.tsx", "start": 1, "end": 136, "total_lines": 136, "test_roster_index": 60, "git_blob_sha": "788bc6785adaa04c9c64986275924cd04129dabd", "source_sha256": "57114caf0bfe6d770f57def9ac0c34676cbcf586b2cc84bbf3c88b1c33b6ea93"}
+{"path": "src/components/inbox/contact-details/__tests__/WhatsAppStatusSection.test.tsx", "start": 1, "end": 284, "total_lines": 284, "test_roster_index": 61, "git_blob_sha": "6d6de59e4c129ec5cabbc5418e405fc0988e34f5", "source_sha256": "0f03e2656e728abb752738d215147bb7d90fb566265f1ab776642cc650f8c8cc"}
+{"path": "src/components/inbox/contact-details/__tests__/contactDetailSections.test.ts", "start": 1, "end": 26, "total_lines": 26, "test_roster_index": 62, "git_blob_sha": "d1819da03413420c6fd3d262fe2248912f7f21e6", "source_sha256": "2cae5bfa2a2ab5880156d9a70d9d7e1e91d0f4aa3deccdca9648b2e599816595"}
+{"path": "src/components/inbox/contact-details/__tests__/editContactShape.test.ts", "start": 1, "end": 93, "total_lines": 93, "test_roster_index": 63, "git_blob_sha": "c9f516857e84ac279d9626d5b2d647861f1cade1", "source_sha256": "ed1f8abf67d5237529d3079140323c78c8e7d4bd1fbf1921fbd817340a715e50"}
+{"path": "src/components/inbox/contact-details/sidebar/__tests__/professionalFallback.test.ts", "start": 1, "end": 47, "total_lines": 47, "test_roster_index": 64, "git_blob_sha": "8b12ccac1febc53c6587fbca083a36a5d967f322", "source_sha256": "28ac2b175f1d9737a8e72bd96a15d7eb072ab00c0fccece07fd560ebdab3f22b"}
+{"path": "src/components/inbox/location-picker/__tests__/SuggestionList.test.tsx", "start": 1, "end": 244, "total_lines": 244, "test_roster_index": 65, "git_blob_sha": "81292eddfade49c74f50261195c95b630edecc24", "source_sha256": "cd821ca8b08b76b8b1aaa46d22fec0e0c6d201d215f5a90839f73b56dc1edd27"}
+{"path": "src/components/inbox/location-picker/__tests__/searchErrors.test.ts", "start": 1, "end": 41, "total_lines": 41, "test_roster_index": 66, "git_blob_sha": "dd06c7802dbc85e1ff6f17ae774b9ef3e4da8c03", "source_sha256": "48a3dfb6fa010258cc530039aa9a55582c879ee427f7287e72deb1cbec6ff37a"}
+{"path": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.reducer.test.ts", "start": 1, "end": 58, "total_lines": 58, "test_roster_index": 67, "git_blob_sha": "b7d15c6aee29afcfce7fb8ba3ea57ab69353fd35", "source_sha256": "c7fba42ff9f8ce444eba943c656e2ead69b6a5aa3e3b4668705db010dc3301b0"}
+{"path": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx", "start": 1, "end": 350, "total_lines": 1006, "test_roster_index": 68, "git_blob_sha": "ae2281005efe9356414cf659edc41d1d41adf192", "source_sha256": "9dad5197d4d2990b24e31c27b31e105446825bc210c4c0cf5625e17be02548d6"}
+{"path": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx", "start": 351, "end": 700, "total_lines": 1006, "test_roster_index": 68, "git_blob_sha": "ae2281005efe9356414cf659edc41d1d41adf192", "source_sha256": "9dad5197d4d2990b24e31c27b31e105446825bc210c4c0cf5625e17be02548d6"}
+{"path": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx", "start": 701, "end": 1006, "total_lines": 1006, "test_roster_index": 68, "git_blob_sha": "ae2281005efe9356414cf659edc41d1d41adf192", "source_sha256": "9dad5197d4d2990b24e31c27b31e105446825bc210c4c0cf5625e17be02548d6"}
+{"path": "src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx", "start": 1, "end": 521, "total_lines": 521, "test_roster_index": 69, "git_blob_sha": "a4a1523d9c72d1c983f5ba8e18476e4ab94b80ab", "source_sha256": "c72792384d66384e14bfd122c211caf5dcdd3d061f7a9fde41f1fe44ec6fab4a"}
+{"path": "src/components/inbox/media-gallery/__tests__/MediaPreviewDialog.test.tsx", "start": 1, "end": 135, "total_lines": 135, "test_roster_index": 70, "git_blob_sha": "7dbbbef585d30c1356434f335f7ba532e58d290b", "source_sha256": "70524829b40b6e2333fb7f21878608f3e5f81cb97ae27abc158a526f52511a6f"}
+{"path": "src/components/inbox/tabs/__tests__/AiTab.test.tsx", "start": 1, "end": 99, "total_lines": 99, "test_roster_index": 71, "git_blob_sha": "bce0dc4c5f1620c191d35de5423528748501126f", "source_sha256": "8304ba8358732efc5ce1ed644b0fb105f5fbab01d7b04dea3543071bd4499e93"}
+{"path": "src/components/inbox/tabs/__tests__/ContactStatsStrip.test.tsx", "start": 1, "end": 73, "total_lines": 73, "test_roster_index": 72, "git_blob_sha": "cc7890b7512a1d9db089dce299dd0d1cb0ab65a4", "source_sha256": "fa65048c3bc43cc93593465ec7a71d20e3a431cdf772578e44afed95f8102731"}
+{"path": "src/components/inbox/tabs/__tests__/Crm360Tab.test.tsx", "start": 1, "end": 207, "total_lines": 207, "test_roster_index": 73, "git_blob_sha": "4f96c82bac6684fbb2a58d4d4e4eb5e6de0573e1", "source_sha256": "70eaaf2128b648a123ab59c03fdc593383889e28f0c9694a3d18f1141d2e156a"}
+{"path": "src/components/inbox/tabs/__tests__/FileCard.test.tsx", "start": 1, "end": 161, "total_lines": 161, "test_roster_index": 74, "git_blob_sha": "59a69692973b7f471a0d4d74f237747727885104", "source_sha256": "d2fe9d7edfa56667c769d25dc189ce905fb9a8f41adfde29132ce9bc18c02eb4"}
+{"path": "src/components/inbox/tabs/__tests__/FileThumb.test.tsx", "start": 1, "end": 236, "total_lines": 236, "test_roster_index": 75, "git_blob_sha": "9001744655a2101c973fe5e23eeaf01921e19cd9", "source_sha256": "b0a2d76063d87c08994bc5673d09ac20482be81aa2f69a968ee241f016968dc8"}
+{"path": "src/components/inbox/tabs/__tests__/FilesColumnSelector.test.tsx", "start": 1, "end": 55, "total_lines": 55, "test_roster_index": 76, "git_blob_sha": "0887b1c0bd6c965446a7d2ec2df1969332f8ac1e", "source_sha256": "bc5ea14c2d7ad613d26ed4a67c22225c428710da922c764c6adf11e67ba9a02a"}
+{"path": "src/components/inbox/tabs/__tests__/FilesContent.test.tsx", "start": 1, "end": 140, "total_lines": 140, "test_roster_index": 77, "git_blob_sha": "2ee3392cfa3d50a8b5d77face8b064155c8ae7db", "source_sha256": "7d797018aa457afda493fd6c69ce31e20764275184e6d396690306f5edf2d346"}
+{"path": "src/components/inbox/tabs/__tests__/FilesLayoutPopover.test.tsx", "start": 1, "end": 78, "total_lines": 78, "test_roster_index": 78, "git_blob_sha": "8ba39a453e5a600394db6b6928c6728cc411e7ee", "source_sha256": "8d4b682258d6a2a91dee970fbb76532ef90b2cf59e210ba14dec435fd1ab1a2e"}
+{"path": "src/components/inbox/tabs/__tests__/FilesListView.test.tsx", "start": 1, "end": 78, "total_lines": 78, "test_roster_index": 79, "git_blob_sha": "50fed6d54fe15beba27728a98dbc8a7312cc9347", "source_sha256": "b4cfb6a1f30df8adac46b96122efeac7d63d8765de23a5e88ecaa67e1cd9467d"}
+{"path": "src/components/inbox/tabs/__tests__/FilesSelectionBar.test.tsx", "start": 1, "end": 93, "total_lines": 93, "test_roster_index": 80, "git_blob_sha": "a1846bde558cb24d262faced661f4d04f6a6c9bf", "source_sha256": "43735c3527ed9202f4245c6bc31c2cfe5e671e8dfb93fcec24dc1514aab9df01"}

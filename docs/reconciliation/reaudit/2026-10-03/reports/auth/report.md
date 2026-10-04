@@ -1,14 +1,14 @@
-# Reauditoria — Auth, usuários, Team Chat, Contatos e ponte Singu
+# Reauditoria — Auth, usuários, Team Chat, Contatos, administração, IA, gamificação, configurações e chamadas
 
-Fonte fixada: `da307ba5626dce892f0b37cb6762463f55d14a96`. Relatório gerado em 2026-10-04T02:34:31.587427+00:00.
+Fonte fixada: `da307ba5626dce892f0b37cb6762463f55d14a96`. Relatório gerado em 2026-10-04T06:39:12.634048+00:00.
 
 ## Resultado e alcance
 
-Foram identificados 40 achados novos confirmados na fonte (10 mecanismos reproduzidos offline) e 1 refinamento de achados prévios. Os casos sem consumidor ativo ficam separados e não entram na contagem de falhas em produção. A gravidade descreve a falha de implementação e suas precondições; nenhum item afirma incidente ocorrido no ambiente real.
+Foram identificados 52 achados novos confirmados na fonte (11 mecanismos reproduzidos offline) e 1 refinamento de achados prévios. Os casos sem consumidor ativo ficam separados e não entram na contagem de falhas em produção. A gravidade descreve a falha de implementação e suas precondições; nenhum item afirma incidente ocorrido no ambiente real.
 
 Os maiores riscos são a verificação WebAuthn sem prova criptográfica, MFA sem gate efetivo, controles de revogação que só alteram tabelas públicas, recuperação de conta interrompida, rascunho entre destinatários e identidade externa trocada na inteligência CRM. Há ainda falhas de confirmação em permissões, roles e mutations e funções de gerenciamento visíveis sem implementação.
 
-Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta de segredos ou execução de scripts do produto. Os 10 probes executam código real transpilado/closures extraídas, com fronteiras sintéticas explicitamente descritas; não representam E2E nem certificação de RLS.
+Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta de segredos ou execução de scripts do produto. Os 11 probes executam código real transpilado/closures extraídas, com fronteiras sintéticas explicitamente descritas; não representam E2E nem certificação de RLS.
 
 ## Inventário dos achados
 
@@ -55,6 +55,18 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 | R2-AUTH-039 | medium | CONFIRMED_STATIC | Recálculo atrasado grava coordenadas do endereço anterior e apaga o aviso de desatualização |
 | R2-AUTH-040 | medium | CONFIRMED_STATIC | Janela relativa do painel de uso de IA fica presa à hora de abertura |
 | R2-AUTH-041 | medium | CONFIRMED_STATIC | Consulta de custo de IA passa fim nulo e elimina todas as chamadas da janela |
+| R2-AUTH-042 | medium | CONFIRMED_STATIC | Página Conquistas apresenta progresso simulado como pertencente ao usuário |
+| R2-AUTH-043 | medium | CONFIRMED_STATIC | Mini-games anunciam ganho de XP sem consumidor que credite a recompensa |
+| R2-AUTH-044 | medium | CONFIRMED_OFFLINE_PROBE | Speed Typing encerrado conclui o jogo seguinte e grava seu recorde sem jogá-lo |
+| R2-AUTH-045 | medium | CONFIRMED_STATIC | CSAT carrega a configuração sem sincronizar o formulário e pode sobrescrevê-la com defaults |
+| R2-AUTH-046 | medium | CONFIRMED_STATIC | Seletor de proficiência sempre cadastra nível 3 independentemente da escolha |
+| R2-AUTH-047 | medium | CONFIRMED_STATIC | Aba Sons altera um estado privado que o botão Salvar não persiste nem aplica aos alertas |
+| R2-AUTH-048 | medium | CONFIRMED_STATIC | Classificar Recentes contabiliza respostas de erro como conversas classificadas |
+| R2-AUTH-049 | medium | CONFIRMED_STATIC | Abas de horário, mensagens e automação persistem preferências sem ligação aos executores versionados |
+| R2-AUTH-050 | medium | CONFIRMED_STATIC | Solicitação de exclusão de dados é confirmada mesmo quando o registro de auditoria falha |
+| R2-AUTH-051 | medium | CONFIRMED_STATIC | Resumo pós-chamada descarta a anotação ainda em edição ao fechar automaticamente |
+| R2-AUTH-052 | medium | CONFIRMED_STATIC | A tabela de ligações cancela o acionamento por teclado do botão Ligar de volta |
+| R2-AUTH-053 | medium | CONFIRMED_STATIC | O tema Diversity remove o indicador de foco definido para botões padrão e cards de tema |
 
 ## Evidência por achado
 
@@ -78,7 +90,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 
 **Alegações documentais relacionadas:** 1.10, 24.5 em COMPLETE_SYSTEM_FEATURES.md.
 
-**Reprodução:** P-AUTH-01 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).
+**Reprodução:** P-AUTH-01 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
 
 **Critérios de aceite para correção:**
 
@@ -210,7 +222,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 
 **Comparação com os 104 anteriores:** Não foi encontrado achado equivalente nos 104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
 
-**Reprodução:** P-AUTH-02 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).
+**Reprodução:** P-AUTH-02 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
 
 **Critérios de aceite para correção:**
 
@@ -306,7 +318,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 
 **Alegações documentais relacionadas:** 1.12, 1.13 em COMPLETE_SYSTEM_FEATURES.md.
 
-**Reprodução:** P-AUTH-05 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).
+**Reprodução:** P-AUTH-05 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
 
 **Critérios de aceite para correção:**
 
@@ -339,7 +351,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 
 **Alegações documentais relacionadas:** 1.17, 1.12 em COMPLETE_SYSTEM_FEATURES.md.
 
-**Reprodução:** P-AUTH-03 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).
+**Reprodução:** P-AUTH-03 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
 
 **Critérios de aceite para correção:**
 
@@ -373,7 +385,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 
 **Comparação com os 104 anteriores:** Não foi encontrado achado equivalente nos 104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
 
-**Reprodução:** P-AUTH-04 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).
+**Reprodução:** P-AUTH-04 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
 
 **Critérios de aceite para correção:**
 
@@ -472,7 +484,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 
 **Comparação com os 104 anteriores:** Não foi encontrado achado equivalente nos 104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
 
-**Reprodução:** P-AUTH-06 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).
+**Reprodução:** P-AUTH-06 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
 
 **Critérios de aceite para correção:**
 
@@ -616,7 +628,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 
 **Comparação com os 104 anteriores:** Não foi encontrado achado equivalente nos 104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
 
-**Reprodução:** P-AUTH-07 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).
+**Reprodução:** P-AUTH-07 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
 
 **Critérios de aceite para correção:**
 
@@ -706,7 +718,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 
 **Alegações documentais relacionadas:** 1.19 em COMPLETE_SYSTEM_FEATURES.md.
 
-**Reprodução:** P-AUTH-08 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).
+**Reprodução:** P-AUTH-08 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
 
 **Critérios de aceite para correção:**
 
@@ -778,7 +790,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 
 **Alegações documentais relacionadas:** 24.11 em COMPLETE_SYSTEM_FEATURES.md.
 
-**Reprodução:** P-AUTH-10 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).
+**Reprodução:** P-AUTH-10 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
 
 **Critérios de aceite para correção:**
 
@@ -847,7 +859,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 
 **Comparação com os 104 anteriores:** Comparado com os 104 registros anteriores por caminho, fluxo e assunto; não há equivalente material. Não reconta achado anterior.
 
-**Reprodução:** P-AUTH-09 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).
+**Reprodução:** P-AUTH-09 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
 
 **Critérios de aceite para correção:**
 
@@ -1292,6 +1304,7 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 - `src/components/contacts/ContactRegionMap.tsx:59–65` — contagem aproximada sem exclusão dos precisos; blob `5eab1972370062e84b2164a5f8a931b7e8c91d41`.
 - `src/components/contacts/ContactRegionMap.tsx:146–180` — duas séries de marcadores; blob `5eab1972370062e84b2164a5f8a931b7e8c91d41`.
 - `src/components/contacts/ContactRegionMap.tsx:218–234` — legenda com contagens de confirmação e aproximação; blob `5eab1972370062e84b2164a5f8a931b7e8c91d41`.
+- `supabase/migrations/20260930450000_contacts_include_legacy_filter.sql:22–34` — search_contacts vigente devolve latitude/longitude do contato; blob `f4acf38fcd554ab0c8af81785721ddb416f1c858`.
 
 **Comparação com os 104 anteriores:** Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material.
 
@@ -1415,6 +1428,435 @@ Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta 
 - Comparação SQL com NULL documentada na fonte primária PostgreSQL. O problema é independente da janela que cresce em AUTH040.
 - Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
 
+### R2-AUTH-042 — Página Conquistas apresenta progresso simulado como pertencente ao usuário
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** ViewRouter achievements(userId) → AchievementsSystem → timer de800ms carrega MOCK_ACHIEVEMENTS → níveis/progresso/data → AchievementDetailDialog Reivindicar Recompensa.
+
+**Precondição:** Usuário abre a view Conquistas, inclusive conta nova sem mensagens/conquistas. O componente termina o timer local de carregamento.
+
+**Falha e consequência:** O componente ignora userId para obter dados: sempre carrega os mesmos oito mocks com três conquistas desbloqueadas,400 XP e progressos fixos como756 conversas resolvidas. Datas são sintetizadas a partir de Date.now. A interface não identifica demonstração. Reivindicar a conquista nova emite celebração/toast de XP e muda apenas isNew localmente; não grava recompensa nem altera saldo. Reabrir remonta os mesmos dados e a recompensa pode aparecer nova de novo. Existe outro painel que consulta agent_stats/agent_achievements, mas a view roteada não o utiliza.
+
+**Evidências na fonte:**
+
+- `src/pages/ViewRouter.tsx:109–113` — view achievements montada com userId; blob `9964a4ea364a29ff6a59c5e49e199c2eeab22ec9`.
+- `src/components/gamification/AchievementsSystem.tsx:45–81` — dados fixos, carregamento sintético e claim local; blob `3cdf421925fe46502f3218787c4eeade264f57e1`.
+- `src/components/gamification/AchievementsSystem.tsx:130–187` — nível, XP e progresso apresentados sem rótulo de demonstração; blob `3cdf421925fe46502f3218787c4eeade264f57e1`.
+- `src/components/gamification/AchievementDetailDialog.tsx:61–79` — recompensa e botão reivindicar; blob `360bbe28d4e455ae225453aa4d08b06159907af6`.
+- `src/hooks/gamification/useAgentGamification.ts:32–61` — controle positivo: consultas reais existentes no outro painel; blob `033d36c21d9cc59f985972d1581893f274cdd889`.
+
+**Comparação com os 104 anteriores:** Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material.
+
+**Critérios de aceite para correção:**
+
+- Conectar a view ao estado autorizado do usuário e distinguir carregamento, ausência real, erro e demonstração.
+- Se os mocks permanecerem como demonstração, identificar esse modo e não apresentá-los como saldo ou desempenho da conta.
+- Vincular resgate à operação autorizada/idempotente confirmada e atualizar o saldo, ou remover a promessa de recompensa real.
+- Conferir conta nova, conta com conquistas e reabertura após resgate: valores e datas devem vir da fonte correspondente e não se repetir por remontagem.
+
+**Limites:**
+
+- Não se afirma uso dessas pontuações em decisões trabalhistas. O efeito comprovado é a atribuição visual de desempenho e saldo inexistentes na fonte consumida.
+- Leaderboard e AchievementsPanel têm consultas reais; não se afirma que toda a infraestrutura de gamificação seja mock.
+- Nenhuma conquista real foi criada, reivindicada ou alterada.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-043 — Mini-games anunciam ganho de XP sem consumidor que credite a recompensa
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** Dashboard GamificationSection → DashboardWidgetRenderer mini-games → TrainingMiniGames sem onXPEarned → conclusão do jogo → toast Você ganhou XP.
+
+**Precondição:** Usuário abre o widget de mini-games e conclui um dos jogos implementados com pontuação positiva.
+
+**Falha e consequência:** A única montagem produtiva de TrainingMiniGames não fornece onXPEarned. handleGameComplete chama opcionalmente essa prop e sempre informa Você ganhou N XP. Seus únicos writes efetivos são score/estado local e miniGameHighScores no localStorage, sem usuário, RPC ou integração ao saldo agent_stats. Assim a conclusão anuncia recompensa, mas nenhuma operação de crédito é executada no caminho atual. O componente oferecer callback não comprova que ele esteja conectado.
+
+**Evidências na fonte:**
+
+- `src/components/dashboard/overview/GamificationSection.tsx:18–40` — widget visível encaminhado ao renderer; blob `0f52d78baef6aa404998c7fc98d1d38da60da27d`.
+- `src/components/dashboard/DashboardWidgetRenderer.tsx:144–148` — único consumidor omite onXPEarned; blob `566782938f8de0bebcd166ded452b4f89970abe3`.
+- `src/components/gamification/TrainingMiniGames.tsx:11–44` — callback opcional, writes locais e confirmação incondicional; blob `5ed087017c1fa5b97603845b75316d785b2b9129`.
+- `src/components/gamification/MiniGameDialogs.tsx:87–95` — conclusão do quiz com pontuação e XP; blob `8569ac3983114bb1e1c4f00b7d7fead20a1727cc`.
+- `src/hooks/gamification/mutations.ts:8–20` — operação real de XP existe, mas não está ligada ao mini-game; blob `1889a388d52b105a028ad8c133dbd5960bbb6948`.
+
+**Comparação com os 104 anteriores:** Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material.
+
+**Critérios de aceite para correção:**
+
+- Definir se XP do jogo é apenas pontuação local ou recompensa da conta e comunicar essa distinção na interface.
+- Se houver crédito real, conectar a conclusão ao contrato autorizado e idempotente e confirmar somente após persistência; não confiar apenas em número fornecido pelo cliente.
+- Conferir saldo antes/depois e após reload, conclusão repetida e falha do crédito. O texto de sucesso deve corresponder ao efeito confirmado.
+- Separar recordes locais por usuário quando a apresentação for pessoal e validar o formato salvo antes de carregar.
+
+**Limites:**
+
+- O jogo e o recorde local existem; a falha não é ausência de toda mecânica de treinamento.
+- Não houve invocação real da RPC de XP. Políticas e autorização dessa RPC pertencem à análise SQL, e sua existência não foi tratada como garantia de crédito pelo frontend.
+- O problema de fechar o jogo seguinte é independente e está em AUTH044.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-044 — Speed Typing encerrado conclui o jogo seguinte e grava seu recorde sem jogá-lo
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_OFFLINE_PROBE.
+
+**Consumidor → efeito:** TrainingMiniGames mantém os três componentes montados → SpeedTypingGame timer chega a zero → onComplete inline muda no rerender → effect de conclusão roda mesmo fechado → handleGameComplete captura novo selectedGame.
+
+**Precondição:** Na mesma montagem do widget, o usuário conclui Speed Typing e depois abre outro jogo, por exemplo Quiz.
+
+**Falha e consequência:** SpeedTypingGame não redefine isActive ao concluir/fechar e seu effect chama onComplete sempre que timeLeft===0, sem gate isOpen nem marca de conclusão. O pai recria handleGameComplete em cada render e mantém o componente montado mesmo com o Dialog fechado. Ao selecionar Quiz, a nova closure continua sendo chamada pelo Speed Typing já encerrado: ela usa selectedGame=quiz, grava o score de digitação como recorde do Quiz, anuncia sua conclusão e fecha o diálogo recém-aberto. A prova offline terminou uma frase de33 pontos, observou duas conclusões e depois um Quiz fechado com33 pontos e16 XP anunciados, sem responder pergunta.
+
+**Evidências na fonte:**
+
+- `src/components/gamification/MiniGameDialogs.tsx:18–37` — state do timer e effect sem gate de abertura/conclusão; blob `8569ac3983114bb1e1c4f00b7d7fead20a1727cc`.
+- `src/components/gamification/TrainingMiniGames.tsx:25–44` — callback usa selectedGame atual, salva recorde e fecha jogo; blob `5ed087017c1fa5b97603845b75316d785b2b9129`.
+- `src/components/gamification/TrainingMiniGames.tsx:53–58` — seleção do próximo jogo; blob `5ed087017c1fa5b97603845b75316d785b2b9129`.
+- `src/components/gamification/TrainingMiniGames.tsx:78–80` — componentes permanecem montados e callback inline compartilhado; blob `5ed087017c1fa5b97603845b75316d785b2b9129`.
+
+**Comparação com os 104 anteriores:** Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material.
+
+**Reprodução:** P-AUTH-11 em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).
+
+**Critérios de aceite para correção:**
+
+- Encerrar/cancelar timer e marcar cada partida como concluída uma única vez, considerando isOpen e uma identidade estável da partida.
+- Vincular score à partida que o produziu, sem depender do selectedGame da closure recriada posteriormente.
+- Conferir terminar/fechar digitação, abrir Quiz e Emoji, reabrir digitação e rerender do dashboard: não pode haver conclusão, crédito ou recorde sem evento válido da respectiva partida.
+- Cancelar callbacks pendentes no fechamento/desmontagem e preservar os jogos novos de conclusões tardias dos anteriores.
+
+**Limites:**
+
+- P-AUTH-11 executa declarações reais e constantes fixadas com scheduler React sintético de useState/useEffect e60 ticks virtuais. Outros jogos são elementos stub; nenhuma resposta do Quiz é submetida.
+- O teste não é navegador/E2E e não comprova frequência em produção. Ele reproduz o ordenamento e os writes locais sem rede ou banco.
+- Não é inflação de saldo real: AUTH043 documenta que o consumidor atual não credita XP no banco.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-045 — CSAT carrega a configuração sem sincronizar o formulário e pode sobrescrevê-la com defaults
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** SettingsView aba CSAT → CSATAutoConfig consulta csat_auto_config → estados locais → Salvar Configuração atualiza a linha carregada.
+
+**Precondição:** Staff autorizado abre a aba com cache de csat-auto-config vazio; existe uma configuração com ao menos um valor diferente dos defaults. A consulta termina depois da primeira renderização e o operador salva o formulário.
+
+**Falha e consequência:** Os quatro estados recebem defaults na primeira renderização. O trecho rotulado Sync state when data loads usa useState com initializer, executado somente na inicialização, e não acompanha a chegada de config. Após o retorno, a UI continua desativada, com atraso 5, mensagem padrão e nenhuma conexão. O callback de salvar já enxerga config.id e faz UPDATE dessa linha com os estados antigos. Assim uma abertura normal com cache vazio pode desativar uma configuração existente e apagar conexão/mensagem personalizada. isLoading é obtido mas não bloqueia nem inicializa o formulário.
+
+**Evidências na fonte:**
+
+- `src/components/settings/SettingsView.tsx:209–213` — montagem ativa com gate staff; blob `c576115115689b975b3897df601519e09de34f53`.
+- `src/components/settings/CSATAutoConfig.tsx:27–48` — consulta assíncrona, defaults e initializer usado como sincronização; blob `859fe36d2678fc57ac847fb6d77fc79662b1a6d0`.
+- `src/components/settings/CSATAutoConfig.tsx:50–75` — payload local atualiza id carregado e anuncia sucesso; blob `859fe36d2678fc57ac847fb6d77fc79662b1a6d0`.
+- `src/components/settings/CSATAutoConfig.tsx:100–120` — estado do switch e atraso; blob `859fe36d2678fc57ac847fb6d77fc79662b1a6d0`.
+- `src/components/settings/CSATAutoConfig.tsx:126–166` — conexão/template e Save sem gate de loading; blob `859fe36d2678fc57ac847fb6d77fc79662b1a6d0`.
+
+**Comparação com os 104 anteriores:** Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material.
+
+**Critérios de aceite para correção:**
+
+- Inicializar os campos somente depois de resolver a consulta e distinguir ausência real de configuração de erro ou carregamento.
+- Sincronizar dados carregados sem substituir edições locais novas; resetar deliberadamente o formulário por identidade/versão da configuração.
+- Validar cache vazio com configuração ativa, atraso diferente de 5, conexão e mensagem customizada: abrir e salvar sem alterações deve preservar cada campo.
+- Em falha de leitura, não permitir inserção ou sobrescrita de defaults apresentada como atualização da configuração existente.
+
+**Limites:**
+
+- A gravação requer as permissões do usuário e pode ser negada por RLS. A falha não contorna autorização.
+- Cache já preenchido antes da montagem pode inicializar os valores corretamente; a precondição é a chegada assíncrona após a primeira renderização.
+- Não houve envio de pesquisa, alteração real de configuração nem afirmação sobre o executor CSAT externo.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-046 — Seletor de proficiência sempre cadastra nível 3 independentemente da escolha
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** SettingsView aba Roteamento → SkillBasedRoutingSettings seletor Nível → adicionar habilidade → INSERT agent_skills.skill_level.
+
+**Precondição:** Staff autorizado seleciona um agente, informa uma nova habilidade, escolhe nível 1, 2, 4 ou 5 e adiciona com sucesso.
+
+**Falha e consequência:** O Select começa em 3, oferece 1–5 e usa onValueChange vazio. O botão de adicionar envia literalmente level:3, que o mutationFn grava como skill_level. A escolha visível não participa do payload: competências novas são cadastradas com proficiência diferente da informada. Após refetch, a UI exibe três estrelas. O contrato SQL skill_based_assign compara skill_level>=min_level, mas o único hook encontrado não tem consumidor produtivo demonstrado; portanto o achado se limita ao cadastro e não afirma atribuição automática incorreta em produção.
+
+**Evidências na fonte:**
+
+- `src/components/settings/SettingsView.tsx:221–225` — aba ativa de roteamento; blob `c576115115689b975b3897df601519e09de34f53`.
+- `src/components/settings/SkillBasedRoutingSettings.tsx:67–80` — mutation grava level como skill_level; blob `0defc5b754ad0a9e8d2bf684fcb53caf89667538`.
+- `src/components/settings/SkillBasedRoutingSettings.tsx:150–157` — estrelas refletem valor persistido; blob `0defc5b754ad0a9e8d2bf684fcb53caf89667538`.
+- `src/components/settings/SkillBasedRoutingSettings.tsx:166–194` — onValueChange vazio e level 3 literal; blob `0defc5b754ad0a9e8d2bf684fcb53caf89667538`.
+- `supabase/migrations/20260828000000_guard_secdef_batch.sql:142–171` — contrato consumidor SQL e fallback; não prova chamada ativa; blob `e86202aca15619acfe8f4a3e8d2aab93e92a5a5a`.
+- `src/hooks/system/useSkillBasedAssign.ts:9–28` — único wrapper RPC encontrado, sem consumidor ativo; blob `6a49bc54ca4748e2f983d402c3031263daf31517`.
+
+**Comparação com os 104 anteriores:** Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material.
+
+**Critérios de aceite para correção:**
+
+- Controlar o nível selecionado em estado e usar esse valor validado no payload de criação.
+- Conferir criação dos cinco níveis e recarregamento da lista; cada registro deve mostrar exatamente o nível escolhido.
+- Separar validação do cadastro da integração de roteamento; somente afirmar atribuição por habilidade quando existir consumidor que execute e aplique a decisão.
+
+**Limites:**
+
+- Não há elevação de papel nem escrita sem permissão demonstrada. Trata-se de integridade de um dado administrativo.
+- O seletor de nível mínimo da fila possui estado e envia o valor escolhido corretamente; não é afetado por este literal.
+- skill_based_assign também possui fallback sem requisito quando não encontra candidato. Esse comportamento não foi julgado sem regra de negócio correspondente.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-047 — Aba Sons altera um estado privado que o botão Salvar não persiste nem aplica aos alertas
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** SettingsView aba Sons → SoundCustomizationPanel instancia useUserSettings próprio → controles locais; Salvar Alterações usa outra instância do hook no pai; alertas usam useNotificationSettings.
+
+**Precondição:** Usuário altera Sons habilitados, horário silencioso, tipo de som ou Volume geral na aba Sons, clica Salvar Alterações e espera a preferência nos próximos alertas/reabertura.
+
+**Falha e consequência:** O painel chama useUserSettings sem receber os settings/callbacks do pai. updateSettings apenas muda useState dentro de cada instância. Nenhum callback do painel chama saveSettings; o botão geral salva os valores antigos da instância de SettingsView. Além disso, o hook nem lê nem inclui os cinco *_sound_type no payload. masterVolume só controla a legenda e o slider; o preview usa gain 0.3 fixo. O upload grava um arquivo mas descarta o caminho, sem acrescentar opção ou vinculá-lo a categoria. Os alertas reais consultam outro hook e continuam com as preferências persistidas. A UI pode mostrar som desligado ou silencioso e confirmar Configurações salvas enquanto alertas mantêm o comportamento anterior.
+
+**Evidências na fonte:**
+
+- `src/components/settings/SettingsView.tsx:37–60` — instância do pai e botão Salvar Alterações; blob `c576115115689b975b3897df601519e09de34f53`.
+- `src/components/settings/SettingsView.tsx:165–171` — painel de Sons montado sem props de estado; blob `c576115115689b975b3897df601519e09de34f53`.
+- `src/components/settings/SoundCustomizationPanel.tsx:22–64` — gain fixo, hook privado, volume local, tipos e upload sem associação; blob `841c102f63385924d18dc1f0707c0dcbefdaffd5`.
+- `src/components/settings/SoundCustomizationPanel.tsx:73–108` — toggles/sliders/categorias usam apenas estado privado; blob `841c102f63385924d18dc1f0707c0dcbefdaffd5`.
+- `src/hooks/system/useUserSettings.ts:106–146` — mapping omite tipos e updateSettings somente local; blob `2ed33a6cf26d8a2dcd977b9c5b8fa3e2efac09a3`.
+- `src/hooks/system/useUserSettings.ts:149–204` — salvar usa closure da própria instância, omite tipos e confirma sucesso; blob `2ed33a6cf26d8a2dcd977b9c5b8fa3e2efac09a3`.
+- `src/hooks/system/useNotificationSettings.ts:84–102` — alertas leem preferências persistidas pelo hook canônico; blob `d576442b7696f7eb30c9043d57c7dc0d1b3d486a`.
+- `src/hooks/realtime/useRealtimeNotifications.ts:31–43` — player real recebe tipo/volume canônicos; blob `408174af1e23336ed41e9e75b99513a77e8052e1`.
+- `src/components/notifications/SoundVolumeControl.tsx:40–60` — controle positivo: volume rápido usa updateSettings canônico; blob `16e774c3f6bc02d1154f44654788341805bce155`.
+
+**Comparação com os 104 anteriores:** Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material.
+
+**Critérios de aceite para correção:**
+
+- Compartilhar uma fonte de preferências e callbacks de persistência entre painel e botão Salvar, ou salvar explicitamente cada alteração no hook canônico.
+- Usar vocabulário e valores de tipos reconhecidos pelo player/banco; vincular volume de preview ao controle anunciado e ao volume real.
+- Completar associação, seleção e uso do som enviado, ou limitar a UI a upload de arquivo com estado claro de que ainda não foi aplicado.
+- Validar desligar som, horário silencioso, tipo e volume: depois de salvar, refetch/reabrir e disparar alerta isolado devem produzir a mesma configuração. Falha de persistência deve manter pendência/erro.
+
+**Limites:**
+
+- R2-PLAT-003 trata os três booleans de eventos omitidos pelo hook canônico; aqui a causa é outra instância local de useUserSettings e a ausência de chamada a salvar. Não duplica os toggles desse achado.
+- SoundVolumeControl e NotificationSettingsPanel possuem caminho canônico de persistência; não se afirma que todos os controles de som estejam inoperantes.
+- Upload bem-sucedido continua criando um arquivo. O efeito ausente é aplicá-lo a alertas, não a existência do upload.
+- Nenhum som foi reproduzido, arquivo enviado ou preferência real alterada.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-048 — Classificar Recentes contabiliza respostas de erro como conversas classificadas
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** SettingsView Tags IA → AIAutoTagsConfig Classificar Recentes → invoke ai-auto-tag para até 20 contatos → processed → toast de conclusão.
+
+**Precondição:** Há contato selecionado e ao menos uma chamada ai-auto-tag devolve o contrato normal {data:null,error}, por exemplo HTTP 429/402/502, ou a consulta inicial de contatos devolve error e data null.
+
+**Falha e consequência:** O loop aguarda invoke sem inspecionar data/error e incrementa processed após cada promessa resolvida. O contrato documentado do cliente devolve erros HTTP/relay/fetch em error; eles não acionam esse catch. Dessa forma, mesmo todas as chamadas devolvendo erro, o mutation resolve com o número solicitado e exibe Tags atualizadas/N conversas classificadas por IA. Se a consulta inicial falha, return sem valor também aciona onSuccess e imprime undefined conversas. O endpoint possui recusas explícitas antes da gravação, portanto há respostas sem classificação que esse consumidor transforma em conclusão.
+
+**Evidências na fonte:**
+
+- `src/components/settings/SettingsView.tsx:203–207` — consumidor ativo com gate staff; blob `c576115115689b975b3897df601519e09de34f53`.
+- `src/components/settings/AIAutoTagsConfig.tsx:40–73` — consulta inicial, erros ignorados, processed e toast; blob `89241a915ef1bba9b5b2cec3a60dc76edc6d872e`.
+- `src/components/settings/AIAutoTagsConfig.tsx:99–110` — botão ativo da operação em lote; blob `89241a915ef1bba9b5b2cec3a60dc76edc6d872e`.
+- `supabase/functions/ai-auto-tag/index.ts:19–35` — gates Auth/IA e retorno 429; blob `8a8a7bb0a20af5bc38fdbed09ec142bdd1cec103`.
+- `supabase/functions/ai-auto-tag/index.ts:128–165` — respostas 402/429/502 sem resultado persistido; blob `8a8a7bb0a20af5bc38fdbed09ec142bdd1cec103`.
+
+**Comparação com os 104 anteriores:** Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material.
+
+**Critérios de aceite para correção:**
+
+- Inspecionar error e o envelope de cada resposta; contar sucesso apenas quando o contrato confirmar a classificação correspondente.
+- Retornar resumo estruturado com êxitos, falhas e itens sem conversa/dados, preservando motivo e possibilidade de retry.
+- Se a consulta inicial falhar, rejeitar a mutation e exibir erro, sem interpolar undefined como contagem.
+- Validar lote com todos os erros, sucesso parcial e nenhuma mensagem elegível; nenhuma recusa pode aumentar o contador de classificadas.
+
+**Limites:**
+
+- IA-METRICS-001/AutoTicketClassifier tratam outro consumidor que descarta o resultado de ai-classify-tickets; o mecanismo específico deste lote e o caminho AIAutoTagsConfig não constam nos 104 anteriores.
+- R2-API-033 aborda persistência/limpeza de tags vazias no handler. Aqui não se afirma que o handler deixou de classificar após resposta válida; a falha está no resumo de chamadas com error no frontend.
+- Nenhuma chamada de IA, classificação de contato real ou gasto externo foi realizado.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-049 — Abas de horário, mensagens e automação persistem preferências sem ligação aos executores versionados
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** SettingsView abas Horário/Mensagens/Automação → useUserSettings.saveSettings → user_settings do operador; rotinas locais de transcrição/fechamento/horários usam contratos separados.
+
+**Precondição:** Staff altera horário/dias, mensagens automáticas ou parâmetros de automação dessas abas e salva, esperando o comportamento anunciado na operação versionada.
+
+**Falha e consequência:** A UI anuncia envio de boas-vindas/ausência/encerramento, distribuição entre agentes, encerramento após minutos de inatividade e transcrição automática. Esses controles são gravados exclusivamente na linha pessoal user_settings. A busca de todos os consumidores locais encontrou leituras para UI/onboarding, mas nenhum executor desses campos em src/Edge; o catálogo SQL vigente não contém corpo que leia user_settings nem trigger de sincronização além de updated_at. O pipeline de áudio lê global_settings.auto_transcription_enabled; auto-close lê auto_close_config.inactivity_hours/close_message, e o módulo de conexão grava business_hours/away_messages. Portanto salvar esses campos não altera os contratos operacionais locais que foram rastreados. A persistência da preferência existe, mas a promessa de efeito global não está ligada ao executor versionado.
+
+**Evidências na fonte:**
+
+- `src/components/settings/SettingsView.tsx:37–60` — contexto operacional/staff e Save de preferências pessoais; blob `c576115115689b975b3897df601519e09de34f53`.
+- `src/components/settings/SettingsView.tsx:132–150` — abas ligadas ao estado pessoal do pai; blob `c576115115689b975b3897df601519e09de34f53`.
+- `src/components/settings/ScheduleSettings.tsx:29–61` — promessa de mensagem fora do horário e campos pessoais; blob `29cd27bb067e0f0f1ee0e8059134c85571fed8db`.
+- `src/components/settings/MessagesSettings.tsx:14–64` — três promessas de mensagem automática e callbacks; blob `7355c277968bbb0bfa5895e5c26ce7bd844ea980`.
+- `src/components/settings/AutomationSettings.tsx:25–96` — distribuição/inatividade/transcrição gravadas em settings; blob `33cb5f89a79d8748550c7805e7d7092be987654e`.
+- `src/hooks/system/useUserSettings.ts:149–188` — único destino da gravação dos campos; blob `2ed33a6cf26d8a2dcd977b9c5b8fa3e2efac09a3`.
+- `supabase/functions/_shared/evolution-webhook-messages.ts:705–727` — executor de transcrição consulta global_settings; blob `8dffb0359b8cf0c137b612b4c863840b34558930`.
+- `supabase/functions/auto-close-conversations/index.ts:15–32` — executor consulta auto_close_config e inactivity_hours; blob `a983968235af033f560f2014dea71d9a4abc2fcb`.
+- `src/hooks/business/useBusinessHours.ts:41–81` — horário/ausência por conexão vêm de outras tabelas; blob `84165629b83bee50fc9a0a518403d563526d09ba`.
+- `src/hooks/inbox/useAutoCloseConversations.ts:18–42` — controle separado grava o config efetivo do auto-close; blob `e932a7cda769f4021f58d638f73af6a653404d38`.
+- `supabase/migrations/20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql:84–84` — único trigger vigente de user_settings atualiza timestamp; blob `909e580860fd515173c018f01e9a4228aba34053`.
+
+**Comparação com os 104 anteriores:** Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material.
+
+**Critérios de aceite para correção:**
+
+- Definir explicitamente escopo pessoal/global/por conexão e conectar os controles ao contrato realmente consumido pelas rotinas.
+- Se o executor for externo, versionar ou referenciar seu contrato e demonstrar a leitura das chaves corretas antes de marcar a função concluída.
+- Enquanto não houver consumidor demonstrado, apresentar esses controles como integração pendente e evitar a promessa automática de efeito na operação.
+- Validar em ambiente isolado a mudança de cada campo até o efeito correspondente, incluindo preservação de outro usuário/conexão e sinalização de falha.
+
+**Limites:**
+
+- A conclusão é ausência de consumidor/sincronização no código e SQL versionados. Não prova inexistência de worker, automação ou serviço externo fora deste checkout.
+- Há implementações separadas de horários, auto-close e transcrição. Não se afirma que essas funcionalidades inteiras sejam inexistentes ou que todos os seus controles estejam quebrados.
+- A avaliação do algoritmo de auto-close e dos provedores pertence às áreas correspondentes; este registro limita-se ao vínculo entre controles e configuração consumida.
+- AUTH030 trata outras chaves em global_settings. O registro atual identifica os campos operacionais de user_settings, com outro consumidor e outro destino de gravação.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-050 — Solicitação de exclusão de dados é confirmada mesmo quando o registro de auditoria falha
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** ViewRouter privacy → LGPDComplianceView Confirmar Exclusão → RPC log_audit_event → toast de solicitação registrada e fechamento da confirmação.
+
+**Precondição:** Usuário autenticado confirma a solicitação e o RPC devolve error no objeto de resposta, por exemplo por falha de transporte, sessão expirada ou recusa do banco.
+
+**Falha e consequência:** handleDeleteRequest aguarda a chamada sem ler data/error. Uma resposta Supabase resolvida com error passa para toast.success e fecha o diálogo, afirmando que a solicitação foi registrada e será processada por administrador em até 30 dias. O único efeito chamado é o logger de auditoria. Não há confirmação de recebimento nem protocolo que diferencie falha e registro. Assim o solicitante pode encerrar o fluxo acreditando que existe um pedido quando nenhuma linha foi gravada. Exceção JavaScript lançada chega ao catch, mas o contrato normal de error devolvido não chega.
+
+**Evidências na fonte:**
+
+- `src/pages/ViewRouter.tsx:64–67` — view privacy ativa; blob `9964a4ea364a29ff6a59c5e49e199c2eeab22ec9`.
+- `src/pages/lazyViews.ts:25–27` — import do componente real; blob `25ec6997136245c412cbee7db745690c03a62bc3`.
+- `src/components/compliance/LGPDComplianceView.tsx:27–51` — RPC sem inspeção e confirmação incondicional; blob `82e0c7e6e69473a860a0d2b79dab15a02701c1ad`.
+- `src/components/compliance/LGPDComplianceView.tsx:115–153` — texto de solicitação e confirmação do usuário; blob `82e0c7e6e69473a860a0d2b79dab15a02701c1ad`.
+- `supabase/migrations/20260405230135_2bb8cb81-ac0c-44ad-b81e-d1bd2d4001a0.sql:39–62` — função de auditoria registra evento do ator; nenhum retorno de protocolo; blob `28ef88504d068a60fe421fe8f26cd099ef98df58`.
+
+**Comparação com os 104 anteriores:** Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material.
+
+**Critérios de aceite para correção:**
+
+- Inspecionar e propagar error antes de afirmar recebimento; manter a confirmação aberta e informar possibilidade de tentar novamente quando falhar.
+- Definir um contrato de solicitação com confirmação de gravação e identificador rastreável, preservando o fluxo administrativo de atendimento.
+- Validar resposta {error}, exceção e sucesso: somente pedido confirmado deve produzir Solicitação registrada; nenhuma confirmação pode anteceder a persistência.
+- Documentar o canal administrativo responsável e o estado do pedido sem tratar prazo textual como prova de processamento.
+
+**Limites:**
+
+- Não se afirma exclusão imediata nem ausência de procedimento administrativo/manual externo. O defeito provado é falso recebimento quando o RPC falha.
+- O bloqueio de exportação é explícito e foi preservado como decisão existente; não é contado como novo no-op.
+- Referências e prazo de 30 dias são textos da interface, não parecer sobre obrigações legais, conformidade ou prazo aplicável. Nenhum pedido real de exclusão foi enviado.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-051 — Resumo pós-chamada descarta a anotação ainda em edição ao fechar automaticamente
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** TelefoniaView sem linha selecionada → ActiveCallPanel em ended → PostCallSummary textarea → timer de 3 s → dispatch RESET → slot troca para NewCallPanel.
+
+**Precondição:** A sessão terminou e o resumo está montado com ID de chamada. O usuário começa uma anotação, ainda não a salvou e o valor do contexto da sessão permanece estável durante os 3 segundos do timer.
+
+**Falha e consequência:** O rascunho existe apenas em useState de PostCallSummary. O efeito agenda fechar incondicionalmente e depende somente da callback fechar, que depende da sessão, não do conteúdo ou do estado salvando. Digitar não adia nem cancela esse timer. Ao vencer, RESET leva ended a idle, o consumidor desmonta o resumo e o texto não salvo desaparece. O mesmo timer não protege uma gravação em curso; isso não prova cancelamento do request já enviado. O T64 oferece anotação rápida junto com resumo de 3 s, mas a implementação não concilia os dois comportamentos.
+
+**Evidências na fonte:**
+
+- `src/components/calls/PostCallSummary.tsx:23–55` — rascunho local, timer sem guarda de edição e persistência explícita; blob `b05c6fa19f749fb071fd67d5b6a9994331d21ea1`.
+- `src/components/calls/PostCallSummary.tsx:70–83` — editor visível e ação de salvar; blob `b05c6fa19f749fb071fd67d5b6a9994331d21ea1`.
+- `src/components/calls/ActiveCallPanel.tsx:42–55` — montagem do resumo no estado ended; blob `5a25d89dd259360fc9f03edee941e76f97b212d5`.
+- `src/components/calls/TelefoniaView.tsx:66–69` — qualquer sessão não idle ocupa o painel ativo; blob `bc93425fb4ace67d66eba3611739e414e136e343`.
+- `src/components/calls/TelefoniaView.tsx:269–278` — RESET para idle desmonta o painel e o rascunho; blob `bc93425fb4ace67d66eba3611739e414e136e343`.
+- `src/lib/calls/session.ts:313–317` — RESET de ended retorna initialState; blob `45be0b4a8d5a9916a585255d644c974fa5d0338d`.
+- `docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md:150–155` — T64 combina duração do resumo e anotação rápida; blob `a9fd397db86fe6783ed5aa464a34f4f870020ebf`.
+
+**Comparação com os 104 anteriores:** TEL-RUNTIME-001 anterior e CALL006–008 tratam transporte/overlay/identidade, e MOD013 trata nota aplicada ao ID trocado. O caso atual é descarte do rascunho pelo timer do resumo de encerramento, em uma única chamada.
+
+**Critérios de aceite para correção:**
+
+- Preservar os 3 s do resumo sem edição, suspendendo o fechamento enquanto houver rascunho ou gravação pendente, ou persistir o rascunho por ID fora do componente desmontado.
+- Definir confirmação de descarte quando o usuário optar por fechar com texto não salvo e manter a anotação após falha de gravação.
+- Verificar ended → digitar por mais de 3 s → salvar/falhar/fechar; o texto não pode desaparecer sem gravação ou descarte explícito.
+
+**Limites:**
+
+- O prazo de 3 s é decisão documentada e não foi tratado isoladamente como defeito; o problema é o descarte do editor ofertado na mesma superfície.
+- Não se afirma perda de nota já persistida nem cancelamento do request. addCallNotes examina error e a invalidação de queries com prefixo calls corresponde a useMyCalls, controles positivos verificados.
+- Não se reproduziu o cenário no navegador. O efeito depende da janela declarada de estabilidade do contexto; atualizações do provider podem reiniciar o timer.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-052 — A tabela de ligações cancela o acionamento por teclado do botão Ligar de volta
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** TelefoniaView → CallHistoryTable → foco no botão Ligar de volta → keydown Enter/Space borbulha ao tr → seleção da linha com preventDefault, sem dispatchStartCall.
+
+**Precondição:** Histórico possui uma linha com telefone e o usuário focaliza seu botão Ligar de volta usando teclado; o acionamento é feito por Enter ou Espaço.
+
+**Falha e consequência:** O tr tratador de onKeyDown não distingue o próprio alvo dos controles descendentes. Enter/Space executa preventDefault e onSelecionar mesmo quando o foco está no botão nativo. O botão tem somente onClick, e seu stopPropagation protege apenas click, não keydown. Cancelada a ação padrão de ativação do botão, o handler que prepara a ligação não recebe o click e a operação observada pelo código é selecionar o detalhe. O wrapper Button não sintetiza uma ativação alternativa. Trata-se de quebra do contrato de teclado do controle, não de bloqueio do caminho por mouse.
+
+**Evidências na fonte:**
+
+- `src/components/calls/CallHistoryTable.tsx:42–58` — handler da linha cancela também keydown dos descendentes; blob `95875db4d53ed37a3434193556f810127e0afedb`.
+- `src/components/calls/CallHistoryTable.tsx:81–94` — botão de callback depende de click e só interrompe esse evento; blob `95875db4d53ed37a3434193556f810127e0afedb`.
+- `src/components/ui/button.tsx:51–73` — wrapper renderiza button nativo sem fallback de teclado; blob `62ae6190d3f261f987deb3299358839e6b11cd56`.
+- `src/components/calls/TelefoniaView.tsx:129–142` — callback ativo prepara a ligação pelo evento do domínio; blob `bc93425fb4ace67d66eba3611739e414e136e343`.
+- `src/components/calls/TelefoniaView.tsx:253–259` — ligação real do callback ao componente; blob `bc93425fb4ace67d66eba3611739e414e136e343`.
+
+**Comparação com os 104 anteriores:** A busca nos 104 achados anteriores e nos relatórios Calls/Módulos não localizou este locus de teclado. MOD014 trata a paginação ao selecionar e CALL007 trata encaminhamento de alerta; não são o mecanismo deste registro.
+
+**Critérios de aceite para correção:**
+
+- Restringir o atalho de seleção ao foco da própria linha, preservando o comportamento nativo dos controles internos.
+- Validar separadamente linha e botão com Tab/Enter/Espaço: linha seleciona, Ligar de volta prepara exatamente uma ligação para o número correto; Escape preserva o contrato de seleção.
+- Verificar em navegador a ação padrão e a ordem dos eventos, incluindo usuários de tecnologia assistiva, sem acionar chamadas reais.
+
+**Limites:**
+
+- Conclusão estática apoiada no contrato normativo de UI Events para ativação e cancelamento de keydown; não se afirma E2E, teste de leitor de tela ou cobertura de todos os navegadores.
+- O caminho de click executa o callback e foi preservado como controle positivo. A ausência de telefone é uma guarda explícita e não é a precondição deste achado.
+- Nenhuma chamada foi discada e nenhum evento de produto foi disparado durante esta revisão.
+- Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção.
+
+### R2-AUTH-053 — O tema Diversity remove o indicador de foco definido para botões padrão e cards de tema
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** ViewRouter themes → ThemeCustomizer → PresetCard Diversity → useThemePreset.applyPreset → applyThemePreset escreve html[data-preset-id="diversity"] → override CSS casa com focus-visible:ring-2 do Button Salvar e dos cards.
+
+**Precondição:** O preset Diversity está aplicado; o usuário navega por teclado até um botão padrão habilitado, como Salvar em ThemeCustomizer, ou um PresetCard. O consumidor demonstrado não declara um indicador de foco alternativo que vença o override.
+
+**Falha e consequência:** O seletor [class*="ring-2"] examina a string de classes, portanto também casa com a classe variante focus-visible:ring-2, mesmo sem uma classe ring-2 isolada. Sob Diversity, box-shadow:none!important e as variáveis de ring zeradas vencem tanto o ring do Button quanto o box-shadow de :focus-visible global. Esses consumidores também removem outline. A regra criada para suprimir halos decorativos assim remove o indicador explícito de posição do foco, incluindo o botão Salvar ativo nas configurações. PresetCard apresenta o mesmo mecanismo. A conclusão é a remoção dos indicadores definidos no código nesses consumidores; a capacidade de receber foco e de ativar a ação por teclado não é cancelada por essa regra.
+
+**Evidências na fonte:**
+
+- `src/index.css:1–8` — entrada de estilos importa base e override Diversity; blob `254f24ac2540ee32491672d39fc3e537c629c518`.
+- `src/pages/ViewRouter.tsx:70–80` — view themes registrada para ThemeCustomizer; blob `9964a4ea364a29ff6a59c5e49e199c2eeab22ec9`.
+- `src/pages/lazyViews.ts:30–38` — import lazy do consumidor ativo; blob `25ec6997136245c412cbee7db745690c03a62bc3`.
+- `src/components/settings/ThemeCustomizer.tsx:51–56` — botão Salvar padrão sem indicador de foco alternativo local; blob `d18de5ddd91aec626dc424aa7a6fec3f1e6e7369`.
+- `src/components/settings/ThemeCustomizer.tsx:115–125` — catálogo clássico liga seleção do card a applyPreset; blob `d18de5ddd91aec626dc424aa7a6fec3f1e6e7369`.
+- `src/components/settings/theme/presets.ts:394–400` — identidade do preset Diversity; blob `7dd4cfebae5f73aa69f079dde256bf4f6edfba93`.
+- `src/components/settings/theme/presets.ts:554–564` — Diversity incluído no catálogo de presets; blob `7dd4cfebae5f73aa69f079dde256bf4f6edfba93`.
+- `src/components/settings/theme/useThemePreset.ts:30–60` — seleção atualiza config e efeito aplica preset ao documento; blob `5f86f28d3b92ff7b5c75c32091bcbfbb951418a1`.
+- `src/components/settings/theme/presets.ts:667–677` — applyThemePreset estampa data-preset-id no elemento html; blob `7dd4cfebae5f73aa69f079dde256bf4f6edfba93`.
+- `src/styles/diversity-overrides.css:71–81` — seletor substring casa com focus-visible:ring-2 e remove sombras com important; blob `30d18102ff74eac76eaf6efdc692d36ec27f2b57`.
+- `src/components/ui/button.tsx:8–18` — Button usa outline-none e ring para sinalizar foco; variação padrão não substitui esse indicador; blob `62ae6190d3f261f987deb3299358839e6b11cd56`.
+- `src/components/ui/button.tsx:51–60` — wrapper aplica classes do Button ao elemento nativo; blob `62ae6190d3f261f987deb3299358839e6b11cd56`.
+- `src/styles/base.css:209–223` — fallback global remove outline e usa box-shadow sem important; blob `dae510567cab6de8a7452dccc076c674ecec575b`.
+- `src/components/settings/theme/PresetCard.tsx:37–51` — cards focalizáveis usam a mesma combinação outline-none/ring-2; blob `1567601abad8e24f29384cd3734e27a1758985f8`.
+
+**Comparação com os 104 anteriores:** Busca por Diversity, foco/ring e box-shadow nos 104 achados prévios e relatórios atuais não localizou esse mecanismo. AUTH052 trata cancelamento de keydown na tabela de ligações; este achado trata exclusivamente a cascata do indicador visual sob um preset. O root realizou leitura integral de diversity-overrides.css; esta é revisão independente das faixas e da cadeia ativa de consumidores.
+
+**Critérios de aceite para correção:**
+
+- Restringir a supressão de sombras decorativas para preservar :focus-visible, ou definir um indicador explícito de foco que permaneça visível na cascata do preset.
+- Verificar Tab e Shift+Tab no botão Salvar e nos PresetCards com Diversity em light e dark: o controle focalizado deve ter indicador distinto e a seleção/ativação deve permanecer funcional.
+- Cobrir o estilo computado do foco no consumidor real e manter controles com outro preset; avaliar separadamente alto contraste e preferências do navegador, sem deduzir conformidade visual apenas das classes.
+
+**Limites:**
+
+- Conclusão estática de seletor, classes e precedência important, sem navegador, captura de tela, DOM executado, medição de contraste ou certificação WCAG.
+- O seletor depende explicitamente de data-preset-id="diversity"; não se generaliza a perda de foco a outros presets ou a componentes que possuam indicador alternativo efetivo.
+- O outline-none e o fallback global de box-shadow foram verificados; estilos de usuário, forced-colors do navegador e tecnologia assistiva não foram executados nem certificados.
+- Não há novo probe: as onze provas offline anteriores permanecem preservadas, sem reexecução ou nova contagem. Nenhuma fonte ou dado de produto foi alterado.
+
 ## Reavaliação dos achados anteriores
 
 - **TC-001:** Mantida evidência frontend de locators/payload de mídia; SQL/Storage final delegado ao agente banco. Não duplicada nos novos IDs.
@@ -1445,6 +1887,24 @@ Estes itens não entram na contagem de achados materiais novos. O status disting
 - **D-AUTH-12 — EXTERNAL_EFFECT_UNVERIFIED:** UI promete storage delete/liberação/whitelist. Hook e Edge (peer providers) só atualizam media_quarantine.decision/reviewed_at; não há fonte de triggers/worker VPS. Marcar efeito externo sem evidência, não afirmar no-op definitivo. Edge exige admin/supervisor para update. Caminhos: `src/hooks/integrations/useQuarantineMedia.ts`, `src/components/security/QuarantinePanel.tsx`, `supabase/functions/external-db-proxy/index.ts`.
 - **D-AUTH-13 — PRECONDITION_UNVERIFIED:** Peer SQL identificou guard com NULL quando JWT não possui email em clear_login_attempts. Fluxos de autenticação locais examinados usam email; não há evidência de sessões phone/anonymous/custom sem claim. Não contada exploração de configuração não demonstrada. Caminhos: `supabase/migrations/20260829100000_fix_clear_login_operator_triple_arrow.sql`.
 - **D-AUTH-14 — CROSS_CONVERSATION_VARIANT_REJECTED:** Painel é remontado por key conversation.id. R2-AUTH-025 conserva somente caso de enriquecimento assíncrono na mesma instância e reabertura de rascunho; hipótese de estado atravessar conversas foi retirada. Caminhos: `src/components/inbox/contact-details/ContactInfoSection.tsx`, `src/components/inbox/RealtimeInboxView.tsx`.
+- **D-AUTH-55 — UNCONSUMED_LEGACY_PATHS_DISTINGUISHED_FROM_ACTIVE_NOTES:** Busca de símbolos/imports em produção não encontrou consumidor da barra genérica raiz nem SearchInput. A barra ativa de Contatos é outra implementação (AUTH013). No useCalls, os consumidores atuais desestruturam addCallNotes; start/answer/end/miss e getContactCalls não tiveram chamada produtiva localizada. Comentários que ainda atribuem mutations diretas a CallDialog/IncomingCallAlert estão superados pelos consumidores atuais do provider. DELETE/UPDATE sem count e callbacks genéricos não foram apresentados como jornada operacional nova. Caminhos: `src/components/BulkActionsBar.tsx`, `src/components/SearchInput.tsx`, `src/hooks/communication/useCalls.ts`.
+- **D-AUTH-56 — POSITIVE_CONTROL_PRIOR_FILTER_CONTRACT:** KPI converte períodos em datas a cada queryFn, envia p_from/p_to e normaliza canal all para undefined; errors são propagados. São controles positivos já citados no TEL-PERIOD-001 anterior, que trata a divergência do histórico. A query key omite usuário, mas AuthProvider limpa queryClient em SIGNED_OUT/signOut; não foi demonstrado reaproveitamento entre usuários por essa chave. Datas usam o fuso local do navegador e end-of-day; não foi medida divergência de fuso nem caso produtivo de precisão submilissegundo. Não há novo finding Calls. Caminhos: `src/hooks/calls/useCallsKpi.ts`, `src/components/calls/CallsKpiGrid.tsx`, `src/hooks/auth/useAuth.tsx`.
+- **D-AUTH-57 — PRIOR_FINDING_CONFIRMED_NO_NEW_COUNT:** SK02 anterior permanece aplicável: readStored pode devolver null após JSON.parse e loadThemeConfig acessa stored.v antes de fallback. ThemeInitializer chama essa função no efeito de aplicação sem catch local. Não há novo mecanismo contado. Listener storage tem catch para JSON inválido e cleanup; não se confirmou efeito visual no navegador. Caminhos: `src/components/ThemeInitializer.tsx`, `src/components/settings/theme/presets.ts`.
+- **D-AUTH-58 — POSITIVE_BOUNDARY_AND_LOW_IMPACT_SCHEMA_LIMIT:** O guard é efetivamente consumido antes de aceitar company/candidates; a query é particionada por usuário/conta/thread/contato. String(status/resolution) pode aceitar formatos coercíveis como arrays de uma string, porém o consumidor compara status estritamente e cai em not_linked; sem payload produtivo inválido ou bypass demonstrado, permanece limite de robustez do schema. Gmail wrapper propaga invoke.error, e o item usa remetente real. tags é string[] não nullable no tipo gerado, afastando hipótese de crash normal por tags null. Datas futuras/invalidas e rótulos são limites de apresentação; API059/060/COM não duplicados. Caminhos: `src/types/emailContactContext.ts`, `src/hooks/crm/useEmailContactContext.ts`, `src/components/gmail/ThreadListItem.tsx`, `src/hooks/gmail/gmailApi.ts`.
+- **D-AUTH-59 — ACTIVE_HELP_PRESENTATION_LIMIT:** Diálogo é montado sob demanda no provider global. Lista principal usa formatShortcut dos bindings e rótulos lazy; a lista adicional de atalhos globais é texto fixo e não acompanha personalização. Não se atribui implementação de atalho à existência da ajuda nem se afirma ausência de qualquer listener alternativo. Handler real de atalhos preserva escopo e exceções para campos de texto. Este lote não executou teclado, foco, leitor de tela ou verificação visual. Caminhos: `src/components/keyboard/KeyboardShortcutsDialog.tsx`, `src/components/keyboard/GlobalKeyboardProvider.tsx`, `src/hooks/ui/useGlobalKeyboardShortcuts.ts`.
+- **D-AUTH-51 — STATIC_SCOPE_LIMIT_NO_DUPLICATE_ACTIVE_INSTANCE_PROVEN:** Keypad escuta window e apenas verifica que existe algum data-keypad-scope; não verifica se o alvo está contido nele nem filtra teclas modificadoras. INPUT/TEXTAREA/contentEditable e disabled são protegidos e há cleanup do listener. A busca encontrou instâncias atuais alternativas em NewCallPanel e ActiveCallPanel; DialPad não tem consumidor produtivo localizado. Não se afirma envio duplo de DTMF, discagem involuntária ou duas instâncias montadas. Limite do escopo físico permanece para QA de interação. Caminhos: `src/components/calls/Keypad.tsx`, `src/components/calls/ActiveCallPanel.tsx`, `src/components/calls/NewCallPanel.tsx`, `src/components/calls/DialPad.tsx`.
+- **D-AUTH-52 — SUPERSEDED_COMMENT_AND_CONDITIONAL_PRESENTATION_LIMIT:** Comentários antigos dizem que gravação nunca está disponível/D3=b, mas o hook vigente define serviço ativo e invoca get-call-recording quando status=available e há ID. RecordingPlayer tem audio nativo e download reais. O ícone Ouvir da tabela não possui handler próprio; o click borbulha e seleciona o detalhe, onde o player pode ser montado. Sem prova de arquivo disponível no ambiente e sem contrato de autoplay, não foi promovido a falha de reprodução nem foi reaberta decisão revogada sobre a fonte da gravação. Caminhos: `src/components/calls/CallHistoryTable.tsx`, `src/components/calls/RecordingPlayer.tsx`, `src/hooks/calls/useCallRecording.ts`.
+- **D-AUTH-53 — INDEPENDENT_REVIEW_NO_DUPLICATE_COUNT:** Revisão independente de CALL006–008 e call_overlay_probes.cjs (104 linhas) com resultados CALL-P08–P11: HEAD, manifesto, SHA do script e 12 blobs/SHA256 conferidos, sem reexecução. As precondições de notificação retida, diálogo persistente, WhatsApp B/SIP A simultâneos e evento remoto com ID observado distinto da sessão foram confrontadas com callbacks e JSX reais. O harness comprova contratos/reducer, não browser, toque audível ou teardown de SIP. Nota independente em calls-cross-review.md/json; nenhum ID material duplicado. Caminhos: `src/hooks/communication/useIncomingCallListener.ts`, `src/components/calls/IncomingCallAlert.tsx`, `src/components/calls/CallDialog.tsx`, `src/hooks/calls/useTerminoRemoto.ts`, `src/lib/calls/session.ts`.
+- **D-AUTH-54 — POSITIVE_CONTROLS_AND_PRESENTATION_LIMITS:** Histórico/KPIs distinguem erro de vazio/zero e possuem retry. Escopo é controlado por papel fornecido pelo consumidor e filtros são controlados; debounce tem cleanup e sincronização externa. Paginação limita botões e fronteiras, sem reabrir o clamp de dados já coberto por MOD015. Badge usa nomes de tom como classes diretas; cores/contraste e ordenação visual não foram validados no navegador. Não se presume autorização de backend apenas pelo seletor escondido. Caminhos: `src/components/calls/CallHistoryCard.tsx`, `src/components/calls/CallHistoryStates.tsx`, `src/components/calls/CallHistoryToolbar.tsx`, `src/components/calls/CallsKpiGrid.tsx`, `src/components/calls/CallsPagination.tsx`, `src/components/calls/CallStatusBadge.tsx`.
+- **D-AUTH-46 — NO_ACTIVE_CONSUMER:** Busca integral de import/símbolos encontrou declarações e re-export, sem consumidor produtivo. FeatureSpotlight mede targetRef em initializer useState, não acompanha montagem, scroll, resize ou troca de alvo. ShowMore limita aberto a 1000px; Tooltip só reage ao mouse; DisclosureProvider começa básico sem persistência. São limitações do código dormente. EnhancedProgressiveDisclosure do Dashboard é outra implementação ativa e não herda essas conclusões. Caminhos: `src/components/cognitive/FeatureSpotlight.tsx`, `src/components/cognitive/ProgressiveDisclosure.tsx`.
+- **D-AUTH-47 — STATIC_VERIFICATION_UI_LIMITS_NO_AUTH_BYPASS:** Rota verify-email é ativa. Sucesso é inferido de sessão existente/SIGNED_IN sem vincular a um token/tentativa específica. No estado error, email começa vazio e só é definido em caminhos de sucesso; Reenviar Email pode chamar resend com endereço vazio, sem campo para corrigir. Estado expired só redireciona ao login. Não foi demonstrada criação de sessão, confirmação de email no servidor ou bypass de autorização por essa UI; fluxo real do link/template e auto-detect da SDK não foi executado. Limitação preservada sem novo achado de segurança. Caminhos: `src/pages/VerifyEmail.tsx`, `src/routes/AppRoutes.tsx`.
+- **D-AUTH-48 — LOW_IMPACT_STATIC_OBSERVATION:** Termos de Uso e Política de Privacidade são botões sem handler/link no formulário de cadastro. Registrado como conteúdo inacessível nesse ponto; não se conclui ausência desses documentos fora do checkout nem validade jurídica do consentimento. Caminhos: `src/pages/Auth.tsx`.
+- **D-AUTH-49 — PRIOR_CONTRACT_AND_LOW_IMPACT_OBSERVATION:** Consumidor DashboardWidgetRenderer:139 é ativo e usa useLeaderboard real. Botão Ver ranking completo e seta de linha não possuem handler. previousRank igual ao atual e indicador isOnline derivado de is_active pertencem ao contrato do hook já confrontado com achados anteriores; não contam novamente. Partículas são somente ornamentais, sem interferir em XP/score. Não houve teste de contraste ou animação no navegador. Caminhos: `src/components/leaderboard/Leaderboard.tsx`, `src/components/leaderboard/LeaderboardHelpers.tsx`.
+- **D-AUTH-50 — LOW_IMPACT_CONFIGURATION_CONTRACT_OBSERVATION:** AppearanceSettings persiste theme/language em user_settings, mas não chama os setters reais de useTheme/useLanguage, que utilizam estado global/localStorage. Busca de leituras locais não achou ponte desses dois campos ao tema/idioma efetivos. Seletor independente LanguageSelector e ThemeCustomizer possuem caminho real. Observação de personalização separada das configurações operacionais AUTH049, sem nova contagem material. Caminhos: `src/components/settings/AppearanceSettings.tsx`, `src/hooks/system/useUserSettings.ts`, `src/hooks/ui/useTheme.ts`, `src/i18n/index.ts`.
+- **D-AUTH-42 — STATIC_FAILURE_LIMITS_NOT_PROMOTED:** Create grava sequência e passos em chamadas separadas, sem compensação se a segunda falha; input permite passo vazio e não há edição da sequência já criada. Query de lista ignora error; histórico devolve error ao Query mas UI não diferencia de vazio. Falhas condicionais de manutenção/feedback foram catalogadas, sem declarar que o worker envia mensagem vazia, que sequência órfã foi criada realmente ou que falta de transação prova incidente. Caminhos: `src/components/settings/FollowUpSequences.tsx`, `src/components/settings/FollowUpExecutionsHistory.tsx`.
+- **D-AUTH-43 — DESIGN_PRESERVED_AND_REVIEW_LIMIT:** Prazo de primeira resposta fixo5 aparece explicitamente desabilitado, consistente com decisão posterior; não reabrir como seletor quebrado. Dialog delega mutate e fecha sem aguardar confirmação; queries de opções não mostram erro e listas de empresas/cargos não paginam. Lifecycle por key foi localizado no pai, afastando inicialização de outro registro. Contrato de SLA/backend e política final são da área correspondente; não inferir violação ou notificação por rótulo da metadata. Caminhos: `src/components/settings/sla/SLARuleFormDialog.tsx`, `src/components/settings/SLAConfigurationManager.tsx`, `src/components/settings/sla/SLARuleRow.tsx`.
+- **D-AUTH-44 — LOW_IMPACT_STATIC_OBSERVATION:** Salvar explícito verifica retorno de localStorage; auto-save/reset atualizam savedConfig mesmo se writeStored retorna false, podendo perder preferência ao reabrir. Aplicação CSS continua efetiva na sessão e dados são cosméticos. PresetCard usa hsl(...) seguido de15 como alpha no gradiente, formato de cor não montado corretamente. Leitura completa sem QA visual/contraste; preservada decisão documentada de superfícies dark também no light e sem afirmar catálogo cromático externamente validado. Caminhos: `src/components/settings/theme/useThemePreset.ts`, `src/components/settings/theme/presets.ts`, `src/components/settings/theme/PresetCard.tsx`.
+- **D-AUTH-45 — NO_ACTIVE_CONSUMER:** Busca de símbolo encontrou apenas declaração e barrel export. O RPC devolve UUID e não atualiza atribuição; toast Agente atribuído é inadequado a esse contrato, mas sem consumidor montado não foi contado como ação operacional falsa. AUTH046 limita-se ao cadastro ativo de nível. Caminhos: `src/hooks/system/useSkillBasedAssign.ts`.
 - **D-AUTH-15 — NO_ACTIVE_CONSUMER:** Utilitários genéricos têm limitações de query key/count/retorno de erro, mas a busca encontrou apenas definição, re-export e exemplo. Não contados como falha ativa de cache ou mutation. Caminhos: `src/hooks/system/useCRUD.ts`, `src/hooks/system/useSupabaseMutation.ts`.
 - **D-AUTH-16 — ACTIVE_FLOW_DISTINGUISHED_FROM_DORMANT_RPC:** Peer SQL identificou search_team_messages sem filtro is_deleted. A UI atual não chama essa RPC e faz DELETE físico; a pesquisa local do Panel não prova reexposição de conteúdo soft-deleted. Resultado encaminhado ao agente SQL. Caminhos: `src/hooks/team-chat/useTeamChatMutations.ts`, `src/components/team-chat/useTeamChatPanel.ts`.
 - **D-AUTH-17 — IDENTITY_SWITCH_PRECONDITION_UNVERIFIED:** Hook conserva settings entre user.id e não cancela fetch anterior; save usa usuário atual. O fluxo normal de logout desmonta a view, portanto não se afirma cópia entre contas sem demonstrar troca direta de identidade com componente preservado. Revisão do mecanismo feita; classificação ativa retida. Caminhos: `src/hooks/system/useUserSettings.ts`.
@@ -1467,6 +1927,11 @@ Estes itens não entram na contagem de achados materiais novos. O status disting
 - **D-AUTH-34 — EXTERNAL_CLAIMS_NOT_VERIFIED:** Métricas comerciais, selo SOC2/LGPD e disponibilidade99.9% são textos estáticos. A fonte local não comprova essas declarações; ausência de evidência local não prova que certificação/disponibilidade sejam falsas. Não contado como defeito de segurança nem validação externa concluída. Caminhos: `src/components/auth/HeroBenefits.tsx`, `src/components/auth/SocialProof.tsx`.
 - **D-AUTH-35 — LOW_IMPACT_STATIC_OBSERVATION:** Tabela ordena o array da página localmente; percentuais por região usam a maior região como100%, não o total; geometria de Sparkline merece QA visual com muitas amostras. São limites de apresentação/escopo, sem mutação ou inferência de vazamento. O mapa com conjuntos sobrepostos é tratado materialmente em AUTH038. Caminhos: `src/components/contacts/ContactsTable.tsx`, `src/components/contacts/ContactMapView.tsx`, `src/components/contacts/ContactKpiCard.tsx`.
 - **D-AUTH-36 — STATIC_PRESENTATION_LIMIT:** Gráfico de áreas enumera somente seis chaves fixas FUNCTION_COLORS, embora o resumo retorne chaves dinâmicas; pizza/lista de funções suportam nomes novos. Erros das queries não são expostos pelo hook ao painel. Agregação de totais e paginação real são controles positivos. Recorte visual separado dos contratos temporais/custo AUTH040/041. Caminhos: `src/components/admin/AIUsageDashboard.tsx`, `src/hooks/analytics/useAIUsageDashboard.ts`.
+- **D-AUTH-37 — UNMOUNTED_PROVIDER_AND_ACTIVE_NOOP_DEMO:** Nenhuma montagem produtiva de GamificationProvider foi localizada por símbolo/import e leitura da árvore. DemoAchievements é montado no widget e recebe NOOP_CONTEXT: seus botões de teste não persistem/mostram conquistas apesar do texto Suas conquistas são salvas automaticamente. Fila/processQueue que captura currentAchievement antigo, toast de prêmio após erro e grant repetido são limitações do provider dormente, não bugs operacionais contados. AchievementsPanel acessado por Ver Conquistas consulta dados reais de forma independente. Não se propõe ligar provider sem revisar autorização/recompensas. Caminhos: `src/components/gamification/GamificationProvider.tsx`, `src/components/gamification/DemoAchievements.tsx`, `src/providers/AppProviders.tsx`, `src/App.tsx`.
+- **D-AUTH-38 — LOW_IMPACT_STATIC_OBSERVATION:** Response Match é um dos quatro cartões oferecidos, mas só há diálogos de Speed Typing/Quiz/Emoji: clicar nele apenas muda selectedGame/isPlaying sem jogo. Emoji considera resposta vazia correta porque qualquer answer inclui string vazia. Quiz conserva setTimeout sem cancelamento no fechamento. Recordes são locais sem namespace de usuário/validação JSON. Observações do catálogo/avaliação/estado; não se afirma crédito real de XP, pois AUTH043 mostra ausência de consumidor. Lifecycle reproduzido de outro jogo é AUTH044. Caminhos: `src/components/gamification/miniGamesData.ts`, `src/components/gamification/MiniGameDialogs.tsx`, `src/components/gamification/TrainingMiniGames.tsx`.
+- **D-AUTH-39 — PRIOR_CONFIRMED_AND_PRESENTATION_LIMITS:** DASH-REALTIME-001 já descreve resposta antiga por período no useLeaderboard; leitura integral confirma ausência de cancelamento/geração e previousRank igual ao atual (DASH-METRICS-001), sem nova contagem. Período p_period é efetivo, contrariando documento antigo. AchievementsPanel filtra/conta apenas últimos20 da query e não expõe error; limite visual sem novo finding material. Caminhos: `src/hooks/gamification/useLeaderboard.ts`, `src/components/gamification/AchievementsPanel.tsx`, `src/components/gamification/AchievementsStats.tsx`, `src/hooks/gamification/useAgentGamification.ts`.
+- **D-AUTH-40 — PRIOR_FINDING_REFINED_NO_NEW_COUNT:** IA-METRICS-001 já exige que erro não produza sucesso local. Leitura completa amplia evidência: AutoTicketClassifier122–135 descarta data do invoke, cujo endpoint só devolve results/summary sem persistir, e depois relê tags pelas regras inline. Mesmo erro de invoke gera toast.success Classificação local aplicada. Switch autoClassify43/158 só altera estado decorativo. Backend existe e protege autenticação/RLS; não se alega função inexistente. Churn também mantém fallback/scores locais já descritos. Coordenado com infra, sem novo ID independente. Caminhos: `src/components/ai/AutoTicketClassifier.tsx`, `supabase/functions/ai-classify-tickets/index.ts`, `src/components/ai/ChurnPredictionDashboard.tsx`.
+- **D-AUTH-41 — HELPER_NOT_CONSUMED_BY_PRODUCTION_COMPONENT:** Helpers groupTagsIntoTickets e computeChurnRisk não são importados pelos componentes, que conservam cópias inline. Validação de linhas malformadas e clamp de datas futuras presentes nos helpers não demonstram proteção na UI. Busca de símbolos de produção não encontrou consumidor; testes do helper não foram executados nem usados como prova da integração. Evidência compartilhada com infra. Caminhos: `src/components/ai/ticketClassification.ts`, `src/components/ai/churnRisk.ts`, `src/components/ai/AutoTicketClassifier.tsx`, `src/components/ai/ChurnPredictionDashboard.tsx`.
 
 ## Reconciliação CRM360 e sucessão de planos
 
@@ -1495,14 +1960,14 @@ Logo, tratamento/apelido eVIP existem. Vendedor não aparece no header atual; n�
 
 ## Cobertura e microáreas restantes
 
-O catálogo desta subárea contém 369 arquivos: 269 semantic, 67 structural, 33 targeted. A enumeração de caminhos não é revisão semântica do repositório inteiro. `coverage.json` contém nível, faixas efetivamente lidas, símbolos, hash e gaps por arquivo.
+O catálogo desta subárea contém 623 arquivos: 474 semantic, 89 structural, 60 targeted. A enumeração de caminhos não é revisão semântica do repositório inteiro. `coverage.json` contém nível, faixas efetivamente lidas, símbolos, hash e gaps por arquivo.
 
-- Corpos dos arquivos structural, incluindo apresentações secundárias, acessibilidade/responsividade, timers visuais e testes preexistentes.
-- MFA enrollment visual, gerenciamento visual de dispositivos/alertas, SSO OAuth real e entrega real de recuperação: nenhum E2E/browser externo foi executado.
+- Arquivos structural permanecem sem leitura semântica nesta subárea: testes preexistentes, GmailWebhookMonitor e componentes de settings/notifications já atribuídos a outros agentes (IA/provedores/mídia/atalhos/SLA). A matriz consolidada reúne essas declarações independentes; este JSON lista cada caminho sem tomar emprestada uma leitura integral.
+- Nos arquivos targeted, apenas as faixas indicadas foram lidas; não se presume o corpo inteiro a partir de um trecho ou referência de outro agente.
+- MFA enrollment visual, dispositivos/alertas, SSO OAuth, entrega de recuperação e gamificação real: não houve E2E/browser externo. Os onze probes offline têm fronteiras sintéticas explícitas.
 - Formulários externos: integridade do schema Singu efetivo e contratos RPC externos continuam dependentes de evidência externa autorizada.
-- SQL final/RLS/grants, storage e last-owner/department RPCs: relatório database coordenado.
-- Segurança provedores e proxy de envio; microárea TalkX sampleCustomFields foi informada ao coordenador.
-- Graph AST local confirma conectividade de módulo, não uso de export específico; casos dormentes classificados por busca de símbolo/imports.
+- SQL final/RLS/grants, storage e last-owner/department RPCs: relatório database coordenado. Provedores, envio e TalkX são subáreas próprias; evidência compartilhada não substitui suas matrizes de cobertura.
+- Grafo AST local confirma conectividade de módulo, não uso de export específico; casos dormentes classificados por busca de símbolo/imports e leitura dos consumidores.
 
 ## Fontes primárias externas consultadas
 
@@ -1518,9 +1983,14 @@ As fontes externas fundamentam semântica de APIs/protocolo. As conclusões espe
 - [https://supabase.com/docs/reference/javascript/insert](https://supabase.com/docs/reference/javascript/insert) — Contrato de retorno data/error do cliente Supabase, R2-AUTH-034.
 - [https://tanstack.com/query/latest/docs/framework/react/guides/mutations](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) — Callbacks de mutation conforme promessa resolvida/rejeitada, R2-AUTH-034.
 - [https://www.postgresql.org/docs/current/functions-comparison.html](https://www.postgresql.org/docs/current/functions-comparison.html) — Comparações ordinárias com NULL produzem resultado desconhecido; efeito do p_until nulo em R2-AUTH-041.
+- [https://react.dev/reference/react/useState](https://react.dev/reference/react/useState) — Argumento initialState não reaplica após inicialização; contrato de R2-AUTH-045.
+- [https://supabase.com/docs/reference/javascript/functions-invoke](https://supabase.com/docs/reference/javascript/functions-invoke) — invoke devolve data/error; erro HTTP é examinado no campo error, R2-AUTH-048.
+- [https://www.w3.org/TR/uievents/](https://www.w3.org/TR/uievents/) — Seção 3.5.6.1: ativação por Enter/Espaço e cancelamento de keydown; contrato estático de R2-AUTH-052.
 
 ## Artefatos de reprodução
 
-- Resultados completos: `/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/results.json`.
-- Programa offline: `/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/source-probes.cjs`.
-- Arquivos de fonte são lidos em memória; os únicos writes ocorrem em relatórios/probes. Não há credentials reais nos fixtures.
+- Casos01–08: `/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/results.json` e `source-probes.cjs`.
+- Casos09–10: `/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/second-pass-results.json` e `second-pass-probes.cjs`.
+- Caso11: `/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/gamification-results.json` e `gamification-probe.cjs`.
+- README de probes documenta parâmetros por ambiente e preflight de HEAD/manifesto/blobs; os programas recusam fonte divergente antes de executar os trechos de produto.
+- Arquivos de fonte são lidos em memória; os únicos writes ocorrem em relatórios/probes. Não há credenciais reais nos fixtures.

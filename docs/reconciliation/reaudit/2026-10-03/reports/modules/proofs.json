@@ -1,6 +1,6 @@
 {
   "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
-  "executed_at": "2026-10-04T02:10:38.579Z",
+  "executed_at": "2026-10-04T03:01:38.364Z",
   "execution": "offline isolated production callbacks; controlled mocks; no DB/network/browser",
   "source_files": [
     {
@@ -66,6 +66,30 @@
     {
       "path": "src/hooks/tasks/workItemAggregates.ts",
       "blob_sha": "621ad9cafd66f3e08518c08cf1ddfc9a3a46a450"
+    },
+    {
+      "path": "src/components/catalog/catalogShared.tsx",
+      "blob_sha": "c716f9ab2bb47a59cd2a1836b92acb308d959a38"
+    },
+    {
+      "path": "src/hooks/integrations/useChatbotFlows.ts",
+      "blob_sha": "56134d13f6c76050f1e6548228adfa4997e6b134"
+    },
+    {
+      "path": "src/components/chatbot/ChatbotFlowEditor.tsx",
+      "blob_sha": "0c7cc838b418d4a1ac79edeab14a132d7735cc83"
+    },
+    {
+      "path": "supabase/functions/elevenlabs-voice-design/index.ts",
+      "blob_sha": "6c5f26e8bce74e90d08f86f8ab186e0e6471090a"
+    },
+    {
+      "path": "src/components/voice/ElevenLabsVoiceDesign.tsx",
+      "blob_sha": "4c8aac7245a2e710673295ffc144fecb9f159bd6"
+    },
+    {
+      "path": "src/utils/audioToMp3.ts",
+      "blob_sha": "4bd92f3c32bc8ded82e3aaa727266e0fe0aef0a8"
     }
   ],
   "probes": [
@@ -239,6 +263,56 @@
         "second_create_due_date": "2026-10-05T23:59:00.000Z"
       },
       "limitation": "Deterministic hook driver, not browser/React rendering. Actual Agenda leaves day-selection buttons enabled during create."
+    },
+    {
+      "id": "R2-MOD-066",
+      "probe": "actual ProductThumb with deterministic hooks and JSX object tree",
+      "result": {
+        "image_after_primary_error": "synthetic-valid-fallback",
+        "image_after_fallback_load": "synthetic-broken-primary",
+        "new_source_after_terminal_error_still_has_no_img": true
+      },
+      "limitation": "No browser, HTTP or image decoder. Controlled callbacks prove source selection and persistent error state, not measured network traffic."
+    },
+    {
+      "id": "R2-MOD-068",
+      "probe": "actual create/query/update hook callbacks and editor initial state with scalar-preserving mock",
+      "result": {
+        "initial_nodes_payload_type": "string",
+        "nodes_encoded_initially": 1,
+        "nodes_displayed_after_reopen": 0,
+        "nodes_payload_after_saving_empty_editor": "[]"
+      },
+      "limitation": "JSON transport/mock preserves supplied scalar. SQL column and no-normalizer facts were reviewed separately; no PostgreSQL, RLS or actual React renderer executed."
+    },
+    {
+      "id": "R2-MOD-070",
+      "probe": "actual UI generateVoice and actual Edge dispatch with synthetic auth/rate/fetch",
+      "result": {
+        "operation_selected": {
+          "url": "https://api.elevenlabs.io/v1/voices",
+          "method": "GET"
+        },
+        "audio_state_writes": 0,
+        "toast": [
+          "success",
+          "Voz gerada com sucesso!"
+        ]
+      },
+      "limitation": "No external request. A successful voices-list response is an explicit synthetic precondition; preview/create schemas are not exercised."
+    },
+    {
+      "id": "R2-MOD-071",
+      "probe": "actual loadLamejs after one explicit script error, with event-listener mock",
+      "result": {
+        "first_error": "Falha ao carregar lamejs",
+        "script_tags_created": 1,
+        "script_tags_appended_after_retry": 1,
+        "load_listeners_on_failed_tag": 2,
+        "timeout_scheduled": 0,
+        "retry_settled_without_new_event": false
+      },
+      "limitation": "No browser/vendor/network. Does not measure an indefinite wall-clock hang; it proves that retry creates no new load request or timeout and depends on another event from the already failed tag."
     }
   ]
 }

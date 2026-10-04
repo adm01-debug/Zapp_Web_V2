@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "second_pass_checkpoint",
+  "status": "providers_assigned_scope_complete",
   "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
   "source_root": "/workspace/scratch/f8f9b9cbce53/reaudit/source",
   "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
@@ -1295,14 +1295,14 @@
     },
     {
       "id": "R2-API-022",
-      "title": "Rotinas de e-mail, relatório, encerramento e recuperação executam privilégio de servidor sem autorizar o chamador",
+      "title": "Rotinas privilegiadas de e-mail, manutenção e integração não autorizam o chamador",
       "severity": "P1",
       "classification": "confirmed_static",
       "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
-      "preconditions": "A chamada é admitida pelo gateway; um usuário válido sem papel administrativo já basta como precondição conservadora. send-email requer Resend configurado; auto-close requer configuração habilitada e contatos elegíveis; relatório exige conhecer um reportId existente. Não foi verificado o estado do gateway implantado. Para recuperação de áudio, há mensagens elegíveis e credenciais de Storage/provedor; dry_run pode retornar metadados mesmo sem recuperação.",
-      "observed_behavior": "send-email aceita destinatários, assunto, corpo, reply_to, cópias e anexos do payload e usa a chave Resend sem getUser/requireAuth/role. O remetente fixo e o rate limit por IP não autorizam a ação. send-scheduled-report lê a configuração e dados agregados com service role, envia e devolve reportData sem verificar o papel. auto-close-conversations seleciona e modifica contatos globalmente com service role sem segredo de cron nem usuário autorizado. recover-corrupted-audios também não tem auth/role/segredo de cron: varre áudio global, aceita batch_size/offset/dry_run do chamador e, por padrão, tenta sobrescrever Storage e media_url. dry_run revela a instância e uma amostra de IDs externos.",
-      "impact": "Chamadores admitidos podem usar o relay do projeto para conteúdo e destinatários arbitrários, disparar relatório conhecido e obter seus agregados, ou antecipar o encerramento global. A política SQL de scheduled_reports restringe leitura a admin/supervisor, por isso não se presume que um agente consiga enumerar IDs pelo frontend. A rotina de recuperação permite iniciar trabalho e alterações globais de mídia fora do papel administrativo.",
+      "preconditions": "A chamada é admitida pelo gateway; um usuário válido sem papel administrativo já basta como precondição conservadora. send-email requer Resend configurado; auto-close requer configuração habilitada e contatos elegíveis; relatório exige conhecer um reportId existente. Não foi verificado o estado do gateway implantado. Para recuperação de áudio, há mensagens elegíveis e credenciais de Storage/provedor; dry_run pode retornar metadados mesmo sem recuperação. Em send-rate-limit-alert, INTERNAL_ALERT_SECRET está ausente/vazio e a chamada de usuário comum é admitida pelo gateway; quando o segredo existe, seu gate funciona. cleanup-rate-limit-logs não tem gate local, mas seus DELETEs se limitam a logs antigos, bloqueios temporários vencidos e alertas antigos resolvidos.",
+      "observed_behavior": "send-email aceita destinatários, assunto, corpo, reply_to, cópias e anexos do payload e usa a chave Resend sem getUser/requireAuth/role. O remetente fixo e o rate limit por IP não autorizam a ação. send-scheduled-report lê a configuração e dados agregados com service role, envia e devolve reportData sem verificar o papel. auto-close-conversations seleciona e modifica contatos globalmente com service role sem segredo de cron nem usuário autorizado. recover-corrupted-audios também não tem auth/role/segredo de cron: varre áudio global, aceita batch_size/offset/dry_run do chamador e, por padrão, tenta sobrescrever Storage e media_url. dry_run revela a instância e uma amostra de IDs externos. send-rate-limit-alert torna o segredo opcional e confia em IP, contador e decisão blocked fornecidos no corpo para escritas service role. cleanup-rate-limit-logs cria service client sem autorizar usuário nem cron. P34 confirmou o primeiro caminho e a rejeição correta quando o segredo está configurado; P35 executou a limpeza com usuário admitido, sem segredo local.",
+      "impact": "Chamadores admitidos podem usar o relay do projeto para conteúdo e destinatários arbitrários, disparar relatório conhecido e obter seus agregados, ou antecipar o encerramento global. A política SQL de scheduled_reports restringe leitura a admin/supervisor, por isso não se presume que um agente consiga enumerar IDs pelo frontend. A rotina de recuperação permite iniciar trabalho e alterações globais de mídia fora do papel administrativo. A configuração sem segredo permite forjar eventos de segurança e decisões de bloqueio na tabela com privilégio de servidor. O chamador da limpeza pode antecipar a retenção que o endpoint já codifica; não se alega DELETE arbitrário ou remoção de todo histórico.",
       "evidence": [
         {
           "path": "supabase/functions/send-email/index.ts",
@@ -1383,6 +1383,36 @@
           "sha256": "dd6f1d50dfdbfa10d3385cbcc123af43904718d8372212c0d7b55f3e0383c1ac",
           "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/recover-corrupted-audios/index.ts#L119",
           "note": ""
+        },
+        {
+          "path": "supabase/functions/send-rate-limit-alert/index.ts",
+          "line_start": 11,
+          "line_end": 29,
+          "symbol": "optional internal gate",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-rate-limit-alert/index.ts#L11",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/send-rate-limit-alert/index.ts",
+          "line_start": 32,
+          "line_end": 83,
+          "symbol": "caller-chosen privileged security effects",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-rate-limit-alert/index.ts#L32",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
+          "line_start": 4,
+          "line_end": 31,
+          "symbol": "unguarded maintenance and bounded deletion predicates",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "9ceed7013a9237cd19adb2b5b608478d2fc2d9f244141d7b658de7d9b45961ac",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/cleanup-rate-limit-logs/index.ts#L4",
+          "note": ""
         }
       ],
       "acceptance": [
@@ -1390,9 +1420,14 @@
         "Rotinas automáticas aceitam apenas credencial dedicada de cron; execução manual exige a permissão equivalente.",
         "Invites usam template e destinatário vinculados ao fluxo de convite autorizado.",
         "Agente comum não envia e-mail arbitrário, não recebe reportData de terceiros e não dispara encerramento; nenhum efeito ocorre após rejeição.",
-        "Recuperação de mídia exige autorização administrativa antes de scan/download/upload, incluindo dry_run; migrate-media-storage já possui gate administrativo e é controle negativo desta revisão."
+        "Recuperação de mídia exige autorização administrativa antes de scan/download/upload, incluindo dry_run; migrate-media-storage já possui gate administrativo e é controle negativo desta revisão.",
+        "Ausência de configuração de credencial interna não habilita escrita de alertas/bloqueios; falhar fechado ou exigir autorização administrativa verificada.",
+        "Limpeza exige identidade de cron ou papel de manutenção e conserva os limites de retenção; usuário comum não inicia as escritas."
       ],
-      "probes": [],
+      "probes": [
+        "P34",
+        "P35"
+      ],
       "related_findings": [
         "R2-AUTH-015"
       ],
@@ -2557,13 +2592,13 @@
     },
     {
       "id": "R2-API-042",
-      "title": "Envio e sincronização de grupos contam erro lógico do proxy como sucesso",
+      "title": "Grupos e banner de reconexão contam erro lógico Evolution como sucesso",
       "severity": "P2",
       "classification": "confirmed_static",
       "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
-      "preconditions": "O proxy Evolution retorna HTTP 200 com envelope error=true para rejeição/indisponibilidade do provedor; o cliente Supabase entrega error=null e data com esse envelope. Fluxo de grupos tem uma conexão válida.",
-      "observed_behavior": "handleBroadcast descarta data e incrementa sent sempre que error de transporte é nulo; depois limpa a seleção. handleAutoSync também ignora error=true, converte o envelope em array vazio e exibe sucesso. P30 executou o hook completo com erro sintético do provedor: enviou toast Mensagem enviada para 1 grupo(s) e limpou a seleção; sync informou 0 grupo(s) sincronizados como sucesso.",
+      "preconditions": "O proxy Evolution retorna HTTP 200 com envelope error=true para rejeição/indisponibilidade do provedor; o cliente Supabase entrega error=null e data com esse envelope. Fluxo de grupos tem uma conexão válida. No EvolutionDisconnectBanner, uma instância desconectada é visível e a janela de manutenção está ativa; esse é um envelope de recusa determinístico do próprio handler.",
+      "observed_behavior": "handleBroadcast descarta data e incrementa sent sempre que error de transporte é nulo; depois limpa a seleção. handleAutoSync também ignora error=true, converte o envelope em array vazio e exibe sucesso. P30 executou o hook completo com erro sintético do provedor: enviou toast Mensagem enviada para 1 grupo(s) e limpou a seleção; sync informou 0 grupo(s) sincronizados como sucesso. O banner também descarta data de invoke. P42 compôs seu callback com o handler Evolution integral: a manutenção retornou HTTP200/error=true e impediu toda chamada ao provedor, mas a UI anunciou Reconectando.",
       "impact": "O usuário recebe confirmação de entrega ou sincronização que não ocorreu. A limpeza dos alvos dificulta distinguir falha de aceite e torna uma nova tentativa menos segura. Erros de upsert também são apenas logados, sem entrar em totalErrors.",
       "evidence": [
         {
@@ -2615,16 +2650,38 @@
           "sha256": "f8f32ebbf2196b6f278c44bc9839e43f39b762a755ac877882a10207390e6055",
           "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/chat/useGroupsManager.ts#L35",
           "note": ""
+        },
+        {
+          "path": "src/components/alerts/EvolutionDisconnectBanner.tsx",
+          "line_start": 49,
+          "line_end": 63,
+          "symbol": "reconnection only checks transport error",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "79d5aacdea9384712bc0af435e62f3bf3bed1c6774585506e802e1f0af7e9465",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/alerts/EvolutionDisconnectBanner.tsx#L49",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/evolution-api/index.ts",
+          "line_start": 82,
+          "line_end": 98,
+          "symbol": "maintenance refuses with HTTP200 error envelope",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "227d16c9e5431bfc0bae0cf833e1d0b0fcce5e822f98ffbc25be7f27865e0cdd",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/evolution-api/index.ts#L82",
+          "note": ""
         }
       ],
       "acceptance": [
         "Usar um único decodificador de erro de transporte, erro lógico e resultado indeterminado do provedor.",
         "Envelope error=true nunca incrementa enviados nem emite sucesso de sincronização.",
         "Manter identificação dos alvos recusados para nova tentativa e preservar separadamente os já aceitos.",
-        "Contabilizar falhas de persistência no resultado parcial da sincronização."
+        "Contabilizar falhas de persistência no resultado parcial da sincronização.",
+        "Rejeição de manutenção no banner é exibida como tal e não anuncia reconexão; preservar o gate que impediu I/O."
       ],
       "probes": [
-        "P30"
+        "P30",
+        "P42"
       ],
       "related_findings": [],
       "limitations": "O probe intercepta invoke e não envia mensagens. Não afirma que aceite HTTP do provedor já comprova entrega ao destinatário.",
@@ -2889,6 +2946,1381 @@
       "related_findings": [],
       "limitations": "A exclusão precisa ser aceita; não se presume contorno de FK/RLS. A cadeia SQL vigente e ausência de trigger DELETE foram conferidas pela frente database; não houve alteração real de configuração.",
       "primary_sources": []
+    },
+    {
+      "id": "R2-API-047",
+      "title": "Tela Sentry confirma ativação e métricas sem executar integração",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Usuário abre Sentry pelo hub, informa qualquer DSN não vazio e pressiona Ativar Monitoramento. O próprio hub classifica Sentry como Disponível, sem o aviso de demonstração usado em n8n.",
+      "observed_behavior": "handleConnect apenas seta isConnected=true e emite sucesso. Eventos vêm de mockErrors fixo, Crash-free é literal 99.2% e Resolver só altera o array local. DSN, ambiente e switches não chegam a persistência, SDK nem API pelo componente.",
+      "impact": "A tela apresenta monitoramento ativo, estatísticas e resolução como resultados operacionais sem ter executado essas ações. Isso pode ocultar a necessidade de configurar a integração verdadeira. Não se afirma que toda a aplicação careça de observabilidade: errorReporter/audit_logs são componentes distintos.",
+      "evidence": [
+        {
+          "path": "src/components/integrations/SentryIntegrationView.tsx",
+          "line_start": 30,
+          "line_end": 69,
+          "symbol": "mock data and local connect/resolve",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "ce5ea90c11ed9cce41a6c5f7c22a5b8872353149ba3570c642e912ad035700f6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/SentryIntegrationView.tsx#L30",
+          "note": ""
+        },
+        {
+          "path": "src/components/integrations/SentryIntegrationView.tsx",
+          "line_start": 120,
+          "line_end": 151,
+          "symbol": "activation button and fixed crash-free",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "ce5ea90c11ed9cce41a6c5f7c22a5b8872353149ba3570c642e912ad035700f6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/SentryIntegrationView.tsx#L120",
+          "note": ""
+        },
+        {
+          "path": "src/components/integrations/IntegrationsHub.tsx",
+          "line_start": 25,
+          "line_end": 31,
+          "symbol": "Sentry available label",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "6d8bea6fcdf95fe6cfa696285a4341cf88c69752021d4b68ae99d3b2f18f0910",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/IntegrationsHub.tsx#L25",
+          "note": ""
+        },
+        {
+          "path": "src/components/integrations/IntegrationsHub.tsx",
+          "line_start": 55,
+          "line_end": 61,
+          "symbol": "active Sentry view mount",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "6d8bea6fcdf95fe6cfa696285a4341cf88c69752021d4b68ae99d3b2f18f0910",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/IntegrationsHub.tsx#L55",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Conectar e verificar o SDK/serviço configurado, persistir opções autorizadas e carregar métricas reais com janela/fonte, ou rotular e bloquear a demonstração.",
+        "Ativação recusada ou DSN não validado não gera estado Ativo.",
+        "Resolver exige aceite remoto, e métricas sintéticas nunca aparecem como dados do ambiente."
+      ],
+      "probes": [],
+      "related_findings": [],
+      "limitations": "A observabilidade real fora deste componente não foi desconsiderada. Nenhum DSN, SDK remoto ou evento real foi acessado.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-048",
+      "title": "Teste de conexão Bitrix ignora a URL e o domínio informados na tela",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Operador digita a configuração do portal B, enquanto o servidor possui BITRIX_WEBHOOK_URL de A, ou ainda não possui a variável. O chamador tem autorização para o teste no handler Bitrix.",
+      "observed_behavior": "webhookUrl serve somente para liberar o botão e validar que há texto; domain não é usado pelo teste. invoke envia action=list/entityType=lead/filters sem URL ou domínio. O backend usa exclusivamente sua configuração de ambiente. Não há ação de salvar esses dois campos no componente.",
+      "impact": "Um sucesso pode validar o portal A e ser apresentado como a conexão recém-informada B; inversamente, uma URL válida digitada não configura um servidor sem credencial. A tela não estabelece a configuração que instrui o usuário a informar.",
+      "evidence": [
+        {
+          "path": "src/components/integrations/BitrixIntegrationView.tsx",
+          "line_start": 12,
+          "line_end": 45,
+          "symbol": "local configuration and test request",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "6e3700d44ed305789226bc317cbe2af246510804d14787d4cff0f39e726fcb3d",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/BitrixIntegrationView.tsx#L12",
+          "note": ""
+        },
+        {
+          "path": "src/components/integrations/BitrixIntegrationView.tsx",
+          "line_start": 68,
+          "line_end": 101,
+          "symbol": "configuration controls",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "6e3700d44ed305789226bc317cbe2af246510804d14787d4cff0f39e726fcb3d",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/BitrixIntegrationView.tsx#L68",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/bitrix-api/index.ts",
+          "line_start": 45,
+          "line_end": 62,
+          "symbol": "server-only URL and parsed body",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "7f699943d5e2155e0deff5f93499e801ec6b16614e38d7d36ac235943f0b39dc",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/bitrix-api/index.ts#L45",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/bitrix-api/index.ts",
+          "line_start": 217,
+          "line_end": 232,
+          "symbol": "fixed configured target",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "7f699943d5e2155e0deff5f93499e801ec6b16614e38d7d36ac235943f0b39dc",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/bitrix-api/index.ts#L217",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Definir um fluxo administrativo de configuração e testar exatamente a configuração salva, sem permitir que um caller comum escolha URL arbitrária do servidor.",
+        "Se a configuração continuar exclusiva do ambiente, remover entradas sem efeito e identificar no resultado o portal que foi efetivamente testado.",
+        "Fixture com A configurado e B digitado não pode confirmar B a partir da resposta de A."
+      ],
+      "probes": [],
+      "related_findings": [
+        "R2-API-018"
+      ],
+      "limitations": "Diferente de R2-API-018, que trata sucesso indevido das ações especiais backend. Esta falha persiste quando o endpoint list e a resposta do provedor funcionam corretamente.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-049",
+      "title": "Insights Talk X escolhem engajamento por contagem e deixam concluídas fora do alerta",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Campanhas elegíveis têm quantidades de enviados diferentes, e há campanhas concluídas recentes. A view final contém campaign_name/id; status da campanha é TEXT sob CHECK que admite completed, não finished.",
+      "observed_behavior": "O insight Mensagem com maior engajamento ordena por replied_count, toma só a primeira linha e apresenta sua taxa. P32 devolveu campanha Volume com 5/100 e Taxa com 4/10: a recomendação escolheu 5% e ignorou 40%. O mesmo hook conta campanhas de status finished para liberar o insight de cliques; o CHECK vigente impede esse estado e o ramo fica sem candidatos. As consultas descartam error, logo faltas de leitura também viram ausência de insight.",
+      "impact": "As recomendações podem orientar reutilização de uma campanha de taxa menor e omitir o alerta de poucos cliques mesmo havendo concluídas elegíveis. O nome de coluna não é o problema: a revisão SQL confirmou que as colunas consultadas existem.",
+      "evidence": [
+        {
+          "path": "src/hooks/integrations/useTalkXInsights.ts",
+          "line_start": 56,
+          "line_end": 87,
+          "symbol": "winner selection and finished filter",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "255fb469415d1f0255226c5285c2cd50ce5fd7c606f2bc5281079ca2b0c17d0b",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useTalkXInsights.ts#L56",
+          "note": ""
+        },
+        {
+          "path": "src/hooks/integrations/useTalkXInsights.ts",
+          "line_start": 106,
+          "line_end": 130,
+          "symbol": "highest-engagement and click claims",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "255fb469415d1f0255226c5285c2cd50ce5fd7c606f2bc5281079ca2b0c17d0b",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useTalkXInsights.ts#L106",
+          "note": ""
+        },
+        {
+          "path": "supabase/migrations/20260929420000_fix_talkx_transition_overload_and_status_check.sql",
+          "line_start": 28,
+          "line_end": 30,
+          "symbol": "campaign status CHECK",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "fe157dbb5db2d02ccc96f5adcc68ca1b897e98ea78f6942d32d54ca0b6ea1320",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260929420000_fix_talkx_transition_overload_and_status_check.sql#L28",
+          "note": ""
+        },
+        {
+          "path": "src/components/talkx/TalkXOverview.tsx",
+          "line_start": 174,
+          "line_end": 190,
+          "symbol": "insight display consumer",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "bf9650dcc7f7b730541013234c890a2443c26d6c52e5562c4c5d476e181971ad",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/TalkXOverview.tsx#L174",
+          "note": ""
+        },
+        {
+          "path": "src/components/talkx/TalkXAnalytics.tsx",
+          "line_start": 425,
+          "line_end": 440,
+          "symbol": "analytics insight consumer",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "8ecd688313d1f5840d006ba261c2f9e026cb9fb664f4443092bba6846dc8562d",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/TalkXAnalytics.tsx#L425",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Definir a métrica de engajamento e classificar candidatos por essa mesma métrica, com denominador/amostra mínimo e desempate explícitos.",
+        "Usar o vocabulário de status vigente e correlacionar cliques/enviados/campanhas ao mesmo conjunto.",
+        "5/100 não vence 4/10 sob regra de maior taxa; três completed sem cliques alcançam o ramo de alerta.",
+        "Erros de leitura não são apresentados como base suficiente para ausência de recomendação."
+      ],
+      "probes": [
+        "P32"
+      ],
+      "related_findings": [],
+      "limitations": "Query builder e dados de campanhas são fixtures; não executa SQL/RLS. finished produz comparação sem resultados em TEXT, não erro de enum. A proposta de estatística não exige um método probabilístico específico.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-050",
+      "title": "Reabrir WhatsApp Flow pode sobrescrever telas que já foram salvas",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Operador abre um Flow pela lista, adiciona uma tela com gravação bem-sucedida, volta à lista e reabre o mesmo Flow sem remontar a página; depois faz outra edição normal.",
+      "observed_behavior": "updateFlowScreens atualiza selectedFlow e a tabela, mas não atualiza flows, fonte da lista. Voltar apenas limpa selectedFlow; clicar no card reusa o objeto antigo de flows. A próxima edição envia o array screens inteiro desse snapshot antigo. P31 executou os callbacks reais: a persistência aceitou duas telas e depois recebeu uma tela na edição após reabrir.",
+      "impact": "Uma navegação normal pode excluir telas já persistidas sem erro de rede nem resposta fora de ordem. O editor não informa que retomou uma versão antiga. Há ainda erros de UPDATE ignorados, mas a perda demonstrada não depende deles.",
+      "evidence": [
+        {
+          "path": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
+          "line_start": 62,
+          "line_end": 74,
+          "symbol": "list snapshot loaded only by fetch",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx#L62",
+          "note": ""
+        },
+        {
+          "path": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
+          "line_start": 102,
+          "line_end": 137,
+          "symbol": "selected-only update and whole-array writes",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx#L102",
+          "note": ""
+        },
+        {
+          "path": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
+          "line_start": 150,
+          "line_end": 152,
+          "symbol": "reopen from stale card",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx#L150",
+          "note": ""
+        },
+        {
+          "path": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
+          "line_start": 194,
+          "line_end": 202,
+          "symbol": "back only clears selection",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx#L194",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Usar uma fonte de estado coerente por Flow, atualizar/invalidate a lista após salvar e revalidar a versão ao reabrir.",
+        "Verificar o aceite do UPDATE e impedir que snapshot anterior sobrescreva versão mais recente sem conflito visível.",
+        "Adicionar segunda tela→voltar→reabrir→editar mantém ambas no editor e no armazenamento."
+      ],
+      "probes": [
+        "P31"
+      ],
+      "related_findings": [],
+      "limitations": "Probe avalia o prefixo completo de dados/callbacks do componente e os statements exatos de navegação extraídos do JSX; não renderiza DOM. Persistência e hooks são fronteiras em memória.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-051",
+      "title": "Pasta de figurinhas pessoais falha para administradores com vários perfis visíveis",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Usuário admin/supervisor pode ver duas ou mais linhas de profiles pela policy vigente. Ele abre PersonalStickers. Para agente comum que só enxerga o próprio perfil, esta precondição não se aplica.",
+      "observed_behavior": "A query my-profile-stickers usa select(id,name).single() sem filtrar user_id. Múltiplas linhas geram erro de singularidade e profile fica ausente. A lista de figurinhas permanece desabilitada e handleUpload retorna silenciosamente sem profile.id. O consumidor mostra uma pasta vazia e botão de adicionar, sem apresentar o erro dessa query.",
+      "impact": "Administradores/supervisores podem não acessar sua própria pasta nem enviar novas figurinhas, embora possuam permissão. Não há seleção demonstrada de outro perfil: o caso observado por contrato é falha por cardinalidade, não roubo de identidade.",
+      "evidence": [
+        {
+          "path": "src/hooks/integrations/usePersonalStickers.ts",
+          "line_start": 13,
+          "line_end": 36,
+          "symbol": "unscoped singular profile query and dependent operations",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "2b160727cdb76663161e690639d19ff1e7de3a08b853c0f625ea20c19ef4c0a5",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/usePersonalStickers.ts#L13",
+          "note": ""
+        },
+        {
+          "path": "src/components/inbox/stickers/PersonalStickers.tsx",
+          "line_start": 18,
+          "line_end": 39,
+          "symbol": "consumer profile and add controls",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "be11e5fc2d771b4f17d01fd8a5646693626226d0ed66d250ef57553c44a69c19",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/stickers/PersonalStickers.tsx#L18",
+          "note": ""
+        },
+        {
+          "path": "src/components/inbox/stickers/PersonalStickers.tsx",
+          "line_start": 51,
+          "line_end": 57,
+          "symbol": "empty state conceals profile error",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "be11e5fc2d771b4f17d01fd8a5646693626226d0ed66d250ef57553c44a69c19",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/stickers/PersonalStickers.tsx#L51",
+          "note": ""
+        },
+        {
+          "path": "supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql",
+          "line_start": 6,
+          "line_end": 12,
+          "symbol": "own and admin/supervisor profile visibility",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "d021a3812e7d2e1401dcfe6c6e7b66f038d7e8f13f347e32ddd92b77ddbae6b9",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql#L6",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Resolver profile por user_id do usuário autenticado ou reutilizar o profile canônico do Auth.",
+        "Expor loading/error da resolução de identidade e não anunciar pasta vazia quando a identidade falhou.",
+        "Fixtures admin com vários perfis e agente com um perfil retornam sempre o perfil do próprio usuário."
+      ],
+      "probes": [],
+      "related_findings": [],
+      "limitations": "Policies vencedoras corroboradas por auth/database e trechos lidos localmente; não foi executado PostgREST real. A documentação oficial exige exatamente uma linha para single(). Não se afirma que todos os agentes comuns falhem.",
+      "primary_sources": [
+        "https://supabase.com/docs/reference/javascript/single"
+      ]
+    },
+    {
+      "id": "R2-API-052",
+      "title": "Limpar a busca de conhecimento não cancela o debounce pendente",
+      "severity": "P3",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Usuário digita pelo menos dois caracteres e aciona Limpar antes de transcorrerem os 300 ms do debounce.",
+      "observed_behavior": "clear esvazia query e debouncedQuery, mas não cancela debounceRef. O callback antigo restaura a consulta efetiva depois da limpeza. P33 executou o hook: input vazio, queryKey com o termo anterior, consulta novamente habilitada e hasResults=true. O painel renderiza resultados apenas por hasResults, sem exigir query visível.",
+      "impact": "A limpeza pode parecer não funcionar: resultados de uma pesquisa cancelada reaparecem sob campo vazio e pode ocorrer uma consulta desnecessária. A cleanup de unmount e o cancelamento ao digitar outro termo existem; falta o caminho clear.",
+      "evidence": [
+        {
+          "path": "src/hooks/integrations/useKnowledgeBaseSearch.ts",
+          "line_start": 24,
+          "line_end": 31,
+          "symbol": "debounce and unmount cleanup",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "e0fd5d06fc1b4cc4073359d0438b439b5b4ddac975a3fbef19479f12310d6047",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useKnowledgeBaseSearch.ts#L24",
+          "note": ""
+        },
+        {
+          "path": "src/hooks/integrations/useKnowledgeBaseSearch.ts",
+          "line_start": 34,
+          "line_end": 58,
+          "symbol": "query enabled and clear",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "e0fd5d06fc1b4cc4073359d0438b439b5b4ddac975a3fbef19479f12310d6047",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useKnowledgeBaseSearch.ts#L34",
+          "note": ""
+        },
+        {
+          "path": "src/components/inbox/KnowledgeBaseSearchPanel.tsx",
+          "line_start": 44,
+          "line_end": 65,
+          "symbol": "clear control and unconditional hasResults renderer",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "ded296bc26c296a64c67a9d29fd1de6caafc142fb35e4ea33dbae81b5aff7b7e",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/KnowledgeBaseSearchPanel.tsx#L44",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Cancelar e zerar o timer ao limpar; invalidar a geração de qualquer resposta pendente quando necessário.",
+        "Limpar antes de 300 ms mantém query efetiva vazia e não reativa a consulta antiga.",
+        "Resultados só são exibidos quando correspondem à pesquisa atual."
+      ],
+      "probes": [
+        "P33"
+      ],
+      "related_findings": [],
+      "limitations": "Tempo, React Query e estado controlados em memória; não houve consulta real nem renderização DOM.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-053",
+      "title": "Operações de emoji e exclusão de conteúdo confirmam sucesso sem verificar persistência",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Uma chamada Supabase resolve com error para UPDATE/DELETE em custom_emojis, knowledge_base_articles ou whatsapp_flows. No ramo de emoji, Storage e tabela podem ter resultados diferentes.",
+      "observed_behavior": "Custom emoji altera estado otimista para favorito/categoria/exclusão e descarta os resultados; categoria e exclusão sempre anunciam sucesso. deleteArticle e deleteFlow também descartam o resultado do DELETE e emitem removido. A exclusão de emoji tenta Storage antes da linha e também ignora seu resultado.",
+      "impact": "A UI pode representar alteração/exclusão que não ocorreu. Se Storage aceita e a tabela recusa, a linha continua apontando para arquivo removido; se Storage recusa e a linha é removida, sobra arquivo sem a referência da tabela. Esses efeitos são condicionais, não presumidos em toda operação.",
+      "evidence": [
+        {
+          "path": "src/hooks/integrations/useCustomEmojis.ts",
+          "line_start": 125,
+          "line_end": 145,
+          "symbol": "optimistic favorite/category/delete and ignored results",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "01d79225188ea46336b266d7757a18acdc1a309c284c18055bc65e24aaa9f1b3",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useCustomEmojis.ts#L125",
+          "note": ""
+        },
+        {
+          "path": "src/components/inbox/CustomEmojiPicker.tsx",
+          "line_start": 190,
+          "line_end": 200,
+          "symbol": "active management controls",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "7975688fd09bbe740ff2e84f72c9eae89a7eac11caf247bdf86b055bafc8f7bf",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/CustomEmojiPicker.tsx#L190",
+          "note": ""
+        },
+        {
+          "path": "src/hooks/integrations/useKnowledgeBase.ts",
+          "line_start": 65,
+          "line_end": 69,
+          "symbol": "deleteArticle ignores error",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "c20dd80252a8454fa04ee60fee6437855ccced91a2ccb699486ef63ba42d15f8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useKnowledgeBase.ts#L65",
+          "note": ""
+        },
+        {
+          "path": "src/components/knowledge/KnowledgeBaseView.tsx",
+          "line_start": 88,
+          "line_end": 90,
+          "symbol": "delete article control",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "2d905343870adbd854231d2664f729f5c408ac3d7ff98e6a22d0633a59a15235",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/knowledge/KnowledgeBaseView.tsx#L88",
+          "note": ""
+        },
+        {
+          "path": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
+          "line_start": 96,
+          "line_end": 100,
+          "symbol": "deleteFlow ignores error",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx#L96",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Concluir estado de sucesso somente após aceite da persistência; em falha, reverter/revalidar estado otimista e mostrar erro recuperável.",
+        "Definir fluxo recuperável para remoção de Storage e metadado, com rastreio da etapa pendente.",
+        "Resultados error em cada etapa não geram toast de sucesso; cenários de falha parcial não deixam referências quebradas sem possibilidade de recuperação."
+      ],
+      "probes": [],
+      "related_findings": [],
+      "limitations": "Classificação estática dos ramos de erro; nenhum arquivo ou registro real foi alterado. O create/update de artigo verifica error e foi preservado como controle positivo.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-054",
+      "title": "Upload de documentos da base de conhecimento não tem processamento até a IA demonstrado",
+      "severity": "P2",
+      "classification": "gap",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Administrador envia um documento pela Base de Conhecimento, apresentada como forma de treinar a IA. O upload e o INSERT são aceitos; eventual extrator/automação externo não versionado permanece desconhecido.",
+      "observed_behavior": "uploadFile grava bytes e cria knowledge_base_files sem article_id nem extracted_text. A tabela inicia processing_status=pending. Não há consumidor localizado em Edge/scripts nem trigger/função SQL vigente que processe os arquivos. Os caminhos de IA lidos usam knowledge_base_articles publicados, não o conteúdo desses uploads. A policy de leitura de arquivos para agentes depende de article_id ligado a artigo publicado.",
+      "impact": "O documento pode permanecer apenas armazenado, sem entrar no contexto da IA nem tornar-se base publicada para os agentes. O uso de artigos escritos manualmente existe e não é negado por este gap.",
+      "evidence": [
+        {
+          "path": "src/components/knowledge/KnowledgeBaseView.tsx",
+          "line_start": 51,
+          "line_end": 66,
+          "symbol": "training/upload promise and indexed counts",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "2d905343870adbd854231d2664f729f5c408ac3d7ff98e6a22d0633a59a15235",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/knowledge/KnowledgeBaseView.tsx#L51",
+          "note": ""
+        },
+        {
+          "path": "src/hooks/integrations/useKnowledgeBase.ts",
+          "line_start": 71,
+          "line_end": 88,
+          "symbol": "upload and metadata only",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "c20dd80252a8454fa04ee60fee6437855ccced91a2ccb699486ef63ba42d15f8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useKnowledgeBase.ts#L71",
+          "note": ""
+        },
+        {
+          "path": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql",
+          "line_start": 43,
+          "line_end": 66,
+          "symbol": "article/file schema and pending state",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "321cb5da936ae109ff860ca7d59fb60a3bd644f0b172c6ee7dbbb323ca60b65e",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql#L43",
+          "note": ""
+        },
+        {
+          "path": "supabase/migrations/20260318121647_fab9b2a8-44aa-441b-b05d-7b917e113eab.sql",
+          "line_start": 42,
+          "line_end": 47,
+          "symbol": "file visibility depends on published article",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "c921b5b1580e846024d49a4268c16cd7d064e81c9d3f8970720539d341b44ad6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260318121647_fab9b2a8-44aa-441b-b05d-7b917e113eab.sql#L42",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/ai-suggest-reply/index.ts",
+          "line_start": 33,
+          "line_end": 51,
+          "symbol": "published articles source",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "4c90f4ed62d870269d012d8ead3d77a2531fd03291579a8fd4678275925f8a9a",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/ai-suggest-reply/index.ts#L33",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Versionar ou comprovar o pipeline de extração→artigo/índice→publicação e registrar progresso/erros por arquivo.",
+        "Arquivo enviado deve produzir conteúdo recuperável pela busca/contexto IA autorizado antes de anunciar disponibilidade como conhecimento.",
+        "Sem pipeline configurado, explicar que o arquivo está somente armazenado; preservar criação manual de artigos e tratamento de erro de upload."
+      ],
+      "probes": [],
+      "related_findings": [],
+      "limitations": "Gap do conjunto versionado, corroborado por database. Nenhum documento real foi enviado nem modelo real foi chamado; não se exclui extrator externo não fornecido.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-055",
+      "title": "Contador de uso da figurinha pessoal descarta a operação PostgREST",
+      "severity": "P3",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Pasta pessoal resolve corretamente o profile e handleSend chama incrementUseCount após selecionar uma figurinha. O cliente usa o contrato lazy/thenable de PostgREST.",
+      "observed_behavior": "incrementUseCount constrói from(stickers).update(...).eq(...) e descarta o builder, sem await, then ou consumo retornado ao chamador. O SDK só despacha ao consumir a PromiseLike; o valor de use_count não é incrementado por esse caminho.",
+      "impact": "O contador pessoal permanece desatualizado mesmo quando a operação de envio de fato acontece. Isso é um efeito de contabilidade de uso, separado da falha de identidade para administradores em R2-API-051 e do heartbeat que usa o mesmo contrato em R2-API-013.",
+      "evidence": [
+        {
+          "path": "src/hooks/integrations/usePersonalStickers.ts",
+          "line_start": 79,
+          "line_end": 81,
+          "symbol": "discarded use count update",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "2b160727cdb76663161e690639d19ff1e7de3a08b853c0f625ea20c19ef4c0a5",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/usePersonalStickers.ts#L79",
+          "note": ""
+        },
+        {
+          "path": "src/components/inbox/stickers/PersonalStickers.tsx",
+          "line_start": 26,
+          "line_end": 26,
+          "symbol": "send calls incrementUseCount",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "be11e5fc2d771b4f17d01fd8a5646693626226d0ed66d250ef57553c44a69c19",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/stickers/PersonalStickers.tsx#L26",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Consumir a operação e tratar seu erro, com atualização atômica do contador se houver concorrência.",
+        "Definir se uso significa seleção, aceite ou entrega e registrar somente o evento escolhido.",
+        "Seleção/envio aceito incrementa uma vez; erro não fabrica contagem."
+      ],
+      "probes": [],
+      "related_findings": [
+        "R2-API-013",
+        "R2-API-051"
+      ],
+      "limitations": "Sem novo probe redundante: o contrato lazy foi demonstrado em P14 e a fonte primária foi lida. A tag remota exata v2.87.1 não foi executada; não se afirma entrega real pela presença do callback.",
+      "primary_sources": [
+        "https://github.com/supabase/supabase-js/blob/master/packages/core/postgrest-js/src/PostgrestBuilder.ts"
+      ]
+    },
+    {
+      "id": "R2-API-056",
+      "title": "Alerta de rate limit substitui bloqueio permanente por expiração de quinze minutos",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Existe blocked_ips para o IP com is_permanent=true e expires_at=null, criado pelo fluxo administrativo. Uma chamada de send-rate-limit-alert é admitida e validada com blocked=true para o mesmo IP. O problema também ocorre com segredo interno correto; não depende de falta de autenticação.",
+      "observed_behavior": "O UPSERT conflita por ip_address e escreve incondicionalmente is_permanent=false, expires_at=agora+15 minutos, motivo e datas novos. A cadeia SQL revisada pela frente database não contém trigger ou constraint que preserve a decisão permanente. P35 executou o handler completo com alerta legítimo e depois cleanup-rate-limit-logs, que apagou a linha tornada temporária após 16 minutos.",
+      "impact": "Um evento automático menos restritivo apaga a duração e a justificativa da decisão administrativa. A rotina de limpeza passa a poder remover esse registro. O impacto sobre requisições efetivamente permitidas depende de um consumidor de bloqueios: não foi demonstrado enforcement local ativo nem inspecionado serviço externo.",
+      "evidence": [
+        {
+          "path": "src/components/security/BlockedIPDialogs.tsx",
+          "line_start": 29,
+          "line_end": 38,
+          "symbol": "permanent block creation",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "c727f47521bf679b42abc2e03c585d463e840606bb98efa1d468bc6fce8ef613",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/security/BlockedIPDialogs.tsx#L29",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/send-rate-limit-alert/index.ts",
+          "line_start": 50,
+          "line_end": 66,
+          "symbol": "unconditional temporary UPSERT",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-rate-limit-alert/index.ts#L50",
+          "note": ""
+        },
+        {
+          "path": "supabase/migrations/20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql",
+          "line_start": 33,
+          "line_end": 44,
+          "symbol": "unique IP and independent permanent/expiry fields",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "cc618235ad1abaee18f7f91b14287f018fdb39ce7a02b9e04175530c88726d04",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql#L33",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
+          "line_start": 21,
+          "line_end": 25,
+          "symbol": "delete expired nonpermanent row",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "9ceed7013a9237cd19adb2b5b608478d2fc2d9f244141d7b658de7d9b45961ac",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/cleanup-rate-limit-logs/index.ts#L21",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Preservar bloqueio permanente e seu motivo/autoria quando chegar alerta temporário.",
+        "Aplicar extensão de prazo de forma atômica, sem reduzir prazo administrativo mais longo.",
+        "Cenário com bloqueio permanente seguido de alerta automático permanece permanente e não é removido pela limpeza.",
+        "Separar o registro de eventos de rate limit da decisão administrativa de bloqueio."
+      ],
+      "probes": [
+        "P35"
+      ],
+      "related_findings": [
+        "R2-API-022",
+        "R2-AUTH-022"
+      ],
+      "limitations": "O probe modela o UPSERT e os predicados sob a unicidade SQL pinada, sem executar PostgreSQL. Não afirma desbloqueio de um IP real nem eficácia de enforcement que não apareceu na fonte.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-057",
+      "title": "Alerta e notificação afirmam bloqueio mesmo quando gravar blocked_ips falha",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Chamada válida com blocked=true; INSERT de security_alerts funciona, mas UPSERT de blocked_ips retorna erro. O exemplo determinístico permite também a inserção da notificação para tornar o efeito visível.",
+      "observed_behavior": "O handler grava primeiro um alerta dizendo que o IP foi bloqueado. Erro no UPSERT é apenas logado; a notificação de administrador mantém metadata.blocked=true e o endpoint retorna HTTP200 com success=true. P36 deixou blocked_ips vazio, mas obteve alerta e notificação afirmando bloqueio. A leitura de admins e o INSERT de notifications também não têm seus erros examinados.",
+      "impact": "A interface e o chamador recebem uma confirmação de controle de segurança que não foi persistido. Se a falha for parcial, não existe no retorno a distinção entre alerta registrado, bloqueio aplicado e notificação enviada, dificultando uma retomada correta.",
+      "evidence": [
+        {
+          "path": "supabase/functions/send-rate-limit-alert/index.ts",
+          "line_start": 32,
+          "line_end": 48,
+          "symbol": "alert claims blocking before block write",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-rate-limit-alert/index.ts#L32",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/send-rate-limit-alert/index.ts",
+          "line_start": 50,
+          "line_end": 87,
+          "symbol": "ignored block and notification errors / success response",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/send-rate-limit-alert/index.ts#L50",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Somente afirmar bloqueio depois de confirmar a decisão persistida.",
+        "Retornar resultado separado para alerta, bloqueio e notificações; erros não devem virar success=true integral.",
+        "Tornar a decisão e o evento correspondente transacionais/idempotentes ou persistir um efeito pendente recuperável.",
+        "Erro do UPSERT não produz notificação de bloqueio aplicado, e o chamador recebe falha ou parcial explícito."
+      ],
+      "probes": [
+        "P36"
+      ],
+      "related_findings": [
+        "R2-API-022",
+        "R2-API-056"
+      ],
+      "limitations": "Confirmação falsa está demonstrada no handler completo com fronteiras em memória; não comprova que qualquer bloqueio legítimo impediria tráfego, nem que o banco real retornou esse erro.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-058",
+      "title": "Alerta mensal de custo repete e-mail em cada execução diária do cron",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Canal de e-mail está habilitado com CRON_SECRET correspondente ao Vault e chave Resend válida; o consumo do mês permanece acima de 400 e ocorrem pelo menos dois ticks diários. O estado real dos segredos não foi lido; a documentação registra que o canal falha fechado enquanto não for configurado.",
+      "observed_behavior": "A documentação promete um alerta por mês e a função SQL consulta notifications como ledger mensal. Entretanto, o job chama net.http_post após notify_searchbox_budget independentemente de seu retorno. A Edge só consulta o consumo e envia o e-mail; não consulta/grava ledger de envio nem transmite chave idempotente. P37 simulou dois dias do mesmo mês com notificação mensal existente e interceptou dois POSTs de e-mail.",
+      "impact": "O canal app pode emitir apenas um alerta enquanto o mesmo canal de e-mail repete o aviso a cada dia acima do limiar. Isso desvia do aceite mensal documentado e gera ruído/custo de envio; não é uma alegação de envio real nem de alteração no preço da Mapbox.",
+      "evidence": [
+        {
+          "path": "docs/mapa/USO_SEARCHBOX.md",
+          "line_start": 119,
+          "line_end": 130,
+          "symbol": "monthly alert contract across channels",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "52e2c8d07854e2bf24cd830c2ecd8f2e4f426769aaa28ae244be2ed380cfe227",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/mapa/USO_SEARCHBOX.md#L119",
+          "note": ""
+        },
+        {
+          "path": "supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql",
+          "line_start": 25,
+          "line_end": 41,
+          "symbol": "monthly notification ledger",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "09e0326b04428ab480b2948fbb52c970a4d339ed78f0fbdb0f6d7526618ac01f",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql#L25",
+          "note": ""
+        },
+        {
+          "path": "supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql",
+          "line_start": 65,
+          "line_end": 78,
+          "symbol": "daily independent email invocation",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "09e0326b04428ab480b2948fbb52c970a4d339ed78f0fbdb0f6d7526618ac01f",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql#L65",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/searchbox-budget-alert/index.ts",
+          "line_start": 19,
+          "line_end": 24,
+          "symbol": "fail-closed cron secret",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "2909d2324bfb71d4e298c370280b8cdd45d77a1b2a9ca044dc7092394bbfa1d1",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/searchbox-budget-alert/index.ts#L19",
+          "note": ""
+        },
+        {
+          "path": "supabase/functions/searchbox-budget-alert/index.ts",
+          "line_start": 28,
+          "line_end": 62,
+          "symbol": "threshold and unconditional email once above it",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "2909d2324bfb71d4e298c370280b8cdd45d77a1b2a9ca044dc7092394bbfa1d1",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/searchbox-budget-alert/index.ts#L28",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Dar ao canal de e-mail identidade mensal e confirmação própria, com decisão atômica antes do envio e resultado durável.",
+        "Dois ticks bem sucedidos no mesmo mês não repetem o e-mail; falha confirmada permite retry e resultado incerto requer conciliação.",
+        "Preservar fail-closed por segredo e propagação de recusa HTTP do Resend.",
+        "A documentação e os canais devem concordar sobre frequência de alerta; se a regra desejada for diária, declarar e aprovar a mudança de contrato."
+      ],
+      "probes": [
+        "P37"
+      ],
+      "related_findings": [
+        "R2-INF-016"
+      ],
+      "limitations": "Cron e SQL foram lidos, não executados. O handler foi executado com data/segredo/provedor em memória e ledger preexistente; secret de produção permanece desconhecido. A exposição de erro 500 deste endpoint continua sob INF-016, sem ID duplicado.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-059",
+      "title": "Telas Gmail convertem falha de consulta em conta desconectada ou histórico vazio",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Consulta de contas, contagem ou mensagens falha. No cartão/thread, a query termina sem dados úteis em cache e o hook expõe accountsError/messagesError; no monitor, a RPC e/ou os counts retornam error em vez de lançar exceção JavaScript.",
+      "observed_behavior": "GmailWebhookMonitor descarta error das três respostas e aplica data||[] e count||0. Seu catch não captura esses resultados normais do SDK. P39 primeiro carregou 1 conta/12 threads/4 não lidas; após falha nas três consultas, o estado virou 0/0/0, loading=false e nenhum aviso. GmailIntegrationCard não consome accountsLoading/accountsError e mostra Desconectado para activeAccount ausente. EmailThreadView descarta messagesError e, terminado loading, apresenta Sem mensagens para o array padrão vazio.",
+      "impact": "Indisponibilidade, recusa de consulta ou erro de sessão é apresentada como ausência de contas ou mensagens. O usuário pode reconectar uma conta que ainda existe, e o monitor de sincronização deixa de distinguir dados desconhecidos de contagem real zero.",
+      "evidence": [
+        {
+          "path": "src/components/admin/GmailWebhookMonitor.tsx",
+          "line_start": 32,
+          "line_end": 58,
+          "symbol": "loadData drops RPC/count errors",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "1f839b9b9bb8343775512665a17347a82daffce7d947c7a8f5a4647bcb6a9424",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/admin/GmailWebhookMonitor.tsx#L32",
+          "note": ""
+        },
+        {
+          "path": "src/components/admin/GmailWebhookMonitor.tsx",
+          "line_start": 99,
+          "line_end": 135,
+          "symbol": "zero counters and no-account branch",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "1f839b9b9bb8343775512665a17347a82daffce7d947c7a8f5a4647bcb6a9424",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/admin/GmailWebhookMonitor.tsx#L99",
+          "note": ""
+        },
+        {
+          "path": "src/components/integrations/GmailIntegrationCard.tsx",
+          "line_start": 10,
+          "line_end": 30,
+          "symbol": "missing account treated as disconnected",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "485d27d86c0986e45237d3b3cf55b914e700dab79065a2dacbcf3f12e5efb641",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/integrations/GmailIntegrationCard.tsx#L10",
+          "note": ""
+        },
+        {
+          "path": "src/hooks/integrations/useGmail.ts",
+          "line_start": 32,
+          "line_end": 48,
+          "symbol": "accounts error is exposed by query",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "b10234263d58ee6e657c0f873997a968bc5e9a56ced63bac65fe4273222ecdf2",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L32",
+          "note": ""
+        },
+        {
+          "path": "src/hooks/integrations/useGmail.ts",
+          "line_start": 143,
+          "line_end": 151,
+          "symbol": "messages error is exposed by query",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "b10234263d58ee6e657c0f873997a968bc5e9a56ced63bac65fe4273222ecdf2",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L143",
+          "note": ""
+        },
+        {
+          "path": "src/components/gmail/EmailThreadView.tsx",
+          "line_start": 156,
+          "line_end": 164,
+          "symbol": "consumer omits messagesError",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "d5286686f6d37a3221d7bcf61fa3872df108d0382f5eac01a25ff9969a3154bb",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L156",
+          "note": ""
+        },
+        {
+          "path": "src/components/gmail/EmailThreadView.tsx",
+          "line_start": 239,
+          "line_end": 245,
+          "symbol": "error becomes empty state",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "d5286686f6d37a3221d7bcf61fa3872df108d0382f5eac01a25ff9969a3154bb",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L239",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Consumir error e loading antes de derivar ausência de conta ou contagem zero.",
+        "Monitor deve preservar último dado conhecido com indicação de desatualização ou mostrar indisponível; erro não deve sobrescrever contagem com zero.",
+        "Thread sem mensagens e consulta fracassada têm estados e ações de recuperação diferentes.",
+        "Repetir fixture de dados válidos seguida de três erros; mostrar erro/retry e não alegar desconexão ou ausência real."
+      ],
+      "probes": [
+        "P39"
+      ],
+      "related_findings": [
+        "R2-COM-007",
+        "R2-COM-010"
+      ],
+      "limitations": "P39 executa prefixo integral de estado/loading e callback de consulta, com React/Supabase em memória, sem renderizar JSX. Os outros dois consumidores são evidência estática. Não afirma falha atual de uma conta real nem ausência de error handling no hook compartilhado, que expõe os erros corretamente.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-060",
+      "title": "Botão Arquivar da thread Gmail legada está habilitado sem ação",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Usuário autorizado acessa a view gmail, seleciona uma thread e usa o botão Arquivar no cabeçalho da EmailThreadView. A view está no roteador e no menu, e GmailInboxView ainda monta esse componente legado.",
+      "observed_behavior": "O Button com ícone Archive e tooltip Arquivar não recebe onClick, não é submit de formulário nem tem ação equivalente no container. O hook já oferece operações de labels, mas este consumidor não liga nenhuma delas ao botão.",
+      "impact": "O controle anunciado não arquiva a conversa nem informa indisponibilidade. O clique termina sem mudança persistida, feedback ou estado de progresso nesse fluxo ainda roteável.",
+      "evidence": [
+        {
+          "path": "src/pages/ViewRouter.tsx",
+          "line_start": 89,
+          "line_end": 92,
+          "symbol": "gmail and monitor routes",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/ViewRouter.tsx#L89",
+          "note": ""
+        },
+        {
+          "path": "src/components/gmail/GmailInboxView.tsx",
+          "line_start": 15,
+          "line_end": 38,
+          "symbol": "selected thread mounts legacy view",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "de19f21aac96450f1b64e6feeedd2146bca7bf09fcff58a1172955a8c3ba328a",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/GmailInboxView.tsx#L15",
+          "note": ""
+        },
+        {
+          "path": "src/components/gmail/EmailThreadView.tsx",
+          "line_start": 208,
+          "line_end": 218,
+          "symbol": "enabled archive button without handler",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "d5286686f6d37a3221d7bcf61fa3872df108d0382f5eac01a25ff9969a3154bb",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L208",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Conectar a ação ao contrato de arquivamento autorizado da thread e atualizar a lista após confirmação.",
+        "Se a ação não estiver disponível, removê-la ou desabilitá-la com indicação clara.",
+        "Clique único executa a operação uma vez; erro conserva estado e é exibido, sucesso retira a thread da caixa conforme regra de produto."
+      ],
+      "probes": [],
+      "related_findings": [
+        "R2-COM-007"
+      ],
+      "limitations": "Leitura estática suficiente; não foi criado teste que apenas espelha a ausência de onClick. Não se infere do botão Excluir uma regra de apagar a thread inteira: esse comportamento distinto permanece fora deste achado.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-061",
+      "title": "Enviar mensagem pelo menu de um grupo já selecionado retira esse grupo dos destinatários",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "O grupo A já está selecionado e o usuário usa Enviar mensagem no menu desse mesmo card. Se B também estiver selecionado, o conjunto resultante ainda permite confirmar um envio para B.",
+      "observed_behavior": "O callback do menu chama toggleGroupSelection(group.id) e abre o diálogo de envio em massa. toggle remove IDs já selecionados. P40 executou o callback exato com seleção A/B, abriu o menu de A e obteve somente B; ao simular confirmação, o hook real de broadcast endereçou B.",
+      "impact": "A ação contextual exclui justamente o grupo escolhido. Com apenas A selecionado o diálogo abre sem destinatários; com outros grupos, esses permanecem como público. O diálogo mostra contagem e nomes, portanto o erro pode ser percebido antes de confirmar; não se afirma envio oculto ou sem confirmação.",
+      "evidence": [
+        {
+          "path": "src/components/groups/GroupsView.tsx",
+          "line_start": 234,
+          "line_end": 237,
+          "symbol": "contextual send toggles selection",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "b43110db8781696eb31ea512116c40a0b39e282e2c7030dec0b8b6e450be153e",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/groups/GroupsView.tsx#L234",
+          "note": ""
+        },
+        {
+          "path": "src/hooks/chat/useGroupsManager.ts",
+          "line_start": 45,
+          "line_end": 51,
+          "symbol": "toggle removes existing ID",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "f8f32ebbf2196b6f278c44bc9839e43f39b762a755ac877882a10207390e6055",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/chat/useGroupsManager.ts#L45",
+          "note": ""
+        },
+        {
+          "path": "src/hooks/groups/actions.ts",
+          "line_start": 88,
+          "line_end": 101,
+          "symbol": "broadcast resolves current selected set",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "b6713ab51c47df06ef5f26a1669f8a9ebec75bb90250b75b6e960be0b7c8809e",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/groups/actions.ts#L88",
+          "note": ""
+        },
+        {
+          "path": "src/components/groups/GroupsView.tsx",
+          "line_start": 285,
+          "line_end": 290,
+          "symbol": "visible recipient confirmation",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "b43110db8781696eb31ea512116c40a0b39e282e2c7030dec0b8b6e450be153e",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/groups/GroupsView.tsx#L285",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "A ação de enviar para um grupo estabelece explicitamente o público pretendido, sem alternar inclusão acidentalmente.",
+        "Se o produto quiser incluir o grupo no envio em massa, usar adição idempotente; se quiser envio individual, definir somente aquele ID.",
+        "Abrir o menu do grupo A já selecionado mantém A como alvo e não converte o envio em somente B.",
+        "Conservar revisão visível de destinatários antes do disparo."
+      ],
+      "probes": [
+        "P40"
+      ],
+      "related_findings": [
+        "R2-API-042"
+      ],
+      "limitations": "Callback/hook reais com estado e transporte simulados. P40 só chama o broadcast após uma confirmação explícita na fixture; nenhuma mensagem externa foi enviada.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-062",
+      "title": "Broadcast de grupos apaga texto e destinatários mesmo quando todos os envios falham",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Grupo com conexão selecionado; o envio retorna erro de transporte ou não há instância utilizável. O usuário já digitou a mensagem e confirma o diálogo.",
+      "observed_behavior": "handleBroadcast conta failed, limpa selectedGroups incondicionalmente e resolve void. onBroadcast não recebe resultado: após await, fecha o diálogo e zera broadcastMessage. P41 fez o único envio retornar error não nulo; houve aviso de zero enviados/uma falha, mas texto e seleção foram apagados.",
+      "impact": "A falha é avisada, porém o usuário perde os dados necessários para corrigir e tentar novamente. Em sucesso parcial, falta um conjunto persistido de alvos recusados e o público inteiro é descartado. É distinto do sucesso falso de API042: aqui o erro é reconhecido e mesmo assim o rascunho se perde.",
+      "evidence": [
+        {
+          "path": "src/hooks/groups/actions.ts",
+          "line_start": 88,
+          "line_end": 108,
+          "symbol": "failed accounting, unconditional clear and void result",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "b6713ab51c47df06ef5f26a1669f8a9ebec75bb90250b75b6e960be0b7c8809e",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/groups/actions.ts#L88",
+          "note": ""
+        },
+        {
+          "path": "src/components/groups/GroupsView.tsx",
+          "line_start": 54,
+          "line_end": 60,
+          "symbol": "unconditional dialog close and draft clear",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "b43110db8781696eb31ea512116c40a0b39e282e2c7030dec0b8b6e450be153e",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/groups/GroupsView.tsx#L54",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Retornar resultado por grupo ao consumidor e preservar texto/alvos recusados.",
+        "Limpar o rascunho apenas quando o envio definido como concluído tiver confirmação suficiente ou quando o usuário o descartar.",
+        "Sucesso parcial distingue aceitos, recusados e incertos para evitar retry integral.",
+        "Fixture de falha total mantém o diálogo e seu texto; fixture parcial permite retentar somente os alvos decididos como seguros."
+      ],
+      "probes": [
+        "P41"
+      ],
+      "related_findings": [
+        "R2-API-042",
+        "R2-API-061"
+      ],
+      "limitations": "O probe modela erro efetivo na fronteira invoke e executa callbacks reais, sem DOM e sem envio. Não presume que sucesso de transporte garanta entrega final.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-063",
+      "title": "Painéis Omnichannel apresentam cadastro pendente como canal conectado e fixam WhatsApp em um",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Administrador consegue inserir um novo channel_connections via OmnichannelManager; o default SQL vigente is_active=true é aplicado e status permanece pending_setup. O usuário abre a aba Canais do OmnichannelInbox. A contagem WhatsApp independe de haver zero, uma ou várias conexões reais.",
+      "observed_behavior": "O cadastro grava pending_setup sem is_active. loadConnections filtra apenas is_active=true, e o resultado recebe título Canais Conectados e ponto verde. P43 compôs os callbacks de criação/leitura e o default SQL pinado: o canal pending_setup entrou nessa lista. No Manager, a contagem WhatsApp é a constante 1 e a tela vazia declara que os canais WhatsApp já estão ativos sem consultá-los.",
+      "impact": "Uma configuração local incompleta passa a ser representada como conexão operacional. O operador recebe informação incorreta sobre disponibilidade e quantidade de canais, mesmo sem qualquer conexão com o provedor demonstrada.",
+      "evidence": [
+        {
+          "path": "src/components/omnichannel/OmnichannelManager.tsx",
+          "line_start": 59,
+          "line_end": 83,
+          "symbol": "create pending channel",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelManager.tsx#L59",
+          "note": ""
+        },
+        {
+          "path": "supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql",
+          "line_start": 9,
+          "line_end": 26,
+          "symbol": "is_active default independent of status",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "e7dff0c87e70ea763ebdc2caa12c75dbaf7ea898c6e206df646da36f7ae7fa9a",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql#L9",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/OmnichannelInbox.tsx",
+          "line_start": 49,
+          "line_end": 55,
+          "symbol": "active-only connection filter",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L49",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/OmnichannelInbox.tsx",
+          "line_start": 267,
+          "line_end": 285,
+          "symbol": "connected label and green indicator",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L267",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/OmnichannelManager.tsx",
+          "line_start": 171,
+          "line_end": 177,
+          "symbol": "unverified active WhatsApp assertion",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelManager.tsx#L171",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/OmnichannelManager.tsx",
+          "line_start": 214,
+          "line_end": 224,
+          "symbol": "constant WhatsApp count",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelManager.tsx#L214",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Separar cadastro habilitado de conexão operacional e mostrar pending_setup como pendente.",
+        "Derivar contagem WhatsApp da fonte autorizada com estado de erro/ausência explícito.",
+        "Canal recém-criado sem credenciais não aparece como conectado.",
+        "Testar zero, duas conexões e estados pendente/desconectado sem substituir ausência por uma constante."
+      ],
+      "probes": [
+        "P43"
+      ],
+      "related_findings": [],
+      "limitations": "SQL default foi confirmado na cadeia pela frente database, não aplicado em banco real. Nenhuma verificação real de credenciais, conexão ou capacidade dos canais foi efetuada.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-064",
+      "title": "Inbox Omnichannel projeta contatos limitados sem carregar nem abrir conversas",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Usuário autorizado abre a aba Canais da view omni-inbox e tem contatos visíveis. Pode haver contatos sem mensagens, mensagens não lidas ou mais de 200 cadastros visíveis.",
+      "observed_behavior": "loadUnifiedInbox lê somente 200 contacts ordenados por updated_at. Cada cadastro vira UnifiedMessage com lastMessage vazio, unread=false e status=open, usando a data do cadastro; não consulta histórico nem estado da conversa. A busca e os contadores são locais a essa amostra. Os cards de conversa têm cursor-pointer, mas nenhum onClick ou navegação. P43 mostrou que um contato sem mensagem produz uma linha de inbox, sem consulta a messages.",
+      "impact": "A tela promete todas as conversas, mas apresenta uma amostra de cadastros, nunca marca não lidas por esse caminho e não permite entrar na conversa. Contatos fora da amostra não aparecem na busca. A aba Email Chat monta o fluxo de e-mail existente e não está incluída nessa ausência funcional.",
+      "evidence": [
+        {
+          "path": "src/components/omnichannel/OmnichannelInbox.tsx",
+          "line_start": 58,
+          "line_end": 94,
+          "symbol": "contact-only bounded projection",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L58",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/OmnichannelInbox.tsx",
+          "line_start": 104,
+          "line_end": 111,
+          "symbol": "search only loaded sample",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L104",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/OmnichannelInbox.tsx",
+          "line_start": 150,
+          "line_end": 153,
+          "symbol": "all conversations promise",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L150",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/OmnichannelInbox.tsx",
+          "line_start": 228,
+          "line_end": 259,
+          "symbol": "conversation rows without open action",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L228",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/OmnichannelInbox.tsx",
+          "line_start": 295,
+          "line_end": 298,
+          "symbol": "separate working email consumer",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelInbox.tsx#L295",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Consumir projeção canônica de conversas com última mensagem, não lidas e estado derivados dos dados autorizados.",
+        "Paginar ou declarar a amostra e executar busca sobre o universo pretendido.",
+        "Permitir abrir a conversa no canal correspondente ou apresentar claramente uma lista de contatos com finalidade diferente.",
+        "Contatos sem histórico, conversa não lida e mais de 200 itens têm representação correta e navegação verificável."
+      ],
+      "probes": [
+        "P43"
+      ],
+      "related_findings": [],
+      "limitations": "O probe executa callbacks e projeção com dados em memória. Não testa provedores adicionais nem afirma inexistência dos inboxes WhatsApp/Email já presentes em outras views.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-065",
+      "title": "Cadastro de canais adicionais e regras de roteamento não têm executor versionado demonstrado",
+      "severity": "P2",
+      "classification": "gap",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "Administrador usa OmnichannelManager para cadastrar Instagram/Telegram/Messenger/Webchat/Gmail ou cria uma regra em ChannelRoutingRules. INSERTs/RLS funcionam. Não foi inspecionado eventual N8N/VPS ou serviço externo não versionado.",
+      "observed_behavior": "O Manager insere nome/tipo/status=pending_setup e orienta configurar credenciais, mas a tela só oferece criar/remover, sem fluxo de configuração/ativação. As regras persistem canal/fila/prioridade/is_active e só são lidas pelo próprio CRUD. Busca dos nomes em todos os entrypoints Edge não localizou consumidor; a frente database confirmou zero referência a channel_routing_rules nos 311 corpos SQL vencedores e nenhum trigger nessa tabela. channel_connections tem apenas o trigger de updated_at nessa cadeia.",
+      "impact": "A evidência local termina no cadastro. Não demonstra que credenciais sejam configuradas, que mensagens desses novos canais entrem/saiam ou que a fila escolhida seja aplicada. O status de concluído de tal integração ou regra não pode ser sustentado apenas pelo sucesso do INSERT.",
+      "evidence": [
+        {
+          "path": "src/components/omnichannel/OmnichannelManager.tsx",
+          "line_start": 59,
+          "line_end": 85,
+          "symbol": "pending registration and instruction to configure credentials",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelManager.tsx#L59",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/OmnichannelManager.tsx",
+          "line_start": 180,
+          "line_end": 205,
+          "symbol": "only delete operation on channel card",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/OmnichannelManager.tsx#L180",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/ChannelRoutingRules.tsx",
+          "line_start": 33,
+          "line_end": 43,
+          "symbol": "rules read by own editor",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "5485f2eee9ce5e3fda2575857cc976fb2fbcf179e35738cb731bc978721873cd",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/ChannelRoutingRules.tsx#L33",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/ChannelRoutingRules.tsx",
+          "line_start": 85,
+          "line_end": 104,
+          "symbol": "local rule insert",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "5485f2eee9ce5e3fda2575857cc976fb2fbcf179e35738cb731bc978721873cd",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/ChannelRoutingRules.tsx#L85",
+          "note": ""
+        },
+        {
+          "path": "src/components/omnichannel/ChannelRoutingRules.tsx",
+          "line_start": 155,
+          "line_end": 160,
+          "symbol": "routing effect promised",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "5485f2eee9ce5e3fda2575857cc976fb2fbcf179e35738cb731bc978721873cd",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/omnichannel/ChannelRoutingRules.tsx#L155",
+          "note": ""
+        },
+        {
+          "path": "supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql",
+          "line_start": 47,
+          "line_end": 71,
+          "symbol": "routing DDL and connection updated_at trigger",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "e7dff0c87e70ea763ebdc2caa12c75dbaf7ea898c6e206df646da36f7ae7fa9a",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql#L47",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Identificar e versionar o executor que aplica as regras, incluindo autorização, precedência e ausência de fila.",
+        "Fornecer fluxo de configuração e diagnóstico de credenciais/capacidades por canal, ou marcar a função como cadastro ainda sem execução.",
+        "Provar uma mensagem de um canal implementado chegando à fila escolhida, com identidade/correlação e falha observável.",
+        "Se o motor é externo, anexar contrato, versão implantada e evidência operacional sanitizada; não presumir que precise ser reimplementado no frontend."
+      ],
+      "probes": [],
+      "related_findings": [
+        "R2-API-063",
+        "R2-API-064"
+      ],
+      "limitations": "Gap de cobertura operacional na fonte, não prova de inexistência de toda integração fora do repositório. Gmail OAuth/Email e WhatsApp possuem fluxos separados; o achado não os declara ausentes. Busca dirigida de src/Edge e confirmação da cadeia SQL sustentam o limite.",
+      "primary_sources": []
+    },
+    {
+      "id": "R2-API-066",
+      "title": "Monitor de quarentena conserva decisão antiga após liberação e para em erro transitório",
+      "severity": "P2",
+      "classification": "confirmed_static",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "preconditions": "VPS/proxy de media_quarantine está configurado e uma consulta inicial funciona; registro pending/deleted já está no cache. Depois ocorre liberação/whitelist, inclusive em outro cliente, ou uma consulta lança erro transitório. Configuração real não foi consultada.",
+      "observed_behavior": "O monitor consulta só pending/deleted e aplica upsertMany, que não remove nem atualiza registros ausentes do resultado. Uma decisão allowed/whitelisted deixa de ser recebida e o cache conserva a anterior. O painel useQuarantineMedia também faz apenas upsertMany depois do reload. Além disso, qualquer exceção no tick seta disabledRef=true e impede novo timer. P44 executou monitor e store reais: depois de liberação omitida pelo filtro, pending permaneceu; após uma exceção, não restou polling.",
+      "impact": "O selo de segurança no MessageBubble pode continuar acusando pendência/ameaça após revisão e parar de refletir novas decisões até reset ou atualização explícita que traga o registro. Trata-se de estado exibido: o badge não é um mecanismo de autorização e o player de mídia é montado separadamente.",
+      "evidence": [
+        {
+          "path": "src/providers/QuarantineMonitorProvider.tsx",
+          "line_start": 54,
+          "line_end": 75,
+          "symbol": "filtered poll and append-only cache hydration",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "31d0b8fcf2e54f93bb660692a67d6c3d5e37f2e373c4caed946b8bf55630d482",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/providers/QuarantineMonitorProvider.tsx#L54",
+          "note": ""
+        },
+        {
+          "path": "src/providers/QuarantineMonitorProvider.tsx",
+          "line_start": 91,
+          "line_end": 110,
+          "symbol": "disable on error and timer lifecycle",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "31d0b8fcf2e54f93bb660692a67d6c3d5e37f2e373c4caed946b8bf55630d482",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/providers/QuarantineMonitorProvider.tsx#L91",
+          "note": ""
+        },
+        {
+          "path": "src/lib/quarantineStore.ts",
+          "line_start": 37,
+          "line_end": 47,
+          "symbol": "upsert does not reconcile missing records",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "c43d2a796900cc38e3a950e5caf8cec718e7d2176f562308b361658de16d0c04",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/quarantineStore.ts#L37",
+          "note": ""
+        },
+        {
+          "path": "src/hooks/integrations/useQuarantineMedia.ts",
+          "line_start": 103,
+          "line_end": 108,
+          "symbol": "panel also upserts filtered list",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "03ab979bfef9f686b0603b22e864899add827d370c1db118fcb60dba9bbc6e63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useQuarantineMedia.ts#L103",
+          "note": ""
+        },
+        {
+          "path": "src/hooks/integrations/useQuarantineMedia.ts",
+          "line_start": 124,
+          "line_end": 139,
+          "symbol": "decision followed by filtered reload",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "03ab979bfef9f686b0603b22e864899add827d370c1db118fcb60dba9bbc6e63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useQuarantineMedia.ts#L124",
+          "note": ""
+        },
+        {
+          "path": "src/components/security/QuarantineBadge.tsx",
+          "line_start": 11,
+          "line_end": 27,
+          "symbol": "badge labels derive cached decision",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "297250d9128093814ccde804ea49b2e7f049eb2bd89d3c02b6021f7ac74a94fa",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/security/QuarantineBadge.tsx#L11",
+          "note": ""
+        },
+        {
+          "path": "src/components/inbox/chat/MessageBubble.tsx",
+          "line_start": 164,
+          "line_end": 174,
+          "symbol": "badge mounted beside media rendering",
+          "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "sha256": "36a6d92d027703add8af782b8ff10032e29e6276e0c3ccec334cbcd1502ef7a1",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/chat/MessageBubble.tsx#L164",
+          "note": ""
+        }
+      ],
+      "acceptance": [
+        "Propagar mudanças para allowed/whitelisted e reconciliar por ID/versão, sem inferir liberação apenas porque um registro saiu da janela de 500.",
+        "Distinguir notConfigured permanente de falhas transitórias, com retry/backoff e estado de atualização observável.",
+        "Após liberação, o selo reflete a decisão atual no cliente que só recebe polling; uma falha temporária não desliga o monitor para toda a sessão.",
+        "Conservar cancelamento ao desmontar e limpar dados por identidade; o selo nunca substitui controle de acesso real à mídia."
+      ],
+      "probes": [
+        "P44"
+      ],
+      "related_findings": [],
+      "limitations": "VPS, ClamAV, storage e efeitos externos da decisão não foram exercidos. O probe usa respostas autoritativas em memória e store real; não afirma bloqueio/desbloqueio efetivo do arquivo. O caminho notConfigured é intencional e não foi tratado como falha.",
+      "primary_sources": []
     }
   ],
   "prior_findings_rechecked": [
@@ -2966,15 +4398,25 @@
       "id": "R2-AUTH-035",
       "outcome": "frontend_delegation",
       "note": "useWhatsAppStatus e consumidores de perfil/status ficaram com auth: conversão de notSupported GO em vazio e estado fixo Offline não foram duplicados nesta frente."
+    },
+    {
+      "id": "R2-INF-016",
+      "outcome": "cross_confirmed_endpoint",
+      "note": "searchbox-budget-alert expõe error.message em Response 500; o gate insuficiente e esse exemplo pertencem à frente infra. Este lote completou a leitura integral do endpoint sem clonar o finding."
+    },
+    {
+      "id": "R2-COM-007/R2-COM-011",
+      "outcome": "legacy_consumer_confirmed",
+      "note": "EmailThreadView também usa última mensagem da consulta sem paginação (178–180) e sanitizeEmailHtml (45–53/116–120). Os defeitos de paginação e imagem protocol-relative permanecem em communication; só consumidor legado foi confirmado."
     }
   ],
   "verification": {
-    "offline_probes": 30,
+    "offline_probes": 44,
     "actual_network_requests": 0,
     "actual_database_requests": 0,
     "actual_environment_reads": 0,
     "source_changes": 0,
-    "source_provenance": "verify-source.mjs validates actual HEAD and all versioned supabase/functions/** bytes plus config before any application import against source-integrity.json",
+    "source_provenance": "verify-source.mjs validates actual HEAD and all versioned supabase/functions/** bytes plus config before any application import against source-integrity.json; frontend/SQL probes additionally validate every evaluated non-backend file before evaluation",
     "files": [
       "verify-source.mjs",
       "reproduce.mjs",
@@ -2990,7 +4432,15 @@
       "reproduce-final-endpoints.mjs",
       "final-endpoints-probe-results.json",
       "reproduce-frontend-providers.mjs",
-      "frontend-providers-probe-results.json"
+      "frontend-providers-probe-results.json",
+      "reproduce-frontend-persistence.mjs",
+      "frontend-persistence-probe-results.json",
+      "reproduce-security-maintenance.mjs",
+      "security-maintenance-probe-results.json",
+      "reproduce-gmail-monitor.mjs",
+      "gmail-monitor-probe-results.json",
+      "reproduce-channel-consumers.mjs",
+      "channel-consumers-probe-results.json"
     ]
   },
   "limitation": "Static and deterministic offline evidence. Runtime deployment, credentials, logs, real provider payload versions and external schedulers were not inspected."

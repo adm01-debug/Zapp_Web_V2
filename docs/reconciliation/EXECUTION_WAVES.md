@@ -3,7 +3,7 @@
 <!-- BEGIN REAUDIT CHECKPOINT -->
 ## Reauditoria atual
 
-**EM ANDAMENTO — checkpoint intermediário.** A solicitação posterior reabriu a análise no pin `da307ba5626dce892f0b37cb6762463f55d14a96`. Este checkpoint contém 282 registros R2; preserva os104 achados históricos e distingue leitura, estrutura, prova isolada e aceite. Consulte [REAUDIT_MICROFUNCTIONS_2026-10-03.md](REAUDIT_MICROFUNCTIONS_2026-10-03.md) para cobertura, precondições e saldo. A revisão continua; esta publicação é exclusivamente documental.
+**PASSAGEM FINITA CONCLUÍDA — limites preservados.** A solicitação posterior reabriu a análise no pin `da307ba5626dce892f0b37cb6762463f55d14a96`. Este checkpoint contém 372 registros R2; preserva os 104 achados históricos e distingue leitura, estrutura, prova isolada e aceite. Consulte [REAUDIT_MICROFUNCTIONS_2026-10-03.md](REAUDIT_MICROFUNCTIONS_2026-10-03.md) para cobertura, precondições e limites. A leitura do escopo finito catalogado foi concluída com gate final aprovado e saldo de corpos zero; não houve aceite em produção. Esta publicação é exclusivamente documental.
 <!-- END REAUDIT CHECKPOINT -->
 
 ## Auditoria documental anterior e planejamento preservado

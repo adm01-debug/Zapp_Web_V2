@@ -196,12 +196,40 @@
           "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
           "origin": "source",
           "reason": "Contagens e único exitCode explícito associado à restauração"
+        },
+        {
+          "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+          "line_start": 99,
+          "line_end": 109,
+          "sha256": "ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "alvo não usado; classificação apenas por returncode"
+        },
+        {
+          "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+          "line_start": 112,
+          "line_end": 125,
+          "sha256": "ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Controle positivo: baseline verde antes de qualquer mutação"
+        },
+        {
+          "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+          "line_start": 127,
+          "line_end": 149,
+          "sha256": "ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Alvo literal, finally e SHA preservados; resultado classificado PEGA pelo booleano permissivo"
         }
       ],
       "acceptance": [
         "Exigir baseline verde e distinguir erro de infraestrutura, mutante detectado, sobrevivente e execução inconclusiva.",
         "Contar detecção apenas quando o teste relevante executou e falhou por uma assertion rastreável.",
-        "Declarar política para sobreviventes/equivalentes e refletir a conclusão no status; executar mutações em cópia isolada com cleanup seguro."
+        "Declarar política para sobreviventes/equivalentes e refletir a conclusão no status; executar mutações em cópia isolada com cleanup seguro.",
+        "No runner histórico de volume, preservar baseline/literal/finally/SHA e exigir prova da assertion alvo; erro de compilação/runner deve ser inconclusivo, não PEGA."
       ],
       "probe_ids": [],
       "related_previous_findings": [],
@@ -222,7 +250,27 @@
       "limitations": [
         "Sem execução de workflow, deploy, SQL, login, E2E real ou rede de produto nesta segunda passagem."
       ],
-      "proof_type": "STATIC_CODE_PATH"
+      "proof_type": "STATIC_CODE_PATH",
+      "extensions": [
+        {
+          "classification": "extensão",
+          "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+          "description": "Extensão histórica: mut-plano-volume.py recebe alvo em rodar, mas não o usa. Qualquer returncode não zero na execução do mutante satisfaz esperado_verde=False e vira PEGA, inclusive erro do runner ou compilação sem assertion relevante executada. Diferentemente do runner original do mapa, este script exige baseline verde, confere alvo literal, restaura bytes em finally e compara SHA. Esses controles são preservados; não se atribui falha a uma execução histórica não observada.",
+          "reviewed_by": "root whole file 1–158; infra source ranges 95–154",
+          "preconditions": [
+            "Execução manual no ambiente/caminho histórico previsto; baseline termina verde.",
+            "Durante um mutante o processo termina não zero por infraestrutura/compilação ou outro teste, sem a assertion alvo provar a mudança."
+          ],
+          "effect": "Esse mutante pode ser contado como PEGA sem evidência da detecção pelo contrato pretendido.",
+          "preserved_controls": [
+            "baseline verde obrigatório",
+            "substituição exige alvo literal",
+            "restauração em finally",
+            "comparação SHA depois da restauração"
+          ],
+          "limitation": "Revisão de fonte; script não executado, sem rejeitar automaticamente evidência histórica. Não conta um novo achado."
+        }
+      ]
     },
     {
       "id": "R2-INF-020",

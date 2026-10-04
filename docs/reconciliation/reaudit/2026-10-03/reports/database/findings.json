@@ -185,6 +185,15 @@
           "sha256": "55c5c8cb57051b57f08468bdca6486adb9c9404465214e89d3fdf5435fc88a90",
           "note": "Consumidor de produção usa exatamente a assinatura com p_direction.",
           "origin": "source"
+        },
+        {
+          "path": "scripts/db-audit/notification-delivery-atomicity.test.sh",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/scripts/db-audit/notification-delivery-atomicity.test.sh",
+          "line_start": 120,
+          "line_end": 161,
+          "sha256": "e05b2839b55a2f00fe4be70bea67cb0061f75a629bd2c7929c3ab6f1e29804b6",
+          "note": "Harness aplica somente migration antiga e valida ACL da assinatura de seis argumentos; não cobre a nova sobrecarga.",
+          "origin": "source"
         }
       ],
       "preconditions": [
@@ -205,7 +214,8 @@
       "runtime_unknowns_and_limits": [
         "Não houve chamada RPC, exploração, consulta de dados nem confirmação do deploy atual.",
         "O snapshot de ACL é datado de 2026-10-03; mudanças posteriores não são conhecidas.",
-        "A função de trigger multiplix_audiences_validate_shared_roles também aparece no baseline anon, mas não foi tratada como RPC diretamente invocável."
+        "A função de trigger multiplix_audiences_validate_shared_roles também aparece no baseline anon, mas não foi tratada como RPC diretamente invocável.",
+        "A leitura integral do harness notification-delivery-atomicity confirmou que seu cenário service-only testa seis argumentos, não a identidade nova de sete. Nenhum harness foi executado nesta rodada."
       ],
       "previous_audit_crosswalk": {
         "classification": "novo achado da reauditoria",
@@ -223,7 +233,8 @@
       "primary_source_ids": [
         "PG-FUNCTION",
         "PG-DEFAULT-ACL"
-      ]
+      ],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-002",
@@ -393,7 +404,8 @@
         "Validar números iguais no sufixo com DDD/país diferentes, múltiplas campanhas, retries e chamadas concorrentes.",
         "Verificar que ausência de atualização concorrente não devolve attributed=true indevidamente."
       ],
-      "primary_source_ids": []
+      "primary_source_ids": [],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-003",
@@ -542,7 +554,8 @@
         "line_end": 351,
         "sha256": "e48a3dc14da0bee40bc95f809141693dd2be6ac7da138a732c139db608b07c3f",
         "prior_mirror": "supabase/migrations/_foreign/singu/multiplix_resolve_recipients.sql"
-      }
+      },
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-004",
@@ -803,7 +816,8 @@
         "Conferir dono, função e payload da chave existente; definir semântica explícita para settled/released/expired.",
         "Validar repetição sequencial e concorrente contra um orçamento ocupado, com assert de número real de chamadas e reservas."
       ],
-      "primary_source_ids": []
+      "primary_source_ids": [],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-005",
@@ -887,7 +901,8 @@
       ],
       "primary_source_ids": [
         "PG-UPDATE"
-      ]
+      ],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-006",
@@ -1137,7 +1152,8 @@
         "Testar dois ou mais blocos com opt-out, destino inválido, falha permanente e resultado incerto.",
         "Verificar que não restam itens pending inalcançáveis e que a conclusão usa a fila por itens."
       ],
-      "primary_source_ids": []
+      "primary_source_ids": [],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-007",
@@ -1439,7 +1455,8 @@
       "primary_source_ids": [
         "PG-CASE",
         "PG-CAST"
-      ]
+      ],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-008",
@@ -1754,6 +1771,24 @@
           "sha256": "83093ef0b7d765eb2846ed8eea3fce8d87bc07addf4bd1f50f6931793e82a9d7",
           "note": "Sucesso fecha/zera chave; conflito SQL aparece como falha de encerramento.",
           "origin": "source"
+        },
+        {
+          "path": "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+          "line_start": 96,
+          "line_end": 102,
+          "sha256": "e3550ecaf6093349152de44af57869708d8c76ffc26bfe8fcc1e8e6961891236",
+          "note": "Fixture não inclui o índice UNIQUE diário da cadeia final.",
+          "origin": "source"
+        },
+        {
+          "path": "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+          "line_start": 543,
+          "line_end": 575,
+          "sha256": "e3550ecaf6093349152de44af57869708d8c76ffc26bfe8fcc1e8e6961891236",
+          "note": "Aceite de close repete a mesma chave; não é uma segunda finalização com nova chave.",
+          "origin": "source"
         }
       ],
       "preconditions": [
@@ -1779,7 +1814,8 @@
         "Não foi encerrada nenhuma conversa nem consultado histórico real.",
         "O cenário exige duas finalizações no mesmo dia SP; em dias diferentes a restrição diária não conflita.",
         "A reabertura foi demonstrada como contrato RPC disponível, não como botão ou efeito automático de novo inbound. O ingest_inbound_message vigente não reabre conversation_status.",
-        "O snapshot confirma o índice, mas seu estado atual em produção permanece sem nova medição."
+        "O snapshot confirma o índice, mas seu estado atual em produção permanece sem nova medição.",
+        "O harness phase1 foi lido integralmente; aplica um recorte histórico e testa replay da mesma UUID, sem a restrição diária no fixture. Não refuta este cenário de nova finalização."
       ],
       "previous_audit_crosswalk": {
         "classification": "novo achado da segunda passagem por corpos antes estruturais",
@@ -1794,7 +1830,8 @@
         "Preservar idempotência de retry com a mesma client_request_id e rejeição de payload diferente.",
         "Conferir status do contato, dois ciclos/eventos, métricas e RLS no schema com o índice real após a correção autorizada."
       ],
-      "primary_source_ids": []
+      "primary_source_ids": [],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-009",
@@ -2249,6 +2286,15 @@
           "sha256": "5dd3f526205086e33880468e15154d701c5590cb0914f84907b2938619a0387d",
           "note": "Consumidor browser enfileira sob usuário autenticado e aborta antes do dispatch ao receber enqueueError.",
           "origin": "source"
+        },
+        {
+          "path": "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+          "line_start": 37,
+          "line_end": 161,
+          "sha256": "e3550ecaf6093349152de44af57869708d8c76ffc26bfe8fcc1e8e6961891236",
+          "note": "Fixture de entrega não instala a cadeia de gamificação e seus triggers.",
+          "origin": "source"
         }
       ],
       "preconditions": [
@@ -2273,7 +2319,8 @@
       "runtime_unknowns_and_limits": [
         "Sem execução SQL, envio de mensagem ou consulta de agent_stats em produção.",
         "Não foi medido quantos perfis estão imediatamente antes de um marco.",
-        "A dedução usa a implementação primária de auth.role e a atomicidade de triggers do PostgreSQL; não usa current_user como substituto do JWT."
+        "A dedução usa a implementação primária de auth.role e a atomicidade de triggers do PostgreSQL; não usa current_user como substituto do JWT.",
+        "O harness phase1 de entrega usa schema mínimo sem triggers de gamificação; seus controles de enqueue e complete não cobrem essa composição."
       ],
       "previous_audit_crosswalk": {
         "classification": "novo achado da segunda passagem semântica",
@@ -2290,7 +2337,8 @@
         "PG-TRIGGER",
         "SUPABASE-AUTH-ROLE",
         "PG-FUNCTION"
-      ]
+      ],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-010",
@@ -2446,7 +2494,8 @@
         "Validar janela0, negativa, muito curta, muito longa e limites arbitrários por RPC direta, além do endpoint normal.",
         "Preservar isolamento por usuário/ação e comportamento definido quando o armazenamento da cota falhar."
       ],
-      "primary_source_ids": []
+      "primary_source_ids": [],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-011",
@@ -2715,7 +2764,8 @@
       ],
       "primary_source_ids": [
         "PG-POLICY"
-      ]
+      ],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-012",
@@ -2836,7 +2886,8 @@
         "Validar limpeza de etiquetas exclusivamente de IA, lista vazia e concorrência sem apagar decisões humanas.",
         "Manter atomicidade da substituição e a distinção entre resultado ausente, inválido e lista vazia."
       ],
-      "primary_source_ids": []
+      "primary_source_ids": [],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-013",
@@ -3060,7 +3111,8 @@
       "runtime_unknowns_and_limits": [
         "Previsão estática apoiada na semântica documentada, sem execução SQL/RPC.",
         "O cabeçalho de 20261001381230 descreve uma falha antiga do backfill, corrigida no mesmo arquivo. Este achado trata o segundo UPDATE da RPC permanente, não reabre aquele backfill como falha atual.",
-        "O snapshot registra assinatura/ACL, não o proprietário em texto nem o tempo entre comandos."
+        "O snapshot registra assinatura/ACL, não o proprietário em texto nem o tempo entre comandos.",
+        "Revisão peer de /root/grill_me_primary_review em ../modules/shell-review.json: talkx-current-template-version.test.sh omite set_talkx_template_updated_at e seu trigger de timestamp. Seus controles de duas edições em fixture não reproduzem a origem de transaction_timestamp relevante aqui; suíte não executada nesta rodada."
       ],
       "previous_audit_crosswalk": {
         "classification": "novo achado da segunda passagem",
@@ -3077,7 +3129,8 @@
         "PG-TRIGGER",
         "PG-TIMESTAMP",
         "POSTGREST-TRANSACTION"
-      ]
+      ],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-014",
@@ -3415,7 +3468,8 @@
         "Preservar trilha durável de tentativa e resposta mesmo que a campanha seja cancelada.",
         "Reproduzir em ambiente autorizado cancelamento entre POST e confirmação, com sucesso, timeout e falha explícita do provedor; nenhum efeito incerto deve ficar sem reconciliação rastreável."
       ],
-      "primary_source_ids": []
+      "primary_source_ids": [],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-015",
@@ -3649,7 +3703,8 @@
         "Uma resposta de retry aceita deve produzir estado elegível ao processamento seguro ou informar explicitamente que aguarda reconciliação.",
         "Cobrir falha pré-POST, falha pós-POST, outcome_unknown, campanha ativa e campanha terminal, sem reenviar efeitos já confirmados."
       ],
-      "primary_source_ids": []
+      "primary_source_ids": [],
+      "effective_policy_source_sequences": []
     },
     {
       "id": "R2-DB-016",
@@ -3862,7 +3917,2610 @@
       ],
       "primary_source_ids": [
         "PG-TRIGGER"
+      ],
+      "effective_policy_source_sequences": []
+    },
+    {
+      "id": "R2-DB-019",
+      "severity": "P2",
+      "title": "Reações do WhatsApp não vinculam a autoria ao usuário que grava",
+      "status": "static_confirmed",
+      "runtime_tested": false,
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "summary": "As policies vencedoras de message_reactions autorizam pela conversa/contato, mas não exigem user_id do chamador nem reservam contact_id como autor a uma origem confiável. Um agente pode criar reação local rotulada Cliente, assumir outro profile conhecido ou alterar/excluir reação alheia em mensagem autorizada.",
+      "effective_source_definitions": {},
+      "definition_histories": {},
+      "evidence": [
+        {
+          "path": "supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql",
+          "line_start": 26,
+          "line_end": 39,
+          "sha256": "db73d151afdbf5f8b8cb85022560bbc82dbdd420fe2b433f9e88b5237386a650",
+          "note": "DDL aceita user_id nulo com contact_id válido; CHECK exige um dos dois, não a identidade do chamador.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260401003034_46580962-a5ba-41f5-b4b1-b05887b4b490.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260401003034_46580962-a5ba-41f5-b4b1-b05887b4b490.sql",
+          "line_start": 41,
+          "line_end": 49,
+          "sha256": "34320fce2bb8e0c4cfe674806fe2199ebf5d3e869165125b6eda09a14e3279f7",
+          "note": "INSERT permissivo por contact_id atribuído; nem sequer vincula esse contato ao message_id.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+          "line_start": 49,
+          "line_end": 81,
+          "sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+          "note": "SELECT/INSERT por mensagem e contato; INSERT não restringe user_id.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+          "line_start": 86,
+          "line_end": 117,
+          "sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+          "note": "UPDATE e DELETE por mensagem visível, sem regra de autoria. Policy própria adicional não restringe outra permissiva.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/schema-manifest.json",
+          "line_start": 9070,
+          "line_end": 9070,
+          "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+          "note": "Snapshot registra INSERT de tabela para authenticated.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/schema-manifest.json",
+          "line_start": 9072,
+          "line_end": 9072,
+          "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+          "note": "Snapshot registra UPDATE de tabela para authenticated.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/schema-manifest.json",
+          "line_start": 9069,
+          "line_end": 9069,
+          "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+          "note": "Snapshot registra DELETE de tabela para authenticated.",
+          "origin": "source"
+        },
+        {
+          "path": "src/hooks/reactions/useReactionMutations.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/reactions/useReactionMutations.ts",
+          "line_start": 22,
+          "line_end": 53,
+          "sha256": "a0020798219802b9108c1b66ce8fd0ea2bad51629661f9d1e27f045222a37016",
+          "note": "Consumidor legítimo deriva contact_id da mensagem e usa profile próprio; isso é escolha do cliente, não defesa do endpoint de dados.",
+          "origin": "source"
+        },
+        {
+          "path": "src/hooks/reactions/useReactionMutations.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/reactions/useReactionMutations.ts",
+          "line_start": 83,
+          "line_end": 94,
+          "sha256": "a0020798219802b9108c1b66ce8fd0ea2bad51629661f9d1e27f045222a37016",
+          "note": "DELETE da UI filtra próprio user_id, filtro que chamada direta pode omitir.",
+          "origin": "source"
+        },
+        {
+          "path": "src/hooks/chat/useMessageReactions.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/chat/useMessageReactions.ts",
+          "line_start": 54,
+          "line_end": 76,
+          "sha256": "483f4ccfb05ceb5c103d9d9177496bb69cad79118535e78767d80a2f29ac3cc7",
+          "note": "Leitura rotula reação sem user_id como Cliente e usa user_id para a autoria de agente.",
+          "origin": "source"
+        },
+        {
+          "path": "src/components/inbox/MessageReactions.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/MessageReactions.tsx",
+          "line_start": 35,
+          "line_end": 69,
+          "sha256": "449e2178c8e5fde2e148fed83b874e5c6372726cf34fce48eaa9fb7e10d23647",
+          "note": "Componente ativo agrupa contagem e identifica reação do usuário pelo user_id persistido.",
+          "origin": "source"
+        },
+        {
+          "path": "src/components/inbox/MessageReactions.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/MessageReactions.tsx",
+          "line_start": 113,
+          "line_end": 117,
+          "sha256": "449e2178c8e5fde2e148fed83b874e5c6372726cf34fce48eaa9fb7e10d23647",
+          "note": "Tooltip apresenta a autoria derivada das linhas.",
+          "origin": "source"
+        }
+      ],
+      "preconditions": [
+        "Policies e grants locais aplicados conforme snapshot; cliente autenticado com perfil e um contato/mensagem que satisfaz o escopo de reação (por exemplo, contato atribuído ao próprio agente).",
+        "O chamador usa a API de dados diretamente com seu JWT; não precisa de papel admin nem service_role.",
+        "Para assumir um colega específico, precisa conhecer o profiles.id dele. Para falsificar a reação de Cliente no próprio contato, não precisa de UUID de outro usuário.",
+        "Escolhe emoji/linha que não conflita nas constraints UNIQUE existentes."
+      ],
+      "failure_scenario": [
+        "Insere {message_id: M, contact_id: C, user_id: null, emoji: E} para a mensagem do contato próprio.",
+        "O FK e reaction_author_check passam; o predicado de INSERT passa pelo contato/mensagem e não verifica origem de cliente.",
+        "A leitura da UI passa no mesmo escopo e mostra a reação como Cliente.",
+        "Alternativamente, UPDATE/DELETE de uma reação já visível passa independentemente de user_id pertencer a outra pessoa, porque as policies permissivas se combinam por OR."
+      ],
+      "impact": "Integridade e atribuição de reações locais comprometidas: aparente reação do cliente/colega, remoção de reação alheia e contagens modificadas. Não foi afirmado que esse INSERT envia uma reação ao WhatsApp externo.",
+      "existing_protections_and_consumer_checks": [
+        "FKs validam que IDs existem e UNIQUE limita duplicação da mesma combinação; nenhum trigger efetivo de message_reactions consta no catálogo/snapshot.",
+        "O hook normal escolhe o profile próprio e valida erros. Chamada direta não é obrigada a enviar esse filtro.",
+        "SELECT de profiles pode ocultar o nome de um colega e fazer aparecer Agente; não corrige o user_id persistido nem a personificação de Cliente."
+      ],
+      "runtime_unknowns_and_limits": [
+        "Nenhuma mutação, consulta de reações reais ou exploração foi realizada.",
+        "Não se alega enumeração de UUIDs de contatos/mensagens fora do escopo nem envio remoto automático.",
+        "Há também um INSERT antigo que permite contact_id autorizado independente de message_id conhecido de outro contato; esse ramo exige UUID externo conhecido e não é necessário ao cenário principal."
+      ],
+      "previous_audit_crosswalk": {
+        "classification": "novo achado da reauditoria",
+        "related_ids": [
+          "R2-INB-032",
+          "TC-009"
+        ],
+        "assessment": "INB-032 trata erro de envio remoto após persistência local. TC-009 trata permissões de Team Chat em tabelas diferentes. Nenhum cobre a autoria de public.message_reactions."
+      },
+      "acceptance_criteria": [
+        "Separar autoria de usuário e autoria de contato no contrato e impor a identidade no banco, com caminho confiável próprio para eventos do provedor.",
+        "Consolidar todas as policies permissivas de escrita; restringir UPDATE/DELETE à autoria permitida.",
+        "Vincular message_id e contato ao mesmo registro canônico sem aceitar uma autorização por um contato e gravação em outro.",
+        "Verificar casos negativos de user_id alheio, user_id nulo em chamada de agente e remoção/edição de reação de outro autor; preservar reação legítima do usuário e ingestão autorizada do cliente."
+      ],
+      "primary_source_ids": [
+        "PG-POLICY"
+      ],
+      "effective_policy_source_sequences": [
+        {
+          "identity": "public.message_reactions.Users can delete their own reactions",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql",
+              "start_line": 32,
+              "end_line": 34,
+              "file_sha256": "2ffa7089e32251cf9e1c78c6e42b279476da1c74024716bd1b385f77905d25e4",
+              "statement_sha256": "f7d44d699e0aacc2ec6df704e20558b7279c4717a67903c01c8c3c7894ec5ef1",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.Users can delete their own reactions"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql",
+              "start_line": 82,
+              "end_line": 85,
+              "file_sha256": "db73d151afdbf5f8b8cb85022560bbc82dbdd420fe2b433f9e88b5237386a650",
+              "statement_sha256": "a33f9c5d1f74d93f642166d725994f60847dd76dfea2b3f0ac1a55323610eb76",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.Users can delete their own reactions"
+            },
+            {
+              "path": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql",
+              "start_line": 31,
+              "end_line": 31,
+              "file_sha256": "2ffa7089e32251cf9e1c78c6e42b279476da1c74024716bd1b385f77905d25e4",
+              "statement_sha256": "d2de8627edd4ebf3a032e39d39f57f8351c3ade0011b7473726479e93278c245",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.message_reactions.Users can delete their own reactions"
+            },
+            {
+              "path": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql",
+              "start_line": 32,
+              "end_line": 34,
+              "file_sha256": "2ffa7089e32251cf9e1c78c6e42b279476da1c74024716bd1b385f77905d25e4",
+              "statement_sha256": "f7d44d699e0aacc2ec6df704e20558b7279c4717a67903c01c8c3c7894ec5ef1",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.Users can delete their own reactions"
+            }
+          ],
+          "snapshot_identity": "message_reactions.\"Users can delete their own reactions\"",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.message_reactions|anon|DELETE|grantor=postgres",
+            "r:public.message_reactions|anon|INSERT|grantor=postgres",
+            "r:public.message_reactions|anon|SELECT|grantor=postgres",
+            "r:public.message_reactions|anon|UPDATE|grantor=postgres",
+            "r:public.message_reactions|anon|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|anon|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|anon|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|anon|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|postgres|DELETE|grantor=postgres",
+            "r:public.message_reactions|postgres|INSERT|grantor=postgres",
+            "r:public.message_reactions|postgres|SELECT|grantor=postgres",
+            "r:public.message_reactions|postgres|UPDATE|grantor=postgres",
+            "r:public.message_reactions|postgres|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|postgres|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|postgres|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|postgres|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|service_role|DELETE|grantor=postgres",
+            "r:public.message_reactions|service_role|INSERT|grantor=postgres",
+            "r:public.message_reactions|service_role|SELECT|grantor=postgres",
+            "r:public.message_reactions|service_role|UPDATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|DELETE|grantor=postgres",
+            "r:public.message_reactions|authenticated|INSERT|grantor=postgres",
+            "r:public.message_reactions|authenticated|SELECT|grantor=postgres",
+            "r:public.message_reactions|authenticated|UPDATE|grantor=postgres",
+            "r:public.message_reactions|service_role|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|service_role|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|service_role|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|service_role|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|authenticated|REFERENCES|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "public.message_reactions.Users can insert reactions for assigned contacts",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260401003034_46580962-a5ba-41f5-b4b1-b05887b4b490.sql",
+              "start_line": 41,
+              "end_line": 49,
+              "file_sha256": "34320fce2bb8e0c4cfe674806fe2199ebf5d3e869165125b6eda09a14e3279f7",
+              "statement_sha256": "209b6920e0b39ce7cc687957cf5cc8ba7c6dc428814d1d53ea7d7d3b44438bb0",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.Users can insert reactions for assigned contacts"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260401003034_46580962-a5ba-41f5-b4b1-b05887b4b490.sql",
+              "start_line": 41,
+              "end_line": 49,
+              "file_sha256": "34320fce2bb8e0c4cfe674806fe2199ebf5d3e869165125b6eda09a14e3279f7",
+              "statement_sha256": "209b6920e0b39ce7cc687957cf5cc8ba7c6dc428814d1d53ea7d7d3b44438bb0",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.Users can insert reactions for assigned contacts"
+            }
+          ],
+          "snapshot_identity": "message_reactions.\"Users can insert reactions for assigned contacts\"",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.message_reactions|anon|DELETE|grantor=postgres",
+            "r:public.message_reactions|anon|INSERT|grantor=postgres",
+            "r:public.message_reactions|anon|SELECT|grantor=postgres",
+            "r:public.message_reactions|anon|UPDATE|grantor=postgres",
+            "r:public.message_reactions|anon|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|anon|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|anon|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|anon|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|postgres|DELETE|grantor=postgres",
+            "r:public.message_reactions|postgres|INSERT|grantor=postgres",
+            "r:public.message_reactions|postgres|SELECT|grantor=postgres",
+            "r:public.message_reactions|postgres|UPDATE|grantor=postgres",
+            "r:public.message_reactions|postgres|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|postgres|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|postgres|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|postgres|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|service_role|DELETE|grantor=postgres",
+            "r:public.message_reactions|service_role|INSERT|grantor=postgres",
+            "r:public.message_reactions|service_role|SELECT|grantor=postgres",
+            "r:public.message_reactions|service_role|UPDATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|DELETE|grantor=postgres",
+            "r:public.message_reactions|authenticated|INSERT|grantor=postgres",
+            "r:public.message_reactions|authenticated|SELECT|grantor=postgres",
+            "r:public.message_reactions|authenticated|UPDATE|grantor=postgres",
+            "r:public.message_reactions|service_role|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|service_role|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|service_role|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|service_role|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|authenticated|REFERENCES|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "public.message_reactions.Users can view reactions on accessible messages",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260413123944_b60de33d-6bf0-4cee-b5f9-97d244045b53.sql",
+              "start_line": 3,
+              "end_line": 19,
+              "file_sha256": "16ac04104f085f4f6656f82523ea1c13eb5725c064636600b06fe95732f34898",
+              "statement_sha256": "ef0b48507ec4f14f71c3d47b0ed14f28f3c6091236880cf58a06dc90828574a5",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.Users can view reactions on accessible messages"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql",
+              "start_line": 69,
+              "end_line": 72,
+              "file_sha256": "db73d151afdbf5f8b8cb85022560bbc82dbdd420fe2b433f9e88b5237386a650",
+              "statement_sha256": "a1e2a1c62e8b3824d5844a1feb45fd2c9dbe209a316e73705f07d885427c314e",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.Users can view reactions on accessible messages"
+            },
+            {
+              "path": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql",
+              "start_line": 26,
+              "end_line": 26,
+              "file_sha256": "2ffa7089e32251cf9e1c78c6e42b279476da1c74024716bd1b385f77905d25e4",
+              "statement_sha256": "4665f592846850e92941a9508b08f8c92ef421f336059f7cd5ae6f21c950aa4b",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.message_reactions.Users can view reactions on accessible messages"
+            },
+            {
+              "path": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql",
+              "start_line": 27,
+              "end_line": 29,
+              "file_sha256": "2ffa7089e32251cf9e1c78c6e42b279476da1c74024716bd1b385f77905d25e4",
+              "statement_sha256": "29812daf6ad8e3961550a22615fc990f9e3e63c555ad36ba33084f03e905b2dd",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.Users can view reactions on accessible messages"
+            },
+            {
+              "path": "supabase/migrations/20260318121108_dc06df42-f7ee-4361-bb05-5d3aba125bba.sql",
+              "start_line": 15,
+              "end_line": 15,
+              "file_sha256": "565196337ff38c64a03eb6d17a8c439f407f1a11f3895b84a5359a14d88cc608",
+              "statement_sha256": "4665f592846850e92941a9508b08f8c92ef421f336059f7cd5ae6f21c950aa4b",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.message_reactions.Users can view reactions on accessible messages"
+            },
+            {
+              "path": "supabase/migrations/20260318121108_dc06df42-f7ee-4361-bb05-5d3aba125bba.sql",
+              "start_line": 16,
+              "end_line": 27,
+              "file_sha256": "565196337ff38c64a03eb6d17a8c439f407f1a11f3895b84a5359a14d88cc608",
+              "statement_sha256": "77ca2621de55119457efa2dc6d3692f5ead9a6e2bd488a8e1ac83b026998ea60",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.Users can view reactions on accessible messages"
+            },
+            {
+              "path": "supabase/migrations/20260413123944_b60de33d-6bf0-4cee-b5f9-97d244045b53.sql",
+              "start_line": 1,
+              "end_line": 1,
+              "file_sha256": "16ac04104f085f4f6656f82523ea1c13eb5725c064636600b06fe95732f34898",
+              "statement_sha256": "4665f592846850e92941a9508b08f8c92ef421f336059f7cd5ae6f21c950aa4b",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.message_reactions.Users can view reactions on accessible messages"
+            },
+            {
+              "path": "supabase/migrations/20260413123944_b60de33d-6bf0-4cee-b5f9-97d244045b53.sql",
+              "start_line": 3,
+              "end_line": 19,
+              "file_sha256": "16ac04104f085f4f6656f82523ea1c13eb5725c064636600b06fe95732f34898",
+              "statement_sha256": "ef0b48507ec4f14f71c3d47b0ed14f28f3c6091236880cf58a06dc90828574a5",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.Users can view reactions on accessible messages"
+            }
+          ],
+          "snapshot_identity": "message_reactions.\"Users can view reactions on accessible messages\"",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.message_reactions|anon|DELETE|grantor=postgres",
+            "r:public.message_reactions|anon|INSERT|grantor=postgres",
+            "r:public.message_reactions|anon|SELECT|grantor=postgres",
+            "r:public.message_reactions|anon|UPDATE|grantor=postgres",
+            "r:public.message_reactions|anon|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|anon|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|anon|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|anon|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|postgres|DELETE|grantor=postgres",
+            "r:public.message_reactions|postgres|INSERT|grantor=postgres",
+            "r:public.message_reactions|postgres|SELECT|grantor=postgres",
+            "r:public.message_reactions|postgres|UPDATE|grantor=postgres",
+            "r:public.message_reactions|postgres|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|postgres|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|postgres|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|postgres|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|service_role|DELETE|grantor=postgres",
+            "r:public.message_reactions|service_role|INSERT|grantor=postgres",
+            "r:public.message_reactions|service_role|SELECT|grantor=postgres",
+            "r:public.message_reactions|service_role|UPDATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|DELETE|grantor=postgres",
+            "r:public.message_reactions|authenticated|INSERT|grantor=postgres",
+            "r:public.message_reactions|authenticated|SELECT|grantor=postgres",
+            "r:public.message_reactions|authenticated|UPDATE|grantor=postgres",
+            "r:public.message_reactions|service_role|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|service_role|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|service_role|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|service_role|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|authenticated|REFERENCES|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "public.message_reactions.message_reactions_delete_policy",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 104,
+              "end_line": 117,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "b2b7d3e5bb3a621c9d819ee61c16dee0add3b5a5b2c962c2f330b2add74f5eb9",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.message_reactions_delete_policy"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 102,
+              "end_line": 102,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "ec9f75be9d8b2b9134dd0502c34512616724287ee8fe5c48a5fa630944e5cc0b",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.message_reactions.message_reactions_delete_policy"
+            },
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 104,
+              "end_line": 117,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "b2b7d3e5bb3a621c9d819ee61c16dee0add3b5a5b2c962c2f330b2add74f5eb9",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.message_reactions_delete_policy"
+            }
+          ],
+          "snapshot_identity": "message_reactions.message_reactions_delete_policy",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.message_reactions|anon|DELETE|grantor=postgres",
+            "r:public.message_reactions|anon|INSERT|grantor=postgres",
+            "r:public.message_reactions|anon|SELECT|grantor=postgres",
+            "r:public.message_reactions|anon|UPDATE|grantor=postgres",
+            "r:public.message_reactions|anon|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|anon|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|anon|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|anon|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|postgres|DELETE|grantor=postgres",
+            "r:public.message_reactions|postgres|INSERT|grantor=postgres",
+            "r:public.message_reactions|postgres|SELECT|grantor=postgres",
+            "r:public.message_reactions|postgres|UPDATE|grantor=postgres",
+            "r:public.message_reactions|postgres|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|postgres|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|postgres|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|postgres|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|service_role|DELETE|grantor=postgres",
+            "r:public.message_reactions|service_role|INSERT|grantor=postgres",
+            "r:public.message_reactions|service_role|SELECT|grantor=postgres",
+            "r:public.message_reactions|service_role|UPDATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|DELETE|grantor=postgres",
+            "r:public.message_reactions|authenticated|INSERT|grantor=postgres",
+            "r:public.message_reactions|authenticated|SELECT|grantor=postgres",
+            "r:public.message_reactions|authenticated|UPDATE|grantor=postgres",
+            "r:public.message_reactions|service_role|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|service_role|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|service_role|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|service_role|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|authenticated|REFERENCES|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "public.message_reactions.message_reactions_insert_policy",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 68,
+              "end_line": 81,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "8af414d70966e8ac1bbb68a27455728fb1a18e722e78d1c4aa169f90933b6d92",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.message_reactions_insert_policy"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 65,
+              "end_line": 65,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "f975f2484be93674575e5ca049f4d8010b2a3ca43d772e8892e57e5a850904ab",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.message_reactions.message_reactions_insert_policy"
+            },
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 68,
+              "end_line": 81,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "8af414d70966e8ac1bbb68a27455728fb1a18e722e78d1c4aa169f90933b6d92",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.message_reactions_insert_policy"
+            }
+          ],
+          "snapshot_identity": "message_reactions.message_reactions_insert_policy",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.message_reactions|anon|DELETE|grantor=postgres",
+            "r:public.message_reactions|anon|INSERT|grantor=postgres",
+            "r:public.message_reactions|anon|SELECT|grantor=postgres",
+            "r:public.message_reactions|anon|UPDATE|grantor=postgres",
+            "r:public.message_reactions|anon|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|anon|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|anon|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|anon|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|postgres|DELETE|grantor=postgres",
+            "r:public.message_reactions|postgres|INSERT|grantor=postgres",
+            "r:public.message_reactions|postgres|SELECT|grantor=postgres",
+            "r:public.message_reactions|postgres|UPDATE|grantor=postgres",
+            "r:public.message_reactions|postgres|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|postgres|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|postgres|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|postgres|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|service_role|DELETE|grantor=postgres",
+            "r:public.message_reactions|service_role|INSERT|grantor=postgres",
+            "r:public.message_reactions|service_role|SELECT|grantor=postgres",
+            "r:public.message_reactions|service_role|UPDATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|DELETE|grantor=postgres",
+            "r:public.message_reactions|authenticated|INSERT|grantor=postgres",
+            "r:public.message_reactions|authenticated|SELECT|grantor=postgres",
+            "r:public.message_reactions|authenticated|UPDATE|grantor=postgres",
+            "r:public.message_reactions|service_role|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|service_role|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|service_role|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|service_role|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|authenticated|REFERENCES|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "public.message_reactions.message_reactions_select_policy",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260830110000_extend_special_agent_visibility_to_related_tables.sql",
+              "start_line": 69,
+              "end_line": 78,
+              "file_sha256": "4632a35128732d52acc14245ce1edff6d6caebb945d261917b6ec3785d65c3f2",
+              "statement_sha256": "880b8d4c527f3392ec7b2e4ae799524fcf8dd7c6ba00b13c6e11a197ddb2560d",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.message_reactions_select_policy"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 45,
+              "end_line": 45,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "f85a807d9b13d3e0529ae17d7d623632e163581286dc6fd18f419e00f6fec0d6",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.message_reactions.message_reactions_select_policy"
+            },
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 49,
+              "end_line": 62,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "a4a3367fe7bfcadec6de8d875ad253b472a74fcb75a2f0de45e2b5c995c1d614",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.message_reactions_select_policy"
+            },
+            {
+              "path": "supabase/migrations/20260830110000_extend_special_agent_visibility_to_related_tables.sql",
+              "start_line": 69,
+              "end_line": 78,
+              "file_sha256": "4632a35128732d52acc14245ce1edff6d6caebb945d261917b6ec3785d65c3f2",
+              "statement_sha256": "880b8d4c527f3392ec7b2e4ae799524fcf8dd7c6ba00b13c6e11a197ddb2560d",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.message_reactions_select_policy"
+            }
+          ],
+          "snapshot_identity": "message_reactions.message_reactions_select_policy",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.message_reactions|anon|DELETE|grantor=postgres",
+            "r:public.message_reactions|anon|INSERT|grantor=postgres",
+            "r:public.message_reactions|anon|SELECT|grantor=postgres",
+            "r:public.message_reactions|anon|UPDATE|grantor=postgres",
+            "r:public.message_reactions|anon|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|anon|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|anon|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|anon|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|postgres|DELETE|grantor=postgres",
+            "r:public.message_reactions|postgres|INSERT|grantor=postgres",
+            "r:public.message_reactions|postgres|SELECT|grantor=postgres",
+            "r:public.message_reactions|postgres|UPDATE|grantor=postgres",
+            "r:public.message_reactions|postgres|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|postgres|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|postgres|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|postgres|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|service_role|DELETE|grantor=postgres",
+            "r:public.message_reactions|service_role|INSERT|grantor=postgres",
+            "r:public.message_reactions|service_role|SELECT|grantor=postgres",
+            "r:public.message_reactions|service_role|UPDATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|DELETE|grantor=postgres",
+            "r:public.message_reactions|authenticated|INSERT|grantor=postgres",
+            "r:public.message_reactions|authenticated|SELECT|grantor=postgres",
+            "r:public.message_reactions|authenticated|UPDATE|grantor=postgres",
+            "r:public.message_reactions|service_role|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|service_role|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|service_role|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|service_role|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|authenticated|REFERENCES|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "public.message_reactions.message_reactions_update_policy",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 86,
+              "end_line": 99,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "7f878bcf1ce4addfc97ba763778a6c015cf7d17401ad908239af77b726b2a083",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.message_reactions_update_policy"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 84,
+              "end_line": 84,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "c94871a979226356d96bd69e9517be3d816732ee636bab4f3702ea150338d4c8",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.message_reactions.message_reactions_update_policy"
+            },
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 86,
+              "end_line": 99,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "7f878bcf1ce4addfc97ba763778a6c015cf7d17401ad908239af77b726b2a083",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.message_reactions.message_reactions_update_policy"
+            }
+          ],
+          "snapshot_identity": "message_reactions.message_reactions_update_policy",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.message_reactions|anon|DELETE|grantor=postgres",
+            "r:public.message_reactions|anon|INSERT|grantor=postgres",
+            "r:public.message_reactions|anon|SELECT|grantor=postgres",
+            "r:public.message_reactions|anon|UPDATE|grantor=postgres",
+            "r:public.message_reactions|anon|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|anon|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|anon|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|anon|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|postgres|DELETE|grantor=postgres",
+            "r:public.message_reactions|postgres|INSERT|grantor=postgres",
+            "r:public.message_reactions|postgres|SELECT|grantor=postgres",
+            "r:public.message_reactions|postgres|UPDATE|grantor=postgres",
+            "r:public.message_reactions|postgres|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|postgres|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|postgres|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|postgres|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|service_role|DELETE|grantor=postgres",
+            "r:public.message_reactions|service_role|INSERT|grantor=postgres",
+            "r:public.message_reactions|service_role|SELECT|grantor=postgres",
+            "r:public.message_reactions|service_role|UPDATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|DELETE|grantor=postgres",
+            "r:public.message_reactions|authenticated|INSERT|grantor=postgres",
+            "r:public.message_reactions|authenticated|SELECT|grantor=postgres",
+            "r:public.message_reactions|authenticated|UPDATE|grantor=postgres",
+            "r:public.message_reactions|service_role|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRIGGER|grantor=postgres",
+            "r:public.message_reactions|service_role|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|service_role|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.message_reactions|authenticated|TRUNCATE|grantor=postgres",
+            "r:public.message_reactions|service_role|REFERENCES|grantor=postgres",
+            "r:public.message_reactions|authenticated|REFERENCES|grantor=postgres"
+          ]
+        }
       ]
+    },
+    {
+      "id": "R2-DB-020",
+      "severity": "P1",
+      "title": "Policy de arquivos do Team Chat compara o caminho com o nome do perfil e perde o vínculo com o objeto",
+      "status": "static_confirmed",
+      "runtime_tested": false,
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "summary": "No EXISTS da policy Conversation members can read team chat files, tm.media_path = name resolve name como profiles.name do escopo interno. Uma mensagem visível com media_bucket team-chat-files e media_path igual ao nome do próprio perfil torna o EXISTS verdadeiro independentemente do objeto Storage consultado.",
+      "effective_source_definitions": {
+        "public.is_team_conversation_member(uuid,uuid)": {
+          "path": "supabase/migrations/20260402130912_abca9ec2-dfde-4f76-908b-2e993e611ad5.sql",
+          "start_line": 49,
+          "end_line": 61,
+          "file_sha256": "af9b6fa87587c3a6dd2dd4d592000a3091b36cf58edce828da8791828b533ae7",
+          "statement_sha256": "6559cda57178bc617e1cd2964ba4963264832787b6c717f575abb3fc7fda408e",
+          "operation": "CREATE",
+          "kind": "function",
+          "action": "create_or_replace",
+          "identity": "public.is_team_conversation_member(uuid,uuid)",
+          "arguments": "_user_id UUID, _conversation_id UUID",
+          "security_definer": true,
+          "search_path": true,
+          "auth_uid": false,
+          "auth_role": false,
+          "returns_trigger": false
+        },
+        "public.team_messages_validate_reply_to()": {
+          "path": "supabase/migrations/20260929170000_team_chat_e27_reply_to_self_ref_check.sql",
+          "start_line": 8,
+          "end_line": 8,
+          "file_sha256": "92b1d48342bdd55f5c31cb5fa58853b87c06a9905e4440c5672c2f97d569dbc6",
+          "statement_sha256": "a9efb8867a5530b270b4cd32557bfc8a4c527a7c7b6b8897f557cee956c0f811",
+          "operation": "CREATE",
+          "kind": "function",
+          "action": "create_or_replace",
+          "identity": "public.team_messages_validate_reply_to()",
+          "arguments": "",
+          "security_definer": true,
+          "search_path": true,
+          "auth_uid": false,
+          "auth_role": false,
+          "returns_trigger": true
+        },
+        "public.bump_conversation_updated_at()": {
+          "path": "supabase/migrations/20260927270001_team_chat_e10_bump_conversation_updated_at_trigger.sql",
+          "start_line": 1,
+          "end_line": 1,
+          "file_sha256": "41bffef50624c84b9c7152da97931259fc6867ca4f485ffc3ebc05a93ea0c32e",
+          "statement_sha256": "ec9d89a717ed00583de245e96986653bce51273f1fe029276f3c5c5248346c25",
+          "operation": "CREATE",
+          "kind": "function",
+          "action": "create_or_replace",
+          "identity": "public.bump_conversation_updated_at()",
+          "arguments": "",
+          "security_definer": true,
+          "search_path": true,
+          "auth_uid": false,
+          "auth_role": false,
+          "returns_trigger": true
+        }
+      },
+      "definition_histories": {
+        "public.is_team_conversation_member(uuid,uuid)": [
+          {
+            "path": "supabase/migrations/20260402130912_abca9ec2-dfde-4f76-908b-2e993e611ad5.sql",
+            "start_line": 49,
+            "end_line": 61,
+            "file_sha256": "af9b6fa87587c3a6dd2dd4d592000a3091b36cf58edce828da8791828b533ae7",
+            "statement_sha256": "6559cda57178bc617e1cd2964ba4963264832787b6c717f575abb3fc7fda408e",
+            "operation": "CREATE",
+            "kind": "function",
+            "action": "create_or_replace",
+            "identity": "public.is_team_conversation_member(uuid,uuid)",
+            "arguments": "_user_id UUID, _conversation_id UUID",
+            "security_definer": true,
+            "search_path": true,
+            "auth_uid": false,
+            "auth_role": false,
+            "returns_trigger": false
+          }
+        ],
+        "public.team_messages_validate_reply_to()": [
+          {
+            "path": "supabase/migrations/20260929170000_team_chat_e27_reply_to_self_ref_check.sql",
+            "start_line": 8,
+            "end_line": 8,
+            "file_sha256": "92b1d48342bdd55f5c31cb5fa58853b87c06a9905e4440c5672c2f97d569dbc6",
+            "statement_sha256": "a9efb8867a5530b270b4cd32557bfc8a4c527a7c7b6b8897f557cee956c0f811",
+            "operation": "CREATE",
+            "kind": "function",
+            "action": "create_or_replace",
+            "identity": "public.team_messages_validate_reply_to()",
+            "arguments": "",
+            "security_definer": true,
+            "search_path": true,
+            "auth_uid": false,
+            "auth_role": false,
+            "returns_trigger": true
+          }
+        ],
+        "public.bump_conversation_updated_at()": [
+          {
+            "path": "supabase/migrations/20260927270001_team_chat_e10_bump_conversation_updated_at_trigger.sql",
+            "start_line": 1,
+            "end_line": 1,
+            "file_sha256": "41bffef50624c84b9c7152da97931259fc6867ca4f485ffc3ebc05a93ea0c32e",
+            "statement_sha256": "ec9d89a717ed00583de245e96986653bce51273f1fe029276f3c5c5248346c25",
+            "operation": "CREATE",
+            "kind": "function",
+            "action": "create_or_replace",
+            "identity": "public.bump_conversation_updated_at()",
+            "arguments": "",
+            "security_definer": true,
+            "search_path": true,
+            "auth_uid": false,
+            "auth_role": false,
+            "returns_trigger": true
+          }
+        ]
+      },
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260927270012_team_chat_e21_storage_select_policy.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260927270012_team_chat_e21_storage_select_policy.sql",
+          "line_start": 1,
+          "line_end": 3,
+          "sha256": "f5a7a3fa6e2ddba08a228e0f3c12611f1e5ce085058455742bdca95fd9575bbb",
+          "note": "Policy SELECT vigente: subquery junta profiles p e usa name não qualificado.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/schema-manifest.json",
+          "line_start": 219,
+          "line_end": 219,
+          "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+          "note": "Snapshot confirma coluna name em profiles; team_messages/team_conversation_members não possuem essa coluna.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260927270004_team_chat_e13_media_bucket_path_columns.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260927270004_team_chat_e13_media_bucket_path_columns.sql",
+          "line_start": 1,
+          "line_end": 3,
+          "sha256": "c725ca636ad30f4d141c0fc06f9734d4e22855a18802f092ab4f50450855f219",
+          "note": "media_bucket e media_path são colunas text sem vínculo de objeto.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql",
+          "line_start": 44,
+          "line_end": 57,
+          "sha256": "2efd108ec9c190aa55c0984be04f3bd9f757e026298f03a97fb1aa12b91bec72",
+          "note": "SELECT de mensagens exige membro e INSERT exige membro+sender próprio, não validade/posse do media_path.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql",
+          "line_start": 83,
+          "line_end": 87,
+          "sha256": "8b7665b249754829759ed870830c8d38efef81626e109e990ab2e9d20d4e5554",
+          "note": "Policy tcm_select_own permite ler a própria participação; recursão anterior foi corrigida.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql",
+          "line_start": 6,
+          "line_end": 8,
+          "sha256": "d021a3812e7d2e1401dcfe6c6e7b66f038d7e8f13f347e32ddd92b77ddbae6b9",
+          "note": "SELECT do próprio perfil permite a linha p necessária ao EXISTS.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260928600000_team_chat_e25_team_messages_integrity.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260928600000_team_chat_e25_team_messages_integrity.sql",
+          "line_start": 10,
+          "line_end": 12,
+          "sha256": "e6c75823b7396bd0076983f180018788dc101ffd5b8acdcda721edad584d30b9",
+          "note": "CHECKs de conteúdo e media_url/media_type não vinculam media_bucket/path a objeto.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260929160000_team_chat_e26_message_type_media_constraint.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260929160000_team_chat_e26_message_type_media_constraint.sql",
+          "line_start": 6,
+          "line_end": 6,
+          "sha256": "5c783211d13f38b683d9e3e384338b83daf183a909fcc0e318f60fbbbb0a298a",
+          "note": "CHECK de tipo também não valida locator; texto com media_url nulo é permitido.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/schema-manifest.json",
+          "line_start": 7968,
+          "line_end": 7968,
+          "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+          "note": "INSERT de tabela para authenticated está no snapshot.",
+          "origin": "source"
+        },
+        {
+          "path": "src/hooks/team-chat/useTeamChatMutations.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/team-chat/useTeamChatMutations.ts",
+          "line_start": 10,
+          "line_end": 31,
+          "sha256": "a3d69885b17595269b7374e32db6111d63a8fbb5b1e4c9bfc23bd07698278f54",
+          "note": "Consumidor ativo envia mediaBucket/mediaPath diretamente; não há autorização adicional por objeto.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260928560000_team_chat_e20_storage_team_chat_files.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260928560000_team_chat_e20_storage_team_chat_files.sql",
+          "line_start": 6,
+          "line_end": 12,
+          "sha256": "8b8fb33a2e658599999dcb7bd526065b76c29a5fb868bcb18f2136a792ceb54e",
+          "note": "Migration posterior remove outro nome de policy SELECT e modifica INSERT; não remove a policy vulnerável.",
+          "origin": "source"
+        },
+        {
+          "path": "src/hooks/storage/useResolvedStorageUrl.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/storage/useResolvedStorageUrl.ts",
+          "line_start": 35,
+          "line_end": 55,
+          "sha256": "952d59bd6c420a1ea1510bedb6fa1ef14f662974b5bb97b0932455a14e8a3389",
+          "note": "Cliente resolve objetos privados através de createSignedUrl, submetido ao controle Storage.",
+          "origin": "source"
+        }
+      ],
+      "preconditions": [
+        "A policy do arquivo 20260927270012 está aplicada; configuração/grants padrão de leitura da API Storage estão disponíveis ao usuário autenticado. O snapshot público não registra a ACL do schema storage.",
+        "O usuário tem profiles.name não nulo e pertence a pelo menos uma conversa Team Chat, podendo inserir e ler uma mensagem própria nessa conversa.",
+        "Existe mídia privada de outras conversas no bucket team-chat-files. Não é necessário pertencer às conversas desses objetos para o predicado defeituoso."
+      ],
+      "failure_scenario": [
+        "Membro P insere mensagem na conversa autorizada C, com sender_id=P, conteúdo não vazio, media_bucket=team-chat-files e media_path igual ao próprio nome N. media_url/media_type podem permanecer ambos nulos, satisfazendo os CHECKs.",
+        "Ao autorizar SELECT de qualquer objeto no bucket team-chat-files, a subquery enxerga essa mensagem, a participação de P e seu próprio perfil.",
+        "O nome não qualificado é resolvido no escopo interno para p.name. Assim tm.media_path=p.name equivale a N=N e a subquery não se correlaciona com objects.name.",
+        "O ramo EXISTS passa para objetos de outras conversas. Conforme as APIs Storage habilitadas, a mesma policy SELECT permite listar/assinar/ler objetos elegíveis; não se exige conhecer previamente cada caminho para que o predicado fique verdadeiro."
+      ],
+      "impact": "Quebra da separação de arquivos privados entre conversas do chat interno. Sob as precondições, uma mensagem controlada por membro pode autorizar leitura de todo o bucket team-chat-files. O achado não concede escrita/remoção desses objetos nem acesso a outros buckets.",
+      "existing_protections_and_consumer_checks": [
+        "RLS de team_messages, team_conversation_members e profiles continua ativa e foi considerada: o cenário usa mensagem, participação e perfil do próprio chamador.",
+        "INSERT de arquivos continua limitado à pasta do profile; o cenário não requer upload e cria apenas uma linha de mensagem válida.",
+        "O trigger de reply_to aceita reply nulo, o guard de edição só atua no UPDATE de conteúdo e o bump apenas atualiza o timestamp da conversa. Nenhum autoriza media_path.",
+        "A correção de grants UPDATE em team_messages impede reparenting por PATCH, mas não restringe o INSERT dessas colunas."
+      ],
+      "runtime_unknowns_and_limits": [
+        "Nenhuma consulta de storage.objects, listagem, assinatura, download ou INSERT foi executada.",
+        "Conclusão de binding é análise estática corroborada por documentação PG17, fonte primária colNameToVar e leitura independente de root/auth; não é resultado de PostgreSQL executado.",
+        "O snapshot é do schema public e não atesta o corpo/grants Storage implantado. Policy posterior ou configuração externa não representada na fonte pode alterar o alcance; isso não foi medido.",
+        "Doxygen mostra master; documentação de referência foi lida na versão 17. O nome name pertence a profiles no catálogo local, independentemente de ordem de plano/avaliação."
+      ],
+      "previous_audit_crosswalk": {
+        "classification": "novo achado da reauditoria",
+        "related_ids": [
+          "TC-001",
+          "R2-INF-022"
+        ],
+        "assessment": "TC-001 cobre incompatibilidade de paths e renderização; não cobre binding de coluna que elimina a correlação de objetos. INF-022 é outro caminho via Edge/service_role e não depende desta mensagem/policy. Root e Auth fizeram revisão independente do escopo interno."
+      },
+      "acceptance_criteria": [
+        "Qualificar explicitamente a coluna do objeto na subquery e revisar todas as correlações de ACL para evitar captura por coluna interna.",
+        "Autorizar a origem do locator no momento de persistir a associação mensagem/objeto; qualificar o nome sozinho não deve transformar referências arbitrárias em permissão.",
+        "Com papéis reais em ambiente de teste autorizado, verificar membro versus não membro, mensagem com media_path igual ao nome do perfil e objetos em outra conversa, além de listagem e assinatura.",
+        "Verificar grants/role e definição efetiva de Storage antes de declarar correção do deploy, preservando upload/leitura legítimos."
+      ],
+      "primary_source_ids": [
+        "PG-COLUMN-SCOPE",
+        "PG-COLUMN-RESOLVER-SOURCE",
+        "PG-POLICY",
+        "SUPABASE-STORAGE-ACL"
+      ],
+      "effective_policy_source_sequences": [
+        {
+          "identity": "public.profiles.Users can view own profile",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql",
+              "start_line": 6,
+              "end_line": 8,
+              "file_sha256": "d021a3812e7d2e1401dcfe6c6e7b66f038d7e8f13f347e32ddd92b77ddbae6b9",
+              "statement_sha256": "91b7ddb17d5e7b071c1687603f730248dbc670bcb45f72ccf408083da1898dcb",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.profiles.Users can view own profile"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260317223223_c85cceeb-728c-476f-af90-92e9ba976a7a.sql",
+              "start_line": 31,
+              "end_line": 33,
+              "file_sha256": "112f530c80ec5bf768bd4b29ab5aa879ef9ee3b1c736156fc27071f327935918",
+              "statement_sha256": "57b9ddc0c2da7a7a40e161c565eedbc255b43ae91339fb83d8ef8264e4a7a66c",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.profiles.Users can view own profile"
+            },
+            {
+              "path": "supabase/migrations/20260317223314_4baeb668-33b6-4061-9f80-ee2406429124.sql",
+              "start_line": 4,
+              "end_line": 4,
+              "file_sha256": "29723aa71216d97a1cf20ecdd303226c34b76f488708dd6512b1b3ffa8d13b93",
+              "statement_sha256": "5ae4ade04197ee9cfb08417830970aacb7ec0c4a4054fb6d5603f0f0656fd96e",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.profiles.Users can view own profile"
+            },
+            {
+              "path": "supabase/migrations/20260318134331_c2d6bbea-71de-4b22-9f1c-0ad1ac36ddac.sql",
+              "start_line": 14,
+              "end_line": 17,
+              "file_sha256": "739d74d89161eb2d7f3ce40287fee907b49c01561ab0e4f76c5b6981ab27a5c8",
+              "statement_sha256": "f1dda3e8385b516a3b0ba26ea6205cbe8f5468fc42de2481d639affc7fc88639",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.profiles.Users can view own profile"
+            },
+            {
+              "path": "supabase/migrations/20260318134450_91a290ef-84da-4e6c-97c6-c030e1f74ae8.sql",
+              "start_line": 42,
+              "end_line": 42,
+              "file_sha256": "cde3a2b52271ed814aef05c8b0e8cfba2608c9573322a57a6f608ede64c69131",
+              "statement_sha256": "5ae4ade04197ee9cfb08417830970aacb7ec0c4a4054fb6d5603f0f0656fd96e",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.profiles.Users can view own profile"
+            },
+            {
+              "path": "supabase/migrations/20260321194716_2488d2c2-fbc8-4226-9eb0-274d3f2bd2d6.sql",
+              "start_line": 4,
+              "end_line": 9,
+              "file_sha256": "a678cd9341930101f24cce2ab7d54859fcef75bf05d01d8a388a65c82bf52f7a",
+              "statement_sha256": "46de436c9046a935b1da6864bed8c5c89bfd9a395b3689e6eabfdd3b23e055b2",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.profiles.Users can view own profile"
+            },
+            {
+              "path": "supabase/migrations/20260321194812_c94817ed-e2cc-49e6-b067-5966bebd844d.sql",
+              "start_line": 4,
+              "end_line": 4,
+              "file_sha256": "de0b29566448a00cfbc687f74d1f8e7e6c121b583871f6da01effb41b6a7ef1b",
+              "statement_sha256": "5ae4ade04197ee9cfb08417830970aacb7ec0c4a4054fb6d5603f0f0656fd96e",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.profiles.Users can view own profile"
+            },
+            {
+              "path": "supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql",
+              "start_line": 6,
+              "end_line": 8,
+              "file_sha256": "d021a3812e7d2e1401dcfe6c6e7b66f038d7e8f13f347e32ddd92b77ddbae6b9",
+              "statement_sha256": "91b7ddb17d5e7b071c1687603f730248dbc670bcb45f72ccf408083da1898dcb",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.profiles.Users can view own profile"
+            }
+          ],
+          "snapshot_identity": "profiles.\"Users can view own profile\"",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.profiles|anon|SELECT|grantor=postgres",
+            "r:public.profiles|anon|MAINTAIN|grantor=postgres",
+            "r:public.profiles|postgres|DELETE|grantor=postgres",
+            "r:public.profiles|postgres|INSERT|grantor=postgres",
+            "r:public.profiles|postgres|SELECT|grantor=postgres",
+            "r:public.profiles|postgres|UPDATE|grantor=postgres",
+            "r:public.profiles|postgres|TRIGGER|grantor=postgres",
+            "r:public.profiles|postgres|MAINTAIN|grantor=postgres",
+            "r:public.profiles|postgres|TRUNCATE|grantor=postgres",
+            "r:public.profiles|postgres|REFERENCES|grantor=postgres",
+            "r:public.profiles|service_role|DELETE|grantor=postgres",
+            "r:public.profiles|service_role|INSERT|grantor=postgres",
+            "r:public.profiles|service_role|SELECT|grantor=postgres",
+            "r:public.profiles|service_role|UPDATE|grantor=postgres",
+            "r:public.profiles|authenticated|DELETE|grantor=postgres",
+            "r:public.profiles|authenticated|INSERT|grantor=postgres",
+            "r:public.profiles|authenticated|SELECT|grantor=postgres",
+            "r:public.profiles|authenticated|UPDATE|grantor=postgres",
+            "r:public.profiles|service_role|TRIGGER|grantor=postgres",
+            "r:public.profiles|authenticated|TRIGGER|grantor=postgres",
+            "r:public.profiles|service_role|MAINTAIN|grantor=postgres",
+            "r:public.profiles|service_role|TRUNCATE|grantor=postgres",
+            "r:public.profiles|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.profiles|authenticated|TRUNCATE|grantor=postgres",
+            "r:public.profiles|service_role|REFERENCES|grantor=postgres",
+            "r:public.profiles|authenticated|REFERENCES|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "public.team_conversation_members.tcm_select_own",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql",
+              "start_line": 85,
+              "end_line": 87,
+              "file_sha256": "8b7665b249754829759ed870830c8d38efef81626e109e990ab2e9d20d4e5554",
+              "statement_sha256": "b4bacf85de6f3163f6f315bc860c70b4f32e153dd0c17eece1f9c06e1b721d2f",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.team_conversation_members.tcm_select_own"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260928580000_team_chat_e22_team_conversation_members_policies.sql",
+              "start_line": 18,
+              "end_line": 18,
+              "file_sha256": "881a7eed46d4deabe4b7608333f0a4ada63e7cb074ec79b17692309038111cde",
+              "statement_sha256": "ddfc46c0023fc55410a295f65304181fa2c48e431d4177ea4fd1a72ed1f45ce7",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.team_conversation_members.tcm_select_own"
+            },
+            {
+              "path": "supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql",
+              "start_line": 83,
+              "end_line": 83,
+              "file_sha256": "8b7665b249754829759ed870830c8d38efef81626e109e990ab2e9d20d4e5554",
+              "statement_sha256": "0d3bf0b7ff9bec0640913c86b5024ce2413852ea45bdf65c087b899e24b93f48",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.team_conversation_members.tcm_select_own"
+            },
+            {
+              "path": "supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql",
+              "start_line": 85,
+              "end_line": 87,
+              "file_sha256": "8b7665b249754829759ed870830c8d38efef81626e109e990ab2e9d20d4e5554",
+              "statement_sha256": "b4bacf85de6f3163f6f315bc860c70b4f32e153dd0c17eece1f9c06e1b721d2f",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.team_conversation_members.tcm_select_own"
+            }
+          ],
+          "snapshot_identity": "team_conversation_members.tcm_select_own",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.team_conversation_members|postgres|DELETE|grantor=postgres",
+            "r:public.team_conversation_members|postgres|INSERT|grantor=postgres",
+            "r:public.team_conversation_members|postgres|SELECT|grantor=postgres",
+            "r:public.team_conversation_members|postgres|UPDATE|grantor=postgres",
+            "r:public.team_conversation_members|postgres|TRIGGER|grantor=postgres",
+            "r:public.team_conversation_members|postgres|MAINTAIN|grantor=postgres",
+            "r:public.team_conversation_members|postgres|TRUNCATE|grantor=postgres",
+            "r:public.team_conversation_members|postgres|REFERENCES|grantor=postgres",
+            "r:public.team_conversation_members|service_role|DELETE|grantor=postgres",
+            "r:public.team_conversation_members|service_role|INSERT|grantor=postgres",
+            "r:public.team_conversation_members|service_role|SELECT|grantor=postgres",
+            "r:public.team_conversation_members|service_role|UPDATE|grantor=postgres",
+            "r:public.team_conversation_members|authenticated|DELETE|grantor=postgres",
+            "r:public.team_conversation_members|authenticated|INSERT|grantor=postgres",
+            "r:public.team_conversation_members|authenticated|SELECT|grantor=postgres",
+            "r:public.team_conversation_members|service_role|TRIGGER|grantor=postgres",
+            "r:public.team_conversation_members|service_role|MAINTAIN|grantor=postgres",
+            "r:public.team_conversation_members|service_role|TRUNCATE|grantor=postgres",
+            "r:public.team_conversation_members|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.team_conversation_members|service_role|REFERENCES|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "public.team_messages.Members can send messages",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql",
+              "start_line": 50,
+              "end_line": 57,
+              "file_sha256": "2efd108ec9c190aa55c0984be04f3bd9f757e026298f03a97fb1aa12b91bec72",
+              "statement_sha256": "79ee02f3cac4ef3d70b63817b2099c9e4a92de48a3b05c300726909fa29bdf19",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.team_messages.Members can send messages"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260402130912_abca9ec2-dfde-4f76-908b-2e993e611ad5.sql",
+              "start_line": 98,
+              "end_line": 103,
+              "file_sha256": "af9b6fa87587c3a6dd2dd4d592000a3091b36cf58edce828da8791828b533ae7",
+              "statement_sha256": "3504a98486e477913bb04d23371dd441207e780bd6d672252ff511c0afb58035",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.team_messages.Members can send messages"
+            },
+            {
+              "path": "supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql",
+              "start_line": 39,
+              "end_line": 39,
+              "file_sha256": "2efd108ec9c190aa55c0984be04f3bd9f757e026298f03a97fb1aa12b91bec72",
+              "statement_sha256": "485dab4740a8f72a38695a655f91570cfdc8b09c956519bd0ecccb493fd35d13",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.team_messages.Members can send messages"
+            },
+            {
+              "path": "supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql",
+              "start_line": 50,
+              "end_line": 57,
+              "file_sha256": "2efd108ec9c190aa55c0984be04f3bd9f757e026298f03a97fb1aa12b91bec72",
+              "statement_sha256": "79ee02f3cac4ef3d70b63817b2099c9e4a92de48a3b05c300726909fa29bdf19",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.team_messages.Members can send messages"
+            }
+          ],
+          "snapshot_identity": "team_messages.\"Members can send messages\"",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.team_messages|postgres|DELETE|grantor=postgres",
+            "r:public.team_messages|postgres|INSERT|grantor=postgres",
+            "r:public.team_messages|postgres|SELECT|grantor=postgres",
+            "r:public.team_messages|postgres|UPDATE|grantor=postgres",
+            "r:public.team_messages|postgres|TRIGGER|grantor=postgres",
+            "r:public.team_messages|postgres|MAINTAIN|grantor=postgres",
+            "r:public.team_messages|postgres|TRUNCATE|grantor=postgres",
+            "r:public.team_messages|postgres|REFERENCES|grantor=postgres",
+            "r:public.team_messages|service_role|DELETE|grantor=postgres",
+            "r:public.team_messages|service_role|INSERT|grantor=postgres",
+            "r:public.team_messages|service_role|SELECT|grantor=postgres",
+            "r:public.team_messages|service_role|UPDATE|grantor=postgres",
+            "r:public.team_messages|authenticated|DELETE|grantor=postgres",
+            "r:public.team_messages|authenticated|INSERT|grantor=postgres",
+            "r:public.team_messages|authenticated|SELECT|grantor=postgres",
+            "r:public.team_messages|service_role|TRIGGER|grantor=postgres",
+            "r:public.team_messages|service_role|MAINTAIN|grantor=postgres",
+            "r:public.team_messages|service_role|TRUNCATE|grantor=postgres",
+            "r:public.team_messages|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.team_messages|service_role|REFERENCES|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "public.team_messages.Members can view conversation messages",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql",
+              "start_line": 44,
+              "end_line": 48,
+              "file_sha256": "2efd108ec9c190aa55c0984be04f3bd9f757e026298f03a97fb1aa12b91bec72",
+              "statement_sha256": "91c63ec813363d6251335851d1fa173944a86db1ee391851c37d825d4961574f",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.team_messages.Members can view conversation messages"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260402130912_abca9ec2-dfde-4f76-908b-2e993e611ad5.sql",
+              "start_line": 94,
+              "end_line": 96,
+              "file_sha256": "af9b6fa87587c3a6dd2dd4d592000a3091b36cf58edce828da8791828b533ae7",
+              "statement_sha256": "b4ba0b247510e705f55e51bf67bbeca5e37dbf92c49ff3e3f74146fb4f095cb3",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.team_messages.Members can view conversation messages"
+            },
+            {
+              "path": "supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql",
+              "start_line": 40,
+              "end_line": 40,
+              "file_sha256": "2efd108ec9c190aa55c0984be04f3bd9f757e026298f03a97fb1aa12b91bec72",
+              "statement_sha256": "25e01ff3d20e15f6f9c55be582d1ae6c37efadb7ce84f1f318baf3291c973540",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.team_messages.Members can view conversation messages"
+            },
+            {
+              "path": "supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql",
+              "start_line": 44,
+              "end_line": 48,
+              "file_sha256": "2efd108ec9c190aa55c0984be04f3bd9f757e026298f03a97fb1aa12b91bec72",
+              "statement_sha256": "91c63ec813363d6251335851d1fa173944a86db1ee391851c37d825d4961574f",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.team_messages.Members can view conversation messages"
+            }
+          ],
+          "snapshot_identity": "team_messages.\"Members can view conversation messages\"",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.team_messages|postgres|DELETE|grantor=postgres",
+            "r:public.team_messages|postgres|INSERT|grantor=postgres",
+            "r:public.team_messages|postgres|SELECT|grantor=postgres",
+            "r:public.team_messages|postgres|UPDATE|grantor=postgres",
+            "r:public.team_messages|postgres|TRIGGER|grantor=postgres",
+            "r:public.team_messages|postgres|MAINTAIN|grantor=postgres",
+            "r:public.team_messages|postgres|TRUNCATE|grantor=postgres",
+            "r:public.team_messages|postgres|REFERENCES|grantor=postgres",
+            "r:public.team_messages|service_role|DELETE|grantor=postgres",
+            "r:public.team_messages|service_role|INSERT|grantor=postgres",
+            "r:public.team_messages|service_role|SELECT|grantor=postgres",
+            "r:public.team_messages|service_role|UPDATE|grantor=postgres",
+            "r:public.team_messages|authenticated|DELETE|grantor=postgres",
+            "r:public.team_messages|authenticated|INSERT|grantor=postgres",
+            "r:public.team_messages|authenticated|SELECT|grantor=postgres",
+            "r:public.team_messages|service_role|TRIGGER|grantor=postgres",
+            "r:public.team_messages|service_role|MAINTAIN|grantor=postgres",
+            "r:public.team_messages|service_role|TRUNCATE|grantor=postgres",
+            "r:public.team_messages|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.team_messages|service_role|REFERENCES|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "storage.objects.Conversation members can read team chat files",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260927270012_team_chat_e21_storage_select_policy.sql",
+              "start_line": 3,
+              "end_line": 3,
+              "file_sha256": "f5a7a3fa6e2ddba08a228e0f3c12611f1e5ce085058455742bdca95fd9575bbb",
+              "statement_sha256": "3d42d0292ef8abc5f9b63ddd72433022bb9280ba8debabd25ddeac6e6e5d4b54",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Conversation members can read team chat files"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260927270012_team_chat_e21_storage_select_policy.sql",
+              "start_line": 3,
+              "end_line": 3,
+              "file_sha256": "f5a7a3fa6e2ddba08a228e0f3c12611f1e5ce085058455742bdca95fd9575bbb",
+              "statement_sha256": "3d42d0292ef8abc5f9b63ddd72433022bb9280ba8debabd25ddeac6e6e5d4b54",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Conversation members can read team chat files"
+            }
+          ],
+          "snapshot_identity": null,
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": []
+        }
+      ]
+    },
+    {
+      "id": "R2-DB-021",
+      "severity": "P2",
+      "title": "A segunda reação ao mesmo emoji conflita com a chave reservada ao contato",
+      "status": "static_confirmed",
+      "runtime_tested": false,
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "summary": "O hook grava simultaneamente user_id e contact_id para reações de agentes. A tabela mantém UNIQUE(message_id,contact_id,emoji), além da UNIQUE por usuário. Outra autoria no mesmo contato/mensagem/emoji viola a chave de contato, e o alvo de UPSERT por user_id não trata esse conflito.",
+      "effective_source_definitions": {},
+      "definition_histories": {},
+      "evidence": [
+        {
+          "path": "supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql",
+          "line_start": 26,
+          "line_end": 39,
+          "sha256": "db73d151afdbf5f8b8cb85022560bbc82dbdd420fe2b433f9e88b5237386a650",
+          "note": "As duas constraints UNIQUE são independentes e o CHECK aceita os dois autores preenchidos.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/schema-manifest.json",
+          "line_start": 5077,
+          "line_end": 5077,
+          "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+          "note": "Snapshot conserva a constraint por contato.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/schema-manifest.json",
+          "line_start": 5053,
+          "line_end": 5053,
+          "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+          "note": "Snapshot conserva a constraint por usuário.",
+          "origin": "source"
+        },
+        {
+          "path": "src/hooks/reactions/useReactionMutations.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/reactions/useReactionMutations.ts",
+          "line_start": 22,
+          "line_end": 53,
+          "sha256": "a0020798219802b9108c1b66ce8fd0ea2bad51629661f9d1e27f045222a37016",
+          "note": "Hook resolve o contato, envia ambas as identidades e escolhe onConflict apenas por message_id,user_id,emoji.",
+          "origin": "source"
+        },
+        {
+          "path": "src/hooks/reactions/useReactionMutations.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/reactions/useReactionMutations.ts",
+          "line_start": 53,
+          "line_end": 79,
+          "sha256": "a0020798219802b9108c1b66ce8fd0ea2bad51629661f9d1e27f045222a37016",
+          "note": "Erro da persistência é lançado antes do envio ao provedor e a UI recebe toast de erro.",
+          "origin": "source"
+        },
+        {
+          "path": "src/components/inbox/MessageReactions.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/MessageReactions.tsx",
+          "line_start": 51,
+          "line_end": 79,
+          "sha256": "449e2178c8e5fde2e148fed83b874e5c6372726cf34fce48eaa9fb7e10d23647",
+          "note": "UI permite adicionar o mesmo emoji quando o usuário atual ainda não reagiu.",
+          "origin": "source"
+        },
+        {
+          "path": "src/components/inbox/MessageReactions.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/MessageReactions.tsx",
+          "line_start": 101,
+          "line_end": 109,
+          "sha256": "449e2178c8e5fde2e148fed83b874e5c6372726cf34fce48eaa9fb7e10d23647",
+          "note": "Interface prevê contagem maior que um para o mesmo emoji.",
+          "origin": "source"
+        }
+      ],
+      "preconditions": [
+        "Uma reação existente R1 tem message_id M, contact_id C e emoji E.",
+        "Um segundo autor autorizado a reagir em M usa a UI atual; por exemplo, supervisor após agente ou novo responsável após transferência do contato.",
+        "Esse segundo usuário tem user_id diferente do primeiro e sua combinação M/user_id/E ainda não existe; demais constraints e RLS são satisfeitas."
+      ],
+      "failure_scenario": [
+        "A primeira reação de agente grava (M, A, C, E) pelo hook atual.",
+        "O segundo agente B ainda não tem reação própria, então a UI chama addReaction(E). O hook tenta (M, B, C, E).",
+        "Não há conflito na chave árbitra (M, B, E), mas há conflito com R1 em (M, C, E). A constraint independente rejeita o INSERT, esperado SQLSTATE 23505.",
+        "O hook lança o erro e interrompe antes de sendReaction; R1 permanece e a reação de B não é salva. Uma reação de cliente já existente com o mesmo M/C/E produz a mesma colisão."
+      ],
+      "impact": "Não é possível representar todas as autorias legítimas do mesmo emoji pela UI atual. Reação de agente e reação de cliente também disputam a mesma chave de contato. A falha é de persistência antes do envio externo, não um sucesso falso.",
+      "existing_protections_and_consumer_checks": [
+        "Repetir o mesmo M/user_id/E pode ser tratado pelo UPSERT e não é o cenário de falha.",
+        "A chave de contato faz sentido quando contact_id identifica exclusivamente o autor cliente; o hook a usa também como vínculo contextual para agentes.",
+        "O tratamento de erro evita anunciar sucesso nessa rejeição."
+      ],
+      "runtime_unknowns_and_limits": [
+        "Não houve execução de INSERT/UPSERT em banco. O resultado é deduzido das constraints conservadas no snapshot, payload exato do hook e semântica documentada de ON CONFLICT.",
+        "Incidência real e UI em sessão autenticada não foram medidas."
+      ],
+      "previous_audit_crosswalk": {
+        "classification": "novo achado da reauditoria",
+        "related_ids": [
+          "R2-DB-019",
+          "R2-INB-032"
+        ],
+        "assessment": "DB-019 é ausência de autorização por autor; corrigir somente a ACL não resolve a colisão de dados válidos. INB-032 começa após a persistência e trata rejeição do provedor. Inbox confirmou que não havia achado duplicado."
+      },
+      "acceptance_criteria": [
+        "Escolher um modelo inequívoco para autor versus contato da mensagem e ajustar payload/constraints em conjunto.",
+        "Verificar duas reações legítimas de agentes diferentes no mesmo emoji, uma reação de cliente mais uma de agente, retries do mesmo autor e exclusão apenas da autoria selecionada.",
+        "Preservar unicidade por autor e o vínculo válido da mensagem sem eliminar a deduplicação do provedor."
+      ],
+      "primary_source_ids": [
+        "PG-ON-CONFLICT"
+      ],
+      "effective_policy_source_sequences": [],
+      "effective_table_source_sequence": [
+        {
+          "path": "supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql",
+          "start_line": 26,
+          "end_line": 39,
+          "file_sha256": "db73d151afdbf5f8b8cb85022560bbc82dbdd420fe2b433f9e88b5237386a650",
+          "statement_sha256": "8c557d0b5efa98d77074adaf0995caccf3c62cc860c4d877ebc5933ad955cf68",
+          "operation": "CREATE",
+          "kind": "table",
+          "identity": "public.message_reactions",
+          "action": "create"
+        },
+        {
+          "path": "supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql",
+          "start_line": 44,
+          "end_line": 44,
+          "file_sha256": "db73d151afdbf5f8b8cb85022560bbc82dbdd420fe2b433f9e88b5237386a650",
+          "statement_sha256": "716df575dddb56df72bc4001b750678eebddddd11e92694d11be769775fa11d4",
+          "operation": "ALTER",
+          "kind": "table",
+          "identity": "public.message_reactions",
+          "action": "alter"
+        },
+        {
+          "path": "supabase/migrations/20260826210200_realtime_publication_d5.sql",
+          "start_line": 17,
+          "end_line": 17,
+          "file_sha256": "90dcae287698285049c92d34153996379e29ff21b4f8352b9918acd6e7bfe859",
+          "statement_sha256": "18dbd95b5bdea70ab02aa93a522da9f6f57c871bbaa19c9e8d248fcef7369ba4",
+          "operation": "ALTER",
+          "kind": "table",
+          "identity": "public.message_reactions",
+          "action": "alter"
+        }
+      ]
+    },
+    {
+      "id": "R2-DB-022",
+      "severity": "P1",
+      "title": "Referência de mídia gravável pelo agente funciona como autorização para outro objeto privado",
+      "status": "static_confirmed",
+      "runtime_tested": false,
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "summary": "As policies de leitura de whatsapp-media/audio-messages aceitam a existência de uma mensagem visível cujo media_url termina no caminho do objeto. Como o agente pode alterar media_url de uma mensagem autorizada fora do estado protegido, pode fabricar essa referência para um locator privado conhecido e passar a satisfazer a ACL de leitura.",
+      "effective_source_definitions": {
+        "public.guard_message_delivery_internal_fields()": {
+          "path": "supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql",
+          "start_line": 192,
+          "end_line": 253,
+          "file_sha256": "75e0c952d254b3d8248bd401f7df311efa8f269e48d1c816117850b384255000",
+          "statement_sha256": "9678d60dadee056b856474e97c4842521e7ae5c10c2eafa2e1db226c8214f593",
+          "operation": "CREATE",
+          "kind": "function",
+          "action": "create_or_replace",
+          "identity": "public.guard_message_delivery_internal_fields()",
+          "arguments": "",
+          "security_definer": false,
+          "search_path": true,
+          "auth_uid": false,
+          "auth_role": false,
+          "returns_trigger": true
+        },
+        "public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)": {
+          "path": "supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql",
+          "start_line": 16,
+          "end_line": 188,
+          "file_sha256": "b032e0ccee70734e4dbfaee241e177bce6811561f362df12d3aeafcf8c309f55",
+          "statement_sha256": "5e7372701204336f32b110a5ebafdb5c22a494f79f3cb6db193cfed9dbf625c0",
+          "operation": "CREATE",
+          "kind": "function",
+          "action": "create_or_replace",
+          "identity": "public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)",
+          "arguments": "\n  p_contact_id uuid,\n  p_client_message_id uuid,\n  p_content text,\n  p_message_type text DEFAULT 'text',\n  p_media_url text DEFAULT NULL,\n  p_reply_to_id uuid DEFAULT NULL,\n  p_whatsapp_connection_id uuid DEFAULT NULL,\n  p_caption text DEFAULT NULL\n",
+          "security_definer": true,
+          "search_path": true,
+          "auth_uid": true,
+          "auth_role": true,
+          "returns_trigger": false
+        }
+      },
+      "definition_histories": {
+        "public.guard_message_delivery_internal_fields()": [
+          {
+            "path": "supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql",
+            "start_line": 72,
+            "end_line": 105,
+            "file_sha256": "51aecdd2b1e21b7b391477c79e8a0d3448b1610e1d1e789dac75286c991548e3",
+            "statement_sha256": "7dd572bd42ad0ba2b36aa80d17104ef077be4918ae32f87287f1044116b7ff1e",
+            "operation": "CREATE",
+            "kind": "function",
+            "action": "create_or_replace",
+            "identity": "public.guard_message_delivery_internal_fields()",
+            "arguments": "",
+            "security_definer": false,
+            "search_path": true,
+            "auth_uid": false,
+            "auth_role": false,
+            "returns_trigger": true
+          },
+          {
+            "path": "supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql",
+            "start_line": 192,
+            "end_line": 253,
+            "file_sha256": "75e0c952d254b3d8248bd401f7df311efa8f269e48d1c816117850b384255000",
+            "statement_sha256": "9678d60dadee056b856474e97c4842521e7ae5c10c2eafa2e1db226c8214f593",
+            "operation": "CREATE",
+            "kind": "function",
+            "action": "create_or_replace",
+            "identity": "public.guard_message_delivery_internal_fields()",
+            "arguments": "",
+            "security_definer": false,
+            "search_path": true,
+            "auth_uid": false,
+            "auth_role": false,
+            "returns_trigger": true
+          }
+        ],
+        "public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)": [
+          {
+            "path": "supabase/migrations/20260909250000_allow_location_in_atomic_outbound_delivery.sql",
+            "start_line": 14,
+            "end_line": 146,
+            "file_sha256": "ba64d74319cae401531ac8b4bab35b04bdbb12ae319e193d69def2ac1b2b8571",
+            "statement_sha256": "bed4711561c86dccc8c3af2fe520c2718430c6a0738511e6dd47b53a0122d141",
+            "operation": "CREATE",
+            "kind": "function",
+            "action": "create_or_replace",
+            "identity": "public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)",
+            "arguments": "\n  p_contact_id uuid,\n  p_client_message_id uuid,\n  p_content text,\n  p_message_type text DEFAULT 'text',\n  p_media_url text DEFAULT NULL,\n  p_reply_to_id uuid DEFAULT NULL,\n  p_whatsapp_connection_id uuid DEFAULT NULL,\n  p_caption text DEFAULT NULL\n",
+            "security_definer": true,
+            "search_path": true,
+            "auth_uid": true,
+            "auth_role": true,
+            "returns_trigger": false
+          },
+          {
+            "path": "supabase/migrations/20260930190000_enforce_send_messages_permission_on_enqueue.sql",
+            "start_line": 18,
+            "end_line": 159,
+            "file_sha256": "8160224ff270c445ddb809ceb34fd98c93660fe5e796d5fb59dedb990253d2fe",
+            "statement_sha256": "2d839a93271f73c6fd35e3d2515e90d1722ffeae15bcba11a92db18a3d9c86f9",
+            "operation": "CREATE",
+            "kind": "function",
+            "action": "create_or_replace",
+            "identity": "public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)",
+            "arguments": "\n  p_contact_id uuid,\n  p_client_message_id uuid,\n  p_content text,\n  p_message_type text DEFAULT 'text',\n  p_media_url text DEFAULT NULL,\n  p_reply_to_id uuid DEFAULT NULL,\n  p_whatsapp_connection_id uuid DEFAULT NULL,\n  p_caption text DEFAULT NULL\n",
+            "security_definer": true,
+            "search_path": true,
+            "auth_uid": true,
+            "auth_role": true,
+            "returns_trigger": false
+          },
+          {
+            "path": "supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql",
+            "start_line": 16,
+            "end_line": 188,
+            "file_sha256": "b032e0ccee70734e4dbfaee241e177bce6811561f362df12d3aeafcf8c309f55",
+            "statement_sha256": "5e7372701204336f32b110a5ebafdb5c22a494f79f3cb6db193cfed9dbf625c0",
+            "operation": "CREATE",
+            "kind": "function",
+            "action": "create_or_replace",
+            "identity": "public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)",
+            "arguments": "\n  p_contact_id uuid,\n  p_client_message_id uuid,\n  p_content text,\n  p_message_type text DEFAULT 'text',\n  p_media_url text DEFAULT NULL,\n  p_reply_to_id uuid DEFAULT NULL,\n  p_whatsapp_connection_id uuid DEFAULT NULL,\n  p_caption text DEFAULT NULL\n",
+            "security_definer": true,
+            "search_path": true,
+            "auth_uid": true,
+            "auth_role": true,
+            "returns_trigger": false
+          }
+        ]
+      },
+      "evidence": [
+        {
+          "path": "supabase/migrations/20261003142707_whatsapp_media_recebida_select_via_messages.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20261003142707_whatsapp_media_recebida_select_via_messages.sql",
+          "line_start": 30,
+          "line_end": 50,
+          "sha256": "dcaad99b94189bef2b4960e605f8dffa12de883983f7932c504765dbb93ff84b",
+          "note": "Policy aditiva SELECT confia no locator de qualquer mensagem que passe pela RLS, sem validar autoria confiável da associação.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql",
+          "line_start": 18,
+          "line_end": 62,
+          "sha256": "729dde0eb79a5c4d5c84a4f2f0000c593f8babe9af226796f388efe5f33096e9",
+          "note": "Policies anteriores já têm ramo por media_url de mensagem de contato atribuído. Corrigir só a policy aditiva deixa esse caminho.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260925223000_messages_update_policy_queue_parity.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260925223000_messages_update_policy_queue_parity.sql",
+          "line_start": 9,
+          "line_end": 23,
+          "sha256": "59c2e4df68d270c5cb94c826affcc175a337640ae108bf57f75f0789a459b5d2",
+          "note": "UPDATE de mensagens é permitido por contato/filas do usuário, sem limitação de coluna media_url.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/schema-manifest.json",
+          "line_start": 6631,
+          "line_end": 6631,
+          "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+          "note": "Snapshot conserva UPDATE de tabela para authenticated, não só colunas de texto.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql",
+          "line_start": 192,
+          "line_end": 253,
+          "sha256": "75e0c952d254b3d8248bd401f7df311efa8f269e48d1c816117850b384255000",
+          "note": "Guard protege campos internos e payload apenas quando OLD.client_message_id não nulo, OLD.status=sending e external_id nulo; mensagem recebida/fora dessa condição pode trocar media_url.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql",
+          "line_start": 21,
+          "line_end": 36,
+          "sha256": "feae2cd2c008abb3859ecf48e55bd78b827d09fb946be90ecd95cc30515f574c",
+          "note": "A própria mensagem continua visível após o UPDATE por permanecer no contato autorizado.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql",
+          "line_start": 51,
+          "line_end": 59,
+          "sha256": "b032e0ccee70734e4dbfaee241e177bce6811561f362df12d3aeafcf8c309f55",
+          "note": "Ramo alternativo de criação: enqueue valida HTTPS/tamanho, sem conferir permissão do objeto referenciado.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql",
+          "line_start": 155,
+          "line_end": 163,
+          "sha256": "b032e0ccee70734e4dbfaee241e177bce6811561f362df12d3aeafcf8c309f55",
+          "note": "enqueue persiste p_media_url sob a mensagem autorizada.",
+          "origin": "source"
+        },
+        {
+          "path": "src/hooks/storage/useResolvedStorageUrl.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/storage/useResolvedStorageUrl.ts",
+          "line_start": 35,
+          "line_end": 55,
+          "sha256": "952d59bd6c420a1ea1510bedb6fa1ef14f662974b5bb97b0932455a14e8a3389",
+          "note": "Consumidor de objetos privados solicita URL assinada pelo bucket/path extraídos do locator.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/tests/rls_whatsapp_media_select_via_messages.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/tests/rls_whatsapp_media_select_via_messages.sql",
+          "line_start": 11,
+          "line_end": 23,
+          "sha256": "702f6c56a7169278cbadc0f40ded1abdda9d1d0185220635be037381c3524d23",
+          "note": "Teste existente explicita limites e alega controles de leitura; não exercita criação/alteração maliciosa da associação.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/tests/rls_whatsapp_media_select_via_messages.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/tests/rls_whatsapp_media_select_via_messages.sql",
+          "line_start": 61,
+          "line_end": 105,
+          "sha256": "702f6c56a7169278cbadc0f40ded1abdda9d1d0185220635be037381c3524d23",
+          "note": "Casos versionados assumem m.media_url já confiável e alternam visibilidade do contato, sem testar reassociação.",
+          "origin": "source"
+        }
+      ],
+      "preconditions": [
+        "Usuário autenticado pode ler e atualizar ao menos uma mensagem M do contato próprio/escopo autorizado; M está fora da condição protegida de payload sending (por exemplo, mensagem recebida com client_message_id nulo).",
+        "Conhece o bucket/path exato de um objeto privado existente de outro contato que não está em seu escopo. A obtenção desse locator não foi demonstrada e é precondição explícita.",
+        "As policies locais de Storage estão aplicadas e a API Storage admite operações de leitura com os grants da plataforma; snapshot public não atesta grants de storage.",
+        "O usuário modifica somente media_url para um HTTPS locator válido; não precisa alterar campos de entrega, fazer upload, ter send_messages nem chamar service_role."
+      ],
+      "failure_scenario": [
+        "Sem a referência fabricada, o objeto de B não possui mensagem visível nem pasta autorizada para A e é negado pelas condições examinadas.",
+        "A atualiza media_url de sua mensagem recebida M para o locator conhecido do objeto de B, mantendo contact_id e todos os campos internos de entrega.",
+        "UPDATE RLS e guard passam. M permanece visível ao usuário.",
+        "A policy Storage encontra M e o sufixo bucket/path correspondente. SELECT passa mesmo que o contato original do objeto continue fora do escopo de A. O cliente pode então solicitar leitura/assinatura desse caminho."
+      ],
+      "impact": "Um identificador conhecido de objeto privado pode ser convertido em acesso por meio de uma mensagem controlada pelo próprio usuário. O limite de leitura por contato deixa de ser confiável para esse objeto. Não se alega enumeração de todos os paths, nem acesso prévio ao conteúdo de B, nem envio remoto como etapa necessária.",
+      "existing_protections_and_consumer_checks": [
+        "As policies qualificam objects.name no ramo de WhatsApp e continuam sujeitas à RLS de messages; o problema é confiar em uma associação que o próprio caller pode criar/alterar.",
+        "URLs sem bucket/path correspondente não passam. Contato e mensagem originais de B continuam protegidos.",
+        "O guard bloqueia alteração de payload em envio ativo com client_message_id, mas o cenário usa mensagem fora desse estado.",
+        "O endpoint de envio tem gates de perfil/contato/conexão/permissão. O cenário principal usa UPDATE de uma mensagem existente e não depende desse endpoint."
+      ],
+      "runtime_unknowns_and_limits": [
+        "Nenhum PATCH, GET, assinatura ou download foi realizado; conclusão estática sobre predicados e superfície de escrita.",
+        "ACL/definição efetiva do schema storage e configurações externas permanecem desconhecidas nesta rodada.",
+        "O registro do teste existente menciona um PG17 descartável anterior; não é execução desta reauditoria nem evidência do cenário de reassociação."
+      ],
+      "previous_audit_crosswalk": {
+        "classification": "novo achado da reauditoria",
+        "related_ids": [
+          "R2-DB-020",
+          "R2-INF-022"
+        ],
+        "assessment": "DB-020 perde a correlação por binding de name em Team Chat. Aqui a correlação é exata, mas seu vínculo é controlável. INF-022 usa service_role em classificadores sem precisar fabricar uma mensagem. Os três caminhos requerem correções próprias."
+      },
+      "acceptance_criteria": [
+        "Definir e validar uma associação confiável entre objeto e contato/mensagem, conferindo permissão da origem antes de aceitar novos locators ou reassociações.",
+        "Restringir mutações de campos de mídia conforme o fluxo legítimo; tratar INSERT, UPDATE e RPC de enqueue de forma coerente.",
+        "Revisar todos os ramos permissivos de SELECT de whatsapp-media/audio-messages, incluindo as policies anteriores à aditiva.",
+        "Teste negativo autorizado: A conhece path de B, pode editar sua própria mensagem e ainda assim não consegue assinar/ler B após tentar referenciá-lo; encaminhamento legítimo de mídia visível continua funcionando."
+      ],
+      "primary_source_ids": [
+        "PG-POLICY",
+        "SUPABASE-STORAGE-ACL"
+      ],
+      "effective_policy_source_sequences": [
+        {
+          "identity": "public.messages.Users can update messages from their assigned contacts",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260329175910_f55d2541-447c-40cb-b18c-1e03a02eeced.sql",
+              "start_line": 81,
+              "end_line": 89,
+              "file_sha256": "48a0b20aa041083002ff56cfd3a82ac57ecf24798bfefceb0f243ea4e6e901a4",
+              "statement_sha256": "a44390781c12a14d3e56d4686c9b1f191f2c126aa37299a3c5e329a5f50e47b7",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.messages.Users can update messages from their assigned contacts"
+            },
+            {
+              "path": "supabase/migrations/20260925223000_messages_update_policy_queue_parity.sql",
+              "start_line": 9,
+              "end_line": 23,
+              "file_sha256": "59c2e4df68d270c5cb94c826affcc175a337640ae108bf57f75f0789a459b5d2",
+              "statement_sha256": "6ce260c83e10f0a248cd009bfa90c5fdd509a470bcc478f9b7ac06096c8a8579",
+              "operation": "ALTER",
+              "kind": "policy",
+              "action": "alter",
+              "identity": "public.messages.Users can update messages from their assigned contacts"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20251215163158_8fcb49be-34d2-4749-a644-f943eaf83c4a.sql",
+              "start_line": 45,
+              "end_line": 57,
+              "file_sha256": "8d59a778de51ed3422784fdbe593173eebed569caed0f3d707206589d5e80605",
+              "statement_sha256": "9613e789bca159f5e29b350ce305fd335776cc4aae3eb97723e8b050b4561d42",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.messages.Users can update messages from their assigned contacts"
+            },
+            {
+              "path": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql",
+              "start_line": 68,
+              "end_line": 68,
+              "file_sha256": "2ffa7089e32251cf9e1c78c6e42b279476da1c74024716bd1b385f77905d25e4",
+              "statement_sha256": "7203fe71015dae30065b27ba9bbd178fb87dd73233517ff0c4c705f51d21f773",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.messages.Users can update messages from their assigned contacts"
+            },
+            {
+              "path": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql",
+              "start_line": 69,
+              "end_line": 76,
+              "file_sha256": "2ffa7089e32251cf9e1c78c6e42b279476da1c74024716bd1b385f77905d25e4",
+              "statement_sha256": "20d80f64f368c82e5dddd5d3f43a81473b940c0b49a57448697c85bc7f4fd74a",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.messages.Users can update messages from their assigned contacts"
+            },
+            {
+              "path": "supabase/migrations/20260329175910_f55d2541-447c-40cb-b18c-1e03a02eeced.sql",
+              "start_line": 80,
+              "end_line": 80,
+              "file_sha256": "48a0b20aa041083002ff56cfd3a82ac57ecf24798bfefceb0f243ea4e6e901a4",
+              "statement_sha256": "7203fe71015dae30065b27ba9bbd178fb87dd73233517ff0c4c705f51d21f773",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.messages.Users can update messages from their assigned contacts"
+            },
+            {
+              "path": "supabase/migrations/20260329175910_f55d2541-447c-40cb-b18c-1e03a02eeced.sql",
+              "start_line": 81,
+              "end_line": 89,
+              "file_sha256": "48a0b20aa041083002ff56cfd3a82ac57ecf24798bfefceb0f243ea4e6e901a4",
+              "statement_sha256": "a44390781c12a14d3e56d4686c9b1f191f2c126aa37299a3c5e329a5f50e47b7",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.messages.Users can update messages from their assigned contacts"
+            },
+            {
+              "path": "supabase/migrations/20260925223000_messages_update_policy_queue_parity.sql",
+              "start_line": 9,
+              "end_line": 23,
+              "file_sha256": "59c2e4df68d270c5cb94c826affcc175a337640ae108bf57f75f0789a459b5d2",
+              "statement_sha256": "6ce260c83e10f0a248cd009bfa90c5fdd509a470bcc478f9b7ac06096c8a8579",
+              "operation": "ALTER",
+              "kind": "policy",
+              "action": "alter",
+              "identity": "public.messages.Users can update messages from their assigned contacts"
+            }
+          ],
+          "snapshot_identity": "messages.\"Users can update messages from their assigned contacts\"",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.messages|postgres|DELETE|grantor=postgres",
+            "r:public.messages|postgres|INSERT|grantor=postgres",
+            "r:public.messages|postgres|SELECT|grantor=postgres",
+            "r:public.messages|postgres|UPDATE|grantor=postgres",
+            "r:public.messages|postgres|TRIGGER|grantor=postgres",
+            "r:public.messages|postgres|MAINTAIN|grantor=postgres",
+            "r:public.messages|postgres|TRUNCATE|grantor=postgres",
+            "r:public.messages|postgres|REFERENCES|grantor=postgres",
+            "r:public.messages|service_role|DELETE|grantor=postgres",
+            "r:public.messages|service_role|INSERT|grantor=postgres",
+            "r:public.messages|service_role|SELECT|grantor=postgres",
+            "r:public.messages|service_role|UPDATE|grantor=postgres",
+            "r:public.messages|authenticated|DELETE|grantor=postgres",
+            "r:public.messages|authenticated|INSERT|grantor=postgres",
+            "r:public.messages|authenticated|SELECT|grantor=postgres",
+            "r:public.messages|authenticated|UPDATE|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "public.messages.messages_select_policy",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql",
+              "start_line": 21,
+              "end_line": 36,
+              "file_sha256": "feae2cd2c008abb3859ecf48e55bd78b827d09fb946be90ecd95cc30515f574c",
+              "statement_sha256": "d26854abfea2fae7a32f0a8b8b742539bbe2c3f66c3e5cfb20390361af6d978c",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.messages.messages_select_policy"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 23,
+              "end_line": 23,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "a913ac5196a4ca9dc2887d9d06b4787e0153518fbe16562ad48b5fa5cd0a92a0",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.messages.messages_select_policy"
+            },
+            {
+              "path": "supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql",
+              "start_line": 27,
+              "end_line": 39,
+              "file_sha256": "d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64",
+              "statement_sha256": "d5e9b19d65945443a4a11dca7f659864948b761e92f755c8bfb842e45ef8ffe8",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.messages.messages_select_policy"
+            },
+            {
+              "path": "supabase/migrations/20260901200001_e23_default_queue_rls_policies.sql",
+              "start_line": 41,
+              "end_line": 56,
+              "file_sha256": "21db91becb43d929219a1426b0ae195b30c91d806ff9236a2e75a706c352a8bf",
+              "statement_sha256": "1354a57af8f1243ea9fc7ab1a85f60a6b69119234dae921c328442c16cba2ce3",
+              "operation": "ALTER",
+              "kind": "policy",
+              "action": "alter",
+              "identity": "public.messages.messages_select_policy"
+            },
+            {
+              "path": "supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql",
+              "start_line": 19,
+              "end_line": 19,
+              "file_sha256": "feae2cd2c008abb3859ecf48e55bd78b827d09fb946be90ecd95cc30515f574c",
+              "statement_sha256": "a913ac5196a4ca9dc2887d9d06b4787e0153518fbe16562ad48b5fa5cd0a92a0",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.messages.messages_select_policy"
+            },
+            {
+              "path": "supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql",
+              "start_line": 21,
+              "end_line": 36,
+              "file_sha256": "feae2cd2c008abb3859ecf48e55bd78b827d09fb946be90ecd95cc30515f574c",
+              "statement_sha256": "d26854abfea2fae7a32f0a8b8b742539bbe2c3f66c3e5cfb20390361af6d978c",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.messages.messages_select_policy"
+            }
+          ],
+          "snapshot_identity": "messages.messages_select_policy",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.messages|postgres|DELETE|grantor=postgres",
+            "r:public.messages|postgres|INSERT|grantor=postgres",
+            "r:public.messages|postgres|SELECT|grantor=postgres",
+            "r:public.messages|postgres|UPDATE|grantor=postgres",
+            "r:public.messages|postgres|TRIGGER|grantor=postgres",
+            "r:public.messages|postgres|MAINTAIN|grantor=postgres",
+            "r:public.messages|postgres|TRUNCATE|grantor=postgres",
+            "r:public.messages|postgres|REFERENCES|grantor=postgres",
+            "r:public.messages|service_role|DELETE|grantor=postgres",
+            "r:public.messages|service_role|INSERT|grantor=postgres",
+            "r:public.messages|service_role|SELECT|grantor=postgres",
+            "r:public.messages|service_role|UPDATE|grantor=postgres",
+            "r:public.messages|authenticated|DELETE|grantor=postgres",
+            "r:public.messages|authenticated|INSERT|grantor=postgres",
+            "r:public.messages|authenticated|SELECT|grantor=postgres",
+            "r:public.messages|authenticated|UPDATE|grantor=postgres"
+          ]
+        },
+        {
+          "identity": "storage.objects.Users can read assigned audio messages",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql",
+              "start_line": 42,
+              "end_line": 62,
+              "file_sha256": "729dde0eb79a5c4d5c84a4f2f0000c593f8babe9af226796f388efe5f33096e9",
+              "statement_sha256": "b200e899aa345900d890712a032f41d80977e374a684c3e4a0d2de1da86f5bf5",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Users can read assigned audio messages"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260401002318_6efa1064-0bdb-4b3d-91b6-329bfff7705b.sql",
+              "start_line": 6,
+              "end_line": 17,
+              "file_sha256": "ae9c3dcec9fc279f704bda402da1be135c5e67535a78c13215625ad970dfb8d9",
+              "statement_sha256": "37b614342ee3e04c10ead20f95bd20b0ddbd21a82f4fea480919fc4f61af6ffc",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Users can read assigned audio messages"
+            },
+            {
+              "path": "supabase/migrations/20260511233306_0e3f3b66-5585-4762-af6b-549c050f6275.sql",
+              "start_line": 99,
+              "end_line": 99,
+              "file_sha256": "c85ee3706f9c16085dad653737f3123bec4377d697ce1aeedfd975a21efc9b43",
+              "statement_sha256": "0129bd126f0e0b1d8d83e8178dab1b5e6dcec7b24c240262a3561c90dd32fddc",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "storage.objects.Users can read assigned audio messages"
+            },
+            {
+              "path": "supabase/migrations/20260511233306_0e3f3b66-5585-4762-af6b-549c050f6275.sql",
+              "start_line": 100,
+              "end_line": 104,
+              "file_sha256": "c85ee3706f9c16085dad653737f3123bec4377d697ce1aeedfd975a21efc9b43",
+              "statement_sha256": "b83236dad741f6c6b343b8a1aecbaa88202476d32a0c55b21b27d6e27aa0952f",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Users can read assigned audio messages"
+            },
+            {
+              "path": "supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql",
+              "start_line": 41,
+              "end_line": 41,
+              "file_sha256": "729dde0eb79a5c4d5c84a4f2f0000c593f8babe9af226796f388efe5f33096e9",
+              "statement_sha256": "0129bd126f0e0b1d8d83e8178dab1b5e6dcec7b24c240262a3561c90dd32fddc",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "storage.objects.Users can read assigned audio messages"
+            },
+            {
+              "path": "supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql",
+              "start_line": 42,
+              "end_line": 62,
+              "file_sha256": "729dde0eb79a5c4d5c84a4f2f0000c593f8babe9af226796f388efe5f33096e9",
+              "statement_sha256": "b200e899aa345900d890712a032f41d80977e374a684c3e4a0d2de1da86f5bf5",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Users can read assigned audio messages"
+            }
+          ],
+          "snapshot_identity": null,
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": []
+        },
+        {
+          "identity": "storage.objects.Users can read assigned whatsapp media",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql",
+              "start_line": 18,
+              "end_line": 39,
+              "file_sha256": "729dde0eb79a5c4d5c84a4f2f0000c593f8babe9af226796f388efe5f33096e9",
+              "statement_sha256": "ad40bc730d03536e47d5f0ea28564356cca3e44080770c49c32f6770f59c4613",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Users can read assigned whatsapp media"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260401002430_4c828f05-f7b6-4c2f-afd1-a341ea825f4b.sql",
+              "start_line": 52,
+              "end_line": 60,
+              "file_sha256": "200f10a7409c5bd9a243fbe1852234479f60dab98ff9a1b68386dd0bd3a419a4",
+              "statement_sha256": "1cfe8ac338042ea6d5c9095cc6b624699b88e5adc3c8b248fee75644bcf09dc9",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Users can read assigned whatsapp media"
+            },
+            {
+              "path": "supabase/migrations/20260401002519_b7df7d1f-2caf-48c2-a23b-62df9f4fc772.sql",
+              "start_line": 9,
+              "end_line": 9,
+              "file_sha256": "b73bc66431c8933db03dd62d37e996eff92bfe507da6133ba33b31dc9aada24f",
+              "statement_sha256": "f445a9efc848a95088a9f2e43d5ac64858e01dcdeff76d4503534e3ee1334626",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "storage.objects.Users can read assigned whatsapp media"
+            },
+            {
+              "path": "supabase/migrations/20260401002933_85351bd1-2e91-4098-90f5-55878dc62c7b.sql",
+              "start_line": 48,
+              "end_line": 60,
+              "file_sha256": "67240c594ed0c7c84bde5fde984e1b2f0daa750f58aad4b459cb81671a302622",
+              "statement_sha256": "ac0ee07e60aba11371379e04bae8c5b81ad78c999d68fbaec1e13d79af1c9a24",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Users can read assigned whatsapp media"
+            },
+            {
+              "path": "supabase/migrations/20260511233306_0e3f3b66-5585-4762-af6b-549c050f6275.sql",
+              "start_line": 106,
+              "end_line": 106,
+              "file_sha256": "c85ee3706f9c16085dad653737f3123bec4377d697ce1aeedfd975a21efc9b43",
+              "statement_sha256": "f445a9efc848a95088a9f2e43d5ac64858e01dcdeff76d4503534e3ee1334626",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "storage.objects.Users can read assigned whatsapp media"
+            },
+            {
+              "path": "supabase/migrations/20260511233306_0e3f3b66-5585-4762-af6b-549c050f6275.sql",
+              "start_line": 107,
+              "end_line": 111,
+              "file_sha256": "c85ee3706f9c16085dad653737f3123bec4377d697ce1aeedfd975a21efc9b43",
+              "statement_sha256": "dc30c4e1a4700be40d499ffb81a278f5b72b0260c6ed7824ad95045fb2c51d46",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Users can read assigned whatsapp media"
+            },
+            {
+              "path": "supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql",
+              "start_line": 17,
+              "end_line": 17,
+              "file_sha256": "729dde0eb79a5c4d5c84a4f2f0000c593f8babe9af226796f388efe5f33096e9",
+              "statement_sha256": "f445a9efc848a95088a9f2e43d5ac64858e01dcdeff76d4503534e3ee1334626",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "storage.objects.Users can read assigned whatsapp media"
+            },
+            {
+              "path": "supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql",
+              "start_line": 18,
+              "end_line": 39,
+              "file_sha256": "729dde0eb79a5c4d5c84a4f2f0000c593f8babe9af226796f388efe5f33096e9",
+              "statement_sha256": "ad40bc730d03536e47d5f0ea28564356cca3e44080770c49c32f6770f59c4613",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.Users can read assigned whatsapp media"
+            }
+          ],
+          "snapshot_identity": null,
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": []
+        },
+        {
+          "identity": "storage.objects.whatsapp media readable via visible message",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20261003142707_whatsapp_media_recebida_select_via_messages.sql",
+              "start_line": 30,
+              "end_line": 50,
+              "file_sha256": "dcaad99b94189bef2b4960e605f8dffa12de883983f7932c504765dbb93ff84b",
+              "statement_sha256": "5701acbc0c47f4bacf2796116b03aea30c6390328a6a2c4bcd8ad571d48732ec",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.whatsapp media readable via visible message"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20261003142707_whatsapp_media_recebida_select_via_messages.sql",
+              "start_line": 28,
+              "end_line": 28,
+              "file_sha256": "dcaad99b94189bef2b4960e605f8dffa12de883983f7932c504765dbb93ff84b",
+              "statement_sha256": "72ce4e65c43a69366cee1bad38a6f7a31db3fe086db24195eed8e6dbb1b451ff",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "storage.objects.whatsapp media readable via visible message"
+            },
+            {
+              "path": "supabase/migrations/20261003142707_whatsapp_media_recebida_select_via_messages.sql",
+              "start_line": 30,
+              "end_line": 50,
+              "file_sha256": "dcaad99b94189bef2b4960e605f8dffa12de883983f7932c504765dbb93ff84b",
+              "statement_sha256": "5701acbc0c47f4bacf2796116b03aea30c6390328a6a2c4bcd8ad571d48732ec",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "storage.objects.whatsapp media readable via visible message"
+            }
+          ],
+          "snapshot_identity": null,
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": []
+        }
+      ]
+    },
+    {
+      "id": "R2-DB-023",
+      "severity": "P2",
+      "title": "Trigger de recuperação ainda escreve campo removido e bloqueia o pedido autenticado",
+      "status": "static_confirmed",
+      "runtime_tested": false,
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "summary": "A migration que remove reset_token exclui os triggers hash/protect, mas mantém sanitize_reset_request_trigger. O corpo vencedor de sanitize_reset_request tenta NEW.reset_token := NULL quando há auth.uid(), embora a coluna já não exista. O formulário pode ser aberto com sessão e chega a esse INSERT para o email do próprio usuário.",
+      "effective_source_definitions": {
+        "public.sanitize_reset_request()": {
+          "path": "supabase/migrations/20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql",
+          "start_line": 7,
+          "end_line": 25,
+          "file_sha256": "45764b043b609b57dd2efc544ba557ff6dcfedd0c2907c40e0ac0f03d5ebdd9f",
+          "statement_sha256": "a646fc827312813e185a91d62cb79f8cda3f3a44e8dd83006dea3bb76178503a",
+          "operation": "CREATE",
+          "kind": "function",
+          "action": "create_or_replace",
+          "identity": "public.sanitize_reset_request()",
+          "arguments": "",
+          "security_definer": true,
+          "search_path": true,
+          "auth_uid": true,
+          "auth_role": false,
+          "returns_trigger": true
+        }
+      },
+      "definition_histories": {
+        "public.sanitize_reset_request()": [
+          {
+            "path": "supabase/migrations/20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql",
+            "start_line": 7,
+            "end_line": 25,
+            "file_sha256": "45764b043b609b57dd2efc544ba557ff6dcfedd0c2907c40e0ac0f03d5ebdd9f",
+            "statement_sha256": "a646fc827312813e185a91d62cb79f8cda3f3a44e8dd83006dea3bb76178503a",
+            "operation": "CREATE",
+            "kind": "function",
+            "action": "create_or_replace",
+            "identity": "public.sanitize_reset_request()",
+            "arguments": "",
+            "security_definer": true,
+            "search_path": true,
+            "auth_uid": true,
+            "auth_role": false,
+            "returns_trigger": true
+          }
+        ]
+      },
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql",
+          "line_start": 7,
+          "line_end": 25,
+          "sha256": "45764b043b609b57dd2efc544ba557ff6dcfedd0c2907c40e0ac0f03d5ebdd9f",
+          "note": "Corpo vencedor: IF auth.uid não NULL escreve NEW.reset_token; não há captura da falha.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql",
+          "line_start": 28,
+          "line_end": 33,
+          "sha256": "45764b043b609b57dd2efc544ba557ff6dcfedd0c2907c40e0ac0f03d5ebdd9f",
+          "note": "Vínculo BEFORE INSERT de sanitize_reset_request continua na cadeia.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql",
+          "line_start": 1,
+          "line_end": 9,
+          "sha256": "8f87b6fb1313b6d03874daf8ef599580dfc0e698c7e19dc2cd0ba6e58549272b",
+          "note": "Remove apenas outros dois triggers e depois DROP COLUMN reset_token.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql",
+          "line_start": 24,
+          "line_end": 33,
+          "sha256": "8f87b6fb1313b6d03874daf8ef599580dfc0e698c7e19dc2cd0ba6e58549272b",
+          "note": "Recria INSERT próprio e remove hash_reset_token/protect_reset_token, preservando sanitize_reset_request.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/schema-manifest.json",
+          "line_start": 4128,
+          "line_end": 4128,
+          "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+          "note": "Snapshot público conserva a identidade do trigger; coluna reset_token ausente da seção columns, ver verificação estrutural abaixo.",
+          "origin": "source"
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/schema-manifest.json",
+          "line_start": 10438,
+          "line_end": 10438,
+          "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+          "note": "Snapshot concede INSERT ao papel authenticated, além da policy própria.",
+          "origin": "source"
+        },
+        {
+          "path": "src/routes/AppRoutes.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/routes/AppRoutes.tsx",
+          "line_start": 49,
+          "line_end": 54,
+          "sha256": "30c6f9981e0f9b86c37154eba2f87e24e2e2f7720259e95da1899c49fbf11da3",
+          "note": "Rota /forgot-password não exclui usuário com sessão.",
+          "origin": "source"
+        },
+        {
+          "path": "src/pages/ForgotPassword.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/pages/ForgotPassword.tsx",
+          "line_start": 39,
+          "line_end": 65,
+          "sha256": "df410e0e6805dad27e1213bc590cae2bd035af8062e72bd92cf45c94530c61cf",
+          "note": "Lookup encontra o próprio perfil sob sessão e INSERT omite token; o trigger tenta atribuí-lo mesmo assim.",
+          "origin": "source"
+        },
+        {
+          "path": "src/pages/ForgotPassword.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/pages/ForgotPassword.tsx",
+          "line_start": 65,
+          "line_end": 72,
+          "sha256": "df410e0e6805dad27e1213bc590cae2bd035af8062e72bd92cf45c94530c61cf",
+          "note": "Consumidor trata insertError e exibe falha, portanto este cenário não é falso sucesso.",
+          "origin": "source"
+        }
+      ],
+      "preconditions": [
+        "Schema sem reset_token e trigger/corpo conforme as definições locais; o snapshot confirma ausência da coluna e presença da identidade, mas o corpo vivo não foi consultado.",
+        "Usuário com sessão válida abre /forgot-password e informa email que encontra seu próprio profiles.",
+        "Permissões e dados normais para pedido próprio; o cenário não precisa fabricar token, mudar user_id de terceiro nem superar o limitador de pedidos."
+      ],
+      "failure_scenario": [
+        "O lookup retorna o próprio user_id e o formulário executa INSERT com email/reason/metadados.",
+        "Antes de inserir, sanitize_reset_request recebe NEW com o rowtype atual de password_reset_requests.",
+        "auth.uid() é não nulo; a atribuição ao campo removido falha e aborta o INSERT.",
+        "A UI apresenta erro e nenhuma solicitação é criada para esse ramo autenticado."
+      ],
+      "impact": "O caminho de pedido de recuperação autenticado permanece indisponível apesar de payload válido e policy própria. Corrigir somente o lookup anônimo ou a entrega de email não corrige este bloqueio no banco.",
+      "existing_protections_and_consumer_checks": [
+        "A policy de INSERT exige user_id = auth.uid().",
+        "O formulário propaga o erro; não anuncia envio com sucesso neste cenário.",
+        "Um contexto service sem auth.uid() não percorre essa atribuição; não se afirmou falha de todo INSERT privilegiado."
+      ],
+      "runtime_unknowns_and_limits": [
+        "Nenhum INSERT, login, recuperação, envio de email ou SQL foi executado.",
+        "AUTH006 cobre o lookup anônimo; AUTH007 cobre geração/entrega posterior. Este mecanismo é a relação entre coluna removida e trigger ainda alcançável.",
+        "A nota anterior desta reauditoria dizia incorretamente que o trigger exigia UID e substituía user_id. A releitura corrigiu esse registro; review_corrections.json preserva o ajuste e sua razão."
+      ],
+      "previous_audit_crosswalk": {
+        "classification": "novo achado da reauditoria",
+        "related_ids": [
+          "R2-AUTH-006",
+          "R2-AUTH-007"
+        ],
+        "assessment": "Revisor Auth confirmou que não havia contado NEW.reset_token removido e confirmou o ramo autenticado alcançável. A remoção histórica do subsistema validate_reset_token não remove este trigger diferente."
+      },
+      "acceptance_criteria": [
+        "Atualizar o trigger por migration nova para usar somente campos existentes, preservando os controles de autoria da policy.",
+        "Teste de contrato com usuário autenticado e pedido próprio deve conseguir persistir solicitação pending sem token; tentativa de user_id de terceiro deve continuar rejeitada.",
+        "Cobrir também o ramo service sem UID e manter o tratamento de erro no formulário. Executar somente em ambiente autorizado, após revisar migração e fixtures."
+      ],
+      "primary_source_ids": [
+        "PG-TRIGGER",
+        "PG-TRIGGER-ROW"
+      ],
+      "effective_policy_source_sequences": [
+        {
+          "identity": "public.password_reset_requests.Users can request own password reset",
+          "source_definition_statements": [
+            {
+              "path": "supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql",
+              "start_line": 25,
+              "end_line": 29,
+              "file_sha256": "8f87b6fb1313b6d03874daf8ef599580dfc0e698c7e19dc2cd0ba6e58549272b",
+              "statement_sha256": "e609a6abf6ef79d635b1d402ec9bbbca8822c380fbc2fb5c7f732df2fb79faed",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.password_reset_requests.Users can request own password reset"
+            }
+          ],
+          "top_level_history": [
+            {
+              "path": "supabase/migrations/20260411111153_71a9e239-1133-4736-b07c-ecf469d1a0e5.sql",
+              "start_line": 6,
+              "end_line": 10,
+              "file_sha256": "3c0b8502e0fb4b96b499752c6f04d967d72d424286f1d46ff047c8c168795d75",
+              "statement_sha256": "15b34148d4b168b0c56f77913e232edd23e1ae1073e74f818ecd7a5a7fc43027",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.password_reset_requests.Users can request own password reset"
+            },
+            {
+              "path": "supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql",
+              "start_line": 4,
+              "end_line": 4,
+              "file_sha256": "8f87b6fb1313b6d03874daf8ef599580dfc0e698c7e19dc2cd0ba6e58549272b",
+              "statement_sha256": "218d0a4347f8213a84941f97ff04572822405d5b547aec4c1dcd12de59a13126",
+              "operation": "DROP",
+              "kind": "policy",
+              "action": "drop",
+              "identity": "public.password_reset_requests.Users can request own password reset"
+            },
+            {
+              "path": "supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql",
+              "start_line": 25,
+              "end_line": 29,
+              "file_sha256": "8f87b6fb1313b6d03874daf8ef599580dfc0e698c7e19dc2cd0ba6e58549272b",
+              "statement_sha256": "e609a6abf6ef79d635b1d402ec9bbbca8822c380fbc2fb5c7f732df2fb79faed",
+              "operation": "CREATE",
+              "kind": "policy",
+              "action": "create",
+              "identity": "public.password_reset_requests.Users can request own password reset"
+            }
+          ],
+          "snapshot_identity": "password_reset_requests.\"Users can request own password reset\"",
+          "definition_resolution": "direct_create_and_subsequent_alters",
+          "snapshot_relation_grants": [
+            "r:public.password_reset_requests|anon|DELETE|grantor=postgres",
+            "r:public.password_reset_requests|anon|INSERT|grantor=postgres",
+            "r:public.password_reset_requests|anon|SELECT|grantor=postgres",
+            "r:public.password_reset_requests|anon|UPDATE|grantor=postgres",
+            "r:public.password_reset_requests|anon|TRIGGER|grantor=postgres",
+            "r:public.password_reset_requests|anon|MAINTAIN|grantor=postgres",
+            "r:public.password_reset_requests|anon|TRUNCATE|grantor=postgres",
+            "r:public.password_reset_requests|anon|REFERENCES|grantor=postgres",
+            "r:public.password_reset_requests|postgres|DELETE|grantor=postgres",
+            "r:public.password_reset_requests|postgres|INSERT|grantor=postgres",
+            "r:public.password_reset_requests|postgres|SELECT|grantor=postgres",
+            "r:public.password_reset_requests|postgres|UPDATE|grantor=postgres",
+            "r:public.password_reset_requests|postgres|TRIGGER|grantor=postgres",
+            "r:public.password_reset_requests|postgres|MAINTAIN|grantor=postgres",
+            "r:public.password_reset_requests|postgres|TRUNCATE|grantor=postgres",
+            "r:public.password_reset_requests|postgres|REFERENCES|grantor=postgres",
+            "r:public.password_reset_requests|service_role|DELETE|grantor=postgres",
+            "r:public.password_reset_requests|service_role|INSERT|grantor=postgres",
+            "r:public.password_reset_requests|service_role|SELECT|grantor=postgres",
+            "r:public.password_reset_requests|service_role|UPDATE|grantor=postgres",
+            "r:public.password_reset_requests|authenticated|DELETE|grantor=postgres",
+            "r:public.password_reset_requests|authenticated|INSERT|grantor=postgres",
+            "r:public.password_reset_requests|authenticated|SELECT|grantor=postgres",
+            "r:public.password_reset_requests|authenticated|UPDATE|grantor=postgres",
+            "r:public.password_reset_requests|service_role|TRIGGER|grantor=postgres",
+            "r:public.password_reset_requests|authenticated|TRIGGER|grantor=postgres",
+            "r:public.password_reset_requests|service_role|MAINTAIN|grantor=postgres",
+            "r:public.password_reset_requests|service_role|TRUNCATE|grantor=postgres",
+            "r:public.password_reset_requests|authenticated|MAINTAIN|grantor=postgres",
+            "r:public.password_reset_requests|authenticated|TRUNCATE|grantor=postgres",
+            "r:public.password_reset_requests|service_role|REFERENCES|grantor=postgres",
+            "r:public.password_reset_requests|authenticated|REFERENCES|grantor=postgres"
+          ]
+        }
+      ],
+      "effective_table_source_sequence": [
+        {
+          "path": "supabase/migrations/20251231131349_3bac81e9-4210-4dc8-867b-2b651e74abef.sql",
+          "start_line": 2,
+          "end_line": 17,
+          "file_sha256": "bc95abda545868b0f25a204bc0c33a59ad50af7b1d36881ad0eb16a679f3e1ca",
+          "statement_sha256": "a66e3273436c1a8cec7ab76e187446c9ae047a426f41d9e2dd24a847a0c01111",
+          "operation": "CREATE",
+          "kind": "table",
+          "identity": "public.password_reset_requests",
+          "action": "create"
+        },
+        {
+          "path": "supabase/migrations/20251231131349_3bac81e9-4210-4dc8-867b-2b651e74abef.sql",
+          "start_line": 20,
+          "end_line": 20,
+          "file_sha256": "bc95abda545868b0f25a204bc0c33a59ad50af7b1d36881ad0eb16a679f3e1ca",
+          "statement_sha256": "91f2bfc8fc188f3804004901a35cc8fd89004a9b73bbd5a03e8da36705df12e7",
+          "operation": "ALTER",
+          "kind": "table",
+          "identity": "public.password_reset_requests",
+          "action": "alter"
+        },
+        {
+          "path": "supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql",
+          "start_line": 9,
+          "end_line": 9,
+          "file_sha256": "8f87b6fb1313b6d03874daf8ef599580dfc0e698c7e19dc2cd0ba6e58549272b",
+          "statement_sha256": "438c9c115c184436ea46c0dc484d67b5e4795bf963bc555cd02f877093365665",
+          "operation": "ALTER",
+          "kind": "table",
+          "identity": "public.password_reset_requests",
+          "action": "alter"
+        },
+        {
+          "path": "supabase/migrations/20260828230000_realtime_replica_identity_full.sql",
+          "start_line": 23,
+          "end_line": 23,
+          "file_sha256": "d090513984e360e37ebd0e3b25990af6cbfd8c2b796c4c42f5f584518c86cb78",
+          "statement_sha256": "0cf68b9edbac8860700ff35d7a1247fce4c0640115e7079da5d0e4a903d752ec",
+          "operation": "ALTER",
+          "kind": "table",
+          "identity": "public.password_reset_requests",
+          "action": "alter"
+        }
+      ],
+      "snapshot_structural_checks": {
+        "password_reset_request_columns": [
+          "password_reset_requests.id",
+          "password_reset_requests.email",
+          "password_reset_requests.reason",
+          "password_reset_requests.status",
+          "password_reset_requests.user_id",
+          "password_reset_requests.created_at",
+          "password_reset_requests.ip_address",
+          "password_reset_requests.updated_at",
+          "password_reset_requests.user_agent",
+          "password_reset_requests.reviewed_at",
+          "password_reset_requests.reviewed_by",
+          "password_reset_requests.rejection_reason",
+          "password_reset_requests.token_expires_at"
+        ],
+        "reset_token_column_present": false,
+        "sanitize_trigger_identity_present": true,
+        "snapshot_generated_at": "2026-10-03T17:11:29Z",
+        "runtime_tested": false
+      }
     }
   ],
   "primary_sources": [
@@ -3902,6 +6560,21 @@
       "use": "O trigger integra a transação da instrução que o aciona; erro não tratado desfaz os efeitos de ambos."
     },
     {
+      "id": "PG-CREATE-TRIGGER",
+      "url": "https://www.postgresql.org/docs/17/sql-createtrigger.html",
+      "use": "Vínculos definem evento/momento/WHEN. Triggers do mesmo tipo/evento seguem ordem nominal; UPDATE OF depende da coluna mencionada, não somente de mudança de valor."
+    },
+    {
+      "id": "PG-TRIGGER-ROW",
+      "url": "https://www.postgresql.org/docs/17/plpgsql-trigger.html",
+      "use": "NEW é o record da nova linha da relação do trigger. Alterar campo de NEW exige o campo no rowtype; o trigger BEFORE integra o INSERT e pode abortá-lo."
+    },
+    {
+      "id": "PG-VIEW",
+      "url": "https://www.postgresql.org/docs/17/sql-createview.html",
+      "use": "security_invoker usa privilégios e RLS do invocador também nas relações base; grants na view não dispensam esse controle. Projeções calculadas e agregações têm limites próprios de atualização."
+    },
+    {
       "id": "SUPABASE-AUTH-ROLE",
       "url": "https://github.com/supabase/auth/blob/master/migrations/20220224000811_update_auth_functions.up.sql",
       "use": "auth.role() consulta claims da requisição, não current_user; SECURITY DEFINER não transforma o JWT authenticated em service_role."
@@ -3915,6 +6588,26 @@
       "id": "POSTGREST-TRANSACTION",
       "url": "https://docs.postgrest.org/en/stable/references/transactions.html",
       "use": "A requisição passa por START TRANSACTION, configurações da transação e consulta principal; erro na função aborta a transação. A versão e os tempos da implantação não foram medidos."
+    },
+    {
+      "id": "PG-ON-CONFLICT",
+      "url": "https://www.postgresql.org/docs/17/sql-insert.html#SQL-ON-CONFLICT",
+      "use": "O alvo de ON CONFLICT escolhe os índices árbitros. Outra constraint UNIQUE continua podendo falhar; UPSERT não ignora erros independentes."
+    },
+    {
+      "id": "SUPABASE-STORAGE-ACL",
+      "url": "https://supabase.com/docs/guides/storage/security/access-control",
+      "use": "Operações de Storage são autorizadas por policies em storage.objects; service key ignora RLS. Policies não substituem a autenticação/autorização do locator referenciado."
+    },
+    {
+      "id": "PG-COLUMN-SCOPE",
+      "url": "https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-COLUMN-REFS",
+      "use": "Referência não qualificada resolve nomes das tabelas no escopo da consulta. Na subconsulta com profiles p, name corresponde à coluna p.name."
+    },
+    {
+      "id": "PG-COLUMN-RESOLVER-SOURCE",
+      "url": "https://doxygen.postgresql.org/parse__relation_8c.html",
+      "use": "Fonte primária colNameToVar: examina p_namespace e interrompe se encontrou coluna antes de subir a parentParseState (linhas de código 926–974 no master exibido). Complementa a documentação PG17; não é execução do parser local nem prova de deploy."
     }
   ]
 }

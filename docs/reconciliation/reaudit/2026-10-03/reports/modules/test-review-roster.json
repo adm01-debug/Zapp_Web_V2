@@ -1,0 +1,743 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "owner": "modules",
+  "status": "PENDING_READING",
+  "files": [
+    {
+      "path": "src/components/admin/__tests__/PublicApiDashboard.disabled.test.tsx",
+      "line_start": 1,
+      "line_end": 20,
+      "git_blob_sha": "2a9290f79a57ad74edb7f33e392634e7d4648eb6",
+      "source_sha256": "ac6d40d84f5f86f9c95ea25583b9d664d6ef9a0c8af9259f495b71265dd70eb9",
+      "uncontained_bodies_at_allocation": 4,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx",
+      "line_start": 1,
+      "line_end": 224,
+      "git_blob_sha": "3e76edd1b3fc41073d1f04b425e863e71d6073af",
+      "source_sha256": "68f5ade9cef7512bb7116e2feb6de1d3b1d060967a02d7053c0d88ba4be533ad",
+      "uncontained_bodies_at_allocation": 53,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/campaigns/__tests__/CampaignsView.test.tsx",
+      "line_start": 1,
+      "line_end": 67,
+      "git_blob_sha": "fa69cd179c9389ae591c883c704a3c140e2406af",
+      "source_sha256": "505c94946b72303b6f9dc02d359f91f583deca9399d0679636b5190f315b19c1",
+      "uncontained_bodies_at_allocation": 16,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT25_cardActions.test.tsx",
+      "line_start": 1,
+      "line_end": 191,
+      "git_blob_sha": "c0dc1d2113bbe245b7020b89fa2a51981ce42611",
+      "source_sha256": "fbd6142e8983e9e0a0090c92d7d3030ba79e6143b0ebdd67a46c1e54d06f5e22",
+      "uncontained_bodies_at_allocation": 25,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT28_bulkBar.test.tsx",
+      "line_start": 1,
+      "line_end": 327,
+      "git_blob_sha": "4878698344ed64ea14a7ea39586f77dbcb4703d1",
+      "source_sha256": "503d30f6d03d464b40a1bff6ba0919897077b335f2bd351ee75e39dcbbdb7ff6",
+      "uncontained_bodies_at_allocation": 51,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT30_responsivo.test.tsx",
+      "line_start": 1,
+      "line_end": 168,
+      "git_blob_sha": "63901d9ddc9ee9a20dea7501a5ad23ee2d2b36be",
+      "source_sha256": "575852af50be8cbc6fe74df9dd97c45eddd0f891e51eace02b841b38e6a82fb9",
+      "uncontained_bodies_at_allocation": 24,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT39_downloadFotos.test.tsx",
+      "line_start": 1,
+      "line_end": 143,
+      "git_blob_sha": "08d6aae715a2926fe7ddcfcf608c1b64cb6e7c0e",
+      "source_sha256": "db302acf6af1401033d9e7fb146c1e08a2212a440ad02746a9bacab1fd1d2947",
+      "uncontained_bodies_at_allocation": 30,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT40_badgeTokens.test.tsx",
+      "line_start": 1,
+      "line_end": 55,
+      "git_blob_sha": "cdbeb07d391ac2a94b2a1561bd100e2b0880764c",
+      "source_sha256": "863f198ba0a0bf614ace1bba1879382fe559473f414dbccf8d9ca65f7627a535",
+      "uncontained_bodies_at_allocation": 14,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT55_57_management.test.tsx",
+      "line_start": 1,
+      "line_end": 314,
+      "git_blob_sha": "5313e039dee7e0048d9b88ee8724aa4b23ead2c7",
+      "source_sha256": "5f7f1ffd41f3702a7382b89ea3cc44ee94a7172f8b5117a5992fabbaac86fdc1",
+      "uncontained_bodies_at_allocation": 41,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT61_62_65_catalogFilters.test.tsx",
+      "line_start": 1,
+      "line_end": 329,
+      "git_blob_sha": "91a6ade7bc3fd2cf59bd7c4451487adcacff1c11",
+      "source_sha256": "2f5f4d18e40a0c3d190c1254c202b884d6f44e6e005467f794f0ff2d5e313cfe",
+      "uncontained_bodies_at_allocation": 49,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT67_a11y.test.tsx",
+      "line_start": 1,
+      "line_end": 300,
+      "git_blob_sha": "c1f679066efc728586f47993aeb38159110925e8",
+      "source_sha256": "b0082a45d484f908b7e03e54668d0f9fd439bf39bacbbb3b4a6e2f2899fded17",
+      "uncontained_bodies_at_allocation": 41,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT68_acessibilidade.test.tsx",
+      "line_start": 1,
+      "line_end": 263,
+      "git_blob_sha": "5654fdc670a96ef679a9940ef491d4c0350662a2",
+      "source_sha256": "5e533f26a12ea8203abafd0cc6a84b15c41861aea9edfed295b3dab32255d125",
+      "uncontained_bodies_at_allocation": 39,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT69_alts.test.tsx",
+      "line_start": 1,
+      "line_end": 177,
+      "git_blob_sha": "35b367cee9953c38996b7708c9fd26a49410d41c",
+      "source_sha256": "db458b29ac22eb74da8bde22bea8c928b56f644d5bfe9d91d25e21e35fea5684",
+      "uncontained_bodies_at_allocation": 26,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT70_reducedMotion.test.tsx",
+      "line_start": 1,
+      "line_end": 194,
+      "git_blob_sha": "760c917167dab3e0030852fc7dc1cc1217d9e554",
+      "source_sha256": "3177091d29faedd34c603b5813470888d317d18c6af569c9adce4e19b3a75f63",
+      "uncontained_bodies_at_allocation": 39,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT72_imagens.test.tsx",
+      "line_start": 1,
+      "line_end": 122,
+      "git_blob_sha": "2f8a88d80b0af138f2f504b30efb0dc07142717f",
+      "source_sha256": "f210476f763d82294064413812c795e0d0c8204040e52d8febecea5869707f63",
+      "uncontained_bodies_at_allocation": 17,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT74_headerSemTroca.test.tsx",
+      "line_start": 1,
+      "line_end": 44,
+      "git_blob_sha": "734f8a89fb8f3e33d0659e7c79643779cf5f9219",
+      "source_sha256": "1121272b535603fd8d344a17c14fd84d72285501aa5fdb74373c6fd3fccafe9a",
+      "uncontained_bodies_at_allocation": 4,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT74_kpiStripCls.test.tsx",
+      "line_start": 1,
+      "line_end": 22,
+      "git_blob_sha": "f0fa5d941072c1e606794172395bcbf7ad5c26e4",
+      "source_sha256": "e457305a948451d4f56cb78fde073bf54127ed40d4513289721ac1e02ccdc399",
+      "uncontained_bodies_at_allocation": 2,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT83_84_helpSheet.test.tsx",
+      "line_start": 1,
+      "line_end": 116,
+      "git_blob_sha": "4c75e2f65c80ba94db2ac8ad9e1f4225a861e9f7",
+      "source_sha256": "8f63deb53fae449d794a63b394d34dce998f3cb5cd981d128a5b83048c4c986e",
+      "uncontained_bodies_at_allocation": 14,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CatalogAdvancedFilters.test.tsx",
+      "line_start": 1,
+      "line_end": 188,
+      "git_blob_sha": "2e5b6513e1068f0904ea98b86741e3fc83cba1b0",
+      "source_sha256": "2855cc4b1d36da5c9a228dc591444ab1a85cbc999f4804e0335bd191446c5695",
+      "uncontained_bodies_at_allocation": 24,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/CatalogRail.test.tsx",
+      "line_start": 1,
+      "line_end": 365,
+      "git_blob_sha": "10158e0ffc559ad11165612cccd3d0597b9a95fe",
+      "source_sha256": "43c28605e920b0d24f5eb2fffe73d90d4f9157e7b65887edfcfb1bfa7bbe73da",
+      "uncontained_bodies_at_allocation": 51,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/ExternalProductCatalog.test.tsx",
+      "line_start": 1,
+      "line_end": 460,
+      "git_blob_sha": "ca5254db6b2b26c21b05b8e9534e51413ca4196a",
+      "source_sha256": "0d76b9f07ce45659a2d6c73cadedf4b285f36a1981a68c93367830fcd53ab575",
+      "uncontained_bodies_at_allocation": 56,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx",
+      "line_start": 1,
+      "line_end": 187,
+      "git_blob_sha": "1fb737f6ccd0a89ff010a86c2f1c9fd7ad492490",
+      "source_sha256": "e1bc74198bb9a196c8da012642e76bf49fca3d25c6867004d5ef2223baebcbee",
+      "uncontained_bodies_at_allocation": 31,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/ExternalProductManagement.test.tsx",
+      "line_start": 1,
+      "line_end": 638,
+      "git_blob_sha": "cdc4e649b86ad0f3bcc195e0bba0da3f49f52e04",
+      "source_sha256": "11b51146d7f887d47f53771ed586a9842bbb1333a6d24ad6a553878dda6df033",
+      "uncontained_bodies_at_allocation": 80,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/ProductDetailDialog.test.tsx",
+      "line_start": 1,
+      "line_end": 391,
+      "git_blob_sha": "59203ffda005a29e651f27fa8c5a00aff3f7a0fe",
+      "source_sha256": "9de77adf2708b8d021c318ad6d0a65dfcdd8d38c41760f62adadeb6553a077b5",
+      "uncontained_bodies_at_allocation": 51,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/SendProductDialog.test.tsx",
+      "line_start": 1,
+      "line_end": 547,
+      "git_blob_sha": "23405c63afdee3b2aac4a585a519d1a71a92af15",
+      "source_sha256": "c2618145bc661c0c65e998d6357e115149009844ed04645f601d2643c7e46f31",
+      "uncontained_bodies_at_allocation": 79,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/catalogExport.test.ts",
+      "line_start": 1,
+      "line_end": 383,
+      "git_blob_sha": "1d631cd242db8c4da7a1748fe807f42d4c5acd5e",
+      "source_sha256": "66778f423dc6bc8f4066c30ed156fceca31c945dfa6ccd329d3ff983563faf92",
+      "uncontained_bodies_at_allocation": 64,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/catalogMocks.ts",
+      "line_start": 1,
+      "line_end": 31,
+      "git_blob_sha": "b6c57043051b0045476fa8c3abddfc997d4792a2",
+      "source_sha256": "cca275360390af49b6b5e575abf1039b29c467b395480994de8a12f48ce54701",
+      "uncontained_bodies_at_allocation": 5,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/catalogShared.test.tsx",
+      "line_start": 1,
+      "line_end": 667,
+      "git_blob_sha": "a5a1b506bdb75ffc3cd525c9d871527e2aa46b0c",
+      "source_sha256": "76f3982ef7486a33835b47904d35d56d00e409688e2c196ed98c41cf1f30f044",
+      "uncontained_bodies_at_allocation": 111,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/sendProductUtils.test.ts",
+      "line_start": 1,
+      "line_end": 236,
+      "git_blob_sha": "6ee63a0cddcbc93353e8868f52c8fe5def5ad3a1",
+      "source_sha256": "bb38bcf91409f6042a7572e564bea4b00e7145bb1eb5a01ccca9c1053dbfc6a2",
+      "uncontained_bodies_at_allocation": 33,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/catalog/__tests__/useSendProduct.test.tsx",
+      "line_start": 1,
+      "line_end": 413,
+      "git_blob_sha": "594a1c0f0ce7fc710f29f6278a1dedfa1b8d02d5",
+      "source_sha256": "b222fa14f0201c2b522c39282fdc9711cfef37ba39c1f955d5928430f9b13b9f",
+      "uncontained_bodies_at_allocation": 95,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/tasks/__tests__/TasksAgendaMode.test.tsx",
+      "line_start": 1,
+      "line_end": 193,
+      "git_blob_sha": "53a4b75e00bd0b4fe1c5aedee98eb3da49ad4030",
+      "source_sha256": "81ea3ed3042be61df089254fbbd1fbc190bfa75eea7b56e0ccb1613e6414573c",
+      "uncontained_bodies_at_allocation": 20,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/tasks/__tests__/TasksBoardMode.test.tsx",
+      "line_start": 1,
+      "line_end": 220,
+      "git_blob_sha": "4589f82e79f2c3f77bf452c59f4896a0b137969c",
+      "source_sha256": "b2e5ab04a46445929164844895e60a49b4ef4d830bcf5af6a50ab2406f347bc8",
+      "uncontained_bodies_at_allocation": 14,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/tasks/__tests__/TasksListMode.test.tsx",
+      "line_start": 1,
+      "line_end": 179,
+      "git_blob_sha": "8494acba59e73735b51d36b22ae325314d8f014a",
+      "source_sha256": "eab0a0a4d7c00b416c105876c4b1e65fdad7b9e53a22c29e619a7c4386598ccd",
+      "uncontained_bodies_at_allocation": 14,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/tasks/__tests__/TasksModule.test.tsx",
+      "line_start": 1,
+      "line_end": 662,
+      "git_blob_sha": "f58307ff760e3f86e5ca79c5778379c9434527c6",
+      "source_sha256": "9ff0bef2ca6e70b1b262339a08af88b2acf415d0a0f3abdb2446efeb12e927ac",
+      "uncontained_bodies_at_allocation": 98,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/tasks/__tests__/WorkItemCard.test.tsx",
+      "line_start": 1,
+      "line_end": 215,
+      "git_blob_sha": "bec8d3caf1be6162f1da7711c8122b96661ef1e7",
+      "source_sha256": "21ddbd764e21eae5babb944b2158480ff199296da9ceaecd47499adc5300bcc0",
+      "uncontained_bodies_at_allocation": 23,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/tasks/__tests__/agendaGroups.test.tsx",
+      "line_start": 1,
+      "line_end": 224,
+      "git_blob_sha": "92736721772f2af1c4f7365aa1a50dab49dea495",
+      "source_sha256": "4d77dc4e60d2b2b7002ba0d325e7f7c5bf621d45fa75c2515aeffce988721b5d",
+      "uncontained_bodies_at_allocation": 21,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/tasks/__tests__/cardAcoes.test.tsx",
+      "line_start": 1,
+      "line_end": 338,
+      "git_blob_sha": "f72a13adae5dd1f5aad7fc1d0ff628d950697c34",
+      "source_sha256": "d03469f43f1d2c018ec6a81ae85dc57e28936255872715b8052639579207fd47",
+      "uncontained_bodies_at_allocation": 38,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/tasks/__tests__/contagensReaisVsFiltradas.test.tsx",
+      "line_start": 1,
+      "line_end": 125,
+      "git_blob_sha": "081f0be9a2d732f8a0b400262db29b6cfbd14e08",
+      "source_sha256": "5bc1533f6e231f8fe12dfd31c40a37172729c4fbfda5cff85869067e57dd3fc2",
+      "uncontained_bodies_at_allocation": 9,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/tasks/__tests__/movimentoEContraste.test.tsx",
+      "line_start": 1,
+      "line_end": 216,
+      "git_blob_sha": "359d6496d45b096440b3561614826b2e1b27ea06",
+      "source_sha256": "dac97ddb179fa928814eaa5772c73c57fa35be4a63ee8cbca69f7990908088fa",
+      "uncontained_bodies_at_allocation": 24,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/tasks/__tests__/taskComponents.test.tsx",
+      "line_start": 1,
+      "line_end": 596,
+      "git_blob_sha": "a5348a8db3d72207c498309590f25c703eb9ef4c",
+      "source_sha256": "8337683569b4d440b88b13a4e353f3f2bd8ff89be164c9908ed418921f03288e",
+      "uncontained_bodies_at_allocation": 44,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/team-chat/__tests__/team-chat-comprehensive.test.ts",
+      "line_start": 1,
+      "line_end": 1589,
+      "git_blob_sha": "c898d6cce8b89caa094347fb5007f3f830ee37ac",
+      "source_sha256": "cee8fb1daf70795cf0be1447ee1780c2b0aa81f93d9263cac0697f76926f6791",
+      "uncontained_bodies_at_allocation": 297,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+      "line_start": 1,
+      "line_end": 727,
+      "git_blob_sha": "0d2a8999cdcd7a7d5facbeadacd0181861a92a7f",
+      "source_sha256": "792ea8dacdb277069f8853522b7358e43dfa281d5073c398d44d2bfafec665e0",
+      "uncontained_bodies_at_allocation": 153,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/features/talk-me/__tests__/TalkMeView.test.tsx",
+      "line_start": 1,
+      "line_end": 334,
+      "git_blob_sha": "72bd11ee5abdf4bcac00d563d9af44c8f4d0047c",
+      "source_sha256": "43c78de9ea79ba6dc5fcd51125b8f5124201abf95c0295bdef23f605461f378a",
+      "uncontained_bodies_at_allocation": 40,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/features/talk-me/__tests__/useTalkMeQueue.test.tsx",
+      "line_start": 1,
+      "line_end": 594,
+      "git_blob_sha": "830f1e52cc38433cb34f4ff1fea4954cdd9fd980",
+      "source_sha256": "c7db7ea6594655a956870958981033eaf4a3966170d47addba2eea90ffaa7b0b",
+      "uncontained_bodies_at_allocation": 174,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useCampaigns.test.tsx",
+      "line_start": 1,
+      "line_end": 76,
+      "git_blob_sha": "381bc38dc173c13e6e0adf7b5e43cacb573f6d09",
+      "source_sha256": "5665fc5e2d4d9f18f1ef4d161b19ba455805db9e6898be2e48d900516984dad6",
+      "uncontained_bodies_at_allocation": 17,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useCatalogFavorites.test.ts",
+      "line_start": 1,
+      "line_end": 162,
+      "git_blob_sha": "e500bdd6b6b295ed5dd6c865013ff3c71ceac1f4",
+      "source_sha256": "2fb49e7e8453ae1ddc543e7474aa64b8f5c59cca28616f241bc052d032fe8879",
+      "uncontained_bodies_at_allocation": 41,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useDashboardData.test.tsx",
+      "line_start": 1,
+      "line_end": 111,
+      "git_blob_sha": "c34b935e1e54685b0c0f01f5af162c34f2944cff",
+      "source_sha256": "82940da6ae6ca198a68a8b393fd6a6986fbde8d9a3a454ed7f992860ac8cf43c",
+      "uncontained_bodies_at_allocation": 18,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useDashboardWidgets.test.ts",
+      "line_start": 1,
+      "line_end": 217,
+      "git_blob_sha": "1d7ce9cdbc583eafb836ce78767dd977bc3b046d",
+      "source_sha256": "4e1071cca5611e22b194666c5f4a5c5149dc5207b2b6f23c14f4fc1b34a89887",
+      "uncontained_bodies_at_allocation": 79,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useExternalCatalog.test.ts",
+      "line_start": 1,
+      "line_end": 1408,
+      "git_blob_sha": "0b7a48e65749d636d87f564f67076d61a56b978c",
+      "source_sha256": "a4de09c27738b75cf794d11318e9bc63e16cb0ebba8e45bb6b2c3d86cdd45898",
+      "uncontained_bodies_at_allocation": 282,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+      "line_start": 1,
+      "line_end": 130,
+      "git_blob_sha": "1dac6cacbebe56679921b7d81479b2e848174ef3",
+      "source_sha256": "c35d8aa3f2cc3bd08a06b8e13a2ade4aa058ccfea2ec8a214200496b4462c4d9",
+      "uncontained_bodies_at_allocation": 27,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx",
+      "line_start": 1,
+      "line_end": 114,
+      "git_blob_sha": "18d1541040a1f2402dfaed44d9547e2a30e0ddb4",
+      "source_sha256": "160aebd9b0679c93f874e9833da80949615331cb61aac4b4198dd343c1f6b751",
+      "uncontained_bodies_at_allocation": 33,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/dashboard/__tests__/useDashboardKpi.test.ts",
+      "line_start": 1,
+      "line_end": 105,
+      "git_blob_sha": "0fc689d2472cee597826fb92910b8862620e88ea",
+      "source_sha256": "cb932220abc45372d84f6f360f90c7c13ebc5097a5d1f2cb72e030e2c2de4826",
+      "uncontained_bodies_at_allocation": 12,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/dashboard/__tests__/useDashboardStats.presence.test.tsx",
+      "line_start": 1,
+      "line_end": 45,
+      "git_blob_sha": "a64067615e73e181623dedf587d0f1bdaae1e3c2",
+      "source_sha256": "be3ffc10972e448eaca41aa5bf436ef06eb8a0be4f4b5c2ee7a06d0edf201e41",
+      "uncontained_bodies_at_allocation": 15,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx",
+      "line_start": 1,
+      "line_end": 162,
+      "git_blob_sha": "2bf3a2c258c110d50936a69bf3b92774633284dc",
+      "source_sha256": "43bd55f76a54cf698a97b9963bb0acf3c1faa6c80901e794b387994f42e0df1f",
+      "uncontained_bodies_at_allocation": 31,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/dashboard/__tests__/useRecentConversationEvents.test.ts",
+      "line_start": 1,
+      "line_end": 29,
+      "git_blob_sha": "de0618a5353e6d33e448d58acf5de5cf613a153a",
+      "source_sha256": "9339001aaac19ef76419669fd1eda08b10d69cdfe8549c31680a104aff909a2a",
+      "uncontained_bodies_at_allocation": 9,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts",
+      "line_start": 1,
+      "line_end": 56,
+      "git_blob_sha": "3ef4669e48374ddc940312abf2ef196c90d2e2cc",
+      "source_sha256": "167aefd2141c56a1843ec55c474f699c983f455182ca8040f60e7a6133287257",
+      "uncontained_bodies_at_allocation": 7,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useCatalogSendReadiness.test.ts",
+      "line_start": 1,
+      "line_end": 74,
+      "git_blob_sha": "ad5bfc56379ea409d37d5d8b08f51bf4cfe74b25",
+      "source_sha256": "b890b92475bec5c5e61d29dfc054ea7b812fb36f894175eca6e780ec63a35841",
+      "uncontained_bodies_at_allocation": 14,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useTalkXMonitor.test.ts",
+      "line_start": 1,
+      "line_end": 86,
+      "git_blob_sha": "ca0843bae590c7591949f4b9128555b6297759dc",
+      "source_sha256": "d0f96e2b7332effef78d7d79f2e748624353144bef4bfc175e8f8f942c2560d8",
+      "uncontained_bodies_at_allocation": 11,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useTalkXSegments.dia-calendario.test.ts",
+      "line_start": 1,
+      "line_end": 63,
+      "git_blob_sha": "9ed6fb7b6657bd403226d67139c65ec3b066cb89",
+      "source_sha256": "122639c29d06ef90165aae5debff814f4ef7c85b4c73faa7b486df719cd0b0c2",
+      "uncontained_bodies_at_allocation": 17,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useTalkXSegments.test.ts",
+      "line_start": 1,
+      "line_end": 242,
+      "git_blob_sha": "fac7f91c69c81f17c241d39c24b0065161cabaca",
+      "source_sha256": "acff1877a573b6b63e1bf857a2d7a44110cd24f3712b736a88e4c35d5fd857c5",
+      "uncontained_bodies_at_allocation": 36,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/shortcuts/__tests__/taskShortcutLabels.test.ts",
+      "line_start": 1,
+      "line_end": 98,
+      "git_blob_sha": "702c76e6c3aa6d5ff6e9369bc55bd0819a2344db",
+      "source_sha256": "cb9acdc54af43e91ee8b6bcc65c81b62b8a52188adf841fb1877065419e5b3e8",
+      "uncontained_bodies_at_allocation": 18,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/useMyWorkItems.idempotencia.test.tsx",
+      "line_start": 1,
+      "line_end": 106,
+      "git_blob_sha": "2092b497a7dee7aa62fb0c3c06ba246ff344c83e",
+      "source_sha256": "3a05a07b37f3464aba25c7ebbfa63355d3b94ef1f0d8dbf2ea5ae6b367cd64eb",
+      "uncontained_bodies_at_allocation": 15,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/useMyWorkItems.test.tsx",
+      "line_start": 1,
+      "line_end": 324,
+      "git_blob_sha": "9d0b86b1ad9435b9bcbf3e3742e1d73fe5b55b2d",
+      "source_sha256": "a37b5841c7137e4cc1cad01cf74debdf2f295626b521ad97bfed2803296d54d9",
+      "uncontained_bodies_at_allocation": 53,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/useTasksFilters.test.tsx",
+      "line_start": 1,
+      "line_end": 152,
+      "git_blob_sha": "1cfeba27cd913cc0b6bbc51938e88fa76f981b4a",
+      "source_sha256": "07641d3c23eaeebb56565fc46887465a9ae3a946c3b0e5db70ada06653c7ee7a",
+      "uncontained_bodies_at_allocation": 35,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/useWorkItemNotifications.test.ts",
+      "line_start": 1,
+      "line_end": 78,
+      "git_blob_sha": "817f1e7ebf3755cc88a9a13b08d842aef171c2b4",
+      "source_sha256": "6e438d4668990d91ba3e27cb07b03755017d01c378aeb8ebde7f51953049f868",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/workItemAggregates.test.ts",
+      "line_start": 1,
+      "line_end": 408,
+      "git_blob_sha": "228110fa8183cca09828e3a442d75bd790a1a471",
+      "source_sha256": "3dad57edbcafa47d3340b78351e8899e0fa8d61b93af48153035748a636deaf9",
+      "uncontained_bodies_at_allocation": 79,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/workItemFilters.test.ts",
+      "line_start": 1,
+      "line_end": 52,
+      "git_blob_sha": "7c81b65a84b5f3be8bbe640f336971bffab5b752",
+      "source_sha256": "444589ebfb39a6c62a6a254753ad8b095a9029ba171cd7f1871629f9e3f38851",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/workItemMachine.test.ts",
+      "line_start": 1,
+      "line_end": 134,
+      "git_blob_sha": "d211bfde37912eeee9617025113859e8bc26c8d0",
+      "source_sha256": "abc28fb9ed7bef9c389aaeda413576d411f541921a7231446d3fbffec2b45cb2",
+      "uncontained_bodies_at_allocation": 22,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx",
+      "line_start": 1,
+      "line_end": 89,
+      "git_blob_sha": "d73c89213493e648fa7d693b9f88a36ab38283fb",
+      "source_sha256": "f4fc765f309515b892bf68e4230c483191a8849c5e7124834b95243c4268a252",
+      "uncontained_bodies_at_allocation": 16,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx",
+      "line_start": 1,
+      "line_end": 48,
+      "git_blob_sha": "aa245de8eaea57427ac3e7ae108a7cd20380d6af",
+      "source_sha256": "1a3f2fba892c4a42e9c61fcf7d991f52330bedd9d9bf56f6679f3ec0da08ae08",
+      "uncontained_bodies_at_allocation": 12,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "src/lib/__tests__/errorReporter.test.ts",
+      "line_start": 1,
+      "line_end": 74,
+      "git_blob_sha": "4abe310ab281fb099d10fc594dcb81b9af337d43",
+      "source_sha256": "2f6fe1c7fee8922d911084daee53e335c9afb8ec194671ea1e6447692c1b5f52",
+      "uncontained_bodies_at_allocation": 12,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/axe-campaigns.contract.test.ts",
+      "line_start": 1,
+      "line_end": 26,
+      "git_blob_sha": "031ea70917a4417fc20989e3edcc3c5bb5aed93a",
+      "source_sha256": "b567e7fb5a572af8e4d95b34a64a054e7134c13316db5bda99db0ec3bd740566",
+      "uncontained_bodies_at_allocation": 4,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    },
+    {
+      "path": "tests/contracts/axe-talkx.contract.test.ts",
+      "line_start": 1,
+      "line_end": 33,
+      "git_blob_sha": "edeff8a1c04db08b7549f0811d6b1ad3ad567de1",
+      "source_sha256": "f9ad9638b523445dbba745e12a92fbd0c3c09de1c0a27869264091957daf200c",
+      "uncontained_bodies_at_allocation": 4,
+      "preferred_area": "modules",
+      "review_status": "PENDING_READING"
+    }
+  ],
+  "limits": [
+    "Finite allocation only; no file is promoted to semantic review by this roster.",
+    "Read assertions, mocks, fixtures and consumers as needed; do not equate test existence with runtime acceptance.",
+    "Existing later whole-file reviews may be cited and skipped, with their exact evidence source recorded."
+  ]
+}

@@ -23,6 +23,15 @@
   "policy_projection": {
     "candidate_count": 499,
     "snapshot_count": 446,
+    "roster": "policy_review.json",
+    "source_extras_reviewed": 56,
+    "extra_classification_counts": {
+      "outside_public_snapshot": 31,
+      "removed_by_dynamic_policy_drop": 15,
+      "retired_with_dropped_table": 8,
+      "renamed_to_snapshot_identity": 1,
+      "known_source_snapshot_identity_mismatch": 1
+    },
     "limitation": "Modelo lexical não expande DO, rename nem toda dependência de DROP TABLE; também inclui storage e ops fora de public. Diferença bruta não é drift comprovado.",
     "snapshot_identities_requiring_nontrivial_history": [
       {
@@ -38,5 +47,26 @@
         "reason": "CREATE POLICY dinâmico em 20260321194716."
       }
     ]
+  },
+  "view_projection": {
+    "candidate_count": 11,
+    "snapshot_count": 11,
+    "identity_matches": 11,
+    "roster": "view_review.json",
+    "body_equality_tested": false
+  },
+  "trigger_projection": {
+    "candidate_count": 123,
+    "snapshot_count": 119,
+    "identity_matches": 119,
+    "snapshot_only_identities": [],
+    "classification_counts": {
+      "snapshot_public_identity_matched": 119,
+      "outside_public_snapshot": 2,
+      "retired_with_dropped_table": 1,
+      "introduced_after_snapshot": 1
+    },
+    "roster": "trigger_review.json",
+    "limitation": "Dois vínculos auth estão fora de public, um some com DROP TABLE tags e um foi criado após a captura. Igualdade nominal não atesta tgfoid, tgenabled, corpo ou implantação atual."
   }
 }

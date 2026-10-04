@@ -348,5 +348,16 @@
       "Calls are bounded lexical candidates, not proof of backend reachability or authorization.",
       "No source module is imported or executed by this scanner."
     ]
+  },
+  "additional_deno_suffix_adjudication": {
+    "path": "supabase/functions/ai-auto-tag/auth_test.ts",
+    "git_blob_sha": "8845684d6db07545d964e1c083063f316706a245",
+    "functions": 2,
+    "lines_reviewed": [
+      1,
+      44
+    ],
+    "evidence": "Deno.test blocks and assertEquals import; file documents its deno test invocation. Only previously non-test path matching _test suffix. No test executed; classification correction only.",
+    "classification": "TEST"
   }
 }

@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "probe_source_sha256": "967ded5b14639d3d70ab1d5aeae6da514b7aace305ad1d2bca340aee62114960",
+  "pins_sha256": "5d3ff3f6c21e7d2d5c000a526caf8f620a4c799d93ae3dc12598e0e23e53d84a",
+  "case_count": 3,
+  "finding_ids": [
+    "R2-INF-036",
+    "R2-INF-037",
+    "R2-INF-038"
+  ],
+  "cases": [
+    {
+      "id": "INF-LO-P01",
+      "finding": "R2-INF-036",
+      "executed": "entire checklistSteps module + actual card checkAllSteps callback",
+      "observed": {
+        "missing": {
+          "completed": [
+            "theme"
+          ],
+          "total_steps": 6,
+          "sdk_calls": 6
+        },
+        "error": {
+          "completed": [
+            "theme"
+          ],
+          "total_steps": 6,
+          "sdk_calls": 6
+        }
+      },
+      "controls": {
+        "system": {
+          "completed": [],
+          "total_steps": 6,
+          "sdk_calls": 6
+        },
+        "dark": {
+          "completed": [
+            "theme"
+          ],
+          "total_steps": 6,
+          "sdk_calls": 6
+        }
+      },
+      "limitation": "Only fake SDK envelopes; no settings changed. Visible green step/count is confirmed by JSX source separately."
+    },
+    {
+      "id": "INF-LO-P02",
+      "finding": "R2-INF-037",
+      "executed": "actual HighContrast storage effect + transition config/preference modules + route config callback",
+      "observed": {
+        "ui_key": "true",
+        "ui_class_applied": true,
+        "route_key": null,
+        "route_reduced": false,
+        "chosen_variant": "slide"
+      },
+      "controls": {
+        "route_key": {
+          "ui_key": "true",
+          "ui_class_applied": true,
+          "route_key": "1",
+          "route_reduced": true,
+          "chosen_variant": "none"
+        },
+        "system": {
+          "ui_key": "true",
+          "ui_class_applied": true,
+          "route_key": null,
+          "route_reduced": true,
+          "chosen_variant": "none"
+        }
+      },
+      "limitation": "Minimal state/effect boundary rerender, no real React or Framer animation. Proves divergent preference/selected variant; CSS reduction remains present and visual movement is not measured."
+    },
+    {
+      "id": "INF-LO-P03",
+      "finding": "R2-INF-038",
+      "executed": "source default steps + AST extraction of navigation IDs + actual retry/next/end callbacks",
+      "observed": {
+        "missing_default_targets": [
+          "notifications",
+          "theme"
+        ],
+        "outcomes": [
+          {
+            "target": "notifications",
+            "attempts": 10,
+            "step_before": 4,
+            "step_after": 5,
+            "active_after": true,
+            "on_complete_count": 0
+          },
+          {
+            "target": "theme",
+            "attempts": 10,
+            "step_before": 5,
+            "step_after": 0,
+            "active_after": false,
+            "on_complete_count": 1
+          }
+        ]
+      },
+      "control": {
+        "inbox_producer_exists": true,
+        "contacts_producer_exists": true
+      },
+      "limitation": "Source-wide data-tour search found SidebarNavItem as producer. Nav IDs form a superset of currently visible items. No real DOM or onComplete persistence; callback is captured in memory."
+    }
+  ],
+  "controls": {
+    "source_and_compiler_pins_before_import": true,
+    "production_imports": 0,
+    "product_network_calls": 0,
+    "real_database_calls": 0,
+    "source_writes": 0,
+    "browser_or_at_test": false,
+    "compilation": "transpileModule only, not build/typecheck/suite success"
+  },
+  "limitations": "Three cases for three findings; WelcomeModal focus finding is static source+APG analysis, not an additional executed test. Only this audit output is written."
+}

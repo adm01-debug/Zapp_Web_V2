@@ -2,30 +2,38 @@
   "schema_version": "2.0",
   "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
   "reviewer": "/root/grill_me_primary_review",
-  "status": "IN_PROGRESS_REMAINING_MODULES",
+  "status": "COMPLETE_ASSIGNED_RECUTS_WITH_LIMITS",
   "source_integrity_reference": "../../source-integrity.json",
-  "scope": "Módulos complementares frontend: automações, campaigns, catálogo, telefonia, Multiplix, Talk X, relatórios, Agenda, NPS/CSAT, War Room, carteira/pagamentos e ferramentas de IA selecionadas.",
+  "scope": "Módulos complementares frontend: automações, campaigns, catálogo, telefonia, Multiplix, Talk X, relatórios, Agenda, NPS/CSAT, War Room, carteira/pagamentos e ferramentas de IA selecionadas. Recorte adicional de 40 helpers em src/lib e src/utils, incluindo monitor cliente de atualização. Codec vendorizado e dez auxiliares Dashboard/transcrições/Meta lidos integralmente; roster final de 73 testes lido integralmente e adjudicado, sem execução de suítes.",
   "excluded_owner_scopes": [
     "Inbox principal/Composer/arquivos/mídia",
-    "Team Chat",
+    "Team Chat de produção; quatro arquivos de testes foram incorporados pelo roster final",
     "Auth/usuários/contatos",
     "SQL e hooks SLA globais",
     "backend/provedores",
     "migrations/SQL fora dos contratos cruzados",
-    "infra/deploy"
+    "infra/deploy fora dos helpers cliente explicitamente lidos"
   ],
   "counts": {
-    "confirmed": 64,
+    "confirmed": 76,
     "deferred": 1,
-    "isolated_callback_probes": 14,
+    "isolated_callback_probes": 21,
+    "primary_probes": 18,
+    "final_frontend_probes": 3,
+    "vendor_probes": 3,
+    "findings_with_offline_probe": 22,
+    "code_origin": {
+      "application_authored": 75,
+      "third_party_vendored": 1
+    },
     "severity": {
-      "P1": 6,
-      "P2": 52,
+      "P1": 7,
+      "P2": 63,
       "P3": 6
     },
     "prior_relation": {
-      "NEW_DISCOVERY": 56,
-      "EXTENSION_OF_PRIOR": 8
+      "NEW_DISCOVERY": 66,
+      "EXTENSION_OF_PRIOR": 10
     }
   },
   "findings": [
@@ -35,6 +43,7 @@
       "title": "Editor de automações reutiliza estado de outro registro",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Abrir a tela de automações e escolher editar uma automação existente; ou trocar a automação selecionada sem desmontar o manager.",
       "cause": "O diálogo fica montado no manager e inicializa o formulário com useState(automation) apenas uma vez. O registro selecionado muda por prop, sem key ou sincronização do draft.",
@@ -92,6 +101,7 @@
       "title": "Salvar automação substitui condições e lista de ações por configuração incompleta",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Salvar uma automação com trigger_config existente, múltiplas ações ou ações que exigem parâmetros além de message.",
       "cause": "O editor lê apenas a primeira ação e sempre reconstrói trigger_config como objeto vazio e actions como uma única ação com config.message. Não há editores para condições ou parâmetros dos demais tipos oferecidos.",
@@ -149,6 +159,7 @@
       "title": "Editor de automação fecha sem aguardar confirmação da persistência",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Salvar uma automação enquanto a mutation ainda está pendente, especialmente em falha de persistência.",
       "cause": "O manager declara handleSave async, mas chama mutate, que não devolve a confirmação da mutation. O await do diálogo aguarda somente o callback já resolvido.",
@@ -205,6 +216,7 @@
       "title": "Campanhas aceita público e mídia sem campos ou materialização correspondente",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Criar campanha no módulo campaigns com público tag/fila/grupo/custom ou mensagem de imagem, vídeo ou documento.",
       "cause": "O formulário oferece tipos sem pedir seleção de destinatários/filtros ou URL da mídia; a criação apenas insere o form e o comando de iniciar apenas altera status.",
@@ -263,6 +275,7 @@
       "title": "Campanha pausada não tem comando de retomada",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Uma campanha do módulo campaigns está no estado paused após o comando Pausar.",
       "cause": "A lista só oferece iniciar para draft e pausar para sending. O filtro de status omite paused e o painel de detalhes não implementa retomada.",
@@ -310,6 +323,7 @@
       "title": "Catálogo em lote classifica falha integral de texto como sucesso e limpa seleção falhada",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Enviar em lote um produto sem imagem cuja única tentativa de texto falha; ou concluir um lote com produtos falhados.",
       "cause": "imageOk começa true mesmo sem tentativa de imagem. Texto rejeitado produz partial; o agregador conta partial como sucesso e chama onSent/fecha mesmo quando há falhas.",
@@ -363,6 +377,7 @@
       "title": "Pré-validação de envio do catálogo ausente em lote e permissiva quando a consulta falha",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Usar envio em lote do catálogo; ou falhar a consulta de prontidão no envio individual.",
       "cause": "O lote não conecta useCatalogSendReadiness/blockedContactIds/isChecking ao seletor. No hook de envio individual, error/isError não integra o estado devolvido; dados ausentes resultam em bloqueio vazio.",
@@ -429,6 +444,7 @@
       "title": "Retorno à primeira página não consulta produtos no catálogo do chat e na gestão",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Navegar do índice 1 ou maior para o índice 0 usando Anterior, no catálogo do chat ou na gestão.",
       "cause": "O efeito de paginação chama fetchProducts somente quando page>0. Mudar para zero não altera os filtros internos do hook que compõem sua queryKey.",
@@ -504,6 +520,7 @@
       "title": "Catálogo conta seleção persistente mas envia somente produtos do filtro visível",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Selecionar produtos e mudar filtro/página mantendo IDs selecionados que saem de displayedProducts.",
       "cause": "O contador usa selectedIds.size, enquanto selectedProducts é a interseção com displayedProducts; lote e exportação usam somente essa interseção.",
@@ -562,6 +579,7 @@
       "title": "Limite de dez imagens não é aplicado à seleção inicial ou ao envio",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Abrir SendProductDialog para um produto que fornece mais de dez imagens base.",
       "cause": "A seleção inicial e seu reset incluem todas as imagens. MAX_IMAGES limita somente adicionar/toggle; o comando de enviar não revalida o tamanho.",
@@ -618,6 +636,7 @@
       "title": "University reaplica resposta de análise após a troca do período",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Iniciar resposta da University, alterar o período enquanto a requisição está pendente e receber a resposta antiga depois.",
       "cause": "O efeito de período limpa resposta/seleção, mas não invalida a geração em voo. O callback assíncrono sempre aplica resultado e toast ao terminar.",
@@ -691,6 +710,7 @@
       "title": "Anotação de chamada acompanha troca de linha e pode sobrescrever outra chamada",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Escrever anotação na chamada A e selecionar B no histórico enquanto o painel permanece montado.",
       "cause": "rascunho é estado local sem reset por call.id. salvar usa o call.id atual com valor derivado do rascunho anterior.",
@@ -753,6 +773,7 @@
       "title": "Selecionar chamada fora da primeira página retorna à primeira e perde o detalhe",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Selecionar uma chamada presente na segunda página ou posterior do histórico.",
       "cause": "setFilter reseta page=1 para qualquer chave diferente de page, inclusive call. O detalhe deriva apenas de historicos.rows da página consultada.",
@@ -824,6 +845,7 @@
       "title": "Histórico anuncia correção de página inválida sem refazer a consulta",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "A URL aponta para página maior que o número atual de páginas, por edição manual, exclusão ou mudança de total.",
       "cause": "useMyCalls consulta o offset inválido e só depois calcula pageEfetiva; o clamp não atualiza URL nem dispara nova consulta. O total é extraído da primeira linha, inexistente em uma página vazia.",
@@ -880,6 +902,7 @@
       "title": "Discador mantém chip do contato após alterar o número pelo teclado",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Escolher um contato no NewCallPanel e alterar o número usando seu teclado numérico/backspace.",
       "cause": "As ações do teclado alteram numero, mas não limpam contato. ligar constrói phone com o número atual e metadados do contato antigo.",
@@ -945,6 +968,7 @@
       "title": "Relatórios comparam períodos de duração desigual e mostram início anterior diferente do consultado",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Selecionar 7, 30 ou 90 dias nos Relatórios Avançados e comparar com o período anterior.",
       "cause": "O período atual vai do começo de N dias atrás ao fim de hoje, totalizando N+1 dias; o anterior tem N. A média divide por N e a etiqueta anterior deriva de outra subtração.",
@@ -1016,6 +1040,7 @@
       "title": "Totais dos Relatórios Avançados agregam apenas uma página de mensagens e contatos",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "O período contém mais mensagens ou contatos que o limite de linhas aplicado pelo PostgREST.",
       "cause": "As quatro consultas current/previous usam select sem paginação, count ou RPC agregadora, e os totais/repartições são reduzidos dos arrays devolvidos.",
@@ -1075,6 +1100,7 @@
       "title": "Falhas de leitura de Relatórios Avançados são apresentadas como métricas zero",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Falha de leitura em uma ou mais consultas dos Relatórios Avançados sem dados prévios em cache.",
       "cause": "As queries lançam erro, mas o hook expõe somente data/isLoading e substitui ausências por arrays vazios; o consumidor não recebe error.",
@@ -1142,6 +1168,7 @@
       "title": "Taxa de abandono trata mensagem anterior do agente como resposta e não identifica sessões",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Um contato tem mensagem de agente anterior a uma nova mensagem de cliente ainda sem resposta, dentro do intervalo consultado.",
       "cause": "AbandonmentRate só lê contact_id e sender e marca o contato como respondido se existir qualquer mensagem de agente; não considera ordem, sessão ou prazo.",
@@ -1189,6 +1216,7 @@
       "title": "Monitor Multiplix depende dos cinquenta disparos mais recentes e UI só abre oito",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Há disparos Multiplix válidos mais antigos que os oito apresentados, ou um monitor aberto cujo disparo sai dos cinquenta mais recentes.",
       "cause": "A UI principal mostra somente slice(0,8), sem histórico completo. A query de detalhe busca a lista limit=50, offset=0 e faz find pelo ID, em vez de pedir o registro.",
@@ -1255,6 +1283,7 @@
       "title": "Lista de destinatários Multiplix descarta continuação e não diferencia falha de vazio",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Um disparo Multiplix tem mais de quinhentos destinatários, ou a consulta de destinatários falha.",
       "cause": "useMultiplixRecipients pede limit=500/offset=0 e devolve somente rows, descartando total/continuação. O monitor usa data=[] e não consome error.",
@@ -1312,6 +1341,7 @@
       "title": "Idempotência do composer Multiplix é descartada em falha de resposta da criação",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "O servidor aceita a criação, mas a resposta se perde ou um passo posterior falha; o operador tenta de novo o mesmo conteúdo.",
       "cause": "A chave de idempotência é limpa em onSettled, inclusive na rejeição. Retry recebe novo UUID em vez de reconciliar o resultado incerto da tentativa anterior.",
@@ -1368,6 +1398,7 @@
       "title": "Respostas atrasadas de variantes e histórico são aplicadas ao template seguinte",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Pedir variantes/histórico de A, trocar para B e abrir o mesmo painel, recebendo B antes da resposta atrasada de A.",
       "cause": "Os loaders aplicam setVariants/setVersions sem comparar templateId/generation. Limpar o painel na troca não invalida Promises antigas.",
@@ -1433,6 +1464,7 @@
       "title": "Reabrir rascunho TalkX grande pode reduzir audiência pelo autosave da primeira página",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Reabrir draft ou scheduled com audience_source=contacts e mais recipients que o cap de retorno da consulta, mantendo válidos os demais campos exigidos pela RPC.",
       "cause": "A hidratação de contact_ids é uma consulta sem paginação. Ela altera selectedContacts depois do snapshot inicial do autosave. buildPayload persiste essa seleção e snapshotDraftAudience substitui integralmente os recipients pelo conjunto filtrado.",
@@ -1547,6 +1579,7 @@
       "title": "Debounce global TalkX descarta atualização de outra campanha e desliga polling",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Duas campanhas diferentes recebem UPDATE Realtime dentro de 500 ms com a assinatura marcada como live.",
       "cause": "Há um único debounceRef para todas as campanhas. O segundo evento cancela o timer que aplicaria o primeiro e a atualização restante modifica só o ID do último payload.",
@@ -1591,6 +1624,7 @@
       "title": "Sair do wizard antes do autosave perde edição sem a proteção beforeunload",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Editar o wizard e clicar Voltar ou navegar internamente antes dos 3 s do autosave, sem usar Salvar rascunho.",
       "cause": "A única guarda instalada é beforeunload. onClose chama diretamente backToList, desmonta o editor e o cleanup cancela o timer de autosave.",
@@ -1684,6 +1718,7 @@
       "title": "Estatísticas CSAT podem continuar no snapshot anterior após atualizar as avaliações",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Avaliações já carregadas; ocorre nova submissão ou refetch e a consulta das avaliações demora mais que a derivação de stats.",
       "cause": "stats é outra query com key estável por período, cujo queryFn lê surveysQuery.data. O sucesso invalida as duas queries simultaneamente e a key de stats não contém a identidade/revisão dos dados de surveys.",
@@ -1759,6 +1794,7 @@
       "title": "Agenda filtra pendentes depois de uma consulta global que pode ser ocupada pelo histórico",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "scheduled_messages contém histórico suficiente para atingir o cap de linhas antes dos agendamentos futuros.",
       "cause": "O hook global busca todos os status em scheduled_at crescente sem intervalo/paginação. O calendário filtra pending e o mês somente no cliente.",
@@ -1827,6 +1863,7 @@
       "title": "War Room apresenta habilitação e contatos atribuídos como presença e atendimento ativo",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Há perfis habilitados mas desconectados, contatos resolvidos ainda atribuídos ou filas com diferentes episódios históricos.",
       "cause": "O hook deriva online/busy de profiles.is_active e da contagem de todos os contacts.assigned_to, sem presença nem status de conversa. Filas também contam todo contato associado e retornam avgWaitTime/slaWarnings fixos em zero.",
@@ -1895,6 +1932,7 @@
       "title": "Auto-atualização do War Room controla apenas o relógio exibido",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Usar o botão Auto-atualização ou ocorrer falha nas consultas periódicas do War Room.",
       "cause": "autoRefresh só habilita um setInterval que muda lastUpdate; o hook mantém refetchInterval=30000 independente do botão e sem devolver o instante/erro de confirmação.",
@@ -1963,6 +2001,7 @@
       "title": "Conclusão remota da campanha não limpa seleção e modais em andamento",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Campanha selecionada sending/paused conclui ou é cancelada remotamente, com um modal de ação aberto.",
       "cause": "O primeiro useEffect escreve campaign=null em prevCampaignRef antes de o efeito seguinte testar se havia campanha anterior. A condição prevCampaignRef.current!==null fica falsa.",
@@ -2052,6 +2091,7 @@
       "title": "Ritmo e prazo da campanha usam os primeiros envios e minutos não consecutivos",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Campanha com mais de 2000 envios ou pausas/minutos sem envio; abrir Resultados em Campanha em Andamento.",
       "cause": "A query lê sent_at crescente com limit(2000), agrupa somente minutos que tiveram eventos e corta os vinte últimos grupos dessa amostra. A média divide os últimos dez grupos por sua quantidade e os chama de últimos dez minutos.",
@@ -2110,6 +2150,7 @@
       "title": "Lista de supressão não identifica nem encontra bloqueios cadastrados somente por telefone",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Existe talkx_blacklist com phone preenchido e contact_id null, formato aceito pelo contrato do módulo.",
       "cause": "O componente define/consome a identidade exclusivamente pelo join contacts. Não usa o phone próprio da entrada na pesquisa ou na linha.",
@@ -2184,6 +2225,7 @@
       "title": "Cadastro de supressão busca contato somente no primeiro lote carregado",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "O contato procurado existe além do cap da consulta contacts ordenada por name.",
       "cause": "A abertura carrega uma única consulta sem paginação e o texto de pesquisa apenas filtra esse array em memória, cortando os resultados em cinquenta.",
@@ -2232,6 +2274,7 @@
       "title": "Consumidores Talk X ainda convertem erro de leitura em vazio ou carregamento indefinido",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Falhar a consulta de campanhas, segmentos, supressão ou campanha individual sem dados prévios válidos.",
       "cause": "A query/hook conserva ou lança error, mas os componentes não o usam. Overview não recebe isError, Segments e Suppression seguem pelo array vazio, Scheduled retorna null e LiveMonitor aguarda campaign indefinidamente.",
@@ -2344,6 +2387,7 @@
       "title": "Analytics Talk X rotula taxa de envio como entrega e usa volume para recomendar abertura",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Campanhas têm sent_count diferente de delivered_count, ou horas de maior volume não têm maior taxa de abertura.",
       "cause": "compareData calcula sent_count/total_recipients, mas a legenda chama a série de Taxa de entrega. bestHour usa contagem de sent_at, sem denominador nem read_at, e o texto promete maior abertura.",
@@ -2420,6 +2464,7 @@
       "title": "Detalhe de segmento conserva cópia antiga depois de salvar e pode reabrir campos obsoletos",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Editar um segmento selecionado, salvar, aguardar a query atualizada e usar Editar segmento no painel lateral ainda selecionado.",
       "cause": "selected guarda o objeto inteiro. A mutation invalida a lista, mas save apenas muda mode para list; não substitui selected pelo retorno nem o deriva da lista por ID.",
@@ -2485,6 +2530,7 @@
       "title": "Ação Novo template abre o wizard de campanha",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Usar o menu Templates → Novo template no topo do módulo.",
       "cause": "O handler chama openNew, que limpa editingCampaign e escreve wizard=new; não abre TalkXTemplateEditor.",
@@ -2531,6 +2577,7 @@
       "title": "Resposta tardia de geração de áudio pode iniciar reprodução após fechar o diálogo",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Iniciar Gerar Preview de efeito/música na biblioteca de mídia e fechar o diálogo antes da resposta.",
       "cause": "Fechar apenas pausa o audioRef atual e limpa preview. O callback pendente não tem cancelamento/geração vinculada à abertura e, quando termina, cria novo Audio e chama play.",
@@ -2588,6 +2635,7 @@
       "title": "Exportar catálogo perde quase todos os filtros da listagem",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Aplicar busca, categoria, fornecedor, estoque baixo, filtros avançados ou duas flags simultâneas e usar Exportar catálogo no rail da gestão.",
       "cause": "A consulta de produtos recebe o objeto completo de filtros, mas a propriedade exportFilter reduz esse estado a uma única chave com precedência in_stock, featured, new_30d. O rail reconstrói somente essa flag e não recebe os demais filtros.",
@@ -2691,6 +2739,7 @@
       "title": "Histórico de envios do catálogo esconde registros além dos 500 mais recentes",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "O usuário possui visibilidade para mais de 500 eventos catalog_send_events, ou procura um envio/status que só exista além desse corte.",
       "cause": "useCatalogSendHistory aplica limit(500) sem total/continuação. A aba aplica busca/status, total de paginação e exportação ao array já truncado.",
@@ -2766,6 +2815,7 @@
       "title": "Favoritar em lote anuncia sucesso antes da escrita e oculta falhas de persistência",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Selecionar produtos ainda não favoritos e usar Favoritar N; uma ou mais escritas falham ou permanecem pendentes.",
       "cause": "Os dois consumidores executam toggle com void em forEach e imediatamente anunciam a quantidade inteira. O hook reverte cache e registra log, mas não lança nem retorna falha ao chamador.",
@@ -2832,6 +2882,7 @@
       "title": "Ranking Mais enviados do catálogo conta tentativas que falharam totalmente",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Há eventos catalog_send_events com status failed na janela de 30 dias; a falha pode ocorrer em envio individual normal, sem depender do erro do envio em lote R2-MOD-007.",
       "cause": "O envio individual classifica falha total e registra seu status. A consulta do ranking seleciona apenas product_id/product_name, não filtra status e incrementa o contador para cada evento.",
@@ -2898,6 +2949,7 @@
       "title": "Enviar variação perde a cor escolhida no catálogo de gestão",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Abrir o detalhe de um produto com variantes na gestão, selecionar uma cor e clicar Enviar variação.",
       "cause": "O detalhe entrega onSend(produto, cor), mas ExternalProductCard declara callback de um argumento e a gestão handleSendProduct só salva o produto. initialVariantColor do diálogo vem exclusivamente do deep link.",
@@ -2990,6 +3042,7 @@
       "title": "Reabrir detalhe do cartão A pode continuar exibindo o produto B navegado anteriormente",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "No catálogo do chat com dois produtos, abrir A, navegar para B pelo botão Próximo produto, fechar o painel e clicar Ver novamente no cartão A sem desmontar a listagem.",
       "cause": "ProductDetailDialog permanece montado em cada cartão. nav só se invalida se product.id mudar, mas esse id é sempre A na instância; a transição open false/true não reinicia nav.",
@@ -3074,6 +3127,7 @@
       "title": "Galeria mantém índice fora do intervalo ao navegar para produto com menos imagens",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "No detalhe com navegação entre produtos, visualizar uma imagem de índice alto de A e avançar para B, que possui menos imagens.",
       "cause": "ImageGallery mantém idx em useState, não recebe key do produto e não ajusta o índice quando product/images mudam. O ajuste de focusToken só altera idx se houver uma URL correspondente.",
@@ -3138,6 +3192,7 @@
       "title": "Favoritos convertem preço e estoque desconhecidos em zero real na interface e no envio",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Abrir Meus favoritos no catálogo do chat; para a consequência de envio, usar a aba Favoritos da gestão quando a consulta do produto completo demora ou falha.",
       "cause": "favoriteToProduct fabrica sale_price=0 e stock_quantity=0 para uma snapshot que não guarda esses campos. O card trata zero como esgotado. O diálogo usa a snapshot como fallback e seus bloqueios não aguardam a hidratação nem tratam erro do produto.",
@@ -3257,6 +3312,7 @@
       "title": "Editar contato da tarefa não persiste o vínculo escolhido",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "No Sheet de uma tarefa, trocar o Contato ou escolher Sem contato e salvar.",
       "cause": "O formulário emite patch.contactId, mas toDbPatch e toItemPatch não mapeiam contactId/contact_id. A chamada update recebe um objeto sem essa alteração.",
@@ -3337,6 +3393,7 @@
       "title": "Salvar tarefa reconstrói datas locais sem offset e pode deslocar prazo e alarme",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Editar uma tarefa com prazo/alarme em navegador cujo fuso difere do fuso da sessão PostgreSQL; por exemplo navegador America/Sao_Paulo e sessão UTC. Basta editar outro campo, pois as strings reconstruídas diferem do ISO original.",
       "cause": "WorkItemSheet compõe data+hora como string sem Z/offset. Salvar compara esse formato local com o ISO retornado e envia dueDate/remindAt ao banco sem normalizar. QuickAdd usa a conversão correta para ISO, portanto criação e edição têm contratos diferentes.",
@@ -3436,6 +3493,7 @@
       "title": "Salvar tarefa fecha com escritas pendentes e divide a edição em operações concorrentes",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Editar campos no WorkItemSheet e salvar com escrita lenta/falha; para aplicação parcial, alterar estado e outro campo simultaneamente.",
       "cause": "As props de escrita são tipadas como void e o pai descarta as promessas. salvar chama onMove e onSave sem await e fecha imediatamente, sem estado pending ou manutenção do rascunho.",
@@ -3517,6 +3575,7 @@
       "title": "Reagendar alarme pelo Salvar não rearma uma tarefa que já foi notificada",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "A tarefa ativa tem notified_at preenchido. Abrir o Sheet, escolher uma nova data/hora de alarme no futuro e Salvar.",
       "cause": "O Sheet envia patch.remindAt pelo update genérico; toDbPatch não limpa notified_at. O trigger vigente só executa em mudança de status e o scheduler exige notified_at IS NULL.",
@@ -3597,6 +3656,7 @@
       "title": "Desfazer cancelamento/conclusão não restaura todo o estado e anuncia sucesso antes da gravação",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Cancelar uma tarefa que possui alarme e usar Desfazer; para a segunda consequência, fazer a atualização de reversão falhar ou permanecer pendente.",
       "cause": "Cancelar limpa remind_at/notified_at pelo trigger. O callback de undo só restaura status/completed_at, não restaura o alarme e ignora error da atualização. undoToast também anuncia sucesso sem aguardar onUndo. Na conclusão, o undo força todo em vez do status anterior e também não restaura o lembrete removido pelo trigger.",
@@ -3663,6 +3723,7 @@
       "title": "Tarefas e filtros consultam somente a primeira resposta da API sem continuação",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "O conjunto elegível de tarefas pessoais excede o teto de linhas configurado no PostgREST. O corte inclui tarefas ativas e concluídas da janela, ordenadas por posição e criação.",
       "cause": "useMyWorkItems faz um único select sem range/cursor/total/continuação. Todos os modos, busca, filtros, KPIs e resolução de deep link operam no array retornado; o badge repete uma consulta não paginada.",
@@ -3729,6 +3790,7 @@
       "title": "Arrastar tarefa entre colunas filtradas persiste índice em relação à lista não filtrada",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Há filtro ativo que esconde pelo menos um item antes do destino. Arrastar uma tarefa de outra coluna para entre dois cartões visíveis.",
       "cause": "TasksModule fornece byStatus filtrado ao quadro. resolveDragEnd entrega destination.index relativo a essa lista; persistPositions usa o mesmo índice em bucketByStatus(items) da fonte completa do hook.",
@@ -3818,6 +3880,7 @@
       "title": "Agenda restaura o prazo do dia anterior se o dia for trocado durante a criação",
       "status": "confirmed",
       "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Iniciar criação no dia A; antes de onCreate resolver, selecionar dia B na Agenda. A criação A termina com sucesso e o usuário cria outra tarefa no campo que anuncia B.",
       "cause": "QuickAdd sincroniza defaultDueDate com um marcador diaAplicado durante render, mas handleSubmit chama a closure limpar do render A depois de await. Essa closure restaura dueDate=A sem atualizar diaAplicado, já igual a B; o próximo render não corrige o prazo.",
@@ -3880,6 +3943,7 @@
       "title": "Cartão de tarefa concluída oferece lembrete que o executor exclui por estado",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Uma tarefa concluída está visível na seção/coluna de concluídas; escolher Lembrar-me → 15 min, 1 h ou amanhã sem reabrir a tarefa.",
       "cause": "O menu de lembretes é renderizado também quando isDone; o callback snooze grava apenas remind_at/notified_at e anuncia sucesso. A função vigente notify_due_tasks exclui status done/cancelled.",
@@ -3964,6 +4028,7 @@
       "title": "Prazo vencido hoje aparece como atraso no menu e como não atrasado no módulo",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Uma tarefa ativa tem due_date com horário anterior ao instante atual, mas no mesmo dia local, sem outro alarme/atraso.",
       "cause": "O badge compara due_date com Date.now(), enquanto bucketByDue e dueLabel só consideram atrasadas datas anteriores ao início do dia.",
@@ -4048,6 +4113,7 @@
       "title": "Filtro de período do Talk X aparece nas quatro telas sem consumidor",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Abrir Visão geral, Templates, Segmentos ou Supressão e escolher Hoje, 7 dias, 30 dias, Este mês ou Personalizado no menu Período.",
       "cause": "TalkXFilterBar renderiza o menu incondicionalmente e depende da prop opcional onPeriodChange. Nenhuma das quatro instâncias atuais passa period ou onPeriodChange. O clique apenas fecha o popover; os filtros e dados das telas não recebem intervalo.",
@@ -4134,6 +4200,7 @@
       "title": "Tamanho de página em Templates, Segmentos e Supressão é um controle sem efeito",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Usar o seletor 8/10/20/50 por página em qualquer das três telas com resultados.",
       "cause": "TalkXPagination é controlado por pageSize, mas as telas criam estado sem setter e fornecem onPageSize vazio.",
@@ -4225,6 +4292,7 @@
       "title": "Atalho Duplicar template abre o editor do original",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Selecionar um template e usar Duplicar template em Ações rápidas (rail).",
       "cause": "O atalho chama openEdit(selected), preservando id/updated_at do original, em vez da mutation duplicateTemplate usada nos botões das linhas/cartões.",
@@ -4300,6 +4368,7 @@
       "title": "Gramática de variáveis do editor/Resumo diverge da personalização com fallback",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Usar placeholder suportado pela personalização, como {{nome|cliente}} ou uma chave customizada com dígito, no wizard/template.",
       "cause": "personalizePreview separa o nome antes do primeiro | e aceita a chave normalizada; o editor normaliza todo o conteúdo sem remover fallback, enquanto extractVariables aceita somente letras e underscore sem fallback.",
@@ -4392,6 +4461,7 @@
       "title": "Duas metas configuráveis nunca entram no cálculo das notificações de conquista",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Meta ativa de contacts_handled ou resolution_rate com alvo positivo, configurada pelo diálogo atual; estatística real atinge a meta.",
       "cause": "O diálogo oferece messages_sent, contacts_handled e resolution_rate, mas o switch do notificador só trata messages_sent, conversations_resolved, response_time e satisfaction. Os dois tipos atuais restantes conservam current = 0.",
@@ -4476,6 +4546,7 @@
       "title": "Restaurar padrões das metas perde IDs e Salvar tenta reinserir configurações existentes",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Perfil já possui ao menos uma goals_configuration do tipo padrão; abrir configuração, clicar Restaurar padrões e Salvar.",
       "cause": "A hidratação preserva o id existente, mas handleReset substitui todos os objetos por DEFAULT_GOALS sem id. A mutation usa INSERT quando id falta, embora exista UNIQUE(profile_id, goal_type).",
@@ -4551,6 +4622,7 @@
       "title": "Escolher período Personalizado não abre o calendário do Dashboard",
       "status": "confirmed",
       "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Dashboard com período today/yesterday/week/month; abrir o seletor e escolher Personalizado.",
       "cause": "handlePeriodChange retorna imediatamente em custom, antes de onFiltersChange. A única renderização do calendário exige que filters.period já seja custom.",
@@ -4612,6 +4684,1142 @@
         "DASH-CONTROLS-001"
       ],
       "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
+    },
+    {
+      "id": "R2-MOD-066",
+      "severity": "P2",
+      "title": "Fallback de imagem volta à URL quebrada e o erro persiste ao trocar de foto",
+      "status": "confirmed",
+      "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Abrir uma galeria com URL principal indisponível e fallback válido; ou falhar ambas as URLs e selecionar outra imagem válida sem desmontar a galeria.",
+      "cause": "ProductThumb usa um único stage para decidir tanto a origem da imagem quanto o carregamento. onLoad troca error-src por loaded, fazendo effectiveSrc voltar a src; o estado também não acompanha mudanças de src/fallbackSrc.",
+      "observed_behavior": "Após o erro principal, a seleção muda para fallbackSrc. Quando o fallback carrega, onLoad seleciona outra vez a URL principal quebrada, permitindo repetir o ciclo erro/carregamento. Depois de error-fallback, o componente retorna somente o ícone mesmo que a galeria altere src para uma foto válida. ProductDetailDialog reutiliza ProductThumb sem key entre as fotos.",
+      "impact": "O fallback não se estabiliza e uma falha de mídia pode deixar outras fotos válidas da galeria invisíveis. Não foi medido tráfego de rede ou custo externo.",
+      "evidence": [
+        {
+          "path": "src/components/catalog/catalogShared.tsx",
+          "line_start": 261,
+          "line_end": 294,
+          "git_blob_sha": "c716f9ab2bb47a59cd2a1836b92acb308d959a38",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/catalogShared.tsx#L261-L294",
+          "purpose": "State machine e origem derivados do mesmo stage"
+        },
+        {
+          "path": "src/components/catalog/ProductDetailDialog.tsx",
+          "line_start": 149,
+          "line_end": 160,
+          "git_blob_sha": "4faa61bfc188a269b548195f895e3190b940df69",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/ProductDetailDialog.tsx#L149-L160",
+          "purpose": "ProductThumb reutilizado sem key"
+        },
+        {
+          "path": "src/components/catalog/ProductDetailDialog.tsx",
+          "line_start": 174,
+          "line_end": 214,
+          "git_blob_sha": "4faa61bfc188a269b548195f895e3190b940df69",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/ProductDetailDialog.tsx#L174-L214",
+          "purpose": "Navegação e miniaturas alteram a imagem atual"
+        },
+        {
+          "path": "src/components/catalog/__tests__/catalogShared.test.tsx",
+          "line_start": 136,
+          "line_end": 170,
+          "git_blob_sha": "a5a1b506bdb75ffc3cd525c9d871527e2aa46b0c",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/catalogShared.test.tsx#L136-L170",
+          "purpose": "Testes não disparam load no fallback ou rerender com outro src"
+        }
+      ],
+      "probes": [
+        {
+          "artifact": "proofs.json",
+          "probe_id": "R2-MOD-066",
+          "script": "offline_probes.cjs"
+        }
+      ],
+      "runtime_observed": false,
+      "offline_probe_observed": true,
+      "recommendation": "Separar a origem selecionada do estado de carregamento, manter o fallback após seu load e reiniciar o ciclo quando a identidade da imagem mudar. Considerar eventos atrasados de URLs anteriores.",
+      "acceptance": [
+        "Falhar a principal e carregar o fallback mantém o fallback visível sem selecionar de novo a principal.",
+        "Falhar as duas origens e navegar para outra foto válida faz o novo src ser carregado.",
+        "Trocar src durante carregamento não permite que evento da imagem antiga determine o estado da nova."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Probe isolado de callbacks/JSX em objeto, sem DOM nem decoder de imagens. A falha de URL é precondição sintética.",
+        "Distinto de R2-MOD-047, que trata índice fora do novo conjunto de imagens. Aqui até um índice válido pode deixar de exibir mídia."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
+    },
+    {
+      "id": "R2-MOD-067",
+      "severity": "P2",
+      "title": "Templates WhatsApp são apresentados como oficiais com aprovação escolhida localmente",
+      "status": "confirmed",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Usuário alcança wa-templates e tem uma operação de criação/edição local aceita pelas permissões e constraints vigentes.",
+      "cause": "WhatsAppTemplatesManager promete templates oficiais aprovados, mas o seletor permite escolher approved/rejected/pending e o hook persiste esse texto diretamente em whatsapp_templates. Não existe verificação de aprovação na cadeia acionada pelo botão Criar/Atualizar.",
+      "observed_behavior": "Escolher Aprovado e salvar envia status=approved no INSERT/UPDATE local. A consulta lê esse mesmo registro e STATUS_BADGES converte o valor em Aprovado. A ação não consulta nem submete a um provedor; o estado visual deriva exclusivamente da escolha do usuário.",
+      "impact": "O catálogo transmite uma certificação externa que esse fluxo não comprova. Isso pode orientar indevidamente preparação e seleção de mensagens; não se afirma que esse template seja usado por um sender externo no repositório.",
+      "evidence": [
+        {
+          "path": "src/pages/ViewRouter.tsx",
+          "line_start": 75,
+          "line_end": 79,
+          "git_blob_sha": "9964a4ea364a29ff6a59c5e49e199c2eeab22ec9",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/ViewRouter.tsx#L75-L79",
+          "purpose": "Rota atual para o manager"
+        },
+        {
+          "path": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+          "line_start": 35,
+          "line_end": 42,
+          "git_blob_sha": "985e5f71e34a73625958a768be043a686ebf085a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/WhatsAppTemplatesManager.tsx#L35-L42",
+          "purpose": "Promessa de templates oficiais aprovados"
+        },
+        {
+          "path": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+          "line_start": 157,
+          "line_end": 181,
+          "git_blob_sha": "985e5f71e34a73625958a768be043a686ebf085a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/WhatsAppTemplatesManager.tsx#L157-L181",
+          "purpose": "Status externo livre no formulário"
+        },
+        {
+          "path": "src/hooks/integrations/useWhatsAppTemplates.ts",
+          "line_start": 37,
+          "line_end": 41,
+          "git_blob_sha": "8f408b81629133e5e12e3bf1105879bf6b9e819f",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useWhatsAppTemplates.ts#L37-L41",
+          "purpose": "Badge Aprovado derivado do texto local"
+        },
+        {
+          "path": "src/hooks/integrations/useWhatsAppTemplates.ts",
+          "line_start": 63,
+          "line_end": 74,
+          "git_blob_sha": "8f408b81629133e5e12e3bf1105879bf6b9e819f",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useWhatsAppTemplates.ts#L63-L74",
+          "purpose": "Leitura da tabela local"
+        },
+        {
+          "path": "src/hooks/integrations/useWhatsAppTemplates.ts",
+          "line_start": 87,
+          "line_end": 120,
+          "git_blob_sha": "8f408b81629133e5e12e3bf1105879bf6b9e819f",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useWhatsAppTemplates.ts#L87-L120",
+          "purpose": "INSERT/UPDATE e toast sem submissão externa"
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "offline_probe_observed": false,
+      "recommendation": "Distinguir templates locais de templates oficiais e tratar a aprovação externa como dado sincronizado, sem edição livre. Se não houver integração disponível, informar a limitação no fluxo e manter o cadastro como rascunho local.",
+      "acceptance": [
+        "Uma edição manual não pode transformar um rascunho local em aprovação oficial.",
+        "Cada estado oficial exibido tem origem e identidade do provedor verificáveis ou é rotulado explicitamente como estado local.",
+        "O botão e o feedback descrevem com precisão se salvam localmente ou submetem para aprovação."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Não foi consultada conta Meta nem realizada submissão. Não se afirma ausência de sistemas externos fora do repositório.",
+        "Providers revisou o mesmo hook e delegou a este achado a divergência de produto/estado; o contrato de created_by é tratado separadamente pelo revisor responsável."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
+    },
+    {
+      "id": "R2-MOD-068",
+      "severity": "P1",
+      "title": "Roundtrip de Chatbot grava JSON como string e reabre o grafo vazio",
+      "status": "confirmed",
+      "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "INSERT/UPDATE de um fluxo de chatbot é aceito; posteriormente ele é consultado e aberto no editor. Salvar novamente o editor vazio concretiza a substituição persistente.",
+      "cause": "useChatbotFlows aplica JSON.stringify a nodes/edges/variables apesar de as colunas serem JSONB. A query apenas faz cast de tipo. ChatbotFlowEditor aceita somente arrays e substitui strings por []; não existe normalizador de JSON na cadeia SQL vigente revisada.",
+      "observed_behavior": "A criação padrão envia a string JSON que contém o nó inicial. A consulta devolve o escalar string, o card conta zero nós e o editor exibe Fluxo vazio. O botão Salvar repassa [] ao update, que grava a string \"[]\", substituindo o conteúdo antes codificado. Um fluxo salvo com vários nós sofre o mesmo roundtrip; duplicar uma string também pode acrescentar outra camada de codificação.",
+      "impact": "Nós e conexões desaparecem da representação ao reabrir e podem ser apagados persistentemente quando o usuário salva o editor. A falha independe de haver executor externo do grafo.",
+      "evidence": [
+        {
+          "path": "src/hooks/integrations/useChatbotFlows.ts",
+          "line_start": 53,
+          "line_end": 81,
+          "git_blob_sha": "56134d13f6c76050f1e6548228adfa4997e6b134",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L53-L81",
+          "purpose": "Leitura sem parse e criação com stringify"
+        },
+        {
+          "path": "src/hooks/integrations/useChatbotFlows.ts",
+          "line_start": 90,
+          "line_end": 104,
+          "git_blob_sha": "56134d13f6c76050f1e6548228adfa4997e6b134",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L90-L104",
+          "purpose": "Atualização com stringify"
+        },
+        {
+          "path": "src/components/chatbot/ChatbotFlowEditor.tsx",
+          "line_start": 21,
+          "line_end": 32,
+          "git_blob_sha": "0c7cc838b418d4a1ac79edeab14a132d7735cc83",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowEditor.tsx#L21-L32",
+          "purpose": "Strings viram arrays vazios"
+        },
+        {
+          "path": "src/components/chatbot/ChatbotFlowEditor.tsx",
+          "line_start": 65,
+          "line_end": 67,
+          "git_blob_sha": "0c7cc838b418d4a1ac79edeab14a132d7735cc83",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowEditor.tsx#L65-L67",
+          "purpose": "Salvar o estado do editor"
+        },
+        {
+          "path": "src/components/chatbot/ChatbotFlowsView.tsx",
+          "line_start": 72,
+          "line_end": 92,
+          "git_blob_sha": "ca4f94a6562741dc68ee477bbccc46465d264e8b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowsView.tsx#L72-L92",
+          "purpose": "Duplicação e entrega dos arrays ao update"
+        },
+        {
+          "path": "src/components/chatbot/ChatbotFlowsView.tsx",
+          "line_start": 164,
+          "line_end": 168,
+          "git_blob_sha": "ca4f94a6562741dc68ee477bbccc46465d264e8b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowsView.tsx#L164-L168",
+          "purpose": "Contagem como zero para string"
+        },
+        {
+          "path": "supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql",
+          "line_start": 40,
+          "line_end": 56,
+          "git_blob_sha": "a1a23feb27c2f8e804ec43fb70924c60fff2622b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql#L40-L56",
+          "purpose": "Colunas JSONB nativas"
+        },
+        {
+          "path": "supabase/migrations/20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql",
+          "line_start": 82,
+          "line_end": 82,
+          "git_blob_sha": "909e580860fd515173c018f01e9a4228aba34053",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql#L82-L82",
+          "purpose": "Trigger efetivo somente timestamp"
+        },
+        {
+          "path": "src/hooks/__tests__/useChatbotFlows.test.tsx",
+          "line_start": 21,
+          "line_end": 41,
+          "git_blob_sha": "9ef53eef8cad0de41b584bff0eaf4296b4d17fde",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useChatbotFlows.test.tsx#L21-L41",
+          "purpose": "Fixtures devolvem arrays, sem roundtrip do payload real"
+        },
+        {
+          "path": "src/hooks/__tests__/useChatbotFlows.test.tsx",
+          "line_start": 64,
+          "line_end": 87,
+          "git_blob_sha": "9ef53eef8cad0de41b584bff0eaf4296b4d17fde",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useChatbotFlows.test.tsx#L64-L87",
+          "purpose": "Teste de criação só confere tabela; listas locais de tipos não exercitam contrato"
+        }
+      ],
+      "probes": [
+        {
+          "artifact": "proofs.json",
+          "probe_id": "R2-MOD-068",
+          "script": "offline_probes.cjs"
+        }
+      ],
+      "runtime_observed": false,
+      "offline_probe_observed": true,
+      "recommendation": "Enviar arrays/objetos nativos para JSONB; validar o shape na leitura; migrar cuidadosamente strings existentes e impedir sobrescrita silenciosa quando o conteúdo não puder ser interpretado.",
+      "acceptance": [
+        "Criar um fluxo e reabri-lo preserva seu nó inicial e o tipo JSON de nodes/edges.",
+        "Salvar e reabrir um grafo com condições e várias conexões preserva integralmente a estrutura e os valores.",
+        "Registros legados codificados como string são recuperados sem sobrescrita e erros de shape mantêm o conteúdo original recuperável."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Descoberta do stringify comunicada por Providers, consumidor examinado por modules, tipos/trigger vencedores confirmados por Database.",
+        "Probe preserva escalares no mock de transporte e executa callbacks originais. Não executa PostgreSQL, RLS, React real nem um fluxo de produção.",
+        "IA-CHATBOT-001 anterior trata seleção de conexão/histórico no endpoint L1; não cobre este roundtrip do editor de grafos."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
+    },
+    {
+      "id": "R2-MOD-069",
+      "severity": "P2",
+      "title": "Editor de Chatbot oferece condição, ação e transferência sem configuração correspondente",
+      "status": "confirmed",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Criar ou editar um grafo no editor de Chatbot e adicionar um nó Condição, Ação ou Transferir. O contrato de persistência é independente do problema de codificação de R2-MOD-068.",
+      "cause": "AddNodeDialog oferece todos os tipos declarados; addNode inicializa só label/content/options/delaySeconds. EditNodeDialog expõe label para todos, conteúdo/opções apenas para mensagem/pergunta e segundos apenas para delay. Não há campos nem callbacks para condition, action, transferTo ou a condição do edge.",
+      "observed_behavior": "Um nó Condição, Ação ou Transferir criado pela interface fica sem sua regra, ação ou destino. Editar permite apenas trocar o nome e Salvar não valida esse conteúdo obrigatório para representar a operação. O indicador de etapas considera somente a existência de start, quantidade de nós e conexões, podendo alcançar Salvar com esses nós incompletos.",
+      "impact": "O usuário consegue desenhar e salvar símbolos dessas operações, mas não consegue definir o que elas devem fazer através dos controles disponíveis. O efeito sobre execução externa não foi afirmado nem testado.",
+      "evidence": [
+        {
+          "path": "src/hooks/integrations/useChatbotFlows.ts",
+          "line_start": 9,
+          "line_end": 30,
+          "git_blob_sha": "56134d13f6c76050f1e6548228adfa4997e6b134",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L9-L30",
+          "purpose": "Campos declarados de nó e condição de aresta"
+        },
+        {
+          "path": "src/components/chatbot/ChatbotNodeDialogs.tsx",
+          "line_start": 14,
+          "line_end": 46,
+          "git_blob_sha": "b5847daf7656be2fc2946746794e2c03fcc3ab1b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotNodeDialogs.tsx#L14-L46",
+          "purpose": "Tipos ofertados para adicionar"
+        },
+        {
+          "path": "src/components/chatbot/ChatbotNodeDialogs.tsx",
+          "line_start": 61,
+          "line_end": 94,
+          "git_blob_sha": "b5847daf7656be2fc2946746794e2c03fcc3ab1b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotNodeDialogs.tsx#L61-L94",
+          "purpose": "Editor só implementa nome, mensagem/pergunta e atraso"
+        },
+        {
+          "path": "src/components/chatbot/ChatbotFlowEditor.tsx",
+          "line_start": 28,
+          "line_end": 47,
+          "git_blob_sha": "0c7cc838b418d4a1ac79edeab14a132d7735cc83",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowEditor.tsx#L28-L47",
+          "purpose": "Progresso e criação dos tipos com dados genéricos"
+        },
+        {
+          "path": "src/components/chatbot/ChatbotFlowEditor.tsx",
+          "line_start": 65,
+          "line_end": 67,
+          "git_blob_sha": "0c7cc838b418d4a1ac79edeab14a132d7735cc83",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowEditor.tsx#L65-L67",
+          "purpose": "Salvar sem validação da configuração"
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "offline_probe_observed": false,
+      "recommendation": "Implementar os editores específicos e validação coerente para cada tipo suportado; enquanto a operação não estiver implementada, apresentá-la como indisponível em vez de aceitar uma configuração vazia.",
+      "acceptance": [
+        "Cada tipo disponibilizado pode receber todos os seus dados através da UI, incluindo regra de condição, ação e destino de transferência.",
+        "Salvar rejeita nós incompletos com indicação do campo e mantém o draft para correção.",
+        "A configuração continua igual após salvar/reabrir e a ligação condicional mantém a regra selecionada."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Não se afirma que haja um executor genérico do grafo neste repositório; a falha comprovada é o contrato de autoria da interface.",
+        "IA-CHATBOT-001 anterior é sobre o endpoint L1. Esse endpoint e seu trigger ai_l1 não provam execução dos grafos montados nesta interface."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
+    },
+    {
+      "id": "R2-MOD-070",
+      "severity": "P2",
+      "title": "Gerar Voz chama a listagem de vozes e anuncia geração sem áudio",
+      "status": "confirmed",
+      "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Abrir o laboratório de voz em Configurações; enviar um nome não vazio; JWT/cota/configuração aceitos e listagem de vozes do provedor retorna 2xx.",
+      "cause": "ElevenLabsVoiceDesign envia action=generate. O endpoint só diferencia preview e create; qualquer outra ação cai na listagem GET /v1/voices. O frontend não exige audioContent nem uma identidade de voz antes de anunciar sucesso.",
+      "observed_behavior": "O clique Gerar Voz não entra em create-previews nem create-voice-from-preview. Recebe a lista de vozes, não atualiza audioUrl e dispara Voz gerada com sucesso. A descrição, nome e texto são ignorados pelo ramo escolhido.",
+      "impact": "O usuário recebe confirmação de uma geração que não foi solicitada ao provedor. O fluxo atual não cria nem produz a prévia solicitada, mesmo com credenciais e rede válidas.",
+      "evidence": [
+        {
+          "path": "src/components/settings/SettingsView.tsx",
+          "line_start": 160,
+          "line_end": 172,
+          "git_blob_sha": "c576115115689b975b3897df601519e09de34f53",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/settings/SettingsView.tsx#L160-L172",
+          "purpose": "Montagem no laboratório de voz"
+        },
+        {
+          "path": "src/components/voice/ElevenLabsVoiceDesign.tsx",
+          "line_start": 22,
+          "line_end": 63,
+          "git_blob_sha": "4c8aac7245a2e710673295ffc144fecb9f159bd6",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/voice/ElevenLabsVoiceDesign.tsx#L22-L63",
+          "purpose": "Payload generate e toast sem audioContent"
+        },
+        {
+          "path": "supabase/functions/elevenlabs-voice-design/index.ts",
+          "line_start": 20,
+          "line_end": 45,
+          "git_blob_sha": "6c5f26e8bce74e90d08f86f8ab186e0e6471090a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/elevenlabs-voice-design/index.ts#L20-L45",
+          "purpose": "Ramo preview"
+        },
+        {
+          "path": "supabase/functions/elevenlabs-voice-design/index.ts",
+          "line_start": 48,
+          "line_end": 83,
+          "git_blob_sha": "6c5f26e8bce74e90d08f86f8ab186e0e6471090a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/elevenlabs-voice-design/index.ts#L48-L83",
+          "purpose": "Ramo create e default de listagem"
+        }
+      ],
+      "probes": [
+        {
+          "artifact": "proofs.json",
+          "probe_id": "R2-MOD-070",
+          "script": "offline_probes.cjs"
+        }
+      ],
+      "runtime_observed": false,
+      "offline_probe_observed": true,
+      "recommendation": "Alinhar o fluxo de UI com preview e create, interpretar o schema de retorno e guardar generated_voice_id quando necessário. O endpoint deve rejeitar action desconhecida; o frontend deve exigir resultado compatível antes de mostrar sucesso.",
+      "acceptance": [
+        "Gerar prévia alcança a ação preview e renderiza áudio retornado no schema aceito.",
+        "Criar voz usa a identidade de prévia selecionada e só confirma após resposta de criação.",
+        "action desconhecida retorna erro explícito; uma lista de vozes não é aceita como resultado de geração."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Providers confirmou o endpoint e delegou este contrato à revisão frontend, evitando duplicação de ID API.",
+        "Probe executa o callback da UI e o dispatch original da Edge com mocks de auth/cota e fetch, sem chamadas externas ou validação de credenciais reais."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
+    },
+    {
+      "id": "R2-MOD-071",
+      "severity": "P2",
+      "title": "Repetir conversão de áudio após erro do codificador fica aguardando o script que já falhou",
+      "status": "confirmed",
+      "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Na mesma sessão, o primeiro carregamento de /vendor/lamejs-1.2.1.min.js dispara error (ou load sem disponibilizar window.lamejs); o usuário ou o próximo arquivo tenta converter novamente. Não ocorre outro evento espontâneo no elemento já encerrado.",
+      "cause": "loadLamejs limpa apenas lamejsLoadPromise no catch. O script com data-lamejs=1 continua no documento. A segunda chamada o encontra sem o global e só acrescenta listeners load/error, sem substituir/recarregar o elemento nem limitar a espera.",
+      "observed_behavior": "A primeira conversão devolve encoder-unavailable e permite o fallback do consumidor. A próxima não dispara outro carregamento nem alcança o fallback, pois o await de loadLamejs fica pendente. useMediaUpload mantém bulkUploading até sair do laço e useAudioMemes só limpa uploading no finally posterior ao await.",
+      "impact": "Uma falha transitória inicial impede as conversões seguintes na mesma página. Um lote com mais de um áudio pode ficar preso a partir do próximo item; o upload individual posterior também pode permanecer ocupado até recarregar a página ou algum código externo emitir outro evento.",
+      "evidence": [
+        {
+          "path": "src/utils/audioToMp3.ts",
+          "line_start": 38,
+          "line_end": 74,
+          "git_blob_sha": "4bd92f3c32bc8ded82e3aaa727266e0fe0aef0a8",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/audioToMp3.ts#L38-L74",
+          "purpose": "Elemento existente, listeners e limpeza exclusiva da promessa"
+        },
+        {
+          "path": "src/utils/audioToMp3.ts",
+          "line_start": 115,
+          "line_end": 121,
+          "git_blob_sha": "4bd92f3c32bc8ded82e3aaa727266e0fe0aef0a8",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/audioToMp3.ts#L115-L121",
+          "purpose": "Await do loader antes do resultado discriminado"
+        },
+        {
+          "path": "src/components/settings/media-library/useMediaUpload.ts",
+          "line_start": 41,
+          "line_end": 55,
+          "git_blob_sha": "6f0c0a01a34ad1b563655720d30c743955399e40",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/settings/media-library/useMediaUpload.ts#L41-L55",
+          "purpose": "Lote aguardando conversão por item"
+        },
+        {
+          "path": "src/components/settings/media-library/useMediaUpload.ts",
+          "line_start": 80,
+          "line_end": 88,
+          "git_blob_sha": "6f0c0a01a34ad1b563655720d30c743955399e40",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/settings/media-library/useMediaUpload.ts#L80-L88",
+          "purpose": "Fim do estado ocupado apenas depois do laço"
+        },
+        {
+          "path": "src/hooks/communication/useAudioMemes.ts",
+          "line_start": 98,
+          "line_end": 109,
+          "git_blob_sha": "b0fabf284c8a368dec14b98a334f736ea0446f72",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useAudioMemes.ts#L98-L109",
+          "purpose": "Upload individual aguarda conversão"
+        },
+        {
+          "path": "src/hooks/communication/useAudioMemes.ts",
+          "line_start": 152,
+          "line_end": 156,
+          "git_blob_sha": "b0fabf284c8a368dec14b98a334f736ea0446f72",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useAudioMemes.ts#L152-L156",
+          "purpose": "Finally só é alcançado após encerramento do await"
+        }
+      ],
+      "probes": [
+        {
+          "artifact": "proofs.json",
+          "probe_id": "R2-MOD-071",
+          "script": "offline_probes.cjs"
+        }
+      ],
+      "runtime_observed": false,
+      "offline_probe_observed": true,
+      "recommendation": "Remover ou substituir o elemento que falhou ao limpar a promessa, limpar seus listeners e iniciar uma nova tentativa efetiva. Limitar a espera e garantir que todos os caminhos retornem um resultado discriminado para o consumidor encerrar o estado ocupado.",
+      "acceptance": [
+        "Após um error controlado, a segunda tentativa cria ou reinicia um carregamento e pode resolver com o codificador disponível.",
+        "Um lote não fica preso no segundo áudio depois do fallback do primeiro; erro definitivo retorna encoder-unavailable e encerra o estado ocupado.",
+        "load sem window.lamejs, falha repetida e chamadas concorrentes encerram de forma determinada sem listeners acumulados em elementos já terminados."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Probe executa o loader original com listeners simulados e um único evento error. Verifica que a repetição não cria outro carregamento nem timeout e fica pendente sem novo evento; não mede espera infinita num navegador.",
+        "Não pressupõe erro permanente do arquivo estático nem problema no conteúdo do fornecedor. A precondição é falha pontual de carregamento ou ausência do global; O probe deste achado não executa public/vendor; a avaliação separada do codec está em vendor/report.md.",
+        "Inbox confirmou a fronteira useMediaUpload sem finding duplicado. Busca literal em FINDINGS.json anterior não encontrou loadLamejs, audioToMp3, lamejs ou mp3; a distinção também foi conferida no catálogo anterior."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
+    },
+    {
+      "id": "R2-MOD-072",
+      "severity": "P2",
+      "title": "Atualização automática recarrega ao ocultar a aba sem preservar edição ou sessão ativa",
+      "status": "confirmed",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "O monitor ativo em main recebe um buildId diferente enquanto há edição ainda não salva (por exemplo no editor de automações) ou uma chamada SIP em curso. A aba já está hidden ou passa a hidden após o aviso.",
+      "cause": "A decisão do monitor usa somente document.visibilityState. O ramo hidden chama location.reload e o ramo visible arma a mesma recarga no primeiro visibilitychange hidden. Não consulta estado de edição, operação em andamento ou sessão de chamada, nem persiste/aguarda os consumidores antes de recarregar.",
+      "observed_behavior": "A aplicação pode recarregar automaticamente ao usuário apenas alternar de aba. O editor de automações guarda os campos em useState e só invoca persistência em Salvar; essas alterações em memória não são recuperadas pelo fluxo mostrado. CallSessionProvider inicia seu reducer do estado inicial, e useSipClient cria CallEngine/SipCallAdapter em memória; o monitor não condiciona a recarga ao término da sessão.",
+      "impact": "Perda de uma edição ainda não salva no consumidor demonstrado. A interrupção de uma ligação ativa é uma inferência da destruição da página e do transporte mantido em memória, confirmada na revisão do kernel pelo root; não foi feita ligação real. Ocultar a aba não demonstra que não há trabalho ativo.",
+      "evidence": [
+        {
+          "path": "src/main.tsx",
+          "line_start": 9,
+          "line_end": 17,
+          "git_blob_sha": "53e586cae25308e6c1b280e97c9101a0cd2e5a3d",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/main.tsx#L9-L17",
+          "purpose": "Ativação incondicional do monitor"
+        },
+        {
+          "path": "src/lib/deployment-update.ts",
+          "line_start": 27,
+          "line_end": 36,
+          "git_blob_sha": "7f122ba50e6de3da6623aad54d42dd428baa2eed",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/deployment-update.ts#L27-L36",
+          "purpose": "Decisão por visibilidade e handler de recarga"
+        },
+        {
+          "path": "src/lib/deployment-update.ts",
+          "line_start": 49,
+          "line_end": 70,
+          "git_blob_sha": "7f122ba50e6de3da6623aad54d42dd428baa2eed",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/deployment-update.ts#L49-L70",
+          "purpose": "Build novo arma recarga automática ou recarrega imediatamente"
+        },
+        {
+          "path": "src/components/automations/AutomationEditorDialog.tsx",
+          "line_start": 20,
+          "line_end": 34,
+          "git_blob_sha": "ca877500e4c9adc606352916c2c95cddd0262af4",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/automations/AutomationEditorDialog.tsx#L20-L34",
+          "purpose": "Draft em memória e persistência somente em Salvar"
+        },
+        {
+          "path": "src/components/automations/AutomationEditorDialog.tsx",
+          "line_start": 48,
+          "line_end": 54,
+          "git_blob_sha": "ca877500e4c9adc606352916c2c95cddd0262af4",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/automations/AutomationEditorDialog.tsx#L48-L54",
+          "purpose": "Alteração dos campos escreve somente estado local"
+        },
+        {
+          "path": "src/components/automations/AutomationsManager.tsx",
+          "line_start": 33,
+          "line_end": 38,
+          "git_blob_sha": "bea142159b3a6acc8ea5c09c346b9a44b969f51a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/automations/AutomationsManager.tsx#L33-L38",
+          "purpose": "Mutation invocada pelo save explícito"
+        },
+        {
+          "path": "src/providers/CallSessionProvider.tsx",
+          "line_start": 235,
+          "line_end": 253,
+          "git_blob_sha": "47d783cd156b15af5267802d8321875f6c06e085",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/providers/CallSessionProvider.tsx#L235-L253",
+          "purpose": "Sessão inicial do provider"
+        },
+        {
+          "path": "src/hooks/communication/useSipClient.ts",
+          "line_start": 26,
+          "line_end": 65,
+          "git_blob_sha": "7e8bb2881d0269faa84fb3f7a8f3360ce2aa3b72",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useSipClient.ts#L26-L65",
+          "purpose": "CallEngine/SipCallAdapter criados no ciclo React"
+        },
+        {
+          "path": "src/lib/__tests__/deployment-update.test.ts",
+          "line_start": 59,
+          "line_end": 92,
+          "git_blob_sha": "f2567dfbaebd42f9f13810c4ea2e8c2d673f24bf",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/__tests__/deployment-update.test.ts#L59-L92",
+          "purpose": "Testes exigem reload em hidden sem consumidor com trabalho pendente"
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "offline_probe_observed": false,
+      "recommendation": "Coordenar a atualização com operações e rascunhos ativos. Adiar recarga automática enquanto houver chamada/edição não preservada; oferecer atualização explícita ou salvar e restaurar estado verificável antes de recarregar. Não usar visibilidade como única evidência de inatividade.",
+      "acceptance": [
+        "Com edição não salva no editor de automações, detectar build novo e ocultar a aba não descarta os campos.",
+        "Uma chamada ativa não é encerrada por alternar a aba após detectar atualização; a atualização ocorre quando a sessão estiver liberada ou por ação explícita informada.",
+        "Sem operação ou edição pendente, o monitor mantém o comportamento de recuperação previsto.",
+        "O teste de atualização combina o monitor com o estado de um consumidor; apenas contar reloads na mudança de visibilidade não prova preservação de trabalho."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Fonte estática e testes existentes lidos, sem executar reload do navegador ou chamada SIP. O efeito no transporte é inferido, não medido.",
+        "Não se generaliza perda a todo rascunho: email e outros consumidores podem ter persistência específica. O editor de automações é o contraexemplo concreto usado aqui.",
+        "MOD027 trata saída SPA do wizard e debounce; o wizard possui beforeunload próprio. Este achado trata a ação global automática do monitor e não supõe que esse guard específico seja inexistente.",
+        "Root revisou o kernel de chamadas e confirmou ausência de reidratação de transporte SIP vivo após reload; persistência de histórico não equivale a restabelecer a ligação."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
+    },
+    {
+      "id": "R2-MOD-073",
+      "severity": "P2",
+      "title": "Detector de ataques do codec ignora oito posições de análise por índices fracionários",
+      "status": "confirmed",
+      "classification": "CONFIRMED_ISOLATED_VENDOR_FRAGMENT",
+      "code_origin": "third_party_vendored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "O caminho CBR/psymodel da integração atual avalia um vetor de ataques com pico acima do limiar em uma das posições 1, 2, 4, 5, 7, 8, 10 ou 11. A prova isola esse vetor interno; não pressupõe que todo áudio dispare o caso nem quantifica sua frequência.",
+      "cause": "L3psycho_anal_ns inicializa ta e ya com quatro posições inteiras, mas usa F/3 diretamente como índice nos laços que agrupam doze ataques e nove energias. Para F não múltiplo de três, ta[F/3] é undefined e o guard 0 == ta[F/3] falha; ya[1+F/3] += Ga escreve uma propriedade fracionária NaN, sem acumular no grupo inteiro.",
+      "observed_behavior": "Nos doze vetores sintéticos de pico único, o trecho original marca somente posições 0, 3, 6 e 9. No trecho original de energia, F=1 cria a propriedade 1.3333333333333333 com NaN e mantém os quatro acumuladores inteiros em zero. Os quatro flags inteiros alimentam S e a seleção posterior de blocos. O consumidor converte para mono/44100 e cria Mp3Encoder(1,44100,128); quality=3 ativa psymodel e o CBR padrão seleciona essa rotina.",
+      "impact": "A análise interna de transientes e agrupamento de energia não considera todos os subintervalos que seus laços percorrem, podendo escolher blocos com informação incompleta. A divergência numérica e o alcance do ramo são confirmados; perda audível, corrupção final do arquivo e magnitude da diferença de qualidade não foram demonstradas.",
+      "evidence": [
+        {
+          "path": "public/vendor/lamejs-1.2.1.min.js",
+          "line_start": 204,
+          "line_end": 204,
+          "git_blob_sha": "8dc6b0726388ff75bec69ac55ac5a6cc49e61093",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/public/vendor/lamejs-1.2.1.min.js#L204-L204",
+          "purpose": "Índices fracionários dos laços de ataque e energia no código original"
+        },
+        {
+          "path": "public/vendor/lamejs-1.2.1.min.js",
+          "line_start": 201,
+          "line_end": 216,
+          "git_blob_sha": "8dc6b0726388ff75bec69ac55ac5a6cc49e61093",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/public/vendor/lamejs-1.2.1.min.js#L201-L216",
+          "purpose": "Estado e consumo dos quatro flags pela decisão de blocos em L3psycho_anal_ns"
+        },
+        {
+          "path": "public/vendor/lamejs-1.2.1.min.js",
+          "line_start": 169,
+          "line_end": 177,
+          "git_blob_sha": "8dc6b0726388ff75bec69ac55ac5a6cc49e61093",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/public/vendor/lamejs-1.2.1.min.js#L169-L177",
+          "purpose": "Frame escolhe rotina NS no caminho CBR e consome o tipo de bloco"
+        },
+        {
+          "path": "public/vendor/lamejs-1.2.1.min.js",
+          "line_start": 247,
+          "line_end": 272,
+          "git_blob_sha": "8dc6b0726388ff75bec69ac55ac5a6cc49e61093",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/public/vendor/lamejs-1.2.1.min.js#L247-L272",
+          "purpose": "CBR padrão e quality=3 com psymodel ativo"
+        },
+        {
+          "path": "public/vendor/lamejs-1.2.1.min.js",
+          "line_start": 305,
+          "line_end": 307,
+          "git_blob_sha": "8dc6b0726388ff75bec69ac55ac5a6cc49e61093",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/public/vendor/lamejs-1.2.1.min.js#L305-L307",
+          "purpose": "Wrapper público fixa quality=3 e recebe argumentos da aplicação"
+        },
+        {
+          "path": "src/utils/audioToMp3.ts",
+          "line_start": 157,
+          "line_end": 192,
+          "git_blob_sha": "4bd92f3c32bc8ded82e3aaa727266e0fe0aef0a8",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/audioToMp3.ts#L157-L192",
+          "purpose": "Downmix, reamostragem e API mono/44100/128 ativa"
+        }
+      ],
+      "probes": [
+        {
+          "artifact": "vendor/proofs.json",
+          "probe_id": "VENDOR-P01",
+          "script": "vendor_probes.cjs"
+        },
+        {
+          "artifact": "vendor/proofs.json",
+          "probe_id": "VENDOR-P02",
+          "script": "vendor_probes.cjs"
+        }
+      ],
+      "runtime_observed": false,
+      "offline_probe_observed": true,
+      "recommendation": "Corrigir os índices de grupo para inteiros na cópia vendorizada ou substituir por uma versão verificada que corrija esse contrato. Antes da troca, comparar com a fonte upstream fixada e validar vetores de transiente, decodificação e propriedades do MP3; não tratar uma simples emissão de bytes como certificação de fidelidade.",
+      "acceptance": [
+        "Todas as doze posições de pico único são atribuídas ao grupo inteiro correto e ao ordinal esperado, preservando a regra de primeiro ataque por grupo.",
+        "Os nove subintervalos de energia alimentam somente três índices inteiros de grupo; nenhum acumulador NaN ou chave fracionária é criado.",
+        "O teste usa trechos ou API da versão real distribuída, com hash fixado, e cobre o caminho mono/44100/128 usado pelo produto.",
+        "Uma validação independente decodifica o MP3 de vetores conhecidos e compara decisões de bloco/qualidade com uma referência antes de declarar impacto audível resolvido."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Código de terceiro vendorizado: um achado de contrato numérico, separado das microfuncionalidades autorais e dos 208 corpos lidos.",
+        "Probes executam exatamente os dois fragmentos extraídos do AST original, com vetores sintéticos; não são uma simulação completa da análise psicoacústica.",
+        "VENDOR-P03 apenas comprova emissão não vazia pela API real para silêncio/seno curtos e término do segundo flush. Nenhum MP3 foi decodificado ou ouvido, nem avaliado em navegador, com áudio longo, por benchmark ou fuzzing.",
+        "O ramo VBR contém a mesma forma de indexação, mas não ganha outro ID e não é necessário para o caminho CBR demonstrado.",
+        "A comparação com os 104 achados anteriores não localizou este contrato nem referências a lamejs/psicoacústica/Mp3Encoder; isso não prova ausência de leitura prévia do fornecedor."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
+    },
+    {
+      "id": "R2-MOD-074",
+      "severity": "P2",
+      "title": "Monitor do War Room recria alertas continuamente quando violações superam a página de 50",
+      "status": "confirmed",
+      "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Um admin/supervisor mantém o War Room montado, a consulta retorna mais de 50 violações SLA, e SELECT/INSERT/realtime ou refetch de alertas funcionam. Cada nova gravação entra entre os 50 alertas unread mais recentes.",
+      "cause": "O monitor compara breaches.length com o número de alertas source=sla-monitor de uma consulta limitada a 50. A tabela não tem UNIQUE por source/incidente e o insert não recebe chave de idempotência. O efeito depende de alerts e executa a checagem imediatamente sempre que essa página muda.",
+      "observed_behavior": "Cada INSERT em warroom_alerts invalida a query pelo callback realtime; a página mais recente muda, mas continua com no máximo 50 itens. Para breaches.length>50, a condição de nova inserção continua verdadeira. A republicação da página rearma a checagem, criando outro alerta para as mesmas violações. Mesmo sem entrega realtime imediata, o refetch de 30 segundos pode continuar o ciclo enquanto as precondições persistirem.",
+      "impact": "Acúmulo de alertas críticos redundantes, consultas/gravações repetidas e som/notificações a cada nova linha. A quantidade de inserts depende da latência/revalidação; não foi medido um volume de produção. Dispensa de alertas não resolve a causa de comparação de contagens.",
+      "evidence": [
+        {
+          "path": "src/hooks/business/useWarRoomAlerts.ts",
+          "line_start": 48,
+          "line_end": 60,
+          "git_blob_sha": "90d833076f1458795bacb9f9e636e933abe56aea",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useWarRoomAlerts.ts#L48-L60",
+          "purpose": "Página unread limitada a 50 e refetch de 30 segundos"
+        },
+        {
+          "path": "src/hooks/business/useWarRoomAlerts.ts",
+          "line_start": 63,
+          "line_end": 95,
+          "git_blob_sha": "90d833076f1458795bacb9f9e636e933abe56aea",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useWarRoomAlerts.ts#L63-L95",
+          "purpose": "INSERT invalida query e emite som/push"
+        },
+        {
+          "path": "src/hooks/business/useWarRoomAlerts.ts",
+          "line_start": 103,
+          "line_end": 129,
+          "git_blob_sha": "90d833076f1458795bacb9f9e636e933abe56aea",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useWarRoomAlerts.ts#L103-L129",
+          "purpose": "Comparação de contagens, insert sem chave e efeito dependente de alerts"
+        },
+        {
+          "path": "src/components/dashboard/WarRoomDashboard.tsx",
+          "line_start": 34,
+          "line_end": 47,
+          "git_blob_sha": "35458d3fdc3874fb38f1a5c49b1fa605f97c7850",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/WarRoomDashboard.tsx#L34-L47",
+          "purpose": "Consumidor monta o monitor e exibe seus alertas"
+        },
+        {
+          "path": "supabase/migrations/20260317212204_a83746c2-5108-4b79-b3b3-6b4d15df28e8.sql",
+          "line_start": 62,
+          "line_end": 86,
+          "git_blob_sha": "dc278b9dc7c37d5f4bda63d71416ca796f2c16ef",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260317212204_a83746c2-5108-4b79-b3b3-6b4d15df28e8.sql#L62-L86",
+          "purpose": "PK aleatória, ausência de unique de source e publicação realtime"
+        },
+        {
+          "path": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql",
+          "line_start": 62,
+          "line_end": 66,
+          "git_blob_sha": "a109bd003b2b580b14a1d996f61bf99b33d7e782",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql#L62-L66",
+          "purpose": "Política vigente permite INSERT de admin/supervisor"
+        },
+        {
+          "path": "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+          "line_start": 58,
+          "line_end": 83,
+          "git_blob_sha": "1dac6cacbebe56679921b7d81479b2e848174ef3",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useWarRoomAlerts.test.tsx#L58-L83",
+          "purpose": "Fixture de SLA vazia não exercita criação/deduplicação"
+        }
+      ],
+      "probes": [
+        {
+          "artifact": "final-frontend-proofs.json",
+          "probe_id": "R2-MOD-074",
+          "script": "final_frontend_probes.cjs"
+        }
+      ],
+      "runtime_observed": false,
+      "offline_probe_observed": true,
+      "recommendation": "Modelar a identidade de uma violação/incidente e deduplicar no banco, consultando o conjunto de violações ainda relevante. Separar o monitor da quantidade de linhas de uma página de apresentação; usar produtor único ou operação idempotente e respeitar encerramento/dispensa do incidente.",
+      "acceptance": [
+        "Com 60 violações e pelo menos 50 alertas existentes, repetir refetch e eventos INSERT não cria novos alertas para incidentes já representados.",
+        "Dois clientes admin abertos simultaneamente produzem no máximo um alerta por incidente/chave de janela definida.",
+        "Erro de inserção e de leitura é exposto/recuperável sem transformar página parcial em sinal de necessidade de alertar.",
+        "O teste cruza o limite de 50 e republica a página após insert; não basta usar lista de violações vazia."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Probe executa o hook original em três ciclos finitos de efeitos com SELECT/INSERT/cache/realtime simulados, 60 violações e página de 50. Não executa React, banco, som ou notificações reais e não alega uma execução infinita medida.",
+        "Database confirmou o estado vencedor: somente PK(id) e FK dismissed_by, sem trigger de deduplicação, e grant/policy de INSERT para authenticated admin/supervisor. Disponibilidade de ambiente não foi testada.",
+        "Root confirmou que seus achados de filas/SLA não cobrem este monitor. MOD030/031 tratam indicadores e controle visual de atualização, sem a cadeia de criação de alertas."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
+    },
+    {
+      "id": "R2-MOD-075",
+      "severity": "P2",
+      "title": "Volume por hora combina buckets de São Paulo com dia e hora do navegador",
+      "status": "confirmed",
+      "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "O navegador está em fuso diferente de America/Sao_Paulo e o instante pertence a outro dia ou hora local. A RPC dashboard_hourly_volume devolve os buckets em São Paulo conforme a definição vencedora.",
+      "cause": "aggregateHourlyVolume usa startOfDay/format/getHours locais para hoje, hora atual e os sete dias. Os buckets day/hour não incluem offset e já foram derivados por SQL em America/Sao_Paulo. O cliente compara identidades temporais incompatíveis.",
+      "observed_behavior": "Às 2026-10-04T01:30Z, o bucket corrente de São Paulo é 2026-10-03/22. Em UTC, o agregador chama hoje de 2026-10-04 e hora atual de 1: coloca a contagem no dia anterior da série de sete dias e deixa a hora corrente em zero. VolumeChart usa esses dados em Hoje, Conversas reais e no gráfico por dia.",
+      "impact": "A mesma atividade pode aparecer como dia anterior, em hora deslocada ou sem volume atual conforme o fuso do dispositivo. Filtros do topo já usam o fuso do aplicativo, portanto a mesma tela pode apresentar recortes temporais incompatíveis.",
+      "evidence": [
+        {
+          "path": "src/hooks/dashboard/useTodayHourlyVolume.ts",
+          "line_start": 18,
+          "line_end": 50,
+          "git_blob_sha": "9c92c3024435ee5ac37efa08a502918a272ed776",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useTodayHourlyVolume.ts#L18-L50",
+          "purpose": "Chaves locais, getHours e comparação de buckets"
+        },
+        {
+          "path": "src/hooks/dashboard/useTodayHourlyVolume.ts",
+          "line_start": 63,
+          "line_end": 74,
+          "git_blob_sha": "9c92c3024435ee5ac37efa08a502918a272ed776",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useTodayHourlyVolume.ts#L63-L74",
+          "purpose": "RPC ativa e transformação no retorno"
+        },
+        {
+          "path": "supabase/migrations/20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql",
+          "line_start": 92,
+          "line_end": 120,
+          "git_blob_sha": "a34667e824428c492c943039d7638ca3ceec0147",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql#L92-L120",
+          "purpose": "Definição hourly vencedora: day/hour e janela em São Paulo"
+        },
+        {
+          "path": "src/components/dashboard/overview/VolumeChart.tsx",
+          "line_start": 46,
+          "line_end": 68,
+          "git_blob_sha": "e072c9396e7f84de3cd81422d852b283a3832799",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/overview/VolumeChart.tsx#L46-L68",
+          "purpose": "Consumo das séries por hora/dia"
+        },
+        {
+          "path": "src/hooks/dashboard/useDashboardUrlFilters.ts",
+          "line_start": 32,
+          "line_end": 44,
+          "git_blob_sha": "3fd3df0971a8fbf132caa26fd324bbb928ff2a6b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useDashboardUrlFilters.ts#L32-L44",
+          "purpose": "Períodos do topo usam helpers do dia do aplicativo"
+        },
+        {
+          "path": "src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts",
+          "line_start": 4,
+          "line_end": 21,
+          "git_blob_sha": "3ef4669e48374ddc940312abf2ef196c90d2e2cc",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts#L4-L21",
+          "purpose": "Fixture e relógio no mesmo fuso local"
+        }
+      ],
+      "probes": [
+        {
+          "artifact": "final-frontend-proofs.json",
+          "probe_id": "R2-MOD-075",
+          "script": "final_frontend_probes.cjs"
+        }
+      ],
+      "runtime_observed": false,
+      "offline_probe_observed": true,
+      "recommendation": "Usar explicitamente o fuso do aplicativo tanto na identificação de hoje/hora quanto na criação das chaves de dias, ou receber do servidor o relógio/identidade do bucket corrente. Preservar a distinção entre data de calendário e timestamp.",
+      "acceptance": [
+        "O mesmo instante e conjunto de buckets produz resultado idêntico em navegador UTC, America/Sao_Paulo e outro fuso.",
+        "O bucket 2026-10-03/22 às 2026-10-04T01:30Z é reconhecido como corrente de São Paulo; não migra para ontem por configuração do dispositivo.",
+        "Testes incluem virada do dia e não geram tanto fixture quanto expectativa com o mesmo relógio local incorreto."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Probe executa o agregador original com Date UTC e stubs transparentes dos três helpers date-fns; não executa pacote date-fns, SQL nem navegador. A divergência é também direta no uso de getHours e nas chaves de data.",
+        "Database confirmou que a definição 20260925221406 é vencedora para esta assinatura e que a janela SQL também usa São Paulo. Não se acusa a RPC de um fuso incorreto.",
+        "Não generaliza o defeito a todos os filtros de data: useDashboardUrlFilters usa os helpers de calendário do aplicativo."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "EXTENSION_OF_PRIOR",
+      "prior_finding_ids": [
+        "DASH-METRICS-001"
+      ],
+      "novelty_note": "Estende a família de métricas do Dashboard com um contrato temporal específico não descrito: RPC hourly correta em São Paulo versus agregador cliente em outro fuso. Não é a regressão SQL de dashboard_contact_counts."
+    },
+    {
+      "id": "R2-MOD-076",
+      "severity": "P2",
+      "title": "Previsão de demanda usa o ponto de quatro horas atrás como valor atual e chama média histórica de dado real",
+      "status": "confirmed",
+      "classification": "CONFIRMED_ISOLATED_CALLBACK",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Dashboard monta DemandPrediction sem externalData, seu uso ativo. As médias históricas da hora atual e de quatro horas antes diferem; o ponto final previsto fica entre elas no contraexemplo.",
+      "cause": "O gerador preenche actual com a mesma média por hora dos sete dias, sem consulta dos valores reais do dia. A lista começa em -4h. O cálculo de currentActual usa find do primeiro ponto não preditivo, em vez do ponto da hora corrente, e a tendência compara o último previsto contra essa base antiga.",
+      "observed_behavior": "Com média de 30 às 08h, 10 às 12h atuais e 20 às 16h futuras, o hook informa currentActual=30 e tendência down. A própria série tem 10 no ponto das 12h, para o qual 20 seria crescimento. O consumidor apresenta esses pontos como Atual/Dados Reais e a tendência no card.",
+      "impact": "O operador pode receber tendência invertida e interpretar a média da semana como volume observado hoje. A prévia depende da população histórica e não demonstra variação real de atividade.",
+      "evidence": [
+        {
+          "path": "src/hooks/business/useDemandPrediction.ts",
+          "line_start": 23,
+          "line_end": 47,
+          "git_blob_sha": "efefaa72acbddb4f9e2e4402068cd32aebe30c6b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useDemandPrediction.ts#L23-L47",
+          "purpose": "Série -4h..0 preenchida por média histórica e futuro"
+        },
+        {
+          "path": "src/hooks/business/useDemandPrediction.ts",
+          "line_start": 53,
+          "line_end": 74,
+          "git_blob_sha": "efefaa72acbddb4f9e2e4402068cd32aebe30c6b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useDemandPrediction.ts#L53-L74",
+          "purpose": "Agregação da contagem dos sete dias por hora"
+        },
+        {
+          "path": "src/hooks/business/useDemandPrediction.ts",
+          "line_start": 78,
+          "line_end": 86,
+          "git_blob_sha": "efefaa72acbddb4f9e2e4402068cd32aebe30c6b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useDemandPrediction.ts#L78-L86",
+          "purpose": "find escolhe primeiro ponto e define tendência"
+        },
+        {
+          "path": "src/components/dashboard/DemandPrediction.tsx",
+          "line_start": 30,
+          "line_end": 40,
+          "git_blob_sha": "7a08b62fe3b3e3e4fe9563b11a8a8bb7d329ecf6",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DemandPrediction.tsx#L30-L40",
+          "purpose": "Tooltip Atual para a média"
+        },
+        {
+          "path": "src/components/dashboard/DemandPrediction.tsx",
+          "line_start": 82,
+          "line_end": 92,
+          "git_blob_sha": "7a08b62fe3b3e3e4fe9563b11a8a8bb7d329ecf6",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DemandPrediction.tsx#L82-L92",
+          "purpose": "Consumidor da tendência"
+        },
+        {
+          "path": "src/components/dashboard/DemandPrediction.tsx",
+          "line_start": 129,
+          "line_end": 133,
+          "git_blob_sha": "7a08b62fe3b3e3e4fe9563b11a8a8bb7d329ecf6",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DemandPrediction.tsx#L129-L133",
+          "purpose": "Legenda Dados Reais"
+        },
+        {
+          "path": "src/components/dashboard/DashboardView.tsx",
+          "line_start": 218,
+          "line_end": 224,
+          "git_blob_sha": "1a89a0f309bbc5aaeae9f03761faadd7e61715ab",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DashboardView.tsx#L218-L224",
+          "purpose": "Consumidor atual sem externalData"
+        }
+      ],
+      "probes": [
+        {
+          "artifact": "final-frontend-proofs.json",
+          "probe_id": "R2-MOD-076",
+          "script": "final_frontend_probes.cjs"
+        }
+      ],
+      "runtime_observed": false,
+      "offline_probe_observed": true,
+      "recommendation": "Separar séries observadas por data/hora da média histórica e identificar explicitamente o ponto corrente. Calcular a tendência contra a base temporal e estatística declarada no produto, com ausência de dados distinta de zero; se a intenção for somente média histórica, ajustar nomes e rótulos.",
+      "acceptance": [
+        "No contraexemplo 30/10/20, a comparação com o ponto corrente usa 10 e retorna crescimento.",
+        "actual contém observação do período atual ou é renomeado de modo que a UI não o apresente como Dados Reais.",
+        "Consulta vazia, erro e histórico insuficiente não afirmam tendência válida ou capacidade sem dados.",
+        "Confiança estatística só é apresentada se corresponder a um método validado; essa exigência já constava no achado anterior."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Probe usa buckets históricos sintéticos, executando o gerador e o cálculo de insights reais. Não avalia qualidade preditiva, estatística, SQL ou visualização em navegador.",
+        "A chamada atual não fornece externalData; a hipótese de crash com externalData sem previsões permanece contrato dirigido, sem impacto ativo afirmado.",
+        "Outros limites do mesmo pipeline — query sem paginação, previsão sem filtros do topo e perda de data em VolumeChart — são preservados como observação relacionada, sem multiplicar IDs."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "EXTENSION_OF_PRIOR",
+      "prior_finding_ids": [
+        "DASH-CONTROLS-001",
+        "DASH-METRICS-001"
+      ],
+      "novelty_note": "Mantém a família anterior de rótulos/proxies do Dashboard, acrescentando seleção do ponto -4h e apresentação de médias como actual. A heurística de confiança95%/capacidade35 já era conhecida e não é contada novamente."
+    },
+    {
+      "id": "R2-MOD-077",
+      "severity": "P2",
+      "title": "Histórico de transcrições oferece Todo período e busca sobre uma única página implícita",
+      "status": "confirmed",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "code_origin": "application_authored",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "O usuário tem mais transcrições de áudio visíveis do que o teto efetivo de uma resposta PostgREST. O registro procurado está fora da primeira página ordenada por created_at descendente.",
+      "cause": "fetchTranscriptions faz uma única consulta sem range/paginação e sem obter total. Todo período, busca por transcrição/nome/telefone e agrupamento são aplicados somente ao array devolvido; a tela não tem próxima página nem sinal de truncação.",
+      "observed_behavior": "O histórico mostra a quantidade da primeira resposta como número de transcrições/contatos. A busca de um áudio antigo ou um contato cuja primeira transcrição está fora dela retorna Nenhum resultado encontrado, embora existam registros elegíveis. Atualizar repete a mesma consulta inicial.",
+      "impact": "Histórico e busca incompletos sem mecanismo para acessar registros omitidos. O usuário pode concluir que uma transcrição antiga não existe ou que um contato não tem áudios transcritos.",
+      "evidence": [
+        {
+          "path": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+          "line_start": 30,
+          "line_end": 47,
+          "git_blob_sha": "ddfac70e3d2682e0b4cf698d59fc418434ef0a21",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionsHistoryView.tsx#L30-L47",
+          "purpose": "Consulta única sem range e catch apenas no log"
+        },
+        {
+          "path": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+          "line_start": 51,
+          "line_end": 76,
+          "git_blob_sha": "ddfac70e3d2682e0b4cf698d59fc418434ef0a21",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionsHistoryView.tsx#L51-L76",
+          "purpose": "Filtro/busca/agrupamento locais"
+        },
+        {
+          "path": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+          "line_start": 104,
+          "line_end": 128,
+          "git_blob_sha": "ddfac70e3d2682e0b4cf698d59fc418434ef0a21",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionsHistoryView.tsx#L104-L128",
+          "purpose": "Contadores, Todo período e Atualizar"
+        },
+        {
+          "path": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+          "line_start": 132,
+          "line_end": 145,
+          "git_blob_sha": "ddfac70e3d2682e0b4cf698d59fc418434ef0a21",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionsHistoryView.tsx#L132-L145",
+          "purpose": "Vazio ou grupos sem navegação de páginas"
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "offline_probe_observed": false,
+      "recommendation": "Implementar paginação estável e filtragem no servidor, com contagem/indicação explícita do conjunto exibido; ou carregar todas as páginas de forma controlada antes de afirmar busca global. Tratar erro separadamente de conjunto vazio.",
+      "acceptance": [
+        "Uma fixture acima do teto de resposta permite localizar uma transcrição da página posterior por texto, nome e telefone.",
+        "Todo período e os contadores deixam claro se mostram um recorte; a próxima página é acessível sem perder filtros/agrupamento.",
+        "Ordenação inclui desempate estável e não duplica/omite registros na transição de páginas.",
+        "Uma falha de consulta não é apresentada como inexistência de transcrições."
+      ],
+      "limitations": [
+        "Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.",
+        "Contrato estático; o teto numérico de produção não foi lido nem aplicado. O achado é condicionado à população exceder o teto efetivo, sem afirmar que uma conta real já o excede.",
+        "Não acusa a geração da transcrição nem as permissões do endpoint ai-transcribe-audio, cobertas pelo agente de provedores. A causa está no consumidor de histórico.",
+        "Erro inicial convertido em Nenhuma transcrição é uma observação adicional da mesma tela, não um novo ID de falha genérica de loading/error."
+      ],
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior."
     }
   ],
   "deferred_candidates": [
@@ -4621,6 +5829,7 @@
       "title": "Formulário da carteira monta SelectItem com valor vazio",
       "status": "deferred",
       "classification": "DEFERRED_DEPENDENCY_CONTRACT",
+      "code_origin": "application_authored",
       "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Abrir o formulário da carteira que contém SelectItem value vazio.",
       "cause": "A fonte passa value=\"\" ao wrapper que encaminha props ao Radix Select Item.",
@@ -4820,6 +6029,17 @@
       ]
     }
   ],
-  "proof_semantics": "14 probes executam trechos/callbacks originais em memória com mocks e driver mínimo de hooks. Não são E2E, React renderer, banco ou prova de incidente em produção.",
-  "additional_review_observations": "second-pass-observations.json"
+  "proof_semantics": "21 probes autorais executam trechos/callbacks originais em memória com mocks e driver mínimo de hooks (18 principais e 3 do recorte final). Mais 3 probes do fornecedor: dois fragmentos numéricos sustentam um achado e um smoke test emite bytes pela API pública. Não são E2E, React renderer, banco ou prova de incidente em produção; o MP3 não foi decodificado/ouvido.",
+  "third_party_vendor_review": "vendor/report.md",
+  "additional_review_observations": "second-pass-observations.json",
+  "final_test_review": {
+    "artifact": "test-review.json",
+    "report": "test-review.md",
+    "assigned_files": 73,
+    "assigned_lines": 18496,
+    "full_body_read": 73,
+    "adjudicated": 73,
+    "pending": 0,
+    "tests_executed": 0
+  }
 }

@@ -1,0 +1,746 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "request": [
+    "other",
+    "comments_not_behavioral_ddl"
+  ],
+  "selection": [
+    171,
+    231
+  ],
+  "presented_instructions": [
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql",
+        "start_line": 92,
+        "end_line": 93,
+        "file_sha256": "b9482028940ba1b6fb09c4c83d7efc41fb19ea9c9761a0650b8d7c767917b1bc",
+        "statement_sha256": "18c3d971d21db3048b7c661984cbdac84e0e0ef0b64c67601ff8c656bc701b4e",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql",
+        "start_line": 126,
+        "end_line": 127,
+        "file_sha256": "b9482028940ba1b6fb09c4c83d7efc41fb19ea9c9761a0650b8d7c767917b1bc",
+        "statement_sha256": "db24145a872943783a1c7f7a86daeb883ba512cd4618b5d22dd3003961b8ce9a",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql",
+        "start_line": 208,
+        "end_line": 209,
+        "file_sha256": "b9482028940ba1b6fb09c4c83d7efc41fb19ea9c9761a0650b8d7c767917b1bc",
+        "statement_sha256": "780bd7ee7e1285a8383166352b7f92d2d17ae556528eab050e96fbf7e7a7931b",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql",
+        "start_line": 231,
+        "end_line": 232,
+        "file_sha256": "b9482028940ba1b6fb09c4c83d7efc41fb19ea9c9761a0650b8d7c767917b1bc",
+        "statement_sha256": "037f6797549a067436799c659205ae9ce4414a15965e3d466b0b69c25ae2935d",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql",
+        "start_line": 253,
+        "end_line": 254,
+        "file_sha256": "b9482028940ba1b6fb09c4c83d7efc41fb19ea9c9761a0650b8d7c767917b1bc",
+        "statement_sha256": "1540d587e43d214f7cb9dccb7678334cd3472d93bfbc2f00160de55353717741",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql",
+        "start_line": 278,
+        "end_line": 279,
+        "file_sha256": "b9482028940ba1b6fb09c4c83d7efc41fb19ea9c9761a0650b8d7c767917b1bc",
+        "statement_sha256": "04aa2b6e855fef712e16ed38458a02f26666d104eb1b37c0c33be8a0b012d4fb",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+        "start_line": 102,
+        "end_line": 103,
+        "file_sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+        "statement_sha256": "d8eaad27614737811d63487c0cd1eefec774aaa8657b467c6a5ccb60f5198ef1",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+        "start_line": 170,
+        "end_line": 171,
+        "file_sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+        "statement_sha256": "5d9b13e324ededfa4e11db988a4275ad318dd42813c4ec8ff90be2bb213c7ef5",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+        "start_line": 263,
+        "end_line": 264,
+        "file_sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+        "statement_sha256": "2f788e782e38d957852918d2efdd92dbe06fc983b0eff6ab23335232c26b34e2",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+        "start_line": 301,
+        "end_line": 302,
+        "file_sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+        "statement_sha256": "07ddeef5c8308486c5e634a1d79d28b6f369be5dbb208a528d41f12ea85b6b3d",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+        "start_line": 372,
+        "end_line": 373,
+        "file_sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+        "statement_sha256": "1274e72559105b3416492a05650efe3a51f02e222f19a63c325c8aca6c39c7d2",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+        "start_line": 425,
+        "end_line": 426,
+        "file_sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+        "statement_sha256": "dc4a3816370c130f5d777e920f977e717f5dabfadd38185dfa12eec8cfaa3002",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+        "start_line": 459,
+        "end_line": 460,
+        "file_sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+        "statement_sha256": "ab9b05f3ae2bdc2c4c4189b2360288adfdd8e83e83cb281a6ee1e6f50154ffde",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002381230_talkx_role_gates.sql",
+        "start_line": 622,
+        "end_line": 623,
+        "file_sha256": "5b9a0d9e97cba2d3f2cfa5339b18da85f004bc3238e3c5e47e96fd6ab2e06f9c",
+        "statement_sha256": "8fa46f2f9fbeb854c7f8f96caacb6415d4f3b879494c129549bc2474a82f305f",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002391230_talkx_audience_rpc.sql",
+        "start_line": 457,
+        "end_line": 458,
+        "file_sha256": "78689f588bdf7654ae49ed9c3d1cceeace10e81423c3787df2aa7e7ef5e26df1",
+        "statement_sha256": "5778d4aa76b5c7025c1798bd80d1177b94d1f2660ec33fd5904c6c98b85a4a7c",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002411230_ia047_idempotencia_de_efeitos.sql",
+        "start_line": 45,
+        "end_line": 46,
+        "file_sha256": "fe76b1d4a79df71da37682cbec46cfc84176fe44c921323ba5231d1f7d29a6e5",
+        "statement_sha256": "0b596f32bac45c197b03931a58ea2532d97b41de46fa24dea535bdf1031b6448",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002411230_ia047_idempotencia_de_efeitos.sql",
+        "start_line": 47,
+        "end_line": 48,
+        "file_sha256": "fe76b1d4a79df71da37682cbec46cfc84176fe44c921323ba5231d1f7d29a6e5",
+        "statement_sha256": "566faaf318cbb85988951046ff5d622b1bfba98e1ce8ba6c13e6e3307abae985",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002411230_ia047_idempotencia_de_efeitos.sql",
+        "start_line": 49,
+        "end_line": 50,
+        "file_sha256": "fe76b1d4a79df71da37682cbec46cfc84176fe44c921323ba5231d1f7d29a6e5",
+        "statement_sha256": "d87a49349b0c23a1daf891a10f99c6feba253d1000a13e777afa231f00f4d0c8",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002411230_ia047_idempotencia_de_efeitos.sql",
+        "start_line": 67,
+        "end_line": 68,
+        "file_sha256": "fe76b1d4a79df71da37682cbec46cfc84176fe44c921323ba5231d1f7d29a6e5",
+        "statement_sha256": "c8ce88e86ce60c3efa84cdf700c160258ed10d017bebd18fd0d67ec37d4e9a4c",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002421230_talkx_audience_snapshot.sql",
+        "start_line": 48,
+        "end_line": 49,
+        "file_sha256": "c37c5dbc81396b615fb7322d5e36dd7b944d954b6c1bd1780dad73972250d85c",
+        "statement_sha256": "8d623521d46018761046ecc32e56a4a79a84a289bed7aa381ed674e32c304359",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002421230_talkx_audience_snapshot.sql",
+        "start_line": 350,
+        "end_line": 351,
+        "file_sha256": "c37c5dbc81396b615fb7322d5e36dd7b944d954b6c1bd1780dad73972250d85c",
+        "statement_sha256": "da307f279900a7e0eda99542faaf8e26d7765570976b852adeae3ea9987ca79e",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002421230_talkx_audience_snapshot.sql",
+        "start_line": 497,
+        "end_line": 498,
+        "file_sha256": "c37c5dbc81396b615fb7322d5e36dd7b944d954b6c1bd1780dad73972250d85c",
+        "statement_sha256": "4d5d86bab55a8bab5c23dd4ce6de32e52953390f3c42eb60014c9ccb9f811cf3",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002431230_talkx_regressoes_fix.sql",
+        "start_line": 346,
+        "end_line": 347,
+        "file_sha256": "8a49a40b3976838756acab2e1e148878313132a0513f701edd26ef6e9d7a4ae5",
+        "statement_sha256": "f5cf4a118c426ba5b836d336c3d69e625ac19bbb84d9f66ada542c642b230872",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002451230_talkx_owner_responsible_unify.sql",
+        "start_line": 42,
+        "end_line": 43,
+        "file_sha256": "788cc86e0b003e537cd45830eb398b02d138995a688f8c93eb839cd3f6a48580",
+        "statement_sha256": "a9dbae8dde4d939260cbb20a138ca15cb4c45a83b1d17522f3149d81d5faefb1",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002451230_talkx_owner_responsible_unify.sql",
+        "start_line": 334,
+        "end_line": 335,
+        "file_sha256": "788cc86e0b003e537cd45830eb398b02d138995a688f8c93eb839cd3f6a48580",
+        "statement_sha256": "7aa28e7fc056e9dea00d214f349e5ad1034ea4ba08e98526789d774bf45f498d",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002451230_talkx_owner_responsible_unify.sql",
+        "start_line": 337,
+        "end_line": 338,
+        "file_sha256": "788cc86e0b003e537cd45830eb398b02d138995a688f8c93eb839cd3f6a48580",
+        "statement_sha256": "436559af6d3be1e4bb65b6ad518faac8c6e69f4591f967e2c4934d0c43bc7419",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql",
+        "start_line": 253,
+        "end_line": 256,
+        "file_sha256": "759b6d7fbc4edb49651b631a1fba5af28a0d1ad4544cb70184566ea5e1ff53dc",
+        "statement_sha256": "488795599988ab175b1aae0373f051bd4eb3d8f94d460132b880d2a749a3cc8b",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql",
+        "start_line": 300,
+        "end_line": 301,
+        "file_sha256": "759b6d7fbc4edb49651b631a1fba5af28a0d1ad4544cb70184566ea5e1ff53dc",
+        "statement_sha256": "e033c329b66a3709d7e5efea3d632fb70742cdd7562b64e8f22b393a9b8e937a",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql",
+        "start_line": 330,
+        "end_line": 331,
+        "file_sha256": "759b6d7fbc4edb49651b631a1fba5af28a0d1ad4544cb70184566ea5e1ff53dc",
+        "statement_sha256": "222227ade1e5fe6ea4365d822a05925b368c486399bcf2cb2770e9bc9d1ade16",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002581230_talkx_v4_x029_optout.sql",
+        "start_line": 88,
+        "end_line": 89,
+        "file_sha256": "eb658b3cff811fedd50bd6f23f6765b5041abc7f0bff61832752cdaa5cb72908",
+        "statement_sha256": "894aecfb19231287338eaac61fd5d5e6ae69caf6f94f3df6a8e7d88b2d45d6c3",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002581230_talkx_v4_x029_optout.sql",
+        "start_line": 115,
+        "end_line": 116,
+        "file_sha256": "eb658b3cff811fedd50bd6f23f6765b5041abc7f0bff61832752cdaa5cb72908",
+        "statement_sha256": "ec7454c876361c61d5f72517ae48aa00bab7f8882c051feff8bf3cf9f0f83b74",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002581230_talkx_v4_x029_optout.sql",
+        "start_line": 166,
+        "end_line": 167,
+        "file_sha256": "eb658b3cff811fedd50bd6f23f6765b5041abc7f0bff61832752cdaa5cb72908",
+        "statement_sha256": "149e20aaa9fa422c37a2de4ab595edb33395843ba289a7125c9e34f02400530a",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002581230_talkx_v4_x029_optout.sql",
+        "start_line": 249,
+        "end_line": 252,
+        "file_sha256": "eb658b3cff811fedd50bd6f23f6765b5041abc7f0bff61832752cdaa5cb72908",
+        "statement_sha256": "ceaff36bcd7e715b89408cfb02004df635d1fa3187465e7d01ed5d6d821d5345",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002581230_talkx_v4_x029_optout.sql",
+        "start_line": 283,
+        "end_line": 284,
+        "file_sha256": "eb658b3cff811fedd50bd6f23f6765b5041abc7f0bff61832752cdaa5cb72908",
+        "statement_sha256": "f37481b528e7f4337d29fbbe3eb1a48fa22a20548ae4e7ed7778f2136c83cf81",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002611230_ia051_correlacao_de_execucao.sql",
+        "start_line": 48,
+        "end_line": 49,
+        "file_sha256": "5868e23967d6a3acd2c0d29903cb67bd366773672baacb2c04b5d9217ea47eff",
+        "statement_sha256": "fcb8dab17d344e7850c981a0be3b75dde61956bdf46f599b76f4cd55d6526f49",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002611230_ia051_correlacao_de_execucao.sql",
+        "start_line": 50,
+        "end_line": 51,
+        "file_sha256": "5868e23967d6a3acd2c0d29903cb67bd366773672baacb2c04b5d9217ea47eff",
+        "statement_sha256": "7d94f118b1706948f7652937c8e091cdf0c1b98bd93674c5bd0a529461f5bad4",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002611230_ia051_correlacao_de_execucao.sql",
+        "start_line": 52,
+        "end_line": 53,
+        "file_sha256": "5868e23967d6a3acd2c0d29903cb67bd366773672baacb2c04b5d9217ea47eff",
+        "statement_sha256": "5162999b3df12739f72b9c92485a5cf07c52a7a91613ddd0b0b91c8c776397b9",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002631230_talkx_v4_x072_overview_stats.sql",
+        "start_line": 70,
+        "end_line": 71,
+        "file_sha256": "a1ba51f5203bb0e2187c0963480d26985e34dab815fd68c792b85d4c177f5eea",
+        "statement_sha256": "67d8feee13c79f112c042a2707cd561b55e76a8dae50fe4d8c778089ef6ae1e5",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002631230_talkx_v4_x072_overview_stats.sql",
+        "start_line": 271,
+        "end_line": 272,
+        "file_sha256": "a1ba51f5203bb0e2187c0963480d26985e34dab815fd68c792b85d4c177f5eea",
+        "statement_sha256": "afb7761b695896d53127a3821443980f7d415cadc9a06b5d245bc7df22bd026a",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002641230_talkx_v4_x057_segmentos.sql",
+        "start_line": 40,
+        "end_line": 41,
+        "file_sha256": "4b48f125d556ed915e0b879fb1e8aa9ad7c844740eb38c28e8d588a1a36f0049",
+        "statement_sha256": "9f22ca537c07aea8ad6fbd4b60420df8b2eb8bf4c412e71f9921ce2eda057893",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002641230_talkx_v4_x057_segmentos.sql",
+        "start_line": 47,
+        "end_line": 48,
+        "file_sha256": "4b48f125d556ed915e0b879fb1e8aa9ad7c844740eb38c28e8d588a1a36f0049",
+        "statement_sha256": "e3c9a21894e1f06ff4aea7034b7cb9a417fd97eba48cd328fe0b486bc7f4c962",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002671230_f60_conexao_capacidades_e_risco.sql",
+        "start_line": 32,
+        "end_line": 33,
+        "file_sha256": "076d7993caa398aeee1fb9a66c6cb353425ab81ca43eb087cb3558cfca955d02",
+        "statement_sha256": "61ddf9e56b083d63bcad22893b81ea30abd1cd08706f455945e4e2ef7f0f17c8",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002681230_catalogo_rate_limit_compartilhado.sql",
+        "start_line": 32,
+        "end_line": 33,
+        "file_sha256": "4324d04267b82566d4ac9c8d4030f3972405a7e17dd77911c8c735f7a1634d0f",
+        "statement_sha256": "0df94b204933cca9abbecb1dfc383a989fa7c18f6524da3769b9f6b738c37ec6",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002681230_catalogo_rate_limit_compartilhado.sql",
+        "start_line": 79,
+        "end_line": 80,
+        "file_sha256": "4324d04267b82566d4ac9c8d4030f3972405a7e17dd77911c8c735f7a1634d0f",
+        "statement_sha256": "55d4196761db5ccd2a87fdf6517e635d5edcc5043e37ecd1ee4fe7afc493a90e",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261002691230_talkx_v4_x021_links_conversoes_investimento.sql",
+        "start_line": 133,
+        "end_line": 134,
+        "file_sha256": "f596a472c0d68e9e8d3926d5107a205a3f08585988931113d45938c98042300c",
+        "statement_sha256": "11e6c9222b1c4f81295b9c11fd505a77a19ba792ef88a3bfca750b711986d42f",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003072707_ia056_agregacao_no_servidor.sql",
+        "start_line": 179,
+        "end_line": 180,
+        "file_sha256": "085ae17e56d94f2b89ada46ae86b403b2e9d2963a2adbaed60a537e6f7e2ad42",
+        "statement_sha256": "b61e420de2855bbe516d7ad1cd150968475bcd5312b0c1699b8a0c22f2b70a78",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003082707_ia055_tarifas_versionadas.sql",
+        "start_line": 68,
+        "end_line": 69,
+        "file_sha256": "1fae921e5bdaa38f6a8eef7b7013bac91f02b180b010676001a41017b339ea3a",
+        "statement_sha256": "ac166afa5bb27f2be6482c91a0a140d18234af4a0990dff02ad3629e41de2203",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003092707_f62b_leitura_janela_jsonb.sql",
+        "start_line": 130,
+        "end_line": 131,
+        "file_sha256": "b2852e0f1921974b95bed8e50c5c989f903c5179b392427a2251e95aff58b0ce",
+        "statement_sha256": "1ad9d77073c367b0ff0ee689df1bc3ac2f269f55424427f8c4c0a0e9623ea278",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003102707_ia055_custo_no_relatorio.sql",
+        "start_line": 139,
+        "end_line": 140,
+        "file_sha256": "348147ad38fed1cca0b0e62634bcf2ca6971c98103947171759c922cb968b6c2",
+        "statement_sha256": "de4bf06ccef93a44640b05e903865682fc7ba59933dbbb0bb4b54ed7918dedd5",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003122707_catalogo_rate_limit_hits_append_only.sql",
+        "start_line": 28,
+        "end_line": 29,
+        "file_sha256": "791210acdb8681c6cfc7c6f7e8b542732eaed45e83721ce66cdfeabf52c38b3e",
+        "statement_sha256": "60b59627d78f97c2a9b595131a0c37af21533cc7887cc06a563eb5af480a4bf1",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003122707_catalogo_rate_limit_hits_append_only.sql",
+        "start_line": 76,
+        "end_line": 77,
+        "file_sha256": "791210acdb8681c6cfc7c6f7e8b542732eaed45e83721ce66cdfeabf52c38b3e",
+        "statement_sha256": "452bfdd52c947db1b0c881790332a16c508bf872638f61d96e553f76e9bc1256",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003151520_add_manual_email_crm_link_guard.sql",
+        "start_line": 67,
+        "end_line": 68,
+        "file_sha256": "7c3149377177aa71fb21b02d00ce4f288b7d6900aaceead9ad4124f0eece2a14",
+        "statement_sha256": "a4c122d71ef0967a2e750832924ff4568ddd58b22dcb2775f48569aba23035a7",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql",
+        "start_line": 25,
+        "end_line": 25,
+        "file_sha256": "66cd25b7697b0360181c4e4971409d15655fb72697821f6756357dac114967d5",
+        "statement_sha256": "6e2ce160285928e38f0de5b042c825747f5eecbbe7b952a85edac853b6ed4e15",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql",
+        "start_line": 26,
+        "end_line": 26,
+        "file_sha256": "66cd25b7697b0360181c4e4971409d15655fb72697821f6756357dac114967d5",
+        "statement_sha256": "2717ac4d148f0de010d6f6d1a46c412e33aab98719d1c2c060aea84cacfd960f",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql",
+        "start_line": 27,
+        "end_line": 27,
+        "file_sha256": "66cd25b7697b0360181c4e4971409d15655fb72697821f6756357dac114967d5",
+        "statement_sha256": "b7a0b3e356584acfb4fa3efeb1fb6d433ad4641c6041dbf00296d010afac2693",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql",
+        "start_line": 50,
+        "end_line": 51,
+        "file_sha256": "6034d56414585c7822cd4d7de9a88028dc25a888007ef3466bfbb127f3132c05",
+        "statement_sha256": "2352ade7268832e7d0823fd13d414408c8a56f7189e694d842ee0de7f18ec10d",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003212707_talkx_receipts_replies.sql",
+        "start_line": 53,
+        "end_line": 54,
+        "file_sha256": "b578dc45911099ea549bee07ede4ff1239b8fb4774eacc1d9dbc71ecfeb26de5",
+        "statement_sha256": "4745dc273576a47f07cda28f2e2c5848644b9ef7dcadb562f16c04e1e6658112",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003212707_talkx_receipts_replies.sql",
+        "start_line": 305,
+        "end_line": 306,
+        "file_sha256": "b578dc45911099ea549bee07ede4ff1239b8fb4774eacc1d9dbc71ecfeb26de5",
+        "statement_sha256": "aa93773bb9925b2baa0fe6f375db4bab9257a97829dda3eb227b3b840f9c5b5d",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003212707_talkx_receipts_replies.sql",
+        "start_line": 329,
+        "end_line": 330,
+        "file_sha256": "b578dc45911099ea549bee07ede4ff1239b8fb4774eacc1d9dbc71ecfeb26de5",
+        "statement_sha256": "1e975b87e4476b9864ea4319a6b73957bc86533cf4c78a9cde7a1fc0a4361f31",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003212707_talkx_receipts_replies.sql",
+        "start_line": 428,
+        "end_line": 429,
+        "file_sha256": "b578dc45911099ea549bee07ede4ff1239b8fb4774eacc1d9dbc71ecfeb26de5",
+        "statement_sha256": "b691ae49b0a2316be4c7782690ca15dc8d6dbd27d8288a5a74bcbd59729aafcf",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    },
+    {
+      "group": "comments_not_behavioral_ddl",
+      "source": {
+        "path": "supabase/migrations/20261003212707_talkx_receipts_replies.sql",
+        "start_line": 481,
+        "end_line": 482,
+        "file_sha256": "b578dc45911099ea549bee07ede4ff1239b8fb4774eacc1d9dbc71ecfeb26de5",
+        "statement_sha256": "bdc9f6594e35da9fefa1217a2fda1a9e5464b236a345df43ac4006fba158e6fe",
+        "operation": "COMMENT",
+        "kind": "other"
+      }
+    }
+  ],
+  "status": "presented_only_not_semantically_reviewed"
+}

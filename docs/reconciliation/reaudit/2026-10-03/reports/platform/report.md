@@ -2,7 +2,7 @@
 
 Fonte fixada: `da307ba5626dce892f0b37cb6762463f55d14a96`.
 
-9 contratos confirmados por leitura de código. Oito casos PLAT executam callbacks/módulos exatos com fronteiras sintéticas; PLAT002 usa duas variantes e PLAT005 não tem probe. COM-P10 compartilha o arquivo de resultados e pertence ao relatório de Email. Não houve navegação autenticada, operação no banco, instalação ou edição do produto.
+12 contratos confirmados por leitura de código. Onze casos PLAT executam callbacks/módulos exatos com fronteiras sintéticas; PLAT002 usa duas variantes, e PLAT005/009 têm inspeção estática. COM-P10 compartilha o arquivo de resultados e pertence ao relatório de Email. Não houve navegação autenticada, operação no banco, instalação ou edição do produto.
 
 ## R2-PLAT-001 · P2 · Avançar no histórico para uma tela repetida seleciona a ocorrência anterior
 
@@ -166,6 +166,60 @@ Fonte fixada: `da307ba5626dce892f0b37cb6762463f55d14a96`.
 
 **Probes:** Leitura estática; sem probe dinâmico..
 
+## R2-PLAT-010 · P2 · Botão Buscar do cabeçalho mobile só altera um estado sem consumidor
+
+**Condição:** Aplicação usa AppShell em viewport mobile e o usuário aciona Buscar no MobileHeader.
+
+**Cadeia:** AppShell → MobileShell → MobileHeader.onSearchOpen → setMobileSearchOpen(true).
+
+**Comportamento:** MobileShell declara mobileSearchOpen e fornece o setter ao botão, mas nunca lê o estado nem renderiza ou despacha uma busca. O botão é exposto porque o callback existe.
+
+**Efeito:** O comando não abre busca, campo ou resultado. O probe mudou o flag para true e conservou a mesma composição e os demais painéis fechados.
+
+**Aceite proposto:** Ligar o botão a uma superfície de busca real ou ao comando compartilhado que a abre. Provar abertura, foco, resultado, fechamento e retorno em viewport mobile.
+
+**Limites:** Componente inteiro executado com captura de JSX e hooks sintéticos. Não houve ReactDOM, clique real ou medição de layout; o achado é a ausência de qualquer consumidor do estado.
+
+**Evidências:** [src/components/mobile/MobileShell.tsx:35–56](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileShell.tsx#L35-L56); [src/components/mobile/MobileShell.tsx:64–109](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileShell.tsx#L64-L109); [src/components/mobile/MobileHeader.tsx:111–123](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileHeader.tsx#L111-L123); [src/components/layout/AppShell.tsx:95–106](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/layout/AppShell.tsx#L95-L106).
+
+**Probes:** PLAT-P09.
+
+## R2-PLAT-011 · P2 · Notificações mobile usam lista vazia local e contador fixado em zero
+
+**Condição:** Há notificações do usuário, mas a navegação usa o shell mobile do Index.
+
+**Cadeia:** Index.unreadNotifications=0 → AppShell → MobileShell.notification state vazio → NotificationsPanel.
+
+**Comportamento:** Index passa zero literal. MobileShell cria notifications=[] sem consulta, subscription ou ação que insira dados; a única atualização mapeia essa lista para read=true. O painel abre normalmente e exibe Tudo em dia/Nenhuma notificação com base no array desconectado.
+
+**Efeito:** O usuário mobile não recebe a lista nem o contador real por esse painel. Isso independe de erro de rede e é distinto de PLAT005, que trata erro/loading de uma consulta existente no popover desktop.
+
+**Aceite proposto:** Conectar mobile e desktop à mesma fonte de notificações e às mesmas mutações de leitura. Provar lista não vazia, contador, leitura individual/em lote, loading e erro em viewport mobile.
+
+**Limites:** O probe usa o literal zero extraído do Index e abre o painel do shell inteiro sob hooks/JSX sintéticos. A existência de notificações reais é uma precondição, não um dado consultado na conta do usuário.
+
+**Evidências:** [src/pages/Index.tsx:113–127](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/Index.tsx#L113-L127); [src/components/mobile/MobileShell.tsx:35–49](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileShell.tsx#L35-L49); [src/components/mobile/MobileShell.tsx:53–73](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileShell.tsx#L53-L73); [src/components/mobile/MobileHeader.tsx:125–145](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileHeader.tsx#L125-L145); [src/components/mobile/NotificationsPanel.tsx:110–121](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/NotificationsPanel.tsx#L110-L121).
+
+**Probes:** PLAT-P10.
+
+## R2-PLAT-012 · P2 · Sidebar das rotas de SLA muda a seleção sem abrir o módulo escolhido
+
+**Condição:** Usuário está nas rotas protegidas /sla ou /sla/history e seleciona Inbox ou outro módulo pela Sidebar.
+
+**Cadeia:** AppRoutes → SLADashboardPage/SLAHistory → SidebarNavItem.onClick → setCurrentView local.
+
+**Comportamento:** As duas páginas passam o setter de um estado local para Sidebar, mas sempre renderizam o mesmo corpo de SLA. O item da Sidebar apenas chama esse callback. Não há navegação de rota nem troca condicional de conteúdo nesses consumidores; a integração normal do Index possui outro callback.
+
+**Efeito:** A indicação de módulo selecionado pode mudar enquanto o usuário continua vendo SLA. O probe alterou a seleção para inbox e preservou a composição dos dois corpos. QueuesComparison não usa essa Sidebar e não pertence ao achado.
+
+**Aceite proposto:** Conectar essas entradas ao contrato de navegação compartilhado, preservando autorização, histórico e destino. Provar ida das duas rotas para Inbox/Configurações, retorno e comportamento do botão Voltar.
+
+**Limites:** Páginas completas com JSX/estado sintéticos; wiring da Sidebar e rotas inspecionados. Sem navegação real, browser, conta autenticada ou mudança do produto. O controle de acesso das rotas permanece presente.
+
+**Evidências:** [src/pages/SLADashboard.tsx:5–15](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/SLADashboard.tsx#L5-L15); [src/pages/SLAHistory.tsx:7–21](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/SLAHistory.tsx#L7-L21); [src/components/layout/SidebarNavItem.tsx:27–43](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/layout/SidebarNavItem.tsx#L27-L43); [src/components/layout/Sidebar.tsx:128–137](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/layout/Sidebar.tsx#L128-L137); [src/routes/AppRoutes.tsx:82–97](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/routes/AppRoutes.tsx#L82-L97).
+
+**Probes:** PLAT-P11.
+
 ## Observações e falsos positivos evitados
 
 - **useResourcePrefetch vaza dados reais entre usuários** — O cache genérico não inclui identidade automaticamente, mas não foi encontrado consumidor de produção além de exportações. Não há cadeia concreta de dados sensíveis demonstrada.
@@ -194,4 +248,10 @@ Arquivos: `src/hooks/ui/useGlobalKeyboardShortcuts.ts`, `src/components/settings
 Corpos integrais lidos. PLAT009 registra Ctrl+2 sem seleção de view; Alt+R usa mapa/callback correto e não é classificado como igualmente quebrado. ZenModeToggle recebe estado e ação do AppShell, portanto não há instância isolada nesse caminho (candidato rejeitado). Sidebar collapse escuta seu evento e remove listener; announcer cria/remove região viva e usa textContent; title restaura valor anterior. Hooks de aparência/gestos não executam escrita de dados de negócio. PrefetchOnHover depende de queryFn já disponível no cache/configuração e não certifica pré-carga de consulta inédita; essa limitação de otimização não foi promovida a falha funcional. DeepLinks é navegação por hash genérica; shell atual usa useNavigationHistory com query, sem confundir as implementações. useKeyboardHeight reage a eventos VisualViewport e não mede zoom/teclado real. Nenhum teste de acessibilidade visual, leitor de tela ou dispositivo móvel foi executado.
 
 Arquivos: `src/pages/Index.tsx`, `src/components/layout/AppShell.tsx`, `src/components/layout/ZenModeToggle.tsx`, `src/hooks/ui/use-toast.ts`, `src/hooks/ui/useKeyboardShortcuts.ts`, `src/hooks/ui/useKeyboardNavigation.ts`, `src/hooks/ui/useNavShortcuts.ts`, `src/hooks/ui/useAriaAnnouncer.ts`, `src/hooks/ui/useAmbientColor.ts`, `src/hooks/ui/useSidebarFavorites.ts`, `src/hooks/ui/useZenMode.ts`, `src/hooks/ui/useDocumentTitle.ts`, `src/hooks/ui/useKeyboardHeight.ts`, `src/hooks/ui/usePrefetchOnHover.ts`, `src/hooks/ui/useSidebarCollapse.ts`, `src/hooks/ui/useViewTransition.ts`, `src/hooks/ui/use-mobile.tsx`, `src/hooks/ui/useDeepLinks.ts`, `src/hooks/ui/useDensity.ts`.
+
+### UI-04: mobile, notificações, gestos e instalação
+
+Corpos integrais lidos. PLAT010/011 registram busca e notificações desconectadas no shell ativo. Drawer filtra seções e recentes por NavigationService; recents contém IDs de views, não consultas privadas. SwipeableRow/PullToRefresh genérico, SlideOverPanel/PinchZoom/LongPressMenu e FABs genéricos aparecem apenas em exports no rastreio de consumidores; suas limitações de cancelamento/limites não foram convertidas em incidentes de tela ativa. O Inbox usa outro hook usePullToRefresh e um indicador puro. MiniChatPiP ativo não recebe onQuickReply; a chamada Toque para responder apenas expande uma prévia com Abrir conversa completa, limitação explícita sem alegar perda de envio assíncrono inexistente. InAppNotification possui timer com cleanup, mas seu hook não tem consumidor de produção encontrado; não foi alegada perda atual por contexto do provider. MobileFAB encaminha as ações Novo para seleção de view, não dispara formulário diretamente. Install observa o prompt nativo, diferencia iOS e display-mode; não se executou instalação, modo offline, permissões, gestos, teclado móvel nem leitor de tela. O listener appinstalled não é removido no unmount, observação de lifecycle sem impacto produtivo material demonstrado.
+
+Arquivos: `src/components/mobile/SwipeGestures.tsx`, `src/components/mobile/swipeUtils.ts`, `src/components/mobile/MobileSlidePanel.tsx`, `src/components/mobile/MobileDrawerMenu.tsx`, `src/components/mobile/MobileShell.tsx`, `src/components/mobile/BottomSheet.tsx`, `src/components/mobile/MobileNavigation.tsx`, `src/components/mobile/MobilePullToRefresh.tsx`, `src/components/mobile/MiniChatPiP.tsx`, `src/components/mobile/InAppNotificationProvider.tsx`, `src/components/mobile/InAppNotification.tsx`, `src/components/mobile/MobileHeader.tsx`, `src/components/mobile/NotificationsPanel.tsx`, `src/components/mobile/MobileFAB.tsx`, `src/components/mobile/FloatingActionButtons.tsx`, `src/components/mobile/TouchRipple.tsx`, `src/components/mobile/SwipeableMessage.tsx`, `src/components/mobile/index.ts`, `src/pages/Install.tsx`.
 

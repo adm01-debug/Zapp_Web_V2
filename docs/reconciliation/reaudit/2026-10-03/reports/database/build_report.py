@@ -7,6 +7,7 @@ from pathlib import Path
 import hashlib
 import json
 import re
+import runpy
 
 from build_inventory import arg_types, parse_function
 
@@ -38,6 +39,12 @@ inventory = json.loads((OUT/'sql_inventory.json').read_text())
 manifest = json.loads((ROOT/'supabase/schema-manifest.json').read_text())
 catalog = json.loads((ROOT/'supabase/schema-catalog.json').read_text())
 grants = json.loads((ROOT/'scripts/db-audit/grants-baseline.json').read_text())
+view_review = json.loads((OUT/'view_review.json').read_text())
+trigger_review = json.loads((OUT/'trigger_review.json').read_text())
+remaining_ddl = json.loads((OUT/'remaining_ddl_inventory.json').read_text())
+ddl_completion = json.loads((OUT/'ddl_completion.json').read_text())
+test_review = json.loads((OUT/'test-review.json').read_text()) if (OUT/'test-review.json').exists() else None
+shell_review = json.loads((OUT/'shell-review.json').read_text()) if (OUT/'shell-review.json').exists() else None
 
 primary_sources = [
     {'id':'PG-POLICY', 'url':'https://www.postgresql.org/docs/17/sql-createpolicy.html',
@@ -54,12 +61,26 @@ primary_sources = [
      'use':'Conversões automáticas de string para tipos definidos pelo usuário são somente explícitas; atribuição precisa de cast adequado.'},
     {'id':'PG-TRIGGER', 'url':'https://www.postgresql.org/docs/17/trigger-definition.html',
      'use':'O trigger integra a transação da instrução que o aciona; erro não tratado desfaz os efeitos de ambos.'},
+    {'id':'PG-CREATE-TRIGGER', 'url':'https://www.postgresql.org/docs/17/sql-createtrigger.html',
+     'use':'Vínculos definem evento/momento/WHEN. Triggers do mesmo tipo/evento seguem ordem nominal; UPDATE OF depende da coluna mencionada, não somente de mudança de valor.'},
+    {'id':'PG-TRIGGER-ROW', 'url':'https://www.postgresql.org/docs/17/plpgsql-trigger.html',
+     'use':'NEW é o record da nova linha da relação do trigger. Alterar campo de NEW exige o campo no rowtype; o trigger BEFORE integra o INSERT e pode abortá-lo.'},
+    {'id':'PG-VIEW', 'url':'https://www.postgresql.org/docs/17/sql-createview.html',
+     'use':'security_invoker usa privilégios e RLS do invocador também nas relações base; grants na view não dispensam esse controle. Projeções calculadas e agregações têm limites próprios de atualização.'},
     {'id':'SUPABASE-AUTH-ROLE', 'url':'https://github.com/supabase/auth/blob/master/migrations/20220224000811_update_auth_functions.up.sql',
      'use':'auth.role() consulta claims da requisição, não current_user; SECURITY DEFINER não transforma o JWT authenticated em service_role.'},
     {'id':'PG-TIMESTAMP', 'url':'https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT',
      'use':'transaction_timestamp representa o início da transação; statement_timestamp representa o comando recebido e pode diferir após a primeira instrução.'},
     {'id':'POSTGREST-TRANSACTION', 'url':'https://docs.postgrest.org/en/stable/references/transactions.html',
      'use':'A requisição passa por START TRANSACTION, configurações da transação e consulta principal; erro na função aborta a transação. A versão e os tempos da implantação não foram medidos.'},
+    {'id':'PG-ON-CONFLICT', 'url':'https://www.postgresql.org/docs/17/sql-insert.html#SQL-ON-CONFLICT',
+     'use':'O alvo de ON CONFLICT escolhe os índices árbitros. Outra constraint UNIQUE continua podendo falhar; UPSERT não ignora erros independentes.'},
+    {'id':'SUPABASE-STORAGE-ACL', 'url':'https://supabase.com/docs/guides/storage/security/access-control',
+     'use':'Operações de Storage são autorizadas por policies em storage.objects; service key ignora RLS. Policies não substituem a autenticação/autorização do locator referenciado.'},
+    {'id':'PG-COLUMN-SCOPE', 'url':'https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-COLUMN-REFS',
+     'use':'Referência não qualificada resolve nomes das tabelas no escopo da consulta. Na subconsulta com profiles p, name corresponde à coluna p.name.'},
+    {'id':'PG-COLUMN-RESOLVER-SOURCE', 'url':'https://doxygen.postgresql.org/parse__relation_8c.html',
+     'use':'Fonte primária colNameToVar: examina p_namespace e interrompe se encontrou coluna antes de subir a parentParseState (linhas de código 926–974 no master exibido). Complementa a documentação PG17; não é execução do parser local nem prova de deploy.'},
 ]
 
 findings = []
@@ -615,6 +636,224 @@ add('R2-DB-016','P2',
      'Confirmar que o consumidor continua informando erros reais e só fecha o diálogo após a operação concluir.'],
     ['PG-TRIGGER'])
 
+add('R2-DB-019','P2',
+    'Reações do WhatsApp não vinculam a autoria ao usuário que grava',
+    'As policies vencedoras de message_reactions autorizam pela conversa/contato, mas não exigem user_id do chamador nem reservam contact_id como autor a uma origem confiável. Um agente pode criar reação local rotulada Cliente, assumir outro profile conhecido ou alterar/excluir reação alheia em mensagem autorizada.',
+    [],
+    [ev(M+'20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql',26,39,'DDL aceita user_id nulo com contact_id válido; CHECK exige um dos dois, não a identidade do chamador.'),
+     ev(M+'20260401003034_46580962-a5ba-41f5-b4b1-b05887b4b490.sql',41,49,'INSERT permissivo por contact_id atribuído; nem sequer vincula esse contato ao message_id.'),
+     ev(M+'20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql',49,81,'SELECT/INSERT por mensagem e contato; INSERT não restringe user_id.'),
+     ev(M+'20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql',86,117,'UPDATE e DELETE por mensagem visível, sem regra de autoria. Policy própria adicional não restringe outra permissiva.'),
+     find_ev('supabase/schema-manifest.json','r:public.message_reactions|authenticated|INSERT|','Snapshot registra INSERT de tabela para authenticated.'),
+     find_ev('supabase/schema-manifest.json','r:public.message_reactions|authenticated|UPDATE|','Snapshot registra UPDATE de tabela para authenticated.'),
+     find_ev('supabase/schema-manifest.json','r:public.message_reactions|authenticated|DELETE|','Snapshot registra DELETE de tabela para authenticated.'),
+     ev('src/hooks/reactions/useReactionMutations.ts',22,53,'Consumidor legítimo deriva contact_id da mensagem e usa profile próprio; isso é escolha do cliente, não defesa do endpoint de dados.'),
+     ev('src/hooks/reactions/useReactionMutations.ts',83,94,'DELETE da UI filtra próprio user_id, filtro que chamada direta pode omitir.'),
+     ev('src/hooks/chat/useMessageReactions.ts',54,76,'Leitura rotula reação sem user_id como Cliente e usa user_id para a autoria de agente.'),
+     ev('src/components/inbox/MessageReactions.tsx',35,69,'Componente ativo agrupa contagem e identifica reação do usuário pelo user_id persistido.'),
+     ev('src/components/inbox/MessageReactions.tsx',113,117,'Tooltip apresenta a autoria derivada das linhas.')],
+    ['Policies e grants locais aplicados conforme snapshot; cliente autenticado com perfil e um contato/mensagem que satisfaz o escopo de reação (por exemplo, contato atribuído ao próprio agente).',
+     'O chamador usa a API de dados diretamente com seu JWT; não precisa de papel admin nem service_role.',
+     'Para assumir um colega específico, precisa conhecer o profiles.id dele. Para falsificar a reação de Cliente no próprio contato, não precisa de UUID de outro usuário.',
+     'Escolhe emoji/linha que não conflita nas constraints UNIQUE existentes.'],
+    ['Insere {message_id: M, contact_id: C, user_id: null, emoji: E} para a mensagem do contato próprio.',
+     'O FK e reaction_author_check passam; o predicado de INSERT passa pelo contato/mensagem e não verifica origem de cliente.',
+     'A leitura da UI passa no mesmo escopo e mostra a reação como Cliente.',
+     'Alternativamente, UPDATE/DELETE de uma reação já visível passa independentemente de user_id pertencer a outra pessoa, porque as policies permissivas se combinam por OR.'],
+    'Integridade e atribuição de reações locais comprometidas: aparente reação do cliente/colega, remoção de reação alheia e contagens modificadas. Não foi afirmado que esse INSERT envia uma reação ao WhatsApp externo.',
+    ['FKs validam que IDs existem e UNIQUE limita duplicação da mesma combinação; nenhum trigger efetivo de message_reactions consta no catálogo/snapshot.',
+     'O hook normal escolhe o profile próprio e valida erros. Chamada direta não é obrigada a enviar esse filtro.',
+     'SELECT de profiles pode ocultar o nome de um colega e fazer aparecer Agente; não corrige o user_id persistido nem a personificação de Cliente.'],
+    ['Nenhuma mutação, consulta de reações reais ou exploração foi realizada.',
+     'Não se alega enumeração de UUIDs de contatos/mensagens fora do escopo nem envio remoto automático.',
+     'Há também um INSERT antigo que permite contact_id autorizado independente de message_id conhecido de outro contato; esse ramo exige UUID externo conhecido e não é necessário ao cenário principal.'],
+    {'classification':'novo achado da reauditoria','related_ids':['R2-INB-032','TC-009'],
+     'assessment':'INB-032 trata erro de envio remoto após persistência local. TC-009 trata permissões de Team Chat em tabelas diferentes. Nenhum cobre a autoria de public.message_reactions.'},
+    ['Separar autoria de usuário e autoria de contato no contrato e impor a identidade no banco, com caminho confiável próprio para eventos do provedor.',
+     'Consolidar todas as policies permissivas de escrita; restringir UPDATE/DELETE à autoria permitida.',
+     'Vincular message_id e contato ao mesmo registro canônico sem aceitar uma autorização por um contato e gravação em outro.',
+     'Verificar casos negativos de user_id alheio, user_id nulo em chamada de agente e remoção/edição de reação de outro autor; preservar reação legítima do usuário e ingestão autorizada do cliente.'],
+    ['PG-POLICY'])
+
+add('R2-DB-021','P2',
+    'A segunda reação ao mesmo emoji conflita com a chave reservada ao contato',
+    'O hook grava simultaneamente user_id e contact_id para reações de agentes. A tabela mantém UNIQUE(message_id,contact_id,emoji), além da UNIQUE por usuário. Outra autoria no mesmo contato/mensagem/emoji viola a chave de contato, e o alvo de UPSERT por user_id não trata esse conflito.',
+    [],
+    [ev(M+'20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql',26,39,'As duas constraints UNIQUE são independentes e o CHECK aceita os dois autores preenchidos.'),
+     find_ev('supabase/schema-manifest.json','relation:message_reactions.message_reactions_message_id_contact_id_emoji_key','Snapshot conserva a constraint por contato.'),
+     find_ev('supabase/schema-manifest.json','relation:message_reactions.message_reactions_message_id_user_id_emoji_key','Snapshot conserva a constraint por usuário.'),
+     ev('src/hooks/reactions/useReactionMutations.ts',22,53,'Hook resolve o contato, envia ambas as identidades e escolhe onConflict apenas por message_id,user_id,emoji.'),
+     ev('src/hooks/reactions/useReactionMutations.ts',53,79,'Erro da persistência é lançado antes do envio ao provedor e a UI recebe toast de erro.'),
+     ev('src/components/inbox/MessageReactions.tsx',51,79,'UI permite adicionar o mesmo emoji quando o usuário atual ainda não reagiu.'),
+     ev('src/components/inbox/MessageReactions.tsx',101,109,'Interface prevê contagem maior que um para o mesmo emoji.')],
+    ['Uma reação existente R1 tem message_id M, contact_id C e emoji E.',
+     'Um segundo autor autorizado a reagir em M usa a UI atual; por exemplo, supervisor após agente ou novo responsável após transferência do contato.',
+     'Esse segundo usuário tem user_id diferente do primeiro e sua combinação M/user_id/E ainda não existe; demais constraints e RLS são satisfeitas.'],
+    ['A primeira reação de agente grava (M, A, C, E) pelo hook atual.',
+     'O segundo agente B ainda não tem reação própria, então a UI chama addReaction(E). O hook tenta (M, B, C, E).',
+     'Não há conflito na chave árbitra (M, B, E), mas há conflito com R1 em (M, C, E). A constraint independente rejeita o INSERT, esperado SQLSTATE 23505.',
+     'O hook lança o erro e interrompe antes de sendReaction; R1 permanece e a reação de B não é salva. Uma reação de cliente já existente com o mesmo M/C/E produz a mesma colisão.'],
+    'Não é possível representar todas as autorias legítimas do mesmo emoji pela UI atual. Reação de agente e reação de cliente também disputam a mesma chave de contato. A falha é de persistência antes do envio externo, não um sucesso falso.',
+    ['Repetir o mesmo M/user_id/E pode ser tratado pelo UPSERT e não é o cenário de falha.',
+     'A chave de contato faz sentido quando contact_id identifica exclusivamente o autor cliente; o hook a usa também como vínculo contextual para agentes.',
+     'O tratamento de erro evita anunciar sucesso nessa rejeição.'],
+    ['Não houve execução de INSERT/UPSERT em banco. O resultado é deduzido das constraints conservadas no snapshot, payload exato do hook e semântica documentada de ON CONFLICT.',
+     'Incidência real e UI em sessão autenticada não foram medidas.'],
+    {'classification':'novo achado da reauditoria','related_ids':['R2-DB-019','R2-INB-032'],
+     'assessment':'DB-019 é ausência de autorização por autor; corrigir somente a ACL não resolve a colisão de dados válidos. INB-032 começa após a persistência e trata rejeição do provedor. Inbox confirmou que não havia achado duplicado.'},
+    ['Escolher um modelo inequívoco para autor versus contato da mensagem e ajustar payload/constraints em conjunto.',
+     'Verificar duas reações legítimas de agentes diferentes no mesmo emoji, uma reação de cliente mais uma de agente, retries do mesmo autor e exclusão apenas da autoria selecionada.',
+     'Preservar unicidade por autor e o vínculo válido da mensagem sem eliminar a deduplicação do provedor.'],
+    ['PG-ON-CONFLICT'])
+
+add('R2-DB-020','P1',
+    'Policy de arquivos do Team Chat compara o caminho com o nome do perfil e perde o vínculo com o objeto',
+    'No EXISTS da policy Conversation members can read team chat files, tm.media_path = name resolve name como profiles.name do escopo interno. Uma mensagem visível com media_bucket team-chat-files e media_path igual ao nome do próprio perfil torna o EXISTS verdadeiro independentemente do objeto Storage consultado.',
+    ['public.is_team_conversation_member(uuid,uuid)','public.team_messages_validate_reply_to()','public.bump_conversation_updated_at()'],
+    [ev(M+'20260927270012_team_chat_e21_storage_select_policy.sql',1,3,'Policy SELECT vigente: subquery junta profiles p e usa name não qualificado.'),
+     find_ev('supabase/schema-manifest.json','"profiles.name"','Snapshot confirma coluna name em profiles; team_messages/team_conversation_members não possuem essa coluna.'),
+     ev(M+'20260927270004_team_chat_e13_media_bucket_path_columns.sql',1,3,'media_bucket e media_path são colunas text sem vínculo de objeto.'),
+     ev(M+'20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql',44,57,'SELECT de mensagens exige membro e INSERT exige membro+sender próprio, não validade/posse do media_path.'),
+     ev(M+'20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql',83,87,'Policy tcm_select_own permite ler a própria participação; recursão anterior foi corrigida.'),
+     ev(M+'20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql',6,8,'SELECT do próprio perfil permite a linha p necessária ao EXISTS.'),
+     ev(M+'20260928600000_team_chat_e25_team_messages_integrity.sql',10,12,'CHECKs de conteúdo e media_url/media_type não vinculam media_bucket/path a objeto.'),
+     ev(M+'20260929160000_team_chat_e26_message_type_media_constraint.sql',6,6,'CHECK de tipo também não valida locator; texto com media_url nulo é permitido.'),
+     find_ev('supabase/schema-manifest.json','r:public.team_messages|authenticated|INSERT|','INSERT de tabela para authenticated está no snapshot.'),
+     ev('src/hooks/team-chat/useTeamChatMutations.ts',10,31,'Consumidor ativo envia mediaBucket/mediaPath diretamente; não há autorização adicional por objeto.'),
+     ev(M+'20260928560000_team_chat_e20_storage_team_chat_files.sql',6,12,'Migration posterior remove outro nome de policy SELECT e modifica INSERT; não remove a policy vulnerável.'),
+     ev('src/hooks/storage/useResolvedStorageUrl.ts',35,55,'Cliente resolve objetos privados através de createSignedUrl, submetido ao controle Storage.')],
+    ['A policy do arquivo 20260927270012 está aplicada; configuração/grants padrão de leitura da API Storage estão disponíveis ao usuário autenticado. O snapshot público não registra a ACL do schema storage.',
+     'O usuário tem profiles.name não nulo e pertence a pelo menos uma conversa Team Chat, podendo inserir e ler uma mensagem própria nessa conversa.',
+     'Existe mídia privada de outras conversas no bucket team-chat-files. Não é necessário pertencer às conversas desses objetos para o predicado defeituoso.'],
+    ['Membro P insere mensagem na conversa autorizada C, com sender_id=P, conteúdo não vazio, media_bucket=team-chat-files e media_path igual ao próprio nome N. media_url/media_type podem permanecer ambos nulos, satisfazendo os CHECKs.',
+     'Ao autorizar SELECT de qualquer objeto no bucket team-chat-files, a subquery enxerga essa mensagem, a participação de P e seu próprio perfil.',
+     'O nome não qualificado é resolvido no escopo interno para p.name. Assim tm.media_path=p.name equivale a N=N e a subquery não se correlaciona com objects.name.',
+     'O ramo EXISTS passa para objetos de outras conversas. Conforme as APIs Storage habilitadas, a mesma policy SELECT permite listar/assinar/ler objetos elegíveis; não se exige conhecer previamente cada caminho para que o predicado fique verdadeiro.'],
+    'Quebra da separação de arquivos privados entre conversas do chat interno. Sob as precondições, uma mensagem controlada por membro pode autorizar leitura de todo o bucket team-chat-files. O achado não concede escrita/remoção desses objetos nem acesso a outros buckets.',
+    ['RLS de team_messages, team_conversation_members e profiles continua ativa e foi considerada: o cenário usa mensagem, participação e perfil do próprio chamador.',
+     'INSERT de arquivos continua limitado à pasta do profile; o cenário não requer upload e cria apenas uma linha de mensagem válida.',
+     'O trigger de reply_to aceita reply nulo, o guard de edição só atua no UPDATE de conteúdo e o bump apenas atualiza o timestamp da conversa. Nenhum autoriza media_path.',
+     'A correção de grants UPDATE em team_messages impede reparenting por PATCH, mas não restringe o INSERT dessas colunas.'],
+    ['Nenhuma consulta de storage.objects, listagem, assinatura, download ou INSERT foi executada.',
+     'Conclusão de binding é análise estática corroborada por documentação PG17, fonte primária colNameToVar e leitura independente de root/auth; não é resultado de PostgreSQL executado.',
+     'O snapshot é do schema public e não atesta o corpo/grants Storage implantado. Policy posterior ou configuração externa não representada na fonte pode alterar o alcance; isso não foi medido.',
+     'Doxygen mostra master; documentação de referência foi lida na versão 17. O nome name pertence a profiles no catálogo local, independentemente de ordem de plano/avaliação.'],
+    {'classification':'novo achado da reauditoria','related_ids':['TC-001','R2-INF-022'],
+     'assessment':'TC-001 cobre incompatibilidade de paths e renderização; não cobre binding de coluna que elimina a correlação de objetos. INF-022 é outro caminho via Edge/service_role e não depende desta mensagem/policy. Root e Auth fizeram revisão independente do escopo interno.'},
+    ['Qualificar explicitamente a coluna do objeto na subquery e revisar todas as correlações de ACL para evitar captura por coluna interna.',
+     'Autorizar a origem do locator no momento de persistir a associação mensagem/objeto; qualificar o nome sozinho não deve transformar referências arbitrárias em permissão.',
+     'Com papéis reais em ambiente de teste autorizado, verificar membro versus não membro, mensagem com media_path igual ao nome do perfil e objetos em outra conversa, além de listagem e assinatura.',
+     'Verificar grants/role e definição efetiva de Storage antes de declarar correção do deploy, preservando upload/leitura legítimos.'],
+    ['PG-COLUMN-SCOPE','PG-COLUMN-RESOLVER-SOURCE','PG-POLICY','SUPABASE-STORAGE-ACL'])
+
+add('R2-DB-022','P1',
+    'Referência de mídia gravável pelo agente funciona como autorização para outro objeto privado',
+    'As policies de leitura de whatsapp-media/audio-messages aceitam a existência de uma mensagem visível cujo media_url termina no caminho do objeto. Como o agente pode alterar media_url de uma mensagem autorizada fora do estado protegido, pode fabricar essa referência para um locator privado conhecido e passar a satisfazer a ACL de leitura.',
+    ['public.guard_message_delivery_internal_fields()','public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)'],
+    [ev(M+'20261003142707_whatsapp_media_recebida_select_via_messages.sql',30,50,'Policy aditiva SELECT confia no locator de qualquer mensagem que passe pela RLS, sem validar autoria confiável da associação.'),
+     ev(M+'20260930700000_fix_whatsapp_storage_policies.sql',18,62,'Policies anteriores já têm ramo por media_url de mensagem de contato atribuído. Corrigir só a policy aditiva deixa esse caminho.'),
+     ev(M+'20260925223000_messages_update_policy_queue_parity.sql',9,23,'UPDATE de mensagens é permitido por contato/filas do usuário, sem limitação de coluna media_url.'),
+     find_ev('supabase/schema-manifest.json','r:public.messages|authenticated|UPDATE|','Snapshot conserva UPDATE de tabela para authenticated, não só colunas de texto.'),
+     ev(M+'20260909260000_add_atomic_rich_outbound_messages.sql',192,253,'Guard protege campos internos e payload apenas quando OLD.client_message_id não nulo, OLD.status=sending e external_id nulo; mensagem recebida/fora dessa condição pode trocar media_url.'),
+     ev(M+'20260902023200_consolidate_rls_select_messages_contacts.sql',21,36,'A própria mensagem continua visível após o UPDATE por permanecer no contato autorizado.'),
+     ev(M+'20260930200000_enforce_enqueue_connection_scope.sql',51,59,'Ramo alternativo de criação: enqueue valida HTTPS/tamanho, sem conferir permissão do objeto referenciado.'),
+     ev(M+'20260930200000_enforce_enqueue_connection_scope.sql',155,163,'enqueue persiste p_media_url sob a mensagem autorizada.'),
+     ev('src/hooks/storage/useResolvedStorageUrl.ts',35,55,'Consumidor de objetos privados solicita URL assinada pelo bucket/path extraídos do locator.'),
+     ev('supabase/tests/rls_whatsapp_media_select_via_messages.sql',11,23,'Teste existente explicita limites e alega controles de leitura; não exercita criação/alteração maliciosa da associação.'),
+     ev('supabase/tests/rls_whatsapp_media_select_via_messages.sql',61,105,'Casos versionados assumem m.media_url já confiável e alternam visibilidade do contato, sem testar reassociação.')],
+    ['Usuário autenticado pode ler e atualizar ao menos uma mensagem M do contato próprio/escopo autorizado; M está fora da condição protegida de payload sending (por exemplo, mensagem recebida com client_message_id nulo).',
+     'Conhece o bucket/path exato de um objeto privado existente de outro contato que não está em seu escopo. A obtenção desse locator não foi demonstrada e é precondição explícita.',
+     'As policies locais de Storage estão aplicadas e a API Storage admite operações de leitura com os grants da plataforma; snapshot public não atesta grants de storage.',
+     'O usuário modifica somente media_url para um HTTPS locator válido; não precisa alterar campos de entrega, fazer upload, ter send_messages nem chamar service_role.'],
+    ['Sem a referência fabricada, o objeto de B não possui mensagem visível nem pasta autorizada para A e é negado pelas condições examinadas.',
+     'A atualiza media_url de sua mensagem recebida M para o locator conhecido do objeto de B, mantendo contact_id e todos os campos internos de entrega.',
+     'UPDATE RLS e guard passam. M permanece visível ao usuário.',
+     'A policy Storage encontra M e o sufixo bucket/path correspondente. SELECT passa mesmo que o contato original do objeto continue fora do escopo de A. O cliente pode então solicitar leitura/assinatura desse caminho.'],
+    'Um identificador conhecido de objeto privado pode ser convertido em acesso por meio de uma mensagem controlada pelo próprio usuário. O limite de leitura por contato deixa de ser confiável para esse objeto. Não se alega enumeração de todos os paths, nem acesso prévio ao conteúdo de B, nem envio remoto como etapa necessária.',
+    ['As policies qualificam objects.name no ramo de WhatsApp e continuam sujeitas à RLS de messages; o problema é confiar em uma associação que o próprio caller pode criar/alterar.',
+     'URLs sem bucket/path correspondente não passam. Contato e mensagem originais de B continuam protegidos.',
+     'O guard bloqueia alteração de payload em envio ativo com client_message_id, mas o cenário usa mensagem fora desse estado.',
+     'O endpoint de envio tem gates de perfil/contato/conexão/permissão. O cenário principal usa UPDATE de uma mensagem existente e não depende desse endpoint.'],
+    ['Nenhum PATCH, GET, assinatura ou download foi realizado; conclusão estática sobre predicados e superfície de escrita.',
+     'ACL/definição efetiva do schema storage e configurações externas permanecem desconhecidas nesta rodada.',
+     'O registro do teste existente menciona um PG17 descartável anterior; não é execução desta reauditoria nem evidência do cenário de reassociação.'],
+    {'classification':'novo achado da reauditoria','related_ids':['R2-DB-020','R2-INF-022'],
+     'assessment':'DB-020 perde a correlação por binding de name em Team Chat. Aqui a correlação é exata, mas seu vínculo é controlável. INF-022 usa service_role em classificadores sem precisar fabricar uma mensagem. Os três caminhos requerem correções próprias.'},
+    ['Definir e validar uma associação confiável entre objeto e contato/mensagem, conferindo permissão da origem antes de aceitar novos locators ou reassociações.',
+     'Restringir mutações de campos de mídia conforme o fluxo legítimo; tratar INSERT, UPDATE e RPC de enqueue de forma coerente.',
+     'Revisar todos os ramos permissivos de SELECT de whatsapp-media/audio-messages, incluindo as policies anteriores à aditiva.',
+     'Teste negativo autorizado: A conhece path de B, pode editar sua própria mensagem e ainda assim não consegue assinar/ler B após tentar referenciá-lo; encaminhamento legítimo de mídia visível continua funcionando.'],
+    ['PG-POLICY','SUPABASE-STORAGE-ACL'])
+
+add('R2-DB-023','P2',
+    'Trigger de recuperação ainda escreve campo removido e bloqueia o pedido autenticado',
+    'A migration que remove reset_token exclui os triggers hash/protect, mas mantém sanitize_reset_request_trigger. O corpo vencedor de sanitize_reset_request tenta NEW.reset_token := NULL quando há auth.uid(), embora a coluna já não exista. O formulário pode ser aberto com sessão e chega a esse INSERT para o email do próprio usuário.',
+    ['public.sanitize_reset_request()'],
+    [ev(M+'20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql',7,25,'Corpo vencedor: IF auth.uid não NULL escreve NEW.reset_token; não há captura da falha.'),
+     ev(M+'20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql',28,33,'Vínculo BEFORE INSERT de sanitize_reset_request continua na cadeia.'),
+     ev(M+'20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql',1,9,'Remove apenas outros dois triggers e depois DROP COLUMN reset_token.'),
+     ev(M+'20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql',24,33,'Recria INSERT próprio e remove hash_reset_token/protect_reset_token, preservando sanitize_reset_request.'),
+     find_ev('supabase/schema-manifest.json','password_reset_requests.sanitize_reset_request_trigger','Snapshot público conserva a identidade do trigger; coluna reset_token ausente da seção columns, ver verificação estrutural abaixo.'),
+     find_ev('supabase/schema-manifest.json','r:public.password_reset_requests|authenticated|INSERT|','Snapshot concede INSERT ao papel authenticated, além da policy própria.'),
+     ev('src/routes/AppRoutes.tsx',49,54,'Rota /forgot-password não exclui usuário com sessão.'),
+     ev('src/pages/ForgotPassword.tsx',39,65,'Lookup encontra o próprio perfil sob sessão e INSERT omite token; o trigger tenta atribuí-lo mesmo assim.'),
+     ev('src/pages/ForgotPassword.tsx',65,72,'Consumidor trata insertError e exibe falha, portanto este cenário não é falso sucesso.')],
+    ['Schema sem reset_token e trigger/corpo conforme as definições locais; o snapshot confirma ausência da coluna e presença da identidade, mas o corpo vivo não foi consultado.',
+     'Usuário com sessão válida abre /forgot-password e informa email que encontra seu próprio profiles.',
+     'Permissões e dados normais para pedido próprio; o cenário não precisa fabricar token, mudar user_id de terceiro nem superar o limitador de pedidos.'],
+    ['O lookup retorna o próprio user_id e o formulário executa INSERT com email/reason/metadados.',
+     'Antes de inserir, sanitize_reset_request recebe NEW com o rowtype atual de password_reset_requests.',
+     'auth.uid() é não nulo; a atribuição ao campo removido falha e aborta o INSERT.',
+     'A UI apresenta erro e nenhuma solicitação é criada para esse ramo autenticado.'],
+    'O caminho de pedido de recuperação autenticado permanece indisponível apesar de payload válido e policy própria. Corrigir somente o lookup anônimo ou a entrega de email não corrige este bloqueio no banco.',
+    ['A policy de INSERT exige user_id = auth.uid().',
+     'O formulário propaga o erro; não anuncia envio com sucesso neste cenário.',
+     'Um contexto service sem auth.uid() não percorre essa atribuição; não se afirmou falha de todo INSERT privilegiado.'],
+    ['Nenhum INSERT, login, recuperação, envio de email ou SQL foi executado.',
+     'AUTH006 cobre o lookup anônimo; AUTH007 cobre geração/entrega posterior. Este mecanismo é a relação entre coluna removida e trigger ainda alcançável.',
+     'A nota anterior desta reauditoria dizia incorretamente que o trigger exigia UID e substituía user_id. A releitura corrigiu esse registro; review_corrections.json preserva o ajuste e sua razão.'],
+    {'classification':'novo achado da reauditoria','related_ids':['R2-AUTH-006','R2-AUTH-007'],
+     'assessment':'Revisor Auth confirmou que não havia contado NEW.reset_token removido e confirmou o ramo autenticado alcançável. A remoção histórica do subsistema validate_reset_token não remove este trigger diferente.'},
+    ['Atualizar o trigger por migration nova para usar somente campos existentes, preservando os controles de autoria da policy.',
+     'Teste de contrato com usuário autenticado e pedido próprio deve conseguir persistir solicitação pending sem token; tentativa de user_id de terceiro deve continuar rejeitada.',
+     'Cobrir também o ramo service sem UID e manter o tratamento de erro no formulário. Executar somente em ambiente autorizado, após revisar migração e fixtures.'],
+    ['PG-TRIGGER','PG-TRIGGER-ROW'])
+
+access_review=json.loads((OUT/'policy_review.json').read_text())
+do_review=json.loads((OUT/'do_review.json').read_text())
+access_adjudications=json.loads((OUT/'access_adjudications.json').read_text())
+access_rows=access_review['policies']+access_review['source_extras']
+finding_policy_selectors={
+    'R2-DB-019':['public.message_reactions.'],
+    'R2-DB-020':['storage.objects.Conversation members can read team chat files',
+                 'public.team_messages.Members can send messages','public.team_messages.Members can view conversation messages',
+                 'public.team_conversation_members.tcm_select_own','public.profiles.Users can view own profile'],
+    'R2-DB-022':['storage.objects.whatsapp media readable via visible message',
+                 'storage.objects.Users can read assigned whatsapp media','storage.objects.Users can read assigned audio messages',
+                 'public.messages.Users can update messages from their assigned contacts','public.messages.messages_select_policy'],
+    'R2-DB-023':['public.password_reset_requests.Users can request own password reset'],
+}
+for finding in findings:
+    selectors=finding_policy_selectors.get(finding['id'],[])
+    relevant=[r for r in access_rows if any(r['identity']==s or (s.endswith('.') and r['identity'].startswith(s)) for s in selectors)]
+    finding['effective_policy_source_sequences']=[{
+        'identity':r['identity'],'source_definition_statements':r['source_definition_statements'],
+        'top_level_history':r['top_level_history'],'snapshot_identity':r['snapshot_identity'],
+        'definition_resolution':r['definition_resolution'],
+        'snapshot_relation_grants':r['snapshot_relation_grants'],
+    } for r in relevant]
+    if finding['id']=='R2-DB-021':
+        finding['effective_table_source_sequence']=[e for e in inventory['events']
+            if e.get('kind')=='table' and e.get('identity')=='public.message_reactions']
+    if finding['id']=='R2-DB-023':
+        finding['effective_table_source_sequence']=inventory['table_histories']['public.password_reset_requests']
+        finding['snapshot_structural_checks']={
+            'password_reset_request_columns':[k for k in manifest['columns'] if k.startswith('password_reset_requests.')],
+            'reset_token_column_present':'password_reset_requests.reset_token' in manifest['columns'],
+            'sanitize_trigger_identity_present':'password_reset_requests.sanitize_reset_request_trigger' in manifest['triggers'],
+            'snapshot_generated_at':manifest['generated_at'],'runtime_tested':False,
+        }
+findings.sort(key=lambda f:f['id'])
 snapshot_functions = {}
 for signature, h in manifest['functions'].items():
     canonical = parse_function('CREATE FUNCTION '+signature.removeprefix('f:'), True)[0]
@@ -722,6 +961,8 @@ projection = {
        'seven_public_functions':'Introduzidas em 20261003172707/20261003202707/20261003212707, posteriores à captura de 17:11:29Z. Ausência no snapshot anterior não prova falta no banco vivo.'},
     'policy_projection':{
         'candidate_count':499,'snapshot_count':446,
+        'roster':'policy_review.json','source_extras_reviewed':len(access_review['source_extras']),
+        'extra_classification_counts':access_review['extra_classification_counts'],
         'limitation':'Modelo lexical não expande DO, rename nem toda dependência de DROP TABLE; também inclui storage e ops fora de public. Diferença bruta não é drift comprovado.',
         'snapshot_identities_requiring_nontrivial_history':[
             {'identity':'conversation_events.conversation_events_select_policy','reason':'ALTER POLICY RENAME na migration 20260925150000.'},
@@ -730,8 +971,33 @@ projection = {
         ],
     },
 }
+projection['view_projection'] = {
+    'candidate_count':11,'snapshot_count':11,'identity_matches':11,
+    'roster':'view_review.json','body_equality_tested':False,
+}
+projection['trigger_projection'] = {
+    'candidate_count':123,'snapshot_count':119,'identity_matches':119,
+    'snapshot_only_identities':[],
+    'classification_counts':trigger_review['projection_classification_counts'],
+    'roster':'trigger_review.json',
+    'limitation':'Dois vínculos auth estão fora de public, um some com DROP TABLE tags e um foi criado após a captura. Igualdade nominal não atesta tgfoid, tgenabled, corpo ou implantação atual.',
+}
 
 coverage_counts = {level:sum(r['coverage_level']==level for r in roster) for level in ['semantic','targeted','structural']}
+policy_tables={r['table'] for r in access_review['policies']}
+zero_policy_tables=['ai_jobs','edge_rate_limits','link_preview_cache','catalog_rate_limits',
+                    'ai_budget_reservations','talkx_test_send_claims','catalog_rate_limit_hits']
+zero_policy_review=[]
+for table in zero_policy_tables:
+    identity='public.'+table
+    zero_policy_review.append({
+        'identity':identity,'coverage_level':'targeted','ddl_bodies_read_in_full':True,
+        'snapshot_policy_count':0,'snapshot_rls_hash':manifest['rls'][table],
+        'source_ddl_sequence':[e for e in inventory['events'] if e.get('kind')=='table' and e.get('identity')==identity],
+        'snapshot_relation_grants':[k for k in manifest['relation_grants'] if k.startswith('r:'+identity+'|')],
+        'assessment':'CREATE e ENABLE RLS lidos; ausência de policies no snapshot não deixa leitura/escrita de linhas liberada. Rotinas service/definer correspondentes foram lidas separadamente. link_preview_cache conserva grants amplos no snapshot, mas não uma policy de acesso a linhas por cliente; privilégios não sujeitos a RLS exigem caminho SQL próprio e não foram declarados exploráveis por REST.',
+        'runtime_tested':False,
+    })
 coverage = {
     'schema_version':1, 'source_head':HEAD, 'date':DATE,
     'authorization':'Somente código e snapshots locais; nenhuma consulta ou mutação de banco vivo.',
@@ -756,13 +1022,66 @@ coverage = {
         'not_fully_semantically_reviewed':[r['identity'] for r in roster if r['coverage_level']!='semantic'],
     },
     'snapshot_crosswalk':projection,
+    'policies':{
+        'coverage_counts':access_review['coverage_counts'],'snapshot_count':len(access_review['policies']),
+        'public_tables_with_policies':len(policy_tables),'roster':'policy_review.json',
+        'source_extra_coverage_counts':access_review['extra_coverage_counts'],
+        'source_extra_count':len(access_review['source_extras']),
+        'extra_classification_counts':access_review['extra_classification_counts'],
+        'method':access_review['method'],'negative_cases':access_review['negative_cases'],
+        'not_fully_semantically_reviewed':[r['identity'] for r in access_rows if r['coverage_level']!='semantic'],
+        'semantic_definition':'Corpo completo de CREATE/ALTER/DO de origem lido; predicado e composição de permissões raciocinados manualmente com nota individual. Não equivale a teste de papéis/claims reais, expansão executada de DO ou prova de igualdade do hash do corpo implantado.',
+    },
+    'anonymous_do_blocks':{
+        'coverage_counts':do_review['coverage_counts'],'count':len(do_review['do_blocks']),
+        'roster':'do_review.json','dynamic_expansion_executed':False,'runtime_tested':False,
+        'method':do_review['method'],
+        'not_fully_read':[r['identity'] for r in do_review['do_blocks'] if not r['body_read_in_full']],
+    },
+    'tables_without_snapshot_policies':zero_policy_review,
+    'access_history_adjudication':{'artifact':'access_adjudications.json','candidate_ids_not_counted_as_new':['R2-DB-017','R2-DB-018'],
+        'assessment':'Preflight LID400–700 e NOT VAFIDD já documentados no aceite parcial de replay; DROP INDEX CONCURRENTLY dentro de DO é refinamento latente condicionado, não recontagem da sintaxe conhecida.'},
     'view_security_options':{
-        'coverage_level':'targeted','count':11,
+        'coverage_level':'semantic','count':11,
         'result':'Todas as 11 definições finais de views da projeção têm security_invoker ativado na criação ou em ALTER posterior identificado. Não basta ler a primeira CREATE VIEW.',
         'identities':sorted(inventory['candidate_final_views']),
         'runtime_unknown':'Não se inspecionou pg_class/reloptions em ambiente vivo nem se executou SELECT sob cada papel.'},
+    'views':{
+        'coverage_counts':view_review['coverage_counts'],'roster':'view_review.json',
+        'definition_and_alter_bodies_read_in_full':True,'snapshot_identity_matches':11,
+        'method':view_review['method'],'not_fully_read':[], 'runtime_tested':False,
+    },
+    'trigger_bindings':{
+        'coverage_counts':trigger_review['coverage_counts'],'roster':'trigger_review.json',
+        'binding_bodies_read_in_full':True,'snapshot_identity_matches':119,
+        'candidate_bound_function_count':trigger_review['candidate_bound_function_count'],
+        'classification_counts':trigger_review['projection_classification_counts'],
+        'method':trigger_review['method'],'not_fully_read':[],'runtime_tested':False,
+    },
+    'remaining_ddl':{
+        'artifact':'remaining_ddl_inventory.json',
+        'completion_artifact':'ddl_completion.json','notes_artifact':'ddl_review.json',
+        'status':ddl_completion['status'],
+        'original_allocation_instruction_count':remaining_ddl['pending_source_instruction_count'],
+        'original_allocation_file_count':remaining_ddl['pending_source_file_count'],
+        'pending_source_instruction_count':0,'pending_source_file_count':0,
+        'own_semantic_original_instructions':ddl_completion['own_original_ddl_instruction_count'],
+        'peer_semantic_original_instructions':ddl_completion['peer_original_ddl_instruction_count'],
+        'peer_review':ddl_completion['peer_review'],
+        'source_units':ddl_completion['units'],
+        'other_top_level_categories':ddl_completion['other_top_level_categories'],
+        'adjudications_artifact':'ddl_adjudications.json',
+        'counts_by_group':remaining_ddl['pending_counts_by_group'],
+        'already_referenced_complete_instructions_count':remaining_ddl['already_referenced_complete_instructions_count'],
+        'method':remaining_ddl['method'],'coverage_distinction':remaining_ddl['coverage_distinction'],
+        'not_claimed':'Não soma instruções históricas como objetos efetivos nem converte uma referência dirigida em revisão integral de todas as constraints/índices/grants.',
+    },
+    'test_review':test_review if test_review else {
+        'roster':'test-review-roster.json','status':'PENDING_READING',
+        'allocated_files':156,'allocated_lines':14463,'read_files':0,
+        'runtime_tested':False,'limits':'Atribuição finita; ainda não conta como leitura semântica nem execução.'},
     'policy_and_auth_targets':{
-        'coverage_level':'targeted',
+        'coverage_level':'targeted','policy_body_coverage':'semantic',
         'tables':['profiles','user_roles','role_permissions','contacts','messages','conversation_tasks','reminders',
                   'scheduled_messages','user_sessions','conversation_sla','talkx_campaigns','talkx_recipients',
                   'talkx_blacklist','multiplix_dispatches','multiplix_recipients','multiplix_delivery_items',
@@ -775,7 +1094,7 @@ coverage = {
                   'session_invalidated_at/user_sessions não fazem revogação de token por si só; consumidores de presença não equivalem a Auth.',
                   'Guard de payload de mensagens é condicionado a sending/client_message_id/external_id; não bloqueia todo edit sent.',
                   'scheduled_messages tem DDL/RLS/índices mas nenhum motor SQL/cron ativo localizado por referências na fonte; scheduler externo desconhecido.'],
-        'not_claimed':'Não houve revisão semântica completa de todas as 446 policies do snapshot nem execução das policies em roles reais.'},
+        'not_claimed':'Não houve execução das policies em roles reais nem leitura de configurações externas de Auth/PostgREST/Storage. Os 446 corpos vinculados ao snapshot público e 56 extras têm revisão individual no roster.'},
     'external_singu':{
         'coverage_level':'semantic',
         'effective_local_mirror':M+'_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql',
@@ -793,7 +1112,9 @@ coverage = {
         'Varredura lexical não é parser PostgreSQL e não executa migrações; 107 DO não expandidos.',
         'ASSINATURA correspondente no snapshot não garante corpo vencedor, ACL ou ordem real idênticos.',
         'Inventário inclui fontes históricas e externas, mas não as soma ao schema final do ZAPP.',
-        'A segunda passagem concluiu a leitura manual dos 311 corpos candidatos efetivos; isto não é teste de todos os ramos, prova de aplicação em runtime nem revisão integral de todas as policies/DO.',
+        'Leitura integral concluída dos 311 corpos candidatos de função, 446 policies do snapshot, 56 extras, 107 DO, 11 sequências de views e 123 vínculos de triggers; isto não é teste de todos os ramos nem execução dos efeitos dinâmicos.',
+        'A passagem dedicada de DDL foi concluída: 1.695 instruções lidas pelo agente database e 730 ACLs de rotina pelo root; 127 DML/calls, 16 cron, 44 controles e 231 COMMENTs lidos separadamente. Não equivale a executar/reconstruir cada objeto do snapshot.',
+        'Storage fica fora do snapshot public: ACL atual e policies externas não são atestadas. A auditoria histórica registra que REVOKE UPDATE de 20260928560000 não teve efeito visível; não se presumiu sucesso atual da revogação.',
         'Completude, consistência e performance de dados reais, plano de execução, locks em carga, grants efetivos herdados e configuração PostgREST/Auth/Realtime permanecem sem medição.',
         'Nenhum teste de runtime foi substituído por contagem de arquivos, regex, hash ou simulação da própria implementação.',
     ],
@@ -804,6 +1125,21 @@ def evidence_md(e):
     end = f"–{e['line_end']}" if e['line_end'] != e['line_start'] else ''
     return (f"- `{e['path']}:{e['line_start']}{end}` — {e['note']} "
             f"SHA-256 `{e['sha256']}`.")
+
+coverage['shell_review']=shell_review if shell_review else {'status':'PENDING_READING','runtime_tested':False}
+for finding in findings:
+    if finding['id']=='R2-DB-001':
+        finding['evidence'].append(ev('scripts/db-audit/notification-delivery-atomicity.test.sh',120,161,'Harness aplica somente migration antiga e valida ACL da assinatura de seis argumentos; não cobre a nova sobrecarga.'))
+        finding['runtime_unknowns_and_limits'].append('A leitura integral do harness notification-delivery-atomicity confirmou que seu cenário service-only testa seis argumentos, não a identidade nova de sete. Nenhum harness foi executado nesta rodada.')
+    if finding['id']=='R2-DB-008':
+        finding['evidence'].append(ev('scripts/db-audit/message-delivery-phase1-behavior.test.sh',96,102,'Fixture não inclui o índice UNIQUE diário da cadeia final.'))
+        finding['evidence'].append(ev('scripts/db-audit/message-delivery-phase1-behavior.test.sh',543,575,'Aceite de close repete a mesma chave; não é uma segunda finalização com nova chave.'))
+        finding['runtime_unknowns_and_limits'].append('O harness phase1 foi lido integralmente; aplica um recorte histórico e testa replay da mesma UUID, sem a restrição diária no fixture. Não refuta este cenário de nova finalização.')
+    if finding['id']=='R2-DB-009':
+        finding['evidence'].append(ev('scripts/db-audit/message-delivery-phase1-behavior.test.sh',37,161,'Fixture de entrega não instala a cadeia de gamificação e seus triggers.'))
+        finding['runtime_unknowns_and_limits'].append('O harness phase1 de entrega usa schema mínimo sem triggers de gamificação; seus controles de enqueue e complete não cobrem essa composição.')
+    if finding['id']=='R2-DB-013':
+        finding['runtime_unknowns_and_limits'].append('Revisão peer de /root/grill_me_primary_review em ../modules/shell-review.json: talkx-current-template-version.test.sh omite set_talkx_template_updated_at e seu trigger de timestamp. Seus controles de duas edições em fixture não reproduzem a origem de transaction_timestamp relevante aqui; suíte não executada nesta rodada.')
 
 report = [
     '# Reauditoria de banco — definições vencedoras, ACL, integridade e contratos',
@@ -835,17 +1171,20 @@ report += [
     '| Funções finais candidatas | 311 assinaturas; 336 identidades com histórico | Projeção lexical, não catálogo de banco reconstruído |',
     f"| Revisão de função | {coverage_counts['semantic']} semânticas; {coverage_counts['targeted']} dirigidas; {coverage_counts['structural']} estruturais | A lista individual está em function_review.json |",
     '| Correspondência ao manifest | 303 de 303 assinaturas do snapshot local | Identidade equivalente, não prova de igualdade de corpo/ACL |',
-    '| Policies | 499 candidatas, 446 no snapshot | DO, RENAME, DROP TABLE e schemas diferentes impedem diff ingênuo |',
-    '| Views | 11 sequências CREATE/ALTER revisadas para security_invoker | Sem teste SELECT sob usuários reais |',
-    f"| Triggers | {len(inventory['candidate_final_triggers'])} candidatos, 119 no snapshot | Contagens têm escopos distintos; vínculos específicos foram revisados por achado |",
-    '| Blocos DO | 107 sinalizados | Não expandidos automaticamente; efeitos de interesse foram examinados de forma dirigida |',
+    '| Policies | 446/446 do snapshot e 56/56 extras com corpos lidos; 499 candidatas lexicais | Três identidades exigem RENAME/DO; outras diferenças foram adjudicadas em policy_review.json |',
+    '| Views | 11/11 definições vencedoras e 7 ALTERs lidos; projeções, filtros, agregações e ACL relacionados | 11 identidades correspondentes, sem teste SELECT/UPDATE sob usuários reais |',
+    f"| Triggers | 123/123 vínculos lidos e 119/119 identidades públicas do snapshot correspondentes | 64 corpos de função relacionados; 2 vínculos auth fora do snapshot, 1 tabela removida e 1 migração posterior explicam as sobras |",
+    '| Blocos DO | 107/107 corpos integralmente lidos e anotados | Nenhuma expansão/execução SQL; condições de dados/catálogo não presumidas satisfeitas |',
+    '| Tabelas sem policy no snapshot | 7 com CREATE/ENABLE RLS lidos e ACL conferida | Rotinas privilegiadas analisadas separadamente; nenhuma medição de acesso real |',
     '| Singu | 4 rotinas do último espelho local e consumidor Edge | Não houve consulta ao projeto externo |',
     '',
-    'O manifest em `supabase/schema-manifest.json` foi gerado em **2026-10-03T17:11:29Z**, para public/PostgreSQL 17, e contém 164 tabelas com RLS, 1911 colunas, 303 funções, 446 policies, 119 triggers e 11 views. O catálogo é uma evidência datada. Os hashes das definições não contêm os corpos e não substituem leitura da fonte.',
+    'O manifest em `supabase/schema-manifest.json` foi gerado em **2026-10-03T17:11:29Z**, para public/PostgreSQL 17, e contém 164 relações com metadados de RLS, 1911 colunas, 303 funções, 446 policies, 119 triggers e 11 views. O catálogo é uma evidência datada. Os hashes das definições não contêm os corpos e não substituem leitura da fonte.',
     '',
     'Das oito assinaturas presentes na projeção e ausentes do manifest, uma é `supabase_migrations.reserve_migration_version`, fora do schema capturado. As outras sete são introduzidas pelas migrations `20261003172707`, `20261003202707` e `20261003212707`, posteriores à captura. **Essa diferença não demonstra que faltem funções no banco atual.**',
     '',
     'A contagem 499 versus 446 de policies também não é um achado de drift por si só: a projeção inclui storage/ops e mantém candidatos que dependem de DROP dinâmico ou da remoção da tabela. As três identidades do snapshot que exigiram seguir operações adicionais são o RENAME de conversation_events_select_policy e os CREATE POLICY dinâmicos de query_telemetry e sicoob_contact_mapping. O arquivo projection_vs_snapshot.json preserva essa distinção.',
+    '',
+    'Os 56 extras foram adjudicados individualmente. A única diferença pública de identidade sem remoção correspondente localizada é Senders can edit own messages: o relatório AUDITORIA_TEAM_CHAT_ESTADO_REAL_2026-09-29.md:141 já registrava a divergência entre o DROP escrito e a policy observada. Essa lacuna foi preservada como conhecida, sem inventar uma operação ausente ou afirmar drift novo em produção.',
     '',
     'O export em `supabase-export` tem manifest de maio e se declara legado. A informação da auditoria anterior sobre 779 arquivos versus 781 entradas de ledger é referente ao run de CI já capturado em 03/10; esta rodada não tornou aquela medição atual nem a reutilizou como prova de deploy.',
     '',
@@ -865,8 +1204,13 @@ for f in findings:
             report += [f"- `{sig}`: {succession}. Último corpo em `{definition['path']}:{definition['start_line']}–{definition['end_line']}`."]
     elif f['id']=='R2-DB-003':
         report += ['- Rotina externa: o arquivo `_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql` redefine `multiplix_resolve_recipients`, após o espelho nominal `multiplix_resolve_recipients.sql`. Esses arquivos não integram a aplicação das migrations do ZAPP.']
-    else:
+    elif f['id']=='R2-DB-005':
         report += ['- DML de migração única em `20260928140000`; não foi localizada correção posterior de `migrated_task_id` na cadeia ativa.']
+    for policy in f.get('effective_policy_source_sequences',[]):
+        definitions='; '.join(f"`{e['path']}:{e['start_line']}–{e['end_line']}`" for e in policy['source_definition_statements'])
+        report += [f"- Policy `{policy['identity']}`: {definitions}. Resolução: {policy['definition_resolution']}."]
+    for e in f.get('effective_table_source_sequence',[]):
+        report += [f"- DDL `{e['identity']}`: {e['action']} em `{e['path']}:{e['start_line']}–{e['end_line']}`. A sequência não remove as duas constraints UNIQUE."]
     report += ['', '**Evidência verificável**', '']
     report += [evidence_md(e) for e in f['evidence']]
     report += ['', '**Confronto com a auditoria anterior:** '+f['previous_audit_crosswalk']['assessment'], '', '**Aceite necessário**', '']
@@ -887,6 +1231,8 @@ report += [
     '- **Escopo Singu não é inteiramente ausente.** HMAC, identidade do vendedor, count/search e filtro de create_draft existem. O defeito confirmado está na projeção de metadados de resolve.',
     '- **Lease vencido não prova duplicação.** Claim troca token; mark/record_sent verificam token e status. Heartbeat ausente, analisado por providers, pode produzir conflito/resultado incerto; não foi tratado como duplicação inevitável.',
     '- **Mensagens sent não têm proibição geral de content/is_deleted pelo guard citado.** O corpo vigente é guard_message_delivery_internal_fields; a imutabilidade do payload é condicionada à mensagem ainda sending com client_message_id e sem external_id. O relatório Inbox mantém sua prova de erro ignorado separada desse trigger.',
+    '- **Policies antigas não foram somadas depois de DROP/RENAME.** Foram lidos os blocos de substituição de contact_notes, whatsapp_groups e configurações; tabelas tags/contact_tags e snapshot LID removidas não foram tratadas como schema vigente.',
+    '- **Replay já parcial não foi recontado como descoberta nova.** Os candidatos R2-DB-017/018 estão em access_adjudications.json. A assertiva de 400–700 LIDs e NOT VAFIDD já eram limitações documentadas. O DROP INDEX CONCURRENTLY dentro de DO foi registrado como bloqueio adicional latente, alcançável somente depois do erro de sintaxe ou por execução de trecho.',
     '',
     'Essas decisões são sustentadas pela leitura das definições vencedoras e pela documentação primária do PostgreSQL. Elas evitam ampliar o relatório com falsos positivos baseados apenas em padrões de texto.',
     '',
@@ -901,7 +1247,13 @@ report += [
     '',
     '## 6. Cobertura restante e condição para encerrar o aceite de banco',
     '',
-    f"A segunda passagem concluiu a leitura manual dos {coverage_counts['semantic']} corpos candidatos efetivos do catálogo, com notas individuais e cruzamentos de consumidores; restam {coverage_counts['targeted']+coverage_counts['structural']} corpos apenas dirigidos/estruturais. Essa cobertura não certifica todos os ramos nem todas as formas de chamada. As 446 policies do snapshot, cada associação de trigger e todos os efeitos dos 107 DO não receberam revisão semântica integral individual. Essas superfícies mantêm cobertura dirigida/estrutural explícita em coverage.json.",
+    f"Foram concluídas a leitura manual dos {coverage_counts['semantic']} corpos candidatos de função, das 446 policies do snapshot público, dos 56 extras da projeção, dos 107 blocos DO, das 11 definições de views e seus 7 ALTERs, e dos 123 vínculos de triggers. Cada item tem nota, origem e faixa de linhas. Isso não certifica todos os ramos, todas as formas de chamada, a habilitação dos triggers vivos nem executa os efeitos dinâmicos dos blocos.",
+    '',
+    f"A fila original de {remaining_ddl['pending_source_instruction_count']} instruções DDL em {remaining_ddl['pending_source_file_count']} arquivos foi integralmente revisada: 1.695 pelo agente database e 730 instruções de privilégios de funções pelo root, incorporadas com autoria peer. `ddl_completion.json` reconcilia cada faixa, hash e nota com a alocação original, preservada em `remaining_ddl_inventory.json`. Além disso foram lidas 127 instruções DML/seeds/calls (798 linhas), 16 agendamentos (117 linhas), 44 controles/manutenção (44 linhas), a policy inválida já documentada (4 linhas), e 231 COMMENTs (453 linhas), estes apenas como intenção. Há 32 instruções históricas de contexto relidas além da fila; não são novos objetos. Nenhuma dessas instruções foi executada.",
+    '',
+    (f"O roster de testes tem {test_review['read_files']}/156 arquivos e {test_review['read_lines']}/14.463 linhas efetivamente lidos; adjudicações e autoria própria/peer estão em `test-review.json`. O consolidado deduplica por path. Não houve execução de suítes ou banco." if test_review else 'O próximo lote finito é `test-review-roster.json`: 156 arquivos/14.463 linhas de testes. A alocação ainda não equivale a leitura nem a passagem dos testes.'),
+    '',
+    (f"O roster shell adicional tem {shell_review['read_files']}/12 scripts e {shell_review['read_lines']}/3.546 linhas lidos integralmente, incluindo SQL embutido, fixtures, assertions e cleanup. `shell-review.json` e `shell-review.md` documentam a diferença entre migrations reais e dependências reconstruídas. Nenhum script shell, Docker, PostgreSQL ou SQL desse lote foi executado." if shell_review else 'O roster shell adicional ainda não foi incorporado a este relatório.'),
     '',
     'O próximo aceite deve usar as definições efetivamente aplicadas em ambiente autorizado, conferir assinaturas e ACL de forma completa, executar os cenários negativos descritos e validar os fluxos com os consumidores reais. As correções propostas aqui são critérios, não migrations executadas. Alterações já aplicadas devem receber migração de correção nova e rastreável, com rollout coordenado do contrato externo quando houver Singu.',
     '',
@@ -912,6 +1264,13 @@ report += [
     f'- `findings.json`: os {len(findings)} achados, pré-condições, proteção existente, cadeia por função, evidências com SHA-256 e critérios de aceite.',
     '- `coverage.json`: fronteiras de execução, contagens, níveis de leitura e lista nominal restante.',
     '- `function_review.json`: 311 identidades com histórico, definição candidata final, grants do snapshot, cobertura e achados associados.',
+    '- `policy_review.json`: 446 identidades do snapshot e 56 extras, fontes completas, composição, notas de revisão e adjudicação histórica.',
+    '- `do_review.json`: 107 corpos DO, todos lidos, sem expansão/execução; notas individuais e evidência de origem.',
+    '- `view_review.json`: 11 definições vencedoras e ALTERs, projeções/filtros, grants e relação com policies da base.',
+    '- `trigger_review.json`: 123 vínculos, eventos/WHEN/colunas, ordem nominal, ligação com 64 corpos revisados e reconciliação de escopo/tempo.',
+    '- `remaining_ddl_inventory.json`: alocação original preservada; não representa o saldo após o fechamento.',
+    '- `ddl_review.json`, `ddl_completion.json` e `ddl_adjudications.json`: notas de 29 lotes, instruções realmente lidas, revisão peer de ACL e candidatos adjudicados sem recontagem.',
+    '- `access_adjudications.json`: dois candidatos de replay rejeitados como achados novos, com confronto documental e limitações.',
     '- `projection_vs_snapshot.json`: correspondência de assinaturas e diferenças de escopo/tempo; evita chamar todo delta de drift.',
     '- `sql_inventory.json`: inventário lexical dos 871 SQL e eventos das 779 migrations ativas.',
     '- `build_inventory.py` e `build_report.py`: scripts locais reproduzíveis; não executam SQL.',
@@ -933,5 +1292,6 @@ for name, obj in [('findings.json',{'schema_version':1,'source_head':HEAD,'date'
                   ('projection_vs_snapshot.json',projection)]:
     (OUT/name).write_text(json.dumps(obj,ensure_ascii=False,indent=2)+'\n')
 (OUT/'report.md').write_text('\n'.join(report)+'\n')
+runpy.run_path(str(OUT/'build_coverage_files.py'))
 print(json.dumps({'findings':len(findings),'coverage':coverage_counts,
                   'signature_matches':len(matched),'files_written':5},ensure_ascii=False))

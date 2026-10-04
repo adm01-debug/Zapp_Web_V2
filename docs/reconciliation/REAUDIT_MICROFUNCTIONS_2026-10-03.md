@@ -1,8 +1,8 @@
 # Reauditoria da auditoria e das microfuncionalidades
 
-**Estado: EM ANDAMENTO — checkpoint intermediário.**
+**Estado: PASSAGEM FINITA CONCLUÍDA — limites preservados.**
 
-Checkpoint gerado em `2026-10-04T02:44:31+00:00`. Código fixado em [`da307ba5626dce892f0b37cb6762463f55d14a96`](https://github.com/adm01-debug/Zapp_Web_V2/commit/da307ba5626dce892f0b37cb6762463f55d14a96); auditoria anterior no baseline `2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6`. Publicação documental no [draft PR #1869](https://github.com/adm01-debug/Zapp_Web_V2/pull/1869).
+Checkpoint gerado em `2026-10-04T06:50:19+00:00`. Código fixado em [`da307ba5626dce892f0b37cb6762463f55d14a96`](https://github.com/adm01-debug/Zapp_Web_V2/commit/da307ba5626dce892f0b37cb6762463f55d14a96); auditoria anterior no baseline `2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6`. Publicação documental no [draft PR #1869](https://github.com/adm01-debug/Zapp_Web_V2/pull/1869).
 
 Esta camada reabre a avaliação dos contratos e da própria evidência anterior, conforme a solicitação de revisão exaustiva. O inventário histórico e seus 104 achados permanecem preservados. Os registros R2 incluem comportamentos confirmados no código, refinamentos e lacunas; não devem ser somados como uma quantidade de bugs independentes, incidentes em produção ou regressões recentes.
 
@@ -11,39 +11,49 @@ Esta camada reabre a avaliação dos contratos e da própria evidência anterior
 | Dimensão | Resultado | O que comprova |
 | --- | ---: | --- |
 | Arquivos versionados conferidos | 4068 | HEAD, tamanho e hash Git de cada arquivo; zero divergência da cópia examinada. |
-| Arquivos JS/TS analisados estruturalmente | 2.397 | Parsing e catálogo de corpos; zero erro sintático nesses arquivos. Não é revisão semântica de SQL. |
 | Corpos JS/TS catalogados | 36853 | Inclui callbacks aninhados e testes, não capacidades de negócio únicas. |
-| Corpos JS/TS fora da classificação teste/fixture | 16654 | Denominador com scripts e código de terceiros; classificação auditável. |
-| Corpos não teste contidos em faixas revisadas | 12062 | Corpo coberto por leitura declarada; não comprova todos os ramos ou cenários executados. |
-| Corpos não teste parcialmente cobertos | 44 | Leitura ainda insuficiente para declarar corpo integral. |
-| Corpos não teste sem faixa atual localizada | 4548 | Saldo explícito para orientar a continuação. |
-| Arquivos com revisão integral declarada | 1139 | Soma única entre áreas, sem duplicar revisões cruzadas. |
+| Corpos JS/TS fora da classificação teste/fixture | 16652 | Denominador com scripts e código de terceiros; classificação auditável. |
+| Corpos não teste contidos em faixas revisadas | 16652 | Corpo coberto por leitura declarada; não comprova todos os ramos ou cenários executados. |
+| Corpos não teste parcialmente cobertos | 0 | Leitura ainda insuficiente para declarar corpo integral. |
+| Corpos não teste sem faixa atual localizada | 0 | Zero exigido pelo gate final de leitura. |
+| Arquivos com revisão integral declarada | 2552 | Soma única entre áreas, sem duplicar revisões cruzadas. |
+| Arquivos com revisão de faixas específicas | 711 | Trechos documentados, sem declarar leitura integral do arquivo. |
+| Arquivos apenas no inventário estrutural | 805 | Identidade e estrutura catalogadas; sem revisão semântica declarada. |
 | Corpos candidatos de funções SQL efetivas revisados | 311 | Ordem das definições versionadas e leitura manual; não é introspecção do banco implantado. |
-| Referências de código validadas | 1329 | Caminho, faixa e blob correspondem ao pin. |
+| Referências de código validadas | 1903 | Caminho, faixa e blob correspondem ao pin. |
+| Recorte suplementar de testes JS/TS lido integralmente | 713 arquivos / 118.817 linhas | Assertions, mocks e contratos adjudicados. É o lote suplementar, não todos os testes do repositório; não foram executadas essas suítes. |
+| Recorte suplementar Bash lido integralmente | 85 arquivos / 24.894 linhas | SQL embutido, fixtures, asserts e cleanup lidos; esses roteiros não foram executados por essa passagem. |
+| Fila original de instruções DDL revisada | 2.425 / 2.425 | Inclui 730 instruções de privilégios de funções revisadas pelo root; zero instruções pendentes na alocação original. |
 | Aceite em produção | Não realizado | Nenhum envio, chamada real, migration, deploy, instalação ou correção do produto. |
 
-O saldo de leitura de corpos não teste está distribuído por **540 arquivos**, listados em [reaudit/2026-10-03/consolidated/remaining-production-review.json](reaudit/2026-10-03/consolidated/remaining-production-review.json). O trabalho continua a partir dessa matriz; o fechamento de um diretório não significa encerramento do repositório.
+A leitura finita tem **zero corpos JS/TS restantes** no catálogo: 36.853 corpos, incluindo 16.652 fora da classificação teste/fixture, estão contidos nas faixas revisadas. O [gate final](reaudit/2026-10-03/global/finite-review-completion.json) está aprovado (`PASS`, estado `COMPLETE`, modo `final`), e a [matriz de saldo](reaudit/2026-10-03/consolidated/remaining-production-review.json) não contém arquivos pendentes desse recorte. Essa conclusão encerra a leitura declarada e verificável do escopo catalogado; não atesta ausência de defeitos, cobertura de todos os cenários nem comportamento da implantação.
+
+### Fechamento dos recortes suplementares e de SQL
+
+Os 713 testes JS/TS e os 85 roteiros Bash são lotes finitos abertos para preencher lacunas de leitura. As adjudicações por arquivo preservam controles positivos, mocks e limites de inferência; leitura de um teste não equivale a resultado de execução. O [registro de conclusão](reaudit/2026-10-03/global/finite-review-completion.json) também explicita o gate das demais linguagens.
+
+A [conclusão DDL](reaudit/2026-10-03/reports/database/ddl_completion.json.gz) reconcilia a fila original de 2.425 instruções, com 1.695 revisadas pelo agente database e 730 instruções de ACL de funções incorporadas com autoria do root. A [cobertura SQL](reaudit/2026-10-03/reports/database/coverage.json.gz) registra ainda 311 corpos de funções efetivas, 107 blocos DO, 11 definições finais de views com 7 ALTERs efetivos e 123 vínculos de trigger lidos. São denominadores distintos, com histórias e composição de policies/ACL documentadas; não devem ser somados como objetos únicos. Nenhuma migration, expansão de DO ou consulta ao banco vivo foi executada para certificar esse fechamento.
 
 ### Correção do denominador, sem promoção artificial de cobertura
 
-58 arquivos `.unit.*`/`.integration.*`, todos com imports de teste/assert, foram corretamente classificados como testes. São 668 corpos transferidos entre categorias; o total estrutural de 36.853 não mudou. A mudança não declarou nenhum corpo adicional como lido. A decisão e os estados anterior/posterior estão em [test-classification-adjudication.json](reaudit/2026-10-03/global/test-classification-adjudication.json).
+58 arquivos `.unit.*`/`.integration.*`, todos com imports de teste/assert, foram corretamente classificados como testes. São 668 corpos transferidos entre categorias; o total estrutural de 36.853 não mudou. A mudança não declarou nenhum corpo adicional como lido. O arquivo Deno `supabase/functions/ai-auto-tag/auth_test.ts` acrescentou uma correção de mais dois corpos, também registrada no mesmo journal. O denominador final é de 16.652 corpos não teste e 20.201 de teste/fixture. A decisão e os estados anterior/posterior estão em [test-classification-adjudication.json](reaudit/2026-10-03/global/test-classification-adjudication.json).
 
 ## Registros por área
 
 | Área | Registros | P1 | P2 | P3 |
 | --- | ---: | ---: | ---: | ---: |
-| [auth](reaudit/2026-10-03/reports/auth/report.md) | 41 | 11 | 30 | 0 |
-| [calls](reaudit/2026-10-03/reports/calls/report.md) | 5 | 1 | 4 | 0 |
+| [auth](reaudit/2026-10-03/reports/auth/report.md) | 53 | 11 | 42 | 0 |
+| [calls](reaudit/2026-10-03/reports/calls/report.md) | 8 | 2 | 6 | 0 |
 | [communication](reaudit/2026-10-03/reports/communication/report.md) | 11 | 2 | 8 | 1 |
-| [database](reaudit/2026-10-03/reports/database/report.md) | 16 | 5 | 11 | 0 |
-| [inbox](reaudit/2026-10-03/reports/inbox/report.md) | 53 | 13 | 39 | 1 |
-| [infra](reaudit/2026-10-03/reports/infra/report.md) | 25 | 8 | 17 | 0 |
-| [modules](reaudit/2026-10-03/reports/modules/report.md) | 64 | 6 | 52 | 6 |
-| [platform](reaudit/2026-10-03/reports/platform/report.md) | 9 | 0 | 9 | 0 |
-| [providers](reaudit/2026-10-03/reports/providers/report.md) | 46 | 8 | 36 | 2 |
-| [root](reaudit/2026-10-03/reports/root/report.md) | 12 | 4 | 8 | 0 |
+| [database](reaudit/2026-10-03/reports/database/report.md) | 21 | 7 | 14 | 0 |
+| [inbox](reaudit/2026-10-03/reports/inbox/report.md) | 64 | 14 | 48 | 2 |
+| [infra](reaudit/2026-10-03/reports/infra/report.md) | 43 | 8 | 31 | 4 |
+| [modules](reaudit/2026-10-03/reports/modules/report.md) | 76 | 7 | 63 | 6 |
+| [platform](reaudit/2026-10-03/reports/platform/report.md) | 12 | 0 | 12 | 0 |
+| [providers](reaudit/2026-10-03/reports/providers/report.md) | 66 | 8 | 54 | 4 |
+| [root](reaudit/2026-10-03/reports/root/report.md) | 18 | 4 | 14 | 0 |
 
-**Total da camada R2 neste snapshot: 282 registros.** CONFIRMED_SOURCE_BEHAVIOR: 275; REFINEMENT_OF_PRIOR_FINDING: 1; GAP_OR_UNRESOLVED_CONTRACT: 5; HYPOTHESIS_REQUIRES_VALIDATION: 1.
+**Total da camada R2 neste snapshot: 372 registros.** CONFIRMED_SOURCE_BEHAVIOR: 362; REFINEMENT_OF_PRIOR_FINDING: 2; GAP_OR_UNRESOLVED_CONTRACT: 7; HYPOTHESIS_REQUIRES_VALIDATION: 1.
 
 As prioridades são classificações de revisão, condicionadas ao consumidor e às precondições descritas. Um risco de autorização demonstrado estaticamente não prova que alguém o explorou. Uma resposta 200 em um probe simulado não certifica acesso ao provedor real. Defeitos que compartilham causa devem ser agrupados antes de virar trabalho de implementação.
 
@@ -85,7 +95,7 @@ Registro completo: [communication](reaudit/2026-10-03/reports/communication/repo
 
 **Comportamento e efeito:** A variante de sete argumentos de record_incoming_call_event é SECURITY DEFINER, não verifica o ator e nasceu sem revogar EXECUTE de PUBLIC. O snapshot de ACL registra esse grant, ao contrário da variante antiga de seis argumentos. Criação ou alteração de registros de chamada e notificações sem a autorização esperada de webhook/service_role. Trata-se de fronteira de escrita, não apenas divulgação de catálogo.
 
-**Limites:** Não houve chamada RPC, exploração, consulta de dados nem confirmação do deploy atual. O snapshot de ACL é datado de 2026-10-03; mudanças posteriores não são conhecidas. A função de trigger multiplix_audiences_validate_shared_roles também aparece no baseline anon, mas não foi tratada como RPC diretamente invocável.
+**Limites:** Não houve chamada RPC, exploração, consulta de dados nem confirmação do deploy atual. O snapshot de ACL é datado de 2026-10-03; mudanças posteriores não são conhecidas. A função de trigger multiplix_audiences_validate_shared_roles também aparece no baseline anon, mas não foi tratada como RPC diretamente invocável. A leitura integral do harness notification-delivery-atomicity confirmou que seu cenário service-only testa seis argumentos, não a identidade nova de sete. Nenhum harness foi executado nesta rodada.
 
 Registro completo: [database](reaudit/2026-10-03/reports/database/report.md). 
 
@@ -95,7 +105,7 @@ Registro completo: [database](reaudit/2026-10-03/reports/database/report.md).
 
 **Comportamento e efeito:** O enqueue autenticado insere uma mensagem e aciona o trigger de gamificação. Nos totais 10/50/100/500/1000, o trigger chama grant_agent_achievement com message_milestone, mas a definição vigente exige JWT privilegiado ou admin/supervisor para esse tipo. O erro desfaz o enqueue inteiro. Uma função de gamificação impede uma operação essencial de atendimento para agentes comuns em marcos previsíveis. Como o incremento também é revertido, repetir o envio não ultrapassa o marco por si só.
 
-**Limites:** Sem execução SQL, envio de mensagem ou consulta de agent_stats em produção. Não foi medido quantos perfis estão imediatamente antes de um marco. A dedução usa a implementação primária de auth.role e a atomicidade de triggers do PostgreSQL; não usa current_user como substituto do JWT.
+**Limites:** Sem execução SQL, envio de mensagem ou consulta de agent_stats em produção. Não foi medido quantos perfis estão imediatamente antes de um marco. A dedução usa a implementação primária de auth.role e a atomicidade de triggers do PostgreSQL; não usa current_user como substituto do JWT. O harness phase1 de entrega usa schema mínimo sem triggers de gamificação; seus controles de enqueue e complete não cobrem essa composição.
 
 Registro completo: [database](reaudit/2026-10-03/reports/database/report.md). 
 
@@ -177,17 +187,25 @@ O catálogo histórico apresenta 349 linhas com marcação de conclusão. A reco
 
 Alguns candidatos foram rejeitados ou reclassificados ao encontrar consumidores, guardas e decisões anteriores. Exemplos: a lista de threads Gmail já tem paginação; o problema adicional é o histórico interno. O componente de modo Zen recebe a ação compartilhada do shell. A regra de cinco minutos de SLA e o marco created_at têm decisões versionadas que precisam ser adjudicadas antes de qualquer alteração. Os relatórios de área conservam essas ressalvas.
 
-Rastreabilidade: [relatório transversal](reaudit/2026-10-03/reports/root/report.md), [adjudicação dos prompts](reaudit/2026-10-03/reports/root/omitted-source-adjudication.json), [índice normalizado de registros](reaudit/2026-10-03/consolidated/findings-index.json).
+Rastreabilidade: [relatório transversal](reaudit/2026-10-03/reports/root/report.md), [adjudicação dos prompts](reaudit/2026-10-03/reports/root/omitted-source-adjudication.json), [índice normalizado de registros](reaudit/2026-10-03/consolidated/findings-index.json.gz).
+
+### Dois contratos da evidência de testes e runners
+
+**R2-GOV-003 — refinamento de TC-011.** A leitura encontrou assertions literais, réplicas locais de regra e mocks que não reproduzem o contrato do consumidor, além de asserts incapazes de discriminar o defeito anunciado. Isso limita a força probatória de testes específicos; não transforma todo teste do repositório em falso positivo nem cria um defeito de produto por arquivo. Controles positivos reais, inclusive testes que importam o consumidor e verificações de acessibilidade executáveis, permanecem distinguidos nos relatórios. A classificação é um refinamento da evidência anterior TC-011.
+
+**R2-GOV-004 — falha independente no runner de exportação.** No trecho de validação, um processo Node pode falhar e ter seu status perdido pelo pipeline com `tee` sem `pipefail`; o contador de mensagens `FAIL` então permite um anúncio de sucesso. Há uma reprodução offline do Bash exato com Node substituto e dois controles; nenhum export ou banco real foi executado. `import.sh` tem `set -e`, portanto não se afirma que ele ignore uma falha do primeiro Node. Nesse arquivo, a observação sobre bloco de importação ausente se limita ao anúncio prematuro: o resultado final ainda depende do validador posterior.
+
+Os registros completos e os limites de seus loci estão no [relatório root](reaudit/2026-10-03/reports/root/report.md); a [revisão independente do núcleo GOV-003/004](reaudit/2026-10-03/reports/root/peer-review-gov003-gov004.md) registra as correções aceitas e a ausência de reexecução pelo revisor. Suplementos posteriores de Bash têm adjudicação própria.
 
 ## Evidência e reprodução
 
-Os probes executam módulos ou callbacks exatos sob fronteiras declaradas: bancos, relógios, rede, React e elementos podem ser sintéticos. Os programas verificam o pin e os blobs antes de avaliar o código. Casos positivos, contraexemplos, replays de revisão e verificações de integridade não devem ser contados como se fossem a mesma coisa. A contagem única entre todos os conjuntos de probes será consolidada ao fechar esta passagem.
+Os casos têm fronteiras diferentes: há execução de módulos/callbacks sob stubs, extrações de código, modelos de predicados, decisões estáticas e controles de proveniência. Bancos, relógios, rede, React e elementos podem ser sintéticos. A classificação individual informa o que efetivamente foi exercido; um caso não equivale a um achado nem a um teste integrado. O [índice único](reaudit/2026-10-03/reports/root/offline-probe-registry.json) consolida 217 casos canônicos únicos: 209 casos diagnósticos (207 de código autoral e 2 de código vendorizado) e 8 controles comportamentais. Os controles incluem verificações positivas de consumidores, o smoke do vendor e os controles do export, cada um com papel próprio; o total canônico não é uma contagem de defeitos reproduzidos. Ficam separados desse total 11 controles negativos de proveniência e 1 controle textual de hash. Os 6 casos de replay e 8 registros históricos dos mesmos casos primários ficam fora da soma primária. O índice apenas reconciliou provas existentes; não reexecutou probes ou suítes.
 
 Comece pelo [guia de reprodução](reaudit/2026-10-03/README.md) e pelo [CHECKPOINT.json](reaudit/2026-10-03/CHECKPOINT.json). Grandes matrizes estão compactadas sem perda; os hashes dos bytes originais e compactados permitem conferir ou materializar a cópia.
 
-## Continuação autorizada
+## Limites do fechamento e trabalho de implementação
 
-A próxima passagem conclui os corpos restantes de interface, utilitários e integrações, além da composição de políticas SQL. Depois vêm a adjudicação de relações com o ledger anterior, a deduplicação dos mecanismos, o índice único de provas e a validação final da publicação. O status deste checkpoint é em andamento e nenhuma capacidade é certificada em produção por esta publicação.
+Esta passagem finita de leitura está concluída com o gate final aprovado e os denominadores explicitados acima. Os achados continuam condicionados às precondições e aos limites de suas provas. Corrigir o produto, instalar ferramentas, validar migrations em ambiente isolado e realizar aceite integrado são trabalhos posteriores; não ocorreram nesta publicação documental.
 
-Cartographer, Claude-Mem e Headroom continuam no plano de avaliação AT, com POCs/instalação não executadas. Grill Me foi incorporado documentalmente à revisão dos planos; integração executável e validação continuam pendentes. Esses estados não foram convertidos em instalação por causa da presente reauditoria.
+Cartographer, Claude-Mem e Headroom continuam no plano de avaliação AT; suas POCs e instalações não foram executadas nesta entrega. A existência de instalações locais, globais ou na VPS permanece sem verificação. Grill Me foi incorporado documentalmente à revisão dos planos; integração executável e validação continuam pendentes. Esses estados não foram convertidos em instalação por causa da presente reauditoria.
 

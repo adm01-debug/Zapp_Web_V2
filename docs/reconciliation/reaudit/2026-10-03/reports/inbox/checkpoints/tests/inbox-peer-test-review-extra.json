@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "root",
+  "allocation_roster": "reports/inbox/test-review-roster.json",
+  "allocation_roster_sha256": "4d2d892848101c8840df74f8d670f4416799ba6f70dc4b20abd63c0721200437",
+  "assigned_indices": [
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93
+  ],
+  "files": [
+    {
+      "path": "src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx",
+      "line_start": 1,
+      "line_end": 275,
+      "git_blob_sha": "36641b2a46bc248b273f0fe6f3b357409df1bbcf",
+      "source_sha256": "d477aa6470525884e888c6ef10635729554993ca55d5b18a5bbe673c716b33e0",
+      "uncontained_bodies_at_allocation": 47,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 80,
+      "adjudication": [
+        "Renderiza FilesTab real com hooks de dados e larguras simulados; verifica grid8→6 com painel inline, Sheet sobreposto preservando5 colunas, seleção por filtro56→2, sobrevivência ao recorte e ausência de ids no localStorage. Exclusão recusada mantém seleção e toast de erro; aceita exige payload/id exatos e limpeza da seleção.",
+        "O sucesso explicita que o item só sai após refetch, não realizado pelo mock; não se contou essa remoção como observada. Largura retorna valores fixos e classes são assertadas sem motor de layout, enquanto RLS e Storage não são executados."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/FilesTab.test.tsx",
+      "line_start": 1,
+      "line_end": 166,
+      "git_blob_sha": "867bec9c3db0f9dbbc80b7387f3f6cab1bac2089",
+      "source_sha256": "1bb241b01c4593f706ecfa60ab044e054ec9c5e6cbdddb0053c47123708e2cdf",
+      "uncontained_bodies_at_allocation": 31,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 81,
+      "adjudication": [
+        "Renderiza FilesTab real com duas mídias e contagens de fixtures; testa classes da grade, chips, busca/filtro, vazio, limpeza, detalhe e Carregar tudo chamando duas páginas simuladas. Reseta preferências e memória por conversa antes de cada caso.",
+        "O teste Carregar tudo observa o loop pelas flags retornadas, sem incorporar novas linhas no hook mockado. Contagens ditas reais são fixtures calculadas sobre o array e não banco; não há reprodução física ou validação visual das classes."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/FilesTableView.test.tsx",
+      "line_start": 1,
+      "line_end": 98,
+      "git_blob_sha": "224f9bea55a74d47be3e9685b552919854261089",
+      "source_sha256": "2e1d31dd2c044ea156d80e5f927e92388f00a3c02e8e10645ddd8025a155a1dd",
+      "uncontained_bodies_at_allocation": 9,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 82,
+      "adjudication": [
+        "Renderiza tabela real com duas linhas, identifica colunas ordenáveis, callbacks de ordenação e aria-sort, removendo colunas por largura683/520. Confere table-fixed, wrapper de overflow e ids de linha.",
+        "O caso cujo título inclui Tamanho→biggest só monta o estado biggest e clica Arquivo→alpha; não clica o botão Tamanho. As larguras são props e não layout medido, e não há ordenação do array pelo consumidor nesse teste."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/FilesToolbar.test.tsx",
+      "line_start": 1,
+      "line_end": 77,
+      "git_blob_sha": "3d4dd943d46662d713c4eaff5ed9ff75c4912405",
+      "source_sha256": "7fa3bbe774630e049f67222784c6fab90106c29bbc2b054faa8a9a66d084b91b",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 83,
+      "adjudication": [
+        "Renderiza FilesToolbar real e verifica controles nomeados, classes flex-wrap/min-width, callback de digitação, quatro opções e alternância Selecionar/Cancelar com aria-pressed e contador após rerender explícito.",
+        "A assertiva com título ordem do plano só exige presença, sem comparar ordem DOM. Não executa busca/ordenação do hook ou geometria responsiva; os callbacks e atributos do componente são os efeitos observados."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/KpiStrip.test.tsx",
+      "line_start": 1,
+      "line_end": 46,
+      "git_blob_sha": "841397b158529ebeaabc4c16770b8a523280565b",
+      "source_sha256": "fb516ecdc56f75e1b44b4aaf448be407e5be067eeea5b87053449edbe2443651",
+      "uncontained_bodies_at_allocation": 6,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 84,
+      "adjudication": [
+        "Renderiza KpiStrip real e verifica rótulo, número, subtítulo, tabela de cinco tons e precedência de iconClassName sobre tone.",
+        "As assertivas inspecionam classes, não contraste calculado ou KPI derivado de dados. Os tons com alfa preservam o contrato de skin e não foram promovidos a nova violação de contraste sem medição e decisão."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/NotesTab.test.tsx",
+      "line_start": 1,
+      "line_end": 128,
+      "git_blob_sha": "a1c15b1733c18d6daaa41fec85d3ea46dbfd91e9",
+      "source_sha256": "2e6869ec893ce1e23f6de4f4ba7458b82e52785e6c7575ca19cb00a607666542",
+      "uncontained_bodies_at_allocation": 19,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 85,
+      "adjudication": [
+        "Renderiza NotesTab real com hooks atuais simulados; verifica nota/objeção, criação de fato e tarefa com contato fixo, toggle de promessa, data sem hora e horário local, contagem de tarefas sem duplicar lista e navegação para tasks.",
+        "Os callbacks de escrita são spies, sem erros, persistência ou alteração da fixture retornada. A data local usa o fuso do processo e não matriz de navegadores; presença de texto da nota não prova sozinha seu agrupamento visual correto."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
+      "line_start": 1,
+      "line_end": 140,
+      "git_blob_sha": "7d60b38ab5fcf86d2524d6f0af00cb3fb9b7ab1d",
+      "source_sha256": "f413520f416f1b78809adc7cae01fa86f46031888913c8de059d156fd622042c",
+      "uncontained_bodies_at_allocation": 21,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 86,
+      "adjudication": [
+        "Renderiza SalesViewTab com resumo CRM mockado e consulta de compras simulada; testa vazio, dados, proposta aberta e vocabulário. Pela UI cria compra e exige created_by/profileId, contact_id, título e invalidação da chave CRM.",
+        "A prova de insert atravessa componente real, mas termina no stub e não testa RLS/erro/persistência. A consulta de compras e o resumo são fixtures independentes, sem assertiva de consistência entre valor total500 e os dois valores100 fornecidos."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/SectionCard.test.tsx",
+      "line_start": 1,
+      "line_end": 63,
+      "git_blob_sha": "c0ecd2e77881c9cd9f8b3e6e1d597690afe52bff",
+      "source_sha256": "f3741b1ca715bbe0c6a58b1c01b37860b175f640cf5bec970acee6c0c1dd5d60",
+      "uncontained_bodies_at_allocation": 7,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 87,
+      "adjudication": [
+        "Renderiza SectionCard real com título, count, conteúdo, tom, ações e subtítulo/headerRight; clica a ação e exige uma chamada.",
+        "Link/pill são verificados por classes e os seletores de span são globais; não prova navegação semântica, contraste ou layout. O caso default cita texto e background mas só exige background na assertiva."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/TasksTab.test.tsx",
+      "line_start": 1,
+      "line_end": 153,
+      "git_blob_sha": "d37378644b012d24995ea8cbcf2b36874c3ef4db",
+      "source_sha256": "1b4eee06b79006e898946446363e4a55e87d28fcf87c7358099341acafdfc8df",
+      "uncontained_bodies_at_allocation": 19,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 88,
+      "adjudication": [
+        "Renderiza TasksTab real com byStatus/byDue simulados; exige contactId no hook, cinco grupos, contadores, tarefa no grupo correto, colapso/reabertura e chamadas complete/move para os itens corretos.",
+        "O hook já entrega agrupamentos prontos e a suíte não valida cálculo de status/prazo no banco. QuickAdd é apenas mostrado neste arquivo, sem submissão; o teste NotesTab complementar observa criação, mas não transforma estes casos em prova de gravação."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/fileDisplay.test.ts",
+      "line_start": 1,
+      "line_end": 30,
+      "git_blob_sha": "d35777f8cc200b4103e56de204b77a85173c415b",
+      "source_sha256": "3a1845386356e38ee920d33f309cc09eebbb8c44e14610726c1865a7f2346ef0",
+      "uncontained_bodies_at_allocation": 4,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 89,
+      "adjudication": [
+        "Chama formatMeta/formatSize/formatFileDate reais; verifica composição, tamanho ausente sem separador duplo e B/KB/MB com valores concretos.",
+        "A data esperada vem do próprio formatFileDate para testar consistência entre formatadores, não um valor independente de data/fuso. Não há layout nem cobertura de tamanhos negativos/NaN por esses cinco casos."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/filesSort.test.ts",
+      "line_start": 1,
+      "line_end": 81,
+      "git_blob_sha": "e1708a3e054d0846a6cc4884fa07aa2499a54de6",
+      "source_sha256": "29003e14037bae1c3c70054bffb95c2db20d45de230591d8df7562ecf79ffdd0",
+      "uncontained_bodies_at_allocation": 20,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 90,
+      "adjudication": [
+        "Chama sortMediaItems e filterMediaItems reais; verifica tamanho desconhecido no fim, desempate data/id, sentidos recente/antigo, ordem alfabética, não mutação da entrada e busca por nome/caption sem distinguir caixa.",
+        "As regras puras são observadas com ids esperados; isso não prova ordenação ou filtragem no servidor nem todas as datas inválidas. O caso não mutar usa array já em ordem alfabética, tornando esse controle menos forte do que uma entrada invertida."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/mobile/__tests__/SwipeableMessage.test.tsx",
+      "line_start": 1,
+      "line_end": 51,
+      "git_blob_sha": "dc59d548247515f3053f4f29891bda41ff490388",
+      "source_sha256": "a5fe7d10446a06bf71297b91299868301f41e64ab9de160a5332775bb88aaba0",
+      "uncontained_bodies_at_allocation": 12,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 91,
+      "adjudication": [
+        "Renderiza SwipeableMessage real em ramo desktop/mobile e com className; observa os filhos e classe de raiz.",
+        "O mock motion descarta handlers e useMotionValue sempre retorna0; nenhum gesto ou callback swipe é acionado. O modo mobile não é resetado entre o segundo e terceiro casos, e a mera presença dos filhos não distingue a existência do wrapper anunciado."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/mobile/__tests__/VoiceDictationButton.test.tsx",
+      "line_start": 1,
+      "line_end": 64,
+      "git_blob_sha": "3a91310e8b94b0c76b343aa5d0dbe2db77b13ccc",
+      "source_sha256": "31da7f25d34b8c80f6ec2b0860762c559cbd40b03882110cc9ea8970c6572f69",
+      "uncontained_bodies_at_allocation": 15,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 92,
+      "adjudication": [
+        "Renderiza VoiceDictationButton real com speech hook simulado; confere botão suportado, retorno null quando não suportado, aria-label idle e disabled.",
+        "Não clica, injeta transcrição ou percorre listening; mockToggleListening não é assertado. Tooltip/motion são substituídos e não há microfone ou Speech API real."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    },
+    {
+      "path": "src/components/omnichannel/__tests__/OmnichannelInbox.test.tsx",
+      "line_start": 1,
+      "line_end": 217,
+      "git_blob_sha": "a0cdf817e81e6acd187540fc6bd2aefa3abeabc5",
+      "source_sha256": "feea10dcb1493144d0c6d3abc96cc654df77ebf7bcec37163d8f34c8987df140",
+      "uncontained_bodies_at_allocation": 54,
+      "preferred_area": "inbox",
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "roster_index": 93,
+      "adjudication": [
+        "Arquivo misto: renderiza OmnichannelInbox real para títulos, seis cards, input, botão de limpar filtro e badges de conexões. Outros blocos definem CHANNEL_CONFIG local e calculam filtros, contadores, initials e arrays vazios inteiramente no próprio teste.",
+        "A busca real observa apenas valor digitado, e o filtro de canal apenas a presença de Limpar filtro, sem exigir a lista resultante. As fórmulas locais não validam a implementação; isso complementa GOV003/TC-011 sem novo ID, preservando os controles reais de renderização."
+      ],
+      "reviewer": "root",
+      "runtime_executed": false,
+      "limits": "Leitura das assertions, mocks e contrato. Não houve execução de suíte, homologação de UI, SQL ou provedor."
+    }
+  ],
+  "tests_executed": 0,
+  "method": "Full semantic source reading; separate reviewer attribution; no suites, database or provider calls.",
+  "reviewed_files": 14,
+  "total_files": 14,
+  "pending_indices": [],
+  "status": "COMPLETED_REVIEW_PASS",
+  "actual_lines_read": 1589
+}

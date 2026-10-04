@@ -41,6 +41,28 @@ additional = json.loads((OUT / 'additional_findings.json').read_text())
 proofs = json.loads((OUT / 'proofs.json').read_text())
 assert proofs['source_head'] == SHA
 probe_by_id = {x['id']: x for x in proofs['probes']}
+vendor_proofs = json.loads((OUT / 'vendor/proofs.json').read_text())
+assert vendor_proofs['head_sha'] == SHA
+vendor_probe_by_id = {x['id']: x for x in vendor_proofs['probes']}
+frontend_proofs = json.loads((OUT / 'final-frontend-proofs.json').read_text())
+assert frontend_proofs['head_sha'] == SHA
+frontend_probe_by_id = {x['id']: x for x in frontend_proofs['probes']}
+external_probe_artifacts = {'vendor/proofs.json': vendor_probe_by_id, 'final-frontend-proofs.json': frontend_probe_by_id}
+authored_probe_count = len(probe_by_id) + len(frontend_probe_by_id)
+vendor_coverage = json.loads((OUT / 'vendor/coverage.json').read_text())
+assert vendor_coverage['head_sha'] == SHA and vendor_coverage['body_count'] == 208
+assert all(f['review_status'] == 'SEMANTIC_BODY_READ' for f in vendor_coverage['functions'])
+test_review = json.loads((OUT / 'test-review.json').read_text())
+assert test_review['source_head'] == SHA
+assert test_review['status'] == 'COMPLETE_FINITE_TEST_READING'
+assert test_review['counts'] == {'assigned_files':73,'assigned_lines':18496,'full_body_read':73,'adjudicated':73,'pending':0,'tests_executed':0}
+test_paths = {r['path'] for r in test_review['files']}
+assert len(test_paths) == 73 and all(r['review_status'] == 'ADJUDICATED_BODY_READ' for r in test_review['files'])
+shell_review = json.loads((OUT / 'shell-review.json').read_text())
+assert shell_review['source_head'] == SHA and shell_review['status'] == 'COMPLETE_FINITE_SHELL_READING'
+assert shell_review['counts']['adjudicated'] == 13 and shell_review['counts']['assigned_lines'] == 3608
+shell_paths = {r['path'] for r in shell_review['files']}
+review_status = 'COMPLETE_ASSIGNED_RECUTS_WITH_LIMITS'
 
 extra_evidence = {
     'R2-MOD-009': [('src/hooks/integrations/useExternalCatalog.ts',248,285,'filters internos determinam queryKey e só mudam no fetchProducts'), ('src/components/catalog/ExternalProductManagement.tsx',520,533,'efeito de filtros não depende de page e efeito de page ignora zero'), ('src/components/catalog/ExternalProductManagement.tsx',1056,1064,'paginacao chama setPage(p-1)')],
@@ -78,21 +100,30 @@ def normalize(base, details):
     relation = current.get('prior_relation', 'NEW_DISCOVERY')
     if not isinstance(relation, str): relation = 'NEW_DISCOVERY'
     confirmed = current.get('status') != 'DEFERRED_DEPENDENCY_CONTRACT'
+    external_probes = current.get('external_probes', [])
+    for probe in external_probes:
+        assert probe['artifact'] in external_probe_artifacts and probe['probe_id'] in external_probe_artifacts[probe['artifact']]
+        assert (OUT / probe['script']).is_file()
+    finding_probes = ([{'artifact': 'proofs.json', 'probe_id': fid, 'script': 'offline_probes.cjs'}] if fid in probe_by_id else []) + external_probes
+    classification = 'CONFIRMED_STATIC_CONTRACT'
+    if fid in probe_by_id: classification = 'CONFIRMED_ISOLATED_CALLBACK'
+    if external_probes: classification = 'CONFIRMED_ISOLATED_VENDOR_FRAGMENT' if current.get('code_origin') == 'third_party_vendored' else 'CONFIRMED_ISOLATED_CALLBACK'
     return {
         'id': fid,
         'severity': current['severity'],
         'title': current['title'],
         'status': 'confirmed' if confirmed else 'deferred',
-        'classification': ('CONFIRMED_ISOLATED_CALLBACK' if fid in probe_by_id else 'CONFIRMED_STATIC_CONTRACT') if confirmed else 'DEFERRED_DEPENDENCY_CONTRACT',
+        'classification': classification if confirmed else 'DEFERRED_DEPENDENCY_CONTRACT',
+        'code_origin': current.get('code_origin', 'application_authored'),
         'baseline_sha': SHA,
         'preconditions': current['preconditions'],
         'cause': current['cause'],
         'observed_behavior': current['observed_behavior'],
         'impact': current['impact'],
         'evidence': ev,
-        'probes': [{'artifact': 'proofs.json', 'probe_id': fid, 'script': 'offline_probes.cjs'}] if fid in probe_by_id else [],
+        'probes': finding_probes,
         'runtime_observed': False,
-        'offline_probe_observed': fid in probe_by_id,
+        'offline_probe_observed': bool(finding_probes),
         'recommendation': current['recommendation'],
         'acceptance': current['acceptance'],
         'limitations': ['Fonte revisada estaticamente; nenhum navegador, banco ou provedor de produção foi executado.'] + current.get('limitations', []),
@@ -178,16 +209,18 @@ for observation in observations:
 json_data = {
     'schema_version': '2.0', 'head_sha': SHA,
     'reviewer': '/root/grill_me_primary_review',
-    'status': 'IN_PROGRESS_REMAINING_MODULES',
+    'status': review_status,
     'source_integrity_reference': '../../source-integrity.json',
-    'scope': 'Módulos complementares frontend: automações, campaigns, catálogo, telefonia, Multiplix, Talk X, relatórios, Agenda, NPS/CSAT, War Room, carteira/pagamentos e ferramentas de IA selecionadas.',
-    'excluded_owner_scopes': ['Inbox principal/Composer/arquivos/mídia', 'Team Chat', 'Auth/usuários/contatos', 'SQL e hooks SLA globais', 'backend/provedores', 'migrations/SQL fora dos contratos cruzados', 'infra/deploy'],
-    'counts': dict(confirmed=len(confirmed), deferred=len(deferred), isolated_callback_probes=len(probe_by_id), severity=dict(collections.Counter(f['severity'] for f in confirmed)), prior_relation=dict(collections.Counter(f['relation_to_prior_audit'] for f in confirmed))),
+    'scope': 'Módulos complementares frontend: automações, campaigns, catálogo, telefonia, Multiplix, Talk X, relatórios, Agenda, NPS/CSAT, War Room, carteira/pagamentos e ferramentas de IA selecionadas. Recorte adicional de 40 helpers em src/lib e src/utils, incluindo monitor cliente de atualização. Codec vendorizado e dez auxiliares Dashboard/transcrições/Meta lidos integralmente; roster final de 73 testes lido integralmente e adjudicado, sem execução de suítes.',
+    'excluded_owner_scopes': ['Inbox principal/Composer/arquivos/mídia', 'Team Chat de produção; quatro arquivos de testes foram incorporados pelo roster final', 'Auth/usuários/contatos', 'SQL e hooks SLA globais', 'backend/provedores', 'migrations/SQL fora dos contratos cruzados', 'infra/deploy fora dos helpers cliente explicitamente lidos'],
+    'counts': dict(confirmed=len(confirmed), deferred=len(deferred), isolated_callback_probes=authored_probe_count, primary_probes=len(probe_by_id), final_frontend_probes=len(frontend_probe_by_id), vendor_probes=len(vendor_probe_by_id), findings_with_offline_probe=sum(f['offline_probe_observed'] for f in confirmed), code_origin=dict(collections.Counter(f['code_origin'] for f in confirmed)), severity=dict(collections.Counter(f['severity'] for f in confirmed)), prior_relation=dict(collections.Counter(f['relation_to_prior_audit'] for f in confirmed))),
     'findings': confirmed,
     'deferred_candidates': deferred,
     'rejected_or_limited': rejected,
-    'proof_semantics': f'{len(probe_by_id)} probes executam trechos/callbacks originais em memória com mocks e driver mínimo de hooks. Não são E2E, React renderer, banco ou prova de incidente em produção.',
+    'proof_semantics': f'{authored_probe_count} probes autorais executam trechos/callbacks originais em memória com mocks e driver mínimo de hooks ({len(probe_by_id)} principais e {len(frontend_probe_by_id)} do recorte final). Mais {len(vendor_probe_by_id)} probes do fornecedor: dois fragmentos numéricos sustentam um achado e um smoke test emite bytes pela API pública. Não são E2E, React renderer, banco ou prova de incidente em produção; o MP3 não foi decodificado/ouvido.',
+    'third_party_vendor_review': 'vendor/report.md',
     'additional_review_observations': 'second-pass-observations.json',
+    'final_test_review': {'artifact':'test-review.json','report':'test-review.md',**test_review['counts']},
 }
 (OUT / 'findings.json').write_text(json.dumps(json_data, ensure_ascii=False, indent=2) + '\n')
 
@@ -216,7 +249,7 @@ def gaps(total, ranges):
     return result
 
 component_scopes = ('automations/', 'automation/', 'chatbot/', 'campaigns/', 'catalog/', 'calls/', 'csat/', 'dashboard/', 'multiplix/', 'nps/', 'payments/', 'reports/', 'schedule/', 'talkx/', 'voice/', 'wallet/', 'inbox/ai-tools/', 'settings/media-library/', 'tasks/')
-added_scopes = ('src/components/tasks/', 'src/hooks/tasks/', 'src/features/talk-me/', 'src/components/chatbot/', 'src/hooks/analytics/')
+added_scopes = ('src/components/tasks/', 'src/hooks/tasks/', 'src/features/talk-me/', 'src/components/chatbot/', 'src/hooks/analytics/', 'src/lib/', 'src/utils/', 'public/vendor/', 'src/components/transcriptions/', 'src/components/meta-capi/', 'src/hooks/business/useWarRoomAlerts.ts', 'src/hooks/business/useDemandPrediction.ts', 'src/components/team-chat/__tests__/', 'src/hooks/team-chat/__tests__/', 'tests/contracts/', 'scripts/db-audit/')
 def in_inventory(path):
     if path.startswith('src/components/'):
         return path[len('src/components/'):].startswith(component_scopes)
@@ -229,6 +262,7 @@ coverage = []
 for path in inventory:
     blob, lines = file_meta(path)
     entries = reads.get(path, [])
+    assert all(1 <= e['line_start'] <= e['line_end'] <= len(lines) for e in entries), path
     ranges = merge_ranges([[e['line_start'], e['line_end']] for e in entries])
     missing = gaps(len(lines), ranges)
     level = 'semantic' if ranges and not missing else 'targeted' if ranges else 'structural'
@@ -242,6 +276,9 @@ for path in inventory:
     associated = [f['id'] for f in confirmed if any(e['path'] == path for e in f['evidence'])]
     row = {
         'path': path, 'git_blob_sha': blob, 'review_level': level,
+        'code_origin': 'third_party_vendored' if path.startswith('public/vendor/') else 'application_authored',
+        'detailed_body_coverage': 'vendor/coverage.json' if path == vendor_coverage['source_path'] else None,
+        'test_adjudication': 'shell-review.json' if path in shell_paths else 'test-review.json' if path in test_paths else None,
         'total_lines': len(lines), 'ranges_read': ranges,
         'added_after_initial_inventory': path.startswith(added_scopes),
         'inventory_addition_reason': 'Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.' if path.startswith(added_scopes) else None,
@@ -269,18 +306,48 @@ for directory in ('src/components/talkx/', 'src/hooks/analytics/', 'src/componen
         'lines': sum(r['total_lines'] for r in selected), 'remaining_unread_ranges': [],
         'limit': 'Leitura dos corpos e dos testes; a suíte não foi executada e os contratos externos permanecem sujeitos aos limites de prova.',
     })
+closed_production_directories = []
+for directory in ('src/components/catalog/', 'src/components/tasks/', 'src/hooks/tasks/', 'src/components/chatbot/', 'src/components/automations/', 'src/components/reports/', 'src/components/voice/'):
+    expected_paths = sorted(p for p in pinned if p.startswith(directory) and p.endswith(('.ts', '.tsx', '.js', '.jsx')) and '/__tests__/' not in p and '.test.' not in p)
+    selected = [r for r in coverage if r['path'] in expected_paths]
+    assert len(selected) == len(expected_paths) and all(r['review_level'] == 'semantic' for r in selected), directory
+    closed_production_directories.append({
+        'directory': directory, 'status': 'PRODUCTION_SOURCE_BODIES_READ', 'files': len(selected),
+        'lines': sum(r['total_lines'] for r in selected), 'remaining_production_unread_ranges': [],
+        'test_limit': 'Testes continuam classificados individualmente; este fechamento não inclui todos os testes do diretório.',
+    })
+lib_utils_scope = json.loads((OUT / 'lib-utils-scope.json').read_text())
+lib_utils_selected = [r for r in coverage if r['path'] in lib_utils_scope['paths']]
+assert len(lib_utils_selected) == lib_utils_scope['assigned_files']
+assert all(r['review_level'] == 'semantic' for r in lib_utils_selected)
+lib_utils_closed = {
+    'status': 'FINITE_AUTHORED_HELPER_RECUT_READ', 'scope_manifest': 'lib-utils-scope.json',
+    'files': len(lib_utils_selected), 'lines': sum(r['total_lines'] for r in lib_utils_selected),
+    'remaining_unread_ranges': [],
+    'limit': 'Somente os 40 caminhos atribuídos pela matriz global. Não inclui todos os testes, outros helpers ou o código terceiro de public/vendor.',
+}
+frontend_scope = json.loads((OUT / 'final-frontend-scope.json').read_text())
+frontend_selected = [r for r in coverage if r['path'] in frontend_scope['paths']]
+assert len(frontend_selected) == 10 and all(r['review_level'] == 'semantic' for r in frontend_selected)
+assert sum(r['total_lines'] for r in frontend_selected) == frontend_scope['assigned_lines']
 covdoc = {
     'schema_version':'2.0', 'head_sha':SHA, 'reviewer':'/root/grill_me_primary_review',
-    'status':'IN_PROGRESS_REMAINING_MODULES',
+    'status':review_status,
     'level_definitions': {
         'semantic':'Arquivo lido integralmente e contratos relevantes examinados; não significa cobertura funcional integral nem runtime aprovado.',
         'targeted':'Somente faixas e símbolos listados foram lidos/examinados; lacunas de linha permanecem explícitas.',
         'structural':'Somente caminho/hash no inventário de escopo. Não houve leitura semântica do arquivo nesta rodada.'
     },
-    'scope_inventory_basis':'Caminhos versionados do manifesto de integridade para diretórios dos módulos e dependências efetivamente lidas. TalkX, analytics e dashboard foram fechados como recortes finitos, incluindo os testes. Catálogo, Tasks, Chatbot e automações continuam na passagem de saldos. Filas/SLA globais, outros módulos e cobertura global são consolidados por root.',
+    'scope_inventory_basis':'Caminhos versionados do manifesto de integridade para diretórios dos módulos e dependências efetivamente lidas. TalkX, analytics e dashboard foram fechados incluindo os testes. A produção de catálogo, Tasks, Chatbot, automações, relatórios e voz também foi lida integralmente; os testes desses outros diretórios mantêm seus níveis individuais. Os 40 helpers de src/lib e src/utils atribuídos pela matriz global foram lidos integralmente, com exclusões registradas no manifesto do recorte. O codec vendorizado foi lido integralmente via cópia AST: 208 corpos/307 linhas originais, separados do código autoral. O saldo individual de arquivos estruturais continua explícito, sem representar a união de outros revisores.',
     'counts': dict(inventoried_files=len(coverage), semantic=counts['semantic'], targeted=counts['targeted'], structural=counts['structural'], read_files=counts['semantic']+counts['targeted'], read_lines=sum(r['lines_read'] for r in coverage)),
     'coverage':coverage,
     'closed_finite_directories': closed_directories,
+    'closed_production_directories': closed_production_directories,
+    'closed_authored_helper_recut': lib_utils_closed,
+    'closed_vendor_recut': {'status': vendor_coverage['status'], 'path': vendor_coverage['source_path'], 'code_origin': 'third_party_vendored', 'source_lines': 307, 'formatted_lines': 4683, 'bodies_read': 208, 'details': 'vendor/coverage.json', 'report': 'vendor/report.md'},
+    'closed_final_frontend_recut': {'status': 'FINITE_PRODUCTION_RECUT_BODIES_READ', 'scope_manifest': 'final-frontend-scope.json', 'files': 10, 'lines': 1055, 'remaining_unread_ranges': [], 'test_limit': 'Roster posterior de 73 testes fechado separadamente em test-review.json; nenhuma suíte executada.'},
+    'closed_test_recut': {'status': test_review['status'], 'allocation_roster':'test-review-roster.json', 'adjudication':'test-review.json', 'report':'test-review.md', **test_review['counts']},
+    'closed_shell_recut': {'status':shell_review['status'], 'allocation_roster':'shell-review-roster.json', 'adjudication':'shell-review.json', 'report':'shell-review.md', **shell_review['counts'], 'additional_dependency_lines':85},
     'cross_agent_boundaries': [
         'Inbox confirmou que seu achado de ScheduleMessageDialog é distinto da leitura da Agenda (R2-MOD-029).',
         'Providers mantém contratos ElevenLabs; R2-MOD-040 cobre somente desfecho do diálogo.',
@@ -298,9 +365,9 @@ def link(e):
 report = [
     '# Reauditoria de módulos complementares — rodada 2',
     '',
-    f'**Fonte fixa:** `{SHA}`. **Resultado:** {len(confirmed)} achados confirmados por contrato estático, dos quais {len(probe_by_id)} também reproduzidos por callbacks isolados; {len(deferred)} candidato adiado. Nenhum desses números representa incidente observado em produção.',
+    f'**Fonte fixa:** `{SHA}`. **Resultado:** {len(confirmed)} achados confirmados por contrato estático, dos quais {authored_probe_count} também reproduzidos por callbacks/transformações isolados e um por dois fragmentos do fornecedor; {len(deferred)} candidato adiado. Um achado pertence ao codec vendorizado e os demais ao código da aplicação. Nenhum desses números representa incidente observado em produção.',
     '',
-    'A fonte permaneceu intocada. Foram executados somente probes locais com dados sintéticos, mocks e trechos de código copiados em memória. A confirmação das definições SQL vencedoras foi cruzada com o agente de banco. Não houve banco, envio, ligação, acesso a segredos ou alteração de aplicação.',
+    'A fonte permaneceu intocada. Foram executados somente probes locais com dados sintéticos, mocks, trechos de código copiados em memória e a API do codec em VM isolada. A confirmação das definições SQL vencedoras foi cruzada com o agente de banco. Não houve banco, envio, ligação, acesso a segredos ou alteração de aplicação.',
     '',
     '## Resultado e prioridades',
     '',
@@ -321,7 +388,9 @@ report += [
     '',
     f'O inventário delimitado contém {len(coverage)} arquivos: {counts["semantic"]} com leitura integral, {counts["targeted"]} com leitura dirigida e {counts["structural"]} somente inventariados. Foram lidas {sum(r["lines_read"] for r in coverage)} linhas únicas em {counts["semantic"]+counts["targeted"]} arquivos. Cada caminho, blob SHA, faixa e lacuna está em `coverage.json`. A categoria structural significa apenas inventário, sem revisão semântica.',
     '',
-    'Os diretórios src/components/talkx, src/hooks/analytics e src/components/dashboard foram lidos integralmente, incluindo seus testes: 165 arquivos e 24.311 linhas. A revisão continua nos saldos de catálogo, Tasks, Chatbot e automações. Bibliotecas e outros arquivos marcados structural ainda possuem somente inventário neste relatório; a união dos revisores é consolidada por root. Não é declarada cobertura integral do frontend nem execução de suas integrações.',
+    'Os diretórios src/components/talkx, src/hooks/analytics e src/components/dashboard foram lidos integralmente, incluindo seus testes: 165 arquivos e 24.311 linhas. A produção de catálogo, Tasks, Chatbot, automações, relatórios e voz também foi lida integralmente; os testes desses diretórios mantêm seus níveis individuais. O recorte adicional de 40 helpers em src/lib e src/utils também foi lido integralmente: 2.888 linhas, caminhos e exclusões em lib-utils-scope.json. O codec vendorizado possui 208 corpos lidos em cópia AST de 4.683 linhas, correspondentes a 307 linhas originais; detalhes em vendor/report.md e vendor/coverage.json. Essa leitura não certifica fidelidade ou conformidade MP3. Arquivos marcados structural ainda possuem somente inventário neste relatório; a união dos revisores é consolidada por root. Não é declarada cobertura integral do frontend nem execução de suas integrações.',
+    '',
+    'O último recorte de produção contém dez auxiliares de Dashboard, transcrições, Meta CAPI e tipos TalkMe: 1.055 linhas lidas, com manifesto em final-frontend-scope.json. O roster final de 73 arquivos de testes (18.496 linhas) foi lido integralmente e adjudicado por arquivo em test-review.json e test-review.md. Cada adjudicação exige faixas completas do diário e confere SHA-256/git blob do arquivo; o roster preserva somente a fotografia de atribuição. Nenhuma suíte foi executada.',
     '',
     '### Arquivos parcialmente lidos',
     '',
@@ -341,6 +410,12 @@ report += [
 for p in proofs['probes']:
     report.append(f"| {p['id']} | `{json.dumps(p['result'], ensure_ascii=False, separators=(',', ':'))}` |")
 report += [
+    '',
+    'O fornecedor tem três provas separadas em `vendor/proofs.json`: VENDOR-P01/P02 reproduzem a indexação fracionária registrada em MOD073; VENDOR-P03 apenas confirma bytes não vazios e término do flush em silêncio/seno curtos. Um smoke test de emissão não valida a qualidade do MP3. Os três casos não são contados como três novos achados nem incluídos nas provas autorais.',
+    '',
+    'O recorte final tem três provas em `final-frontend-proofs.json`: monitor de SLA em três ciclos limitados com página de 50/60 violações; bucket SQL de São Paulo comparado ao calendário UTC com stubs explícitos de date-fns; e tendência calculada contra o ponto de quatro horas atrás. São contratos isolados, não execução de SQL, React ou navegador.',
+    '',
+    'A adjudicação final dos 73 testes distingue componentes/hooks reais, funções puras de produção, contratos por regex de fonte e exemplos locais sem chamada à implementação. CT67 executa axe com controle negativo no próprio teste; os arquivos axe-campaigns/axe-talkx são contratos de fonte sem axe runtime. Os dois grandes testes Team Chat foram incluídos por atribuição explícita do root: comprehensive usa constantes/exemplos locais, enquanto exhaustive lê fonte com regex e casos todo. Estas diferenças alimentam a família GOV003/TC011 consolidada pelo root e não geram um achado por arquivo.',
     '',
     'Alguns testes existentes cobrem contratos menores do que o comportamento que poderiam sugerir: useMyCalls verifica clamp com fixture incompatível com offset vazio; a navegação TalkXView substitui o wizard por stub; o teste de limites mantém a campanha sempre sending; CSAT verifica dados definidos e loading, sem validar média/total após atualização; agendamentos usam dois registros e não conferem completude. Esses testes continuam úteis para seus objetivos estreitos, mas não encerram os cenários encontrados. A suíte não foi executada nem ampliada nesta revisão.',
     '',
@@ -371,7 +446,7 @@ for f in confirmed:
     if len(f['limitations']) > 1:
         report += ['**Limites específicos:**', ''] + ['- '+l for l in f['limitations'][1:]] + ['']
     if f['probes']:
-        report += [f"**Probe:** `proofs.json`, ID `{f['id']}`; código em `offline_probes.cjs`.", '']
+        report += ['**Probes:** ' + '; '.join(f"`{p['artifact']}` / `{p['probe_id']}` (código `{p['script']}`)" for p in f['probes']) + '.', '']
 
 report += ['## Hipóteses adiadas, limitadas e duplicadas', '']
 for f in deferred:
@@ -382,13 +457,25 @@ for r in rejected:
     report += [f"### {r['hypothesis']}", '', f"**{r['adjudication']}:** {r['reason']}", '']
     report += ['- '+link(e) for e in r['evidence']]
     if r['evidence']: report += ['']
+report += ['## Observações da segunda passagem', '', 'Estas observações não são somadas à contagem de achados. Preservam consumidores adicionais, limites específicos dos testes e a relação com famílias já registradas.', '']
+for observation in observations:
+    report += [f"### {observation['id']} — {observation['title']}", '', f"**Classificação:** {observation['classification']}.", '', observation['observation'], '']
+    related = observation['prior_finding_ids'] + observation['related_finding_ids']
+    if related: report += ['**Referências de relação:** ' + ', '.join(related) + '.', '']
+    report += ['- '+link(e)+f" — blob `{e['git_blob_sha']}`." for e in observation['evidence']]
+    report += ['']
 report += [
     '## Artefatos e reprodução', '',
     '- `findings.json`: achados, hipóteses adiadas, relação anterior, precondições, critérios e evidências imutáveis.',
     '- `coverage.json`: inventário delimitado, nível de leitura, declarações/faixas realmente lidas e lacunas.',
     '- `second-pass-observations.json`: limites concretos dos testes e extensões de famílias já registradas, sem aumentar a contagem.',
     f'- `proofs.json` e `offline_probes.cjs`: {len(probe_by_id)} provas isoladas e respectivas limitações.',
+    '- `final-frontend-proofs.json` e `final_frontend_probes.cjs`: três provas isoladas do último recorte de produção.',
+    '- `vendor/report.md`, `vendor/coverage.json`, `vendor/contracts.json` e `vendor/proofs.json`: revisão separada dos 208 corpos do fornecedor, contrato confirmado, ramos sem consumidor demonstrado e três probes numéricos/de emissão.',
+    '- `test-review.json` e `test-review.md`: adjudicação dos 73 testes finais, com controles positivos, mocks, limites e hashes; `build_test_review.py` valida faixas completas sem executar suítes.',
     '- `read-journal.jsonl`: diário bruto de leitura; a cobertura consolidada agrupa as releituras usadas para recuperar saídas truncadas.',
+    '- `shell-review.json` / `shell-review.md`: 13 scripts shell e 3.608 linhas lidos integralmente, mais dependência Python de 85 linhas; nenhum script ou SQL executado. Incorporados após o gate adicional de linguagens.',
+    '- `database-peer-test-review.json` / `.md`: 52 testes complementares do roster Database, 4.082 linhas; artefato separado para integração do dono e deduplicação do único overlap.',
     '- `candidates.json`, `adjudications.json` e `additional_findings.json`: trilha de candidatos e decisões de classificação.',
     '- `build_reports.py`: montagem e validação de paths/faixas/blobs contra o manifesto fixado.',
     '',
@@ -403,6 +490,13 @@ validation = {
     'evidence_records':sum(len(f['evidence']) for f in all_records),
     'coverage_files':len(coverage), 'read_files':counts['semantic']+counts['targeted'],
     'probe_ids':sorted(probe_by_id),
+    'vendor_probe_ids': sorted(vendor_probe_by_id),
+    'final_frontend_probe_ids': sorted(frontend_probe_by_id),
+    'vendor_bodies_read': 208,
+    'final_test_review': {'status':test_review['status'], **test_review['counts']},
+    'shell_review': {'status':shell_review['status'], **shell_review['counts'], **shell_review['validation']},
+    'all_final_test_sha256_and_git_blob_match_roster': True,
+    'all_final_test_full_ranges_and_adjudications_present': True,
     'all_prior_references_exist':True,
     'all_evidence_ranges_valid':True,
     'all_coverage_and_evidence_blobs_match_pin':True,

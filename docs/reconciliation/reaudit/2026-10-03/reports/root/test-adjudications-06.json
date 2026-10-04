@@ -1,0 +1,30 @@
+[
+  {
+    "roster_index": 38,
+    "adjudication": [
+      "Importa mapboxSession real e simula logAudit e relógio. Verifica reaproveitamento e expiração por inatividade, encerramento por retrieve/explícito, rotação depois de 51 chamadas suggest e evento de auditoria somente no primeiro uso, com source/default corretos.",
+      "Também verifica chamada sem sessão em DEV e PROD e ausência de sessão fantasma. O caso de teto não discrimina exatamente o instante 50 versus 51; logAudit é mock e não comprova cobrança ou agregação mensal no banco."
+    ]
+  },
+  {
+    "roster_index": 39,
+    "adjudication": [
+      "Importa mapboxToken real; verifica cache, deduplicação simultânea, force, timeout com abort, classes de HTTP/SDK/rede, token ausente, não cachear falha, classificação arbitrária e encaminhamento da telemetria com source/kind.",
+      "As assertivas observam o contrato local e seus argumentos de erro. O servidor get-mapbox-token e o serviço de mapas são simulados; validade operacional do token e entrega real da telemetria não são inferidas."
+    ]
+  },
+  {
+    "roster_index": 40,
+    "adjudication": [
+      "Importa módulos reais de volume com singletons limpos. Verifica volume nativo, falta de suporte sem AudioContext, criação de GainNode somente após play, reutilização de source, store/loadedmetadata, detach/recriação do elemento e sinais de presença de faixa de áudio.",
+      "O próprio arquivo explicita a limitação jsdom: volume read-only e APIs WebAudio/decodificação são simulados. Os controles de estado e ciclo de vida são preservados, sem afirmar áudio em iOS físico ou decodificação real."
+    ]
+  },
+  {
+    "roster_index": 41,
+    "adjudication": [
+      "Importa mediaVolumeStore real a cada cenário. Verifica defaults, identidade do snapshot, curva quadrática com controle não linear, sanitização e clamp, storage indisponível, persistência/reload, mute preservando volume, subscribers e sincronização por FakeBroadcastChannel/evento storage.",
+      "Há casos de erro e fronteiras úteis e separação entre escrita e leitura inválida. A sincronização é simulada em módulos no mesmo processo e não comprova comportamento em abas reais; o teste de payload inválido usa acesso opcional ao peer, limite registrado sem desqualificar os demais controles."
+    ]
+  }
+]

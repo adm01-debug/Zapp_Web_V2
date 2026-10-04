@@ -352,7 +352,7 @@
       "classification": "CONFIRMED_STATIC_CONTRACT",
       "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "preconditions": "Uma thread ou o conjunto consultado de anexos excede o limite de linhas da API. O limite real implantado não foi consultado.",
-      "consumer_chain": "useGmail.threadMessages query ascendente → lastMessage/replyTarget/markAsRead → EmailChatThread.",
+      "consumer_chain": "useGmail.threadMessages query ascendente → lastMessage/replyTarget/markAsRead → EmailChatThread e EmailThreadView legado.",
       "observed_behavior": "A lista de threads usa collectEmailPages, mas a consulta de mensagens e a consulta de anexos fazem uma única requisição sem range/cursor/continuação. As mensagens são ordenadas da mais antiga para a mais nova; lastMessage usa o último elemento da amostra recebida.",
       "impact": "Sob truncamento, mensagens recentes e anexos podem ficar ausentes, e a resposta padrão pode referenciar uma mensagem antiga da amostra. Não se fixa 1000 como configuração observada do servidor.",
       "evidence": [
@@ -395,6 +395,14 @@
           "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
           "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L368-L375",
           "purpose": ""
+        },
+        {
+          "path": "src/components/gmail/EmailThreadView.tsx",
+          "line_start": 178,
+          "line_end": 180,
+          "git_blob_sha": "70a11fdbb7e39daac07951dab442e23895721391",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L178-L180",
+          "purpose": "O consumidor legado também toma o último elemento da amostra como alvo de resposta."
         }
       ],
       "probes": [],
@@ -646,6 +654,22 @@
           "git_blob_sha": "3bca05232a5345f8da5dd21dfc1e692540595e1c",
           "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatBubble.tsx#L45-L60",
           "purpose": "Uso do pipeline comum; sanitização permanece ativa."
+        },
+        {
+          "path": "src/components/gmail/EmailThreadView.tsx",
+          "line_start": 45,
+          "line_end": 53,
+          "git_blob_sha": "70a11fdbb7e39daac07951dab442e23895721391",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L45-L53",
+          "purpose": "O consumidor legado também sanitiza pelo pipeline comum."
+        },
+        {
+          "path": "src/components/gmail/EmailThreadView.tsx",
+          "line_start": 116,
+          "line_end": 120,
+          "git_blob_sha": "70a11fdbb7e39daac07951dab442e23895721391",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L116-L120",
+          "purpose": "Renderização do HTML sanitizado, sem retirar as proteções restantes."
         }
       ],
       "probes": [

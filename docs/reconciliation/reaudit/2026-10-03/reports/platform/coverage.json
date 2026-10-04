@@ -643,6 +643,196 @@
       "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
     },
     {
+      "path": "src/components/mobile/SwipeGestures.tsx",
+      "line_start": 1,
+      "line_end": 144,
+      "git_blob_sha": "c30908fa03c93ec873c05aba6559a232dff8c424",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/SwipeGestures.tsx#L1-L144",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/swipeUtils.ts",
+      "line_start": 1,
+      "line_end": 60,
+      "git_blob_sha": "69492ba33dc0a71ceba195bd701fba9c6c0d4918",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/swipeUtils.ts#L1-L60",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/MobileSlidePanel.tsx",
+      "line_start": 1,
+      "line_end": 165,
+      "git_blob_sha": "c9024c0215d12e83b350f35492480370b0a333ed",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileSlidePanel.tsx#L1-L165",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/MobileDrawerMenu.tsx",
+      "line_start": 1,
+      "line_end": 320,
+      "git_blob_sha": "5f63306ac808bc919535d11dac582ab4b9c6541e",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileDrawerMenu.tsx#L1-L320",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/MobileShell.tsx",
+      "line_start": 1,
+      "line_end": 109,
+      "git_blob_sha": "d488734dc1796bccb51629b3a985f5f27d93f231",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileShell.tsx#L1-L109",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/BottomSheet.tsx",
+      "line_start": 1,
+      "line_end": 76,
+      "git_blob_sha": "bd05c6815a2191b440fcb8266cf3ce459d770137",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/BottomSheet.tsx#L1-L76",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/MobileNavigation.tsx",
+      "line_start": 1,
+      "line_end": 69,
+      "git_blob_sha": "1daf6e838773f3ef861482e181c85f92acab75eb",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileNavigation.tsx#L1-L69",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/MobilePullToRefresh.tsx",
+      "line_start": 1,
+      "line_end": 48,
+      "git_blob_sha": "35145a7c56af0a010f7d3d4b9e0486f707614a1d",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobilePullToRefresh.tsx#L1-L48",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/MiniChatPiP.tsx",
+      "line_start": 1,
+      "line_end": 208,
+      "git_blob_sha": "ad0d41f938cf8d9097595a1825eb7d223ea585d5",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MiniChatPiP.tsx#L1-L208",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/InAppNotificationProvider.tsx",
+      "line_start": 1,
+      "line_end": 31,
+      "git_blob_sha": "e44c899ab672a25513a524cae00ac3305465f1ba",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/InAppNotificationProvider.tsx#L1-L31",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/InAppNotification.tsx",
+      "line_start": 1,
+      "line_end": 72,
+      "git_blob_sha": "4487eb3857ab4893220a31a6e970ec5f266e7553",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/InAppNotification.tsx#L1-L72",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/MobileHeader.tsx",
+      "line_start": 1,
+      "line_end": 153,
+      "git_blob_sha": "44288d685a2bc346314f6ab0614e004427661135",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileHeader.tsx#L1-L153",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/NotificationsPanel.tsx",
+      "line_start": 1,
+      "line_end": 176,
+      "git_blob_sha": "b44648781fcbf6a94779defc124516efb85791d0",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/NotificationsPanel.tsx#L1-L176",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/MobileFAB.tsx",
+      "line_start": 1,
+      "line_end": 117,
+      "git_blob_sha": "ff7fe2f77a4cc2158ed51e076c7abdde80e462cf",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileFAB.tsx#L1-L117",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/FloatingActionButtons.tsx",
+      "line_start": 1,
+      "line_end": 119,
+      "git_blob_sha": "e55269d88528fb8899ecf62229962bd03b9c7829",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/FloatingActionButtons.tsx#L1-L119",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/TouchRipple.tsx",
+      "line_start": 1,
+      "line_end": 72,
+      "git_blob_sha": "12ce1e508f6dc53e74883512eeac1321eb87ce4c",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/TouchRipple.tsx#L1-L72",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/SwipeableMessage.tsx",
+      "line_start": 1,
+      "line_end": 91,
+      "git_blob_sha": "0476a7c603703705700fd37d340b3afcdce79960",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/SwipeableMessage.tsx#L1-L91",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/components/mobile/index.ts",
+      "line_start": 1,
+      "line_end": 4,
+      "git_blob_sha": "3f0c2c464ee4ce0376817d661f6ddad5b0378df5",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/index.ts#L1-L4",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
+      "path": "src/pages/Install.tsx",
+      "line_start": 1,
+      "line_end": 149,
+      "git_blob_sha": "14e3abc2b01b8e1dd96bb3d2cc17faa1954186dc",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/Install.tsx#L1-L149",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo integral e contratos locais lidos; consumidores/ramos cruzados quando indicados. Não declara execução de todos os estados."
+    },
+    {
       "path": "src/components/inbox/useGlobalSearchData.ts",
       "line_start": 223,
       "line_end": 226,
@@ -711,6 +901,56 @@
       "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/ConversationListSidebar.tsx#L112-L125",
       "review_level": "TARGETED_RANGE_REVIEW",
       "scope": "R2-PLAT-007"
+    },
+    {
+      "path": "src/pages/SLADashboard.tsx",
+      "line_start": 5,
+      "line_end": 15,
+      "git_blob_sha": "1634cc30959d18e0716ddb3904b5e3e6923d63e1",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/SLADashboard.tsx#L5-L15",
+      "review_level": "TARGETED_RANGE_REVIEW",
+      "scope": "R2-PLAT-012"
+    },
+    {
+      "path": "src/pages/SLAHistory.tsx",
+      "line_start": 7,
+      "line_end": 21,
+      "git_blob_sha": "6b7727fe3355c205f320ce3236b5fc37599815e2",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/SLAHistory.tsx#L7-L21",
+      "review_level": "TARGETED_RANGE_REVIEW",
+      "scope": "R2-PLAT-012"
+    },
+    {
+      "path": "src/components/layout/SidebarNavItem.tsx",
+      "line_start": 27,
+      "line_end": 43,
+      "git_blob_sha": "47eb0a3df6df762e78413ff2e3ee8d59a2165e49",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/layout/SidebarNavItem.tsx#L27-L43",
+      "review_level": "TARGETED_RANGE_REVIEW",
+      "scope": "R2-PLAT-012"
+    },
+    {
+      "path": "src/components/layout/Sidebar.tsx",
+      "line_start": 128,
+      "line_end": 137,
+      "git_blob_sha": "8781121425b6ee0267d079decb32959035ad6146",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/layout/Sidebar.tsx#L128-L137",
+      "review_level": "TARGETED_RANGE_REVIEW",
+      "scope": "R2-PLAT-012"
+    },
+    {
+      "path": "src/routes/AppRoutes.tsx",
+      "line_start": 82,
+      "line_end": 97,
+      "git_blob_sha": "005f7a1a35bfb4cb98161784c7047a4edbc9dc22",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/routes/AppRoutes.tsx#L82-L97",
+      "review_level": "TARGETED_RANGE_REVIEW",
+      "scope": "R2-PLAT-012"
     },
     {
       "path": "src/providers/AppProviders.tsx",

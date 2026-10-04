@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "second_pass_checkpoint",
+  "status": "providers_assigned_scope_complete",
   "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
   "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
   "source_root": "/workspace/scratch/f8f9b9cbce53/reaudit/source",
@@ -2627,6 +2627,98 @@
       "note": ""
     },
     {
+      "path": "supabase/functions/csp-report/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "029925a360928bc6c4cc35934192a13ecd111f06903c1b2092f85127ac093040",
+      "line_count": 127,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 127,
+          "symbols": [
+            "readBounded",
+            "collectReports",
+            "scalar",
+            "redactUrl",
+            "truncate",
+            "handler method/rate/body/format guards",
+            "legacy and Reporting API field normalization",
+            "allowlist log"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/send-rate-limit-alert/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63",
+      "line_count": 92,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 92,
+          "symbols": [
+            "handler",
+            "optional internal secret",
+            "payload contract",
+            "alert insert",
+            "block upsert",
+            "admin lookup",
+            "notification mapping/insert",
+            "response/error"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9ceed7013a9237cd19adb2b5b608478d2fc2d9f244141d7b658de7d9b45961ac",
+      "line_count": 47,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 47,
+          "symbols": [
+            "handler",
+            "service client",
+            "aged log deletion",
+            "expired nonpermanent block deletion",
+            "resolved alert retention",
+            "counts/error response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/searchbox-budget-alert/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2909d2324bfb71d4e298c370280b8cdd45d77a1b2a9ca044dc7092394bbfa1d1",
+      "line_count": 64,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 64,
+          "symbols": [
+            "handler",
+            "fail-closed cron secret",
+            "monthly view aggregate",
+            "threshold gate",
+            "Resend request",
+            "provider response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
       "path": "supabase/functions/_shared/schemas.ts",
       "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "sha256": "7fb6f10bf93306c84c7a4a84b68cb6e53f855e4aa04045dd1e8b96fead3c6cc7",
@@ -2765,30 +2857,24 @@
       "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "sha256": "d3b0a5b13b12473c9f871c5085e84e3274f46b4f2702cffcb0c4fe4be3992684",
       "line_count": 250,
-      "level": "semantic_selected_ranges",
+      "level": "semantic_full_file",
       "reviewed_ranges": [
         {
           "line_start": 1,
-          "line_end": 88,
+          "line_end": 250,
           "symbols": [
             "callBitrixApi",
-            "syncContactsFromBitrix",
-            "pushContactToBitrix",
-            "createLeadFromConversation"
-          ]
-        },
-        {
-          "line_start": 175,
-          "line_end": 226,
-          "symbols": [
-            "callBitrixApi",
+            "all lead/contact/deal/activity methods",
+            "registerCall",
+            "finishCall",
+            "attachCallRecord",
             "syncContactsFromBitrix",
             "pushContactToBitrix",
             "createLeadFromConversation"
           ]
         }
       ],
-      "note": ""
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
     },
     {
       "path": "src/components/voice/ElevenLabsDialogue.tsx",
@@ -3381,6 +3467,999 @@
       "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
     },
     {
+      "path": "src/hooks/evolution/useEvolutionGroups.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "bf60350e1710505303d93e9068ce561073ea14df1c2b816befb878aec044ea32",
+      "line_count": 59,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 59,
+          "symbols": [
+            "useEvolutionGroups",
+            "create/list/info/participants",
+            "name/description/settings",
+            "invite/revoke/accept/leave",
+            "picture/ephemeral"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/evolution/useEvolutionMessaging.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e86486752703cae072bcce8f7ca425359e6c819314db0956abb46f79f90f10ed",
+      "line_count": 160,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 160,
+          "symbols": [
+            "useEvolutionMessaging",
+            "all send methods",
+            "read/unread/archive/delete/edit",
+            "pin/unpin/star/clear/disappearing/profile/mute"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/evolution/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b8d7656b0f95ad3b45e4a011b08f7b31abd6f9e1b2579556a5ae89d43101d770",
+      "line_count": 6,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 6,
+          "symbols": [
+            "evolution reexports"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5de33c8796d23292379b40f76b5299f07e9392d8fdf6d9286853c7097620b716",
+      "line_count": 18,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 18,
+          "symbols": [
+            "integration reexports"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/evolutionApi.types.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c849b739786156fdec137edfc3d0f129a6cffd907f9c3a9a3d48311358e1d7b8",
+      "line_count": 229,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 229,
+          "symbols": [
+            "send/group/contact/poll/list/button types",
+            "webhook/settings/privacy",
+            "all provider integration configs",
+            "instance/connection create contracts"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useExternalEvolution.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d23548eca0554a33c495af652475abeb2f5c845f07385ca991799b2be7096b22",
+      "line_count": 69,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 69,
+          "symbols": [
+            "useExternalConversations",
+            "useExternalMessages",
+            "query/poll gating and read-only return"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useSyncToCRM.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "edecd623d86f0f07f7a677ade8182c02a31eb370f3475704f0be58bceea1204c",
+      "line_count": 71,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 71,
+          "symbols": [
+            "SyncParams/SyncResult",
+            "useSyncToCRM",
+            "identity-only enqueue",
+            "result-based invalidation"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useMetaCAPIData.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5f7c3fc90feb1ae94c66d8ee0bb720fc40936eb8f81c3a4e0ad2027030b868b6",
+      "line_count": 51,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 51,
+          "symbols": [
+            "CAPIEvent",
+            "useMetaCAPIData",
+            "events/settings query",
+            "remount revalidation"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useQuarantineForMessage.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "29c5458fbf9ad1f6873793f778c69d8ed42a5eb13ee4f5d602f8aec29a8ca8ee",
+      "line_count": 17,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 17,
+          "symbols": [
+            "useQuarantineForMessage",
+            "external-store subscription and message lookup"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useChatbotFlows.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "79ae33581d8f40c7b1b8b4e4eaa907a967929da5227de413f974570d0e075897",
+      "line_count": 152,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 152,
+          "symbols": [
+            "node/edge/flow types",
+            "useChatbotFlows",
+            "flowsQuery",
+            "createFlow",
+            "updateFlow",
+            "deleteFlow",
+            "toggleFlow"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useKnowledgeBase.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c20dd80252a8454fa04ee60fee6437855ccced91a2ccb699486ef63ba42d15f8",
+      "line_count": 91,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 91,
+          "symbols": [
+            "Article/KBFile/categories",
+            "useKnowledgeBase",
+            "fetchData",
+            "saveArticle",
+            "deleteArticle",
+            "uploadFile"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useKnowledgeBaseSearch.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e0fd5d06fc1b4cc4073359d0438b439b5b4ddac975a3fbef19479f12310d6047",
+      "line_count": 60,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 60,
+          "symbols": [
+            "KBArticle",
+            "useKnowledgeBaseSearch",
+            "handleSearch",
+            "debounce cleanup",
+            "RPC query",
+            "clear"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXInsights.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "255fb469415d1f0255226c5285c2cd50ce5fd7c606f2bc5281079ca2b0c17d0b",
+      "line_count": 148,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 148,
+          "symbols": [
+            "TalkXInsight/InsightRaw",
+            "fetchInsightData",
+            "best hour/template/inactivity/clicks",
+            "buildInsights",
+            "useTalkXInsights"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXConnectionStatus.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ef4b14bbef8ef4eae2f29e0376d260960098671baf34f9f8b93aba0a591fbaea",
+      "line_count": 39,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 39,
+          "symbols": [
+            "WA_CONNECTION_STATUS_LABEL",
+            "useTalkXConnectionStatus",
+            "scoped query and null/unknown states"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXCommandItems.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "559ae630780ac87a714dc87abfe1fee0e53131c9b30c9ed56952b6f67b73413e",
+      "line_count": 63,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 63,
+          "symbols": [
+            "STATUS_LABEL",
+            "useTalkXCommandItems",
+            "cache freshness reads",
+            "campaign/segment/template item mappings",
+            "navigation actions"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useWhatsAppTemplates.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2e5f46a6608d03eb3dbcf89f0e267e106c772ba7c540bec32678b01282a83027",
+      "line_count": 171,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 171,
+          "symbols": [
+            "types/categories/languages/status/defaults",
+            "fetchTemplates",
+            "extractVariables",
+            "handleContentChange",
+            "handleSave",
+            "handleDelete",
+            "handleDuplicate",
+            "handlePreview",
+            "renderPreviewContent",
+            "filteredTemplates",
+            "openNew/openEdit"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/usePersonalStickers.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2b160727cdb76663161e690639d19ff1e7de3a08b853c0f625ea20c19ef4c0a5",
+      "line_count": 84,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 84,
+          "symbols": [
+            "profile query",
+            "stickers query",
+            "handleUpload",
+            "toggleFavorite",
+            "deleteSticker",
+            "incrementUseCount"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useCustomEmojis.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "01d79225188ea46336b266d7757a18acdc1a309c284c18055bc65e24aaa9f1b3",
+      "line_count": 154,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 154,
+          "symbols": [
+            "fetchEmojis",
+            "open effect",
+            "handleFileSelect",
+            "handleConfirmUpload",
+            "handleCancelUpload",
+            "handleSend",
+            "toggleFavorite",
+            "handleCategoryChange",
+            "handleDelete"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/integrations/IntegrationsHub.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6d8bea6fcdf95fe6cfa696285a4341cf88c69752021d4b68ae99d3b2f18f0910",
+      "line_count": 110,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 110,
+          "symbols": [
+            "integration descriptors",
+            "IntegrationsHub",
+            "navigation and view mounts",
+            "demo/available badges"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/integrations/BitrixIntegrationView.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6e3700d44ed305789226bc317cbe2af246510804d14787d4cff0f39e726fcb3d",
+      "line_count": 148,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 148,
+          "symbols": [
+            "BitrixIntegrationView",
+            "handleTestConnection",
+            "handleSyncContacts",
+            "configuration fields and status"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/integrations/N8nIntegrationView.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5f4f58e74f2ef9641dc565288a36e2613f1be579f17b51e0ea7676ee0db60c81",
+      "line_count": 215,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 215,
+          "symbols": [
+            "triggerEvents",
+            "handleConnect",
+            "handleAddWorkflow",
+            "toggleWorkflow",
+            "removeWorkflow",
+            "testWorkflow",
+            "disabled connection and demo banner",
+            "workflow rendering"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/integrations/SentryIntegrationView.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ce5ea90c11ed9cce41a6c5f7c22a5b8872353149ba3570c642e912ad035700f6",
+      "line_count": 185,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 185,
+          "symbols": [
+            "mockErrors",
+            "SentryIntegrationView",
+            "handleConnect",
+            "resolveError",
+            "levelColor",
+            "counters",
+            "configuration and issue rendering"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/integrations/GoogleCalendarIntegration.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b2d2f2ce0715a50ca9bcdb692703424a5a9113ee0104890c7820075a129e4ff2",
+      "line_count": 169,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 169,
+          "symbols": [
+            "GoogleCalendarIntegration",
+            "handleConnect",
+            "handleDisconnect",
+            "demo/disabled connection",
+            "settings and feature descriptors"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/whatsapp-flows/FlowComponentPreview.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f95db759a8cc0955bc4ad1ce2a6c421b284b7358e2f7e880246d9167bba6d418",
+      "line_count": 108,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 108,
+          "symbols": [
+            "FlowComponent",
+            "FlowComponentPreview",
+            "renderComponent all component branches"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242",
+      "line_count": 252,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 252,
+          "symbols": [
+            "flow/screen types",
+            "COMPONENT_TYPES",
+            "fetchFlows",
+            "createFlow",
+            "deleteFlow",
+            "updateFlowScreens",
+            "addScreen",
+            "addComponent",
+            "removeComponent",
+            "list/reopen/back/preview/render branches"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/knowledge/KnowledgeBaseView.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2d905343870adbd854231d2664f729f5c408ac3d7ff98e6a22d0633a59a15235",
+      "line_count": 133,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 133,
+          "symbols": [
+            "statusIcon",
+            "KnowledgeBaseView",
+            "openNew",
+            "openEdit",
+            "save",
+            "filteredArticles",
+            "article/file views",
+            "upload/editor controls"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/inbox/KnowledgeBaseSearchPanel.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ded296bc26c296a64c67a9d29fd1de6caafc142fb35e4ea33dbae81b5aff7b7e",
+      "line_count": 120,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 120,
+          "symbols": [
+            "KnowledgeBaseSearchPanel",
+            "handleCopy",
+            "clear/loading/empty/results",
+            "expand/copy/insert controls"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/inbox/stickers/PersonalStickers.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "be11e5fc2d771b4f17d01fd8a5646693626226d0ed66d250ef57553c44a69c19",
+      "line_count": 103,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 103,
+          "symbols": [
+            "PersonalStickers",
+            "filter/folderName",
+            "handleSend",
+            "upload/favorite/delete controls",
+            "empty/loading states"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/inbox/CustomEmojiPicker.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7975688fd09bbe740ff2e84f72c9eae89a7eac11caf247bdf86b055bafc8f7bf",
+      "line_count": 217,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 217,
+          "symbols": [
+            "CategorySelector",
+            "UploadPreview",
+            "CustomEmojiPicker",
+            "filters",
+            "native/custom tabs",
+            "upload and management controls"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/keyboard/CommandPaletteHost.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "34609b36fb8616345b10f2b49f26bfeafaf03f70cb5090eb99b3b44cf3f30f97",
+      "line_count": 30,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 30,
+          "symbols": [
+            "CommandPaletteHost",
+            "catalog and TalkX hook consumer",
+            "palette props"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/lib/quarantineStore.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c43d2a796900cc38e3a950e5caf8cec718e7d2176f562308b361658de16d0c04",
+      "line_count": 74,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 74,
+          "symbols": [
+            "refreshSnapshot",
+            "subscribe/unsubscribe",
+            "getSnapshot/get",
+            "upsertMany",
+            "remove",
+            "replaceForDecision",
+            "clear"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/adapters/evolutionAdapter.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "34ac4fb3bb7ed75ba604dcc94e2ce845f846ca18aede2b1346332c20e1d45e90",
+      "line_count": 223,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 223,
+          "symbols": [
+            "jidToPhone",
+            "evolutionToRealtimeMessage",
+            "mapMessageType",
+            "mapStatus",
+            "deriveContactsFromMessages",
+            "derivedToConversationContact",
+            "buildExternalConversations"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/services/evolution.service.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "31e4f8ad84b0922e3557854063f533d39e14894d6acd5450f41375c9607b05d2",
+      "line_count": 221,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 221,
+          "symbols": [
+            "getEvolutionInstances",
+            "getEvolutionInstanceById",
+            "getEvolutionInstanceByName",
+            "getConnectedEvolutionInstances",
+            "updateEvolutionInstanceStatus",
+            "sendEvolutionMessage",
+            "sendEvolutionMedia"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/integrations/supabase/externalClient.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2824022cfd758d329143618771241ffb1d0a908a0e2d731a00cb945250f73d46",
+      "line_count": 14,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 14,
+          "symbols": [
+            "parseCRMIntegrationBuildFlag",
+            "strict staged build gate"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/system/useCRMIntegrationEnabled.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "246f639736aa765d46d5df6e0c1436d625150de7ce128bfacf38a5d143e11af0",
+      "line_count": 8,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 8,
+          "symbols": [
+            "build gate and runtime flag conjunction"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/inbox/contact-details/AIInsightsWidget.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "14714b13d37e5ae3ad3dc05df86a62c6882fa10a2f6572aea9dff5c9e2e96dce",
+      "line_count": 45,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 45,
+          "symbols": [
+            "CRM kill switch",
+            "conditional contact intelligence query",
+            "items projection",
+            "render gating"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/services/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b22dd16fb78b3e08fa67648f24e643059e3db1a495b620af64b884692593a25e",
+      "line_count": 9,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 9,
+          "symbols": [
+            "service barrel exports"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/integrations/GmailIntegrationCard.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "485d27d86c0986e45237d3b3cf55b914e700dab79065a2dacbcf3f12e5efb641",
+      "line_count": 66,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 66,
+          "symbols": [
+            "useGmail connection projection",
+            "connect/sync/disconnect buttons",
+            "sync status/last error presentation"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/admin/GmailWebhookMonitor.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "1f839b9b9bb8343775512665a17347a82daffce7d947c7a8f5a4647bcb6a9424",
+      "line_count": 192,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 192,
+          "symbols": [
+            "loadData",
+            "getStatusBadge",
+            "timeSince",
+            "stats/account/empty rendering",
+            "static webhook info"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/gmail/EmailThreadView.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d5286686f6d37a3221d7bcf61fa3872df108d0382f5eac01a25ff9969a3154bb",
+      "line_count": 302,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 302,
+          "symbols": [
+            "getInitials",
+            "formatDate",
+            "EmailMessageCard expansion and sanitized HTML",
+            "EmailThreadView selection/markAsRead effects",
+            "lastMessage",
+            "archive/trash/reply actions",
+            "EmailComposer binding"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/groups/GroupsView.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b43110db8781696eb31ea512116c40a0b39e282e2c7030dec0b8b6e450be153e",
+      "line_count": 312,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 312,
+          "symbols": [
+            "onAddGroup",
+            "onBroadcast",
+            "filter/selection UI",
+            "context menu callbacks",
+            "category controls",
+            "broadcast target summary and draft lifecycle"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/providers/QuarantineMonitorProvider.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "31d0b8fcf2e54f93bb660692a67d6c3d5e37f2e373c4caed946b8bf55630d482",
+      "line_count": 114,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 114,
+          "symbols": [
+            "auth reset effect",
+            "detectAdmin",
+            "tick",
+            "notConfigured/exception paths",
+            "cache hydration",
+            "notification detection",
+            "timeout scheduling and cleanup"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/alerts/EvolutionDisconnectBanner.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "79d5aacdea9384712bc0af435e62f3bf3bed1c6774585506e802e1f0af7e9465",
+      "line_count": 115,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 115,
+          "symbols": [
+            "fetchStatus",
+            "Realtime effect and cleanup",
+            "handleReconnect",
+            "dismiss/render status"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/omnichannel/OmnichannelManager.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa",
+      "line_count": 236,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 236,
+          "symbols": [
+            "channel config/types",
+            "connection query",
+            "addChannel",
+            "deleteChannel",
+            "getStatusBadge",
+            "create/delete UI",
+            "constant/derived counts",
+            "lazy routing rules"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/omnichannel/OmnichannelInbox.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe",
+      "line_count": 302,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 302,
+          "symbols": [
+            "loadConnections",
+            "loadUnifiedInbox",
+            "init effect",
+            "filteredMessages",
+            "getChannelIcon",
+            "channel counters/rows",
+            "connection status rendering",
+            "embedded EmailChatInbox"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/omnichannel/ChannelRoutingRules.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5485f2eee9ce5e3fda2575857cc976fb2fbcf179e35738cb731bc978721873cd",
+      "line_count": 205,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 205,
+          "symbols": [
+            "rules/queues queries",
+            "toggleRule",
+            "deleteRule",
+            "createRule",
+            "channelLabels",
+            "add/toggle/delete controls",
+            "priority/queue/empty rendering"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/security/QuarantineBadge.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "297250d9128093814ccde804ea49b2e7f049eb2bd89d3c02b6021f7ac74a94fa",
+      "line_count": 53,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 53,
+          "symbols": [
+            "STYLE_BY_DECISION",
+            "QuarantineBadge",
+            "cache decision projection",
+            "tooltip and metadata"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
       "path": "supabase/migrations/20260408194438_1ad57139-c089-4711-86e1-71d8f461e02d.sql",
       "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "sha256": "7f5968e3f16d21d397d1744a20e19fbb359bead392d87c5cbc857b16f2708cb6",
@@ -3440,6 +4519,214 @@
       "note": "Texto original completo lido; definições/políticas posteriores vigentes pertencem à frente database."
     },
     {
+      "path": "supabase/migrations/20260929420000_fix_talkx_transition_overload_and_status_check.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "fe157dbb5db2d02ccc96f5adcc68ca1b897e98ea78f6942d32d54ca0b6ea1320",
+      "line_count": 30,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 16,
+          "line_end": 30,
+          "symbols": [
+            "campaign status check",
+            "text vocabulary excludes finished"
+          ]
+        }
+      ],
+      "note": "Trecho vigente confirmado por database e pinado antes de P32; não é execução SQL."
+    },
+    {
+      "path": "supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d021a3812e7d2e1401dcfe6c6e7b66f038d7e8f13f347e32ddd92b77ddbae6b9",
+      "line_count": 82,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 18,
+          "symbols": [
+            "profile visibility own/admin/supervisor"
+          ]
+        }
+      ],
+      "note": "Recorte lido após confirmação da cadeia por auth/database."
+    },
+    {
+      "path": "supabase/migrations/20260401001655_509f6c72-b9c2-458c-9dc5-af298d512958.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "cb48838709dd2aed6659fe101c792beae6c8ed4890c2612d872e5396a5b12d15",
+      "line_count": 17,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 10,
+          "symbols": [
+            "removal of team profile broad policy"
+          ]
+        }
+      ],
+      "note": "Somente trecho inicial, sem promover os demais guards da migration."
+    },
+    {
+      "path": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "321cb5da936ae109ff860ca7d59fb60a3bd644f0b172c6ee7dbbb323ca60b65e",
+      "line_count": 156,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 41,
+          "line_end": 69,
+          "symbols": [
+            "knowledge_base_articles/files DDL and defaults"
+          ]
+        }
+      ],
+      "note": "Recorte de contrato, motor/SQL final pertencem a database."
+    },
+    {
+      "path": "supabase/migrations/20260318121647_fab9b2a8-44aa-441b-b05d-7b917e113eab.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c921b5b1580e846024d49a4268c16cd7d064e81c9d3f8970720539d341b44ad6",
+      "line_count": 47,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 39,
+          "line_end": 47,
+          "symbols": [
+            "published article condition for file visibility"
+          ]
+        }
+      ],
+      "note": "Somente policy de arquivos da base de conhecimento."
+    },
+    {
+      "path": "supabase/functions/ai-suggest-reply/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4c90f4ed62d870269d012d8ead3d77a2531fd03291579a8fd4678275925f8a9a",
+      "line_count": 198,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 29,
+          "line_end": 54,
+          "symbols": [
+            "published article context query"
+          ]
+        }
+      ],
+      "note": "Leitura pontual de integração Knowledge Base; handler integral e achados pertencem a infra."
+    },
+    {
+      "path": "supabase/functions/chatbot-l1/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "00bde368aa253ce9ec44de1cf226d12603497fa5cfff568543b6f7fc1fe4f816",
+      "line_count": 266,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 87,
+          "line_end": 108,
+          "symbols": [
+            "article context and fallback"
+          ]
+        }
+      ],
+      "note": "Leitura pontual; revisão integral e achados do handler pertencem a infra."
+    },
+    {
+      "path": "src/hooks/inbox/useRealtimeInbox.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2b07f993b9a31756380d355a2de5a25a8b0a9e7f0e97104cddddc50b5f26ccf8",
+      "line_count": 229,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 64,
+          "symbols": [
+            "USE_EXTERNAL_DB=false",
+            "external hooks disabled",
+            "local source selection"
+          ]
+        }
+      ],
+      "note": "Somente fronteira do hook legado externo; restante pertence a Inbox."
+    },
+    {
+      "path": "src/components/inbox/stickers/StickerManager.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e264f740736043a2efd549136f308325130c1c3ee118ce950d74d21dc9085bd7",
+      "line_count": 191,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 92,
+          "line_end": 106,
+          "symbols": [
+            "PersonalStickers mount"
+          ]
+        }
+      ],
+      "note": "Somente consumidor da pasta pessoal; revisão integral pertence a Inbox."
+    },
+    {
+      "path": "src/components/talkx/TalkXOverview.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "bf9650dcc7f7b730541013234c890a2443c26d6c52e5562c4c5d476e181971ad",
+      "line_count": 386,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 33,
+          "line_end": 66,
+          "symbols": [
+            "useTalkXInsights consumer",
+            "insight rendering"
+          ]
+        },
+        {
+          "line_start": 174,
+          "line_end": 190,
+          "symbols": [
+            "useTalkXInsights consumer",
+            "insight rendering"
+          ]
+        }
+      ],
+      "note": "Trechos de contrato; arquivo integral pertence a grill."
+    },
+    {
+      "path": "src/components/talkx/TalkXAnalytics.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8ecd688313d1f5840d006ba261c2f9e026cb9fb664f4443092bba6846dc8562d",
+      "line_count": 449,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 150,
+          "line_end": 172,
+          "symbols": [
+            "useTalkXInsights consumer",
+            "analytics insight rendering"
+          ]
+        },
+        {
+          "line_start": 425,
+          "line_end": 440,
+          "symbols": [
+            "useTalkXInsights consumer",
+            "analytics insight rendering"
+          ]
+        }
+      ],
+      "note": "Trechos de contrato; arquivo integral pertence a grill."
+    },
+    {
       "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
       "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
@@ -3490,7 +4777,7 @@
       "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "sha256": "872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af",
       "line_count": 78,
-      "level": "semantic_selected_ranges",
+      "level": "semantic_full_file",
       "reviewed_ranges": [
         {
           "line_start": 1,
@@ -3499,11 +4786,371 @@
             "webhook/auth gateway declarations",
             "message-delivery",
             "crm-integration",
-            "call functions"
+            "call functions",
+            "csp-report",
+            "searchbox cron"
           ]
         }
       ],
       "note": ""
+    },
+    {
+      "path": "vercel.json",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e314c4f3d196498fe8275be1cde13929ac5bd27dc0c6e51bd86d03aca69cdb1d",
+      "line_count": 44,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 44,
+          "symbols": [
+            "CSP report-only policy and public report-uri",
+            "security headers",
+            "rewrites"
+          ]
+        }
+      ],
+      "note": "Leitura de configuração para alcance do collector; gate de headers pertence à frente infra."
+    },
+    {
+      "path": "src/components/security/BlockedIPDialogs.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c727f47521bf679b42abc2e03c585d463e840606bb98efa1d468bc6fce8ef613",
+      "line_count": 96,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 67,
+          "symbols": [
+            "permanent/temporary block creation",
+            "handleBlockIP",
+            "switch and TTL controls"
+          ]
+        }
+      ],
+      "note": "Somente diálogo de criação e interface seguinte; revisão integral de segurança pertence a auth."
+    },
+    {
+      "path": "supabase/migrations/20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "cc618235ad1abaee18f7f91b14287f018fdb39ce7a02b9e04175530c88726d04",
+      "line_count": 274,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 26,
+          "line_end": 52,
+          "symbols": [
+            "blocked_ips original unique/expiry/permanent contract",
+            "original is_ip_blocked and whitelist prefix"
+          ]
+        },
+        {
+          "line_start": 171,
+          "line_end": 200,
+          "symbols": [
+            "blocked_ips original unique/expiry/permanent contract",
+            "original is_ip_blocked and whitelist prefix"
+          ]
+        }
+      ],
+      "note": "Trechos originais; database confirmou constraints finais e ausência de trigger de preservação. Não promove a revisão integral da migration nem enforcement ativo."
+    },
+    {
+      "path": "supabase/migrations/20260930760000_searchbox_usage_daily.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f970c7234d7da1d0c7706e6297c9fe93396b133b9cbb57a579446692cb9cc411",
+      "line_count": 33,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 33,
+          "symbols": [
+            "daily grouped view",
+            "São Paulo date grain",
+            "security_invoker and grants"
+          ]
+        }
+      ],
+      "note": "Contrato integral lido: uma linha por dia, afastando suspeita de paginação de 1000 rows no mês normal."
+    },
+    {
+      "path": "supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "09e0326b04428ab480b2948fbb52c970a4d339ed78f0fbdb0f6d7526618ac01f",
+      "line_count": 79,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 79,
+          "symbols": [
+            "notify_searchbox_budget",
+            "monthly app-notification ledger",
+            "admin/supervisor loop",
+            "daily independent net.http_post"
+          ]
+        }
+      ],
+      "note": "Texto integral lido e cruzado com Edge; não executa cron, Vault ou SQL."
+    },
+    {
+      "path": "docs/mapa/USO_SEARCHBOX.md",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "52e2c8d07854e2bf24cd830c2ecd8f2e4f426769aaa28ae244be2ed380cfe227",
+      "line_count": 301,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 115,
+          "line_end": 138,
+          "symbols": [
+            "monthly alert/channel contract"
+          ]
+        }
+      ],
+      "note": "Recorte documental do aceite do canal; não afirma preço vigente de serviço externo."
+    },
+    {
+      "path": "docs/mapa/PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5e86fdac5dbadaacf01678a1ad772c3a341b5ec3a0d3e318c0c8bbbb7d893f1a",
+      "line_count": 974,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 818,
+          "line_end": 835,
+          "symbols": [
+            "E91 monthly delivery acceptance and secret-pending limitation"
+          ]
+        }
+      ],
+      "note": "Só contexto do canal/segredo e fronteira de implementação descrita; não prova estado implantado."
+    },
+    {
+      "path": "src/hooks/integrations/useGmail.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b10234263d58ee6e657c0f873997a968bc5e9a56ced63bac65fe4273222ecdf2",
+      "line_count": 318,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 28,
+          "line_end": 102,
+          "symbols": [
+            "accounts and exposed query errors",
+            "active account and OAuth/sync controls",
+            "thread message/attachment query",
+            "modify thread labels"
+          ]
+        },
+        {
+          "line_start": 143,
+          "line_end": 184,
+          "symbols": [
+            "accounts and exposed query errors",
+            "active account and OAuth/sync controls",
+            "thread message/attachment query",
+            "modify thread labels"
+          ]
+        },
+        {
+          "line_start": 232,
+          "line_end": 250,
+          "symbols": [
+            "accounts and exposed query errors",
+            "active account and OAuth/sync controls",
+            "thread message/attachment query",
+            "modify thread labels"
+          ]
+        }
+      ],
+      "note": "Dependência pontual dos três consumidores finais; hook integral e seus achados pertencem a root/communication."
+    },
+    {
+      "path": "src/components/gmail/GmailInboxView.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "de19f21aac96450f1b64e6feeedd2146bca7bf09fcff58a1172955a8c3ba328a",
+      "line_count": 96,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 53,
+          "symbols": [
+            "legacy selected-thread consumer",
+            "local filters",
+            "disconnected branch"
+          ]
+        }
+      ],
+      "note": "Trecho de alcance; arquivo integral com root/communication."
+    },
+    {
+      "path": "src/components/gmail/EmailComposer.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2a9c76a0306128dafb0cc821953df8896d49c5ddd0748441cf0146e07fa6e588",
+      "line_count": 495,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 26,
+          "line_end": 59,
+          "symbols": [
+            "account/reply/thread props",
+            "resolved account and draft key"
+          ]
+        }
+      ],
+      "note": "Somente contrato com EmailThreadView; revisão integral permanece em root/communication."
+    },
+    {
+      "path": "supabase/migrations/20260828210000_get_own_gmail_accounts_filter_active.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "801cf14de5cc532bee67667db30d24ddb36586ef9027abca058bc17d62024ac3",
+      "line_count": 34,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 34,
+          "symbols": [
+            "get_own_gmail_accounts current return fields",
+            "owner/active filters"
+          ]
+        }
+      ],
+      "note": "Texto completo da definição lido; cadeia SQL final pertence à frente database."
+    },
+    {
+      "path": "src/pages/ViewRouter.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530",
+      "line_count": 258,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 86,
+          "line_end": 96,
+          "symbols": [
+            "Gmail route mappings",
+            "role gate and currentView mount"
+          ]
+        },
+        {
+          "line_start": 116,
+          "line_end": 181,
+          "symbols": [
+            "Gmail route mappings",
+            "role gate and currentView mount"
+          ]
+        }
+      ],
+      "note": "Leitura pontual de alcance; demais roteamento/layout com root."
+    },
+    {
+      "path": "src/pages/lazyViews.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "51085b5e5bb6a4691131275cccf1d9c74c6b91be14f5e4b71811c99d09d84e3f",
+      "line_count": 62,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 48,
+          "line_end": 55,
+          "symbols": [
+            "GmailInbox/Email/GmailWebhook lazy mounts"
+          ]
+        }
+      ],
+      "note": "Somente declarações de alcance; restante com root."
+    },
+    {
+      "path": "src/hooks/integrations/useQuarantineMedia.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "03ab979bfef9f686b0603b22e864899add827d370c1db118fcb60dba9bbc6e63",
+      "line_count": 155,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 8,
+          "line_end": 34,
+          "symbols": [
+            "quarantine decision types",
+            "notConfigured and upsert after reload",
+            "decide update and reload"
+          ]
+        },
+        {
+          "line_start": 86,
+          "line_end": 149,
+          "symbols": [
+            "quarantine decision types",
+            "notConfigured and upsert after reload",
+            "decide update and reload"
+          ]
+        }
+      ],
+      "note": "Trechos necessários ao cache/monitor; hook integral pertence à frente auth."
+    },
+    {
+      "path": "src/providers/AppProviders.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7105ef85cebbef40787859cfa9e50ec541efbe86cdd0ca0c2e6e8d230a218d1f",
+      "line_count": 90,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 71,
+          "line_end": 86,
+          "symbols": [
+            "authenticated provider nesting and QuarantineMonitor mount"
+          ]
+        }
+      ],
+      "note": "Somente árvore que monta o monitor; demais providers com root."
+    },
+    {
+      "path": "src/components/inbox/chat/MessageBubble.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "36a6d92d027703add8af782b8ff10032e29e6276e0c3ccec334cbcd1502ef7a1",
+      "line_count": 283,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 159,
+          "line_end": 181,
+          "symbols": [
+            "QuarantineBadge beside image/video/audio rendering"
+          ]
+        }
+      ],
+      "note": "Trecho de consumidor do selo; sem atribuir revisão integral do renderer a providers."
+    },
+    {
+      "path": "supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e7dff0c87e70ea763ebdc2caa12c75dbaf7ea898c6e206df646da36f7ae7fa9a",
+      "line_count": 71,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 71,
+          "symbols": [
+            "channel enum",
+            "channel_connections defaults and original policies",
+            "message/contact channel metadata",
+            "channel_routing_rules DDL/policies",
+            "connection updated_at trigger"
+          ]
+        }
+      ],
+      "note": "Texto integral lido; defaults e ausência de engine SQL final foram corroborados pela frente database."
     },
     {
       "path": "supabase/migrations/20251220182411_dd03d6a1-4f98-410e-a411-1f2486626de2.sql",
@@ -3555,6 +5202,1819 @@
         }
       ],
       "note": "Teste lido, não executado pelo runner Deno; probes novos exercitam falhas omitidas pelas fixtures felizes."
+    },
+    {
+      "path": "src/components/email/__tests__/EmailChatBubble.test.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "36d59103692c6b4c7f9976c714b5af91a983bc17195cf48a4fe9c21a720e27a9",
+      "line_count": 143,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 143,
+          "symbols": [
+            "sanitizeEmailHtml: remove larguras em px, scripts, handlers, estilos hostis e data image excessiva; preserva percentuais, cores e links seguros",
+            "buildBodyPreview: entidades, limite por palavra e reticências",
+            "EmailChatBubble: prioridade HTML, fallback texto e expansão/recolhimento de corpos longos"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Asserções positivas e negativas relevantes para o contrato local. Nenhum novo achado material; o nome do caso de imagem não prova retenção de src, pois verifica a tag e atributos lazy/referrer. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/components/email/__tests__/EmailChatReplyBar.test.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "3add3d927ed24687c5cb2a4dc4b745202e18fef7d83da39edfbae14d943308ac",
+      "line_count": 244,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 244,
+          "symbols": [
+            "Destinatários de reply, reply-all e forward; exclusão do próprio e-mail",
+            "Guardas de corpo vazio, destinatário ausente e assunto em novo e-mail; payloads reply/send",
+            "Ctrl+Enter versus Enter; onSent no sucesso; tamanho e remoção de anexo"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Confirma montagem local de payloads e guardas dentro dos mocks. Não há defeito concreto adicional; respostas sempre imediatas não adjudicam as corridas de limpeza/persistência de rascunho já registradas. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/components/email/__tests__/EmailChatThread.test.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ed55b2d9a475a225a80ba1d67e386e1b2dbda876024dab7267871c597c67766f",
+      "line_count": 321,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 321,
+          "symbols": [
+            "Scroll: botão de novas mensagens e reduced motion; montagem/limpeza da seleção de thread",
+            "Reply explícito mantém a mensagem antiga selecionada; cabeçalho, loading, vazio e conteúdo",
+            "markAsRead apenas quando thread não lida e possui mensagens",
+            "Arquivo, lixeira e restauração no componente moderno enviam rótulos e gmail_thread_id corretos",
+            "Separadores de data hoje/ontem/anteriores"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Boa evidência do contrato de ações da thread moderna; não valida o botão Arquivar do componente legado de API060. Os casos intitulados 'só então volta' verificam chamada e resultado com promessa imediatamente resolvida, sem demonstrar a ordem diante de pendência/falha. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/components/email/__tests__/EmailThreadList.test.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "bdb365dc36c5235cff62b877ca049b1344cac3e38d9fbc50b428b0051e6edb92",
+      "line_count": 109,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 109,
+          "symbols": [
+            "Nome/endereço real do remetente e classe de snippet; seletor de pasta sem chips",
+            "Paginação local de 20 itens e busca antes do recorte; fixture de 1000 threads",
+            "Restauração de filtros da URL preserva view; combinação unread e attachment"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Asserções comprovam filtragem/paginação local das props e identidade exibida. A fixture de 1000 linhas não comprova paginação de leitura no servidor nem modifica COM007 sobre mensagens. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/components/gmail/__tests__/EmailThreadView.test.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f0b88cc57f375d0c4b6cae63c288c57b947047441e7584362fc91453cd92d762",
+      "line_count": 245,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 245,
+          "symbols": [
+            "Seleção e limpeza do thread, cabeçalho, loading/vazio e renderização de mensagens",
+            "markAsRead condicional com Gmail ID; Reply/Forward montam modo correto",
+            "Voltar chama callback e Lixeira envia apenas ID da última mensagem"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Exercita ações locais do legado. O botão Arquivar não é acionado no arquivo, portanto não refuta API060. O teste de lixeira congela exclusão da última mensagem; não comprova arquivamento/exclusão integral da thread. Não se infere novo defeito apenas desse escopo. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/components/gmail/__tests__/ThreadListItem.test.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9a86c9cf6311a961c7d2f06a409d21c81481237ae15d4d0b8fc8160d81f52ff0",
+      "line_count": 180,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 180,
+          "symbols": [
+            "Precedência contact.name → last_from_name → address → Desconhecido",
+            "Assunto fallback, contagem >1, estrela/importância condicionais e até3 tags",
+            "Botão chama callback e classe de seleção"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Contrato de apresentação e interação local consistentemente exercitado. Sem novo achado concreto; não é prova de sincronização, remetente no backend ou navegação completa. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/hooks/__tests__/useBitrixApi.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "34cb22408f8bc05a7523454d63897af094de25840128e3701858cb38c8738890",
+      "line_count": 167,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 167,
+          "symbols": [
+            "Estado inicial e existência dos métodos Lead/Contact/Deal/telefonia/sync",
+            "listLeads monta action=list/entityType=lead",
+            "Erro invoke e erro lógico de resposta viram error; loading durante promise pendente e após conclusão"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Prova local dos dois canais de erro e de loading. Boa parte dos métodos é verificada somente por typeof; isso não valida seus contratos remotos e não refuta os achados de ação especial/URL configurada. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/hooks/__tests__/useEvolutionApi.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "aa01855e490f59be09bce56d91ce68698ffdae2644c366f26d083036fd44004d",
+      "line_count": 868,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 868,
+          "symbols": [
+            "Inicialização, catálogo de funções expostas, erro invoke/rejeição, limpeza de loading e toasts",
+            "Verbos POST e paths/body de instância/settings/webhook",
+            "Payloads de texto/citação/mídia/áudio/sticker/localização/contato/reação/poll/lista/botões/status/template",
+            "Gestão de mensagem/chat, grupos e ações de participantes no body",
+            "Perfil/privacidade/labels, integrações e templates; retorno de data"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Cobertura extensa de serialização do frontend, sem executar as rotas remotas. O path mantém a ação principal e o body.action de grupos não a sobrescreve. A denominação Exhaustive Test Suite não é aceite exaustivo do provedor: vários casos de integração verificam apenas toast ou typeof. Nenhum novo defeito independente. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "882993297d244e22aebe463204609841973c7967b4ce68d61a6334ae6531207a",
+      "line_count": 211,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 211,
+          "symbols": [
+            "Telefone ausente/vazio, conexão indisponível e fallback de conexão",
+            "Duas chamadas para status/presença e filtro por telefone limpo",
+            "Erro de lookup lançado expõe mensagem; erro lógico de status e rejeição isolada viram lista vazia"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Casos 149–164 e 192–209 aceitam explicitamente vazio depois de erro do provedor; contextualizam AUTH035 e não o refutam. O teste de presença verifica quantidade de chamadas, não fidelidade do estado online. Sem novo ID. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useAgentPresence.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "15aa82345b82c957230661359b375d6d4950596fd9071a5a0af02372d31442ec",
+      "line_count": 134,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 134,
+          "symbols": [
+            "Entrada publica status salvo da própria identidade; mudança salva localmente e faz upsert",
+            "Mapa inicial e evento UPDATE de postgres_changes; heartbeat velho vira offline",
+            "Heartbeat periódico e desmontagem remove canal e impede novas escritas no avanço do relógio"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Asserções de encerramento efetivamente avançam o relógio após unmount e conferem ausência de novas chamadas, portanto são controle positivo útil. Não surge defeito concreto independente. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useGmail.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c6d08f758adde5b3b799e3172903c579d31cf356cd0428a766816ef4c23efc0d",
+      "line_count": 288,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 288,
+          "symbols": [
+            "Accounts via Edge, fallback RPC, RPC recusada e contas vazias",
+            "Conta ativa por ID, contagem local unread/starred e thread de deep link",
+            "Assinatura com dois listeners e cleanup; sem conta não cria canal",
+            "Contexto de retorno OAuth por query/hash e location.assign"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Verifica dados e chamadas locais. O caso de deep link não valida os argumentos dos filtros (mock ignora eq). accounts=[] após erro é compatível com hook que também expõe accountsError; a falsa desconexão pertence ao consumidor de API059. OAuth de ida não adjudica state de volta COM009. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useMultiplixDispatches.edge.test.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ce4419387664e07039cc16f930283c762e5db4411b6b25eaa64128108ad47e6f",
+      "line_count": 182,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 182,
+          "symbols": [
+            "Leituras usam action/payload e JWT via Edge, sem supabase.from disponível",
+            "Variações de envelope rows/dispatches/array; detalhes localizados no lote de50 e erro se ausentes",
+            "Recipients limit500/status e totals exatos ou fallback por tamanho",
+            "Erro nomeado em Response context e rejeição de formato desconhecido"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Os testes congelam detalhe limitado à primeira página e ausência convertida em not_found (98–119), coerentes com MOD021. Totais/página dos recipients têm escopo documentado em MOD022. Boa propagação de erro de envelope, sem novo ID. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/lib/__tests__/crmIntegration.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a07289f6693d53b482539e9a39eeedab489d40c135773aa46bd98ebb677f06a2",
+      "line_count": 45,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 45,
+          "symbols": [
+            "Action escolhido sobrepõe tentativa no payload",
+            "Envelope válido, erro transporte/domínio, resposta nula/semdata e erro nomeado no context"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Controles positivos precisos de montagem do comando e interpretação de erro. Não atribui esses aceites à autorização ou integração externa. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/lib/__tests__/emailHtml.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0df1832670460d8868116aa4cbb5a041c219d43727876884b7a08273f9ae133c",
+      "line_count": 337,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 337,
+          "symbols": [
+            "XSS básico, links seguros e remoção de tags ativas",
+            "Imagem remota HTTPS e cid bloqueados, data grande removida, data pequena preservada",
+            "CSS bloqueado, dimensões, comentários, url em qualquer prop, escapes e declarações malformadas",
+            "Tags HTML permitidas e buildBodyPreview para null, limites, entidades e espaços"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Asserções negativas significativas com controles de preservação. COM011 é uma forma distinta de URL (//host) não decidida pelos casos HTTPS; não se cria finding pela mera ausência desse caso. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/lib/__tests__/webhookStatusPriority.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5f6bca243c62a7d7ab516b7628288928a14304e4ce41134e9f2700976baf107a",
+      "line_count": 130,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 130,
+          "symbols": [
+            "Prioridade local em estado null, progressão, regressão e mesmo estado",
+            "deleted/failed sobrepõem sempre; played/read empatam, received/sent empatam",
+            "Estados desconhecidos usam prioridade0"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Este arquivo testa uma reimplementação local da regra. Pode documentar intenção, mas seu resultado não é evidência de execução nem regressão do webhook real. Não há novo ID apenas por esse isolamento. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "src/pages/__tests__/ViewRouter.multiplix-gate.test.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8c2e56c4c63dd27215eab55a479228df03037411c9d724ac237d175a79e93de9",
+      "line_count": 85,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 85,
+          "symbols": [
+            "Rota Multiplix bloqueia staff sem permissão nomeada e permite agente com permissão",
+            "Rota catálogo não apresenta bloqueio para agente"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Contratos de gate local claramente delimitados e caso negativo útil. Não prova concessão real da permissão pelo RPC nem render completo do catálogo; o próprio comentário explicita este limite. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f6006323c4dcd4bb5f465d732a5dc289193ddf3fe2f93648406912f939f94d67",
+      "line_count": 135,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 135,
+          "symbols": [
+            "Cliente Supabase do helper usa JWT do chamador e anon key na consulta de messages",
+            "Linha invisível retorna404; linha visível usa media_url; URL nula permanece null",
+            "Erro de banco mantém500; falta de messageId/Bearer impede fetch"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. O caminho central do helper é exercitado em vez de apenas parsing. A fixture de media_url=null explicitamente delega decisão ao handler: não refuta API027, que combina mensagem visível sem mídia com URL alternativa no consumidor. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8627c2935a7b4d6037ccef3f7c0d64e60709c2ae199d46d38fc0f6650a9bd92e",
+      "line_count": 86,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 86,
+          "symbols": [
+            "Reconhecimento da service key exata versus variação e ausência",
+            "requireAiIdentity recusa serviço403; variante OrService aceita kind=service",
+            "Quarta chamada acima do teto3 porIP retorna429; ambiente semkey não concede serviço"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Controle positivo do caminho de serviço e seu limiter local. Asserções de igualdade não medem tempo constante, e acceptance do helper não confirma aplicação uniforme nos endpoints. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-auth.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2676fcdff3965f951ddf7d8f65a3420fbeeb7630e0a220b3a63bbbdfd4e49145",
+      "line_count": 87,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 87,
+          "symbols": [
+            "Chave exata; prefixo/sufixo/case inválidos e ausência deBearer/key",
+            "Bearer case-insensitive; identidade ausente ou sessão inválida401, service403"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Asserções úteis de igualdade e rejeição. O título de comparação em tempo constante descreve intenção; estes casos não realizam medição temporal. Não é prova de sessão válida ou autorização por objeto. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "db2e245bc0e4a9cb256985e72fe8cc4ccd7d5a51e925db804faf4a2ed244aa27",
+      "line_count": 222,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 222,
+          "symbols": [
+            "Schemas requestId/contextVersion/periodKey e compatibilidade de cliente antigo",
+            "Comparação de versões null/undefined/opacas/temporais; declaredVersion tem precedência",
+            "Revalidação de visibilidade e supersessão; versão que lança permite current=true",
+            "Envelope cancelled preserva requestId/context/reason e omite ausência"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Confirma decisão pura e contrato do envelope; não demonstra atomicidade entre releitura e efeito. Esse limite é diretamente relevante a INF023; o teste não contrapõe a corrida concorrente do handler/RPC. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-response-contracts.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "71e1dd700a05c0db961bbddb64979d93df19852296f9d9ff7bd86bb0870074b4",
+      "line_count": 386,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 386,
+          "symbols": [
+            "Análise/resumo rejeitam enums, tipos, notas e tamanho de arrays inválidos com paths precisos",
+            "Opcionais ausentes não ganham defaults; zero/null sobrevivem",
+            "Sugestões exigem3 itens/texto e tags exigem confiança0–1/nome",
+            "Envelope omite undefined, preserva null e compõe erro com parser"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Bons casos de contratos estritos dos helpers. Não prova que todo handler usa os schemas; o endpoint de sugestão foi auditado separadamente por Infra. AutoTagOutput validado isoladamente não demonstra limpeza de tags no DB quando array vazio. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-vocabulary.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b44e2d18fb71edf72a4ff96c86a3cffb7e0ed4eb482a29b83e2b006d2bbe8d8b",
+      "line_count": 241,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 241,
+          "symbols": [
+            "Conjuntos canônicos literais de sentimento/urgência/prioridade",
+            "Matriz de legados, trim/case e rejeição de ausentes/tipos errados/valoresinventados",
+            "Conversão urgência→prioridade preserva null e rejeita valores runtime inválidos",
+            "Consistência entre escalas e idempotência da normalização"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Especificação testável dos vocabulários, com negativos e invariantes. Não comprova os usos de todos os consumidores, mas não há falha concreta adicional no arquivo. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/chatbot-l1-output.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a09ef818fa889c23132b02035f2967b86e6530c4514b7b78b4b6c168d953ada1",
+      "line_count": 153,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 153,
+          "symbols": [
+            "ChatbotL1Output valida campos obrigatórios, confidence numérica0–1/zero/ausência",
+            "Sentimento deve ser canônico; erro em tipo nãoobjeto ou response vazio",
+            "Normalização real compõe legadoEN e omissão de valor desconhecido antes do schema"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Prova os helpers e sua composição local, sem afirmar execução do chatbot. Não cria defaults para campos ausentes nos casos exercitados. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/crm-integration-contract.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "1498c9576ee872c45d5a51a3e1f19a4a5d71c45e8cc509fb616f6d976eb737f1",
+      "line_count": 78,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 78,
+          "symbols": [
+            "Telefones e identificadores; pin de URL/projeto/role de chave externa",
+            "Allowlist de RPC/args/ordenação e limites; mutações restritas por ação/campo/match",
+            "parseSyncResult rejeita falsos sucessos; extractContact360Id aceita apenas identidade delimitada"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Contrato local fail-closed tem controles positivos e negativos relevantes. A inspeção de claims configura o cliente esperado; não deve ser apresentada como prova da validade criptográfica da chave. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ed87b4a823ee657dc19366dac2dadaa0d83acc6aa42bbae5e5147b0fd198e8e5",
+      "line_count": 247,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 247,
+          "symbols": [
+            "Mesma matriz para connection-health-check e batch-fetch-avatars: anon, ausente, segredo correto/errado, Vault falho eOPTIONS",
+            "Caminho sem header não lê Vault; correto alcança200 com tabela vazia; preflight temCORS semVault"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Teste de gate atravessa os handlers e contém controles positivos/negativos válidos. O 200 é deliberadamente sem trabalho de provider; não é aceite de healthcheck/avatar em produção nem das rotinas adicionais de API022. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/effect-reconcile.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "14298729305c23976af84e9fa2231343e0d943cec246ca49ef2155a86491cdde",
+      "line_count": 285,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 285,
+          "symbols": [
+            "Recibo durável ou sonda v2→succeeded; GO sem recibo→partial; tentativas esgotadas→UNCONFIRMED",
+            "Spy comprova leitura de histórico e nenhuma rota de envio nas fixtures",
+            "Payload/efeito inválido recusados; enqueues repetidos usam chave/payload estáveis e registro HANDLERS existe"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Confirma decisão e que reconciliação não reenvia no caminho exercitado. O título promete atualização de origem, mas update é pass-through sem captura/estado: asserções de succeeded não demonstram a linha gravada. Mesmo jobID decorre do mock; chave estável é efetivamente inspecionada, unicidade SQL não é executada. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/evolution-call-events.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "492d2cc451d47382088e737d8d437193cf9a4c407ae76edc4ad363f83f5ca124",
+      "line_count": 131,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 131,
+          "symbols": [
+            "Quatro eventos offer/accept/reject/terminate viram status/rpc/id/direção/notificação esperados",
+            "fromMe/isOutgoing e instante inválido/ausente; saída não notifica",
+            "Identidade de conexão/contato presente na chamadaRPC"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Valida mapeamento do envelope sintético até argumentos RPC. As fixtures declaram não serem capturas reais; não uso sua afirmação sobre inexistência de eventos no banco como evidência operacional desta auditoria. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/evolution-go-routes.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b2751107980df6f850a5d5db9c50157ef119e174c747f7e1bb0630017987402b",
+      "line_count": 356,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 356,
+          "symbols": [
+            "Tradução v2→GO de textos/mídias/citações de contato/polls/listas/botões/status",
+            "Payload incompleto de reação/read/label vira invalid; device suffix e LID",
+            "Presença, bloqueio, arquivo, contatos, criação/conexão/status/QR, grupos/perfil/privacidade/webhook",
+            "Rotas sem equivalente retornamnull; auth instance/admin selecionado no objeto"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Asserções úteis do tradutor e dos campos omitidos. Privacidade parcial é correta aqui, mas API014 acontece na etapa seguinte de leitura/merge; null não prova um 404 remoto nem que o chamador trate unsupported corretamente. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/evolution-webhook-connection-risk.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0e42607fb0f65af95723bc11b26e454c0105e69c85c2d62c0c13261c13de0f6d",
+      "line_count": 119,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 119,
+          "symbols": [
+            "TempBanned/Banned/connectFailure mapeiam sinal e classe na RPC de risco da conexão",
+            "Queda transitória e conexão desconhecida não registram risco",
+            "RPC recusada não lança para o webhook"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Demonstra o fio até a RPC e a classificação dos motivos. Erro da RPC explicitamente absorvido não comprova que o dispatch ficou pausado; sem novo ID por esse limite. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/f58-item-receipts.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "536d894bcfcd70760284daff62babb6a1f27b5e7d3bc72f5e630072e9ed36992",
+      "line_count": 123,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 123,
+          "symbols": [
+            "DELIVERY_ACK chama RPC de item com external_id/conexão e p_event omitido",
+            "READ repassa p_event=read; fromMe=false não atualiza item",
+            "Registro de item independe do resultado positivo do recipient TalkX"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Bons testes do fanout de receipt por item. Não passam pelo tradutor GO que produz fromMe de API002, nem modelam builder RPC lazy; não refutam os achados dessas fronteiras. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c363d7e55ce07777e2613ad5ec4c338aab10f1b6f904d716c6ebc958186a6e8a",
+      "line_count": 86,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 86,
+          "symbols": [
+            "syncMessages sincroniza uma mensagem e reconcilia unread com filtros gmail_account_id/thread_id",
+            "UPDATE de thread reancora a mesma conta e UUID"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Asserções inspecionam efetivamente filtros de conta, controle positivo relevante de isolamento. Não demonstram múltiplas páginas, falha parcial ou cursor, portanto não adjudicam API011/012. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/gmail-send-schema.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2363f665deebdb0f120a4364036fdfac0777de9fb0fb86b54d73ce5f6ca50715",
+      "line_count": 87,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 87,
+          "symbols": [
+            "Gmail IDs seguros versus path/query/fragment/percent encoding/espaço/vazio/tamanho",
+            "Array de IDs rejeita qualquer elemento inválido",
+            "CRLF em destinatário/assunto/anexo; ações thread/draft; limite agregado de anexos"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Negativos precisos da validação de entrada; reforçam rejeição do vetor de header/path injection na fonte auditada. Não provam enforcement de cada campo em toda ação do handler. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/messaging-errors.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c44723b934938976105d36fbfcf706769c1db8addf670ce49517c865a8a7276d",
+      "line_count": 151,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 151,
+          "symbols": [
+            "Opt-out e número inexistente permanentes, inclusive status5xx",
+            "429/5xx transitórios, backoff30s/2min/10min e quarta tentativa terminal",
+            "Corpo ilegível/circular/BigInt ou status desconhecido preservam unknown",
+            "Mensagens ao operador mapeadas e não expõem JSON nas strings do catálogo"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Prova decisão pura de retry e seu teto. Não é prova de que todos os workers aplicam exatamente o plano ou de que um erro pós-POST pode ser reenviado com segurança. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "108ef0216401b95217f24603f354e56993d68efb187b52f02ae57c426d801585",
+      "line_count": 207,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 207,
+          "symbols": [
+            "Capabilities e presença por tipo; GO routes/body/token corretos para texto/imagem/documento/áudio/PTT",
+            "Documento sem filename e texto excessivo falham antes de fetch",
+            "Erro400 do provedor retorna ok=false, status e ausência de messageId"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Evidência útil da serialização e seleção de credencial de instância. Fetch sempre resolve imediatamente: não testa cancelamento durante presença, achado API031; erro de presença e de envio recebem a mesma fixture no caso negativo. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/multiplix-eligibility.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d576f50798f93f875a67cd6d52140a83efea6694057f903e7131f5fc14ff675f",
+      "line_count": 140,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 140,
+          "symbols": [
+            "Sete elegibilidades canônicas, unicidade e rótulos exaustivos",
+            "Matriz Singu PT→Zapp EN, trim/case e pares de vocabulário",
+            "Null/undefined explicitamente elegíveis para legado; valores desconhecidos viram out_of_scope"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Distingue ausência histórica de valor desconhecido, em vez de alegar que todos os inputs inválidos falham fechados. Não surge novo defeito só porque a compatibilidade null é permitida. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/secure-egress.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9e0dce5151dcbf7c2ada9a94f20257c6d72804d8e9b001731d9a9ad77541d41a",
+      "line_count": 100,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 100,
+          "symbols": [
+            "Fetch vai ao proxy, body é URL serializada e timestamp/nonce presentes",
+            "Assinatura possui64hex; resposta base64 vira corpo de prévia",
+            "ConfigHTTP/segredo curto e respostas malformadas/esquema file/status semcorpo falham fechados"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Prova seleção do proxy e forma do corpo, com controles de não chamada. O teste denominado 'signs the exact body' só valida formato hex da assinatura, sem comparar HMAC esperado: não é prova criptográfica independente do conteúdo assinado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-reply-window.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e30bd3a3f800610353f868f37adc41d736dd3cd63d7b1acaeab75d04c1933697",
+      "line_count": 87,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 87,
+          "symbols": [
+            "TalkX usa p_contact_id/p_phone/p_message_id; Multiplix usa phone/message/quoted_external_id sem contact_id",
+            "No recipient/item não lança; erro RPC também não propaga",
+            "Citação é repassada para atribuição linked"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Contrato de assinatura efetivamente testado e explicitamente separado do SQL no arquivo. Absorção de falha é aceita pelos casos; não prova recuperação após ingestão de API006 nem correlação/idempotência DB002. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8b451a9c1a8eac4612d96e58a536f27d6b50a6478d2a84b289bddf230e9c9908",
+      "line_count": 219,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 219,
+          "symbols": [
+            "Motivos de pausa e allowlist; manual não retoma, janela/conexão elegíveis retomam",
+            "Conexão caída/semID/desconhecida/semstatus impede retomada",
+            "Motivo com espaços não é aceito; fusos SP/NY produzem decisões distintas",
+            "Resolver por map e business_hours comparados com relógio fixo"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Conjunto consistente de negativos e controles positivos da política pura, inclusive casos que distinguem missing ID e timezone. Não representa o scheduler HTTP nem a transição SQL. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7981d2222fa3f16dd77308bbe39188962c45771386236363b7f738fd3cea0a5d",
+      "line_count": 146,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 146,
+          "symbols": [
+            "GO Chat≠Sender traduzido chama receipt TalkX canônico read/delivered",
+            "Repetição gera duas chamadas sem lançar; v2 fromMe=true continua válido",
+            "No-match gera warning e wrapper antigo não é usado"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Este arquivo compõe efetivamente tradutor e handler para a correção X028. A garantia se limita ao TalkX; não verifica os consumidores Multiplix/inbox ainda dependentes de fromMe em API002. Idempotência é explicitamente delegada à RPC. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6a039ffce60a2030772f78037f09868e5c1a506f3885697af0008f9363d1a510",
+      "line_count": 180,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 180,
+          "symbols": [
+            "Mensagem GO traduzida e ingerida envia contato/phone/message à attribute_talkx_reply",
+            "Promise da atribuição fica pendente: handler não resolve antes do release",
+            "SAIR vindo do seed configurado não conta como resposta; no-recipient não lança"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. A asserção de await é substantiva, com bloqueio e liberação explícitos. Não testa falha depois de ingest nem replay que retorna duplicate, portanto não refuta API006/007. Atribuição SQL permanece fora do escopo. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/voice-copilot-authz.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "12b88bcd8d6e43890ac3e6681044e32d19082141ccc18a7c89dd4351cc5a682a",
+      "line_count": 133,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 133,
+          "symbols": [
+            "Agente reivindica para si, mas não reatribui a terceiro; admin/supervisor podem",
+            "Sem perfil do chamador/destino ou roles não concede transferência",
+            "Allowlist de gestores e mensagem estável"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Regra de autoatribuição é explícita, não automaticamente roubo de conversa. Asserções de helper não provam leitura autorizada do contato, origem JWT dos papéis ou escrita do endpoint. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6fbe80e6a0310b7652488881e762b69d08fc80c6c6f2f214b463c1249d787abc",
+      "line_count": 186,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 186,
+          "symbols": [
+            "Helpers shadow aceitam ausência/erro de assinatura sem lançar e retornam metadados",
+            "HMAC válido genérico e ElevenLabs, igualdade do segredo legado",
+            "Gmail OIDC ausente/malformado/assinatura fake apenas decodifica/loga"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Documenta intencionalmente modo shadow e contextualiza API021. O texto inicial diz provar os quatro handlers, mas só importa helpers; ElevenLabs tem guard bloqueante adicional na produção, por isso não generalizo a falha a esse endpoint. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/webhook-signature.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "46f637f705e1197e0788acae941394ac2327f3d44b9fdda5504c3ea9a6f1cb97",
+      "line_count": 211,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 211,
+          "symbols": [
+            "Parser de assinatura ElevenLabs exige timestamp/campos/hex",
+            "Verificador aceita assinatura correta e headerlegado; recusa secret ausente, payload alterado e segredo errado",
+            "Clock controlado recusa passado/futuro fora da tolerância; bordas299/301segundos e matriz adversária"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Controle positivo/negativo preciso de assinatura e timestamp; contrapõe o helper shadow. Demonstra veredito criptográfico, mas a ligação ao retorno HTTP deve vir da leitura do endpoint já realizada. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-generate.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "487d1f631869a9fffec17f24f12b2f0b341175c30ea0fe031769e7b0366d53f1",
+      "line_count": 184,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 184,
+          "symbols": [
+            "deriveAiIdempotencyKey real comparada a serialização/hash independentes de code-unit e locale",
+            "Casos discriminam pontuação/dígitos/caixa e chaves aninhadas",
+            "Ordem de inserção é estável; arrays preservam ordem; null/undefined e primitivos"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. A réplica serve de oráculo comparado ao produtor real, portanto é distinta do teste que só executa cópia local. Prova estabilidade nos casos escolhidos; não garante ausência universal de colisão nem idempotência da chamada paga. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-usage.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4ac3a3919ee492e9468f747380c1961988e7e455137b1810114a6b2716bf96f4",
+      "line_count": 997,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 997,
+          "symbols": [
+            "logAiUsageDetached registra promise no waitUntil e fallback sem runtime aguarda portão do insert",
+            "Guarda textual de dois awaits no ai-proxy; UUID/correlação/tentativa e rejeição de e-mail/telefone como ID",
+            "POST observado leva rota efetiva/fallback/modalidade e preserva metadados; ausência não vira rota inventada",
+            "Stream preserva bytes/conta chunks, mede usage final, registra cancelamento/erro uma vez e distingue null de zero",
+            "Reconciliação de ações/tentativas/falhas/tokens, duplicata de rowID e linhas sem identidade",
+            "Tarifas sintéticas por vigência/unidade/fonte, fronteiras e custo desconhecido/null versus zero"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Provas substantivas de consumo da promise e de stream no helper. O POST sempre responde 201, portanto promessa registrada não é prova de durabilidade quando o DB falha. Guardas textuais do ai-proxy não executam todos seus ramos; API032 de teste pago sem log permanece fora desse aceite. Custo é aritmética de fixtures, sem reconciliação de fatura real. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/__tests__/eligibility.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "664d3a425c8facca55aca5bf2d8c9aeba209e2cd95bcecbad7cfb75a4dcd8a99",
+      "line_count": 199,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 199,
+          "symbols": [
+            "Sete classes de elegibilidade com caso positivo e negativo",
+            "Destino inválido/ausente, blacklist normalizada, escopo/conexão/mídia/template",
+            "Precedência dos bloqueios e alcance de todos os valores do enum"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Negativos discriminam classes e sua precedência. Defaults permissivos de contexto ausente são explícitos; confiabilidade da coleta do contexto deve vir dos consumidores, não é provada pelo kernel isolado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/__tests__/media.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "08f4aa1d4fdd5ade07da202bbf42fb6d3b4990295d79f82138ae06e0ab622fa8",
+      "line_count": 251,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 251,
+          "symbols": [
+            "Magic bytes de PNG/PDF/MP3 e detecção apesar de extensão/content-type falsos",
+            "404, tamanho, documento sem nome e tipo desconhecido recusados",
+            "SignedURL expirada bloqueia ou re-assina com bucket/path/TTL; válida é preservada",
+            "Detector/decoder puros e shutdown do servidor em finally"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Fixture de HTTP local testa magic bytes e seleção de TTL quando executada; não é autorização de Storage. Esta auditoria apenas leu o arquivo, sem abrir servidor. Não valida conteúdo completo decodificável, SSRF remoto ou tamanho oculto após cabeçalho falso. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/__tests__/personalize.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ef5aac48e24d68fbea9b20347bd8ccee7e71d87f603ad61848a43f6d681101ee",
+      "line_count": 175,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 175,
+          "symbols": [
+            "Placeholders TalkX built-in/custom/link/rótulos, case e desconhecidos",
+            "Nomes reservados não são sobrescritos; valor custom não é reprocessado; propriedades herdadas não vazam",
+            "Dialeto Multiplix aceita empresa/saudação e rejeita outras variáveis"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Asserções de substituição e precedência são relevantes. O nome do caso link desconhecido diz 'never [link:rotulo]', mas o corpo exige esse texto e a marca unknown; o aceite real é a presença de unknown, não uma rejeição automática do envio. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/__tests__/phone.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0656bf99ab5cdda632c552ae759c2d488c7710e9f1dfbef32e5bbcd3f72909e7",
+      "line_count": 185,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 185,
+          "symbols": [
+            "Variantes com/sem nonodígito, preservaçãoDDD, '+' e remoção de sufixo de dispositivo",
+            "Ausência/vazio/LID e warning; exceção de grupo longo",
+            "Bloco RED-BEFORE compara strip local antigo com normalizador real"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Os testes do kernel importam produção. O bloco RED-BEFORE demonstra diferença entre algoritmos, não o comportamento atual do sender: fonte pinada de multiplix-send:458 já chama normalizePhone. Comentário de caminho 'atual' na linha 146 não deve sustentar um finding contra o pin. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/ai-jobs-worker/index.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c0a9b1ceed8d82788df76bc8c0d17a15b26b06c9556dcc99d67b6c28a7fa163c",
+      "line_count": 108,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 108,
+          "symbols": [
+            "Source guard recorta generateWithRouting e exige jobId/attempt do lease",
+            "Source do router declara/lê/repassa requestId/jobId/attempt para logger",
+            "Nega atribuições diretas de input.payload como jobId/attempt"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. O arquivo declara corretamente que é guarda de origem, não prova de runtime. Não valida heartbeat, lease ou continuidade de log de API026. Regex pode ver texto sem execução; esse limite não vira achado genérico. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/crm-integration/index.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9c6ad2e42255ee577d34e6a6c957431e74eaa6804ec7cba20830cd745f9a987d",
+      "line_count": 86,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 86,
+          "symbols": [
+            "Participante externo do Email, primeira identidade e escapeIlikeExact",
+            "Redes sociais permitidas na projeção",
+            "Handler nega anônimo antes do body, body declarado grande413, cron fora do escopo403",
+            "Service credential recusada para emailContactContext400"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Negativos correspondem a gates locais do handler. Conferência pontual de index.ts:418–426 confirma que service/cron fazem parte da condição 400 de emailContactContext; IDs da fixture são UUIDs válidos, portanto não se alegou falso negativo por campo malformado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/multiplix-audience/index.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9d1fa678a1b733c82e1a77a1bf604ff4047265841dcdfd0dcdc3c1f33a9ceafc",
+      "line_count": 480,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 480,
+          "symbols": [
+            "mapResolvedRecipients: elegibilidade, campos permitidos e ausência de company ID",
+            "cache por tipo/RPC, TTL, erro sem cache; lotes 1000, limite de política, truncamento e falha intermediária",
+            "assinatura de escopo: ordenação code-unit, payload e vetor HMAC independente"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Helpers reais demonstram divisão e rejeição de truncamento, com vetor independente de assinatura. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/__tests__/audience.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5105f42ef888778c1da0cbf75c4cfbfba7ee0987ba08a753699003b2da397d20",
+      "line_count": 306,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 306,
+          "symbols": [
+            "handleAudienceSelect: exclusão prevalece sobre seleção e retorno adversarial; principal por empresa e fallback",
+            "materializeFilteredCompanyIds: 5001 IDs em 26 páginas, máximo 10000 e rejeição anterior à paginação"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Boa verificação de filtros de exclusão e paginação do helper real. O cenário de seleção com 5001 injeta todos os IDs e não percorre ponte real. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/__tests__/blocks.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e067552c38f0ff421613f5d49336f71f3b5210d7529596afdef4c82e832d2ca2",
+      "line_count": 469,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 469,
+          "symbols": [
+            "blocksUpsert: script/voice/personalização invalidam áudio, título preserva; versionamento, no-op, inserção e tipos",
+            "blocksDelete/Reorder: RPC, ordem, duplicatas, set mismatch, ownership e estados não editáveis"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Asserções verificam mudanças reais da tabela em memória e rejeições de proprietário/estado. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "46c8e4f4d738354c2995a299a59652bb97991a0daeb7626eb3c77ae9dfc8e6c9",
+      "line_count": 619,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 619,
+          "symbols": [
+            "preview e validate: personalização, fallback, assets congelados, campos ausentes e desconhecidos",
+            "summary: baldes, inclusion_reason, frase; estimate: mensagens, roteiros e caracteres; dispatch alheio"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Contratos locais de renderização e baldes são exercitados. Os mocks não refutam R2-API-029/030: preservam campos não selecionados e não impõem cap. Sem novo ID. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/__tests__/lifecycle.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e430e44d541a1dcf1267bf9f29067911e37df4b8c7282549dbe9f3f079b7a7cd",
+      "line_count": 367,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 367,
+          "symbols": [
+            "confirm preserva expected_version em cinco chamadas e delega uma RPC por requisição, sem INSERT direto",
+            "erro de materialização e revisão stale; status mantém sent/delivered/read/replied separados por recipient e bloco"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Demonstra argumentos e tratamento do handler, incluindo ausência de INSERT direto. Atomicidade/idempotência SQL são pressupostas pelo fake e não verificadas. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "bc53f0622ec6383ec549d9bbdfdadebe7eab204d55eea73202dbb8637b3f66df",
+      "line_count": 469,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 469,
+          "symbols": [
+            "dispatch.list: dono, perfil ausente, manage_all, offset/limit/count e dispatch_id além dos 50",
+            "recipients.list: dono, inexistência, manage_all, status, paginação e payload inválido"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Verifica escopo antes de leitura e filtro por ID na mesma consulta. A capacidade do endpoint não prova que o hook envia dispatch_id ou consome paginação. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/multiplix-send/index.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "73052b058b26cb52950a131245095eea56dcdeda9f8d5180c770a4bfd9ba9005",
+      "line_count": 1269,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 1269,
+          "symbols": [
+            "handleMultiplixSend: cron/service/JWT, papéis, manage_all e dono; start/pause",
+            "Opt-out em duas etapas e RPC falha; lote único/tetos; cota diária/conexão, janela e claim vazio",
+            "Envio de texto/mídia, normalização, filename/PTT/presença, WAMID, erro legível e risco da conexão"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Muitos controles positivos de chamadas e efeitos em memória. Nenhuma asserção comprova execução de heartbeat lazy, encerramento de timers ou conclusão SQL tardia, preservando API013/031. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/multiplix-voices/index.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "64850eae7b1451f883951166d8898ce696fcdceabe66a892380fcc31cd552b90",
+      "line_count": 329,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 329,
+          "symbols": [
+            "grantReachesCaller/visibleGrants/canRecoverAsset: papel, perfil, revogação, criador e staff",
+            "Handler: ausência de bearer/env, ação inválida, lista filtrada, acesso negado/invalidado e URL assinada"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Exercita decisões reais e handler com respostas controladas, sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/promogifts-catalog/index.actions.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "156cabf0a596361def9a8002b56f6c491786abba59ccfabce39f8ecd68ceb317",
+      "line_count": 616,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 616,
+          "symbols": [
+            "Seis ações de catálogo: auth/config/payload, query de produtos, categorias, fornecedores, stats/bootstrap, erros externos e range inválido",
+            "Cotas por ação, rejeição após limite, corpo inválido/malformado, falha do contador com log; select inclui full_path_readable"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Exercita handler e argumentos de consulta. Atomicidade/distribuição do contador são supostas pelo mock. Falha aberta com log é decisão explicitamente testada, sem novo finding. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/promogifts-catalog/index.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "37358abda0f2b265ab22fa39193780959667582428b0d9afdf7c2f9a784a168f",
+      "line_count": 87,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 87,
+          "symbols": [
+            "buildTagOrExpr: três/cinco cores, independência de colunas, sanitização e arrays vazios"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Bom contrato de expressão local; não comprova parsing pelo PostgREST nem composição real do handler. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/talkx-link/index.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d9db60078f98f45d9c04fb26e0082a9aa2c1ab16afad450748e3320a39ec417b",
+      "line_count": 219,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 219,
+          "symbols": [
+            "mergeUtm preserva query e ignora vazios; GET clique/redirect/404",
+            "POST secret, assinatura, timestamp vencido, sucesso/duplicate e valores inválidos"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Confirma guardas locais e tradução de resposta; duplicate é resposta pré-programada de uma única chamada, sem teste de repetição/dedupe. Não refuta API035/036. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/talkx-scheduler/index.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2c4a86b52bab1e4fd2757403d626d6b2ce7009078e9d90541e60f2684ddd944f",
+      "line_count": 320,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 320,
+          "symbols": [
+            "Scheduler auth cron/service; retomada manual/janela/conexão; uma retomada por conexão",
+            "Fetch pendente termina por AbortController e próximo envio continua; teto de campanhas; ausência de evento duplicado"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Timeout é exercitado com promessa realmente pendente; limites reais exportados são pinados. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/talkx-send/_test-utils.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ae3bd2b150b83a601ab606c91ab4fee4e78c3aea808f4962f487e62ecef4604c",
+      "line_count": 431,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 431,
+          "symbols": [
+            "Helpers de testes: request, builders, campanhas/recipients, env v2/GO, fetch, relógio e fila de continue"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Arquivo auxiliar, sem asserções próprias. Registrado como infraestrutura de testes, sem confundir leitura com teste executado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/talkx-send/index.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e41233d007d9d92a94fda0325bbf0196405fa4114b93f9268a73a93497950ed1",
+      "line_count": 1107,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 1107,
+          "symbols": [
+            "Personalização e randomBetween; gates service/JWT/role e ações start/test/pause/cancel/retry",
+            "Continue: 45 destinos em três invocações, orçamento, retry_after e claim negado; start assíncrono sem POST e um kick",
+            "Envio v2/GO, falha 5xx outcome_unknown, dedupe de test com chave explícita/derivada, ator/motivo e eventos"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Boas verificações da orquestração e parâmetros. Retry outcome_unknown aceita RPC true e só confere success, sem validar estado elegível posterior; cancel só verifica status string. Não refuta DB014/015. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/talkx-send/v20-daily-limit.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5421bd49f84bc6eb0be1ebcd08ea443cd4d9d4fc104611391099c0b54796b1b8",
+      "line_count": 92,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 92,
+          "symbols": [
+            "V20 daily_limit=3: action start retorna 200 e chama pausa daily_limit"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Teste exige motivo de pausa, sem observar POST ou caminho continue. Sem execução nesta auditoria; compatibilidade do fixture legado com contrato atual é limitada. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/talkx-send/x019-connection-budget.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ee8909e4081cc62a771588144509123f07b4676c28a0c65b4342effe8f6984e9",
+      "line_count": 121,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 121,
+          "symbols": [
+            "Token da conexão B em todos os headers; day_remaining zero pausa; minute_limit2 encerra com sent=2"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Token é observado no fetch. Os casos de ritmo não estabelecem janela SQL real; há desalinhamento do contador de URLs com GO, preservado como limite de teste e sem novo finding produtivo. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/talkx-send/x020-variavel-precedencia.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0b36b883cbead2129f8621e770b7d9087b4aae58682be8f96ebddd8b48b0b5fa",
+      "line_count": 81,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 81,
+          "symbols": [
+            "Defaults, missing/unknown, vendedor/telefone/data; pickVariant estável para ID e distribuição entre 50 IDs"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Determinismo é demonstrado apenas com sequência fixa. Comentário sobre ausência de viés de ordem não é coberto e não refuta API020. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "tests/contracts/crm-sentiment-boundary.contract.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f3353fc92eadf94f52a665e5a9fbaafa2c65518738c170b16d11ab17997b3898",
+      "line_count": 186,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 186,
+          "symbols": [
+            "sentimentForExternalCrm: quatro canônicos, ausência, lixo e log; buildSyncInteractionArgs omite sentimento e preserva identidade da fila",
+            "Scanner remove comentários e exige call site/construtor e ausência de fallback neutral"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Asserções comportamentais demonstram mapeamento e omissão no objeto de argumentos; controle textual vincula call site. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "tests/contracts/email-sender-domains.contract.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "46b40f21be93382e794a6ab95074f315f3644c0bb736e9af40837335038e4e50",
+      "line_count": 84,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 84,
+          "symbols": [
+            "Scanner de todos os TS Edge: domínios proibidos, from literal permitido e remetentes fixos de alertas"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Verifica literais presentes na fonte. Comentário de domínio já verificado não é prova da configuração vigente do provedor. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "tests/contracts/evolution-private-storage-url.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "85f9c5d4e96136eb40e784c8a9e7a1468eedd0f503fbea9d14f3913ee08255b1",
+      "line_count": 89,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 89,
+          "symbols": [
+            "resolvePrivateBucketUrl: re-assina public/sign/authenticated com TTL 300, origem/bucket, traversal e falha do signer"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Bom controle de origem, locator e chamada do signer. Não cobre autorização do objeto pelo usuário ou despacho final. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "tests/contracts/multiplix-audience.contract.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9c63f4d30c546e61d92515823173df46c30b96dc11446f3a33bbebdf28ce22f6",
+      "line_count": 223,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 223,
+          "symbols": [
+            "Contrato textual audience: cinco RPCs, schemas, escopo servidor, cache/429, HMAC em headers e logs"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Estrutural, corretamente anunciado no arquivo. Complementa testes comportamentais de helpers, sem provar execução/autorização/egress. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "tests/contracts/multiplix-dispatch-domain-api.contract.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "581b52573bb36a6268cf9c2c0ad5ee7eb52da42c025fe32c2286afd7ba58edd7",
+      "line_count": 157,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 157,
+          "symbols": [
+            "Mapa de 16 ações, pending vazio, ramo desconhecido400, logs permitidos, header correlation antes do return"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Trava forma do router; não comprova semântica dos handlers ou o escopo de recipient. Não refuta API029/030. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "tests/contracts/multiplix-dispatch-no-secret-leak.contract.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "95623951b2658c04d11d267ce3d344b747f4f3c30ec62ed58d83e1f1a7c62f8e",
+      "line_count": 132,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 132,
+          "symbols": [
+            "Cinco arquivos Multiplix: console estruturado, campos proibidos, contagem de logs e leitura de nomes de env"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Controle estrutural de log direto dos arquivos enumerados; não prova ausência universal de vazamento ou valores indiretos. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "tests/contracts/multiplix-dispatch-write-path.contract.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "257df2970f617a089b5d0960f205ebb05936d884ec625c81fc433ce4bd4f71e3",
+      "line_count": 219,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 219,
+          "symbols": [
+            "Scanner de writes no frontend com controles positivo/negativo e vínculo aos hooks",
+            "Guarda created_by/ctx.userId e resolveScope antes de writes; confirm único caminho e literais SQL scheduled/sending"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Prova padrões textuais selecionados, incluindo o contrato de identidade que precisa ser confrontado com schema. Não demonstra auth/profile equivalentes nem atomicidade SQL. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "tests/contracts/webhooks-versioning.contract.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7a574dd802de1f2cb661bf76448892311dd15a015812b9ec93ff1f501693a343",
+      "line_count": 82,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 82,
+          "symbols": [
+            "getContractVersion/deprecationHeaders; Evolution v1/v2 legado/completo/extras; ElevenLabs vazio e type/event_type"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Confirma negociação/parser e erro 422 estruturado no helper; não prova política operacional dos endpoints. Sem novo achado. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__fixtures__/evolution-call-offer.json",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "3bd18b02ca37ba2032932e428cb999e50f43fbbedc70f4f43f5de0a28373157f",
+      "line_count": 13,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 13,
+          "symbols": [
+            "Envelope call/instance/data com offer, provider ID, remetente, isVideo/fromMe e data"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Fixture coerente com a asserção de ringing e notificação no teste de chamada. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__fixtures__/evolution-call-accept.json",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "344fd149eb57fc9d59eef63c06c544e618e4b406420268f9ea27bf3420ab6c4e",
+      "line_count": 13,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 13,
+          "symbols": [
+            "Envelope call com accept e instante20segundosdepois"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Fixture de mapeamento answered; teste não modela toda a mesma sessão de chamada. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__fixtures__/evolution-call-reject.json",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "bf5937ca01ccc6c2e3bec9287066676881c96ab75127bb1759c471d28f18ae7b",
+      "line_count": 13,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 13,
+          "symbols": [
+            "Envelope call com reject, ID e data fixos"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Fixture de missed sem notificação; sem ocorrência operacional demonstrada. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "supabase/functions/_shared/__fixtures__/evolution-call-terminate.json",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7c5730fd5bf6aca5fcd8ccf8d53ec9cd22d059b7f1e893c88f2fecd5c074f393",
+      "line_count": 13,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 13,
+          "symbols": [
+            "Envelope call terminate, ID/direção/data fixos"
+          ]
+        }
+      ],
+      "note": "Teste/fixture lido integralmente, não executado. Fixture de ended sem notificação; cobre mapeamento local. Detalhes: test-review.json.",
+      "scope_kind": "test_or_fixture"
+    },
+    {
+      "path": "scripts/db-audit/ai-block03-vocabulary-contract.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5765ba7fcb5686f1deac124730e24661c5ea1f97c2f20b036470263c77ccb43b",
+      "line_count": 573,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 573,
+          "symbols": [
+            "Backfill de 1.200 contatos, contagens canônicas e preservação de nomes; seis CHECKs validados, defaults NULL e ACL das RPCs.",
+            "Dois mutantes da migration em cópias: remoção dos UPDATEs deve falhar no VALIDATE; normal→high é detectado pelo valor persistido. Hash/cmp confirmam original intacto."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. Bom contrato de backfill, constraints, defaults e sensibilidade da migration específica. Não demonstra persistência bem-sucedida das RPCs nem preservação de tags humanas; esses corpos são fixtures e a chamada service espera erro. Nenhum novo achado. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "f2b6914a8c0553106b395b761016075756be919b"
+    },
+    {
+      "path": "scripts/db-audit/catalog-manifest.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "53f9bbd0b9706a0d4359efec2a5d5dbb3a8e959c2b5d117a8941a1229722a66b",
+      "line_count": 255,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 255,
+          "symbols": [
+            "Catálogo/manifesto versão 2, PostgreSQL 17, assinaturas de overloads, dezesseis seções e fingerprints; duas bases com OIDs distintos normalizam iguais.",
+            "Mutações reais de defaults, constraints, domínio, enum, índice, RLS, policies, trigger, corpo/overload de função, ACL de tabela/coluna/tipo/rotina/default e view alteram as seções esperadas."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. Controle positivo de estabilidade de catálogo e sensibilidade a alterações estruturais, com produtor real. Não há achado novo. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "90ee8c16dcb323b1046fd42c099bd3844fb75130"
+    },
+    {
+      "path": "scripts/db-audit/check-mcp-exec-acl.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9979e8c0b9fa1193be4e0333deaa4a82456da74b9e33e6661bdaf5c85f362f5b",
+      "line_count": 345,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 345,
+          "symbols": [
+            "Baseline exige status zero, marcador OK e dois MD5s de corpos; negativos exigem erro não zero com marcador FALHA ACL.",
+            "Mutações cobrem função ausente/overload/owner/SECURITY DEFINER/volatilidade/grants/search_path/default/body, memberships INHERIT/SET/ADMIN e caminhos indiretos."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. Negativos substanciais do guard e prova textual de status/marcadores. Aceita variantes previstas por hashes distintos. Não prova segurança de todo SQL que mcp_exec pode executar; nenhum achado novo. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "d7678ba2125f35ceae92cf809b044b792779eb16"
+    },
+    {
+      "path": "scripts/db-audit/check-reconcile-ledger-drift.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "dc79f624dfbadcbe199f9ba055a261a11a98de2f702b34696bafe0b70071dc1c",
+      "line_count": 185,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 185,
+          "symbols": [
+            "Nome do ledger fica estável para mcp_exec limpo, híbrido, hash divergente e statements NULL; colisão reconhecida renomeia e segunda aplicação é estável.",
+            "Referência Gmail antiga é corrigida apenas em statements[3], os dois primeiros statements são preservados e hash da linha não muda no replay."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. Controla autorização do rename pela evidência textual e estabilidade do replay. Não representa reconstrução de toda a história de migrations. Nenhum achado novo. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "ca84a96c7a3d6add5df78d551b33e5c01c4456d6"
+    },
+    {
+      "path": "scripts/db-audit/check-webhook-failures-acl.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "16e4d11984d140d4f346b641dda9f31994c0ec41253b75c04d3b9b580442b786",
+      "line_count": 141,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 141,
+          "symbols": [
+            "Migration original deve ser recusada, baseline endurecido aceito; hardening remove grants legados de coluna.",
+            "Negativos incluem grants de tabela/coluna, policy PUBLIC/adicional, RLS desabilitada, TRUNCATE/GRANT OPTION service_role e tabela ausente; exigem não zero e marcador FALHA."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. Controle útil do contrato do guard e da migration ACL com negativos específicos. Não é teste de processamento de webhook/retry/opt-out, portanto não refuta API006–008. Nenhum novo ID. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "26092b40ca35ef7047bbcfe539092d0d8458b881"
+    },
+    {
+      "path": "scripts/db-audit/inbox-contact-authorization.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4ab1b30d0cde4ad45ca96f5caf62418d121f65c5c69a8536a68b01d9adf4c8e9",
+      "line_count": 234,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 234,
+          "symbols": [
+            "Runtime JSON valida hash de definições, RLS, quatro policies, guards/EXECUTE/grants; checks SQL adicionais de privilégios.",
+            "Visibilidade de owner/fila/special/admin versus outsider/inativo; IDOR e spoof caller; contagens de tabs; CRUD de notas, autoria imutável, ausência de escrita e replay."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. Controles de RLS e efeitos concretos, incluindo zero linhas para outsider e remoção própria. Esperar qualquer erro nos negativos reduz a precisão causal; sem novo finding produtivo. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "a7272fe7302f3857da8bc61761e1cc01f1c75d2d"
+    },
+    {
+      "path": "scripts/db-audit/l11-departments-acl-escrita.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6bfb278386b1a4882a549d1a0ab115f1faa8be8447c147393102c23b6909c7f0",
+      "line_count": 271,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 271,
+          "symbols": [
+            "Privilégio efetivo de coluna antes/depois: segredos fechados para authenticated, colunas públicas preservadas, anon sem escrita, service_role mantém chave.",
+            "Mutante A sem REVOKE de tabela deve falhar; mutante B sem REVOKE de coluna verifica ausência de UPDATE em segredos e documenta redundância esperada."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. Boa discriminação da revogação necessária versus redundância. Alegações do cabeçalho sobre medição histórica não foram tomadas como evidência live nesta reauditoria. Nenhum novo ID. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "b519e30d1a5d1fc66550c0d4a1c52b200abe2ed3"
+    },
+    {
+      "path": "scripts/db-audit/talkx-events-contract.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f6818d8608bd74fcfeb93cd354f2779c4f2593c98ba89cb097c10a7c528c2952",
+      "line_count": 328,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 328,
+          "symbols": [
+            "V11/V11.1 reais: tipos de evento, alvo obrigatório/XOR, formato de entidade, owner/admin/supervisor, anon, append-only e replay de constraints/policies.",
+            "CASCADE de campanha é verificado por superuser para não confundir filtro RLS com remoção real."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. V11/V11.1 têm vínculo com migrations reais e assertivas positivas/negativas. O fecho X021 apenas testa SQL local copiado; locus enviado à família TC-011/GOV003, sem novo ID API. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "cd9867192d16e735161056dc3e665a4328262fe7"
+    },
+    {
+      "path": "scripts/db-audit/talkx-settings-rls.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6f1b3a91fe0741889444be599aaddf6aae021c50efc4ab30fe19d3985c4728b8",
+      "line_count": 146,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 146,
+          "symbols": [
+            "Red-first verifica valor inalterado sem UPDATE policy; migration V06 e X014 reaplicadas; anon perde SELECT e authenticated mantém.",
+            "Admin persiste novo valor, agente não altera e continua lendo."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. O teste distingue UPDATE silencioso de persistência real. Não comprova o mapeamento de papel em produção; divergência do helper foi encaminhada à família TC-011/GOV003, sem finding API. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "b7aaba71b98db126251e38a0426131f78f07fa8b"
+    },
+    {
+      "path": "scripts/db-audit/talkx-template-history-behavior.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "46db0e4480dc56022f87f3bb6c11d9d8007cfe92973027c46045b679514fd236",
+      "line_count": 588,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 588,
+          "symbols": [
+            "Migration real de canonização: snapshots preservam estado anterior/autoria, RPC atualiza e retorna timestamp persistido; stale/outsider/mídia inválida recusados.",
+            "ACL, variants ownership/admin, bypass de definer irmão, trigger imutável mesmo com grant+policy permissiva; counter não altera revision token.",
+            "Dois writers em processos psql separados exigem exatamente um sucesso e um stale; estado final 2 versões; cascade físico e runtime hash/estrutura."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. Harness comportamental substancial de edição/snapshot e concorrência da migration específica. Flags opcionais não contam como cenários executados automaticamente. Nenhum novo achado. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "40e569e66b1011c1972b57bdc3921a58882a3b4e"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v15-replied-count-guard.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c62d35f5416056c8fa6064a29edd2c376b0d63bef515ea1da6667dd6f063f6ab",
+      "line_count": 116,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 116,
+          "symbols": [
+            "GREEN exige mensagem talkx_delivery_state_managed_by_worker após UPDATE replied_count; consulta pg_proc exige ausência de increment_talkx_template_use.",
+            "RED só recusa uma substring de erro específica; não mede valor persistido."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. Locus concreto TC-011/GOV003: ausência final de RPC não comprova DROP, porque ela já não existia no fixture. Remover o DROP manteria essa assertiva verde. GREEN do guard é controle parcial válido. Encaminhado ao root, sem novo ID API. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "e9b19d54da20223a1cb7fc355a6825e68b81b0fd"
+    },
+    {
+      "path": "scripts/db-audit/wa-tag-and-status-authorization.test.sh",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "48c7a5651d2966b22d1cee710e4a61f0ab2b73111bc65ce22cb6715fe19da9cb",
+      "line_count": 376,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 376,
+          "symbols": [
+            "Preestado permite outsider fechar contato e operar tags globais, com efeitos SQL medidos; migration real fecha acesso indevido e preserva próprios/fila/admin.",
+            "Após negativas verifica status/closures e tags intactos, preserva service_role/cron e bloqueia anon; FSM termina archived."
+          ]
+        }
+      ],
+      "note": "Shell, SQL/Node embutido, fixtures, asserts e cleanup lidos integralmente; não executado. Vínculo migration→recusa→ausência de efeito é substancial para status/tags. Não torna equivalentes esses predicados simplificados à cadeia SQL vencedora. Nenhum novo finding. Detalhes: shell-review.json.",
+      "scope_kind": "shell_test_or_harness",
+      "git_blob_sha": "fb58006b18814835643845da79a46a7d6c513da7"
     },
     {
       "path": "supabase/functions/_shared/ai-conversation-pipeline.ts",
@@ -3620,24 +7080,6 @@
       "note": "Inventory/import/call search only; no claim of full semantic review."
     },
     {
-      "path": "supabase/functions/ai-suggest-reply/index.ts",
-      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
-      "sha256": "4c90f4ed62d870269d012d8ead3d77a2531fd03291579a8fd4678275925f8a9a",
-      "line_count": 198,
-      "level": "catalogued_only",
-      "reviewed_ranges": [],
-      "note": "Inventory/import/call search only; no claim of full semantic review."
-    },
-    {
-      "path": "supabase/functions/chatbot-l1/index.ts",
-      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
-      "sha256": "00bde368aa253ce9ec44de1cf226d12603497fa5cfff568543b6f7fc1fe4f816",
-      "line_count": 266,
-      "level": "catalogued_only",
-      "reviewed_ranges": [],
-      "note": "Inventory/import/call search only; no claim of full semantic review."
-    },
-    {
       "path": "supabase/functions/classify-audio-meme/index.ts",
       "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
       "sha256": "a3d89d46f978d644b752deae3f56d5460a7ddedf54a3bf17d066ba52f4ee88ee",
@@ -3675,11 +7117,11 @@
     }
   ],
   "counts": {
-    "semantic_full_file": 146,
-    "semantic_selected_ranges": 12,
-    "catalogued_only": 13
+    "semantic_full_file": 296,
+    "semantic_selected_ranges": 33,
+    "catalogued_only": 11
   },
-  "offline_probes": 30,
+  "offline_probes": 44,
   "tests_and_helpers_excluded_from_production_catalogue": [
     "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts",
     "supabase/functions/_shared/__tests__/ai-audio-authz.test.ts",
@@ -3765,16 +7207,20 @@
     "secret state"
   ],
   "known_remaining_areas": [
-    "Os 13 arquivos ainda catalogados nesta frente têm responsável explícito: 12 arquivos IA com infra e gmail-oauth com root. A união global deve usar a cobertura desses responsáveis sem atribuir leitura a providers.",
+    "13 arquivos backend têm revisão integral delegada: 12 IA com infra e gmail-oauth com root. Dois IA receberam leitura pontual de Knowledge Base aqui; os demais continuam na lista catalogued_only. A união global usa os responsáveis sem atribuir suas leituras integrais a providers.",
     "Geração/budget, kernels, Talk X, Multiplix, Evolution, rotinas de mídia, schemas/HMAC, utilitários de voz, catálogo e diagnósticos do lote providers foram percorridos integralmente na segunda passagem.",
-    "Lote connections, settings/ai-providers, useConnectionsManager e groups concluído; useWhatsAppStatus pertence à frente auth. Ampliação para lacunas de hooks/evolution, hooks/integrations, components/integrations e whatsapp-flows em andamento, registrada separadamente ao ler os arquivos.",
-    "Configuração implantada, payloads reais de cada versão Evolution, agendadores e efeitos/triggers de bancos externos permanecem sem evidência operacional."
+    "Lotes connections, settings/ai-providers, useConnectionsManager e groups concluídos; useWhatsAppStatus pertence à frente auth. Ampliação para os corpos pendentes de hooks/evolution, hooks/integrations, components/integrations e whatsapp-flows concluída, incluindo o tail GmailIntegrationCard; useCatalogQuickSearch continua delegado a grill.",
+    "Configuração implantada, payloads reais de cada versão Evolution, agendadores e efeitos/triggers de bancos externos permanecem sem evidência operacional.",
+    "Lote final de quatro endpoints (csp-report, send-rate-limit-alert, cleanup-rate-limit-logs, searchbox-budget-alert) e três arquivos de suporte Evolution/CRM concluído. GmailIntegrationCard, GmailWebhookMonitor e EmailThreadView legado também concluídos. Lote de seis canais/provedores concluído. O roster de 76 arquivos de testes foi lido integralmente e registrado separadamente em test-review.json, sem execução de suítes.",
+    "Gate final de linguagens: os 12 scripts shell / 3.558 linhas do roster providers foram lidos integralmente, incluindo SQL/Node embutido, asserts, fixtures e cleanup. Nenhum script, Docker ou SQL foi executado; journal shell-review.json."
   ],
   "parallel_ownership": [
     "Database: 779 migrations/final definitions and receipt/reply attribution; relevant conclusions cross-referenced, not counted as this agent reading those migrations.",
     "Inbox: ScheduleMessageDialog false success and frontend message workflows.",
     "Grill primary: frontend TalkX/Multiplix/telephony/IA contracts where assigned.",
-    "Root: gmail-oauth and email/Gmail frontend; completed in reports/communication, COM009/COM010 for OAuth.",
+    "Root: gmail-oauth and modern email/Gmail frontend completed in reports/communication; COM009/COM010 for OAuth. GmailIntegrationCard, GmailWebhookMonitor and legacy EmailThreadView reassigned to providers in final tail.",
+    "Grill: all 40 lib/utils support files, including Mapbox and aiJobs/status.ts; full review confirmed by owner, not repeated here.",
+    "Grill: ChatbotFlowEditor/ChatbotFlowsView roundtrip JSON and WhatsAppTemplatesManager local-vs-official approval, based on hooks fully read here; useCatalogQuickSearch remains with grill.",
     "Infra: _shared/ai-conversation-pipeline.ts, _shared/ai-image-input.ts, ai-conversation-analysis, ai-conversation-summary, ai-churn-analysis, ai-classify-tickets, ai-enhance-message, ai-suggest-reply, chatbot-l1, classify-audio-meme, classify-emoji, classify-sticker.",
     "Auth: login/MFA/passkeys/admin user functions and useWhatsAppStatus/contact profile; provider endpoint authorization stayed with this agent."
   ],
@@ -3788,6 +7234,96 @@
     "BusinessHoursDialog aguarda saveSettings; mutateAsync propaga erros e não fecha como sucesso após erro de gravação. A falta de consumidor de away_messages é um gap diferente.",
     "AIProviderHealthPanel identifica explicitamente amostra de no máximo 50 e retorna percentil nulo para conjunto vazio; não se alegou taxa completa nem zero como medição ausente.",
     "whatsapp_groups possui UNIQUE global(group_id), mas representar um grupo por uma única linha pode ser decisão de produto; a sobreposição entre conexões não foi automaticamente declarada corrupção.",
-    "findMessages recebe remoteJid no hook enquanto o backend usa where; a busca dirigida não encontrou consumidor de produção desse método no primeiro lote. Esse desencontro não foi promovido a falha de botão ativo sem alcance demonstrado."
+    "findMessages recebe remoteJid no hook enquanto o backend usa where; a busca dirigida não encontrou consumidor de produção desse método no primeiro lote. Esse desencontro não foi promovido a falha de botão ativo sem alcance demonstrado.",
+    "useEvolutionApiCore coloca o nome da ação no path, portanto body.action de participante/configuração de grupo não sobrescreve o comando do endpoint; a suspeita de colisão foi rejeitada.",
+    "Google Calendar e n8n exibem aviso explícito de demonstração e o botão de conexão está disabled. Não foram declarados integração operacional defeituosa apenas porque callbacks simulados continuam no arquivo.",
+    "useExternalEvolution é legado e seu consumidor useRealtimeInbox passa enabled=false/remoteJid=null por USE_EXTERNAL_DB=false; não se alegou que o polling legado esteja ativo.",
+    "useSyncToCRM manda somente contactId para enqueueSync; metadata de CRM continua derivada no servidor. Campos documentais extras de SyncParams não foram classificados como forgery efetiva.",
+    "A view talkx_campaign_metrics possui as colunas campaign_name/id no vencedor; status de campanha é TEXT, logo finished é comparação vazia, não erro de enum. whatsapp_templates.created_by não tem FK, afastando uma suposta violação por auth.uid.",
+    "ChatbotFlows serializa JSON em strings e a UI de grill reabre com Array.isArray: contrato de perda na reabertura entregue ao finding único de grill. Aprovação de WhatsAppTemplates é local; a promessa oficial também ficou com o consumidor de grill.",
+    "useTalkXCommandItems é leitura de cache sem assinatura reativa própria; depende de rerender externo para atualizar. A ausência de busca global após nunca visitar TalkX não foi promovida automaticamente a falha sem requisito de catálogo completo.",
+    "quarantineStore.refreshSnapshot cria uma nova Map antes de notificar assinantes e subscribe devolve cleanup; o hook useSyncExternalStore não foi classificado como incapaz de observar mudanças por identidade imutável do snapshot.",
+    "csp-report está declarado verify_jwt=false e vercel.json aponta report-uri para ele: a suspeita de gateway JWT bloquear coleta anônima foi rejeitada. P38 confirma teto real de 8KB mesmo com Content-Length falso, cancelamento do stream, dez reports, campos permitidos e remoção de query/fragment de URLs. Rate limiter distribuído é fronteira simulada.",
+    "searchbox-budget-alert exige segredo configurado e propaga recusa HTTP do Resend; P37 preserva esses negativos. A view tem uma row por dia, logo o mês normal não sofre o teto de mil rows. Idempotência de e-mail é API058; exposição de erro já é INF016.",
+    "cleanup-rate-limit-logs mantém predicados de retenção: sete dias para logs, prazo vencido e is_permanent=false para bloqueios, trinta dias e is_resolved=true para alertas. Sem alegação de remoção arbitrária. Erro da terceira exclusão é aviso, enquanto as duas primeiras falham explicitamente.",
+    "send-rate-limit-alert não tem consumidor ativo localizado por busca em src/Edge/scripts; o contrato invocável e a configuração do gateway foram auditados, sem afirmar botão atual. O gate existe quando INTERNAL_ALERT_SECRET é configurado; ausência habilita o caminho service (API022/P34).",
+    "evolution.service foi lido integralmente: só aparece reexportado por services/index.ts; não houve importador de produção dos seus exports localizado. Leitura por name, campos de status e formato de envio foram examinados sem promover inconsistências latentes a falha de UI ativa.",
+    "evolutionAdapter agrega por remote_jid e descarta conexão em campos do modelo; seu único consumidor produtivo é useExternalEvolution, desabilitado em useRealtimeInbox por USE_EXTERNAL_DB=false. Reativação exigiria rever identidade por instância e estados desconhecidos; não se declara mistura ativa de conversas.",
+    "externalClient não constrói cliente externo nem expõe URL/chave: flag só aceita string true. useCRMIntegrationEnabled combina build e kill switch runtime; AIInsightsWidget não renderiza cache quando desligado. Esses caminhos foram mantidos como controles positivos.",
+    "GmailIntegrationCard propaga sync/connection ações para o hook canônico e mostra last_error da conta; isso não substitui tratar accountsError local. EmailThreadView sanitiza HTML antes de dangerouslySetInnerHTML; o problema de imagem relativa ao protocolo é COM011, não ausência de sanitização.",
+    "GmailWebhookMonitor usa RPC de contas próprias/ativas que não expõe tokens nem history_id. Forçar history_id=null no modelo não foi interpretado como vazamento de credencial nem ausência de processamento real de webhook.",
+    "QuarantineMonitor confere cancelled depois do await e limpa timeout ao desmontar. Configuração ausente intencionalmente interrompe polling. A falha API066 é condicionada à configuração e sucesso inicial, concerne cache/atualização e não afirma bloqueio real de mídia.",
+    "EvolutionDisconnectBanner usa o path evolution-api/instance/connect, mas o handler extrai a última parte connect corretamente: suspeita de action inexistente foi rejeitada. A manutenção realmente barra o POST ao provedor em P42; o erro está na interpretação do envelope pela UI.",
+    "ChannelRoutingRules e OmnichannelManager verificam erros de INSERT/UPDATE/DELETE antes de onSuccess. A revisão não classificou essas escritas como sucesso silencioso nem presumiu que cadastro local prove transporte externo.",
+    "Na confirmação de broadcast, nomes e quantidade de grupos continuam visíveis. API061 não presume envio furtivo; P40 só executa transporte simulado depois da confirmação. API062 usa um erro efetivo de invoke, distinto do envelope lógico ignorado em API042."
+  ],
+  "frontend_tests_excluded_from_scope": [
+    "src/components/settings/ai-providers/__tests__/AIProviderHealthPanel.sem-observacoes.test.tsx",
+    "src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts",
+    "src/hooks/integrations/__tests__/useCatalogSendReadiness.test.ts",
+    "src/hooks/integrations/__tests__/useTalkXMonitor.test.ts",
+    "src/hooks/integrations/__tests__/useTalkXSegments.dia-calendario.test.ts",
+    "src/hooks/integrations/__tests__/useTalkXSegments.test.ts"
+  ],
+  "test_review": {
+    "status": "COMPLETE",
+    "total_files": 76,
+    "total_lines": 19010,
+    "fully_read_lines": 19010,
+    "counts": {
+      "SEMANTIC_FULL_FILE": 76
+    },
+    "tests_executed": 0,
+    "journal": "test-review.json"
+  },
+  "shell_review": {
+    "status": "COMPLETE",
+    "total_files": 12,
+    "total_lines": 3558,
+    "fully_read_files": 12,
+    "fully_read_lines": 3558,
+    "counts": {
+      "SEMANTIC_FULL_FILE": 12
+    },
+    "scripts_executed": 0,
+    "journal": "shell-review.json"
+  },
+  "frontend_scope_delegations": [
+    {
+      "path": "src/hooks/integrations/useWhatsAppStatus.ts",
+      "owner": "auth",
+      "finding": "R2-AUTH-035"
+    },
+    {
+      "path": "src/hooks/integrations/useEvolutionContactProfile.ts",
+      "owner": "auth"
+    },
+    {
+      "path": "src/components/integrations/GmailIntegrationCard.tsx",
+      "owner": "providers",
+      "status": "complete_full_file"
+    },
+    {
+      "path": "src/components/admin/GmailWebhookMonitor.tsx",
+      "owner": "providers",
+      "status": "complete_full_file"
+    },
+    {
+      "path": "src/components/gmail/EmailThreadView.tsx",
+      "owner": "providers",
+      "status": "complete_full_file"
+    },
+    {
+      "path": "src/hooks/integrations/useGmail.ts",
+      "owner": "root/communication"
+    },
+    {
+      "path": "src/hooks/integrations/useGmailOAuth.ts",
+      "owner": "root/communication"
+    },
+    {
+      "path": "src/hooks/integrations/useCatalogQuickSearch.ts",
+      "owner": "grill/catalog"
+    }
   ]
 }

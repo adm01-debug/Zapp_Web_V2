@@ -243,14 +243,84 @@
       "scope": "Corpo, invariantes de identidade/estado/tempo e consumidores examinados; não é homologação SIP real."
     },
     {
+      "path": "src/components/calls/IncomingCallAlert.tsx",
+      "line_start": 1,
+      "line_end": 230,
+      "git_blob_sha": "ae3a1d5827a86f49d939a4d0ae3575fae23db516",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/calls/IncomingCallAlert.tsx#L1-L230",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo, invariantes de identidade/estado/tempo e consumidores examinados; não é homologação SIP real."
+    },
+    {
+      "path": "src/components/calls/CallDialog.tsx",
+      "line_start": 1,
+      "line_end": 282,
+      "git_blob_sha": "abcc1e9db5f8ed07eb5edfda3ac4787cb5f24102",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/calls/CallDialog.tsx#L1-L282",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo, invariantes de identidade/estado/tempo e consumidores examinados; não é homologação SIP real."
+    },
+    {
+      "path": "src/components/calls/DialPad.tsx",
+      "line_start": 1,
+      "line_end": 233,
+      "git_blob_sha": "3e0068f01c2d181220172d858607cfb35c554ca0",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/calls/DialPad.tsx#L1-L233",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo, invariantes de identidade/estado/tempo e consumidores examinados; não é homologação SIP real."
+    },
+    {
+      "path": "src/components/calls/ActiveCallBar.tsx",
+      "line_start": 1,
+      "line_end": 77,
+      "git_blob_sha": "784e01956ea0f856e3557292f48da076d94a7174",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/calls/ActiveCallBar.tsx#L1-L77",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo, invariantes de identidade/estado/tempo e consumidores examinados; não é homologação SIP real."
+    },
+    {
+      "path": "src/hooks/calls/useTerminoRemoto.ts",
+      "line_start": 1,
+      "line_end": 46,
+      "git_blob_sha": "2f245a7cfcfd5097d2fbe72de74c3b8d6f0e382b",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/calls/useTerminoRemoto.ts#L1-L46",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo, invariantes de identidade/estado/tempo e consumidores examinados; não é homologação SIP real."
+    },
+    {
+      "path": "src/hooks/calls/useCallChannels.ts",
+      "line_start": 1,
+      "line_end": 317,
+      "git_blob_sha": "09b876d49d1d42f3f5df57781d68fa662fbf2b13",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/calls/useCallChannels.ts#L1-L317",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo, invariantes de identidade/estado/tempo e consumidores examinados; não é homologação SIP real."
+    },
+    {
       "path": "src/providers/CallSessionProvider.tsx",
-      "line_start": 200,
-      "line_end": 455,
+      "line_start": 1,
+      "line_end": 477,
       "git_blob_sha": "47d783cd156b15af5267802d8321875f6c06e085",
       "purpose": "",
-      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/providers/CallSessionProvider.tsx#L200-L455",
-      "review_level": "TARGETED_RANGE_REVIEW",
-      "scope": "Ponte de navegação, despacho/fim, discagem e projeção de eventos. Revisão independente de modules confirma ausência de fence; não se atribui ao root o restante não lido."
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/providers/CallSessionProvider.tsx#L1-L477",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo, invariantes de identidade/estado/tempo e consumidores examinados; não é homologação SIP real."
+    },
+    {
+      "path": "src/App.tsx",
+      "line_start": 1,
+      "line_end": 154,
+      "git_blob_sha": "4328fcf14cd3765f0cbda0a426a068a21ebc958a",
+      "purpose": "",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/App.tsx#L1-L154",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo, invariantes de identidade/estado/tempo e consumidores examinados; não é homologação SIP real."
     }
   ],
   "limits": [

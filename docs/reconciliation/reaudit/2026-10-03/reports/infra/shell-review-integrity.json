@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "finding_total": 43,
+  "finding_counts": {
+    "P1": 8,
+    "P2": 31,
+    "P3": 4
+  },
+  "coverage_counts": {
+    "total": 782,
+    "targeted": 55,
+    "semantic": 500,
+    "structural": 227
+  },
+  "evidence_refs": 219,
+  "source_evidence_refs": 215,
+  "source_hashes_checked": 782,
+  "added_ids": [],
+  "primary_files": 12,
+  "primary_lines": 3554,
+  "primary_remaining": 0,
+  "preserved_prior_findings_sha256": "69748a5c10b0f0f5e53fdf5f293931dbb3ed32b9f5013be3a7a9ee7117dbaa40",
+  "artifact_hashes": {
+    "findings.json": "3c4dbee7144b0f60482ca6ef980fd7b3ba6f46186fe48939400894364840d7c4",
+    "coverage.json": "7d033ebca0413890d8889009b25366029e42e95ecbe0222195903dc55cb6ee29",
+    "report.md": "4c15c0c6ef28d1f1e7a0b19e1f556d981a42dc26784781df27c0a0b651edd0f4",
+    "shell-review-findings.json": "2daf3258e847127da4daed11bdc436743b06cc725499966b3465b95a7c6aca0a",
+    "shell-review-coverage.json": "291fce271a8a6f59388d14e1d427db658adde36990c419bfd2cb8dea0e9e2676",
+    "shell-review-report.md": "e0cc48f3b7f627e85917ff01753b1a59754e398b7f954e2d8944e7f98fd0f175",
+    "merge_finite_batch.py": "7434bfaf4187797e06d18f5221707aee4e661a6f3fa522c6aed9fbd2d4f02d0c",
+    "shell-review.json": "650bcf19459866cd3caac7f0cd45118e22c439a0fd52c6cf944f3278dccb06b7",
+    "shell-review-roster.json": "dc123f24de2b5aee853f568ffc7cd002dcf91cdb2343a43bce06b6d5d131948b",
+    "shell-review.md": "e0cc48f3b7f627e85917ff01753b1a59754e398b7f954e2d8944e7f98fd0f175",
+    "finalize_shell_review.py": "16d4dbe496f39ef61eaca394cc40fe74b6a6a4a221d491bc1dbaf17cad8f1b70"
+  }
+}

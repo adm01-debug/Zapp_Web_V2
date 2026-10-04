@@ -3,9 +3,9 @@
     "folder": ".",
     "tracked_descendant_files": 4068,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2655,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 274,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1139
+      "STRUCTURAL_INVENTORY_ONLY": 805,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2552,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 711
     },
     "js_ts_bodies": 36853
   },
@@ -13,7 +13,8 @@
     "folder": ".agents",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -21,7 +22,8 @@
     "folder": ".agents/skills",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -29,7 +31,8 @@
     "folder": ".agents/skills/zapp-web-v2",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -37,7 +40,7 @@
     "folder": ".agents/skills/zapp-web-v2/agents",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -45,7 +48,8 @@
     "folder": ".claude",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4,
+      "STRUCTURAL_INVENTORY_ONLY": 1
     },
     "js_ts_bodies": 0
   },
@@ -53,7 +57,7 @@
     "folder": ".claude/homunculus",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -61,7 +65,7 @@
     "folder": ".claude/homunculus/instincts",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -69,7 +73,7 @@
     "folder": ".claude/homunculus/instincts/inherited",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -93,7 +97,8 @@
     "folder": ".codex",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 0
   },
@@ -101,7 +106,7 @@
     "folder": ".codex/agents",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 0
   },
@@ -134,7 +139,7 @@
     "folder": ".husky",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 0
   },
@@ -150,7 +155,7 @@
     "folder": ".vscode",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 0
   },
@@ -158,9 +163,9 @@
     "folder": "docs",
     "tracked_descendant_files": 508,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 496,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 7,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
+      "STRUCTURAL_INVENTORY_ONLY": 489,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 10,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 9
     },
     "js_ts_bodies": 0
   },
@@ -185,9 +190,9 @@
     "folder": "docs/audits",
     "tracked_descendant_files": 207,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 204,
+      "STRUCTURAL_INVENTORY_ONLY": 203,
       "REVIEWED_SOURCE_RANGES_LOCATED": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 0
   },
@@ -291,7 +296,8 @@
     "folder": "docs/audits/onda3-260930",
     "tracked_descendant_files": 10,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 10
+      "STRUCTURAL_INVENTORY_ONLY": 9,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -339,7 +345,8 @@
     "folder": "docs/audits/onda3-260930/poc",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -420,8 +427,9 @@
     "folder": "docs/design",
     "tracked_descendant_files": 55,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 52,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 3
+      "STRUCTURAL_INVENTORY_ONLY": 50,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 4,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -509,7 +517,8 @@
     "folder": "docs/evidencias",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7
+      "STRUCTURAL_INVENTORY_ONLY": 6,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -517,7 +526,8 @@
     "folder": "docs/evidencias/plano-volume-50",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7
+      "STRUCTURAL_INVENTORY_ONLY": 6,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -549,8 +559,8 @@
     "folder": "docs/mapa",
     "tracked_descendant_files": 15,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 14,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "STRUCTURAL_INVENTORY_ONLY": 12,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 3
     },
     "js_ts_bodies": 0
   },
@@ -622,7 +632,8 @@
     "folder": "docs/talkx",
     "tracked_descendant_files": 63,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 63
+      "STRUCTURAL_INVENTORY_ONLY": 62,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -654,7 +665,8 @@
     "folder": "docs/talkx/references",
     "tracked_descendant_files": 20,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 20
+      "STRUCTURAL_INVENTORY_ONLY": 19,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 0
   },
@@ -718,9 +730,8 @@
     "folder": "e2e",
     "tracked_descendant_files": 80,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 73,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "STRUCTURAL_INVENTORY_ONLY": 42,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 38
     },
     "js_ts_bodies": 441
   },
@@ -744,8 +755,8 @@
     "folder": "e2e/fixtures",
     "tracked_descendant_files": 27,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 24,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
+      "STRUCTURAL_INVENTORY_ONLY": 19,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 8
     },
     "js_ts_bodies": 102
   },
@@ -777,7 +788,8 @@
     "folder": "public",
     "tracked_descendant_files": 12,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 12
+      "STRUCTURAL_INVENTORY_ONLY": 9,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 208
   },
@@ -801,7 +813,7 @@
     "folder": "public/vendor",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 208
   },
@@ -825,8 +837,8 @@
     "folder": "scripts",
     "tracked_descendant_files": 315,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 132,
-      "STRUCTURAL_INVENTORY_ONLY": 182,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 293,
+      "STRUCTURAL_INVENTORY_ONLY": 21,
       "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 1886
@@ -843,8 +855,8 @@
     "folder": "scripts/ci",
     "tracked_descendant_files": 72,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 42,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 30
+      "STRUCTURAL_INVENTORY_ONLY": 7,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 65
     },
     "js_ts_bodies": 676
   },
@@ -852,8 +864,8 @@
     "folder": "scripts/db-audit",
     "tracked_descendant_files": 183,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 119,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 63,
+      "STRUCTURAL_INVENTORY_ONLY": 7,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 175,
       "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 699
@@ -894,8 +906,8 @@
     "folder": "scripts/edge-deploy",
     "tracked_descendant_files": 32,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 16,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 16
+      "STRUCTURAL_INVENTORY_ONLY": 5,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 27
     },
     "js_ts_bodies": 348
   },
@@ -919,8 +931,7 @@
     "folder": "scripts/lib",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1,
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 17
   },
@@ -946,8 +957,7 @@
     "folder": "scripts/talkx",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 34
   },
@@ -963,9 +973,9 @@
     "folder": "src",
     "tracked_descendant_files": 1952,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 807,
-      "STRUCTURAL_INVENTORY_ONLY": 1080,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 65
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1849,
+      "STRUCTURAL_INVENTORY_ONLY": 71,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 32
     },
     "js_ts_bodies": 30257
   },
@@ -973,7 +983,7 @@
     "folder": "src/__tests__",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 63
   },
@@ -981,8 +991,7 @@
     "folder": "src/adapters",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 28
   },
@@ -990,7 +999,7 @@
     "folder": "src/adapters/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 7
   },
@@ -1014,9 +1023,9 @@
     "folder": "src/components",
     "tracked_descendant_files": 1143,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 625,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 480,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 38
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1121,
+      "STRUCTURAL_INVENTORY_ONLY": 15,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 7
     },
     "js_ts_bodies": 17969
   },
@@ -1024,7 +1033,7 @@
     "folder": "src/components/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 10
   },
@@ -1040,8 +1049,7 @@
     "folder": "src/components/admin",
     "tracked_descendant_files": 20,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 17,
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 20
     },
     "js_ts_bodies": 235
   },
@@ -1049,7 +1057,7 @@
     "folder": "src/components/admin/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 18
   },
@@ -1073,8 +1081,7 @@
     "folder": "src/components/ai",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "REVIEWED_SOURCE_RANGES_LOCATED": 2,
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 151
   },
@@ -1082,7 +1089,7 @@
     "folder": "src/components/ai/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 111
   },
@@ -1090,7 +1097,7 @@
     "folder": "src/components/alerts",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 24
   },
@@ -1098,7 +1105,7 @@
     "folder": "src/components/alerts/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 16
   },
@@ -1106,8 +1113,7 @@
     "folder": "src/components/auth",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6,
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7
     },
     "js_ts_bodies": 63
   },
@@ -1115,7 +1121,7 @@
     "folder": "src/components/auth/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 15
   },
@@ -1131,8 +1137,7 @@
     "folder": "src/components/calls",
     "tracked_descendant_files": 50,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 42,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 8
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 50
     },
     "js_ts_bodies": 586
   },
@@ -1140,8 +1145,7 @@
     "folder": "src/components/calls/__tests__",
     "tracked_descendant_files": 20,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 18,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 20
     },
     "js_ts_bodies": 427
   },
@@ -1149,8 +1153,7 @@
     "folder": "src/components/campaigns",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3,
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 66
   },
@@ -1158,7 +1161,7 @@
     "folder": "src/components/campaigns/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 16
   },
@@ -1166,9 +1169,7 @@
     "folder": "src/components/catalog",
     "tracked_descendant_files": 48,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 31,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 14,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 48
     },
     "js_ts_bodies": 1725
   },
@@ -1176,8 +1177,7 @@
     "folder": "src/components/catalog/__tests__",
     "tracked_descendant_files": 28,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 26,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 28
     },
     "js_ts_bodies": 1151
   },
@@ -1185,7 +1185,7 @@
     "folder": "src/components/chatbot",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 84
   },
@@ -1193,7 +1193,7 @@
     "folder": "src/components/cognitive",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 18
   },
@@ -1201,7 +1201,7 @@
     "folder": "src/components/compliance",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 7
   },
@@ -1217,8 +1217,7 @@
     "folder": "src/components/contacts",
     "tracked_descendant_files": 71,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 47,
-      "STRUCTURAL_INVENTORY_ONLY": 24
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 71
     },
     "js_ts_bodies": 1202
   },
@@ -1226,7 +1225,7 @@
     "folder": "src/components/contacts/__tests__",
     "tracked_descendant_files": 24,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 24
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 24
     },
     "js_ts_bodies": 671
   },
@@ -1306,7 +1305,7 @@
     "folder": "src/components/diagnostics",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 55
   },
@@ -1314,7 +1313,7 @@
     "folder": "src/components/diagnostics/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 34
   },
@@ -1322,7 +1321,7 @@
     "folder": "src/components/docs",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 14
   },
@@ -1330,7 +1329,7 @@
     "folder": "src/components/effects",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 6
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 65
   },
@@ -1338,7 +1337,7 @@
     "folder": "src/components/effects/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 6
   },
@@ -1346,9 +1345,7 @@
     "folder": "src/components/email",
     "tracked_descendant_files": 20,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 8,
-      "STRUCTURAL_INVENTORY_ONLY": 11,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 20
     },
     "js_ts_bodies": 493
   },
@@ -1356,8 +1353,7 @@
     "folder": "src/components/email/__tests__",
     "tracked_descendant_files": 12,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 11,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 12
     },
     "js_ts_bodies": 259
   },
@@ -1365,7 +1361,7 @@
     "folder": "src/components/errors",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 14
   },
@@ -1373,7 +1369,7 @@
     "folder": "src/components/gamification",
     "tracked_descendant_files": 12,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 12
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 12
     },
     "js_ts_bodies": 149
   },
@@ -1381,7 +1377,7 @@
     "folder": "src/components/gamification/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 11
   },
@@ -1389,8 +1385,7 @@
     "folder": "src/components/gmail",
     "tracked_descendant_files": 9,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3,
-      "STRUCTURAL_INVENTORY_ONLY": 6
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 9
     },
     "js_ts_bodies": 305
   },
@@ -1398,7 +1393,7 @@
     "folder": "src/components/gmail/__tests__",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 195
   },
@@ -1406,7 +1401,7 @@
     "folder": "src/components/groups",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 77
   },
@@ -1414,7 +1409,7 @@
     "folder": "src/components/groups/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 47
   },
@@ -1422,9 +1417,9 @@
     "folder": "src/components/inbox",
     "tracked_descendant_files": 278,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 80,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 26,
-      "STRUCTURAL_INVENTORY_ONLY": 172
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 266,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 7,
+      "STRUCTURAL_INVENTORY_ONLY": 5
     },
     "js_ts_bodies": 4266
   },
@@ -1432,8 +1427,8 @@
     "folder": "src/components/inbox/__tests__",
     "tracked_descendant_files": 25,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 20,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 22,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 3
     },
     "js_ts_bodies": 789
   },
@@ -1441,8 +1436,7 @@
     "folder": "src/components/inbox/ai-tools",
     "tracked_descendant_files": 12,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7,
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 12
     },
     "js_ts_bodies": 67
   },
@@ -1450,9 +1444,9 @@
     "folder": "src/components/inbox/chat",
     "tracked_descendant_files": 44,
     "file_review_states": {
-      "REVIEWED_SOURCE_RANGES_LOCATED": 3,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 15,
-      "STRUCTURAL_INVENTORY_ONLY": 26
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 41,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 1,
+      "STRUCTURAL_INVENTORY_ONLY": 2
     },
     "js_ts_bodies": 430
   },
@@ -1460,7 +1454,7 @@
     "folder": "src/components/inbox/chat/__tests__",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7
     },
     "js_ts_bodies": 145
   },
@@ -1468,7 +1462,7 @@
     "folder": "src/components/inbox/collaboration",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 34
   },
@@ -1476,8 +1470,7 @@
     "folder": "src/components/inbox/contact-details",
     "tracked_descendant_files": 29,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 19,
-      "STRUCTURAL_INVENTORY_ONLY": 10
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 29
     },
     "js_ts_bodies": 431
   },
@@ -1485,7 +1478,7 @@
     "folder": "src/components/inbox/contact-details/__tests__",
     "tracked_descendant_files": 9,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 9
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 9
     },
     "js_ts_bodies": 252
   },
@@ -1493,8 +1486,7 @@
     "folder": "src/components/inbox/contact-details/sidebar",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 6
   },
@@ -1502,7 +1494,7 @@
     "folder": "src/components/inbox/contact-details/sidebar/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 5
   },
@@ -1510,7 +1502,7 @@
     "folder": "src/components/inbox/conversation-list",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 10
   },
@@ -1518,8 +1510,7 @@
     "folder": "src/components/inbox/interactive-builder",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 42
   },
@@ -1527,9 +1518,7 @@
     "folder": "src/components/inbox/location-picker",
     "tracked_descendant_files": 9,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4,
-      "STRUCTURAL_INVENTORY_ONLY": 3,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 9
     },
     "js_ts_bodies": 542
   },
@@ -1537,8 +1526,7 @@
     "folder": "src/components/inbox/location-picker/__tests__",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
     },
     "js_ts_bodies": 481
   },
@@ -1546,8 +1534,7 @@
     "folder": "src/components/inbox/media-gallery",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 47
   },
@@ -1555,7 +1542,7 @@
     "folder": "src/components/inbox/media-gallery/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 26
   },
@@ -1563,7 +1550,7 @@
     "folder": "src/components/inbox/quick-replies",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 17
   },
@@ -1571,7 +1558,7 @@
     "folder": "src/components/inbox/search",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 20
   },
@@ -1587,8 +1574,7 @@
     "folder": "src/components/inbox/stickers",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4,
-      "STRUCTURAL_INVENTORY_ONLY": 2,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6,
       "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 75
@@ -1597,7 +1583,7 @@
     "folder": "src/components/inbox/summary",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 17
   },
@@ -1605,9 +1591,8 @@
     "folder": "src/components/inbox/tabs",
     "tracked_descendant_files": 48,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 42,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 47,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 634
   },
@@ -1615,7 +1600,7 @@
     "folder": "src/components/inbox/tabs/__tests__",
     "tracked_descendant_files": 22,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 21,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 21,
       "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 385
@@ -1624,7 +1609,7 @@
     "folder": "src/components/inbox/templates",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 13
   },
@@ -1632,7 +1617,7 @@
     "folder": "src/components/integrations",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 6
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 70
   },
@@ -1640,8 +1625,7 @@
     "folder": "src/components/keyboard",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 55
   },
@@ -1649,7 +1633,7 @@
     "folder": "src/components/keyboard/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 14
   },
@@ -1657,7 +1641,7 @@
     "folder": "src/components/knowledge",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 24
   },
@@ -1665,9 +1649,7 @@
     "folder": "src/components/layout",
     "tracked_descendant_files": 21,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 17,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 21
     },
     "js_ts_bodies": 135
   },
@@ -1675,7 +1657,7 @@
     "folder": "src/components/layout/__tests__",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 67
   },
@@ -1683,7 +1665,7 @@
     "folder": "src/components/leaderboard",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 27
   },
@@ -1691,7 +1673,7 @@
     "folder": "src/components/leaderboard/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 8
   },
@@ -1699,7 +1681,7 @@
     "folder": "src/components/meta-capi",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 7
   },
@@ -1707,8 +1689,7 @@
     "folder": "src/components/mfa",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4,
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 84
   },
@@ -1716,7 +1697,7 @@
     "folder": "src/components/mfa/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 52
   },
@@ -1724,8 +1705,7 @@
     "folder": "src/components/mobile",
     "tracked_descendant_files": 22,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 21,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 22
     },
     "js_ts_bodies": 200
   },
@@ -1733,7 +1713,7 @@
     "folder": "src/components/mobile/__tests__",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 43
   },
@@ -1741,8 +1721,7 @@
     "folder": "src/components/monitoring",
     "tracked_descendant_files": 17,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 16,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 17
     },
     "js_ts_bodies": 199
   },
@@ -1750,7 +1729,7 @@
     "folder": "src/components/monitoring/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 24
   },
@@ -1758,8 +1737,7 @@
     "folder": "src/components/monitoring/hooks",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
     },
     "js_ts_bodies": 50
   },
@@ -1775,8 +1753,7 @@
     "folder": "src/components/notifications",
     "tracked_descendant_files": 14,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7,
-      "STRUCTURAL_INVENTORY_ONLY": 7
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 14
     },
     "js_ts_bodies": 111
   },
@@ -1784,7 +1761,7 @@
     "folder": "src/components/notifications/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 39
   },
@@ -1800,7 +1777,7 @@
     "folder": "src/components/omnichannel",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 113
   },
@@ -1808,7 +1785,7 @@
     "folder": "src/components/omnichannel/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 54
   },
@@ -1816,7 +1793,7 @@
     "folder": "src/components/onboarding",
     "tracked_descendant_files": 8,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 8
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 8
     },
     "js_ts_bodies": 88
   },
@@ -1824,7 +1801,7 @@
     "folder": "src/components/onboarding/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 46
   },
@@ -1840,7 +1817,7 @@
     "folder": "src/components/performance",
     "tracked_descendant_files": 11,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 11
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 11
     },
     "js_ts_bodies": 247
   },
@@ -1848,7 +1825,7 @@
     "folder": "src/components/performance/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 109
   },
@@ -1864,8 +1841,8 @@
     "folder": "src/components/queues",
     "tracked_descendant_files": 14,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 9,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 13,
+      "STRUCTURAL_INVENTORY_ONLY": 1
     },
     "js_ts_bodies": 144
   },
@@ -1873,8 +1850,7 @@
     "folder": "src/components/reports",
     "tracked_descendant_files": 10,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7,
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 10
     },
     "js_ts_bodies": 143
   },
@@ -1890,8 +1866,7 @@
     "folder": "src/components/security",
     "tracked_descendant_files": 26,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 21,
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 26
     },
     "js_ts_bodies": 358
   },
@@ -1899,7 +1874,7 @@
     "folder": "src/components/security/__tests__",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
     },
     "js_ts_bodies": 138
   },
@@ -1907,9 +1882,7 @@
     "folder": "src/components/settings",
     "tracked_descendant_files": 55,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 36,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 17,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 55
     },
     "js_ts_bodies": 1251
   },
@@ -1917,8 +1890,7 @@
     "folder": "src/components/settings/__tests__",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 630
   },
@@ -1926,8 +1898,7 @@
     "folder": "src/components/settings/ai-providers",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5,
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 81
   },
@@ -1935,7 +1906,7 @@
     "folder": "src/components/settings/ai-providers/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 17
   },
@@ -1951,8 +1922,7 @@
     "folder": "src/components/settings/sla",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 57
   },
@@ -1960,7 +1930,7 @@
     "folder": "src/components/settings/theme",
     "tracked_descendant_files": 11,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 11
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 11
     },
     "js_ts_bodies": 149
   },
@@ -1968,7 +1938,7 @@
     "folder": "src/components/settings/theme/__tests__",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
     },
     "js_ts_bodies": 104
   },
@@ -1976,7 +1946,7 @@
     "folder": "src/components/sla",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 14
   },
@@ -2016,8 +1986,7 @@
     "folder": "src/components/tasks",
     "tracked_descendant_files": 37,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 22,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 15
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 37
     },
     "js_ts_bodies": 628
   },
@@ -2025,8 +1994,7 @@
     "folder": "src/components/tasks/__tests__",
     "tracked_descendant_files": 13,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 12,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 13
     },
     "js_ts_bodies": 378
   },
@@ -2042,8 +2010,7 @@
     "folder": "src/components/tasks/board",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 40
   },
@@ -2059,8 +2026,7 @@
     "folder": "src/components/tasks/shared",
     "tracked_descendant_files": 16,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 8,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 8
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 16
     },
     "js_ts_bodies": 123
   },
@@ -2068,8 +2034,7 @@
     "folder": "src/components/team-chat",
     "tracked_descendant_files": 27,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 24,
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 27
     },
     "js_ts_bodies": 788
   },
@@ -2077,7 +2042,7 @@
     "folder": "src/components/team-chat/__tests__",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 516
   },
@@ -2093,7 +2058,7 @@
     "folder": "src/components/theme",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 56
   },
@@ -2101,7 +2066,7 @@
     "folder": "src/components/theme/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 33
   },
@@ -2109,7 +2074,7 @@
     "folder": "src/components/transcriptions",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 31
   },
@@ -2117,7 +2082,7 @@
     "folder": "src/components/transitions",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7
     },
     "js_ts_bodies": 23
   },
@@ -2125,7 +2090,7 @@
     "folder": "src/components/transitions/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 6
   },
@@ -2133,8 +2098,8 @@
     "folder": "src/components/ui",
     "tracked_descendant_files": 90,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 89,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 82,
+      "STRUCTURAL_INVENTORY_ONLY": 8
     },
     "js_ts_bodies": 533
   },
@@ -2142,7 +2107,7 @@
     "folder": "src/components/ui/__tests__",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 29
   },
@@ -2150,7 +2115,8 @@
     "folder": "src/components/ui/empty-states",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
+      "STRUCTURAL_INVENTORY_ONLY": 1
     },
     "js_ts_bodies": 11
   },
@@ -2158,7 +2124,7 @@
     "folder": "src/components/ui/micro-interactions",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 35
   },
@@ -2166,7 +2132,7 @@
     "folder": "src/components/ui/motion",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 27
   },
@@ -2174,7 +2140,8 @@
     "folder": "src/components/ui/sidebar",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 34
   },
@@ -2182,9 +2149,7 @@
     "folder": "src/components/voice",
     "tracked_descendant_files": 10,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 10
     },
     "js_ts_bodies": 69
   },
@@ -2200,7 +2165,7 @@
     "folder": "src/components/whatsapp-flows",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 30
   },
@@ -2217,7 +2182,7 @@
     "folder": "src/contexts",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 2
   },
@@ -2225,7 +2190,7 @@
     "folder": "src/data",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 5
   },
@@ -2233,8 +2198,7 @@
     "folder": "src/features",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 303
   },
@@ -2242,8 +2206,7 @@
     "folder": "src/features/talk-me",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 303
   },
@@ -2251,7 +2214,7 @@
     "folder": "src/features/talk-me/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 214
   },
@@ -2259,9 +2222,9 @@
     "folder": "src/hooks",
     "tracked_descendant_files": 509,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 233,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 20,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 256
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 476,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 15,
+      "STRUCTURAL_INVENTORY_ONLY": 18
     },
     "js_ts_bodies": 9134
   },
@@ -2269,9 +2232,8 @@
     "folder": "src/hooks/__tests__",
     "tracked_descendant_files": 108,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 95,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 8,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 101,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 7
     },
     "js_ts_bodies": 3936
   },
@@ -2279,7 +2241,7 @@
     "folder": "src/hooks/__tests__/helpers",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 39
   },
@@ -2303,8 +2265,7 @@
     "folder": "src/hooks/auth",
     "tracked_descendant_files": 9,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 9
     },
     "js_ts_bodies": 121
   },
@@ -2312,7 +2273,7 @@
     "folder": "src/hooks/auth/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 58
   },
@@ -2320,8 +2281,8 @@
     "folder": "src/hooks/business",
     "tracked_descendant_files": 13,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 9
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 12
     },
     "js_ts_bodies": 166
   },
@@ -2329,8 +2290,7 @@
     "folder": "src/hooks/calls",
     "tracked_descendant_files": 12,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 12
     },
     "js_ts_bodies": 135
   },
@@ -2338,8 +2298,7 @@
     "folder": "src/hooks/calls/__tests__",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 92
   },
@@ -2347,9 +2306,9 @@
     "folder": "src/hooks/chat",
     "tracked_descendant_files": 48,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 23,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 43,
       "REVIEWED_SOURCE_RANGES_LOCATED": 3,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 22
+      "STRUCTURAL_INVENTORY_ONLY": 2
     },
     "js_ts_bodies": 926
   },
@@ -2357,7 +2316,7 @@
     "folder": "src/hooks/chat/__tests__",
     "tracked_descendant_files": 13,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 11,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 11,
       "REVIEWED_SOURCE_RANGES_LOCATED": 2
     },
     "js_ts_bodies": 441
@@ -2367,8 +2326,7 @@
     "tracked_descendant_files": 18,
     "file_review_states": {
       "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 16,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 17
     },
     "js_ts_bodies": 207
   },
@@ -2376,8 +2334,7 @@
     "folder": "src/hooks/crm",
     "tracked_descendant_files": 39,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 12,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 27
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 39
     },
     "js_ts_bodies": 488
   },
@@ -2385,7 +2342,7 @@
     "folder": "src/hooks/crm/__tests__",
     "tracked_descendant_files": 12,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 12
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 12
     },
     "js_ts_bodies": 248
   },
@@ -2393,8 +2350,8 @@
     "folder": "src/hooks/dashboard",
     "tracked_descendant_files": 13,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 10,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 12,
+      "STRUCTURAL_INVENTORY_ONLY": 1
     },
     "js_ts_bodies": 131
   },
@@ -2402,7 +2359,7 @@
     "folder": "src/hooks/dashboard/__tests__",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
     },
     "js_ts_bodies": 74
   },
@@ -2410,9 +2367,7 @@
     "folder": "src/hooks/evolution",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 129
   },
@@ -2428,7 +2383,7 @@
     "folder": "src/hooks/gamification",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 6
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 27
   },
@@ -2436,7 +2391,8 @@
     "folder": "src/hooks/gmail",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
+      "STRUCTURAL_INVENTORY_ONLY": 2
     },
     "js_ts_bodies": 11
   },
@@ -2444,7 +2400,7 @@
     "folder": "src/hooks/gmail/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 9
   },
@@ -2460,8 +2416,8 @@
     "folder": "src/hooks/inbox",
     "tracked_descendant_files": 16,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 8,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 14,
+      "STRUCTURAL_INVENTORY_ONLY": 1,
       "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 239
@@ -2470,7 +2426,7 @@
     "folder": "src/hooks/inbox/__tests__",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 41
   },
@@ -2478,9 +2434,7 @@
     "folder": "src/hooks/integrations",
     "tracked_descendant_files": 46,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 22,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 22
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 46
     },
     "js_ts_bodies": 665
   },
@@ -2488,7 +2442,7 @@
     "folder": "src/hooks/integrations/__tests__",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7
     },
     "js_ts_bodies": 206
   },
@@ -2504,7 +2458,8 @@
     "folder": "src/hooks/performance",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 56
   },
@@ -2522,8 +2477,8 @@
     "folder": "src/hooks/realtime",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 53
   },
@@ -2531,8 +2486,8 @@
     "folder": "src/hooks/shortcuts",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4,
+      "STRUCTURAL_INVENTORY_ONLY": 1
     },
     "js_ts_bodies": 20
   },
@@ -2540,7 +2495,7 @@
     "folder": "src/hooks/shortcuts/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 18
   },
@@ -2548,8 +2503,8 @@
     "folder": "src/hooks/sip",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
+      "STRUCTURAL_INVENTORY_ONLY": 1
     },
     "js_ts_bodies": 73
   },
@@ -2557,7 +2512,7 @@
     "folder": "src/hooks/sip/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 60
   },
@@ -2591,8 +2546,8 @@
     "folder": "src/hooks/system",
     "tracked_descendant_files": 38,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 33
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 37,
+      "STRUCTURAL_INVENTORY_ONLY": 1
     },
     "js_ts_bodies": 382
   },
@@ -2600,7 +2555,7 @@
     "folder": "src/hooks/system/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 7
   },
@@ -2608,8 +2563,7 @@
     "folder": "src/hooks/tasks",
     "tracked_descendant_files": 16,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 9,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 16
     },
     "js_ts_bodies": 379
   },
@@ -2617,7 +2571,7 @@
     "folder": "src/hooks/tasks/__tests__",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7
     },
     "js_ts_bodies": 222
   },
@@ -2625,8 +2579,7 @@
     "folder": "src/hooks/team-chat",
     "tracked_descendant_files": 21,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 16
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 21
     },
     "js_ts_bodies": 228
   },
@@ -2634,7 +2587,7 @@
     "folder": "src/hooks/team-chat/__tests__",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
     },
     "js_ts_bodies": 73
   },
@@ -2642,8 +2595,8 @@
     "folder": "src/hooks/ui",
     "tracked_descendant_files": 34,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 32
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 33,
+      "STRUCTURAL_INVENTORY_ONLY": 1
     },
     "js_ts_bodies": 342
   },
@@ -2651,7 +2604,7 @@
     "folder": "src/hooks/ui/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 21
   },
@@ -2659,8 +2612,8 @@
     "folder": "src/hooks/voice",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3,
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5,
       "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 37
@@ -2669,7 +2622,8 @@
     "folder": "src/i18n",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "REVIEWED_SOURCE_RANGES_LOCATED": 1,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 6
   },
@@ -2677,7 +2631,8 @@
     "folder": "src/integrations",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
+      "STRUCTURAL_INVENTORY_ONLY": 1,
       "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 3
@@ -2686,7 +2641,8 @@
     "folder": "src/integrations/supabase",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 3,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
+      "STRUCTURAL_INVENTORY_ONLY": 1,
       "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 3
@@ -2695,7 +2651,7 @@
     "folder": "src/integrations/supabase/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 2
   },
@@ -2703,8 +2659,9 @@
     "folder": "src/lib",
     "tracked_descendant_files": 158,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 114,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 44
+      "STRUCTURAL_INVENTORY_ONLY": 7,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 6,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 145
     },
     "js_ts_bodies": 1844
   },
@@ -2712,7 +2669,8 @@
     "folder": "src/lib/__fixtures__",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 6
     },
     "js_ts_bodies": 0
   },
@@ -2720,7 +2678,8 @@
     "folder": "src/lib/__fixtures__/mapbox",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 7
+      "STRUCTURAL_INVENTORY_ONLY": 1,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 6
     },
     "js_ts_bodies": 0
   },
@@ -2728,7 +2687,7 @@
     "folder": "src/lib/__tests__",
     "tracked_descendant_files": 52,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 52
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 52
     },
     "js_ts_bodies": 925
   },
@@ -2736,7 +2695,7 @@
     "folder": "src/lib/aiJobs",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 2
   },
@@ -2744,8 +2703,7 @@
     "folder": "src/lib/aiRequest",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 33
   },
@@ -2753,7 +2711,7 @@
     "folder": "src/lib/aiRequest/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 21
   },
@@ -2761,8 +2719,7 @@
     "folder": "src/lib/calls",
     "tracked_descendant_files": 31,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 19,
-      "STRUCTURAL_INVENTORY_ONLY": 12
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 31
     },
     "js_ts_bodies": 499
   },
@@ -2770,7 +2727,7 @@
     "folder": "src/lib/calls/__tests__",
     "tracked_descendant_files": 11,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 11
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 11
     },
     "js_ts_bodies": 248
   },
@@ -2778,8 +2735,7 @@
     "folder": "src/lib/calls/adapters",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3,
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 145
   },
@@ -2787,7 +2743,7 @@
     "folder": "src/lib/calls/adapters/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 86
   },
@@ -2795,9 +2751,8 @@
     "folder": "src/pages",
     "tracked_descendant_files": 30,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 15,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 4,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 11
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 29,
+      "STRUCTURAL_INVENTORY_ONLY": 1
     },
     "js_ts_bodies": 329
   },
@@ -2805,7 +2760,7 @@
     "folder": "src/pages/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 13
   },
@@ -2821,7 +2776,7 @@
     "folder": "src/pages/admin-telemetria",
     "tracked_descendant_files": 6,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 6
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
     },
     "js_ts_bodies": 21
   },
@@ -2829,7 +2784,7 @@
     "folder": "src/pages/admin-telemetria/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 9
   },
@@ -2837,8 +2792,7 @@
     "folder": "src/pages/queue-details",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 4
   },
@@ -2846,8 +2800,7 @@
     "folder": "src/providers",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
-      "STRUCTURAL_INVENTORY_ONLY": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 127
   },
@@ -2855,7 +2808,7 @@
     "folder": "src/providers/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 88
   },
@@ -2871,8 +2824,7 @@
     "folder": "src/services",
     "tracked_descendant_files": 20,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 11,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 8,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 19,
       "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 219
@@ -2881,7 +2833,7 @@
     "folder": "src/services/__tests__",
     "tracked_descendant_files": 8,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 8
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 8
     },
     "js_ts_bodies": 109
   },
@@ -2897,7 +2849,7 @@
     "folder": "src/styles",
     "tracked_descendant_files": 10,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 10
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 10
     },
     "js_ts_bodies": 3
   },
@@ -2905,7 +2857,7 @@
     "folder": "src/styles/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 3
   },
@@ -2913,7 +2865,7 @@
     "folder": "src/test",
     "tracked_descendant_files": 8,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 8
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 8
     },
     "js_ts_bodies": 52
   },
@@ -2921,7 +2873,7 @@
     "folder": "src/test/mocks",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 28
   },
@@ -2929,7 +2881,8 @@
     "folder": "src/types",
     "tracked_descendant_files": 12,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 12
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2,
+      "STRUCTURAL_INVENTORY_ONLY": 10
     },
     "js_ts_bodies": 14
   },
@@ -2937,7 +2890,7 @@
     "folder": "src/types/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 7
   },
@@ -2945,7 +2898,7 @@
     "folder": "src/utils",
     "tracked_descendant_files": 12,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 11,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 11,
       "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 111
@@ -2954,7 +2907,7 @@
     "folder": "src/utils/__tests__",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 56
   },
@@ -2962,9 +2915,9 @@
     "folder": "supabase",
     "tracked_descendant_files": 1030,
     "file_review_states": {
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 146,
-      "STRUCTURAL_INVENTORY_ONLY": 689,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 195
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 231,
+      "STRUCTURAL_INVENTORY_ONLY": 134,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 665
     },
     "js_ts_bodies": 2714
   },
@@ -2972,7 +2925,8 @@
     "folder": "supabase-export",
     "tracked_descendant_files": 23,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 23
+      "STRUCTURAL_INVENTORY_ONLY": 20,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 0
   },
@@ -2980,9 +2934,7 @@
     "folder": "supabase/functions",
     "tracked_descendant_files": 217,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 80,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 136,
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 217
     },
     "js_ts_bodies": 2714
   },
@@ -2990,8 +2942,7 @@
     "folder": "supabase/functions/_shared",
     "tracked_descendant_files": 109,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 48,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 61
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 109
     },
     "js_ts_bodies": 1291
   },
@@ -2999,7 +2950,7 @@
     "folder": "supabase/functions/_shared/__fixtures__",
     "tracked_descendant_files": 4,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 4
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 4
     },
     "js_ts_bodies": 0
   },
@@ -3007,8 +2958,7 @@
     "folder": "supabase/functions/_shared/__tests__",
     "tracked_descendant_files": 38,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 37,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 38
     },
     "js_ts_bodies": 552
   },
@@ -3016,8 +2966,7 @@
     "folder": "supabase/functions/_shared/messaging",
     "tracked_descendant_files": 14,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 9
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 14
     },
     "js_ts_bodies": 144
   },
@@ -3025,7 +2974,7 @@
     "folder": "supabase/functions/_shared/messaging/__tests__",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
     },
     "js_ts_bodies": 80
   },
@@ -3033,8 +2982,7 @@
     "folder": "supabase/functions/ai-auto-tag",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 7
   },
@@ -3082,8 +3030,7 @@
     "folder": "supabase/functions/ai-jobs-worker",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 16
   },
@@ -3187,7 +3134,7 @@
     "folder": "supabase/functions/cleanup-rate-limit-logs",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 1
   },
@@ -3211,8 +3158,7 @@
     "folder": "supabase/functions/crm-integration",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 44
   },
@@ -3220,7 +3166,7 @@
     "folder": "supabase/functions/csp-report",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 7
   },
@@ -3356,8 +3302,7 @@
     "folder": "supabase/functions/get-call-recording",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 9
   },
@@ -3373,8 +3318,7 @@
     "folder": "supabase/functions/get-sip-password",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 10
   },
@@ -3422,8 +3366,7 @@
     "folder": "supabase/functions/message-delivery",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 13
   },
@@ -3439,8 +3382,7 @@
     "folder": "supabase/functions/multiplix-audience",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 90
   },
@@ -3448,8 +3390,7 @@
     "folder": "supabase/functions/multiplix-dispatch",
     "tracked_descendant_files": 12,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 6,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 6
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 12
     },
     "js_ts_bodies": 359
   },
@@ -3457,7 +3398,7 @@
     "folder": "supabase/functions/multiplix-dispatch/__tests__",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 5
   },
@@ -3465,8 +3406,7 @@
     "folder": "supabase/functions/multiplix-dispatch/actions",
     "tracked_descendant_files": 10,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 10
     },
     "js_ts_bodies": 347
   },
@@ -3474,7 +3414,7 @@
     "folder": "supabase/functions/multiplix-dispatch/actions/__tests__",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 5
     },
     "js_ts_bodies": 229
   },
@@ -3482,8 +3422,7 @@
     "folder": "supabase/functions/multiplix-send",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 123
   },
@@ -3491,8 +3430,7 @@
     "folder": "supabase/functions/multiplix-voices",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 44
   },
@@ -3500,8 +3438,7 @@
     "folder": "supabase/functions/promogifts-catalog",
     "tracked_descendant_files": 3,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 2,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 3
     },
     "js_ts_bodies": 98
   },
@@ -3509,8 +3446,7 @@
     "folder": "supabase/functions/public-api",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 4
   },
@@ -3526,7 +3462,7 @@
     "folder": "supabase/functions/searchbox-budget-alert",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "REVIEWED_SOURCE_RANGES_LOCATED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 2
   },
@@ -3542,7 +3478,7 @@
     "folder": "supabase/functions/send-rate-limit-alert",
     "tracked_descendant_files": 1,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
     },
     "js_ts_bodies": 2
   },
@@ -3558,8 +3494,7 @@
     "folder": "supabase/functions/sentiment-alert",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 5
   },
@@ -3567,8 +3502,7 @@
     "folder": "supabase/functions/sync-call-records",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 13
   },
@@ -3576,8 +3510,7 @@
     "folder": "supabase/functions/talkx-link",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 33
   },
@@ -3585,8 +3518,7 @@
     "folder": "supabase/functions/talkx-report",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 7
   },
@@ -3594,8 +3526,7 @@
     "folder": "supabase/functions/talkx-scheduler",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 51
   },
@@ -3603,8 +3534,7 @@
     "folder": "supabase/functions/talkx-send",
     "tracked_descendant_files": 7,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 7
     },
     "js_ts_bodies": 229
   },
@@ -3644,8 +3574,7 @@
     "folder": "supabase/functions/webhook-diagnostic",
     "tracked_descendant_files": 2,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 1,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2
     },
     "js_ts_bodies": 21
   },
@@ -3661,9 +3590,9 @@
     "folder": "supabase/migrations",
     "tracked_descendant_files": 804,
     "file_review_states": {
-      "REVIEWED_SOURCE_RANGES_LOCATED": 192,
-      "STRUCTURAL_INVENTORY_ONLY": 603,
-      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 9
+      "REVIEWED_SOURCE_RANGES_LOCATED": 662,
+      "STRUCTURAL_INVENTORY_ONLY": 129,
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 13
     },
     "js_ts_bodies": 0
   },
@@ -3697,7 +3626,8 @@
     "folder": "supabase/tests",
     "tracked_descendant_files": 5,
     "file_review_states": {
-      "STRUCTURAL_INVENTORY_ONLY": 5
+      "STRUCTURAL_INVENTORY_ONLY": 4,
+      "REVIEWED_SOURCE_RANGES_LOCATED": 1
     },
     "js_ts_bodies": 0
   },
@@ -3705,8 +3635,7 @@
     "folder": "tests",
     "tracked_descendant_files": 61,
     "file_review_states": {
-      "REVIEWED_SOURCE_RANGES_LOCATED": 3,
-      "STRUCTURAL_INVENTORY_ONLY": 58
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 61
     },
     "js_ts_bodies": 1339
   },
@@ -3714,8 +3643,7 @@
     "folder": "tests/contracts",
     "tracked_descendant_files": 61,
     "file_review_states": {
-      "REVIEWED_SOURCE_RANGES_LOCATED": 3,
-      "STRUCTURAL_INVENTORY_ONLY": 58
+      "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 61
     },
     "js_ts_bodies": 1339
   }

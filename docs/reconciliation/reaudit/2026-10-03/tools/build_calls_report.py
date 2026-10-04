@@ -8,7 +8,7 @@ integrity=json.loads(Path(args.integrity).read_text());HEAD=integrity['head_sha'
 assert subprocess.check_output(['git','-C',str(SOURCE),'rev-parse','HEAD'],text=True).strip()==HEAD
 def ev(path,lo,hi,purpose=''):
     b=(SOURCE/path).read_bytes();assert hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()==files[path]['git_blob_sha']
-    assert 0<lo<=hi<=len(b.splitlines())
+    assert 0<lo<=hi<=len(b.splitlines()), (path,lo,hi,len(b.splitlines()))
     return {'path':path,'line_start':lo,'line_end':hi,'git_blob_sha':files[path]['git_blob_sha'],'purpose':purpose,
             'url':f'https://github.com/adm01-debug/Zapp_Web_V2/blob/{HEAD}/{path}#L{lo}-L{hi}'}
 engine='src/lib/calls/adapters/CallEngine.ts';sink='src/hooks/communication/useCallEngineSink.ts';consumer='src/hooks/communication/useSipClient.ts'
@@ -68,27 +68,65 @@ findings += [
   'related_previous_findings':['TEL-RUNTIME-001'],
   'limitations':'Fronteiras SIP/React simuladas; dados e credenciais sintéticos. A confirmação é do contrato do hook e dos efeitos observáveis na simulação, sem homologação de SIP ou navegadores.'},
 ]
+alert='src/components/calls/IncomingCallAlert.tsx';dialog='src/components/calls/CallDialog.tsx'
+incoming='src/hooks/communication/useIncomingCallListener.ts';remote='src/hooks/calls/useTerminoRemoto.ts'
+provider='src/providers/CallSessionProvider.tsx';channels='src/hooks/calls/useCallChannels.ts'
+findings += [
+ {'id':'R2-CALL-006','priority':'P2','classification':'CONFIRMED_STATIC_CONTRACT','source_head':HEAD,
+  'title':'Alerta recebido conserva a notificação encerrada e o diálogo da chamada anterior',
+  'preconditions':'O overlay global permanece montado. Uma notificação válida já foi entregue; a sessão termina fora de handleDialogEnd/dismissCall. Na variante entre chamadas, A foi aberta pelo botão Atender e B chega antes de um fechamento explícito do diálogo.',
+  'consumer_chain':'App.DeferredProviders → IncomingCallAlert → useIncomingCallListener.incomingState → showDialog → CallDialog.initialStatus.',
+  'observed_behavior':'O listener assina INSERT em notifications e guarda a chamada até dismissCall ou troca de usuário. Não observa o estado do provider nem UPDATE terminal em calls. Os comentários do alerta dizem que ele deixa de entregar quando sai de ringing_in, mas isso não está implementado. showDialog também não é associado ao callId: B herda true e recebe initialStatus=answered, que visualStatus aplica mesmo para ringing_in/idle.',
+  'impact':'A entrada de um alerta pode continuar presente após a sessão terminar. Se A abriu o diálogo, B pode aparecer como em andamento sem novo aceite e sem o botão Atender; o guarda !showDialog também suprime seu toque. Não se afirma que o transporte de B tenha sido atendido.',
+  'evidence':[ev('src/App.tsx',50,63,'Overlay persistente fora das views.'),ev(incoming,56,74),ev(incoming,143,173),ev(alert,43,66),ev(alert,106,148),ev(dialog,63,79),ev(dialog,237,250)],
+  'probes':['CALL-P08','CALL-P09'],
+  'acceptance_criteria':['Reconciliar a notificação com a identidade e o ciclo real da chamada; remover a entrada terminal e reinicializar o diálogo quando mudar o callId.','Provar fim remoto, timeout, encerramento em outro painel e A atendida→B recebida sem fechamento manual; B deve ter controles e toque próprios.'],
+  'related_previous_findings':['TEL-RUNTIME-001'],
+  'limitations':'Hook inteiro, reducer, regras puras e callbacks exatos executados com fronteiras sintéticas. Não houve ReactDOM, navegador, som ou chamada real; o vínculo dos flags ao JSX foi examinado na fonte. A filtragem inicial de replay terminal e o dismiss explícito funcionam e foram preservados.'},
+ {'id':'R2-CALL-007','priority':'P1','classification':'CONFIRMED_STATIC_CONTRACT','source_head':HEAD,
+  'title':'Atender e ignorar alerta WhatsApp usam comandos SIP sem identidade da notificação',
+  'preconditions':'Usuário vê uma conexão WhatsApp conectada e recebe incoming_call com whatsapp_connection_id. O cenário de interferência exige ainda uma entrada SIP distinta na mesma sessão; nenhuma ocorrência produtiva dessa simultaneidade foi alegada.',
+  'consumer_chain':'Webhook/notificação WhatsApp → capacidade canReceive → IncomingCallAlert.handleAnswer/handleDecline → CallSessionProvider.accept/reject → useSipClient → CallEngine SIP.',
+  'observed_behavior':'A UI escolhe o rótulo/capacidade pelo canal, mas os handlers chamam accept/reject sem callId, contato ou canal. O provider usa sempre sip.acceptIncomingCall/rejectIncomingCall. O adapter WhatsApp que implementa registro local + abertura da conversa não é invocado por essa cadeia. handleAnswer abre o diálogo mesmo sem aguardar o resultado.',
+  'impact':'O clique em Atender para WhatsApp não cumpre o fluxo local documentado daquele canal. Com outra chamada SIP tocando, o comando pode atuar nela: o probe mudou a sessão SIP A para connecting e chamou sua API ao clicar na notificação WhatsApp B. O áudio e o aceite do servidor não foram executados.',
+  'evidence':[ev(alert,34,48),ev(alert,111,118),ev(alert,201,223),ev(channels,181,208),ev(provider,377,391),ev(consumer,57,77),ev('src/lib/calls/WhatsAppCallAdapter.ts',173,213)],
+  'probes':['CALL-P10'],
+  'acceptance_criteria':['Encaminhar ações pelo canal e pela identidade da chamada alvo; o alerta WhatsApp deve executar somente o contrato local aprovado desse canal.','Provar notificação WhatsApp B com SIP A em ringing/active/idle: nenhuma ação de B pode aceitar, rejeitar ou alterar A.','Abrir estado atendido somente após resultado válido da operação alvo.'],
+  'related_previous_findings':['TEL-RUNTIME-001'],
+  'limitations':'Callbacks e mapper reais com SIP substituído por spy. O adapter WhatsApp explicitamente não transporta áudio no browser; isso não foi tratado como defeito. O defeito é o consumidor não encaminhar a ação para o contrato correspondente e poder alcançar a sessão SIP corrente.'},
+ {'id':'R2-CALL-008','priority':'P2','classification':'CONFIRMED_STATIC_CONTRACT','source_head':HEAD,
+  'title':'Encerramento por Realtime compara o ID observado, mas despacha sobre outra sessão e evento inválido em ringing',
+  'preconditions':'O hook observa a chamada B do alerta enquanto o provider está na sessão ativa A; ou a mesma chamada observada ainda está em ringing_in quando chega status terminal.',
+  'consumer_chain':'IncomingCallAlert.useTerminoRemoto(notification.callId) → UPDATE calls filtrado por esse ID → terminoRemotoDaChamada → dispatch HANGUP_REMOTE → reducer da sessão global.',
+  'observed_behavior':'A regra pura rejeita payload com ID diferente do argumento observado, mas o hook não compara esse argumento a session.sessionId. HANGUP_REMOTE não carrega identidade e é aplicado ao estado global corrente. Além disso, endReasonFor aceita CANCEL_REMOTE/REJECT/TIMEOUT em ringing_in, não HANGUP_REMOTE; o evento único do hook é ignorado nesse estado.',
+  'impact':'O UPDATE terminal de B pode encerrar o estado visual de A, sem demonstrar teardown de seu transporte. Na entrada ainda tocando, o mesmo evento terminal não encerra a sessão e depende de outro evento/timeout. O probe confirmou ambos os estados e preservou o controle positivo de rejeitar payload de outro ID.',
+  'evidence':[ev(alert,41,44),ev(remote,17,45),ev('src/lib/calls/terminoRemoto.ts',45,51),ev('src/lib/calls/session.ts',179,215),ev('src/lib/calls/session.ts',299,310),ev(provider,119,147)],
+  'probes':['CALL-P11'],
+  'acceptance_criteria':['Associar o evento remoto à identidade/geração da sessão atual e rejeitar eventos de outras chamadas.','Selecionar evento terminal válido para o estado atual, preservando motivo e identidade; usar a mesma regra do restante do provider.','Provar A ativa+B termina, A tocando+A termina, payload de outro ID e evento repetido; preservar sessão não alvo.'],
+  'related_previous_findings':['TEL-RUNTIME-001'],
+  'limitations':'Callback do hook e reducer inteiros/exatos, com payloads sintéticos. Confirma somente transição de estado local; não confirma encerramento do SIP, alteração no banco nem incidente real. A comparação existente com o ID assinado não foi negada.'},
+]
 full=[engine,sink,consumer,'src/lib/calls/persistence.ts','src/hooks/communication/useTabLeaderRole.ts',
       'src/hooks/communication/useIncomingCallListener.ts','src/hooks/communication/useCallHistory.ts',connection,
       'src/lib/calls/adapters/SipCallAdapter.ts','src/lib/calls/adapters/CallAdapter.ts','src/lib/calls/WhatsAppCallAdapter.ts',
       'src/lib/calls/session.ts',leader,'src/lib/calls/capabilities.ts','src/lib/calls/duration.ts','src/lib/calls/phone.ts',
       'src/lib/calls/callStatus.ts','src/lib/calls/formatoKpi.ts','src/lib/calls/historyFormat.ts','src/lib/calls/historyLabels.ts',
-      'src/lib/calls/nomeDoContato.ts','src/lib/calls/sipProvisioning.ts','src/lib/calls/terminoRemoto.ts','src/lib/calls/toqueDaChamada.ts']
+      'src/lib/calls/nomeDoContato.ts','src/lib/calls/sipProvisioning.ts','src/lib/calls/terminoRemoto.ts','src/lib/calls/toqueDaChamada.ts',
+      alert,dialog,'src/components/calls/DialPad.tsx','src/components/calls/ActiveCallBar.tsx',remote,channels,provider,'src/App.tsx']
 coverage=[dict(ev(p,1,len((SOURCE/p).read_bytes().splitlines())),review_level='SEMANTIC_FILE_REVIEW',
                scope='Corpo, invariantes de identidade/estado/tempo e consumidores examinados; não é homologação SIP real.') for p in full]
-coverage.append(dict(ev('src/providers/CallSessionProvider.tsx',200,455),review_level='TARGETED_RANGE_REVIEW',scope='Ponte de navegação, despacho/fim, discagem e projeção de eventos. Revisão independente de modules confirma ausência de fence; não se atribui ao root o restante não lido.'))
 positive=[
  {'contract':'Fila de persistência','basis':'criarFilaDePersistencia encadeia chamadas e upsertMyCall repete o mesmo payload/id. Não foi alegada ausência de idempotência.'},
  {'contract':'Notificação tardia e identidade do usuário','basis':'useIncomingCallListener tem active/geração e userId no estado. Consulta de chamada finalizada é best-effort deliberada; falha de leitura não foi rotulada automaticamente como defeito.'},
  {'contract':'Transição de líder da aba','basis':'useTabLeaderRole guarda callbacks em ref e age só na transição de papel. Não foi extrapolado o ciclo encontrado no Email a este hook.'},
  {'contract':'Busca por telefone','basis':'useSipClient usa variantes completas e pickUniquePhoneMatch. Não foi inventado sufixo de telefone nesse consumidor; reconciliação Bitrix é um achado antigo diferente.'},
  {'contract':'WhatsApp sem áudio no browser','basis':'WhatsAppCallAdapter declara o contrato de abrir conversa e registrar intenção local. Dial não suportado e recusa local são decisões explícitas do plano, não defeitos novos.'},
- {'contract':'Encerramento por Realtime','basis':'terminoRemotoDaChamada compara o ID recebido ao ID em curso. O defeito de evento tardio foi delimitado ao motor SIP, sem negar esse controle no caminho Realtime.'},
+ {'contract':'Encerramento por Realtime','basis':'terminoRemotoDaChamada compara o ID recebido ao argumento observado e rejeita payload divergente. Esse controle foi confirmado por CALL-P11; não compara esse argumento à sessão global, lacuna delimitada em CALL008.'},
 ]
 def save(n,o):(OUT/n).write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n')
 save('findings.json',{'schema_version':1,'source_head':HEAD,'status':'COMPLETED_REVIEW_PASS','findings':findings,'confirmed_controls':positive})
 save('coverage.json',{'schema_version':1,'source_head':HEAD,'files':coverage,'limits':['Demais módulos de chamadas são enumerados na matriz global; somente as faixas aqui declaradas são reivindicadas.','Sem registro SIP, áudio, credenciais, banco ou provedor real.']})
-lines=['# Reauditoria do motor e ciclo de vida de chamadas','',f'Fonte: `{HEAD}`. Cinco contratos adicionais; sete casos offline, com variantes agrupadas por defeito.','']
+lines=['# Reauditoria do motor e ciclo de vida de chamadas','',f'Fonte: `{HEAD}`. Oito contratos adicionais; onze casos offline, com variantes agrupadas por defeito.','']
 for f in findings:
     lines += [f"## {f['id']} · {f['priority']} · {f['title']}",'','**Condição:** '+f['preconditions'],'','**Cadeia:** '+f['consumer_chain'],'',
               '**Comportamento:** '+f['observed_behavior'],'','**Efeito:** '+f['impact'],'','**Aceite proposto:** '+' '.join(f['acceptance_criteria']),'',

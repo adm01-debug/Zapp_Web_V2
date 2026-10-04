@@ -1798,7 +1798,9 @@
         "postgres"
       ],
       "second_pass_review": "Leitura integral. Trigger copia NEW.created_at da mensagem para conversa. Pode retroceder se houver backfill cronologicamente antigo; não presume esse produtor sem evidência.",
-      "finding_ids": []
+      "finding_ids": [
+        "R2-DB-020"
+      ]
     },
     {
       "identity": "public.calculate_level(bigint)",
@@ -5887,7 +5889,8 @@
       ],
       "second_pass_review": "Leitura integral. Gate send_messages, perfil ativo, visibilidade, escopo de conexão, reply do mesmo contato e chave idempotente com comparação integral. Fallback escolhe conexão global antes do gate de fila e pode negar mesmo havendo outra permitida; tratado como limitação do fallback, sem afirmar envio fora do escopo. Função não permite service_role direto pelo corpo/ACL.",
       "finding_ids": [
-        "R2-DB-009"
+        "R2-DB-009",
+        "R2-DB-022"
       ]
     },
     {
@@ -8863,7 +8866,9 @@
         "postgres"
       ],
       "second_pass_review": "Leitura integral. current_user postgres/service bypass para RPCs privilegiadas; cliente direto não muda tokens de lease nem payload enquanto mensagem atômica sending sem external_id. Não protege content/is_deleted de toda mensagem já sent; falso positivo rejeitado e comunicado ao Inbox.",
-      "finding_ids": []
+      "finding_ids": [
+        "R2-DB-022"
+      ]
     },
     {
       "identity": "public.guard_multiplix_event_immutable()",
@@ -10419,7 +10424,9 @@
         "service_role"
       ],
       "second_pass_review": "Leitura integral. EXISTS membership vincula profiles.user_id ao profile_id real; resultado booleano sobre UUID fornecido. Não retorna conteúdo de mensagem nem autoriza por department_id sozinho.",
-      "finding_ids": []
+      "finding_ids": [
+        "R2-DB-020"
+      ]
     },
     {
       "identity": "public.is_valid_talkx_schedule_timezone(text)",
@@ -15252,8 +15259,10 @@
       "snapshot_execute_grantees": [
         "postgres"
       ],
-      "second_pass_review": "Corpo integral: trigger de INSERT exige auth.uid e substitui user_id, status e campos de revisão/token antes de persistir. Não se atribui esse saneamento a UPDATE administrativo.",
-      "finding_ids": []
+      "second_pass_review": "Corpo integral corrigido após cruzamento DDL: somente se auth.uid() não NULL, limpa reset_token/token_expires_at/reviewed_by/reviewed_at/rejection_reason/status; não exige UID nem sobrescreve user_id. reset_token foi removido posteriormente, mas o trigger permanece, causando campo inexistente no INSERT autenticado. Candidato confirmado com consumidor ForgotPassword e separado de AUTH006/007; nenhum SQL executado.",
+      "finding_ids": [
+        "R2-DB-023"
+      ]
     },
     {
       "identity": "public.save_talkx_campaign_draft(uuid,bigint,uuid,jsonb)",
@@ -18302,7 +18311,9 @@
         "postgres"
       ],
       "second_pass_review": "Leitura integral. Se reply_to não nulo, exige mesma conversation_id via mensagem alvo; evita associação cruzada de reply na gravação.",
-      "finding_ids": []
+      "finding_ids": [
+        "R2-DB-020"
+      ]
     },
     {
       "identity": "public.team_reactions_dedup_guard()",

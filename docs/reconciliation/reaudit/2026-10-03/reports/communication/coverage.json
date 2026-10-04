@@ -273,6 +273,16 @@
       "scope": "R2-COM-001"
     },
     {
+      "path": "src/components/gmail/EmailThreadView.tsx",
+      "line_start": 178,
+      "line_end": 180,
+      "git_blob_sha": "70a11fdbb7e39daac07951dab442e23895721391",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L178-L180",
+      "purpose": "O consumidor legado também toma o último elemento da amostra como alvo de resposta.",
+      "review_level": "TARGETED_RANGE_REVIEW",
+      "scope": "R2-COM-007"
+    },
+    {
       "path": "supabase/migrations/20260827210100_gmail_token_rpcs.sql",
       "line_start": 31,
       "line_end": 59,
@@ -281,6 +291,26 @@
       "purpose": "Função vencedora pode lançar erro e preserva refresh quando NULL/vazio; não foi inventado apagamento nesse ramo.",
       "review_level": "TARGETED_RANGE_REVIEW",
       "scope": "R2-COM-010"
+    },
+    {
+      "path": "src/components/gmail/EmailThreadView.tsx",
+      "line_start": 45,
+      "line_end": 53,
+      "git_blob_sha": "70a11fdbb7e39daac07951dab442e23895721391",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L45-L53",
+      "purpose": "O consumidor legado também sanitiza pelo pipeline comum.",
+      "review_level": "TARGETED_RANGE_REVIEW",
+      "scope": "R2-COM-011"
+    },
+    {
+      "path": "src/components/gmail/EmailThreadView.tsx",
+      "line_start": 116,
+      "line_end": 120,
+      "git_blob_sha": "70a11fdbb7e39daac07951dab442e23895721391",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L116-L120",
+      "purpose": "Renderização do HTML sanitizado, sem retirar as proteções restantes.",
+      "review_level": "TARGETED_RANGE_REVIEW",
+      "scope": "R2-COM-011"
     }
   ],
   "limits": [

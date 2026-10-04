@@ -5,160 +5,156 @@
   "source_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
   "tracked_files_verified": 4068,
   "source_hash_mismatches": 0,
-  "findings": 282,
+  "findings": 372,
   "by_priority": {
-    "P1": 58,
-    "P2": 214,
-    "P3": 10
+    "P1": 63,
+    "P2": 292,
+    "P3": 17
   },
   "by_review_state": {
-    "CONFIRMED_SOURCE_BEHAVIOR": 275,
-    "REFINEMENT_OF_PRIOR_FINDING": 1,
-    "GAP_OR_UNRESOLVED_CONTRACT": 5,
+    "CONFIRMED_SOURCE_BEHAVIOR": 362,
+    "REFINEMENT_OF_PRIOR_FINDING": 2,
+    "GAP_OR_UNRESOLVED_CONTRACT": 7,
     "HYPOTHESIS_REQUIRES_VALIDATION": 1
   },
   "by_area": {
-    "auth": 41,
-    "calls": 5,
+    "auth": 53,
+    "calls": 8,
     "communication": 11,
-    "database": 16,
-    "inbox": 53,
-    "infra": 25,
-    "modules": 64,
-    "providers": 46,
-    "root": 12,
-    "platform": 9
+    "database": 21,
+    "inbox": 64,
+    "infra": 43,
+    "modules": 76,
+    "providers": 66,
+    "root": 18,
+    "platform": 12
   },
-  "validated_source_evidence_references": 1329,
+  "validated_source_evidence_references": 1903,
   "validated_prior_artifact_references": 4,
   "file_review_states": {
-    "STRUCTURAL_INVENTORY_ONLY": 2655,
-    "REVIEWED_SOURCE_RANGES_LOCATED": 274,
-    "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 1139
+    "STRUCTURAL_INVENTORY_ONLY": 805,
+    "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2552,
+    "REVIEWED_SOURCE_RANGES_LOCATED": 711
   },
   "all_js_ts_bodies": 36853,
-  "non_test_js_ts_bodies": 16654,
+  "non_test_js_ts_bodies": 16652,
   "function_span_states_all": {
-    "NO_CURRENT_REVIEWED_RANGE_LOCATED": 22817,
-    "BODY_CONTAINED_IN_REVIEWED_RANGES": 13956,
-    "BODY_PARTIALLY_OVERLAPS_REVIEWED_RANGES": 80
+    "BODY_CONTAINED_IN_REVIEWED_RANGES": 36853
   },
   "function_span_states_non_test": {
-    "NO_CURRENT_REVIEWED_RANGE_LOCATED": 4548,
-    "BODY_CONTAINED_IN_REVIEWED_RANGES": 12062,
-    "BODY_PARTIALLY_OVERLAPS_REVIEWED_RANGES": 44
+    "BODY_CONTAINED_IN_REVIEWED_RANGES": 16652
   },
   "sql_function_review": {
     "semantic": 311,
     "targeted": 0,
     "structural": 0
   },
-  "remaining_non_test_js_ts_files_with_uncontained_bodies": 540,
+  "remaining_non_test_js_ts_files_with_uncontained_bodies": 0,
   "previous_findings_preserved": 104,
   "review_inputs": [
     {
       "path": "reports/auth/findings.json",
-      "sha256": "ea3394f16a4df18173b632d69c0c77b4b1f8ccb1cf0772945ee40c47dba8a826",
-      "bytes": 188655
+      "sha256": "231080771b6aae6f614962786df0442c3da4c77f6771faf84999b18ec4c1b7a4",
+      "bytes": 269275
     },
     {
       "path": "reports/auth/coverage.json",
-      "sha256": "975b3ff4ed337e2594033172b1668b2971e48ca744adb8ffa499349d7f2155c6",
-      "bytes": 221274
+      "sha256": "d90c0e563143a174941e7df3788843d8758a1b051f6e9a8c51254780a71a3794",
+      "bytes": 426852
     },
     {
       "path": "reports/calls/findings.json",
-      "sha256": "196fe5b22f8d03e559f97a353b308808751bf4f54aa975c4812ba152dbe79175",
-      "bytes": 19421
+      "sha256": "d9eec5488b323900157366c80dbda11fdf5a136c05745939bea74b884b6cf0a6",
+      "bytes": 34103
     },
     {
       "path": "reports/calls/coverage.json",
-      "sha256": "ef70a7a3936edb715e40c356fe33962621531a67a0e7cfeb6dd8283b47e67305",
-      "bytes": 13185
+      "sha256": "f75b443ae29b9b0d91402b50e13710034618adee6854541e6f76d1eb09376605",
+      "bytes": 16679
     },
     {
       "path": "reports/communication/findings.json",
-      "sha256": "d8a0378e9a4fef09016b72e0f14cde8cf706e3efaeb97bc96591f662dbf4edd8",
-      "bytes": 40444
+      "sha256": "a234a310a5eb33ed094480505c98a5f213ef63e9999ad45d2c7d31f5208e31d2",
+      "bytes": 41858
     },
     {
       "path": "reports/communication/coverage.json",
-      "sha256": "89cdd8a82208b269b17f58c9fffcfa099a1f12a134895e9079a377dc0314772b",
-      "bytes": 14459
+      "sha256": "007e98b9470d6b462e6b2835b191bba9843e7b9e084b1b482a36395bd24d0d15",
+      "bytes": 15980
     },
     {
       "path": "reports/database/findings.json",
-      "sha256": "35198e1ecf808b36988eb2c72c49d8fcbbad14f3da61933f21b67d5e85f75c11",
-      "bytes": 219207
+      "sha256": "8c475a560b14770682767a004f64d64f76e91352d39af8f0d4bbcbffd6baad48",
+      "bytes": 375768
     },
     {
       "path": "reports/database/coverage.json",
-      "sha256": "f1b4cf2f1bab76ebd73f18d53b75d956d94c6f0a316c44e2edb774fb2daea371",
-      "bytes": 11516
+      "sha256": "f6214eee183cfcaaf230ea7164c4b8cd82ddbbeabe05d45e3aab0d1f41043136",
+      "bytes": 3941439
     },
     {
       "path": "reports/inbox/findings.json",
-      "sha256": "48e5603cb13cba5c702fe4256d95d435a642b63de0aaf36f7c0e17917811b3eb",
-      "bytes": 270258
+      "sha256": "89c08f260637153b70d32d91ee90903b4da7b7746092ef3183b810e8a18ea600",
+      "bytes": 335279
     },
     {
       "path": "reports/inbox/coverage.json",
-      "sha256": "1b36e2c606c624bbb46962a4b7cd9d91b4fb6157634afb5bcae1e714f268a417",
-      "bytes": 279159
+      "sha256": "1780232bb574dddb59a9ce3e87aea0b91e98f420035c580a72c3eebda6af6f62",
+      "bytes": 518912
     },
     {
       "path": "reports/infra/findings.json",
-      "sha256": "c9e1635711df18251dc46e364020870b3f0474fbfb416d19ccd70dc3f43e13ea",
-      "bytes": 117503
+      "sha256": "87d4bf35dd37341d26bc99599acdc20c1caaac2d094d72c9f34563efd4664e1c",
+      "bytes": 225113
     },
     {
       "path": "reports/infra/coverage.json",
-      "sha256": "fda76986d8476c030f5f0074ceee80ad4951b1ccfb4549ea0878d3e1a1f34fdb",
-      "bytes": 470535
+      "sha256": "9c57cd52cb9768f0bc3be8104748c794e76c14288eb3e44bd413d71638050f87",
+      "bytes": 755077
     },
     {
       "path": "reports/modules/findings.json",
-      "sha256": "3968a78e4270880403268335ea81ef0d4e213e08d6a225f8708522ce64e0451d",
-      "bytes": 283453
+      "sha256": "e656df85938c1e0a0027cc277c313cb9e7b7e75a734b2ce55bdea38d274f128c",
+      "bytes": 366684
     },
     {
       "path": "reports/modules/coverage.json",
-      "sha256": "e81e56aa2d0dc276c30a35b7d32b5c7a3a64337f063ccb5958eb1ec9c15ad102",
-      "bytes": 954118
+      "sha256": "77a028590b6871a2f18141a99f5e60aa1fb8a40d94bf80de6a4584b60de3eb32",
+      "bytes": 1421052
     },
     {
       "path": "reports/platform/findings.json",
-      "sha256": "a078aaf0e8839b23d1daf59437e9ec1709ae55805095751144bd9bbba4fca6a4",
-      "bytes": 37583
+      "sha256": "1605a6659e79f7c28ac0701a008c9db000a2729fc07aaa6d1366fbeb82ed1fb3",
+      "bytes": 47984
     },
     {
       "path": "reports/platform/coverage.json",
-      "sha256": "b4b7a2956a9fc87be1b04165901cc68fe95c37beb6c5e30127eecb257ca51fa6",
-      "bytes": 38558
+      "sha256": "21a8757ce8e0d955321c7d3296e6932a1a106eec8b6c13761454f1ab5cbfc055",
+      "bytes": 51077
     },
     {
       "path": "reports/providers/findings.json",
-      "sha256": "85130416bdb5242c7136d0f5e9d7c5e7f9c5dbe7e03b035a5550ab80c180947b",
-      "bytes": 187917
+      "sha256": "9e81ddafc86822d932de9ccc7ef38fc6bf9715825781f6c6e72b0acbf1871bf8",
+      "bytes": 281824
     },
     {
       "path": "reports/providers/coverage.json",
-      "sha256": "d0e022e94b9452f3966304d298d90229e2ffd13f59e74ac4e640c2d59dfc74c6",
-      "bytes": 122211
+      "sha256": "faadf3923cf1d60a145b4a436bc33d2c6aaa79e55b9a9690c6863cf409036f65",
+      "bytes": 282551
     },
     {
       "path": "reports/root/findings.json",
-      "sha256": "204849d366cd57af7419cdd0fd264b6b0485077770d158bd267c2e034fe540e5",
-      "bytes": 38907
+      "sha256": "5dbe2745cc7c9de78c31ae3e422a3650263f6ca7eb8419ee724290641c1b8614",
+      "bytes": 71780
     },
     {
       "path": "reports/root/coverage.json",
-      "sha256": "0a82ecf3b5a5e4ea2ed4215b0143656401eb79d90277d7be590e40fb86ad73ef",
-      "bytes": 26664
+      "sha256": "0b657ccffffe5f1f6b5dc8f84b63e603fe7ed05c3af99ff7628e063c23aa2262",
+      "bytes": 760342
     }
   ],
   "validation_errors": 0,
-  "in_progress_artifacts_allowed": true,
+  "in_progress_artifacts_allowed": false,
   "limits": [
     "A file or body inside a reviewed source range is not a claim that every input, branch or microfeature was executed.",
     "Review declarations preserve each reviewer’s own scope. A journal read or AST extraction alone does not promote a file to semantic review.",

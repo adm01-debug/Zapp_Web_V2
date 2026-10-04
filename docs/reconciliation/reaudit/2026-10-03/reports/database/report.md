@@ -2,7 +2,7 @@
 
 **Fonte:** `da307ba5626dce892f0b37cb6762463f55d14a96`. **Data da revisão:** 2026-10-04. **Modo:** somente arquivos e snapshots locais.
 
-Esta rodada identificou **16 achados** com cenários confirmáveis no código. A revisão não consultou banco vivo, não iniciou PostgreSQL, não executou migrations, não carregou credenciais e não modificou a aplicação. O estado de produção depois dos snapshots continua desconhecido.
+Esta rodada identificou **21 achados** com cenários confirmáveis no código. A revisão não consultou banco vivo, não iniciou PostgreSQL, não executou migrations, não carregou credenciais e não modificou a aplicação. O estado de produção depois dos snapshots continua desconhecido.
 
 A principal correção de método foi distinguir **quantidade de SQL**, **identidade da função**, **definição que prevalece** e **comportamento do consumidor**. A auditoria anterior dizia corretamente que o histórico de nove RPCs e o inventário das migrations não equivalem a revisar todas as funções. Esta rodada amplia a projeção para 311 assinaturas candidatas e publica o nível de revisão de cada uma, sem converter análise lexical em aceite semântico.
 
@@ -26,6 +26,11 @@ A principal correção de método foi distinguir **quantidade de SQL**, **identi
 | R2-DB-014 | P2 | Cancelamento em voo pode descartar a confirmação do provedor e impedir reconciliação |
 | R2-DB-015 | P2 | Retry terminal do TalkX pode voltar a pending sem se tornar elegível ao worker |
 | R2-DB-016 | P2 | Mesclagem autorizada de contato com nota é bloqueada pelo guard posterior de identidade |
+| R2-DB-019 | P2 | Reações do WhatsApp não vinculam a autoria ao usuário que grava |
+| R2-DB-020 | P1 | Policy de arquivos do Team Chat compara o caminho com o nome do perfil e perde o vínculo com o objeto |
+| R2-DB-021 | P2 | A segunda reação ao mesmo emoji conflita com a chave reservada ao contato |
+| R2-DB-022 | P1 | Referência de mídia gravável pelo agente funciona como autorização para outro objeto privado |
+| R2-DB-023 | P2 | Trigger de recuperação ainda escreve campo removido e bloqueia o pedido autenticado |
 
 P1 indica fronteira de autorização, proteção de custo ou falha de fluxo essencial a corrigir antes de aceitar o respectivo contrato. P2 exige correção de integridade/atribuição/progresso com as pré-condições descritas. Severidade não é afirmação de incidente ocorrido no ambiente vivo.
 
@@ -40,17 +45,20 @@ P1 indica fronteira de autorização, proteção de custo ou falha de fluxo esse
 | Funções finais candidatas | 311 assinaturas; 336 identidades com histórico | Projeção lexical, não catálogo de banco reconstruído |
 | Revisão de função | 311 semânticas; 0 dirigidas; 0 estruturais | A lista individual está em function_review.json |
 | Correspondência ao manifest | 303 de 303 assinaturas do snapshot local | Identidade equivalente, não prova de igualdade de corpo/ACL |
-| Policies | 499 candidatas, 446 no snapshot | DO, RENAME, DROP TABLE e schemas diferentes impedem diff ingênuo |
-| Views | 11 sequências CREATE/ALTER revisadas para security_invoker | Sem teste SELECT sob usuários reais |
-| Triggers | 123 candidatos, 119 no snapshot | Contagens têm escopos distintos; vínculos específicos foram revisados por achado |
-| Blocos DO | 107 sinalizados | Não expandidos automaticamente; efeitos de interesse foram examinados de forma dirigida |
+| Policies | 446/446 do snapshot e 56/56 extras com corpos lidos; 499 candidatas lexicais | Três identidades exigem RENAME/DO; outras diferenças foram adjudicadas em policy_review.json |
+| Views | 11/11 definições vencedoras e 7 ALTERs lidos; projeções, filtros, agregações e ACL relacionados | 11 identidades correspondentes, sem teste SELECT/UPDATE sob usuários reais |
+| Triggers | 123/123 vínculos lidos e 119/119 identidades públicas do snapshot correspondentes | 64 corpos de função relacionados; 2 vínculos auth fora do snapshot, 1 tabela removida e 1 migração posterior explicam as sobras |
+| Blocos DO | 107/107 corpos integralmente lidos e anotados | Nenhuma expansão/execução SQL; condições de dados/catálogo não presumidas satisfeitas |
+| Tabelas sem policy no snapshot | 7 com CREATE/ENABLE RLS lidos e ACL conferida | Rotinas privilegiadas analisadas separadamente; nenhuma medição de acesso real |
 | Singu | 4 rotinas do último espelho local e consumidor Edge | Não houve consulta ao projeto externo |
 
-O manifest em `supabase/schema-manifest.json` foi gerado em **2026-10-03T17:11:29Z**, para public/PostgreSQL 17, e contém 164 tabelas com RLS, 1911 colunas, 303 funções, 446 policies, 119 triggers e 11 views. O catálogo é uma evidência datada. Os hashes das definições não contêm os corpos e não substituem leitura da fonte.
+O manifest em `supabase/schema-manifest.json` foi gerado em **2026-10-03T17:11:29Z**, para public/PostgreSQL 17, e contém 164 relações com metadados de RLS, 1911 colunas, 303 funções, 446 policies, 119 triggers e 11 views. O catálogo é uma evidência datada. Os hashes das definições não contêm os corpos e não substituem leitura da fonte.
 
 Das oito assinaturas presentes na projeção e ausentes do manifest, uma é `supabase_migrations.reserve_migration_version`, fora do schema capturado. As outras sete são introduzidas pelas migrations `20261003172707`, `20261003202707` e `20261003212707`, posteriores à captura. **Essa diferença não demonstra que faltem funções no banco atual.**
 
 A contagem 499 versus 446 de policies também não é um achado de drift por si só: a projeção inclui storage/ops e mantém candidatos que dependem de DROP dinâmico ou da remoção da tabela. As três identidades do snapshot que exigiram seguir operações adicionais são o RENAME de conversation_events_select_policy e os CREATE POLICY dinâmicos de query_telemetry e sicoob_contact_mapping. O arquivo projection_vs_snapshot.json preserva essa distinção.
+
+Os 56 extras foram adjudicados individualmente. A única diferença pública de identidade sem remoção correspondente localizada é Senders can edit own messages: o relatório AUDITORIA_TEAM_CHAT_ESTADO_REAL_2026-09-29.md:141 já registrava a divergência entre o DROP escrito e a policy observada. Essa lacuna foi preservada como conhecida, sem inventar uma operação ausente ou afirmar drift novo em produção.
 
 O export em `supabase-export` tem manifest de maio e se declara legado. A informação da auditoria anterior sobre 779 arquivos versus 781 entradas de ledger é referente ao run de CI já capturado em 03/10; esta rodada não tornou aquela medição atual nem a reutilizou como prova de deploy.
 
@@ -77,6 +85,7 @@ Cenário: O chamador fornece contato/conexão válidos e status permitido à var
 - Não houve chamada RPC, exploração, consulta de dados nem confirmação do deploy atual.
 - O snapshot de ACL é datado de 2026-10-03; mudanças posteriores não são conhecidas.
 - A função de trigger multiplix_audiences_validate_shared_roles também aparece no baseline anon, mas não foi tratada como RPC diretamente invocável.
+- A leitura integral do harness notification-delivery-atomicity confirmou que seu cenário service-only testa seis argumentos, não a identidade nova de sete. Nenhum harness foi executado nesta rodada.
 
 **Ordem e definição efetiva na fonte**
 
@@ -94,6 +103,7 @@ Cenário: O chamador fornece contato/conexão válidos e status permitido à var
 - `scripts/db-audit/grants-baseline.json:5` — Baseline de grants também lista a variante nova entre rotinas executáveis por anon. SHA-256 `c3612a9b15a44f2f1fa4573259581d5dc37a0f2d1b1f48dc2d1cc97b1a6a704f`.
 - `supabase/schema-manifest.json:5157` — Schema public permite USAGE a anon no mesmo snapshot. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
 - `supabase/functions/_shared/evolution-webhook-handlers.ts:309–324` — Consumidor de produção usa exatamente a assinatura com p_direction. SHA-256 `55c5c8cb57051b57f08468bdca6486adb9c9404465214e89d3fdf5435fc88a90`.
+- `scripts/db-audit/notification-delivery-atomicity.test.sh:120–161` — Harness aplica somente migration antiga e valida ACL da assinatura de seis argumentos; não cobre a nova sobrecarga. SHA-256 `e05b2839b55a2f00fe4be70bea67cb0061f75a629bd2c7929c3ab6f1e29804b6`.
 
 **Confronto com a auditoria anterior:** A auditoria anterior não examinou esta nova identidade/ACL. TEL-RUNTIME-001 sobre homologação de telefonia não cobre execução anônima de escrita.
 
@@ -419,6 +429,7 @@ Cenário: Primeiro encerramento insere closure do contato no dia D. Conversa é 
 - O cenário exige duas finalizações no mesmo dia SP; em dias diferentes a restrição diária não conflita.
 - A reabertura foi demonstrada como contrato RPC disponível, não como botão ou efeito automático de novo inbound. O ingest_inbound_message vigente não reabre conversation_status.
 - O snapshot confirma o índice, mas seu estado atual em produção permanece sem nova medição.
+- O harness phase1 foi lido integralmente; aplica um recorte histórico e testa replay da mesma UUID, sem a restrição diária no fixture. Não refuta este cenário de nova finalização.
 
 **Ordem e definição efetiva na fonte**
 
@@ -437,6 +448,8 @@ Cenário: Primeiro encerramento insere closure do contato no dia D. Conversa é 
 - `supabase/schema-manifest.json:2654` — Índice permanece no snapshot local. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
 - `src/components/inbox/CloseConversationDialog.tsx:79–105` — Dialog zera chave ao abrir e gera crypto.randomUUID para nova ação. SHA-256 `83093ef0b7d765eb2846ed8eea3fce8d87bc07addf4bd1f50f6931793e82a9d7`.
 - `src/components/inbox/CloseConversationDialog.tsx:116–128` — Sucesso fecha/zera chave; conflito SQL aparece como falha de encerramento. SHA-256 `83093ef0b7d765eb2846ed8eea3fce8d87bc07addf4bd1f50f6931793e82a9d7`.
+- `scripts/db-audit/message-delivery-phase1-behavior.test.sh:96–102` — Fixture não inclui o índice UNIQUE diário da cadeia final. SHA-256 `e3550ecaf6093349152de44af57869708d8c76ffc26bfe8fcc1e8e6961891236`.
+- `scripts/db-audit/message-delivery-phase1-behavior.test.sh:543–575` — Aceite de close repete a mesma chave; não é uma segunda finalização com nova chave. SHA-256 `e3550ecaf6093349152de44af57869708d8c76ffc26bfe8fcc1e8e6961891236`.
 
 **Confronto com a auditoria anterior:** Deduplicar fechamento diário para métricas é diferente de aceitar múltiplos ciclos da conversa. A definição vencedora da RPC e a chave real do consumidor demonstram conflito entre os contratos.
 
@@ -470,6 +483,7 @@ Cenário: A RPC autoriza o agente e tenta inserir a nova mensagem. O AFTER INSER
 - Sem execução SQL, envio de mensagem ou consulta de agent_stats em produção.
 - Não foi medido quantos perfis estão imediatamente antes de um marco.
 - A dedução usa a implementação primária de auth.role e a atomicidade de triggers do PostgreSQL; não usa current_user como substituto do JWT.
+- O harness phase1 de entrega usa schema mínimo sem triggers de gamificação; seus controles de enqueue e complete não cobrem essa composição.
 
 **Ordem e definição efetiva na fonte**
 
@@ -485,6 +499,7 @@ Cenário: A RPC autoriza o agente e tenta inserir a nova mensagem. O AFTER INSER
 - `supabase/migrations/20260928110000_fix_grant_agent_achievement_conflict_target.sql:34–55` — Guarda do próprio perfil passa, mas tipo message_milestone exige role privilegiada ou admin/supervisor. SHA-256 `5a1441cde1dff9c2e3090a43a97396a5d3401a0b799daa0ee9e297854254b65a`.
 - `supabase/schema-manifest.json:4079` — Trigger permanece no snapshot local. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
 - `src/services/outbound-message.service.ts:102–128` — Consumidor browser enfileira sob usuário autenticado e aborta antes do dispatch ao receber enqueueError. SHA-256 `5dd3f526205086e33880468e15154d701c5590cb0914f84907b2938619a0387d`.
+- `scripts/db-audit/message-delivery-phase1-behavior.test.sh:37–161` — Fixture de entrega não instala a cadeia de gamificação e seus triggers. SHA-256 `e3550ecaf6093349152de44af57869708d8c76ffc26bfe8fcc1e8e6961891236`.
 
 **Confronto com a auditoria anterior:** A existência de um fix anterior de erro em marcos não comprova este caminho: a revisão cruzou o trigger vencedor, o guard vencedor e o contexto JWT do enqueue real.
 
@@ -658,6 +673,7 @@ Cenário: Considere início de transação T, instrução S diferente de T e con
 - Previsão estática apoiada na semântica documentada, sem execução SQL/RPC.
 - O cabeçalho de 20261001381230 descreve uma falha antiga do backfill, corrigida no mesmo arquivo. Este achado trata o segundo UPDATE da RPC permanente, não reabre aquele backfill como falha atual.
 - O snapshot registra assinatura/ACL, não o proprietário em texto nem o tempo entre comandos.
+- Revisão peer de /root/grill_me_primary_review em ../modules/shell-review.json: talkx-current-template-version.test.sh omite set_talkx_template_updated_at e seu trigger de timestamp. Seus controles de duas edições em fixture não reproduzem a origem de transaction_timestamp relevante aqui; suíte não executada nesta rodada.
 
 **Ordem e definição efetiva na fonte**
 
@@ -829,6 +845,290 @@ Cenário: A RPC autoriza o ator, bloqueia os contatos e atualiza os campos do co
 
 Semântica primária: [PG-TRIGGER](https://www.postgresql.org/docs/17/trigger-definition.html).
 
+### R2-DB-019 · P2 — Reações do WhatsApp não vinculam a autoria ao usuário que grava
+
+As policies vencedoras de message_reactions autorizam pela conversa/contato, mas não exigem user_id do chamador nem reservam contact_id como autor a uma origem confiável. Um agente pode criar reação local rotulada Cliente, assumir outro profile conhecido ou alterar/excluir reação alheia em mensagem autorizada.
+
+**Condições e sequência de falha**
+
+- Policies e grants locais aplicados conforme snapshot; cliente autenticado com perfil e um contato/mensagem que satisfaz o escopo de reação (por exemplo, contato atribuído ao próprio agente).
+- O chamador usa a API de dados diretamente com seu JWT; não precisa de papel admin nem service_role.
+- Para assumir um colega específico, precisa conhecer o profiles.id dele. Para falsificar a reação de Cliente no próprio contato, não precisa de UUID de outro usuário.
+- Escolhe emoji/linha que não conflita nas constraints UNIQUE existentes.
+
+Cenário: Insere {message_id: M, contact_id: C, user_id: null, emoji: E} para a mensagem do contato próprio. O FK e reaction_author_check passam; o predicado de INSERT passa pelo contato/mensagem e não verifica origem de cliente. A leitura da UI passa no mesmo escopo e mostra a reação como Cliente. Alternativamente, UPDATE/DELETE de uma reação já visível passa independentemente de user_id pertencer a outra pessoa, porque as policies permissivas se combinam por OR.
+
+**Consequência:** Integridade e atribuição de reações locais comprometidas: aparente reação do cliente/colega, remoção de reação alheia e contagens modificadas. Não foi afirmado que esse INSERT envia uma reação ao WhatsApp externo.
+
+**Proteções existentes e limites da conclusão**
+
+- FKs validam que IDs existem e UNIQUE limita duplicação da mesma combinação; nenhum trigger efetivo de message_reactions consta no catálogo/snapshot.
+- O hook normal escolhe o profile próprio e valida erros. Chamada direta não é obrigada a enviar esse filtro.
+- SELECT de profiles pode ocultar o nome de um colega e fazer aparecer Agente; não corrige o user_id persistido nem a personificação de Cliente.
+- Nenhuma mutação, consulta de reações reais ou exploração foi realizada.
+- Não se alega enumeração de UUIDs de contatos/mensagens fora do escopo nem envio remoto automático.
+- Há também um INSERT antigo que permite contact_id autorizado independente de message_id conhecido de outro contato; esse ramo exige UUID externo conhecido e não é necessário ao cenário principal.
+
+**Ordem e definição efetiva na fonte**
+
+- Policy `public.message_reactions.Users can delete their own reactions`: `supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql:32–34`. Resolução: direct_create_and_subsequent_alters.
+- Policy `public.message_reactions.Users can insert reactions for assigned contacts`: `supabase/migrations/20260401003034_46580962-a5ba-41f5-b4b1-b05887b4b490.sql:41–49`. Resolução: direct_create_and_subsequent_alters.
+- Policy `public.message_reactions.Users can view reactions on accessible messages`: `supabase/migrations/20260413123944_b60de33d-6bf0-4cee-b5f9-97d244045b53.sql:3–19`. Resolução: direct_create_and_subsequent_alters.
+- Policy `public.message_reactions.message_reactions_delete_policy`: `supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql:104–117`. Resolução: direct_create_and_subsequent_alters.
+- Policy `public.message_reactions.message_reactions_insert_policy`: `supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql:68–81`. Resolução: direct_create_and_subsequent_alters.
+- Policy `public.message_reactions.message_reactions_select_policy`: `supabase/migrations/20260830110000_extend_special_agent_visibility_to_related_tables.sql:69–78`. Resolução: direct_create_and_subsequent_alters.
+- Policy `public.message_reactions.message_reactions_update_policy`: `supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql:86–99`. Resolução: direct_create_and_subsequent_alters.
+
+**Evidência verificável**
+
+- `supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql:26–39` — DDL aceita user_id nulo com contact_id válido; CHECK exige um dos dois, não a identidade do chamador. SHA-256 `db73d151afdbf5f8b8cb85022560bbc82dbdd420fe2b433f9e88b5237386a650`.
+- `supabase/migrations/20260401003034_46580962-a5ba-41f5-b4b1-b05887b4b490.sql:41–49` — INSERT permissivo por contact_id atribuído; nem sequer vincula esse contato ao message_id. SHA-256 `34320fce2bb8e0c4cfe674806fe2199ebf5d3e869165125b6eda09a14e3279f7`.
+- `supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql:49–81` — SELECT/INSERT por mensagem e contato; INSERT não restringe user_id. SHA-256 `d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64`.
+- `supabase/migrations/20260413133214_75a73092-8328-4b6a-8bac-9e2a75934a4d.sql:86–117` — UPDATE e DELETE por mensagem visível, sem regra de autoria. Policy própria adicional não restringe outra permissiva. SHA-256 `d6828c32892580e65433278a239ef768fc3f9959650754a230a452978f036b64`.
+- `supabase/schema-manifest.json:9070` — Snapshot registra INSERT de tabela para authenticated. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `supabase/schema-manifest.json:9072` — Snapshot registra UPDATE de tabela para authenticated. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `supabase/schema-manifest.json:9069` — Snapshot registra DELETE de tabela para authenticated. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `src/hooks/reactions/useReactionMutations.ts:22–53` — Consumidor legítimo deriva contact_id da mensagem e usa profile próprio; isso é escolha do cliente, não defesa do endpoint de dados. SHA-256 `a0020798219802b9108c1b66ce8fd0ea2bad51629661f9d1e27f045222a37016`.
+- `src/hooks/reactions/useReactionMutations.ts:83–94` — DELETE da UI filtra próprio user_id, filtro que chamada direta pode omitir. SHA-256 `a0020798219802b9108c1b66ce8fd0ea2bad51629661f9d1e27f045222a37016`.
+- `src/hooks/chat/useMessageReactions.ts:54–76` — Leitura rotula reação sem user_id como Cliente e usa user_id para a autoria de agente. SHA-256 `483f4ccfb05ceb5c103d9d9177496bb69cad79118535e78767d80a2f29ac3cc7`.
+- `src/components/inbox/MessageReactions.tsx:35–69` — Componente ativo agrupa contagem e identifica reação do usuário pelo user_id persistido. SHA-256 `449e2178c8e5fde2e148fed83b874e5c6372726cf34fce48eaa9fb7e10d23647`.
+- `src/components/inbox/MessageReactions.tsx:113–117` — Tooltip apresenta a autoria derivada das linhas. SHA-256 `449e2178c8e5fde2e148fed83b874e5c6372726cf34fce48eaa9fb7e10d23647`.
+
+**Confronto com a auditoria anterior:** INB-032 trata erro de envio remoto após persistência local. TC-009 trata permissões de Team Chat em tabelas diferentes. Nenhum cobre a autoria de public.message_reactions.
+
+**Aceite necessário**
+
+- Separar autoria de usuário e autoria de contato no contrato e impor a identidade no banco, com caminho confiável próprio para eventos do provedor.
+- Consolidar todas as policies permissivas de escrita; restringir UPDATE/DELETE à autoria permitida.
+- Vincular message_id e contato ao mesmo registro canônico sem aceitar uma autorização por um contato e gravação em outro.
+- Verificar casos negativos de user_id alheio, user_id nulo em chamada de agente e remoção/edição de reação de outro autor; preservar reação legítima do usuário e ingestão autorizada do cliente.
+
+Semântica primária: [PG-POLICY](https://www.postgresql.org/docs/17/sql-createpolicy.html).
+
+### R2-DB-020 · P1 — Policy de arquivos do Team Chat compara o caminho com o nome do perfil e perde o vínculo com o objeto
+
+No EXISTS da policy Conversation members can read team chat files, tm.media_path = name resolve name como profiles.name do escopo interno. Uma mensagem visível com media_bucket team-chat-files e media_path igual ao nome do próprio perfil torna o EXISTS verdadeiro independentemente do objeto Storage consultado.
+
+**Condições e sequência de falha**
+
+- A policy do arquivo 20260927270012 está aplicada; configuração/grants padrão de leitura da API Storage estão disponíveis ao usuário autenticado. O snapshot público não registra a ACL do schema storage.
+- O usuário tem profiles.name não nulo e pertence a pelo menos uma conversa Team Chat, podendo inserir e ler uma mensagem própria nessa conversa.
+- Existe mídia privada de outras conversas no bucket team-chat-files. Não é necessário pertencer às conversas desses objetos para o predicado defeituoso.
+
+Cenário: Membro P insere mensagem na conversa autorizada C, com sender_id=P, conteúdo não vazio, media_bucket=team-chat-files e media_path igual ao próprio nome N. media_url/media_type podem permanecer ambos nulos, satisfazendo os CHECKs. Ao autorizar SELECT de qualquer objeto no bucket team-chat-files, a subquery enxerga essa mensagem, a participação de P e seu próprio perfil. O nome não qualificado é resolvido no escopo interno para p.name. Assim tm.media_path=p.name equivale a N=N e a subquery não se correlaciona com objects.name. O ramo EXISTS passa para objetos de outras conversas. Conforme as APIs Storage habilitadas, a mesma policy SELECT permite listar/assinar/ler objetos elegíveis; não se exige conhecer previamente cada caminho para que o predicado fique verdadeiro.
+
+**Consequência:** Quebra da separação de arquivos privados entre conversas do chat interno. Sob as precondições, uma mensagem controlada por membro pode autorizar leitura de todo o bucket team-chat-files. O achado não concede escrita/remoção desses objetos nem acesso a outros buckets.
+
+**Proteções existentes e limites da conclusão**
+
+- RLS de team_messages, team_conversation_members e profiles continua ativa e foi considerada: o cenário usa mensagem, participação e perfil do próprio chamador.
+- INSERT de arquivos continua limitado à pasta do profile; o cenário não requer upload e cria apenas uma linha de mensagem válida.
+- O trigger de reply_to aceita reply nulo, o guard de edição só atua no UPDATE de conteúdo e o bump apenas atualiza o timestamp da conversa. Nenhum autoriza media_path.
+- A correção de grants UPDATE em team_messages impede reparenting por PATCH, mas não restringe o INSERT dessas colunas.
+- Nenhuma consulta de storage.objects, listagem, assinatura, download ou INSERT foi executada.
+- Conclusão de binding é análise estática corroborada por documentação PG17, fonte primária colNameToVar e leitura independente de root/auth; não é resultado de PostgreSQL executado.
+- O snapshot é do schema public e não atesta o corpo/grants Storage implantado. Policy posterior ou configuração externa não representada na fonte pode alterar o alcance; isso não foi medido.
+- Doxygen mostra master; documentação de referência foi lida na versão 17. O nome name pertence a profiles no catálogo local, independentemente de ordem de plano/avaliação.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.is_team_conversation_member(uuid,uuid)`: 20260402130912:create_or_replace. Último corpo em `supabase/migrations/20260402130912_abca9ec2-dfde-4f76-908b-2e993e611ad5.sql:49–61`.
+- `public.team_messages_validate_reply_to()`: 20260929170000:create_or_replace. Último corpo em `supabase/migrations/20260929170000_team_chat_e27_reply_to_self_ref_check.sql:8–8`.
+- `public.bump_conversation_updated_at()`: 20260927270001:create_or_replace. Último corpo em `supabase/migrations/20260927270001_team_chat_e10_bump_conversation_updated_at_trigger.sql:1–1`.
+- Policy `public.profiles.Users can view own profile`: `supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql:6–8`. Resolução: direct_create_and_subsequent_alters.
+- Policy `public.team_conversation_members.tcm_select_own`: `supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql:85–87`. Resolução: direct_create_and_subsequent_alters.
+- Policy `public.team_messages.Members can send messages`: `supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql:50–57`. Resolução: direct_create_and_subsequent_alters.
+- Policy `public.team_messages.Members can view conversation messages`: `supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql:44–48`. Resolução: direct_create_and_subsequent_alters.
+- Policy `storage.objects.Conversation members can read team chat files`: `supabase/migrations/20260927270012_team_chat_e21_storage_select_policy.sql:3–3`. Resolução: direct_create_and_subsequent_alters.
+
+**Evidência verificável**
+
+- `supabase/migrations/20260927270012_team_chat_e21_storage_select_policy.sql:1–3` — Policy SELECT vigente: subquery junta profiles p e usa name não qualificado. SHA-256 `f5a7a3fa6e2ddba08a228e0f3c12611f1e5ce085058455742bdca95fd9575bbb`.
+- `supabase/schema-manifest.json:219` — Snapshot confirma coluna name em profiles; team_messages/team_conversation_members não possuem essa coluna. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `supabase/migrations/20260927270004_team_chat_e13_media_bucket_path_columns.sql:1–3` — media_bucket e media_path são colunas text sem vínculo de objeto. SHA-256 `c725ca636ad30f4d141c0fc06f9734d4e22855a18802f092ab4f50450855f219`.
+- `supabase/migrations/20260404172933_cc26cd49-aefe-495d-a6da-7231daaa06e6.sql:44–57` — SELECT de mensagens exige membro e INSERT exige membro+sender próprio, não validade/posse do media_path. SHA-256 `2efd108ec9c190aa55c0984be04f3bd9f757e026298f03a97fb1aa12b91bec72`.
+- `supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql:83–87` — Policy tcm_select_own permite ler a própria participação; recursão anterior foi corrigida. SHA-256 `8b7665b249754829759ed870830c8d38efef81626e109e990ab2e9d20d4e5554`.
+- `supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql:6–8` — SELECT do próprio perfil permite a linha p necessária ao EXISTS. SHA-256 `d021a3812e7d2e1401dcfe6c6e7b66f038d7e8f13f347e32ddd92b77ddbae6b9`.
+- `supabase/migrations/20260928600000_team_chat_e25_team_messages_integrity.sql:10–12` — CHECKs de conteúdo e media_url/media_type não vinculam media_bucket/path a objeto. SHA-256 `e6c75823b7396bd0076983f180018788dc101ffd5b8acdcda721edad584d30b9`.
+- `supabase/migrations/20260929160000_team_chat_e26_message_type_media_constraint.sql:6` — CHECK de tipo também não valida locator; texto com media_url nulo é permitido. SHA-256 `5c783211d13f38b683d9e3e384338b83daf183a909fcc0e318f60fbbbb0a298a`.
+- `supabase/schema-manifest.json:7968` — INSERT de tabela para authenticated está no snapshot. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `src/hooks/team-chat/useTeamChatMutations.ts:10–31` — Consumidor ativo envia mediaBucket/mediaPath diretamente; não há autorização adicional por objeto. SHA-256 `a3d69885b17595269b7374e32db6111d63a8fbb5b1e4c9bfc23bd07698278f54`.
+- `supabase/migrations/20260928560000_team_chat_e20_storage_team_chat_files.sql:6–12` — Migration posterior remove outro nome de policy SELECT e modifica INSERT; não remove a policy vulnerável. SHA-256 `8b8fb33a2e658599999dcb7bd526065b76c29a5fb868bcb18f2136a792ceb54e`.
+- `src/hooks/storage/useResolvedStorageUrl.ts:35–55` — Cliente resolve objetos privados através de createSignedUrl, submetido ao controle Storage. SHA-256 `952d59bd6c420a1ea1510bedb6fa1ef14f662974b5bb97b0932455a14e8a3389`.
+
+**Confronto com a auditoria anterior:** TC-001 cobre incompatibilidade de paths e renderização; não cobre binding de coluna que elimina a correlação de objetos. INF-022 é outro caminho via Edge/service_role e não depende desta mensagem/policy. Root e Auth fizeram revisão independente do escopo interno.
+
+**Aceite necessário**
+
+- Qualificar explicitamente a coluna do objeto na subquery e revisar todas as correlações de ACL para evitar captura por coluna interna.
+- Autorizar a origem do locator no momento de persistir a associação mensagem/objeto; qualificar o nome sozinho não deve transformar referências arbitrárias em permissão.
+- Com papéis reais em ambiente de teste autorizado, verificar membro versus não membro, mensagem com media_path igual ao nome do perfil e objetos em outra conversa, além de listagem e assinatura.
+- Verificar grants/role e definição efetiva de Storage antes de declarar correção do deploy, preservando upload/leitura legítimos.
+
+Semântica primária: [PG-POLICY](https://www.postgresql.org/docs/17/sql-createpolicy.html); [SUPABASE-STORAGE-ACL](https://supabase.com/docs/guides/storage/security/access-control); [PG-COLUMN-SCOPE](https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-COLUMN-REFS); [PG-COLUMN-RESOLVER-SOURCE](https://doxygen.postgresql.org/parse__relation_8c.html).
+
+### R2-DB-021 · P2 — A segunda reação ao mesmo emoji conflita com a chave reservada ao contato
+
+O hook grava simultaneamente user_id e contact_id para reações de agentes. A tabela mantém UNIQUE(message_id,contact_id,emoji), além da UNIQUE por usuário. Outra autoria no mesmo contato/mensagem/emoji viola a chave de contato, e o alvo de UPSERT por user_id não trata esse conflito.
+
+**Condições e sequência de falha**
+
+- Uma reação existente R1 tem message_id M, contact_id C e emoji E.
+- Um segundo autor autorizado a reagir em M usa a UI atual; por exemplo, supervisor após agente ou novo responsável após transferência do contato.
+- Esse segundo usuário tem user_id diferente do primeiro e sua combinação M/user_id/E ainda não existe; demais constraints e RLS são satisfeitas.
+
+Cenário: A primeira reação de agente grava (M, A, C, E) pelo hook atual. O segundo agente B ainda não tem reação própria, então a UI chama addReaction(E). O hook tenta (M, B, C, E). Não há conflito na chave árbitra (M, B, E), mas há conflito com R1 em (M, C, E). A constraint independente rejeita o INSERT, esperado SQLSTATE 23505. O hook lança o erro e interrompe antes de sendReaction; R1 permanece e a reação de B não é salva. Uma reação de cliente já existente com o mesmo M/C/E produz a mesma colisão.
+
+**Consequência:** Não é possível representar todas as autorias legítimas do mesmo emoji pela UI atual. Reação de agente e reação de cliente também disputam a mesma chave de contato. A falha é de persistência antes do envio externo, não um sucesso falso.
+
+**Proteções existentes e limites da conclusão**
+
+- Repetir o mesmo M/user_id/E pode ser tratado pelo UPSERT e não é o cenário de falha.
+- A chave de contato faz sentido quando contact_id identifica exclusivamente o autor cliente; o hook a usa também como vínculo contextual para agentes.
+- O tratamento de erro evita anunciar sucesso nessa rejeição.
+- Não houve execução de INSERT/UPSERT em banco. O resultado é deduzido das constraints conservadas no snapshot, payload exato do hook e semântica documentada de ON CONFLICT.
+- Incidência real e UI em sessão autenticada não foram medidas.
+
+**Ordem e definição efetiva na fonte**
+
+- DDL `public.message_reactions`: create em `supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql:26–39`. A sequência não remove as duas constraints UNIQUE.
+- DDL `public.message_reactions`: alter em `supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql:44–44`. A sequência não remove as duas constraints UNIQUE.
+- DDL `public.message_reactions`: alter em `supabase/migrations/20260826210200_realtime_publication_d5.sql:17–17`. A sequência não remove as duas constraints UNIQUE.
+
+**Evidência verificável**
+
+- `supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql:26–39` — As duas constraints UNIQUE são independentes e o CHECK aceita os dois autores preenchidos. SHA-256 `db73d151afdbf5f8b8cb85022560bbc82dbdd420fe2b433f9e88b5237386a650`.
+- `supabase/schema-manifest.json:5077` — Snapshot conserva a constraint por contato. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `supabase/schema-manifest.json:5053` — Snapshot conserva a constraint por usuário. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `src/hooks/reactions/useReactionMutations.ts:22–53` — Hook resolve o contato, envia ambas as identidades e escolhe onConflict apenas por message_id,user_id,emoji. SHA-256 `a0020798219802b9108c1b66ce8fd0ea2bad51629661f9d1e27f045222a37016`.
+- `src/hooks/reactions/useReactionMutations.ts:53–79` — Erro da persistência é lançado antes do envio ao provedor e a UI recebe toast de erro. SHA-256 `a0020798219802b9108c1b66ce8fd0ea2bad51629661f9d1e27f045222a37016`.
+- `src/components/inbox/MessageReactions.tsx:51–79` — UI permite adicionar o mesmo emoji quando o usuário atual ainda não reagiu. SHA-256 `449e2178c8e5fde2e148fed83b874e5c6372726cf34fce48eaa9fb7e10d23647`.
+- `src/components/inbox/MessageReactions.tsx:101–109` — Interface prevê contagem maior que um para o mesmo emoji. SHA-256 `449e2178c8e5fde2e148fed83b874e5c6372726cf34fce48eaa9fb7e10d23647`.
+
+**Confronto com a auditoria anterior:** DB-019 é ausência de autorização por autor; corrigir somente a ACL não resolve a colisão de dados válidos. INB-032 começa após a persistência e trata rejeição do provedor. Inbox confirmou que não havia achado duplicado.
+
+**Aceite necessário**
+
+- Escolher um modelo inequívoco para autor versus contato da mensagem e ajustar payload/constraints em conjunto.
+- Verificar duas reações legítimas de agentes diferentes no mesmo emoji, uma reação de cliente mais uma de agente, retries do mesmo autor e exclusão apenas da autoria selecionada.
+- Preservar unicidade por autor e o vínculo válido da mensagem sem eliminar a deduplicação do provedor.
+
+Semântica primária: [PG-ON-CONFLICT](https://www.postgresql.org/docs/17/sql-insert.html#SQL-ON-CONFLICT).
+
+### R2-DB-022 · P1 — Referência de mídia gravável pelo agente funciona como autorização para outro objeto privado
+
+As policies de leitura de whatsapp-media/audio-messages aceitam a existência de uma mensagem visível cujo media_url termina no caminho do objeto. Como o agente pode alterar media_url de uma mensagem autorizada fora do estado protegido, pode fabricar essa referência para um locator privado conhecido e passar a satisfazer a ACL de leitura.
+
+**Condições e sequência de falha**
+
+- Usuário autenticado pode ler e atualizar ao menos uma mensagem M do contato próprio/escopo autorizado; M está fora da condição protegida de payload sending (por exemplo, mensagem recebida com client_message_id nulo).
+- Conhece o bucket/path exato de um objeto privado existente de outro contato que não está em seu escopo. A obtenção desse locator não foi demonstrada e é precondição explícita.
+- As policies locais de Storage estão aplicadas e a API Storage admite operações de leitura com os grants da plataforma; snapshot public não atesta grants de storage.
+- O usuário modifica somente media_url para um HTTPS locator válido; não precisa alterar campos de entrega, fazer upload, ter send_messages nem chamar service_role.
+
+Cenário: Sem a referência fabricada, o objeto de B não possui mensagem visível nem pasta autorizada para A e é negado pelas condições examinadas. A atualiza media_url de sua mensagem recebida M para o locator conhecido do objeto de B, mantendo contact_id e todos os campos internos de entrega. UPDATE RLS e guard passam. M permanece visível ao usuário. A policy Storage encontra M e o sufixo bucket/path correspondente. SELECT passa mesmo que o contato original do objeto continue fora do escopo de A. O cliente pode então solicitar leitura/assinatura desse caminho.
+
+**Consequência:** Um identificador conhecido de objeto privado pode ser convertido em acesso por meio de uma mensagem controlada pelo próprio usuário. O limite de leitura por contato deixa de ser confiável para esse objeto. Não se alega enumeração de todos os paths, nem acesso prévio ao conteúdo de B, nem envio remoto como etapa necessária.
+
+**Proteções existentes e limites da conclusão**
+
+- As policies qualificam objects.name no ramo de WhatsApp e continuam sujeitas à RLS de messages; o problema é confiar em uma associação que o próprio caller pode criar/alterar.
+- URLs sem bucket/path correspondente não passam. Contato e mensagem originais de B continuam protegidos.
+- O guard bloqueia alteração de payload em envio ativo com client_message_id, mas o cenário usa mensagem fora desse estado.
+- O endpoint de envio tem gates de perfil/contato/conexão/permissão. O cenário principal usa UPDATE de uma mensagem existente e não depende desse endpoint.
+- Nenhum PATCH, GET, assinatura ou download foi realizado; conclusão estática sobre predicados e superfície de escrita.
+- ACL/definição efetiva do schema storage e configurações externas permanecem desconhecidas nesta rodada.
+- O registro do teste existente menciona um PG17 descartável anterior; não é execução desta reauditoria nem evidência do cenário de reassociação.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.guard_message_delivery_internal_fields()`: 20260909220000:create_or_replace → 20260909260000:create_or_replace. Último corpo em `supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql:192–253`.
+- `public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)`: 20260909250000:create_or_replace → 20260930190000:create_or_replace → 20260930200000:create_or_replace. Último corpo em `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:16–188`.
+- Policy `public.messages.Users can update messages from their assigned contacts`: `supabase/migrations/20260329175910_f55d2541-447c-40cb-b18c-1e03a02eeced.sql:81–89`; `supabase/migrations/20260925223000_messages_update_policy_queue_parity.sql:9–23`. Resolução: direct_create_and_subsequent_alters.
+- Policy `public.messages.messages_select_policy`: `supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql:21–36`. Resolução: direct_create_and_subsequent_alters.
+- Policy `storage.objects.Users can read assigned audio messages`: `supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql:42–62`. Resolução: direct_create_and_subsequent_alters.
+- Policy `storage.objects.Users can read assigned whatsapp media`: `supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql:18–39`. Resolução: direct_create_and_subsequent_alters.
+- Policy `storage.objects.whatsapp media readable via visible message`: `supabase/migrations/20261003142707_whatsapp_media_recebida_select_via_messages.sql:30–50`. Resolução: direct_create_and_subsequent_alters.
+
+**Evidência verificável**
+
+- `supabase/migrations/20261003142707_whatsapp_media_recebida_select_via_messages.sql:30–50` — Policy aditiva SELECT confia no locator de qualquer mensagem que passe pela RLS, sem validar autoria confiável da associação. SHA-256 `dcaad99b94189bef2b4960e605f8dffa12de883983f7932c504765dbb93ff84b`.
+- `supabase/migrations/20260930700000_fix_whatsapp_storage_policies.sql:18–62` — Policies anteriores já têm ramo por media_url de mensagem de contato atribuído. Corrigir só a policy aditiva deixa esse caminho. SHA-256 `729dde0eb79a5c4d5c84a4f2f0000c593f8babe9af226796f388efe5f33096e9`.
+- `supabase/migrations/20260925223000_messages_update_policy_queue_parity.sql:9–23` — UPDATE de mensagens é permitido por contato/filas do usuário, sem limitação de coluna media_url. SHA-256 `59c2e4df68d270c5cb94c826affcc175a337640ae108bf57f75f0789a459b5d2`.
+- `supabase/schema-manifest.json:6631` — Snapshot conserva UPDATE de tabela para authenticated, não só colunas de texto. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `supabase/migrations/20260909260000_add_atomic_rich_outbound_messages.sql:192–253` — Guard protege campos internos e payload apenas quando OLD.client_message_id não nulo, OLD.status=sending e external_id nulo; mensagem recebida/fora dessa condição pode trocar media_url. SHA-256 `75e0c952d254b3d8248bd401f7df311efa8f269e48d1c816117850b384255000`.
+- `supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql:21–36` — A própria mensagem continua visível após o UPDATE por permanecer no contato autorizado. SHA-256 `feae2cd2c008abb3859ecf48e55bd78b827d09fb946be90ecd95cc30515f574c`.
+- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:51–59` — Ramo alternativo de criação: enqueue valida HTTPS/tamanho, sem conferir permissão do objeto referenciado. SHA-256 `b032e0ccee70734e4dbfaee241e177bce6811561f362df12d3aeafcf8c309f55`.
+- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:155–163` — enqueue persiste p_media_url sob a mensagem autorizada. SHA-256 `b032e0ccee70734e4dbfaee241e177bce6811561f362df12d3aeafcf8c309f55`.
+- `src/hooks/storage/useResolvedStorageUrl.ts:35–55` — Consumidor de objetos privados solicita URL assinada pelo bucket/path extraídos do locator. SHA-256 `952d59bd6c420a1ea1510bedb6fa1ef14f662974b5bb97b0932455a14e8a3389`.
+- `supabase/tests/rls_whatsapp_media_select_via_messages.sql:11–23` — Teste existente explicita limites e alega controles de leitura; não exercita criação/alteração maliciosa da associação. SHA-256 `702f6c56a7169278cbadc0f40ded1abdda9d1d0185220635be037381c3524d23`.
+- `supabase/tests/rls_whatsapp_media_select_via_messages.sql:61–105` — Casos versionados assumem m.media_url já confiável e alternam visibilidade do contato, sem testar reassociação. SHA-256 `702f6c56a7169278cbadc0f40ded1abdda9d1d0185220635be037381c3524d23`.
+
+**Confronto com a auditoria anterior:** DB-020 perde a correlação por binding de name em Team Chat. Aqui a correlação é exata, mas seu vínculo é controlável. INF-022 usa service_role em classificadores sem precisar fabricar uma mensagem. Os três caminhos requerem correções próprias.
+
+**Aceite necessário**
+
+- Definir e validar uma associação confiável entre objeto e contato/mensagem, conferindo permissão da origem antes de aceitar novos locators ou reassociações.
+- Restringir mutações de campos de mídia conforme o fluxo legítimo; tratar INSERT, UPDATE e RPC de enqueue de forma coerente.
+- Revisar todos os ramos permissivos de SELECT de whatsapp-media/audio-messages, incluindo as policies anteriores à aditiva.
+- Teste negativo autorizado: A conhece path de B, pode editar sua própria mensagem e ainda assim não consegue assinar/ler B após tentar referenciá-lo; encaminhamento legítimo de mídia visível continua funcionando.
+
+Semântica primária: [PG-POLICY](https://www.postgresql.org/docs/17/sql-createpolicy.html); [SUPABASE-STORAGE-ACL](https://supabase.com/docs/guides/storage/security/access-control).
+
+### R2-DB-023 · P2 — Trigger de recuperação ainda escreve campo removido e bloqueia o pedido autenticado
+
+A migration que remove reset_token exclui os triggers hash/protect, mas mantém sanitize_reset_request_trigger. O corpo vencedor de sanitize_reset_request tenta NEW.reset_token := NULL quando há auth.uid(), embora a coluna já não exista. O formulário pode ser aberto com sessão e chega a esse INSERT para o email do próprio usuário.
+
+**Condições e sequência de falha**
+
+- Schema sem reset_token e trigger/corpo conforme as definições locais; o snapshot confirma ausência da coluna e presença da identidade, mas o corpo vivo não foi consultado.
+- Usuário com sessão válida abre /forgot-password e informa email que encontra seu próprio profiles.
+- Permissões e dados normais para pedido próprio; o cenário não precisa fabricar token, mudar user_id de terceiro nem superar o limitador de pedidos.
+
+Cenário: O lookup retorna o próprio user_id e o formulário executa INSERT com email/reason/metadados. Antes de inserir, sanitize_reset_request recebe NEW com o rowtype atual de password_reset_requests. auth.uid() é não nulo; a atribuição ao campo removido falha e aborta o INSERT. A UI apresenta erro e nenhuma solicitação é criada para esse ramo autenticado.
+
+**Consequência:** O caminho de pedido de recuperação autenticado permanece indisponível apesar de payload válido e policy própria. Corrigir somente o lookup anônimo ou a entrega de email não corrige este bloqueio no banco.
+
+**Proteções existentes e limites da conclusão**
+
+- A policy de INSERT exige user_id = auth.uid().
+- O formulário propaga o erro; não anuncia envio com sucesso neste cenário.
+- Um contexto service sem auth.uid() não percorre essa atribuição; não se afirmou falha de todo INSERT privilegiado.
+- Nenhum INSERT, login, recuperação, envio de email ou SQL foi executado.
+- AUTH006 cobre o lookup anônimo; AUTH007 cobre geração/entrega posterior. Este mecanismo é a relação entre coluna removida e trigger ainda alcançável.
+- A nota anterior desta reauditoria dizia incorretamente que o trigger exigia UID e substituía user_id. A releitura corrigiu esse registro; review_corrections.json preserva o ajuste e sua razão.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.sanitize_reset_request()`: 20260410103156:create_or_replace. Último corpo em `supabase/migrations/20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql:7–25`.
+- Policy `public.password_reset_requests.Users can request own password reset`: `supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql:25–29`. Resolução: direct_create_and_subsequent_alters.
+- DDL `public.password_reset_requests`: create em `supabase/migrations/20251231131349_3bac81e9-4210-4dc8-867b-2b651e74abef.sql:2–17`. A sequência não remove as duas constraints UNIQUE.
+- DDL `public.password_reset_requests`: alter em `supabase/migrations/20251231131349_3bac81e9-4210-4dc8-867b-2b651e74abef.sql:20–20`. A sequência não remove as duas constraints UNIQUE.
+- DDL `public.password_reset_requests`: alter em `supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql:9–9`. A sequência não remove as duas constraints UNIQUE.
+- DDL `public.password_reset_requests`: alter em `supabase/migrations/20260828230000_realtime_replica_identity_full.sql:23–23`. A sequência não remove as duas constraints UNIQUE.
+
+**Evidência verificável**
+
+- `supabase/migrations/20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql:7–25` — Corpo vencedor: IF auth.uid não NULL escreve NEW.reset_token; não há captura da falha. SHA-256 `45764b043b609b57dd2efc544ba557ff6dcfedd0c2907c40e0ac0f03d5ebdd9f`.
+- `supabase/migrations/20260410103156_cc27889c-8fa6-488b-865a-8109be5ddc98.sql:28–33` — Vínculo BEFORE INSERT de sanitize_reset_request continua na cadeia. SHA-256 `45764b043b609b57dd2efc544ba557ff6dcfedd0c2907c40e0ac0f03d5ebdd9f`.
+- `supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql:1–9` — Remove apenas outros dois triggers e depois DROP COLUMN reset_token. SHA-256 `8f87b6fb1313b6d03874daf8ef599580dfc0e698c7e19dc2cd0ba6e58549272b`.
+- `supabase/migrations/20260411111454_e3176142-54ca-44b7-a26f-1548ce9832a3.sql:24–33` — Recria INSERT próprio e remove hash_reset_token/protect_reset_token, preservando sanitize_reset_request. SHA-256 `8f87b6fb1313b6d03874daf8ef599580dfc0e698c7e19dc2cd0ba6e58549272b`.
+- `supabase/schema-manifest.json:4128` — Snapshot público conserva a identidade do trigger; coluna reset_token ausente da seção columns, ver verificação estrutural abaixo. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `supabase/schema-manifest.json:10438` — Snapshot concede INSERT ao papel authenticated, além da policy própria. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `src/routes/AppRoutes.tsx:49–54` — Rota /forgot-password não exclui usuário com sessão. SHA-256 `30c6f9981e0f9b86c37154eba2f87e24e2e2f7720259e95da1899c49fbf11da3`.
+- `src/pages/ForgotPassword.tsx:39–65` — Lookup encontra o próprio perfil sob sessão e INSERT omite token; o trigger tenta atribuí-lo mesmo assim. SHA-256 `df410e0e6805dad27e1213bc590cae2bd035af8062e72bd92cf45c94530c61cf`.
+- `src/pages/ForgotPassword.tsx:65–72` — Consumidor trata insertError e exibe falha, portanto este cenário não é falso sucesso. SHA-256 `df410e0e6805dad27e1213bc590cae2bd035af8062e72bd92cf45c94530c61cf`.
+
+**Confronto com a auditoria anterior:** Revisor Auth confirmou que não havia contado NEW.reset_token removido e confirmou o ramo autenticado alcançável. A remoção histórica do subsistema validate_reset_token não remove este trigger diferente.
+
+**Aceite necessário**
+
+- Atualizar o trigger por migration nova para usar somente campos existentes, preservando os controles de autoria da policy.
+- Teste de contrato com usuário autenticado e pedido próprio deve conseguir persistir solicitação pending sem token; tentativa de user_id de terceiro deve continuar rejeitada.
+- Cobrir também o ramo service sem UID e manter o tratamento de erro no formulário. Executar somente em ambiente autorizado, após revisar migração e fixtures.
+
+Semântica primária: [PG-TRIGGER](https://www.postgresql.org/docs/17/trigger-definition.html); [PG-TRIGGER-ROW](https://www.postgresql.org/docs/17/plpgsql-trigger.html).
+
 ## 4. Hipóteses rejeitadas e fronteiras verificadas
 
 - **UPDATE sem WITH CHECK não é automaticamente bypass.** Para UPDATE/ALL o PostgreSQL reaproveita USING quando WITH CHECK é omitido. A avaliação exige predicado, combinação permissiva/restritiva, grant e identidade de execução. A instrução genérica contrária encontrada no material de skill não foi usada como prova.
@@ -839,6 +1139,8 @@ Semântica primária: [PG-TRIGGER](https://www.postgresql.org/docs/17/trigger-de
 - **Escopo Singu não é inteiramente ausente.** HMAC, identidade do vendedor, count/search e filtro de create_draft existem. O defeito confirmado está na projeção de metadados de resolve.
 - **Lease vencido não prova duplicação.** Claim troca token; mark/record_sent verificam token e status. Heartbeat ausente, analisado por providers, pode produzir conflito/resultado incerto; não foi tratado como duplicação inevitável.
 - **Mensagens sent não têm proibição geral de content/is_deleted pelo guard citado.** O corpo vigente é guard_message_delivery_internal_fields; a imutabilidade do payload é condicionada à mensagem ainda sending com client_message_id e sem external_id. O relatório Inbox mantém sua prova de erro ignorado separada desse trigger.
+- **Policies antigas não foram somadas depois de DROP/RENAME.** Foram lidos os blocos de substituição de contact_notes, whatsapp_groups e configurações; tabelas tags/contact_tags e snapshot LID removidas não foram tratadas como schema vigente.
+- **Replay já parcial não foi recontado como descoberta nova.** Os candidatos R2-DB-017/018 estão em access_adjudications.json. A assertiva de 400–700 LIDs e NOT VAFIDD já eram limitações documentadas. O DROP INDEX CONCURRENTLY dentro de DO foi registrado como bloqueio adicional latente, alcançável somente depois do erro de sintaxe ou por execução de trecho.
 
 Essas decisões são sustentadas pela leitura das definições vencedoras e pela documentação primária do PostgreSQL. Elas evitam ampliar o relatório com falsos positivos baseados apenas em padrões de texto.
 
@@ -853,7 +1155,13 @@ Essas decisões são sustentadas pela leitura das definições vencedoras e pela
 
 ## 6. Cobertura restante e condição para encerrar o aceite de banco
 
-A segunda passagem concluiu a leitura manual dos 311 corpos candidatos efetivos do catálogo, com notas individuais e cruzamentos de consumidores; restam 0 corpos apenas dirigidos/estruturais. Essa cobertura não certifica todos os ramos nem todas as formas de chamada. As 446 policies do snapshot, cada associação de trigger e todos os efeitos dos 107 DO não receberam revisão semântica integral individual. Essas superfícies mantêm cobertura dirigida/estrutural explícita em coverage.json.
+Foram concluídas a leitura manual dos 311 corpos candidatos de função, das 446 policies do snapshot público, dos 56 extras da projeção, dos 107 blocos DO, das 11 definições de views e seus 7 ALTERs, e dos 123 vínculos de triggers. Cada item tem nota, origem e faixa de linhas. Isso não certifica todos os ramos, todas as formas de chamada, a habilitação dos triggers vivos nem executa os efeitos dinâmicos dos blocos.
+
+A fila original de 2425 instruções DDL em 463 arquivos foi integralmente revisada: 1.695 pelo agente database e 730 instruções de privilégios de funções pelo root, incorporadas com autoria peer. `ddl_completion.json` reconcilia cada faixa, hash e nota com a alocação original, preservada em `remaining_ddl_inventory.json`. Além disso foram lidas 127 instruções DML/seeds/calls (798 linhas), 16 agendamentos (117 linhas), 44 controles/manutenção (44 linhas), a policy inválida já documentada (4 linhas), e 231 COMMENTs (453 linhas), estes apenas como intenção. Há 32 instruções históricas de contexto relidas além da fila; não são novos objetos. Nenhuma dessas instruções foi executada.
+
+O roster de testes tem 156/156 arquivos e 14463/14.463 linhas efetivamente lidos; adjudicações e autoria própria/peer estão em `test-review.json`. O consolidado deduplica por path. Não houve execução de suítes ou banco.
+
+O roster shell adicional tem 12/12 scripts e 3546/3.546 linhas lidos integralmente, incluindo SQL embutido, fixtures, assertions e cleanup. `shell-review.json` e `shell-review.md` documentam a diferença entre migrations reais e dependências reconstruídas. Nenhum script shell, Docker, PostgreSQL ou SQL desse lote foi executado.
 
 O próximo aceite deve usar as definições efetivamente aplicadas em ambiente autorizado, conferir assinaturas e ACL de forma completa, executar os cenários negativos descritos e validar os fluxos com os consumidores reais. As correções propostas aqui são critérios, não migrations executadas. Alterações já aplicadas devem receber migração de correção nova e rastreável, com rollout coordenado do contrato externo quando houver Singu.
 
@@ -861,9 +1169,16 @@ Não há evidência nesta rodada para declarar restaurabilidade, migração do z
 
 ## 7. Artefatos e fontes
 
-- `findings.json`: os 16 achados, pré-condições, proteção existente, cadeia por função, evidências com SHA-256 e critérios de aceite.
+- `findings.json`: os 21 achados, pré-condições, proteção existente, cadeia por função, evidências com SHA-256 e critérios de aceite.
 - `coverage.json`: fronteiras de execução, contagens, níveis de leitura e lista nominal restante.
 - `function_review.json`: 311 identidades com histórico, definição candidata final, grants do snapshot, cobertura e achados associados.
+- `policy_review.json`: 446 identidades do snapshot e 56 extras, fontes completas, composição, notas de revisão e adjudicação histórica.
+- `do_review.json`: 107 corpos DO, todos lidos, sem expansão/execução; notas individuais e evidência de origem.
+- `view_review.json`: 11 definições vencedoras e ALTERs, projeções/filtros, grants e relação com policies da base.
+- `trigger_review.json`: 123 vínculos, eventos/WHEN/colunas, ordem nominal, ligação com 64 corpos revisados e reconciliação de escopo/tempo.
+- `remaining_ddl_inventory.json`: alocação original preservada; não representa o saldo após o fechamento.
+- `ddl_review.json`, `ddl_completion.json` e `ddl_adjudications.json`: notas de 29 lotes, instruções realmente lidas, revisão peer de ACL e candidatos adjudicados sem recontagem.
+- `access_adjudications.json`: dois candidatos de replay rejeitados como achados novos, com confronto documental e limitações.
 - `projection_vs_snapshot.json`: correspondência de assinaturas e diferenças de escopo/tempo; evita chamar todo delta de drift.
 - `sql_inventory.json`: inventário lexical dos 871 SQL e eventos das 779 migrations ativas.
 - `build_inventory.py` e `build_report.py`: scripts locais reproduzíveis; não executam SQL.
@@ -882,8 +1197,15 @@ Não há evidência nesta rodada para declarar restaurabilidade, migração do z
 - [PG-CASE](https://www.postgresql.org/docs/17/typeconv-union-case.html) — CASE cujos resultados são todos unknown resolve o tipo de resultado para text.
 - [PG-CAST](https://www.postgresql.org/docs/17/sql-createcast.html) — Conversões automáticas de string para tipos definidos pelo usuário são somente explícitas; atribuição precisa de cast adequado.
 - [PG-TRIGGER](https://www.postgresql.org/docs/17/trigger-definition.html) — O trigger integra a transação da instrução que o aciona; erro não tratado desfaz os efeitos de ambos.
+- [PG-CREATE-TRIGGER](https://www.postgresql.org/docs/17/sql-createtrigger.html) — Vínculos definem evento/momento/WHEN. Triggers do mesmo tipo/evento seguem ordem nominal; UPDATE OF depende da coluna mencionada, não somente de mudança de valor.
+- [PG-TRIGGER-ROW](https://www.postgresql.org/docs/17/plpgsql-trigger.html) — NEW é o record da nova linha da relação do trigger. Alterar campo de NEW exige o campo no rowtype; o trigger BEFORE integra o INSERT e pode abortá-lo.
+- [PG-VIEW](https://www.postgresql.org/docs/17/sql-createview.html) — security_invoker usa privilégios e RLS do invocador também nas relações base; grants na view não dispensam esse controle. Projeções calculadas e agregações têm limites próprios de atualização.
 - [SUPABASE-AUTH-ROLE](https://github.com/supabase/auth/blob/master/migrations/20220224000811_update_auth_functions.up.sql) — auth.role() consulta claims da requisição, não current_user; SECURITY DEFINER não transforma o JWT authenticated em service_role.
 - [PG-TIMESTAMP](https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT) — transaction_timestamp representa o início da transação; statement_timestamp representa o comando recebido e pode diferir após a primeira instrução.
 - [POSTGREST-TRANSACTION](https://docs.postgrest.org/en/stable/references/transactions.html) — A requisição passa por START TRANSACTION, configurações da transação e consulta principal; erro na função aborta a transação. A versão e os tempos da implantação não foram medidos.
+- [PG-ON-CONFLICT](https://www.postgresql.org/docs/17/sql-insert.html#SQL-ON-CONFLICT) — O alvo de ON CONFLICT escolhe os índices árbitros. Outra constraint UNIQUE continua podendo falhar; UPSERT não ignora erros independentes.
+- [SUPABASE-STORAGE-ACL](https://supabase.com/docs/guides/storage/security/access-control) — Operações de Storage são autorizadas por policies em storage.objects; service key ignora RLS. Policies não substituem a autenticação/autorização do locator referenciado.
+- [PG-COLUMN-SCOPE](https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-COLUMN-REFS) — Referência não qualificada resolve nomes das tabelas no escopo da consulta. Na subconsulta com profiles p, name corresponde à coluna p.name.
+- [PG-COLUMN-RESOLVER-SOURCE](https://doxygen.postgresql.org/parse__relation_8c.html) — Fonte primária colNameToVar: examina p_namespace e interrompe se encontrou coluna antes de subir a parentParseState (linhas de código 926–974 no master exibido). Complementa a documentação PG17; não é execução do parser local nem prova de deploy.
 
 As fontes primárias foram consultadas para resolver semântica. Não foram usadas como substituto de prova sobre o estado do projeto.

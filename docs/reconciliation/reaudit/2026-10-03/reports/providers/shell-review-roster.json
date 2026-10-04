@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "owner": "providers",
+  "state": "ALLOCATION_ONLY_NOT_REVIEW",
+  "files": [
+    {
+      "path": "scripts/db-audit/ai-block03-vocabulary-contract.test.sh",
+      "line_start": 1,
+      "line_end": 573,
+      "source_sha256": "5765ba7fcb5686f1deac124730e24661c5ea1f97c2f20b036470263c77ccb43b",
+      "git_blob_sha": "f2b6914a8c0553106b395b761016075756be919b"
+    },
+    {
+      "path": "scripts/db-audit/catalog-manifest.test.sh",
+      "line_start": 1,
+      "line_end": 255,
+      "source_sha256": "53f9bbd0b9706a0d4359efec2a5d5dbb3a8e959c2b5d117a8941a1229722a66b",
+      "git_blob_sha": "90ee8c16dcb323b1046fd42c099bd3844fb75130"
+    },
+    {
+      "path": "scripts/db-audit/check-mcp-exec-acl.test.sh",
+      "line_start": 1,
+      "line_end": 345,
+      "source_sha256": "9979e8c0b9fa1193be4e0333deaa4a82456da74b9e33e6661bdaf5c85f362f5b",
+      "git_blob_sha": "d7678ba2125f35ceae92cf809b044b792779eb16"
+    },
+    {
+      "path": "scripts/db-audit/check-reconcile-ledger-drift.test.sh",
+      "line_start": 1,
+      "line_end": 185,
+      "source_sha256": "dc79f624dfbadcbe199f9ba055a261a11a98de2f702b34696bafe0b70071dc1c",
+      "git_blob_sha": "ca84a96c7a3d6add5df78d551b33e5c01c4456d6"
+    },
+    {
+      "path": "scripts/db-audit/check-webhook-failures-acl.test.sh",
+      "line_start": 1,
+      "line_end": 141,
+      "source_sha256": "16e4d11984d140d4f346b641dda9f31994c0ec41253b75c04d3b9b580442b786",
+      "git_blob_sha": "26092b40ca35ef7047bbcfe539092d0d8458b881"
+    },
+    {
+      "path": "scripts/db-audit/inbox-contact-authorization.test.sh",
+      "line_start": 1,
+      "line_end": 234,
+      "source_sha256": "4ab1b30d0cde4ad45ca96f5caf62418d121f65c5c69a8536a68b01d9adf4c8e9",
+      "git_blob_sha": "a7272fe7302f3857da8bc61761e1cc01f1c75d2d"
+    },
+    {
+      "path": "scripts/db-audit/l11-departments-acl-escrita.test.sh",
+      "line_start": 1,
+      "line_end": 271,
+      "source_sha256": "6bfb278386b1a4882a549d1a0ab115f1faa8be8447c147393102c23b6909c7f0",
+      "git_blob_sha": "b519e30d1a5d1fc66550c0d4a1c52b200abe2ed3"
+    },
+    {
+      "path": "scripts/db-audit/talkx-events-contract.test.sh",
+      "line_start": 1,
+      "line_end": 328,
+      "source_sha256": "f6818d8608bd74fcfeb93cd354f2779c4f2593c98ba89cb097c10a7c528c2952",
+      "git_blob_sha": "cd9867192d16e735161056dc3e665a4328262fe7"
+    },
+    {
+      "path": "scripts/db-audit/talkx-settings-rls.test.sh",
+      "line_start": 1,
+      "line_end": 146,
+      "source_sha256": "6f1b3a91fe0741889444be599aaddf6aae021c50efc4ab30fe19d3985c4728b8",
+      "git_blob_sha": "b7aaba71b98db126251e38a0426131f78f07fa8b"
+    },
+    {
+      "path": "scripts/db-audit/talkx-template-history-behavior.test.sh",
+      "line_start": 1,
+      "line_end": 588,
+      "source_sha256": "46db0e4480dc56022f87f3bb6c11d9d8007cfe92973027c46045b679514fd236",
+      "git_blob_sha": "40e569e66b1011c1972b57bdc3921a58882a3b4e"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v15-replied-count-guard.test.sh",
+      "line_start": 1,
+      "line_end": 116,
+      "source_sha256": "c62d35f5416056c8fa6064a29edd2c376b0d63bef515ea1da6667dd6f063f6ab",
+      "git_blob_sha": "e9b19d54da20223a1cb7fc355a6825e68b81b0fd"
+    },
+    {
+      "path": "scripts/db-audit/wa-tag-and-status-authorization.test.sh",
+      "line_start": 1,
+      "line_end": 376,
+      "source_sha256": "48c7a5651d2966b22d1cee710e4a61f0ab2b73111bc65ce22cb6715fe19da9cb",
+      "git_blob_sha": "fb58006b18814835643845da79a46a7d6c513da7"
+    }
+  ]
+}

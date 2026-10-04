@@ -22419,7 +22419,7 @@
     "path": "supabase/functions/ai-auto-tag/auth_test.ts",
     "git_blob_sha": "8845684d6db07545d964e1c083063f316706a245",
     "lines": 44,
-    "is_test": false,
+    "is_test": true,
     "layer": "edge",
     "functions": 2,
     "empty_catches": [],

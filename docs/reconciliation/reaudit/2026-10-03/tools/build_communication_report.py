@@ -84,10 +84,10 @@ add(6,'P2','Rascunho da resposta rápida se perde ao trocar de conversa',
 
 add(7,'P2','Histórico de mensagens de Email não continua além do limite de resposta',
  'Uma thread ou o conjunto consultado de anexos excede o limite de linhas da API. O limite real implantado não foi consultado.',
- 'useGmail.threadMessages query ascendente → lastMessage/replyTarget/markAsRead → EmailChatThread.',
+ 'useGmail.threadMessages query ascendente → lastMessage/replyTarget/markAsRead → EmailChatThread e EmailThreadView legado.',
  'A lista de threads usa collectEmailPages, mas a consulta de mensagens e a consulta de anexos fazem uma única requisição sem range/cursor/continuação. As mensagens são ordenadas da mais antiga para a mais nova; lastMessage usa o último elemento da amostra recebida.',
  'Sob truncamento, mensagens recentes e anexos podem ficar ausentes, e a resposta padrão pode referenciar uma mensagem antiga da amostra. Não se fixa 1000 como configuração observada do servidor.',
- [(gmail,79,99),(gmail,148,176),(thread,87,95),(thread,121,128),(thread,368,375)],[],
+ [(gmail,79,99),(gmail,148,176),(thread,87,95),(thread,121,128),(thread,368,375),('src/components/gmail/EmailThreadView.tsx',178,180,'O consumidor legado também toma o último elemento da amostra como alvo de resposta.')],[],
  ['Paginar o histórico com ordem estável e cursor/limite explícito; obter o alvo de resposta atual a partir de fonte completa.','Provar mais de uma página de mensagens/anexos e mensagens com timestamp igual, preservando a autorização por conta.'],
  'OTH-005 tratava paginação/filtros da lista de threads. Este achado é o histórico interno e suas projeções; não reconta aquele contrato.', ['OTH-005'])
 
@@ -124,7 +124,7 @@ add(11,'P2','Bloqueio de imagens externas do Email deixa passar URL relativa ao 
  'EmailChatBubble → sanitizeEmailHtml → DOMPurify → afterSanitizeAttributes → HTML renderizado.',
  'A política declara bloqueio de imagens remotas para privacidade, mas o hook remove apenas src que começa com http:, https: ou cid:. A forma //host/caminho não corresponde. img e src permanecem nas allowlists e não existe ALLOWED_URI_REGEXP que retire essa forma; a documentação oficial do DOMPurify permite URLs relativas ao protocolo por padrão.',
  'Uma imagem externa pode sobreviver à regra local de privacidade e permitir requisição ao host quando renderizada sob política permissiva. O probe preserva //tracker.example.invalid/pixel e remove a forma https: equivalente. Isso não demonstra XSS, retirada da sanitização ou rastreamento ocorrido.',
- [(html,3,29),(html,59,83),(html,141,148),('src/components/email/EmailChatBubble.tsx',45,60,'Uso do pipeline comum; sanitização permanece ativa.')],['COM-P10'],
+ [(html,3,29),(html,59,83),(html,141,148),('src/components/email/EmailChatBubble.tsx',45,60,'Uso do pipeline comum; sanitização permanece ativa.'),('src/components/gmail/EmailThreadView.tsx',45,53,'O consumidor legado também sanitiza pelo pipeline comum.'),('src/components/gmail/EmailThreadView.tsx',116,120,'Renderização do HTML sanitizado, sem retirar as proteções restantes.')],['COM-P10'],
  ['Classificar a URL já normalizada contra a origem e permitir apenas esquemas/origens previstos para imagens.','Verificar formatos absolutos, relativos ao protocolo, escapes e imagens data permitidas com a biblioteca efetivamente instalada e CSP do ambiente.'],
  'Probe do hook exato com substituto de Element, sem DOMPurify, DOM ou rede. Documentação primária fundamenta a permissividade padrão; não equivale a executar a versão instalada. Resultado está em ../platform/probe-results.json.')
 findings[-1]['external_references']=[{'url':'https://github.com/cure53/DOMPurify#control-permitted-attribute-values','purpose':'Documentação primária: URLs relativas e relativas ao protocolo são permitidas por padrão.'}]

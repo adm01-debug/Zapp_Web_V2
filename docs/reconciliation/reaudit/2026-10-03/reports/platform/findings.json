@@ -591,6 +591,190 @@
       "related_previous_findings": [],
       "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
       "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-010",
+      "title": "Botão Buscar do cabeçalho mobile só altera um estado sem consumidor",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Aplicação usa AppShell em viewport mobile e o usuário aciona Buscar no MobileHeader.",
+      "consumer_chain": "AppShell → MobileShell → MobileHeader.onSearchOpen → setMobileSearchOpen(true).",
+      "observed_behavior": "MobileShell declara mobileSearchOpen e fornece o setter ao botão, mas nunca lê o estado nem renderiza ou despacha uma busca. O botão é exposto porque o callback existe.",
+      "impact": "O comando não abre busca, campo ou resultado. O probe mudou o flag para true e conservou a mesma composição e os demais painéis fechados.",
+      "evidence": [
+        {
+          "path": "src/components/mobile/MobileShell.tsx",
+          "line_start": 35,
+          "line_end": 56,
+          "git_blob_sha": "d488734dc1796bccb51629b3a985f5f27d93f231",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileShell.tsx#L35-L56"
+        },
+        {
+          "path": "src/components/mobile/MobileShell.tsx",
+          "line_start": 64,
+          "line_end": 109,
+          "git_blob_sha": "d488734dc1796bccb51629b3a985f5f27d93f231",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileShell.tsx#L64-L109"
+        },
+        {
+          "path": "src/components/mobile/MobileHeader.tsx",
+          "line_start": 111,
+          "line_end": 123,
+          "git_blob_sha": "44288d685a2bc346314f6ab0614e004427661135",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileHeader.tsx#L111-L123"
+        },
+        {
+          "path": "src/components/layout/AppShell.tsx",
+          "line_start": 95,
+          "line_end": 106,
+          "git_blob_sha": "e38b6cb6b8ba9d1fa755c81125d99ea2d2a0eead",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/layout/AppShell.tsx#L95-L106"
+        }
+      ],
+      "probes": [
+        "PLAT-P09"
+      ],
+      "acceptance_criteria": [
+        "Ligar o botão a uma superfície de busca real ou ao comando compartilhado que a abre.",
+        "Provar abertura, foco, resultado, fechamento e retorno em viewport mobile."
+      ],
+      "limitations": "Componente inteiro executado com captura de JSX e hooks sintéticos. Não houve ReactDOM, clique real ou medição de layout; o achado é a ausência de qualquer consumidor do estado.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-011",
+      "title": "Notificações mobile usam lista vazia local e contador fixado em zero",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Há notificações do usuário, mas a navegação usa o shell mobile do Index.",
+      "consumer_chain": "Index.unreadNotifications=0 → AppShell → MobileShell.notification state vazio → NotificationsPanel.",
+      "observed_behavior": "Index passa zero literal. MobileShell cria notifications=[] sem consulta, subscription ou ação que insira dados; a única atualização mapeia essa lista para read=true. O painel abre normalmente e exibe Tudo em dia/Nenhuma notificação com base no array desconectado.",
+      "impact": "O usuário mobile não recebe a lista nem o contador real por esse painel. Isso independe de erro de rede e é distinto de PLAT005, que trata erro/loading de uma consulta existente no popover desktop.",
+      "evidence": [
+        {
+          "path": "src/pages/Index.tsx",
+          "line_start": 113,
+          "line_end": 127,
+          "git_blob_sha": "9317b83b809bbb745fd6d5adfe5de3c1e420d16d",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/Index.tsx#L113-L127"
+        },
+        {
+          "path": "src/components/mobile/MobileShell.tsx",
+          "line_start": 35,
+          "line_end": 49,
+          "git_blob_sha": "d488734dc1796bccb51629b3a985f5f27d93f231",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileShell.tsx#L35-L49"
+        },
+        {
+          "path": "src/components/mobile/MobileShell.tsx",
+          "line_start": 53,
+          "line_end": 73,
+          "git_blob_sha": "d488734dc1796bccb51629b3a985f5f27d93f231",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileShell.tsx#L53-L73"
+        },
+        {
+          "path": "src/components/mobile/MobileHeader.tsx",
+          "line_start": 125,
+          "line_end": 145,
+          "git_blob_sha": "44288d685a2bc346314f6ab0614e004427661135",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/MobileHeader.tsx#L125-L145"
+        },
+        {
+          "path": "src/components/mobile/NotificationsPanel.tsx",
+          "line_start": 110,
+          "line_end": 121,
+          "git_blob_sha": "b44648781fcbf6a94779defc124516efb85791d0",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/mobile/NotificationsPanel.tsx#L110-L121"
+        }
+      ],
+      "probes": [
+        "PLAT-P10"
+      ],
+      "acceptance_criteria": [
+        "Conectar mobile e desktop à mesma fonte de notificações e às mesmas mutações de leitura.",
+        "Provar lista não vazia, contador, leitura individual/em lote, loading e erro em viewport mobile."
+      ],
+      "limitations": "O probe usa o literal zero extraído do Index e abre o painel do shell inteiro sob hooks/JSX sintéticos. A existência de notificações reais é uma precondição, não um dado consultado na conta do usuário.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-012",
+      "title": "Sidebar das rotas de SLA muda a seleção sem abrir o módulo escolhido",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Usuário está nas rotas protegidas /sla ou /sla/history e seleciona Inbox ou outro módulo pela Sidebar.",
+      "consumer_chain": "AppRoutes → SLADashboardPage/SLAHistory → SidebarNavItem.onClick → setCurrentView local.",
+      "observed_behavior": "As duas páginas passam o setter de um estado local para Sidebar, mas sempre renderizam o mesmo corpo de SLA. O item da Sidebar apenas chama esse callback. Não há navegação de rota nem troca condicional de conteúdo nesses consumidores; a integração normal do Index possui outro callback.",
+      "impact": "A indicação de módulo selecionado pode mudar enquanto o usuário continua vendo SLA. O probe alterou a seleção para inbox e preservou a composição dos dois corpos. QueuesComparison não usa essa Sidebar e não pertence ao achado.",
+      "evidence": [
+        {
+          "path": "src/pages/SLADashboard.tsx",
+          "line_start": 5,
+          "line_end": 15,
+          "git_blob_sha": "1634cc30959d18e0716ddb3904b5e3e6923d63e1",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/SLADashboard.tsx#L5-L15"
+        },
+        {
+          "path": "src/pages/SLAHistory.tsx",
+          "line_start": 7,
+          "line_end": 21,
+          "git_blob_sha": "6b7727fe3355c205f320ce3236b5fc37599815e2",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/SLAHistory.tsx#L7-L21"
+        },
+        {
+          "path": "src/components/layout/SidebarNavItem.tsx",
+          "line_start": 27,
+          "line_end": 43,
+          "git_blob_sha": "47eb0a3df6df762e78413ff2e3ee8d59a2165e49",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/layout/SidebarNavItem.tsx#L27-L43"
+        },
+        {
+          "path": "src/components/layout/Sidebar.tsx",
+          "line_start": 128,
+          "line_end": 137,
+          "git_blob_sha": "8781121425b6ee0267d079decb32959035ad6146",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/layout/Sidebar.tsx#L128-L137"
+        },
+        {
+          "path": "src/routes/AppRoutes.tsx",
+          "line_start": 82,
+          "line_end": 97,
+          "git_blob_sha": "005f7a1a35bfb4cb98161784c7047a4edbc9dc22",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/routes/AppRoutes.tsx#L82-L97"
+        }
+      ],
+      "probes": [
+        "PLAT-P11"
+      ],
+      "acceptance_criteria": [
+        "Conectar essas entradas ao contrato de navegação compartilhado, preservando autorização, histórico e destino.",
+        "Provar ida das duas rotas para Inbox/Configurações, retorno e comportamento do botão Voltar."
+      ],
+      "limitations": "Páginas completas com JSX/estado sintéticos; wiring da Sidebar e rotas inspecionados. Sem navegação real, browser, conta autenticada ou mudança do produto. O controle de acesso das rotas permanece presente.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
     }
   ],
   "adjudications": [

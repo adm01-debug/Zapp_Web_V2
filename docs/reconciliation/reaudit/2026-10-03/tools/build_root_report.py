@@ -42,6 +42,40 @@ add('R2-GOV-002','P2','Catálogo histórico com 349 marcações de conclusão n�
     'Checkmarks e existência de arquivo podem encobrir capacidades desativadas, consumidores substituídos e contratos quebrados. O índice físico anterior não omitiu este arquivo; faltava confrontar suas promessas com os caminhos ativos.',
     [ev('docs/COMPLETE_SYSTEM_FEATURES.md',430,460),ev('docs/COMPLETE_SYSTEM_FEATURES.md',558,570),ev('src/config/service_worker.ts',1,8),ev('src/hooks/system/useServiceWorker.ts',7,43)],[],
     'Tratar o catálogo como declaração histórica, registrar sucessores e estados de produto, e exigir prova por fluxo; não reativar capacidades removidas por decisão.', ['20.3','20.13','27.2'])
+findings[-1]['observed_behavior'] += ' O consumidor ativo SystemFeaturesView exibe um badge literal 100% Implementado, enquanto sua lista estática ainda anuncia push e Service Worker. A afirmação vem do próprio catálogo de produto; não foi atribuída ao ledger da auditoria anterior.'
+findings[-1]['evidence'] += [ev('src/components/docs/SystemFeaturesView.tsx',37,44),ev('src/components/docs/featuresSectionsData.ts',207,214),ev('src/components/docs/featuresSectionsData.ts',275,282),ev('src/pages/lazyViews.ts',21,21)]
+
+add('R2-GOV-003','P2','A fragilidade de provas do TC-011 também ocorre em testes de outros módulos',
+    'Usar a quantidade ou os títulos de testes como prova de que as funções de produto foram exercitadas.',
+    'Há assertivas literais e regras reimplementadas dentro de testes, sem chamar a função produtiva correspondente. useAgents afirma validar status mas compara true com true; MediaLibraryAdmin compara limites literais e replica extractStoragePath; ChurnPredictionDashboard valida o literal 500; webhookStatusPriority define mapa e função locais. AutoTicketClassifier testa uma fórmula local que converte confiança zero em70, enquanto scenario-simulation importa a classificação real e espera zero. O teste nominal de sucesso de useQueuesComparison espera somente loading=false, e o mock de messages termina em uma Promise antes dos filtros gte/lte que o hook exige.',
+    'Esses casos podem continuar satisfeitos com o comportamento real ausente ou incorreto; o caso de comparação de filas admite a saída pelo catch. A descoberta amplia a família TC-011 além de Team Chat e não representa uma nova falha de produto por arquivo nem invalida os testes comportamentais existentes.',
+    [ev('src/hooks/__tests__/useAgents.test.tsx',66,91),ev('src/components/settings/__tests__/MediaLibraryAdmin.test.tsx',1089,1097),ev('src/components/settings/__tests__/MediaLibraryAdmin.test.tsx',1418,1446),ev('src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx',197,215),ev('src/lib/__tests__/webhookStatusPriority.test.ts',1,28),ev('src/components/ai/__tests__/AutoTicketClassifier.test.tsx',168,193),ev('src/lib/__tests__/scenario-simulation.test.ts',188,232),ev('src/hooks/__tests__/useQueuesComparison.test.tsx',1,122),ev('src/hooks/business/useQueuesComparison.ts',72,84)],[],
+    'Migrar gradualmente os casos desconectados para o módulo real e exigir saídas/efeitos relevantes, incluindo erro explícito. Separar contrato textual, regra pura, hook com fronteiras simuladas e fluxo integrado no relatório. O aceite deve falhar ao quebrar o alvo produtivo e preservar controles positivos legítimos; não exigir um teste que apenas duplique cada linha da implementação.',relation='EXTENSION_OF_PRIOR',prior=['TC-011'])
+findings[-1]['classification']='REFINED_PRIOR_FINDING'
+findings[-1]['novelty_note']='Ampliação documental da família de qualidade de prova TC-011; os casos foram localizados no HEAD fixado, sem afirmar regressão nova ou execução da suíte.'
+findings[-1]['observed_behavior'] += ' Em outbound-message.service.test, a prova de reutilização do id fixa crypto.randomUUID no mesmo literal para todas as chamadas: ids iguais não distinguem retenção da ação de geração repetida.'
+findings[-1]['evidence'] += [ev('src/services/__tests__/outbound-message.service.test.ts',11,15),ev('src/services/__tests__/outbound-message.service.test.ts',55,70)]
+findings[-1]['evidence'] += [ev('src/hooks/business/useQueuesComparison.ts',139,144),ev('src/lib/__tests__/scenario-simulation.test.ts',8,13)]
+findings[-1]['observed_behavior'] += ' A leitura suplementar de Bash encontrou o mesmo limite de prova em dois casos precisos: cron-secret-l5-contract anuncia D2-MUT de segredo truncado, mas reutiliza a fixture vazia de D1-MUT sem trocá-la por 32 caracteres; talkx-settings-replay-idempotent anuncia atualização de admin, mas compara apenas SELECT 1 após um UPDATE que pode afetar zero linhas por RLS. Os controles não mutantes de segredo truncado e o UPDATE de agente com RETURNING/count são preservados.'
+findings[-1]['evidence'] += [ev('scripts/db-audit/cron-secret-l5-contract.test.sh',738,780),ev('scripts/db-audit/talkx-settings-replay-idempotent.test.sh',113,124)]
+findings[-1]['supplemental_adjudication_journals']=['test-review.json','inbox-peer-test-review.json','inbox-peer-test-review-extra.json','shell-review.json']
+findings[-1]['positive_controls']=[
+    'scenario-simulation importa as regras reais de classificação e verifica confiança zero; sua evidência não foi descartada por outros testes usarem cópias.',
+    'useMessages exercita mudança de contato, resposta obsoleta, desabilitação e preservação de páginas antigas com o hook real.',
+    'useContactMedia exercita paginação de201 itens, cursor por data/id, assinatura em lote e erros através do hook real.',
+    'Os casos reais de renderização presentes em arquivos mistos foram mantidos com seu escopo, e contratos textuais declarados não foram tratados como tautologias.',
+    'Os roteiros Bash contêm controles úteis de dados persistidos, mensagens específicas, ACL com SET ROLE e mutações direcionadas; a leitura suplementar registra o alcance de cada um, sem afirmar sua execução neste passe.'
+]
+
+add('R2-GOV-004','P2','Validação do export anuncia sucesso após falha do comando de banco',
+    'O comando psql-safe falha durante validate_destino.sh e sua saída não contém uma linha de métrica FAIL reconhecida. Separadamente, um bloco ausente durante import.sh provoca apenas aviso e continuação.',
+    'validate_destino.sh usa set -u e testa node psql-safe | tee sem pipefail; o status observado é o de tee. Uma falha do comando de banco sem linha de métrica FAIL prossegue com contagem zero e exit0. Os comandos de geração JSON/CSV também não propagam falha. import.sh pula um bloco ausente e imprime importação concluída antes de chamar esse validador. POST_EXPORT_CHECKLIST é um verificador separado de existência/tamanho, não executado por import.sh.',
+    'O validador pode certificar um destino que nem foi consultado. O probe executou o Bash original com node substituído por um stub: erro42 resultou em sucesso/exit0 e nenhum JSON; controles com métrica FAIL e sucesso sintético foram distinguidos. import.sh tem set -e e aborta se o Node que aplica um bloco falhar; um bloco ausente, porém, permite o anúncio prematuro de importação concluída. O sucesso final dessa cadeia depende do validador posterior. Não houve importação ou validação em banco real.',
+    [ev('supabase-export/validate_destino.sh',17,45),ev('supabase-export/validate_destino.sh',47,95),ev('supabase-export/import.sh',30,43),ev('supabase-export/POST_EXPORT_CHECKLIST.sh',44,94)],['ROOT-EXPORT-P01'],
+    'Propagar falhas em pipelines e em cada geração de artefato, rejeitar blocos obrigatórios ausentes e só anunciar sucesso após validação estrutural dos resultados. O aceite deve distinguir falha de conexão, métrica FAIL, saída vazia e sucesso conhecido em ambiente descartável, sem atuar no banco de produção.')
+findings[-1]['behavior_controls']=['ROOT-EXPORT-C01','ROOT-EXPORT-C02']
+findings[-1]['evidence'].append(ev('supabase-export/import.sh',1,2))
+findings[-1]['relation_to_prior_audit']='NEW_DISCOVERY_SEPARATE_RUNNER_FROM_R2_INF_014'
 
 add('R2-QUE-001','P1','Analytics de filas apresentam estimativas fixas como resultados medidos',
     'Abrir os detalhes ou gráficos de uma fila com contatos atribuídos.',
@@ -84,6 +118,34 @@ add('R2-QUE-006','P2','Ações Editar e Configurar fila estão visíveis sem ope
     'O CRUD anunciado não inclui um caminho funcional de edição nesses pontos de entrada.',
     [ev('src/components/queues/QueueCard.tsx',39,47),ev('src/pages/QueueDetails.tsx',95,99),ev('src/hooks/business/useQueues.ts',106,126)],[],
     'Conectar os controles a um formulário com confirmação de gravação, ou retirar a promessa até existir. Testar edição pelo ponto de entrada ativo.', ['7.1'])
+
+add('R2-QUE-007','P2','Período personalizado aceita início posterior ao fim',
+    'Selecionar uma data final e depois alterar a data inicial para um dia posterior àquela data final, ambas no passado.',
+    'O calendário inicial preserva o fim anterior. Aplicar verifica apenas a existência das duas datas, e useQueuesComparison transmite os limites invertidos diretamente em gte/lte. O bloqueio no calendário final impede novas escolhas inválidas, mas não corrige um fim já selecionado.',
+    'O operador pode aplicar um intervalo impossível; a consulta de mensagens não pode conter uma linha que satisfaça simultaneamente esses limites. O probe confirma os parâmetros enviados, sem consultar banco real.',
+    [ev('src/components/queues/PeriodSelector.tsx',62,66),ev('src/components/queues/PeriodSelector.tsx',138,170),ev('src/components/queues/PeriodSelector.tsx',187,192),ev('src/components/queues/QueuesComparisonDashboard.tsx',128,132),ev('src/hooks/business/useQueuesComparison.ts',74,84)],['ROOT-P07'],
+    'Validar a ordem no handler e no contrato de consulta, ajustar ou invalidar o fim quando o início mudar, e apresentar o erro antes de aplicar. Provar as duas ordens de seleção.', ['7.11'])
+
+add('R2-QUE-008','P2','Filas com o mesmo nome compartilham indevidamente a série do radar',
+    'Duas filas ativas e visíveis têm o mesmo name e métricas distintas. O schema local permite nomes repetidos: queues possui PK por id e não há UNIQUE de nome no histórico adjudicado pelo revisor de banco.',
+    'Object.fromEntries indexa os cinco eixos pelo nome e preserva apenas o último valor de cada nome. Os Radar usam id como chave React, mas dataKey continua sendo o nome. Duas filas com 10 e 5 contatos ficam ambas ligadas ao valor 50% da segunda.',
+    'A comparação pode desenhar os mesmos valores para filas distintas, embora a tabela e a lista de barras conservem entradas separadas. Não se afirma que o renderer foi executado nem que existem nomes duplicados em produção.',
+    [ev('src/components/queues/QueuesComparisonCharts.tsx',34,45),ev('src/components/queues/QueuesComparisonCharts.tsx',88,94),ev('src/components/queues/QueuesComparisonDashboard.tsx',201,207),ev('supabase/migrations/20251220130243_14f0f8fe-6186-499e-8eee-e7d0f8e9cfd8.sql',2,12)],['ROOT-P08'],
+    'Indexar as séries pelo id estável da fila e manter name somente como rótulo. Provar nomes iguais e distintos, inclusive uma fila fora das quatro séries exibidas.', ['7.9'])
+
+add('R2-QUE-009','P2','Falha ao buscar atendentes é apresentada como fila já completa',
+    'Na primeira abertura do diálogo Adicionar Atendente, a consulta de profiles retorna erro explícito, como 42501.',
+    'fetchProfiles registra o erro e encerra loading sem estado de erro. Como profiles permanece vazio, o diálogo exibe Todos os atendentes já estão nesta fila. A mesma mensagem também não distingue ausência de perfis ativos de associação completa.',
+    'Uma falha de leitura pode ser interpretada como ausência de pessoas a adicionar, sem tentativa de recuperação visível no diálogo. Nenhum acesso não autorizado ou associação real foi realizado.',
+    [ev('src/components/queues/AddMemberDialog.tsx',38,58),ev('src/components/queues/AddMemberDialog.tsx',76,92),ev('src/components/queues/QueuesView.tsx',99,112)],['ROOT-P09'],
+    'Separar erro, ausência de perfis ativos e todos já associados; oferecer repetição e manter resultados anteriores identificados como desatualizados quando aplicável.', ['7.5'])
+
+add('R2-QUE-010','P2','Resposta de um período antigo sobrescreve a comparação mais recente',
+    'O usuário troca o período enquanto a consulta anterior está em andamento; a consulta mais recente termina primeiro e a antiga retorna depois, com o hook ainda montado.',
+    'Cada callback fecha sobre dateRange, mas ambos escrevem no mesmo estado. isMountedRef impede escrita após desmontagem; não identifica a geração da consulta. O último retorno, mesmo antigo, substitui queuesPerformance e loading.',
+    'O seletor permanece no período novo enquanto os gráficos e a tabela mostram as métricas do período anterior. O probe reproduz a inversão de 2 para 1 mensagem usando duas promises ordenadas, sem medir latência real.',
+    [ev('src/hooks/business/useQueuesComparison.ts',23,37),ev('src/hooks/business/useQueuesComparison.ts',74,84),ev('src/hooks/business/useQueuesComparison.ts',133,151),ev('src/components/queues/QueuesComparisonDashboard.tsx',32,46),ev('src/components/queues/QueuesComparisonDashboard.tsx',128,132)],['ROOT-P10'],
+    'Cancelar a consulta anterior ou conferir uma geração/chave de período antes de publicar o resultado. Provar retornos em ambas as ordens e desmontagem, preservando o controle existente.', ['7.9','7.11'])
 
 add('R2-SLA-001','P2','Métricas e histórico de SLA usam denominadores incompatíveis',
     'Mesmo conjunto contendo linhas pendentes legadas, importadas ou criadas por escrita administrativa, sem primeira resposta e ainda não marcadas como violadas. O escritor versionado atual insere linhas já respondidas; não se afirma que ele produza rotineiramente essa amostra, nem que ela exista em produção.',
@@ -145,9 +207,31 @@ full_read = [
  'src/hooks/__tests__/useQueueAnalytics.test.tsx','src/hooks/__tests__/useSLAMetrics.test.tsx','src/hooks/__tests__/useQueueGoals.test.tsx',
  'docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md','docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md','docs/decisions/ADR-005-empty-state-consolidation.md',
  'supabase/migrations/20260903233000_sla_base_only_valid_messages.sql',
+ 'src/components/queues/PeriodSelector.tsx','src/components/queues/QueuesComparisonCharts.tsx','src/components/queues/QueuesComparisonDashboard.tsx',
+ 'src/components/queues/QueueAlertsDisplay.tsx','src/components/queues/AddMemberDialog.tsx','src/components/queues/CreateQueueDialog.tsx',
+ 'src/components/queues/SLAAgentTable.tsx','src/components/queues/SLAMetricCards.tsx','src/components/sla/SLAHistoryDashboard.tsx','src/components/sla/SLACharts.tsx',
+ 'src/pages/QueuesComparison.tsx','src/pages/SLAHistory.tsx','src/pages/queue-details/QueueContactsTable.tsx','src/components/dashboard/SLAMetricsDashboard.tsx',
+ 'src/components/docs/SystemFeaturesView.tsx','src/components/docs/featuresSectionsData.ts','src/pages/lazyViews.ts','generate_audit_pdf.ts',
 ]
+manual_path=OUT/'manual-review.json'
+if manual_path.exists():
+    manual=json.loads(manual_path.read_text())
+    assert manual['source_head']==HEAD
+    for r in manual['files']:
+        assert r['review_status']=='SEMANTIC_FILE_REVIEW' and r['git_blob_sha']==files[r['path']]['git_blob_sha']
+        assert r['line_start']==1 and r['line_end']==len((SOURCE/r['path']).read_bytes().splitlines())
+        full_read.append(r['path'])
+full_read=list(dict.fromkeys(full_read))
 coverage = [dict(ev(p,1,len((SOURCE/p).read_text().splitlines())),review_level='SEMANTIC_FILE_REVIEW',scope='Leitura e rastreio de contratos; sem homologação visual/live.') for p in full_read]
 covered = set(full_read)
+acl_path=OUT/'routine-acl-review.json'
+if acl_path.exists():
+    acl=json.loads(acl_path.read_text())
+    assert acl['source_head']==HEAD and acl['status']=='COMPLETED_REVIEW_PASS'
+    for u in acl['units']:
+        assert u['coverage_level']=='semantic'
+        r=u['source']
+        coverage.append(dict(ev(u['path'],r['start_line'],r['end_line'],u['adjudication']),review_level='TARGETED_RANGE_REVIEW',scope='Dedicated routine ACL semantic pass; exact statement ranges, no live execution.'))
 for f in findings:
     for e in f['evidence']:
         if e['path'] not in covered:coverage.append(dict(e,review_level='TARGETED_RANGE_REVIEW',scope=f['id']))
@@ -159,14 +243,17 @@ rejected = [
  {'candidate':'ADR de empty states gera automaticamente3tarefas novas','disposition':'REQUIRES_AUTHORITY_AND_LINEAGE_ADJUDICATION','basis':'Guia contém etapas, mas é regra/proposta; o estado de adoção e planos sucessores devem ser reconciliados antes de aumentar backlog.'},
  {'candidate':'OfflineCache nunca é limpo no logout','disposition':'REJECTED_BY_CURRENT_CONSUMER','basis':'useAuth chama clearOfflineCache e queryClient.clear no sign-out; não se inferiu vazamento do simples CACHE_KEY global.'},
  {'candidate':'Atividade por hora ignora o período sem aviso','disposition':'REJECTED_INFERENCE','basis':'QueueCharts rotula explicitamente Atividade por Hora (Hoje); outros problemas de amostra são separados.'},
+ {'candidate':'CreateQueueDialog apaga o rascunho quando a criação é recusada','disposition':'REJECTED_BY_ERROR_PROPAGATION','basis':'O consumidor passa useQueues.createQueue, que verifica error e relança a exceção. O diálogo aguarda esse resultado antes de limpar/fechar; o finally apenas retira loading. Não se confunde com saveGoal, que absorve a falha.'},
+ {'candidate':'Nome repetido de fila é bloqueado por UNIQUE','disposition':'REJECTED_BY_SCHEMA_REVIEW','basis':'A tabela possui PK(id), name NOT NULL e nenhuma UNIQUE de nome no histórico/manifest revisados; o radar deve usar identidade estável.'},
+ {'candidate':'O PDF de auditoria gerado comprova a saúde atual do produto','disposition':'HISTORICAL_STATIC_ARTIFACT_ONLY','basis':'generate_audit_pdf.ts imprime data e texto fixos de 14/05/2026, sem execução de testes ou leitura de evidências atuais. A saída determinística corrige drift do arquivo, não valida suas afirmações históricas.'},
 ]
 
 def save(name,obj): (OUT/name).write_text(json.dumps(obj,ensure_ascii=False,indent=2)+'\n')
 save('findings.json',{'schema_version':1,'head_sha':HEAD,'reviewer':'root','findings':findings,'rejected_or_limited':rejected})
-save('coverage.json',{'schema_version':1,'head_sha':HEAD,'files':coverage,'limitations':['AST/import graph and citation indexing cover the whole tree structurally, not every function semantically.','Only explicit read ranges are claimed; a whole-file read does not imply all runtime inputs were tested.']})
+save('coverage.json',{'schema_version':1,'head_sha':HEAD,'files':coverage,'limitations':['AST/import graph and citation indexing are structural; semantic coverage is separately grounded in the explicit ranges below.','Only explicit read ranges are claimed; a whole-file read does not imply all runtime inputs were tested.']})
 save('omitted-source-adjudication.json',{'schema_version':1,'head_sha':HEAD,'two_missing_source_adjudications':True,'task_headings':10,'new_tasks_added_to_original_ledger':0,'tasks':plan_rows})
 
-lines = ['# Revisão transversal: cobertura, requisitos, Filas e SLA','',f'Código examinado: `{HEAD}`. Data local: 3 de outubro de 2026.','',
+lines = ['# Revisão transversal: cobertura, requisitos, Filas e SLA','',f'Código examinado: `{HEAD}`. Passagem iniciada em 3 de outubro de 2026, com complementação em 4 de outubro de 2026 (UTC).','',
  'Esta revisão preserva o ledger anterior e acrescenta evidência. As descobertas abaixo não representam autorização para alterar produto, migrar banco ou operar provedores. Os cenários foram inspecionados no código e, quando indicado, executados com fronteiras sintéticas.','',
  '## Achados','']
 for f in findings:
@@ -179,5 +266,11 @@ for r in plan_rows:lines.append(f"| {r['id']} | {r['status']} | {r['adjudication
 lines += ['', '## Limites e falsos positivos rejeitados','']
 for r in rejected:lines.append(f"- **{r['candidate']}:** {r['basis']}")
 lines += ['', 'O catálogo de microfunções e o grafo de importação servem para identificar cobertura faltante. Funções aninhadas e callbacks não equivalem a funcionalidades de negócio; um import ou uma faixa citada não prova execução. A cobertura específica desta revisão está em coverage.json.','']
+lines += ['## Leitura suplementar e controles da prova', '',
+    'O lote próprio de testes JS/TS tem 77 arquivos e 19.008 linhas, adjudicados individualmente em [test-review.md](test-review.md) e [test-review.json](test-review.json). O apoio de 45 arquivos da frente Inbox conserva autoria e faixas nos dois journals peer; seus arquivos são contados uma vez pelo owner no denominador global.', '',
+    'O lote Bash próprio tem 12 arquivos e 3.529 linhas, incluindo SQL embutido, fixtures, assertivas e limpeza. [shell-review.md](shell-review.md) registra tanto controles positivos quanto limites precisos; [shell-review.json](shell-review.json) fixa os hashes e faixas 1..EOF. Nenhum desses roteiros de banco foi executado.', '',
+    'A revisão cruzada de ACL de rotinas abrange 730 instruções e 965 linhas, com 587 textos únicos inspecionados e sem promoção de arquivos SQL inteiros. A trilha está em [routine-acl-review.json](routine-acl-review.json).', '',
+    'O complemento de estilos/referências registra 11 arquivos e 1.443 linhas em [style-review.md](style-review.md), com a regra de foco do preset Diversity encaminhada para revisão independente de Auth. Outras 18 configurações de desenvolvimento/agentes, com 804 linhas, estão em [config-review.md](config-review.md). Declarações de MCP, extensões, presets e regras de editor não foram tratadas como instalação ou execução.', '',
+    'O validador de export tem uma reprodução primária (ROOT-EXPORT-P01) e dois controles comportamentais (C01/C02), executados apenas com node falso e diretório temporário. [export-validation-probe-results.json](export-validation-probe-results.json) distingue esses casos; nenhum banco ou import foi executado. A revisão independente anterior do núcleo GOV003/GOV004 permanece em [peer-review-gov003-gov004.md](peer-review-gov003-gov004.md); os dois exemplos Bash acrescentados depois estão sustentados pelo journal suplementar.', '']
 (OUT/'report.md').write_text('\n'.join(lines))
 print(json.dumps({'root_findings':len(findings),'coverage_entries':len(coverage),'omitted_task_headings':len(plan_rows),'out':str(OUT)}))

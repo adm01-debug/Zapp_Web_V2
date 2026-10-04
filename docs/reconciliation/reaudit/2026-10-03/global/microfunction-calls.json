@@ -17581,7 +17581,7 @@
     "function_id": "supabase/functions/ai-auto-tag/auth_test.ts:18:572",
     "method": "fetch",
     "literal": null,
-    "is_test": false
+    "is_test": true
   },
   {
     "path": "supabase/functions/ai-auto-tag/auth_test.ts",
@@ -17589,7 +17589,7 @@
     "function_id": "supabase/functions/ai-auto-tag/auth_test.ts:32:901",
     "method": "fetch",
     "literal": null,
-    "is_test": false
+    "is_test": true
   },
   {
     "path": "supabase/functions/ai-auto-tag/index.ts",

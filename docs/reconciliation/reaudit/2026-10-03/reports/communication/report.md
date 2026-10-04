@@ -116,7 +116,7 @@ Onze contratos adicionais examinados em Email e OAuth. Dez contraexemplos execut
 
 **Condição:** Uma thread ou o conjunto consultado de anexos excede o limite de linhas da API. O limite real implantado não foi consultado.
 
-**Cadeia:** useGmail.threadMessages query ascendente → lastMessage/replyTarget/markAsRead → EmailChatThread.
+**Cadeia:** useGmail.threadMessages query ascendente → lastMessage/replyTarget/markAsRead → EmailChatThread e EmailThreadView legado.
 
 **Comportamento:** A lista de threads usa collectEmailPages, mas a consulta de mensagens e a consulta de anexos fazem uma única requisição sem range/cursor/continuação. As mensagens são ordenadas da mais antiga para a mais nova; lastMessage usa o último elemento da amostra recebida.
 
@@ -126,7 +126,7 @@ Onze contratos adicionais examinados em Email e OAuth. Dez contraexemplos execut
 
 **Limites:** OTH-005 tratava paginação/filtros da lista de threads. Este achado é o histórico interno e suas projeções; não reconta aquele contrato.
 
-**Evidências:** [src/hooks/integrations/useGmail.ts:79–99](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L79-L99); [src/hooks/integrations/useGmail.ts:148–176](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L148-L176); [src/components/email/EmailChatThread.tsx:87–95](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L87-L95); [src/components/email/EmailChatThread.tsx:121–128](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L121-L128); [src/components/email/EmailChatThread.tsx:368–375](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L368-L375).
+**Evidências:** [src/hooks/integrations/useGmail.ts:79–99](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L79-L99); [src/hooks/integrations/useGmail.ts:148–176](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L148-L176); [src/components/email/EmailChatThread.tsx:87–95](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L87-L95); [src/components/email/EmailChatThread.tsx:121–128](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L121-L128); [src/components/email/EmailChatThread.tsx:368–375](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L368-L375); [src/components/gmail/EmailThreadView.tsx:178–180](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L178-L180).
 
 **Probes:** Inspeção de código/consumidor; sem prova dinâmica..
 
@@ -202,7 +202,7 @@ Referência primária: [Conferir state antes de tratar a resposta OAuth.](https:
 
 **Limites:** Probe do hook exato com substituto de Element, sem DOMPurify, DOM ou rede. Documentação primária fundamenta a permissividade padrão; não equivale a executar a versão instalada. Resultado está em ../platform/probe-results.json.
 
-**Evidências:** [src/lib/emailHtml.ts:3–29](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailHtml.ts#L3-L29); [src/lib/emailHtml.ts:59–83](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailHtml.ts#L59-L83); [src/lib/emailHtml.ts:141–148](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailHtml.ts#L141-L148); [src/components/email/EmailChatBubble.tsx:45–60](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatBubble.tsx#L45-L60).
+**Evidências:** [src/lib/emailHtml.ts:3–29](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailHtml.ts#L3-L29); [src/lib/emailHtml.ts:59–83](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailHtml.ts#L59-L83); [src/lib/emailHtml.ts:141–148](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailHtml.ts#L141-L148); [src/components/email/EmailChatBubble.tsx:45–60](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatBubble.tsx#L45-L60); [src/components/gmail/EmailThreadView.tsx:45–53](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L45-L53); [src/components/gmail/EmailThreadView.tsx:116–120](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailThreadView.tsx#L116-L120).
 
 **Probes:** COM-P10.
 

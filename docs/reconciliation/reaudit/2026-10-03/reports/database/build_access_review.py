@@ -89,6 +89,10 @@ for identity in sorted(set(inv['candidate_final_policies'])-snapshot_ids):
     r=row(identity)
     r['extra_classification']='outside_public_snapshot' if not identity.startswith('public.') else 'requires_history_adjudication_not_proven_drift'
     if identity==rename_old:r['extra_classification']='renamed_to_snapshot_identity'
+    adjudication=manual.get('extra_adjudications',{}).get(identity)
+    if adjudication:
+        r['extra_classification']=adjudication['classification']
+        r['history_adjudication']=adjudication
     extra.append(r)
 
 dos=[]
@@ -105,6 +109,8 @@ policies={'source_head':HEAD,'snapshot_generated_at':manifest['generated_at'],
  'method':'Identidades do snapshot público ligadas à última CREATE e ALTERs conhecidos na cadeia local. Condicionais DO anexadas como fonte, não executadas. O hash do snapshot não é comparado ao texto lexical.',
  'coverage_counts':counts(snapshot),'extra_coverage_counts':counts(extra),
  'policies':snapshot,'source_extras':extra,
+ 'extra_classification_counts':dict(collections.Counter(r['extra_classification'] for r in extra)),
+ 'negative_cases':manual.get('negative_cases',[]),
  'projection_notes':manual.get('projection_notes',[])}
 do_roster={'source_head':HEAD,
  'method':'Corpos DO de migrations ativas. Leitura integral manual é marcada individualmente; nenhuma expansão SQL foi executada.',

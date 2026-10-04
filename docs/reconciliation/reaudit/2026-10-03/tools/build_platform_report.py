@@ -149,6 +149,42 @@ add(9, 'P2', 'Atalho Ir para Dashboard anuncia navegação sem selecionar a view
      'Provar o atalho a partir do Inbox e de outra view, conferindo conteúdo, URL e trilha, com paridade ao clique.'],
     'Cadeia de produtor/consumidor lida integralmente, sem browser ou React Router montado. Não se atribui esse defeito ao atalho alternativo Alt+R nem a IDs sem binding padrão.')
 
+mobile = 'src/components/mobile/MobileShell.tsx'
+add(10, 'P2', 'Botão Buscar do cabeçalho mobile só altera um estado sem consumidor',
+    'Aplicação usa AppShell em viewport mobile e o usuário aciona Buscar no MobileHeader.',
+    'AppShell → MobileShell → MobileHeader.onSearchOpen → setMobileSearchOpen(true).',
+    'MobileShell declara mobileSearchOpen e fornece o setter ao botão, mas nunca lê o estado nem renderiza ou despacha uma busca. O botão é exposto porque o callback existe.',
+    'O comando não abre busca, campo ou resultado. O probe mudou o flag para true e conservou a mesma composição e os demais painéis fechados.',
+    [(mobile, 35, 56), (mobile, 64, 109), ('src/components/mobile/MobileHeader.tsx', 111, 123),
+     ('src/components/layout/AppShell.tsx', 95, 106)], ['PLAT-P09'],
+    ['Ligar o botão a uma superfície de busca real ou ao comando compartilhado que a abre.',
+     'Provar abertura, foco, resultado, fechamento e retorno em viewport mobile.'],
+    'Componente inteiro executado com captura de JSX e hooks sintéticos. Não houve ReactDOM, clique real ou medição de layout; o achado é a ausência de qualquer consumidor do estado.')
+
+add(11, 'P2', 'Notificações mobile usam lista vazia local e contador fixado em zero',
+    'Há notificações do usuário, mas a navegação usa o shell mobile do Index.',
+    'Index.unreadNotifications=0 → AppShell → MobileShell.notification state vazio → NotificationsPanel.',
+    'Index passa zero literal. MobileShell cria notifications=[] sem consulta, subscription ou ação que insira dados; a única atualização mapeia essa lista para read=true. O painel abre normalmente e exibe Tudo em dia/Nenhuma notificação com base no array desconectado.',
+    'O usuário mobile não recebe a lista nem o contador real por esse painel. Isso independe de erro de rede e é distinto de PLAT005, que trata erro/loading de uma consulta existente no popover desktop.',
+    [('src/pages/Index.tsx', 113, 127), (mobile, 35, 49), (mobile, 53, 73),
+     ('src/components/mobile/MobileHeader.tsx', 125, 145),
+     ('src/components/mobile/NotificationsPanel.tsx', 110, 121)], ['PLAT-P10'],
+    ['Conectar mobile e desktop à mesma fonte de notificações e às mesmas mutações de leitura.',
+     'Provar lista não vazia, contador, leitura individual/em lote, loading e erro em viewport mobile.'],
+    'O probe usa o literal zero extraído do Index e abre o painel do shell inteiro sob hooks/JSX sintéticos. A existência de notificações reais é uma precondição, não um dado consultado na conta do usuário.')
+
+add(12, 'P2', 'Sidebar das rotas de SLA muda a seleção sem abrir o módulo escolhido',
+    'Usuário está nas rotas protegidas /sla ou /sla/history e seleciona Inbox ou outro módulo pela Sidebar.',
+    'AppRoutes → SLADashboardPage/SLAHistory → SidebarNavItem.onClick → setCurrentView local.',
+    'As duas páginas passam o setter de um estado local para Sidebar, mas sempre renderizam o mesmo corpo de SLA. O item da Sidebar apenas chama esse callback. Não há navegação de rota nem troca condicional de conteúdo nesses consumidores; a integração normal do Index possui outro callback.',
+    'A indicação de módulo selecionado pode mudar enquanto o usuário continua vendo SLA. O probe alterou a seleção para inbox e preservou a composição dos dois corpos. QueuesComparison não usa essa Sidebar e não pertence ao achado.',
+    [('src/pages/SLADashboard.tsx', 5, 15), ('src/pages/SLAHistory.tsx', 7, 21),
+     ('src/components/layout/SidebarNavItem.tsx', 27, 43), ('src/components/layout/Sidebar.tsx', 128, 137),
+     ('src/routes/AppRoutes.tsx', 82, 97)], ['PLAT-P11'],
+    ['Conectar essas entradas ao contrato de navegação compartilhado, preservando autorização, histórico e destino.',
+     'Provar ida das duas rotas para Inbox/Configurações, retorno e comportamento do botão Voltar.'],
+    'Páginas completas com JSX/estado sintéticos; wiring da Sidebar e rotas inspecionados. Sem navegação real, browser, conta autenticada ou mudança do produto. O controle de acesso das rotas permanece presente.')
+
 full_system = ['useNavigationHistory', 'useNotificationSettings', 'useNotifications', 'useDocumentBadge',
     'useResourcePrefetch', 'useDuplicate', 'useSearch', 'useVersions', 'useSkillBasedAssign', 'useCurrentModule',
     'usePrefetch', 'useSearchHistory', 'useDebounce', 'useIdleCallback', 'useNetworkStatus', 'useInfiniteScroll',
@@ -198,7 +234,7 @@ save('coverage.json', dict(schema_version=1, source_head=HEAD, files=coverage,
                                   'Alguns utilitários são genéricos ou não alcançados por consumidores; revisão não implica uso atual.']))
 lines = ['# Reauditoria de navegação, notificações e utilitários de plataforma', '',
          f'Fonte fixada: `{HEAD}`.', '',
-         f'{len(findings)} contratos confirmados por leitura de código. Oito casos PLAT executam callbacks/módulos exatos com fronteiras sintéticas; PLAT002 usa duas variantes e PLAT005 não tem probe. COM-P10 compartilha o arquivo de resultados e pertence ao relatório de Email. Não houve navegação autenticada, operação no banco, instalação ou edição do produto.', '']
+         f'{len(findings)} contratos confirmados por leitura de código. Onze casos PLAT executam callbacks/módulos exatos com fronteiras sintéticas; PLAT002 usa duas variantes, e PLAT005/009 têm inspeção estática. COM-P10 compartilha o arquivo de resultados e pertence ao relatório de Email. Não houve navegação autenticada, operação no banco, instalação ou edição do produto.', '']
 for f in findings:
     lines += [f"## {f['id']} · {f['priority']} · {f['title']}", '', '**Condição:** ' + f['preconditions'], '',
               '**Cadeia:** ' + f['consumer_chain'], '', '**Comportamento:** ' + f['observed_behavior'], '',

@@ -99,6 +99,10 @@ additional = [
         tasks=[task('P006','E85','SQL de presença existe e falha; resta propagar a falha no workflow, alerta e evidência.','PARTIAL')]),
 ]
 
+# Later independently reviewed locus; keep the original five IDs.
+from extend_inf019 import apply_extension
+apply_extension(next(f for f in additional if f["id"] == "R2-INF-019"))
+
 merge()
 doc = json.loads((OUT / 'findings.json').read_text())
 original = [f for f in doc['findings'] if int(f['id'].split('-')[-1]) <= 16]

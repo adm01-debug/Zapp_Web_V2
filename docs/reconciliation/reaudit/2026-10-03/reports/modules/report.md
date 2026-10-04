@@ -1,8 +1,8 @@
 # Reauditoria de módulos complementares — rodada 2
 
-**Fonte fixa:** `da307ba5626dce892f0b37cb6762463f55d14a96`. **Resultado:** 64 achados confirmados por contrato estático, dos quais 14 também reproduzidos por callbacks isolados; 1 candidato adiado. Nenhum desses números representa incidente observado em produção.
+**Fonte fixa:** `da307ba5626dce892f0b37cb6762463f55d14a96`. **Resultado:** 76 achados confirmados por contrato estático, dos quais 21 também reproduzidos por callbacks/transformações isolados e um por dois fragmentos do fornecedor; 1 candidato adiado. Um achado pertence ao codec vendorizado e os demais ao código da aplicação. Nenhum desses números representa incidente observado em produção.
 
-A fonte permaneceu intocada. Foram executados somente probes locais com dados sintéticos, mocks e trechos de código copiados em memória. A confirmação das definições SQL vencedoras foi cruzada com o agente de banco. Não houve banco, envio, ligação, acesso a segredos ou alteração de aplicação.
+A fonte permaneceu intocada. Foram executados somente probes locais com dados sintéticos, mocks, trechos de código copiados em memória e a API do codec em VM isolada. A confirmação das definições SQL vencedoras foi cruzada com o agente de banco. Não houve banco, envio, ligação, acesso a segredos ou alteração de aplicação.
 
 ## Resultado e prioridades
 
@@ -12,41 +12,49 @@ A passagem final de Talk X examinou os consumidores de Overview, Analytics, Live
 
 | Severidade | Quantidade |
 |---|---:|
-| P1 | 6 |
-| P2 | 52 |
+| P1 | 7 |
+| P2 | 63 |
 | P3 | 6 |
 
 | Relação com auditoria anterior | Quantidade |
 |---|---:|
-| EXTENSION_OF_PRIOR | 8 |
-| NEW_DISCOVERY | 56 |
+| EXTENSION_OF_PRIOR | 10 |
+| NEW_DISCOVERY | 66 |
 
 “Nova descoberta” significa causa/efeito não identificado nos 104 achados usados na comparação. Não significa código novo, regressão recente ou prova de que o auditor anterior jamais leu o arquivo. Extensões preservam o ID anterior e acrescentam um consumidor, precondição ou efeito que não estava explicitado.
 
 ## Cobertura e limites
 
-O inventário delimitado contém 474 arquivos: 295 com leitura integral, 18 com leitura dirigida e 161 somente inventariados. Foram lidas 51941 linhas únicas em 313 arquivos. Cada caminho, blob SHA, faixa e lacuna está em `coverage.json`. A categoria structural significa apenas inventário, sem revisão semântica.
+O inventário delimitado contém 570 arquivos: 482 com leitura integral, 24 com leitura dirigida e 64 somente inventariados. Foram lidas 84206 linhas únicas em 506 arquivos. Cada caminho, blob SHA, faixa e lacuna está em `coverage.json`. A categoria structural significa apenas inventário, sem revisão semântica.
 
-Os diretórios src/components/talkx, src/hooks/analytics e src/components/dashboard foram lidos integralmente, incluindo seus testes: 165 arquivos e 24.311 linhas. A revisão continua nos saldos de catálogo, Tasks, Chatbot e automações. Bibliotecas e outros arquivos marcados structural ainda possuem somente inventário neste relatório; a união dos revisores é consolidada por root. Não é declarada cobertura integral do frontend nem execução de suas integrações.
+Os diretórios src/components/talkx, src/hooks/analytics e src/components/dashboard foram lidos integralmente, incluindo seus testes: 165 arquivos e 24.311 linhas. A produção de catálogo, Tasks, Chatbot, automações, relatórios e voz também foi lida integralmente; os testes desses diretórios mantêm seus níveis individuais. O recorte adicional de 40 helpers em src/lib e src/utils também foi lido integralmente: 2.888 linhas, caminhos e exclusões em lib-utils-scope.json. O codec vendorizado possui 208 corpos lidos em cópia AST de 4.683 linhas, correspondentes a 307 linhas originais; detalhes em vendor/report.md e vendor/coverage.json. Essa leitura não certifica fidelidade ou conformidade MP3. Arquivos marcados structural ainda possuem somente inventário neste relatório; a união dos revisores é consolidada por root. Não é declarada cobertura integral do frontend nem execução de suas integrações.
+
+O último recorte de produção contém dez auxiliares de Dashboard, transcrições, Meta CAPI e tipos TalkMe: 1.055 linhas lidas, com manifesto em final-frontend-scope.json. O roster final de 73 arquivos de testes (18.496 linhas) foi lido integralmente e adjudicado por arquivo em test-review.json e test-review.md. Cada adjudicação exige faixas completas do diário e confere SHA-256/git blob do arquivo; o roster preserva somente a fotografia de atribuição. Nenhuma suíte foi executada.
 
 ### Arquivos parcialmente lidos
 
 | Caminho | Faixas sem leitura semântica |
 |---|---|
-| `src/components/catalog/__tests__/CatalogRail.test.tsx` | 1–195, 241–365 |
-| `src/components/catalog/__tests__/ExternalProductManagement.test.tsx` | 1–554, 611–638 |
-| `src/components/catalog/catalogShared.tsx` | 1–779 |
 | `src/components/inbox/ChatPanel.tsx` | 1–84, 176–284 |
 | `src/components/inbox/RealtimeInboxView.tsx` | 1–284, 326–376 |
 | `src/components/inbox/chat/useChatInputLogic.ts` | 1–49 |
+| `src/components/inbox/useFileUploadLogic.ts` | 1–54, 169–252 |
 | `src/components/layout/Sidebar.tsx` | 1–115, 146–258 |
 | `src/components/settings/MediaLibraryAdmin.tsx` | 1–44, 65–155 |
-| `src/components/voice/ElevenLabsDialogue.tsx` | 111–165 |
+| `src/components/settings/SettingsView.tsx` | 1–152, 173–236 |
+| `src/components/settings/media-library/useMediaUpload.ts` | 1–26 |
+| `src/hooks/communication/useAudioMemes.ts` | 1–79, 159–239 |
 | `src/hooks/communication/useCalls.ts` | 1–64, 211–241 |
+| `src/main.tsx` | 30–82 |
 | `src/pages/Index.tsx` | 1–103, 150–196 |
 | `src/pages/ViewRouter.tsx` | 211–258 |
 | `supabase/migrations/20251224024453_84e90b51-3f9f-47f9-a4be-44831f2f5bd8.sql` | 21–46 |
+| `supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql` | 1–36, 81–114 |
+| `supabase/migrations/20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql` | 1–74, 86–125 |
+| `supabase/migrations/20260317212204_a83746c2-5108-4b79-b3b3-6b4d15df28e8.sql` | 1–59, 89–136 |
+| `supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql` | 1–53, 74–108 |
 | `supabase/migrations/20260409014536_3a836b4b-1e37-411c-b8af-45d918304272.sql` | 1–41, 60–166 |
+| `supabase/migrations/20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql` | 1–91, 121–192 |
 | `supabase/migrations/20260928140000_tasks_unify_reminders_kanban.sql` | 112–235 |
 | `supabase/migrations/20261002391230_talkx_audience_rpc.sql` | 1–74, 111–478 |
 | `supabase/migrations/20261002421230_talkx_audience_snapshot.sql` | 1–399, 489–657 |
@@ -72,6 +80,16 @@ Os diretórios src/components/talkx, src/hooks/analytics e src/components/dashbo
 | R2-MOD-051 | `{"order_before_either_write_resolves":["move-pending","save-pending","closed"]}` |
 | R2-MOD-055 | `{"requested_visible_order":["A","X","B"],"persisted_visible_order":["X","A","B"],"written_positions":[{"id":"hidden","position":0},{"id":"X","position":1},{"id":"A","position":2},{"id":"B","position":3}]}` |
 | R2-MOD-056 | `{"selected_default_day":"2026-10-06T23:59:00.000Z","internal_applied_marker":"2026-10-06T23:59:00.000Z","second_create_due_date":"2026-10-05T23:59:00.000Z"}` |
+| R2-MOD-066 | `{"image_after_primary_error":"synthetic-valid-fallback","image_after_fallback_load":"synthetic-broken-primary","new_source_after_terminal_error_still_has_no_img":true}` |
+| R2-MOD-068 | `{"initial_nodes_payload_type":"string","nodes_encoded_initially":1,"nodes_displayed_after_reopen":0,"nodes_payload_after_saving_empty_editor":"[]"}` |
+| R2-MOD-070 | `{"operation_selected":{"url":"https://api.elevenlabs.io/v1/voices","method":"GET"},"audio_state_writes":0,"toast":["success","Voz gerada com sucesso!"]}` |
+| R2-MOD-071 | `{"first_error":"Falha ao carregar lamejs","script_tags_created":1,"script_tags_appended_after_retry":1,"load_listeners_on_failed_tag":2,"timeout_scheduled":0,"retry_settled_without_new_event":false}` |
+
+O fornecedor tem três provas separadas em `vendor/proofs.json`: VENDOR-P01/P02 reproduzem a indexação fracionária registrada em MOD073; VENDOR-P03 apenas confirma bytes não vazios e término do flush em silêncio/seno curtos. Um smoke test de emissão não valida a qualidade do MP3. Os três casos não são contados como três novos achados nem incluídos nas provas autorais.
+
+O recorte final tem três provas em `final-frontend-proofs.json`: monitor de SLA em três ciclos limitados com página de 50/60 violações; bucket SQL de São Paulo comparado ao calendário UTC com stubs explícitos de date-fns; e tendência calculada contra o ponto de quatro horas atrás. São contratos isolados, não execução de SQL, React ou navegador.
+
+A adjudicação final dos 73 testes distingue componentes/hooks reais, funções puras de produção, contratos por regex de fonte e exemplos locais sem chamada à implementação. CT67 executa axe com controle negativo no próprio teste; os arquivos axe-campaigns/axe-talkx são contratos de fonte sem axe runtime. Os dois grandes testes Team Chat foram incluídos por atribuição explícita do root: comprehensive usa constantes/exemplos locais, enquanto exhaustive lê fonte com regex e casos todo. Estas diferenças alimentam a família GOV003/TC011 consolidada pelo root e não geram um achado por arquivo.
 
 Alguns testes existentes cobrem contratos menores do que o comportamento que poderiam sugerir: useMyCalls verifica clamp com fixture incompatível com offset vazio; a navegação TalkXView substitui o wizard por stub; o teste de limites mantém a campanha sempre sending; CSAT verifica dados definidos e loading, sem validar média/total após atualização; agendamentos usam dois registros e não conferem completude. Esses testes continuam úteis para seus objetivos estreitos, mas não encerram os cenários encontrados. A suíte não foi executada nem ampliada nesta revisão.
 
@@ -145,6 +163,18 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 | R2-MOD-063 | P2 | Duas metas configuráveis nunca entram no cálculo das notificações de conquista | Novo |
 | R2-MOD-064 | P2 | Restaurar padrões das metas perde IDs e Salvar tenta reinserir configurações existentes | Novo |
 | R2-MOD-065 | P2 | Escolher período Personalizado não abre o calendário do Dashboard | DASH-CONTROLS-001 |
+| R2-MOD-066 | P2 | Fallback de imagem volta à URL quebrada e o erro persiste ao trocar de foto | Novo |
+| R2-MOD-067 | P2 | Templates WhatsApp são apresentados como oficiais com aprovação escolhida localmente | Novo |
+| R2-MOD-068 | P1 | Roundtrip de Chatbot grava JSON como string e reabre o grafo vazio | Novo |
+| R2-MOD-069 | P2 | Editor de Chatbot oferece condição, ação e transferência sem configuração correspondente | Novo |
+| R2-MOD-070 | P2 | Gerar Voz chama a listagem de vozes e anuncia geração sem áudio | Novo |
+| R2-MOD-071 | P2 | Repetir conversão de áudio após erro do codificador fica aguardando o script que já falhou | Novo |
+| R2-MOD-072 | P2 | Atualização automática recarrega ao ocultar a aba sem preservar edição ou sessão ativa | Novo |
+| R2-MOD-073 | P2 | Detector de ataques do codec ignora oito posições de análise por índices fracionários | Novo |
+| R2-MOD-074 | P2 | Monitor do War Room recria alertas continuamente quando violações superam a página de 50 | Novo |
+| R2-MOD-075 | P2 | Volume por hora combina buckets de São Paulo com dia e hora do navegador | DASH-METRICS-001 |
+| R2-MOD-076 | P2 | Previsão de demanda usa o ponto de quatro horas atrás como valor atual e chama média histórica de dado real | DASH-CONTROLS-001, DASH-METRICS-001 |
+| R2-MOD-077 | P2 | Histórico de transcrições oferece Todo período e busca sobre uma única página implícita | Novo |
 
 ## Achados detalhados
 
@@ -315,7 +345,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-007`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-007` (código `offline_probes.cjs`).
 
 ### R2-MOD-008 — Pré-validação de envio do catálogo ausente em lote e permissiva quando a consulta falha
 
@@ -466,7 +496,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 - Não é afirmado vazamento entre contatos: RealtimeInboxView atribui key da conversa ao ChatPanel atual.
 - IA-048 é referência de implementação, não um dos IDs dos 104 achados anteriores.
 
-**Probe:** `proofs.json`, ID `R2-MOD-012`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-012` (código `offline_probes.cjs`).
 
 ### R2-MOD-013 — Anotação de chamada acompanha troca de linha e pode sobrescrever outra chamada
 
@@ -495,7 +525,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-013`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-013` (código `offline_probes.cjs`).
 
 ### R2-MOD-014 — Selecionar chamada fora da primeira página retorna à primeira e perde o detalhe
 
@@ -525,7 +555,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-014`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-014` (código `offline_probes.cjs`).
 
 ### R2-MOD-015 — Histórico anuncia correção de página inválida sem refazer a consulta
 
@@ -613,7 +643,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-017`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-017` (código `offline_probes.cjs`).
 
 ### R2-MOD-018 — Totais dos Relatórios Avançados agregam apenas uma página de mensagens e contatos
 
@@ -793,7 +823,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 - A criação aceita é uma precondição sintética. O caminho backend dispatch.create não foi homologado nesta revisão e os bloqueios anteriores MX08 continuam relevantes.
 
-**Probe:** `proofs.json`, ID `R2-MOD-023`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-023` (código `offline_probes.cjs`).
 
 ### R2-MOD-024 — Respostas atrasadas de variantes e histórico são aplicadas ao template seguinte
 
@@ -888,7 +918,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-026`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-026` (código `offline_probes.cjs`).
 
 ### R2-MOD-027 — Sair do wizard antes do autosave perde edição sem a proteção beforeunload
 
@@ -1079,7 +1109,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-032`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-032` (código `offline_probes.cjs`).
 
 ### R2-MOD-033 — Ritmo e prazo da campanha usam os primeiros envios e minutos não consecutivos
 
@@ -1597,7 +1627,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-049`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-049` (código `offline_probes.cjs`).
 
 ### R2-MOD-050 — Salvar tarefa reconstrói datas locais sem offset e pode deslocar prazo e alarme
 
@@ -1634,7 +1664,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 - O probe compara as duas funções reais sob TZ explícito. A interpretação da sessão UTC é precondição declarada; não foi medida no banco remoto.
 
-**Probe:** `proofs.json`, ID `R2-MOD-050`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-050` (código `offline_probes.cjs`).
 
 ### R2-MOD-051 — Salvar tarefa fecha com escritas pendentes e divide a edição em operações concorrentes
 
@@ -1666,7 +1696,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-051`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-051` (código `offline_probes.cjs`).
 
 ### R2-MOD-052 — Reagendar alarme pelo Salvar não rearma uma tarefa que já foi notificada
 
@@ -1697,7 +1727,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-052`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-052` (código `offline_probes.cjs`).
 
 ### R2-MOD-053 — Desfazer cancelamento/conclusão não restaura todo o estado e anuncia sucesso antes da gravação
 
@@ -1790,7 +1820,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-055`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-055` (código `offline_probes.cjs`).
 
 ### R2-MOD-056 — Agenda restaura o prazo do dia anterior se o dia for trocado durante a criação
 
@@ -1819,7 +1849,7 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 **Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
 
-**Probe:** `proofs.json`, ID `R2-MOD-056`; código em `offline_probes.cjs`.
+**Probes:** `proofs.json` / `R2-MOD-056` (código `offline_probes.cjs`).
 
 ### R2-MOD-057 — Cartão de tarefa concluída oferece lembrete que o executor exclui por estado
 
@@ -2116,6 +2146,472 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 
 - Fluxo validado estaticamente, sem browser. Extensão da família anterior de controles cosméticos; causa e callback específicos não constavam dos 104 achados.
 
+### R2-MOD-066 — Fallback de imagem volta à URL quebrada e o erro persiste ao trocar de foto
+
+**Severidade:** P2. **Prova:** CONFIRMED_ISOLATED_CALLBACK. **Relação:** NEW_DISCOVERY.
+
+**Precondição:** Abrir uma galeria com URL principal indisponível e fallback válido; ou falhar ambas as URLs e selecionar outra imagem válida sem desmontar a galeria.
+
+**Causa:** ProductThumb usa um único stage para decidir tanto a origem da imagem quanto o carregamento. onLoad troca error-src por loaded, fazendo effectiveSrc voltar a src; o estado também não acompanha mudanças de src/fallbackSrc.
+
+**Cadeia observada:** Após o erro principal, a seleção muda para fallbackSrc. Quando o fallback carrega, onLoad seleciona outra vez a URL principal quebrada, permitindo repetir o ciclo erro/carregamento. Depois de error-fallback, o componente retorna somente o ícone mesmo que a galeria altere src para uma foto válida. ProductDetailDialog reutiliza ProductThumb sem key entre as fotos.
+
+**Efeito:** O fallback não se estabiliza e uma falha de mídia pode deixar outras fotos válidas da galeria invisíveis. Não foi medido tráfego de rede ou custo externo.
+
+**Correção recomendada:** Separar a origem selecionada do estado de carregamento, manter o fallback após seu load e reiniciar o ciclo quando a identidade da imagem mudar. Considerar eventos atrasados de URLs anteriores.
+
+**Aceite:**
+
+- Falhar a principal e carregar o fallback mantém o fallback visível sem selecionar de novo a principal.
+- Falhar as duas origens e navegar para outra foto válida faz o novo src ser carregado.
+- Trocar src durante carregamento não permite que evento da imagem antiga determine o estado da nova.
+
+**Evidência:**
+
+- [src/components/catalog/catalogShared.tsx:261–294](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/catalogShared.tsx#L261-L294) — blob `c716f9ab2bb47a59cd2a1836b92acb308d959a38`; State machine e origem derivados do mesmo stage.
+- [src/components/catalog/ProductDetailDialog.tsx:149–160](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/ProductDetailDialog.tsx#L149-L160) — blob `4faa61bfc188a269b548195f895e3190b940df69`; ProductThumb reutilizado sem key.
+- [src/components/catalog/ProductDetailDialog.tsx:174–214](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/ProductDetailDialog.tsx#L174-L214) — blob `4faa61bfc188a269b548195f895e3190b940df69`; Navegação e miniaturas alteram a imagem atual.
+- [src/components/catalog/__tests__/catalogShared.test.tsx:136–170](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/catalogShared.test.tsx#L136-L170) — blob `a5a1b506bdb75ffc3cd525c9d871527e2aa46b0c`; Testes não disparam load no fallback ou rerender com outro src.
+
+**Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
+
+**Limites específicos:**
+
+- Probe isolado de callbacks/JSX em objeto, sem DOM nem decoder de imagens. A falha de URL é precondição sintética.
+- Distinto de R2-MOD-047, que trata índice fora do novo conjunto de imagens. Aqui até um índice válido pode deixar de exibir mídia.
+
+**Probes:** `proofs.json` / `R2-MOD-066` (código `offline_probes.cjs`).
+
+### R2-MOD-067 — Templates WhatsApp são apresentados como oficiais com aprovação escolhida localmente
+
+**Severidade:** P2. **Prova:** CONFIRMED_STATIC_CONTRACT. **Relação:** NEW_DISCOVERY.
+
+**Precondição:** Usuário alcança wa-templates e tem uma operação de criação/edição local aceita pelas permissões e constraints vigentes.
+
+**Causa:** WhatsAppTemplatesManager promete templates oficiais aprovados, mas o seletor permite escolher approved/rejected/pending e o hook persiste esse texto diretamente em whatsapp_templates. Não existe verificação de aprovação na cadeia acionada pelo botão Criar/Atualizar.
+
+**Cadeia observada:** Escolher Aprovado e salvar envia status=approved no INSERT/UPDATE local. A consulta lê esse mesmo registro e STATUS_BADGES converte o valor em Aprovado. A ação não consulta nem submete a um provedor; o estado visual deriva exclusivamente da escolha do usuário.
+
+**Efeito:** O catálogo transmite uma certificação externa que esse fluxo não comprova. Isso pode orientar indevidamente preparação e seleção de mensagens; não se afirma que esse template seja usado por um sender externo no repositório.
+
+**Correção recomendada:** Distinguir templates locais de templates oficiais e tratar a aprovação externa como dado sincronizado, sem edição livre. Se não houver integração disponível, informar a limitação no fluxo e manter o cadastro como rascunho local.
+
+**Aceite:**
+
+- Uma edição manual não pode transformar um rascunho local em aprovação oficial.
+- Cada estado oficial exibido tem origem e identidade do provedor verificáveis ou é rotulado explicitamente como estado local.
+- O botão e o feedback descrevem com precisão se salvam localmente ou submetem para aprovação.
+
+**Evidência:**
+
+- [src/pages/ViewRouter.tsx:75–79](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/ViewRouter.tsx#L75-L79) — blob `9964a4ea364a29ff6a59c5e49e199c2eeab22ec9`; Rota atual para o manager.
+- [src/components/catalog/WhatsAppTemplatesManager.tsx:35–42](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/WhatsAppTemplatesManager.tsx#L35-L42) — blob `985e5f71e34a73625958a768be043a686ebf085a`; Promessa de templates oficiais aprovados.
+- [src/components/catalog/WhatsAppTemplatesManager.tsx:157–181](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/WhatsAppTemplatesManager.tsx#L157-L181) — blob `985e5f71e34a73625958a768be043a686ebf085a`; Status externo livre no formulário.
+- [src/hooks/integrations/useWhatsAppTemplates.ts:37–41](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useWhatsAppTemplates.ts#L37-L41) — blob `8f408b81629133e5e12e3bf1105879bf6b9e819f`; Badge Aprovado derivado do texto local.
+- [src/hooks/integrations/useWhatsAppTemplates.ts:63–74](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useWhatsAppTemplates.ts#L63-L74) — blob `8f408b81629133e5e12e3bf1105879bf6b9e819f`; Leitura da tabela local.
+- [src/hooks/integrations/useWhatsAppTemplates.ts:87–120](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useWhatsAppTemplates.ts#L87-L120) — blob `8f408b81629133e5e12e3bf1105879bf6b9e819f`; INSERT/UPDATE e toast sem submissão externa.
+
+**Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
+
+**Limites específicos:**
+
+- Não foi consultada conta Meta nem realizada submissão. Não se afirma ausência de sistemas externos fora do repositório.
+- Providers revisou o mesmo hook e delegou a este achado a divergência de produto/estado; o contrato de created_by é tratado separadamente pelo revisor responsável.
+
+### R2-MOD-068 — Roundtrip de Chatbot grava JSON como string e reabre o grafo vazio
+
+**Severidade:** P1. **Prova:** CONFIRMED_ISOLATED_CALLBACK. **Relação:** NEW_DISCOVERY.
+
+**Precondição:** INSERT/UPDATE de um fluxo de chatbot é aceito; posteriormente ele é consultado e aberto no editor. Salvar novamente o editor vazio concretiza a substituição persistente.
+
+**Causa:** useChatbotFlows aplica JSON.stringify a nodes/edges/variables apesar de as colunas serem JSONB. A query apenas faz cast de tipo. ChatbotFlowEditor aceita somente arrays e substitui strings por []; não existe normalizador de JSON na cadeia SQL vigente revisada.
+
+**Cadeia observada:** A criação padrão envia a string JSON que contém o nó inicial. A consulta devolve o escalar string, o card conta zero nós e o editor exibe Fluxo vazio. O botão Salvar repassa [] ao update, que grava a string "[]", substituindo o conteúdo antes codificado. Um fluxo salvo com vários nós sofre o mesmo roundtrip; duplicar uma string também pode acrescentar outra camada de codificação.
+
+**Efeito:** Nós e conexões desaparecem da representação ao reabrir e podem ser apagados persistentemente quando o usuário salva o editor. A falha independe de haver executor externo do grafo.
+
+**Correção recomendada:** Enviar arrays/objetos nativos para JSONB; validar o shape na leitura; migrar cuidadosamente strings existentes e impedir sobrescrita silenciosa quando o conteúdo não puder ser interpretado.
+
+**Aceite:**
+
+- Criar um fluxo e reabri-lo preserva seu nó inicial e o tipo JSON de nodes/edges.
+- Salvar e reabrir um grafo com condições e várias conexões preserva integralmente a estrutura e os valores.
+- Registros legados codificados como string são recuperados sem sobrescrita e erros de shape mantêm o conteúdo original recuperável.
+
+**Evidência:**
+
+- [src/hooks/integrations/useChatbotFlows.ts:53–81](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L53-L81) — blob `56134d13f6c76050f1e6548228adfa4997e6b134`; Leitura sem parse e criação com stringify.
+- [src/hooks/integrations/useChatbotFlows.ts:90–104](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L90-L104) — blob `56134d13f6c76050f1e6548228adfa4997e6b134`; Atualização com stringify.
+- [src/components/chatbot/ChatbotFlowEditor.tsx:21–32](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowEditor.tsx#L21-L32) — blob `0c7cc838b418d4a1ac79edeab14a132d7735cc83`; Strings viram arrays vazios.
+- [src/components/chatbot/ChatbotFlowEditor.tsx:65–67](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowEditor.tsx#L65-L67) — blob `0c7cc838b418d4a1ac79edeab14a132d7735cc83`; Salvar o estado do editor.
+- [src/components/chatbot/ChatbotFlowsView.tsx:72–92](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowsView.tsx#L72-L92) — blob `ca4f94a6562741dc68ee477bbccc46465d264e8b`; Duplicação e entrega dos arrays ao update.
+- [src/components/chatbot/ChatbotFlowsView.tsx:164–168](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowsView.tsx#L164-L168) — blob `ca4f94a6562741dc68ee477bbccc46465d264e8b`; Contagem como zero para string.
+- [supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql:40–56](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql#L40-L56) — blob `a1a23feb27c2f8e804ec43fb70924c60fff2622b`; Colunas JSONB nativas.
+- [supabase/migrations/20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql:82–82](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql#L82-L82) — blob `909e580860fd515173c018f01e9a4228aba34053`; Trigger efetivo somente timestamp.
+- [src/hooks/__tests__/useChatbotFlows.test.tsx:21–41](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useChatbotFlows.test.tsx#L21-L41) — blob `9ef53eef8cad0de41b584bff0eaf4296b4d17fde`; Fixtures devolvem arrays, sem roundtrip do payload real.
+- [src/hooks/__tests__/useChatbotFlows.test.tsx:64–87](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useChatbotFlows.test.tsx#L64-L87) — blob `9ef53eef8cad0de41b584bff0eaf4296b4d17fde`; Teste de criação só confere tabela; listas locais de tipos não exercitam contrato.
+
+**Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
+
+**Limites específicos:**
+
+- Descoberta do stringify comunicada por Providers, consumidor examinado por modules, tipos/trigger vencedores confirmados por Database.
+- Probe preserva escalares no mock de transporte e executa callbacks originais. Não executa PostgreSQL, RLS, React real nem um fluxo de produção.
+- IA-CHATBOT-001 anterior trata seleção de conexão/histórico no endpoint L1; não cobre este roundtrip do editor de grafos.
+
+**Probes:** `proofs.json` / `R2-MOD-068` (código `offline_probes.cjs`).
+
+### R2-MOD-069 — Editor de Chatbot oferece condição, ação e transferência sem configuração correspondente
+
+**Severidade:** P2. **Prova:** CONFIRMED_STATIC_CONTRACT. **Relação:** NEW_DISCOVERY.
+
+**Precondição:** Criar ou editar um grafo no editor de Chatbot e adicionar um nó Condição, Ação ou Transferir. O contrato de persistência é independente do problema de codificação de R2-MOD-068.
+
+**Causa:** AddNodeDialog oferece todos os tipos declarados; addNode inicializa só label/content/options/delaySeconds. EditNodeDialog expõe label para todos, conteúdo/opções apenas para mensagem/pergunta e segundos apenas para delay. Não há campos nem callbacks para condition, action, transferTo ou a condição do edge.
+
+**Cadeia observada:** Um nó Condição, Ação ou Transferir criado pela interface fica sem sua regra, ação ou destino. Editar permite apenas trocar o nome e Salvar não valida esse conteúdo obrigatório para representar a operação. O indicador de etapas considera somente a existência de start, quantidade de nós e conexões, podendo alcançar Salvar com esses nós incompletos.
+
+**Efeito:** O usuário consegue desenhar e salvar símbolos dessas operações, mas não consegue definir o que elas devem fazer através dos controles disponíveis. O efeito sobre execução externa não foi afirmado nem testado.
+
+**Correção recomendada:** Implementar os editores específicos e validação coerente para cada tipo suportado; enquanto a operação não estiver implementada, apresentá-la como indisponível em vez de aceitar uma configuração vazia.
+
+**Aceite:**
+
+- Cada tipo disponibilizado pode receber todos os seus dados através da UI, incluindo regra de condição, ação e destino de transferência.
+- Salvar rejeita nós incompletos com indicação do campo e mantém o draft para correção.
+- A configuração continua igual após salvar/reabrir e a ligação condicional mantém a regra selecionada.
+
+**Evidência:**
+
+- [src/hooks/integrations/useChatbotFlows.ts:9–30](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L9-L30) — blob `56134d13f6c76050f1e6548228adfa4997e6b134`; Campos declarados de nó e condição de aresta.
+- [src/components/chatbot/ChatbotNodeDialogs.tsx:14–46](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotNodeDialogs.tsx#L14-L46) — blob `b5847daf7656be2fc2946746794e2c03fcc3ab1b`; Tipos ofertados para adicionar.
+- [src/components/chatbot/ChatbotNodeDialogs.tsx:61–94](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotNodeDialogs.tsx#L61-L94) — blob `b5847daf7656be2fc2946746794e2c03fcc3ab1b`; Editor só implementa nome, mensagem/pergunta e atraso.
+- [src/components/chatbot/ChatbotFlowEditor.tsx:28–47](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowEditor.tsx#L28-L47) — blob `0c7cc838b418d4a1ac79edeab14a132d7735cc83`; Progresso e criação dos tipos com dados genéricos.
+- [src/components/chatbot/ChatbotFlowEditor.tsx:65–67](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowEditor.tsx#L65-L67) — blob `0c7cc838b418d4a1ac79edeab14a132d7735cc83`; Salvar sem validação da configuração.
+
+**Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
+
+**Limites específicos:**
+
+- Não se afirma que haja um executor genérico do grafo neste repositório; a falha comprovada é o contrato de autoria da interface.
+- IA-CHATBOT-001 anterior é sobre o endpoint L1. Esse endpoint e seu trigger ai_l1 não provam execução dos grafos montados nesta interface.
+
+### R2-MOD-070 — Gerar Voz chama a listagem de vozes e anuncia geração sem áudio
+
+**Severidade:** P2. **Prova:** CONFIRMED_ISOLATED_CALLBACK. **Relação:** NEW_DISCOVERY.
+
+**Precondição:** Abrir o laboratório de voz em Configurações; enviar um nome não vazio; JWT/cota/configuração aceitos e listagem de vozes do provedor retorna 2xx.
+
+**Causa:** ElevenLabsVoiceDesign envia action=generate. O endpoint só diferencia preview e create; qualquer outra ação cai na listagem GET /v1/voices. O frontend não exige audioContent nem uma identidade de voz antes de anunciar sucesso.
+
+**Cadeia observada:** O clique Gerar Voz não entra em create-previews nem create-voice-from-preview. Recebe a lista de vozes, não atualiza audioUrl e dispara Voz gerada com sucesso. A descrição, nome e texto são ignorados pelo ramo escolhido.
+
+**Efeito:** O usuário recebe confirmação de uma geração que não foi solicitada ao provedor. O fluxo atual não cria nem produz a prévia solicitada, mesmo com credenciais e rede válidas.
+
+**Correção recomendada:** Alinhar o fluxo de UI com preview e create, interpretar o schema de retorno e guardar generated_voice_id quando necessário. O endpoint deve rejeitar action desconhecida; o frontend deve exigir resultado compatível antes de mostrar sucesso.
+
+**Aceite:**
+
+- Gerar prévia alcança a ação preview e renderiza áudio retornado no schema aceito.
+- Criar voz usa a identidade de prévia selecionada e só confirma após resposta de criação.
+- action desconhecida retorna erro explícito; uma lista de vozes não é aceita como resultado de geração.
+
+**Evidência:**
+
+- [src/components/settings/SettingsView.tsx:160–172](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/settings/SettingsView.tsx#L160-L172) — blob `c576115115689b975b3897df601519e09de34f53`; Montagem no laboratório de voz.
+- [src/components/voice/ElevenLabsVoiceDesign.tsx:22–63](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/voice/ElevenLabsVoiceDesign.tsx#L22-L63) — blob `4c8aac7245a2e710673295ffc144fecb9f159bd6`; Payload generate e toast sem audioContent.
+- [supabase/functions/elevenlabs-voice-design/index.ts:20–45](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/elevenlabs-voice-design/index.ts#L20-L45) — blob `6c5f26e8bce74e90d08f86f8ab186e0e6471090a`; Ramo preview.
+- [supabase/functions/elevenlabs-voice-design/index.ts:48–83](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/elevenlabs-voice-design/index.ts#L48-L83) — blob `6c5f26e8bce74e90d08f86f8ab186e0e6471090a`; Ramo create e default de listagem.
+
+**Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
+
+**Limites específicos:**
+
+- Providers confirmou o endpoint e delegou este contrato à revisão frontend, evitando duplicação de ID API.
+- Probe executa o callback da UI e o dispatch original da Edge com mocks de auth/cota e fetch, sem chamadas externas ou validação de credenciais reais.
+
+**Probes:** `proofs.json` / `R2-MOD-070` (código `offline_probes.cjs`).
+
+### R2-MOD-071 — Repetir conversão de áudio após erro do codificador fica aguardando o script que já falhou
+
+**Severidade:** P2. **Prova:** CONFIRMED_ISOLATED_CALLBACK. **Relação:** NEW_DISCOVERY.
+
+**Precondição:** Na mesma sessão, o primeiro carregamento de /vendor/lamejs-1.2.1.min.js dispara error (ou load sem disponibilizar window.lamejs); o usuário ou o próximo arquivo tenta converter novamente. Não ocorre outro evento espontâneo no elemento já encerrado.
+
+**Causa:** loadLamejs limpa apenas lamejsLoadPromise no catch. O script com data-lamejs=1 continua no documento. A segunda chamada o encontra sem o global e só acrescenta listeners load/error, sem substituir/recarregar o elemento nem limitar a espera.
+
+**Cadeia observada:** A primeira conversão devolve encoder-unavailable e permite o fallback do consumidor. A próxima não dispara outro carregamento nem alcança o fallback, pois o await de loadLamejs fica pendente. useMediaUpload mantém bulkUploading até sair do laço e useAudioMemes só limpa uploading no finally posterior ao await.
+
+**Efeito:** Uma falha transitória inicial impede as conversões seguintes na mesma página. Um lote com mais de um áudio pode ficar preso a partir do próximo item; o upload individual posterior também pode permanecer ocupado até recarregar a página ou algum código externo emitir outro evento.
+
+**Correção recomendada:** Remover ou substituir o elemento que falhou ao limpar a promessa, limpar seus listeners e iniciar uma nova tentativa efetiva. Limitar a espera e garantir que todos os caminhos retornem um resultado discriminado para o consumidor encerrar o estado ocupado.
+
+**Aceite:**
+
+- Após um error controlado, a segunda tentativa cria ou reinicia um carregamento e pode resolver com o codificador disponível.
+- Um lote não fica preso no segundo áudio depois do fallback do primeiro; erro definitivo retorna encoder-unavailable e encerra o estado ocupado.
+- load sem window.lamejs, falha repetida e chamadas concorrentes encerram de forma determinada sem listeners acumulados em elementos já terminados.
+
+**Evidência:**
+
+- [src/utils/audioToMp3.ts:38–74](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/audioToMp3.ts#L38-L74) — blob `4bd92f3c32bc8ded82e3aaa727266e0fe0aef0a8`; Elemento existente, listeners e limpeza exclusiva da promessa.
+- [src/utils/audioToMp3.ts:115–121](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/audioToMp3.ts#L115-L121) — blob `4bd92f3c32bc8ded82e3aaa727266e0fe0aef0a8`; Await do loader antes do resultado discriminado.
+- [src/components/settings/media-library/useMediaUpload.ts:41–55](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/settings/media-library/useMediaUpload.ts#L41-L55) — blob `6f0c0a01a34ad1b563655720d30c743955399e40`; Lote aguardando conversão por item.
+- [src/components/settings/media-library/useMediaUpload.ts:80–88](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/settings/media-library/useMediaUpload.ts#L80-L88) — blob `6f0c0a01a34ad1b563655720d30c743955399e40`; Fim do estado ocupado apenas depois do laço.
+- [src/hooks/communication/useAudioMemes.ts:98–109](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useAudioMemes.ts#L98-L109) — blob `b0fabf284c8a368dec14b98a334f736ea0446f72`; Upload individual aguarda conversão.
+- [src/hooks/communication/useAudioMemes.ts:152–156](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useAudioMemes.ts#L152-L156) — blob `b0fabf284c8a368dec14b98a334f736ea0446f72`; Finally só é alcançado após encerramento do await.
+
+**Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
+
+**Limites específicos:**
+
+- Probe executa o loader original com listeners simulados e um único evento error. Verifica que a repetição não cria outro carregamento nem timeout e fica pendente sem novo evento; não mede espera infinita num navegador.
+- Não pressupõe erro permanente do arquivo estático nem problema no conteúdo do fornecedor. A precondição é falha pontual de carregamento ou ausência do global; O probe deste achado não executa public/vendor; a avaliação separada do codec está em vendor/report.md.
+- Inbox confirmou a fronteira useMediaUpload sem finding duplicado. Busca literal em FINDINGS.json anterior não encontrou loadLamejs, audioToMp3, lamejs ou mp3; a distinção também foi conferida no catálogo anterior.
+
+**Probes:** `proofs.json` / `R2-MOD-071` (código `offline_probes.cjs`).
+
+### R2-MOD-072 — Atualização automática recarrega ao ocultar a aba sem preservar edição ou sessão ativa
+
+**Severidade:** P2. **Prova:** CONFIRMED_STATIC_CONTRACT. **Relação:** NEW_DISCOVERY.
+
+**Precondição:** O monitor ativo em main recebe um buildId diferente enquanto há edição ainda não salva (por exemplo no editor de automações) ou uma chamada SIP em curso. A aba já está hidden ou passa a hidden após o aviso.
+
+**Causa:** A decisão do monitor usa somente document.visibilityState. O ramo hidden chama location.reload e o ramo visible arma a mesma recarga no primeiro visibilitychange hidden. Não consulta estado de edição, operação em andamento ou sessão de chamada, nem persiste/aguarda os consumidores antes de recarregar.
+
+**Cadeia observada:** A aplicação pode recarregar automaticamente ao usuário apenas alternar de aba. O editor de automações guarda os campos em useState e só invoca persistência em Salvar; essas alterações em memória não são recuperadas pelo fluxo mostrado. CallSessionProvider inicia seu reducer do estado inicial, e useSipClient cria CallEngine/SipCallAdapter em memória; o monitor não condiciona a recarga ao término da sessão.
+
+**Efeito:** Perda de uma edição ainda não salva no consumidor demonstrado. A interrupção de uma ligação ativa é uma inferência da destruição da página e do transporte mantido em memória, confirmada na revisão do kernel pelo root; não foi feita ligação real. Ocultar a aba não demonstra que não há trabalho ativo.
+
+**Correção recomendada:** Coordenar a atualização com operações e rascunhos ativos. Adiar recarga automática enquanto houver chamada/edição não preservada; oferecer atualização explícita ou salvar e restaurar estado verificável antes de recarregar. Não usar visibilidade como única evidência de inatividade.
+
+**Aceite:**
+
+- Com edição não salva no editor de automações, detectar build novo e ocultar a aba não descarta os campos.
+- Uma chamada ativa não é encerrada por alternar a aba após detectar atualização; a atualização ocorre quando a sessão estiver liberada ou por ação explícita informada.
+- Sem operação ou edição pendente, o monitor mantém o comportamento de recuperação previsto.
+- O teste de atualização combina o monitor com o estado de um consumidor; apenas contar reloads na mudança de visibilidade não prova preservação de trabalho.
+
+**Evidência:**
+
+- [src/main.tsx:9–17](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/main.tsx#L9-L17) — blob `53e586cae25308e6c1b280e97c9101a0cd2e5a3d`; Ativação incondicional do monitor.
+- [src/lib/deployment-update.ts:27–36](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/deployment-update.ts#L27-L36) — blob `7f122ba50e6de3da6623aad54d42dd428baa2eed`; Decisão por visibilidade e handler de recarga.
+- [src/lib/deployment-update.ts:49–70](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/deployment-update.ts#L49-L70) — blob `7f122ba50e6de3da6623aad54d42dd428baa2eed`; Build novo arma recarga automática ou recarrega imediatamente.
+- [src/components/automations/AutomationEditorDialog.tsx:20–34](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/automations/AutomationEditorDialog.tsx#L20-L34) — blob `ca877500e4c9adc606352916c2c95cddd0262af4`; Draft em memória e persistência somente em Salvar.
+- [src/components/automations/AutomationEditorDialog.tsx:48–54](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/automations/AutomationEditorDialog.tsx#L48-L54) — blob `ca877500e4c9adc606352916c2c95cddd0262af4`; Alteração dos campos escreve somente estado local.
+- [src/components/automations/AutomationsManager.tsx:33–38](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/automations/AutomationsManager.tsx#L33-L38) — blob `bea142159b3a6acc8ea5c09c346b9a44b969f51a`; Mutation invocada pelo save explícito.
+- [src/providers/CallSessionProvider.tsx:235–253](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/providers/CallSessionProvider.tsx#L235-L253) — blob `47d783cd156b15af5267802d8321875f6c06e085`; Sessão inicial do provider.
+- [src/hooks/communication/useSipClient.ts:26–65](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useSipClient.ts#L26-L65) — blob `7e8bb2881d0269faa84fb3f7a8f3360ce2aa3b72`; CallEngine/SipCallAdapter criados no ciclo React.
+- [src/lib/__tests__/deployment-update.test.ts:59–92](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/__tests__/deployment-update.test.ts#L59-L92) — blob `f2567dfbaebd42f9f13810c4ea2e8c2d673f24bf`; Testes exigem reload em hidden sem consumidor com trabalho pendente.
+
+**Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
+
+**Limites específicos:**
+
+- Fonte estática e testes existentes lidos, sem executar reload do navegador ou chamada SIP. O efeito no transporte é inferido, não medido.
+- Não se generaliza perda a todo rascunho: email e outros consumidores podem ter persistência específica. O editor de automações é o contraexemplo concreto usado aqui.
+- MOD027 trata saída SPA do wizard e debounce; o wizard possui beforeunload próprio. Este achado trata a ação global automática do monitor e não supõe que esse guard específico seja inexistente.
+- Root revisou o kernel de chamadas e confirmou ausência de reidratação de transporte SIP vivo após reload; persistência de histórico não equivale a restabelecer a ligação.
+
+### R2-MOD-073 — Detector de ataques do codec ignora oito posições de análise por índices fracionários
+
+**Severidade:** P2. **Prova:** CONFIRMED_ISOLATED_VENDOR_FRAGMENT. **Relação:** NEW_DISCOVERY.
+
+**Precondição:** O caminho CBR/psymodel da integração atual avalia um vetor de ataques com pico acima do limiar em uma das posições 1, 2, 4, 5, 7, 8, 10 ou 11. A prova isola esse vetor interno; não pressupõe que todo áudio dispare o caso nem quantifica sua frequência.
+
+**Causa:** L3psycho_anal_ns inicializa ta e ya com quatro posições inteiras, mas usa F/3 diretamente como índice nos laços que agrupam doze ataques e nove energias. Para F não múltiplo de três, ta[F/3] é undefined e o guard 0 == ta[F/3] falha; ya[1+F/3] += Ga escreve uma propriedade fracionária NaN, sem acumular no grupo inteiro.
+
+**Cadeia observada:** Nos doze vetores sintéticos de pico único, o trecho original marca somente posições 0, 3, 6 e 9. No trecho original de energia, F=1 cria a propriedade 1.3333333333333333 com NaN e mantém os quatro acumuladores inteiros em zero. Os quatro flags inteiros alimentam S e a seleção posterior de blocos. O consumidor converte para mono/44100 e cria Mp3Encoder(1,44100,128); quality=3 ativa psymodel e o CBR padrão seleciona essa rotina.
+
+**Efeito:** A análise interna de transientes e agrupamento de energia não considera todos os subintervalos que seus laços percorrem, podendo escolher blocos com informação incompleta. A divergência numérica e o alcance do ramo são confirmados; perda audível, corrupção final do arquivo e magnitude da diferença de qualidade não foram demonstradas.
+
+**Correção recomendada:** Corrigir os índices de grupo para inteiros na cópia vendorizada ou substituir por uma versão verificada que corrija esse contrato. Antes da troca, comparar com a fonte upstream fixada e validar vetores de transiente, decodificação e propriedades do MP3; não tratar uma simples emissão de bytes como certificação de fidelidade.
+
+**Aceite:**
+
+- Todas as doze posições de pico único são atribuídas ao grupo inteiro correto e ao ordinal esperado, preservando a regra de primeiro ataque por grupo.
+- Os nove subintervalos de energia alimentam somente três índices inteiros de grupo; nenhum acumulador NaN ou chave fracionária é criado.
+- O teste usa trechos ou API da versão real distribuída, com hash fixado, e cobre o caminho mono/44100/128 usado pelo produto.
+- Uma validação independente decodifica o MP3 de vetores conhecidos e compara decisões de bloco/qualidade com uma referência antes de declarar impacto audível resolvido.
+
+**Evidência:**
+
+- [public/vendor/lamejs-1.2.1.min.js:204–204](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/public/vendor/lamejs-1.2.1.min.js#L204-L204) — blob `8dc6b0726388ff75bec69ac55ac5a6cc49e61093`; Índices fracionários dos laços de ataque e energia no código original.
+- [public/vendor/lamejs-1.2.1.min.js:201–216](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/public/vendor/lamejs-1.2.1.min.js#L201-L216) — blob `8dc6b0726388ff75bec69ac55ac5a6cc49e61093`; Estado e consumo dos quatro flags pela decisão de blocos em L3psycho_anal_ns.
+- [public/vendor/lamejs-1.2.1.min.js:169–177](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/public/vendor/lamejs-1.2.1.min.js#L169-L177) — blob `8dc6b0726388ff75bec69ac55ac5a6cc49e61093`; Frame escolhe rotina NS no caminho CBR e consome o tipo de bloco.
+- [public/vendor/lamejs-1.2.1.min.js:247–272](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/public/vendor/lamejs-1.2.1.min.js#L247-L272) — blob `8dc6b0726388ff75bec69ac55ac5a6cc49e61093`; CBR padrão e quality=3 com psymodel ativo.
+- [public/vendor/lamejs-1.2.1.min.js:305–307](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/public/vendor/lamejs-1.2.1.min.js#L305-L307) — blob `8dc6b0726388ff75bec69ac55ac5a6cc49e61093`; Wrapper público fixa quality=3 e recebe argumentos da aplicação.
+- [src/utils/audioToMp3.ts:157–192](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/audioToMp3.ts#L157-L192) — blob `4bd92f3c32bc8ded82e3aaa727266e0fe0aef0a8`; Downmix, reamostragem e API mono/44100/128 ativa.
+
+**Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
+
+**Limites específicos:**
+
+- Código de terceiro vendorizado: um achado de contrato numérico, separado das microfuncionalidades autorais e dos 208 corpos lidos.
+- Probes executam exatamente os dois fragmentos extraídos do AST original, com vetores sintéticos; não são uma simulação completa da análise psicoacústica.
+- VENDOR-P03 apenas comprova emissão não vazia pela API real para silêncio/seno curtos e término do segundo flush. Nenhum MP3 foi decodificado ou ouvido, nem avaliado em navegador, com áudio longo, por benchmark ou fuzzing.
+- O ramo VBR contém a mesma forma de indexação, mas não ganha outro ID e não é necessário para o caminho CBR demonstrado.
+- A comparação com os 104 achados anteriores não localizou este contrato nem referências a lamejs/psicoacústica/Mp3Encoder; isso não prova ausência de leitura prévia do fornecedor.
+
+**Probes:** `vendor/proofs.json` / `VENDOR-P01` (código `vendor_probes.cjs`); `vendor/proofs.json` / `VENDOR-P02` (código `vendor_probes.cjs`).
+
+### R2-MOD-074 — Monitor do War Room recria alertas continuamente quando violações superam a página de 50
+
+**Severidade:** P2. **Prova:** CONFIRMED_ISOLATED_CALLBACK. **Relação:** NEW_DISCOVERY.
+
+**Precondição:** Um admin/supervisor mantém o War Room montado, a consulta retorna mais de 50 violações SLA, e SELECT/INSERT/realtime ou refetch de alertas funcionam. Cada nova gravação entra entre os 50 alertas unread mais recentes.
+
+**Causa:** O monitor compara breaches.length com o número de alertas source=sla-monitor de uma consulta limitada a 50. A tabela não tem UNIQUE por source/incidente e o insert não recebe chave de idempotência. O efeito depende de alerts e executa a checagem imediatamente sempre que essa página muda.
+
+**Cadeia observada:** Cada INSERT em warroom_alerts invalida a query pelo callback realtime; a página mais recente muda, mas continua com no máximo 50 itens. Para breaches.length>50, a condição de nova inserção continua verdadeira. A republicação da página rearma a checagem, criando outro alerta para as mesmas violações. Mesmo sem entrega realtime imediata, o refetch de 30 segundos pode continuar o ciclo enquanto as precondições persistirem.
+
+**Efeito:** Acúmulo de alertas críticos redundantes, consultas/gravações repetidas e som/notificações a cada nova linha. A quantidade de inserts depende da latência/revalidação; não foi medido um volume de produção. Dispensa de alertas não resolve a causa de comparação de contagens.
+
+**Correção recomendada:** Modelar a identidade de uma violação/incidente e deduplicar no banco, consultando o conjunto de violações ainda relevante. Separar o monitor da quantidade de linhas de uma página de apresentação; usar produtor único ou operação idempotente e respeitar encerramento/dispensa do incidente.
+
+**Aceite:**
+
+- Com 60 violações e pelo menos 50 alertas existentes, repetir refetch e eventos INSERT não cria novos alertas para incidentes já representados.
+- Dois clientes admin abertos simultaneamente produzem no máximo um alerta por incidente/chave de janela definida.
+- Erro de inserção e de leitura é exposto/recuperável sem transformar página parcial em sinal de necessidade de alertar.
+- O teste cruza o limite de 50 e republica a página após insert; não basta usar lista de violações vazia.
+
+**Evidência:**
+
+- [src/hooks/business/useWarRoomAlerts.ts:48–60](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useWarRoomAlerts.ts#L48-L60) — blob `90d833076f1458795bacb9f9e636e933abe56aea`; Página unread limitada a 50 e refetch de 30 segundos.
+- [src/hooks/business/useWarRoomAlerts.ts:63–95](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useWarRoomAlerts.ts#L63-L95) — blob `90d833076f1458795bacb9f9e636e933abe56aea`; INSERT invalida query e emite som/push.
+- [src/hooks/business/useWarRoomAlerts.ts:103–129](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useWarRoomAlerts.ts#L103-L129) — blob `90d833076f1458795bacb9f9e636e933abe56aea`; Comparação de contagens, insert sem chave e efeito dependente de alerts.
+- [src/components/dashboard/WarRoomDashboard.tsx:34–47](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/WarRoomDashboard.tsx#L34-L47) — blob `35458d3fdc3874fb38f1a5c49b1fa605f97c7850`; Consumidor monta o monitor e exibe seus alertas.
+- [supabase/migrations/20260317212204_a83746c2-5108-4b79-b3b3-6b4d15df28e8.sql:62–86](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260317212204_a83746c2-5108-4b79-b3b3-6b4d15df28e8.sql#L62-L86) — blob `dc278b9dc7c37d5f4bda63d71416ca796f2c16ef`; PK aleatória, ausência de unique de source e publicação realtime.
+- [supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql:62–66](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql#L62-L66) — blob `a109bd003b2b580b14a1d996f61bf99b33d7e782`; Política vigente permite INSERT de admin/supervisor.
+- [src/hooks/__tests__/useWarRoomAlerts.test.tsx:58–83](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useWarRoomAlerts.test.tsx#L58-L83) — blob `1dac6cacbebe56679921b7d81479b2e848174ef3`; Fixture de SLA vazia não exercita criação/deduplicação.
+
+**Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
+
+**Limites específicos:**
+
+- Probe executa o hook original em três ciclos finitos de efeitos com SELECT/INSERT/cache/realtime simulados, 60 violações e página de 50. Não executa React, banco, som ou notificações reais e não alega uma execução infinita medida.
+- Database confirmou o estado vencedor: somente PK(id) e FK dismissed_by, sem trigger de deduplicação, e grant/policy de INSERT para authenticated admin/supervisor. Disponibilidade de ambiente não foi testada.
+- Root confirmou que seus achados de filas/SLA não cobrem este monitor. MOD030/031 tratam indicadores e controle visual de atualização, sem a cadeia de criação de alertas.
+
+**Probes:** `final-frontend-proofs.json` / `R2-MOD-074` (código `final_frontend_probes.cjs`).
+
+### R2-MOD-075 — Volume por hora combina buckets de São Paulo com dia e hora do navegador
+
+**Severidade:** P2. **Prova:** CONFIRMED_ISOLATED_CALLBACK. **Relação:** EXTENSION_OF_PRIOR (DASH-METRICS-001).
+
+**Precondição:** O navegador está em fuso diferente de America/Sao_Paulo e o instante pertence a outro dia ou hora local. A RPC dashboard_hourly_volume devolve os buckets em São Paulo conforme a definição vencedora.
+
+**Causa:** aggregateHourlyVolume usa startOfDay/format/getHours locais para hoje, hora atual e os sete dias. Os buckets day/hour não incluem offset e já foram derivados por SQL em America/Sao_Paulo. O cliente compara identidades temporais incompatíveis.
+
+**Cadeia observada:** Às 2026-10-04T01:30Z, o bucket corrente de São Paulo é 2026-10-03/22. Em UTC, o agregador chama hoje de 2026-10-04 e hora atual de 1: coloca a contagem no dia anterior da série de sete dias e deixa a hora corrente em zero. VolumeChart usa esses dados em Hoje, Conversas reais e no gráfico por dia.
+
+**Efeito:** A mesma atividade pode aparecer como dia anterior, em hora deslocada ou sem volume atual conforme o fuso do dispositivo. Filtros do topo já usam o fuso do aplicativo, portanto a mesma tela pode apresentar recortes temporais incompatíveis.
+
+**Correção recomendada:** Usar explicitamente o fuso do aplicativo tanto na identificação de hoje/hora quanto na criação das chaves de dias, ou receber do servidor o relógio/identidade do bucket corrente. Preservar a distinção entre data de calendário e timestamp.
+
+**Aceite:**
+
+- O mesmo instante e conjunto de buckets produz resultado idêntico em navegador UTC, America/Sao_Paulo e outro fuso.
+- O bucket 2026-10-03/22 às 2026-10-04T01:30Z é reconhecido como corrente de São Paulo; não migra para ontem por configuração do dispositivo.
+- Testes incluem virada do dia e não geram tanto fixture quanto expectativa com o mesmo relógio local incorreto.
+
+**Evidência:**
+
+- [src/hooks/dashboard/useTodayHourlyVolume.ts:18–50](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useTodayHourlyVolume.ts#L18-L50) — blob `9c92c3024435ee5ac37efa08a502918a272ed776`; Chaves locais, getHours e comparação de buckets.
+- [src/hooks/dashboard/useTodayHourlyVolume.ts:63–74](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useTodayHourlyVolume.ts#L63-L74) — blob `9c92c3024435ee5ac37efa08a502918a272ed776`; RPC ativa e transformação no retorno.
+- [supabase/migrations/20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql:92–120](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql#L92-L120) — blob `a34667e824428c492c943039d7638ca3ceec0147`; Definição hourly vencedora: day/hour e janela em São Paulo.
+- [src/components/dashboard/overview/VolumeChart.tsx:46–68](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/overview/VolumeChart.tsx#L46-L68) — blob `e072c9396e7f84de3cd81422d852b283a3832799`; Consumo das séries por hora/dia.
+- [src/hooks/dashboard/useDashboardUrlFilters.ts:32–44](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useDashboardUrlFilters.ts#L32-L44) — blob `3fd3df0971a8fbf132caa26fd324bbb928ff2a6b`; Períodos do topo usam helpers do dia do aplicativo.
+- [src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts:4–21](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts#L4-L21) — blob `3ef4669e48374ddc940312abf2ef196c90d2e2cc`; Fixture e relógio no mesmo fuso local.
+
+**Comparação anterior:** Estende a família de métricas do Dashboard com um contrato temporal específico não descrito: RPC hourly correta em São Paulo versus agregador cliente em outro fuso. Não é a regressão SQL de dashboard_contact_counts.
+
+**Limites específicos:**
+
+- Probe executa o agregador original com Date UTC e stubs transparentes dos três helpers date-fns; não executa pacote date-fns, SQL nem navegador. A divergência é também direta no uso de getHours e nas chaves de data.
+- Database confirmou que a definição 20260925221406 é vencedora para esta assinatura e que a janela SQL também usa São Paulo. Não se acusa a RPC de um fuso incorreto.
+- Não generaliza o defeito a todos os filtros de data: useDashboardUrlFilters usa os helpers de calendário do aplicativo.
+
+**Probes:** `final-frontend-proofs.json` / `R2-MOD-075` (código `final_frontend_probes.cjs`).
+
+### R2-MOD-076 — Previsão de demanda usa o ponto de quatro horas atrás como valor atual e chama média histórica de dado real
+
+**Severidade:** P2. **Prova:** CONFIRMED_ISOLATED_CALLBACK. **Relação:** EXTENSION_OF_PRIOR (DASH-CONTROLS-001, DASH-METRICS-001).
+
+**Precondição:** Dashboard monta DemandPrediction sem externalData, seu uso ativo. As médias históricas da hora atual e de quatro horas antes diferem; o ponto final previsto fica entre elas no contraexemplo.
+
+**Causa:** O gerador preenche actual com a mesma média por hora dos sete dias, sem consulta dos valores reais do dia. A lista começa em -4h. O cálculo de currentActual usa find do primeiro ponto não preditivo, em vez do ponto da hora corrente, e a tendência compara o último previsto contra essa base antiga.
+
+**Cadeia observada:** Com média de 30 às 08h, 10 às 12h atuais e 20 às 16h futuras, o hook informa currentActual=30 e tendência down. A própria série tem 10 no ponto das 12h, para o qual 20 seria crescimento. O consumidor apresenta esses pontos como Atual/Dados Reais e a tendência no card.
+
+**Efeito:** O operador pode receber tendência invertida e interpretar a média da semana como volume observado hoje. A prévia depende da população histórica e não demonstra variação real de atividade.
+
+**Correção recomendada:** Separar séries observadas por data/hora da média histórica e identificar explicitamente o ponto corrente. Calcular a tendência contra a base temporal e estatística declarada no produto, com ausência de dados distinta de zero; se a intenção for somente média histórica, ajustar nomes e rótulos.
+
+**Aceite:**
+
+- No contraexemplo 30/10/20, a comparação com o ponto corrente usa 10 e retorna crescimento.
+- actual contém observação do período atual ou é renomeado de modo que a UI não o apresente como Dados Reais.
+- Consulta vazia, erro e histórico insuficiente não afirmam tendência válida ou capacidade sem dados.
+- Confiança estatística só é apresentada se corresponder a um método validado; essa exigência já constava no achado anterior.
+
+**Evidência:**
+
+- [src/hooks/business/useDemandPrediction.ts:23–47](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useDemandPrediction.ts#L23-L47) — blob `efefaa72acbddb4f9e2e4402068cd32aebe30c6b`; Série -4h..0 preenchida por média histórica e futuro.
+- [src/hooks/business/useDemandPrediction.ts:53–74](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useDemandPrediction.ts#L53-L74) — blob `efefaa72acbddb4f9e2e4402068cd32aebe30c6b`; Agregação da contagem dos sete dias por hora.
+- [src/hooks/business/useDemandPrediction.ts:78–86](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useDemandPrediction.ts#L78-L86) — blob `efefaa72acbddb4f9e2e4402068cd32aebe30c6b`; find escolhe primeiro ponto e define tendência.
+- [src/components/dashboard/DemandPrediction.tsx:30–40](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DemandPrediction.tsx#L30-L40) — blob `7a08b62fe3b3e3e4fe9563b11a8a8bb7d329ecf6`; Tooltip Atual para a média.
+- [src/components/dashboard/DemandPrediction.tsx:82–92](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DemandPrediction.tsx#L82-L92) — blob `7a08b62fe3b3e3e4fe9563b11a8a8bb7d329ecf6`; Consumidor da tendência.
+- [src/components/dashboard/DemandPrediction.tsx:129–133](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DemandPrediction.tsx#L129-L133) — blob `7a08b62fe3b3e3e4fe9563b11a8a8bb7d329ecf6`; Legenda Dados Reais.
+- [src/components/dashboard/DashboardView.tsx:218–224](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DashboardView.tsx#L218-L224) — blob `1a89a0f309bbc5aaeae9f03761faadd7e61715ab`; Consumidor atual sem externalData.
+
+**Comparação anterior:** Mantém a família anterior de rótulos/proxies do Dashboard, acrescentando seleção do ponto -4h e apresentação de médias como actual. A heurística de confiança95%/capacidade35 já era conhecida e não é contada novamente.
+
+**Limites específicos:**
+
+- Probe usa buckets históricos sintéticos, executando o gerador e o cálculo de insights reais. Não avalia qualidade preditiva, estatística, SQL ou visualização em navegador.
+- A chamada atual não fornece externalData; a hipótese de crash com externalData sem previsões permanece contrato dirigido, sem impacto ativo afirmado.
+- Outros limites do mesmo pipeline — query sem paginação, previsão sem filtros do topo e perda de data em VolumeChart — são preservados como observação relacionada, sem multiplicar IDs.
+
+**Probes:** `final-frontend-proofs.json` / `R2-MOD-076` (código `final_frontend_probes.cjs`).
+
+### R2-MOD-077 — Histórico de transcrições oferece Todo período e busca sobre uma única página implícita
+
+**Severidade:** P2. **Prova:** CONFIRMED_STATIC_CONTRACT. **Relação:** NEW_DISCOVERY.
+
+**Precondição:** O usuário tem mais transcrições de áudio visíveis do que o teto efetivo de uma resposta PostgREST. O registro procurado está fora da primeira página ordenada por created_at descendente.
+
+**Causa:** fetchTranscriptions faz uma única consulta sem range/paginação e sem obter total. Todo período, busca por transcrição/nome/telefone e agrupamento são aplicados somente ao array devolvido; a tela não tem próxima página nem sinal de truncação.
+
+**Cadeia observada:** O histórico mostra a quantidade da primeira resposta como número de transcrições/contatos. A busca de um áudio antigo ou um contato cuja primeira transcrição está fora dela retorna Nenhum resultado encontrado, embora existam registros elegíveis. Atualizar repete a mesma consulta inicial.
+
+**Efeito:** Histórico e busca incompletos sem mecanismo para acessar registros omitidos. O usuário pode concluir que uma transcrição antiga não existe ou que um contato não tem áudios transcritos.
+
+**Correção recomendada:** Implementar paginação estável e filtragem no servidor, com contagem/indicação explícita do conjunto exibido; ou carregar todas as páginas de forma controlada antes de afirmar busca global. Tratar erro separadamente de conjunto vazio.
+
+**Aceite:**
+
+- Uma fixture acima do teto de resposta permite localizar uma transcrição da página posterior por texto, nome e telefone.
+- Todo período e os contadores deixam claro se mostram um recorte; a próxima página é acessível sem perder filtros/agrupamento.
+- Ordenação inclui desempate estável e não duplica/omite registros na transição de páginas.
+- Uma falha de consulta não é apresentada como inexistência de transcrições.
+
+**Evidência:**
+
+- [src/components/transcriptions/TranscriptionsHistoryView.tsx:30–47](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionsHistoryView.tsx#L30-L47) — blob `ddfac70e3d2682e0b4cf698d59fc418434ef0a21`; Consulta única sem range e catch apenas no log.
+- [src/components/transcriptions/TranscriptionsHistoryView.tsx:51–76](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionsHistoryView.tsx#L51-L76) — blob `ddfac70e3d2682e0b4cf698d59fc418434ef0a21`; Filtro/busca/agrupamento locais.
+- [src/components/transcriptions/TranscriptionsHistoryView.tsx:104–128](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionsHistoryView.tsx#L104-L128) — blob `ddfac70e3d2682e0b4cf698d59fc418434ef0a21`; Contadores, Todo período e Atualizar.
+- [src/components/transcriptions/TranscriptionsHistoryView.tsx:132–145](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionsHistoryView.tsx#L132-L145) — blob `ddfac70e3d2682e0b4cf698d59fc418434ef0a21`; Vazio ou grupos sem navegação de páginas.
+
+**Comparação anterior:** Não localizado como causa/efeito nos 104 achados anteriores. Descoberta nesta rodada não significa regressão introduzida desde o baseline anterior.
+
+**Limites específicos:**
+
+- Contrato estático; o teto numérico de produção não foi lido nem aplicado. O achado é condicionado à população exceder o teto efetivo, sem afirmar que uma conta real já o excede.
+- Não acusa a geração da transcrição nem as permissões do endpoint ai-transcribe-audio, cobertas pelo agente de provedores. A causa está no consumidor de histórico.
+- Erro inicial convertido em Nenhuma transcrição é uma observação adicional da mesma tela, não um novo ID de falha genérica de loading/error.
+
 ## Hipóteses adiadas, limitadas e duplicadas
 
 ### R2-MOD-004 — Formulário da carteira monta SelectItem com valor vazio
@@ -2178,13 +2674,285 @@ O fechamento dos três diretórios registra observações separadas em `second-p
 - [src/components/tasks/shared/WorkItemCard.tsx:61–68](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/shared/WorkItemCard.tsx#L61-L68)
 - [src/components/tasks/TasksModule.tsx:203–223](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/TasksModule.tsx#L203-L223)
 
+## Observações da segunda passagem
+
+Estas observações não são somadas à contagem de achados. Preservam consumidores adicionais, limites específicos dos testes e a relação com famílias já registradas.
+
+### MOD-OBS-001 — Metas de atendimento continuam apoiadas em proxies e desafios fixos
+
+**Classificação:** PRIOR_FAMILY_RECONFIRMED.
+
+DailyGoalsCard usa totalConversations para o rótulo Responder 10 mensagens e não avalia a hora no desafio das 18h. DashboardWidgetRenderer repete proxies de desafios e exibe progresso fixo. Isso reforça a família anterior; os novos IDs 063 e 064 tratam causas distintas de notificação e persistência de configuração.
+
+**Referências de relação:** DASH-METRICS-001, R2-MOD-063, R2-MOD-064.
+
+- [src/components/dashboard/overview/DailyGoalsCard.tsx:16–40](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/overview/DailyGoalsCard.tsx#L16-L40) — blob `136f0de71774fabe8b7c0cb364774fad905d96e5`.
+- [src/components/dashboard/DashboardWidgetRenderer.tsx:155–181](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DashboardWidgetRenderer.tsx#L155-L181) — blob `566782938f8de0bebcd166ded452b4f89970abe3`.
+
+### MOD-OBS-002 — Formulário SLA não expõe o prazo e os históricos usam janelas diferentes
+
+**Classificação:** CROSS_AGENT_EXTENSION_NO_NEW_ID.
+
+SLAConfigTable oferece nome, prioridade e padrão, sem input para first_response_minutes. SLAMetricsDashboard usa o período selecionado no resumo e 30 dias no histórico. AgentPerformancePanel fixa SLA em week enquanto o ranking recebe outro período. A ausência do prazo foi incorporada por root em R2-SLA-003; as janelas são observações de apresentação, sem aumentar o total de achados.
+
+**Referências de relação:** R2-SLA-003.
+
+- [src/components/dashboard/sla/SLAConfigTable.tsx:101–130](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/sla/SLAConfigTable.tsx#L101-L130) — blob `f6ea145c093e0d4cda003759890393f60cd9e5a3`.
+- [src/components/dashboard/SLAMetricsDashboard.tsx:30–56](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/SLAMetricsDashboard.tsx#L30-L56) — blob `b18ad017fa90900ec24625ffa36014d71e2993ff`.
+- [src/components/dashboard/AgentPerformancePanel.tsx:43–56](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/AgentPerformancePanel.tsx#L43-L56) — blob `eea32a8b217c0a2a3ab30e1c16b4f16e9829fe38`.
+
+### MOD-OBS-003 — TalkX.test inclui implementações locais que não exercitam a produção
+
+**Classificação:** TEST_SCOPE_LIMIT.
+
+A primeira parte testa useTalkX real com backend simulado, inclusive rejeição lógica. Já os blocos de personalização, duração e filtro declaram funções locais e testam essas cópias. Alterar a função de produção não necessariamente faz esses testes falharem; isso não invalida os testes reais do hook nem os testes separados que importam os helpers de produção.
+
+**Referências de relação:** R2-MOD-062.
+
+- [src/components/talkx/__tests__/TalkX.test.tsx:1–127](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkX.test.tsx#L1-L127) — blob `940b0de55d924661138f06b994a0156d49f0f5fe`.
+- [src/components/talkx/__tests__/TalkX.test.tsx:131–305](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkX.test.tsx#L131-L305) — blob `940b0de55d924661138f06b994a0156d49f0f5fe`.
+
+### MOD-OBS-004 — Fixtures do editor não cobrem a audiência maior que a página nem a saída antes do debounce
+
+**Classificação:** TEST_SCOPE_LIMIT.
+
+useCampaignEditor.test substitui useQuery pela lista persistida do fixture, portanto não exercita paginação real. A hidratação de público usa um contato; o roundtrip espera 3.100 ms antes de desmontar. Esses cenários não cobrem truncação do público nem saída antes do autosave. A serialização de saves e a reutilização de chave de criação de TalkX possuem testes úteis e não devem ser confundidas com o defeito distinto de Multiplix.
+
+**Referências de relação:** R2-MOD-024, R2-MOD-025, R2-MOD-027.
+
+- [src/components/talkx/__tests__/useCampaignEditor.test.tsx:65–99](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/useCampaignEditor.test.tsx#L65-L99) — blob `a1883276e9f2c6cb6479b509b50ae6367ab9f96e`.
+- [src/components/talkx/__tests__/useCampaignEditor.test.tsx:240–295](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/useCampaignEditor.test.tsx#L240-L295) — blob `a1883276e9f2c6cb6479b509b50ae6367ab9f96e`.
+- [src/components/talkx/__tests__/useCampaignEditor.test.tsx:441–522](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/useCampaignEditor.test.tsx#L441-L522) — blob `a1883276e9f2c6cb6479b509b50ae6367ab9f96e`.
+
+### MOD-OBS-005 — Testes de rota não executam o ciclo do wizard
+
+**Classificação:** TEST_SCOPE_LIMIT.
+
+TalkXView.route substitui TalkXCampaignWizard por um componente de teste. Ele valida navegação e callbacks da rota, mas não o salvamento automático, cancelamento ou recuperação de erro do wizard real.
+
+**Referências de relação:** R2-MOD-027.
+
+- [src/components/talkx/__tests__/TalkXView.route.test.tsx:23–28](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXView.route.test.tsx#L23-L28) — blob `90f8e6e8d1924f0b3d47ed12d54e1bdf87f1d703`.
+- [src/components/talkx/__tests__/TalkXView.route.test.tsx:95–114](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXView.route.test.tsx#L95-L114) — blob `90f8e6e8d1924f0b3d47ed12d54e1bdf87f1d703`.
+- [src/components/talkx/__tests__/TalkXView.route.test.tsx:152–243](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXView.route.test.tsx#L152-L243) — blob `90f8e6e8d1924f0b3d47ed12d54e1bdf87f1d703`.
+
+### MOD-OBS-006 — Kit de estado e filtro testado isoladamente não comprova adoção pelos consumidores
+
+**Classificação:** TEST_SCOPE_LIMIT.
+
+A matriz do QueryBoundary e os testes de FilterBar/Table são úteis para seus componentes controlados. Eles não asseguram que cada tela entregue error/retry, onPeriodChange ou onPageSizeChange. Os defeitos registrados permanecem nos consumidores. TalkXAnalytics.hooks declara explicitamente que verifica ordem dos hooks e simula os dados, sem validar a correção das métricas.
+
+**Referências de relação:** TX03, R2-MOD-036, R2-MOD-059, R2-MOD-060.
+
+- [src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx:1–40](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx#L1-L40) — blob `c7b5c00d4f3c072bae0919f699e5b8e9de507284`.
+- [src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx:1–35](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx#L1-L35) — blob `95fd5e2e894d733d33ad56a821e14de25f29d4af`.
+- [src/components/talkx/__tests__/TalkXAnalytics.hooks.test.tsx:1–45](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXAnalytics.hooks.test.tsx#L1-L45) — blob `69085a95cefa7af3883dc0384388e9c26c66dd01`.
+
+### MOD-OBS-007 — Teste de fuso do Dashboard não cobre selecionar Personalizada
+
+**Classificação:** TEST_SCOPE_LIMIT.
+
+DashboardFilters.fuso testa getDefaultFilters, sem interação no seletor custom. DashboardView.test simula filtros e painéis: valida permissões e roteamento para o consumidor, mas não o seletor real. Por isso não contradiz o caminho sem ação de Personalizada encontrado em 065.
+
+**Referências de relação:** DASH-CONTROLS-001, R2-MOD-065.
+
+- [src/components/dashboard/__tests__/DashboardFilters.fuso.test.ts:1–36](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/__tests__/DashboardFilters.fuso.test.ts#L1-L36) — blob `2b5c96da0eff2cf1dacd82ea353546efc8396a9b`.
+- [src/components/dashboard/__tests__/DashboardView.test.tsx:11–69](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/__tests__/DashboardView.test.tsx#L11-L69) — blob `17021de5e159190af8811a52dcb07468d5867ef6`.
+
+### MOD-OBS-008 — Resumo de IA com 1.500 declarados é teste de contrato de consumo, não de completude da consulta
+
+**Classificação:** TEST_SCOPE_LIMIT.
+
+useAIUsageDashboard.agregacao simula um resumo RPC com 1.500 análises e uma página de 50 linhas. Isso demonstra a separação correta entre resumo e página no hook, sem demonstrar que 1.500 registros reais atravessam o SQL, a política ou a janela temporal. useDashboardData.presence também usa respostas simuladas e não comprova a identidade profile_id versus auth.uid no banco.
+
+**Referências de relação:** DASH-METRICS-001.
+
+- [src/hooks/analytics/__tests__/useAIUsageDashboard.agregacao.test.tsx:32–91](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/analytics/__tests__/useAIUsageDashboard.agregacao.test.tsx#L32-L91) — blob `e96dd2b6a38b2b479b3c330062a44b267db557cd`.
+- [src/hooks/analytics/__tests__/useDashboardData.presence.test.tsx:1–42](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/analytics/__tests__/useDashboardData.presence.test.tsx#L1-L42) — blob `e0f9d5c59494d439d03f351e6c97cf7c43abc4b2`.
+
+### MOD-OBS-009 — Teste offline da fila verifica texto, não todos os sinais visuais nomeados
+
+**Classificação:** TEST_SCOPE_LIMIT.
+
+O caso offline de QueueHealthTable verifica a presença de Tempo real. Apesar do nome mencionar tom e pulso, o trecho não faz asserções desses atributos. O limite é específico a esse teste; a revisão não realizou renderização visual nem conclui, por esse teste, defeito adicional de presença.
+
+**Referências de relação:** DASH-REALTIME-001.
+
+- [src/components/dashboard/__tests__/QueueHealthTable.test.tsx:34–44](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/__tests__/QueueHealthTable.test.tsx#L34-L44) — blob `a891068b82bb3cc724c12fedf606d225b0b96c7f`.
+
+### MOD-OBS-010 — Chatbot também fecha o editor antes de a mutation salvar
+
+**Classificação:** RELATED_CAUSE_ADDITIONAL_CONSUMER.
+
+ChatbotFlowsView chama updateFlow.mutate e imediatamente desmonta o editor. Uma rejeição posterior só gera toast no hook e o draft local é perdido. Mesmo padrão de fechamento prematuro já registrado nos consumidores de automações e Tasks; esta ocorrência adicional é preservada sem outro ID.
+
+**Referências de relação:** R2-MOD-003, R2-MOD-051.
+
+- [src/components/chatbot/ChatbotFlowsView.tsx:83–92](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowsView.tsx#L83-L92) — blob `ca4f94a6562741dc68ee477bbccc46465d264e8b`.
+- [src/hooks/integrations/useChatbotFlows.ts:90–110](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L90-L110) — blob `56134d13f6c76050f1e6548228adfa4997e6b134`.
+
+### MOD-OBS-011 — Chatbot usa amostra limitada como Total e oculta error das consultas
+
+**Classificação:** PRIOR_FAMILY_ADDITIONAL_CONSUMER.
+
+ChatbotExecutionsDashboard limita os registros mais recentes a 200, calcula Total/Concluídos/Falhas sobre essa amostra e não oferece paginação. O filtro de status muda também os denominadores dos cards. O erro de useQuery não é consumido: a view cai em zero/Nenhuma execução encontrada. A listagem de fluxos também não devolve error ao consumidor e é uma consulta sem paginação. São extensões de completude e estado vazio já presentes nas famílias anteriores; não afirmam falha de uma execução externa.
+
+**Referências de relação:** DASH-METRICS-001, TX03, R2-MOD-036.
+
+- [src/components/chatbot/ChatbotExecutionsDashboard.tsx:25–49](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotExecutionsDashboard.tsx#L25-L49) — blob `85b234c418f538b1d568c290ee0f7aa6af1de3e2`.
+- [src/components/chatbot/ChatbotExecutionsDashboard.tsx:64–108](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotExecutionsDashboard.tsx#L64-L108) — blob `85b234c418f538b1d568c290ee0f7aa6af1de3e2`.
+- [src/components/chatbot/ChatbotExecutionsDashboard.tsx:129–135](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotExecutionsDashboard.tsx#L129-L135) — blob `85b234c418f538b1d568c290ee0f7aa6af1de3e2`.
+- [src/hooks/integrations/useChatbotFlows.ts:53–62](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L53-L62) — blob `56134d13f6c76050f1e6548228adfa4997e6b134`.
+- [src/hooks/integrations/useChatbotFlows.ts:143–151](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useChatbotFlows.ts#L143-L151) — blob `56134d13f6c76050f1e6548228adfa4997e6b134`.
+- [src/components/chatbot/ChatbotFlowsView.tsx:149–159](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotFlowsView.tsx#L149-L159) — blob `ca4f94a6562741dc68ee477bbccc46465d264e8b`.
+
+### MOD-OBS-012 — Dashboard de execuções Chatbot troca estados válidos por Aguardando
+
+**Classificação:** CROSS_MODULE_DOMAIN_MISMATCH.
+
+O CHECK versionado permite running/completed/failed/paused/cancelled. A UI oferece waiting e não mapeia paused/cancelled; ambos caem no fallback STATUS_CONFIG.waiting, portanto podem ser apresentados como Aguardando e não há filtro para eles. Database confirmou que não há redefinição posterior do CHECK. Registrado como variante adicional de divergência de domínio de status, sem outro ID de finding.
+
+**Referências de relação:** R2-MOD-006.
+
+- [supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql:60–71](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql#L60-L71) — blob `a1a23feb27c2f8e804ec43fb70924c60fff2622b`.
+- [src/components/chatbot/ChatbotExecutionsDashboard.tsx:15–20](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotExecutionsDashboard.tsx#L15-L20) — blob `85b234c418f538b1d568c290ee0f7aa6af1de3e2`.
+- [src/components/chatbot/ChatbotExecutionsDashboard.tsx:120–139](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/chatbot/ChatbotExecutionsDashboard.tsx#L120-L139) — blob `85b234c418f538b1d568c290ee0f7aa6af1de3e2`.
+
+### MOD-OBS-013 — Previsão de relatórios injeta ruído aleatório e usa até 1.000 mensagens
+
+**Classificação:** PRIOR_FAMILY_ADDITIONAL_CONSUMER.
+
+DemandForecast calcula a média por dia da semana dividindo contagens limitadas a 1.000 por quatro, e adiciona ruído de até cerca de 15% aos dias futuros. secureRandomFloat usa uma nova amostra de crypto, portanto o mesmo histórico pode produzir previsões diferentes ao remontar, sem que o gráfico exponha esse ruído como simulação. O heatmap de relatórios também limita 1.000 sem paginação. Essas variantes reforçam as famílias anteriores de previsões/contagens e não geram novos IDs.
+
+**Referências de relação:** DASH-CONTROLS-001, DASH-METRICS-001, R2-MOD-018, R2-MOD-019.
+
+- [src/components/reports/DemandForecast.tsx:19–69](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/reports/DemandForecast.tsx#L19-L69) — blob `fbe3b569223a491fd3cada132a95ba41d9daa99c`.
+- [src/components/reports/DemandForecast.tsx:89–121](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/reports/DemandForecast.tsx#L89-L121) — blob `fbe3b569223a491fd3cada132a95ba41d9daa99c`.
+- [src/lib/secureRandom.ts:14–17](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/secureRandom.ts#L14-L17) — blob `476661d7819c1a27d1bc04b106ba3e2a537d5b8c`.
+- [src/components/reports/ConversationHeatmap.tsx:44–73](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/reports/ConversationHeatmap.tsx#L44-L73) — blob `454ec67a134445dc5a45295fdf52773e9b68552a`.
+- [src/components/reports/AdvancedReportsView.tsx:173–185](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/reports/AdvancedReportsView.tsx#L173-L185) — blob `fd9f20064b81966425e411717e80365383cbf34e`.
+
+### MOD-OBS-014 — QuickAdd cobre submissão imediata, sem troca de dia enquanto a criação está pendente
+
+**Classificação:** TEST_SCOPE_LIMIT.
+
+QuickAdd.test usa onAdd resolvido imediatamente ou função async vazia. Testa presets e o payload de hora, mas não muda defaultDueDate enquanto um create aguarda. QuickAddCompacto cobre somente abertura dos chips por atalhos. Os testes não contradizem a corrida reproduzida por MOD056.
+
+**Referências de relação:** R2-MOD-056.
+
+- [src/components/tasks/__tests__/QuickAdd.test.tsx:27–46](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/QuickAdd.test.tsx#L27-L46) — blob `e1d12d963ea1e17c71ead52eacd636344f9a233a`.
+- [src/components/tasks/__tests__/QuickAdd.test.tsx:138–175](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/QuickAdd.test.tsx#L138-L175) — blob `e1d12d963ea1e17c71ead52eacd636344f9a233a`.
+- [src/components/tasks/__tests__/QuickAddCompacto.test.tsx:41–70](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/QuickAddCompacto.test.tsx#L41-L70) — blob `79134c4b5881cf687043e8869db9af7849ad177c`.
+
+### MOD-OBS-015 — Opacidade de gráfico altera o fechamento de var; teste só procura o número
+
+**Classificação:** DORMANT_HELPER_AND_TEST_SCOPE_LIMIT.
+
+getChartColorWithOpacity troca o primeiro parêntese de fechamento em hsl(var(--chart-1)), produzindo hsl(var(--chart-1 / 0.5)) para opacidade 0.5, dentro de var em vez de depois de var. O teste verifica somente que a string contém 0.5 e que índices 0/10 coincidem; não valida a expressão CSS resultante. A busca em src não encontrou consumidor de produção desse helper, apenas sua definição e testes, portanto não se conta tela quebrada nem novo finding. getChartColor com índice negativo também não foi promovido sem chamador correspondente.
+
+- [src/lib/chartColors.ts:115–149](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/chartColors.ts#L115-L149) — blob `ae6b51526e540eb6673c018c3ccdbb09dace3145`.
+- [src/lib/__tests__/chartColors.test.ts:100–110](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/__tests__/chartColors.test.ts#L100-L110) — blob `1e6b5eb11393c80414c1a021585303fc42a16e2b`.
+
+### MOD-OBS-016 — Compressão: MIME original não é repassado ao envio; teste não importa o compressor
+
+**Classificação:** REJECTED_GENERALIZATION_AND_TEST_SCOPE_LIMIT.
+
+A hipótese inicial de que toda conversão JPEG para WebP enviaria o MIME antigo foi rejeitada ao ler sendFileViaApi: o payload fornece categoria e URL, sem repassar file.type nem o nome antigo para imagens. A construção do File usa outputType e não blob.type; uma hipótese de encoder do canvas retornar tipo diferente permanece dependente de uma precondição de navegador não verificada. imageCompression.test não importa nenhuma função de produção: testa startsWith, números e constantes locais, logo não demonstra qualidade, limite final, fallback ou metadata da compressão.
+
+- [src/components/inbox/useFileUploadLogic.ts:119–136](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/useFileUploadLogic.ts#L119-L136) — blob `af489a0f3136df5d5316ed2b2a409795ba457304`.
+- [src/utils/imageCompression.ts:115–142](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/imageCompression.ts#L115-L142) — blob `182947325a0edc043c7d7ac284fbb837638c11bd`.
+- [src/utils/__tests__/imageCompression.test.ts:1–37](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/__tests__/imageCompression.test.ts#L1-L37) — blob `b17eebf2927a3ba04469a961deb7a10fb6925f4b`.
+
+### MOD-OBS-017 — URLs e formatadores: hipóteses condicionais mantidas sem impacto inventado
+
+**Classificação:** UNPROVEN_INPUT_OR_REACHABILITY_PRECONDITIONS.
+
+normalizeMediaUrl aplica substituição de barras à URL inteira, mas não foi encontrado um URL efetivamente produzido no fluxo com componente opaco cuja alteração prove falha. cfImagesSrcSet reconstrói origem/caminho sem query; os consumidores existem, porém a precondição de imagens privadas assinadas do Cloudflare não foi comprovada neste repositório. Testes do helper usam somente URL pública sem query. labelOrRaw usa lookup em objeto comum e formatDuration pode arredondar o resto para 60 segundos; as buscas não localizaram consumidor ativo dos helpers específicos suficiente para atribuir uma falha de interface. Esses limites não são certificados de correção dos utilitários.
+
+- [src/utils/normalizeMediaUrl.ts:1–9](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/utils/normalizeMediaUrl.ts#L1-L9) — blob `c97154c4c10957f7d22032a9cd77afda2ad22f75`.
+- [src/lib/cfImages.ts:33–48](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/cfImages.ts#L33-L48) — blob `c403cb3f434de24be786d1de1f73bd70d602f702`.
+- [src/lib/__tests__/cfImages.test.ts:11–44](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/__tests__/cfImages.test.ts#L11-L44) — blob `ebfb8f2ff73c29893c67d06b0f81817a03290dc2`.
+- [src/lib/singuLabels.ts:131–140](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/singuLabels.ts#L131-L140) — blob `538a6e033bc4de6e63712cccb4bdfd169cfb944e`.
+- [src/lib/formatters.ts:118–125](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/formatters.ts#L118-L125) — blob `1425fed7827d7f1416711164bbaa627c79a147d9`.
+
+### MOD-OBS-018 — Mapbox e helpers transversais: corpos lidos, contratos externos delimitados
+
+**Classificação:** FINITE_REVIEW_BOUNDARY.
+
+O recorte finito de 40 caminhos de src/lib e src/utils foi lido integralmente. Inclui token/cache Mapbox, sessão/contagem, guarda de orçamento, loader, normalização de filtros, deduplicação, retry, helpers de autenticação, paletas e áudio. Os 40 caminhos e exclusões estão em lib-utils-scope.json. Não se infere preço vigente, limite financeiro rígido ou validade do codec a partir de comentários. O consumidor useAddressAutocomplete e mapboxGeocode pertencem a Inbox; o endpoint de alerta de orçamento pertence a Providers. Os arquivos de chamadas e helpers de email permanecem sob root. Leitura integral de um helper não prova adoção correta por todos os consumidores.
+
+**Referências de relação:** R2-MOD-071, R2-MOD-072.
+
+- [src/lib/mapboxToken.ts:1–136](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/mapboxToken.ts#L1-L136) — blob `318729640cd7d9a0aadfb286423a43039fef1340`.
+- [src/lib/mapboxSession.ts:1–128](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/mapboxSession.ts#L1-L128) — blob `73c814b08cdfc10de209b8935eccf1f95a68eb3c`.
+- [src/lib/mapboxCostGuard.ts:1–152](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/mapboxCostGuard.ts#L1-L152) — blob `33f635b2a1e7bf81286871d29d3ec5622a385404`.
+- [src/lib/mapboxLoader.ts:1–21](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/mapboxLoader.ts#L1-L21) — blob `7c9fc731bf2cf53f9d7790ade5f389045d165a36`.
+- [src/lib/aiJobs/status.ts:1–116](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/aiJobs/status.ts#L1-L116) — blob `ff5a17a390e95753e543ccc5e2c9b67d6b012bbc`.
+
+### MOD-OBS-019 — Previsão do VolumeChart mistura população filtrada com média geral e perde a data futura
+
+**Classificação:** EXTENSION_WITHOUT_NEW_FINDING_ID.
+
+VolumeChart passa queueId/agentId apenas a useTodayHourlyVolume; useDemandPrediction consulta mensagens de sete dias sem esses filtros e sem paginação. A linha Média7dias compara população geral disponível com a série filtrada. O mapa de previsões usa apenas a hora de p.time: previsões após a meia-noite podem ocupar horas do começo do próprio dia exibido. A conversão para média simples e a heurística95% já tinham família anterior; estas fronteiras do consumidor são registradas sem multiplicar IDs. Não se afirmou cobertura SQL da consulta de mensagens ou incidência em dados reais.
+
+**Referências de relação:** DASH-METRICS-001, DASH-CONTROLS-001, R2-MOD-076.
+
+- [src/components/dashboard/overview/VolumeChart.tsx:46–68](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/overview/VolumeChart.tsx#L46-L68) — blob `e072c9396e7f84de3cd81422d852b283a3832799`.
+- [src/hooks/business/useDemandPrediction.ts:39–47](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useDemandPrediction.ts#L39-L47) — blob `efefaa72acbddb4f9e2e4402068cd32aebe30c6b`.
+- [src/hooks/business/useDemandPrediction.ts:53–74](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useDemandPrediction.ts#L53-L74) — blob `efefaa72acbddb4f9e2e4402068cd32aebe30c6b`.
+
+### MOD-OBS-020 — Meta CAPI declara demonstração, mas totais e preferências continuam limitados ao contrato local
+
+**Classificação:** HONEST_UNAVAILABLE_STATE_WITH_DATA_LIMITS.
+
+A view declara explicitamente que não envia para graph.facebook.com e desabilita Configurar/testes. Isso é um estado indisponível honesto, não prova de integração concluída. O hook, lido como fronteira e já integral no relatório Providers, limita eventos a100; Total Eventos usa esse comprimento e os tipos usam a mesma amostra. O erro de settingsResult não é verificado pelo hook, podendo apresentar Não configurado/Inativo sem distinguir falha de leitura. A view mostra alerta para isError dos eventos, mas também pode renderizar vazio/zeros. A recomendação de apresentação é delimitar últimos100 e separar preferências indisponíveis; sem novo ID de ausência de integração.
+
+- [src/components/meta-capi/MetaCAPIView.tsx:23–60](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/meta-capi/MetaCAPIView.tsx#L23-L60) — blob `38f95287a5890d2b4a9afeb3e8edb2fb69af04a2`.
+- [src/components/meta-capi/MetaCAPIView.tsx:65–108](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/meta-capi/MetaCAPIView.tsx#L65-L108) — blob `38f95287a5890d2b4a9afeb3e8edb2fb69af04a2`.
+- [src/hooks/integrations/useMetaCAPIData.ts:17–44](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useMetaCAPIData.ts#L17-L44) — blob `e0d3466b7649e30d1d6f95fe712d51833418c05e`.
+
+### MOD-OBS-021 — Testes dos auxiliares cobrem formato e som sem fechar os novos contratos de fronteira
+
+**Classificação:** SPECIFIC_TEST_LIMITS.
+
+useTodayHourlyVolume.test chama o agregador real, mas monta relógio e day do fixture no mesmo fuso local; não simula buckets SQL de São Paulo com navegador em UTC. useRecentConversationEvents.test testa somente eventText, não o fallback/lookup/query. Os testes WarRoomAlerts usam violações vazias ou mocks sem coleção de violações e verificam existência/array/volume; o teste de mute entrega um INSERT manual e verifica play. Têm valor nesses contratos estreitos, sem verificar idempotência com >50 violações e republicação de página. useDashboardUrlFilters.test simula useSearchParams diretamente e testa callbacks/roundtrip; não monta MemoryRouter nem comprova um calendário de dias inválidos. Nenhuma suíte foi executada.
+
+**Referências de relação:** DASH-ACCEPTANCE-001, R2-MOD-074, R2-MOD-075.
+
+- [src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts:4–56](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts#L4-L56) — blob `3ef4669e48374ddc940312abf2ef196c90d2e2cc`.
+- [src/hooks/dashboard/__tests__/useRecentConversationEvents.test.ts:1–29](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useRecentConversationEvents.test.ts#L1-L29) — blob `de0618a5353e6d33e448d58acf5de5cf613a153a`.
+- [src/hooks/__tests__/useWarRoomAlerts.test.tsx:55–115](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useWarRoomAlerts.test.tsx#L55-L115) — blob `1dac6cacbebe56679921b7d81479b2e848174ef3`.
+- [src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx:71–113](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx#L71-L113) — blob `18d1541040a1f2402dfaed44d9547e2a30e0ddb4`.
+- [src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx:4–18](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx#L4-L18) — blob `2bf3a2c258c110d50936a69bf3b92774633284dc`.
+- [src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx:73–110](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx#L73-L110) — blob `2bf3a2c258c110d50936a69bf3b92774633284dc`.
+
+### MOD-OBS-022 — Auxiliares finais: erros secundários e limites que não foram promovidos
+
+**Classificação:** LIMITED_CONTRACT_OBSERVATIONS.
+
+Eventos recentes têm janela24h e fallback para consulta sem embed; falha da consulta principal é lançada. Já os erros nos lookups de contatos/perfis/filas são ignorados e o ator pode cair em Sistema apesar de performed_by preenchido. QueueHealth preserva null para SLA ausente em vez de afirmar100. URL filters usa calendário do aplicativo, mas parse de data aceita normalização de Date e não impõe from<=to; não foi mostrado um formulário atual que produza datas inválidas. TranscriptionAudio ignora error da assinatura e pode manter Pausar sem áudio disponível; o helper de volume usa layout effect em cada commit, portanto a hipótese de volume não aplicado por montagem após loading foi rejeitada. Os helpers de URL/volume estão integralmente no relatório Inbox; não se duplica uma análise de seu kernel.
+
+**Referências de relação:** DASH-METRICS-001, R2-MOD-077.
+
+- [src/hooks/dashboard/useRecentConversationEvents.ts:45–95](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useRecentConversationEvents.ts#L45-L95) — blob `a7b43b2f40aebd1e6d10ec0a59840d48391b7674`.
+- [src/hooks/dashboard/useQueueHealth.ts:26–45](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useQueueHealth.ts#L26-L45) — blob `c0e8eea5ac0c8844a787fc8cc564e08edac1a734`.
+- [src/hooks/dashboard/useDashboardUrlFilters.ts:55–81](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/useDashboardUrlFilters.ts#L55-L81) — blob `3fd3df0971a8fbf132caa26fd324bbb928ff2a6b`.
+- [src/components/transcriptions/TranscriptionContactGroup.tsx:34–42](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionContactGroup.tsx#L34-L42) — blob `4eef0fd214e9d01ef6c8df5b16b6d5f1709cf9a3`.
+- [src/components/transcriptions/TranscriptionContactGroup.tsx:110–118](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/transcriptions/TranscriptionContactGroup.tsx#L110-L118) — blob `4eef0fd214e9d01ef6c8df5b16b6d5f1709cf9a3`.
+- [src/hooks/communication/useMediaElementVolume.ts:40–60](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useMediaElementVolume.ts#L40-L60) — blob `2cadfe5febb85a3a502c75f43f5bdf275abb9c44`.
+
 ## Artefatos e reprodução
 
 - `findings.json`: achados, hipóteses adiadas, relação anterior, precondições, critérios e evidências imutáveis.
 - `coverage.json`: inventário delimitado, nível de leitura, declarações/faixas realmente lidas e lacunas.
 - `second-pass-observations.json`: limites concretos dos testes e extensões de famílias já registradas, sem aumentar a contagem.
-- `proofs.json` e `offline_probes.cjs`: 14 provas isoladas e respectivas limitações.
+- `proofs.json` e `offline_probes.cjs`: 18 provas isoladas e respectivas limitações.
+- `final-frontend-proofs.json` e `final_frontend_probes.cjs`: três provas isoladas do último recorte de produção.
+- `vendor/report.md`, `vendor/coverage.json`, `vendor/contracts.json` e `vendor/proofs.json`: revisão separada dos 208 corpos do fornecedor, contrato confirmado, ramos sem consumidor demonstrado e três probes numéricos/de emissão.
+- `test-review.json` e `test-review.md`: adjudicação dos 73 testes finais, com controles positivos, mocks, limites e hashes; `build_test_review.py` valida faixas completas sem executar suítes.
 - `read-journal.jsonl`: diário bruto de leitura; a cobertura consolidada agrupa as releituras usadas para recuperar saídas truncadas.
+- `shell-review.json` / `shell-review.md`: 13 scripts shell e 3.608 linhas lidos integralmente, mais dependência Python de 85 linhas; nenhum script ou SQL executado. Incorporados após o gate adicional de linguagens.
+- `database-peer-test-review.json` / `.md`: 52 testes complementares do roster Database, 4.082 linhas; artefato separado para integração do dono e deduplicação do único overlap.
 - `candidates.json`, `adjudications.json` e `additional_findings.json`: trilha de candidatos e decisões de classificação.
 - `build_reports.py`: montagem e validação de paths/faixas/blobs contra o manifesto fixado.
 

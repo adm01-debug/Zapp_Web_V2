@@ -2,7 +2,7 @@
 
 Baseline: `da307ba5626dce892f0b37cb6762463f55d14a96`. Escopo: leitura de fonte e documentação com probes sintéticos offline. Comparação: 104 achados anteriores e tarefas P006 preservadas.
 
-## Resultado: 25 mecanismos adicionais (8 P1, 17 P2)
+## Resultado: 43 mecanismos adicionais (8 P1, 31 P2, 4 P3)
 
 Os caminhos mais graves são o ensaio de deploy que ainda escreve secrets, a publicação de artifact após falha da remoção de secrets, o DSN endurecido que é sobrescrito, os contratos Bash entregues a psql, e mutações E2E fora do dado de teste. Os probes demonstram defeitos no código local; não houve deploy, SQL, login, envio de mensagem, consulta de configuração real ou teste de produção.
 
@@ -37,6 +37,26 @@ O runner de runtime tem 12 arquivos de contrato, todos iniciados por Bash. Exist
 | R2-INF-023 | P2 | Revalidação de contexto fora da RPC deixa análise antiga substituir uma projeção concorrente | novo; lote IA delegado |
 | R2-INF-024 | P2 | Sugestões com JSON inválido para o contrato chegam à interface ou viram frases fixas sem sinal de degradação | novo; lote IA delegado |
 | R2-INF-025 | P2 | Reescrita atrasada substitui edição mais nova do mesmo rascunho | novo; lote IA delegado |
+| R2-INF-026 | P2 | Diagnóstico marca falhas rápidas de banco/Storage e Realtime não testado como saudáveis | novo; lote observabilidade delegado |
+| R2-INF-027 | P2 | SLA de 24h e disponibilidade de 7 dias usam janela selecionada e aprovam ausência de checks | novo; lote observabilidade delegado |
+| R2-INF-028 | P2 | Gráfico de mensagens perde linhas válidas ao montar buckets de 7 dias e colapsa buckets de 1 hora | novo; lote observabilidade delegado |
+| R2-INF-029 | P2 | Score de desempenho trata APIs ausentes como memória livre, RTT zero e conexão 4g | novo; lote observabilidade delegado |
+| R2-INF-030 | P2 | Limpar snapshots informa remoção mesmo quando DELETE devolve erro | novo; lote observabilidade delegado |
+| R2-INF-031 | P3 | Coletor local rotula agregações incompatíveis como CLS e INP | novo; lote observabilidade delegado |
+| R2-INF-032 | P2 | Busca antiga do catálogo pode substituir os resultados da consulta atual na paleta | novo; lote UI/effects/performance |
+| R2-INF-033 | P2 | Três ações padrão da paleta são exibidas sem executor e apenas fecham o diálogo | novo; lote UI/effects/performance |
+| R2-INF-034 | P3 | Acesso rápido inicial fica fora da navegação por setas e Enter da paleta | novo; lote UI/effects/performance |
+| R2-INF-035 | P3 | Progress aplica value à barra visual e o descarta antes do Root semântico | novo; lote UI/effects/performance |
+| R2-INF-036 | P3 | Checklist marca tema como concluído quando a consulta não devolve configuração | novo; lote layout/onboarding |
+| R2-INF-037 | P2 | Controle de movimento reduzido e transições de rota usam preferências desconectadas | novo; lote layout/onboarding |
+| R2-INF-038 | P2 | Tour padrão aponta para dois alvos ausentes e avança até a conclusão sem mostrá-los | novo; lote layout/onboarding |
+| R2-INF-039 | P2 | Modais próprios anunciam modalidade sem implementar o contrato de foco | novo; lote layout/onboarding |
+| R2-INF-040 | P2 | Falha de leitura da telemetria aparece como sistema com bom desempenho | novo; telemetria e tratamento de erros |
+| R2-INF-041 | P2 | ErrorBoundary ignora fallback nulo usado para retirar overlays com falha | novo; telemetria e tratamento de erros |
+| R2-INF-042 | P2 | Gate E98 de contraste descarta violações serious da regra que promete proteger | novo; testes e contratos de prova |
+| R2-INF-043 | P2 | Fixture para dispensar onboarding procura nome acessível removido e deixa o modal ativo | novo; testes e contratos de prova |
+
+
 
 ## Evidência executada e limites
 
@@ -46,30 +66,41 @@ O runner de runtime tem 12 arquivos de contrato, todos iniciados por Bash. Exist
 
 ## Cobertura real desta área
 
-Foram inventariados 557 arquivos: 200 com revisão semântica, 35 com revisão dirigida e 322 com revisão estrutural. A segunda passagem registra 93 arquivos com faixas, SHA256, consumidor, efeitos e avaliação própria; 91 foram lidos integralmente e dois arquivos de ambiente apenas por nomes. Esses números são leitura de fonte, não cobertura de execução.
+Foram inventariados 785 arquivos: 505 com revisão semântica, 55 com revisão dirigida e 225 com revisão estrutural. A segunda passagem registra 93 arquivos com faixas, SHA256, consumidor, efeitos e avaliação própria; 91 foram lidos integralmente e dois arquivos de ambiente apenas por nomes. Esses números são leitura de fonte, não cobertura de execução.
 
 | Camada | Semântica | Dirigida | Estrutural | Total |
 |---|---:|---:|---:|---:|
 | ai_delegated | 12 | 0 | 0 | 12 |
 | ai_support | 6 | 22 | 0 | 28 |
-| config_and_support | 23 | 6 | 3 | 32 |
-| e2e | 6 | 3 | 71 | 80 |
+| config_and_support | 25 | 6 | 1 | 32 |
+| e2e | 38 | 0 | 42 | 80 |
+| entrypoint_support | 3 | 0 | 0 | 3 |
 | infrastructure | 5 | 0 | 0 | 5 |
+| layout_onboarding_delegated | 25 | 0 | 0 | 25 |
+| layout_onboarding_support | 11 | 9 | 0 | 20 |
+| observability_delegated | 27 | 0 | 0 | 27 |
+| observability_support | 7 | 3 | 0 | 10 |
 | scripts/catalog | 2 | 0 | 0 | 2 |
-| scripts/ci | 30 | 0 | 42 | 72 |
-| scripts/db-audit | 63 | 1 | 119 | 183 |
+| scripts/ci | 64 | 0 | 8 | 72 |
+| scripts/db-audit | 75 | 1 | 107 | 183 |
 | scripts/db-tests | 6 | 0 | 0 | 6 |
-| scripts/edge-deploy | 16 | 0 | 16 | 32 |
+| scripts/edge-deploy | 27 | 0 | 5 | 32 |
 | scripts/graphify | 1 | 0 | 0 | 1 |
-| scripts/lib | 1 | 0 | 1 | 2 |
+| scripts/lib | 2 | 0 | 0 | 2 |
 | scripts/mutation | 1 | 0 | 1 | 2 |
 | scripts/qa | 6 | 0 | 1 | 7 |
-| scripts/talkx | 2 | 0 | 1 | 3 |
+| scripts/talkx | 3 | 0 | 0 | 3 |
 | scripts/team-chat-db-validate.mjs | 1 | 0 | 0 | 1 |
-| scripts/team-chat-db-validate.unit.mjs | 0 | 0 | 1 | 1 |
+| scripts/team-chat-db-validate.unit.mjs | 1 | 0 | 0 | 1 |
 | scripts/ui-audit | 3 | 0 | 0 | 3 |
-| src/test | 0 | 0 | 8 | 8 |
-| tests/contracts | 0 | 3 | 58 | 61 |
+| shell_contract_support | 0 | 2 | 0 | 2 |
+| src/test | 2 | 0 | 6 | 8 |
+| telemetry_error_delegated | 7 | 0 | 0 | 7 |
+| telemetry_error_support | 3 | 1 | 0 | 4 |
+| test_review | 31 | 0 | 0 | 31 |
+| tests/contracts | 4 | 3 | 54 | 61 |
+| ui_performance_delegated | 87 | 0 | 0 | 87 |
+| ui_performance_support | 4 | 8 | 0 | 12 |
 | workflows | 16 | 0 | 0 | 16 |
 
 Wiring preservado: 16 workflows, 72 suites Edge .test.ts, 87 suites Node .unit/.test.mjs, 84 contratos .test.sh e 61 arquivos de contracts Vitest. A descoberta e os globs não comprovam cenários executados.
@@ -866,3 +897,970 @@ Os 21 achados INF anteriores e sua revisão de infraestrutura permanecem preserv
 - Helpers centrais ai-generate/ai-routing/ai-usage e migrações/RLS completas ficam com providers/database; somente faixas adicionais de suporte declaradas aqui.
 - Provas sintéticas usam funções puras/módulo local revisado e stubs; modelo do predicado SQL não é teste de PostgreSQL.
 - Consumidores fora das faixas declaradas, todos os layouts e toda combinação de provedor não foram promovidos a leitura integral.
+
+## Ampliação finita — observabilidade, diagnósticos e desempenho
+
+### Revisão de monitoramento, diagnósticos e desempenho
+
+Fonte fixa: `da307ba5626dce892f0b37cb6762463f55d14a96`. Leitura integral de 27 arquivos primários,4.550 linhas; 37 arquivos no lote incluindo apoios, 32 semânticos integrais e 5 dirigidos. Não houve execução do produto.
+
+## Resultado
+
+Seis achados adicionais: cinco P2 e um P3. Os seis casos sintéticos abaixo sustentam esses seis achados; não são seis descobertas adicionais. As rotas passam pelo gate de papéis/permissões do ViewRouter. Não há alegação de acesso anônimo, incidente de produção ou indisponibilidade real.
+
+| ID | Prioridade | Contrato observado |
+|---|---|---|
+| R2-INF-026 | P2 | Diagnóstico marca falhas rápidas de banco/Storage e Realtime não testado como saudáveis |
+| R2-INF-027 | P2 | SLA de 24h e disponibilidade de 7 dias usam janela selecionada e aprovam ausência de checks |
+| R2-INF-028 | P2 | Gráfico de mensagens perde linhas válidas ao montar buckets de 7 dias e colapsa buckets de 1 hora |
+| R2-INF-029 | P2 | Score de desempenho trata APIs ausentes como memória livre, RTT zero e conexão 4g |
+| R2-INF-030 | P2 | Limpar snapshots informa remoção mesmo quando DELETE devolve erro |
+| R2-INF-031 | P3 | Coletor local rotula agregações incompatíveis como CLS e INP |
+
+## Evidência comportamental delimitada
+
+| Probe | Fonte realmente executada | Fixture e resultado | Limite |
+|---|---|---|---|
+| INF-OBS-P01 | callback fetchSystemHealth | SELECT/List com error rápido → DB/Storage saudáveis; Realtime constante; Edge.error → degraded no controle | SDK e latência falsos; UI lida no fonte |
+| INF-OBS-P02 | fetchData + computeUptime | mesmos dois checks →100% em1h,50% em24h; vazio→100%/0checks | Não mede SLA real |
+| INF-OBS-P03 | fetchData e loop de buckets | duas mensagens7d →total2/plot1; seis âncoras1h→duas chaves | Dados completos e UTC explícito |
+| INF-OBS-P04 | collectMetrics | memória/rede ausentes→score100; controle observado90%/2g/500ms→63 | Payload capturado, sem INSERT |
+| INF-OBS-P05 | clearOldSnapshots | DELETE.error resolvido→sucesso/recarga; rejeição→toast.error | Nenhum DELETE real |
+| INF-OBS-P06 | módulo web-vitals completo em VM | CLS0.12 vs referência0.06; INP1000 vs160 em50interações | Coletor próprio local, sem Vercel RUM |
+
+Os sete arquivos executados como texto e o compilador foram verificados por SHA256 antes da importação do compilador. VM recebeu interfaces falsas explícitas; nenhum hook React, SDK, handler Edge ou biblioteca de analytics do produto foi importado. Compilar trechos com transpileModule não é typecheck, build ou suíte completa.
+
+## R2-INF-026 — Diagnóstico marca falhas rápidas de banco/Storage e Realtime não testado como saudáveis
+
+fetchSystemHealth mede a duração de consultas de banco e listagem de Storage, mas não inspeciona seus campos error. O status depende apenas de latência; um erro que retorna rápido vira healthy. Realtime é definido diretamente como healthy sem subscribe/ack/status. DiagnosticsView converte isso em Saudável, Canal de tempo real ativo e, quando a Edge também retorna sem erro, Todos os sistemas operacionais.
+
+**Precondições:** Usuário admitido no gate da rota abre diagnósticos. A consulta/listagem resolve com error em menos dos limiares500ms/1000ms, ou o canal Realtime está indisponível sem erro correspondente nas outras consultas.
+
+**Efeito:** O operador pode interpretar falha de permissão/serviço como saúde confirmada; o painel não distingue teste com falha, teste não realizado e sucesso. O achado não presume que todo error prove indisponibilidade global: ele prova que a saúde exibida não é sustentada pela coleta.
+
+**Evidência:**
+
+- `src/hooks/system/useDiagnosticsData.ts:137–167` — Duração usada como status; error ignorado e realtime constante. SHA256 `c665f66b86eb8a1116c77e34150d25fa0554a82e75684dc9c7ed867d4b46628a`.
+- `src/hooks/system/useDiagnosticsData.ts:249–275` — Coleta inicial/periódica e refresh. SHA256 `c665f66b86eb8a1116c77e34150d25fa0554a82e75684dc9c7ed867d4b46628a`.
+- `src/components/diagnostics/DiagnosticsView.tsx:31–42` — healthy é apresentado como Saudável. SHA256 `9e23c355bbd03e5be2ee5d8102d88b32d551505b8032156d42ae2d862092ed8d`.
+- `src/components/diagnostics/DiagnosticsView.tsx:72–86` — Realtime ativo sem medição e hook consumidor. SHA256 `9e23c355bbd03e5be2ee5d8102d88b32d551505b8032156d42ae2d862092ed8d`.
+- `src/components/diagnostics/DiagnosticsView.tsx:237–270` — Resumo de todos os sistemas operacionais. SHA256 `9e23c355bbd03e5be2ee5d8102d88b32d551505b8032156d42ae2d862092ed8d`.
+- `src/pages/ViewRouter.tsx:129–151` — Gate de autorização precede montagem do painel. SHA256 `6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530`.
+
+**Critérios de aceite:**
+
+- Representar sucesso, falha de coleta e não testado separadamente; só avaliar latência de resultado bem-sucedido.
+- Marcar Realtime a partir de estado/ack observado com validade temporal ou mostrar não medido.
+- Teste com SELECT/List retornando error rápido não pode produzir Saudável; falha de autorização deve ser distinguida de serviço fora do ar.
+- Manter controle existente de error nas Edge Functions e derivar resumo apenas de sinais válidos.
+
+**Limites:** Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão. Probe executa callback real com interfaces falsas; texto da UI foi verificado no fonte, sem renderização React. API001/API037 cobrem autorização e contagens globais da Edge webhook-diagnostic, que são mecanismos separados. Não se alegou acesso anônimo às rotas.
+
+## R2-INF-027 — SLA de 24h e disponibilidade de 7 dias usam janela selecionada e aprovam ausência de checks
+
+useMonitoringData consulta connection_health_logs a partir do período selecionado (padrão12h). computeUptime filtra mais24h sobre esse resultado já reduzido, sem recuperar as horas faltantes, e devolve100% quando não há checks. O mesmo estado abastece Uptime24h e SLA últimas24h; o heatmap7dias recebe os mesmos logs filtrados. Sua grade indica corretamente células sem dados, mas o badge agregado também mostra100% no vazio e o gauge de SLA diz Atingido.
+
+**Precondições:** Há seleção inferior à janela anunciada, ou o conjunto de checks resolvido está vazio. Para o caso numérico, um check saudável está na última hora e outro com falha está oito horas antes, ambos nas últimas24h.
+
+**Efeito:** Sem mudança dos checks, selecionar1h produz uptime100% e selecionar24h produz50%, enquanto o texto de SLA permanece24h. Zero checks resulta SLA atingido. Não é medida observada de disponibilidade ou violação real de contrato de serviço; é inconsistência na janela e na suficiência do dado usado pelo painel.
+
+**Evidência:**
+
+- `src/components/monitoring/hooks/useMonitoringData.ts:9–18` — Filtro adicional24h e default100% sem amostras. SHA256 `2f866d9a0e6d6ea033f64f2063f50feacf684c4a873616e3e0f408a2d079d7ee`.
+- `src/components/monitoring/hooks/useMonitoringData.ts:68–83` — Consulta limitada pelo período antes de calcular uptime. SHA256 `2f866d9a0e6d6ea033f64f2063f50feacf684c4a873616e3e0f408a2d079d7ee`.
+- `src/components/monitoring/hooks/useEvolutionMonitoring.ts:10–23` — Período inicial12h e encaminhamento da seleção. SHA256 `432cee260294b361c1d943bd2aa7043f60784c08290691ba8928b00692a6ab1d`.
+- `src/components/monitoring/MonitoringStatsCards.tsx:83–92` — Título Uptime24h e Sem dados apenas no subtítulo. SHA256 `6329681044c353e56a8cf0041dda9d663e55a3aee50090548caa5fcc59ee6237`.
+- `src/components/monitoring/MonitoringSLAPanel.tsx:16–42` — Gauge interpreta100 como SLA atingido. SHA256 `9b0edabce5756c3f769f552641ab09c5fda09c7faa524908e3196122e64b3cee`.
+- `src/components/monitoring/MonitoringSLAPanel.tsx:46–69` — Descrição últimas24h e counts. SHA256 `9b0edabce5756c3f769f552641ab09c5fda09c7faa524908e3196122e64b3cee`.
+- `src/components/monitoring/EvolutionMonitoringDashboard.tsx:310–328` — Mesmo dataset encaminhado ao SLA e heatmap. SHA256 `97802933f3d40202b9b802b28f0a90c1a671979e46e7aa37e82a04b703fea257`.
+- `src/components/monitoring/MonitoringAvailabilityHeatmap.tsx:43–89` — Grade 7 dias, células vazias diferenciadas e agregado vazio100. SHA256 `1aac00d58a918f0ba45d98c3df251108f0fa4c73fb63e99d7a4b03e88741c6b0`.
+
+**Critérios de aceite:**
+
+- Consultar a janela prometida por cada painel ou ajustar seu título, critério e tooltip à seleção efetiva.
+- Representar ausência de checks como dado insuficiente, sem sucesso do SLA ou porcentagem100 por default.
+- Definir e mostrar janela real/quantidade/cobertura de checks; tratar limite2000 e paginação antes de afirmar completude.
+- Fixar teste com check falho fora de1h mas dentro de 24h, e caso zero checks; preservar o estado cinza correto da grade.
+
+**Limites:** Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão. Probe usa duas linhas sintéticas e queries filtradas em memória; nenhum dado real de disponibilidade foi coletado. Porcentagem de checks não é automaticamente disponibilidade ponderada por duração. Esta auditoria não impõe uma nova definição de SLA; exige coerência com a janela/estado anunciados. Rótulos adicionais Checks(7d) sobre últimos50 e Última hora sobre health logs sem cutoff constam da cobertura como extensões de apresentação, sem novos IDs.
+
+## R2-INF-028 — Gráfico de mensagens perde linhas válidas ao montar buckets de 7 dias e colapsa buckets de 1 hora
+
+fetchData calcula buckets de tamanhos variáveis, mas usa chaves de hora civil tanto para a âncora quanto para cada mensagem. Em7d há sete âncoras diárias na hora atual; mensagens de outras horas do dia não encontram chave e são ignoradas no gráfico, embora contem no total. Em1h seis âncoras de10min geram chaves HH:00 repetidas, reduzindo a resolução a uma ou duas entradas.
+
+**Precondições:** Resposta de messages contém linhas válidas dentro do período selecionado; não depende de erro, truncamento de API ou dados malformados. Em7d ao menos uma mensagem está em hora diferente da âncora diária.
+
+**Efeito:** O volume/forma da série apresentados ao operador podem divergir do tráfego consultado. No probe, duas mensagens válidas somam total2 e apenas1 chega à área plotada; em1h seis buckets previstos viram dois.
+
+**Evidência:**
+
+- `src/components/monitoring/hooks/types.ts:3–13` — Duração e quantidade de buckets por período. SHA256 `4564f84805039c7199daca72211a4f91425e6e169bfa2a2f5f3ec941864286c9`.
+- `src/components/monitoring/hooks/useMonitoringData.ts:84–104` — Totais e chave por hora incompatível com bucketSize. SHA256 `2f866d9a0e6d6ea033f64f2063f50feacf684c4a873616e3e0f408a2d079d7ee`.
+- `src/components/monitoring/EvolutionMonitoringDashboard.tsx:196–206` — Cards e gráfico consomem o mesmo messageStats. SHA256 `97802933f3d40202b9b802b28f0a90c1a671979e46e7aa37e82a04b703fea257`.
+- `src/components/monitoring/MonitoringMessageChart.tsx:37–73` — Série e período são apresentados ao usuário. SHA256 `add3ef18394dd94b624f1272a6d528df92316ac76351004105b6013cd50ee4bf`.
+
+**Critérios de aceite:**
+
+- Agrupar por índice temporal floor((timestamp-início)/bucketSize), ou por uma política equivalente explicitamente definida, e formatar o rótulo somente após agrupar.
+- Garantir que cada mensagem elegível entre em exatamente um bucket e que soma dos buckets corresponda aos totais do mesmo conjunto.
+- Testar limites inicial/final, horas diferentes no mesmo dia em7d, seis intervalos10min em1h e fusos/virada de dia.
+
+**Limites:** Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão. Probe executa o callback real e as funções auxiliares com respostas completas em memória; usa UTC explicitamente. Não inferido volume real, limite efetivo do PostgREST ou comportamento em horário de verão a partir do caso sintético.
+
+## R2-INF-029 — Score de desempenho trata APIs ausentes como memória livre, RTT zero e conexão 4g
+
+collectMetrics transforma ausência de performance.memory em0MB/256MB e0% de uso, e ausência de navigator.connection em4g/RTT0. Esses valores recebem status good e entram com o mesmo peso no score; o payload salvo não inclui uma indicação de não medido. Navegação/pintura ausentes também viram0. A UI pode declarar Excelente com parcela relevante dos critérios inventada como default.
+
+**Precondições:** Navegador não fornece memory ou connection (ou entradas de timing ainda não estão disponíveis). Os demais critérios têm valores bons para o exemplo100; gravação real depende de profile.id e sucesso do INSERT.
+
+**Efeito:** O score e o histórico tentado confundem desconhecido com bom. No mesmo fixture de navegação/DOM, APIs ausentes dão100 pontos; memória90%,2g e RTT500 observados dão63. Isso não mede diferença real entre navegadores, apenas demonstra a contribuição indevida dos valores de substituição.
+
+**Evidência:**
+
+- `src/components/performance/PerformanceMonitor.tsx:26–56` — Defaults e critérios good das medições ausentes. SHA256 `a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1`.
+- `src/components/performance/PerformanceMonitor.tsx:70–97` — Score, payload e coleta periódica. SHA256 `a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1`.
+- `src/components/performance/PerformanceMonitor.tsx:165–187` — Texto Excelente e apresentação do score/histórico. SHA256 `a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1`.
+- `src/hooks/analytics/usePerformanceSnapshots.ts:32–55` — Payload segue para INSERT se profile existir. SHA256 `53af871c26874ca6981a66dc74d2926a1f5641c73bd077a577e9c4e4877d43d0`.
+- `src/pages/ViewRouter.tsx:80–84` — Rota produtiva de PerformanceMonitor. SHA256 `6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530`.
+
+**Critérios de aceite:**
+
+- Usar estado indisponível/não medido para APIs ou entries ausentes; não fabricar valor numérico normal.
+- Calcular score apenas sobre medições válidas e exibir sua cobertura, ou não emitir score quando a amostra for insuficiente.
+- Persistir validade/origem das medições para que histórico não trate defaults como observações.
+- Teste com memory/connection ausentes deve mostrar cobertura parcial e nenhum4g ou memória livre presumidos; controle com APIs válidas deve manter classificação correspondente.
+
+**Limites:** Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão. Callback real executado com objetos de navegador falsos; payload capturado em saveSnapshot falso, sem gravação real. Testes de metricThresholds isolados não provam a coleta: PerformanceMonitor possui thresholds inline; teste de suporte inicial foi lido, não executado como gate.
+
+## R2-INF-030 — Limpar snapshots informa remoção mesmo quando DELETE devolve erro
+
+clearOldSnapshots aguarda a cadeia delete().lt(), mas ignora o resultado com error. Como erro normal de SDK pode resolver a Promise, o catch não roda, o hook dispara Dados antigos removidos e recarrega histórico. O botão Limpar antigos da rota performance chama esse caminho diretamente.
+
+**Precondições:** A chamada DELETE retorna erro por envelope resolvido, em vez de lançar rejeição. Usuário está admitido na rota performance; não se pressupõe qual política/serviço originou o erro.
+
+**Efeito:** Confirmação falsa de uma ação solicitada e nenhuma orientação para tentar novamente ou corrigir a causa. O probe faz o mesmo callback mostrar sucesso para error resolvido e erro para Promise rejeitada.
+
+**Evidência:**
+
+- `src/hooks/analytics/usePerformanceSnapshots.ts:78–90` — Retorno de DELETE ignorado antes da confirmação. SHA256 `53af871c26874ca6981a66dc74d2926a1f5641c73bd077a577e9c4e4877d43d0`.
+- `src/components/performance/PerformanceMonitor.tsx:145–161` — Botão produtivo chama clearOldSnapshots. SHA256 `a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1`.
+- `src/hooks/analytics/usePerformanceSnapshots.ts:58–76` — loadHistory verifica seu próprio error, mas não confirma a remoção. SHA256 `53af871c26874ca6981a66dc74d2926a1f5641c73bd077a577e9c4e4877d43d0`.
+
+**Critérios de aceite:**
+
+- Inspecionar error do DELETE antes de anunciar sucesso e propagar causa de falha de forma tratável.
+- No erro, preservar estado e avisar que a limpeza não foi confirmada; não converter simples recarga em prova de remoção.
+- Cobrir envelope {error} e rejeição, mais controle de sucesso; manter período selecionado ao recarregar.
+
+**Limites:** Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão. Nenhuma exclusão real executada e nenhuma inferência de RLS/global delete baseada na ausência de filtro de profile_id. Hook coordenado com revisão de módulos: não há ID duplicado criado por ela para este callback.
+
+## R2-INF-031 — Coletor local rotula agregações incompatíveis como CLS e INP
+
+O observador CLS soma shifts por toda a sessão visível, sem separar janelas; o INP usa o maior duration bruto, sem contar interações ou desconsiderar um pico por 50. As definições atuais usam maior janela de shifts para CLS e descartam um maior valor de interação por 50 no INP. O erro se manifesta no Map/log do coletor próprio inicializado em main, cujo getRating consulta o budget correto sobre um valor agregado incorretamente.
+
+**Precondições:** Navegador fornece entries de layout-shift/event e ocorre flush. CLS: shifts separados por mais de1s; INP:50 interações distintas com um pico isolado.
+
+**Efeito:** Diagnóstico local contra o budget pode classificar estabilidade/responsividade incorretamente. No fixture, dois shifts0.06 separados por2s produzem0.12 em vez de0.06;50 interações com pico1000 e segundo valor160 produzem1000 em vez de160. PrioridadeP3 porque o consumidor confirmado é local/desenvolvimento: info é suprimido em produção e não foi identificado consumidor produtivo adicional de getWebVitalsReport.
+
+**Evidência:**
+
+- `src/lib/web-vitals.ts:34–64` — Threshold correto é aplicado ao valor agregado e salvo no Map/log. SHA256 `1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d`.
+- `src/lib/web-vitals.ts:111–141` — Soma de shifts e máximo bruto de event.duration. SHA256 `1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d`.
+- `src/lib/web-vitals.ts:143–166` — Flush por visibilidade/pagehide. SHA256 `1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d`.
+- `src/lib/web-vitals.ts:185–187` — Export de relatório local. SHA256 `1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d`.
+- `src/main.tsx:30–33` — Coletor próprio e Speed Insights são inicializações separadas. SHA256 `df91ccf7d1d34c0321952a8ac9dcf9849a8b8092190912382d16c3aa9c742a1f`.
+- `src/lib/logger.ts:50–64` — info/debug desativados fora de DEV. SHA256 `f45d5ba0fed8fcd36784de3223c995206f9767e7c961d5dab5f4badca8e1666e`.
+- `src/lib/__tests__/web-vitals-budget.test.ts:22–49` — Teste verifica targets/rating, sem exercitar observadores ou agregação. SHA256 `3990316d15c353fbc44f021f7e0a3c273fb96e66c9e8b1bf408d231ce15c481e`.
+
+**Critérios de aceite:**
+
+- Usar implementação mantida das métricas ou implementar integralmente janelaCLS e cálculoINP por interação com os limites definidos.
+- Preservar o consumo dos thresholds do budget, separado da medição do valor.
+- Comparar fixtures de shifts separados/mesma janela e49/50+ interações com referência; incluir visibilidade e BFCache conforme a política adotada.
+- Não usar o resultado local como prova de métricas do Speed Insights sem demonstrar a cadeia real de dados.
+
+**Limites:** Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão. Probe executa o módulo completo em VM com PerformanceObserver/DOM/logger falsos e entradas sintéticas; não certifica Web Vitals de browser ou tráfego real. Nenhuma falha atribuída à coleta independente do Speed Insights ou aos gates de tamanho de bundle. P008E36 e P041033 já são PARTIAL; apenas o subcontrato do coletor local recebe evidência adicional.
+
+**Planos:** P008/E36 permanece PARTIAL: Agregação CLS/INP do coletor próprio, sem alterar aceite de budget ou statusPARTIAL.; P041/033 permanece PARTIAL: Coletor local e qualidade do valor; envio/RUM independente continua com limites já registrados.
+
+**Definições primárias consultadas:** [CLS](https://web.dev/articles/cls) e [INP](https://web.dev/articles/inp), consultadas em04/10/2026. A primeira usa a maior janela de shifts; a segunda descarta um pico por 50interações. Essas definições fundamentam somente a referência dos fixtures do coletor local.
+
+## Controles preservados e observações sem novo ID
+
+- O roteador espera papéis/permissões e nega acesso antes de montar views restritas. Os achados de UI pressupõem admissão no gate.
+- ConnectionHealthPanel faz polling de dados armazenados com sinal/timeout e usa ação manual para a Edge. Não se atribuiu auto-fix a esse polling.
+- A grade do heatmap diferencia corretamente células sem dados. A falha está no agregado/janela anunciados, não na cor de toda célula vazia.
+- O cartão Checks(7d) de ConnectionHealthPanel usa os últimos50checks, sem cutoff7d; MonitoringEventTimeline mistura mensagens1h com15healthlogs sem cutoff1h. São extensões do contrato temporal documentadas na cobertura, sem multiplicar o número de mecanismos.
+- Conectar/reiniciar trata data.error===true; não foi registrada falha genérica de toast nesses ramos.
+- HotRoutePrefetcher está montado, respeita saveData/2g e tem cancel flag para novos imports. Ganho de navegação permanece sem medição, coerente com P008E35.
+- OptimizedImage/Avatar, VirtualizedList/Grid e Prefetcher legado tiveram leitura integral, mas a busca de consumidores produtivos só encontrou definições/exports nos caminhos relevantes. Estados de imagem ou callbacks de fim latentes não foram promovidos a problemas de fluxo ativo.
+- Testes de threshold/getRating não exercitam automaticamente coleta; o teste web-vitals-budget completo valida a origem dos alvos, não o algoritmo dos observadores.
+- SentryIntegrationView, AIProviderHealthPanel, webhook-diagnostic e Shadow Webhooks ficaram com providers; nenhum achado novo deste lote os substitui.
+- A assertiva de400–700LIDs está no relatório histórico de replay. Sua descoberta por leitura integral é revalidação de limite conhecido, não novo incidente.
+
+## Cobertura por arquivo
+
+observability-coverage.json contém SHA256, contagem de linhas, faixa lida e avaliação de função/ramo por arquivo. Todos os27 primários estão com 1–EOF. Apoios de rota, main, Index e teste parcial continuam dirigidos. src/hooks/monitoring não existe nesta fonte.
+
+| Arquivo | Nível | Faixas | Avaliação |
+|---|---|---|---|
+| `src/components/monitoring/MonitoringDiagnosticPanel.tsx` | semantic | 1–202 | Execução manual do diagnóstico, erro/loading, metadados, recomendações e exportação TXT/PDF. Confronto de dados da Edge com os rótulos; autorização/backend e estatística global permanecem API001/API037, sem nova contagem. |
+| `src/components/performance/PerformanceMonitor.tsx` | semantic | 1–291 | collectMetrics: Navigation/Paint, memória/rede opcionais, classificação, score, snapshot e timer; histórico/seleção/limpeza e JSX. Ausência de APIs vira valores bons no score; cleanup depende de hook externo. Métricas de cache locais não certificam taxa real. |
+| `src/lib/web-vitals.ts` | semantic | 1–187 | Observadores LCP/FID/CLS/INP, inicialização idempotente, Map limitado por nome, visibilidade, TTFB e thresholds do budget. CLS soma shifts sem janela dentro do ciclo visível e INP usa máximo bruto; efeito restrito ao coletor local, separado do Speed Insights. |
+| `src/components/diagnostics/DiagnosticsView.tsx` | semantic | 1–324 | Cards de conexões/mensagens, HealthBadge, textos de estado operacional, erros e Refresh; segue o hook useDiagnosticsData. Realtime ativo é afirmado a partir de constante, e erros rápidos da coleta podem virar saudáveis. |
+| `src/components/monitoring/MonitoringStatsCards.tsx` | semantic | 1–164 | Indicadores por dados, empty state, ratio e sparkline; uptime anunciado 24h vem do período selecionado. Texto Sem dados preservado no subtítulo, mas valor e estilo ainda vêm de 100% por default. |
+| `src/components/monitoring/EvolutionMonitoringDashboard.tsx` | semantic | 1–346 | Composição de período, notificações, conexões, webhook, diagnóstico, SLA, heatmap e loading; rastreado que os mesmos healthLogs filtrados abastecem cartões 24h e grade 7d. LastUpdatedBadge exibe relógio, não reivindicação explícita de última coleta. |
+| `src/components/monitoring/MonitoringConnectionsList.tsx` | semantic | 1–135 | QR/conectar/reiniciar por instância, chave de pendência, status/latência e mensagens de erro. Ramos data.error===true são tratados; ausência de QR retorna informação. Nenhum envio real ou reinício executado. |
+| `src/hooks/system/useDiagnosticsData.ts` | semantic | 1–288 | Todas as consultas, contagens, erros recentes, saúde DB/Storage/Edge/Realtime, atualização e polling. Retornos error não lançados são ignorados em várias consultas; latência é usada como sucesso e realtime não é testado. |
+| `src/components/monitoring/hooks/useMonitoringData.ts` | semantic | 1–115 | computeUptime, uptime por instância, sparkline, consultas por período, limites, totais e formação de buckets. Vazio vira100%, consulta já limita janela e chaves por hora divergem de buckets 10min/1d. Erros e concorrência de fetch ficam explicitados. |
+| `src/components/monitoring/MonitoringAvailabilityHeatmap.tsx` | semantic | 1–151 | Grade7d/24h, agrupamento de checks, tooltip, ratio e cores. Células sem dados são corretamente cinzas; agregado vazio=100 e dados recebidos podem ser apenas1h/12h. Não se atribuiu saúde a cada célula vazia. |
+| `src/components/performance/OptimizedImage.tsx` | semantic | 1–296 | IntersectionObserver, lazy image, skeleton, src/srcset/error/load, prioridade, estilos e OptimizedAvatar. Estados não reiniciam em troca de src e props podem substituir handlers, mas busca produtiva só encontrou exports/definições: limitações latentes, sem novo achado de fluxo ativo. |
+| `src/components/monitoring/MonitoringEventTimeline.tsx` | semantic | 1–209 | Carga de mensagens1h e últimos15 health logs, merge/ordem/corte, filtro, pausa e intervalo15s. Health logs sem filtro1h podem aparecer sob Última hora; tabela deixa sua idade visível. Nenhuma alegação de canal realtime foi inferida de LiveDot. |
+| `src/components/diagnostics/ConnectionHealthPanel.tsx` | semantic | 1–270 | Consultas com AbortSignal/timeout, polling visível de dados armazenados, execução manual, resumo/status/histórico. Polled fetch não invoca auto-fix. Checks(7d) usa últimos50 sem filtro temporal; ausência de latência contribui0 na média. |
+| `src/components/performance/VirtualizedList.tsx` | semantic | 1–264 | Virtualizer, medições/overscan/keys/scroll, empty/loading/end reached e VirtualizedGrid. Callbacks de fim/guardas de coluna têm contratos latentes; nenhum consumidor JSX produtivo encontrado no escopo de busca. Sem promover export a bug ativo. |
+| `src/components/monitoring/MonitoringWebhookPanel.tsx` | semantic | 1–176 | Estado/filtros/eventos esperados, cópia, configuração e verificação manual; erros da API tratados. Configuração única e check por instância foram cruzados com API037; nenhum achado duplicado de tráfego global. |
+| `src/components/monitoring/hooks/useMonitoringActions.ts` | semantic | 1–88 | Invocações de obter/configurar/verificar webhook e diagnóstico, estados loading/result, toast e erros retornados/lançados. Somente leitura de fonte; mutações do handler ficam com providers. |
+| `src/components/monitoring/MonitoringHealthLogs.tsx` | semantic | 1–124 | Filtro/status/contadores/tabela, metadados, ordem e empty state; todos os cálculos são do dataset recebido. Não há prova de cobertura temporal maior que o fetch. |
+| `src/components/monitoring/MonitoringSLAPanel.tsx` | semantic | 1–148 | Meta99.5, attainment, progresso, contagem e detalhe por instância. Afirma últimas24h com stats derivados do período selecionado; zero amostras resulta Atingido por uptime100. |
+| `src/components/performance/Prefetcher.tsx` | semantic | 1–187 | Prefetch por hover/delay, hooks/cleanup, loader catch, CriticalRoutePrefetcher e resource hints. Caminhos legados sem consumidor produtivo encontrado; sem inferir ganho de navegação ou bug ativo só por export. |
+| `src/components/monitoring/hooks/useMonitoringNotifications.ts` | semantic | 1–70 | Estado anterior, transição de conexão, mute/volume/horário silencioso, áudio e desktop notification. Contextos de áudio e preferências de notificação registrados como fronteira de revisão; sem chamar Notification/áudio reais. |
+| `src/components/performance/LazyRoutes.tsx` | semantic | 1–161 | Mapas de imports dinâmicos, fallbacks Suspense, factory/HOC e placeholders. Exports e nomes conferidos; presença de lazy wrapper não é métrica de bundle/runtime. |
+| `src/components/performance/HotRoutePrefetcher.tsx` | semantic | 1–59 | Uso ativo pelo Index, política saveData/2g, idle/timer, fila de imports, captura de falha e cancel flag. Cancelamento impede novos imports; não alegado cancelamento de import em andamento. |
+| `src/components/monitoring/MonitoringMessageChart.tsx` | semantic | 1–83 | Selecionador de período, toggle enviados/recebidos, área/tooltip e ligação hourlyData. Não reconcilia soma plotada com total consultado; consumidor do defeito de buckets. |
+| `src/components/performance/metricThresholds.ts` | semantic | 1–19 | Funções puras de limiares; sem estado desconhecido. PerformanceMonitor duplica limiares inline, portanto testes do helper isolado não provam o ramo de coleta no painel. |
+| `src/components/monitoring/hooks/useEvolutionMonitoring.ts` | semantic | 1–57 | Período inicial12h, refetch, interval, listener de conexão, troca de período e exposição de estados/actions. Sem request fence/abort entre períodos; janela de healthLogs é a seleção atual. |
+| `src/components/performance/hotRoutePrefetch.ts` | semantic | 1–40 | Tabela das cinco views quentes e decisão por connection/saveData/2g. Nenhum import é executado na declaração; decisão desconhecida permite prefetch. |
+| `src/components/monitoring/MonitoringSkeletons.tsx` | semantic | 1–96 | Skeletons acessíveis dos painéis, estrutura, variabilidade visual e nenhum efeito de produto; leitura completa sem achado novo. |
+| `src/components/monitoring/hooks/types.ts` | semantic | 1–90 | Tipos de conexão/check/mensagem/uptime, periodMs/bucketCounts e conjunto HEALTHY. Nenhum valor externo validado pelo TypeScript em runtime. |
+| `src/components/performance/index.ts` | semantic | 1–16 | Barrel de exports completo; existência de export não promove helper/virtualização a fluxo ativo. |
+| `src/hooks/analytics/usePerformanceSnapshots.ts` | semantic | 1–99 | Hook completo: insert de telemetria, query de histórico, auth/profile, janela/limite e clearOldSnapshots. DELETE resolve com error e ainda anuncia sucesso; não inferida RLS/visibilidade global a partir da falta de filtro. |
+| `src/lib/logger.ts` | semantic | 1–131 | Logger completo, correlação e filtros DEV. info/debug são suprimidos fora de DEV: resultados do coletor Web Vitals não foram atribuídos a logs de produção ou a Speed Insights. |
+| `src/pages/ViewRouter.tsx` | targeted | 1–155 | Mapa das rotas diagnostics/performance/evolution-monitor e gate NavigationService.canAccess após carga de papéis/permissões. Consumo efetivo demonstrado, não alegação de acesso anônimo. |
+| `src/pages/lazyViews.ts` | targeted | 1–60 | Bindings lazy dos três painéis e demais exports no trecho. Não promovida leitura das linhas finais não vistas. |
+| `src/pages/Index.tsx` | targeted | 20–40, 115–148 | Binding lazy e montagem ativa de HotRoutePrefetcher em Suspense. Trechos restantes fora deste lote. |
+| `src/main.tsx` | targeted | 1–50 | Inicialização do coletor manual e import separado de Speed Insights; handlers de erro e preparação do root. Não confundir os dois canais de coleta. |
+| `src/components/performance/__tests__/PerformanceMonitor.test.tsx` | targeted | 1–140 | Inspeção inicial do teste/mocks de navegação, memória/rede e painel. Sem execução ou alegação de cobertura dos demais casos não lidos. |
+| `src/lib/__tests__/web-vitals-budget.test.ts` | semantic | 1–50 | Teste integral verifica origem dos thresholds via mock e getRating; não alimenta PerformanceObserver nem comprova agregação CLS/INP. |
+
+## Lacunas remanescentes
+
+- Sem observação em browser real, permissões atuais, dados de produção, SDK de navegador ou métricas de usuário.
+- Ramos latentes de componentes exportados sem consumidor produtivo não viraram falhas alcançáveis por suposição.
+- Não é revisão integral de todos os testes nem de diretórios vizinhos; limites dos apoios permanecem nas faixas por arquivo.
+
+Nenhum pedido de deploy, SQL, credenciais ou teste de produto é necessário para revisar estes resultados. Correções de produção ficam para etapa autorizada própria; a entrega atual preserva a fonte auditada.
+
+## Ampliação finita — UI, efeitos e hooks de performance
+
+### Revisão de UI, efeitos e hooks de performance
+
+Fonte fixa `da307ba5626dce892f0b37cb6762463f55d14a96`. Todos os87 arquivos primários foram lidos integralmente:78 em UI,5 em effects e4 hooks de performance, somando10.095 linhas. O inventário com apoios tem101 caminhos, com91 leituras integrais e10 dirigidas. Nenhum arquivo de produto foi alterado.
+
+## Resultado delimitado
+
+| ID | Prioridade | Contrato |
+|---|---|---|
+| R2-INF-032 | P2 | Busca antiga do catálogo pode substituir os resultados da consulta atual na paleta |
+| R2-INF-033 | P2 | Três ações padrão da paleta são exibidas sem executor e apenas fecham o diálogo |
+| R2-INF-034 | P3 | Acesso rápido inicial fica fora da navegação por setas e Enter da paleta |
+| R2-INF-035 | P3 | Progress aplica value à barra visual e o descarta antes do Root semântico |
+
+Quatro casos de prova confirmam esses quatro registros; não são quatro defeitos adicionais. A ordem de resolução, a filtragem e os handlers vêm do texto de fonte fixado. SHA256 dos sete arquivos do probe e do compilador é validado antes da importação do compilador. O pacote de produto, SDK, rede e banco não são fornecidos à VM.
+
+## Probes e controles
+
+| Probe | Execução delimitada | Controle |
+|---|---|---|
+| INF-UI-P01 | Debounce real e callbacks de busca/agrupamento, A e B iniciadas, B resolve antes de A | Timers ainda pendentes coalescem; a falha depende de pedidos já iniciados |
+| INF-UI-P02 | Dados padrão, filtro e executor reais | nav-, action explícita e disabled mantêm seus efeitos esperados |
+| INF-UI-P03 | Coleção e handler de teclado reais | Um item consultado entra em allItems e Enter o executa |
+| INF-UI-P04 | Módulo Progress completo com captura inerte de JSX | max e aria-label chegam ao Root; value não chega |
+
+Primeira execução do P01 usou await Promise.resolve() insuficiente para Promise entre VM/host e parou por TypeError antes de gravar resultado. Harness corrigido para aguardar a Promise exata do callback capturada na fronteira; quatro casos então passaram. Nenhuma falha desse harness virou achado.
+
+## R2-INF-032 — Busca antiga do catálogo pode substituir os resultados da consulta atual na paleta
+
+A paleta dispara um callback com debounce, mas toda resolução grava searchResults sem comparar a consulta ou geração corrente. O debounce só cancela timers ainda pendentes. Depois que A e B iniciaram, B pode terminar primeiro e ser substituída por A. O agrupamento concatena searchResults ao filtro da consulta atual sem refiltrar o resultado remoto.
+
+**Precondições:** Paleta aberta e duas consultas de pelo menos dois caracteres já iniciadas após o debounce. A consulta antiga resolve depois da atual, com conjunto diferente de produtos.
+
+**Efeito e alcance:** A entrada pode dizer vermelho e a seção Resultados mostrar produto azul da consulta anterior. O link preserva o ID do resultado antigo e abre o fluxo do catálogo para esse item se selecionado. Não há envio automático de mensagem. Um finally antigo também pode encerrar o indicador enquanto outra busca continua.
+
+**Evidência:**
+
+- `src/components/ui/command-palette.tsx:40–68` — Filtro local, concatenação de resultados e await sem geração. SHA256 `cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c`.
+- `src/components/ui/command-palette.tsx:70–94` — Mudança de consulta, executor e limpeza sem invalidar requisição em voo. SHA256 `cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c`.
+- `src/hooks/system/useDebounce.ts:7–20` — Cancela apenas timeout; callback iniciado não é abortado. SHA256 `e1a8716e995f6732963fd06d57df463dde9325aa55a96bfa29a2e9c7a24daba4`.
+- `src/components/keyboard/CommandPaletteHost.tsx:16–27` — Consumidor injeta busca real do catálogo. SHA256 `34609b36fb8616345b10f2b49f26bfeafaf03f70cb5090eb99b3b44cf3f30f97`.
+- `src/hooks/integrations/useCatalogQuickSearch.ts:9–31` — Query no endpoint e retorno de href por produto, sem geração. SHA256 `6e015b754e5e3f4d12867f3f7f864b37a2bd4447c29c8499805ba8a4942b2dc7`.
+- `src/components/keyboard/GlobalKeyboardProvider.tsx:58–63` — Host permanece montado após primeira abertura. SHA256 `16dcf2e44b55d936320e7da0d4677482b952e0d952840483632274d735feb020`.
+- `src/components/keyboard/GlobalKeyboardProvider.tsx:146–154` — Montagem da paleta atual. SHA256 `16dcf2e44b55d936320e7da0d4677482b952e0d952840483632274d735feb020`.
+- `src/App.tsx:124–143` — Provider atual envolve AppRoutes. SHA256 `3e05e3ea5f9c194799d123aa46a8dc80967dc8ef846f8efe7e97e8d96f659220`.
+
+**Critérios de aceite:**
+
+- Invalidar respostas anteriores a cada mudança de consulta, limpeza e fechamento; só a geração atual pode alterar resultados/loading.
+- Preservar debounce e usar cancelamento quando suportado, sem depender dele como única proteção contra resposta já resolvida.
+- Verificar A→B com resolução B→A, erro tardio de A, consulta vazia/curta e fechamento; uma resposta antiga não deve substituir nem apagar B.
+- Exercitar o callback consumidor e a seleção do produto, mantendo o ID associado à consulta atual.
+
+**Limites:** Fonte fixa; nenhuma escrita no produto, chamada de catálogo, SDK, SQL, envio, login ou deploy. Probe usa texto de fonte e fronteiras sintéticas; não certifica interação de navegador ou comportamento de tecnologia assistiva. Fixture usa dois resultados sintéticos e o debounce real com avanço manual de timers. Não invoca promogifts-catalog nem presume falha de RLS. A prova é a troca de consulta dentro da paleta; não se afirma vazamento entre contas ou envio involuntário.
+
+## R2-INF-033 — Três ações padrão da paleta são exibidas sem executor e apenas fecham o diálogo
+
+Nova conversa, Respostas rápidas e Atalhos de teclado são CommandItems de categoria action sem action nem href. executeCommand só trata callback, href ou id nav- e depois fecha incondicionalmente. O Host injeta itens Talk X e busca, mas não conecta handlers às três entradas padrão.
+
+**Precondições:** Usuário abre a paleta atual e busca um dos três títulos. Seleciona a entrada padrão habilitada, pelo clique ou pela lista consultada.
+
+**Efeito e alcance:** A operação anunciada não começa: não abre conversa, templates nem ajuda de atalhos. O fechamento aparenta ter aceitado o comando. Navegações nav- e itens com action explícita continuam funcionando no controle do probe.
+
+**Evidência:**
+
+- `src/components/ui/command-palette-data.tsx:39–43` — Três action-* sem action/href. SHA256 `5abe68e6324949e730211977509079358132b9c97bc31982c1e94984dcbc8cf5`.
+- `src/components/ui/command-palette.tsx:40–48` — Itens padrão entram na filtragem. SHA256 `cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c`.
+- `src/components/ui/command-palette.tsx:72–78` — Executor não despacha IDs action-* e fecha. SHA256 `cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c`.
+- `src/components/ui/command-palette.tsx:168–186` — Itens habilitados chamam executor. SHA256 `cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c`.
+- `src/components/keyboard/CommandPaletteHost.tsx:16–27` — Host não fornece handlers para defaults. SHA256 `34609b36fb8616345b10f2b49f26bfeafaf03f70cb5090eb99b3b44cf3f30f97`.
+- `src/components/keyboard/GlobalKeyboardProvider.tsx:146–154` — Consumer atual montado. SHA256 `16dcf2e44b55d936320e7da0d4677482b952e0d952840483632274d735feb020`.
+
+**Critérios de aceite:**
+
+- Conectar cada ação anunciada ao mecanismo real existente, com contexto/permissão necessários, ou removê-la/desabilitá-la com explicação quando não disponível.
+- Selecionar cada entrada deve abrir o fluxo indicado e produzir o efeito observável correspondente.
+- Manter controles para nav-, href, action explícita e disabled; não considerar o simples fechamento como sucesso de execução.
+
+**Limites:** Fonte fixa; nenhuma escrita no produto, chamada de catálogo, SDK, SQL, envio, login ou deploy. Probe usa texto de fonte e fronteiras sintéticas; não certifica interação de navegador ou comportamento de tecnologia assistiva. Não duplica a paleta antiga src/components/CommandPalette.tsx, governança de tags ou configuração global de atalhos. Nenhuma ação de negócio real foi executada pelo probe.
+
+## R2-INF-034 — Acesso rápido inicial fica fora da navegação por setas e Enter da paleta
+
+Com query vazia, groupedCommands é vazio e allItems também. Mesmo assim o JSX mostra cinco destinos de acesso rápido e destaca o índice0. O listener de teclado usa exclusivamente allItems: setas ficam no índice0 e Enter não executa item. A UI anuncia as duas teclas como navegação/seleção.
+
+**Precondições:** Paleta aberta, busca ainda vazia e foco no input de pesquisa. Usuário segue as dicas visíveis de setas e Enter.
+
+**Efeito e alcance:** O acesso rápido não funciona pelo caminho de teclado anunciado até que haja uma consulta. O clique e a navegação nativa por Tab permanecem alternativas; não se afirma bloqueio de toda operação por teclado.
+
+**Evidência:**
+
+- `src/components/ui/command-palette.tsx:50–62` — Lista de teclado vazia quando query vazia. SHA256 `cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c`.
+- `src/components/ui/command-palette.tsx:80–89` — Listener usa apenas allItems. SHA256 `cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c`.
+- `src/components/ui/command-palette.tsx:91–94` — Abertura dirige foco para o input. SHA256 `cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c`.
+- `src/components/ui/command-palette.tsx:115–119` — Dicas de setas e Enter. SHA256 `cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c`.
+- `src/components/ui/command-palette.tsx:143–155` — Cinco atalhos visíveis usam outra lista. SHA256 `cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c`.
+
+**Critérios de aceite:**
+
+- Construir uma coleção de itens visíveis usada pelo destaque, teclado e clique, incluindo acesso rápido quando query vazia.
+- Setas devem percorrer os itens exibidos e Enter deve executar o item destacado a partir do foco na busca.
+- Cobrir estados zero/um/vários resultados e manter comportamento de itens desabilitados; não depender de Tab/click para cumprir as dicas anunciadas.
+
+**Limites:** Fonte fixa; nenhuma escrita no produto, chamada de catálogo, SDK, SQL, envio, login ou deploy. Probe usa texto de fonte e fronteiras sintéticas; não certifica interação de navegador ou comportamento de tecnologia assistiva. Probe chama apenas agrupamento/lista e handler reais com evento sintético; não simula ativação nativa de botões ou ordem DOM. A falha é distinta das ações sem executor: aqui o destino nav-inbox tem executor, mas não entra na coleção do listener.
+
+## R2-INF-035 — Progress aplica value à barra visual e o descarta antes do Root semântico
+
+O wrapper remove value na desestruturação e o usa no transform do Indicator, mas não passa value para ProgressPrimitive.Root. O Root recebe os demais props. A API oficial usa Root.value para fornecer a medida do progresso; nos consumidores lidos nenhum aria-valuenow alternativo compensa a omissão.
+
+**Precondições:** Um consumidor monta Progress com value determinado. Consumidor não injeta manualmente o valor semântico por atributo alternativo; os caminhos inspecionados não o fazem.
+
+**Efeito e alcance:** O controle deixa de transmitir a medida pelo contrato semântico do Radix, embora a largura visual represente25% ou100%. O probe confirma a prop omitida. Textos percentuais adjacentes continuam existentes nos exemplos; não se afirma ausência total de informação para leitor de tela nem falha de envio.
+
+**Evidência:**
+
+- `src/components/ui/progress.tsx:6–19` — value sai dos props de Root e só alimenta transform. SHA256 `bdc4847f05de3aea1276966e0df9b4a293297f0ca7d7b430a1cb16cf5626728f`.
+- `src/components/catalog/CatalogBulkSendDialog.tsx:213–228` — Uso determinado com texto percentual adjacente. SHA256 `aa84d2e5e54f2667f870c1a91358fc79b0ed064b548e6ec0c8c9ea9e78a7fc14`.
+- `src/components/catalog/ExternalProductCatalog.tsx:709–721` — Montagem real do diálogo em massa. SHA256 `5658830363331ff54f5ec01121ce2eef2bfc9ed1aea8071ee51c4b5e4ac965e5`.
+- `src/components/inbox/FileUploader.tsx:178–185` — Upload passa value sem alternativa aria-valuenow. SHA256 `b3dee842e813c8c8b8c192f945dd096e6daba2de41163208fb26ff7a65acb0f9`.
+- `src/components/inbox/FileUploader.tsx:207–211` — Progresso da fila também usa wrapper. SHA256 `b3dee842e813c8c8b8c192f945dd096e6daba2de41163208fb26ff7a65acb0f9`.
+- `src/components/inbox/chat/ChatInputArea.tsx:210–216` — FileUploader no composer. SHA256 `2afe2fca8725cc54161998a384a3eb332cc2488e4535d97121f97a80fcbaf70c`.
+- `package.json:52–52` — Dependência Progress declarada. SHA256 `1f8a4113677be5d92b90ba65c6e98b7e807a3a9b499ada8ec35f6349220debcb`.
+- `bun.lock:382–382` — Versão1.1.16 fixada. SHA256 `81a17a8b7cc56ef4a9aa584cc341de640c0fe8d59fca3fc7b399431db10a695f`.
+
+**Critérios de aceite:**
+
+- Encaminhar value ao Root e manter medida visual/semântica coerentes, incluindo zero,100 e indeterminado.
+- Verificar o DOM gerado com a dependência fixada: role e valor/estado acessível devem refletir a medida recebida.
+- Manter texto contextual e nome acessível adequados no consumidor; a correção de props não é prova de aceitação completa por tecnologia assistiva.
+
+**Limites:** Fonte fixa; nenhuma escrita no produto, chamada de catálogo, SDK, SQL, envio, login ou deploy. Probe usa texto de fonte e fronteiras sintéticas; não certifica interação de navegador ou comportamento de tecnologia assistiva. Documentação primária consultada em04/10/2026. Não foi baixado/importado o pacote Radix1.1.16; duas tentativas de consultar o código GitHub foram bloqueadas pelo provedor de pesquisa. Probe captura o JSX produzido pelo wrapper com tipos inertes; não simula o algoritmo interno do Radix nem relata aria-valuenow observado em browser. P3 delimitado pela existência de textos de progresso adjacentes e ausência de efeito sobre a operação de upload/envio.
+
+**Contrato primário:** [Progress — Radix](https://www.radix-ui.com/primitives/docs/components/progress), consultado em04/10/2026. A API/exemplo fornece a medida em Root.value. Esta é documentação geral, não captura de execução da versão1.1.16.
+
+## Adjudicação de planos
+
+- P010/56 DONE_VERIFIED certifica remoção de nav-tags; continua preservado e não é reaberto pelos novos defeitos de busca/execução.
+- P015/E38 do catálogo e P043/E26 são SUPERSEDED; a relação histórica com a paleta não reativa planos substituídos.
+- P046/X054 PARTIAL trata integração específica de Talk X; este lote não altera esse status nem certifica todos os itens Talk X.
+- Nenhuma tarefa genérica DONE_VERIFIED foi reaberta por associação temática. Os defeitos atuais têm seu próprio subcontrato executável e aceite.
+
+## Controles e candidatos não promovidos
+
+- OfflineIndicator: HTTP404/500 ainda comprova transporte/conectividade; o rótulo não promete saúde de API e SW/PWA foi deliberadamente desativado. Rejeitado como defeito.
+- ReactionPicker: falta de preventDefault sozinha não prova duplo evento. Wrapper TeamMessageItem antigo não está no Panel ativo e fechamento é síncrono; sem novo ID.
+- Prefetch/observers/counters/QuickPeek e vários efeitos exportados têm riscos latentes sem consumidor ativo confirmado; não foram convertidos em incidentes de produto.
+- useTimingHooks tem consumidor real do debounce de valor em useTalkMeQueue; a nota inicial de ausência genérica foi corrigida após busca transversal de imports. Esse debounce limpa timer e não é o callback debounce da paleta.
+- ChartContainer foi rastreado até config CSS literal em AIStatsWidget; dados de série remotos não demonstram injeção no CSS.
+- Easter eggs, partículas e skeletons são apresentação deliberada; animação ou placeholders não provam regressão de performance ou conclusão falsa de negócio.
+- useAnnounce ignora politeness e tem timer sem cleanup, mas só sua definição foi localizada; LiveRegion ativo é componente distinto.
+
+## Cobertura por arquivo
+
+| Arquivo | Nível | Faixas | Avaliação |
+|---|---|---|---|
+| `bun.lock` | targeted | 27–27, 382–382 | Pin versionado de Progress1.1.16 identificado no lock; leitura dirigida da dependência, sem baixar/importar pacote. |
+| `package.json` | targeted | 52–52 | Dependência de Progress identificada em contrato; leitura dirigida da linha52 apenas, sem executar install/scripts. |
+| `src/App.tsx` | targeted | 1–75, 118–147 | Imports/DeferredProviders e retorno principal lidos por faixas: confirma EasterEggs lazy e montagem, GlobalKeyboardProvider ao redor de AppRoutes, Toaster/Sonner e LiveRegion. Restante não é declarado integral. |
+| `src/components/catalog/CatalogBulkSendDialog.tsx` | targeted | 1–60, 205–234 | Imports e ramo sending confirmam Progress com valor conhecido e texto percentual adjacente. Caminho real faz envio por serviço, mas não foi executado; revisão desta fronteira é apenas do controle visual/acessível. |
+| `src/components/catalog/ExternalProductCatalog.tsx` | targeted | 35–45, 706–729 | Lazy import e montagem condicionada bulkSendOpen confirmam alcance do diálogo em massa. Nenhum envio/chamada de produto realizado. |
+| `src/components/dashboard/AIStatsWidget.tsx` | targeted | 50–65, 185–212 | Verificação dirigida do consumidor de ChartContainer: chartConfig em 57–61 usa cores literais confiáveis e passagem em 192 não inclui id externo; valores de série não entram na string CSS. Caminho de CSS não confiável não demonstrado. Restante deste widget pertence à revisão de módulos. |
+| `src/components/dashboard/GoalsDashboard.tsx` | targeted | 1–52 | Faixa de imports/estado/cálculo/primeiro JSX confirma uso real de CelebrationOverlay com callback inline para limpar showCelebration; não executa nem comprova conclusão de meta. |
+| `src/components/effects/AuroraBorealis.tsx` | semantic | 1–151 | Camadas decorativas/partículas e variantes de intensidade lidas integralmente. Pointer-events-none mantém camada fora da interação; loops visuais não comprovam regressão de desempenho sem medição. |
+| `src/components/effects/Confetti.tsx` | semantic | 1–296 | Partículas, temporizador, CelebrationOverlay e useCelebration completos. Cleanup ao trocar active interrompe timer; saídas cosméticas de cancelamento não promovidas sem consumidor afetado. Overlay recebe callbacks e a composição é responsabilidade do consumidor; não pressupõe persistência de conquista. |
+| `src/components/effects/EasterEggs.tsx` | semantic | 1–250 | Provider/atalhos completos: Konami e sequências ativam party/matrix/disco; listeners e timers removidos, CSS removido. Evento global não filtra campos de texto, mas efeito cosmético deliberado, sem efeito de negócio demonstrado. Texto de XP e estado celebrating não provam integração de gamificação; não promovidos. |
+| `src/components/effects/ParallaxContainer.tsx` | semantic | 1–268 | Parallax, imagem/texto, reveal, progress bar e float completos; transforms e variants são apresentação. Nenhum import produtivo fora dos próprios exports localizado; não inventada falha de desempenho ou alcance. |
+| `src/components/effects/ScrollEffects.tsx` | semantic | 1–309 | Todos exports lidos: magnetic, reveals, counter/spring, gradient, perspective, ripple DOM e blur. Counter/blur obtêm valores de motion via get durante render; risco latente sem consumidor produtivo localizado. Ripple cria/remove elemento cosmético com timeout. Nenhum efeito de dados ou rede. |
+| `src/components/inbox/FileUploader.tsx` | targeted | 1–20, 156–187, 198–216 | Import e ramos de upload simples/múltiplo confirmam Progress com value e textos adjacentes. Não afirmar ausência total de informação a leitor de tela; perda é no contrato numérico do controle. Upload real não executado. |
+| `src/components/inbox/chat/ChatInputArea.tsx` | targeted | 202–221 | Montagem dirigida de FileUploader no composer ativo; passa contato e callbacks. Revisão completa do composer fica com inbox/root. |
+| `src/components/keyboard/CommandPaletteHost.tsx` | semantic | 1–30 | Host ativo liga open/onNavigate a UI palette, onSearch do catálogo e comandos TalkX. Leitura integral para comprovar alcançabilidade da busca e actions default. |
+| `src/components/keyboard/GlobalKeyboardProvider.tsx` | semantic | 1–157 | Corpo integral lido como suporte: listener global/custom event, lazy Host e paletteMounted que persiste após primeira abertura; navegação via ref e cleanup listeners. Comprova consumer atual. Gates/atalhos duplicados da plataforma são propriedade do root. |
+| `src/components/ui/EmptyState.tsx` | semantic | 1–197 | Variantes, defaults, ícone, descrição, ações e classes lidos. Botões só aparecem com texto e callback correspondentes; estado puramente apresentado por props, sem leitura de negócio ou rede. |
+| `src/components/ui/GenericEmptyState.tsx` | semantic | 1–84 | JSX integral e guardas dos botões lidos. Comentário chama wrapper/reexport, porém implementação é própria; inconsistência documental sem defeito funcional comprovado. Sem efeito externo. |
+| `src/components/ui/SkeletonList.tsx` | semantic | 1–150 | Ramos list/card/table e composição com StaggerList lidos, contagens e placeholders apenas visuais. Nenhum acesso a dados. |
+| `src/components/ui/VolumeSliderPopoverContent.tsx` | semantic | 1–88 | Slider vertical controlado, array de valores, bounds/step, callback, mute label/aria/disabled e footer completos. Usa botão type=button; efeito de mídia é delegado ao consumidor. |
+| `src/components/ui/VolumeTriggerButton.tsx` | semantic | 1–64 | Botão type=button, foco/long-press/cancel/click/teclas via rocker, aria e indicador completos. ariaDisabled é informativo; política interativa depende do hook useVolumeRocker (root), sem duplicação presumida. |
+| `src/components/ui/accessible-toast.tsx` | semantic | 1–200 | Provider add/update/remove, timeout, ToastContainer live region e progresso completos. Loading atualizado não agenda auto-removal e duration0 difere no progress, mas nenhum useAccessibleToast fora da definição localizado. Provider montado não significa toast ativo. |
+| `src/components/ui/accordion.tsx` | semantic | 1–52 | Root/Item/Trigger/Content e composição de heading completos; forwarded refs e props preservam estado/eventos do Radix. Chevron/expansão são apresentação, sem efeito de negócio. |
+| `src/components/ui/alert-dialog.tsx` | semantic | 1–104 | Todos primitives e wrappers de portal, overlay, content, title, description, action e cancel lidos. Ações/fechamento e foco são delegados ao Radix e callbacks do consumidor; não há confirmação ou mutação interna. |
+| `src/components/ui/alert.tsx` | semantic | 1–43 | Variants default/destructive, role alert, título/descrição e ref/props completos; apenas apresentação de conteúdo fornecido. |
+| `src/components/ui/avatar.tsx` | semantic | 1–201 | Radix root/image/fallback, indicador de status, posições/tamanhos e grupo com overflow lidos; status vem de props, não é inferido de saúde/backend. Imagem mantém contrato do Radix. |
+| `src/components/ui/badge.tsx` | semantic | 1–35 | Todas variantes semânticas visuais e ref/props lidos; não calcula status nem valida resultado de negócio. |
+| `src/components/ui/breadcrumb.tsx` | semantic | 1–90 | Nav/ordered list/Slot links, página atual/separadores/ellipsis lidos; sem efeitos. Props/aria encaminhadas, foco dos links controlado pelo elemento renderizado. |
+| `src/components/ui/button.tsx` | semantic | 1–113 | Button/MotionButton, variants, Slot, isLoading/disabled e passagem de props completos. Loading desabilita botão nativo; asChild depende de semântica do filho. Tipo default permanece nativo; não alegada submissão acidental sem form consumidor concreto. |
+| `src/components/ui/calendar.tsx` | semantic | 1–54 | DayPicker com classes default/overrides, ícones e props lido; seleção, modo, disabled/datas encaminhados ao DayPicker. Wrapper não converte timezone nem produz dados. |
+| `src/components/ui/card.tsx` | semantic | 1–104 | Variants/ref/props, motion hover e seções/títulos completos; elementos são wrappers de apresentação sem mutações. |
+| `src/components/ui/chart.tsx` | semantic | 1–305 | Context/ResponsiveContainer, CSS por tema, tooltip/legend e helper payload completos. CSS bruto exige config confiável; único importador localizado AIStatsWidget, a ser checado para origem de config. Zero no JSX item.value&& resulta nó0, não prova de sumiço; sem finding falso de contagem. Consumidor AIStatsWidget 57–61/192 usa config CSS literal; dados remotos da série não atravessam dangerouslySetInnerHTML. |
+| `src/components/ui/checkbox.tsx` | semantic | 1–26 | Root e Indicator completos; checked/disabled/name/eventos continuam em props e são encaminhados ao primitive. Aparência de check não introduz mutação própria. |
+| `src/components/ui/command-palette-data.tsx` | semantic | 1–71 | Tipos, default navigation/action commands, fuzzy matching e highlight com JSX escapado. Três action-* são só metadados sem action/href; correlacionado com executor. Nenhum HTML bruto produzido. |
+| `src/components/ui/command-palette.tsx` | semantic | 1–211 | Busca/debounce async, merge/fuzzy/group, teclas, executar ação/href/nav, abrir/fechar, recentes e JSX completos. Rastreadas buscas fora de ordem, actions sem callback e allItems vazio no acesso rápido sem query. Candidatos pendentes de deduplicação/probe. |
+| `src/components/ui/command.tsx` | semantic | 1–135 | Wrappers cmdk e CommandDialog completos, incluindo title sr-only e aria-describedby undefined deliberado; Item preserva onSelect e disabled. Não confundir com CommandPalette própria que implementa outra busca/teclado. |
+| `src/components/ui/context-menu.tsx` | semantic | 1–178 | Todos exports lidos: submenus, portal principal, checkbox/radio/labels/separadores. checked e handlers encaminhados, disabled/focus delegado; strings de shortcuts não registram atalhos globais. |
+| `src/components/ui/dialog.tsx` | semantic | 1–122 | Portal/overlay/content/close/header/footer/title/description e sizes lidos; max-height e overflow-y-auto presentes na base. Foco/modalidade do Radix mantidos, botão de fechar opcional explícito; altura do consumidor não presumida defeituosa. |
+| `src/components/ui/drawer.tsx` | semantic | 1–107 | Vaul Root/portal/overlay/content, headers/footers/títulos e gesto delegado completos. shouldScaleBackground false deliberado sem wrapper marcado. Alça aria-hidden decorativa, ref/props preservados. |
+| `src/components/ui/dropdown-menu.tsx` | semantic | 1–179 | Todos exports e submenus lidos; portal principal, checked, ref e callbacks preservados. Nenhuma autorização/mutação de itens está no wrapper; consumidores devem prover handlers e gates. |
+| `src/components/ui/emoji-picker.tsx` | semantic | 1–331 | Banco/busca/categorias/recentes/storage, seleção, quick picker e animação completos. JSON local recente só catch parse sem shape e gravação pode lançar; somente referências internas neste arquivo, sem consumidor produtivo de exports identificado. |
+| `src/components/ui/empty-state-illustrations.tsx` | semantic | 1–176 | Todas ilustrações SVG e Record de presets lidos; faixa inicial foi relida após truncamento para assegurar corpo integral. Sem conteúdo HTML externo, dados ou rede. |
+| `src/components/ui/empty-state.tsx` | semantic | 1–143 | Ícone, tamanho, ilustração e botões primário/secundário lidos; ações exigem label e handler. Apenas apresentação controlada pelo consumidor. |
+| `src/components/ui/empty-states.tsx` | semantic | 1–191 | Contextos e presets inbox/contacts/dashboard/search/notifications/tags/calls/transcriptions lidos; ilustração e mensagens têm fallback. CTA depende de action. Preset legado não prova feature montada. |
+| `src/components/ui/empty-states/ContextualEmptyState.tsx` | semantic | 1–86 | Context lookup e fallback messages, query, CTAs condicionais e ajuda lidos integralmente. Valores de config importada são conteúdo; callbacks vêm do consumidor. Não infere resultado de operação. |
+| `src/components/ui/empty-states/ConvenienceExports.tsx` | semantic | 1–37 | Nove wrappers de presets/ações lidos e mapeamento de contexto conferido; nenhum efeito adicional oculto. |
+| `src/components/ui/error-boundary-retry.tsx` | semantic | 1–140 | Boundary completo: captura, callback, limite2/retry exponential, timer cleanup, manual reset e fallback. Render de mensagem de erro via JSX escapado; nenhum HTML bruto. Retry não prova que causa do erro foi resolvida. |
+| `src/components/ui/form.tsx` | semantic | 1–129 | Contextos Field/Item, Controller/FormProvider, ids/aria, errors e refs completos. Exige árvore de providers; guarda do contexto{} não protege uso incorreto, mas sem consumidor inválido demonstrado. Textos de erro são JSX, não HTML. |
+| `src/components/ui/hover-card.tsx` | semantic | 1–27 | Root/trigger/content e props de alinhamento lidos. Content não usa Portal próprio, mas clipping só seria defeito com contêiner consumidor demonstrado; nenhum import produtivo encontrado no levantamento transversal. |
+| `src/components/ui/icon-button.tsx` | semantic | 1–151 | Props/ref/Slot, aria-label exigido, tooltip opcional e versão motion completos. Nenhuma lógica remota. Trecho truncado foi reaberto integralmente antes desta promoção. |
+| `src/components/ui/input.tsx` | semantic | 1–83 | Ref/type/props, variants, ícones, addons e estados de erro/sucesso lidos. Elementos laterais são apresentação; interatividade de addons não é pressuposta sem consumidor específico. |
+| `src/components/ui/label.tsx` | semantic | 1–17 | Radix label com ref/class/props lido; htmlFor/associação continuam contrato do consumidor. |
+| `src/components/ui/liquid-metal-button.tsx` | semantic | 1–130 | Import lazy de shader, capability/reduced-motion gate, cancel flag, dispose e estados/contagem/handlers completos. Tipo button e disabled/loading aplicados após props; fallback estático. Sem montagem de WebGL ou alegação de ganho medido. |
+| `src/components/ui/menubar.tsx` | semantic | 1–207 | Root/menu/trigger/submenus/itens checkbox-radio/labels/portal e separadores lidos integralmente; forwarded props preservam contratos do Radix. displayname minúsculo é metadado de depuração, não promovido como falha de produto. |
+| `src/components/ui/message-reactions.tsx` | semantic | 1–184 | ReactionBadge, picker por grid/ref/teclas, bar/popover e quick strip completos. Teclas Enter/Space chamam onSelect antes de default nativo; requer provar consumidor/unmount antes de alegar dupla mutação. Backend/toggle pertence a Inbox. |
+| `src/components/ui/micro-interactions/buttons.tsx` | semantic | 1–284 | Ripple, icon, bounce, magnetic, glow e press feedback completos. Disabled impede callback nos controles pertinentes, props/types variam; não há rede ou escrita de dados. Timers/hover/semântica do div registrados como contrato de componentes genéricos, sem assumir consumidor ativo. |
+| `src/components/ui/micro-interactions/feedback.tsx` | semantic | 1–83 | MicroFeedback, LoadingDots/Spinner e FeedbackAnimation completos. Tipo/show controlam apresentação; não são prova de sucesso de ação remota por si. |
+| `src/components/ui/micro-interactions/skeletons.tsx` | semantic | 1–106 | SkeletonPulse e cinco ramos de ContentSkeleton completos. Apenas repetição/estilos/placeholders; count vem do chamador e não foi presumido input não confiável. |
+| `src/components/ui/mobile-components.tsx` | semantic | 1–263 | MobileDrawer gesto/body overflow, BottomNavigation ativo/vibração/badge, PullToRefresh await e TouchFeedback completos. BottomNavigation é consumidor real; Drawer/PullToRefresh genéricos não aparecem montados e seus riscos latentes não viraram findings. |
+| `src/components/ui/motion/components.tsx` | semantic | 1–127 | PageTransition, neon/card/buttons, stagger/fade/slide/scale, interactive e shimmer completos. PageTransition respeita useReducedMotion; outros wrappers delegam motion ao contexto/props, sem alegar falha a11y sem conferir consumidor/Config global. |
+| `src/components/ui/motion/effects.tsx` | semantic | 1–94 | AnimatedCounter/progress/presence/stagger/slide/list/typewriter completos, com RAF/interval cleanup. prevRef é objeto recriado e value0 retorna sem reset no contador; falta consumidor real para promover. Não alegada corrupção de métrica apenas pelo export. |
+| `src/components/ui/motion/variants.ts` | semantic | 1–83 | Todos os variants declarativos e factory talkxStagger lidos; nenhum efeito/IO ou cálculo de dado de produto. Escala/duração são apresentação. |
+| `src/components/ui/offline-indicator.tsx` | semantic | 1–131 | Eventos navigator.onLine, retry HEAD favicon, toast restaurado e timers completos. Root confirmou SW/PWA desabilitado por configuração. Candidato response.ok rejeitado: HTTP404/500 ainda comprova transporte de rede e rótulo não promete saúde de API. |
+| `src/components/ui/pagination.tsx` | semantic | 1–81 | Nav/list/link, aria-current, links previous/next e ellipsis lidos; href/onClick são contrato do consumidor, não há paginação de dados implícita. |
+| `src/components/ui/popover.tsx` | semantic | 1–31 | Root/trigger/anchor/content e portal completos, align/offset overridable. Foco/dismissal e open vêm do primitive; nenhum efeito externo. |
+| `src/components/ui/progress.tsx` | semantic | 1–23 | Corpo integral lido: value é consumido no transform visual e omitido das props de Root. Candidato de contrato acessível separado, com consumidores/probe a verificar; max segue encaminhado, enquanto cálculo visual assume escala100. |
+| `src/components/ui/quick-peek.tsx` | semantic | 1–73 | Hover enter/leave/timer, preview/enabled e JSX completos. Timer não tem cleanup no unmount/alteração enabled, mas nenhum efeito de dados; consumidor terá de definir impacto antes de promover achado. |
+| `src/components/ui/radio-group.tsx` | semantic | 1–36 | Root/Item/Indicator lidos integralmente, ref/props preservados. Checked/value/keyboard/input permanecem no primitive. |
+| `src/components/ui/resizable.tsx` | semantic | 1–37 | PanelGroup, Panel e handle completo; direção e callbacks da lib preservados e pega visual opcional. Não persiste layout por conta própria. |
+| `src/components/ui/route-loading-bar.tsx` | semantic | 1–74 | Loading determina visibilidade, percentuais visuais temporizados e término; todos timers cancelados na troca/unmount. Progresso indeterminado simulado não é declarado como bytes medidos ou resultado de negócio. |
+| `src/components/ui/scroll-area.tsx` | semantic | 1–38 | Root/Viewport/Scrollbar/Corner e dois eixos lidos; props/ref de Root não representam ref do viewport. Nenhum uso incorreto de consumidor é inferido pelo wrapper isolado. |
+| `src/components/ui/scroll-to-top.tsx` | semantic | 1–57 | Ref de container, listener scroll com cleanup, limiar e ação smooth completos. Não inicializa visibilidade pelo scroll atual até primeiro evento; impacto condicionado a consumidor, sem mutação de produto. |
+| `src/components/ui/section-error-boundary.tsx` | semantic | 1–71 | Boundary por seção completo: log/reportClientError, captura com stack truncada, retry local e fallback. Egress e sanitização do reporter pertencem ao lote lib/root; não inferidos pela chamada. |
+| `src/components/ui/separator.tsx` | semantic | 1–20 | Orientação/decorative e ref/props completos; default decorativo deliberado, classes correspondem aos dois eixos. |
+| `src/components/ui/sheet.tsx` | semantic | 1–107 | Lados top/bottom/left/right, overlay/portal, content e close, header/footer/título/descrição lidos. Foco do Radix e close encaminhados. Falta de overflow interno só afetaria consumidor alto comprovado, não promovida genericamente. |
+| `src/components/ui/sidebar/sidebar-context.tsx` | semantic | 1–111 | Provider controlado/não controlado, callback toggle, mobile, cookie booleano7dias, Ctrl+B com cleanup e dimensões/context completos. Cookie é preferência não credencial; não promove acesso ou risco de segurança. |
+| `src/components/ui/sidebar/sidebar-menu.tsx` | semantic | 1–192 | Botões/Slot ativos, tooltip colapsado, actions/badge/submenu e skeleton completo. Preferências vêm do contexto e não são ACL. Sem consumidor produtivo importando esse sidebar no scan. |
+| `src/components/ui/sidebar/sidebar-primitives.tsx` | semantic | 1–242 | Sidebar desktop/mobile/none, Sheet controlado, trigger/rail/inset/header/footer/group/input completos. Callbacks/props/roles inspecionados; sem importador produtivo do sidebar genérico localizado no scan, não confundir com Sidebar aplicativo. |
+| `src/components/ui/skeleton.tsx` | semantic | 1–139 | Variants, delay, role/status/label e composição Card/List/Text/Avatar/Button lidos; placeholders dependem de props e não representam sucesso real de operação. |
+| `src/components/ui/skip-link.tsx` | semantic | 1–141 | Links condicionados à existência do target, foco/scroll, detector1500ms e indicador de Tab completos. Cleanup de listener/interval; foco efetivo depende do target focusable, não presumido defeito sem consumidor. |
+| `src/components/ui/slider.tsx` | semantic | 1–56 | Wrapper Radix completo com número de thumbs derivado do value/defaultValue, labels por índice, orientação vertical/horizontal e props. Corrige número de thumbs; nenhum valor fictício de mídia. |
+| `src/components/ui/sonner.tsx` | semantic | 1–38 | Integração com resolvedTheme, opções/duração e classes lida; props finais permitem override. Componente apenas hospeda toast, não cria mensagem de sucesso nem altera operação. |
+| `src/components/ui/sparkline.tsx` | semantic | 1–53 | Normalização min/max, largura/altura, pontos e área SVG completos; <2amostras retorna null e série constante usa range1. Entrada finita é contrato do chamador; nenhuma medição ou acesso remoto. |
+| `src/components/ui/step-progress.tsx` | semantic | 1–79 | Passos derivados por índice, estado atual/concluído, rótulos e conexões completos. Só apresentação; ausência de aria-current anotada como contrato, sem nova certificação a11y ou finding genérico. |
+| `src/components/ui/switch.tsx` | semantic | 1–27 | Root/thumb lidos; checked/disabled/eventos/ref encaminhados ao Radix, sem estado paralelo ou persistência. |
+| `src/components/ui/table.tsx` | semantic | 1–72 | Table/head/body/footer/row/cell/caption lidos, elementos nativos e props/ref preservados; overflow wrapper permite rolagem. Ordenação/paginação/seleção são do consumidor. |
+| `src/components/ui/tabs.tsx` | semantic | 1–53 | Root/list/trigger/content completos; state/value/disabled/focus seguem primitive, sem reset de dados externo ou efeito de negócio no wrapper. |
+| `src/components/ui/textarea.tsx` | semantic | 1–21 | Forward ref e HTML props lidos; valor/eventos/disabled encaminhados, sem estado interno ou sanitização presuntiva. |
+| `src/components/ui/toast.tsx` | semantic | 1–111 | Provider/viewport/root/action/close/title/description e variants lidos. Root recebe duration/open/handlers, foco/swipe delegados à lib. Mensagem e confirmação de operação são contrato do chamador. |
+| `src/components/ui/toaster.tsx` | semantic | 1–24 | Map de toasts do hook encaminha props/id/title/description/action e close; não consome promessa de operação. Vida útil dos itens é gerida por use-toast, lido pelo root. |
+| `src/components/ui/toggle-group.tsx` | semantic | 1–49 | Contexto de variants/size e Root/Item lidos; grupo precede estilo local, props/eventos/refs preservados. Estado do toggle permanece na lib. |
+| `src/components/ui/toggle.tsx` | semantic | 1–37 | Variants e Root completos, value/pressed/handlers continuam em props; nenhuma mutação externa. |
+| `src/components/ui/tooltip.tsx` | semantic | 1–139 | Wrappers Radix, portais em content/enhanced, offsets/variants e wrapper simplificado lidos. Portal evita clipping conhecido; foco e dismissal delegados ao primitive. Nenhum handler de negócio. |
+| `src/components/ui/visually-hidden.tsx` | semantic | 1–77 | VisuallyHidden, useAnnounce e LiveRegion completos. Hook ignora politeness e usa timer sem cleanup, mas sem consumidor localizado fora da definição; não promovido como ramo ativo. LiveRegion é montado no App e mantém aria-live polite/status. |
+| `src/features/talk-me/useTalkMeQueue.ts` | targeted | 1–8, 70–120 | Correção de alcance: importa useDebounce do módulo performance e o usa para pesquisa normalizada; guarda searchPending e refs de geração aparecem nesta faixa. Debounce de valor tem cleanup, distinto do debounce de callback da paleta. Restante do hook não é declarado lido aqui. |
+| `src/hooks/integrations/useCatalogQuickSearch.ts` | semantic | 1–34 | Busca promogifts-catalog compact limit8; erro retorna[]; produtos mapeados para CommandItem search e href /?view=catalog&product=...&send=1. Sem guard de geração próprio; retorno async controlado pelo chamador. |
+| `src/hooks/performance/useDataOptimization.ts` | semantic | 1–116 | Paginação acumulada/reset, hover prefetch e preload resources completos. Prefetch não limpa timer no unmount nem reinicia cache ao mudar fetcher; nenhum consumidor produtivo desses exports localizado, só reexports. Preload remove links no cleanup. |
+| `src/hooks/performance/useMonitoring.ts` | semantic | 1–105 | Contagem de renders, memória dev-only, FPS via RAF e medição entre dois effects. Medição de slow render cobre intervalo pós-commit, não corpo de render; exports sem consumidor produtivo localizado, portanto limite latente sem finding. |
+| `src/hooks/performance/useObservers.ts` | semantic | 1–72 | Intersection/lazy/load flags e event listener passivo completos. RemoveEventListener omite capture usado por options, mas não há consumidor ativo identificado: risco latente, sem ID. Observer exige API; cleanup unobserve. |
+| `src/hooks/performance/useTimingHooks.ts` | semantic | 1–103 | Todos hooks lidos: debounce de valor e throttle limpam timers, RAF cancela request, stable callback usa ref atualizada e idle tem fallback/cleanup. Consumidor real confirmado: useTalkMeQueue93 usa o debounce de valor corretamente; outros exports têm somente reexports/chamada interna de useFPS localizados. Não confundir com useDebounce de callback em hooks/system. |
+| `src/hooks/system/useDebounce.ts` | semantic | 1–21 | Callback debounce integral: cancela timer pendente, não cancela promessa já iniciada, não existe fence de geração/consulta. Usado pela CommandPalette; temporizador não tem cleanup no unmount. Sem executar timer real. |
+
+## Lacunas remanescentes
+
+- Sem browser/assistive technology, medições de FPS/memória ou regressão visual; leitura integral não é teste de renderização.
+- Dependências Radix/cmdk/vaul são fronteiras não executadas. Eventos/foco/scroll internos não foram reimplementados em mocks como se fossem comprovação do pacote.
+- Probes cobrem quatro riscos concretos; não são suíte completa, typecheck, build nem aceite final de acessibilidade.
+- A auditoria global continua IN_PROGRESS; conclusão se refere somente aos87 arquivos primários deste lote.
+
+## Ampliação finita — layout, transições e onboarding
+
+### Revisão de layout, transições e onboarding
+
+Fonte fixa `da307ba5626dce892f0b37cb6762463f55d14a96`. Os 25 arquivos primários foram lidos integralmente, somando 2.136 linhas. Com apoios, o inventário tem 47 caminhos: 37 leituras integrais e 10 dirigidas. Nenhum arquivo de produto foi alterado.
+
+## Resultado delimitado
+
+| ID | Prioridade | Contrato |
+|---|---|---|
+| R2-INF-036 | P3 | Checklist marca tema como concluído quando a consulta não devolve configuração |
+| R2-INF-037 | P2 | Controle de movimento reduzido e transições de rota usam preferências desconectadas |
+| R2-INF-038 | P2 | Tour padrão aponta para dois alvos ausentes e avança até a conclusão sem mostrá-los |
+| R2-INF-039 | P2 | Modais próprios anunciam modalidade sem implementar o contrato de foco |
+
+Há três casos offline para os três primeiros registros e análise estática para o quarto. Os dois modais são loci de um único mecanismo, sem aumentar a contagem. O harness valida SHA256 de 11 fontes e do compilador antes de importá-lo; as fronteiras de SDK, timers e hooks são sintéticas.
+
+## Probes e controles
+
+| Caso | Execução delimitada | Controle |
+|---|---|---|
+| INF-LO-P01 | Módulo checklistSteps completo e callback checkAllSteps real | data ausente/erro concluem tema; system não conclui e dark conclui |
+| INF-LO-P02 | Efeito global, leitor/hook de preferência e decisão de variante de rota | Chave privada de rota ou preferência do sistema produz none |
+| INF-LO-P03 | Etapas padrão e callbacks de retry, avanço e conclusão | Apenas getters de navegação lidos são usados para verificar IDs; nenhuma query de produto |
+
+Os três casos passaram na execução delimitada registrada. Não se repetiram suítes anteriores nem se simulou o motor de movimento ou um navegador.
+
+## R2-INF-036 — Checklist marca tema como concluído quando a consulta não devolve configuração
+
+A condição de tema compara data?.theme com null e system. Quando data é null, o valor é undefined e ambas as comparações são verdadeiras. O error resolvido pelo SDK também é ignorado. O callback real do card incorpora esse true ao conjunto de etapas concluídas.
+
+**Precondições:** Usuário autenticado e card ainda visível no dashboard. A consulta de user_settings resolve sem registro ou com error e data null.
+
+**Efeito e alcance:** A interface afirma que o usuário escolheu tema claro ou escuro sem evidência dessa configuração e remove a ação pendente dessa etapa. A prova mantém as outras cinco etapas falsas; não afirma que o onboarding inteiro é concluído nessa situação.
+
+**Evidência:**
+
+- `src/components/onboarding/checklistSteps.ts:103–119` — Promessa da etapa e condição undefined diferente de null/system. SHA256 `554a022f5172c80cfc1ddb9c6c4dafddf89d7d799c1f9b36ddf5ef0dfd219813`.
+- `src/components/onboarding/OnboardingChecklist.tsx:33–47` — Callback inclui a etapa verdadeira e não vê error resolvido. SHA256 `69a62b48b1d515ebf301e6538a1418dfb9075649a0933d56aeb7292e002bdb5b`.
+- `src/components/onboarding/OnboardingChecklist.tsx:94–123` — Contagem, estado visual e ação condicionados a completedSteps. SHA256 `69a62b48b1d515ebf301e6538a1418dfb9075649a0933d56aeb7292e002bdb5b`.
+- `src/pages/Index.tsx:87–87` — Card limitado ao dashboard. SHA256 `971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268`.
+- `src/components/layout/AppShell.tsx:141–145` — Consumidor atual monta card. SHA256 `30552c0b530b0b14122f4dc09e06c62bcf61e5a1e3ac28d536153e84f350185e`.
+- `src/hooks/ui/useOnboardingChecklist.ts:58–68` — Hook vizinho exige settings existente; não compensa condição do card. SHA256 `4c12ac595f89c390c24038f72552acea564c9f0e6f37db4f62a14b994741453d`.
+
+**Critérios de aceite:**
+
+- Validar presença e valor permitido de theme antes de concluir a etapa; ausência ou erro não deve virar conclusão.
+- Manter a regra do card coerente com o hook de estado de onboarding, preservando distinção entre pendente e falha de leitura.
+- Cobrir data null, error resolvido, theme system, theme dark/light e valor malformado no callback consumidor; a contagem deve refletir apenas estados comprovados.
+
+**Limites:** Fonte fixa; nenhum endpoint, SDK real, SQL, envio, login, browser ou deploy executado. Nenhum arquivo de produto foi alterado. P3 delimitado ao estado de orientação; não há concessão de permissão, perda de dados ou gravação no probe. O card desmonta fora do dashboard e remonta ao voltar; a hipótese anterior de falta de atualização ao retornar foi rejeitada.
+
+## R2-INF-037 — Controle de movimento reduzido e transições de rota usam preferências desconectadas
+
+O controle global de acessibilidade grava reducedMotion=true/false e aplica a classe reduced-motion. O hook das transições lê zapp:reduce-motion=1/0 e o media query do sistema; ele não lê o contexto global, sua chave ou sua classe. Com a opção global ligada e o sistema sem redução, RouteTransition continua escolhendo slide/zoom/fade em vez de none.
+
+**Precondições:** Usuário liga Reduzir Movimento pela interface global. Sistema operacional não pede redução e zapp:reduce-motion não está em 1. Usuário navega entre rotas abrangidas pelo PageTransitionProvider.
+
+**Efeito e alcance:** A preferência anunciada como desativação das animações não chega à decisão de variante das rotas. O controle CSS global reduz duração de animações e transições CSS e continua válido; o probe comprova a divergência da configuração JavaScript, sem medir a duração visual do Framer Motion.
+
+**Evidência:**
+
+- `src/components/theme/HighContrastToggle.tsx:49–51` — Estado inicial usa reducedMotion. SHA256 `7b52b8272d32b9d5538c285bd98cafb4c5c7f37970562eb6539a43f209a2f9a9`.
+- `src/components/theme/HighContrastToggle.tsx:107–114` — Efeito escreve chave/classe globais. SHA256 `7b52b8272d32b9d5538c285bd98cafb4c5c7f37970562eb6539a43f209a2f9a9`.
+- `src/components/theme/HighContrastToggle.tsx:240–254` — Controle e promessa apresentados ao usuário. SHA256 `7b52b8272d32b9d5538c285bd98cafb4c5c7f37970562eb6539a43f209a2f9a9`.
+- `src/components/layout/Sidebar.tsx:251–252` — Controle acessível na Sidebar. SHA256 `445291acd74493e9ec82e7622176ad269f9b1d3f100ff8ee6eeb79b596a38e9e`.
+- `src/components/transitions/transitionConfig.ts:29–44` — Chave e codificação diferentes nas rotas. SHA256 `856077f41ff388e078b4b67bfe1491045b808d2a0d1a212998e47c32e337cafc`.
+- `src/components/transitions/useTransitionPreferences.ts:11–30` — Preferências de sistema e chave privada, sem contexto global. SHA256 `52c1d2762bdb214e6070424b05bf735386bdca313d32e36d593d673702660f10`.
+- `src/components/transitions/RouteTransition.tsx:12–30` — Flag decide none versus transição animada. SHA256 `9a8a5b1dce73e8c1290f9ff71af7b73e00e9ae4cc7d4f1405d2d28145b0ba1d9`.
+- `src/routes/AppRoutes.tsx:44–84` — Provider e rotas reais que usam slide/zoom. SHA256 `30c6f9981e0f9b86c37154eba2f87e24e2e2f7720259e95da1899c49fbf11da3`.
+- `src/styles/accessibility.css:57–70` — Controle CSS existe e não é negado pelo achado. SHA256 `ab0c400cb831f529da67e359a0b7c7dd61b45cd78eab905206d09c09fd863c67`.
+
+**Critérios de aceite:**
+
+- Usar uma fonte de preferência de usuário para a interface global e as transições, combinada com a preferência do sistema.
+- Garantir atualização da variante após ligar ou desligar a opção sem exigir outra chave escondida ou recarga.
+- Cobrir UI ligada/desligada e sistema ligado/desligado; verificar none no ramo esperado e depois validar em browser a animação efetiva.
+
+**Limites:** Fonte fixa; nenhum endpoint, SDK real, SQL, envio, login, browser ou deploy executado. Nenhum arquivo de produto foi alterado. O probe executa efeito, leitura e decisão de configuração de fonte com fronteiras inertes; não importa Framer Motion nem reimplementa seu motor. Não se afirma que toda animação CSS continua ativa ou que houve sintomas observados em usuário. O efeito demonstrado é a escolha incorreta de variante.
+
+## R2-INF-038 — Tour padrão aponta para dois alvos ausentes e avança até a conclusão sem mostrá-los
+
+As duas últimas etapas padrão procuram data-tour=notifications e data-tour=theme. A produção de data-tour vem de SidebarNavItem com IDs de navegação; nenhum dos getters ativos fornece esses dois IDs. Os controles reais de notificações e tema da Sidebar não têm esses atributos. Após dez tentativas, TourOverlay chama nextStep; na última etapa isso chama endTour/onComplete.
+
+**Precondições:** Usuário inicia o tour padrão e chega às duas últimas etapas. Layout usa os componentes da fonte atual; não há plugin externo inserindo os atributos ausentes.
+
+**Efeito e alcance:** As explicações de notificações e personalização não recebem alvo visível no fluxo atual e o callback de conclusão pode ser chamado mesmo sem essas etapas terem sido mostradas. O salto de uma etapa indisponível por permissão pode ser deliberado; aqui os dois seletores não são produzidos sequer para o layout desktop completo lido.
+
+**Evidência:**
+
+- `src/components/onboarding/defaultTourSteps.ts:32–45` — Dois seletores ausentes do layout. SHA256 `b7570face27ff498e26ea801e2bd09aaa3dfc752f03a94231258b51e825324c0`.
+- `src/components/layout/SidebarNavItem.tsx:33–44` — Único produtor dinâmico de data-tour em UI de produto. SHA256 `be8efae696b82ddc7896f6601b536909e0d7a1f4570cf259afa576b12cd68776`.
+- `src/services/navigation.service.ts:1–155` — Getters de navegação não fornecem os dois IDs. SHA256 `8e128c5cc1aa208f96570c68295d6e4836ca1febed4d7d1e603f648d4c294d48`.
+- `src/components/layout/Sidebar.tsx:92–124` — Controles de notificações não têm o atributo esperado. SHA256 `445291acd74493e9ec82e7622176ad269f9b1d3f100ff8ee6eeb79b596a38e9e`.
+- `src/components/layout/Sidebar.tsx:236–252` — Controles de tema/acessibilidade não têm data-tour=theme. SHA256 `445291acd74493e9ec82e7622176ad269f9b1d3f100ff8ee6eeb79b596a38e9e`.
+- `src/components/onboarding/TourOverlay.tsx:16–39` — Retries e salto automático por ausência/medida zero. SHA256 `e96f75433ceab7f93324a25573d89e614682935f8594e516d64a82f6096ef6f5`.
+- `src/components/onboarding/OnboardingTour.tsx:50–63` — Último nextStep chama endTour e onComplete. SHA256 `066e3caa337f58ae0f87adad74073c1e64c68466aa47f8e5f1a25f75b2c1649b`.
+- `src/pages/Index.tsx:135–142` — Início real do tour padrão. SHA256 `971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268`.
+- `src/pages/Index.tsx:183–192` — Callback de conclusão conectado ao estado de onboarding. SHA256 `971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268`.
+
+**Critérios de aceite:**
+
+- Conectar seletores aos controles reais ou corrigir as etapas para os alvos realmente renderizados, respeitando layout e permissões.
+- Validar os seletores no layout composto, não apenas sua sintaxe em um document vazio.
+- Distinguir salto deliberado de ausência inesperada e evitar registrar conclusão de etapa obrigatória que não foi apresentada.
+- Cobrir caminho desktop, mobile e usuário sem uma seção permitida, com política de passos disponíveis explícita.
+
+**Limites:** Fonte fixa; nenhum endpoint, SDK real, SQL, envio, login, browser ou deploy executado. Nenhum arquivo de produto foi alterado. Três getters de navegação e callbacks reais foram analisados/executados em fronteiras sintéticas; nenhum DOM de aplicação foi montado. O probe usa a ausência estática dos IDs e querySelector sintético null; não mede posicionamento, scroll ou visibilidade em browser. O teste existente que só verifica seletor válido/consulta sem throw não prova que o alvo exista. Não foi reexecutado.
+
+## R2-INF-039 — Modais próprios anunciam modalidade sem implementar o contrato de foco
+
+WelcomeModal e MobileDrawerMenu renderizam motion.div com role=dialog e aria-modal=true, mas não gerenciam foco inicial, contenção de Tab, inércia do conteúdo externo ou retorno do foco. Seus consumidores mantêm a aplicação e seus controles montados. WelcomeModal já implementa Escape corretamente; o drawer não possui handler de Escape no componente ou em MobileShell.
+
+**Precondições:** Um dos dois overlays está aberto e há controles focáveis da aplicação ao fundo. Usuário depende de teclado ou do contrato de modalidade comunicado à tecnologia assistiva.
+
+**Efeito e alcance:** A semântica declara que a interação está restrita ao diálogo, enquanto a implementação não estabelece essa restrição nem transfere/restaura o foco. Isso cria um caminho de interação incompatível com o contrato modal. O achado é de fonte e contrato primário; nenhuma sequência DOM/AT foi executada ou apresentada como observação de produção.
+
+**Evidência:**
+
+- `src/components/onboarding/WelcomeModal.tsx:13–47` — Comentário reconhece ausência de trap; único efeito trata Escape; modal sem primitive de foco. SHA256 `b4b1d9fa2fb5a4ff1a7e736595eb9414f614b567df89632120ba95a1f8a5ef9c`.
+- `src/components/onboarding/WelcomeModal.tsx:56–62` — Botão de fechar rotulado preservado. SHA256 `b4b1d9fa2fb5a4ff1a7e736595eb9414f614b567df89632120ba95a1f8a5ef9c`.
+- `src/pages/Index.tsx:110–143` — AppShell permanece montado como irmão do modal. SHA256 `971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268`.
+- `src/components/mobile/MobileDrawerMenu.tsx:133–164` — Drawer próprio com aria-modal, backdrop e drag, sem foco. SHA256 `9df67cc307562d9464297b710086bb26602719a2abb44cd2a54348d1c88d556c`.
+- `src/components/mobile/MobileDrawerMenu.tsx:184–220` — Controles internos e busca sem autofoco/gerenciamento modal. SHA256 `9df67cc307562d9464297b710086bb26602719a2abb44cd2a54348d1c88d556c`.
+- `src/components/mobile/MobileShell.tsx:33–105` — Consumidor mantém Header/bottom navigation e não adiciona foco/Escape. SHA256 `bd36c452c890fae93dedb2e1da1a0f79568eca6fd3cff7036f146c342ae923d4`.
+- `src/providers/AppProviders.tsx:61–90` — Providers globais não oferecem um escopo de foco para estes overlays. SHA256 `7105ef85cebbef40787859cfa9e50ec541efbe86cdd0ca0c2e6e8d230a218d1f`.
+
+**Critérios de aceite:**
+
+- Usar o Dialog/Sheet acessível já existente ou implementar integralmente foco inicial apropriado, contenção de Tab/Shift+Tab, conteúdo externo inerte e retorno ao acionador ou destino lógico.
+- Preservar Escape no WelcomeModal e fornecer fechamento por Escape no drawer sem quebrar botão, backdrop ou drag.
+- Testar cada modal com um controle focável externo: abertura, ciclo de Tab/Shift+Tab, Escape, fechamento e retorno. Complementar com tecnologia assistiva em browser.
+- Não considerar role/aria-modal ou uma regra isolada de axe como prova suficiente do ciclo de foco.
+
+**Limites:** Fonte fixa; nenhum endpoint, SDK real, SQL, envio, login, browser ou deploy executado. Nenhum arquivo de produto foi alterado. Dois loci foram agrupados em um único mecanismo; MobileDrawerMenu foi revisto também pelo root. WelcomeModal já tem nome acessível, um único role de diálogo e Escape. Essas correções anteriores são preservadas. Não há probe adicional para este registro. Foco nativo, ordem DOM e comportamento de tecnologia assistiva continuam pendentes de execução controlada.
+
+**Contrato primário:** [WAI-ARIA APG — Dialog (Modal)](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/), consultado em 04/10/2026. O documento fornece o contrato de foco; não representa uma observação da aplicação.
+
+## Adjudicação e controles
+
+- Nenhuma tarefa DONE_VERIFIED foi reaberta por associação temática; os quatro achados especificam novos subcontratos de produto.
+- P055/090 já está PARTIAL e trata onboarding/ambiente local do projeto, não certifica este tour visual. O status é preservado.
+- P015/E97 está SUPERSEDED e trata onboarding do catálogo. Não é reativado pelo defeito no tour global.
+- Tarefas de movimento reduzido de Contatos, Tarefas e Telefonia mantêm seus estados próprios. O defeito 037 é a preferência global versus roteador, não rejeição genérica dos controles por módulo.
+- Root PLAT010/011 cobrem busca e notificações mobile; a navegação filtrada por permissões permanece um controle válido. Esses mecanismos não foram recontados.
+- Atualização do checklist ao voltar ao dashboard: rejeitada, pois o card é desmontado fora da view e remonta no retorno.
+- PageTemplate/scroll: sem prova do DOM e dos estilos computados, não foi promovida a hipótese de dois donos de scroll.
+- Posicionamento do tour durante scroll e passos ocultos por permissão são limites adicionais; não recebem IDs sem cenário composto comprovado.
+- Heurísticas de perfil/conexão/notificações foram lidas. Um indicador de orientação simplificado não foi automaticamente tratado como requisito novo de negócio.
+- WelcomeModal Escape, nome acessível e diálogo único são correções presentes. O registro 039 cobre somente o contrato restante de foco e o drawer correspondente.
+- A redução CSS existente e o media query do sistema são controles reais; o achado 037 não os descreve como ausentes.
+
+## Cobertura por arquivo
+
+| Arquivo | Nível | Faixas | Avaliação |
+|---|---|---|---|
+| `src/components/layout/A11yBoilerplate.tsx` | semantic | 1–29 | Skip-link e live regions polite/assertive completos; não é focus trap de modal e não altera tab-order global. |
+| `src/components/layout/AppShell.tsx` | targeted | 110–163 | Suporte dirigido: Sidebar fora de Zen/mobile, main focusable, card só dashboard e ViewRouter. Root é dono da leitura integral. |
+| `src/components/layout/MediaVolumeToggle.tsx` | semantic | 1–11 | Wrapper inteiro encaminha variant sidebar ao controle de mídia, preservando diferença em relação aos alertas; operações do MediaVolumeControl pertencem à revisão Inbox. |
+| `src/components/layout/PageHeader.tsx` | semantic | 1–169 | Todos ramos de título/ações/breadcrumb/back completos. hidePageBreadcrumbs contextual é decisão preservada; Início explícito evita duplicar rótulo. Callbacks interceptam href quando fornecidos; retorno sem callback usa navigate(-1). Não reintroduzir breadcrumb desktop por diagnóstico antigo. |
+| `src/components/layout/PageTemplate.tsx` | semantic | 1–133 | Props e ramos header/actions/filters/content, padding/fullBleed/constrained e variants completos. Consumidor real SettingsView; CSS/layout visual não foi medido. Fonte não tem scroller próprio apesar de comentário do ViewContainer; rastreamento dirigido deve avaliar alcance, não prometer captura visual. |
+| `src/components/layout/ProfileMenuContent.tsx` | semantic | 1–54 | Conteúdo completo: status chama callback opcional+fecha, settings navega e logout opcional. Nenhum SDK ou persistência própria; papel/heartbeat não derivado no menu. |
+| `src/components/layout/RoleBadge.tsx` | semantic | 1–24 | Mapas de labels/variants completos e papel vindo do consumidor. Badge não concede autorização e não compara precedência de papéis. |
+| `src/components/layout/Sidebar.tsx` | semantic | 1–258 | Corpo completo: filtra navegação por NavigationService/roles/permissões, filtra favoritos por canAccess e retira duplicados da primária; scroll único, modos recolhido/expandido e controles do rodapé. Busca dispara open-global-search da paleta antiga, fronteira de GOV001 do root, sem novo ID. Notificações/tema não recebem data-tour neste JSX. |
+| `src/components/layout/SidebarBackButton.tsx` | semantic | 1–46 | Guarda canGoBack+callback e placeholder do modo recolhido completos; preserva altura e foco/label no botão presente. onGoBack é do dono do histórico, não histórico implementado aqui. |
+| `src/components/layout/SidebarNavGroup.tsx` | semantic | 1–137 | Leitura/escrita local de grupos, default/persistência/active override, trigger, AnimatePresence e mapa de itens completos. Armazenamento indisponível é capturado; hasActiveItem mantém grupo aberto deliberadamente. Payload JSON fora do contrato é limite de robustez local, não incidente alegado. |
+| `src/components/layout/SidebarNavItem.tsx` | semantic | 1–139 | Ref/ícone/active/badge, prefetch e dois modos completos. data-tour vem do id da navegação. Favorito chama stopPropagation; botão aninhado no botão principal em modo expandido documentado como estrutura a validar por browser/AT, sem inferir duplo clique ou quebrar navegação automaticamente. Badge texto genérico não certifica não lidas de toda entidade. |
+| `src/components/layout/SidebarUserPill.tsx` | semantic | 1–80 | Avatar/nome/role, estado de presença e popover completos; passa setMyPresenceStatus ao menu e fecha após ações. Presença é valor do hook, não heartbeat comprovado. API031 do providers continua dono do contrato de presença. |
+| `src/components/layout/ViewContainer.tsx` | semantic | 1–55 | Reset de scroll por viewId, ramos fullScreen/ownScroll e wrapper scroll compartilhado lidos. ownScroll=settings conforme ViewRouter; contexto ref apenas no ramo padrão. Não amplia LT-LAYOUT001 antigo nem julga viewport sem medição. |
+| `src/components/layout/ViewLoadingFallback.tsx` | semantic | 1–44 | Skeletons, role status/aria-busy e padding opcional completos. Loading é estado de apresentação, não sucesso de query. |
+| `src/components/layout/VoiceCopilotFAB.tsx` | semantic | 1–25 | Botão flutuante+tooltip completos; onClick vem do consumidor, nenhum acesso ao microfone/rede acontece neste wrapper. |
+| `src/components/layout/sidebarNavConfig.ts` | semantic | 1–14 | Exports e aliases inteiros, derivados de NavigationService. Ordem dos seis grupos é pressuposto atual; não modifica dados. |
+| `src/components/mobile/MobileDrawerMenu.tsx` | semantic | 1–320 | Leitura integral por extensão do contrato modal: navegação e recentes filtram canAccessView; busca local funciona. Wrapper motion declara dialog/aria-modal, fecha por backdrop, botão e drag; não implementa foco inicial, contenção, retorno, inert ou Escape. Storage de recentes e interação foram lidos, sem browser ou mutação. Root mantém PLAT010/011 nos estados de busca/notificações; não recontados. |
+| `src/components/mobile/MobileShell.tsx` | semantic | 1–109 | Leitura integral como consumidor do drawer: controla isOpen por Header/BottomNavigation e onClose; não oferece gerenciamento de foco ou Escape ao drawer. Busca e notificações locais são achados PLAT010/011 do root e ficam fora desta contagem. |
+| `src/components/onboarding/OnboardingChecklist.tsx` | semantic | 1–137 | Timers, checkAllSteps sequencial, dismiss por usuário, progress e dois layouts completos. Efeito[user] remonta ao voltar ao dashboard; hipótese stale por navegar a Settings foi rejeitada após consumer. Exibe tema marcado quando checkCondition recebe data ausente; fechamento/progresso não escreve configuração. |
+| `src/components/onboarding/OnboardingTour.tsx` | semantic | 1–86 | Contexto, guarda de uso, start/end/next/prev/goTo e onComplete completos. End é usado tanto no término quanto no fechamento/skip; não promete tour inteiramente assistido. Overlay sempre montado no Provider. |
+| `src/components/onboarding/TourOverlay.tsx` | semantic | 1–217 | Posicionamento, retry10, skip de alvo ausente/zerado, listeners+cleanup, SVG/callout/controles completos. Falta reset de targetRect durante alvo faltante; mede antes de scrollIntoView e só escuta resize (limite geométrico a validar). Ausência de alvos padrão rastreada; não inferido duplo Enter nativo sem DOM. |
+| `src/components/onboarding/WelcomeModal.tsx` | semantic | 1–177 | Todo modal lido: guarda open, listener Escape e cleanup, conteúdo/ações e aria-modal. Não põe foco inicial, trap de Tab, restauração ou inert no fundo; fluxo Index mantém AppShell irmão montado. Tests só labels/landmark/Escape não provam ciclo de foco. |
+| `src/components/onboarding/__tests__/OnboardingTour.test.tsx` | semantic | 1–310 | Teste inteiro310 lido, não executado: estado/transições do Provider, formato de seletores, callback de ações e Escape/aria do Welcome. querySelector não lançar não prova alvo existente; não há tour real contra Sidebar nem scroll/focus fixture. |
+| `src/components/onboarding/__tests__/WelcomeModal.a11y.test.tsx` | semantic | 1–53 | Teste inteiro lido, não executado: verifica um dialog, aria-modal+label, axe region e fechado. Não exercita foco inicial/Tab/inert/restauração; manter a prova positiva de landmark. |
+| `src/components/onboarding/checklistSteps.ts` | semantic | 1–121 | Seis checks integralmente lidos e comparados aos rótulos. Queries SDK ignoram error; tema compara undefined contra null/system e devolve true, ao contrário do hook agregado que guarda settings. Perfil usa nome (foto descrita mas não exigida pelo check), conexão depende visibilidade/RLS; não inventada obrigação global nova. |
+| `src/components/onboarding/defaultTourSteps.ts` | semantic | 1–46 | Seis passos/seletores completos. notifications/theme não correspondem a produtores data-tour atuais; parte do contrato atual do tour, não apenas formato CSS. |
+| `src/components/settings/AppearanceSettings.tsx` | targeted | 1–86 | Controle real de tema oferece dark/light/system e chama updateSettings; campos adjacentes de perfil e densidade. Não certifica toda persistência por trecho. |
+| `src/components/settings/SettingsView.tsx` | targeted | 40–75, 211–236 | Suporte dirigido ao PageTemplate: header/ações e conteúdo da aba de aparência. Possível owner de scroll não promovido: comportamento CSS overflow-y depende do DOM e não foi medido. |
+| `src/components/theme/HighContrastToggle.tsx` | semantic | 1–298 | Corpo completo298: preferências de contraste e sistema, reaplicação de preset, multiplicador, reducedMotion/classe+Storage, largeText e diálogo de configurações. UI reduz movimento escreve reducedMotion=true, rota lê outra chave. Storage getters/setters não guardados no provider; não testado browser privado. Esta leitura encerra saldo298 que root pediu depois. |
+| `src/components/transitions/PageTransitionProvider.tsx` | semantic | 1–14 | Wrapper integral delega RouteTransition e declara respeito à preferência do usuário; consumidor AppRoutes confirmado por faixa. |
+| `src/components/transitions/RouteTransition.tsx` | semantic | 1–37 | Config memo, variant reduzida, AnimatePresence por pathname e filho completos. Chave pathname é da rota, não troca de view interna no Index. Contrato de preferência própria rastreado; não reimplementar o motor Framer em prova. |
+| `src/components/transitions/index.ts` | semantic | 1–17 | Reexports integrais; não instala handlers nem publica setter de preferência por conta própria. |
+| `src/components/transitions/transitionConfig.ts` | semantic | 1–45 | Lookup por prefixo mais longo e store zapp:reduce-motion completos; guards de Storage preservados. Chave/formato distintos do controle de acessibilidade ativo, rastreados no consumidor. |
+| `src/components/transitions/transitionVariants.ts` | semantic | 1–93 | Todos ramos none/fade/slide/zoom/flip/parallax completos; duração limitada0.05–0.4 e defaults. none ainda faz fade80ms, reduz movimento geométrico; não equivale a provar que toda animação foi desativada. |
+| `src/components/transitions/useTransitionPreferences.ts` | semantic | 1–33 | Estado local, leitura inicial, media query/change cleanup e setter persistente completos. reducedMotion = sistema OU chave própria; não consome contexto HighContrast nem classe reduced-motion. Divergência de preferência confirmada, sem render medido. |
+| `src/contexts/LayoutContext.tsx` | semantic | 1–17 | Contexto/provider/hook completos, default hidePageBreadcrumbs false e estado Zen opcional. Ocultar trilha no desktop é decisão preservada do AppShell. |
+| `src/contexts/LayoutScrollContext.tsx` | semantic | 1–9 | Contexto/ref/hook completos; default current null, provider do ViewContainer no ramo scroll. Ausência do contexto nos ramos sem scroller é deliberada. |
+| `src/hooks/system/useUserSettings.ts` | targeted | 151–202 | Persistência dirigida inclui theme no upsert e valida error. Confirma que SDK data ausente não é prova de tema selecionado; fonte não executada. |
+| `src/hooks/ui/useOnboardingChecklist.ts` | semantic | 1–137 | Hook completo comparado ao card: guarda if(settings) antes de theme, enabled muda ao dashboard, estado/dismiss/reset e queries. Não duplica achado de scope global sem RLS; ausência de dados e freshness devem ser explicitadas. |
+| `src/hooks/ui/useTheme.ts` | targeted | 1–185 | Suporte dirigido à preferência visual de tema: sincroniza estado/store/localStorage theme e classes. Isso não transforma data ausente do SDK em confirmação de tema persistido; restante do hook não foi integralmente lido neste lote. |
+| `src/index.css` | targeted | 35–56 | Regra nativa de View Transitions tem media query do sistema. Não vincula o toggle interno nem corrige preferência do hook por si só. |
+| `src/pages/Index.tsx` | semantic | 1–196 | Corpo integral lido como suporte: auth guard, navegação, checklist habilitado só dashboard, AppShell persistente mas card condicional, Welcome e TourProvider. Antiga CommandPalette/Gmail/audit são fronteiras do root; não duplicadas. |
+| `src/pages/ViewRouter.tsx` | targeted | 1–47, 88–124, 150–183 | Suporte dirigido: metadata de layouts/ownScroll=settings e ViewContainer; view interna tem AnimatePresence/OS reduced motion, não usa a preferência do HighContrast. |
+| `src/providers/AppProviders.tsx` | semantic | 1–90 | Corpo completo: ErrorBoundary/retry3 e fallbacks, Query/Auth/HighContrast/toast/tooltip/ThemeSync e providers. Não existe gestão global de foco para Welcome. Limpar Cache chama localStorage.clear, observado sem execução; classificar recuperação depende do consumidor de ErrorBoundary. |
+| `src/routes/AppRoutes.tsx` | targeted | 40–119 | Montagem do PageTransitionProvider ao redor de rotas, incluindo /queues/rotas de auth nos mapas; acesso depende de ProtectedRoute onde aplicável. |
+| `src/services/navigation.service.ts` | targeted | 1–160 | Getters completos de navegação primária/grupos/avançado conferidos; seus IDs não incluem notifications ou theme singular. Restante da autorização canAccess não lido nesta ampliação e pertence ao root. |
+| `src/styles/accessibility.css` | targeted | 50–76 | Regra reduced-motion reduz CSS animation/transition durations e scroll behavior; não é consumo da flag no hook de transição. Não se relata duração observada de Framer. |
+
+## Lacunas remanescentes
+
+- Não houve browser, axe, tecnologia assistiva, medição visual ou chamada de produto. Leitura integral não é aceite de interação.
+- Três casos offline sustentam 036–038. O registro 039 é uma análise estática do contrato modal, sem quarto teste executado.
+- A cobertura primária fecha somente estes 25 arquivos e suas 2.136 linhas; a reauditoria global continua em andamento.
+
+### Extensão documental de R2-INF-019 — runner histórico de volume
+
+Extensão histórica: mut-plano-volume.py recebe alvo em rodar, mas não o usa. Qualquer returncode não zero na execução do mutante satisfaz esperado_verde=False e vira PEGA, inclusive erro do runner ou compilação sem assertion relevante executada. Diferentemente do runner original do mapa, este script exige baseline verde, confere alvo literal, restaura bytes em finally e compara SHA. Esses controles são preservados; não se atribui falha a uma execução histórica não observada.
+
+- `docs/evidencias/plano-volume-50/mut-plano-volume.py:99–109` — alvo não usado; classificação apenas por returncode. SHA256 `ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5`.
+- `docs/evidencias/plano-volume-50/mut-plano-volume.py:112–125` — Controle positivo: baseline verde antes de qualquer mutação. SHA256 `ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5`.
+- `docs/evidencias/plano-volume-50/mut-plano-volume.py:127–149` — Alvo literal, finally e SHA preservados; resultado classificado PEGA pelo booleano permissivo. SHA256 `ba8d01e742131b5da5c1f323ad885174e0e10cdea36553fa07ce95201cf33aa5`.
+
+## Ampliação finita — telemetria e tratamento de erros
+
+### Revisão de telemetria e tratamento de erros
+
+Sete arquivos primários lidos integralmente: 685 linhas. HighContrastToggle já foi fechado como apoio no lote anterior. Há 16 caminhos com apoio: 12 integrais e 4 dirigidos. Fonte `da307ba5626dce892f0b37cb6762463f55d14a96`; nenhuma alteração de produto.
+
+## Resultado e prova delimitada
+
+Dois achados, dois casos offline. INF-TE-P01 verifica a falha lançada pela query real com SDK sintético e a apresentação real da página/tabela para um estado documentado de erro. INF-TE-P02 chama somente render do ErrorBoundary. Nenhum caso executa React, TanStack, browser, rede ou reload.
+
+Primeira execução interrompida por guarda do harness: import.meta.env.DEV aparece também em comentário, tornando a contagem textual 2. A substituição foi restringida à expressão JSX exata; os dois casos passaram depois. Nenhuma falha do harness virou achado.
+
+## R2-INF-040 — Falha de leitura da telemetria aparece como sistema com bom desempenho
+
+A queryFn lança o error do SDK, mas AdminTelemetriaPage não consome error/isError/status. Sem dados prévios, o default rows=[] chega à tabela quando a primeira consulta terminou em falha. TelemetryTable usa somente isLoading e rows.length e exibe uma mensagem explícita de bom desempenho, enquanto os cards mostram zero erros e média 0ms.
+
+**Precondições:** Usuário com acesso à view de telemetria. Consulta inicial falha depois das tentativas configuradas e não há dados de sucesso no cache dessa chave; não há configuração externa que faça throwOnError.
+
+**Efeito:** Uma indisponibilidade ou erro de autorização/consulta é apresentada como ausência de consultas lentas e bom desempenho, justamente quando a tela deveria comunicar que não conseguiu medir. O achado não depende de números reais do banco nem afirma exposição a usuários sem acesso.
+
+**Evidência:**
+
+- `src/pages/AdminTelemetriaPage.tsx:37–59` — Estado de erro omitido; queryFn lança SDK error. SHA256 `a84e4f28ce99e418b6d2dc4c8f83960e1bb003fb04ceabd175f20bffb453d65d`.
+- `src/pages/AdminTelemetriaPage.tsx:70–98` — Cards calculados do array vazio. SHA256 `a84e4f28ce99e418b6d2dc4c8f83960e1bb003fb04ceabd175f20bffb453d65d`.
+- `src/pages/AdminTelemetriaPage.tsx:145–148` — Contador e tabela sem estado de erro. SHA256 `a84e4f28ce99e418b6d2dc4c8f83960e1bb003fb04ceabd175f20bffb453d65d`.
+- `src/pages/admin-telemetria/TelemetryTable.tsx:13–28` — Sem dados vira mensagem explícita de bom desempenho. SHA256 `351510648414af0ce45528db1ed08ec743d02894d50e0899083481b885eab0b4`.
+- `src/lib/queryClient.ts:9–25` — Configura retries, mas não eleva todo erro de query à ErrorBoundary. SHA256 `5036c273782cf6aca3d756b2ac74710edbd0b5d8fe177a0991e5fdc2a390fac5`.
+- `src/pages/ViewRouter.tsx:81–87` — View telemetry é consumidor ativo. SHA256 `6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530`.
+- `src/pages/ViewRouter.tsx:129–151` — Gate de acesso presente antes da montagem. SHA256 `6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530`.
+- `src/services/navigation.service.ts:142–155` — Telemetria restrita por papel no mapa de navegação. SHA256 `8e128c5cc1aa208f96570c68295d6e4836ca1febed4d7d1e603f648d4c294d48`.
+
+**Aceite:**
+
+- Consumir e apresentar falha da query, separada de carregamento, sucesso vazio e sucesso com registros.
+- Não derivar saúde do sistema de ausência de dados por falha; se houver dados de cache, sinalizar atualização falha/defasagem.
+- Verificar falha inicial, sucesso vazio, sucesso com alertas e falha de refetch; manter os gates de acesso e o erro já validado pelo cleanup.
+
+**Limites:** Nenhuma query de produto, biblioteca React/TanStack, browser ou retry real executado. Probe usa o queryFn real com SDK sintético e fornece o estado de erro documentado à fronteira do hook; testa as decisões de página/tabela reais. A classe de severidade e o limite de 500 registros não foram convertidos em defeitos adicionais.
+
+Contrato primário: [TanStack Query — Queries](https://tanstack.com/query/latest/docs/framework/react/guides/queries), consultado em 04/10/2026. Estados de erro e sucesso são distintos; a documentação não é captura de execução do produto.
+
+## R2-INF-041 — ErrorBoundary ignora fallback nulo usado para retirar overlays com falha
+
+O contrato de Props aceita fallback ReactNode, mas render verifica seu valor por truthiness. Quando App fornece fallback={null} para os providers diferidos, a condição é falsa e o boundary renderiza a tela padrão de erro, com min-h-screen e role=alert. App documenta expressamente que esse fallback deve retirar silenciosamente a camada opcional.
+
+**Precondições:** O boundary de overlays da aplicação captura uma falha e permanece em hasError. O fallback fornecido é null, como no consumidor atual; para chunk load, após a recuperação automática não ser possível ou já ter sido usada.
+
+**Efeito:** Uma falha de componente opcional produz um painel de erro com altura mínima de uma viewport e anúncio assertivo em vez de desaparecer. AppRoutes continua fora e montado; não se afirma que o roteamento ou toda a aplicação foi derrubado. A ocupação visual foi confirmada como classe/JSX, não medida em navegador.
+
+**Evidência:**
+
+- `src/components/errors/ErrorBoundary.tsx:8–13` — Fallback é ReactNode opcional. SHA256 `fecb028508cd26cc018163f3a21c18093761ffc4fc07eb780ec8b9c940bd18ca`.
+- `src/components/errors/ErrorBoundary.tsx:129–142` — if truthy ignora null e cai na UI padrão. SHA256 `fecb028508cd26cc018163f3a21c18093761ffc4fc07eb780ec8b9c940bd18ca`.
+- `src/App.tsx:15–24` — Contrato de recuperação silenciosa dos overlays. SHA256 `3e05e3ea5f9c194799d123aa46a8dc80967dc8ef846f8efe7e97e8d96f659220`.
+- `src/App.tsx:128–143` — Consumidor real fornece null e mantém AppRoutes fora do boundary. SHA256 `3e05e3ea5f9c194799d123aa46a8dc80967dc8ef846f8efe7e97e8d96f659220`.
+
+**Aceite:**
+
+- Distinguir fallback não fornecido de fallback fornecido como null/false/zero/string vazia; retornar o ReactNode explícito.
+- Verificar erro com fallback=null, fallback customizado e ausência de fallback, além do caminho sem erro.
+- Manter os wrappers de sessionStorage, limitação de autoreload e isolamento de AppRoutes; validar em browser que a camada opcional desaparece sem deslocar a aplicação.
+
+**Limites:** Probe chama o método render real isolado, com DEV=false e JSX inerte; não executa componentDidCatch, reportClientError ou reload. O comentário de main.tsx sobre um wrapper não montado foi tratado pelo root como observação; não compõe este achado. Os controles de chunk recovery e ocultação de detalhes em produção foram lidos e preservados.
+
+## Controles e adjudicação
+
+Cleanup da telemetria já verifica SDK error. Os períodos de sete dias são deliberadamente de calendário em São Paulo e os testes importam o helper real. O gate de acesso à view foi preservado. Chunk recovery possui wrappers de storage e limitação de recarga; ErrorFallback exportado não foi promovido sem consumidor. Nenhuma tarefa DONE_VERIFIED foi reaberta por semelhança temática.
+
+INF-019 recebeu um locus histórico adicional por revisão compartilhada com root. O script de volume tem baseline, alvo literal, finally e SHA; o achado preserva esses controles e limita a extensão à contagem de qualquer nonzero como PEGA. Não é um terceiro achado deste lote.
+
+## Cobertura por arquivo
+
+| Arquivo | Nível | Faixas | Avaliação |
+|---|---|---|---|
+| `docs/evidencias/plano-volume-50/mut-plano-volume.py` | targeted | 95–154 | Trechos de apoio da extensão INF-019 revisada integralmente pelo root: baseline, rodar e mutações com finally/SHA. Nonzero indiscriminado continua inadequado para provar assertion alvo; não se executou o script. |
+| `infrastructure/preview-egress-proxy/main.go` | semantic | 1–355 | Releitura integral para explicitar a faixa antes implícita: HMAC corpo/timestamp/nonce, retenção até expiração da aceitação, mutex/capacidade, limites de body/time/redirect, validação de todas respostas DNS e dial de IP validado preservando SNI/Host. Erros externos genéricos. Nenhum Go/servidor/rede iniciado. |
+| `infrastructure/preview-egress-proxy/main_test.go` | semantic | 1–182 | Releitura integral de assertions: IP/URL privados, autenticação/replay com clock à frente, pin de dial/SNI/Host e rejeição de DNS privado antes do dial. TLS insecure é fixture do httptest; teste inicia serviço local se executado, mas não foi executado nesta auditoria. |
+| `src/App.tsx` | targeted | 1–45, 118–150 | Apoio dirigido: contrato e montagem de overlays opcionais com fallback null, AppRoutes irmão fora do boundary. Nenhum handler global foi executado. |
+| `src/components/admin/telemetry/TelemetryCharts.tsx` | semantic | 1–187 | Leitura integral de apoio: buckets floor por duração, severidade/contagem/média/máximo e ranking. Usa somente rows filtrado; 500 mais recentes limitam série. Sem chamada ou mutação, sem nova medição fictícia. |
+| `src/components/errors/ErrorBoundary.tsx` | semantic | 1–254 | Leitura integral: recuperação de chunks exige storage legível e gravável, flag evita loop; retry/home/reload limpam flag com catch. Detalhes DEV condicionados, render fallback truthy é INF-041. Export ErrorFallback não teve consumidor produtivo localizado além de reexport; sem alegação de exposição desse export. |
+| `src/lib/queryClient.ts` | semantic | 1–33 | Leitura integral de apoio: singleton, retries de queries e networkMode online; mutations sem retry. Não configura throwOnError global nem converte toda query em suspense. |
+| `src/pages/AdminTelemetriaPage.tsx` | semantic | 1–151 | Leitura integral: queryKey inclui filtros, query limitada a 500 mais recentes com erro lançado; apresentação ignora isError (INF-040). Cleanup verifica SDK error. Calendário custom e polling lidos; truncamento e ausência de datas explícitos como limites, não novo defeito automático. |
+| `src/pages/ViewRouter.tsx` | targeted | 75–90, 125–152 | Apoio dirigido: mapeamento ativo telemetry e gate de acesso antes de ViewComponent. Erro de useQuery não é automaticamente exceção de render. |
+| `src/pages/admin-telemetria/TelemetryStatsCards.tsx` | semantic | 1–60 | Leitura integral: quatro cards recebem agregados; não buscam dados. Rótulos e zero/média seguem o pai, sustentando efeito de INF-040 sem ID separado. |
+| `src/pages/admin-telemetria/TelemetryTable.tsx` | semantic | 1–88 | Leitura integral: loading, sucesso vazio e linhas; vazio afirma bom desempenho sem receber erro do pai (INF-040). Colunas/limiares/labels de data e severidade inspecionados. |
+| `src/pages/admin-telemetria/TelemetryTopOffenders.tsx` | semantic | 1–44 | Leitura integral: oculta vazio e exibe até oito grupos recebidos, count/max/média; divisor só ocorre em grupo com linha. Contrato é alertas dos registros carregados, sem query adicional. |
+| `src/pages/admin-telemetria/__tests__/telemetryUtils.periodo.test.ts` | semantic | 1–77 | Asserções/fixtures integrais lidas, sem executar: importa helper real; data fixa e Intl São Paulo testam meia-noite, sete dias calendário e horas corridas. Não prova a apresentação de erro da página. |
+| `src/pages/admin-telemetria/telemetryTypes.ts` | semantic | 1–18 | Tipos integrais de linha, severidade e período; schema estático não valida dados remotos por si só. |
+| `src/pages/admin-telemetria/telemetryUtils.tsx` | semantic | 1–70 | Leitura integral: formatos, badges e agrupamento top oito por frequência; dias de calendário em São Paulo são decisão explícita para 7d, horas corridas preservadas para 1h/6h/24h. |
+| `src/services/navigation.service.ts` | targeted | 142–155 | Apoio dirigido: item telemetry com ADMIN_ONLY; não se presume acesso universal. |
+
+## Lacunas
+
+
+- Nenhum browser, SDK real, banco, TLS, Go runtime ou serviço iniciado.
+- Probes usam fonte real e fronteiras inertes; não substituem React/TanStack nem a execução de seus ciclos.
+- O limite de 500 registros representa uma amostra recente, não certifica métricas de todo o banco; não foi promovido a um novo mecanismo sem promessa mais específica.
+- A leitura integral dos sete arquivos fecha apenas o lote delegado; o roster final de testes permanece em andamento.
+
+## Ampliação finita — testes e contratos de prova
+
+### Revisão integral do roster fixo de testes
+
+Fechados 118 arquivos e 14.473 linhas do roster alocado no HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`: 117 leituras integrais neste lote e 1 leitura integral anterior citada. Não houve execução de suítes, serviços, browser ou novos probes. Cada linha do journal contém avaliação específica de assertions, fixtures/mocks, controles positivos, limites, SHA256, blob Git e faixa efetivamente lida. O roster original é histórico da alocação; `test-review.json` é o estado final.
+
+Foram adicionados R2-INF-042 e R2-INF-043, ambos P2. O primeiro identifica o filtro `critical` do spec E98: a regra color-contrast é `serious`, portanto o próprio gate a descarta. Outros specs de contraste exigem todas as violações vazias; nenhuma regressão visual atual foi inferida. O segundo identifica o nome acessível antigo na fixture de onboarding; se o modal abre, o timeout absorvido leva a um retorno sem dispensá-lo. O teste do próprio onboarding precisa de navegação que preserve seu modal, mesmo após correção do helper compartilhado.
+
+A deduplicação considerou os 104 achados anteriores e os relatórios atuais. TC-011 é mantido como família de prova insuficiente/tautológica sob responsabilidade do root. OTH010/CT94 é outro teste; VOL03/SK04 preservam a decisão de skin. A tolerância 4.4 documentada para alto contraste não foi tratada como defeito.
+
+O suporte adicional `contraste-balao-midia.contract.test.ts` foi lido integralmente: o parser casa `.high-contrast` dentro de `.dark.high-contrast`, de modo que o estado rotulado claro termina com tokens escuros. Isso foi encaminhado como extensão de TC-011, sem outro ID INF. As verificações de classes reais e o parser exato do teste vizinho são controles positivos preservados.
+
+Os limites de prova registrados por arquivo não tornam as suítes inteiras tautológicas. Exemplos: os testes de realtime incluem uma corrida real com deferred; os testes de segurança incluem chamadas reais a logAudit além de um mockRpc autorreferente; os contratos de manifesto distinguem fonte e bundle corretamente; testes de CI verificam ordenação textual, mas não reproduzem o dry-run que grava secrets antes de chegar ao deploy. Os testes de OnboardingTour lidos pelo root verificam Escape, estados e nome, mas querySelector apenas não lançar aceita null e não demonstra foco/trap/inert (apoio INF038/039).
+
+Para consolidação da família TC-011, também foram comunicados os casos de Array.sort local em ordenar.unit, assert do campo já visível em TalkX, oráculos locais de PerformanceMonitor, fallback de teste de exclusão sem remover no RateLimitConfigPanel e logging de catálogo consultado sem marcador/limite temporal. No catálogo, a mensagem em si possui marcador e janela temporal: a insuficiência é limitada à correlação do evento de log.
+
+`test-review-coverage.json` usa semantic apenas para leitura integral do código do teste; não afirma cobertura integral do produto testado. Os arquivos de apoio possuem faixas explícitas. Permanecem sem prova de runtime: accessible-name/browser, axe/contraste renderizado, CI remoto, SDK real, PostgreSQL e provedores. Os dois novos achados têm zero probes atribuídos e prova estática delimitada.
+
+## Ampliação finita — scripts shell de contrato
+
+### Leitura integral dos 12 scripts shell de contrato
+
+Lote fechado: 12 arquivos/3.554 linhas no HEAD `da307ba5626dce892f0b37cb6762463f55d14a96`. Zero scripts, SQL, Docker, Deno, serviço, suíte ou probe executado. A leitura incluiu setup, SQL embutido, migrations selecionadas, branches/assertions, status de erro e cleanup. Credenciais nos fixtures são sintéticas; nenhum segredo real foi lido ou publicado.
+
+As operações mutáveis desses scripts, quando executados, apontam para containers criados pelo próprio runner. Não foram confundidas com execução somente leitura nem com o cleanup de reações do E2E produtivo. Os controles positivos reais são preservados, assim como o limite de schema mínimo. Nenhum novo ID INF foi criado. Limites concretos de oráculo (pausa com item já inelegível, ACL PUBLIC não medido, psql permissivo/role ausente) foram encaminhados à família TC-011.
+
+## scripts/db-audit/calls-telefonia-contract.test.sh
+
+Faixa 1–373; SHA256 `c9a6e49def217142809123698aa5ccc77a1641312a1af1a299dbc31d8afee650`; blob `a1982fa70f7d983fed7c5a04edb6baa0629100a2`.
+
+Docker com nome PID e cleanup restrito; readiness estável; set-Eeuo/ON_ERROR_STOP1. Schema/roles/policies mínimos, três migrations, asserts de escopo/raw RLS, filtro/paginação/KPI, dono, NULL profile/owner, notas, chamadas WhatsApp, grants e reaplicação.
+
+expect_failure41–51 aceita qualquer erro, sem SQLSTATE; positivos e queries de estado reduzem o risco, mas não provam a causa de toda recusa. Reaplicação365 cobre a migration base, não as duas correções posteriores. Não certifica a cadeia completa nem o overload mais recente.
+
+## scripts/db-audit/mapa-f1-address-contract.test.sh
+
+Faixa 1–126; SHA256 `f02c1c695cf4e5701714c5381f9258100e10205c090cc278dc2579bbe986b801`; blob `980a69a0bbc8bcbd66aed4e680ed8514a20913f8`.
+
+Container PID network none, mktemp/cleanup, readiness por log+SELECT, ON_ERROR_STOP1. Aplica migrations reais, mede assinatura/campo de endereço, trigger só em mudança, cleared e ausência de PII no audit.
+
+ACL98–103 consulta grantees diretos e verifica anon ausente/authenticated presente, sem testar PUBLIC apesar do título; PUBLIC permitiria anon por herança. A função is_admin_or_supervisor da fixture sempre true: não prova escopo de agente.
+
+## scripts/db-audit/multiplix-delivery-leases.test.sh
+
+Faixa 1–743; SHA256 `ac3707ca66fdbf97753f7ecb8d79fe4933fac733a93f0eec3e27e74eb8883f06`; blob `461817346b9bfe24dc79d113e6c213e357406dc7`.
+
+Container PID, retry apenas bootstrap, ON_ERROR_STOP1, migrations reais em fixture explícita auth/vault/cron/net. Verifica tokens distintos, reclaim e conflito do token antigo, cancel/timeout, ordem de três blocos, heartbeat, dead letters, optout, risco de conexão e atribuição linked/inferred com janela/contato.
+
+Claims339–349 são sequenciais: não simulam corrida simultânea. F57.3 declara item pending, mas item1 foi reclaimado365 e permanece sending com lease90; recusa392 não isola pausa. O timeout claim422 ocorre após dispatch cancelled, também não isola só outcome_unknown. F59.4–5 mede gravação da supressão e lista imutável, não um envio real. Erros tolerados nos captures são em geral confrontados com valores/exceções específicos. positivos de outro item e token velho preservados.
+
+## scripts/db-audit/talkx-campaign-worker-lease.test.sh
+
+Faixa 1–330; SHA256 `26945f6a3f2a8579c884dda47ac58bf4636787ba3e76c59001f44dd21bec5c19`; blob `28d2c91d85445b0a12e7221a2f1f4e7506f47b65`.
+
+Docker PID/cleanup, bootstrap até duas respostas estáveis, ON_ERROR_STOP1; expect_error exige nonzero+needle. ACL has_function_privilege, negativas42501, start idempotente, bloqueio worker direto, claim/renew/release, duas fixtures de fila (47/limite20 e subconjunto2), segredo só avaliado como não nulo.
+
+Fixture mínima; leases sequenciais e expiração por UPDATE com escape GUC, sem concorrência real. Sorting313 reordena recipient_id na query externa, portanto não certifica a ordem original do set retornado; conjunto pequeno319 também reordena. Não leu segredo real.
+
+## scripts/db-audit/talkx-lifecycle-events.test.sh
+
+Faixa 1–195; SHA256 `5faa79d910550bc5aeaa7224647b48e935cfcd2f19e346f9e4febfcf99b315f5`; blob `88c1a10e71ddd3e274b0ecf460e04aafe936c30d`.
+
+Docker PID e cleanup, retry bootstrap, ON_ERROR_STOP1. Fixture de perfis/campanhas/recipients/events; migration real. Transições reais+persistência de quatro eventos/ator/motivo, cancel5, no-complete cancelada, resumed_auto e complete com resumo.
+
+Cabeçalho promete soltar leases, mas recipients são criados com leases NULL e não há assertion das colunas de lease. Conclusão usa UPDATE sent direto e contadores0, coerentes com resumo esperado; não prova contadores de envio reais.
+
+## scripts/db-audit/talkx-overview-stats.test.sh
+
+Faixa 1–423; SHA256 `6caf4c7aa6a36966353139e115b4e2b16b848b9f9cac55655ad65e4ad11ebb67`; blob `c8887e8e6db4f97d24a6bb993b9d22485c8dcc36`.
+
+Docker PID/cleanup, fail-fast SQL. Registro CASES_SEEN exige todos13 casos após asserts. Fixture de políticas e roles, migration real+replay, eliminação de overload, has_function_privilege, números atuais/anteriores, dias/zero-fill/somas, dedup, filtros, canal, previous null e sessão agente/admin.
+
+Escopo é schema/policies mínimos declarados, não cadeia completa. Fluxo muda dados só no container; maior parte numérica é como postgres, e o bloco RLS usa SET ROLE real. Não se executou nem confirmou resultado das13 medições nesta auditoria.
+
+## scripts/db-audit/talkx-send-budget.test.sh
+
+Faixa 1–253; SHA256 `ed3bf0fb60ec92b30d9161c42f4dd0c03372ba68adc237a4ee50af2782fce1fe`; blob `c96249c591a955feb158e823b42f2eabd5b3cce9`.
+
+Docker PID/cleanup e retrybootstrap; ON_ERROR_STOP1. Cadeia explícita10migrations e schema mínimo. Assert objetos3, orçamento minuto/dia, soma Multiplix/TalkX por conexão, pace, clampfast e exceção específica de max_per_minute.
+
+GUC role/sub sem SET ROLE nos casos: testa gates internos, não grants/RLS de um usuário autenticado. Orçamento lido sequencialmente, sem reserva concorrente; não substitui provas de envio. jqget definido181 não usado e sem ON_ERROR_STOP, sem consumidor ativo no script.
+
+## scripts/db-audit/talkx-suppress-phone-axis.test.sh
+
+Faixa 1–206; SHA256 `6b22e13ddeebb34e43d81a73caf5c551a25164923666aab80c11b18d614d04c8`; blob `a7223aa7d0fce61dc434c74fac2ccff6dc132236`.
+
+Docker RANDOM+PID/cleanupvalidado, readiness por segundo marker, ON_ERROR_STOP1. Migrations phoneaxis+X029 reaplicadas, overload antigo eliminado, conflitos phone/contato retornam NULL, nova supressão UUID, has_function_privilege dos3roles.
+
+Captures com ||true confrontam saída vazia/UUID; erros típicos não passam como sucesso vazio. Casos comportamentais usam postgres+GUC; ACL verificada separadamente. Não mede disputa simultânea nem serviço real.
+
+## scripts/db-audit/talkx-transition-overload-postgrest.test.sh
+
+Faixa 1–294; SHA256 `bfda297740566b20db21a02b727ec6ae685e08ad5f30c7c417977847fe6b7518`; blob `d0e345dc07d1bce4a9bd6e10922698e682f5eb1b`.
+
+Docker PG+PostgREST+rede com nomes PID e cleanup restrito. SQL failfast, guard exige status+mensagem; reproduz2overloads, erro CHECK, aplica3migrations, NOTIFY schema, prepara JWT sintético HMAC e invoca testeDeno com falha propagada.
+
+Se executado, faz pull de imagem/redeDocker e inicia serviços: não é script read-only. /tmp/talkx-transition-deno.log é caminho compartilhado, não isolado por PID; nota de robustez, sem corrida executada. ChamadaDeno/HTTP não ocorreu. Comentário de estado vigente é histórico do conjunto aplicado, não atestado de deployment.
+
+## scripts/db-audit/talkx-v16-time-series.test.sh
+
+Faixa 1–119; SHA256 `aa659a60f2f2b60c3de48f7fe6e065accb00302c4e3fdfacce0a0da49efdd399`; blob `3305ac8f65e62653051e5fc698a3ad96dc493527`.
+
+Docker RANDOM/cleanupvalidado, readiness, fixture mínima; função antiga transcrita para RED3, migration real para GREEN5 e campo médio não nulo. Assert diferencia somas3/5 e mede resultado real se rodado.
+
+psql helper9 usa ON_ERROR_STOP0; não prova aplicação integral sem erro, mesmo com ||fail na migration109. RED é cópia local da função antiga, não checkout histórico. Verifica presença de avg_reply_secs, não seu valor. Nenhuma execução.
+
+## scripts/db-audit/talkx-v21-launch-flags.test.sh
+
+Faixa 1–156; SHA256 `fd7df0f245f6a36ffe25525fec713b3fa5cb1e3f2d08f600d4cadf0e04637f69`; blob `305f5713485f5a1233dbb5709ddcb19399cb2e2a`.
+
+Docker RANDOM/cleanupvalidado e readiness; fixture mínima, RED semcoluna, migration real, quatrocolunas/defaults, launched_by/at, erro específico adminonly e flags persistidas.
+
+ON_ERROR_STOP0linha10 permite prosseguir em erros de arquivo. Fixture cria service_role/authenticated39–40, mas omite anon citado nos REVOKEs da migration114–115/369–370; assertions comportamentais não medem ACL. Captura save_out permissiva152 é seguida de checkreal true:true153–154, controle positivo preservado.
+
+## scripts/db-audit/team-reaction-membership.test.sh
+
+Faixa 1–336; SHA256 `1fe8efb02f1610e99db5d2f69893a2b7d1f20721c0e00350958f1e1c89a94457`; blob `b631998b263c5fcf87508427add1e3596436ade4`.
+
+Docker PID e mktemp/cleanup, failfast ON_ERROR_STOP1, helpers de negativos com status+needle. SQL anterior transcrito com duas policies permissivas e NOTNULL; migration real aplicada entre A/B, reseed, ataques diretos/RPC, visibilidade vítima, bloqueios, controles legítimos e contagem/predicado final da policy.
+
+Prova é sobre fixture de policies e migration escolhida; não inclui todas as RLS de tabelas vizinhas nem estado atual de plataforma. SQL de seed contém DELETE globais apenas no container recém-criado pelo script; não é cleanup de produto nem INF006. Não foi executado.
+
+## Ampliação finita — entrypoints e metadados públicos
+
+### Entrypoints sem extensão e metadados públicos
+
+Lidos integralmente 5 arquivos/177 linhas; zero execução. Os hooks encaminham os gates já revisados; o HTML inicializa tema/watchdog/mount e os JSONs são metadados declarativos. PWA/SW desligado permanece decisão preservada. Não foram promovidos riscos hipotéticos de bootstrap, metadados antigos sem promessa de frescor ou limites genéricos.
+
+- `.husky/pre-commit`,1–5: Invoca lint-ratchet --staged; status da única chamada Node é status do hook. Gate incremental por dívida nova, não lint integral. Nenhuma execução; consumidor do runner já revisado.
+- `.husky/pre-push`,1–10: set-e propaga erro dos runners typecheck, lint e migration-drift em sequência. Não corrige falsa aceitação dentro de typecheck (INF008); comentário offline supõe ambiente sem DESTINO_URL, o hook não limpa a variável. Não foi invocado nem se inferiu consulta de banco nesta revisão.
+- `index.html`,1–108: Entry HTML integral: idioma/viewport/fonts; bootstrap theme cachev6/v5 e clamp raio; tratamento de exceção; remoção de flag session; watchdog até primeiro filho root, erros window/unhandledrejection e fallback HTML; mount src/main.tsx. Sem DOM/render/rede. O fallback concatena mensagens em innerHTML, mas não foi estabelecido dado adversário alcançável durante bootstrap: observação, não novo XSS. Tema HC antecipado está dentro do cachev6; componentes de tema posteriores não foram confundidos com bootstrap. Prazo8s e override já explicitam limite cold-start, sem novo ID genérico.
+- `public/manifest.json`,1–46: Manifest declarativo integral: start/scope/display standalone, idioma, ícones any/maskable, sem shortcuts/handlers. Não há link manifest neste index.html; PWA/SW desabilitado é decisão preservada. Não equivale a instalação ativa nem nova falha.
+- `public/version.json`,1–8: Metadados estáticos integrais de versão, ambiente, endpoints públicos e data histórica. Não é atestado de deploy recente; sem segredo ou consulta de endpoint. Nenhum ID por metadado estático sem consumidor que prometa frescor.

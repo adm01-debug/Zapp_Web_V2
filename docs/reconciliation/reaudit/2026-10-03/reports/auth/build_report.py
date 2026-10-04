@@ -192,7 +192,7 @@ for patch in supp.get('amendments', []):
  for field,items in patch.get('append',{}).items(): current[field]+=items
  for field,value in patch.get('set',{}).items(): current[field]=value
 rejected += supp.get('rejected_or_pending', [])
-meta={'source_head':HEAD,'source_root':str(SRC),'created_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'scope':'Auth, users/roles/permissions, session/device, Team Chat/department UI/hooks, routes/admin, contacts/company/profile/sidebar and Singu gateway frontend contracts','prior_findings_file':'/workspace/scratch/8b95153002da/reconciliation/docs/reconciliation/FINDINGS.json','safety':{'source_modified':False,'live_database_queries':0,'product_scripts_executed':0,'messages_or_emails_sent':0,'secrets_read_or_exported':False},'probe_results':str(BASE/'probes/auth/results.json'),'probe_script':str(BASE/'probes/auth/source-probes.cjs'),'additional_probe_results':supp.get('probe_results',[]),'second_pass_file':str(supp_path),'findings':findings,'cross_domain_evidence':cross,'rejected_or_integration_pending':rejected,'prior_reassessment':prior,'plan_mapping':plan_mapping,'external_sources':external}
+meta={'source_head':HEAD,'source_root':str(SRC),'created_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'scope':'Auth, users/roles/permissions, session/device, Team Chat/department UI/hooks, routes/admin, contacts/company/profile/sidebar, Singu gateway frontend contracts, delegated AI usage/admin, gamification UI/hooks and settings/notifications consumers','prior_findings_file':'/workspace/scratch/8b95153002da/reconciliation/docs/reconciliation/FINDINGS.json','safety':{'source_modified':False,'live_database_queries':0,'product_scripts_executed':0,'messages_or_emails_sent':0,'secrets_read_or_exported':False},'probe_results':str(BASE/'probes/auth/results.json'),'probe_script':str(BASE/'probes/auth/source-probes.cjs'),'additional_probe_results':supp.get('probe_results',[]),'second_pass_file':str(supp_path),'findings':findings,'cross_domain_evidence':cross,'rejected_or_integration_pending':rejected,'prior_reassessment':prior,'plan_mapping':plan_mapping,'external_sources':external}
 OUT.mkdir(parents=True,exist_ok=True);(OUT/'findings.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n')
 # Coverage: actual semantic reads versus targeted reads versus inventory only.
 semantic='''src/App.tsx
@@ -315,8 +315,24 @@ for p,review in supp.get('reviewed_files',{}).items():
   targeted.pop(p,None)
  else:
   targeted.setdefault(p,[]).extend((r['start_line'],r['end_line'],r['symbol']) for r in review['ranges'])
+test_review_path=OUT/'test-review.json'
+test_reviews={r['path']:r for r in json.loads(test_review_path.read_text())['files']} if test_review_path.exists() else {}
+shell_review_path=OUT/'shell-review.json'
+if shell_review_path.exists():
+ for r in json.loads(shell_review_path.read_text())['files']:
+  test_reviews[r['path']]=r
+style_review_path=OUT/'style-review.json'
+if style_review_path.exists():
+ for r in json.loads(style_review_path.read_text())['files']:
+  test_reviews[r['path']]=r
+for p,r in test_reviews.items():
+ if r['review_status']=='SEMANTIC_REVIEW_COMPLETE':
+  if p not in semantic:semantic.append(p)
+  targeted.pop(p,None)
+ elif r['reviewed_ranges']:
+  targeted.setdefault(p,[]).extend((a,b,'assertions, fixtures/mocks e contrato do consumidor; revisão parcial de teste') for a,b in r['reviewed_ranges'])
 paths=set(semantic)|set(targeted)
-for d in ['src/hooks/auth','src/components/auth','src/components/mfa','src/components/security','src/components/admin','src/components/agents','src/components/permissions','src/components/team-chat','src/hooks/team-chat','src/hooks/crm','src/components/contacts','src/components/crm360','src/components/inbox/contact-details','src/pages/admin']:
+for d in ['src/hooks/auth','src/components/auth','src/components/mfa','src/components/security','src/components/admin','src/components/agents','src/components/permissions','src/components/team-chat','src/hooks/team-chat','src/hooks/crm','src/components/contacts','src/components/crm360','src/components/inbox/contact-details','src/pages/admin','src/components/ai','src/components/gamification','src/hooks/gamification','src/components/settings','src/components/notifications','src/components/cognitive','src/components/compliance','src/components/leaderboard','src/components/calls']:
  paths.update(str(p.relative_to(SRC)) for p in (SRC/d).rglob('*') if p.is_file() and p.suffix in ['.ts','.tsx'])
 for e in cross:paths.add(e['path'])
 coverage=[]
@@ -337,12 +353,15 @@ for p in sorted(paths):
   gap='Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo.'
  if p in supp.get('reviewed_files',{}):
   symbols=supp['reviewed_files'][p]['symbols']
+ if p in test_reviews and test_reviews[p]['reviewed_ranges']:
+  symbols=test_reviews[p]['proves']+test_reviews[p]['mocks_and_fixtures']
+  gap=('Revisão semântica de CSS, sem renderização ou certificação visual. ' if p.endswith('.css') else 'Revisão semântica do código de teste/script, sem execução. ')+' '.join(test_reviews[p]['limits'])
  coverage.append({'path':p,'blob_sha':blob(p),'line_count':n,'review_level':level,'reviewed_ranges':ranges,'symbols_or_slices_reviewed':symbols,'finding_ids':sorted({f['id'] for f in findings if any(e['path']==p for e in f['evidence'])}),'gaps':[gap]})
 counts=collections.Counter(x['review_level'] for x in coverage)
-cv={'source_head':HEAD,'definition':{'semantic':'Leitura humana do corpo completo e relação consumidor→efeito/contrato; não é teste E2E.','targeted':'Leitura humana apenas dos símbolos/faixas indicados.','structural':'Inventário/hash e, quando explicitado, busca de import/consumidor; não foi análise semântica.'},'counts':dict(counts),'files':coverage,'rejected_or_integration_pending_ids':[r['id'] for r in rejected],'remaining_microareas':['Corpos dos arquivos structural, incluindo apresentações secundárias, acessibilidade/responsividade, timers visuais e testes preexistentes.','MFA enrollment visual, gerenciamento visual de dispositivos/alertas, SSO OAuth real e entrega real de recuperação: nenhum E2E/browser externo foi executado.','Formulários externos: integridade do schema Singu efetivo e contratos RPC externos continuam dependentes de evidência externa autorizada.','SQL final/RLS/grants, storage e last-owner/department RPCs: relatório database coordenado.','Segurança provedores e proxy de envio; microárea TalkX sampleCustomFields foi informada ao coordenador.','Graph AST local confirma conectividade de módulo, não uso de export específico; casos dormentes classificados por busca de símbolo/imports.'],'probe_ids':sorted({p for f in findings for p in f['offline_probes']})}
+cv={'source_head':HEAD,'definition':{'semantic':'Leitura humana do corpo completo e relação consumidor→efeito/contrato; não é teste E2E.','targeted':'Leitura humana apenas dos símbolos/faixas indicados.','structural':'Inventário/hash e, quando explicitado, busca de import/consumidor; não foi análise semântica.'},'counts':dict(counts),'files':coverage,'rejected_or_integration_pending_ids':[r['id'] for r in rejected],'remaining_microareas':['Arquivos structural permanecem sem leitura semântica nesta subárea: testes preexistentes, GmailWebhookMonitor e componentes de settings/notifications já atribuídos a outros agentes (IA/provedores/mídia/atalhos/SLA). A matriz consolidada reúne essas declarações independentes; este JSON lista cada caminho sem tomar emprestada uma leitura integral.','Nos arquivos targeted, apenas as faixas indicadas foram lidas; não se presume o corpo inteiro a partir de um trecho ou referência de outro agente.','MFA enrollment visual, dispositivos/alertas, SSO OAuth, entrega de recuperação e gamificação real: não houve E2E/browser externo. Os onze probes offline têm fronteiras sintéticas explícitas.','Formulários externos: integridade do schema Singu efetivo e contratos RPC externos continuam dependentes de evidência externa autorizada.','SQL final/RLS/grants, storage e last-owner/department RPCs: relatório database coordenado. Provedores, envio e TalkX são subáreas próprias; evidência compartilhada não substitui suas matrizes de cobertura.','Grafo AST local confirma conectividade de módulo, não uso de export específico; casos dormentes classificados por busca de símbolo/imports e leitura dos consumidores.'],'probe_ids':sorted({p for f in findings for p in f['offline_probes']})}
 (OUT/'coverage.json').write_text(json.dumps(cv,ensure_ascii=False,indent=2)+'\n')
 # Full human readable report derived from complete structured findings.
-report=['# Reauditoria — Auth, usuários, Team Chat, Contatos e ponte Singu','',f'Fonte fixada: `{HEAD}`. Relatório gerado em {meta["created_at"]}.','',
+report=['# Reauditoria — Auth, usuários, Team Chat, Contatos, administração, IA, gamificação, configurações e chamadas','',f'Fonte fixada: `{HEAD}`. Relatório gerado em {meta["created_at"]}.','',
 '## Resultado e alcance','',
 f'Foram identificados {sum(not f["prior_comparison"]["ids"] for f in findings)} achados novos confirmados na fonte ({len(cv["probe_ids"])} mecanismos reproduzidos offline) e 1 refinamento de achados prévios. Os casos sem consumidor ativo ficam separados e não entram na contagem de falhas em produção. A gravidade descreve a falha de implementação e suas precondições; nenhum item afirma incidente ocorrido no ambiente real.','',
 'Os maiores riscos são a verificação WebAuthn sem prova criptográfica, MFA sem gate efetivo, controles de revogação que só alteram tabelas públicas, recuperação de conta interrompida, rascunho entre destinatários e identidade externa trocada na inteligência CRM. Há ainda falhas de confirmação em permissões, roles e mutations e funções de gerenciamento visíveis sem implementação.','',
@@ -355,7 +374,7 @@ for f in findings:
  for e in f['evidence']:report.append(f'- `{e["path"]}:{e["start_line"]}–{e["end_line"]}` — {e["symbol"]}; blob `{e["blob_sha"]}`.')
  report+=['',f'**Comparação com os 104 anteriores:** {f["prior_comparison"]["assessment"]}'+(' IDs: '+', '.join(f['prior_comparison']['ids'])+'.' if f['prior_comparison']['ids'] else ''),'']
  if f['feature_claim_ids']:report += ['**Alegações documentais relacionadas:** '+', '.join(f['feature_claim_ids'])+' em COMPLETE_SYSTEM_FEATURES.md.','']
- if f['offline_probes']:report += ['**Reprodução:** '+', '.join(f['offline_probes'])+' em `../../probes/auth/results.json`/`source-probes.cjs` (01–08) ou `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10).','']
+ if f['offline_probes']:report += ['**Reprodução:** '+', '.join(f['offline_probes'])+' em `../../probes/auth/results.json`/`source-probes.cjs` (01–08), `../../probes/auth/second-pass-results.json`/`second-pass-probes.cjs` (09–10) ou `../../probes/auth/gamification-results.json`/`gamification-probe.cjs` (11).','']
  report+=['**Critérios de aceite para correção:**','']+[f'- {s}' for s in f['acceptance_criteria']]+['','**Limites:**','']+[f'- {s}' for s in f['limitations']]+['']
 report+=['## Reavaliação dos achados anteriores','']
 for p in prior:report.append('- **'+', '.join(p['ids'])+':** '+p['assessment'])
@@ -370,6 +389,6 @@ report+=['## Cobertura e microáreas restantes','',f'O catálogo desta subárea 
 report += ['- '+x for x in cv['remaining_microareas']]
 report += ['','## Fontes primárias externas consultadas','', 'As fontes externas fundamentam semântica de APIs/protocolo. As conclusões específicas do projeto estão ancoradas nos blobs e faixas acima.','']
 for s in external:report.append(f'- [{s["url"]}]({s["url"]}) — {s["purpose"]}.')
-report+=['','## Artefatos de reprodução','',f'- Resultados completos: `{BASE / "probes/auth/results.json"}`.',f'- Programa offline: `{BASE / "probes/auth/source-probes.cjs"}`.','- Arquivos de fonte são lidos em memória; os únicos writes ocorrem em relatórios/probes. Não há credentials reais nos fixtures.','']
+report+=['','## Artefatos de reprodução','',f'- Casos01–08: `{BASE / "probes/auth/results.json"}` e `source-probes.cjs`.',f'- Casos09–10: `{BASE / "probes/auth/second-pass-results.json"}` e `second-pass-probes.cjs`.',f'- Caso11: `{BASE / "probes/auth/gamification-results.json"}` e `gamification-probe.cjs`.','- README de probes documenta parâmetros por ambiente e preflight de HEAD/manifesto/blobs; os programas recusam fonte divergente antes de executar os trechos de produto.','- Arquivos de fonte são lidos em memória; os únicos writes ocorrem em relatórios/probes. Não há credenciais reais nos fixtures.','']
 (OUT/'report.md').write_text('\n'.join(report))
 print(json.dumps({'findings':len(findings),'new':sum(not f['prior_comparison']['ids'] for f in findings),'prior_refinements':sum(bool(f['prior_comparison']['ids']) for f in findings),'severity':dict(collections.Counter(f['severity'] for f in findings)),'coverage':dict(counts),'files':len(coverage),'output':str(OUT)},ensure_ascii=False))

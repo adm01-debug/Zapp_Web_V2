@@ -329,6 +329,77 @@ function hookDriver(fn) {
   assert.equal(storedChatbotFlow.nodes, '[]');
   rows.push({ id: 'R2-MOD-068', probe: 'actual create/query/update hook callbacks and editor initial state with scalar-preserving mock', result: { initial_nodes_payload_type: typeof initialNodePayload, nodes_encoded_initially: JSON.parse(initialNodePayload).length, nodes_displayed_after_reopen: graph.nodes.length, nodes_payload_after_saving_empty_editor: storedChatbotFlow.nodes }, limitation: 'JSON transport/mock preserves supplied scalar. SQL column and no-normalizer facts were reviewed separately; no PostgreSQL, RLS or actual React renderer executed.' });
 
+  // UI action and actual Edge dispatch table, both isolated from the network.
+  let voiceDesignHandler;
+  const vendorOperations = [], voiceDesignToasts = [], voiceDesignAudioWrites = [];
+  const SyntheticLogger = class { info() {} done() {} error() {} };
+  load(source('supabase/functions/elevenlabs-voice-design/index.ts'), {
+    '../_shared/validation.ts': {
+      handleCors: () => null, requireAuth: async () => ({ userId: 'synthetic-user' }),
+      enforceRateLimit: async () => ({ allowed: true }), requireEnv: () => 'synthetic-only-key', Logger: SyntheticLogger,
+      jsonResponse: (body, status) => new Response(JSON.stringify(body), { status }),
+      errorResponse: (error, status) => new Response(JSON.stringify({ error }), { status }),
+    },
+    '../_shared/schemas.ts': {
+      ElevenLabsVoiceDesignPreviewSchema: {}, ElevenLabsVoiceDesignCreateSchema: {},
+      parseBody: () => { throw new Error('Unexpected preview/create path'); },
+      validationErrorResponse: () => { throw new Error('Unexpected schema response'); },
+    },
+  }, {
+    Deno: { serve: handler => { voiceDesignHandler = handler; } }, Response,
+    fetch: async (url, options = {}) => {
+      vendorOperations.push({ url, method: options.method || 'GET' });
+      return new Response(JSON.stringify({ voices: [] }), { status: 200 });
+    },
+  });
+  const voiceDesignGenerate = load(source('src/components/voice/ElevenLabsVoiceDesign.tsx', 22, 69) + '\nexports.generate = generateVoice;', {}, {
+    name: 'Synthetic voice', description: 'Synthetic description', gender: 'female', age: 'young', accent: 'brazilian', previewText: 'Synthetic text', audioUrl: null,
+    setGenerating() {}, setAudioUrl: value => voiceDesignAudioWrites.push(value),
+    toast: { error: value => voiceDesignToasts.push(['error', value]), success: value => voiceDesignToasts.push(['success', value]) },
+    SUPABASE_URL: 'https://synthetic.invalid', SUPABASE_ANON_KEY: 'synthetic-anon',
+    supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 'synthetic-access' } } }) } },
+    fetch: async (url, options) => voiceDesignHandler(new Request(url, options)),
+  }).generate;
+  await voiceDesignGenerate();
+  assert.equal(vendorOperations.length, 1);
+  assert.equal(vendorOperations[0].method, 'GET');
+  assert.equal(vendorOperations[0].url, 'https://api.elevenlabs.io/v1/voices');
+  assert.equal(voiceDesignAudioWrites.length, 0);
+  assert.equal(voiceDesignToasts[0][0], 'success');
+  rows.push({ id: 'R2-MOD-070', probe: 'actual UI generateVoice and actual Edge dispatch with synthetic auth/rate/fetch', result: { operation_selected: vendorOperations[0], audio_state_writes: voiceDesignAudioWrites.length, toast: voiceDesignToasts[0] }, limitation: 'No external request. A successful voices-list response is an explicit synthetic precondition; preview/create schemas are not exercised.' });
+
+  // The actual loader resets its Promise after failure, but keeps the failed tag.
+  // No browser/network is simulated beyond one explicitly delivered error event.
+  let lameTag = null, lameCreated = 0, lameAppended = 0, lameTimers = 0;
+  const lameWindow = {};
+  const lameDocument = {
+    querySelector: () => lameTag,
+    createElement: () => {
+      lameCreated++;
+      return { dataset: {}, listeners: { load: [], error: [] },
+        addEventListener(type, callback) { this.listeners[type].push(callback); } };
+    },
+    head: { appendChild(tag) { lameTag = tag; lameAppended++; } },
+  };
+  const loadLamejs = load(source('src/utils/audioToMp3.ts', 11, 75) + '\nexports.loadLamejs = loadLamejs;', {}, {
+    document: lameDocument, window: lameWindow,
+    setTimeout() { lameTimers++; return 1; },
+  }).loadLamejs;
+  const lameFirst = loadLamejs().then(() => 'unexpected-success', error => error.message);
+  lameTag.listeners.error.forEach(callback => callback());
+  const lameFirstError = await lameFirst;
+  assert.equal(lameFirstError, 'Falha ao carregar lamejs');
+  let lameRetrySettled = false;
+  loadLamejs().then(() => { lameRetrySettled = true; }, () => { lameRetrySettled = true; });
+  for (let turn = 0; turn < 8; turn++) await Promise.resolve();
+  assert.equal(lameCreated, 1);
+  assert.equal(lameAppended, 1);
+  assert.equal(lameTag.listeners.load.length, 2);
+  assert.equal(lameTag.listeners.error.length, 2);
+  assert.equal(lameTimers, 0);
+  assert.equal(lameRetrySettled, false);
+  rows.push({ id: 'R2-MOD-071', probe: 'actual loadLamejs after one explicit script error, with event-listener mock', result: { first_error: lameFirstError, script_tags_created: lameCreated, script_tags_appended_after_retry: lameAppended, load_listeners_on_failed_tag: lameTag.listeners.load.length, timeout_scheduled: lameTimers, retry_settled_without_new_event: lameRetrySettled }, limitation: 'No browser/vendor/network. Does not measure an indefinite wall-clock hang; it proves that retry creates no new load request or timeout and depends on another event from the already failed tag.' });
+
   fs.writeFileSync(path.join(__dirname, 'proofs.json'), JSON.stringify({ source_head: 'da307ba5626dce892f0b37cb6762463f55d14a96', executed_at: new Date().toISOString(), execution: 'offline isolated production callbacks; controlled mocks; no DB/network/browser', source_files: [...sourceLog.values()], probes: rows }, null, 2) + '\n');
   process.stdout.write(JSON.stringify({ passed: rows.length, ids: rows.map(r => r.id), output: path.join(__dirname, 'proofs.json') }) + '\n');
 })().catch(error => { process.stderr.write(error.stack + '\n'); process.exitCode = 1; });

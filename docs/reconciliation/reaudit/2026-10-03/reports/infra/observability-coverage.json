@@ -73,7 +73,7 @@
       "full_file_read": true,
       "primary_delegated": true,
       "layer": "observability_delegated",
-      "review_basis": "Observadores FCP/LCP/FID/CLS/INP, inicialização idempotente, Map limitado por nome, visibilidade, TTFB e thresholds do budget. CLS soma a vida inteira e INP usa máximo bruto; efeito restrito ao coletor local, separado do Speed Insights."
+      "review_basis": "Observadores LCP/FID/CLS/INP, inicialização idempotente, Map limitado por nome, visibilidade, TTFB e thresholds do budget. CLS soma shifts sem janela dentro do ciclo visível e INP usa máximo bruto; efeito restrito ao coletor local, separado do Speed Insights."
     },
     {
       "path": "src/components/diagnostics/DiagnosticsView.tsx",
