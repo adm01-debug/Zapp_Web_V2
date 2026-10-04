@@ -9,8 +9,13 @@ export interface ConversationTabCounts {
 
 const EMPTY: ConversationTabCounts = { tasksOpen: 0, notesTotal: 0, filesTotal: 0 };
 
-/** Shape real do RPC — types.ts gerado ainda não reflete a remoção de reminders_pending
- *  (fica desatualizado até o types-sync rodar pós-merge da migration). */
+/** Shape real do RPC.
+ *
+ *  `reminders_pending` foi abandonada (decisão 20261003-121143): a migration que adicionaria a coluna
+ *  nunca aplicou — `create or replace` não muda tipo de retorno e o `DROP FUNCTION` que resolveria está
+ *  comentado no arquivo irmão. O RPC devolve apenas as três colunas abaixo e o `types.ts` gerado já
+ *  reflete isso. Se a aba um dia precisar de lembretes pendentes, entra por versão nova de migration
+ *  (DROP + CREATE da função). */
 type TabCountsRpcRow = {
   tasks_open: number;
   notes_total: number;

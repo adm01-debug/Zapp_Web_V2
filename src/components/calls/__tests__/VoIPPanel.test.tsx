@@ -48,6 +48,13 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'profile-1' }, user: { id: 'user-1' } }),
 }));
 
+// 6o mock desta view: o detalhe (T65) le o papel para decidir quem anota. Sem mock, o
+// hook real roda sem provider e derruba o painel inteiro - a divida de harness ja
+// registrada no PR anterior se confirmando.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ hasRole: () => false, roles: [] }),
+}));
+
 vi.mock('@/hooks/communication/useCalls', () => ({
   useCalls: () => ({
     startCall: vi.fn(),
@@ -64,6 +71,7 @@ vi.mock('@/hooks/communication/useCalls', () => ({
 vi.mock('@/providers/CallSessionProvider', () => ({
   useCallSession: () => ({
     sipStatus: 'idle' as const,
+    micReason: null,
     callStatus: 'idle' as const,
     callDuration: 0,
     isMuted: false,
@@ -86,11 +94,14 @@ vi.mock('@/lib/calls/tabLeaderStore', () => ({
   claimLeadership: mockClaimLeadership,
 }));
 
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { VoIPPanel } from '../VoIPPanel';
 
 function renderWithProviders(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+  // O app monta esta pilha em AppProviders; o teste reproduz para o painel lateral
+  // (que usa Tooltip) nao estourar por falta de provider - nao e o componente que muda.
+  return render(<TooltipProvider><QueryClientProvider client={qc}>{ui}</QueryClientProvider></TooltipProvider>);
 }
 
 describe('VoIPPanel', () => {
@@ -111,7 +122,8 @@ describe('VoIPPanel', () => {
 
   it('shows history and the dialer side by side — no admin configuration tab', () => {
     renderWithProviders(<VoIPPanel />);
-    expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
+    expect(screen.getByTestId('tel-new-call-panel')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Buscar contato ou digitar número')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Buscar por nome ou número')).toBeInTheDocument();
     expect(screen.queryByText('Configurações')).not.toBeInTheDocument();
     expect(screen.queryByText('Servidor SIP')).not.toBeInTheDocument();
@@ -170,7 +182,7 @@ describe('VoIPPanel', () => {
       id: `call-${i}`, contact_id: null, agent_id: 'profile-1', whatsapp_connection_id: null,
       direction: 'outbound', status: 'ended', started_at: new Date().toISOString(),
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
-      duration_seconds: 30, recording_url: null, notes: null, contact: null,
+      duration_seconds: 30, notes: null, contact: null,
     }));
     const paginado = mockMyCalls();
     mockMyCalls.mockReturnValueOnce({ ...paginado, total: 40, pages: 5, page: 2 });
@@ -191,7 +203,7 @@ describe('VoIPPanel', () => {
       id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
       direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
-      duration_seconds: 42, recording_url: null,
+      duration_seconds: 42,
       notes: 'metadado do provedor', agent_notes: 'nota antiga',
       contact: { name: 'Ana Paula', phone: '5511999999999' },
     }];
@@ -206,11 +218,11 @@ describe('VoIPPanel', () => {
     expect(screen.getByDisplayValue('nota antiga')).toBeInTheDocument();
     // Prova do defeito: o metadado do provedor NÃO é a anotação do agente.
     expect(screen.queryByDisplayValue('metadado do provedor')).not.toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Digite o número')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tel-new-call-panel')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByLabelText('Fechar detalhe'));
     expect(screen.queryByText('Detalhe da chamada')).not.toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
+    expect(screen.getByTestId('tel-new-call-panel')).toBeInTheDocument();
   });
 
   it('saves an edited note through addCallNotes', async () => {
@@ -219,7 +231,7 @@ describe('VoIPPanel', () => {
       id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
       direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
-      duration_seconds: 42, recording_url: null, notes: null, agent_notes: null,
+      duration_seconds: 42, notes: null, agent_notes: null,
       contact: { name: 'Ana Paula', phone: '5511999999999' },
     }];
     mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
@@ -254,7 +266,7 @@ describe('VoIPPanel', () => {
       id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
       direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
       answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
-      duration_seconds: 42, recording_url: null,
+      duration_seconds: 42,
       notes: 'metadado do provedor', agent_notes: null as string | null,
       contact: { name: 'Ana Paula', phone: '5511999999999' },
     }];
@@ -322,6 +334,29 @@ describe('VoIPPanel', () => {
     expect(screen.queryByText('Conectar SIP')).toBeNull();
     expect(screen.queryByText('Desconectar')).toBeNull();
   });
+
+  it('T68: Esc no item do historico limpa a selecao e fecha o detalhe', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const page = [{
+      id: 'call-1', contact_id: 'contact-1', agent_id: 'profile-1', whatsapp_connection_id: null,
+      direction: 'inbound', status: 'ended', started_at: new Date().toISOString(),
+      answered_at: new Date().toISOString(), ended_at: new Date().toISOString(),
+      duration_seconds: 42, notes: null, agent_notes: null,
+      contact: { name: 'Ana Paula', phone: '5511999999999' },
+    }];
+    mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
+
+    renderWithProviders(<VoIPPanel />);
+    await waitFor(() => expect(screen.getByText('Ana Paula')).toBeInTheDocument());
+
+    // Enter seleciona (T68)...
+    fireEvent.keyDown(screen.getAllByTestId('tel-row')[0], { key: 'Enter' });
+    await waitFor(() => expect(screen.getByTestId('tel-selected-panel')).toBeInTheDocument());
+
+    // ...e Esc limpa. O handler vive no proprio item, nao num listener global.
+    fireEvent.keyDown(screen.getAllByTestId('tel-row')[0], { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByTestId('tel-selected-panel')).toBeNull());
+  });
 });
 // Fase 4: o historico passou a vir da RPC search_my_calls (useMyCalls). Os testes
 // desta view davam os dados pelo builder do supabase (useCallHistory); agora o hook
@@ -350,7 +385,7 @@ const mockMyCalls = vi.hoisted(() =>
         agent_notes: 'nota antiga',
         notes: 'metadado do provedor',
         recording_status: 'none',
-        agent_id: 'agente-1',
+        agent_id: 'profile-1',
         answered_by: 'agente-1',
         total_count: 2,
       },
@@ -373,7 +408,7 @@ const mockMyCalls = vi.hoisted(() =>
         agent_notes: 'rascunho',
         notes: '',
         recording_status: 'none',
-        agent_id: 'agente-1',
+        agent_id: 'profile-1',
         answered_by: '',
         total_count: 2,
       },
@@ -419,6 +454,7 @@ vi.mock('@/hooks/calls/useTelefoniaFilters', async () => {
       return { filtros, setFilter, limpar: () => setFiltros(PADRAO) };
     },
   };
+
 });
 
 // T34: o PageHeader le o LayoutContext (breadcrumbs) e estoura sem o provider. Mockar

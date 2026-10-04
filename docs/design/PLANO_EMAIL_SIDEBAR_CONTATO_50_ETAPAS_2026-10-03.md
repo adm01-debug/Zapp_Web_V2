@@ -205,3 +205,18 @@ Os números organizam rastreabilidade, não exigem cinquenta PRs ou cinquenta ex
 ### Regra de fechamento
 
 Marcar uma etapa com `[x]` exige acrescentar evidência e SHA. Uma dependência bloqueada recebe motivo, responsável e critério de desbloqueio. Este plano substitui orientações anteriores **somente quanto ao sidebar do Email e à exclusão da paleta NAVY**; preserva os demais requisitos funcionais de mensagens e Gmail já existentes.
+
+## Execução incremental e evidências
+
+> Este registro não fecha etapas cujo aceite completo ainda depende de fixtures, homologação visual ou smoke autenticado. Ele torna explícito o que foi alterado e o que ainda falta, conforme a regra de fechamento.
+
+### Lote 1 — identidade externa e contexto empresarial (03/10/2026)
+
+- Commit: `4dcc5984` (`fix(email): resolve empresa por participante externo`). Publicação Edge: `crm-integration`, versão 539 ativa.
+- ES-06: o DTO recebeu estados explícitos de ambiguidade, origem da resolução e validação runtime na fronteira do front; payload inválido passa a falhar de forma segura.
+- ES-08/ES-09: para thread sem contato local, a Edge deriva o participante externo a partir das mensagens visíveis ao usuário. A busca no Singu é somente por e-mail completo normalizado; `+`, ponto, domínio e nomes não são reescritos/inferidos. Mais de um resultado gera `ambiguous`; domínio não é usado.
+- ES-14/ES-16: continuam exigidos usuário autenticado, conta Gmail visível e thread pertencente à conta. `contactId` é opcional somente para o fluxo de e-mail; quando informado, ainda deve coincidir com a thread. A operação permanece somente leitura e não grava no Singu.
+- ES-18/ES-19/ES-20: interface diferencia ambiguidade, indisponibilidade de integração, falha e acesso negado; painel é remontado na troca de conta/thread/contato e cache de notas passa a incluir usuário. Exibe separadamente “Atualizado no CRM” e “Consultado em”.
+- ES-26/ES-32/ES-33: logo passa pela normalização HTTP(S); anexos exibem data quando disponível; conversas relacionadas exibem data e estado.
+- Verificações: `bun run build`; lint dos arquivos alterados; Vitest focado (5 arquivos, 38 testes); `deno check` e `deno test` da Edge (6 testes); smoke público da função com OPTIONS permitido, origem não correspondente e POST anônimo 401.
+- Pendências que impedem `[x]`: resolver/UX de seleção para múltiplas empresas, fluxos autorizados de vincular/abrir CRM, matriz de permissões com atendente real, fixtures integrais, Playwright responsivo/acessível e smoke autenticado de uma empresa conhecida.

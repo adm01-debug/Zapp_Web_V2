@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } fro
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useContactMedia, type ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import { useContactMediaCounts } from '@/hooks/chat/useContactMediaCounts';
+import { useFilesInfiniteScroll } from '@/hooks/chat/useFilesInfiniteScroll';
 import {
   columnsCapacity,
   effectiveColumns,
@@ -11,16 +13,24 @@ import {
 import { FILES_COLUMNS, useFilesViewState, type FilesTypeFilter } from '@/hooks/chat/useFilesViewState';
 import { useFilesSelection } from '@/hooks/chat/useFilesSelection';
 import { useFilesActions } from '@/hooks/chat/useFilesActions';
+import {
+  createForwardRunState,
+  forwardMediaMessages,
+  type ForwardMediaItem,
+  type ForwardRunState,
+} from '@/hooks/chat/useForwardMedia';
+import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
+import { forwardLimitError } from '@/lib/forward-limits';
 import { FilesToolbar } from './FilesToolbar';
 import { FilesContent } from './FilesContent';
 import { FilesSelectionBar } from './FilesSelectionBar';
 import { FileDetailContent, FileDetailPanel } from './FileDetailPanel';
+import { filterMediaItems, sortMediaItems } from './filesSort';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
-import type { Message } from '@/types/chat';
 
 const MediaPreviewDialog = lazy(() =>
   import('../media-gallery/MediaPreviewDialog').then((m) => ({ default: m.MediaPreviewDialog })));
@@ -36,6 +46,9 @@ const ForwardMessageDialog = lazy(() =>
 const SIDE_BY_SIDE_MIN_WIDTH = 1100;
 const DETAIL_PANEL_WIDTH = 260;
 const DETAIL_PANEL_GAP = 16;
+
+/** Teto de seguranca do "Carregar tudo": 500 paginas de 60 = 30 mil itens numa conversa. */
+const MAX_PAGES_TO_LOAD_ALL = 500;
 
 const CHIPS: { id: FilesTypeFilter; label: string }[] = [
   { id: 'all', label: 'Todos' },
@@ -56,31 +69,49 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { effective: containerEffective, width: containerWidth, available: containerOptions } =
     useFilesContainerColumns(containerRef, view.columns);
-  const { data, isLoading } = useContactMedia(contactId);
+
+  // Etapa 41: paginacao real por keyset. A aba recebe a lista ja concatenada das paginas.
+  const {
+    items,
+    hasMore,
+    isLoading,
+    isFetchingNextPage,
+    isError,
+    fetchNextPage,
+    refetch,
+  } = useContactMedia(contactId);
+  // Etapa 42: chips contam no banco (contagem exata por tipo), nao nos itens carregados.
+  const { counts } = useContactMediaCounts(contactId);
 
   const [selected, setSelected] = useState<ContactMediaItem | null>(null);
   const [previewItem, setPreviewItem] = useState<ContactMediaItem | null>(null);
-  const [forwardItem, setForwardItem] = useState<ContactMediaItem | null>(null);
+  // Etapa 38: o diálogo de encaminhar recebe um ou N itens da seleção.
+  const [forwardItems, setForwardItems] = useState<ContactMediaItem[]>([]);
+  const forwardStateRef = useRef<ForwardRunState | null>(null);
   // Etapa 35: item cuja exclusao aguarda confirmacao no AlertDialog (no lugar do window.confirm).
   const [deleteTarget, setDeleteTarget] = useState<ContactMediaItem | null>(null);
 
-  const items = useMemo(() => data?.items ?? [], [data]);
-  const counts = data?.counts ?? { all: 0, image: 0, video: 0, audio: 0, document: 0 };
-  const hasMore = data?.hasMore ?? false;
+  // Etapa 41: sentinela do fim da lista carrega a proxima pagina ao entrar na area visivel.
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const loadMore = useCallback(() => { void fetchNextPage(); }, [fetchNextPage]);
+  useFilesInfiniteScroll(sentinelRef, { hasMore, isFetching: isFetchingNextPage, onLoadMore: loadMore });
 
-  const filtered = useMemo(() => {
-    let list = view.typeFilter === 'all' ? items : items.filter((i) => i.type === view.typeFilter);
-    if (view.search.trim()) {
-      const q = view.search.trim().toLowerCase();
-      list = list.filter((i) => i.filename.toLowerCase().includes(q) || (i.caption ?? '').toLowerCase().includes(q));
+  // Etapa 43: "Carregar tudo" pagina ate o fim (com teto de seguranca contra loop).
+  const loadAll = useCallback(async () => {
+    let guard = 0;
+    let result = await fetchNextPage();
+    while (result?.hasNextPage && guard < MAX_PAGES_TO_LOAD_ALL) {
+      result = await fetchNextPage();
+      guard += 1;
     }
-    const sorted = [...list];
-    if (view.sort === 'recent') sorted.sort((a, b) => b.created_at.localeCompare(a.created_at));
-    else if (view.sort === 'old') sorted.sort((a, b) => a.created_at.localeCompare(b.created_at));
-    else if (view.sort === 'biggest') sorted.sort((a, b) => (b.size ?? 0) - (a.size ?? 0));
-    else sorted.sort((a, b) => a.displayName.localeCompare(b.displayName, 'pt-BR'));
-    return sorted;
-  }, [items, view.typeFilter, view.search, view.sort]);
+  }, [fetchNextPage]);
+
+  // Etapa 43: filtro/ordenacao num modulo proprio (testavel) — "Maiores" põe tamanho
+  // desconhecido no fim e desempata por data e id.
+  const filtered = useMemo(
+    () => sortMediaItems(filterMediaItems(items, view.typeFilter, view.search), view.sort),
+    [items, view.typeFilter, view.search, view.sort],
+  );
 
   const visibleIds = useMemo(() => filtered.map((item) => item.id), [filtered]);
   const selection = useFilesSelection(visibleIds, contactId);
@@ -132,9 +163,36 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [selection]);
 
-  const forwardMessage: Message | null = forwardItem
-    ? { id: forwardItem.id, content: forwardItem.caption ?? '', sender: (forwardItem.sender as 'agent' | 'contact') ?? 'contact', timestamp: new Date(forwardItem.created_at), type: forwardItem.type === 'document' ? 'document' : forwardItem.type }
-    : null;
+  // Etapa 38: os itens selecionados (dentro do recorte atual) alimentam o diálogo.
+  const selectedItems = useMemo(
+    () => filtered.filter((item) => selection.selectedIds.has(item.id)),
+    [filtered, selection.selectedIds],
+  );
+
+  const forwardMediaItems = useMemo<ForwardMediaItem[]>(
+    () => forwardItems.map((item) => ({
+      id: item.id, url: item.url, type: item.type, filename: item.filename, caption: item.caption,
+    })),
+    [forwardItems],
+  );
+
+  // Etapa 36/38: abre o diálogo com seleção nova e um estado de execução limpo. O retry
+  // dentro do diálogo reusa o MESMO estado, que guarda os pares (item, destino) concluídos.
+  const openForward = useCallback((targets: ContactMediaItem[]) => {
+    if (targets.length === 0) return;
+    forwardStateRef.current = createForwardRunState();
+    setForwardItems(targets);
+  }, []);
+
+  const handleForwardToTargets = useCallback<ForwardCallback>(async (targetIds, targetType, onProgress) => {
+    const state = forwardStateRef.current ?? createForwardRunState();
+    forwardStateRef.current = state;
+    return forwardMediaMessages(
+      forwardMediaItems,
+      targetIds.map((id) => ({ id, type: targetType })),
+      { state, onProgress },
+    );
+  }, [forwardMediaItems]);
 
   const detailProps = selected
     ? { item: selected, contactName, onClose: () => setSelected(null), onRequestDelete: setDeleteTarget }
@@ -165,11 +223,25 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
           ))}
         </div>
         <p className="ml-auto text-xs text-muted-foreground tabular-nums">
-          {hasMore
-            ? `${items.length} carregados · há mais antigos`
-            : `${counts.all} ${counts.all === 1 ? 'arquivo' : 'arquivos'}`}
+          {counts.all} {counts.all === 1 ? 'arquivo' : 'arquivos'}
         </p>
       </header>
+
+      {/* Etapa 43: enquanto ha paginas nao carregadas, a busca/ordenacao so vale para o recorte
+          carregado — o aviso diz quantos sao e oferece "Carregar tudo". */}
+      {hasMore && (
+        <p className="text-xs text-muted-foreground" data-testid="files-pagination-notice">
+          Buscando entre os {items.length} carregados ·{' '}
+          <button
+            type="button"
+            onClick={() => { void loadAll(); }}
+            disabled={isFetchingNextPage}
+            className="font-medium text-foreground underline underline-offset-2 hover:text-primary disabled:opacity-50"
+          >
+            Carregar tudo
+          </button>
+        </p>
+      )}
 
       <FilesToolbar
         search={view.search}
@@ -197,6 +269,8 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
           onSelectAllVisible={selection.selectAllVisible}
           onClear={selection.clear}
           onCancel={selection.exit}
+          onForward={() => openForward(selectedItems)}
+          forwardLimitReason={forwardLimitError(selection.selectedCount, 1)}
         />
       )}
 
@@ -210,10 +284,20 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
             contactName={contactName}
             loading={isLoading}
             selection={{ mode: selection.selectionMode, selectedIds: selection.selectedIds, toggle: selection.toggle }}
-            actions={{ onPreview: setPreviewItem, onOpenDetails: setSelected, onForward: setForwardItem, onRequestDelete: setDeleteTarget }}
+            actions={{ onPreview: setPreviewItem, onOpenDetails: setSelected, onForward: (item) => openForward([item]), onRequestDelete: setDeleteTarget }}
             sort={view.sort}
             onSortChange={view.setSort}
             selectedId={selected?.id ?? null}
+            hasMore={hasMore}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={loadMore}
+            sentinelRef={sentinelRef}
+            search={view.search}
+            typeFilter={view.typeFilter}
+            onClearSearch={() => view.setSearch('')}
+            onClearFilter={() => view.setTypeFilter('all')}
+            isError={isError}
+            onRetry={refetch}
           />
         </div>
 
@@ -270,13 +354,14 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
         </Suspense>
       )}
 
-      {forwardMessage && (
+      {forwardItems.length > 0 && (
         <Suspense fallback={null}>
           <ForwardMessageDialog
-            open={!!forwardItem}
-            onOpenChange={(open) => !open && setForwardItem(null)}
-            message={forwardMessage}
-            onForward={() => {}}
+            open={forwardItems.length > 0}
+            onOpenChange={(open) => { if (!open) setForwardItems([]); }}
+            items={forwardMediaItems}
+            targets="contacts"
+            onForward={handleForwardToTargets}
           />
         </Suspense>
       )}

@@ -13,6 +13,7 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     isLive: false,
     startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn(),
     deleteCampaign: { mutate: vi.fn() },
+    duplicateCampaign: { mutateAsync: vi.fn() },
   }),
 }));
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: [] }) }));

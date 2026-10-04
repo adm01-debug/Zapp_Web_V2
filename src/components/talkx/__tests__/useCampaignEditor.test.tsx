@@ -575,7 +575,10 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(result.current.canProceed[3]).toBe(false);
   });
 
-  it('does not record a false started event when the send request is rejected', async () => {
+  it('não grava evento de ciclo de vida no cliente (X025)', async () => {
+    // X025: created/updated saem do trigger do servidor e started da transição;
+    // o cliente não escreve mais nenhum evento de ciclo de vida — nem o falso
+    // 'started' quando o pedido de envio é recusado.
     f.start.mockResolvedValue(false);
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
     act(() => {
@@ -591,8 +594,8 @@ describe('useCampaignEditor — draft integrity', () => {
       await expect(result.current.handleSave('launch')).rejects.toThrow('A campanha não foi iniciada');
     });
     expect(f.start).toHaveBeenCalledWith('draft-1');
-    expect(f.log).toHaveBeenCalledWith('draft-1', 'created', 'Campanha criada');
-    expect(f.log).not.toHaveBeenCalledWith('draft-1', 'started', 'Envio iniciado manualmente');
+    // Nenhum logEvent de ciclo de vida parte do editor.
+    expect(f.log).not.toHaveBeenCalled();
   });
 
   it('resolves launch as soon as the async start is accepted, without waiting for the send', async () => {

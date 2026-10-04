@@ -12,8 +12,8 @@ Medido em **26/09/2026** contra o código de `origin/main` (`001fd46`) e o banco
 | **Receber (entrada)** | ⚠️ código existe, **não homologado** | ⚠️ evento sim, **áudio não** | VoIP: `useSipConnection.ts:54` monta `delegate.onInvite` (PR #868) e `CallSessionProvider` está montado; chamada real nunca foi exercitada nesta análise. WhatsApp: `handleCallEvent` no webhook → RPC `record_incoming_call_event`. O áudio **não passa pelo app** (a linha toca no aparelho da conexão). |
 | **Áudio ponta a ponta no navegador** | ⚠️ mídia de saída implementada (`getUserMedia`, tracks, DTMF); entrada sem prova | ❌ não | Nenhum teste de áudio foi executado. `setSinkId` não é usado. |
 | **Recusar** | ✅ `inviter.cancel()` existe; recusa de chamada **recebida** não foi exercitada | ❌ não comprovado | Sem handler de reject para o WhatsApp (nenhum `reject` em `evolution-webhook-handlers.ts`). |
-| **Gravar** | ❌ nenhuma fonte | ❌ não | Sem bucket de gravação no Storage (`audio-memes, audio-messages, avatars, custom-emojis, stickers, team-chat-files, whatsapp-media`); `BITRIX_WEBHOOK_URL` **não configurado** (só a linha comentada `# VITE_BITRIX_WEBHOOK_URL` no `.env.example`). `recording_url` nunca foi gravado em produção. |
-| **Duração oficial do provedor** | ❌ não | ❌ não | `voximplant.statistic.get` do Bitrix **não testado** (sem webhook REST). `duration_seconds` no banco nunca foi preenchido (0 de 21 linhas com `answered_at`+`ended_at`). |
+| **Gravar** | ⚠️ **código entregue** (T67 player + T73 Edge `get-call-recording`), **sem fonte** | ❌ não | Sem bucket de gravação no Storage (`audio-memes, audio-messages, avatars, custom-emojis, stickers, team-chat-files, whatsapp-media`); `BITRIX_WEBHOOK_URL` **não configurado** (só a linha comentada `# VITE_BITRIX_WEBHOOK_URL` no `.env.example`). `recording_url` nunca foi gravado em produção. |
+| **Duração oficial do provedor** | ⚠️ **código entregue** (T72 Edge `sync-call-records`), **sem credencial** | ❌ não | `voximplant.statistic.get` do Bitrix: a Edge existe e devolve `{reconciliados: 0}` sem `BITRIX_WEBHOOK_URL` (que nao esta configurado). `duration_seconds` no banco nunca foi preenchido (0 de 21 linhas com `answered_at`+`ended_at`). |
 
 ## Provedores
 
@@ -31,7 +31,7 @@ Medido em **26/09/2026** contra o código de `origin/main` (`001fd46`) e o banco
 
 - Chip "VoIP": verde só com `sipStatus === 'registered'` **e** microfone liberado; amarelo "Reconectando…" no backoff; vermelho "Telefone indisponível" sem provisionamento/403.
 - Chip "WhatsApp": **"só recebidas"** — nunca oferecer discagem por WhatsApp nesta entrega.
-- Botão de gravação: **não renderizar** enquanto `recording_status !== 'available'`. Hoje nenhuma chamada tem gravação, e não há fonte configurada.
+- Botão de gravação: **não renderizar** enquanto `recording_status !== 'available'` (regra mantida). A Edge `get-call-recording` já existe e responde 404 quando não há áudio; **falta a fonte** (`BITRIX_WEBHOOK_URL`), então na prática nenhuma chamada tem gravação ainda.
 - Espera, transferência, conferência, vídeo, transcrição e resumo por IA: **fora de escopo**, sem capacidade comprovada.
 - O que **preservar** (já funciona e é usado em produção): discagem VoIP, DTMF, mute, encerrar, registro de eventos de chamada do WhatsApp, notificação `incoming_call` por usuário e a RLS de chamadas próprias/admin.
 

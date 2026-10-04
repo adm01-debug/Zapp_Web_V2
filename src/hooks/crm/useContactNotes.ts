@@ -26,7 +26,7 @@ export interface ContactNote {
   };
 }
 
-export const contactNotesKey = (contactId: string) => ['contact-notes', contactId] as const;
+export const contactNotesKey = (contactId: string, userId?: string | null) => ['contact-notes', userId ?? null, contactId] as const;
 
 export function useContactNotes(contactId: string, options?: { category?: ContactNoteCategory }) {
   const { user } = useAuth();
@@ -35,7 +35,7 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
    const { profile } = useAuth();
 
    const { data: allNotes = [], isLoading, error, refetch } = useQuery({
-     queryKey: contactNotesKey(contactId),
+     queryKey: contactNotesKey(contactId, user?.id),
      queryFn: () => ContactService.fetchNotes(contactId) as Promise<ContactNote[]>,
      enabled: !!contactId,
    });
@@ -47,7 +47,7 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
   );
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: contactNotesKey(contactId) });
+    queryClient.invalidateQueries({ queryKey: contactNotesKey(contactId, user?.id) });
     queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
   };
 

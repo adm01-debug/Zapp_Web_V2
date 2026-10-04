@@ -14,7 +14,7 @@
     },
     {
       "path": "src/components/admin/AIUsageDashboard.tsx",
-      "sha256": "995bd1a7b3f4a9ddda61a711334506d21a3c91f48d8d947e0c16a53e1bb47cfb"
+      "sha256": "e3a294a0ddc57f276419bf94462d169d4003b9606df765814518c59764c88134"
     },
     {
       "path": "src/components/admin/AIUsageUsersTab.tsx",
@@ -78,7 +78,7 @@
     },
     {
       "path": "src/components/auth/PasswordStrengthMeter.tsx",
-      "sha256": "d37dd48843810f93d71efe69db2d3694dead753cf97923d3e12c83de8ca394b9"
+      "sha256": "170b58111f1d4ebffa15229d5a6f2c2a08ef02971642313f3642af2dd7c09e4a"
     },
     {
       "path": "src/components/auth/ProtectedRoute.tsx",
@@ -202,7 +202,7 @@
     },
     {
       "path": "src/components/dashboard/GoalsConfigDialog.tsx",
-      "sha256": "2508fa511dca436d30f7862c8e5a7a53b3a462aeaabfe0010debdcafd7d55ed8"
+      "sha256": "f6908ec531f4a9636c67b6c878bd278762a5d91ee46f806c93ba3f9cc0bce88d"
     },
     {
       "path": "src/components/dashboard/metrics/AnimatedMetricCard.tsx",
@@ -218,7 +218,7 @@
     },
     {
       "path": "src/components/dashboard/useSentimentData.ts",
-      "sha256": "4b424e51bdbc0d75ab728c4a6c938632f39029d1afc2201bef95161f213dabe4"
+      "sha256": "e0c34f38d55f30e74e427519f5717e809b6eb36f8b0137d97582a732d7e25516"
     },
     {
       "path": "src/components/dashboard/WidgetConfigSheet.tsx",
@@ -362,7 +362,7 @@
     },
     {
       "path": "src/components/inbox/ContactPurchasesPanel.tsx",
-      "sha256": "3764e61ece65934972c0cc965c45b66682a13ffa300692571bd54268552b20c4"
+      "sha256": "ac559f735f88ed418566f702d62c424a366665aefa2e351f8ad69724c6d3654d"
     },
     {
       "path": "src/components/inbox/ContactTypeFilter.tsx",
@@ -450,7 +450,7 @@
     },
     {
       "path": "src/components/inbox/useFileUploadLogic.ts",
-      "sha256": "1f14d83370923769bfbaa25ecafdbaef0f14c62e25a6cf4d523a2d644eedd12e"
+      "sha256": "d467b094640fe430417a95d96f6cdbb52ac40bc49e6d0a774dc6ac6e8dab4340"
     },
     {
       "path": "src/components/inbox/useGlobalSearchData.ts",
@@ -554,7 +554,7 @@
     },
     {
       "path": "src/components/performance/PerformanceMonitor.tsx",
-      "sha256": "cf4179250718fea5f91d4905898f31b3b3325a406a9a22b7f154df79bc74d877"
+      "sha256": "a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1"
     },
     {
       "path": "src/components/performance/Prefetcher.tsx",
@@ -574,23 +574,23 @@
     },
     {
       "path": "src/components/queues/QueueGoalsDialog.tsx",
-      "sha256": "6a4c6e788f800d35bf2a04352079a6175fefb3ddf2e2fac1d52eff315b753352"
+      "sha256": "8fb34080b6d199ed0a9554580ecd6a598fd5753792b47de78128c8e1fe4e759b"
     },
     {
       "path": "src/components/queues/SLADashboard.tsx",
-      "sha256": "884549b26ecff8d6da233a0c624733f3ac5d10bf521ca822734ab3fcc3fcd8cd"
+      "sha256": "932e01bc6f3218078351e023b39e5c3fc105cf2ee8b26fa3598c22f9cab2f68a"
     },
     {
       "path": "src/components/reports/AbandonmentRate.tsx",
-      "sha256": "9bb211812b42570af4decf58a75ab1a3c76f697607c0057bdbb0090f98c14d56"
+      "sha256": "b6df574e90d0d304517c64a858d4ac4a188b06963d8ad40eddaadcbe24a5bddf"
     },
     {
       "path": "src/components/reports/ConversationHeatmap.tsx",
-      "sha256": "c9453055cb5090a5db9e7225fe6ec7f7688537defdc11aed5ab90beb1c0fc00e"
+      "sha256": "6f09fd2c5955dc2ad1ef2d855307cbec5c958f6a6e4eb704c2b2792d4404d167"
     },
     {
       "path": "src/components/reports/DemandForecast.tsx",
-      "sha256": "2d481cd9370e01c4c895688feac822cf59f769333126ea2c0ec9cfd1250c4152"
+      "sha256": "1afd548edce927d6f542eb97e56a8e84d43d5cd0c5ab75cc9337a13445574ee0"
     },
     {
       "path": "src/components/reports/PeriodComparison.tsx",
@@ -602,7 +602,7 @@
     },
     {
       "path": "src/components/reports/useReportsData.ts",
-      "sha256": "0773f8c71b115d287a503a40a65b4e39cb009126733b6ae565f3317e8cd48025"
+      "sha256": "e3e24ce81de8fd154f90f65928e9c020a8f109af2056de74f83a6845522318fb"
     },
     {
       "path": "src/components/SearchInput.tsx",
@@ -614,7 +614,7 @@
     },
     {
       "path": "src/components/security/BlockedIPDialogs.tsx",
-      "sha256": "754c9d87b1fddf74151bba89fd68c17c2aae0698a9792124bf757dfdde86a45e"
+      "sha256": "c727f47521bf679b42abc2e03c585d463e840606bb98efa1d468bc6fce8ef613"
     },
     {
       "path": "src/components/security/BlockedIPsPanel.tsx",
@@ -630,7 +630,7 @@
     },
     {
       "path": "src/components/security/RateLimitConfigPanel.tsx",
-      "sha256": "4425de340936fad1a4586c5aa084a2fab8b55f2430ac80371f4bbcb24e101ff3"
+      "sha256": "f171377129d243c455e63272efbe8f409688550a02c9326d22af72f195667f6f"
     },
     {
       "path": "src/components/security/RateLimitRealtimeAlerts.tsx",
@@ -642,7 +642,7 @@
     },
     {
       "path": "src/components/settings/ai-providers/AIProviderHealthPanel.tsx",
-      "sha256": "3e3bd8f9b2d7cf5d935cc494b72c555e09d4e9c83996f90b746ccc41b9450e3e"
+      "sha256": "0606efd66fa6b37567d0e369a6b40d4a3b5916758278017ebbd1dd8e3f155233"
     },
     {
       "path": "src/components/settings/ai-providers/useAIProviders.ts",
@@ -654,7 +654,7 @@
     },
     {
       "path": "src/components/settings/AutoCloseSettings.tsx",
-      "sha256": "f37d9102458606ea6adb47ec10aa0db8f373c95ca64d2c0f15b7e09fa3345f98"
+      "sha256": "3c58384da4b7382d5fcfe682c8b154b7ec9c04906998c755e1ae19d483aae0c9"
     },
     {
       "path": "src/components/settings/AvatarUpload.tsx",
@@ -702,7 +702,7 @@
     },
     {
       "path": "src/components/settings/sla/SLARuleFormDialog.tsx",
-      "sha256": "36fd2b445244493a6f95ad4964110cdd6b058b12b72ba4fcdcbe6fa9179c628c"
+      "sha256": "38687a134eba0a258ec6c6ae83307d216164338c037619f1a6cd45ba2545cf09"
     },
     {
       "path": "src/components/settings/SLARulesManager.tsx",
@@ -734,7 +734,7 @@
     },
     {
       "path": "src/components/theme/HighContrastToggle.tsx",
-      "sha256": "5f784f084837abf76fc7cc4e8e9f00771b438942ecec8882c4bc46681eacb4fa"
+      "sha256": "7b52b8272d32b9d5538c285bd98cafb4c5c7f37970562eb6539a43f209a2f9a9"
     },
     {
       "path": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
@@ -1122,7 +1122,7 @@
     },
     {
       "path": "src/services/evolution.service.ts",
-      "sha256": "96be56e40846555ff84bed8b63cf146d6dae2855bbc1f3d76322e0cd2d8d4adc"
+      "sha256": "31e4f8ad84b0922e3557854063f533d39e14894d6acd5450f41375c9607b05d2"
     },
     {
       "path": "src/services/realtime.service.ts",
@@ -1149,28 +1149,8 @@
       "sha256": "9056c49ae190dc60fd1fc34fee89fc3e4a21e14628fc9bf68d33a6576f3ab0d9"
     },
     {
-      "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "sha256": "2b9a7900048054c8bc77e9a988661b05f1f9ebf616698d16c806fb7377942d4f"
-    },
-    {
-      "path": "supabase/functions/_shared/evolution-go-routes.ts",
-      "sha256": "b2808b9d8f2631ea0fa395b54fe6348d967f7f038667de1532b1886a61e7597c"
-    },
-    {
-      "path": "supabase/functions/_shared/evolution-send.ts",
-      "sha256": "8416e0ce196b12024ca5bf53c6ce67ad2f47ae8945c356fc2f5928744c60d906"
-    },
-    {
-      "path": "supabase/functions/_shared/evolution-sync-actions.ts",
-      "sha256": "79fa4b35311142b5f729cafaf4f32dc4d82b4fb0b1eed56194a2b4ab3028dd05"
-    },
-    {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
       "sha256": "4c90f4ed62d870269d012d8ead3d77a2531fd03291579a8fd4678275925f8a9a"
-    },
-    {
-      "path": "supabase/functions/evolution-api/index.ts",
-      "sha256": "1656e4b0c513afcd96bfc303bb3e7a98bfa6128a608124cb693a5677abef0ff7"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
@@ -1182,7 +1162,7 @@
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "sha256": "daf1277d9949542e1d1cb300613b0948b4ba9ef18c41057e82d44efa57c98bfa"
+      "sha256": "ce7b56638d35522933152ce280c3034336d43caee024a40eb46d386c7211ff1e"
     },
     {
       "path": "supabase/functions/migrate-media-storage/index.ts",
@@ -5840,9 +5820,9 @@
     },
     {
       "file": "src/components/theme/HighContrastToggle.tsx",
-      "line": 109,
+      "line": 147,
       "column": 17,
-      "endLine": 109,
+      "endLine": 147,
       "endColumn": 32,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -7954,23 +7934,9 @@
     },
     {
       "file": "src/services/evolution.service.ts",
-      "line": 103,
-      "column": 24,
-      "endLine": 103,
-      "endColumn": 27,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "27d2501df684ed7fc9fda4592ea05da15e061801f59ce10bc5621a31f61e9a0d",
-      "contextHash": "bb5cff72d7ab4d1d609bf8ca67963c8390e27af86677c8e4b73dc38eef13eab3"
-    },
-    {
-      "file": "src/services/evolution.service.ts",
-      "line": 117,
+      "line": 115,
       "column": 42,
-      "endLine": 117,
+      "endLine": 115,
       "endColumn": 45,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -7982,37 +7948,23 @@
     },
     {
       "file": "src/services/evolution.service.ts",
-      "line": 122,
-      "column": 34,
-      "endLine": 122,
-      "endColumn": 37,
+      "line": 135,
+      "column": 42,
+      "endLine": 135,
+      "endColumn": 45,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
       "messageId": "unexpectedAny",
       "message": "Unexpected any. Specify a different type.",
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "db2536ce31c82bbd138881fc07c77a3c53fa5751e723d3996d55e972d98acc0c",
-      "contextHash": "85950c021bc14940b697a7d25af96335a16e1e64d91984895ac56ea330757c45"
+      "lineHash": "087bb03b99fa8098a99bca6852cfd52be611635aa180e076a9b8ba6a9f4cfe6e",
+      "contextHash": "1bd7d529a0c57c027a1765b253b2c243cc24a2a9f30c9d04cdd809cd57bab924"
     },
     {
       "file": "src/services/evolution.service.ts",
-      "line": 147,
-      "column": 37,
-      "endLine": 147,
-      "endColumn": 40,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "98929ce919b007cc5f7831cc1a9bcbf55bcf41f28b5478732c47fc7695eb2339",
-      "contextHash": "d79c7f64efd2ca56fe2c61deae1cb8cb8b3b91bda05d45aa7713ff5fa020d4aa"
-    },
-    {
-      "file": "src/services/evolution.service.ts",
-      "line": 148,
+      "line": 166,
       "column": 68,
-      "endLine": 148,
+      "endLine": 166,
       "endColumn": 71,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -8020,69 +7972,13 @@
       "message": "Unexpected any. Specify a different type.",
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "e367e39518aef0591b4e646cdc5b77d5374090b0ff8c4d1ff31392822d2ef9e4",
-      "contextHash": "fd830125f8ba73ec086d01310ade69a5f755cb1492b7939bbbf19e776ace14de"
+      "contextHash": "36734ae963ad9692418ff30836e8476f8fd14a251c50d2f1d232708bd549e48d"
     },
     {
       "file": "src/services/evolution.service.ts",
-      "line": 175,
-      "column": 25,
-      "endLine": 175,
-      "endColumn": 28,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "1b838bba06693b8967822c76ff6e511c59cb89c957708b335fd67bb859a85b6a",
-      "contextHash": "2c2ba79bc9d04355d8c471aff756f8e94f089267a3d2b5c2583cd70d2408d210"
-    },
-    {
-      "file": "src/services/evolution.service.ts",
-      "line": 176,
-      "column": 30,
-      "endLine": 176,
-      "endColumn": 33,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "84313d582f9ded4ccd4a9bfa8bbc362c7b3fc916ed98725720034cb950c2a897",
-      "contextHash": "3d082b8d25883f953fe8ae041909f1c1b58a026a9bb59011f87cf31f76745412"
-    },
-    {
-      "file": "src/services/evolution.service.ts",
-      "line": 198,
-      "column": 25,
-      "endLine": 198,
-      "endColumn": 28,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "1b838bba06693b8967822c76ff6e511c59cb89c957708b335fd67bb859a85b6a",
-      "contextHash": "c67e5b938ffb5fbf75265a0a2e16575b0c8b2b1eb8e18c18813a31879003dd5b"
-    },
-    {
-      "file": "src/services/evolution.service.ts",
-      "line": 199,
-      "column": 30,
-      "endLine": 199,
-      "endColumn": 33,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "f51414aa12ef69d0b3efd0a723a29ad4e40643c3cc683201fc5ef8b3dc1634db",
-      "contextHash": "cf7bbe4c7ceb43ca16552969075c8bb533c5a35aa0fee1914a26ba510c7f1e8a"
-    },
-    {
-      "file": "src/services/evolution.service.ts",
-      "line": 57,
+      "line": 75,
       "column": 42,
-      "endLine": 57,
+      "endLine": 75,
       "endColumn": 45,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -8094,9 +7990,9 @@
     },
     {
       "file": "src/services/evolution.service.ts",
-      "line": 59,
+      "line": 77,
       "column": 22,
-      "endLine": 59,
+      "endLine": 77,
       "endColumn": 25,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -8108,51 +8004,9 @@
     },
     {
       "file": "src/services/evolution.service.ts",
-      "line": 62,
-      "column": 34,
-      "endLine": 62,
-      "endColumn": 37,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "db2536ce31c82bbd138881fc07c77a3c53fa5751e723d3996d55e972d98acc0c",
-      "contextHash": "85950c021bc14940b697a7d25af96335a16e1e64d91984895ac56ea330757c45"
-    },
-    {
-      "file": "src/services/evolution.service.ts",
-      "line": 76,
+      "line": 94,
       "column": 42,
-      "endLine": 76,
-      "endColumn": 45,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "087bb03b99fa8098a99bca6852cfd52be611635aa180e076a9b8ba6a9f4cfe6e",
-      "contextHash": "1bd7d529a0c57c027a1765b253b2c243cc24a2a9f30c9d04cdd809cd57bab924"
-    },
-    {
-      "file": "src/services/evolution.service.ts",
-      "line": 82,
-      "column": 24,
-      "endLine": 82,
-      "endColumn": 27,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "27d2501df684ed7fc9fda4592ea05da15e061801f59ce10bc5621a31f61e9a0d",
-      "contextHash": "bb5cff72d7ab4d1d609bf8ca67963c8390e27af86677c8e4b73dc38eef13eab3"
-    },
-    {
-      "file": "src/services/evolution.service.ts",
-      "line": 97,
-      "column": 42,
-      "endLine": 97,
+      "endLine": 94,
       "endColumn": 45,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -8373,230 +8227,6 @@
       "contextHash": "6df612e8af3ccb7a863ea38aac949e449ea6d3f8fc454b39dda5535e607e9d80"
     },
     {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 183,
-      "column": 53,
-      "endLine": 183,
-      "endColumn": 56,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "96b72515a601dee701279211d20a2832eb26408adbf50e84e57cb156dab9a6d8",
-      "contextHash": "bcb36e826ec3b42e9467bdaed4af4a56ea7c5256607dc4747459a812384c5f13"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 187,
-      "column": 64,
-      "endLine": 187,
-      "endColumn": 67,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "126c9ff67bafc349b3291d19294df5693423798f2a21811717758fd009bafe88",
-      "contextHash": "eab7d431a2ee7b6ee10b8441171a6dd989d91c35e63e24e81ecf662c64a851ef"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 31,
-      "column": 66,
-      "endLine": 31,
-      "endColumn": 69,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "5d83e80bc635338262ae371a468a3ccff9a717bfca2af566f850a4a7c71614fc",
-      "contextHash": "87943be36751f4886eed48aedf292b91dad50f15604d5849341d8d4ffc211de1"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 34,
-      "column": 30,
-      "endLine": 34,
-      "endColumn": 33,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "2d5217423dcce722251ef6804bce2bf35bf124cc1eec5f804d389a8c7e57d970",
-      "contextHash": "b2447ed0c10c35b4e06471b5a4606dd0a54f46168a66f68da59d44a5843710a2"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 40,
-      "column": 36,
-      "endLine": 40,
-      "endColumn": 39,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "cc0c321cc8a825509f84deb3c3c0b1a1975551de7f8a6b8f79c791e29795cbf5",
-      "contextHash": "36ad57afc341cf478172d598a6dbfe1779d4d2b48b267b54c7e983c840689c8b"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "line": 8,
-      "column": 47,
-      "endLine": 8,
-      "endColumn": 50,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "a3043e3f41e7ca474ebec03b49ebbf3052f54197cf3bf5a7d54d734bcd6dfaeb",
-      "contextHash": "795329cc897cbd312e965008bda76b83297cb594118bdd48aae5302c968bb822"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-go-routes.ts",
-      "line": 51,
-      "column": 73,
-      "endLine": 51,
-      "endColumn": 76,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "9e0eee019840b5a9c0dc5cc9bc44d63680b03e9c5a264f3637fb70606004c2ee",
-      "contextHash": "444e7dd817b6873812f662b104ffb920d2710549f0d5ce3bd366a19f0a5f9f41"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-go-routes.ts",
-      "line": 54,
-      "column": 44,
-      "endLine": 54,
-      "endColumn": 47,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "06e7655fc11f749b4a59ceee5a5d908bedfd132cda8a6256e5a0de4e3228df77",
-      "contextHash": "e6df952d45124441bd67877597a5d4adbe29ee5c9dcd48c8c4e514f2a933b304"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-go-routes.ts",
-      "line": 58,
-      "column": 31,
-      "endLine": 58,
-      "endColumn": 34,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "729ca470c841612186031c4aec669c58f50e006c4c6eb52e523f543b4c54539e",
-      "contextHash": "11e681e7aaf20bc6479cb32a651961537143ca761fe9fdada994f28c9e8f8498"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-send.ts",
-      "line": 105,
-      "column": 46,
-      "endLine": 105,
-      "endColumn": 49,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "be7705776c1078d83ef2fff890d10eacbd8513d616454df0232d965f9ad371db",
-      "contextHash": "ef3581a8a5ae0108f7395bacc3323906a567d8cd4ce3c9bdc28e75ecef2bc881"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-send.ts",
-      "line": 67,
-      "column": 40,
-      "endLine": 67,
-      "endColumn": 43,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "cebe34888cccbb62b3dcdf8af7e7c06962f27ede4e87d03c51cb49dfec8129cc",
-      "contextHash": "5a846e318a5582584c142bb21904b5737c959ae335b8cee8433e977c4a16ad1f"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-send.ts",
-      "line": 77,
-      "column": 42,
-      "endLine": 77,
-      "endColumn": 45,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "12bad3ccef22d7a31032b51d9f2ef8ae7b2dcaff3e1eb1e446c2f791b1917071",
-      "contextHash": "d6aac275ab12632aa72f32c52194987b2863c69c6f3b1d6484a968f0be5a8c73"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-send.ts",
-      "line": 93,
-      "column": 40,
-      "endLine": 93,
-      "endColumn": 43,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "739bd239e84d502135160aaf632ef3b084195d63da3119a70a11dd5d32a389ed",
-      "contextHash": "337ba737a3bfba1c2abe702df7cb60b8a3f9d3979b41db655fca701ecdace806"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-sync-actions.ts",
-      "line": 10,
-      "column": 39,
-      "endLine": 10,
-      "endColumn": 42,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "ca06b007cfd02c577418903de50940e0062ae81d347106af7306d7056ca60c64",
-      "contextHash": "3819314caeeabdcd21af289473a62e30b2d801f451d411b5492b5aae34ad2ed0"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-sync-actions.ts",
-      "line": 20,
-      "column": 120,
-      "endLine": 20,
-      "endColumn": 123,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "badfa67a670e5b16b36ff1a7dbaf41d6fd44d27aa0b792d4ccbe87a8e4aea483",
-      "contextHash": "072160759d3d6ec37e5df780f12090c9343e081ddb2f12e4863c0d216b5f7d1e"
-    },
-    {
-      "file": "supabase/functions/_shared/evolution-sync-actions.ts",
-      "line": 309,
-      "column": 44,
-      "endLine": 309,
-      "endColumn": 47,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "0c22fd3e3512406c50fce9acf1d52d22bc45af07e9f22ea64b0f540da66f4f42",
-      "contextHash": "c838e8c414f7eee0dc68050f22908a27d1906393895a2f9efd3711406fe7773d"
-    },
-    {
       "file": "supabase/functions/ai-suggest-reply/index.ts",
       "line": 163,
       "column": 30,
@@ -8609,104 +8239,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "f7a0f276eec37fc7de82f28512b4e86e7c01f1062957610278fe4395b7d6277b",
       "contextHash": "d2022e0a21217fcaa699c62f2e65e41b2fe77d26470f0a598fe8ce95610b3656"
-    },
-    {
-      "file": "supabase/functions/evolution-api/index.ts",
-      "line": 397,
-      "column": 22,
-      "endLine": 397,
-      "endColumn": 25,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "b88c1d4d5fa9cf114bd545d78e7fc18e3b37d1b85c77f895aa6a7ed26ae03c27",
-      "contextHash": "b7a4ab05319d0bfed6c550c0cd9e95273216b325dc59b09431c608668b283eeb"
-    },
-    {
-      "file": "supabase/functions/evolution-api/index.ts",
-      "line": 402,
-      "column": 17,
-      "endLine": 402,
-      "endColumn": 20,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "913728169e0fb56e9505ddc1ea1f6d611a1730bc3e3168de9ee3ad28114122e8",
-      "contextHash": "19cea99283a39607ac97ddb65b372181bbb460538502bae965b1c71bcdf71af4"
-    },
-    {
-      "file": "supabase/functions/evolution-api/index.ts",
-      "line": 415,
-      "column": 21,
-      "endLine": 415,
-      "endColumn": 24,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "79f3f297ea8292dc5100849eabc8505bfe890e6f01ce39782737dacd10069a4f",
-      "contextHash": "4638a338257bb917a5406b98034875536842dfccc0e1684a98f05cf07d074d7c"
-    },
-    {
-      "file": "supabase/functions/evolution-api/index.ts",
-      "line": 422,
-      "column": 26,
-      "endLine": 422,
-      "endColumn": 29,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "93a84194a82aafe6085fa10fb40e363130d9e07d84c97fe3baf1baf643e0c278",
-      "contextHash": "10d62318bbc6318af79b361755602f3d0b652cb605c68efe4f32c6230ab376c4"
-    },
-    {
-      "file": "supabase/functions/evolution-api/index.ts",
-      "line": 578,
-      "column": 17,
-      "endLine": 578,
-      "endColumn": 20,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "913728169e0fb56e9505ddc1ea1f6d611a1730bc3e3168de9ee3ad28114122e8",
-      "contextHash": "19cea99283a39607ac97ddb65b372181bbb460538502bae965b1c71bcdf71af4"
-    },
-    {
-      "file": "supabase/functions/evolution-api/index.ts",
-      "line": 622,
-      "column": 17,
-      "endLine": 622,
-      "endColumn": 20,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "913728169e0fb56e9505ddc1ea1f6d611a1730bc3e3168de9ee3ad28114122e8",
-      "contextHash": "19cea99283a39607ac97ddb65b372181bbb460538502bae965b1c71bcdf71af4"
-    },
-    {
-      "file": "supabase/functions/evolution-api/index.ts",
-      "line": 643,
-      "column": 25,
-      "endLine": 643,
-      "endColumn": 28,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "8016d1b9c03a7c56f3b830cf97d03a0cdd7cae7e3bf8c1b91c01f98dcdefb161",
-      "contextHash": "c78047c729d4b41674b563de96f14aa2731477b5d465c8f7599552c4354080cd"
     },
     {
       "file": "supabase/functions/external-db-bridge/index.ts",

@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: dispatch (manual, com confirmacao de project-ref)
+#   prova: import de snapshot legado validado por identidade do destino
+#   falha: o import aborta antes de escrever
+#   avisa: operador que disparou
 name: Supabase Sync & Validate
 
 # [2026-08-28] Somente execucao MANUAL. Antes, qualquer push/PR tocando
@@ -23,6 +28,10 @@ on:
         description: 'Digite o project-ref oficial para confirmar o import destrutivo.'
         required: true
         type: string
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 permissions:
   contents: read

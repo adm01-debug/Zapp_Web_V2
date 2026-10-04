@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: dispatch (manual; o cron foi desligado por rodar 100% skipped)
+#   prova: sincronizacao do CRM executada de ponta a ponta
+#   falha: o job fica vermelho e nada e sincronizado
+#   avisa: quem disparou
 name: CRM Sync Worker
 
 on:
@@ -14,6 +19,10 @@ on:
         description: 'Quantidade maxima desta execucao (1-10)'
         required: false
         default: '1'
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 permissions:
   contents: read

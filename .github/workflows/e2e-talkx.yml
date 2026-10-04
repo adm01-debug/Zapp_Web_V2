@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: pull_request e dispatch
+#   prova: o fluxo do Talk X no navegador
+#   falha: PR fica vermelho com o artefato do Playwright
+#   avisa: autor do PR
 # ==========================================================================
 # ZAPP-WEB · E2E Talk X em PR (Playwright, deslogado, NÃO required)
 # ==========================================================================
@@ -32,6 +37,10 @@ on:
       # A config global continua coberta pelo job E2E do ci.yml, que é required.
       - '.github/workflows/e2e-talkx.yml'
   workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 permissions:
   contents: read

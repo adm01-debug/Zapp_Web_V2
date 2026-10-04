@@ -10,12 +10,12 @@ import { Checkbox } from '@/components/ui/checkbox';
  *   selecao parcial — M e o recorte atual (`filtered`), nunca a colecao inteira;
  * - "k selecionados fora do filtro" quando o operador troca o filtro e deixa itens
  *   marcados que sumiram do recorte (etapa 33);
- * - "Limpar", "Cancelar" e "Encaminhar N" — este ULTIMO desabilitado ate a PR G mergear,
- *   com o mesmo `title` da etapa 19 ("Disponivel em breve"). Sem ZIP e sem excluir em
- *   massa: essas acoes nao existem aqui de proposito.
+ * - "Limpar", "Cancelar" e "Encaminhar N" — este ultimo abre o dialogo de encaminhamento
+ *   real (etapa 38). Sem ZIP e sem excluir em massa: essas acoes nao existem aqui de
+ *   proposito.
  *
- * Toda acao habilitada tem handler real; o unico botao sem handler e o "Encaminhar N",
- * justamente porque esta desabilitado (nao ha servico de encaminhamento antes da PR G).
+ * Toda acao habilitada tem handler real. Quando `forwardLimitReason` vem preenchido (etapa
+ * 39), o botao fica desabilitado e o motivo aparece ao lado dele.
  */
 
 interface FilesSelectionBarProps {
@@ -29,6 +29,10 @@ interface FilesSelectionBarProps {
   onSelectAllVisible: () => void;
   onClear: () => void;
   onCancel: () => void;
+  /** Etapa 38: abre o dialogo de encaminhamento com os N selecionados. */
+  onForward: () => void;
+  /** Etapa 39: motivo pelo qual o encaminhamento excede o limite (desabilita o botao). */
+  forwardLimitReason?: string | null;
 }
 
 export function FilesSelectionBar({
@@ -40,6 +44,8 @@ export function FilesSelectionBar({
   onSelectAllVisible,
   onClear,
   onCancel,
+  onForward,
+  forwardLimitReason = null,
 }: FilesSelectionBarProps) {
   const checkedState: boolean | 'indeterminate' = allVisibleSelected
     ? true
@@ -75,6 +81,9 @@ export function FilesSelectionBar({
       )}
 
       <div className="ml-auto flex items-center gap-2">
+        {forwardLimitReason && (
+          <span className="text-xs text-destructive" role="status">{forwardLimitReason}</span>
+        )}
         <Button type="button" size="sm" variant="ghost" className="h-8" onClick={onClear}>
           Limpar
         </Button>
@@ -86,10 +95,11 @@ export function FilesSelectionBar({
           size="sm"
           variant="outline"
           className="h-8"
-          disabled
-          title="Disponível em breve"
+          disabled={selectedCount === 0 || forwardLimitReason !== null}
+          title={forwardLimitReason ?? undefined}
+          onClick={onForward}
         >
-          {/* PR G: "Encaminhar N" so liga quando o servico real existir (etapa 38). */}
+          {/* Etapa 38: "Encaminhar N" abre o mesmo diálogo com os N itens da seleção. */}
           Encaminhar {selectedCount}
         </Button>
       </div>

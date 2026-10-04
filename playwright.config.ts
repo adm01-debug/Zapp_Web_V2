@@ -27,7 +27,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // The Email fixture boots a full Vite app and captures visual artifacts. A
+  // bounded local pool prevents cold-start starvation that made otherwise
+  // independent specs observe the module-loading fallback after five seconds.
+  workers: process.env.CI ? 1 : 2,
   reporter: 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173',
@@ -174,6 +177,16 @@ export default defineConfig({
       },
     },
     {
+      name: 'firefox-email-navy',
+      testMatch: /email-navy-visual\.spec\.ts/,
+      use: { ...devices['Desktop Firefox'], viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
+    },
+    {
+      name: 'webkit-email-navy',
+      testMatch: /email-navy-visual\.spec\.ts/,
+      use: { ...devices['Desktop Safari'], viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
+    },
+    {
       // auth.spec.ts on Firefox — cross-browser login UI coverage.
       // No dependencies, no storageState: runs without E2E_TEST_EMAIL/E2E_TEST_PASSWORD,
       // safe to include in ci.yml (PR checks cannot reference those secrets).
@@ -249,7 +262,11 @@ export default defineConfig({
     return {
       // O app de desenvolvimento usa 8080 por padrao; o E2E tem porta propria
       // para que a sonda do Playwright e o navegador exercitem o MESMO processo.
-      command: `bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
+      // Fixture tests exercise both sides of the runtime kill switch.  This is
+      // test-server-only; production still requires the build env and the
+      // feature flag.  Without it, a complete CRM fixture can never reach the
+      // panel and falsely validates only the disabled state.
+      command: `VITE_CRM_INTEGRATION_ENABLED=true bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
       url,
       env: {
         ...process.env,

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { EmailMessage, EmailThread } from '@/hooks/integrations/useGmail';
@@ -107,6 +107,27 @@ describe('EmailContactPanel', () => {
     expect(screen.getByText(/integração crm desativada/i)).toBeDefined();
   });
 
+  it('informs an authorized user when the explicit company link fails', async () => {
+    const mutateAsync = vi.fn().mockRejectedValue(new Error('CRM identity conflict'));
+    contextQuery.mockReturnValue({
+      data: {
+        status: 'available',
+        company: {
+          id: 'company-1', name: 'ACME Ltda', legalName: null, website: null, logoUrl: null,
+          industry: null, location: null, about: null, relationships: [], relationshipsKnown: true,
+          socials: [], socialsKnown: true, aboutKnown: true, updatedAt: null,
+        },
+        source: { linked: false, consultedAt: '2026-10-03T12:00:00Z', selectedExternalContactId: 'external-1', canLink: true },
+      },
+      status: 'available', isFetching: false, error: null, refetch: vi.fn(),
+      linkCompany: { isPending: false, mutateAsync },
+    } as never);
+    render(<EmailContactPanel accountId="acc1" thread={BASE_THREAD} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /vincular empresa ao contato/i }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/não foi possível vincular esta empresa/i));
+    expect(mutateAsync).toHaveBeenCalledWith('external-1');
+  });
+
   describe('exibição do contato', () => {
     it('exibe nome do contato quando disponível', () => {
       render(<EmailContactPanel accountId="acc1" thread={BASE_THREAD} onClose={vi.fn()} />);
@@ -127,6 +148,28 @@ describe('EmailContactPanel', () => {
     it('exibe email do contato', () => {
       render(<EmailContactPanel thread={BASE_THREAD} onClose={vi.fn()} />);
       expect(screen.getAllByText('alice@example.com').length).toBeGreaterThan(0);
+    });
+
+    it('não troca o interlocutor pela própria conta após uma resposta enviada', () => {
+      const messages: EmailMessage[] = [
+        {
+          id: 'outbound', thread_id: 'thread1', gmail_message_id: 'g-outbound', gmail_account_id: 'acc1',
+          from_address: 'agent@example.com', from_name: 'Agente', to_addresses: ['alice@example.com'], cc_addresses: [], bcc_addresses: [],
+          reply_to_address: null, subject: 'Hello', body_text: '', body_html: '', snippet: '', label_ids: [], is_read: true,
+          is_starred: false, has_attachments: false, in_reply_to: null, references_header: null,
+          internal_date: '2026-09-06T11:00:00Z', direction: 'outbound', created_at: '2026-09-06T11:00:00Z',
+        },
+        {
+          id: 'inbound', thread_id: 'thread1', gmail_message_id: 'g-inbound', gmail_account_id: 'acc1',
+          from_address: 'alice@example.com', from_name: 'Alice', to_addresses: ['agent@example.com'], cc_addresses: [], bcc_addresses: [],
+          reply_to_address: null, subject: 'Hello', body_text: '', body_html: '', snippet: '', label_ids: [], is_read: true,
+          is_starred: false, has_attachments: false, in_reply_to: null, references_header: null,
+          internal_date: '2026-09-06T10:00:00Z', direction: 'inbound', created_at: '2026-09-06T10:00:00Z',
+        },
+      ];
+      render(<EmailContactPanel accountEmail="agent@example.com" thread={{ ...BASE_THREAD, contact: undefined, contact_id: null, last_from_name: 'Agente', last_from_address: 'agent@example.com' }} messages={messages} onClose={vi.fn()} />);
+      expect(screen.getAllByText('alice@example.com').length).toBeGreaterThan(0);
+      expect(screen.getByRole('heading', { name: 'Alice' })).toBeDefined();
     });
   });
 

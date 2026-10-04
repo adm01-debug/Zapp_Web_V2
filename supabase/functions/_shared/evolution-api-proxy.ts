@@ -4,11 +4,14 @@ import { translateV2ToGo } from "./evolution-go-routes.ts";
 // GO responde envios como { message:'success', data:{ Info:{ ID, Chat, IsFromMe,… }, Message } }.
 // O frontend (messageSender, useChatMediaSending, useSendProduct) lê key.id/messageId (shape v2).
 // Injeta os campos v2 no topo sem remover o payload GO — normalização única para todos os consumidores.
-// deno-lint-ignore no-explicit-any
-export function normalizeGoSendResponse(data: any): unknown {
+export function normalizeGoSendResponse(data: unknown): unknown {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
-  if (data.key?.id) return data; // já é shape v2
-  const info = data.data?.Info;
+  const d = data as {
+    key?: { id?: unknown };
+    data?: { Info?: { ID?: unknown; Chat?: unknown; IsFromMe?: unknown } };
+  };
+  if (d.key?.id) return data; // já é shape v2
+  const info = d.data?.Info;
   const id = info?.ID;
   if (typeof id !== 'string' || !id) return data;
   return {
@@ -27,28 +30,38 @@ export function normalizeGoSendResponse(data: any): unknown {
 // /label/list → [{id,name,color}] (o front espera o array v2) ·
 // /user/check → [{exists,jid,number,name}] (contrato whatsappNumbers do v2) ·
 // demais respostas: injeção aditiva de key/messageId nos envios.
-// deno-lint-ignore no-explicit-any
-export function normalizeGoResponse(goPath: string | null, data: any): unknown {
-  if (goPath === '/label/list' && Array.isArray(data?.data)) {
-    // deno-lint-ignore no-explicit-any
-    return data.data.map((l: any) => ({
-      id: l.label_id ?? l.id, name: l.label_name ?? l.name, color: l.label_color ?? l.color,
-    }));
+export function normalizeGoResponse(goPath: string | null, data: unknown): unknown {
+  const d = data as {
+    data?: Array<Record<string, unknown>> & { Users?: Array<Record<string, unknown>> };
+  };
+  if (goPath === '/label/list' && Array.isArray(d.data)) {
+    return d.data.map((l: unknown) => {
+      const label = l as {
+        label_id?: unknown; id?: unknown;
+        label_name?: unknown; name?: unknown;
+        label_color?: unknown; color?: unknown;
+      };
+      return {
+        id: label.label_id ?? label.id, name: label.label_name ?? label.name, color: label.label_color ?? label.color,
+      };
+    });
   }
-  if (goPath === '/user/check' && Array.isArray(data?.data?.Users)) {
-    // deno-lint-ignore no-explicit-any
-    return data.data.Users.map((u: any) => ({
-      exists: u.IsInWhatsapp === true, jid: u.JID ?? u.RemoteJID ?? null,
-      number: u.Query ?? null, ...(u.VerifiedName ? { name: u.VerifiedName } : {}),
-    }));
+  if (goPath === '/user/check' && Array.isArray(d.data?.Users)) {
+    return d.data.Users.map((u: unknown) => {
+      const user = u as { IsInWhatsapp?: unknown; JID?: unknown; RemoteJID?: unknown; Query?: unknown; VerifiedName?: unknown };
+      return {
+        exists: user.IsInWhatsapp === true, jid: user.JID ?? user.RemoteJID ?? null,
+        number: user.Query ?? null, ...(user.VerifiedName ? { name: user.VerifiedName } : {}),
+      };
+    });
   }
-  if (goPath === '/instance/all' && Array.isArray(data?.data)) {
-    const instances = data.data.map((instance: Record<string, unknown>) => {
+  if (goPath === '/instance/all' && Array.isArray(d?.data)) {
+    const instances = d.data.map((instance: Record<string, unknown>) => {
       const safe = { ...instance };
       delete safe.token;
       return safe;
     });
-    return { ...data, data: instances };
+    return { ...d, data: instances };
   }
   return normalizeGoSendResponse(data);
 }
@@ -179,12 +192,10 @@ export async function proxyToEvolution(
 
       if (!response.ok) {
         const errorData = data as Record<string, unknown>;
-        // deno-lint-ignore no-explicit-any
-        const responseMsg = (errorData?.response as any)?.message;
+        const responseMsg = (errorData?.response as { message?: unknown })?.message;
         const goError = typeof errorData?.error === 'string' ? errorData.error : '';
         let friendlyMessage = 'Erro na API Evolution';
-        // deno-lint-ignore no-explicit-any
-        if (Array.isArray(responseMsg) && responseMsg.some((m: any) => m.exists === false)) {
+        if (Array.isArray(responseMsg) && responseMsg.some((m: unknown) => (m as { exists?: unknown }).exists === false)) {
           friendlyMessage = 'Número não encontrado no WhatsApp. Verifique se o número está correto e registrado.';
         } else if (response.status === 401) {
           friendlyMessage = 'Chave de API inválida ou sem permissão.';

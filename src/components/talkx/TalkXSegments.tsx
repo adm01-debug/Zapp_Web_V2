@@ -15,6 +15,7 @@ import { PrimaryButton, GhostButton, Pill, ProgressBar, VerTodasButton, Initials
 import { cn } from '@/lib/utils';
 import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, useAudienceEstimate, countAudience, splitRules, isRuleComplete } from '@/hooks/integrations/useTalkXSegments';
 import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES } from './talkxShared';
+import { TalkXQueryBoundary } from './kit/states';
 import { toast } from 'sonner';
 
 interface Props {
@@ -115,9 +116,15 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         />
 
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-          {isLoading ? (<div className="p-4"><TalkXSkeletonRows rows={5} /></div>)
-           : segments.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Bookmark} title="Nenhum segmento salvo" description="Crie segmentos inteligentes para campanhas mais assertivas." actionLabel="Criar segmento" onAction={openNew} /></div>)
-           : filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum segmento encontrado" description="Ajuste os filtros ou tente outro termo." /></div>)
+          <TalkXQueryBoundary
+            query={{ isLoading, isError, error }}
+            entity="os segmentos"
+            onRetry={() => refetch()}
+            skeleton={<div className="p-4"><TalkXSkeletonRows rows={5} /></div>}
+            isEmpty={segments.length === 0}
+            empty={<div className="p-4"><TalkXEmptyState icon={Bookmark} title="Nenhum segmento salvo" description="Crie segmentos inteligentes para campanhas mais assertivas." actionLabel="Criar segmento" onAction={openNew} /></div>}
+          >
+           {filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum segmento encontrado" description="Ajuste os filtros ou tente outro termo." /></div>)
            : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse">
@@ -169,6 +176,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
               </table>
             </div>
           )}
+          </TalkXQueryBoundary>
           {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={() => {}} noun="segmentos" /></div>}
         </section>
       </div>

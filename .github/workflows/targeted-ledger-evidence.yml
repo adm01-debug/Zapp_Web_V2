@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: dispatch
+#   prova: a evidencia do ledger de migrations para uma version especifica
+#   falha: o job aborta sem publicar evidencia
+#   avisa: operador que disparou
 # Coleta forense manual e somente-leitura. O ledger e cifrado em memoria
 # antes de virar artifact; chave privada e statements nunca chegam aos logs.
 name: Targeted Ledger Evidence
@@ -13,6 +18,10 @@ on:
         description: 'Chave publica RSA PEM codificada em base64'
         required: true
         type: string
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 permissions:
   contents: read
