@@ -38,7 +38,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [showStats, setShowStats] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [olderMessages, setOlderMessages] = useState<TeamMessage[]>([]);
-  const [oldestCursor, setOldestCursor] = useState<string | null>(null);
+  const [oldestCursor, setOldestCursor] = useState<{ createdAt: string; id: string } | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
 
@@ -118,13 +118,11 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     return combined;
   }, [olderMessages, newestMessages]);
 
-  useEffect(() => {
-    if (newestMessages.length > 0 && oldestCursor === null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setOldestCursor(newestMessages[0].created_at);
-    }
-  }, [newestMessages, oldestCursor]);
-
+  // TC-006 — o reset por conversa roda ANTES do init do cursor: se rodasse
+  // depois (como estava), o `setOldestCursor(null)` do reset apagava o cursor
+  // que o efeito de init tinha acabado de gravar (ambos disparam no mesmo
+  // commit de montagem/troca), e a paginação nunca começava — as mensagens
+  // antigas ficavam inalcançáveis.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOlderMessages([]);
@@ -134,6 +132,14 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     setShowTransferDialog(false);
     setShowGroupManagement(false);
   }, [conversation.id]);
+
+  useEffect(() => {
+    if (newestMessages.length > 0 && oldestCursor === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOldestCursor({ createdAt: newestMessages[0].created_at, id: newestMessages[0].id });
+    }
+  }, [newestMessages, oldestCursor]);
+
 
   useEffect(() => {
     if (savedScrollFromBottomRef.current === null) return;
@@ -151,19 +157,29 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     if (el) savedScrollFromBottomRef.current = el.scrollHeight - el.scrollTop;
     setIsFetchingOlder(true);
     try {
+      // TC-006 — keyset composto `(created_at, id)`. Só `created_at` pulava as
+      // mensagens que empatam no mesmo instante: o lote seguinte trazia
+      // `created_at < cursor` e as empatadas com o instante do cursor ficavam
+      // de fora. O `id` desempata de forma estável e casa com o
+      // `order by created_at desc, id desc` das consultas. As aspas no
+      // timestamptz são obrigatórias (o valor serializado traz ':' e '+', que o
+      // parser de filtro do PostgREST leria como separadores) — mesmo padrão de
+      // `useCSAT`.
+      const ts = `"${oldestCursor.createdAt}"`;
       const { data, error } = await supabase
         .from('team_messages')
         .select('*, sender:profiles!team_messages_sender_id_fkey(id, name, avatar_url), media_bucket, media_path, status')
         .eq('conversation_id', conversation.id)
-        .lt('created_at', oldestCursor)
+        .or(`created_at.lt.${ts},and(created_at.eq.${ts},id.lt.${oldestCursor.id})`)
         .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
         .limit(60);
       if (error) throw error;
       const older = ((data || []) as TeamMessage[]).reverse();
       if (older.length === 0) {
         setHasOlderMessages(false);
       } else {
-        setOldestCursor(older[0].created_at);
+        setOldestCursor({ createdAt: older[0].created_at, id: older[0].id });
         setOlderMessages(prev => {
           const ids = new Set(prev.map(m => m.id));
           return [...older.filter(m => !ids.has(m.id)), ...prev];
