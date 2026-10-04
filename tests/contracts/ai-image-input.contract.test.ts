@@ -30,6 +30,8 @@ const BUCKET = 'whatsapp-media';
 const PATH = 'stickers/figurinha.webp';
 const PUBLIC_URL = `${ORIGIN}/storage/v1/object/public/${BUCKET}/${PATH}`;
 const SERVICE_KEY = 'service-role-de-teste';
+const ANON_KEY = 'anon-key-de-teste';
+const USER_TOKEN = 'jwt-do-chamador-de-teste';
 const ENDPOINT = `${ORIGIN}/storage/v1/object/${BUCKET}/${PATH}`;
 
 /** Bytes "de imagem" (assinatura RIFF/WEBP + resto) para conferir o base64. */
@@ -368,5 +370,104 @@ describe('toInlineImage — data URL já pronta (sem rede)', () => {
 
     expect(error.code).toBe('IMAGE_TYPE_INVALID');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('toInlineImage — storageIdentity (R2-INF-022: download privado sob a identidade certa)', () => {
+  it('kind:"user" baixa com anon key + JWT do chamador (nunca service role)', async () => {
+    fetchMock.mockResolvedValue(storageResponse(IMAGE_BYTES, { contentType: 'image/webp' }));
+
+    const result = await toInlineImage(PUBLIC_URL, {
+      storageIdentity: { kind: 'user', bearerToken: USER_TOKEN, anonKey: ANON_KEY },
+    });
+
+    expect(result.dataUrl).toBe(`data:image/webp;base64,${IMAGE_BASE64}`);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers.apikey).toBe(ANON_KEY);
+    expect(headers.Authorization).toBe(`Bearer ${USER_TOKEN}`);
+    // Nunca service role no caminho de usuário.
+    expect(headers.apikey).not.toBe(SERVICE_KEY);
+    expect(headers.Authorization).not.toBe(`Bearer ${SERVICE_KEY}`);
+  });
+
+  it('kind:"user" usa SUPABASE_ANON_KEY do ambiente quando a opção não vem', async () => {
+    env.SUPABASE_ANON_KEY = 'anon-do-ambiente';
+    fetchMock.mockResolvedValue(storageResponse(IMAGE_BYTES, { contentType: 'image/webp' }));
+
+    await toInlineImage(PUBLIC_URL, {
+      storageIdentity: { kind: 'user', bearerToken: USER_TOKEN },
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers.apikey).toBe('anon-do-ambiente');
+    expect(headers.Authorization).toBe(`Bearer ${USER_TOKEN}`);
+  });
+
+  it('kind:"user" sem bearerToken falha fechada sem rede', async () => {
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, {
+        storageIdentity: { kind: 'user', bearerToken: '', anonKey: ANON_KEY },
+      }),
+    );
+
+    expect(error.code).toBe('IMAGE_STORAGE_UNAVAILABLE');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('kind:"user" sem anon key (opção e ambiente) falha fechada sem rede', async () => {
+    delete env.SUPABASE_ANON_KEY;
+
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, {
+        storageIdentity: { kind: 'user', bearerToken: USER_TOKEN },
+      }),
+    );
+
+    expect(error.code).toBe('IMAGE_STORAGE_UNAVAILABLE');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([401, 403])(
+    'kind:"user" recusa HTTP %i do Storage sem ler/embutir bytes',
+    async (status) => {
+      const readBody = vi.fn(async () => {
+        throw new Error('o corpo nao deveria ser lido');
+      });
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status,
+        headers: new Headers(),
+        arrayBuffer: readBody,
+        body: null,
+      } as unknown as Response);
+
+      const error = await errorFrom(
+        toInlineImage(PUBLIC_URL, {
+          storageIdentity: { kind: 'user', bearerToken: USER_TOKEN, anonKey: ANON_KEY },
+        }),
+      );
+
+      expect(error).toBeInstanceOf(AiImageInputError);
+      expect(error.code).toBe('IMAGE_DOWNLOAD_FAILED');
+      expect(error.status_http).toBe(status);
+      expect(readBody).not.toHaveBeenCalled();
+    },
+  );
+
+  it('kind:"service" explícito preserva o download com service role', async () => {
+    fetchMock.mockResolvedValue(storageResponse(IMAGE_BYTES, { contentType: 'image/webp' }));
+
+    const result = await toInlineImage(PUBLIC_URL, {
+      storageIdentity: { kind: 'service' },
+    });
+
+    expect(result.dataUrl).toBe(`data:image/webp;base64,${IMAGE_BASE64}`);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers.apikey).toBe(SERVICE_KEY);
+    expect(headers.Authorization).toBe(`Bearer ${SERVICE_KEY}`);
   });
 });
