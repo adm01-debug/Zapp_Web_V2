@@ -50,7 +50,7 @@ export function createFakeEvolution(
   let mode: FakeEvolutionMode = options.mode ?? "ok";
   // O modo `timeout` segura a resposta por este tempo (o motor corta em 20s); é
   // finito de propósito para o servidor conseguir encerrar (shutdown não trava).
-  let timeoutDelayMs = options.timeoutDelayMs ?? 30_000;
+  const timeoutDelayMs = options.timeoutDelayMs ?? 30_000;
   let counter = 0;
 
   const server = Deno.serve(
