@@ -32,6 +32,20 @@ const runUrl = `${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_
  * (api.github.com, ou o host do GitHub Enterprise vindo de GITHUB_SERVER_URL) e caminho
  * comecando com '/' e sem travessia.
  */
+/**
+ * S5145: neutraliza quebra de linha e caracteres de controle em valor vindo da API
+ * antes de ele virar linha de log ou de GITHUB_OUTPUT.
+ *
+ * Duas razoes distintas, e a segunda e' a mais seria:
+ *   - `::notice::` e `::warning::` sao COMANDOS de workflow no Actions: uma quebra de
+ *     linha no valor forja um comando novo, inclusive um `::error::`.
+ *   - o protocolo de `GITHUB_OUTPUT` e' `nome=valor` por linha: uma quebra de linha no
+ *     valor abre VARIAVEL NOVA no job seguinte. A regra do Sonar nao aponta essa linha.
+ *
+ * Mesmo tratamento que o github-settings-guard.mjs ja aplica (`semQuebra`).
+ */
+const semQuebra = (valor) => String(valor ?? '').replace(/[\r\n\u0000-\u001f\u007f]/g, ' ');
+
 export function resolverDestino(apiUrl, caminho, serverUrl = process.env.GITHUB_SERVER_URL) {
   const base = String(apiUrl ?? '').trim().replace(/\/+$/, '');
   let destino;
@@ -87,10 +101,10 @@ try {
     `/repos/${GITHUB_REPOSITORY}/deployments/${dep.id}/statuses`,
     construirStatus({ id: dep.id, runUrl }),
   );
-  console.log(`::notice::Deployment registrado: ${resumirDeployment(dep)} (id=${dep.id}, status=${st.state})`);
-  console.log(`deployment_id=${dep.id}`);
-  if (GITHUB_OUTPUT) appendFileSync(GITHUB_OUTPUT, `deployment_id=${dep.id}\n`);
+  console.log(`::notice::Deployment registrado: ${semQuebra(resumirDeployment(dep))} (id=${semQuebra(dep.id)}, status=${semQuebra(st.state)})`);
+  console.log(`deployment_id=${semQuebra(dep.id)}`);
+  if (GITHUB_OUTPUT) appendFileSync(GITHUB_OUTPUT, `deployment_id=${semQuebra(dep.id)}\n`);
 } catch (e) {
   // Nunca derruba o deploy: o job elevou o passo a best-effort desde a tag.
-  console.log(`::warning::Falha ao registrar o Deployment (deploy nao afetado): ${e.message}`);
+  console.log(`::warning::Falha ao registrar o Deployment (deploy nao afetado): ${semQuebra(e.message)}`);
 }

@@ -620,6 +620,35 @@ jobs:
           TALKX_RECEIPTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-receipts-replies.test.sh
 
+      # X031: reenvio manual em lote (failed/skipped, teto de 3, revalida supressão e
+      # elegibilidade) e resolução de outcome_unknown (mark_sent|mark_failed|retry) por
+      # RPC admin/supervisor com trilha; campanha completed reabre para sending.
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar reenvio manual e resolucao de outcome_unknown com trilha (X031)
+        env:
+          TALKX_X031_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-retry-resolve.test.sh
+
+      # X032: LGPD no motor — consentimento no lancamento (revoked fora da audiencia,
+      # require_granted_consent opcional, start/agendar recusam sem confirmacao, opt-out
+      # automatico marca consent_status=revoked) e expurgo por prazo 1x/dia via
+      # purge_talkx_expired_data (texto/midia de campanha terminal vencida, ua/ip_hash,
+      # linhas de teste e de IA) sem tocar blacklist, contadores ou eventos.
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar consentimento no lancamento e expurgo por prazo (X032)
+        env:
+          TALKX_X032_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-lgpd.test.sh
+
+      # X033: log por destinatario (sem telefone/texto, expurgo de 30 dias), view de
+      # saude talkx_engine_health (security_invoker) e alertas com deduplicacao por
+      # tipo/campanha e fechamento automatico (stalled_campaign, cron_degraded).
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar log por destinatario, saude do motor e alertas (X033)
+        env:
+          TALKX_X033_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-health.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.

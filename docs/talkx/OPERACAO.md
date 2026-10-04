@@ -180,6 +180,67 @@ Como ler:
   migration X012 não foi aplicada (ou foi feito rollback): o motor voltou a chamar
   a edge sem o reaper/conclusão e as campanhas presas não se recuperam sozinhas.
 
+### 7.2 Alertas e o que fazer (X033)
+
+A X033 dá dois instrumentos ao motor: o **log por destinatário**
+(`public.talkx_delivery_log` — sem telefone nem texto, expurgado em 30 dias pelo
+`purge_talkx_expired_data`) e a **visão de saúde** `public.talkx_engine_health`
+(`security_invoker`). Sobre ela roda `public.talkx_engine_alerts()`, chamada pelo
+próprio tick (a cada 5 min): abre alerta em `public.talkx_alerts` com
+**deduplicação por (tipo, campanha)** e **fechamento automático** (`resolved_at`)
+quando o sintoma desaparece.
+
+Sinais da view `talkx_engine_health`:
+
+| `kind` | O que significa |
+| --- | --- |
+| `stalled_campaign` | campanha `sending` sem envio novo há mais de 15 min **com a janela aberta** |
+| `stale_lease` | destinatário `sending` com lease (`delivery_claim_expires_at`) vencido |
+| `outcome_unknown_24h` | destinatário que ficou `outcome_unknown` nas últimas 24 h (exige decisão humana — §8.4) |
+| `failure_rate_15m` | taxa de falha dos envios dos últimos 15 min acima do limiar |
+| `cron_run` | últimas 60 execuções do cron `talkx-scheduler-1min` (`status` + `return_message`) |
+
+Log por destinatário de uma campanha (paginado; a tabela não guarda telefone nem
+texto de mensagem):
+
+```sql
+SELECT id, campaign_id, recipient_id, attempt, stage, outcome, http_status,
+       error_code, worker_id, duration_ms, created_at
+  FROM public.talkx_campaign_logs('<campaign_id>', NULL, 100);
+```
+
+Alertas abertos (tipos: `stalled_campaign`, `stale_lease`, `outcome_unknown`,
+`high_failure_rate`, `cron_degraded`):
+
+```sql
+SELECT kind, campaign_id, payload, opened_at
+  FROM public.talkx_alerts
+ WHERE resolved_at IS NULL
+ ORDER BY opened_at DESC;
+```
+
+O que fazer por tipo:
+
+- **`stalled_campaign`** — a campanha parou de avançar com a janela aberta.
+  Verifique o deploy de `talkx-send` e o tick (§7.1). Se for um `continue` travado,
+  o reaper resolve no próximo tick; se persistir, force um `continue` ou pause a campanha.
+- **`stale_lease`** — destinatário preso em `sending` com lease vencido. O reaper
+  (`sweep_talkx_stuck_recipients`) o move para `outcome_unknown`; confirme e trate em §8.4.
+- **`outcome_unknown`** — exige decisão humana (§8.4); não é ação automática.
+- **`high_failure_rate`** — falha alta em 15 min: verifique instância/credencial de
+  WhatsApp (§5) e `net._http_response` (§7.1) antes de retomar.
+- **`cron_degraded`** — 3 execuções seguidas do cron com falha (ex.: `job startup
+  timeout`): o motor para de avançar. Ver §7.1; reduza a cadência/custo do tick,
+  não duplique jobs.
+
+O fechamento é automático: quando o sinal some, a próxima chamada de
+`talkx_engine_alerts()` preenche `resolved_at`. Alertas globais (ex.: `cron_degraded`)
+têm `campaign_id` nulo e deduplicam por tipo.
+
+O aviso no grupo interno é feito pelo fluxo N8N **`talkx-alerts`** (export em
+`docs/talkx/n8n/talkx-alerts.json`): ele lê os alertas abertos e posta o resumo —
+é só o encaminhamento do aviso, a decisão continua humana.
+
 ---
 
 ## 8. Procedimentos operacionais
@@ -264,6 +325,16 @@ Procedimento:
 3. O teto de 3 tentativas por destinatário é respeitado tanto pelo retry manual
    (`retry_talkx_recipient`) quanto pelo backoff automático
    (`reschedule_talkx_recipient`).
+
+> **Sem reconciliação automática sem id do provedor (X031).** Não existe — e não
+> haverá — varredura automática que conclua sozinha um `outcome_unknown`: sem um id
+> do provedor que correlacione o POST ao recibo, todo `outcome_unknown` é ambíguo
+> por definição e exige decisão humana. A administração resolve caso a caso pelas
+> RPCs `resolve_talkx_outcome_unknown` (`mark_sent` | `mark_failed` | `retry` — o
+> `retry` exige confirmação explícita de risco de mensagem em dobro) e
+> `retry_talkx_recipients` (reenvio manual em lote de `failed`/`skipped`, teto de 3
+> por destinatário); ambas gravam evento com ator na linha do tempo e reabrem a
+> campanha `completed` para `sending` quando necessário.
 
 ---
 
