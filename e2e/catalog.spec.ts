@@ -11,9 +11,9 @@ import {
   E2E_FIXTURE_CONTACT_DISPLAY_NAME,
   E2E_FIXTURE_CONTACT_ID,
 } from './fixtures/catalog';
-
-// A URL do projeto é pública (aparece em todo o repo, inclusive nos workflows).
-const SUPABASE_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
+// A URL do projeto vem da fonte única dos testes (aponta para o projeto oficial; o banco
+// local de desenvolvimento entra pelo override explícito E2E_SUPABASE_URL_OVERRIDE).
+import { SUPABASE_URL } from './fixtures/supabase-env';
 
 // A chave pública do projeto NÃO é literal neste arquivo: vem do ambiente —
 // `VITE_SUPABASE_PUBLISHABLE_KEY` (o mesmo secret que o `ci.yml` entrega ao app)
