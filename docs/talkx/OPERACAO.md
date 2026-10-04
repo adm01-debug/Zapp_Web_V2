@@ -265,6 +265,16 @@ Procedimento:
    (`retry_talkx_recipient`) quanto pelo backoff automático
    (`reschedule_talkx_recipient`).
 
+> **Sem reconciliação automática sem id do provedor (X031).** Não existe — e não
+> haverá — varredura automática que conclua sozinha um `outcome_unknown`: sem um id
+> do provedor que correlacione o POST ao recibo, todo `outcome_unknown` é ambíguo
+> por definição e exige decisão humana. A administração resolve caso a caso pelas
+> RPCs `resolve_talkx_outcome_unknown` (`mark_sent` | `mark_failed` | `retry` — o
+> `retry` exige confirmação explícita de risco de mensagem em dobro) e
+> `retry_talkx_recipients` (reenvio manual em lote de `failed`/`skipped`, teto de 3
+> por destinatário); ambas gravam evento com ator na linha do tempo e reabrem a
+> campanha `completed` para `sending` quando necessário.
+
 ---
 
 ## 9. Histórico de versões
