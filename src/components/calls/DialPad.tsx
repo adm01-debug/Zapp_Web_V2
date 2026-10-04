@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { SipStatus, CallStatus, CallDirection } from '@/hooks/communication/useSipClient';
 import { describeReason, type CapabilityReason } from '@/lib/calls/capabilities';
+import { Keypad } from './Keypad';
 
 interface DialPadProps {
   sipStatus: SipStatus;
@@ -39,19 +40,6 @@ interface DialPadProps {
   onToggleMute: () => void;
   onDTMF: (digit: string) => void;
 }
-
-const dialButtons = [
-  ['1', '2', '3'],
-  ['4', '5', '6'],
-  ['7', '8', '9'],
-  ['*', '0', '#'],
-];
-
-const subLabels: Record<string, string> = {
-  '2': 'ABC', '3': 'DEF', '4': 'GHI', '5': 'JKL',
-  '6': 'MNO', '7': 'PQRS', '8': 'TUV', '9': 'WXYZ',
-  '0': '+',
-};
 
 function formatTime(seconds: number) {
   const h = Math.floor(seconds / 3600);
@@ -214,24 +202,13 @@ export function DialPad({
         </div>
       )}
 
-      {/* Dial Grid */}
-      <div className="grid grid-cols-3 gap-2 w-full max-w-[280px]">
-        {dialButtons.map((row) =>
-          row.map((digit) => (
-            <motion.button
-              key={digit}
-              whileTap={{ scale: 0.92 }}
-              onClick={() => handleDigit(digit)}
-              className="flex flex-col items-center justify-center w-full h-16 rounded-xl bg-muted/50 hover:bg-muted border border-border/50 transition-colors"
-            >
-              <span className="text-xl font-semibold text-foreground">{digit}</span>
-              {subLabels[digit] && (
-                <span className="text-[9px] text-muted-foreground tracking-widest">{subLabels[digit]}</span>
-              )}
-            </motion.button>
-          ))
-        )}
-      </div>
+      {/* Teclado (T58): extraido para Keypad.tsx e reusado pelo painel lateral.
+          Em chamada as teclas viram tom (DTMF); fora dela, montam o numero. */}
+      <Keypad
+        onKey={handleDigit}
+        onBackspace={isInCall ? undefined : handleDelete}
+        mode={isInCall ? 'dtmf' : 'edit'}
+      />
 
       {/* Call Button */}
       {!isInCall && (

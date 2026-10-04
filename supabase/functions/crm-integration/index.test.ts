@@ -1,4 +1,4 @@
-import { handleCRMIntegrationRequest, resolveContactLookup } from './index.ts';
+import { emailCompanySocials, escapeIlikeExact, externalParticipantEmail, handleCRMIntegrationRequest, resolveContactLookup } from './index.ts';
 
 function assertStatus(actual: number, expected: number) {
   if (actual !== expected) throw new Error(`expected HTTP ${expected}, got ${actual}`);
@@ -86,6 +86,38 @@ Deno.test('contact lookup rejects a UTF-8 response larger than 512 KB', async ()
   } catch (error) {
     if (!(error instanceof Error) || error.message !== 'CRM_RESPONSE_TOO_LARGE') throw error;
   }
+});
+
+Deno.test('derives the external participant without treating the active Gmail account as the contact', () => {
+  const participant = externalParticipantEmail([
+    { from_address: 'agent@example.com', to_addresses: ['other@example.com'], cc_addresses: [], direction: 'outbound' },
+    { from_address: 'customer@example.com', to_addresses: ['agent@example.com'], cc_addresses: [], direction: 'inbound' },
+  ], 'agent@example.com');
+  if (participant !== 'customer@example.com') throw new Error(`expected customer@example.com, got ${participant}`);
+});
+
+Deno.test('keeps the first external participant when a later reply-all sender appears', () => {
+  const participant = externalParticipantEmail([
+    { from_address: 'owner@example.com', to_addresses: ['agent@example.com'], cc_addresses: [], direction: 'inbound' },
+    { from_address: 'copied@example.com', to_addresses: ['agent@example.com'], cc_addresses: [], direction: 'inbound' },
+  ], 'agent@example.com');
+  if (participant !== 'owner@example.com') throw new Error(`expected owner@example.com, got ${participant}`);
+});
+
+Deno.test('escapes SQL pattern characters before exact insensitive email lookup', () => {
+  if (escapeIlikeExact('person_%@example.com') !== 'person\\_\\%@example.com') throw new Error('email wildcard was not escaped');
+});
+
+Deno.test('projects only social networks accepted by the Email company contract', () => {
+  const socials = emailCompanySocials([
+    { plataforma: 'linkedin', url: 'https://linkedin.example/acme' },
+    { plataforma: 'Facebook', url: 'https://facebook.example/acme' },
+    { plataforma: 'instagram', url: 'https://instagram.example/acme' },
+  ]);
+  if (JSON.stringify(socials) !== JSON.stringify([
+    { platform: 'linkedin', url: 'https://linkedin.example/acme' },
+    { platform: 'instagram', url: 'https://instagram.example/acme' },
+  ])) throw new Error('unsupported CRM social network escaped the Email projection');
 });
 
 Deno.test('rejects anonymous request before consuming its body', async () => {

@@ -48,15 +48,31 @@ const presenceToGo = (presence: unknown, delay?: unknown) => ({
   ...(typeof delay === 'number' && delay > 0 ? { delay } : {}),
 });
 
-export function translateV2ToGo(fullPath: string, method: string, body: any): GoRoute | null {
+/**
+ * Corpo das rotas v2 (Evolution clássica) que este tradutor converte para Go.
+ * Os campos soltos são repassados em bloco para o formato Go (daí `unknown`);
+ * `key` é tipado porque é o único objeto lido campo a campo aqui dentro.
+ */
+type V2RequestBody = Record<string, unknown> & {
+  key?: { remoteJid?: string; id?: string; fromMe?: boolean; participant?: string };
+  lastMessage?: { key?: { remoteJid?: string } };
+  message?: { message?: unknown };
+  webhook?: { url?: string };
+};
+
+export function translateV2ToGo(fullPath: string, method: string, body: unknown): GoRoute | null {
   const [path, qs] = fullPath.split('?');
   const q = new URLSearchParams(qs ?? '');
-  const b = (body ?? {}) as Record<string, any>;
+  const b = (body ?? {}) as V2RequestBody;
   const m = (re: RegExp) => re.test(path);
 
   // quoted v2 {key:{id, participant}} → GO {messageId, participant}
-  const quotedToGo = (quoted: any) =>
-    quoted?.key?.id ? { quoted: { messageId: quoted.key.id, participant: quoted.key.participant ?? '' } } : {};
+  const quotedToGo = (quoted: unknown) => {
+    const q2 = quoted as { key?: { id?: unknown; participant?: unknown } } | undefined;
+    return q2?.key?.id
+      ? { quoted: { messageId: q2.key.id, participant: q2.key.participant ?? '' } }
+      : {};
+  };
 
   // ── Mensagens ──
   if (m(/^\/message\/sendText\/[^/]+$/)) {

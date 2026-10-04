@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: dispatch na main, com o job gateado por environment
+#   prova: dry-run obrigatorio e apply com hash estrutural da migration
+#   falha: nada e aplicado; o dry-run precisa passar antes
+#   avisa: operador que disparou e a issue de ops
 # ==================================================================
 # ZAPP-WEB · Migration controlada do banco oficial
 # ==================================================================

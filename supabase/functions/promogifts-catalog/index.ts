@@ -1,12 +1,20 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
-import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, Logger, markDegraded, degradedCounters } from "../_shared/validation.ts";
 
-const jsonRes = (body: unknown, status = 200, req?: Request) =>
-  new Response(JSON.stringify(body), {
+const jsonRes = (body: unknown, status = 200, req?: Request) => {
+  // CT-19 — a degradacao viaja no cabecalho quando acontece: fail-open silencioso ja
+  // mascarou uma medicao inteira (o log tinha o erro, a resposta era 200 e eu li 200
+  // como "esta tudo certo"). Sem degradacao marcada, nenhum cabecalho novo aparece.
+  const contadores = degradedCounters();
+  const degradado: Record<string, string> = Object.keys(contadores).length
+    ? { "x-degraded": Object.entries(contadores).map(([motivo, total]) => `${motivo}=${total}`).join(";") }
+    : {};
+  return new Response(JSON.stringify(body), {
     status,
-    headers: { ...(req ? getCorsHeaders(req) : getCorsHeaders()), "Content-Type": "application/json" },
+    headers: { ...(req ? getCorsHeaders(req) : getCorsHeaders()), "Content-Type": "application/json", ...degradado },
   });
+};
 
 // ─── Input Schemas ────────────────────────────────────────────
 const ALLOWED_ORDER_FIELDS = ["name", "sale_price", "stock_quantity", "brand", "created_at", "sku", "order_count"] as const;
@@ -182,11 +190,14 @@ async function checkRateLimit(
   if (error) {
     // CT-19 — falha ABERTA de proposito: se o contador compartilhado estiver
     // indisponivel, o catalogo continua servindo (o limite e protecao, nao caminho
-    // critico). O erro fica registrado para nao passar em silencio.
+    // critico). O erro fica registrado para nao passar em silencio — e o contador de
+    // degradacao viaja no cabecalho `x-degraded`, para que a proxima medicao nao leia
+    // um 200 e conclua que o limitador esta funcionando.
     log.error("Rate limit store unavailable", {
       error: error.message,
       action: action ?? "global",
     });
+    markDegraded("rate_limit_store_unavailable");
     return true;
   }
   return data === true;

@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: dispatch (manual)
+#   prova: as Edge Functions publicadas batem com o repo
+#   falha: o deploy aborta antes de publicar
+#   avisa: operador que disparou
 # =================================================
 # Deploy de Edge Functions - MANUAL (workflow_dispatch)
 # =================================================

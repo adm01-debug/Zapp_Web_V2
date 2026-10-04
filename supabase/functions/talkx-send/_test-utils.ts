@@ -38,6 +38,55 @@ export function thenableQB(result: { data: unknown; error: unknown }): any {
   return self;
 }
 
+/**
+ * X025 — query builder que REGISTRA os `insert` de `talkx_campaign_events` num
+ * array, para provar os eventos que a edge grava (connection_failed,
+ * skipped_suppressed). As demais operações resolvem vazio.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function makeEventRecordingQB(events: Array<Record<string, unknown>>): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const b: Record<string, any> = {};
+  const chain = () => b;
+  for (const m of ["select","eq","neq","in","or","order","range","limit","is","not","update","upsert","delete","gte","gt","lte","lt"]) {
+    b[m] = chain;
+  }
+  b.insert = (row: Record<string, unknown>) => { events.push(row); return b; };
+  b.single = () => Promise.resolve({ data: null, error: null });
+  b.maybeSingle = () => Promise.resolve({ data: null, error: null });
+  b.then = (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
+    Promise.resolve({ data: null, error: null }).then(res, rej);
+  b.catch = (rej: (e: unknown) => unknown) =>
+    Promise.resolve({ data: null, error: null }).catch(rej);
+  return b;
+}
+
+/**
+ * X033 — query builder que REGISTRA os `insert` numa lista. Aceita linha única OU
+ * lote (array), para provar o log por destinatário que a edge grava ao fim da passada.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function makeInsertRecordingQB(rows: Array<Record<string, unknown>>): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const b: Record<string, any> = {};
+  const chain = () => b;
+  for (const m of ["select","eq","neq","in","or","order","range","limit","is","not","update","upsert","delete","gte","gt","lte","lt"]) {
+    b[m] = chain;
+  }
+  b.insert = (value: Record<string, unknown> | Array<Record<string, unknown>>) => {
+    if (Array.isArray(value)) for (const row of value) rows.push(row);
+    else rows.push(value);
+    return b;
+  };
+  b.single = () => Promise.resolve({ data: null, error: null });
+  b.maybeSingle = () => Promise.resolve({ data: null, error: null });
+  b.then = (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
+    Promise.resolve({ data: null, error: null }).then(res, rej);
+  b.catch = (rej: (e: unknown) => unknown) =>
+    Promise.resolve({ data: null, error: null }).catch(rej);
+  return b;
+}
+
 export function makeCampaign(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: CAMPAIGN_ID, status: "sending", whatsapp_connection_id: CONNECTION_ID,
@@ -262,6 +311,10 @@ export interface ContinueMockCtx {
   providerPosts: string[];
   rpcCalls: Array<{ name: string; args: Record<string, unknown> }>;
   completions: Array<Record<string, unknown>>;
+  /** X025: linhas inseridas em `talkx_campaign_events` (ex.: skipped_suppressed). */
+  events: Array<Record<string, unknown>>;
+  /** X033: linhas inseridas em `talkx_delivery_log` (log por destinatário). */
+  deliveryLogs: Array<Record<string, unknown>>;
   claimWorkerCalls: number;
   releaseWorkerCalls: number;
   completeDrainedCalls: number;
@@ -313,6 +366,8 @@ export function makeContinueDeps(opts: {
     providerPosts: [],
     rpcCalls: [],
     completions: [],
+    events: [],
+    deliveryLogs: [],
     claimWorkerCalls: 0,
     releaseWorkerCalls: 0,
     completeDrainedCalls: 0,
@@ -396,6 +451,8 @@ export function makeContinueDeps(opts: {
           if (table === "talkx_settings") return thenableQB({ data: [], error: null });
           if (table === "talkx_links") return thenableQB({ data: null, error: null });
           if (table === "contact_custom_fields") return thenableQB({ data: [], error: null });
+          if (table === "talkx_campaign_events") return makeEventRecordingQB(ctx.events);
+          if (table === "talkx_delivery_log") return makeInsertRecordingQB(ctx.deliveryLogs);
           return thenableQB({ data: null, error: null });
         },
       },

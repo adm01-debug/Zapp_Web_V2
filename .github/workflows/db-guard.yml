@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: pull_request, push na main, merge_group e dispatch
+#   prova: guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR)
+#   falha: PR fica vermelho; nenhum codigo de PR alcanca o banco de producao
+#   avisa: autor do PR e revisor
 # ==================================================================
 # ZAPP-WEB · Guardas de banco OFFLINE
 # ==================================================================
@@ -21,6 +26,10 @@ on:
   # group e a fila travaria todos os merges do repo.
   merge_group:
   workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 permissions:
   contents: read
@@ -580,6 +589,66 @@ jobs:
           TALKX_LINKS_CONV_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-links-conversions.test.sh
 
+      # X024: delta de ciclo de vida — start->pause->resume->cancel grava 4 eventos em
+      # ordem com ator e motivo; retomada sem ator grava resumed_auto; cancel fecha a
+      # fila (pendentes viram cancelled, leases soltas); cancelado não vira completed;
+      # conclusão drenada grava 1 completed com resumo.
+      - name: Provar o ciclo de vida com ator/motivo e o fechamento da fila (X024)
+        env:
+          TALKX_LIFECYCLE_EVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-lifecycle-events.test.sh
+
+      # X026: contadores íntegros (replied_count/skipped_count no guard de
+      # enforce_talkx_campaign_mutability), destinatário pulado entra em
+      # skipped_count, lançar com template não conta use_count em dobro, checklist
+      # de retomada com ator, duplicar/excluir por RPC no banco e policy de INSERT
+      # de eventos limitada a note|checklist|segments_reviewed. Harness RED→GREEN
+      # em PostgreSQL 17 descartável.
+      - name: Provar contadores, checklist, duplicar/excluir e policy de eventos (X026)
+        env:
+          TALKX_COUNTERS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-counters-integrity.test.sh
+
+      # X027: recibos de leitura idempotentes e atribuição de resposta no banco —
+      # read sem delivered preenche delivered_at/read_at e sobe delivered_count/read_count
+      # uma única vez; record_talkx_recipient_delivered vira invólucro; attribute_talkx_reply
+      # atribui por contact_id OU telefone normalizado na janela de reply_window_hours;
+      # talkx_campaign_reply_stats devolve replied/avg/median; read_at na publicação realtime.
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar recibos de leitura, atribuicao de resposta e tempo de resposta (X027)
+        env:
+          TALKX_RECEIPTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-receipts-replies.test.sh
+
+      # X031: reenvio manual em lote (failed/skipped, teto de 3, revalida supressão e
+      # elegibilidade) e resolução de outcome_unknown (mark_sent|mark_failed|retry) por
+      # RPC admin/supervisor com trilha; campanha completed reabre para sending.
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar reenvio manual e resolucao de outcome_unknown com trilha (X031)
+        env:
+          TALKX_X031_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-retry-resolve.test.sh
+
+      # X032: LGPD no motor — consentimento no lancamento (revoked fora da audiencia,
+      # require_granted_consent opcional, start/agendar recusam sem confirmacao, opt-out
+      # automatico marca consent_status=revoked) e expurgo por prazo 1x/dia via
+      # purge_talkx_expired_data (texto/midia de campanha terminal vencida, ua/ip_hash,
+      # linhas de teste e de IA) sem tocar blacklist, contadores ou eventos.
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar consentimento no lancamento e expurgo por prazo (X032)
+        env:
+          TALKX_X032_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-lgpd.test.sh
+
+      # X033: log por destinatario (sem telefone/texto, expurgo de 30 dias), view de
+      # saude talkx_engine_health (security_invoker) e alertas com deduplicacao por
+      # tipo/campanha e fechamento automatico (stalled_campaign, cron_degraded).
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar log por destinatario, saude do motor e alertas (X033)
+        env:
+          TALKX_X033_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-health.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
@@ -698,3 +767,9 @@ jobs:
           SOUND_INTEGRITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/user-settings-sound-integrity-contract.test.sh
+
+      - name: Provar grants e revogação das vozes do Multiplix (F64)
+        env:
+          F64_VOZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/f64-voz-assets-e-grants.test.sh

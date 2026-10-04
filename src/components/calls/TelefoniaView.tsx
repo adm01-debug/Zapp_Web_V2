@@ -13,7 +13,9 @@ import {
 } from 'lucide-react';
 import { format, formatDuration, intervalToDuration } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { DialPad } from './DialPad';
+import { NewCallPanel } from './NewCallPanel';
+import { ActiveCallPanel } from './ActiveCallPanel';
+import { SelectedCallPanel } from './SelectedCallPanel';
 import { useCallSession } from '@/providers/CallSessionProvider';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useCalls } from '@/hooks/communication/useCalls';
@@ -62,6 +64,9 @@ export function TelefoniaView() {
   const { filtros, setFilter, limpar } = useTelefoniaFilters();
   const period = filtros.period as PeriodoValue;
   const sip = useCallSession();
+  // T62: enquanto a sessao nao volta para `idle`, o slot lateral mostra a LIGACAO -
+  // nao faz sentido oferecer "digite um numero" com uma chamada de pe.
+  const sessaoAtiva = Boolean(sip.session && sip.session.status !== 'idle');
   // T20: o motivo da linha VoIP (é o `line_in_use_other_tab` que importa aqui)
   // vem do `useSipClient` e é repassado pelo `CallSessionApi` — acesso direto,
   // já tipado pelo domínio (`CapabilityReason | null`).
@@ -213,7 +218,7 @@ export function TelefoniaView() {
       <CallsKpiGrid period={filtros.period} channel={filtros.channel} scope={filtros.scope} />
 
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 items-start">
+      <div className="grid grid-cols-1 gap-4 items-start xl:grid-cols-[minmax(0,1fr)_408px]">
         {/* Fase 4 (T43-T53): o historico agora vem da RPC `search_my_calls`, paginado no
             servidor (8 por pagina). Os filtros continuam sendo os da URL (T36), entao
             trocar busca, direcao, resultado, aba de canal, escopo ou pagina refaz a
@@ -249,6 +254,7 @@ export function TelefoniaView() {
               rows={historicos.rows}
               selecionadaId={filtros.call || null}
               onSelecionar={(id) => setFilter('call', id)}
+              onLimparSelecao={resetSelection}
               onLigarDeVolta={ligarDeVolta}
             />
           )}
@@ -260,83 +266,15 @@ export function TelefoniaView() {
           />
         </CallHistoryCard>
         {/* Painel lateral: discador ou detalhe da chamada selecionada */}
-        <div className="xl:sticky xl:top-4">
+        <div className="xl:sticky xl:top-4" data-testid="tel-side-panel">
           <Card className="border-secondary/30">
             <CardContent className="p-6">
               {selectedCall ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-foreground">Detalhe da chamada</h2>
-                    <Button variant="ghost" size="icon" className="w-7 h-7" onClick={resetSelection} aria-label="Fechar detalhe">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  <div>
-                    <p className="text-base font-medium text-foreground">{getContactLabel(selectedCall)}</p>
-                    {(selectedCall.contact_phone || selectedCall.peer_number) && (
-                      <p className="text-sm text-muted-foreground">
-                        {selectedCall.contact_phone || selectedCall.peer_number}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className="text-3xs">{getChannelLabel(selectedCall)}</Badge>
-                    {getStatusBadge(selectedCall)}
-                  </div>
-
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p>Início: {format(new Date(selectedCall.started_at), 'dd/MM/yyyy HH:mm:ss', { locale: ptBR })}</p>
-                    {selectedCall.answered_at && (
-                      <p>Atendida: {format(new Date(selectedCall.answered_at), 'dd/MM/yyyy HH:mm:ss', { locale: ptBR })}</p>
-                    )}
-                    {selectedCall.ended_at && (
-                      <p>Fim: {format(new Date(selectedCall.ended_at), 'dd/MM/yyyy HH:mm:ss', { locale: ptBR })}</p>
-                    )}
-                    {talkSeconds(selectedCall) != null && (
-                      <p>Duração: {formatClock(talkSeconds(selectedCall))}</p>
-                    )}
-                  </div>
-
-                  {/* T67 (antecipado): o <audio src={recording_url}> cru saiu. A linha da RPC
-                      nao carrega mais a URL da gravacao - o que existe e `recording_status`.
-                      O player definitivo (so quando `recording_status === 'available'`) e o
-                      RecordingPlayer do T67, na Fase 6. */}
-
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-foreground">Anotações</p>
-                    <Textarea
-                      value={noteDraft}
-                      onChange={(e) => setNoteDraft(e.target.value)}
-                      placeholder="Adicionar anotação sobre esta chamada..."
-                      className="min-h-20 text-sm"
-                    />
-                    <Button size="sm" onClick={handleSaveNote} disabled={noteSaving}>
-                      {noteSaving ? <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-2" />}
-                      Salvar
-                    </Button>
-                  </div>
-                </div>
+                <SelectedCallPanel call={selectedCall} onClose={resetSelection} />
+              ) : sessaoAtiva ? (
+                <ActiveCallPanel segundos={sip.callDuration} />
               ) : (
-                <DialPad
-                  sipStatus={sip.sipStatus}
-                  callStatus={sip.callStatus}
-                  callDuration={sip.callDuration}
-                  isMuted={sip.isMuted}
-                  currentNumber={sip.currentNumber}
-                  numeroInicial={sip.numeroPendente}
-                  key={`discador-${sip.numeroPendente ?? 'vazio'}`}
-                  callDirection={sip.callDirection}
-                  sipReason={sipReason}
-                  onConnect={sip.connectWithStoredCredentials}
-                  onDisconnect={sip.disconnect}
-                  onCall={sip.makeCall}
-                  onHangUp={sip.hangUp}
-                  onAcceptIncoming={sip.acceptIncomingCall}
-                  onToggleMute={sip.toggleMute}
-                  onDTMF={sip.sendDTMF}
-                />
+                <NewCallPanel />
               )}
             </CardContent>
           </Card>

@@ -86,5 +86,14 @@ done
 echo "RESULTADO: $OK ok, $FALHA falha(s) de $TOTAL" | tee -a "$LOG"
 echo "--- erros mais comuns ---" >> "$LOG"
 cut -f2 "$ERROS" | sed 's/ERROR:  //' | sort | uniq -c | sort -rn | head -14 >> "$LOG"
+
+# Classifica contra o allowlist: falha esperada (ja investigada e medida no canonico) x INESPERADA
+# (drift novo). So a inesperada derruba o replay - e o que faz deste script um gate.
+python3 "$(dirname "$0")/replay-classify.py" "$ERROS" "$(dirname "$0")/replay-known-failures.json" | tee -a "$LOG"
+RC=${PIPESTATUS[0]}
+
 docker rm -f "$NOME" >/dev/null 2>&1
 echo "container removido" >> "$LOG"
+
+# 0 = verde (nenhuma falha inesperada); 1 = drift novo.
+exit "$RC"

@@ -62,20 +62,41 @@ const messages = [
 
 const extremeMessages = [{
   id: EXTREME_MESSAGE_ID, thread_id: EXTREME_THREAD_ID, gmail_message_id: 'gmail-message-extreme', gmail_account_id: ACCOUNT_ID,
-  from_address: 'extremo@example.com', from_name: 'REMETENTESEMQUEBRA'.repeat(80), to_addresses: ['admin@zapp.local'], cc_addresses: [], bcc_addresses: [],
+  from_address: 'extremo@example.com', from_name: 'REMETENTESEMQUEBRA'.repeat(80), to_addresses: ['admin@zapp.local'], cc_addresses: Array.from({ length: 50 }, (_, index) => `participante-${index + 1}@example.com`), bcc_addresses: [],
   reply_to_address: null, subject: threads.at(-1)?.subject, body_text: `${'CORPOSEMQUEBRA'.repeat(900)}\n${'Linha extensa com espaços. '.repeat(500)}`,
   body_html: '', snippet: 'CORPOSEMQUEBRA'.repeat(100), label_ids: ['INBOX'], is_read: true, is_starred: false, has_attachments: true,
   in_reply_to: null, references_header: null, message_id_header: '<extreme@example.com>', internal_date: '2026-10-01T12:00:00.000Z', direction: 'inbound', created_at: '2026-10-01T12:00:00.000Z',
 }];
 
-const extremeAttachments = Array.from({ length: 40 }, (_, index) => ({
+const extremeAttachments = Array.from({ length: 100 }, (_, index) => ({
   id: `60000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
   email_message_id: EXTREME_MESSAGE_ID, gmail_attachment_id: `extreme-attachment-${index + 1}`,
   filename: `ARQUIVO_EXTREMAMENTE_LONGO_SEM_QUEBRA_${'X'.repeat(180)}_${index + 1}.txt`,
   mime_type: 'text/plain', size_bytes: 1024 + index, created_at: '2026-10-01T12:00:00.000Z',
 }));
 
-export async function mockEmailNavy(page: Page, options: { includeExtreme?: boolean } = {}) {
+type CrmFixtureMode = 'disabled' | 'available' | 'ambiguous' | 'permission_denied';
+
+const completeCompany = {
+  id: 'crm-company-acme', name: 'Empresa Exemplo', legalName: 'Empresa Exemplo LTDA',
+  website: 'https://empresa.example.test/catalogo?origem=email#sobre', logoUrl: null,
+  industry: 'Tecnologia', location: 'São Paulo, SP, Brasil',
+  about: 'Descrição empresarial sintética com origem no CRM. '.repeat(12),
+  relationships: ['cliente', 'fornecedor'], relationshipsKnown: true,
+  socials: [
+    { platform: 'linkedin', url: 'https://www.linkedin.com/company/empresa-exemplo/' },
+    { platform: 'instagram', url: 'https://www.instagram.com/empresa.exemplo/' },
+  ],
+  socialsKnown: true, aboutKnown: true, updatedAt: '2026-10-01T10:00:00.000Z',
+};
+
+const completeOtherCompany = {
+  ...completeCompany,
+  id: 'crm-company-other', name: 'Outra Empresa', legalName: 'Outra Empresa S.A.',
+  website: 'https://outra-empresa.example.test/',
+};
+
+export async function mockEmailNavy(page: Page, options: { includeExtreme?: boolean; crmContext?: CrmFixtureMode } = {}) {
   await installFakeSession(page);
   await mockTalkXAuth(page);
 
@@ -117,4 +138,36 @@ export async function mockEmailNavy(page: Page, options: { includeExtreme?: bool
       { id: '60000000-0000-4000-8000-000000000001', email_message_id: MESSAGE_ID, gmail_attachment_id: 'attachment-1', filename: 'deployment-log.txt', mime_type: 'text/plain', size_bytes: 12288, created_at: '2026-10-02T17:35:00.000Z' },
     ]);
   });
+  const crmContext = options.crmContext ?? 'disabled';
+  let linkedExternalContactId: string | null = null;
+  if (crmContext !== 'disabled') {
+    await page.route(/\/rest\/v1\/feature_flags/, route => isRead(route.request().method())
+      ? json(route, [{ key: 'crm.integration', enabled: true, description: 'Fixture CRM Email', updated_at: '2026-10-03T12:00:00.000Z' }])
+      : json(route, { message: 'escrita bloqueada' }, 403));
+    await page.route(/\/functions\/v1\/crm-integration/, route => {
+      const request = route.request().postDataJSON() as { action?: string; contactId?: string; externalContactId?: string; selectedExternalContactId?: string };
+      if (request.action === 'linkEmailContactCompany') {
+        if (crmContext !== 'ambiguous' || !['crm-contact-acme', 'crm-contact-other'].includes(request.externalContactId || '')) {
+          return json(route, { error: 'vínculo CRM inválido na fixture' }, 409);
+        }
+        linkedExternalContactId = request.externalContactId || null;
+        return json(route, { data: { linked: true } });
+      }
+      if (request.action !== 'emailContactContext') return json(route, { error: 'ação CRM inesperada na fixture' }, 403);
+      if (crmContext === 'permission_denied') return json(route, { error: 'Email contact context is not visible' }, 404);
+      const selectedExternalContactId = request.selectedExternalContactId || (crmContext === 'ambiguous' ? null : 'crm-contact-acme');
+      const source = { linked: linkedExternalContactId === selectedExternalContactId, consultedAt: '2026-10-03T12:00:00.000Z', resolution: 'email_exact', participantEmail: 'notifications@vercel.com', selectedExternalContactId, canLink: Boolean(request.contactId) };
+      if (crmContext === 'ambiguous' && !request.selectedExternalContactId) return json(route, {
+        data: {
+          status: 'ambiguous', company: null, source,
+          candidates: [
+            { externalContactId: 'crm-contact-acme', companyId: 'crm-company-acme', companyName: 'Empresa Exemplo' },
+            { externalContactId: 'crm-contact-other', companyId: 'crm-company-other', companyName: 'Outra Empresa' },
+          ],
+        },
+      });
+      const company = request.selectedExternalContactId === 'crm-contact-other' ? completeOtherCompany : completeCompany;
+      return json(route, { data: { status: 'available', company, source } });
+    });
+  }
 }

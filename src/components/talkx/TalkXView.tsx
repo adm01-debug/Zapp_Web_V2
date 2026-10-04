@@ -23,7 +23,6 @@ import { TalkXAnalytics } from './TalkXAnalytics';
 import { TalkXSettings } from './TalkXSettings';
 import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from './TalkXCampaignRunning';
-import { duplicateTalkXCampaignDraft } from './talkxCampaignDraft';
 import { parseTalkXWizardRoute, pushTalkXWizardRoute, replaceTalkXWizardRoute, type TalkXWizardRoute } from './talkxWizardRoute';
 import { goTab, readTab, readSub } from './talkxTabRoute';
 import type { WizardStep } from './useCampaignEditor';
@@ -31,7 +30,7 @@ import type { WizardStep } from './useCampaignEditor';
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
 
 export default function TalkXView() {
-  const { campaigns, isLoading, isError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign } = useTalkX();
+  const { campaigns, isLoading, isError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation } = useTalkX();
   const { data: teamProfiles = [] } = useTeamProfiles();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
@@ -151,13 +150,21 @@ export default function TalkXView() {
     return m;
   }, [teamProfiles]);
 
-  const duplicateCampaign = useCallback((c: TalkXCampaign) => {
+  // X026: duplicar agora cria o rascunho no banco (RPC duplicate_talkx_campaign) e
+  // abre o editor sobre a linha devolvida — não é mais um objeto só de cliente.
+  const duplicateCampaign = useCallback(async (c: TalkXCampaign) => {
     setLocalDraftRouteId(null);
-    setEditingCampaign(duplicateTalkXCampaignDraft(c));
     setWizardInitial(undefined);
-    setTopView('wizard');
-    writeWizardRoute({ campaignId: 'new', step: 1 });
-  }, [writeWizardRoute]);
+    try {
+      const created = await duplicateCampaignMutation.mutateAsync(c.id);
+      setEditingCampaign(created);
+      setLocalDraftRouteId(created.id);
+      setTopView('wizard');
+      writeWizardRoute({ campaignId: created.id, step: 1 });
+    } catch {
+      // A mutation já mostra o toast de erro.
+    }
+  }, [duplicateCampaignMutation, writeWizardRoute]);
 
   const onWizardStepChange = useCallback((step: WizardStep, replace = false) => {
     if (!wizardRoute) return;

@@ -1,0 +1,183 @@
+{
+  "name": "talkx-alerts",
+  "meta": {
+    "description": "X033 — le os alertas ABERTOS do motor Talk X (public.talkx_alerts, resolved_at is null) e avisa o grupo interno. Somente aviso: a decisao continua humana (docs/talkx/OPERACAO.md §7.2). NUNCA dispara mensagem para destinatario de campanha.",
+    "instanceId": "REPLACE_ON_IMPORT"
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "00000000-0000-4000-8000-000000000033",
+  "tags": [
+    { "name": "talkx" },
+    { "name": "observabilidade" }
+  ],
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "A cada 5 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-240, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/talkx_alerts",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "resolved_at", "value": "is.null" },
+            { "name": "select", "value": "id,kind,campaign_id,payload,opened_at" },
+            { "name": "order", "value": "opened_at.desc" },
+            { "name": "limit", "value": "50" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.TALKX_ALERTS_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.TALKX_ALERTS_SERVICE_KEY }}" },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Ler alertas abertos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1000000-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Tem alerta aberto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [260, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// X033: monta o resumo do grupo interno a partir dos alertas abertos.\n// Somente aviso — nao decide nem dispara campanha.\nconst items = $input.all().flatMap((i) => (Array.isArray(i.json) ? i.json : [i.json]));\nconst linhas = items.map((a) => {\n  const campanha = a.campaign_id ? `\\ncampanha: ${a.campaign_id}` : '';\n  const payload = a.payload ? `\\ndetalhe: ${JSON.stringify(a.payload)}` : '';\n  return `• *${a.kind}*\\naberto em: ${a.opened_at}${campanha}${payload}`;\n});\nconst texto = `⚠️ *Talk X — ${items.length} alerta(s) aberto(s)*\\n\\n` + linhas.join('\\n\\n') +\n  '\\n\\nVer docs/talkx/OPERACAO.md §7.2 para o que fazer.';\nreturn [{ json: { total: items.length, texto } }];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Montar resumo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, -80]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE_NAME }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $env.TALKX_ALERTS_GROUP_ID, text: $json.texto }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Avisar grupo interno",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, -80]
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "Nada a fazer",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [520, 120]
+    }
+  ],
+  "connections": {
+    "A cada 5 min": {
+      "main": [
+        [
+          { "node": "Ler alertas abertos", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Ler alertas abertos": {
+      "main": [
+        [
+          { "node": "Tem alerta aberto?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Tem alerta aberto?": {
+      "main": [
+        [
+          { "node": "Montar resumo", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Nada a fazer", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Montar resumo": {
+      "main": [
+        [
+          { "node": "Avisar grupo interno", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

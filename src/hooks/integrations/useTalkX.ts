@@ -307,13 +307,38 @@ export function useTalkX() {
 
   const deleteCampaign = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('talkx_campaigns').delete().eq('id', id);
-      if (error) throw error;
+      // X026: a exclusão passa pela RPC (draft ou scheduled, sem envio). O delete
+      // direto no PostgREST só alcançava rascunho e não deixava rastro/autorização.
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { error } = await rpc('delete_talkx_campaign', { p_campaign_id: id });
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
       toast.success('Campanha excluída');
     },
+    onError: (e: Error) => toast.error(`Erro ao excluir: ${e.message}`),
+  });
+
+  /**
+   * X026: duplicar deixa de ser estado do cliente — a RPC cria um rascunho novo
+   * no banco copiando mensagem, mídia, segmento, limites e janela, sem
+   * destinatários e sem agendamento, e devolve a linha criada.
+   */
+  const duplicateCampaign = useMutation({
+    mutationFn: async (id: string) => {
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('duplicate_talkx_campaign', { p_campaign_id: id });
+      if (error) throw new Error(error.message);
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row || typeof row !== 'object') throw new Error('O banco não confirmou a duplicação da campanha.');
+      return row as unknown as TalkXCampaign;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+      toast.success('Campanha duplicada como rascunho');
+    },
+    onError: (e: Error) => toast.error(`Erro ao duplicar: ${e.message}`),
   });
 
   const addRecipients = useMutation({
@@ -422,9 +447,9 @@ export function useTalkX() {
     queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
-  const cancelCampaign = useCallback(async (campaignId: string) => {
+  const cancelCampaign = useCallback(async (campaignId: string, reason?: string) => {
     const { data, error } = await supabase.functions.invoke('talkx-send', {
-      body: { campaignId, action: 'cancel' },
+      body: { campaignId, action: 'cancel', reason: reason ?? null },
     });
     if (error) throw error;
     assertTalkXActionAccepted(data);
@@ -435,6 +460,8 @@ export function useTalkX() {
     campaigns: campaignsQuery.data || [],
     isLoading: campaignsQuery.isLoading,
     isError: campaignsQuery.isError,
+    error: (campaignsQuery.error as Error | null) ?? null,
+    isFetching: campaignsQuery.isFetching,
     isLive,
     recipients: recipientsQuery.data || [],
     recipientsLoading: recipientsQuery.isLoading,
@@ -445,6 +472,7 @@ export function useTalkX() {
     updateCampaignLimits,
     saveDraftCampaign,
     deleteCampaign,
+    duplicateCampaign,
     addRecipients,
     replaceDraftRecipients,
     snapshotDraftAudience,

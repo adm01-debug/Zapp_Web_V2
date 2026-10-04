@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: push
+#   prova: o placar do Talk X regenerado a partir dos dados atuais
+#   falha: o job fica vermelho e o placar nao e atualizado
+#   avisa: autor do push
 name: Talk X V4 placar regen (push)
 
 # Regenera docs/talkx/v4/STATUS.md quando a main anda e, se mudou, abre/atualiza
@@ -24,6 +29,10 @@ name: Talk X V4 placar regen (push)
 on:
   push:
     branches: [main]
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 permissions:
   contents: read

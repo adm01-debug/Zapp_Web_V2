@@ -7,7 +7,7 @@ import {
   mockGlobalFetch, makeDispatchPost,
   TEST_CRON_SECRET, installFakeClock,
   makeContinueRecipients, makeContinueDeps, mockProviderRecording,
-  thenableQB,
+  thenableQB, makeEventRecordingQB,
 } from './_test-utils.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -953,5 +953,155 @@ Deno.test("IA-047 test action: sem idempotencyKey, o mesmo pedido deriva a MESMA
     assert(posts.length === 1, `o hash do pedido tem de deduplicar (houve ${posts.length} POSTs)`);
   } finally {
     provider.restore();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// X025 — ator e motivo pela edge + eventos de conexão/supressão.
+// ---------------------------------------------------------------------------
+
+Deno.test("X025 pause: repassa o motivo (p_pause_reason) e o profiles.id do JWT (p_actor_id)", async () => {
+  setDispatchEnv();
+  const transitionCalls: Array<Record<string, unknown>> = [];
+  const deps = {
+    serviceKey: TEST_SERVICE_KEY,
+    supabase: {
+      auth: { getUser: () => Promise.resolve({ data: { user: { id: "auth-user-1" } }, error: null }) },
+      rpc(name: string, args: Record<string, unknown> = {}) {
+        if (name === "is_admin_or_supervisor") return Promise.resolve({ data: true, error: null });
+        if (name === "transition_talkx_campaign") {
+          transitionCalls.push(args);
+          return Promise.resolve({ data: [{ current_status: "paused" }], error: null });
+        }
+        return Promise.resolve({ data: null, error: null });
+      },
+      from(table: string) {
+        if (table === "profiles") return thenableQB({ data: { id: "profile-abc" }, error: null });
+        return thenableQB({ data: null, error: null });
+      },
+    },
+  };
+  const req = makePost({
+    bearer: "eyJvalid.admin.token.xx",
+    body: { action: "pause", campaignId: CAMPAIGN_ID, reason: "Pausa do operador" },
+  });
+  const res = await handleTalkxSend(req, deps);
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.success === true, `body inesperado: ${JSON.stringify(body)}`);
+  assert(transitionCalls.length === 1, `esperado 1 transição, recebido ${transitionCalls.length}`);
+  assert(
+    transitionCalls[0].p_pause_reason === "Pausa do operador",
+    `p_pause_reason inesperado: ${JSON.stringify(transitionCalls[0])}`,
+  );
+  assert(
+    transitionCalls[0].p_actor_id === "profile-abc",
+    `p_actor_id deveria ser o profiles.id resolvido do JWT: ${JSON.stringify(transitionCalls[0])}`,
+  );
+});
+
+Deno.test("X025 pause: motivo acima de 500 caracteres → 400 e nenhuma transição", async () => {
+  setDispatchEnv();
+  const transitionCalls: unknown[] = [];
+  const deps = {
+    serviceKey: TEST_SERVICE_KEY,
+    supabase: {
+      auth: { getUser: () => Promise.resolve({ data: { user: { id: "auth-user-1" } }, error: null }) },
+      rpc(name: string, args: Record<string, unknown> = {}) {
+        if (name === "is_admin_or_supervisor") return Promise.resolve({ data: true, error: null });
+        if (name === "transition_talkx_campaign") {
+          transitionCalls.push(args);
+          return Promise.resolve({ data: null, error: null });
+        }
+        return Promise.resolve({ data: null, error: null });
+      },
+      from() { return thenableQB({ data: { id: "profile-abc" }, error: null }); },
+    },
+  };
+  const req = makePost({
+    bearer: "eyJvalid.admin.token.xx",
+    body: { action: "pause", campaignId: CAMPAIGN_ID, reason: "x".repeat(501) },
+  });
+  const res = await handleTalkxSend(req, deps);
+  assert(res.status === 400, `esperado 400, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.error === "reason_too_long", `body inesperado: ${JSON.stringify(body)}`);
+  assert(transitionCalls.length === 0, "motivo inválido não pode chamar a transição");
+});
+
+Deno.test("X025 start: queda de conexão pausa e grava 1 connection_failed com o status lido", async () => {
+  setDispatchEnv();
+  const events: Array<Record<string, unknown>> = [];
+  const transitionCalls: Array<Record<string, unknown>> = [];
+  let connectionReads = 0;
+  const deps = {
+    serviceKey: TEST_SERVICE_KEY,
+    supabase: {
+      auth: { getUser: () => Promise.resolve({ data: { user: null }, error: new Error("") }) },
+      rpc(name: string, args: Record<string, unknown> = {}) {
+        if (name === "transition_talkx_campaign") {
+          transitionCalls.push(args);
+          return Promise.resolve({ data: [{ current_status: "paused" }], error: null });
+        }
+        return Promise.resolve({ data: null, error: null });
+      },
+      from(table: string) {
+        if (table === "talkx_campaigns") return thenableQB({ data: makeCampaign(), error: null });
+        if (table === "whatsapp_connections") {
+          connectionReads++;
+          // 1ª leitura: o filtro status='connected' não acha nada (queda).
+          // 2ª leitura (readConnectionStatus): devolve o status ATUAL.
+          return connectionReads === 1
+            ? thenableQB({ data: null, error: null })
+            : thenableQB({ data: { status: "disconnected" }, error: null });
+        }
+        if (table === "talkx_campaign_events") return makeEventRecordingQB(events);
+        if (table === "talkx_settings") return thenableQB({ data: [], error: null });
+        if (table === "talkx_links") return thenableQB({ data: null, error: null });
+        if (table === "contact_custom_fields") return thenableQB({ data: [], error: null });
+        return thenableQB({ data: null, error: null });
+      },
+    },
+  };
+  const req = makePost({ bearer: TEST_SERVICE_KEY, body: { action: "start", campaignId: CAMPAIGN_ID } });
+  const res = await handleTalkxSend(req, deps);
+  assert(res.status === 409, `esperado 409, recebido ${res.status}`);
+  const connectionFailed = events.filter((e) => e.event_type === "connection_failed");
+  assert(connectionFailed.length === 1, `esperado 1 connection_failed, recebido ${connectionFailed.length}`);
+  assert(
+    String(connectionFailed[0].message).includes("disconnected"),
+    `a mensagem deve conter o status lido: ${JSON.stringify(connectionFailed[0])}`,
+  );
+  assert(
+    transitionCalls.some((c) => c.p_pause_reason === "connection_lost"),
+    `esperado pausa connection_lost: ${JSON.stringify(transitionCalls)}`,
+  );
+});
+
+Deno.test("X025 continue: lote com 2 suprimidos → 1 evento agregado skipped_suppressed", async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const { deps, ctx } = makeContinueDeps({
+    recipients: makeContinueRecipients(2), clock, cronSecret: TEST_CRON_SECRET, suppressAll: true,
+  });
+  const provider = mockProviderRecording();
+  try {
+    const res = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.blacklisted === 2, `esperado blacklisted:2, recebido ${body.blacklisted}`);
+    const suppressed = ctx.events.filter((e) => e.event_type === "skipped_suppressed");
+    assert(suppressed.length === 1, `esperado 1 evento agregado, recebido ${suppressed.length}`);
+    assert(
+      String(suppressed[0].message).includes("2"),
+      `a mensagem deve agregar a contagem: ${JSON.stringify(suppressed[0])}`,
+    );
+    assert(messagePosts(provider.posts).length === 0, "suprimido não pode POSTar ao provedor");
+  } finally {
+    provider.restore();
+    clock.restore();
   }
 });
