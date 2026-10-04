@@ -19,6 +19,7 @@ import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCa
 import { PrimaryButton, GhostButton, InitialsAvatar, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, barsByDay } from './talkxShared';
+import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXFilterState } from './kit/useFilterState';
 
 interface BlacklistEntry {
@@ -49,7 +50,7 @@ export function TalkXSuppression() {
   const [addOrigin, setAddOrigin] = useState<'manual'|'lgpd'>('manual');
   const [contactSearch, setContactSearch] = useState('');
 
-  const { data: blacklist = [], isLoading } = useQuery({
+  const { data: blacklist = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['talkx-blacklist'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -147,9 +148,15 @@ export function TalkXSuppression() {
         />
 
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-          {isLoading ? (<div className="p-4"><TalkXSkeletonRows rows={5} /></div>)
-           : blacklist.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={ShieldCheck} title="Nenhum contato na lista de supressão" description="Contatos suprimidos são automaticamente excluídos de todos os envios de campanhas, segmentos e automações." /></div>)
-           : filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum resultado" /></div>)
+          <TalkXQueryBoundary
+            query={{ isLoading, isError, error }}
+            entity="os contatos suprimidos"
+            onRetry={() => refetch()}
+            skeleton={<div className="p-4"><TalkXSkeletonRows rows={5} /></div>}
+            isEmpty={blacklist.length === 0}
+            empty={<div className="p-4"><TalkXEmptyState icon={ShieldCheck} title="Nenhum contato na lista de supressão" description="Contatos suprimidos são automaticamente excluídos de todos os envios de campanhas, segmentos e automações." /></div>}
+          >
+           {filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum resultado" /></div>)
            : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] border-collapse">
@@ -185,6 +192,7 @@ export function TalkXSuppression() {
               </table>
             </div>
           )}
+          </TalkXQueryBoundary>
           {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={() => {}} noun="contatos suprimidos" /></div>}
         </section>
       </div>
