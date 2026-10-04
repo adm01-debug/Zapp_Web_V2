@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fromTable } from '@/lib/supabaseHelpers';
 import { useAuth } from '../auth/useAuth';
 import { log } from '@/lib/logger';
 
@@ -17,6 +18,10 @@ interface UserDevice {
   last_seen_at: string;
 }
 
+// `auth_session_id` é adicionado pela migration do cartão backend (t_29b824ad,
+// R2-AUTH-004). O types.ts gerado ainda não o conhece — será regenerado pelo
+// types-sync depois do merge — então o acesso a `user_sessions` que toca essa
+// coluna usa `fromTable` (escape dinâmico tipado) em vez do client tipado.
 interface UserSession {
   id: string;
   device_id: string | null;
@@ -28,6 +33,10 @@ interface UserSession {
   last_activity_at: string;
   expires_at: string;
   ended_at: string | null;
+}
+
+interface SessionAuthIdRow {
+  auth_session_id: string | null;
 }
 
 export function useDeviceDetection() {
@@ -144,14 +153,13 @@ export function useDeviceDetection() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('user_sessions')
+      const { data, error } = await fromTable('user_sessions')
         .select('*')
         .eq('is_active', true)
         .order('last_activity_at', { ascending: false });
 
       if (error) throw error;
-      setSessions(data || []);
+      setSessions((data ?? []) as UserSession[]);
     } catch (error) {
       log.error('Error fetching sessions:', error);
     }
@@ -176,14 +184,13 @@ export function useDeviceDetection() {
   // Remove a device — revoga todas as sessões Auth vinculadas ANTES de excluir.
   const removeDevice = useCallback(async (deviceId: string) => {
     // 1. Descobre as sessões Auth vinculadas a este dispositivo.
-    const { data: deviceSessions, error: sessionsError } = await supabase
-      .from('user_sessions')
+    const { data: deviceSessions, error: sessionsError } = await fromTable('user_sessions')
       .select('auth_session_id')
       .eq('device_id', deviceId);
 
     if (sessionsError) throw sessionsError;
 
-    const authSessionIds = (deviceSessions ?? [])
+    const authSessionIds = ((deviceSessions ?? []) as SessionAuthIdRow[])
       .map((s) => s.auth_session_id)
       .filter((sid): sid is string => typeof sid === 'string' && sid.length > 0);
 
@@ -209,15 +216,14 @@ export function useDeviceDetection() {
 
   // End a session — revoga a sessão Auth correspondente via scope local.
   const endSession = useCallback(async (sessionId: string) => {
-    const { data, error: lookupError } = await supabase
-      .from('user_sessions')
+    const { data, error: lookupError } = await fromTable('user_sessions')
       .select('auth_session_id')
       .eq('id', sessionId)
       .maybeSingle();
 
     if (lookupError) throw lookupError;
 
-    const authSessionId = data?.auth_session_id ?? null;
+    const authSessionId = (data as SessionAuthIdRow | null)?.auth_session_id ?? null;
     if (!authSessionId) {
       throw new Error('Sessão sem vínculo Auth; não é possível revogar');
     }
