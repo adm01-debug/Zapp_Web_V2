@@ -93,10 +93,15 @@ export function useDashboardStats(filters: DashboardFilters) {
     queues: queuesQuery.data,
     isLoading: agentsQuery.isLoading || contactCountsQuery.isLoading || queuesQuery.isLoading,
     error: agentsQuery.error || contactCountsQuery.error || queuesQuery.error,
-    refetch: () => {
-      agentsQuery.refetch();
-      contactCountsQuery.refetch();
-      queuesQuery.refetch();
-    }
+    // `refetch` devolve a Promise das TRÊS leituras: quem faz `await refetch()` (DashboardView)
+    // passa a esperar as leituras de verdade, em vez de resolver na hora com `undefined` e
+    // fechar o spinner por setTimeout. `refetch()` do react-query não rejeita por padrão (o
+    // erro vai para `error`), então o Promise.all só resolve DEPOIS que as três terminam.
+    refetch: () =>
+      Promise.all([
+        agentsQuery.refetch(),
+        contactCountsQuery.refetch(),
+        queuesQuery.refetch(),
+      ])
   };
 }
