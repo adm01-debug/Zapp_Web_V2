@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "owner": "auth",
+  "state": "ALLOCATION_ONLY_NOT_REVIEW",
+  "files": [
+    {
+      "path": "scripts/db-audit/contacts-soft-delete-and-status.test.sh",
+      "line_start": 1,
+      "line_end": 754,
+      "source_sha256": "74bf98d2454488e9bdd2ee8e0a18dc515b838ec5dd3f26df2ee847cafc19fc4f",
+      "git_blob_sha": "66be0a61f0debef3267b6630222d4fc83062b1d5"
+    },
+    {
+      "path": "scripts/db-audit/gen-types.test.sh",
+      "line_start": 1,
+      "line_end": 102,
+      "source_sha256": "2b6f372479590453f2f73f7b92352877cd6bfe495590a0c574f176ad92fbf0bc",
+      "git_blob_sha": "d18aa236314e4b372720879947499e3a2add0c24"
+    },
+    {
+      "path": "scripts/db-audit/generic-migration-runtime.test.sh",
+      "line_start": 1,
+      "line_end": 167,
+      "source_sha256": "bd10682b59e0c3b4461e5851b755a6a91e61035a9978bf78eb217fb883d459c6",
+      "git_blob_sha": "53af2ab1dda15942931ab34bdd485182589d7c22"
+    },
+    {
+      "path": "scripts/db-audit/multiplix-scope.test.sh",
+      "line_start": 1,
+      "line_end": 328,
+      "source_sha256": "ace7d02f85a578694cc9a836e04f8fb0a09b92bf730fd18c5eb38d2d6b0f045c",
+      "git_blob_sha": "f585bd05aa49853759d79c6402a742fe7caea80f"
+    },
+    {
+      "path": "scripts/db-audit/talkx-audience-rpc.test.sh",
+      "line_start": 1,
+      "line_end": 413,
+      "source_sha256": "01e3dc9dff88048eb35c46155c951d788363ecabae80e2dc08fc7816cf2adbd8",
+      "git_blob_sha": "94d7473872c4f8e570f4690b907de7aaa881faaf"
+    },
+    {
+      "path": "scripts/db-audit/talkx-audience-snapshot.test.sh",
+      "line_start": 1,
+      "line_end": 346,
+      "source_sha256": "a4c9ff880bdddac58f429efa1051c7f60e73714ab6fe8ce364c095c42831af09",
+      "git_blob_sha": "97fcb8cb9c5c660f3daad47f639def0c49f7a5bf"
+    },
+    {
+      "path": "scripts/db-audit/talkx-campaign-segments.test.sh",
+      "line_start": 1,
+      "line_end": 366,
+      "source_sha256": "21af7585ff1145eefbab6532f9a237f79906e7f19b9c4f6cb50beae625861af5",
+      "git_blob_sha": "519f57d4306a4761456bc9cccf3ee95fb2af0f5a"
+    },
+    {
+      "path": "scripts/db-audit/talkx-draft-save.test.sh",
+      "line_start": 1,
+      "line_end": 291,
+      "source_sha256": "58156c1e08635839518fb9e937e6591fdef9aa691233d75a88024c491eff327e",
+      "git_blob_sha": "3aa4bf86a5d6109ea614f3fb7d0d32f344ac1a64"
+    },
+    {
+      "path": "scripts/db-audit/talkx-metrics-view-invoker.test.sh",
+      "line_start": 1,
+      "line_end": 253,
+      "source_sha256": "28cce04b85e972c06f426a9d3df26c983e7630efa821a0768f21baeb0e5ede58",
+      "git_blob_sha": "a7e46fd33e866363b0aefee7d64f90f863c916dc"
+    },
+    {
+      "path": "scripts/db-audit/talkx-send-interval-teto-24h.test.sh",
+      "line_start": 1,
+      "line_end": 193,
+      "source_sha256": "16a395dc61aef8d129dc9f3b8703fbb7d3f0e7d9e6760fe1d701fd6c02d3a8d9",
+      "git_blob_sha": "df4a279b05a9029de6309b45eb0974b5b95f503f"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v12-lifecycle-events.test.sh",
+      "line_start": 1,
+      "line_end": 209,
+      "source_sha256": "64714b8ef6f28fe0c101ff69d73b130373a3fa7351d8d792822a341f3c549f03",
+      "git_blob_sha": "28cfea1062d87f62a68124149ccb1300be2e1783"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v17-read-at.test.sh",
+      "line_start": 1,
+      "line_end": 124,
+      "source_sha256": "92897cdd7ef1c42136bb0c661b4d95ff7dc4640ee1103a9c2be89f461b8d6dce",
+      "git_blob_sha": "14d66a1aa014f580d2304933b06aec4b8d2c5f13"
+    }
+  ]
+}

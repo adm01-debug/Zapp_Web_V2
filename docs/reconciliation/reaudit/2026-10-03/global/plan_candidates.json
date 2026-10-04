@@ -1,0 +1,946 @@
+[
+  {
+    "path": "docs/COMPLETE_SYSTEM_FEATURES.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 34,
+    "checkboxes": 0,
+    "task_table": 395,
+    "lines": 844
+  },
+  {
+    "path": "docs/talkx/v4/inventario/F_telas_11_12_13.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 0,
+    "checkboxes": 0,
+    "task_table": 217,
+    "lines": 388
+  },
+  {
+    "path": "docs/talkx/v4/inventario/G_telas_14_15_16.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 27,
+    "checkboxes": 0,
+    "task_table": 180,
+    "lines": 346
+  },
+  {
+    "path": "docs/talkx/v4/inventario/E_telas_08_09_10.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 3,
+    "checkboxes": 0,
+    "task_table": 176,
+    "lines": 354
+  },
+  {
+    "path": "docs/audits/talkx-plan-review-2026-09-11/REVISAO_100_ETAPAS.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 10,
+    "checkboxes": 0,
+    "task_table": 172,
+    "lines": 374
+  },
+  {
+    "path": "docs/talkx/v4/inventario/B_telas_02_03.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 4,
+    "checkboxes": 0,
+    "task_table": 170,
+    "lines": 347
+  },
+  {
+    "path": "docs/audits/adversarial-f1-f2-f3-2026-09-29/02-mutacao-forca-dos-testes.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 15,
+    "checkboxes": 0,
+    "task_table": 163,
+    "lines": 335
+  },
+  {
+    "path": "docs/talkx/v4/inventario/D_telas_06_07.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 0,
+    "checkboxes": 0,
+    "task_table": 158,
+    "lines": 337
+  },
+  {
+    "path": "docs/design/RELATORIO_AUDITORIA_TAREFAS_FUSAO.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 8,
+    "checkboxes": 0,
+    "task_table": 140,
+    "lines": 300
+  },
+  {
+    "path": "docs/audits/talkx-revalidation-2026-09-11/REVISAO_100_ETAPAS.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 57,
+    "checkboxes": 0,
+    "task_table": 132,
+    "lines": 440
+  },
+  {
+    "path": "docs/talkx/v4/inventario/C_telas_04_05.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 14,
+    "checkboxes": 0,
+    "task_table": 131,
+    "lines": 251
+  },
+  {
+    "path": "docs/talkx/v4/inventario/H_motor_backend.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 58,
+    "checkboxes": 0,
+    "task_table": 131,
+    "lines": 315
+  },
+  {
+    "path": "docs/multiplix/AUDITORIA_IMPLEMENTACAO_MULTIPLIX_2026-09-29.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 37,
+    "checkboxes": 0,
+    "task_table": 128,
+    "lines": 299
+  },
+  {
+    "path": "docs/talkx/AUDITORIA_PLANO_TALKX_2026-09-29.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 3,
+    "checkboxes": 0,
+    "task_table": 127,
+    "lines": 359
+  },
+  {
+    "path": "docs/talkx/v4/inventario/A_telas_01_17.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 1,
+    "checkboxes": 0,
+    "task_table": 121,
+    "lines": 248
+  },
+  {
+    "path": "docs/handoffs/handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 109,
+    "checkboxes": 0,
+    "task_table": 38,
+    "lines": 1585
+  },
+  {
+    "path": "docs/audits/REVISAO_PLANO_100_ETAPAS_2026-09-10.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 14,
+    "checkboxes": 0,
+    "task_table": 103,
+    "lines": 389
+  },
+  {
+    "path": "docs/handoffs/cline_execution_log_2026_08_30.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 11,
+    "checkboxes": 0,
+    "task_table": 100,
+    "lines": 297
+  },
+  {
+    "path": "docs/handoffs/auditoria_exaustiva_plano_100_etapas_2026_08_30.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 42,
+    "checkboxes": 0,
+    "task_table": 100,
+    "lines": 322
+  },
+  {
+    "path": "docs/catalogo/AUDITORIA_CATALOGO_2026-09-29.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 14,
+    "checkboxes": 0,
+    "task_table": 100,
+    "lines": 248
+  },
+  {
+    "path": "docs/audits/AUDITORIA_TEAM_CHAT_V3_PARITY_2026-09-28.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 12,
+    "checkboxes": 0,
+    "task_table": 100,
+    "lines": 208
+  },
+  {
+    "path": "docs/tipografia/REVISAO_PLANO_AUDITORIA_FONTES_2026-09-24.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 7,
+    "checkboxes": 0,
+    "task_table": 84,
+    "lines": 206
+  },
+  {
+    "path": "docs/design/EMAIL_NAVY_IMPLEMENTATION_EVIDENCE_2026-10-02.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 5,
+    "checkboxes": 0,
+    "task_table": 80,
+    "lines": 224
+  },
+  {
+    "path": "docs/team-chat/AUDITORIA_TEAM_CHAT_2026-09-29.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 16,
+    "checkboxes": 0,
+    "task_table": 66,
+    "lines": 302
+  },
+  {
+    "path": "docs/ia/IA-007-reuso-infraestrutura.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 6,
+    "checkboxes": 6,
+    "task_table": 62,
+    "lines": 337
+  },
+  {
+    "path": "docs/audits/FECHAMENTO_PLANO_50_ETAPAS_2026-09-20.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 5,
+    "checkboxes": 0,
+    "task_table": 60,
+    "lines": 157
+  },
+  {
+    "path": "docs/mapa/AUDITORIA_PLANO_50_ETAPAS_2026-09-29.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 0,
+    "checkboxes": 0,
+    "task_table": 56,
+    "lines": 152
+  },
+  {
+    "path": "docs/design/TAREFAS_QUADRO_STATUS.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 55,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 834
+  },
+  {
+    "path": "docs/catalogo/PERF.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 53,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 675
+  },
+  {
+    "path": "docs/audits/REVISAO_PLANO_100_ETAPAS_2026-09-28.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 53,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 316
+  },
+  {
+    "path": "docs/audits/AUDITORIA_MODULO_CONTATOS_2026-09-29.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 5,
+    "checkboxes": 0,
+    "task_table": 51,
+    "lines": 248
+  },
+  {
+    "path": "docs/design/RELATORIO_REFINAMENTO_TALK_ME_50_ETAPAS_2026-10-01.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 0,
+    "checkboxes": 0,
+    "task_table": 50,
+    "lines": 113
+  },
+  {
+    "path": "docs/TROUBLESHOOTING.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 49,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 343
+  },
+  {
+    "path": "docs/audits/AUDITORIA_TEAM_CHAT_ESTADO_REAL_2026-09-29.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 9,
+    "checkboxes": 0,
+    "task_table": 47,
+    "lines": 217
+  },
+  {
+    "path": "docs/talkx/v4/DECISOES.md",
+    "role": "DECISION_OR_OPERATING_RULE",
+    "numbered": 9,
+    "checkboxes": 0,
+    "task_table": 45,
+    "lines": 101
+  },
+  {
+    "path": "docs/catalogo/CHANGELOG_CATALOGO.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 41,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 173
+  },
+  {
+    "path": "docs/design/TELEFONIA_STATUS.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 40,
+    "checkboxes": 0,
+    "task_table": 8,
+    "lines": 655
+  },
+  {
+    "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 39,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 221
+  },
+  {
+    "path": "CLAUDE.md",
+    "role": "DECISION_OR_OPERATING_RULE",
+    "numbered": 36,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 502
+  },
+  {
+    "path": "docs/ia/IA-004-matriz-autorizacao.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 2,
+    "checkboxes": 6,
+    "task_table": 35,
+    "lines": 406
+  },
+  {
+    "path": "docs/audits/AUDITORIA_PARIDADE_LOCAL_GITHUB_SUPABASE_2026-09-22.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 35,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 619
+  },
+  {
+    "path": "docs/talkx/v4/STATUS.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 2,
+    "checkboxes": 0,
+    "task_table": 34,
+    "lines": 52
+  },
+  {
+    "path": "docs/WEBHOOK_EVENTS.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 32,
+    "checkboxes": 0,
+    "task_table": 6,
+    "lines": 373
+  },
+  {
+    "path": "docs/audits/IMPLEMENTACAO_ACHADOS_CINCO_ESPECIALISTAS_2026-09-22.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 32,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 157
+  },
+  {
+    "path": "docs/TECHNICAL_DOCUMENTATION.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 31,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 3414
+  },
+  {
+    "path": "docs/FUNCTIONALITIES_INVENTORY.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 28,
+    "checkboxes": 0,
+    "task_table": 10,
+    "lines": 652
+  },
+  {
+    "path": "docs/audits/talkx-2026-09-11/DIAGNOSTICO_CAMPANHAS.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 27,
+    "checkboxes": 0,
+    "task_table": 28,
+    "lines": 372
+  },
+  {
+    "path": "docs/EVOLUTION_API_REFERENCE.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 26,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 1284
+  },
+  {
+    "path": "docs/security/validation-report-2026-08-30.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 18,
+    "checkboxes": 0,
+    "task_table": 26,
+    "lines": 266
+  },
+  {
+    "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W4-PERFORMANCE.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 26,
+    "checkboxes": 0,
+    "task_table": 24,
+    "lines": 302
+  },
+  {
+    "path": ".github/PULL_REQUEST_TEMPLATE.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 0,
+    "checkboxes": 25,
+    "task_table": 0,
+    "lines": 64
+  },
+  {
+    "path": "docs/runbooks/CRM_INTEGRATION_ROLLOUT.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 25,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 91
+  },
+  {
+    "path": "docs/handoffs/HANDOFF_ZAPP_WEB_V2_2026-08-29.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 9,
+    "checkboxes": 0,
+    "task_table": 24,
+    "lines": 543
+  },
+  {
+    "path": "docs/REFACTORING_REPORT_2026-06-12.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 0,
+    "checkboxes": 0,
+    "task_table": 23,
+    "lines": 129
+  },
+  {
+    "path": "docs/design/AUDITORIA_TELEFONIA_ESTADO_REAL_2026-09-29.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 14,
+    "checkboxes": 0,
+    "task_table": 23,
+    "lines": 158
+  },
+  {
+    "path": "docs/ia/IA-002-inventario-frontend-ia.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 23,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 596
+  },
+  {
+    "path": "docs/ia/IA-041-a-IA-050-execucao-resiliente-filas-e-consumo.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 23,
+    "checkboxes": 0,
+    "task_table": 3,
+    "lines": 228
+  },
+  {
+    "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W2-SEGURANCA-PG.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 23,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 638
+  },
+  {
+    "path": "docs/PROJECT_TEMPLATE.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 0,
+    "checkboxes": 22,
+    "task_table": 0,
+    "lines": 874
+  },
+  {
+    "path": "docs/design/PAINEL_STATUS.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 22,
+    "checkboxes": 12,
+    "task_table": 1,
+    "lines": 124
+  },
+  {
+    "path": "docs/audits/TRIAGEM_CONTEUDO_LOCAL_DESTINO_GITHUB_BANCO_2026-09-22.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 22,
+    "checkboxes": 0,
+    "task_table": 1,
+    "lines": 283
+  },
+  {
+    "path": "docs/audits/VALIDACAO_EXAUSTIVA_CINCO_ESPECIALISTAS_2026-09-22.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 22,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 275
+  },
+  {
+    "path": "docs/talkx/HANDOFF_SESSAO_03.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 22,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 257
+  },
+  {
+    "path": "docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 15,
+    "checkboxes": 0,
+    "task_table": 21,
+    "lines": 2470
+  },
+  {
+    "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W5-PROD-BROWSER.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 21,
+    "checkboxes": 0,
+    "task_table": 5,
+    "lines": 495
+  },
+  {
+    "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 20,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 95
+  },
+  {
+    "path": "docs/ia/IA-008-organizacao-das-entregas.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 6,
+    "checkboxes": 4,
+    "task_table": 20,
+    "lines": 68
+  },
+  {
+    "path": "docs/ia/IA-006-natureza-e-verificacao-dos-achados.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 5,
+    "checkboxes": 0,
+    "task_table": 20,
+    "lines": 261
+  },
+  {
+    "path": "docs/audits/CORRECAO_ROTEAMENTO_NOTIFICACOES_2026-09-22.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 20,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 186
+  },
+  {
+    "path": "docs/talkx/PARIDADE.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 0,
+    "checkboxes": 0,
+    "task_table": 20,
+    "lines": 201
+  },
+  {
+    "path": "docs/evidencias/plano-volume-50/e45-e48-e2e.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 20,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 185
+  },
+  {
+    "path": "docs/EVOLUTION_API_GAPS_ANALYSIS.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 3,
+    "checkboxes": 19,
+    "task_table": 0,
+    "lines": 157
+  },
+  {
+    "path": "docs/runbooks/secret-rotation.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 19,
+    "checkboxes": 7,
+    "task_table": 0,
+    "lines": 179
+  },
+  {
+    "path": "docs/INCIDENT-RUNBOOK.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 2,
+    "checkboxes": 16,
+    "task_table": 18,
+    "lines": 338
+  },
+  {
+    "path": "docs/audits/adversarial-f1-f2-f3-2026-09-29/04-consumidores-incompletude.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 13,
+    "checkboxes": 0,
+    "task_table": 18,
+    "lines": 471
+  },
+  {
+    "path": "docs/DEPLOYMENT.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 17,
+    "checkboxes": 9,
+    "task_table": 0,
+    "lines": 322
+  },
+  {
+    "path": "docs/runbooks/deploy.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 17,
+    "checkboxes": 9,
+    "task_table": 0,
+    "lines": 157
+  },
+  {
+    "path": "docs/ia/IA-011-a-IA-020-contencao-P0.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 6,
+    "checkboxes": 9,
+    "task_table": 17,
+    "lines": 159
+  },
+  {
+    "path": "docs/ia/IA-031-a-IA-040-camada-de-provedores-e-capacidades.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 17,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 186
+  },
+  {
+    "path": "docs/audits/AUDITORIA_TECNICA_22_DIMENSOES_2026-09-05.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 17,
+    "checkboxes": 0,
+    "task_table": 1,
+    "lines": 504
+  },
+  {
+    "path": "docs/talkx/ARQUITETURA.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 0,
+    "checkboxes": 0,
+    "task_table": 17,
+    "lines": 133
+  },
+  {
+    "path": "docs/evidencias/plano-volume-50/e18-contraste.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 17,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 218
+  },
+  {
+    "path": "HANDOFF_MISSION_10-10.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 7,
+    "checkboxes": 16,
+    "task_table": 1,
+    "lines": 172
+  },
+  {
+    "path": "UX_AUDIT_REPORT.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 7,
+    "checkboxes": 7,
+    "task_table": 16,
+    "lines": 232
+  },
+  {
+    "path": "docs/runbooks/auth-pendurado-saturacao-postgres.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 16,
+    "checkboxes": 0,
+    "task_table": 7,
+    "lines": 164
+  },
+  {
+    "path": "docs/audits/AUDITORIA_ENTREGAS_HERMES_RODADA3_2026-09-30.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 16,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 234
+  },
+  {
+    "path": "docs/mapa/mapeamento-fase7.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 6,
+    "checkboxes": 0,
+    "task_table": 16,
+    "lines": 48
+  },
+  {
+    "path": "supabase-export/README.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 6,
+    "checkboxes": 0,
+    "task_table": 15,
+    "lines": 113
+  },
+  {
+    "path": "docs/audits/AUDITORIA_ENTREGAS_HERMES_2026-09-30.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 15,
+    "checkboxes": 0,
+    "task_table": 2,
+    "lines": 378
+  },
+  {
+    "path": "docs/audits/TALKX_AUDIT_ARCHIVE_2026-09-11.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 0,
+    "checkboxes": 0,
+    "task_table": 15,
+    "lines": 61
+  },
+  {
+    "path": "docs/LGPD-RETENTION-POLICY.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 0,
+    "checkboxes": 14,
+    "task_table": 1,
+    "lines": 378
+  },
+  {
+    "path": "docs/FORGOTTEN_FEATURES_REPORT.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 14,
+    "checkboxes": 0,
+    "task_table": 12,
+    "lines": 174
+  },
+  {
+    "path": "docs/ia/README.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 3,
+    "checkboxes": 0,
+    "task_table": 14,
+    "lines": 64
+  },
+  {
+    "path": "docs/audits/AUDITORIA_TECNICA_22_DIMENSOES_2026-09-02.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 14,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 680
+  },
+  {
+    "path": "docs/audits/onda3-260930/VEREDICTO-CONSOLIDADO.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 14,
+    "checkboxes": 0,
+    "task_table": 4,
+    "lines": 335
+  },
+  {
+    "path": "docs/security/secret-surface-inventory.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 13,
+    "checkboxes": 0,
+    "task_table": 13,
+    "lines": 165
+  },
+  {
+    "path": "docs/migration/HANDOFF.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 13,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 271
+  },
+  {
+    "path": "docs/mapa/ENCERRAMENTO_FASE8_E100.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 5,
+    "checkboxes": 0,
+    "task_table": 13,
+    "lines": 94
+  },
+  {
+    "path": "docs/runbooks/preview-egress-proxy.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 12,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 87
+  },
+  {
+    "path": "docs/ia/IA-002-inventario-functions-ia.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 12,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 162
+  },
+  {
+    "path": "docs/audits/DOSSIE_EXECUCAO_PLANO_50_2026-09-20.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 12,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 335
+  },
+  {
+    "path": "docs/audits/AUDITORIA_ENTREGAS_HERMES_RODADA2_2026-09-30.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 12,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 151
+  },
+  {
+    "path": "docs/audits/PROJETO_IA058_ALERTAS_DE_CONSUMO_ANOMALO_2026-10-03.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 12,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 113
+  },
+  {
+    "path": "docs/design/salesview-journey/VERIFICACAO_S38_S41_S42_S43_2026-10-02.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 8,
+    "checkboxes": 0,
+    "task_table": 12,
+    "lines": 226
+  },
+  {
+    "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W1-META-AUDITORIA.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 12,
+    "checkboxes": 1,
+    "task_table": 7,
+    "lines": 296
+  },
+  {
+    "path": "docs/audits/onda3-260930/a1-db/RELATORIO.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 12,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 301
+  },
+  {
+    "path": "docs/WEBHOOK_SECURITY.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 11,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 206
+  },
+  {
+    "path": "docs/audits/EXECUCAO_MELHORIAS_2026-08-27.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 4,
+    "checkboxes": 0,
+    "task_table": 11,
+    "lines": 108
+  },
+  {
+    "path": "docs/audits/adversarial-f1-f2-f3-2026-09-29/05-ci-producao-ledger.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 11,
+    "checkboxes": 0,
+    "task_table": 6,
+    "lines": 466
+  },
+  {
+    "path": "docs/audits/onda3-260930/a5-red/RELATORIO.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 6,
+    "checkboxes": 0,
+    "task_table": 11,
+    "lines": 273
+  },
+  {
+    "path": "docs/runbooks/cron-secret-rotation.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 10,
+    "checkboxes": 0,
+    "task_table": 3,
+    "lines": 131
+  },
+  {
+    "path": "docs/design/RELATORIO_EXECUCAO_TALK_ME_2026-09-30.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 7,
+    "checkboxes": 0,
+    "task_table": 10,
+    "lines": 96
+  },
+  {
+    "path": "docs/catalogo/HANDOFF_v1.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 2,
+    "checkboxes": 0,
+    "task_table": 10,
+    "lines": 138
+  },
+  {
+    "path": "docs/ia/IA-021-a-IA-030-contratos-integridade.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 9,
+    "checkboxes": 0,
+    "task_table": 10,
+    "lines": 183
+  },
+  {
+    "path": "docs/ia/IA-003-registro-achados.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 0,
+    "checkboxes": 4,
+    "task_table": 10,
+    "lines": 145
+  },
+  {
+    "path": "docs/audits/EXECUCAO_TRIAGEM_PARIDADE_2026-09-22.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 10,
+    "checkboxes": 0,
+    "task_table": 8,
+    "lines": 143
+  },
+  {
+    "path": "docs/talkx/OPERACAO.md",
+    "role": "SUPPORTING_DOCUMENT",
+    "numbered": 10,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 314
+  },
+  {
+    "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W3-REPLAY.md",
+    "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+    "numbered": 10,
+    "checkboxes": 0,
+    "task_table": 0,
+    "lines": 267
+  }
+]

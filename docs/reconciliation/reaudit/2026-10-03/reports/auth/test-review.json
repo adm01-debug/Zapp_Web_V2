@@ -1,0 +1,2871 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "owner": "auth",
+  "status": "COMPLETE",
+  "updated_at": "2026-10-04T06:08:12.992146+00:00",
+  "method": "Manual integral source review of assertions, fixtures, mocks and consumer contracts. Allocation alone confers no review coverage. No suite, browser, service or database executed.",
+  "allocation_file": "test-review-roster.json",
+  "counts": {
+    "SEMANTIC_REVIEW_COMPLETE": 88
+  },
+  "allocated_files": 88,
+  "allocated_lines": 14464,
+  "actual_lines_read": 14464,
+  "files": [
+    {
+      "index": 1,
+      "path": "src/components/auth/__tests__/PasswordStrengthMeter.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "984f85f67d040d9288e1d0d2dc4fcbda6050b3a7",
+      "source_sha256": "208b9308cb6c51851576c062f9ac234c7fc116268a3b4a58c49a6bddb34b3ff0",
+      "line_count": 94,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          94
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Prefixo SHA-1 de5 caracteres/UTF-8, diferença de SHA-256, header Add-Padding e veredito por sufixo HIBP."
+      ],
+      "mocks_and_fixtures": [
+        "Componente real; fetch global substituído por respostas textuais bem-sucedidas e hashes calculados por node:crypto."
+      ],
+      "positive_controls": [
+        "Casos de sufixo presente e ausente; senha acentuada."
+      ],
+      "limits": [
+        "Não alterna senha durante request pendente, nem resolve respostas fora de ordem; não afasta AUTH031. Não acessa HIBP real nem executa teste nesta auditoria."
+      ],
+      "related_findings": [
+        "R2-AUTH-031"
+      ],
+      "observations": []
+    },
+    {
+      "index": 2,
+      "path": "src/components/calls/__tests__/ActiveCallBar.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "ce7084fee65fcf7cd8614d9f23bd4e5cfba32b41",
+      "source_sha256": "b2f662991ba02eeddb2e5b087bd8112b040ef3befe6bf4698ff8e64364db5f07",
+      "line_count": 96,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          96
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Visibilidade por callStatus/view, número/duração, botão Atender para inbound e navegação ao clicar na barra."
+      ],
+      "mocks_and_fixtures": [
+        "useCallSession e navigationHistory retornam fixtures/vi.fn; fixture session.status=active pode coexistir com callStatus=idle."
+      ],
+      "positive_controls": [
+        "Barra ausente em idle e na própria view voip; classes h-12/shrink-0 e ausência de fixed/bottom."
+      ],
+      "limits": [
+        "A altura é verificada por classe, não medida. Aceite chega apenas ao spy; fixture não percorre reducer/motor nem sincronização entre dois estados."
+      ],
+      "related_findings": [
+        "TEL-RUNTIME-001"
+      ],
+      "observations": []
+    },
+    {
+      "index": 3,
+      "path": "src/components/calls/__tests__/ActiveCallPanel.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "a163beff0e85988a5bbab4d883d50d2ab300c58f",
+      "source_sha256": "ecf28d694cc3239a9db2e59d1b8ba6878c6feb640b02a856393ca01fdbdbc875",
+      "line_count": 134,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          134
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Cinco estados antes do fim, rótulos, contato/canal, timer apenas active, controles, gate canReject, aria-pressed e DTMF por click."
+      ],
+      "mocks_and_fixtures": [
+        "Provider/capacidades substituídos por estados mutáveis e spies; render real de ActiveCallPanel/Keypad."
+      ],
+      "positive_controls": [
+        "Recusar disabled quando canReject=false; mute/teclado disabled fora de active."
+      ],
+      "limits": [
+        "Não monta estado ended/PostCallSummary, portanto não exercita perda de rascunho AUTH051. DTMF/aceite são spies sem transporte nem identidade concorrente."
+      ],
+      "related_findings": [
+        "R2-AUTH-051",
+        "TEL-RUNTIME-001"
+      ],
+      "observations": []
+    },
+    {
+      "index": 4,
+      "path": "src/components/calls/__tests__/CallChannelBadge.linha.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "d607b38239e370e18170cd305fb65f77811dde7d",
+      "source_sha256": "8f2524e1d1314e95dcc09e0d15efabe650db521953df59794c548b58b73b12b3",
+      "line_count": 39,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Apresentação de linha/canal e precedência do motivo D8 que oculta o nome da linha."
+      ],
+      "mocks_and_fixtures": [
+        "Props textuais fixas sobre CallChannelBadge real."
+      ],
+      "positive_controls": [
+        "Sem motivo mostra linha; com motivo de restrição não mostra a linha; VoIP conserva rótulo."
+      ],
+      "limits": [
+        "Não consulta permissões/RLS nem decide se o usuário pode conhecer o nome recebido por props."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 5,
+      "path": "src/components/calls/__tests__/CallChannelBadge.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "86d2ceb30d462611b8db2d21225caff8c68528e6",
+      "source_sha256": "6dc8d06e10cff90f917f0a1aeb1601cf214b600415f1f99fb627ac11c3381733",
+      "line_count": 26,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Rótulos VoIP/WhatsApp, texto de restrição e ausência de separador com motivo null."
+      ],
+      "mocks_and_fixtures": [
+        "Componente real com props fixas e assertions de texto."
+      ],
+      "positive_controls": [
+        "Canal sem motivo não exibe texto adicional."
+      ],
+      "limits": [
+        "Cobertura de apresentação; não prova origem, seleção da linha ou autorização real."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 6,
+      "path": "src/components/calls/__tests__/CallDialog.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "85d2083baf72f952b5f78b1609f451752a11028f",
+      "source_sha256": "67dd63c88f94695b02547024185d6f1aaeb7a8efbf067befb980637d82b490b5",
+      "line_count": 340,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          340
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "CallDialog usa dial/accept/hangup/toggleMute do provider, evita quatro mutations legadas/insert e disca uma vez mesmo com callback mudando de identidade."
+      ],
+      "mocks_and_fixtures": [
+        "Provider, Supabase, legado useCalls, dialog/button/avatar/motion substituídos; eventos por fireEvent, números/IDs sintéticos; regex adicional lê fonte."
+      ],
+      "positive_controls": [
+        "existingCallId e inbound sem ID não discam; mute real encaminha ao spy; encerrar fecha; ausência deliberada do alto-falante cosmético."
+      ],
+      "limits": [
+        "276–283 impõe ringing_in+initialStatus answered e exige visual atendido; não prova que o flag pertence ao callId atual ou que B foi aceita. Não exercita A→B no overlay (CALL006), rejeição do aceite, mídia/DB ou provider real."
+      ],
+      "related_findings": [
+        "R2-CALL-006",
+        "R2-CALL-007",
+        "TEL-RUNTIME-001"
+      ],
+      "observations": []
+    },
+    {
+      "index": 7,
+      "path": "src/components/calls/__tests__/CallHistoryCard.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "67a02070ac5e68d7e7dd10ef6f39b50962b4388d",
+      "source_sha256": "712f51eececb7b4d2977fb40f171d24649f4d3bc2e6a312e8666f12b0162dd86",
+      "line_count": 47,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Card apresenta total37 recebido por prop, seletor condicionado à flag e três abas com valor ativo."
+      ],
+      "mocks_and_fixtures": [
+        "Componentes reais, números/flags fornecidos diretamente e onMudar spy não acionado."
+      ],
+      "positive_controls": [
+        "Seletor ausente para flag falsa; aba WhatsApp selecionada por prop."
+      ],
+      "limits": [
+        "Teste intitulado trocar avisa o pai só verifica existência do seletor, não interage nem verifica onMudar. Número37 não veio de RPC neste teste; não prova paginação/URL/RLS."
+      ],
+      "related_findings": [
+        "TEL-PERIOD-001"
+      ],
+      "observations": []
+    },
+    {
+      "index": 8,
+      "path": "src/components/calls/__tests__/CallHistoryCells.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "7e5fb975c89e75a7df06245f31623a63046e1735",
+      "source_sha256": "6ccc855c018bb6ee1c66c44ad9fe9bf930158028e654a70b76c453b2cd03ba77",
+      "line_count": 83,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Precedência peer/CRM/telefone, fallback desconhecido, foto/iniciais, resultado nulo, rótulos de direção e formatação/invalidade de data."
+      ],
+      "mocks_and_fixtures": [
+        "Helpers e células reais com fixtures sintéticas; foto apenas src atribuído, sem rede."
+      ],
+      "positive_controls": [
+        "Data inválida/null vira traço, nomes ausentes conservam número e reduced-motion usa classe motion-safe."
+      ],
+      "limits": [
+        "Asserts de cor/40px/animar limitam-se a texto/classes. Não mede estilo, acessibilidade completa nem ação do botão dentro da tabela (AUTH052)."
+      ],
+      "related_findings": [
+        "R2-AUTH-052"
+      ],
+      "observations": []
+    },
+    {
+      "index": 9,
+      "path": "src/components/calls/__tests__/CallHistoryStates.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "0bdc18137a352e582b7b5da48e8fa2172cbcf5af",
+      "source_sha256": "990f2bdcf01221426682cf6ff1086126f7bbf41774ce2f8b2f43cf90e73b14ad",
+      "line_count": 66,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Janela de7 páginas contém a atual, paginação marca aria-current/some com1, skeleton8 e callbacks de limpar/nova ligação/retry."
+      ],
+      "mocks_and_fixtures": [
+        "Helpers/componentes reais; callbacks spies, totais/páginas fornecidos diretamente."
+      ],
+      "positive_controls": [
+        "Casos início/meio/fim da janela, vazio por filtro distinto de vazio total e erro separado."
+      ],
+      "limits": [
+        "Não consulta dados nem testa clamp concorrente do hook MOD015; alturas verificadas por classe, não layout. Nova ligação é só um spy, não o callback do pai."
+      ],
+      "related_findings": [
+        "R2-MOD-015"
+      ],
+      "observations": []
+    },
+    {
+      "index": 10,
+      "path": "src/components/calls/__tests__/CallHistoryToolbar.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "c027f6810382ea7fb4673e9a2acec5954e2f667f",
+      "source_sha256": "a174817702a5271f166a0b7fe612f6766cdd1a97f9d5f14fea1ed7a5a0f006a1",
+      "line_count": 45,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          45
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Busca em3 alterações só chama onBusca uma vez após300ms; classes h-10 e catálogo de9 resultados no objeto do domínio."
+      ],
+      "mocks_and_fixtures": [
+        "Componente real com timers falsos e callbacks no-op/spy."
+      ],
+      "positive_controls": [
+        "Nenhuma chamada antes do debounce; valor final ana recebido pelo callback."
+      ],
+      "limits": [
+        "Não testa troca externa da URL ou identidade de callback entre renders. Teste de opções só inspeciona RESULT_LABEL, sem abrir Select ou verificar sua lista efetiva."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 11,
+      "path": "src/components/calls/__tests__/ContactPicker.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "8337b58180ac4bef17af088611f377b2b9aad8ba",
+      "source_sha256": "d7f12d4963b268889925765bdbe45b71f263c119e29b5ff11c7de1ef02d5975b",
+      "line_count": 51,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          51
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Busca só após2 letras, parâmetro page_size6, nomes/telefones, seleção com seta/Enter e chip quando selecionado."
+      ],
+      "mocks_and_fixtures": [
+        "ContactService retorna imediatamente dois contatos fixos; timers reais no código de teste."
+      ],
+      "positive_controls": [
+        "Uma letra não busca; ArrowDown+Enter escolhe segundo contato; chip esconde input."
+      ],
+      "limits": [
+        "page_size6 enviado não comprova backend limitar6. Não há resposta fora de ordem, erro, mudança de número após seleção ou reset do chip (MOD016)."
+      ],
+      "related_findings": [
+        "R2-MOD-016"
+      ],
+      "observations": []
+    },
+    {
+      "index": 12,
+      "path": "src/components/calls/__tests__/DialPad.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "15ce534d480b749e861a8b08e147755fea10056f",
+      "source_sha256": "e8e22c0b2e1e418c6b708803b67fca4d94906f5951f72dad912b407faf572340",
+      "line_count": 298,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          298
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "DialPad isolado monta12 teclas, filtros de número, estados/rótulos, enabled por conexão/número, callbacks de discar/DTMF/mute/fim e ausência deliberada dos botões conectar/desconectar."
+      ],
+      "mocks_and_fixtures": [
+        "Props de estado fixas, todos efeitos externos vi.fn, componente real com fireEvent e consultas de classes/ícones."
+      ],
+      "positive_controls": [
+        "Vazio/desconectado não disca; input oculta em active; * e # encaminhados como DTMF;20 clicks preservam dígitos."
+      ],
+      "limits": [
+        "DialPad não tem consumidor produtivo atual localizado. Aceitar número1/551 é contrato desta implementação antiga, não prova de validação do NewCallPanel ativo. Alguns testes intitulados delete/trim só verificam contagem/input, sem clicar Delete nem discar. Não mede SIP nem teclado físico global."
+      ],
+      "related_findings": [
+        "D-AUTH-51",
+        "R2-MOD-016"
+      ],
+      "observations": []
+    },
+    {
+      "index": 13,
+      "path": "src/components/calls/__tests__/IncomingCallAlert.provider.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "fa0ea72fe5f2dabaa4f1548e5fde94df3d8d9136",
+      "source_sha256": "00084f1419b788bb2c4f7e4da1efedee9d1ec7efeea66e10e1b511554a9924ad",
+      "line_count": 133,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          133
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Alerta com conexão WhatsApp chama accept/reject abstratos, evita hooks legados, mostra Ignorar e chama dismiss; timer local não decide desfecho."
+      ],
+      "mocks_and_fixtures": [
+        "Listener devolve sempre a mesma notificação WhatsApp, provider só spies, capacidades fixas e som desativado; CallDialog substituído por null."
+      ],
+      "positive_controls": [
+        "Sem escrita legada por answer/miss; texto de Ignorar coerente com canal;90s virtuais não disparam ações da UI."
+      ],
+      "limits": [
+        "A fixture testa justamente WhatsApp→provider sem verificar o destino SIP desses métodos: não afasta CALL007. Listener constante e CallDialog null removem ciclo terminal/troca A→B; assertion de não-dismiss por timeout não prova que o provider real faça desaparecer o alerta (CALL006)."
+      ],
+      "related_findings": [
+        "R2-CALL-006",
+        "R2-CALL-007"
+      ],
+      "observations": []
+    },
+    {
+      "index": 14,
+      "path": "src/components/calls/__tests__/IncomingCallAlert.ringtone.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "b628042c931fd877db0cc7dcfeff5a4283ad11ef",
+      "source_sha256": "27aeb5808510dce5859f620f5343c52d75e017aa3531f8fc9b75f4085991c21e",
+      "line_count": 164,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          164
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Código tenta resume no mount, reage a gesto posterior e remove listeners de gesto no unmount."
+      ],
+      "mocks_and_fixtures": [
+        "AudioContext/gain/oscillator falsos; ativação é uma variável estática manipulada pelo teste. Listener/notificação, provider e capacidades fixos; diálogo null."
+      ],
+      "positive_controls": [
+        "Fake continua suspended sem ativação e só muda após flag+pointerdown; unmount impede novas chamadas resume."
+      ],
+      "limits": [
+        "Não prova áudio audível, política real do navegador, ganho, intervalo ou chegada terminal. Comentário que diz imitar navegador não substitui esse limite; notificação constante não cobre CALL006."
+      ],
+      "related_findings": [
+        "R2-CALL-006"
+      ],
+      "observations": []
+    },
+    {
+      "index": 15,
+      "path": "src/components/calls/__tests__/Keypad.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "fceff6965926672082256cac17988071f778dccf",
+      "source_sha256": "c16284dd5cb5f8cfcedf5e111f030fdccd378d62b9b123083f4cdbbd648cdf8c",
+      "line_count": 54,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "12 teclas, aria-labels, callback por click, disabled, dígito/backspace de window e atributo de modo."
+      ],
+      "mocks_and_fixtures": [
+        "Keypad real, callbacks spies e keyDown diretamente em window."
+      ],
+      "positive_controls": [
+        "Tecla a ignorada; disabled não envia click."
+      ],
+      "limits": [
+        "Teste chamado dentro do escopo envia evento em window, sem foco/target dentro do componente. Não verifica guardas INPUT/contentEditable, modificadores ou duas instâncias; não afasta limite D-AUTH-51.46px é classe, não medição."
+      ],
+      "related_findings": [
+        "D-AUTH-51"
+      ],
+      "observations": []
+    },
+    {
+      "index": 16,
+      "path": "src/components/calls/__tests__/RecordingPlayer.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "515972b1bcffd4f23463e45e9d4ced88a103fe16",
+      "source_sha256": "cffffe81ababa6b200c342bfdcb118d757eabe47df7cf182a2ec24b103f159a8",
+      "line_count": 37,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Sem status available não monta player/não invoca; available pede get-call-recording com callId."
+      ],
+      "mocks_and_fixtures": [
+        "QueryClient real sem retry; invoke devolve URL sintética imediatamente."
+      ],
+      "positive_controls": [
+        "Status null não faz request."
+      ],
+      "limits": [
+        "Teste available aguarda só a chamada invoke e afirma ausência de http no DOM; não aguarda/asserta player, src ou reprodução. O componente real usa a URL quando a query resolve, portanto texto nunca pela URL/sem URL no front não é garantia demonstrada. Não há caso404/erro/troca de chamada."
+      ],
+      "related_findings": [
+        "D-AUTH-52"
+      ],
+      "observations": []
+    },
+    {
+      "index": 17,
+      "path": "src/components/calls/__tests__/TelefoniaTopActions.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "822d6e2f4f7c6e913a0e9ba41bc0d5af702fb6dd",
+      "source_sha256": "600cdc7848b1194d3022f06ca6dccbc98a989afc6ca7fc1b1db58e0be78944ea",
+      "line_count": 44,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          44
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Existência de2 chips+Select e catálogo de6 períodos/valor7dias."
+      ],
+      "mocks_and_fixtures": [
+        "useCallChannels vi.fn devolve capacidades controladas."
+      ],
+      "positive_controls": [
+        "Valor recebido aparece no seletor."
+      ],
+      "limits": [
+        "Teste que diz label reflete D8 só verifica chip existente e hook chamado, não o texto do motivo. Não abre selector nem verifica callback; nenhum gate real/RLS."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 18,
+      "path": "src/components/calls/__tests__/VoIPPanel.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "65de0183d5c6a6b36157741795ab038190f5cfac",
+      "source_sha256": "80dad65d77174ab419bfc291ae8cf85a40cd449d66457449e3b961c61636b7dc",
+      "line_count": 470,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          470
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Composição de Telefonia,5 KPIs fornecidos, scope mine ao hook, abertura/fechamento do detalhe, encaminhamento de anotação e Enter/Escape da linha."
+      ],
+      "mocks_and_fixtures": [
+        "Auth/roles, sessão SIP, eleição, useCalls, useMyCalls, useCallsKpi, filtros e PageHeader são mocks; QueryClient/Tooltip reais. Filtro fake apenas mescla chave no useState e não escreve URL."
+      ],
+      "positive_controls": [
+        "agent_notes distinto de notes do provedor; ausência de config/conectar no painel; claimLeadership chamado; uma única fileira de KPIs."
+      ],
+      "limits": [
+        "263–310 descreve save→reopen, mas só nega metadado do provedor na assertion final; não exige texto salvo. useMyCalls conserva fixture nota antiga, independente do builder/linhas alterado. Filtro mock não reproduz reset de página (MOD014/015). Apenas Enter na linha, não no botão interno (AUTH052); notas sem mudança de ID/latência (MOD013), KPIs sem RPC real/TEL-PERIOD."
+      ],
+      "related_findings": [
+        "R2-MOD-013",
+        "R2-MOD-014",
+        "R2-MOD-015",
+        "R2-AUTH-052",
+        "TEL-PERIOD-001"
+      ],
+      "observations": []
+    },
+    {
+      "index": 19,
+      "path": "src/components/calls/__tests__/calls-access.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "c9d94d1036b9f369495e57a6fa0a0b6364cd5722",
+      "source_sha256": "cad85e0fb62fe64d5c4b38b176206bb1d288db9825af2cd0058fbb17d76b2632",
+      "line_count": 232,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          232
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Guards de fonte para superfície não vazia, ausência de texto service_role, separação engine/React/SIP, sufixo ilike, RPC de notas, depreciação e ausência literal de Math.random."
+      ],
+      "mocks_and_fixtures": [
+        "Leitura estática de diretórios e regex sobre arquivos; fixtures positivas/negativas do detector de sufixo."
+      ],
+      "positive_controls": [
+        "Detector de sufixo tem amostras legítimas/proibidas; paths não podem resultar em coleção vazia; presença de fallback é exigida."
+      ],
+      "limits": [
+        "Regex de fonte não comprova RLS, segredo ausente em aliases/config, runtime da RPC ou todas formas equivalentes de código. JSDoc exigida menciona consumidores legados já removidos.3 it.todo são pendências explícitas, não testes executados de scope/SRTP/conferência."
+      ],
+      "related_findings": [
+        "TEL-RUNTIME-001",
+        "TEL-PERIOD-001",
+        "D-AUTH-55"
+      ],
+      "observations": []
+    },
+    {
+      "index": 20,
+      "path": "src/components/contacts/__tests__/BulkActionsBarPermissions.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "6a590081665524692524076438055b59a5effd63",
+      "source_sha256": "ccf1b308e9ef3a6834bdcc34542218aa072628a6e7cc38aea2c6dfeaa038e748",
+      "line_count": 23,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Barra ativa de Contatos oculta Tipo por padrão e mostra com canChangeType."
+      ],
+      "mocks_and_fixtures": [
+        "Supabase objeto vazio; props com2 IDs e callbacks spies; nenhuma mutation acionada."
+      ],
+      "positive_controls": [
+        "Default nega a apresentação do controle."
+      ],
+      "limits": [
+        "Permissão é fornecida como prop, não derivada de roles/RLS. Não testa nenhuma ação em massa, erro ou zero rows de AUTH013."
+      ],
+      "related_findings": [
+        "R2-AUTH-013"
+      ],
+      "observations": []
+    },
+    {
+      "index": 21,
+      "path": "src/components/inbox/contact-details/__tests__/click-to-call-origens.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "447da741b5c30cb51faafdce78b620e100aed3f2",
+      "source_sha256": "c10611c81f6c22f7506d631de830c8e259be68efc0a245bd8967def9bb2aa7a7",
+      "line_count": 76,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          76
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Strings de import/chamada dispatchStartCall, payload channel/source e ausência de strings do legado em4 origens/hosts e provider."
+      ],
+      "mocks_and_fixtures": [
+        "Leitura de5 arquivos por fs e regex, sem montar a árvore ou disparar evento."
+      ],
+      "positive_controls": [
+        "Canais WhatsApp e VoIP explicitamente buscados; chamada real do símbolo exigida além do import."
+      ],
+      "limits": [
+        "Título ninguém mais emite no app só cobre a lista fixa de arquivos. Não prova consumidor único globalmente, payload em runtime, roteamento de canal ou acesso; remete a outros testes que precisam ser adjudicados separadamente."
+      ],
+      "related_findings": [
+        "R2-CALL-007",
+        "TEL-RUNTIME-001"
+      ],
+      "observations": []
+    },
+    {
+      "index": 22,
+      "path": "src/components/onboarding/__tests__/WelcomeModal.a11y.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "867c521d37200b83cd2a67c340a71d1ebe2eb352",
+      "source_sha256": "db3f6be3c5aeb67fd9fcbf7ac9a2eded71393136450b3fb8cb5239d08f06cbe6",
+      "line_count": 53,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "WelcomeModal aberto tem um role dialog com aria-modal/nome via título; fechado retorna null; axe configurado verifica apenas ausência de violações region."
+      ],
+      "mocks_and_fixtures": [
+        "Componente real em DOM de teste, callbacks no-op e usuário Ana; contraste axe explicitamente desativado."
+      ],
+      "positive_controls": [
+        "Um único dialog evita duplicação de landmark; título referenciado existe."
+      ],
+      "limits": [
+        "Filtro da assertion é apenas region. Não prova foco/trap/retorno/teclado, leitor de tela nem contraste/medidas reais. A auditoria não executou axe."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 23,
+      "path": "src/components/settings/__tests__/KeyboardShortcutsSettings.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "9570fb1301eebab065c078d171008cef011c910f",
+      "source_sha256": "5074f887a82314bef8edd498cd581731aa76862c6eee9cc75edd2c2433fc27c4",
+      "line_count": 45,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          45
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Nomes/descrições dos7 atalhos de tarefas e globais preservados na tela de configurações."
+      ],
+      "mocks_and_fixtures": [
+        "Toast mockado; componente real; textos esperados enumerados."
+      ],
+      "positive_controls": [
+        "Ajuda de atalhos aparece duas vezes conforme catálogo e descrições específicas permanecem."
+      ],
+      "limits": [
+        "Não verifica divisão de chunk/budget initial-js, import carregado sob demanda, personalização ou execução dos atalhos. Texto presente não comprova ação."
+      ],
+      "related_findings": [
+        "D-AUTH-59"
+      ],
+      "observations": []
+    },
+    {
+      "index": 24,
+      "path": "src/components/settings/__tests__/MediaLibraryAdmin.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "4e6d4ee12143ec9de7b1f84d63420d27a023938f",
+      "source_sha256": "fb0214261ef721709c242877a032276798226091d213061caf0229bab96f6943",
+      "line_count": 1825,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          1825
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "1–625 monta MediaLibraryAdmin com infraestrutura falsa e verifica três abas, consulta stickers/limit1000/order/select*, estado vazio/null/erro, contagens/soma/favoritos/categorias, refresh e atributos de controles e linhas.",
+        "627–1825 verifica apenas constantes, funções e operações recriadas no arquivo de teste: filtros/seleção/estatísticas/URLs/MIME/progresso/mapeamentos/classificação/insert/revert/rename/preview/duração/prompt. Pode verificar essas fixtures, não os respectivos handlers de produção."
+      ],
+      "mocks_and_fixtures": [
+        "Supabase from/storage/functions/Auth substituídos por builders e spies; factories sticker/audio/emoji com URLs sintéticas. Escritas padrão devolvem error:null.",
+        "A suíte Pure Logic tem mapas locais, getFn/getBucket/getField e extractStoragePath local (1419 declara a réplica). Reverts e limpeza são atribuições manuais, sem renderHook, promise rejeitada ou interação com handlers reais."
+      ],
+      "positive_controls": [
+        "No componente real montado, vazio/null não quebra render, top usados some sem dados, soma use_count10+5 aparece, refresh faz nova chamada à tabela.",
+        "Fixturas locais incluem nulos, seleção parcial e vazia, categoria desconhecida, path alternativo, tamanho exato 10MiB, prompt vazio e demais limites; sua utilidade está restrita à lógica duplicada."
+      ],
+      "limits": [
+        "214–220 exige catálogo vazio após erro retornado, sem verificar aviso/retry. Revisão produtiva da frente Inbox confirmou toast.error em useMediaLibrary109–116; não é prova de silêncio total.",
+        "Assertions com títulos de acessibilidade, edge cases e performance frequentemente verificam apenas tag INPUT, footer ou título; loops não medem desempenho ou efeitos duplicados.",
+        "Casos Pure Logic não falhariam se handlers produtivos divergissem: duração1090–1095 compara literais consigo mesmos; fallback743–745 é objeto criado no teste; rollback1498–1510/1595–1615 e erro de reclassificação1661–1691 são simulações locais.",
+        "Não prova autorização/RLS, persistência, storage/upload/playback/IA reais, erro de mutação, concorrência ou recuperação de recursos."
+      ],
+      "related_findings": [
+        "R2-INB-051",
+        "R2-INB-053"
+      ],
+      "observations": [
+        "Leitura integral1–1825 concluída; nenhuma execução. Casos intitulados integração usam o mesmo mock Supabase.",
+        "INB-051/053 são referências aos limites de janela/erros de reclassificação; não absorvem um novo achado de carga. Parent agrupará cópias de lógica na família de evidência de testes, sem ID Auth separado."
+      ]
+    },
+    {
+      "index": 25,
+      "path": "src/components/settings/__tests__/SLAConfigurationManager.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "1f80efcb467cff843a9bcd78baa87b628a3bb2c7",
+      "source_sha256": "a046884778b04b45c9f60847d4c1c3e3c5079b4b2730f86f1be94f5a14f23f3f",
+      "line_count": 131,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          131
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Lista/título, nomes/prioridades/default/tempos de2 configs, botão Novo abre diálogo e existem switches."
+      ],
+      "mocks_and_fixtures": [
+        "Supabase ignora nome de tabela e retorna2 fixtures fixas; toda escrita devolve sucesso; QueryClient/BrowserRouter reais."
+      ],
+      "positive_controls": [
+        "Config default distinta e formatação5/15min; abertura real do diálogo por click."
+      ],
+      "limits": [
+        "Nenhum submit/toggle/delete é acionado; não verifica payload, autorização, erro, exclusividade de default ou primeira resposta fixa por decisão. Fixtures chamadas from database são dados sintéticos."
+      ],
+      "related_findings": [
+        "D-AUTH-43"
+      ],
+      "observations": []
+    },
+    {
+      "index": 26,
+      "path": "src/components/settings/__tests__/SLARulesManager.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "c34d6211cefb2f31f75dde572fa76898f211af7f",
+      "source_sha256": "899138a7d945ea0386037039b5b36f36e8e48f1e6ba8091a5ffb707fd69784bd",
+      "line_count": 166,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          166
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Seis abas, estados vazios, abertura/formulário/cancelar/criar e helper de formatação de minutos."
+      ],
+      "mocks_and_fixtures": [
+        "Todos encadeamentos Supabase resolvem dados vazios/sem erro; QueryClient/Router reais; toast spy."
+      ],
+      "positive_controls": [
+        "Troca de abas por click e descrição acessível presente; limites59/60/90/125min no helper."
+      ],
+      "limits": [
+        "Abas distintas recebem sempre mesmo vazio; não prova filtro SQL nem ausência de vazamento entre escopos. Não cria/edita/remove regra, não confirma payload/clamp/key/reset do formulário nem trata error."
+      ],
+      "related_findings": [
+        "D-AUTH-43"
+      ],
+      "observations": []
+    },
+    {
+      "index": 27,
+      "path": "src/components/settings/__tests__/SettingsView.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "d2be3e6bae44f0bb90261d455ec5702c5b54832d",
+      "source_sha256": "23912de14f19ff041679c14537f000a7fefa0384f471aab88e7351899509a7b5",
+      "line_count": 111,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          111
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "SettingsView real mantém os doze painéis staff fora do DOM de agente e presentes para admin/supervisor; verifica também barra de quatro abas pessoais e dois painéis pessoais."
+      ],
+      "mocks_and_fixtures": [
+        "Papel, userSettings e onboarding falsos; todos os painéis são stubs. TabsContent foi substituído para renderizar sempre, isolando o guard externo."
+      ],
+      "positive_controls": [
+        "Matriz negativa agente e positiva admin/supervisor detecta remoção do guard de composição mesmo quando uma aba está inativa."
+      ],
+      "limits": [
+        "Não prova navegação Radix, autorização backend/RLS, permissões internas dos painéis ou persistência. Os doze stubs não exercitam os controles operacionais relacionados."
+      ],
+      "related_findings": [
+        "R2-AUTH-045",
+        "R2-AUTH-046",
+        "R2-AUTH-047",
+        "R2-AUTH-048",
+        "R2-AUTH-049"
+      ],
+      "observations": []
+    },
+    {
+      "index": 28,
+      "path": "src/components/settings/__tests__/ThemeCustomizer.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "75e2f998eb0019e85b237e7b73bf562f93486694",
+      "source_sha256": "07df23f9597f259dcb98902af3c2bea1ad3812c7fc9e050dfe89d7160a6a4716",
+      "line_count": 99,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          99
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "ThemeCustomizer real aplica presets/radius/dataset/storage, restaura corporate, renderiza radios e chama setTheme light."
+      ],
+      "mocks_and_fixtures": [
+        "ResizeObserver vazio, toast spy e useTheme falso; DOM/localStorage de teste reais."
+      ],
+      "positive_controls": [
+        "Transição GX→ocean verifica snap de radius e reset confirma valor persistido."
+      ],
+      "limits": [
+        "Teste Salvar64–69 exige somente toast.success; não induz falha de storage. Não cobre ThemeInitializer e storage null de SK-02, nem render visual/contraste ou mudança real de tema do sistema."
+      ],
+      "related_findings": [
+        "SK-02"
+      ],
+      "observations": []
+    },
+    {
+      "index": 29,
+      "path": "src/components/settings/ai-providers/__tests__/AIProviderHealthPanel.sem-observacoes.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "dac2e4b264396d24d42c6a581bbcc5735c6ac7a5",
+      "source_sha256": "0104bc63667d90d9b35a6fd6131e6ea6b242977273011b34c83781cba2386a0f",
+      "line_count": 101,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          101
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Painel real distingue ausência de observações, taxa zero de erros, taxa 50% da amostra mista e p50 excluindo durações null."
+      ],
+      "mocks_and_fixtures": [
+        "React Query real isolado sem retry; builder Supabase ignora filtros e devolve logs sintéticos openrouter/ai-proxy, com variável de erro disponível."
+      ],
+      "positive_controls": [
+        "Amostra quatro com fallback no denominador e cinco durações com duas não medidas têm assertions de números e rótulos."
+      ],
+      "limits": [
+        "Nenhum caso atribui logsDaConsulta.erro. Todos function_name='ai-proxy' e mesmo provider; não testa completude de coleta/filtro/limite ou outros provedores. Consulta e observações de produção não executadas."
+      ],
+      "related_findings": [
+        "R2-API-043"
+      ],
+      "observations": []
+    },
+    {
+      "index": 30,
+      "path": "src/components/settings/theme/__tests__/BorderRadiusControl.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "9ea1dd7f9bbd76e6fa1ca9a043591cfe47303412",
+      "source_sha256": "2093369486dfcdd3d8119f5266712eeec4e037e66efad9fa14159f753e0c50ca",
+      "line_count": 41,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "BorderRadiusControl real apresenta cinco presets, callback20, indicação de ativo, aria-label do slider e valor em pixels."
+      ],
+      "mocks_and_fixtures": [
+        "ResizeObserver vazio, onChange spy, props escalares."
+      ],
+      "positive_controls": [
+        "Click no preset redondo exige argumento20; value0 corresponde à classe ativa."
+      ],
+      "limits": [
+        "Não interage com slider/teclado e não prova clamp, aplicação CSS ou persistência do consumidor."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 31,
+      "path": "src/components/settings/theme/__tests__/PresetCard.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "b8b7520169c9e4552e6d7b1cb2ed9ad9f436f2a6",
+      "source_sha256": "f326f6a44d8bd287f2731ad7c6c570d637f02dee6f72a3e1efd97de87b4d15ca",
+      "line_count": 45,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          45
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "PresetCard real com preset importado usa radio/aria-checked/tabIndex, chama callback com id no clique e duas keydowns Enter/Space."
+      ],
+      "mocks_and_fixtures": [
+        "Preset gx-classic produtivo; callback spy, DOM simulado."
+      ],
+      "positive_controls": [
+        "Estados ativo/inativo verificados; identidade do preset do clique é exata."
+      ],
+      "limits": [
+        "fireEvent.keyDown não realiza ativação nativa completa ou navegação em radiogroup; não prova foco entre presets, persistência ou aparência. Duas keydowns intencionais produzem duas chamadas, sem cenário de default click do navegador."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 32,
+      "path": "src/components/settings/theme/__tests__/presets.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "c6db001a6d77593eadc9e18f0550080261b3ee6c",
+      "source_sha256": "2b2d236cd71773f42c30908f664a98f33f57f68a92b58615c29ce717df65941d",
+      "line_count": 404,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          404
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Importa catálogo e funções produtivas:19presets, ids/ordem/cores/categorias, conjunto de tokens, radius clamp, cleanup/cache, import/export e normalização. Exercita sequências de persistência/reload/reset com DOM local.",
+        "Calcula razões de contraste em oracle HSL→RGB local aplicado a duas duplas de tokens light/dark de cada preset, exigindo limiar3."
+      ],
+      "mocks_and_fixtures": [
+        "Sem mock das funções presets; DOM/localStorage do ambiente de teste. Expectativas de cores e ids fixadas no arquivo; funções auxiliares de contraste locais21–50."
+      ],
+      "positive_controls": [
+        "Rejeita JSON/preset/tipo radius inválidos, clamp negativo/excessivo/NaN, id desconhecido no-op e persistCache:false. Compara CSS_VARS sem duplicatas aos tokens corporate."
+      ],
+      "limits": [
+        "Contraste3 de duas duplas de tokens não atesta contraste de todos os elementos, transparências, estados, tamanhos de texto ou acessibilidade da aplicação. Oracle não tem fixtures de calibração no arquivo.",
+        "Reload chama loadThemeConfig/applyThemePreset manualmente, sem montar ThemeInitializer; não cobre stored null/SK-02. Storage indisponível/corrompido parcialmente delegado a outro arquivo; remoção de classe transitioning não é aguardada/assertada."
+      ],
+      "related_findings": [
+        "SK-02"
+      ],
+      "observations": []
+    },
+    {
+      "index": 33,
+      "path": "src/components/settings/theme/__tests__/theme-storage.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "8bf2be2f3da9452eb46392fcfa66117d4d549f66",
+      "source_sha256": "915771e71e2e2fe6e3b48764d3cc70bf9507e63533d3bdf0d6adacca5eecfc93",
+      "line_count": 81,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          81
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "load/save produtivos fazem round-trip v6, migração v5/ids antigos, clamp, default para versão/JSON inválidos, preservação de cache no merge e retorno false por quota."
+      ],
+      "mocks_and_fixtures": [
+        "localStorage do ambiente; um caso substitui Storage.prototype.setItem e restaura em finally."
+      ],
+      "positive_controls": [
+        "Falha concreta QuotaExceededError verifica retorno false; migração confirma v persistido6 e radius preservado."
+      ],
+      "limits": [
+        "Não monta consumidor ThemeCustomizer para conferir reação ao false, nem ThemeInitializer para null/SK-02. JSON literal null e getItem lançando não são injetados neste arquivo."
+      ],
+      "related_findings": [
+        "SK-02"
+      ],
+      "observations": []
+    },
+    {
+      "index": 34,
+      "path": "src/components/settings/theme/__tests__/tokens-sync.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "dfe4236f247b2c3d5bfb0e2d2a71349d02ec6119",
+      "source_sha256": "409e1d7be1733f3f601bbe7ae8cd56fe7eea0252d75a917e13e2fc3f48043d4d",
+      "line_count": 55,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          55
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Lê tokens.css real e compara todas CSS_VARS_TO_APPLY produtivas ao corporate light/dark, com fallback root quando dark não define."
+      ],
+      "mocks_and_fixtures": [
+        "Parser textual local com profundidade de chaves/regex CSS; conjunto de divergências permitidas vazio."
+      ],
+      "positive_controls": [
+        "Sem exceções ativas, todas chaves do contrato são comparadas; resolve herança root no dark."
+      ],
+      "limits": [
+        "Não é parser CSS completo nem testa cascade/computedStyle ou tokens fora CSS_VARS_TO_APPLY; compatibilidade visual não estabelecida."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 35,
+      "path": "src/hooks/__tests__/useAgents.presence.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "51cc599da7ce61e56339fc13d89e5fee8089a283",
+      "source_sha256": "b4179678971db51664be7faa545569c82f4be9f3a110ad776f2ca2325d6f70bf",
+      "line_count": 39,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "useAgents real prefere mapa de presença away para u2 e fallback offline com updated_at vazio para u1."
+      ],
+      "mocks_and_fixtures": [
+        "Duas profiles fixas e Supabase builder falso; useAgentPresenceMap devolve apenas u2:away; React Query isolado."
+      ],
+      "positive_controls": [
+        "Distingue identidade de usuário do perfil no resultado e cobre override versus ausência de mapa."
+      ],
+      "limits": [
+        "Não cobre atualização em realtime, heartbeat, TTL, profiles RLS, usuário ativo com updated_at recente nem correção de contagem de chats."
+      ],
+      "related_findings": [
+        "R2-AUTH-011",
+        "R2-AUTH-020"
+      ],
+      "observations": []
+    },
+    {
+      "index": 36,
+      "path": "src/hooks/__tests__/useAgents.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "ebaf901e4db69bc166d967af1e09c34076871349",
+      "source_sha256": "b4e6bdc4fe1e8cb19d65b6226619692237829d0e7e5fc2443f33b36345b817a1",
+      "line_count": 93,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          93
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Dois casos montam useAgents real e verificam quantidade de profiles retornadas/resultado não vazio."
+      ],
+      "mocks_and_fixtures": [
+        "Duas profiles com estados ativos diferentes, queue/membro e dois contatos atribuídos a p1 devolvidos por Supabase falso; React Query real."
+      ],
+      "positive_controls": [
+        "Caso66–74 exige exatamente duas entradas após loading terminar."
+      ],
+      "limits": [
+        "76–81 não chama hook/utilitário: única assertion80 é expect(true).toBe(true), explicitamente placeholder. Não prova status.",
+        "83–91 intitula contagens corretas, mas só verifica agents.length>0; não verifica contagem de chats, histórico/ativo, queues, RLS ou erros."
+      ],
+      "related_findings": [
+        "R2-AUTH-011",
+        "R2-AUTH-020"
+      ],
+      "observations": [
+        "Locus de placeholder encaminhado ao parent para família agregada de evidência de testes, sem achado Auth novo."
+      ]
+    },
+    {
+      "index": 37,
+      "path": "src/hooks/__tests__/useAuth.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "6dbc3ea95b1f49bca1985c2093dc7dbe22f3a719",
+      "source_sha256": "94b1cfa69bf2517b9a977a8ba6de51812a49a2eb01c28fcd5b9d550d6fd57405",
+      "line_count": 101,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          101
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "AuthProvider real inicializa loading/user null; signIn delega serverLogin, aplica tokens por setSession, evita signInWithPassword e retorna sem erro; signOut chama Supabase."
+      ],
+      "mocks_and_fixtures": [
+        "Auth SDK, from/profile e serverLogin falsos; onAuthStateChange só devolve subscription sem emitir eventos. QueryClient estável por teste."
+      ],
+      "positive_controls": [
+        "Asserts argumentos de credenciais e tokens exatos, e ausência do caminho client password."
+      ],
+      "limits": [
+        "Não invoca callback SIGNED_OUT nem coloca entrada no cache para afirmar limpeza, apesar dos comentários37–51. signOut verifica só chamada do SDK.",
+        "Não cobre falha setSession/serverLogin, obtenção/troca tardia de perfil, duas identidades/logout, inatividade/MFA ou validade real dos tokens."
+      ],
+      "related_findings": [
+        "R2-AUTH-003",
+        "R2-AUTH-004",
+        "R2-AUTH-005",
+        "R2-AUTH-021"
+      ],
+      "observations": []
+    },
+    {
+      "index": 38,
+      "path": "src/hooks/__tests__/useCallHistory.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "c07c73857a89e5aa7f7213ceeac80dc2799df64a",
+      "source_sha256": "179a802470db1c951da1dbc443f989a8ef7732e4f6f074b4f4672c875e314f17",
+      "line_count": 79,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "useCallHistory real não consulta sem profile; constrói filtros de direction/channel/result e busca por IDs de contatos; busca sem contatos evita query paginada."
+      ],
+      "mocks_and_fixtures": [
+        "Builder único compartilhado por history/stats/contact lookup, com spies e respostas vazias/contato1; QueryClient criado dentro do wrapper."
+      ],
+      "positive_controls": [
+        "Vazio de busca exige calls=[] e range não chamado; sem perfil exige nenhuma chamada from."
+      ],
+      "limits": [
+        "Caso intitulado filtros em ambas queries verifica cada spy chamado ao menos uma vez no builder compartilhado; não distingue aplicação em history versus stats. Não prova RLS, totais, paginação ou comportamento de erro."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 39,
+      "path": "src/hooks/__tests__/useCalls.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "ffc26c1fd047576b7a79684e42f8a974723fbb25",
+      "source_sha256": "fb5516fcc49719c2ca9237742d77c3298bdd5ac1bcb62e3a9064daf76d0848a9",
+      "line_count": 165,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          165
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "useCalls real retorna id/booleans em start/answer/end/miss e delega addCallNotes à RPC com id e notas exatos, inclusive texto vazio."
+      ],
+      "mocks_and_fixtures": [
+        "Auth usuário1, Supabase profile/calls/RPC, log e toast falsos; todas respostas bem-sucedidas."
+      ],
+      "positive_controls": [
+        "Asserts nome da RPC e corpo de notas; start sem contactId ainda retorna registro, conforme contrato legado."
+      ],
+      "limits": [
+        "Não confere payload/escopo das mutations de lifecycle, erros, contagem de linhas ou transporte. getContactCalls apenas Array.isArray. Leitura produtiva anterior estabeleceu uso atual de notas; lifecycle deste hook legado não foi estabelecido como caminho do discador ativo."
+      ],
+      "related_findings": [
+        "R2-AUTH-051"
+      ],
+      "observations": []
+    },
+    {
+      "index": 40,
+      "path": "src/hooks/__tests__/useCalls.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "297ec8445fd1fb68c9fa9940f5387f8d14dccfa4",
+      "source_sha256": "dedb161daae150c05632accaf5cf7993a328843f58b2abbcb05267cbda97f2d8",
+      "line_count": 157,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          157
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "useCalls real inicia com estado vazio, retorna id de start e true em answer, delega notas à RPC e retorna false quando ela falha."
+      ],
+      "mocks_and_fixtures": [
+        "Supabase falso por tabela, profilep1/Authu1 e log/toast mock; auth nunca muda."
+      ],
+      "positive_controls": [
+        "146–155 induz error da RPC e exige false, controle negativo concreto contra sucesso local nesse hook."
+      ],
+      "limits": [
+        "endCall110–118 só exige from('calls'), sem status/callId/duração persistidos. Não verifica tratamento do retorno false pelo consumidor/editor, concorrência/troca de chamada, RLS ou lifecycle real de telefonia."
+      ],
+      "related_findings": [
+        "R2-AUTH-051",
+        "R2-MOD-013"
+      ],
+      "observations": []
+    },
+    {
+      "index": 41,
+      "path": "src/hooks/__tests__/useConnectionQueues.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "991724aba32d88a40dce130a31e9aa531ced049e",
+      "source_sha256": "65df8eba0faae6b23cb696536f1bd1556999187b968b8ad86e28c6d6def9df00",
+      "line_count": 46,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Hook real consulta whatsapp_connection_queues e expõe funções add/remove; estado inicial sem id é vazio."
+      ],
+      "mocks_and_fixtures": [
+        "Builder Supabase fixa uma associação conn1/q1; todas mutations mock sucesso."
+      ],
+      "positive_controls": [
+        "Tabela consultada é assertada após loading."
+      ],
+      "limits": [
+        "Não confere eq do connectionId ou resultado da associação; teste 'does not fetch' não verifica from não chamado. add/remove apenas typeof function, sem execução/erro/RLS. Não testa mudança de conexão e resposta tardia."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 42,
+      "path": "src/hooks/__tests__/useGlobalSearchShortcut.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "f3313a1aa68bbe9799ed409c8476b586cf3a62d3",
+      "source_sha256": "fe4689011a049b56d59f19f6764956e2aed544a469aacbc48ee890caf82521f4",
+      "line_count": 53,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Hook real abre uma vez em Ctrl+K/Cmd+K, não abre em K simples/Ctrl+A e remove listener ao desmontar."
+      ],
+      "mocks_and_fixtures": [
+        "Callbacks spies e KeyboardEvent enviado diretamente ao document; removeEventListener spy restaurado."
+      ],
+      "positive_controls": [
+        "Dois controles negativos de combinações e cleanup explícito."
+      ],
+      "limits": [
+        "Não verifica preventDefault ou alvos editáveis, callback atualizado, duplicação com outros shortcuts montados, remapeamento ou comportamento do navegador."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 43,
+      "path": "src/hooks/__tests__/useIncomingCallListener.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "11fbf042011208729b748929a6697816cc45d340",
+      "source_sha256": "f6f9a3bd89c7e027fe21efd0a4fa5acb50aa0796421736c99474bb042aecc3ca",
+      "line_count": 416,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          416
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Listener real assina INSERT scoped ao usuário, mapeia metadados, distingue callId da notificationId, deduplica por linha/evento/callId, filtra tipos/status e consulta status antes de publicar alerta.",
+        "Promises controladas testam lookup legado antigo não sobrescrevendo chamada nova e completion após cleanup; terminais no momento da consulta são ignorados e erro de consulta permanece fail-open explicitamente."
+      ],
+      "mocks_and_fixtures": [
+        "Auth fixo user1/profile1; callbacks de canal Supabase capturados e disparados manualmente. Builders falsos para contacts/calls, promises deferred e logger spy."
+      ],
+      "positive_controls": [
+        "243–278 exercita duas entregas fora de ordem;280–300 impede commit após unmount;350–366 verifica consulta exata por call42; replay e duas chamadas legítimas separados."
+      ],
+      "limits": [
+        "Não monta IncomingCallAlert ou CallSessionProvider; não simula chamada viva que termina depois de publicar alerta, tela fechada/reaberta, ação WhatsApp/SIP ou mudança de usuário. Controles de consulta inicial não eliminam CALL006–008.",
+        "Cleanup verifica removeChannel chamado, sem confirmação de transporte real; não há tempo/TTL de dedupe ou realtime real."
+      ],
+      "related_findings": [
+        "R2-CALL-006",
+        "R2-CALL-007",
+        "R2-CALL-008"
+      ],
+      "observations": []
+    },
+    {
+      "index": 44,
+      "path": "src/hooks/__tests__/usePermissions.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "2e3e9dba4aac8e8dacbb2c1e7a2ef2e3c06b0190",
+      "source_sha256": "c3100f8e3f2219c0b7b075011bda0cff5f8b5cc5fbd85c37c1d0e5bcfb423370",
+      "line_count": 160,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          160
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "usePermissions real produz vazio/nega sem usuário, carrega lista e calcula hasPermission/Any/All com permissões positivas e negativas das fixtures."
+      ],
+      "mocks_and_fixtures": [
+        "Auth fixo por caso e builder Supabase permissivo por tabela; agent também recebe role_permissions pelo mock, sem RLS."
+      ],
+      "positive_controls": [
+        "Nomes inexistentes negados e Any/All recebem listas mistas; caso deslogado retorna []."
+      ],
+      "limits": [
+        "Não monta troca de usuário/logout com pedidos pendentes, cache/refresh ou erro de leitura. Não executa grant/revoke e não cobre role_permissions SELECT restrito ao staff; fixture agent com permissão é premissa falsa para provar acesso direto ao banco vigente."
+      ],
+      "related_findings": [
+        "R2-AUTH-009",
+        "R2-AUTH-011"
+      ],
+      "observations": []
+    },
+    {
+      "index": 45,
+      "path": "src/hooks/__tests__/useReauthentication.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "69560cfc208e9f91a37ab99324b4cb06562c4686",
+      "source_sha256": "5fd5b6dad5706a7e63c5a2c9326ee25a060c780c2d2cebf5a263cfb137c0c919",
+      "line_count": 195,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          195
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Hook real obtém email, reautentica via serverLogin/setSession, diferencia senha incorreta de indisponibilidade, recusa usuário ausente e gerencia pendingAction/dialog/cancelamento.",
+        "confirmReauth chama callback após resposta bem-sucedida e limpa dialog/ação; rótulos de cinco ações verificados."
+      ],
+      "mocks_and_fixtures": [
+        "GetUser/setSession/serverLogin e toast mocks; tokens sintéticos e callback spy resolvido."
+      ],
+      "positive_controls": [
+        "Erro auth-edge503 tem mensagem própria, distinta de credenciais, quando serverLogin devolve unavailable:true."
+      ],
+      "limits": [
+        "Não prova que endpoint upstream preserve503 (AUTH021), nem autorização/AAL da ação protegida. Não injeta erro setSession, callback rejeitado, requisições concorrentes/cancelamento durante await ou mudança de identidade. Labels não demonstram consumidores operacionais para cada ação."
+      ],
+      "related_findings": [
+        "R2-AUTH-003",
+        "R2-AUTH-021"
+      ],
+      "observations": []
+    },
+    {
+      "index": 46,
+      "path": "src/hooks/__tests__/useSipClient.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "a0dcb54e8eb039045f615c4f78f1d7df115fc312",
+      "source_sha256": "f797c2f8f0b2c38014d459e2c7a7d1d9b2407a726e9eec0a3112ee6e9035ce94",
+      "line_count": 1054,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          1054
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Hook SIP real atravessa engine/adapters até RPC mock: estados/register/disconnect, provisionamento host/user/porta, guard de registro, identidade e lifecycle ringing→answered→ended, cancelamento de INVITE pendente, motivos locais/remotos/486/falha, timer, fila de persistência, retentativa e watchdog.",
+        "Testa entrada SIP, rejeição ocupada com id separado, microfone bloqueado/ausente/ocupado, devolução de tracks da sondagem e transições leader/follower simuladas."
+      ],
+      "mocks_and_fixtures": [
+        "Todas classes SIP.js são doublês, callbacks de estado disparados manualmente; UA/start/stop/register/invite/media sem rede. Supabase Edge/RPC/consultas, toast e tabLeaderStore falsos.",
+        "Fake timers em casos de duração/watchdog; promises controladas em INVITE e duas primeiras RPCs. Helper escoar aguarda número fixo de microtarefas. Números/credenciais são fixtures sintéticas."
+      ],
+      "positive_controls": [
+        "362–377 distingue UA existente não registrado de UA nulo;463–474 cancela enquanto invite não resolve.",
+        "693–719 verifica três upserts mesmo sessionId;734–747 força três erros e toast;828–858 prova que answered/ended não ultrapassam ringing pendente.",
+        "542–615 cobre timer congelado, repeated Established sem intervalo duplicado, segunda chamada resetada e zero timers após término;873–918 inclui negativa de microfone tanto em discar como atender.",
+        "1018–1052 fecha ponte evento do adapter→última RPC para busy/failure, sem depender somente do classificador puro."
+      ],
+      "limits": [
+        "Não há servidor SIP, áudio real, credenciais reais, RLS ou banco; eleição real delegada ao teste de tabLeaderStore. Não testa login/logout/troca de usuário ou fluxo WhatsApp→SIP no overlay.",
+        "535–540 'clean up interval on unmount' não cria chamada/timer e não contém assertion; controles de timer601–615 são de término de chamada, não de unmount ativo.",
+        "380–388 intitula registro antes de invite resolver, mas await discar usa invite já resolvido.722–731 diz mesmas três gravações, porém só emite até Established e compara duas; ciclo completo existe separadamente693–719.",
+        "Mocks de listeners acumulam funções e evento chama todas; não modela transporte nem isolamento multissessão real. Não adjudica CALL006–008 nem remoção de UA no logout."
+      ],
+      "related_findings": [
+        "R2-CALL-001",
+        "R2-CALL-002",
+        "R2-CALL-006",
+        "R2-CALL-007",
+        "R2-CALL-008"
+      ],
+      "observations": []
+    },
+    {
+      "index": 47,
+      "path": "src/hooks/__tests__/useUserSettings.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "3529d7805736ae219875b43667bb522114eb269f",
+      "source_sha256": "cdcc8dca6625db8b52e53a09f7dfdd155282e1070f65dd6f15311a207e3b9fb0",
+      "line_count": 135,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          135
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "useUserSettings real lê duas propriedades da fixture, usa defaults sem usuário e após promise rejeitada, e expõe updateSettings."
+      ],
+      "mocks_and_fixtures": [
+        "Auth falso por caso, builder maybeSingle/upsert falso e fixture ampla de horários/mensagens/automações/tema/TTS."
+      ],
+      "positive_controls": [
+        "Exceção de DB não prende loading; defaults de dias, idioma, quiet hours, speed e método de atribuição são comparados."
+      ],
+      "limits": [
+        "Nenhum teste chama updateSettings/saveSettings/toggleWorkDay ou confere upsert, campos enviados, erro retornado e usuário trocado. Defaults após erro não provam que ajustes salvos têm executor operacional, nem sincronização user_settings→global_settings."
+      ],
+      "related_findings": [
+        "R2-AUTH-049"
+      ],
+      "observations": []
+    },
+    {
+      "index": 48,
+      "path": "src/hooks/__tests__/useWebAuthn.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "5470096867150636c2386fd8ff14b3d393559454",
+      "source_sha256": "34e58e95619a42c46a805878106bb87308aac78e279473308f0b83043e10949f",
+      "line_count": 196,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          196
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Hook real nega operações sem usuário ou sem PublicKeyCredential; fetch vazio sem usuário evita DB, fetch autenticado expõe fixture; rename/delete retornam success no mock."
+      ],
+      "mocks_and_fixtures": [
+        "Supabase/from/invoke e Auth mocks; ambiente assume PublicKeyCredential ausente. Nenhuma credencial browser é criada/obtida e nenhum desafio criptográfico é fornecido."
+      ],
+      "positive_controls": [
+        "Fetch sem usuário exige nenhuma consulta, lista exata da fixture é conferida no caso autenticado."
+      ],
+      "limits": [
+        "Registro/autenticação só percorrem early return por suporte ausente/sem usuário. Não chama verifier Edge, não prova challenge/signature/origin/RP/UV/expiry nem estabelecimento de sessão.",
+        "Título 'delete ... correct params'100–123 verifica apenas success, não id/user/table do delete; rename137–160 idem para payload/nome. Nenhuma recusa RLS/zero linhas/erro de mutação."
+      ],
+      "related_findings": [
+        "R2-AUTH-001",
+        "R2-AUTH-002"
+      ],
+      "observations": []
+    },
+    {
+      "index": 49,
+      "path": "src/hooks/auth/__tests__/useAuthForm.email.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "f6bea07e70b0a83ded5fd2d6ae4631dc18306c5b",
+      "source_sha256": "305288986dc424feb1e9858510fc0b32b32fe5eaee28a9c70d37fb44fbc1c629",
+      "line_count": 119,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          119
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Hook useAuthForm real em formulário mínimo escolhe email do estado quando DOM diverge e usa DOM como fallback quando estado está vazio; controlo sem divergência envia valores digitados."
+      ],
+      "mocks_and_fixtures": [
+        "Auth signIn spy sucesso, WebAuthn indisponível, navigate/loginAttempts/toast/Supabase falsos. Setter nativo de input injeta valor sem onChange."
+      ],
+      "positive_controls": [
+        "A/B84–102 assegura DOM=B e signIn(A), com negativa explícita para B; caso105–117 preserva autofill no estado vazio."
+      ],
+      "limits": [
+        "Simula divergência DOM/React, não realiza autofill do browser, tela Auth completa ou requisição auth-login. Comentário sobre medição histórica não é revalidado por este teste lido."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 50,
+      "path": "src/hooks/auth/__tests__/useAuthForm.senha.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "4d77ac5c995089c65848b4e84845d339b6f04e5e",
+      "source_sha256": "9d85e2407b84527f26f54643f5c601f530b872c4b54d088945c49bd364b5a928",
+      "line_count": 113,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          113
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Hook real limpa password DOM não controlado após recusa; segundo submit sem redigitar não faz nova requisição; primeiro submit aceita senha injetada por setter DOM."
+      ],
+      "mocks_and_fixtures": [
+        "Formulário mínimo com email controlado/password não controlado, signIn sempre Invalid login credentials e demais integrações mock."
+      ],
+      "positive_controls": [
+        "A/B83–99 confere contagem permanece uma e a senha recusada só aparece em uma chamada; controle102–111 preserva autofill inicial."
+      ],
+      "limits": [
+        "Não cobre motivo lock/outage, sucesso de sessão, submit concorrente ou preenchimento pelo navegador real. Campo é equivalente mínimo, sem PasswordInput e página Auth montados."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 51,
+      "path": "src/hooks/calls/__tests__/linhaDoCanal.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "00cc1e6ce52b3167b82cf3e5115bbc657eb51e86",
+      "source_sha256": "f9c1f9b4927c720d8922cb08fe48a276df7b57414555734b8cc2f0f941ac53f8",
+      "line_count": 90,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Funções produtivas selecionam linha da conversa antes de default, tratam id ausente/E2E/vazio e rótulos D8; capacidade receive respeita conexão selecionada/role."
+      ],
+      "mocks_and_fixtures": [
+        "Fixtures de conexão conectada/desconectada/default/E2E e argumentos de papel; funções reais importadas."
+      ],
+      "positive_controls": [
+        "Linha da conversa desconectada não herda receive da default conectada; D8 oculta nome mesmo se dado da linha for fornecido."
+      ],
+      "limits": [
+        "Não monta hook/consulta RLS nem inicia chamada. Fallback de id não resolvido para default é regra explícita verificada, não tratado como defeito. CanReceive não prova roteamento correto da ação no overlay."
+      ],
+      "related_findings": [
+        "R2-CALL-007"
+      ],
+      "observations": []
+    },
+    {
+      "index": 52,
+      "path": "src/hooks/calls/__tests__/useCallChannels.d8.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "d11afa262feb4965a43ee3d4cb2cff692e79d0e8",
+      "source_sha256": "a5d98817575dd8fdfdce55aa19bd7be3bf6dadbfce5904add35059d5c4b8e7dd",
+      "line_count": 58,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Mapper puro distingue agente sem linha visível (restrito supervisores) de staff sem linha (unavailable), preserva comportamento sem campo e rótulo D8."
+      ],
+      "mocks_and_fixtures": [
+        "Nenhuma consulta: capacidadesPorCanal/describeReason produtivos recebem objetos com role/linha fornecidos pelo teste."
+      ],
+      "positive_controls": [
+        "Confere canDial/canReceive false sem linha e capacidade receive com linha conectada mesmo podeVerWhatsApp:false, regra explícita48–56."
+      ],
+      "limits": [
+        "Título 'sob RLS' não executa RLS; visibilidade é premissa de fixture. Não prova permissão efetiva de receber/controlar chamada, nem ação correspondente do overlay."
+      ],
+      "related_findings": [
+        "R2-CALL-007"
+      ],
+      "observations": []
+    },
+    {
+      "index": 53,
+      "path": "src/hooks/calls/__tests__/useCallChannels.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "b2afe1f0b59b7a0c613d026ffe17fdf6e33dce8b",
+      "source_sha256": "3c48a4ee939b7fb56b89f2ea956f2f5e3628368d2348aee2fc59c306fa937771",
+      "line_count": 226,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          226
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Mapper real calcula capacidades VoIP conforme registro/microfone/motivo e WhatsApp conforme conexão/default/E2E; filtro de prefixo E2E e canRecord=false são verificados."
+      ],
+      "mocks_and_fixtures": [
+        "Supabase e CallSessionProvider cortam grafo; funções puras reais recebem fixtures de conexão/status."
+      ],
+      "positive_controls": [
+        "Mic unknown também bloqueia discar; sem linha registrada não permite recusar; status de conexão escolhido altera receive. Lista E2E+default real mantém só a válida."
+      ],
+      "limits": [
+        "Não monta useCallChannels ou provider; sem RLS/provisionamento/ação. Título217 diz WhatsApp indisponível mas assertions223–224 exigem receive true e no_outbound por existir outra linha real conectada; avaliar pelo corpo, não pelo título."
+      ],
+      "related_findings": [
+        "R2-CALL-007"
+      ],
+      "observations": []
+    },
+    {
+      "index": 54,
+      "path": "src/hooks/calls/__tests__/useCallsKpi.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "19cf9a94bbb19b781153f0652242362d53e0e6ee",
+      "source_sha256": "4f57bde1856f2cd4794951eced4f9cd884485f7585ea73c257fc3319075f35b3",
+      "line_count": 66,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "periodoParaIntervalo real converte hoje/ontem/7d/30d/mês/mês passado/fallback a limites locais; KPI_ZERADO tem seis campos zero."
+      ],
+      "mocks_and_fixtures": [
+        "Instante AGORA fixo com offset-03; expectativas construídas em timezone local do processo."
+      ],
+      "positive_controls": [
+        "Mês passado cobre setembro inteiro e janelas incluem hoje; ontem compara largura de dia local."
+      ],
+      "limits": [
+        "Não monta useCallsKpi nem confere RPC/normalização all/agente/status de erro. Comentário de portabilidade a qualquer fuso não é demonstrado: AGORA é instante fixo enquanto datas esperadas são outubro2 local; em fusos que mudam seu dia local há diferença. Nenhuma matriz TZ foi executada."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 55,
+      "path": "src/hooks/crm/__tests__/useAgentsLite.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "3ca6ffe162dfc417cf817d225b0c2cd9e69f75cb",
+      "source_sha256": "2249568b6b6dc9e7bfc10de83e656b5d846105960b63975d2d98cbeef07c519f",
+      "line_count": 77,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          77
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "useAgentsLite real devolve Map vazio inicial, indexa profiles por id e mantém vazio quando React Query chegou de fato ao status error."
+      ],
+      "mocks_and_fixtures": [
+        "Builder profiles permissivo devolve dois perfis; QueryClient isolado/limpo e componente desmontado após cada caso."
+      ],
+      "positive_controls": [
+        "65–75 aguarda estado de erro, distinguindo-o de loading; mapeamento exige objetos de ambos IDs e undefined para desconhecido."
+      ],
+      "limits": [
+        "Não testa RLS de perfil comum vendo só a si, usuário/cache trocados, refresh realtime ou feedback no consumidor quando Map fica vazio."
+      ],
+      "related_findings": [
+        "R2-AUTH-011"
+      ],
+      "observations": []
+    },
+    {
+      "index": 56,
+      "path": "src/hooks/gmail/__tests__/gmailApi.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "8d3c03d554d36eb431c01f3f65f589c152e64a35",
+      "source_sha256": "5568b721e9482787143272e8e918d8713f55817badf5ac65049a1f7528c81343",
+      "line_count": 34,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          34
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Wrapper Gmail real preserva status403 e classifica recusa conclusiva, classifica falha fetch como resultado desconhecido e evita invoke sem sessão."
+      ],
+      "mocks_and_fixtures": [
+        "Auth getSession e functions.invoke spies; erros FunctionsHttpError/FetchError sintéticos."
+      ],
+      "positive_controls": [
+        "29–32 exige rejeição e zero invoke sem sessão;403 explicitamente outcomeUnknown:false contra transporte true."
+      ],
+      "limits": [
+        "Não verifica headers/corpo ou respostas de sucesso/erro no data, renovação de sessão, backend Gmail/OAuth e UI de retry. Não envia email."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 57,
+      "path": "src/hooks/sip/__tests__/useSipConnection.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "a6f9188def517df6627c210a16dd04827a2fa0fd",
+      "source_sha256": "4b6c2e533278fc7029d473bc05947fd3d54cc54b35b0c513d5d34a548669a6ed",
+      "line_count": 252,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          252
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "useSipConnection real instala delegate, diferencia REGISTER403 de500, evita novo UA ao conectar novamente, cancela retries no disconnect/unmount, limita seis falhas e consulta liderança viva no gate."
+      ],
+      "mocks_and_fixtures": [
+        "UA/Registerer SIP.js fake, callbacks de transporte/estado e options capturados; tabLeaderStore isLeader mutável, fake timers e toast spies."
+      ],
+      "positive_controls": [
+        "137–155 desconecta no backoff e espera sem UA novo;172–189 desmonta com retry pendente;192–212 força seis falhas;234–250 follower→leader permite mesmo connect após mudança de papel."
+      ],
+      "limits": [
+        "Não verifica UA.stop/unregister no unmount, novas credenciais ou segunda conexão após disconnect explícito, duas connect concorrentes antes de await e reconexão iniciada que termina após cleanup. Contagens após timer não são validação do transporte real.",
+        "REGISTER403 como linha em uso é contrato do código/fixture, sem provar resposta de provedor. Auth/logout não participam deste harness."
+      ],
+      "related_findings": [
+        "R2-CALL-004",
+        "R2-CALL-005"
+      ],
+      "observations": [
+        "Relacionado à área Calls do root: controles parciais de backoff não afastam as corridas de conexão revisadas na produção."
+      ]
+    },
+    {
+      "index": 58,
+      "path": "src/lib/__tests__/emailCompanyLinks.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "298bab83098de1dd08c2946efb4f9f62ce6c22e3",
+      "source_sha256": "6853c37db0f09db8c971bc2555dbcfbb1421f1121853227bcc671f9a8260347f",
+      "line_count": 27,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Helpers reais normalizam domínio nu para HTTPS, recusam esquemas executáveis/credenciais/host social enganoso e só mantêm URLs de plataformas conhecidas."
+      ],
+      "mocks_and_fixtures": [
+        "Strings sintéticas e array de objetos, sem mock de funções produtivas ou acesso à rede."
+      ],
+      "positive_controls": [
+        "Linkedin.com.evil é negativo pareado a www.linkedin.com; handles sem URL e plataforma facebook excluídos."
+      ],
+      "limits": [
+        "Não testa redirects/DNS, URLs completas em consumidores, renderização de links ou autorização dos dados da empresa. Não implica varredura de destinos externos."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 59,
+      "path": "src/lib/__tests__/formatBirthday.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "8beec7addcfb9e840077842fe01b4aaa54ed8055",
+      "source_sha256": "aac8c505bc37c94640fa3fd831ee671341cf710bedfef88c56272339f4439933",
+      "line_count": 49,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Formatter real calcula idade antes/no/depois do aniversário, regra local de29/02, rejeita datas impossíveis/ausentes e conserva label futura sem idade."
+      ],
+      "mocks_and_fixtures": [
+        "NOW construído em data local e datas ISO fixas; função produtiva importada diretamente."
+      ],
+      "positive_controls": [
+        "Casos29/02 e datas normalizáveis indevidas (30/02, mês13, ano0085) são asserts de comportamento concreto."
+      ],
+      "limits": [
+        "Não exercita parsing de servidor/consumidor UI e não faz matriz de timezone ou formatos fora do contrato ISO esperado."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 60,
+      "path": "src/lib/calls/__tests__/WhatsAppCallAdapter.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "8543c3cc55a088748a6fc04901cd8ba43588bc4e",
+      "source_sha256": "278adabd3b125c0a397c22d6836b4de5b84a7b5e9abdf4909dc114642547cd1c",
+      "line_count": 160,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          160
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Adapter WhatsApp real recusa dial via NotSupported, envia payload inbound/answered ou declined por porta injetada, abre contato no aceite e propaga resultado de persistência falha."
+      ],
+      "mocks_and_fixtures": [
+        "Portas persistir/abrirConversa spies, fixture callId/contato/telefone, sem banco/DOM. Classe real importada."
+      ],
+      "positive_controls": [
+        "73–94 confere channel explícito/id/contactId/phone/answeredAt válido e ausência de answeredBy; reject não marca atendimento nem abre contato;111–121 preserva ok:false."
+      ],
+      "limits": [
+        "Não monta consumidor IncomingCallAlert/CallSessionProvider, portanto existência de adapter correto não prova que botões o chamem (CALL007). RPC/answered_by e operação no aparelho são comentários/contratos externos, não executados.",
+        "148–158 afirma ausência de rede por desenho das portas e contagem local, mas não intercepta fetch ou qualquer cliente global; a ausência de endpoint depende também da leitura do adapter."
+      ],
+      "related_findings": [
+        "R2-CALL-007"
+      ],
+      "observations": []
+    },
+    {
+      "index": 61,
+      "path": "src/lib/calls/__tests__/callStatus.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "1fe1a05f5067e455135c68fe491dcfba6dc4e547",
+      "source_sha256": "03c3701db2f728a1548df2cc512287fdbef8bf4cda9b1f8951f52bf81094735e",
+      "line_count": 349,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          349
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Funções reais normalizam status/direction legados e inválidos, mapeiam dez resultados e oito códigos SIP, reconhecem terminais, rótulos e tons."
+      ],
+      "mocks_and_fixtures": [
+        "Tabela de cenários com answered_at/ended_at fixos e chamadas puras.283–318 cria Record/objetos locais tipados para ilustrar EndedBy/CallEndOutcome."
+      ],
+      "positive_controls": [
+        "Status atrasado answered/ringing com ended_at segue desfecho, direção ausente tem fallback, valores de tipos errados e códigos desconhecidos são tratados explicitamente."
+      ],
+      "limits": [
+        "Não testa emissão/ordenação dos eventos nem persistência/RLS ou qual chamada recebe terminal (CALL001/008).283–318 demonstra shape local, não origem real do desfecho; alegação de exaustividade depende de typecheck, que não foi executado nesta revisão."
+      ],
+      "related_findings": [
+        "R2-CALL-001",
+        "R2-CALL-008"
+      ],
+      "observations": []
+    },
+    {
+      "index": 62,
+      "path": "src/lib/calls/__tests__/capabilities.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "a68020a709c63d0a5937fd02a8fac91d94dab79e",
+      "source_sha256": "e54b72936487411a18a2d73dc17b76ffc36fcaa732731c40af8fd5e46bc4492b",
+      "line_count": 88,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "describeReason/REASON_LABEL reais cobrem motivos obrigatórios, null/undefined/desconhecido e vocabulário sem termos técnicos listados."
+      ],
+      "mocks_and_fixtures": [
+        "Strings esperadas e objetos tipados ChannelCapability definidos no próprio teste; sem rede/mocks de implementação."
+      ],
+      "positive_controls": [
+        "43–45 rejeita motivo desconhecido; todas chaves do mapa têm rótulo não vazio."
+      ],
+      "limits": [
+        "48–88 cria manualmente capacidades e verifica os próprios campos/rótulos: não calcula capacidades nem testa canais disponíveis. Objeto 'voip indisponível' inclui canReceive:true por fixture, sem consequência produtiva. Fonte do mapper é testada separadamente no roster53."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Exemplos de shape tipado não equivalem a teste de regra de disponibilidade; sem novo ID por si só."
+      ]
+    },
+    {
+      "index": 63,
+      "path": "src/lib/calls/__tests__/duration.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "4cb91ea6d1a996dcb1b79c9c5b8c7ec8e7847628",
+      "source_sha256": "9971818d53d09c4aadd2f125eb95d3865e7855a2566f0f8907985df525c9ea7c",
+      "line_count": 145,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Helpers reais preferem talk_seconds inclusive zero, usam timestamps como fallback, recusam intervalo negativo e parse inválido, formatam minutos/horas e ausência de duração."
+      ],
+      "mocks_and_fixtures": [
+        "Números, strings ISO, Date e epoch sintéticos; funções de produção sem mocks."
+      ],
+      "positive_controls": [
+        "talk_seconds0 não é substituído por258 dos timestamps; NaN/Infinity e formatos inválidos têm asserts."
+      ],
+      "limits": [
+        "Não prova momento em que snapshots de duração são capturados/persistidos; CALL002 nasce antes desse formatter, em leitura tardia do relógio na fila. UI e tempo real não executados."
+      ],
+      "related_findings": [
+        "R2-CALL-002"
+      ],
+      "observations": []
+    },
+    {
+      "index": 64,
+      "path": "src/lib/calls/__tests__/events.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "ece57efea4f7648113d3d18a03040e69054fff6e",
+      "source_sha256": "f7a928804594445a6958a3f11873d38972e65477d5cbe4a29b8c66f5674b612a",
+      "line_count": 263,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          263
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Dispatch/listener produtivos fazem round-trip document do evento novo e window do legado, preservam payload e autoDial, validam formato, entregam múltiplos listeners e fazem cleanup idempotente e independente."
+      ],
+      "mocks_and_fixtures": [
+        "DOM CustomEvent real do ambiente de teste; console.warn spy e payloads fixos, sem provider/SIP."
+      ],
+      "positive_controls": [
+        "Payload inválido gera quatro avisos e nenhuma entrega; nomes de evento semelhantes são ignorados. Após cleanup nenhuma nova entrega e outra assinatura continua ativa."
+      ],
+      "limits": [
+        "Não verifica consumidor onStartCall montado, navegação real ou qual canal/sessão recebe ação; não normaliza telefone por design. Comentário134 sobre emissor legado não comprova que ContactActionButtons ainda emita esse evento; roster21 verifica fontes atuais separadamente."
+      ],
+      "related_findings": [
+        "R2-CALL-007"
+      ],
+      "observations": []
+    },
+    {
+      "index": 65,
+      "path": "src/lib/calls/__tests__/persistence.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "d21ddc395f5da6757a769cb627dff3870ae77851",
+      "source_sha256": "6174790b879bc5c42108cbddcac89cc32af9b80b47dd79f0142f6aca9d291a53",
+      "line_count": 379,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          379
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Persistência produtiva mapeia input para p_* explícitos, omite nulls, tenta até3 vezes com mesmo id, retorna erro final inclusive rejeição, calcula desfechos e serializa fila sem travar após falha."
+      ],
+      "mocks_and_fixtures": [
+        "Somente Supabase.rpc mock; funções produtivas importadas. Respostas sequenciais/deferred controlam ordem e erro; crypto substituído para fallbacks e restaurado."
+      ],
+      "positive_controls": [
+        "Contrato de payload é igualdade exata37–85; retry mantém identidade e para no primeiro sucesso.337–362 mantém segunda/terceira pendentes até primeira concluir;364–378 prova que erro não bloqueia próximo trabalho.",
+        "Fallback sem randomUUID e sem crypto conserva formato UUIDv4, e três IDs gerados distintos; outcomes incluem CANCEL com200, failure durante/antes e ausência legada."
+      ],
+      "limits": [
+        "Não executa nem lê assinatura da migration no teste: nomes p_* são constantes esperadas, não contrato automaticamente reconciliado com SQL. Não prova idempotência/RLS/upsert do servidor.",
+        "Título290 'id SEMPRE uuid' limita-se à geração sem sessionId;135–138 intencionalmente aceita sessionId literal fornecido. Não é validador de entrada externa.",
+        "Fila recebe payload já construído neste teste; não cobre leitura tardia de relógio/estado dentro do consumidor que gera CALL002."
+      ],
+      "related_findings": [
+        "R2-CALL-002"
+      ],
+      "observations": []
+    },
+    {
+      "index": 66,
+      "path": "src/lib/calls/__tests__/phone.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "82fce9dbe93f24afce0f2769b5a50e2f883b054c",
+      "source_sha256": "86f3dfd384796ddc97562f28a8646562d2c8b2bc16a58b2d836556faf33bfaff",
+      "line_count": 206,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          206
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Helpers de telefone reais normalizam dez grafias BR, preservam fixos e DDD55, formatam, comparam E164 com DDD, produzem sete variantes e só vinculam match único."
+      ],
+      "mocks_and_fixtures": [
+        "Strings e arrays sintéticos, imports reais inclusive identidade de reexports legados."
+      ],
+      "positive_controls": [
+        "Suffix de8/DDD distinto/fixo versus celular são negativos; dois contatos equivalentes resultam null; inputs inválidos não geram variantes."
+      ],
+      "limits": [
+        "Não consulta banco/RLS nem prova cobertura de formatos internacionais ou completude do conjunto de candidatos retornados por limite. Comentário153–154 sobre44% do banco é alegação histórica, não medição deste teste."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 67,
+      "path": "src/lib/calls/__tests__/session.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "96f8b01739a316a5148a0833514d9f46b14a1a34",
+      "source_sha256": "5425b916b700f855e0eae2d337d85405782d070fbb4236125ca23869517aeb47",
+      "line_count": 561,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          561
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Reducer/estado e mappers reais percorrem tabela de transições válidas e inválidas, invariantes de sessionId/answeredAt/reset, busyHere e motivos/status persistidos. Fixtures de estado são replay de eventos reais, exceto ending explicitamente hidratado.",
+        "Conecta estado encerrado ao toResult real para manter completed na apresentação; garante identidade do reexport sipCodeToEndReason."
+      ],
+      "mocks_and_fixtures": [
+        "Clock fornecido por at fixo; console.warn spy, sem transporte/provider. Tabelas de eventos/expectativas locais exercitam reduce importado."
+      ],
+      "positive_controls": [
+        "Transições inválidas mantêm mesma referência e um warn com status/event/sessionId; tentativa DIAL com id novo não troca sessão.",
+        "INVALIDAS161 + assertions245–259 confirma ringing_in/HANGUP_REMOTE inválido. CANCEL_REMOTE/TIMEOUT corretos encerram ringing_in e answeredAt só nasce em ESTABLISHED."
+      ],
+      "limits": [
+        "Não vincula o produtor realtime de HANGUP_REMOTE ao reducer nem verifica id de evento tardio, cuja ausência é relevante a CALL001/008. 'Todas transições do plano' usa tabela manual, sem extrair plano formal ou explorar interleavings.",
+        "Lista EndReason[]521 não força exaustividade futura de união pelo tipo; assertions cobrem os onze valores enumerados, não geram automaticamente um caso para novo valor. UI/SIP/SQL não executados."
+      ],
+      "related_findings": [
+        "R2-CALL-001",
+        "R2-CALL-008"
+      ],
+      "observations": []
+    },
+    {
+      "index": 68,
+      "path": "src/lib/calls/__tests__/tabLeaderStore.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "f66e1673ec2cfaaf8b4458366f3cda6d1913cb86",
+      "source_sha256": "f338c3e6d20dd0f4975dfa8290ff2e5d5a715574453989d3ee4c4a2953ee197e",
+      "line_count": 316,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          316
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Store produtivo reimportado por aba simula eleição inicial, follower com lock vivo, expiração/heartbeat/release, dois claims no boot, fallback sem canal, subscription e identidade de snapshot.",
+        "239–283 interrompe o intervalo da líder e prova que follower assume após TTL;286–314 verifica uso de crypto no jitter e fallback do id sem crypto."
+      ],
+      "mocks_and_fixtures": [
+        "FakeBroadcastChannel importado, localStorage do ambiente, fake timers com tempo fixo; resetModules cria instâncias do singleton. Spy captura IDs dos intervalos para parar só a líder."
+      ],
+      "positive_controls": [
+        "Líder parada deixa de renovar lock antes do takeover; follower só assume após expiração. Boot simultâneo exige exatamente uma líder e leaderId coerente."
+      ],
+      "limits": [
+        "Não retoma o heartbeat da líder antiga após takeover: parar permanentemente seu intervalo239–283 simula morte, não suspensão/retorno, portanto CALL003 permanece não coberto.",
+        "Mocks não reproduzem escalonamento/entrega de eventos entre processos de browser ou storage desabilitado. Caso sem crypto só importa módulo e lê id, sem tentar claim/jitter."
+      ],
+      "related_findings": [
+        "R2-CALL-003"
+      ],
+      "observations": []
+    },
+    {
+      "index": 69,
+      "path": "src/lib/calls/__tests__/terminoRemoto.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "e1b30e7d1beac24ba4ed77bc3836cdd8a1e04916",
+      "source_sha256": "4d9ea5e0d257018b63174b176b80d31c53693133741584cb2b3c8aa0605f510a",
+      "line_count": 36,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Helper real retorna HANGUP_REMOTE apenas para linha terminal cujo id iguala o argumento EM_CURSO; rejeita status ativo/desconhecido e ids divergentes/ausentes."
+      ],
+      "mocks_and_fixtures": [
+        "Objetos de linha e id passados diretamente, sem React/provider/realtime."
+      ],
+      "positive_controls": [
+        "21–23 isola id alheio e25–28 ausência de linha/sessão."
+      ],
+      "limits": [
+        "Assume que segundo argumento já é a sessão global correta. Não testa hook que passa id observado nem se HANGUP_REMOTE é evento válido em ringing; CALL008 permanece fora dessa ponte."
+      ],
+      "related_findings": [
+        "R2-CALL-008"
+      ],
+      "observations": []
+    },
+    {
+      "index": 70,
+      "path": "src/lib/calls/__tests__/toqueDaChamada.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "ed6cc769b1a69e54006f245a56a5128eafdfe206",
+      "source_sha256": "abf9fc390df11e60f739cf49bf2efb8cc5f2d2196a3343b88c9c42a3ab1fd9b0",
+      "line_count": 57,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "FSM de toque real inicia com convite, para em quatro eventos e pode iniciar novamente depois de parada."
+      ],
+      "mocks_and_fixtures": [
+        "Estados/eventos escalares, constantes e funções produtivas puras."
+      ],
+      "positive_controls": [
+        "Quatro eventos de parada iterados e novo convite após todos volta a tocar."
+      ],
+      "limits": [
+        "Não reproduz AudioContext, emissão do TIMEOUT/HANGUP pela UI ou identidade da chamada; provar transição pura não garante entrega do evento nem limpeza do overlay."
+      ],
+      "related_findings": [
+        "R2-CALL-006",
+        "R2-CALL-008"
+      ],
+      "observations": []
+    },
+    {
+      "index": 71,
+      "path": "src/lib/calls/adapters/__tests__/CallEngine.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "f47027b77e680cc87d65be4c716c5ae4a241d330",
+      "source_sha256": "9ef8e144fdc0ecc7a3223f338ca9fb2512ebbd39c9faa91d4581c969821e0943",
+      "line_count": 685,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          685
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Engine e grande parte SipCallAdapter reais exercitam mute pela propriedade enabled lida, DTMF Established, ordem createInviter/create/invite, Call-ID, delegate onReject e outcomes local/remoto/reject/failure.",
+        "Cobre remoção de elemento áudio no dispose, watchdog/finalização idempotente antes de nova chamada, cancelamento do watchdog em Established, onFinished antes status ended e rejeição486 de segundo convite sem alterar sessão."
+      ],
+      "mocks_and_fixtures": [
+        "TestAdapter sobrescreve host/dialable/createInviter/invite; sessões/UA/sink falsos. fakeAudioTrack20–21 é objeto simples tipado como MediaStreamTrack, não track capturada real.",
+        "Sink.create retorna imediatamente call-1 por padrão, microtarefas contadas e fake timers em watchdog. MediaStream substituído para DOM de áudio."
+      ],
+      "positive_controls": [
+        "Track com setter que recusa escrita224–241 impede exibir mudo sem efeito; vídeo permanece intocado; DTMF fora de Established não chama insertDTMF.",
+        "176–201 verifica ordem e IDs;566–582 impede reemissão terminal logo após watchdog,588–604 prova chamada longa atendida sem timeout;651–683 protege sessão ocupada."
+      ],
+      "limits": [
+        "Não é áudio/microfone/DTMF de rede real; comentário 'track de verdade'8–9 excede fixture objeto simples.",
+        "450–475 verifica flags limpas sequencialmente, mas não injeta evento da sessão velha depois que B começa.566–582 só envia Terminated tardio antes de criar B; CALL001 não coberto.",
+        "495–517 aceita expect.any(Number) com create imediatamente resolvido; não mede duração após persistência lenta (CALL002). Sem Auth/autorizações ou transporte SIP."
+      ],
+      "related_findings": [
+        "R2-CALL-001",
+        "R2-CALL-002"
+      ],
+      "observations": []
+    },
+    {
+      "index": 72,
+      "path": "src/providers/__tests__/CallSessionProvider.test.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "c01f65d934919a00e6879d84b0283fab5069f394",
+      "source_sha256": "291c0426cc6dc15df7f15d11b0f6737a8e8861a42c830829c5596ae04e93781d",
+      "line_count": 690,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          690
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Provider real integra reducer e useNavigationHistory/MemoryRouter: discar navega mantendo sessão, oferece campos legados, adota id compartilhado com SIP, converte status/outcome a eventos e evita transição terminal duplicada.",
+        "Monta sem Router como AppProviders, protege DIAL por microfone, aceita segunda entrada após terminal e reconstrói fim presumido quando outcome real chega, preservando id/answeredAt.",
+        "TTL de ringing_in encerra por timeout, aceite o cancela e unmount cancela exatamente o timer criado."
+      ],
+      "mocks_and_fixtures": [
+        "useSipClient inteiro substituído por snapshot h.value mutável e callbacks spies; onEnd capturado manualmente. Sonda mínima exibe contexto, sem overlay, PostCallSummary ou transporte real."
+      ],
+      "positive_controls": [
+        "235–246 cobre ausência de Router;297–321 compara ID DIAL→SIP;329–341 garante que microfone negado não gera sessão.",
+        "547–605 injeta status ended antes do outcome fino, exigindo correção sem perda de identidade;668–685 verifica timer específico e contagem zero após unmount."
+      ],
+      "limits": [
+        "Término observado aqui vem do status/callback SIP falso, não do hook useTerminoRemoto; correto CANCEL_REMOTE255–267 não cobre HANGUP_REMOTE incorreto do outro produtor (CALL008).",
+        "Não monta listener de notificação WhatsApp/overlay, portanto não verifica ações por canal ou aviso antigo persistente (CALL006/007). Não monta editor de notas durante reset automático3s (AUTH051).",
+        "Alegações de SIP de fato desligado532–533 verificam só spy hangUp, e fluxo completo no banco não é exercitado. Auth/logout, origem de eventos de sessões antigas e conexão pendente ausentes."
+      ],
+      "related_findings": [
+        "R2-CALL-001",
+        "R2-CALL-006",
+        "R2-CALL-007",
+        "R2-CALL-008",
+        "R2-AUTH-051"
+      ],
+      "observations": []
+    },
+    {
+      "index": 73,
+      "path": "src/services/__tests__/auth.service.signIn.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "56fa00a864354bc2da366e96a3fe148484ddc089",
+      "source_sha256": "4f4f1194632c2234ac21db9bc2f4b089edc0c8d28c37560b62f4584c0769218b",
+      "line_count": 48,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          48
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "AuthService.signIn real usa serverLogin/setSession e preserva lock/indisponibilidade sem fallback signInWithPassword."
+      ],
+      "mocks_and_fixtures": [
+        "serverLogin/SDK/log falsos; resposta ok/tokens, lock ou unavailable sintéticos."
+      ],
+      "positive_controls": [
+        "Recusa não chama setSession nem password login; sucesso compara shape inteiro e outage exige mensagem de indisponibilidade."
+      ],
+      "limits": [
+        "Não executa endpoint auth-login/GoTrue e não verifica erro/throw de setSession. unavailable:true é premissa, não prova do mapeamento de outage upstream (AUTH021)."
+      ],
+      "related_findings": [
+        "R2-AUTH-021"
+      ],
+      "observations": []
+    },
+    {
+      "index": 74,
+      "path": "src/services/__tests__/auth.service.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "b22cc67a26e654ac2b2c0577cd228d7db99eef27",
+      "source_sha256": "cd27887bd4e11cd8d064f8b543db42579efe0bc64002f1714fd815994e50467b",
+      "line_count": 67,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          67
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Serviço real deduplica leituras getSession simultâneas sem guardar promise resolvida indefinidamente; refreshSession uma vez e retry de profile após PGRST301."
+      ],
+      "mocks_and_fixtures": [
+        "SDK/from falsos, promise deferred no primeiro getSession e respostas sequenciais no maybeSingle."
+      ],
+      "positive_controls": [
+        "Confere duas chamadas totais do SDK após o lote concorrente e nova leitura; perfil final só retorna após segunda consulta."
+      ],
+      "limits": [
+        "Não emite SIGNED_OUT ou troca de usuário durante request; dedupe não invalida resposta de perfil tardia no AuthProvider(AUTH005). Não verifica eq user_id, refresh falho ou cache limpo."
+      ],
+      "related_findings": [
+        "R2-AUTH-005"
+      ],
+      "observations": []
+    },
+    {
+      "index": 75,
+      "path": "src/styles/__tests__/prefersContrastMedia.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "f6bdaf1ca52487f9fe86244934811400f1117c52",
+      "source_sha256": "d2bba2c9f8471b0ae2ca0fb6ea602a36686c3e336fb498259fd1991c60602678",
+      "line_count": 31,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          31
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Guarda textual lê accessibility.css e exige media prefers-contrast:more, recusando condição com high via regex."
+      ],
+      "mocks_and_fixtures": [
+        "Fonte CSS lida por fs a partir de cwd do teste; sem browser/parser CSS."
+      ],
+      "positive_controls": [
+        "Negativa procura condição @media, não palavra high solta nos comentários."
+      ],
+      "limits": [
+        "Não avalia media query/computed style nem contraste visual. Descrição de medição histórica não é reproduzida; nenhuma conclusão de acessibilidade integral."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 76,
+      "path": "src/test/mocks/auth.tsx",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "19c9198b8c7a49925010c9f7a24b7799d2a3b1e9",
+      "source_sha256": "402edef67401424a8f91efb611ecab38a4e838a457db2eb4a176bbd6c2ffabed",
+      "line_count": 61,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          61
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Arquivo de apoio define fixtures autenticada/deslogada, spies resolvidos e MockAuthProvider que só devolve children; não possui testes/assertions."
+      ],
+      "mocks_and_fixtures": [
+        "User/profile/session de teste fixos e tokens fictícios; casts any. expires_at usa Date.now()+3600 em28; valores não são tokens/sessões reais."
+      ],
+      "positive_controls": [
+        "Perfis/usuário têm IDs distintos e user_id consistente; contexto deslogado zera três identidades."
+      ],
+      "limits": [
+        "MockAuthProvider ignora value e não instala contexto por design(comentário59), então apenas mock direto de useAuth pode fornecer valor aos consumidores. Não prova provider/Auth real, expiração, erros de login ou logout. expires_at de fixture não modela unidade do contrato de sessão em segundos."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 77,
+      "path": "src/utils/__tests__/whatsappFileTypes.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "86d0d8deb926ba22df64adfa24b4803def648a85",
+      "source_sha256": "9d0d576bd3fb4fbf708124db49ddac53f66915d715d9065c05103d1907df5774",
+      "line_count": 50,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Somente verifica quatro arrays MIME e seis extensões definidos dentro do próprio teste, incluindo negativos contra esses arrays."
+      ],
+      "mocks_and_fixtures": [
+        "Nenhum import de produção; allowlists locais5–8 e extensões locais44."
+      ],
+      "positive_controls": [
+        "Negativos BMP/TIFF/executable são úteis apenas para conferir a fixture declarada, sem ponte ao produto."
+      ],
+      "limits": [
+        "Não chama validator/uploader/endpoint produtivo, não cria File e não inspeciona bytes.10–13 itera a própria lista para provar includes;43–48 só verifica ponto e comprimento de literais, não valida extensão de entrada. Pode continuar verde com política produtiva completamente diferente."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Encaminhado ao parent para GOV003, extensão agregada de evidência de testes, sem novo achado Auth."
+      ]
+    },
+    {
+      "index": 78,
+      "path": "supabase/functions/_shared/__tests__/gmail-helpers.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "979600795c9f2734d46c68aeda604d5d5ce8985b",
+      "source_sha256": "f2c34de2d9a544102bc2d11a24159f09f504be1c69694a5d7f22ba861033d119",
+      "line_count": 33,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Helpers Gmail reais tratam nome Unicode com vírgula citado, decodificam UTF8 base64url e extraem texto/html/anexo de MIME aninhado."
+      ],
+      "mocks_and_fixtures": [
+        "Deno.test com payload MIME sintético e helper local apenas para codificação da fixture; funções de produção importadas."
+      ],
+      "positive_controls": [
+        "Compara objetos completos da lista de endereços e attachment metadata; acentos preservados."
+      ],
+      "limits": [
+        "Não executado; não chama Gmail real, OAuth, anexos externos, sanitização HTML ou formatos MIME malformados/profundidade extrema."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 79,
+      "path": "supabase/functions/_shared/__tests__/gmail-mime.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "cd590a805499c1e62515a2ad311d4d5810e53546",
+      "source_sha256": "010969f5fa60558bfa1ee55896404af2ddad6d9c89fc75fb5033cf83b780d9dc",
+      "line_count": 41,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Builder MIME real inclui In-Reply-To/References, codifica assunto UTF8, estrutura multipart e mantém strings base64 de dois anexos; encoder base64url tem vetor literal."
+      ],
+      "mocks_and_fixtures": [
+        "Dados de email/anexos sintéticos e Deno asserts, sem cliente Gmail."
+      ],
+      "positive_controls": [
+        "Bytes base64 são conferidos por sequência exata com CRLF e tipos multipart; encoder compara w78_."
+      ],
+      "limits": [
+        "Não faz parse round-trip por parser independente, envio/recepção Gmail, coerção de headers adversariais, limites ou sanitização. Includes não prova mensagem completa válida em todos leitores."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 80,
+      "path": "supabase/functions/_shared/__tests__/talkx-delivery-connection.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "c0806ca8a8f738a654ca15e76094d3f8e5108cc1",
+      "source_sha256": "06af575d50c79c3de53463017f2c71330a85b10cda221d6fed45abcd5603001f",
+      "line_count": 21,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Helper produtivo só retorna instance_id aparado com status connected; rejeita conexão ausente, desconectada, connecting, id nulo/vazio/não string."
+      ],
+      "mocks_and_fixtures": [
+        "Objetos escalares sintéticos com Deno assertEquals; sem DB/provider."
+      ],
+      "positive_controls": [
+        "Positivo trim pareado a sete entradas inválidas."
+      ],
+      "limits": [
+        "Não comprova autorização/seleção da conexão ou entrega TalkX; valida somente formato/estado fornecido ao helper."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 81,
+      "path": "supabase/functions/get-call-recording/index.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "18185f06dfad51d43a024f305564754695c044d3",
+      "source_sha256": "30d82ea2c698225daf61098607e18ffdc76a6898aa3e69efc27b4c0b9f114ea0",
+      "line_count": 53,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Helper cabecalhosDoAudio real aplica Content-Type default, Content-Length/Range/Accept-Ranges fornecidos, Cache-Control private/no-store e CORS."
+      ],
+      "mocks_and_fixtures": [
+        "Deno asserts com objetos de metadados/CORS; importa helper do index, sem requisição ao handler."
+      ],
+      "positive_controls": [
+        "Ausência de tamanho/faixa não cria headers; dados de range são comparados exatamente."
+      ],
+      "limits": [
+        "Não testa401/403/200 do handler, RLS, streaming ou forwarding do header Range ao upstream.42–48 só procura URL/provedor em headers produzidos de input que não contém URL; não prova ausência de URL em corpo, redirect, frontend ou outros headers fornecidos."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Comentário1–7 explica recorte puro; preservar essa limitação ao citar aceite T73."
+      ]
+    },
+    {
+      "index": 82,
+      "path": "supabase/functions/get-sip-password/index.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "caa14f3c6b424e3adc006aba7c335a5c03a43720",
+      "source_sha256": "5fa1661c66fcb05718f48ab2d460dab94f88f2d2639b556183edd47df1bdbfe0",
+      "line_count": 40,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          40
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Função provisionamentoSip real usa env accessor injetado, defaults e porta numérica/fallback para string vazia ou não numérica."
+      ],
+      "mocks_and_fixtures": [
+        "Accessors semEnv/comEnv sintéticos, sem ler ambiente vivo; Deno asserts de objeto exato."
+      ],
+      "positive_controls": [
+        "Host/user/porta alternativos prevalecem em conjunto e wsPort é number."
+      ],
+      "limits": [
+        "Não testa auth/role/IP/secret do handler, retorno de senha, conexão SIP ou consumo frontend. Portas negativas/acima do intervalo e hostname inválido não fazem parte dos casos."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 83,
+      "path": "supabase/functions/sentiment-alert/index.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "43bf01b376e89df08642d042a99c99bfcd351f55",
+      "source_sha256": "01dd59be516fa6e76f6b9d8b1622e4044c1911a1db232bfb821f5070c55f41ca",
+      "line_count": 26,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Handler real responde405 a GET,401 a POST anônimo com corpo inválido e200 a OPTIONS."
+      ],
+      "mocks_and_fixtures": [
+        "Requests locais edge.invalid, sem SDK mock definido no arquivo; helper assertStatus só confere status."
+      ],
+      "positive_controls": [
+        "POST body não JSON continua401; OPTIONS antecede exigência de autenticação no resultado observado pela assertion."
+      ],
+      "limits": [
+        "Não injeta JWT válido/inválido, papel/autorização de objeto, emissão de alerta ou persistência. Título 'before reading secrets' não instrumenta env; status405 sozinho não prova ausência de leitura de segredo. Nenhum teste executado nesta revisão."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 84,
+      "path": "supabase/functions/talkx-report/index.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "c700a16dc873aa8b246bc395089be9768fc4ea58",
+      "source_sha256": "d08741af53acd5d1998aaf298e7ffdfcecb34e4af38038da29d1cdadd99b4e09",
+      "line_count": 14,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "escHtml real substitui caracteres de um vetor com script, aspas e ampersand; exige ausência de tag literal e entidades esperadas."
+      ],
+      "mocks_and_fixtures": [
+        "String sintética e helper assert local; nenhuma chamada ao handler do relatório."
+      ],
+      "positive_controls": [
+        "Vetor reúne os cinco caracteres especiais em uma entrada."
+      ],
+      "limits": [
+        "Não prova que todos os campos do template passem por escHtml, contexto de atributo/URL seguro, PDF/render final ou autorização/envio do relatório."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 85,
+      "path": "supabase/functions/webhook-diagnostic/diagnostic.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "110d6ab1032e255fc63d1d3767860f80b7d18a9a",
+      "source_sha256": "bb1bf203821bf88480107f5561fdbedb9bffcd4559464fd6a79eb7f0d53169df",
+      "line_count": 41,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Normalizer produtivo converte events string para array, preserva array e trata null/ausência/vazio."
+      ],
+      "mocks_and_fixtures": [
+        "Objetos WebhookRecord tipados locais; Deno asserts, sem endpoint Evolution."
+      ],
+      "positive_controls": [
+        "Casos array/string/undefined/null são distintos, com saídas exatas."
+      ],
+      "limits": [
+        "33–40 só verifica campos do objeto que criou; afirmação de aceitar tipo depende de typecheck. Não executa autenticação/diagnóstico, contrato GO versus v2 ou schemas malformados em runtime."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 86,
+      "path": "tests/contracts/ai-endpoints-auth.contract.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "d44ca8078a085c1725c3a5c77222c36fecddeb71",
+      "source_sha256": "8a2490de20d03ec4c28979c08f7472af8da187c648f0fb6cff19928a70c3343c",
+      "line_count": 150,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          150
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Contrato textual lê fontes reais, remove imports e verifica existência/ordem lexográfica de guard→provedor, assinatura→audit e visibilidade→download, além de credencial de sessão do voice-agent e allowlist textual."
+      ],
+      "mocks_and_fixtures": [
+        "fs lê fontes, regex semImports e listas fixas de quatro endpoints/dois canais de gasto; não executa handlers ou helpers de auth."
+      ],
+      "positive_controls": [
+        "Índices exigidos >-1 impedem passar quando chamadas desaparecem;60–67 tenta distinguir import de ocorrência do corpo. Verifica source user token e proíbe duas formas conhecidas de anon key no voice-agent."
+      ],
+      "limits": [
+        "Ordem textual não prova ordem de execução em branches, nem guard rejeitando requisição, fluxo de exceção ou validação de assinatura; substring pode casar comentários/definições.",
+        "138–145 aceita presença da atribuição mediaUrl antes do download sem testar condição em que mediaUrl=null mantém URL solicitada. Não afasta bypass por objeto confirmado pela frente Providers.",
+        "116–124 procura ausência literal de details:body e presença de nomes de campos; não demonstra exclusividade da allowlist.147–149 só exige texto identity.kind user, não sua dominância no fluxo. Nenhuma autorização/RLS/criptografia foi executada."
+      ],
+      "related_findings": [
+        "R2-API-027"
+      ],
+      "observations": [
+        "Guarda estrutural útil, não prova semântica de segurança ponta a ponta. O ramo media_url=null corresponde a R2-API-027 confirmado pela frente Providers; sem achado novo aqui."
+      ]
+    },
+    {
+      "index": 87,
+      "path": "tests/contracts/axe-configuracoes.contract.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "59ff9afde892fb37815133eb2927b5619fac1d38",
+      "source_sha256": "b40a4c99d2b8407915061784f2dc56be611a256ada82788a2592a0a1122881b1",
+      "line_count": 21,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Guarda textual encontra tag PopoverContent não vazia em SidebarUserPill e presença da sintaxe aria-label."
+      ],
+      "mocks_and_fixtures": [
+        "Leitura fs de fonte; regex limitada a400caracteres antes do fechamento da tag."
+      ],
+      "positive_controls": [
+        "Exige bloco encontrado antes de verificar atributo, evitando sucesso vazio."
+      ],
+      "limits": [
+        "Não executa axe/Chromium e não prova nome acessível não vazio, conteúdo renderizado ou contraste. Os comentários sobre medição histórica e dois outros achados não são revalidados pelo teste; path ~/evidencias é referência externa."
+      ],
+      "related_findings": [],
+      "observations": []
+    },
+    {
+      "index": 88,
+      "path": "tests/contracts/evolution-call-handler.contract.test.ts",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "97c24824bddcace3f669d79d956414c9edd06a3b",
+      "source_sha256": "4361af623bd46327396607ce514b2e6c6a5cd4364cfd402da560f679b731508e",
+      "line_count": 123,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          123
+        ]
+      ],
+      "test_execution": "NOT_EXECUTED",
+      "proves": [
+        "Handler handleCallEvent real normaliza oferta/boolean isVideo e parâmetros da RPC atômica, mapeia seis status sem notify, propaga erro da persistência e evita consultas sem telefone do chamador."
+      ],
+      "mocks_and_fixtures": [
+        "getConnectionByInstance/getContactByPhone substituídos; demais helpers importados reais. Simulação RPC captura argumentos e devolve call1 ou error; from lança se consultado."
+      ],
+      "positive_controls": [
+        "56–81 compara payload inteiro incluindo direction inbound e provider_event_id;106–112 força erro e exige rejeição;115–121 ausência de from impede lookup/persistência."
+      ],
+      "limits": [
+        "Nome 'persists and notifies once' cobre uma chamada do handler, sem replay/concorrência e sem executar RPC/notificação. 'caller identity absent' é ausência de from no evento, não JWT/Auth ou autorização da instância. Não prova gateway/assinatura, RLS, direção fromMe=true ou resultado externo do webhook."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Sem novo ID: preservada distinção entre contrato de argumentos produtivo e atomicidade/efeitos do banco simulado."
+      ]
+    }
+  ]
+}

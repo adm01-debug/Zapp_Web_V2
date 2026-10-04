@@ -1,0 +1,1621 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_root": "/workspace/scratch/f8f9b9cbce53/reaudit/source",
+  "created_at": "2026-10-04T01:26:57.481976+00:00",
+  "scope": "Auth, users/roles/permissions, session/device, Team Chat/department UI/hooks, routes/admin, contacts/company/profile/sidebar and Singu gateway frontend contracts",
+  "prior_findings_file": "/workspace/scratch/8b95153002da/reconciliation/docs/reconciliation/FINDINGS.json",
+  "safety": {
+    "source_modified": false,
+    "live_database_queries": 0,
+    "product_scripts_executed": 0,
+    "messages_or_emails_sent": 0,
+    "secrets_read_or_exported": false
+  },
+  "probe_results": "/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/results.json",
+  "probe_script": "/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/source-probes.cjs",
+  "findings": [
+    {
+      "id": "R2-AUTH-001",
+      "title": "WebAuthn aceita verificação sem assinatura, authenticatorData ou validação de origem",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_OFFLINE",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "Auth/useAuthForm → useWebAuthn.authenticateWithPasskey → webauthn(authentication-options, verify-authentication) → service client lê credencial, incrementa contador e retorna identidade.",
+      "precondition": "Uma credencial cadastrada e um challenge conhecido para a conta; authentication-options devolve o challenge e IDs de credencial quando encontra o email.",
+      "failure_and_effect": "verify-authentication só compara clientData.type e challenge. Não verifica signature, authenticatorData, RP ID hash, origin, flags UP/UV nem contador assinado. O challenge não é filtrado por expires_at. A prova offline retornou200/success com origem errada, nenhum dado de assinatura e challenge vencido. A inscrição também grava attestationObject como public_key sem extrair/verificar a chave. A resposta inclui userId/email e consome challenge; não emite uma sessão Auth.",
+      "evidence": [
+        {
+          "path": "supabase/functions/webauthn/index.ts",
+          "start_line": 97,
+          "end_line": 128,
+          "blob_sha": "9e42845d17a6dead75e6deb95f12be00d9e7b340",
+          "symbol": "verify-registration",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/webauthn/index.ts",
+          "start_line": 131,
+          "end_line": 181,
+          "blob_sha": "9e42845d17a6dead75e6deb95f12be00d9e7b340",
+          "symbol": "authentication-options / verify-authentication",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/_shared/schemas.ts",
+          "start_line": 338,
+          "end_line": 345,
+          "blob_sha": "57b706d77864be9c2c24f0eb57f0728335b0b2d0",
+          "symbol": "WebAuthnActionSchema",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [
+        "P-AUTH-01"
+      ],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [
+        "1.10",
+        "24.5"
+      ],
+      "acceptance_criteria": [
+        "Verificar criação e assertions com uma implementação WebAuthn que valide desafio, expiração, origem/RP, assinatura, UP/UV e contador conforme a política escolhida.",
+        "Rejeitar falta/alteração de signature e authenticatorData, origem ou RP errados, challenge expirado/reutilizado; provar que nenhum caso altera contador ou autentica.",
+        "Vincular desafio a tentativa/conta e consumir de forma atômica apenas após prova válida."
+      ],
+      "limitations": [
+        "O probe executa o handler real transpilado com DB/CORS/entrada de schema sintéticos. Não é exploração de banco vivo.",
+        "Não classificado como tomada de sessão: o endpoint não retorna tokens, e o handoff quebrado está em R2-AUTH-002."
+      ]
+    },
+    {
+      "id": "R2-AUTH-002",
+      "title": "Login com passkey anuncia autenticação mas somente inicia OTP por email",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "Auth → handlePasskeyLogin → authenticateWithPasskey → signInWithOtp → toast de autenticado → navigate(/) → ProtectedRoute.",
+      "precondition": "Usuário sem sessão que conclui a etapa WebAuthn; SDK aceita o envio do OTP.",
+      "failure_and_effect": "signInWithOtp envia o mecanismo de login por email, mas o código não verifica OTP nem recebe/aplica sessão. Mesmo com sucesso do endpoint WebAuthn a página anuncia Autenticado com Passkey e navega para uma rota que volta a /auth. Há falhas adicionais do mesmo fluxo: sem email, authentication-options grava challenge com user_id null, enquanto a verificação procura pelo user_id da credencial; listUsers sem paginação torna a resolução por email incompleta para contas fora da primeira página.",
+      "evidence": [
+        {
+          "path": "src/hooks/auth/useAuthForm.ts",
+          "start_line": 189,
+          "end_line": 202,
+          "blob_sha": "8425451add33bca558cd2e1a92c520e76041ecba",
+          "symbol": "handlePasskeyLogin",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/auth/useWebAuthn.ts",
+          "start_line": 109,
+          "end_line": 157,
+          "blob_sha": "9757ac438d96ce70bd030a5cb12ed4fccf870f99",
+          "symbol": "authenticateWithPasskey",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/webauthn/index.ts",
+          "start_line": 131,
+          "end_line": 181,
+          "blob_sha": "9e42845d17a6dead75e6deb95f12be00d9e7b340",
+          "symbol": "passkey challenge / identity response",
+          "observation": ""
+        },
+        {
+          "path": "src/components/auth/ProtectedRoute.tsx",
+          "start_line": 113,
+          "end_line": 118,
+          "blob_sha": "c16a92880441adf86f2a408382c969fb215eaf75",
+          "symbol": "guard de sessão",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [
+        "1.10",
+        "24.5"
+      ],
+      "acceptance_criteria": [
+        "Uma assertion válida deve concluir um fluxo de sessão realmente suportado e produzir usuário/sessão antes de anunciar login.",
+        "Testar login sem sessão, sem email, conta além da primeira página de usuários, cancelamento e retorno; exigir chegada ao app sem login adicional não anunciado.",
+        "Se houver continuação por email, mostrar explicitamente esse estado em vez de autenticação concluída."
+      ],
+      "limitations": [
+        "A semântica de signInWithOtp foi conferida na documentação oficial Supabase.",
+        "Não executado biométrico em navegador nem envio de email."
+      ]
+    },
+    {
+      "id": "R2-AUTH-003",
+      "title": "MFA no login está fora da cadeia de autorização das rotas",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "Login senha/SSO → AuthProvider user → AuthForm navega / → ProtectedRoute checa user/papel/permissão; /2fa é uma rota independente.",
+      "precondition": "Conta com fator TOTP verificado e sessão aal1 antes do desafio adicional.",
+      "failure_and_effect": "Não existe decisão AAL em ProtectedRoute, AppRoutes ou no redirecionamento do login. TwoFactorAuth só inicia verificação se o usuário visitar a rota. O inventário SQL do agente de banco não encontrou cláusula AAL nas779 migrations ativas. Assim a UI e a cadeia analisada não exigem segundo fator para acessar o app, apesar de existir enrollment e tela funcional de desafio. A própria rota fica indefinidamente em Verificando para usuário sem sessão/sem fator ou erro de assurance.",
+      "evidence": [
+        {
+          "path": "src/hooks/auth/useAuthForm.ts",
+          "start_line": 53,
+          "end_line": 57,
+          "blob_sha": "8425451add33bca558cd2e1a92c520e76041ecba",
+          "symbol": "redirect após user",
+          "observation": ""
+        },
+        {
+          "path": "src/components/auth/ProtectedRoute.tsx",
+          "start_line": 17,
+          "end_line": 141,
+          "blob_sha": "c16a92880441adf86f2a408382c969fb215eaf75",
+          "symbol": "ProtectedRoute",
+          "observation": ""
+        },
+        {
+          "path": "src/routes/AppRoutes.tsx",
+          "start_line": 28,
+          "end_line": 113,
+          "blob_sha": "005f7a1a35bfb4cb98161784c7047a4edbc9dc22",
+          "symbol": "rotas auth/2fa/admin",
+          "observation": ""
+        },
+        {
+          "path": "src/pages/TwoFactorAuth.tsx",
+          "start_line": 17,
+          "end_line": 50,
+          "blob_sha": "dccd7a3ba6c07a6dd7124a2e9cbc5dbfd7be2a03",
+          "symbol": "checkMFAStatus",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [
+        "1.7",
+        "1.8",
+        "1.9",
+        "1.11"
+      ],
+      "acceptance_criteria": [
+        "Aplicar decisão de currentLevel/nextLevel antes da autorização do conteúdo protegido.",
+        "Reforçar os recursos sensíveis na autorização server-side/RLS conforme política MFA, além do redirecionamento.",
+        "Com fator verificado, senha/SSO aal1 e URL direta devem exigir desafio; aal2 deve entrar; ausência de usuário/fator/erro deve ter estado explícito."
+      ],
+      "limitations": [
+        "Ausência de AAL em SQL baseada na cadeia da fonte, corroborada pelo agente SQL; não houve consulta ao dashboard Auth implantado.",
+        "1.20 SSO tem implementação de callback; o problema é o gate posterior de MFA, não a inexistência de SSO."
+      ]
+    },
+    {
+      "id": "R2-AUTH-004",
+      "title": "Desativar usuário, forçar logout e encerrar dispositivos não revogam sessões Auth",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "AdminUsersTable → ForceLogoutButton/useAdminData; Segurança → useDeviceDetection → profiles ou public.user_sessions.",
+      "precondition": "Usuário com sessão ou credenciais válidas que o administrador tenta desativar/desconectar.",
+      "failure_and_effect": "Forçar logout só atualiza profiles.session_invalidated_at, campo sem leitor na fonte/SQL. Desativar altera is_active, mas auth-login e guardas não o validam e a visibilidade canônica não o consulta. Encerrar sessões só marca public.user_sessions.is_active=false; não há vínculo com auth.sessions, revogação de refresh token ou validação desse registro. detect-new-device insere uma sessão pública nova a cada chamada, sem chave da sessão Auth, e só é chamado nas telas de segurança. As confirmações descrevem efeitos de segurança que esses writes não realizam.",
+      "evidence": [
+        {
+          "path": "src/components/admin/ForceLogoutButton.tsx",
+          "start_line": 26,
+          "end_line": 61,
+          "blob_sha": "d796604de197b3e648d4b17d96ca45ea218d41df",
+          "symbol": "handleForceLogout e promessa UI",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/useAdminData.ts",
+          "start_line": 115,
+          "end_line": 126,
+          "blob_sha": "9c74e75a5e998a94189ff292ffbdfc113973ef9d",
+          "symbol": "handleToggleActive",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/ui/useDeviceDetection.ts",
+          "start_line": 174,
+          "end_line": 227,
+          "blob_sha": "512c3752014ac7a1494bce1ca8eda98e89a1fa28",
+          "symbol": "removeDevice/endSession/endAllOtherSessions",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/detect-new-device/index.ts",
+          "start_line": 140,
+          "end_line": 169,
+          "blob_sha": "a94779b3b19fcb704eb9a9370cc62267b4e45a33",
+          "symbol": "registro de user_sessions",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/auth-login/index.ts",
+          "start_line": 72,
+          "end_line": 116,
+          "blob_sha": "a4fe292c8b536d271ff3d65008b5ee8473babc99",
+          "symbol": "login sem is_active/session_invalidated_at",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260315193759_ad5f45ba-4b9f-4b25-b483-7da8b548e8c7.sql",
+          "start_line": 33,
+          "end_line": 40,
+          "blob_sha": "566646ef7d4f844f87bf80f91030daf645fa965f",
+          "symbol": "adiciona session_invalidated_at",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql",
+          "start_line": 1,
+          "end_line": 84,
+          "blob_sha": "a0c2e2f7484bfdd3808b3e30f2ca87cb4104428c",
+          "symbol": "predicado canônico de visibilidade",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [
+        "1.11"
+      ],
+      "acceptance_criteria": [
+        "Definir e implementar revogação real para logout forçado, término de sessão/dispositivo e desativação de conta.",
+        "Vincular inventário de dispositivos à sessão Auth que ele pretende encerrar; evitar duplicação por visita à tela.",
+        "Validar duas sessões independentes: após a ação, sessão alvo não renova/acessa recursos conforme o prazo garantido; desativado não inicia nova sessão; sessão preservada continua."
+      ],
+      "limitations": [
+        "SQL peer confirmou: session_invalidated_at só ADD COLUMN; user_sessions não consulta auth.sessions; can_view_contact não verifica is_active.",
+        "Não se presume que revogar um refresh token revogue instantaneamente todo JWT já emitido; o aceite deve definir o mecanismo/prazo real."
+      ]
+    },
+    {
+      "id": "R2-AUTH-005",
+      "title": "Resposta atrasada de perfil repõe identidade antiga após logout ou troca de usuário",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_OFFLINE",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "AuthProvider.onAuthStateChange / refreshProfile → fetchProfile(userId) → setProfile; consumidores usam profile.id/nome para Team Chat e Contatos.",
+      "precondition": "Uma consulta de perfil em andamento durante SIGNED_OUT, novo SIGNED_IN ou atualização concorrente.",
+      "failure_and_effect": "fetchProfile guarda apenas um booleano; não confere identidade vigente ou geração ao resolver. O listener libera o booleano a cada sessão e permite consultas concorrentes. O finally do logout limpa profile, porém uma consulta anterior pode escrever depois dessa limpeza; uma resposta A pode sobrescrever a resposta B. Os dois ordenamentos foram reproduzidos na closure real.",
+      "evidence": [
+        {
+          "path": "src/hooks/auth/useAuth.tsx",
+          "start_line": 36,
+          "end_line": 47,
+          "blob_sha": "b6a2c01e872eb422a4c71cab6fff0e58b7f383a4",
+          "symbol": "fetchProfile",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/auth/useAuth.tsx",
+          "start_line": 89,
+          "end_line": 118,
+          "blob_sha": "b6a2c01e872eb422a4c71cab6fff0e58b7f383a4",
+          "symbol": "onAuthStateChange",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/auth/useAuth.tsx",
+          "start_line": 148,
+          "end_line": 181,
+          "blob_sha": "b6a2c01e872eb422a4c71cab6fff0e58b7f383a4",
+          "symbol": "refreshProfile/signOut",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [
+        "P-AUTH-02"
+      ],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Vincular cada resposta de perfil à geração de sessão e userId atuais; descartar resultados de gerações encerradas.",
+        "Invalidar/cancelar consultas de perfil no logout e na troca de usuário e zerar perfil ao iniciar identidade diferente.",
+        "Provar duas ordens de resolução A/B e conclusão tardia após logout, sem reaparecer perfil anterior."
+      ],
+      "limitations": [
+        "Probe da closure real com promises controladas; transições de sessão simulam pontos de corte do listener, sem renderização React completa.",
+        "Não afirma bypass de RLS: a falha confirmada é a identidade incorreta no estado do cliente."
+      ]
+    },
+    {
+      "id": "R2-AUTH-006",
+      "title": "Recuperação anônima consulta profiles protegido e não cria solicitação",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "/forgot-password → SELECT profiles(user_id) por email → retorno genérico sem insert.",
+      "precondition": "Pessoa desconectada tentando recuperar sua conta, o caso normal desta página.",
+      "failure_and_effect": "As policies SELECT atuais de profiles exigem authenticated e permitem próprio usuário/admin/supervisor. Sem sessão, a consulta não retorna a conta. ForgotPassword ignora userError e, quando existingUser é vazio, apresenta sucesso genérico antes do INSERT password_reset_requests. A não enumeração de emails é correta como aparência, mas o pedido real nunca é entregue ao administrador.",
+      "evidence": [
+        {
+          "path": "src/pages/ForgotPassword.tsx",
+          "start_line": 37,
+          "end_line": 68,
+          "blob_sha": "c4a8b964af4313dd0d0da2026c3224076ae34caf",
+          "symbol": "handleSubmit",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql",
+          "start_line": 1,
+          "end_line": 26,
+          "blob_sha": "a05f3685643ec445ce07862463a20db859b3faa3",
+          "symbol": "SELECT profiles próprio/admin/supervisor e política de equipe transitória",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260401001655_509f6c72-b9c2-458c-9dc5-af298d512958.sql",
+          "start_line": 1,
+          "end_line": 5,
+          "blob_sha": "bcef82895cdad989af1c9809d1107b3483cc6b15",
+          "symbol": "remove política de equipe",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [
+        "1.4",
+        "1.23"
+      ],
+      "acceptance_criteria": [
+        "Mover o registro do pedido para uma fronteira server-side anônima controlada que faça lookup sem expor existência e persista pedido válido.",
+        "Manter mesma resposta pública para email existente/inexistente; separar falha de infraestrutura de pedido persistido.",
+        "Verificar anon existente: uma solicitação pendente aparece ao revisor; anon inexistente não enumera; duplicatas/rate limit tratados."
+      ],
+      "limitations": [
+        "Policies exatas: migration com prefixo20260401000858 linhas6–12; remoção da policy de equipe no prefixo20260401001655 linha3. Pins SQL anexados em cross_domain_evidence.",
+        "Sem teste anônimo em banco vivo."
+      ]
+    },
+    {
+      "id": "R2-AUTH-007",
+      "title": "Aprovar recuperação gera link que a UI descarta e anuncia email não enviado",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "PasswordResetRequestsPanel.handleApprove → approve-password-reset → auth.admin.generateLink → resposta resetLink → UI ignora data.",
+      "precondition": "Uma solicitação pendente existente e revisor autorizado.",
+      "failure_and_effect": "A Edge gera action_link, marca a solicitação approved e devolve o link. Não há envio de email. O consumidor extrai somente error e informa Email de reset enviado. Mesmo contornando o bloqueio da etapa anterior, o usuário não recebe o link por esse fluxo. A checagem pending e update também são separados, sem compare-and-swap, permitindo decisões concorrentes sobre o mesmo pedido.",
+      "evidence": [
+        {
+          "path": "supabase/functions/approve-password-reset/index.ts",
+          "start_line": 39,
+          "end_line": 104,
+          "blob_sha": "06449dc84c8bc823cc9505555ba8ef77c8e3d6a2",
+          "symbol": "leitura/aprovação/generateLink",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/PasswordResetRequestsPanel.tsx",
+          "start_line": 51,
+          "end_line": 60,
+          "blob_sha": "871a2b47f2eae46543fa00e15eb0d49ff95d0d06",
+          "symbol": "handleApprove",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [
+        "1.4",
+        "1.23"
+      ],
+      "acceptance_criteria": [
+        "Gerar e entregar o mecanismo de recuperação ao destinatário por transporte verificável; status sent somente após aceite do envio.",
+        "Não expor link ao revisor se não for parte do fluxo autorizado; a UI deve refletir queued/sent/failed e permitir retry seguro.",
+        "Condicionar decisão ao estado pending de forma atômica e testar aprovar/rejeitar concorrentes sem múltiplas decisões contraditórias."
+      ],
+      "limitations": [
+        "generateLink é geração de link para transporte próprio conforme documentação oficial, não disparo de email.",
+        "Nenhum email enviado e nenhum link de recuperação real coletado."
+      ]
+    },
+    {
+      "id": "R2-AUTH-008",
+      "title": "Troca de papel apaga privilégios antes de confirmar a nova atribuição",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_OFFLINE",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "AdminUsersTable seletor de role → useAdminData.handleRoleChange → DELETE user_roles → INSERT.",
+      "precondition": "Administrador muda papel; o DELETE conclui e o INSERT falha, ou o DELETE falha silenciosamente.",
+      "failure_and_effect": "A substituição usa dois requests não transacionais. Falha no INSERT deixa o usuário sem qualquer role; falha no DELETE é ignorada e o INSERT pode somar papéis ao antigo. O probe preservou exatamente o caminho real e mostrou admin→[] quando a inserção falha. Um operador pode inclusive retirar seu próprio acesso administrativo.",
+      "evidence": [
+        {
+          "path": "src/components/admin/useAdminData.ts",
+          "start_line": 104,
+          "end_line": 113,
+          "blob_sha": "9c74e75a5e998a94189ff292ffbdfc113973ef9d",
+          "symbol": "handleRoleChange",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/AdminUsersTable.tsx",
+          "start_line": 1,
+          "end_line": 115,
+          "blob_sha": "b0b64c6e3f23eeda62a9ccf0b679099e40245e4e",
+          "symbol": "seletor consumidor",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [
+        "P-AUTH-05"
+      ],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [
+        "1.12",
+        "1.13"
+      ],
+      "acceptance_criteria": [
+        "Substituir papel por operação server-side atômica com autorização e proteção de último administrador conforme regra de negócio.",
+        "Erro de qualquer etapa deve manter atribuição anterior e ser refletido na UI.",
+        "Validar falha/inserção concorrente e múltiplos papéis sem estados intermediários destrutivos."
+      ],
+      "limitations": [
+        "Conclusão da fonte fixada; não atesta comportamento de uma implantação ou banco vivo."
+      ]
+    },
+    {
+      "id": "R2-AUTH-009",
+      "title": "Matriz anuncia permissão removida mesmo quando a revogação retorna erro",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_OFFLINE",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "PermissionMatrix.handleToggle → usePermissions.removePermissionFromRole/addPermissionToRole → PostgREST → toast.",
+      "precondition": "Falha explícita da escrita de role_permissions, por ACL, constraint ou serviço.",
+      "failure_and_effect": "O hook retorna false em error e não lança. A matriz ignora o booleano e sempre mostra Permissão removida/adicionada. Probe com42501 retornou sucesso visual e nenhum refetch. Além disso, escritas bem-sucedidas não invalidam user-roles/user-nav-permissions de consumidores; staleTime não funciona como polling e o QueryClient desliga refetch em foco/mount.",
+      "evidence": [
+        {
+          "path": "src/hooks/system/usePermissions.ts",
+          "start_line": 119,
+          "end_line": 141,
+          "blob_sha": "c8242e4421b19780f72aa36765883db807309f60",
+          "symbol": "mutations retornam boolean",
+          "observation": ""
+        },
+        {
+          "path": "src/components/permissions/PermissionMatrix.tsx",
+          "start_line": 54,
+          "end_line": 72,
+          "blob_sha": "9528e77ae5a584e286e70c2fb38a6a5f218e4d62",
+          "symbol": "handleToggle",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/system/useUserRole.ts",
+          "start_line": 1,
+          "end_line": 74,
+          "blob_sha": "bf443c59442e8913b9c65b4114a4e2704c21b313",
+          "symbol": "cache de papéis",
+          "observation": ""
+        },
+        {
+          "path": "src/lib/queryClient.ts",
+          "start_line": 1,
+          "end_line": 33,
+          "blob_sha": "585ce9bf74ebeb3308234c672e6ae0fb98f10b64",
+          "symbol": "políticas globais de cache",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [
+        "P-AUTH-03"
+      ],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [
+        "1.17",
+        "1.12"
+      ],
+      "acceptance_criteria": [
+        "Propagar erro de mutation ou exigir retorno true antes de anunciar sucesso; confirmar quantidade efetivamente alterada.",
+        "Invalidar/reconciliar permissões e papéis usados pela navegação após alteração e em mudanças remotas que o produto precise refletir.",
+        "Testar revogação403/42501 e falha transitória: permissão permanece visível com erro e nenhuma mensagem de removida."
+      ],
+      "limitations": [
+        "Não classifica hasPermission do hook como bloqueio ativo de agentes: não foi encontrado consumidor ativo desse método genérico fora da matriz.",
+        "Backend pode continuar autorizando corretamente apesar do cache/UI incorretos."
+      ]
+    },
+    {
+      "id": "R2-AUTH-010",
+      "title": "Rascunho e resposta do Team Chat atravessam conversas e permanecem entre contas",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_OFFLINE",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "TeamChatView troca conversation no mesmo TeamChatPanel → useTeamChatPanel mantém text/replyTo → TeamChatInputArea/useTeamChatDraft grava sob conversationId novo → send usa destino atual.",
+      "precondition": "Operador digita texto ou seleciona resposta em A e muda para B antes de enviar; outra conta pode usar o mesmo navegador e conversa depois.",
+      "failure_and_effect": "O painel é reutilizado sem key por conversa; efeito de troca não limpa texto/reply/edit. O hook só restaura B se text estiver vazio e grava o texto antigo sob a chave de B após500ms. As chaves team_draft_+conversationId não têm identidade e não são removidas no logout. Probe mostrou A sobrescrevendo rascunho B e outro profile restaurando A. Enviar em B usa conversationId B e conteúdo/reply pendentes de A.",
+      "evidence": [
+        {
+          "path": "src/components/team-chat/TeamChatView.tsx",
+          "start_line": 35,
+          "end_line": 54,
+          "blob_sha": "8454231c59f5d39daef659d66756ecbe66ed4d2b",
+          "symbol": "painel sem key por conversa",
+          "observation": ""
+        },
+        {
+          "path": "src/components/team-chat/useTeamChatPanel.ts",
+          "start_line": 27,
+          "end_line": 35,
+          "blob_sha": "236c415ea7b224bb41b815097fb75ed4c37c9ce3",
+          "symbol": "estado de edição",
+          "observation": ""
+        },
+        {
+          "path": "src/components/team-chat/useTeamChatPanel.ts",
+          "start_line": 116,
+          "end_line": 124,
+          "blob_sha": "236c415ea7b224bb41b815097fb75ed4c37c9ce3",
+          "symbol": "reset incompleto por conversationId",
+          "observation": ""
+        },
+        {
+          "path": "src/components/team-chat/useTeamChatPanel.ts",
+          "start_line": 190,
+          "end_line": 206,
+          "blob_sha": "236c415ea7b224bb41b815097fb75ed4c37c9ce3",
+          "symbol": "send atual",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/chat/useTeamChatDraft.ts",
+          "start_line": 7,
+          "end_line": 53,
+          "blob_sha": "586bbd32e45e818ee4fac64e38a6e82df4d849dd",
+          "symbol": "chave/auto-save/restore",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/auth/useAuth.tsx",
+          "start_line": 162,
+          "end_line": 181,
+          "blob_sha": "b6a2c01e872eb422a4c71cab6fff0e58b7f383a4",
+          "symbol": "limpeza de logout",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [
+        "P-AUTH-04"
+      ],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Escopar todo estado de composição e persistência por usuário e conversa; restaurar B independentemente do conteúdo prévio de A.",
+        "Zerar reply/edit/arquivo/recording ao mudar de destinatário ou remontar painel com identidade completa.",
+        "Provar troca A→B com ambos os rascunhos, resposta selecionada, envio e logout→outra conta, sem sobrescrita nem exposição."
+      ],
+      "limitations": [
+        "Nova fronteira de identidade/destinatário; TC-010 anterior tratava perda após erro de envio, que permanece separado.",
+        "Sem envio real de mensagem; probe do hook com scheduler sintético e retenção do painel confirmada na fonte."
+      ]
+    },
+    {
+      "id": "R2-AUTH-011",
+      "title": "Team Chat busca perfis de colegas por tabela proibida aos agentes",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "TeamChatView/lista → useTeamConversations embed profiles; painel colega → useTeamMemberDetails SELECT profiles.",
+      "precondition": "Usuário agent/special_agent, colega diferente e policy atual de profiles (próprio/admin/supervisor).",
+      "failure_and_effect": "A lista incorpora perfis diretamente da tabela protegida; dados do outro participante vêm null. DMs sem nome caem em Chat Direto e perdem avatar. O painel individual consulta nome/email/telefone/cargo/aniversário pelo mesmo caminho e fica sem perfil; grupo lista só o que a policy permite, podendo contar1 membro em grupo maior. Há RPC get_team_profiles para projeção controlada em outros consumidores, mas esses caminhos não a usam.",
+      "evidence": [
+        {
+          "path": "src/hooks/team-chat/useTeamConversations.ts",
+          "start_line": 26,
+          "end_line": 68,
+          "blob_sha": "5cf706a571edcaea4d68de8e7ce3037d0d1c761a",
+          "symbol": "embed e displayName fallback",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/team-chat/useTeamMemberDetails.ts",
+          "start_line": 40,
+          "end_line": 69,
+          "blob_sha": "0a3d5c862699b293f8f36e605906af925963b2cf",
+          "symbol": "consultas peer/group",
+          "observation": ""
+        },
+        {
+          "path": "src/components/team-chat/TeamMemberDetails.tsx",
+          "start_line": 35,
+          "end_line": 77,
+          "blob_sha": "2ae63d3cd4caf36eebf96650834a73d0a582c92f",
+          "symbol": "render detalhes e count",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/crm/useTeamProfiles.ts",
+          "start_line": 1,
+          "end_line": 19,
+          "blob_sha": "fb33eb361c21d30aca245ad165a01f04f33f896b",
+          "symbol": "projeção existente",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql",
+          "start_line": 1,
+          "end_line": 26,
+          "blob_sha": "a05f3685643ec445ce07862463a20db859b3faa3",
+          "symbol": "SELECT profiles próprio/admin/supervisor e política de equipe transitória",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260401001655_509f6c72-b9c2-458c-9dc5-af298d512958.sql",
+          "start_line": 1,
+          "end_line": 5,
+          "blob_sha": "bcef82895cdad989af1c9809d1107b3483cc6b15",
+          "symbol": "remove política de equipe",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Usar projeção autorizada e mínima para participantes do Team Chat, sem abrir dados privados inteiros de profiles.",
+        "Testar agent→agent e group com múltiplos membros: nomes/avatar corretos, somente atributos autorizados, count fiel.",
+        "Distinguir perfil indisponível de erro de consulta."
+      ],
+      "limitations": [
+        "Cadeia e manifesto SQL confirmados pelo agente SQL: policy de membros ativos foi removida na migration20260401001655.",
+        "Não sugere afrouxar RLS genericamente nem afirma que agentes deveriam ver todos os dados pessoais do colega."
+      ]
+    },
+    {
+      "id": "R2-AUTH-012",
+      "title": "Ações VIP, arquivar, bloquear e tags no detalhe do contato não persistem",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "ContactActionButtons menu Mais → ContactHeaderSection.onQuickAction → ContactDetails.handleQuickAction; ContactAccordionSections botões/tag X.",
+      "precondition": "Abrir detalhes do contato e selecionar ação visível do menu ou tags.",
+      "failure_and_effect": "VIP/archive/block só emitem undoToast; não chamam mutation, não alteram estado persistido e undo também só mostra toast. Os botões Adicionar tag/Adicionar e X de tags não têm handler. A UI declara contato bloqueado/arquivado mesmo com dado intacto, levando a decisões operacionais incorretas.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/contact-details/ContactActionButtons.tsx",
+          "start_line": 186,
+          "end_line": 198,
+          "blob_sha": "851aa7e03c6010ebbdd240bfdc5c52ddba94f55d",
+          "symbol": "menu alcançável",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/ContactDetails.tsx",
+          "start_line": 67,
+          "end_line": 91,
+          "blob_sha": "eeffb3e8f1a69c737171f4dfb107d2485beec79a",
+          "symbol": "handleQuickAction",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/ContactDetails.tsx",
+          "start_line": 125,
+          "end_line": 136,
+          "blob_sha": "eeffb3e8f1a69c737171f4dfb107d2485beec79a",
+          "symbol": "wiring consumidor",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+          "start_line": 74,
+          "end_line": 77,
+          "blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+          "symbol": "Adicionar tag sem handler",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+          "start_line": 163,
+          "end_line": 190,
+          "blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+          "symbol": "TagsContent",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [
+        "2.5"
+      ],
+      "acceptance_criteria": [
+        "Conectar cada ação ao contrato persistido com autorização e só confirmar após sucesso; undo deve reverter operação real.",
+        "Se a função ainda não existir, removê-la/desabilitá-la com estado honesto.",
+        "Reabrir contato após VIP/archive/block/tag e confirmar dado persistido e falhas explícitas."
+      ],
+      "limitations": [
+        "Conclusão da fonte fixada; não atesta comportamento de uma implantação ou banco vivo."
+      ]
+    },
+    {
+      "id": "R2-AUTH-013",
+      "title": "Mutations de Contatos ainda informam sucesso em erros ou lotes parciais",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_OFFLINE",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "ContactsView → ContactBulkTagDialog/BulkActionsBar → SELECT/UPDATE contacts; edição avulsa via useContactsCRUD.",
+      "precondition": "Contato selecionado sem UPDATE permitido, seleção incluindo IDs invisíveis, falha de escrita ou perda de autorização entre leitura e update.",
+      "failure_and_effect": "ContactBulkTagDialog ignora todos os erros dos UPDATE e anuncia contactIds.length, inclusive IDs não lidos. BulkActionsBar.handleBulkTag ignora erros de leitura/escrita; leitura falha vira tags=[], podendo sobrescrever tags se a escrita subsequente passar. Atribuir/tipo/edição só verificam error sem quantidade, então zero/parte das linhas também anunciam sucesso total. DELETE já usa RPC e contagem corretamente; a correção não foi aplicada aos outros caminhos.",
+      "evidence": [
+        {
+          "path": "src/components/contacts/ContactBulkTagDialog.tsx",
+          "start_line": 57,
+          "end_line": 94,
+          "blob_sha": "386521b4886c48e6ea533072c2522255fca0206c",
+          "symbol": "handleApply",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/BulkActionsBar.tsx",
+          "start_line": 78,
+          "end_line": 144,
+          "blob_sha": "72312d4b962d491a06f99f1070308c900a3b5878",
+          "symbol": "tag/assign/type",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/BulkActionsBar.tsx",
+          "start_line": 146,
+          "end_line": 177,
+          "blob_sha": "72312d4b962d491a06f99f1070308c900a3b5878",
+          "symbol": "contraste interno: delete contabiliza",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/useContactsCRUD.ts",
+          "start_line": 187,
+          "end_line": 234,
+          "blob_sha": "8be3bec66e4631d55516b740125ceddcb240cf41",
+          "symbol": "handleEditContact",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [
+        "P-AUTH-06"
+      ],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Propagar erros SDK e obter quantidade/IDs efetivamente alterados; reportar sucesso parcial e manter seleção recusada.",
+        "Não fabricar tags vazias quando leitura falha; aplicar adição/remoção atômica para evitar lost update.",
+        "Testar lote com autorização mista, erro de SELECT, erro UPDATE e zero rows, preservando tags existentes e feedback fiel."
+      ],
+      "limitations": [
+        "O item Atribuir do BulkActionsBar está sem availableAgents no consumidor ContactsView239–248; erro de contagem desse handler é latente nessa montagem. Tag, tipo e edição são alcançáveis."
+      ]
+    },
+    {
+      "id": "R2-AUTH-014",
+      "title": "Menus de gerenciamento de agentes possuem opções clicáveis sem ação",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "AgentsView grid → menu de cada agente ou botão Filtrar.",
+      "precondition": "Página de agentes carregada e ação selecionada.",
+      "failure_and_effect": "Filtrar, Editar, Configurações e Desativar são renderizados sem onClick/onSelect. Não abrem diálogo, não mudam filtro, não invocam gerenciamento de conta. Há outra superfície Admin funcional para parte dessas operações, mas os controles oferecidos aqui não conduzem a ela.",
+      "evidence": [
+        {
+          "path": "src/components/agents/AgentsView.tsx",
+          "start_line": 145,
+          "end_line": 155,
+          "blob_sha": "6708b347500a72eb23c4da5a96cc31e18c8ea715",
+          "symbol": "Filtrar",
+          "observation": ""
+        },
+        {
+          "path": "src/components/agents/AgentsView.tsx",
+          "start_line": 205,
+          "end_line": 225,
+          "blob_sha": "6708b347500a72eb23c4da5a96cc31e18c8ea715",
+          "symbol": "menu agente",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Ligar ações à superfície canônica de gerenciamento com o agente escolhido ou apresentá-las como indisponíveis.",
+        "Validar cada opção com teclado/clique e verificar efeito real/autorização, inclusive desativação."
+      ],
+      "limitations": [
+        "Conclusão da fonte fixada; não atesta comportamento de uma implantação ou banco vivo."
+      ]
+    },
+    {
+      "id": "R2-AUTH-015",
+      "title": "Convite de agente não cria convite autenticável nem provisiona papel escolhido",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "AgentsView Novo agente → InviteAgentDialog.handleInvite → send-email.",
+      "precondition": "Operador seleciona papel admin/supervisor/agent e envia convite.",
+      "failure_and_effect": "O único efeito é email HTML com texto do papel. Não há convite Auth, token/URL de aceite, registro de atribuição pendente ou associação do papel ao email. O destinatário é instruído a criar conta, e o papel selecionado não é comunicado a nenhum contrato de provisionamento. O email pode ser enviado com sucesso, mas não conclui onboarding do papel anunciado.",
+      "evidence": [
+        {
+          "path": "src/components/agents/InviteAgentDialog.tsx",
+          "start_line": 29,
+          "end_line": 65,
+          "blob_sha": "c2ec05fe9f8be3135b56bad8e09ff7d954cd1ee2",
+          "symbol": "handleInvite",
+          "observation": ""
+        },
+        {
+          "path": "src/components/agents/InviteAgentDialog.tsx",
+          "start_line": 100,
+          "end_line": 110,
+          "blob_sha": "c2ec05fe9f8be3135b56bad8e09ff7d954cd1ee2",
+          "symbol": "papéis selecionáveis",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Definir fluxo de convite verificável, com destinatário, expiração, papel autorizado e consumo único.",
+        "Aplicar atribuição na aceitação server-side, jamais por confiar no texto/email ou metadata fornecida pelo convidado.",
+        "Testar convite para cada papel, email existente, novo, expirado e uso repetido; UI deve refletir estado de convite/aceite."
+      ],
+      "limitations": [
+        "Não afirma que o email não é enviado: o defeito é o provisionamento ausente e a promessa do papel.",
+        "send-email não foi executado."
+      ]
+    },
+    {
+      "id": "R2-AUTH-016",
+      "title": "Criação de usuário retorna sucesso mesmo com role/perfil/contas auxiliares falhos",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "AdminView → useAdminData.handleCreateUser → create-user → Auth createUser → updates/inserts públicos →200.",
+      "precondition": "Criação Auth bem-sucedida e uma etapa posterior de role/perfil/conta auxiliar falha ou não afeta linha.",
+      "failure_and_effect": "Erros das atualizações role e perfil são ignorados; Gmail/serviços/Dropbox apenas logam erro. A Edge sempre responde success:true e UI fecha como criado. Uma conta existe com configuração diferente da solicitada, e repetir a operação esbarra em email já criado. A autorização do criador usa user_roles.single(), incompatível com administrador que tenha mais de uma role, apesar da modelagem por linhas.",
+      "evidence": [
+        {
+          "path": "supabase/functions/create-user/index.ts",
+          "start_line": 35,
+          "end_line": 44,
+          "blob_sha": "c9f07ddae973e905dfee8d7180e82c3ef02d4eb8",
+          "symbol": "lookup single de papel",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/create-user/index.ts",
+          "start_line": 70,
+          "end_line": 152,
+          "blob_sha": "c9f07ddae973e905dfee8d7180e82c3ef02d4eb8",
+          "symbol": "provisionamento parcial",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/useAdminData.ts",
+          "start_line": 237,
+          "end_line": 248,
+          "blob_sha": "9c74e75a5e998a94189ff292ffbdfc113973ef9d",
+          "symbol": "sucesso pelo HTTP",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Verificar e persistir resultado de cada etapa obrigatória; tornar retry idempotente e retornar provisionamento parcial explícito quando não for possível transação com Auth.",
+        "Não sinalizar papel aplicado sem linha confirmada; reconciliar/compensar falha de provisionamento.",
+        "Autorizar admin por existência do papel, com caso multi-role coberto."
+      ],
+      "limitations": [
+        "Conclusão da fonte fixada; não atesta comportamento de uma implantação ou banco vivo."
+      ]
+    },
+    {
+      "id": "R2-AUTH-017",
+      "title": "Gestão de grupo e recursos novos de Team Chat permanecem sem consumidor",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "REFINED_PRIOR",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "TeamChatView → TeamChatPanel → TeamChatHeader; estados/mutations do hook e diálogos exportados não são ligados ao painel.",
+      "precondition": "Uso da view de produção e intenção de renomear/sair/transferir/gerenciar grupo ou departamentos.",
+      "failure_and_effect": "Além da gestão de departamento já apontada em TC-005 e da paginação/reação em TC-006, o painel não passa callbacks de rename/leave/transfer para header nem monta GroupManagementDialog/TransferConversationDialog/TeamPerformancePanel. Componentes e hooks não equivalem a operação disponível. GroupManagementDialog ainda trata membership.id como profile.id, mas esse bug foi mantido somente como bloqueio de integração porque o componente não está alcançável.",
+      "evidence": [
+        {
+          "path": "src/components/team-chat/TeamChatPanel.tsx",
+          "start_line": 1,
+          "end_line": 156,
+          "blob_sha": "66db8581e8565112211f289772b49255bd0c237f",
+          "symbol": "imports e props do header",
+          "observation": ""
+        },
+        {
+          "path": "src/components/team-chat/TeamChatView.tsx",
+          "start_line": 29,
+          "end_line": 55,
+          "blob_sha": "8454231c59f5d39daef659d66756ecbe66ed4d2b",
+          "symbol": "props para lista e painel",
+          "observation": ""
+        },
+        {
+          "path": "src/components/team-chat/useTeamChatPanel.ts",
+          "start_line": 116,
+          "end_line": 124,
+          "blob_sha": "236c415ea7b224bb41b815097fb75ed4c37c9ce3",
+          "symbol": "estados de gestão",
+          "observation": ""
+        },
+        {
+          "path": "src/components/team-chat/GroupManagementDialog.tsx",
+          "start_line": 60,
+          "end_line": 70,
+          "blob_sha": "bab5c8d48183b3e1e5aa5e76d1632b52bde9a559",
+          "symbol": "shape dormente",
+          "observation": ""
+        },
+        {
+          "path": "src/components/team-chat/GroupManagementDialog.tsx",
+          "start_line": 155,
+          "end_line": 167,
+          "blob_sha": "bab5c8d48183b3e1e5aa5e76d1632b52bde9a559",
+          "symbol": "ID dormente",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "refines_existing",
+        "ids": [
+          "TC-005",
+          "TC-006"
+        ],
+        "assessment": "Amplia a evidência do achado anterior sem contá-lo novamente como defeito independente."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Concluir ligação dos recursos aceitos ao consumidor real; não encerrar tarefa apenas por existir hook/componente.",
+        "Corrigir shape membership/profile e contratos SQL antes de ativar diálogos.",
+        "Provar as ações de grupo e departamentos a partir da view normal, com gestão/recusa de usuário sem papel."
+      ],
+      "limitations": [
+        "Refinamento do grupo de achados anteriores, não novo achado de exploração.",
+        "Bugs em código sem consumidor não foram contados como falha ativa."
+      ]
+    },
+    {
+      "id": "R2-AUTH-018",
+      "title": "Inteligência CRM aceita pessoa externa diferente do vínculo estável",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_OFFLINE",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "ContactAccordionSections → ContactIntelligencePanel → useContactIntelligence → crm-integration(contactLookup,intelligence) → RPC externa por telefone.",
+      "precondition": "Contato canônico visível vinculado a external-A; o mesmo telefone no CRM externo passa a resolver external-B, sem mudar o telefone canônico.",
+      "failure_and_effect": "A Edge lê o vínculo estável, mas compara external_contact_id apenas no lookup360. Para intelligence, aceita result.contact_id diferente e entrega briefing/rapport/interações de outra pessoa sob o contato atual. O probe do handler real retornou409 para360 e200 para intelligence com o mesmo vínculo A e resultado B. O caminho batch também só compara normalized_phone e não carrega external_contact_id, deixando logos/empresa do número reciclado sem prova de identidade.",
+      "evidence": [
+        {
+          "path": "supabase/functions/crm-integration/index.ts",
+          "start_line": 568,
+          "end_line": 589,
+          "blob_sha": "d51878b27773388bf87396cb82f9b62c8c818c7b",
+          "symbol": "contactLookup",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/crm-integration/index.ts",
+          "start_line": 590,
+          "end_line": 617,
+          "blob_sha": "d51878b27773388bf87396cb82f9b62c8c818c7b",
+          "symbol": "contactLookupBatch",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/crm/useContactIntelligence.ts",
+          "start_line": 79,
+          "end_line": 108,
+          "blob_sha": "18ab915b7c991b6358fcd9d58a8c7e3ef95c4d11",
+          "symbol": "contact_id e consumidor",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+          "start_line": 95,
+          "end_line": 103,
+          "blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+          "symbol": "painel alcançável",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [
+        "P-AUTH-07"
+      ],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Resolver leituras pelo vínculo estável ou conferir identidade retornada em todas as projeções, incluindo intelligence e batch.",
+        "Em divergência, retornar conflito/estado de reverificação sem exibir dado de outra pessoa.",
+        "Reproduzir telefone reciclado, vínculo alterado e ausência de vínculo; confirmar que360/intelligence/batch compartilham a mesma autoridade de identidade."
+      ],
+      "limitations": [
+        "External RPC/DB sintéticos, sem provar que já ocorreu reatribuição no Singu real.",
+        "Authorization do contato canônico está presente; defeito é a identidade externa que ele autoriza a projetar."
+      ]
+    },
+    {
+      "id": "R2-AUTH-019",
+      "title": "Edição de empresa/contato no CRM externo aceita zero linhas como sucesso",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "CRM360ExplorerView → CompanyFormDialog/ContactFormDialog → useExternalMutation → crm-integration mutate update → select result.",
+      "precondition": "Empresa/contato removido ou ID que não existe mais entre abertura do form e update.",
+      "failure_and_effect": "O gateway transforma retorno vazio em data=[] com200; hook retorna o array e forms ignoram seu conteúdo, anunciam atualizado e fecham. Não há verificação de uma linha efetivamente gravada nem reconciliação de conflito. A invalidação só cobre external-db/tabela, deixando projeções360/intelligence/batch existentes com valores antigos após edição bem-sucedida.",
+      "evidence": [
+        {
+          "path": "supabase/functions/crm-integration/index.ts",
+          "start_line": 676,
+          "end_line": 687,
+          "blob_sha": "d51878b27773388bf87396cb82f9b62c8c818c7b",
+          "symbol": "mutate",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/integrations/useExternalDB.ts",
+          "start_line": 138,
+          "end_line": 159,
+          "blob_sha": "cc0d00e79513ce3b063106102f14879d20cb6a9a",
+          "symbol": "useExternalMutation",
+          "observation": ""
+        },
+        {
+          "path": "src/components/crm360/CompanyFormDialog.tsx",
+          "start_line": 94,
+          "end_line": 115,
+          "blob_sha": "e04475506eb435d2eaa09f00edeb4852feae4023",
+          "symbol": "handleSubmit",
+          "observation": ""
+        },
+        {
+          "path": "src/components/crm360/ContactFormDialog.tsx",
+          "start_line": 105,
+          "end_line": 125,
+          "blob_sha": "3902767351eb673a9412ce405055e8d34a539c21",
+          "symbol": "handleSubmit",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Exigir exatamente uma linha alterada para update de ID único e informar404/conflito sem fechar form quando zero.",
+        "Definir controle de versão para edição concorrente e invalidar projeções360/intelligence/batch impactadas.",
+        "Verificar remoção entre read/update e edição de empresa vinculada em aba separada."
+      ],
+      "limitations": [
+        "Conclusão da fonte fixada; não atesta comportamento de uma implantação ou banco vivo."
+      ]
+    },
+    {
+      "id": "R2-AUTH-020",
+      "title": "Capacidade de agentes conta todos os contatos atribuídos como chats ativos",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "useAgents agents-active-chats → COUNT client-side por assigned_to → AgentsView capacidade/chats e totalActiveChats.",
+      "precondition": "Existem contatos atribuídos com conversa encerrada, histórico antigo ou volume acima do limite de resposta da API.",
+      "failure_and_effect": "A consulta não filtra estado da conversa e conta cada contato atribuído como ativo. A capacidade exibida cresce com o histórico mesmo sem atendimento aberto; a consulta não pagina/agrega no servidor, então volumes maiores também truncam contagem. Loading dos chats não compõe isLoading e falhas podem se apresentar como0. A presença tem fallback por profiles.updated_at, que é atualização de cadastro, não evento de login.",
+      "evidence": [
+        {
+          "path": "src/hooks/crm/useAgents.ts",
+          "start_line": 75,
+          "end_line": 142,
+          "blob_sha": "9a87db8dcea3d8538a8009cc3986a26cd4dc96c9",
+          "symbol": "activeChats e stats",
+          "observation": ""
+        },
+        {
+          "path": "src/components/agents/AgentsView.tsx",
+          "start_line": 167,
+          "end_line": 168,
+          "blob_sha": "6708b347500a72eb23c4da5a96cc31e18c8ea715",
+          "symbol": "capacityPercent",
+          "observation": ""
+        },
+        {
+          "path": "src/components/agents/AgentsView.tsx",
+          "start_line": 228,
+          "end_line": 244,
+          "blob_sha": "6708b347500a72eb23c4da5a96cc31e18c8ea715",
+          "symbol": "exibição de chats ativos",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Contar o conjunto canônico de atendimentos ativos no servidor com o filtro de status correto e sem limite de paginação implícito.",
+        "Separar erro/loading/ausência de dado de zero; não estimar presença por edição de perfil.",
+        "Conferir0 abertos com histórico atribuído, abertos/encerrados mistos e volume maior que uma página."
+      ],
+      "limitations": [
+        "Não afirma que o algoritmo de distribuição do banco usa esta estatística; o defeito confirmado é na UI/estatística de agentes."
+      ]
+    },
+    {
+      "id": "R2-AUTH-021",
+      "title": "Indisponibilidade do Auth é registrada como tentativa de senha incorreta",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_OFFLINE",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "consumer_flow": "AuthService.signIn → auth-login → GoTrue signInWithPassword retorna erro503 → record_failed_login →401 → cliente trata credenciais inválidas.",
+      "precondition": "GoTrue retorna erro operacional/retryable em vez de uma recusa de credenciais.",
+      "failure_and_effect": "Qualquer signInError entra no mesmo ramo de senha inválida. O handler registra tentativa e responde401, ocultando503/rede e podendo levar usuários legítimos ao lockout ao repetir durante incidente. Probe com upstream503 chamou record_failed_login e retornou Invalid login credentials. Isso contradiz a distinção disponibilidade/credenciais que o cliente pretende manter no ADR-006.",
+      "evidence": [
+        {
+          "path": "supabase/functions/auth-login/index.ts",
+          "start_line": 83,
+          "end_line": 99,
+          "blob_sha": "a4fe292c8b536d271ff3d65008b5ee8473babc99",
+          "symbol": "classificação de falha Auth",
+          "observation": ""
+        },
+        {
+          "path": "src/lib/serverLogin.ts",
+          "start_line": 96,
+          "end_line": 121,
+          "blob_sha": "dd7d79a775127bbb18ee7a64b6e5f730032609aa",
+          "symbol": "interpretação de resposta",
+          "observation": ""
+        },
+        {
+          "path": "docs/adr/ADR-006-login-lockout-server-side.md",
+          "start_line": 56,
+          "end_line": 58,
+          "blob_sha": "8e57df3373a358ef6a3ed81776fc277ec535b163",
+          "symbol": "distinção declarada",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [
+        "P-AUTH-08"
+      ],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título."
+      },
+      "feature_claim_ids": [
+        "1.19"
+      ],
+      "acceptance_criteria": [
+        "Registrar tentativa somente para códigos comprovadamente relativos a credenciais; propagar falhas de rede/5xx/rate limit como indisponibilidade com retry adequado.",
+        "Não alterar login_attempts por outage do provedor.",
+        "Testar credencial inválida,503,429 e falha de transporte garantindo categoria/status e contador corretos."
+      ],
+      "limitations": [
+        "Não reabre bypass direto GoTrue: esse limite residual já é explícito e aceito no ADR-00679–85.",
+        "Nenhuma conta real foi bloqueada."
+      ]
+    }
+  ],
+  "cross_domain_evidence": [
+    {
+      "path": "supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql",
+      "start_line": 1,
+      "end_line": 26,
+      "blob_sha": "a05f3685643ec445ce07862463a20db859b3faa3",
+      "symbol": "SELECT profiles próprio/admin/supervisor e política de equipe transitória",
+      "observation": ""
+    },
+    {
+      "path": "supabase/migrations/20260401001655_509f6c72-b9c2-458c-9dc5-af298d512958.sql",
+      "start_line": 1,
+      "end_line": 5,
+      "blob_sha": "bcef82895cdad989af1c9809d1107b3483cc6b15",
+      "symbol": "remove política de equipe",
+      "observation": ""
+    },
+    {
+      "path": "supabase/migrations/20260315193759_ad5f45ba-4b9f-4b25-b483-7da8b548e8c7.sql",
+      "start_line": 33,
+      "end_line": 40,
+      "blob_sha": "566646ef7d4f844f87bf80f91030daf645fa965f",
+      "symbol": "adiciona session_invalidated_at",
+      "observation": ""
+    },
+    {
+      "path": "supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql",
+      "start_line": 1,
+      "end_line": 84,
+      "blob_sha": "a0c2e2f7484bfdd3808b3e30f2ca87cb4104428c",
+      "symbol": "predicado canônico de visibilidade",
+      "observation": ""
+    },
+    {
+      "path": "supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql",
+      "start_line": 25,
+      "end_line": 71,
+      "blob_sha": "f1ea0afaa371f86c9b024d4d86719b3dc5ad796d",
+      "symbol": "role_permissions políticas e RPC designada",
+      "observation": ""
+    }
+  ],
+  "rejected_or_integration_pending": [
+    {
+      "id": "D-AUTH-01",
+      "paths": [
+        "src/hooks/team-chat/useTeamPresence.ts",
+        "src/hooks/team-chat/useTeamTyping.ts"
+      ],
+      "status": "INTEGRATION_PENDING",
+      "reason": "Hooks públicos sem private:true, mas zero importação/chamada de produção encontrada. Não classificar exposição ativa. Se ativados, validar membership no canal privado e identidade de payload."
+    },
+    {
+      "id": "D-AUTH-02",
+      "paths": [
+        "src/components/inbox/CRMAutoSync.tsx"
+      ],
+      "status": "NO_ACTIVE_CONSUMER",
+      "reason": "CRMSyncButton retém contactNotFound/lastSyncTime e score0 por truthiness, porém somente export/definição foi encontrada. Header usa CrmSyncMenuItem em ContactActionButtons. Não incluir como bug do botão atual."
+    },
+    {
+      "id": "D-AUTH-03",
+      "paths": [
+        "src/hooks/crm/useContactSidebar.ts",
+        "src/services/crm/external-crm.service.ts",
+        "src/types/contactSidebar.ts"
+      ],
+      "status": "INTEGRATION_PENDING",
+      "reason": "lookup:sidebar não é aceito pelo gateway360/intelligence; hook não tem consumidor UI de produção. DTO/hook/testes existem, não integração atual concluída."
+    },
+    {
+      "id": "D-AUTH-04",
+      "paths": [
+        "src/components/mfa/MFABackupCodes.tsx"
+      ],
+      "status": "INTEGRATION_PENDING",
+      "reason": "Códigos gerados localmente sem persistência/redeemer, mas componente não aparece em fluxo MFA de produção. Não afirmar que usuário recebe códigos inválidos atualmente."
+    },
+    {
+      "id": "D-AUTH-05",
+      "paths": [
+        "src/components/team-chat/GroupManagementDialog.tsx",
+        "src/components/team-chat/TransferConversationDialog.tsx",
+        "src/hooks/team-chat/useTeamUnreadCount.ts",
+        "src/hooks/team-chat/useTeamPerformance.ts"
+      ],
+      "status": "INTEGRATION_PENDING",
+      "reason": "Há shape/ID incorreto em GroupManagementDialog e transferência só atualiza created_by; ausência de consumidor impede classificar operação ativa. Integração de gestão é refinamentoTC005/006."
+    },
+    {
+      "id": "D-AUTH-06",
+      "paths": [
+        "src/hooks/auth/useSecureProfile.ts",
+        "src/hooks/system/usePermissions.ts"
+      ],
+      "status": "NO_ACTIVE_CONSUMER_FOR_SUSPECT_SYMBOL",
+      "reason": "useSecureProfile não consumido em produção; hasPermission genérico do hook usePermissions também não é autorização efetiva do app. Não atribuir falha ao consumidor que usa RoleService/RPC."
+    },
+    {
+      "id": "D-AUTH-07",
+      "paths": [
+        "src/components/auth/ProtectedRoute.tsx"
+      ],
+      "status": "NO_ACTIVE_CONSUMER_FOR_SUSPECT_SYMBOL",
+      "reason": "Promise de requiredPermission não cancela resposta antiga apesar do reset de estado; rotas atuais usam requiredRoles, e não foi encontrado uso ativo de withPermission. Navegação atual usa consultas escopadas. Mantido como revisão futura."
+    },
+    {
+      "id": "D-AUTH-08",
+      "paths": [
+        "src/hooks/crm/useContactCustomFields.ts"
+      ],
+      "status": "LIMITED_CONSUMER_REVIEW",
+      "reason": "Estado/fetch não reinicia por contato. Consumidores atuais encontrados são amostra do TalkXWizard, não editor/sidebar; uso só leitura. Transferido ao escopo TalkX sem alegar alteração do contato errado."
+    },
+    {
+      "id": "D-AUTH-09",
+      "paths": [
+        "docs/adr/ADR-006-login-lockout-server-side.md"
+      ],
+      "status": "ACCEPTED_EXISTING_LIMIT",
+      "reason": "Acesso direto ao password grant GoTrue é limite explicitamente aceito79–85. Não reaberto como achado novo. Cliente oficial efetivamente usa auth-login fail-closed."
+    },
+    {
+      "id": "D-AUTH-10",
+      "paths": [
+        "src/components/inbox/contact-details/ExternalContact360Panel.tsx",
+        "src/services/crm/external-crm.service.ts"
+      ],
+      "status": "DESIGN_REQUIREMENT_PRESERVED",
+      "reason": "Ocultar erro/offline do painel360 atende tarefa1.4 do prompt antigo; não transformar retorno null nesse painel em novo defeito sem requisito mais recente."
+    }
+  ],
+  "prior_reassessment": [
+    {
+      "ids": [
+        "TC-001"
+      ],
+      "assessment": "Mantida evidência frontend de locators/payload de mídia; SQL/Storage final delegado ao agente banco. Não duplicada nos novos IDs."
+    },
+    {
+      "ids": [
+        "TC-002",
+        "TC-003",
+        "TC-004",
+        "TC-009"
+      ],
+      "assessment": "Delegados para reassessment SQL/grants/RLS pelo agente banco; não encerrados por esta revisão UI."
+    },
+    {
+      "ids": [
+        "TC-005",
+        "TC-006"
+      ],
+      "assessment": "Revalidada montagem/props/hooks e ampliada emR2-AUTH-017; não contar como novo defeito independente."
+    },
+    {
+      "ids": [
+        "TC-007"
+      ],
+      "assessment": "Mute continua com consumidor user_settings versus writer members; notifications montadas na view. Sem sinal de eliminação no caminho revisado."
+    },
+    {
+      "ids": [
+        "TC-008"
+      ],
+      "assessment": "Hook de departamento conserva contracts de audit/authUUID e tabela/RPC; entrada UI continua ausente. SQL final delegado."
+    },
+    {
+      "ids": [
+        "TC-010"
+      ],
+      "assessment": "Envio continua limpando texto/reply antes de await. R2-AUTH-010 adiciona outro mecanismo: troca de destinatário/conta; não substitui a perda pós-falha."
+    },
+    {
+      "ids": [
+        "TC-011",
+        "TC-012",
+        "TC-013",
+        "TC-014",
+        "TC-015"
+      ],
+      "assessment": "Histórico/qualidade de testes/scripts/quarentena preservado; não reexecutado como comprovação deste subescopo."
+    },
+    {
+      "ids": [
+        "SV-001",
+        "SV-002"
+      ],
+      "assessment": "Sem evidência de correção: agregado comercial continua completed/approved; fetchStats estima resposta com200 primeiras mensagens. Não recontados."
+    },
+    {
+      "ids": [
+        "SV-003",
+        "SV-004",
+        "OTH-013",
+        "OTH-015"
+      ],
+      "assessment": "Evidência visual/externa/histórica não substituída por leitura de código. Mantidas necessidades de aceite e reconciliação documental, sem novo runtime inventado."
+    }
+  ],
+  "plan_mapping": [
+    {
+      "source": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+      "task": "T1",
+      "assessment": "Implementado na fonte, requisito visual antigo sujeito à sucessão",
+      "evidence": [
+        {
+          "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+          "start_line": 95,
+          "end_line": 98,
+          "blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+          "symbol": "consumer",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ExternalContact360Panel.tsx",
+          "start_line": 21,
+          "end_line": 43,
+          "blob_sha": "c870ade2e7add55f099e58e56aa2ee174a8fb64f",
+          "symbol": "loading/error/notfound",
+          "observation": ""
+        }
+      ],
+      "notes": "Hoje em Mais detalhes, gate runtime crm.integration; mover entre acordeões não reaberto. Contrato mudou de telefone para ID canônico via Edge."
+    },
+    {
+      "source": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+      "task": "T2",
+      "assessment": "Fluxo integrado, aceite visual/externo não executado",
+      "evidence": [
+        {
+          "path": "src/components/contacts/ContactsView.tsx",
+          "start_line": 175,
+          "end_line": 176,
+          "blob_sha": "805de473b266d4bb067c7bd9875eefeaa612f4dc",
+          "symbol": "botão/gate",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactsView.tsx",
+          "start_line": 230,
+          "end_line": 236,
+          "blob_sha": "805de473b266d4bb067c7bd9875eefeaa612f4dc",
+          "symbol": "dialog consumidor",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactCRMDialog.tsx",
+          "start_line": 16,
+          "end_line": 60,
+          "blob_sha": "1c4187abdb488bea454162b2d2d56647211ddc15",
+          "symbol": "80vh/local lookup/import",
+          "observation": ""
+        }
+      ],
+      "notes": "AdvancedCRMSearch tem400ms debounce, Sheet/paginação e gate server-side. Importação é imediata no clique se não encontra local; não inventar6gaps. D5 do planoContatos100 linha184 exclui CRM daquele plano, mas HEAD atual passa props; depende da reconciliação de sucessão pelo root."
+    },
+    {
+      "source": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+      "task": "T5",
+      "assessment": "Parcial demonstrável; vendedor no header não encontrado",
+      "evidence": [
+        {
+          "path": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
+          "start_line": 63,
+          "end_line": 83,
+          "blob_sha": "e150d4976513971845879922d8746687e2fbc6c9",
+          "symbol": "CRM/VIP/tratamento",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
+          "start_line": 146,
+          "end_line": 168,
+          "blob_sha": "e150d4976513971845879922d8746687e2fbc6c9",
+          "symbol": "logo/tratamento",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
+          "start_line": 199,
+          "end_line": 203,
+          "blob_sha": "e150d4976513971845879922d8746687e2fbc6c9",
+          "symbol": "VIP",
+          "observation": ""
+        }
+      ],
+      "notes": "Logo, tratamento/apelido eVIP existem. Vendedor não aparece no header atual; não presumir requisito vigente sem sucessão design. BancoÚnico151 prevê ficha com vendedor. Root coordenaT3/T4/T6."
+    }
+  ],
+  "external_sources": [
+    {
+      "url": "https://www.w3.org/TR/webauthn-2/",
+      "purpose": "Requisitos de validação de assertion/origin/RP/signature e contador, R2-AUTH-001",
+      "retrieval_ref": "turn23view3"
+    },
+    {
+      "url": "https://supabase.com/docs/reference/javascript/auth-signinwithotp",
+      "purpose": "Envio de OTP/magic link é etapa de início, R2-AUTH-002",
+      "retrieval_ref": "turn23view2"
+    },
+    {
+      "url": "https://supabase.com/docs/reference/javascript/auth-admin-generatelink",
+      "purpose": "generateLink gera dados/link para envio próprio, R2-AUTH-007",
+      "retrieval_ref": "turn23view1"
+    },
+    {
+      "url": "https://supabase.com/docs/guides/auth/auth-mfa",
+      "purpose": "AAL e enforcement de MFA, R2-AUTH-003",
+      "retrieval_ref": "turn18view2"
+    },
+    {
+      "url": "https://supabase.com/docs/guides/realtime/authorization",
+      "purpose": "Validação de suspeita em hooks dormentes; não usada para contar exposição ativa",
+      "retrieval_ref": "turn23view0"
+    },
+    {
+      "url": "https://supabase.com/changelog",
+      "purpose": "Changelog obrigatório do skill Supabase, consultado antes de recomendações",
+      "retrieval_ref": "turn18view3"
+    }
+  ]
+}

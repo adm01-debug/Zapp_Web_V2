@@ -1,0 +1,4897 @@
+[
+  {
+    "id": "1.1",
+    "title": "Login com email/senha",
+    "source_line": 55,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/Auth.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/Auth.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.2",
+    "title": "Cadastro de novos usuários",
+    "source_line": 56,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/Auth.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/Auth.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.3",
+    "title": "Verificação de email obrigatória",
+    "source_line": 57,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/VerifyEmail.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/VerifyEmail.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.4",
+    "title": "Recuperação de senha",
+    "source_line": 58,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/ForgotPassword.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/ForgotPassword.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.5",
+    "title": "Reset de senha",
+    "source_line": 59,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/ResetPassword.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/ResetPassword.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.6",
+    "title": "Indicador de força de senha",
+    "source_line": 60,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/auth/PasswordStrengthMeter.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/auth/PasswordStrengthMeter.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.7",
+    "title": "MFA (Autenticação de Dois Fatores)",
+    "source_line": 61,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/mfa/MFAEnroll.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/mfa/MFAEnroll.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.8",
+    "title": "Verificação MFA no login",
+    "source_line": 62,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/TwoFactorAuth.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/TwoFactorAuth.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.9",
+    "title": "Configurações MFA",
+    "source_line": 63,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/mfa/MFASettings.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/mfa/MFASettings.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.10",
+    "title": "Passkeys (WebAuthn)",
+    "source_line": 64,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/PasskeysPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/PasskeysPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.11",
+    "title": "Rotas protegidas",
+    "source_line": 65,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/auth/ProtectedRoute.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/auth/ProtectedRoute.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.12",
+    "title": "RBAC (3 níveis: admin, supervisor, agent)",
+    "source_line": 66,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useUserRole.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useUserRole.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/system/useUserRole.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "1.13",
+    "title": "Tabela user_roles separada (segurança)",
+    "source_line": 67,
+    "claimed_status": "✅",
+    "declared_location": "`user_roles` table",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "1.14",
+    "title": "Função SQL `has_role()`",
+    "source_line": 68,
+    "claimed_status": "✅",
+    "declared_location": "Migrations",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "1.15",
+    "title": "Função SQL `is_admin_or_supervisor()`",
+    "source_line": 69,
+    "claimed_status": "✅",
+    "declared_location": "Migrations",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "1.16",
+    "title": "Permission Gate (controle por permissão)",
+    "source_line": 70,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/auth/PermissionGate.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/auth/PermissionGate.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "1.17",
+    "title": "Matriz de permissões",
+    "source_line": 71,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/permissions/PermissionMatrix.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/permissions/PermissionMatrix.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.18",
+    "title": "Reautenticação para ações sensíveis",
+    "source_line": 72,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/auth/ReauthDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/auth/ReauthDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.19",
+    "title": "Bloqueio de tentativas de login",
+    "source_line": 73,
+    "claimed_status": "✅",
+    "declared_location": "`src/lib/loginAttempts.ts`",
+    "path_checks": [
+      {
+        "path": "src/lib/loginAttempts.ts",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.20",
+    "title": "SSO Callback",
+    "source_line": 74,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/SSOCallback.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/SSOCallback.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.21",
+    "title": "Prova social na tela de login",
+    "source_line": 75,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/auth/SocialProof.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/auth/SocialProof.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.22",
+    "title": "Benefícios exibidos no login",
+    "source_line": 76,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/auth/HeroBenefits.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/auth/HeroBenefits.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "1.23",
+    "title": "Aprovação de reset de senha por admin",
+    "source_line": 77,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/approve-password-reset/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/approve-password-reset/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.1",
+    "title": "Lista de conversas em tempo real",
+    "source_line": 86,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/ConversationList.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/ConversationList.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.2",
+    "title": "Lista virtualizada (performance)",
+    "source_line": 87,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/VirtualizedConversationList.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/VirtualizedConversationList.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.3",
+    "title": "Lista de mensagens virtualizada",
+    "source_line": 88,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/VirtualizedMessageList.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/VirtualizedMessageList.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.4",
+    "title": "Painel de chat completo",
+    "source_line": 89,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/ChatPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/ChatPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.5",
+    "title": "Detalhes do contato no chat",
+    "source_line": 90,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/ContactDetails.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/ContactDetails.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.6",
+    "title": "Filtros de inbox (status, fila, prioridade)",
+    "source_line": 91,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/InboxFilters.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/InboxFilters.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.7",
+    "title": "Busca global (Ctrl+K)",
+    "source_line": 92,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/GlobalSearch.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/GlobalSearch.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.8",
+    "title": "Indicador de digitação (typing)",
+    "source_line": 93,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/TypingIndicator.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/TypingIndicator.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.9",
+    "title": "Presença de digitação realtime",
+    "source_line": 94,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useTypingPresence.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useTypingPresence.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/chat/useTypingPresence.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.10",
+    "title": "Indicador de novas mensagens",
+    "source_line": 95,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/NewMessageIndicator.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/NewMessageIndicator.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.11",
+    "title": "Responder/Citar mensagem (Quote)",
+    "source_line": 96,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/ReplyQuote.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/ReplyQuote.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.12",
+    "title": "Encaminhar mensagem",
+    "source_line": 97,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/ForwardMessageDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/ForwardMessageDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.13",
+    "title": "Copiar mensagem",
+    "source_line": 98,
+    "claimed_status": "✅",
+    "declared_location": "Via ações do chat",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "2.14",
+    "title": "Reações a mensagens (emojis)",
+    "source_line": 99,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/MessageReactions.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/MessageReactions.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.15",
+    "title": "Menu de contexto de mensagem",
+    "source_line": 100,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/MessageContextMenu.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/MessageContextMenu.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.16",
+    "title": "Menu de contexto de conversa",
+    "source_line": 101,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/ConversationContextMenu.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/ConversationContextMenu.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.17",
+    "title": "Preview de mensagem ao digitar",
+    "source_line": 102,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/MessagePreview.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/MessagePreview.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.18",
+    "title": "Preview de links",
+    "source_line": 103,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/LinkPreview.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/LinkPreview.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.19",
+    "title": "Status de mensagem (enviado/entregue/lido/falhou)",
+    "source_line": 104,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/MessageStatus.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/MessageStatus.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.20",
+    "title": "Indicador de SLA no chat",
+    "source_line": 105,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/SLAIndicator.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/SLAIndicator.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.21",
+    "title": "Indicador de sentimento",
+    "source_line": 106,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/SentimentIndicator.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/SentimentIndicator.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.22",
+    "title": "Transferir conversa (agente/fila)",
+    "source_line": 107,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/TransferDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/TransferDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.23",
+    "title": "Notas privadas internas",
+    "source_line": 108,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/PrivateNotes.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/PrivateNotes.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.24",
+    "title": "Colaboração em tempo real",
+    "source_line": 109,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/RealtimeCollaboration.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/RealtimeCollaboration.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.25",
+    "title": "Histórico de conversas",
+    "source_line": 110,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/ConversationHistory.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/ConversationHistory.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.26",
+    "title": "Galeria de mídias da conversa",
+    "source_line": 111,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/MediaGallery.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/MediaGallery.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.27",
+    "title": "Resumo de conversa (IA)",
+    "source_line": 112,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/ConversationSummary.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/ConversationSummary.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.28",
+    "title": "Sugestões de resposta (IA)",
+    "source_line": 113,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/AISuggestions.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/AISuggestions.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.29",
+    "title": "Assistente de conversa (IA)",
+    "source_line": 114,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/AIConversationAssistant.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/AIConversationAssistant.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.30",
+    "title": "Templates de mensagem",
+    "source_line": 115,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/MessageTemplates.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/MessageTemplates.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.31",
+    "title": "Templates com variáveis dinâmicas",
+    "source_line": 116,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/TemplatesWithVariables.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/TemplatesWithVariables.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.32",
+    "title": "Respostas rápidas (Quick Replies)",
+    "source_line": 117,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/QuickRepliesManager.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/QuickRepliesManager.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.33",
+    "title": "Slash Commands",
+    "source_line": 118,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/SlashCommands.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/SlashCommands.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.34",
+    "title": "Ações em bulk (marcar lido, arquivar, etc.)",
+    "source_line": 119,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/BulkActionsToolbar.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/BulkActionsToolbar.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.35",
+    "title": "Upload de arquivos (drag & drop)",
+    "source_line": 120,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/FileUploader.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/FileUploader.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.36",
+    "title": "Preview de imagem",
+    "source_line": 121,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/ImagePreview.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/ImagePreview.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.37",
+    "title": "Preview de mídia (vídeo, documento)",
+    "source_line": 122,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/MediaPreview.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/MediaPreview.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.38",
+    "title": "Swipe-to-reply (mobile)",
+    "source_line": 123,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/swipe-to-reply.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/swipe-to-reply.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.39",
+    "title": "Reações por toque longo",
+    "source_line": 124,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/long-press-reactions.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/long-press-reactions.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.40",
+    "title": "Smart Reply Chips",
+    "source_line": 125,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/smart-reply-chips.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/smart-reply-chips.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "2.41",
+    "title": "Barra de ações do agente atribuído",
+    "source_line": 126,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/chat/ChatAssignedBar.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/chat/ChatAssignedBar.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.42",
+    "title": "Atalhos de teclado no chat",
+    "source_line": 127,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/KeyboardShortcutsHelp.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/KeyboardShortcutsHelp.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "2.43",
+    "title": "Emoji picker com histórico",
+    "source_line": 128,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/emoji-picker.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/emoji-picker.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "3.1",
+    "title": "Texto",
+    "source_line": 137,
+    "claimed_status": "✅",
+    "declared_location": "Mensagens de texto simples com formatação",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.2",
+    "title": "Imagem",
+    "source_line": 138,
+    "claimed_status": "✅",
+    "declared_location": "Envio/recebimento de imagens (até 16MB)",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.3",
+    "title": "Vídeo",
+    "source_line": 139,
+    "claimed_status": "✅",
+    "declared_location": "Envio/recebimento de vídeos (até 16MB)",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.4",
+    "title": "Áudio",
+    "source_line": 140,
+    "claimed_status": "✅",
+    "declared_location": "Mensagens de voz com player customizado",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.5",
+    "title": "Documento",
+    "source_line": 141,
+    "claimed_status": "✅",
+    "declared_location": "PDFs, planilhas, etc. (até 100MB)",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.6",
+    "title": "Localização",
+    "source_line": 142,
+    "claimed_status": "✅",
+    "declared_location": "Compartilhamento de localização no mapa",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.7",
+    "title": "Mensagens interativas (botões)",
+    "source_line": 143,
+    "claimed_status": "✅",
+    "declared_location": "Quick reply buttons",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.8",
+    "title": "Mensagens interativas (lista)",
+    "source_line": 144,
+    "claimed_status": "✅",
+    "declared_location": "List messages com seções",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.9",
+    "title": "Mensagens interativas (CTA URL)",
+    "source_line": 145,
+    "claimed_status": "✅",
+    "declared_location": "Call-to-action com URL",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.10",
+    "title": "Resposta de botão (button_response)",
+    "source_line": 146,
+    "claimed_status": "✅",
+    "declared_location": "Rastreamento de cliques",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.11",
+    "title": "Stickers",
+    "source_line": 147,
+    "claimed_status": "✅",
+    "declared_location": "Suporte a stickers (até 100KB)",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.12",
+    "title": "Mensagem encaminhada",
+    "source_line": 148,
+    "claimed_status": "✅",
+    "declared_location": "Indicador de forwarded",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.13",
+    "title": "Mensagem de produto",
+    "source_line": 149,
+    "claimed_status": "✅",
+    "declared_location": "`ProductMessage.tsx`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "3.14",
+    "title": "Mensagem de pagamento",
+    "source_line": 150,
+    "claimed_status": "✅",
+    "declared_location": "`PaymentMessage.tsx`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "4.1",
+    "title": "Gravação de áudio no chat",
+    "source_line": 165,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useAudioRecorder.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useAudioRecorder.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/communication/useAudioRecorder.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "4.2",
+    "title": "Player de áudio customizado",
+    "source_line": 166,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/AudioMessagePlayer.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/AudioMessagePlayer.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "4.3",
+    "title": "Visualização de ondas de áudio",
+    "source_line": 167,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/audio-waveform.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/audio-waveform.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "4.4",
+    "title": "Seletor de velocidade de reprodução",
+    "source_line": 168,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/SpeedSelector.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/SpeedSelector.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "4.5",
+    "title": "Text-to-Speech (ElevenLabs)",
+    "source_line": 169,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useTextToSpeech.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useTextToSpeech.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/communication/useTextToSpeech.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "4.6",
+    "title": "Seletor de vozes TTS",
+    "source_line": 170,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/VoiceSelector.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/VoiceSelector.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "4.7",
+    "title": "Transcrição automática de áudios (IA)",
+    "source_line": 171,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/ai-transcribe-audio/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/ai-transcribe-audio/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "4.8",
+    "title": "Transcrição em tempo real (Scribe)",
+    "source_line": 172,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/RealtimeTranscription.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/RealtimeTranscription.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "4.9",
+    "title": "Status de transcrição (pending/processing/completed/failed)",
+    "source_line": 173,
+    "claimed_status": "✅",
+    "declared_location": "Campo `transcription_status` na tabela messages",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "4.10",
+    "title": "Histórico de transcrições",
+    "source_line": 174,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/transcriptions/TranscriptionsHistoryView.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "4.11",
+    "title": "Notificação de transcrição completa",
+    "source_line": 175,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useTranscriptionNotifications.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useTranscriptionNotifications.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/communication/useTranscriptionNotifications.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "4.12",
+    "title": "Configuração auto-transcrição on/off",
+    "source_line": 176,
+    "claimed_status": "✅",
+    "declared_location": "`user_settings.auto_transcription_enabled`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "5.1",
+    "title": "Sugestão de respostas contextuais",
+    "source_line": 184,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/ai-suggest-reply/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/ai-suggest-reply/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "5.2",
+    "title": "Resumo automático de conversa",
+    "source_line": 185,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/ai-conversation-summary/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/ai-conversation-summary/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "5.3",
+    "title": "Análise de conversa (sentimento, tópicos, urgência)",
+    "source_line": 186,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/ai-conversation-analysis/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/ai-conversation-analysis/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "5.4",
+    "title": "Alertas de sentimento negativo",
+    "source_line": 187,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/sentiment-alert/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/sentiment-alert/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "5.5",
+    "title": "Score de sentimento por conversa",
+    "source_line": 188,
+    "claimed_status": "✅",
+    "declared_location": "Campo `sentiment_score` em `conversation_analyses`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "5.6",
+    "title": "Tendência de sentimento (improving/declining/stable)",
+    "source_line": 189,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/SentimentTrendChart.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/SentimentTrendChart.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "5.7",
+    "title": "Alertas configuráveis por threshold",
+    "source_line": 190,
+    "claimed_status": "✅",
+    "declared_location": "`user_settings.sentiment_alert_threshold`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "5.8",
+    "title": "Detecção de sentimento consecutivo negativo",
+    "source_line": 191,
+    "claimed_status": "✅",
+    "declared_location": "`user_settings.sentiment_consecutive_count`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "5.9",
+    "title": "Dashboard de alertas de sentimento",
+    "source_line": 192,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/SentimentAlertsDashboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/SentimentAlertsDashboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "5.10",
+    "title": "Widget de estatísticas IA",
+    "source_line": 193,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/AIStatsWidget.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/AIStatsWidget.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "5.11",
+    "title": "Acesso rápido IA no dashboard",
+    "source_line": 194,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/AIQuickAccess.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/AIQuickAccess.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "5.12",
+    "title": "Gerador de avatar por IA",
+    "source_line": 195,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/contacts/AIAvatarGenerator.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/contacts/AIAvatarGenerator.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "5.13",
+    "title": "Predição de demanda",
+    "source_line": 196,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/DemandPrediction.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/DemandPrediction.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "6.1",
+    "title": "CRUD de contatos",
+    "source_line": 212,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/contacts/ContactsView.tsx`, `useContactsCRUD.ts`",
+    "path_checks": [
+      {
+        "path": "src/components/contacts/ContactsView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "6.2",
+    "title": "Campos estendidos (nome, apelido, sobrenome, cargo, empresa, endereço)",
+    "source_line": 213,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `contacts`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "6.3",
+    "title": "Avatar de contato",
+    "source_line": 214,
+    "claimed_status": "✅",
+    "declared_location": "Campo `avatar_url`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "6.4",
+    "title": "Atribuição de contato a agente",
+    "source_line": 215,
+    "claimed_status": "✅",
+    "declared_location": "Campo `assigned_to`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "6.5",
+    "title": "Atribuição a fila",
+    "source_line": 216,
+    "claimed_status": "✅",
+    "declared_location": "Campo `queue_id`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "6.6",
+    "title": "Tags/etiquetas em contatos",
+    "source_line": 217,
+    "claimed_status": "✅",
+    "declared_location": "Coluna `contacts.tags` (`text[]`), `ContactBulkTagDialog.tsx`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "6.7",
+    "title": "Notas privadas por contato",
+    "source_line": 218,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `contact_notes`, `ContactNotes.tsx`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "6.8",
+    "title": "Tipo de contato (cliente, fornecedor, transportadora, colaborador, prestador de serviço, parceiro)",
+    "source_line": 219,
+    "claimed_status": "✅",
+    "declared_location": "Campo `contact_type` (CHECK `chk_contact_type`), `contactTypeConfig.tsx`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "6.9",
+    "title": "Exclusão (soft-delete)",
+    "source_line": 220,
+    "claimed_status": "✅",
+    "declared_location": "Coluna `deleted_at`, RPCs `delete_contact`/`delete_contacts`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "6.10",
+    "title": "Mesclagem de duplicados",
+    "source_line": 221,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/contacts/ContactMergeDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/contacts/ContactMergeDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "6.11",
+    "title": "Comparação de contatos",
+    "source_line": 222,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/contacts/ContactCompareDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/contacts/ContactCompareDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "6.12",
+    "title": "Busca e filtros avançados",
+    "source_line": 223,
+    "claimed_status": "✅",
+    "declared_location": "`ContactSearchWithSuggestions.tsx`, `ContactAdvancedFilters.tsx`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "6.13",
+    "title": "Filtros salvos",
+    "source_line": 224,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/contacts/FilterPresets.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/contacts/FilterPresets.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "6.14",
+    "title": "Paginação incremental",
+    "source_line": 225,
+    "claimed_status": "✅",
+    "declared_location": "`ContactsView.tsx` (`loadMore`/`loadPrevious`)",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "6.15",
+    "title": "Ações em bulk",
+    "source_line": 226,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/contacts/BulkActionsBar.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/contacts/BulkActionsBar.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "6.16",
+    "title": "Vistas cards / lista / tabela / kanban / mapa",
+    "source_line": 227,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/contacts/ContactViewSwitcher.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/contacts/ContactViewSwitcher.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "6.16",
+    "title": "Versionamento de registros",
+    "source_line": 228,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/VersionHistory.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/VersionHistory.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "7.1",
+    "title": "CRUD de filas",
+    "source_line": 236,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/queues/QueuesView.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/queues/QueuesView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "7.2",
+    "title": "Cores por fila",
+    "source_line": 237,
+    "claimed_status": "✅",
+    "declared_location": "Campo `color`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "7.3",
+    "title": "Prioridade por fila",
+    "source_line": 238,
+    "claimed_status": "✅",
+    "declared_location": "Campo `priority`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "7.4",
+    "title": "Tempo máximo de espera configurável",
+    "source_line": 239,
+    "claimed_status": "✅",
+    "declared_location": "Campo `max_wait_time_minutes`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "7.5",
+    "title": "Membros por fila",
+    "source_line": 240,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/queues/AddMemberDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/queues/AddMemberDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "7.6",
+    "title": "Metas por fila (configuráveis)",
+    "source_line": 241,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/queues/QueueGoalsDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/queues/QueueGoalsDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "7.7",
+    "title": "Alertas de fila",
+    "source_line": 242,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/queues/QueueAlertsDisplay.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/queues/QueueAlertsDisplay.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "7.8",
+    "title": "Gráficos analíticos por fila",
+    "source_line": 243,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/queues/QueueCharts.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/queues/QueueCharts.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "7.9",
+    "title": "Comparação entre filas",
+    "source_line": 244,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/queues/QueuesComparisonDashboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/queues/QueuesComparisonDashboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "7.10",
+    "title": "Detalhes da fila com analytics",
+    "source_line": 245,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/QueueDetails.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/QueueDetails.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "7.11",
+    "title": "Seletor de período (7/14/30 dias)",
+    "source_line": 246,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/queues/PeriodSelector.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/queues/PeriodSelector.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "7.12",
+    "title": "Atribuição automática ao agente menos ocupado",
+    "source_line": 247,
+    "claimed_status": "✅",
+    "declared_location": "Trigger SQL `auto_assign_contact`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "8.1",
+    "title": "Configuração de SLA (tempo resposta/resolução)",
+    "source_line": 255,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `sla_configurations`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "8.2",
+    "title": "Tracking de SLA por conversa",
+    "source_line": 256,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `conversation_sla`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "8.3",
+    "title": "Indicador visual de SLA no chat",
+    "source_line": 257,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/SLAIndicator.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/SLAIndicator.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "8.4",
+    "title": "Dashboard de métricas SLA",
+    "source_line": 258,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/SLAMetricsDashboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/SLAMetricsDashboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "8.5",
+    "title": "Dashboard SLA dedicado",
+    "source_line": 259,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/SLADashboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/SLADashboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "8.6",
+    "title": "Histórico de SLA",
+    "source_line": 260,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/SLAHistory.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/SLAHistory.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "8.7",
+    "title": "Notificações de breach de SLA",
+    "source_line": 261,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useSLANotifications.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useSLANotifications.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/sla/useSLANotifications.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "8.8",
+    "title": "Provider de notificações SLA",
+    "source_line": 262,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/notifications/SLANotificationProvider.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/notifications/SLANotificationProvider.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "9.1",
+    "title": "Sistema de XP e níveis",
+    "source_line": 270,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useAgentGamification.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useAgentGamification.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/gamification/useAgentGamification.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "9.2",
+    "title": "Conquistas/Badges",
+    "source_line": 271,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/gamification/AchievementBadge.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/gamification/AchievementBadge.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "9.3",
+    "title": "Painel de conquistas",
+    "source_line": 272,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/gamification/AchievementsPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/gamification/AchievementsPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "9.4",
+    "title": "Toast de conquista desbloqueada",
+    "source_line": 273,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/gamification/AchievementToast.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/gamification/AchievementToast.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "9.5",
+    "title": "Leaderboard (ranking)",
+    "source_line": 274,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/leaderboard/Leaderboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/leaderboard/Leaderboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "9.6",
+    "title": "Ranking de agentes por metas",
+    "source_line": 275,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/leaderboard/AgentRanking.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/leaderboard/AgentRanking.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "9.7",
+    "title": "Streak de dias consecutivos",
+    "source_line": 276,
+    "claimed_status": "✅",
+    "declared_location": "Campo `current_streak` / `best_streak`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "9.8",
+    "title": "Efeito de confetti",
+    "source_line": 277,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/effects/Confetti.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/effects/Confetti.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "9.9",
+    "title": "Celebração de metas",
+    "source_line": 278,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/goal-celebration.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/goal-celebration.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "9.10",
+    "title": "Mini-games de treinamento",
+    "source_line": 279,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/gamification/TrainingMiniGames.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/gamification/TrainingMiniGames.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "9.11",
+    "title": "Provider de gamificação",
+    "source_line": 280,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/gamification/GamificationProvider.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/gamification/GamificationProvider.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "9.12",
+    "title": "Efeitos gamificação no dashboard",
+    "source_line": 281,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/GamificationEffects.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/GamificationEffects.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.1",
+    "title": "Dashboard principal com métricas",
+    "source_line": 289,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/DashboardView.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/DashboardView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.2",
+    "title": "Filtros globais (período, fila, agente)",
+    "source_line": 290,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/DashboardFilters.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/DashboardFilters.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.3",
+    "title": "Dashboard personalizável (drag & drop)",
+    "source_line": 291,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/DraggableWidgetContainer.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/DraggableWidgetContainer.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.4",
+    "title": "Progressive Disclosure (níveis de detalhe)",
+    "source_line": 292,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/ProgressiveDisclosureDashboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/ProgressiveDisclosureDashboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.5",
+    "title": "Dashboard de metas",
+    "source_line": 293,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/GoalsDashboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/GoalsDashboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.6",
+    "title": "Configuração de metas",
+    "source_line": 294,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/GoalsConfigDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/GoalsConfigDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.7",
+    "title": "Comparação de métricas",
+    "source_line": 295,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/MetricComparison.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/MetricComparison.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.8",
+    "title": "Indicador de tendência",
+    "source_line": 296,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/TrendIndicator.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/TrendIndicator.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.9",
+    "title": "Heatmap de atividade",
+    "source_line": 297,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/ActivityHeatmap.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/ActivityHeatmap.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.10",
+    "title": "Heatmap de conversas",
+    "source_line": 298,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/ConversationHeatmap.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/ConversationHeatmap.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.11",
+    "title": "Predição de demanda (IA)",
+    "source_line": 299,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/DemandPrediction.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/DemandPrediction.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.12",
+    "title": "War Room (supervisores)",
+    "source_line": 300,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/WarRoomDashboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/WarRoomDashboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.13",
+    "title": "Métricas de satisfação",
+    "source_line": 301,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/SatisfactionMetrics.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/SatisfactionMetrics.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.14",
+    "title": "Dashboard de alertas de sentimento",
+    "source_line": 302,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/SentimentAlertsDashboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/SentimentAlertsDashboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.15",
+    "title": "Gráfico de tendência de sentimento",
+    "source_line": 303,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/SentimentTrendChart.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/SentimentTrendChart.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.16",
+    "title": "Partículas flutuantes decorativas",
+    "source_line": 304,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/dashboard/FloatingParticles.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/dashboard/FloatingParticles.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "10.17",
+    "title": "Aurora Borealis (efeito decorativo)",
+    "source_line": 305,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/effects/AuroraBorealis.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/effects/AuroraBorealis.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "11.1",
+    "title": "Relatórios avançados",
+    "source_line": 313,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/reports/AdvancedReportsView.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/reports/AdvancedReportsView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "11.2",
+    "title": "Exportação avançada (wizard 3 passos)",
+    "source_line": 314,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/reports/AdvancedExportDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/reports/AdvancedExportDialog.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "11.3",
+    "title": "Exportar para PDF",
+    "source_line": 315,
+    "claimed_status": "✅",
+    "declared_location": "jsPDF + jspdf-autotable",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "11.4",
+    "title": "Exportar para Excel",
+    "source_line": 316,
+    "claimed_status": "✅",
+    "declared_location": "xlsx",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "11.5",
+    "title": "Exportar para CSV",
+    "source_line": 317,
+    "claimed_status": "✅",
+    "declared_location": "`src/utils/exportReport.ts`",
+    "path_checks": [
+      {
+        "path": "src/utils/exportReport.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "11.6",
+    "title": "Botão de exportação rápida",
+    "source_line": 318,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/reports/ExportButton.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/reports/ExportButton.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "11.7",
+    "title": "Relatórios agendados por email",
+    "source_line": 319,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/reports/ScheduledReportsManager.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/reports/ScheduledReportsManager.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "11.8",
+    "title": "Edge function para envio de relatórios",
+    "source_line": 320,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/send-scheduled-report/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/send-scheduled-report/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "12.1",
+    "title": "Pesquisa de satisfação (1-5 estrelas)",
+    "source_line": 328,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/csat/CSATSurveyDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/csat/CSATSurveyDialog.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "12.2",
+    "title": "Feedback textual opcional",
+    "source_line": 329,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/csat/CSATSurveyDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/csat/CSATSurveyDialog.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "12.3",
+    "title": "Dashboard CSAT (média, distribuição, feedbacks)",
+    "source_line": 330,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/csat/CSATDashboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/csat/CSATDashboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "12.4",
+    "title": "Hook completo de CSAT",
+    "source_line": 331,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useCSAT.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useCSAT.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/business/useCSAT.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "12.5",
+    "title": "Filtro por período (hoje/semana/mês)",
+    "source_line": 332,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useCSAT.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useCSAT.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/business/useCSAT.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "12.6",
+    "title": "Tabela `csat_surveys` com RLS",
+    "source_line": 333,
+    "claimed_status": "✅",
+    "declared_location": "Banco de dados",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "12.7",
+    "title": "Realtime habilitado para CSAT",
+    "source_line": 334,
+    "claimed_status": "✅",
+    "declared_location": "`supabase_realtime`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "13.1",
+    "title": "Catálogo de produtos",
+    "source_line": 342,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/catalog/ProductCatalog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/catalog/ProductCatalog.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "13.2",
+    "title": "Card de produto",
+    "source_line": 343,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/catalog/ProductCard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/catalog/ProductCard.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "13.3",
+    "title": "Gerenciamento de produtos (CRUD)",
+    "source_line": 344,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/catalog/ProductManagement.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/catalog/ProductManagement.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "13.4",
+    "title": "Mensagem de produto no chat",
+    "source_line": 345,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/catalog/ProductMessage.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/catalog/ProductMessage.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "13.5",
+    "title": "Mensagem de pagamento (PIX, status)",
+    "source_line": 346,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/catalog/PaymentMessage.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/catalog/PaymentMessage.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "13.6",
+    "title": "Carrinho de compras",
+    "source_line": 347,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/catalog/ShoppingCart.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/catalog/ShoppingCart.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "13.7",
+    "title": "Hook do carrinho",
+    "source_line": 348,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useShoppingCart.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useShoppingCart.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "13.8",
+    "title": "Gerenciador de templates WhatsApp",
+    "source_line": 349,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/catalog/WhatsAppTemplatesManager.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "14.1",
+    "title": "Gerenciamento de conexões",
+    "source_line": 357,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/connections/ConnectionsView.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/connections/ConnectionsView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "14.2",
+    "title": "QR Code para conexão",
+    "source_line": 358,
+    "claimed_status": "✅",
+    "declared_location": "Via Evolution API",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "14.3",
+    "title": "Status de conexão (connected/disconnected/connecting)",
+    "source_line": 359,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `whatsapp_connections`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "14.4",
+    "title": "Horário comercial por conexão",
+    "source_line": 360,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/connections/BusinessHoursDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/connections/BusinessHoursDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "14.5",
+    "title": "Indicador de horário comercial",
+    "source_line": 361,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/connections/BusinessHoursIndicator.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/connections/BusinessHoursIndicator.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "14.6",
+    "title": "Mensagem de ausência",
+    "source_line": 362,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `away_messages`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "14.7",
+    "title": "Sincronização com Evolution API",
+    "source_line": 363,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/evolution-sync/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/evolution-sync/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "15.1",
+    "title": "CRUD de templates oficiais",
+    "source_line": 371,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `whatsapp_templates`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "15.2",
+    "title": "Preview estilo WhatsApp",
+    "source_line": 372,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/catalog/WhatsAppTemplatesManager.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "15.3",
+    "title": "Variáveis dinâmicas ({{1}}, {{2}})",
+    "source_line": 373,
+    "claimed_status": "✅",
+    "declared_location": "Campo `variables`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "15.4",
+    "title": "Categorias (utility, marketing, authentication)",
+    "source_line": 374,
+    "claimed_status": "✅",
+    "declared_location": "Campo `category`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "15.5",
+    "title": "Status do template (draft/pending/approved/rejected)",
+    "source_line": 375,
+    "claimed_status": "✅",
+    "declared_location": "Campo `status`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "15.6",
+    "title": "Header, body, footer e botões",
+    "source_line": 376,
+    "claimed_status": "✅",
+    "declared_location": "Campos dedicados",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "16.1",
+    "title": "Visualização de grupos",
+    "source_line": 384,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/groups/GroupsView.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/groups/GroupsView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "16.2",
+    "title": "Sincronização de grupos",
+    "source_line": 385,
+    "claimed_status": "✅",
+    "declared_location": "Via Evolution API",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "16.3",
+    "title": "Contagem de participantes",
+    "source_line": 386,
+    "claimed_status": "✅",
+    "declared_location": "Campo `participant_count`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "16.4",
+    "title": "Status de admin do bot",
+    "source_line": 387,
+    "claimed_status": "✅",
+    "declared_location": "Campo `is_admin`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "17.1",
+    "title": "Diálogo de chamada",
+    "source_line": 395,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/calls/CallDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/calls/CallDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "17.2",
+    "title": "Chamadas inbound/outbound",
+    "source_line": 396,
+    "claimed_status": "✅",
+    "declared_location": "Campo `direction`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "17.3",
+    "title": "Status (ringing/answered/ended)",
+    "source_line": 397,
+    "claimed_status": "✅",
+    "declared_location": "Campo `status`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "17.4",
+    "title": "Duração e gravação",
+    "source_line": 398,
+    "claimed_status": "✅",
+    "declared_location": "Campos `duration_seconds`, `recording_url`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "17.5",
+    "title": "Notas de chamada",
+    "source_line": 399,
+    "claimed_status": "✅",
+    "declared_location": "Campo `notes`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "17.6",
+    "title": "Hook de chamadas",
+    "source_line": 400,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useCalls.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useCalls.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/communication/useCalls.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "18.1",
+    "title": "Regras de carteira",
+    "source_line": 408,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/wallet/ClientWalletView.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/wallet/ClientWalletView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "18.2",
+    "title": "Atribuição automática por regras",
+    "source_line": 409,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `client_wallet_rules`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "18.3",
+    "title": "Prioridade de regras",
+    "source_line": 410,
+    "claimed_status": "✅",
+    "declared_location": "Campo `priority`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "18.4",
+    "title": "Ativação/desativação de regras",
+    "source_line": 411,
+    "claimed_status": "✅",
+    "declared_location": "Campo `is_active`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "19.1",
+    "title": "Gerenciador de automações",
+    "source_line": 419,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/automations/AutomationsManager.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/automations/AutomationsManager.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "19.2",
+    "title": "Atribuição automática de chats",
+    "source_line": 420,
+    "claimed_status": "✅",
+    "declared_location": "`user_settings.auto_assignment_enabled`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "19.3",
+    "title": "Métodos de distribuição (round-robin, aleatório, menor carga)",
+    "source_line": 421,
+    "claimed_status": "✅",
+    "declared_location": "`user_settings.auto_assignment_method`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "19.4",
+    "title": "Timeout de inatividade",
+    "source_line": 422,
+    "claimed_status": "✅",
+    "declared_location": "`user_settings.inactivity_timeout`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "19.5",
+    "title": "Auto-fechamento de conversas inativas",
+    "source_line": 423,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/settings/AutoCloseSettings.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/settings/AutoCloseSettings.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "19.6",
+    "title": "Configuração de horas de inatividade",
+    "source_line": 424,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `auto_close_config`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "19.7",
+    "title": "Mensagem de encerramento customizável",
+    "source_line": 425,
+    "claimed_status": "✅",
+    "declared_location": "Campo `close_message`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "19.8",
+    "title": "Transcrição automática de áudios",
+    "source_line": 426,
+    "claimed_status": "✅",
+    "declared_location": "`user_settings.auto_transcription_enabled`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "20.1",
+    "title": "Central de notificações",
+    "source_line": 434,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/notifications/NotificationCenter.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/notifications/NotificationCenter.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "20.2",
+    "title": "Central de notificações aprimorada",
+    "source_line": 435,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/notifications/NotificationCenterEnhanced.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/notifications/NotificationCenterEnhanced.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "20.3",
+    "title": "Push notifications (browser)",
+    "source_line": 436,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/usePushNotifications.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/usePushNotifications.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/system/usePushNotifications.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "20.4",
+    "title": "Configurações de push",
+    "source_line": 437,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/notifications/PushNotificationSettings.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/notifications/PushNotificationSettings.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "20.5",
+    "title": "Painel de configurações de notificações",
+    "source_line": 438,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/notifications/NotificationSettingsPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/notifications/NotificationSettingsPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "20.6",
+    "title": "Sons de notificação personalizáveis",
+    "source_line": 439,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/settings/SoundCustomizationPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/settings/SoundCustomizationPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "20.7",
+    "title": "Tipos de som (mensagem, menção, SLA, meta, transcrição)",
+    "source_line": 440,
+    "claimed_status": "✅",
+    "declared_location": "`user_settings.*_sound_type`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "20.8",
+    "title": "Horários silenciosos",
+    "source_line": 441,
+    "claimed_status": "✅",
+    "declared_location": "`user_settings.quiet_hours_*`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "20.9",
+    "title": "Notificações de metas",
+    "source_line": 442,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/notifications/GoalNotificationProvider.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/notifications/GoalNotificationProvider.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "20.10",
+    "title": "Notificações de SLA",
+    "source_line": 443,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/notifications/SLANotificationProvider.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/notifications/SLANotificationProvider.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "20.11",
+    "title": "Alertas de sentimento em tempo real",
+    "source_line": 444,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/notifications/RealtimeSentimentAlertProvider.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/notifications/RealtimeSentimentAlertProvider.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "20.12",
+    "title": "Notificações de segurança push",
+    "source_line": 445,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useSecurityPushNotifications.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useSecurityPushNotifications.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/system/useSecurityPushNotifications.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "20.13",
+    "title": "Service Worker para push",
+    "source_line": 446,
+    "claimed_status": "✅",
+    "declared_location": "`public/sw.js`",
+    "path_checks": [
+      {
+        "path": "public/sw.js",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "21.1",
+    "title": "Agendar mensagem para envio futuro",
+    "source_line": 454,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/ScheduleMessageDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/ScheduleMessageDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "21.2",
+    "title": "Visualização em calendário",
+    "source_line": 455,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/schedule/ScheduleCalendarView.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/schedule/ScheduleCalendarView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "21.3",
+    "title": "Cancelamento de agendamento",
+    "source_line": 456,
+    "claimed_status": "✅",
+    "declared_location": "Via ScheduleCalendarView",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "21.4",
+    "title": "Filtro por agente",
+    "source_line": 457,
+    "claimed_status": "✅",
+    "declared_location": "Via ScheduleCalendarView",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "21.5",
+    "title": "Hook de mensagens agendadas",
+    "source_line": 458,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useScheduledMessages.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useScheduledMessages.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/chat/useScheduledMessages.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "21.6",
+    "title": "Suporte a anexos no agendamento",
+    "source_line": 459,
+    "claimed_status": "✅",
+    "declared_location": "Via ScheduleMessageDialog",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "22.1",
+    "title": "Mapa interativo (Mapbox)",
+    "source_line": 467,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/LocationPicker.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/LocationPicker.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "22.2",
+    "title": "Seletor de localização",
+    "source_line": 468,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/LocationPicker.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/LocationPicker.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "22.3",
+    "title": "Exibição de localização recebida",
+    "source_line": 469,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/LocationMessage.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/LocationMessage.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "22.4",
+    "title": "Edge function para token Mapbox",
+    "source_line": 470,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/get-mapbox-token/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/get-mapbox-token/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "23.1",
+    "title": "Página de configurações",
+    "source_line": 478,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/settings/SettingsView.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/settings/SettingsView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "23.2",
+    "title": "Horário de funcionamento",
+    "source_line": 479,
+    "claimed_status": "✅",
+    "declared_location": "Aba \"Horário\"",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "23.3",
+    "title": "Mensagens automáticas (boas-vindas, ausência, encerramento)",
+    "source_line": 480,
+    "claimed_status": "✅",
+    "declared_location": "Aba \"Mensagens\"",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "23.4",
+    "title": "Automações (atribuição, transcrição)",
+    "source_line": 481,
+    "claimed_status": "✅",
+    "declared_location": "Aba \"Automação\"",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "23.5",
+    "title": "Auto-fechamento de conversas",
+    "source_line": 482,
+    "claimed_status": "✅",
+    "declared_location": "Aba \"Automação\"",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "23.6",
+    "title": "Notificações",
+    "source_line": 483,
+    "claimed_status": "✅",
+    "declared_location": "Aba \"Notificações\"",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "23.7",
+    "title": "Aparência (tema, modo compacto)",
+    "source_line": 484,
+    "claimed_status": "✅",
+    "declared_location": "Aba \"Aparência\"",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "23.8",
+    "title": "Atalhos de teclado personalizáveis",
+    "source_line": 485,
+    "claimed_status": "✅",
+    "declared_location": "Aba \"Atalhos\"",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "23.9",
+    "title": "Sons personalizáveis",
+    "source_line": 486,
+    "claimed_status": "✅",
+    "declared_location": "Aba \"Sons\"",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "23.10",
+    "title": "Upload de avatar",
+    "source_line": 487,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/settings/AvatarUpload.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/settings/AvatarUpload.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "23.11",
+    "title": "Seletor de idioma",
+    "source_line": 488,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/settings/LanguageSelector.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/settings/LanguageSelector.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "23.12",
+    "title": "Persistência em banco (user_settings)",
+    "source_line": 489,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useUserSettings.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useUserSettings.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/system/useUserSettings.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "24.1",
+    "title": "Visão geral de segurança",
+    "source_line": 497,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/SecurityView.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/SecurityView.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.2",
+    "title": "Overview de segurança",
+    "source_line": 498,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/SecurityOverview.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/SecurityOverview.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.3",
+    "title": "Configurações de segurança",
+    "source_line": 499,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/SecuritySettingsPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/SecuritySettingsPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.4",
+    "title": "Gerenciamento de dispositivos/sessões",
+    "source_line": 500,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/DevicesPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/DevicesPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.5",
+    "title": "Passkeys (WebAuthn)",
+    "source_line": 501,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/PasskeysPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/PasskeysPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.6",
+    "title": "IP Whitelist",
+    "source_line": 502,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/IPWhitelistPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/IPWhitelistPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.7",
+    "title": "IPs bloqueados",
+    "source_line": 503,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/BlockedIPsPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/BlockedIPsPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.8",
+    "title": "Geo-blocking (países)",
+    "source_line": 504,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/GeoBlockingPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/GeoBlockingPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.9",
+    "title": "Notificações de segurança",
+    "source_line": 505,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/SecurityNotificationsPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/SecurityNotificationsPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.10",
+    "title": "Solicitações de reset de senha (admin)",
+    "source_line": 506,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/PasswordResetRequestsPanel.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/PasswordResetRequestsPanel.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.11",
+    "title": "Rate limiting configurável",
+    "source_line": 507,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `rate_limit_configs`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "24.12",
+    "title": "Logs de rate limiting",
+    "source_line": 508,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `rate_limit_logs`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "24.13",
+    "title": "Alertas de rate limit em tempo real",
+    "source_line": 509,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/security/RateLimitRealtimeAlerts.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/security/RateLimitRealtimeAlerts.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.14",
+    "title": "Dashboard de rate limiting (admin)",
+    "source_line": 510,
+    "claimed_status": "✅",
+    "declared_location": "`src/pages/admin/RateLimitDashboard.tsx`",
+    "path_checks": [
+      {
+        "path": "src/pages/admin/RateLimitDashboard.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.15",
+    "title": "Detecção de novo dispositivo",
+    "source_line": 511,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/detect-new-device/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/detect-new-device/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.16",
+    "title": "Limpeza de logs (cron)",
+    "source_line": 512,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/cleanup-rate-limit-logs/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/cleanup-rate-limit-logs/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.17",
+    "title": "Envio de alerta por email",
+    "source_line": 513,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/send-rate-limit-alert/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/send-rate-limit-alert/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "24.18",
+    "title": "Alertas de segurança (tabela)",
+    "source_line": 514,
+    "claimed_status": "✅",
+    "declared_location": "Tabela `security_alerts`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "25.1",
+    "title": "Skip links",
+    "source_line": 522,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/skip-link.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/skip-link.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "25.2",
+    "title": "ARIA labels completos",
+    "source_line": 523,
+    "claimed_status": "✅",
+    "declared_location": "Todos os componentes interativos",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "25.3",
+    "title": "Focus trap",
+    "source_line": 524,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/focus-trap.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/focus-trap.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "25.4",
+    "title": "Visually hidden",
+    "source_line": 525,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/visually-hidden.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/visually-hidden.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "25.5",
+    "title": "Alto contraste toggle",
+    "source_line": 526,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/theme/HighContrastToggle.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/theme/HighContrastToggle.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "25.6",
+    "title": "Contraste de cores",
+    "source_line": 527,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/a11y/ColorContrast.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/a11y/ColorContrast.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "25.7",
+    "title": "Navegação por teclado",
+    "source_line": 528,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/a11y/KeyboardNavigation.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/a11y/KeyboardNavigation.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "25.8",
+    "title": "Preferências de motion",
+    "source_line": 529,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/a11y/MotionPreferences.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/a11y/MotionPreferences.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "25.9",
+    "title": "Accessible toast",
+    "source_line": 530,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/accessible-toast.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/accessible-toast.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "25.10",
+    "title": "Module de acessibilidade",
+    "source_line": 531,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/accessibility/index.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/accessibility/index.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "26.1",
+    "title": "Lazy loading de rotas",
+    "source_line": 539,
+    "claimed_status": "✅",
+    "declared_location": "`src/App.tsx` (React.lazy)",
+    "path_checks": [
+      {
+        "path": "src/App.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "26.2",
+    "title": "Lista virtualizada (tanstack-virtual)",
+    "source_line": 540,
+    "claimed_status": "✅",
+    "declared_location": "`VirtualizedMessageList.tsx`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "26.3",
+    "title": "Imagem otimizada",
+    "source_line": 541,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/optimized-image.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/optimized-image.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "26.4",
+    "title": "Compressão de imagem no upload",
+    "source_line": 542,
+    "claimed_status": "✅",
+    "declared_location": "`src/utils/imageCompression.ts`",
+    "path_checks": [
+      {
+        "path": "src/utils/imageCompression.ts",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "26.5",
+    "title": "Prefetcher de recursos",
+    "source_line": 543,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/performance/Prefetcher.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/performance/Prefetcher.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "26.6",
+    "title": "Lista virtualizada genérica",
+    "source_line": 544,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/performance/VirtualizedList.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/performance/VirtualizedList.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "26.7",
+    "title": "Hook de performance",
+    "source_line": 545,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/usePerformance.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/usePerformance.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/analytics/usePerformance.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "26.8",
+    "title": "Otimizações de performance",
+    "source_line": 546,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/usePerformanceOptimizations.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/usePerformanceOptimizations.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/analytics/usePerformanceOptimizations.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "26.9",
+    "title": "Prefetch de recursos",
+    "source_line": 547,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useResourcePrefetch.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useResourcePrefetch.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/system/useResourcePrefetch.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "26.10",
+    "title": "Logger centralizado",
+    "source_line": 548,
+    "claimed_status": "✅",
+    "declared_location": "`src/lib/logger.ts`",
+    "path_checks": [
+      {
+        "path": "src/lib/logger.ts",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "26.11",
+    "title": "Debounce hook",
+    "source_line": 549,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useDebounce.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useDebounce.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/system/useDebounce.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "26.12",
+    "title": "Skeletons contextuais",
+    "source_line": 550,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/skeletons/`",
+    "path_checks": [
+      {
+        "path": "src/components/skeletons/",
+        "exists": false,
+        "kind": "directory",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "26.13",
+    "title": "Loading states unificados",
+    "source_line": 551,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/unified-loading.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/unified-loading.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "26.14",
+    "title": "Busca unificada",
+    "source_line": 552,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/unified-search.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/unified-search.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "26.15",
+    "title": "Virtual list genérica",
+    "source_line": 553,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/virtual-list.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/virtual-list.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "27.1",
+    "title": "PWA (manifest.json completo)",
+    "source_line": 561,
+    "claimed_status": "✅",
+    "declared_location": "`public/manifest.json`",
+    "path_checks": [
+      {
+        "path": "public/manifest.json",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "27.2",
+    "title": "Service Worker",
+    "source_line": 562,
+    "claimed_status": "✅",
+    "declared_location": "`public/sw.js`",
+    "path_checks": [
+      {
+        "path": "public/sw.js",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "27.3",
+    "title": "Navegação mobile (bottom nav)",
+    "source_line": 563,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/mobile/MobileNavigation.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/mobile/MobileNavigation.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "27.4",
+    "title": "Bottom Sheet",
+    "source_line": 564,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/mobile/BottomSheet.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/mobile/BottomSheet.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "27.5",
+    "title": "Gestos swipe",
+    "source_line": 565,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/mobile/SwipeGestures.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/mobile/SwipeGestures.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "27.6",
+    "title": "Swipeable list items",
+    "source_line": 566,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/SwipeableListItem.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/SwipeableListItem.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "27.7",
+    "title": "Detecção de dispositivo",
+    "source_line": 567,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useDeviceDetection.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useDeviceDetection.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/ui/useDeviceDetection.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "27.8",
+    "title": "Hook is-mobile",
+    "source_line": 568,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/use-mobile.tsx`",
+    "path_checks": [
+      {
+        "path": "src/hooks/use-mobile.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/ui/use-mobile.tsx"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "27.9",
+    "title": "Deep links",
+    "source_line": 569,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useDeepLinks.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useDeepLinks.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/ui/useDeepLinks.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "27.10",
+    "title": "Indicador offline",
+    "source_line": 570,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/offline-indicator.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/offline-indicator.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "27.11",
+    "title": "Componentes mobile específicos",
+    "source_line": 571,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/mobile-components.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/mobile-components.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "27.12",
+    "title": "Navegação mobile UI",
+    "source_line": 572,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/mobile-navigation.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/mobile-navigation.tsx",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [],
+        "candidate_state": "NO_SAME_BASENAME_CANDIDATE"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "28.1",
+    "title": "Atalhos globais (Ctrl+K, Ctrl+N, etc.)",
+    "source_line": 580,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useGlobalKeyboardShortcuts.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useGlobalKeyboardShortcuts.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/ui/useGlobalKeyboardShortcuts.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "28.2",
+    "title": "Atalhos customizáveis pelo usuário",
+    "source_line": 581,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useCustomShortcuts.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useCustomShortcuts.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/ui/useCustomShortcuts.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "28.3",
+    "title": "Atalho de busca global",
+    "source_line": 582,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useGlobalSearchShortcut.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useGlobalSearchShortcut.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/ui/useGlobalSearchShortcut.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "28.4",
+    "title": "Provider global de teclado",
+    "source_line": 583,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/keyboard/GlobalKeyboardProvider.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/keyboard/GlobalKeyboardProvider.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "28.5",
+    "title": "Dialog de atalhos",
+    "source_line": 584,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/keyboard/KeyboardShortcutsDialog.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/keyboard/KeyboardShortcutsDialog.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "28.6",
+    "title": "Navegação por teclado no chat",
+    "source_line": 585,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useChatKeyboardNavigation.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useChatKeyboardNavigation.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/chat/useChatKeyboardNavigation.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "28.7",
+    "title": "Configurações de atalhos",
+    "source_line": 586,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/settings/KeyboardShortcutsSettings.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/settings/KeyboardShortcutsSettings.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "28.8",
+    "title": "Ajuda de atalhos no inbox",
+    "source_line": 587,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/inbox/KeyboardShortcutsHelp.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/inbox/KeyboardShortcutsHelp.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "28.9",
+    "title": "Command Palette (cmdk)",
+    "source_line": 588,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/ui/command-palette.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/ui/command-palette.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "29.1",
+    "title": "Tour interativo passo-a-passo",
+    "source_line": 596,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/onboarding/OnboardingTour.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/onboarding/OnboardingTour.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "29.2",
+    "title": "Checklist de onboarding",
+    "source_line": 597,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/onboarding/OnboardingChecklist.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/onboarding/OnboardingChecklist.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "29.3",
+    "title": "Modal de boas-vindas",
+    "source_line": 598,
+    "claimed_status": "✅",
+    "declared_location": "`src/components/onboarding/WelcomeModal.tsx`",
+    "path_checks": [
+      {
+        "path": "src/components/onboarding/WelcomeModal.tsx",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "29.4",
+    "title": "Hook de onboarding",
+    "source_line": 599,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useOnboarding.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useOnboarding.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/ui/useOnboarding.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "29.5",
+    "title": "Checklist hook",
+    "source_line": 600,
+    "claimed_status": "✅",
+    "declared_location": "`src/hooks/useOnboardingChecklist.ts`",
+    "path_checks": [
+      {
+        "path": "src/hooks/useOnboardingChecklist.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/ui/useOnboardingChecklist.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "29.6",
+    "title": "Opção de resetar tour nas configurações",
+    "source_line": 601,
+    "claimed_status": "✅",
+    "declared_location": "Via SettingsView",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "30.1",
+    "title": "Evolution API (WhatsApp) — 60+ endpoints",
+    "source_line": 609,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/evolution-api/`, `src/hooks/useEvolutionApi.ts`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/evolution-api/",
+        "exists": true,
+        "kind": "directory"
+      },
+      {
+        "path": "src/hooks/useEvolutionApi.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/integrations/useEvolutionApi.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "30.2",
+    "title": "Evolution API — Webhook de recebimento",
+    "source_line": 610,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/evolution-webhook/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/evolution-webhook/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "30.3",
+    "title": "Evolution API — Sync de dados",
+    "source_line": 611,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/evolution-sync/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/evolution-sync/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "30.4",
+    "title": "WhatsApp Cloud API — Webhook",
+    "source_line": 612,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/whatsapp-webhook/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/whatsapp-webhook/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "30.5",
+    "title": "Bitrix24 CRM (bidirecional)",
+    "source_line": 613,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/bitrix-api/`, `src/hooks/useBitrixApi.ts`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/bitrix-api/",
+        "exists": true,
+        "kind": "directory"
+      },
+      {
+        "path": "src/hooks/useBitrixApi.ts",
+        "exists": false,
+        "kind": "file",
+        "same_basename_candidates": [
+          "src/hooks/integrations/useBitrixApi.ts"
+        ],
+        "candidate_state": "ONE_RELOCATION_CANDIDATE_NOT_SEMANTIC_PROOF"
+      }
+    ],
+    "audit_state": "MISSING_OR_RENAMED_PATH_REFERENCE"
+  },
+  {
+    "id": "30.6",
+    "title": "ElevenLabs (TTS)",
+    "source_line": 614,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/elevenlabs-tts/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/elevenlabs-tts/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "30.7",
+    "title": "ElevenLabs (Scribe Token)",
+    "source_line": 615,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/elevenlabs-scribe-token/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/elevenlabs-scribe-token/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "30.8",
+    "title": "Mapbox (mapas)",
+    "source_line": 616,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/get-mapbox-token/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/get-mapbox-token/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "30.9",
+    "title": "Lovable AI Gateway (IA sem API key)",
+    "source_line": 617,
+    "claimed_status": "✅",
+    "declared_location": "Edge Functions de AI",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "30.10",
+    "title": "WebAuthn (passkeys)",
+    "source_line": 618,
+    "claimed_status": "✅",
+    "declared_location": "`supabase/functions/webauthn/`",
+    "path_checks": [
+      {
+        "path": "supabase/functions/webauthn/",
+        "exists": true,
+        "kind": "directory"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "31.1",
+    "title": "Logs de auditoria",
+    "source_line": 633,
+    "claimed_status": "✅",
+    "declared_location": "`src/lib/audit.ts`",
+    "path_checks": [
+      {
+        "path": "src/lib/audit.ts",
+        "exists": true,
+        "kind": "file"
+      }
+    ],
+    "audit_state": "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED"
+  },
+  {
+    "id": "31.2",
+    "title": "Tabela `audit_logs` com RLS",
+    "source_line": 634,
+    "claimed_status": "✅",
+    "declared_location": "Banco de dados",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "31.3",
+    "title": "Log de login/logout",
+    "source_line": 635,
+    "claimed_status": "✅",
+    "declared_location": "`logLogin()`, `logLogout()`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "31.4",
+    "title": "Log de CRUD",
+    "source_line": 636,
+    "claimed_status": "✅",
+    "declared_location": "`logCreate()`, `logUpdate()`, `logDelete()`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  },
+  {
+    "id": "31.5",
+    "title": "Informações de IP e user-agent",
+    "source_line": 637,
+    "claimed_status": "✅",
+    "declared_location": "Campos `ip_address`, `user_agent`",
+    "path_checks": [],
+    "audit_state": "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING"
+  }
+]

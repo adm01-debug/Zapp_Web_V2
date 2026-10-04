@@ -1,0 +1,43 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "branches": 58,
+  "remote_compare_successes": 58,
+  "graph_mismatches": [],
+  "exclusive_commit_occurrences": 197,
+  "unique_exclusive_commits": 197,
+  "exclusive_merge_commits": 20,
+  "comparison_statuses": {
+    "ahead": 3,
+    "diverged": 51,
+    "behind": 3,
+    "identical": 1
+  },
+  "classifications": {
+    "open_pr_preserve": 12,
+    "closed_without_merge_preserve_for_reconciliation": 30,
+    "latest_pr_merged_but_exclusive_graph": 7,
+    "no_pr_preserve_for_reconciliation": 5,
+    "ancestor_integrated_graph": 3,
+    "baseline": 1
+  },
+  "file_diff_occurrences": 339,
+  "file_states": {
+    "content_differs_from_main": 197,
+    "absent_from_main": 73,
+    "both_absent": 3,
+    "deleted_in_branch_present_in_main": 6,
+    "content_equal": 60
+  },
+  "diff_categories": {
+    "documentation": 45,
+    "database_guard_evidence": 20,
+    "application": 105,
+    "configuration_or_other": 12,
+    "database_migrations": 96,
+    "ci_github": 9,
+    "scripts": 7,
+    "tests": 28,
+    "edge_functions": 17
+  },
+  "unique_exclusive_changed_paths": 1561
+}

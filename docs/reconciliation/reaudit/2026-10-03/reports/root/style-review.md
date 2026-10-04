@@ -1,0 +1,50 @@
+# CSS e referência HTML — leitura complementar
+
+Fonte `da307ba5626dce892f0b37cb6762463f55d14a96`; 11 arquivos, 1443 linhas integrais.
+
+Leitura de estilos não é homologação visual. A execução de CSS e as preferências reais do navegador não foram testadas.
+
+## [src/index.css](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/index.css#L1-L56)
+
+Leitura integral 1–56. Ordem dos oito imports, camadas Tailwind, animação pulse-subtle, min-height com fallback vh/dvh, overflow-x, root flex e transições nativas foram examinados. As regras de View Transition neste entrypoint sucedem as de animations.css; o media query de movimento reduzido usa important. A presença de regras não certifica suporte do navegador, clipping em viewport real ou todos os ramos de acessibilidade. Sem build/render neste passe.
+
+## [src/features/talk-me/talk-me-layout.css](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/features/talk-me/talk-me-layout.css#L1-L88)
+
+Leitura integral 1–88. Dimensões padrão, clamps desktop, limites de altura 872/767 e reorganização horizontal 45%/55% foram examinados em conjunto; o layout curto fixa card de 160px e largura 440px. As regras deixam os breakpoints menores no fluxo original; alcance, zoom e overflow final dependem da árvore de componentes e fonte calculada. Não se inferiu corte efetivo de conteúdo sem renderização. Sem observação visual nesta reauditoria.
+
+## [src/styles/accessibility.css](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/styles/accessibility.css#L1-L175)
+
+Leitura integral 1–175. Tokens high-contrast claro/escuro, classe reduced-motion, media query incluindo pseudo-elementos, prefers-contrast:more, large-text, skeletons, foco/skip link, live region, densidade e content-visibility foram examinados. O seletor de classe reduced-motion não lista pseudo-elementos, enquanto a preferência de sistema lista; a composição efetiva com consumidores/animações deve ser distinguida. Não se presume que a presença de touch-target, skip-link ou aria-live-region seja sua adoção por todos componentes. A tolerância histórica de contraste não foi redefinida e nenhum contraste/AT foi certificado por leitura de tokens.
+
+## [src/styles/animations.css](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/styles/animations.css#L1-L205)
+
+Leitura integral 1–205. Keyframes de movimento, opacidade, sombras, ripple, skeleton, typing e arco de conversa foram examinados. @property registra o ângulo e a aba oculta pausa a animação do pseudo-elemento selecionado. As regras finais incluem redução de movimento de sistema e pausa por tab-hidden, controles positivos preservados. Os efeitos de View Transition são também definidos posteriormente no entrypoint. Existência de keyframe não prova consumidor nem repaint/desempenho medido; não houve render ou benchmark.
+
+## [src/styles/sidebar.css](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/styles/sidebar.css#L1-L89)
+
+Leitura integral 1–89. Estados ativos/hover, badges, compatibilidade neon, reveals, transformações, sombras e animações foram examinados. Classes reveal começam ocultas e exigem classe revealed do consumidor. As classes de compatibilidade explicitamente no-op não foram tratadas como defeito sem promessa/consumidor. Escopo CSS não demonstra navegação, ativação do menu ou gestão de foco; o contrato de navegação permanece nos findings de plataforma/infra. Sem execução visual.
+
+## [src/styles/team-chat-tokens.css](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/styles/team-chat-tokens.css#L1-L75)
+
+Leitura integral 1–75. Tokens de layout, cores ligadas ao tema global, bolhas, estados, analytics, durações, bordas e sombras foram examinados. Sombras escuras usam preferência de sistema e data-theme; redução de sistema zera três durações. Tokens não provam aplicação aos componentes. A combinação data-theme, classes do tema e preferência do sistema depende do consumidor; não se declarou defeito apenas por nomes de seletores nem se homologou contraste/layout. Nenhuma UI executada.
+
+## [src/styles/base.css](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/styles/base.css#L1-L230)
+
+Leitura integral 1–230. Reset de bordas, smooth scroll, transição temporária de tema, tipografia, pesos dark, fontes fluidas com especificidade, placeholders, controles nativos, scrollbar e indicadores focus-visible foram examinados. O arquivo declara relações de especificidade com Tailwind, mas os valores de comentário não foram convertidos em medição visual atual. Os controles de foco removem outline e desenham box-shadow; a composição com diversity-overrides merece conferência no consumidor e foi encaminhada para peer review. Sem build, rasterização ou teste assistivo.
+
+## [src/styles/diversity-overrides.css](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/styles/diversity-overrides.css#L1-L121)
+
+Leitura integral 1–121. Preset ativado por html[data-preset-id=diversity], fundos rainbow por classe/estado, scrollbar, slider e ajustes de borda foram examinados. O bloco 74–80 usa seletores de substring ring-primary/ring-2/ring-1 e box-shadow:none!important. A substring também alcança classes de variante, como focus-visible:ring-2 do Button padrão, enquanto base.css usa box-shadow para foco. O mecanismo foi encaminhado à frente Auth para conferir caminho ativo e classificar sem afirmar execução DOM. Seletores por classe de hover/focus em 102–106 são incondicionais quanto à pseudo-classe: registrou-se o alcance exato, sem declarar incidente visual sem contexto.
+
+## [src/styles/utilities.css](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/styles/utilities.css#L1-L247)
+
+Leitura integral 1–247. Utilitários tipográficos, scrollbars, texto gradiente, elevação/sombras, máscaras, card-lift/card-glow, redução de movimento e overrides de tarefas foram examinados. Os seletores de tarefas e chips têm escopo explícito, incluindo portal conforme o desenho de classe. Há controles de movimento reduzido para transição/transform e regras específicas para arrasto inline; esses controles foram preservados. Valores de contraste nos comentários são declarações históricas, não medições deste passe. Não se certificou efeito computado de máscara, fonte, contraste ou dispositivo.
+
+## [docs/design/ZAPP_DARKBLUE_PREMIUM_TOKENS.css](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/design/ZAPP_DARKBLUE_PREMIUM_TOKENS.css#L1-L68)
+
+Leitura integral 1–68. Referência de paleta, tipografia, raio, largura de sidebar e adapter semântico scoped foi examinada, com tokens dark separados. É uma referência documental; não foi tratada como stylesheet necessariamente carregada na aplicação nem como autoridade para reverter presets atuais. Sua presença não valida a UI implantada. Sem render de referência.
+
+## [docs/talkx/references/INDEX.html](https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/talkx/references/INDEX.html#L1-L89)
+
+Leitura integral 1–89, incluindo CSS inline. Galeria estática de 17 imagens, links relativos de preview/download, rel=noopener, alt/dimensões, lazy loading, foco e breakpoint de uma coluna foram examinados. Não há JavaScript inline neste documento. O rodapé classifica as referências como ilustrativas e pede confronto de requisitos/capacidades. Os rótulos e screenshots não foram convertidos em prova de funcionamento do Talk X, e a leitura não validou pixels, autenticidade das aprovações históricas ou dimensões reais das imagens. Sem abertura de navegador.
+

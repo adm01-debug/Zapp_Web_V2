@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "source_files": [
+    {
+      "path": "src/lib/gmailOAuth.ts",
+      "git_blob_sha": "ea41addc5a01d106f6107ece76e2d7087c4f6f73",
+      "sha256": "4e92090b99ed1c291ec12200fd580da6b432d0349405604a382a3959edc28f30"
+    },
+    {
+      "path": "src/hooks/integrations/useGmailOAuth.ts",
+      "git_blob_sha": "ac77a89ae987da95599be08fc1f708835b605362",
+      "sha256": "04119f2a913e0a075baf479bb77bf36dce7f2fc7bff32ac4b288ce7ed5605ddf"
+    },
+    {
+      "path": "supabase/functions/gmail-oauth/index.ts",
+      "git_blob_sha": "423072ccc566dc0b05d8efa6c32ae7abbb42bd63",
+      "sha256": "b5a3b0d4101fa00bb2f751b8340ebfe997b39dc1415a37dd1e6720fc3e30ab52"
+    }
+  ],
+  "script_sha256": "8fda37dcf04c1853e11147001a847a4c7d3559d8121beb92fa75576dfad50be5",
+  "typescript_version": "5.9.3",
+  "probes": [
+    {
+      "id": "COM-P06",
+      "status": "PASS",
+      "title": "Mismatched OAuth state still reaches code exchange",
+      "observed": {
+        "exchanges": 1,
+        "contains_state_in_exchange": false,
+        "success_notice": true
+      },
+      "limitations": "Exact state parser and effect hook; fake Auth and Edge invoke. No real Google code, credential or account link. Two variants of one missing binding defect."
+    },
+    {
+      "id": "COM-P07",
+      "status": "PASS",
+      "title": "Absent OAuth state still reaches code exchange",
+      "observed": {
+        "exchanges": 1,
+        "contains_state_in_exchange": false,
+        "success_notice": true
+      },
+      "limitations": "Exact state parser and effect hook; fake Auth and Edge invoke. No real Google code, credential or account link. Two variants of one missing binding defect."
+    },
+    {
+      "id": "COM-P08",
+      "status": "PASS",
+      "title": "Code exchange reports success after the token-storage RPC returns an error",
+      "observed": {
+        "response_status": 200,
+        "response_success": true,
+        "token_storage_rejected": true
+      },
+      "limitations": "Exact Edge handler, mocked schema/auth/DB/Google boundaries; fixture is valid for this action. The real validators and provider were not exercised."
+    },
+    {
+      "id": "COM-P09",
+      "status": "PASS",
+      "title": "Disconnect reports success when revocation and local deactivation both fail",
+      "observed": {
+        "response_status": 200,
+        "response_success": true,
+        "revocation_status": 503,
+        "deactivation_error": "synthetic update failure"
+      },
+      "limitations": "Exact Edge handler with both external effects simulated as failures. No actual revocation, database mutation or account disconnect."
+    }
+  ],
+  "network_calls": 0,
+  "product_writes": 0,
+  "method": "Whole exact parser/hook/Edge modules transpiled after HEAD and all consumed blobs verified; explicit mocked imports and I/O."
+}

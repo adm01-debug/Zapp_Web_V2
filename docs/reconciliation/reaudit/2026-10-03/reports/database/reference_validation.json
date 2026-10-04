@@ -1,0 +1,28 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "scope": "Ranges and SHA256s of local evidence only; not SQL parsing, execution, acceptance, or a production check.",
+  "counts": {
+    "json_artifacts_checked": 25,
+    "line_ranges_checked": 31150,
+    "file_hash_references_checked": 25661,
+    "git_blob_references_checked": 1677
+  },
+  "unique_files_checked": 1075,
+  "finding_count": 21,
+  "policy_body_counts": {
+    "semantic": 446
+  },
+  "policy_extra_counts": {
+    "semantic": 56
+  },
+  "do_body_counts": {
+    "semantic": 107
+  },
+  "function_body_counts": {
+    "semantic": 311,
+    "targeted": 0,
+    "structural": 0
+  },
+  "error_count": 0,
+  "errors": []
+}

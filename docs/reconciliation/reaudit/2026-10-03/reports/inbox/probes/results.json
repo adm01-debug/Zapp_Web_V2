@@ -1,0 +1,299 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "integrity": {
+    "head_verified": true,
+    "source_blobs_verified": 20,
+    "pins_sha256": "2486b6a14ac20a7b7e0b98fea1bcf046b439f85554a7b347ff004e1abf76101d",
+    "derived_from_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "runner_sha256": "556dca06ac9038e9c67f4540348dfd01652c3ba8e8acae35747b70b8f37e006b"
+  },
+  "engine": "v24.19.0",
+  "no_network": true,
+  "method": "TypeScript real carregado com stripTypeScriptTypes; stubs apenas para fronteiras e hooks, sem React DOM.",
+  "source_blob_hashes": {
+    "src/components/inbox/chat/useChatPanelHandlers.ts": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+    "src/services/outbound-message.service.ts": "a328efc57530103d0e3fc0c2256420032db982ae",
+    "src/lib/storage_object_upload.ts": "1945625b0d173202c91d559739e2c45ecf820c43",
+    "src/components/inbox/useFileUploadLogic.ts": "af489a0f3136df5d5316ed2b2a409795ba457304",
+    "src/hooks/chat/useMessageSignature.ts": "e968bbed653ad68b4c0ecf35fbfb0a53a374e30b",
+    "src/hooks/communication/useAudioRecorder.ts": "5d8a02dc8a1e53b8577aacb7508dc27f4bece3ae",
+    "src/hooks/chat/useMessages.ts": "8cff663272e7a2ad435e7deaf7a89c1a4c668e56",
+    "src/components/inbox/media-gallery/mediaUtils.ts": "981dacf45c0ea7aacc83f8cf3c3a81298e83b099",
+    "src/components/inbox/ScheduleMessageDialog.tsx": "c888205672230e8a41e6766d7878211edf6db7f9",
+    "src/components/inbox/ChatPanel.tsx": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+    "src/components/inbox/TransferDialog.tsx": "bea5653b01d3051d32a0847be085fb0a008e790e",
+    "src/components/inbox/chat/MessageHoverToolbar.tsx": "8eb6d284602e804426c8b7d0d9f71e0581173f41",
+    "src/hooks/realtime/realtimeUtils.ts": "91f68d605c8bbf3dc0769e098e57ab36fc7f45a7",
+    "src/services/realtime.service.ts": "a9ea1fbe585827e7a9ffaf918d7c9994797e52dc",
+    "src/hooks/inbox/useInboxFilters.ts": "cc80d5db7b34aca33a10460213b6d87176bebf6b",
+    "src/hooks/system/useOfflineCache.ts": "c1984e76f25b69f5aab57a7da0d38a229b4184a6",
+    "src/components/inbox/GlobalSearch.tsx": "3364ad19aec7daf91cea810f117fc0705a6076d1",
+    "src/adapters/inboxAdapter.ts": "f1af7f3f6957dbad7090951c02f30420563c1565",
+    "src/pages/ChatPopup.tsx": "cb665a32970cf4f0582c46d3866b88725a41bf2d",
+    "src/components/inbox/useGlobalSearchData.ts": "0d2ec01515522c34a811013da0c2703d5fee4e6c"
+  },
+  "results": [
+    {
+      "id": "reply_metadata",
+      "description": "Resposta selecionada não chega ao callback de transporte",
+      "observed": {
+        "transportArguments": [
+          "Aprovado"
+        ],
+        "replyId": "quoted-1",
+        "metadataSent": false
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "forward_interactive_noop",
+      "description": "Handlers de encaminhar e interativo não invocam transporte",
+      "observed": {
+        "newTransportCalls": 0,
+        "interactiveToast": "Mensagem interativa enviada!"
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "enter_limit",
+      "description": "Enter contorna o limite visual 4096 do botão",
+      "observed": {
+        "sentCharacters": 4097
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "media_rollback",
+      "description": "Falha após enqueue apaga objeto já referenciado; reenviar cria outro ID",
+      "observed": {
+        "firstAttemptEvents": [
+          "uploaded",
+          "enqueued",
+          "dispatch",
+          "removed"
+        ],
+        "persistedMessages": 2,
+        "objectsRemaining": 1,
+        "firstMessageObjectDeleted": true,
+        "retryUsesNewId": true
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "native_multiple_files",
+      "description": "Seletor nativo multiple encaminha somente files[0]",
+      "observed": {
+        "selected": 2,
+        "previewFiles": 1,
+        "queueFiles": 0
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "signature_retry",
+      "description": "Retry de texto restaura payload já assinado e adiciona outra assinatura",
+      "observed": {
+        "first": "*Ana - Vendas:*\nProposta aprovada",
+        "restored": "*Ana - Vendas:*\nProposta aprovada",
+        "second": "*Ana - Vendas:*\n*Ana - Vendas:*\nProposta aprovada",
+        "differentIdempotencyKey": true
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "recorder_lifecycle",
+      "description": "Tempo máximo e cleanup do mount não param MediaRecorder",
+      "observed": {
+        "beforeUnmount": {
+          "reportedDuration": 2,
+          "recorderState": "recording",
+          "stops": 0
+        },
+        "afterUnmount": {
+          "recorderState": "recording",
+          "recorderStopCalls": 0,
+          "trackStopCalls": 0
+        }
+      },
+      "limitations": "Hook real em harness com semântica de closure/deps; função de cleanup escolhida é exatamente a captura useEffect([]) do componente. Sem microfone ou browser real."
+    },
+    {
+      "id": "overlay_stale",
+      "description": "Refetch novo perde para overlay antigo que nunca é descartado",
+      "observed": {
+        "serverStatus": "read",
+        "renderedStatus": "delivered",
+        "serverContent": "edição posterior no servidor",
+        "renderedContent": "edição vista em realtime"
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "gallery_webm_audio",
+      "description": "Arquivo produzido por uploadAudio(.webm) é vídeo na galeria",
+      "observed": {
+        "urlSuffix": ".webm",
+        "messageType": "audio",
+        "classified": "video"
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "schedule_before_persistence",
+      "description": "Dialog anuncia sucesso e elimina draft enquanto onSchedule está pendente",
+      "observed": {
+        "eventsBeforePersistence": [
+          "pending-persistence",
+          "Mensagem agendada!",
+          "open:false",
+          "draft:",
+          "attachment:null"
+        ]
+      },
+      "limitations": "Callback extraído por marcadores do TSX real, com funções externas simuladas. Não monta DOM nem cria agendamento real."
+    },
+    {
+      "id": "transfer_wrong_kind",
+      "description": "Tipo connection vira queue_id; erro resolvido pelo callback fecha diálogo",
+      "observed": {
+        "writtenFields": {
+          "queue_id": "connection-1"
+        },
+        "events": [
+          "busy:true",
+          "Erro ao transferir",
+          "open:false",
+          "busy:false"
+        ]
+      },
+      "limitations": "Callbacks extraídos dos dois TSX reais. Erro FK simulado; não executa schema nem serviço."
+    },
+    {
+      "id": "delete_false_success",
+      "description": "Exclusão falha no provedor e banco mas anuncia para todos e invoca callback de exclusão",
+      "observed": {
+        "events": [
+          "provider-rejected",
+          "db-rejected",
+          "Mensagem deletada para todos",
+          "delete-callback:m1"
+        ]
+      },
+      "limitations": "Callback real extraído do TSX ativo; respostas externas simuladas. Não exclui mensagem real."
+    },
+    {
+      "id": "edit_false_success",
+      "description": "Edição sem conexão resolvida e update rejeitado ainda anuncia sucesso",
+      "observed": {
+        "remoteCalls": 0,
+        "toast": "✏️ Mensagem editada",
+        "draftAfter": ""
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "global_window_hides_contact",
+      "description": "1000 mensagens globais ocupadas por A removem B ativo da lista aberta",
+      "observed": {
+        "fixtureMessageCount": 1001,
+        "queries": [
+          {
+            "table": "contacts",
+            "limit": 500
+          },
+          {
+            "table": "messages",
+            "limit": 1000
+          }
+        ],
+        "contactB": {
+          "actualUnread": 1,
+          "sampledUnread": 0,
+          "lastMessage": null,
+          "visibleInOpen": false
+        }
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "offline_cache_dropped",
+      "description": "Cache válido desaparece ao concluir fetch offline falho",
+      "observed": {
+        "offline": true,
+        "cachedConversations": 1,
+        "whileLoading": 1,
+        "afterFailureLoadingFalse": 0,
+        "usingCache": false
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "global_search_nan_index",
+      "description": "Navegação com total zero torna índice NaN e bloqueia Enter após resultados chegarem",
+      "observed": {
+        "indexIsNaN": true,
+        "resultsAfter": 1,
+        "selectedByEnter": 0
+      },
+      "limitations": "Effect/handler extraídos do TSX, simulação do listener e transição de resultados. Sem browser real."
+    },
+    {
+      "id": "audio_error_closes_recorder",
+      "description": "Mesmo com rejeição explícita, parent desmonta gravador e perde blob local",
+      "observed": {
+        "sendRejected": true,
+        "isRecordingAudioAfter": false
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "popup_discards_fields",
+      "description": "Mapper do popup apaga campos que useMessages já forneceu",
+      "observed": {
+        "inboxFields": {
+          "location": true,
+          "external_id": true,
+          "is_deleted": true,
+          "isEdited": true
+        },
+        "popupFields": {
+          "location": false,
+          "external_id": false,
+          "is_deleted": false,
+          "isEdited": false
+        }
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "global_search_tag_semantics",
+      "description": "Tag limita contatos só depois de LIMIT e não restringe mensagens",
+      "observed": {
+        "matchingContactExistsAtPosition": 11,
+        "contactLimit": 10,
+        "returnedContactCount": 0,
+        "messageReturnedFromContactWithoutSelectedTag": "other",
+        "queries": [
+          {
+            "table": "contacts",
+            "limit": 10
+          },
+          {
+            "table": "messages",
+            "limit": 20
+          }
+        ]
+      },
+      "limitations": "Código TypeScript real com fronteiras simuladas; não é render React nem execução de banco/provedor."
+    },
+    {
+      "id": "ctrl_f_double_toggle",
+      "description": "Dois handlers de Ctrl+F desfazem a abertura do painel de busca",
+      "observed": {
+        "calls": 2,
+        "activeSearchAfter": null
+      },
+      "limitations": "Callbacks reais; ordem de propagação textarea→window modelada explicitamente. Sem React DOM."
+    }
+  ]
+}

@@ -1,0 +1,872 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-03T23:47:31.965755+00:00",
+  "repository": "adm01-debug/Zapp_Web_V2",
+  "pull_request": 1869,
+  "publication_sha": "9a1c370c1979b5e3f1c59291a2bfac331f689e3d",
+  "product_baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "check_id": 111317671013,
+  "check_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/111317671013",
+  "sonar_dashboard": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1869",
+  "check_conclusion": "failure",
+  "quality_gate_reported": {
+    "new_code_reliability": "D",
+    "new_code_security": "E",
+    "required": "A"
+  },
+  "annotation_count": 29,
+  "annotation_levels": {
+    "failure": 21,
+    "warning": 8
+  },
+  "paths": {
+    "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs": 12,
+    "docs/reconciliation/reproduce/skins/skins_probe.mjs": 6,
+    "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs": 6,
+    "docs/reconciliation/reproduce/validate_package.py": 4,
+    "docs/reconciliation/evidence/skins-probe-results.json": 1
+  },
+  "categories": {
+    "LOCAL_SOURCE_EXECUTION": 11,
+    "SOURCE_PARSING_REGEX": 5,
+    "REDUNDANT_SORT": 2,
+    "GIT_ARGUMENT_VALIDATION": 1,
+    "LOCAL_CLI_PATH": 4,
+    "SOURCE_FINGERPRINT": 1,
+    "EXECUTABLE_RESOLUTION": 1,
+    "GIT_BLOB_IDENTITY": 1,
+    "LOCAL_CLI_OUTPUT": 2,
+    "INTENTIONAL_FIXTURE_ASSERTION": 1
+  },
+  "dispositions": {
+    "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY": 11,
+    "BOUNDED_INPUT_HARDENING": 5,
+    "NON_FUNCTIONAL_CLEANUP": 2,
+    "REAL_HARNESS_HARDENING": 6,
+    "FALSE_POSITIVE_SECRET_CONFIRMED": 1,
+    "NON_SECURITY_HASH_USE_CONFIRMED": 1,
+    "INTENDED_LOCAL_OUTPUT_WITH_HARDENING_OPTION": 2,
+    "INTENTIONAL_CONSTANT_NOT_PRODUCT_BUG": 1
+  },
+  "scope_proof": {
+    "pr_file_pages": [
+      100,
+      100,
+      23
+    ],
+    "pr_file_count": 223,
+    "all_pr_files_under_docs_reconciliation": true,
+    "all_annotated_paths_new_in_pr": true,
+    "product_annotations": 0,
+    "sdk_copy_annotations": 0,
+    "annotated_source_files": 5,
+    "exact_blob_hashes_verified": true
+  },
+  "root_conclusion": "Todas as29 annotations pertencem aos novos artefatos de auditoria. Nenhuma aponta produto ou a cópia do SDK. Renomear a cópia SDK trata o lint indicado por root, mas não os sinks dos probes nem os demais alertas Sonar.",
+  "security_interpretation": "Execução dinâmica é intencional sobre fontes locais do baseline, com mocks; isso exige confiança e integridade do checkout. Não há evidência de novo endpoint vulnerável do produto, nem base para marcar todos os alertas como falsos positivos. O validator tem hardening real de argumentos/política de saída; o token é um fingerprint comprovado.",
+  "retrieval": {
+    "annotations_primary_public_url": "https://api.github.com/repos/adm01-debug/Zapp_Web_V2/check-runs/111317671013/annotations?per_page=100",
+    "method": "Anonymous public HTTPS GET with urllib;200 OK;29 records; no Link pagination header",
+    "github_fetch_attempt": "Rejected as unsupported endpoint, not an authentication decision",
+    "sonar_api_attempts": "Public issues/search and qualitygates/project_status returned403; search-service opening also unavailable",
+    "github_comment_confirmed": 5974632875,
+    "annotations_complete": true,
+    "sonar_rule_ids_and_taint_traces": "Not returned by GitHub annotations; not invented or inferred as exact rule IDs"
+  },
+  "limitations": [
+    "No Sonar state was changed and no issue was marked safe/false-positive externally.",
+    "No scanner rules, exclusions or baselines were modified.",
+    "No probe, product, CI workflow, network provider or live database action was executed.",
+    "The diagnosis is pinned to9a1c370c1979; any following publication needs its own observed check before claiming green.",
+    "The29 annotations are not29 independent vulnerabilities; related indices identify repeated sinks/downstream execution.",
+    "Underlying Sonar rule IDs, severity taxonomy and per-issue contribution to D/E ratings were not available; annotation_level is preserved verbatim."
+  ],
+  "independent_review": {
+    "agent": "/root/other_modules",
+    "scope": [
+      "validate_package.py:60,63,86",
+      "skins-probe-results.json:9"
+    ],
+    "agreement": "Confirmed fingerprint and Git identity uses; identified missing enforcement of definition_ref syntax; duplicate output-path alerts share one CLI write. Root separately authorized validator hardening; this report did not modify it."
+  },
+  "annotations": [
+    {
+      "annotation_index": 0,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakR",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 119,
+      "line_end": 119,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that this dynamic injection or execution of code is safe.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakR&open=AaEEHalN46-QiBaKFakR&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L119",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "Instancia a classe FunctionsClient construída na linha114 a partir da cópia local do SDK. O transporte é injetado e retorna Response sintética; não há entrada de rede controlando o construtor.",
+      "recommended_action": "Conferir os bytes do SDK contra o hash esperado antes de carregar; manter explícita a finalidade de execução de código local confiável.",
+      "related_annotation_indices": [
+        9
+      ],
+      "source_excerpt": {
+        "line_start": 116,
+        "line_end": 122,
+        "text": ");\nconst sdkCases = [];\nfor (const [contentType, status, body] of [['audio/mpeg', 200, 'ID3 synthetic'], ['application/json', 207, JSON.stringify(partialSync)]]) {\n  const client = new FunctionsClient('https://offline.invalid', { customFetch: async () => new Response(body, { status, headers: { 'Content-Type': contentType } }) });\n  const result = await client.invoke('synthetic', { body: {} });\n  assert.equal(result.error, null);\n  sdkCases.push({ contentType, httpStatus: status, error: result.error, decodedType: typeof result.data, decodedData: result.data });"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 1,
+      "sonar_issue_key": "AaEEHalb46-QiBaKFakZ",
+      "path": "docs/reconciliation/reproduce/skins/skins_probe.mjs",
+      "line_start": 72,
+      "line_end": 72,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that this dynamic injection or execution of code is safe.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalb46-QiBaKFakZ&open=AaEEHalb46-QiBaKFakZ&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/skins/skins_probe.mjs#L72",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "vm.runInNewContext executa o bootstrap extraído de index.html para observar a aplicação de cache de tema em DOM/storage simulados. É execução intencional de código do checkout.",
+      "recommended_action": "Verificar o conteúdo contra o baseline antes de executar; não tratar o contexto de mocks como permissão para aceitar código arbitrário.",
+      "related_annotation_indices": [
+        8
+      ],
+      "source_excerpt": {
+        "line_start": 69,
+        "line_end": 75,
+        "text": "const hookModule=await import(`data:text/javascript;base64,${Buffer.from(hookJs).toString('base64')}`);\nvalues.set(STORAGE_KEY,JSON.stringify({v:6,preset:'corporate',borderRadius:14}));cursor=0;let hook=hookModule.useThemePreset();storageFails=true;hook.applyPreset('gx-hackerman');cursor=0;hook=hookModule.useThemePreset();const autoSave={config:hook.config,hasUnsavedChanges:hook.hasUnsavedChanges,persisted:JSON.parse(values.get(STORAGE_KEY)),toasts:[...toasts]};record('hook.quota_unsaved_indicator',autoSave.hasUnsavedChanges===true&&autoSave.toasts.some(x=>x.kind==='error'),autoSave,{hasUnsavedChanges:true,errorToast:true,persistedPreset:'corporate'});storageFails=false;console.error=originalError;\nconst bootSource=fs.readFileSync(`${repo}/index.html`,'utf8').match(/<script>\\s*([\\s\\S]*?)<\\/script>/)[1];\nvalues.clear();values.set('theme','dark');values.set(STORAGE_KEY,JSON.stringify({v:6,preset:'gx-classic',borderRadius:10,cacheMode:'light',cssVarsCache:{background:'WRONG-MODE'}}));vars.clear();vm.runInNewContext(bootSource,{localStorage,document,window:{matchMedia:()=>({matches:true})},console});record('boot.rejects_wrong_mode_cache',!vars.has('--background'),Object.fromEntries(vars),{backgroundCacheAbsent:true});\nconst report={baseline,executed_at:new Date().toISOString(),runtime:process.version,method:'Actual TypeScript source stripped with Node; in-memory storage/document; synchronous hook state harness; no React renderer, browser, DB, network, provider or deploy.',source_hashes:Object.fromEntries([presetPath,hookPath,'src/styles/tokens.css','index.html'].map(p=>[p,crypto.createHash('sha256').update(fs.readFileSync(`${repo}/${p}`)).digest('hex')])),total:outcomes.length,passed:outcomes.filter(x=>x.pass).length,failed:outcomes.filter(x=>!x.pass).length,outcomes,limits:['Static theme ratios cover two solid token pairs at threshold 3:1, not composed UI WCAG AA 4.5:1 or Diversity gradients.','The document mock proves setter/removal choices, not rendered pixels or actual high-contrast output.','The hook harness proves return-value/state bookkeeping without React batching, effects, or browser storage failure.','No historical authenticated Skins QA was rerun.'],captured_expected_storage_errors:errors};\nfs.writeFileSync(`${out}/skins_probe_results.json`,JSON.stringify(report,null,2)+'\\n');\nconsole.log(JSON.stringify({total:report.total,passed:report.passed,failed:report.failed,failures:outcomes.filter(x=>!x.pass)},null,2));"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 2,
+      "sonar_issue_key": "AaEEHalq46-QiBaKFakb",
+      "path": "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs",
+      "line_start": 35,
+      "line_end": 35,
+      "annotation_level": "warning",
+      "sonar_title": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalq46-QiBaKFakb&open=AaEEHalq46-QiBaKFakb&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs#L35",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "SOURCE_PARSING_REGEX",
+      "disposition": "BOUNDED_INPUT_HARDENING",
+      "assessment": "Regex remove imports e bootstrap do worker lido do checkout. Pode ter custo ruim em conteúdo malformado, mas a entrada prevista é um arquivo fixado, não uma requisição do produto.",
+      "recommended_action": "Preferir transformação por sintaxe ou algoritmo de passagem única; impor limite de tamanho e integridade das fontes.",
+      "related_annotation_indices": [],
+      "source_excerpt": {
+        "line_start": 32,
+        "line_end": 38,
+        "text": " },\n};\nlet worker=stripTypeScriptTypes(readFileSync(resolve(repo,'supabase/functions/multiplix-send/index.ts'),'utf8'),{mode:'transform'});\nworker=worker.replace(/^import\\s+[\\s\\S]*?from\\s+[\"'][^\"']+[\"'];\\s*$/gm,'').replace(/export\\s*\\{\\s*personalize\\s*\\};?/,'').replace(/export async function handleMultiplixSend/,'async function handleMultiplixSend').replace(/if \\(import\\.meta\\.main\\) \\{[\\s\\S]*?\\}\\s*$/,'');\nconst handleMultiplixSend=Function(...Object.keys(imports),worker+'\\nreturn handleMultiplixSend;')(...Object.values(imports));\nlet test=stripTypeScriptTypes(readFileSync(resolve(repo,'supabase/functions/multiplix-send/index.test.ts'),'utf8'),{mode:'transform'}).replace(/^import.*$/gm,'');\nconst h=Function('handleMultiplixSend','personalize',test+'\\nreturn {dispatchRow,recipientRow,newCtx,mockDeps,makePost,TEST_CRON_SECRET};')(handleMultiplixSend,personalize);"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 3,
+      "sonar_issue_key": "AaEEHalq46-QiBaKFakd",
+      "path": "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs",
+      "line_start": 38,
+      "line_end": 38,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that this dynamic injection or execution of code is safe.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalq46-QiBaKFakd&open=AaEEHalq46-QiBaKFakd&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs#L38",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "Function compila o helper de teste real do Multiplix para disponibilizar dispatchRow/recipientRow/newCtx/mockDeps. O arquivo index.test.ts vem do checkout selecionado.",
+      "recommended_action": "Conferir baseline e hashes das fontes antes de ler/avaliar; preservar mocks de banco/provedor e não aceitar repositórios arbitrários.",
+      "related_annotation_indices": [
+        11,
+        24
+      ],
+      "source_excerpt": {
+        "line_start": 35,
+        "line_end": 41,
+        "text": "worker=worker.replace(/^import\\s+[\\s\\S]*?from\\s+[\"'][^\"']+[\"'];\\s*$/gm,'').replace(/export\\s*\\{\\s*personalize\\s*\\};?/,'').replace(/export async function handleMultiplixSend/,'async function handleMultiplixSend').replace(/if \\(import\\.meta\\.main\\) \\{[\\s\\S]*?\\}\\s*$/,'');\nconst handleMultiplixSend=Function(...Object.keys(imports),worker+'\\nreturn handleMultiplixSend;')(...Object.values(imports));\nlet test=stripTypeScriptTypes(readFileSync(resolve(repo,'supabase/functions/multiplix-send/index.test.ts'),'utf8'),{mode:'transform'}).replace(/^import.*$/gm,'');\nconst h=Function('handleMultiplixSend','personalize',test+'\\nreturn {dispatchRow,recipientRow,newCtx,mockDeps,makePost,TEST_CRON_SECRET};')(handleMultiplixSend,personalize);\nconst result=[];\nfor(const [caseName,template,blockText,company,httpStatus] of [\n ['distinct_block_content','GLOBAL {{empresa}}','BLOCO CORRETO {{empresa}}','Empresa 1',200],"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 4,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakO",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 103,
+      "line_end": 103,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that this dynamic injection or execution of code is safe.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakO&open=AaEEHalN46-QiBaKFakO&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L103",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "Function executa o corpo onSuccess extraído de useGmail com payload sintético e callbacks de toast/invalidation em memória, para provar toast de sucesso após207 parcial.",
+      "recommended_action": "Prender a extração à fonte imutável esperada; não substituir pela cópia manual de uma implementação que deixaria de testar o código real.",
+      "related_annotation_indices": [],
+      "source_excerpt": {
+        "line_start": 100,
+        "line_end": 106,
+        "text": "const successMatch = gmailHook.match(/const syncInbox = useMutation\\([\\s\\S]*?onSuccess: \\(data\\) => \\{([\\s\\S]*?)\\},\\s*onError/);\nassert.ok(successMatch);\nconst toasts = [];\nFunction('data', 'invalidateThreadData', 'queryClient', 'toast', successMatch[1])(gmailReturned, () => {}, { invalidateQueries() {} }, { success: x => toasts.push(x) });\nassert.deepEqual(toasts, ['2 emails sincronizados']);\n\n// Exact official FunctionsClient source at v2.117.2, matching bun.lock."
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 5,
+      "sonar_issue_key": "AaEEHalb46-QiBaKFakW",
+      "path": "docs/reconciliation/reproduce/skins/skins_probe.mjs",
+      "line_start": 41,
+      "line_end": 41,
+      "annotation_level": "failure",
+      "sonar_title": "Provide a compare function to avoid sorting elements alphabetically.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalb46-QiBaKFakW&open=AaEEHalb46-QiBaKFakW&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/skins/skins_probe.mjs#L41",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "REDUNDANT_SORT",
+      "disposition": "NON_FUNCTIONAL_CLEANUP",
+      "assessment": "Object.keys e a lista de variáveis CSS são ordenadas, mas as operações seguintes usam somente includes/filter/length. A ordem não participa do resultado.",
+      "recommended_action": "Remover os dois sort() redundantes; não adicionar comparator sem finalidade. Nenhum defeito do produto decorre dessa linha.",
+      "related_annotation_indices": [
+        23
+      ],
+      "source_excerpt": {
+        "line_start": 38,
+        "line_end": 44,
+        "text": "const expectedGx = [['gx-classic','347 96% 54%'],['gx-pink-addiction','330 95% 60%'],['gx-purple-haze','265 65% 50%'],['gx-rose-quartz','345 75% 68%'],['gx-ultraviolet','271 76% 53%'],['gx-hackerman','127 65% 46%'],['gx-frutti-di-mare','182 90% 42%'],['gx-cyberpunk','55 100% 51%'],['gx-razer','113 70% 51%']];\nfor(const [id,primary] of expectedGx){const p=getPresetById(id);record(`gx.${id}`,p.light.primary===primary&&p.dark.primary===primary&&p.category==='gx'&&p.borderRadius===10&&p.font===undefined,{light:p.light.primary,dark:p.dark.primary,category:p.category,radius:p.borderRadius,font:p.font??null},{primary,category:'gx',radius:10,font:null});}\nfor(const p of THEME_PRESETS) for(const mode of ['light','dark']){\n const keys=Object.keys(p[mode]).sort(); const expected=[...CSS_VARS_TO_APPLY].sort();\n record(`keys.${p.id}.${mode}`,expected.every(k=>keys.includes(k)),{requiredKeys:expected.length,actualKeys:keys.length,extraKeys:keys.filter(k=>!expected.includes(k))},{requiredKeysPresent:true});\n}\nconst css = fs.readFileSync(`${repo}/src/styles/tokens.css`,'utf8');"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 6,
+      "sonar_issue_key": "AaEEHalb46-QiBaKFakY",
+      "path": "docs/reconciliation/reproduce/skins/skins_probe.mjs",
+      "line_start": 71,
+      "line_end": 71,
+      "annotation_level": "warning",
+      "sonar_title": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalb46-QiBaKFakY&open=AaEEHalb46-QiBaKFakY&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/skins/skins_probe.mjs#L71",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "SOURCE_PARSING_REGEX",
+      "disposition": "BOUNDED_INPUT_HARDENING",
+      "assessment": "Regex extrai o primeiro bloco script do index.html local. Uma entrada muito grande/malformada pode aumentar custo; não é parser exposto pelo aplicativo.",
+      "recommended_action": "Usar busca dos delimitadores ou parser apropriado com tamanho máximo, mantendo a mesma extração do baseline.",
+      "related_annotation_indices": [],
+      "source_excerpt": {
+        "line_start": 68,
+        "line_end": 74,
+        "text": "hookJs='const {useState,useEffect,useCallback,useMemo,toast,useTheme,applyThemePreset,applyRadius,loadThemeConfig,saveThemeConfig,clearThemeOverrides,getDefaultConfig,getPresetById}=globalThis.__skinsAuditHarness;\\n'+hookJs;\nconst hookModule=await import(`data:text/javascript;base64,${Buffer.from(hookJs).toString('base64')}`);\nvalues.set(STORAGE_KEY,JSON.stringify({v:6,preset:'corporate',borderRadius:14}));cursor=0;let hook=hookModule.useThemePreset();storageFails=true;hook.applyPreset('gx-hackerman');cursor=0;hook=hookModule.useThemePreset();const autoSave={config:hook.config,hasUnsavedChanges:hook.hasUnsavedChanges,persisted:JSON.parse(values.get(STORAGE_KEY)),toasts:[...toasts]};record('hook.quota_unsaved_indicator',autoSave.hasUnsavedChanges===true&&autoSave.toasts.some(x=>x.kind==='error'),autoSave,{hasUnsavedChanges:true,errorToast:true,persistedPreset:'corporate'});storageFails=false;console.error=originalError;\nconst bootSource=fs.readFileSync(`${repo}/index.html`,'utf8').match(/<script>\\s*([\\s\\S]*?)<\\/script>/)[1];\nvalues.clear();values.set('theme','dark');values.set(STORAGE_KEY,JSON.stringify({v:6,preset:'gx-classic',borderRadius:10,cacheMode:'light',cssVarsCache:{background:'WRONG-MODE'}}));vars.clear();vm.runInNewContext(bootSource,{localStorage,document,window:{matchMedia:()=>({matches:true})},console});record('boot.rejects_wrong_mode_cache',!vars.has('--background'),Object.fromEntries(vars),{backgroundCacheAbsent:true});\nconst report={baseline,executed_at:new Date().toISOString(),runtime:process.version,method:'Actual TypeScript source stripped with Node; in-memory storage/document; synchronous hook state harness; no React renderer, browser, DB, network, provider or deploy.',source_hashes:Object.fromEntries([presetPath,hookPath,'src/styles/tokens.css','index.html'].map(p=>[p,crypto.createHash('sha256').update(fs.readFileSync(`${repo}/${p}`)).digest('hex')])),total:outcomes.length,passed:outcomes.filter(x=>x.pass).length,failed:outcomes.filter(x=>!x.pass).length,outcomes,limits:['Static theme ratios cover two solid token pairs at threshold 3:1, not composed UI WCAG AA 4.5:1 or Diversity gradients.','The document mock proves setter/removal choices, not rendered pixels or actual high-contrast output.','The hook harness proves return-value/state bookkeeping without React batching, effects, or browser storage failure.','No historical authenticated Skins QA was rerun.'],captured_expected_storage_errors:errors};\nfs.writeFileSync(`${out}/skins_probe_results.json`,JSON.stringify(report,null,2)+'\\n');"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 7,
+      "sonar_issue_key": "AaEEHal146-QiBaKFakj",
+      "path": "docs/reconciliation/reproduce/validate_package.py",
+      "line_start": 60,
+      "line_end": 60,
+      "annotation_level": "warning",
+      "sonar_title": "Command Argument Injection via unsanitized user input",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHal146-QiBaKFakj&open=AaEEHal146-QiBaKFakj&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/validate_package.py#L60",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "GIT_ARGUMENT_VALIDATION",
+      "disposition": "REAL_HARNESS_HARDENING",
+      "assessment": "subprocess.run recebe uma lista, sem shell; não há interpolação para Bash. Porém definition_ref e path vêm do registry, e a revisão não valida a sintaxe antes de passar o argumento a git show. Um registry adulterado pode transformar o operando em opção Git.",
+      "recommended_action": "Validar ref hexadecimal/objeto fixado e caminho relativo; resolver Git confiável; impedir interpretação de opções e conversões externas. Não classificar como RCE de shell observada.",
+      "related_annotation_indices": [],
+      "source_excerpt": {
+        "line_start": 57,
+        "line_end": 63,
+        "text": "            raw=(d/'sources/Plano_Dashboard_100_Etapas_2026-09-30.md').read_bytes()\n            require(hashlib.sha256(raw).hexdigest()==p['source_sha256'],'source_hash_'+p['record_id'])\n        else:\n            proc=subprocess.run(['git','show',p['definition_ref']+':'+p['path']],cwd=args.repo,capture_output=True)\n            require(proc.returncode==0,'source_read_'+p['record_id'])\n            if proc.returncode:continue\n            raw=proc.stdout;blob=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\\0'+raw).hexdigest()"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 8,
+      "sonar_issue_key": "AaEEHalb46-QiBaKFaka",
+      "path": "docs/reconciliation/reproduce/skins/skins_probe.mjs",
+      "line_start": 72,
+      "line_end": 72,
+      "annotation_level": "failure",
+      "sonar_title": "Code Injection via unsanitized user input",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalb46-QiBaKFaka&open=AaEEHalb46-QiBaKFaka&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/skins/skins_probe.mjs#L72",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "É o mesmo sink vm.runInNewContext da annotation1, agora com título de fluxo contaminado. A origem é index.html sob RECONCILIATION_REPO; o uso previsto é checkout auditado, mas o script não impõe sozinho a integridade dele.",
+      "recommended_action": "Mesma ação de1: verificar fontes imutáveis e documentar confiança; uma annotation adicional não representa outro endpoint vulnerável.",
+      "related_annotation_indices": [
+        1
+      ],
+      "source_excerpt": {
+        "line_start": 69,
+        "line_end": 75,
+        "text": "const hookModule=await import(`data:text/javascript;base64,${Buffer.from(hookJs).toString('base64')}`);\nvalues.set(STORAGE_KEY,JSON.stringify({v:6,preset:'corporate',borderRadius:14}));cursor=0;let hook=hookModule.useThemePreset();storageFails=true;hook.applyPreset('gx-hackerman');cursor=0;hook=hookModule.useThemePreset();const autoSave={config:hook.config,hasUnsavedChanges:hook.hasUnsavedChanges,persisted:JSON.parse(values.get(STORAGE_KEY)),toasts:[...toasts]};record('hook.quota_unsaved_indicator',autoSave.hasUnsavedChanges===true&&autoSave.toasts.some(x=>x.kind==='error'),autoSave,{hasUnsavedChanges:true,errorToast:true,persistedPreset:'corporate'});storageFails=false;console.error=originalError;\nconst bootSource=fs.readFileSync(`${repo}/index.html`,'utf8').match(/<script>\\s*([\\s\\S]*?)<\\/script>/)[1];\nvalues.clear();values.set('theme','dark');values.set(STORAGE_KEY,JSON.stringify({v:6,preset:'gx-classic',borderRadius:10,cacheMode:'light',cssVarsCache:{background:'WRONG-MODE'}}));vars.clear();vm.runInNewContext(bootSource,{localStorage,document,window:{matchMedia:()=>({matches:true})},console});record('boot.rejects_wrong_mode_cache',!vars.has('--background'),Object.fromEntries(vars),{backgroundCacheAbsent:true});\nconst report={baseline,executed_at:new Date().toISOString(),runtime:process.version,method:'Actual TypeScript source stripped with Node; in-memory storage/document; synchronous hook state harness; no React renderer, browser, DB, network, provider or deploy.',source_hashes:Object.fromEntries([presetPath,hookPath,'src/styles/tokens.css','index.html'].map(p=>[p,crypto.createHash('sha256').update(fs.readFileSync(`${repo}/${p}`)).digest('hex')])),total:outcomes.length,passed:outcomes.filter(x=>x.pass).length,failed:outcomes.filter(x=>!x.pass).length,outcomes,limits:['Static theme ratios cover two solid token pairs at threshold 3:1, not composed UI WCAG AA 4.5:1 or Diversity gradients.','The document mock proves setter/removal choices, not rendered pixels or actual high-contrast output.','The hook harness proves return-value/state bookkeeping without React batching, effects, or browser storage failure.','No historical authenticated Skins QA was rerun.'],captured_expected_storage_errors:errors};\nfs.writeFileSync(`${out}/skins_probe_results.json`,JSON.stringify(report,null,2)+'\\n');\nconsole.log(JSON.stringify({total:report.total,passed:report.passed,failed:report.failed,failures:outcomes.filter(x=>!x.pass)},null,2));"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 9,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakQ",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 114,
+      "line_end": 114,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that this dynamic injection or execution of code is safe.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakQ&open=AaEEHalN46-QiBaKFakQ&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L114",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "Function avalia o SDK local transpilado com helpers/erros e customFetch injetados. O comportamento de desserialização é real; a fonte é um arquivo de referência, não input de usuário do produto.",
+      "recommended_action": "Conferir hash esperado do SDK antes de avaliar e preservar bytes originais. Renomear a extensão da cópia para resolver lint não remove este sink no probe.",
+      "related_annotation_indices": [
+        0
+      ],
+      "source_excerpt": {
+        "line_start": 111,
+        "line_end": 117,
+        "text": "  .replace(/^import\\s+[\\s\\S]*?from\\s+[\"'][^\"']+[\"'];\\s*$/gm, '')\n  .replace(/export class FunctionsClient/, 'class FunctionsClient');\nclass FakeFunctionsError extends Error { constructor(context) { super('offline injected SDK error'); this.context = context; } }\nconst FunctionsClient = Function('resolveFetch', 'FunctionRegion', 'FunctionsFetchError', 'FunctionsHttpError', 'FunctionsRelayError', sdkCode + '\\nreturn FunctionsClient;')(\n  customFetch => customFetch, { Any: 'any' }, FakeFunctionsError, FakeFunctionsError, FakeFunctionsError,\n);\nconst sdkCases = [];"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 10,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakL",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 24,
+      "line_end": 24,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that this dynamic injection or execution of code is safe.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakL&open=AaEEHalN46-QiBaKFakL&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L24",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "loadTs remove tipos/imports e compila hooks/helpers reais com dependências controladas. As chamadas usam caminhos literais, mas o diretório repo é selecionado por CLI/env.",
+      "recommended_action": "Carregar blobs do baseline ou validar seus hashes antes da avaliação. O assert de HEAD não detecta por si só um worktree sujo ou arquivo substituído.",
+      "related_annotation_indices": [
+        14,
+        22,
+        28
+      ],
+      "source_excerpt": {
+        "line_start": 21,
+        "line_end": 27,
+        "text": "  let code = stripTypeScriptTypes(source(path), { mode: 'transform' });\n  code = code.replace(/^import\\s+[\\s\\S]*?from\\s+[\"'][^\"']+[\"'];\\s*$/gm, '');\n  code = code.replace(/\\bexport\\s+(?=(?:async\\s+)?(?:function|class|const|let|var)\\b)/g, '');\n  return Function(...Object.keys(dependencies), code + '\\nreturn {' + names.join(',') + '};')(...Object.values(dependencies));\n}\nconst { filterMediaItems } = await import(pathToFileURL(resolve(repo, 'src/components/inbox/tabs/filesSort.ts')));\nsource('src/components/inbox/tabs/filesSort.ts');"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 11,
+      "sonar_issue_key": "AaEEHalq46-QiBaKFakf",
+      "path": "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs",
+      "line_start": 34,
+      "line_end": 34,
+      "annotation_level": "failure",
+      "sonar_title": "Path Traversal via faulty LLM-supplied CLI arguments",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalq46-QiBaKFakf&open=AaEEHalq46-QiBaKFakf&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs#L34",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_CLI_PATH",
+      "disposition": "REAL_HARNESS_HARDENING",
+      "assessment": "Lê multiplix-send/index.ts sob o diretório repo fornecido. Esse acesso é a finalidade da CLI; não há requisição externa. O probe não confirma o HEAD nem a integridade antes de executar a fonte.",
+      "recommended_action": "Validar checkout/conteúdo esperado e impedir escape por symlink onde o contrato exigir confinamento; conservar a opção de usar cópia temporária autorizada.",
+      "related_annotation_indices": [
+        24,
+        3,
+        26
+      ],
+      "source_excerpt": {
+        "line_start": 31,
+        "line_end": 37,
+        "text": "  return {status:responseStatus,ok:responseStatus===200,body:responseStatus===200?{id:'fake-id'}:{error:'Too many requests'},messageId:responseStatus===200?'fake-id':null};\n },\n};\nlet worker=stripTypeScriptTypes(readFileSync(resolve(repo,'supabase/functions/multiplix-send/index.ts'),'utf8'),{mode:'transform'});\nworker=worker.replace(/^import\\s+[\\s\\S]*?from\\s+[\"'][^\"']+[\"'];\\s*$/gm,'').replace(/export\\s*\\{\\s*personalize\\s*\\};?/,'').replace(/export async function handleMultiplixSend/,'async function handleMultiplixSend').replace(/if \\(import\\.meta\\.main\\) \\{[\\s\\S]*?\\}\\s*$/,'');\nconst handleMultiplixSend=Function(...Object.keys(imports),worker+'\\nreturn handleMultiplixSend;')(...Object.values(imports));\nlet test=stripTypeScriptTypes(readFileSync(resolve(repo,'supabase/functions/multiplix-send/index.test.ts'),'utf8'),{mode:'transform'}).replace(/^import.*$/gm,'');"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 12,
+      "sonar_issue_key": "AaEEHaUl46-QiBaKFakI",
+      "path": "docs/reconciliation/evidence/skins-probe-results.json",
+      "line_start": 9,
+      "line_end": 9,
+      "annotation_level": "failure",
+      "sonar_title": "\"token\" detected here, make sure this is not a hard-coded secret.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHaUl46-QiBaKFakI&open=AaEEHaUl46-QiBaKFakI&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/evidence/skins-probe-results.json#L9",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "SOURCE_FINGERPRINT",
+      "disposition": "FALSE_POSITIVE_SECRET_CONFIRMED",
+      "assessment": "O valor sinalizado é o SHA-256 de src/styles/tokens.css, dentro de source_hashes. O hash foi recalculado a partir do baseline e coincide byte a byte. Não é token de autenticação.",
+      "recommended_action": "Preservar a evidência e tratar o alerta pelo contexto de fingerprint; não rotacionar credencial, apagar o hash ou adulterar o JSON para ocultar a palavra tokens.",
+      "related_annotation_indices": [],
+      "source_excerpt": {
+        "line_start": 6,
+        "line_end": 12,
+        "text": "  \"source_hashes\": {\n    \"src/components/settings/theme/presets.ts\": \"d2facb41ef44ac006051013085df365bb429a99f517b8349f443967ce767c0df\",\n    \"src/components/settings/theme/useThemePreset.ts\": \"fa8b1c981e9b8ac4e93442b5535905cd0b036ddbf689d48967cf0a41b230529f\",\n    \"src/styles/tokens.css\": \"ca19bfc1a5fd31d443e2763da0304e73bc25027cd894add5d0a32d015f805a28\",\n    \"index.html\": \"8a62d9ad8c361901b0d2e23520ce9843a8024293d1b0395b5f6037ba56585438\"\n  },\n  \"total\": 299,"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 13,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakN",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 36,
+      "line_end": 36,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that this dynamic injection or execution of code is safe.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakN&open=AaEEHalN46-QiBaKFakN&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L36",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "Chama selectedItems, função construída na linha31 de expressão exata de FilesTab. Os argumentos são fixtures image/pdf e filtros locais; é etapa posterior do mesmo fluxo de avaliação.",
+      "recommended_action": "Mesma validação da expressão/fonte de18; não contar a chamada como uma segunda origem independente de injeção.",
+      "related_annotation_indices": [
+        18
+      ],
+      "source_excerpt": {
+        "line_start": 33,
+        "line_end": 39,
+        "text": "const selectedIds = new Set(fixtures.map(x => x.id));\nconst selectionCases = ['all', 'image', 'video'].map(filter => {\n  const visible = filterMediaItems(fixtures, filter, '');\n  const forwarded = selectedItems(visible, { selectedIds });\n  return { filter, labelCount: selectedIds.size, forwardedIds: forwarded.map(x => x.id), forwardedCount: forwarded.length, openForwardReturnsImmediately: forwarded.length === 0 };\n});\nassert.deepEqual(selectionCases.map(x => x.forwardedCount), [2, 1, 0]);"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 14,
+      "sonar_issue_key": "AaEEHalM46-QiBaKFakJ",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 12,
+      "line_end": 12,
+      "annotation_level": "warning",
+      "sonar_title": "Make sure the \"PATH\" variable only contains fixed, unwriteable directories.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalM46-QiBaKFakJ&open=AaEEHalM46-QiBaKFakJ&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L12",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "EXECUTABLE_RESOLUTION",
+      "disposition": "REAL_HARNESS_HARDENING",
+      "assessment": "execFileSync usa o nome git resolvido por PATH para confirmar HEAD. O ambiente é local; os argumentos são constantes. PATH inesperado ou binário substituído pode invalidar a confiança nessa verificação.",
+      "recommended_action": "Resolver e validar o executável Git esperado sem alterar PATH global; manter a checagem de baseline e acrescentar integridade das fontes.",
+      "related_annotation_indices": [
+        22
+      ],
+      "source_excerpt": {
+        "line_start": 9,
+        "line_end": 15,
+        "text": "const repo = resolve(process.argv[2] ?? (process.env.RECONCILIATION_REPO || process.cwd()));\nconst out = dirname(fileURLToPath(import.meta.url));\nconst baseline = '2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6';\nassert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim(), baseline);\nglobalThis.fetch = async () => { throw new Error('Network is forbidden in these audit probes'); };\nconst hashes = {};\nfunction source(path) {"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 15,
+      "sonar_issue_key": "AaEEHalq46-QiBaKFake",
+      "path": "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs",
+      "line_start": 49,
+      "line_end": 49,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that this dynamic injection or execution of code is safe.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalq46-QiBaKFake&open=AaEEHalq46-QiBaKFake&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs#L49",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "Invoca handleMultiplixSend previamente compilado de fonte local, com makePost/mockDeps do teste. A solicitação, provedor e banco são simulados.",
+      "recommended_action": "Mesma proteção de proveniência dos sinks26/3. A chamada reproduz o worker; não é um endpoint adicional publicado pela documentação.",
+      "related_annotation_indices": [
+        26,
+        3
+      ],
+      "source_excerpt": {
+        "line_start": 46,
+        "line_end": 52,
+        "text": " const recipient={...h.recipientRow(1,'5511999990001'),company_name_snapshot:company};\n const opts={cronVaultResult:h.TEST_CRON_SECRET,dispatch:h.dispatchRow({message_template:template,total_recipients:1}),recipients:[recipient],blockContent:{text:blockText}};\n const ctx=h.newCtx(opts);\n const response=await handleMultiplixSend(h.makePost({cronSecret:h.TEST_CRON_SECRET}),h.mockDeps(opts,ctx));\n result.push({case:caseName,expectedBlockText:personalize(blockText,{company}).text,actualSends:sends,httpStatus:response.status,result:await response.json(),completionRpc:ctx.rpcCalls.filter(c=>c.name.includes('if_drained')),itemCompletions:ctx.completions,rescheduleCalls:ctx.rpcCalls.filter(c=>c.name==='reschedule_multiplix_item').length,personalization:personalize(template,{company})});\n}\nconst output={baseline:'2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6',mode:'OFFLINE_WORKER_WITH_REPO_MOCKS',limitations:'Provider send, database, clock delays and auth helper integrations are injected in memory. Does not establish deployed runtime or SQL behavior.',cases:result};"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 16,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakP",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 111,
+      "line_end": 111,
+      "annotation_level": "warning",
+      "sonar_title": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakP&open=AaEEHalN46-QiBaKFakP&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L111",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "SOURCE_PARSING_REGEX",
+      "disposition": "BOUNDED_INPUT_HARDENING",
+      "assessment": "Regex remove imports da cópia fixa do SDK após stripTypeScriptTypes. O problema potencial é custo sobre fonte malformada, não conteúdo recebido pelo produto.",
+      "recommended_action": "Preferir parser/transformação de imports e impor integridade/tamanho do arquivo; preservar o SDK original.",
+      "related_annotation_indices": [
+        9
+      ],
+      "source_excerpt": {
+        "line_start": 108,
+        "line_end": 114,
+        "text": "const sdkPath = resolve(out, 'supabase-functions-client-2.117.2.ts');\nconst sdkRaw = readFileSync(sdkPath, 'utf8');\nlet sdkCode = stripTypeScriptTypes(sdkRaw, { mode: 'transform' })\n  .replace(/^import\\s+[\\s\\S]*?from\\s+[\"'][^\"']+[\"'];\\s*$/gm, '')\n  .replace(/export class FunctionsClient/, 'class FunctionsClient');\nclass FakeFunctionsError extends Error { constructor(context) { super('offline injected SDK error'); this.context = context; } }\nconst FunctionsClient = Function('resolveFetch', 'FunctionRegion', 'FunctionsFetchError', 'FunctionsHttpError', 'FunctionsRelayError', sdkCode + '\\nreturn FunctionsClient;')("
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 17,
+      "sonar_issue_key": "AaEEHalb46-QiBaKFakX",
+      "path": "docs/reconciliation/reproduce/skins/skins_probe.mjs",
+      "line_start": 45,
+      "line_end": 45,
+      "annotation_level": "warning",
+      "sonar_title": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalb46-QiBaKFakX&open=AaEEHalb46-QiBaKFakX&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/skins/skins_probe.mjs#L45",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "SOURCE_PARSING_REGEX",
+      "disposition": "BOUNDED_INPUT_HARDENING",
+      "assessment": "Regex reconhece declarações CSS em tokens.css local; não recebe CSS remoto. O script já delimita bloco por contador de chaves.",
+      "recommended_action": "Parsing de passagem única ou limite explícito de conteúdo evita custo superlinear em casos malformados; não alegar DoS remoto demonstrado.",
+      "related_annotation_indices": [],
+      "source_excerpt": {
+        "line_start": 42,
+        "line_end": 48,
+        "text": " record(`keys.${p.id}.${mode}`,expected.every(k=>keys.includes(k)),{requiredKeys:expected.length,actualKeys:keys.length,extraKeys:keys.filter(k=>!expected.includes(k))},{requiredKeysPresent:true});\n}\nconst css = fs.readFileSync(`${repo}/src/styles/tokens.css`,'utf8');\nfunction block(header){const begin=css.indexOf('{',css.indexOf(header));let d=1,j=begin+1;for(;d&&j<css.length;j++){if(css[j]==='{')d++;if(css[j]==='}')d--;}const map={};for(const m of css.slice(begin+1,j-1).matchAll(/--([a-z0-9-]+):\\s*([^;]+);/g))map[m[1]]=normalized(m[2]);return map;}\nconst light=block(':root {'), dark=block('.dark {');\nfor(const key of CSS_VARS_TO_APPLY)for(const mode of ['light','dark']){const expected=mode==='light'?light[key]:(dark[key]??light[key]);const actual=normalized(getPresetById('corporate')[mode][key]);record(`tokens.${mode}.${key}`,actual===expected,actual,expected);}\nfunction luminance(hsl){let [h,s,l]=hsl.match(/[+-]?[\\d.]+/g).map(Number);h=((h%360)+360)%360/360;s/=100;l/=100;const a=s*Math.min(l,1-l);const f=n=>{const k=(n+h*12)%12;return l-a*Math.max(-1,Math.min(k-3,9-k,1));};const rgb=[f(0),f(8),f(4)].map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];}"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 18,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakM",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 31,
+      "line_end": 31,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that this dynamic injection or execution of code is safe.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakM&open=AaEEHalN46-QiBaKFakM&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L31",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "Function cria a expressão selectedItems extraída de FilesTab para provar seleção fora do filtro. Os nomes dos parâmetros são constantes e os dados são sintéticos.",
+      "recommended_action": "Conferir hash/expressão do baseline antes de avaliar; manter vínculo com a fonte real auditada.",
+      "related_annotation_indices": [
+        13
+      ],
+      "source_excerpt": {
+        "line_start": 28,
+        "line_end": 34,
+        "text": "const tabSource = source('src/components/inbox/tabs/FilesTab.tsx');\nconst selectionMatch = tabSource.match(/const selectedItems = useMemo\\(\\s*\\(\\) => ([^\\n]+),\\s*\\[filtered, selection.selectedIds\\]/);\nassert.ok(selectionMatch, 'Exact selectedItems expression must be found');\nconst selectedItems = Function('filtered', 'selection', 'return ' + selectionMatch[1]);\nconst fixtures = [{ id: 'image-1', type: 'image', filename: 'one.png' }, { id: 'pdf-1', type: 'document', filename: 'two.pdf' }];\nconst selectedIds = new Set(fixtures.map(x => x.id));\nconst selectionCases = ['all', 'image', 'video'].map(filter => {"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 19,
+      "sonar_issue_key": "AaEEHal146-QiBaKFakh",
+      "path": "docs/reconciliation/reproduce/validate_package.py",
+      "line_start": 63,
+      "line_end": 63,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that hashing data is safe here.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHal146-QiBaKFakh&open=AaEEHal146-QiBaKFakh&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/validate_package.py#L63",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "GIT_BLOB_IDENTITY",
+      "disposition": "NON_SECURITY_HASH_USE_CONFIRMED",
+      "assessment": "SHA-1 calcula exatamente o identificador Git blob: cabeçalho blob+tamanho+NUL+conteúdo. Não protege senha nem autenticação. Trocar o algoritmo quebraria a comparação com source_sha.",
+      "recommended_action": "Preservar SHA-1 para identidade Git e explicitar uso não criptográfico (por exemplo usedforsecurity=False quando suportado); SHA-256 já cobre integridade do pacote.",
+      "related_annotation_indices": [],
+      "source_excerpt": {
+        "line_start": 60,
+        "line_end": 66,
+        "text": "            proc=subprocess.run(['git','show',p['definition_ref']+':'+p['path']],cwd=args.repo,capture_output=True)\n            require(proc.returncode==0,'source_read_'+p['record_id'])\n            if proc.returncode:continue\n            raw=proc.stdout;blob=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\\0'+raw).hexdigest()\n            if p.get('source_sha'):require(blob==p['source_sha'],'source_hash_'+p['record_id'])\n        source_refs+=1;lines=raw.decode().splitlines()\n        for t in full:"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 20,
+      "sonar_issue_key": "AaEEHal146-QiBaKFaki",
+      "path": "docs/reconciliation/reproduce/validate_package.py",
+      "line_start": 86,
+      "line_end": 86,
+      "annotation_level": "failure",
+      "sonar_title": "Path Traversal via unsanitized user input",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHal146-QiBaKFaki&open=AaEEHal146-QiBaKFaki&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/validate_package.py#L86",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_CLI_OUTPUT",
+      "disposition": "INTENDED_LOCAL_OUTPUT_WITH_HARDENING_OPTION",
+      "assessment": "--output é um caminho de saída explicitamente escolhido pelo operador; write_text grava o relatório ali. Não há servidor recebendo esse valor, mas a interface permite sobrescrever um destino arbitrário autorizado pelo processo.",
+      "recommended_action": "Se o pacote deve escrever somente a evidência canônica, restringir o destino a evidence/artifact-validation.json; não chamar toda escolha de arquivo por CLI de exploração remota.",
+      "related_annotation_indices": [
+        27
+      ],
+      "source_excerpt": {
+        "line_start": 83,
+        "line_end": 88,
+        "text": " 'artifact_hashes_checked':manifest_checked,'errors':errors,'broken_active_markdown_links':broken,\n 'scope':'Package integrity only. Does not execute product code, tests, network calls or SQL.'}\nout=json.dumps(report,ensure_ascii=False,indent=2)+'\\n'\nif args.output:args.output.write_text(out)\nprint(out,end='')\nraise SystemExit(bool(errors))"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 21,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakK",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 22,
+      "line_end": 22,
+      "annotation_level": "warning",
+      "sonar_title": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakK&open=AaEEHalN46-QiBaKFakK&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L22",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "SOURCE_PARSING_REGEX",
+      "disposition": "BOUNDED_INPUT_HARDENING",
+      "assessment": "Regex genérica de loadTs percorre imports em fontes TypeScript locais. Arquivos confiáveis e finitos limitam a exposição atual, mas não garantem bom custo para qualquer arquivo substituído.",
+      "recommended_action": "Transformação por sintaxe/passagem única e validação das fontes; não modificar regra ou baseline do scanner.",
+      "related_annotation_indices": [
+        10
+      ],
+      "source_excerpt": {
+        "line_start": 19,
+        "line_end": 25,
+        "text": "}\nfunction loadTs(path, names, dependencies) {\n  let code = stripTypeScriptTypes(source(path), { mode: 'transform' });\n  code = code.replace(/^import\\s+[\\s\\S]*?from\\s+[\"'][^\"']+[\"'];\\s*$/gm, '');\n  code = code.replace(/\\bexport\\s+(?=(?:async\\s+)?(?:function|class|const|let|var)\\b)/g, '');\n  return Function(...Object.keys(dependencies), code + '\\nreturn {' + names.join(',') + '};')(...Object.values(dependencies));\n}"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 22,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakT",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 12,
+      "line_end": 12,
+      "annotation_level": "failure",
+      "sonar_title": "Path Traversal via faulty LLM-supplied CLI arguments",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakT&open=AaEEHalN46-QiBaKFakT&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L12",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_CLI_PATH",
+      "disposition": "REAL_HARNESS_HARDENING",
+      "assessment": "O diretório cwd da chamada Git vem de repo escolhido por CLI/env. Selecionar o checkout é uma função documentada; a checagem confirma HEAD, mas não proveniência de todas as leituras seguintes.",
+      "recommended_action": "Validar caminho real, Git confiável e fontes fixadas. Não restringir a um diretório efêmero específico nem perder a portabilidade documentada.",
+      "related_annotation_indices": [
+        14,
+        28
+      ],
+      "source_excerpt": {
+        "line_start": 9,
+        "line_end": 15,
+        "text": "const repo = resolve(process.argv[2] ?? (process.env.RECONCILIATION_REPO || process.cwd()));\nconst out = dirname(fileURLToPath(import.meta.url));\nconst baseline = '2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6';\nassert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim(), baseline);\nglobalThis.fetch = async () => { throw new Error('Network is forbidden in these audit probes'); };\nconst hashes = {};\nfunction source(path) {"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 23,
+      "sonar_issue_key": "AaEEHalb46-QiBaKFakV",
+      "path": "docs/reconciliation/reproduce/skins/skins_probe.mjs",
+      "line_start": 41,
+      "line_end": 41,
+      "annotation_level": "failure",
+      "sonar_title": "Provide a compare function that depends on \"String.localeCompare\", to reliably sort elements alphabetically.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalb46-QiBaKFakV&open=AaEEHalb46-QiBaKFakV&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/skins/skins_probe.mjs#L41",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "REDUNDANT_SORT",
+      "disposition": "NON_FUNCTIONAL_CLEANUP",
+      "assessment": "Segundo alerta sobre a mesma linha41. CSS keys são strings, mas a ordem nem é usada; não há necessidade funcional de localeCompare.",
+      "recommended_action": "Remover sort() redundante; os dois alertas compartilham a mesma operação.",
+      "related_annotation_indices": [
+        5
+      ],
+      "source_excerpt": {
+        "line_start": 38,
+        "line_end": 44,
+        "text": "const expectedGx = [['gx-classic','347 96% 54%'],['gx-pink-addiction','330 95% 60%'],['gx-purple-haze','265 65% 50%'],['gx-rose-quartz','345 75% 68%'],['gx-ultraviolet','271 76% 53%'],['gx-hackerman','127 65% 46%'],['gx-frutti-di-mare','182 90% 42%'],['gx-cyberpunk','55 100% 51%'],['gx-razer','113 70% 51%']];\nfor(const [id,primary] of expectedGx){const p=getPresetById(id);record(`gx.${id}`,p.light.primary===primary&&p.dark.primary===primary&&p.category==='gx'&&p.borderRadius===10&&p.font===undefined,{light:p.light.primary,dark:p.dark.primary,category:p.category,radius:p.borderRadius,font:p.font??null},{primary,category:'gx',radius:10,font:null});}\nfor(const p of THEME_PRESETS) for(const mode of ['light','dark']){\n const keys=Object.keys(p[mode]).sort(); const expected=[...CSS_VARS_TO_APPLY].sort();\n record(`keys.${p.id}.${mode}`,expected.every(k=>keys.includes(k)),{requiredKeys:expected.length,actualKeys:keys.length,extraKeys:keys.filter(k=>!expected.includes(k))},{requiredKeysPresent:true});\n}\nconst css = fs.readFileSync(`${repo}/src/styles/tokens.css`,'utf8');"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 24,
+      "sonar_issue_key": "AaEEHalq46-QiBaKFakg",
+      "path": "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs",
+      "line_start": 37,
+      "line_end": 37,
+      "annotation_level": "failure",
+      "sonar_title": "Path Traversal via faulty LLM-supplied CLI arguments",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalq46-QiBaKFakg&open=AaEEHalq46-QiBaKFakg&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs#L37",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_CLI_PATH",
+      "disposition": "REAL_HARNESS_HARDENING",
+      "assessment": "Lê o helper index.test.ts sob repo escolhido; a finalidade é reproduzir o worker com mocks originais. Sem checagem de integridade, um checkout substituído também substitui o código executado.",
+      "recommended_action": "Aplicar o mesmo pinning e verificação de11 antes da leitura/avaliação.",
+      "related_annotation_indices": [
+        11,
+        3
+      ],
+      "source_excerpt": {
+        "line_start": 34,
+        "line_end": 40,
+        "text": "let worker=stripTypeScriptTypes(readFileSync(resolve(repo,'supabase/functions/multiplix-send/index.ts'),'utf8'),{mode:'transform'});\nworker=worker.replace(/^import\\s+[\\s\\S]*?from\\s+[\"'][^\"']+[\"'];\\s*$/gm,'').replace(/export\\s*\\{\\s*personalize\\s*\\};?/,'').replace(/export async function handleMultiplixSend/,'async function handleMultiplixSend').replace(/if \\(import\\.meta\\.main\\) \\{[\\s\\S]*?\\}\\s*$/,'');\nconst handleMultiplixSend=Function(...Object.keys(imports),worker+'\\nreturn handleMultiplixSend;')(...Object.values(imports));\nlet test=stripTypeScriptTypes(readFileSync(resolve(repo,'supabase/functions/multiplix-send/index.test.ts'),'utf8'),{mode:'transform'}).replace(/^import.*$/gm,'');\nconst h=Function('handleMultiplixSend','personalize',test+'\\nreturn {dispatchRow,recipientRow,newCtx,mockDeps,makePost,TEST_CRON_SECRET};')(handleMultiplixSend,personalize);\nconst result=[];\nfor(const [caseName,template,blockText,company,httpStatus] of ["
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 25,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakS",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 150,
+      "line_end": 150,
+      "annotation_level": "warning",
+      "sonar_title": "Remove this \"!==\" check; it will always be true. Did you mean to use \"!=\"?",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakS&open=AaEEHalN46-QiBaKFakS&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L150",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "INTENTIONAL_FIXTURE_ASSERTION",
+      "disposition": "INTENTIONAL_CONSTANT_NOT_PRODUCT_BUG",
+      "assessment": "As duas linhas de fixture declaram first_response_at como strings. A expressão !==null é verdadeira por construção e registra que a fixture satisfaz a condição do índice parcial. Não é condição de negócio morta do produto.",
+      "recommended_action": "Pode ser explicitada como pré-condição/assertion do modelo para evitar leitura ambígua; não trocar cegamente !== por != nem remover a explicação do contraexemplo.",
+      "related_annotation_indices": [],
+      "source_excerpt": {
+        "line_start": 147,
+        "line_end": 153,
+        "text": "assert.deepEqual([myActiveWithAuthUuid, myActiveWithProfileUuid], [0, 1]);\nconst dashboardModel = {\n  method: 'Relational/identity counterexample model, not PostgreSQL execution',\n  fixturePermittedByPartialUniqueIndex: slaRows.every(s => s.first_response_at !== null),\n  contacts: contacts.length, slaRows: slaRows.length,\n  latestInService, priorDeduplicatedInService: priorInService,\n  myActiveWithAuthUuid, myActiveWithProfileUuid,"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 26,
+      "sonar_issue_key": "AaEEHalq46-QiBaKFakc",
+      "path": "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs",
+      "line_start": 36,
+      "line_end": 36,
+      "annotation_level": "failure",
+      "sonar_title": "Make sure that this dynamic injection or execution of code is safe.",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalq46-QiBaKFakc&open=AaEEHalq46-QiBaKFakc&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs#L36",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_SOURCE_EXECUTION",
+      "disposition": "INTENTIONAL_EXECUTION_WITH_TRUST_BOUNDARY",
+      "assessment": "Function compila handleMultiplixSend da fonte real, após retirar imports/bootstrap e injetar implementações em memória. É execução local intencional do código sob auditoria.",
+      "recommended_action": "Confirmar baseline e hashes antes de carregar. Mocks de fetch/DB/provedor não tornam uma fonte arbitrária confiável.",
+      "related_annotation_indices": [
+        11,
+        3,
+        15
+      ],
+      "source_excerpt": {
+        "line_start": 33,
+        "line_end": 39,
+        "text": "};\nlet worker=stripTypeScriptTypes(readFileSync(resolve(repo,'supabase/functions/multiplix-send/index.ts'),'utf8'),{mode:'transform'});\nworker=worker.replace(/^import\\s+[\\s\\S]*?from\\s+[\"'][^\"']+[\"'];\\s*$/gm,'').replace(/export\\s*\\{\\s*personalize\\s*\\};?/,'').replace(/export async function handleMultiplixSend/,'async function handleMultiplixSend').replace(/if \\(import\\.meta\\.main\\) \\{[\\s\\S]*?\\}\\s*$/,'');\nconst handleMultiplixSend=Function(...Object.keys(imports),worker+'\\nreturn handleMultiplixSend;')(...Object.values(imports));\nlet test=stripTypeScriptTypes(readFileSync(resolve(repo,'supabase/functions/multiplix-send/index.test.ts'),'utf8'),{mode:'transform'}).replace(/^import.*$/gm,'');\nconst h=Function('handleMultiplixSend','personalize',test+'\\nreturn {dispatchRow,recipientRow,newCtx,mockDeps,makePost,TEST_CRON_SECRET};')(handleMultiplixSend,personalize);\nconst result=[];"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 27,
+      "sonar_issue_key": "AaEEHal146-QiBaKFakk",
+      "path": "docs/reconciliation/reproduce/validate_package.py",
+      "line_start": 86,
+      "line_end": 86,
+      "annotation_level": "failure",
+      "sonar_title": "Path Traversal via faulty LLM-supplied CLI arguments",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHal146-QiBaKFakk&open=AaEEHal146-QiBaKFakk&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/validate_package.py#L86",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_CLI_OUTPUT",
+      "disposition": "INTENDED_LOCAL_OUTPUT_WITH_HARDENING_OPTION",
+      "assessment": "Mesmo write_text da annotation20; este segundo título menciona argumentos CLI fornecidos por LLM. O sink, origem e impacto são iguais.",
+      "recommended_action": "Uma única mudança de contrato de saída cobre ambos; não contar como duas vulnerabilidades independentes.",
+      "related_annotation_indices": [
+        20
+      ],
+      "source_excerpt": {
+        "line_start": 83,
+        "line_end": 88,
+        "text": " 'artifact_hashes_checked':manifest_checked,'errors':errors,'broken_active_markdown_links':broken,\n 'scope':'Package integrity only. Does not execute product code, tests, network calls or SQL.'}\nout=json.dumps(report,ensure_ascii=False,indent=2)+'\\n'\nif args.output:args.output.write_text(out)\nprint(out,end='')\nraise SystemExit(bool(errors))"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    },
+    {
+      "annotation_index": 28,
+      "sonar_issue_key": "AaEEHalN46-QiBaKFakU",
+      "path": "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+      "line_start": 16,
+      "line_end": 16,
+      "annotation_level": "failure",
+      "sonar_title": "Path Traversal via faulty LLM-supplied CLI arguments",
+      "sonar_url": "https://sonarcloud.io/project/issues?id=adm01-debug_Zapp_Web_V2&issues=AaEEHalN46-QiBaKFakU&open=AaEEHalN46-QiBaKFakU&pullRequest=1869",
+      "published_source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/9a1c370c1979b5e3f1c59291a2bfac331f689e3d/docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs#L16",
+      "new_in_pr": true,
+      "product_code_path": false,
+      "category": "LOCAL_CLI_PATH",
+      "disposition": "REAL_HARNESS_HARDENING",
+      "assessment": "source(path) resolve repo com caminhos literais usados pelas chamadas, coleta SHA-256 e lê o arquivo. Os hashes são reportados, mas não comparados com hashes esperados antes da execução.",
+      "recommended_action": "Ler conteúdo Git imutável ou validar o hash esperado previamente; tratar repo como seleção de checkout confiável, com validação de caminho real.",
+      "related_annotation_indices": [
+        22,
+        10
+      ],
+      "source_excerpt": {
+        "line_start": 13,
+        "line_end": 19,
+        "text": "globalThis.fetch = async () => { throw new Error('Network is forbidden in these audit probes'); };\nconst hashes = {};\nfunction source(path) {\n  const data = readFileSync(resolve(repo, path), 'utf8');\n  hashes[path] = createHash('sha256').update(data).digest('hex');\n  return data;\n}"
+      },
+      "review_level": "DIRECT_SOURCE_REVIEW_AT_IMMUTABLE_PUBLICATION_SHA",
+      "runtime_validation": "NOT_EXECUTED"
+    }
+  ]
+}

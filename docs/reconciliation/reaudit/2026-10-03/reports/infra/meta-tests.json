@@ -1,0 +1,13 @@
+{
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "observed_command": "node --test scripts/ci/db-migrate-contratos.unit.mjs scripts/ci/db-migrate-workflow.unit.mjs scripts/ci/verify-ledger-statements.unit.mjs",
+  "cwd": "/workspace/scratch/f8f9b9cbce53/reaudit/source",
+  "exit_code": 0,
+  "tests": 15,
+  "passed": 15,
+  "failed": 0,
+  "skipped": 0,
+  "interpretation": "Testes de metacontrato/helper passaram; não exercitam SQL do runner nem heredoc pós-apply. Não comprovam fluxo DB Migrate.",
+  "network_requests": 0,
+  "database_statements": 0
+}

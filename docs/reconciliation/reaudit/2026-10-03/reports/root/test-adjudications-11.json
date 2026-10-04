@@ -1,0 +1,16 @@
+[
+  {
+    "roster_index": 60,
+    "adjudication": [
+      "Importa classifyFailure/withRetry e adaptadores reais; cobre classes de erro, tentativas transitórias/permanentes, teto de chamadas, variação de jitter e abort/ausência de timer. O despacho real é carregado com adaptadores simulados para observar timeout padrão e precedência do chamador.",
+      "O sinal state_unknown é aceito em qualquer uma de várias formas e não prova sinalização por todos os consumidores. O último caso chama budgetMs=30.000 com callbacks instantâneos e apenas exige tempo<60.000; não demonstra o teto total de 30 segundos com tentativa lenta. Os controles de retry existentes continuam válidos dentro desse alcance."
+    ]
+  },
+  {
+    "roster_index": 61,
+    "adjudication": [
+      "Importa schemas/parseModelOutput/envelope e normalizadores reais, verificando saída válida, opcionais ausentes, tipos/faixas/enums inválidos, caminho exato de erro, zero preservado e normalização de legado com controle bruto recusado. Cobre também resumo, três sugestões e confidence de tags.",
+      "São testes de contrato de dados efetivo, sem duplicar a implementação. O envelope com texto nada foi gravado não verifica efeitos de persistência do handler; banco, renderização e contexto completo de produção não são exercitados aqui."
+    ]
+  }
+]

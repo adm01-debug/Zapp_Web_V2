@@ -1,0 +1,32 @@
+[
+  {
+    "roster_index": 0,
+    "adjudication": [
+      "Leitura integral 1–882. O harness usa PostgreSQL descartável, set -Eeuo pipefail, ON_ERROR_STOP, dois checks de readiness, identificação restrita do container e limpeza dos temporários (65–145, 204–215). Fixtures constroem Vault e pg_cron simplificados (217–344); URLs nos comandos ficam como texto na tabela cron.job. A leitura não executou nenhum comando do harness.",
+      "A/B verificam antes/depois de migrations reais: geração e distinção de segredos, ACL efetiva com has_function_privilege e SET ROLE, reprogramação de 11 jobs, nomes fora de escopo preservados e replay idempotente (454–551). Mutações C/D validam mensagens e valores específicos, em vez de aceitar qualquer exit code. D cobre bloqueio de DML, homônimo de outro dono, jobid/active, segredo inválido, duplicação e ACL (599–882). Esses controles positivos são preservados.",
+      "Limites dos stubs: alter_job não filtra username (321–325); session_replication_role é alterada em transação pelos helpers e não restaurada dentro deles. Isso delimita fidelidade ao pg_cron real; não demonstra defeito produtivo. O hash de jobs usado no controle não abrange todas as colunas, e asserções específicas de dono suplementam a checagem.",
+      "Extensão documental TC-011/GOV003: D2-MUT anunciado como segredo truncado reutiliza d1_mut após preparar secret='' em 758–759. Entre D1-MUT e D2-MUT (760–780) não há UPDATE para 32 caracteres; os dois exercitam a variante vazia. O controle não mutante de truncamento em 745–749 efetivamente prepara 32 caracteres e continua válido. Não se afirma que toda a suíte seja tautológica nem que a migration aceite truncamento."
+    ]
+  },
+  {
+    "roster_index": 1,
+    "adjudication": [
+      "Leitura integral 1–143: Docker descartável e temporários isolados, ON_ERROR_STOP, comparação de valor e erro SQLSTATE por substring; aplica a migration real e a reaplica. A/B conferem ausência/presença de índices, unicidade efetiva com duplicata e conservação da linha (108–141).",
+      "Os EXPLAIN em 60–64 e 132–135 desabilitam seqscan e usam fixture com uma linha. Demonstram disponibilidade de caminho por índice sob essa configuração; não medem custo, latência ou escolha do planejador em produção. B8 exige o nome ux_messages_dedup, enquanto B7 só exige substring Index. O pre.sql reconstrói o recorte dos três índices; não aplica a cadeia completa de schema. Sem execução neste passe."
+    ]
+  },
+  {
+    "roster_index": 2,
+    "adjudication": [
+      "Leitura integral 1–335: o harness reconstrói um contrato de permissões e o corpo antigo de enqueue_outbound_message (68–265), usa profiles.id diferente de auth user_id e duas identidades com permissões distintas (267–299). Aplica a migration real após demonstrar a gravação indevida no baseline sintético; testa recusa, ausência de linha, envio autorizado, atribuição correta de profile, claims ausentes e ACL (301–333).",
+      "ON_ERROR_STOP e pipefail propagam erros; expect_error exige falha e mensagem. A visibilidade de contato é stub constante true (120–122), auth é reconstruída por GUC e o schema é mínimo. Logo o teste é evidência direcionada de send_messages, não prova geral de RLS/visibilidade, validação do JWT ou cadeia completa de migrations. O rótulo B1 anuncia 42501, mas a assertiva confere a mensagem, não separadamente o SQLSTATE. Nenhum comando de banco foi executado na reauditoria."
+    ]
+  },
+  {
+    "roster_index": 3,
+    "adjudication": [
+      "Leitura integral 1–357, incluindo recuperação explícita do trecho 282–357 após truncamento da saída. O teste aplica duas migrations reais a schema mínimo com identidades profile/user distintas e auth.uid por GUC. A/B conferem elegibilidade por fila, busca, cursor, ordem, exclusão de grupos por várias representações, ACL de anon/helper, perfil atribuído, auditoria e retry idempotente (233–271). C alterna membro, flag e atividade do perfil, conferindo também ausência de atribuição/auditoria; E testa fila externa.",
+      "Há duas sessões PostgreSQL para revogação e duas para disputa de aceite (300–350), com estado final e auditoria única; isso é um controle positivo real se o harness for executado. Limites: os loops de espera 305–308 e 314–317 não falham explicitamente quando o lock esperado não é observado, portanto uma execução pode testar revogação sequencial sem isolar a intercalação anunciada. D exige exatamente um sucesso e estado final, mas não verifica a mensagem específica do processo perdedor. A revisão não executou o harness nem extrapola o auth.uid simulado para autenticação real."
+    ]
+  }
+]
