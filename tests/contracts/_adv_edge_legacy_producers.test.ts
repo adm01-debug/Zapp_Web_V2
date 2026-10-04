@@ -109,6 +109,13 @@
  *    telefone, e o `Logger.child` anexa campaign_id/recipient_id/attempt a toda entrada).
  *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
  *    seguem idênticos — só o total varrido sobe (213 → 214), medido pela varredura depois do merge.
+ *  - 218: X034 (04/10/2026) — `_shared/__tests__/fake-evolution.ts` (provedor Evolution FALSO em
+ *    127.0.0.1 para os ensaios do motor), `_shared/__tests__/fake-evolution.test.ts` (prova dos modos
+ *    ok/500/timeout/sem id/400 e do registro de POSTs) e `talkx-send/engine.integration.test.ts`
+ *    (integração multi-destinatário do motor contra Postgres descartável + PostgREST local).
+ *    Nenhum dos três produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem
+ *    idênticos — só o total varrido sobe (214 → 218, absorvendo +1 de outro chat sem entry + os 3
+ *    da X034), medido pela varredura depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -183,8 +190,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('215 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(215);
+  it('218 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(218);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

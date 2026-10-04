@@ -220,3 +220,37 @@ saiu para `rest/v1/messages`, então nenhum WhatsApp real é gerado (o único
 PATCH é o `is_read` do markAsRead ao abrir a conversa). Roda em
 `chromium-mapa` (E75) — projeto sem `setup`/`storageState`, pois a sessão é
 falsa.
+
+## Lançamento do Talk X com provedor falso (plano V4 · X034)
+
+`e2e/talkx-launch.spec.ts` é o **ensaio real de lançamento**: prova no navegador
+o ciclo inteiro de uma campanha — lançar → corpo `{ action: 'start' }` → ida ao
+monitor ("Campanha em Andamento") → pausar com motivo → `{ action: 'pause',
+reason }` → retomar → `{ action: 'start' }` → cancelar → `{ action: 'cancel' }`.
+
+Roda **deslogado** (sem `storageState`/secrets) no projeto
+`chromium-talkx-launch`: a sessão é injetada por `installFakeSession(page)` e o
+backend inteiro é mockado com `page.route`. As leituras da campanha vêm das
+fixtures de `e2e/fixtures/talkx-launch/<tabela>.json` (uma por tabela:
+`talkx_campaigns`, `whatsapp_connections`, `talkx_recipients`,
+`talkx_campaign_events`, `contacts` e `talkx_segments`) e o POST de
+`**/functions/v1/talkx-send` é respondido por um **stub local** que registra o
+corpo e devolve `{ accepted: true }`. O status da campanha na fixture é mutável
+(`start` → `sending`, `pause` → `paused`, `cancel` → `cancelled`), então a UI
+migra de rascunho → em andamento → pausada → cancelada sem banco nenhum.
+
+**Guardas.** O stub responde com o cabeçalho marcador `x-talkx-launch-stub`; o
+spec ouve `page.on('response')` e **falha** se alguma resposta de `talkx-send`
+não trouxer esse cabeçalho — ou seja, se alguma chamada escapar do `page.route`
+e for para a rede. O provedor de produção não é endereçado por nenhum caminho:
+não existe envio real neste spec. Os 4 corpos são conferidos exatamente e
+qualquer outra `functions/v1/*` responde 403 `"escrita não prevista"`.
+
+O spec roda em `.github/workflows/e2e-talkx.yml` (junto do spec de navegação e
+da régua visual), no passo `--project=chromium-talkx-launch`.
+
+**Armadilhas para quem for mexer.** O botão do menu da linha tem
+`aria-label="Ações"` e exige `exact: true` no seletor: sem isso,
+`getByRole('button', { name: 'Ações' })` casa também o sino "Notificações" (que
+contém "ações") e o clique abre o popover de notificações. E o
+`TalkXConfirmDialog` renderiza `role="alertdialog"`, não `dialog`.

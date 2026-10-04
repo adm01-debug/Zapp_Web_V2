@@ -92,7 +92,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|talkx-launch\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -166,6 +166,16 @@ export default defineConfig({
         ...devices['Desktop Safari'],
         storageState: 'e2e/.auth/user.json',
       },
+    },
+    {
+      // talkx-launch.spec.ts (X034) — E2E de lançamento com o provedor FALSO:
+      // sessão falsa (`installFakeSession`), `page.route` interceptando
+      // `**/functions/v1/talkx-send` e as leituras por fixtures de
+      // `e2e/fixtures/talkx-launch/`. DESLOGADO (sem setup, sem secrets) por isso
+      // entra no e2e-talkx.yml (PR) — nenhuma mensagem real é enviada.
+      name: 'chromium-talkx-launch',
+      testMatch: /talkx-launch\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'chromium-email-navy',

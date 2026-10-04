@@ -1,0 +1,10 @@
+[
+  {
+    "id": "eeeeeeee-0000-4000-8000-0000000000e1",
+    "campaign_id": "aaaaaaaa-0000-4000-8000-0000000000a1",
+    "event_type": "started",
+    "message": "Envio iniciado",
+    "actor_id": "00000000-0000-4000-8000-000000000001",
+    "created_at": "2026-10-04T10:05:00.000Z"
+  }
+]

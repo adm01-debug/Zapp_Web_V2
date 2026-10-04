@@ -1,0 +1,26 @@
+[
+  {
+    "id": "cccccccc-0000-4000-8000-0000000000c1",
+    "campaign_id": "aaaaaaaa-0000-4000-8000-0000000000a1",
+    "contact_id": "dddddddd-0000-4000-8000-0000000000d1",
+    "status": "sent",
+    "personalized_message": "Olá Ana, esta é a campanha de ensaio.",
+    "attempt_count": 1,
+    "sent_at": "2026-10-04T10:05:00.000Z",
+    "delivered_at": "2026-10-04T10:05:02.000Z",
+    "error_message": null,
+    "updated_at": "2026-10-04T10:05:02.000Z"
+  },
+  {
+    "id": "cccccccc-0000-4000-8000-0000000000c2",
+    "campaign_id": "aaaaaaaa-0000-4000-8000-0000000000a1",
+    "contact_id": "dddddddd-0000-4000-8000-0000000000d2",
+    "status": "pending",
+    "personalized_message": "Olá Bruno, esta é a campanha de ensaio.",
+    "attempt_count": 0,
+    "sent_at": null,
+    "delivered_at": null,
+    "error_message": null,
+    "updated_at": "2026-10-04T10:05:00.000Z"
+  }
+]
