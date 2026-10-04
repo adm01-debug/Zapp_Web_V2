@@ -20,6 +20,7 @@
  * chamada. Queda de rede não vira tempestade de requisições nem reenvio cego.
  */
 
+import { validatedAiFetch } from "./ai-provider-egress.ts";
 import { filterConfigBody, filterExtraBody, filterHeaders } from "./ai-routing.ts";
 import { secureRandomFloat } from "./secure-random.ts";
 
@@ -105,7 +106,7 @@ export async function callOpenAICompatible(params: {
     : null;
 
   try {
-    return await fetch(params.endpoint, {
+    return await validatedAiFetch(params.endpoint, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
@@ -146,7 +147,7 @@ export async function callCustomWebhook(params: {
     : null;
 
   try {
-    return await fetch(params.endpoint, {
+    return await validatedAiFetch(params.endpoint, {
       method: "POST",
       headers,
       // extra_body filtrado entra primeiro e `messages` do código por último:

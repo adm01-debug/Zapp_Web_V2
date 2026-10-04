@@ -22,6 +22,7 @@ import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached, extractTokenUsage, extractUserIdFromRequest, medirStream } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { callLovableAI, callOpenAICompatible, callCustomWebhook, withRetry } from "../_shared/ai-providers.ts";
+import { validateAiProviderSecretName } from "../_shared/ai-provider-egress.ts";
 import {
   AiRoutingError,
   resolveProvider,
@@ -94,9 +95,15 @@ function requireProviderSecret(secretName: string | null): string {
   if (!secretName) {
     throw new ProviderConfigError("api_key_secret_name nao configurado para este provedor.");
   }
-  const value = Deno.env.get(secretName);
+  // IA-EGRESS-001: nome vem do banco (configurável). Só aceita nome de chave de
+  // provedor fora da lista de secrets de infraestrutura.
+  const secretValidation = validateAiProviderSecretName(secretName);
+  if (!secretValidation.ok) {
+    throw new ProviderConfigError(`Nome de secret inválido para este provedor: ${secretValidation.reason}.`);
+  }
+  const value = Deno.env.get(secretValidation.value);
   if (!value) {
-    throw new ProviderConfigError(`Segredo ${secretName} nao encontrado nos secrets (Deno.env).`);
+    throw new ProviderConfigError(`Segredo ${secretValidation.value} nao encontrado nos secrets (Deno.env).`);
   }
   return value;
 }
