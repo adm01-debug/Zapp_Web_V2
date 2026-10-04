@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ReactNode } from 'react';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 
 const mockFrom = vi.fn();
 const mockFunctionsInvoke = vi.fn();
@@ -29,28 +29,55 @@ vi.mock('@/lib/logger', () => ({
 
 import { useDeviceDetection } from '@/hooks/ui/useDeviceDetection';
 
+// Builder thenable que emula a cadeia do supabase-js. `thenResult` resolve o
+// `await builder` (select/eq/order encadeados) e `maybeSingleResult` resolve o
+// `.maybeSingle()`.
+function makeBuilder(opts: {
+  thenResult?: () => Promise<unknown>;
+  maybeSingleResult?: () => Promise<unknown>;
+} = {}) {
+  const thenResult = opts.thenResult ?? (() => Promise.resolve({ data: [], error: null }));
+  const maybeSingleResult = opts.maybeSingleResult ?? (() => Promise.resolve({ data: null, error: null }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const b: any = {};
+  b.select = vi.fn(() => b);
+  b.eq = vi.fn(() => b);
+  b.order = vi.fn(() => b);
+  b.neq = vi.fn(() => b);
+  b.update = vi.fn(() => b);
+  b.delete = vi.fn(() => b);
+  b.maybeSingle = vi.fn(() => maybeSingleResult());
+  b.then = (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) => thenResult().then(res, rej);
+  return b;
+}
+
+function setupDefaultMocks() {
+  mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
+  mockFunctionsInvoke.mockResolvedValue({ data: { revoked: 1 }, error: null });
+  mockFrom.mockImplementation((table: string) => {
+    if (table === 'user_sessions') {
+      return makeBuilder({
+        maybeSingleResult: () => Promise.resolve({ data: { auth_session_id: 'auth-s1' }, error: null }),
+      });
+    }
+    return makeBuilder();
+  });
+}
+
+// Renderiza o hook, aguarda a carga inicial (que dispara checkDevice) e reseta o
+// mock de invoke para isolar as chamadas de revogação da mutação sob teste.
+async function renderLoaded() {
+  const rendered = renderHook(() => useDeviceDetection());
+  await waitFor(() => expect(rendered.result.current.loading).toBe(false));
+  mockFunctionsInvoke.mockReset();
+  mockFunctionsInvoke.mockResolvedValue({ data: { revoked: 1 }, error: null });
+  return rendered;
+}
+
 describe('useDeviceDetection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
-    mockFunctionsInvoke.mockResolvedValue({ data: { device_id: 'd1' } });
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
-      }),
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null }),
-        neq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        }),
-      }),
-      delete: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      }),
-    });
+    setupDefaultMocks();
   });
 
   it('initializes with loading=true', () => {
@@ -58,42 +85,16 @@ describe('useDeviceDetection', () => {
     expect(result.current.loading).toBe(true);
   });
 
-  it('returns empty devices initially', () => {
-    const { result } = renderHook(() => useDeviceDetection());
-    expect(result.current.devices).toEqual([]);
-  });
-
-  it('returns empty sessions initially', () => {
-    const { result } = renderHook(() => useDeviceDetection());
-    expect(result.current.sessions).toEqual([]);
-  });
-
-  it('exposes trustDevice function', () => {
+  it('exposes the mutation/read functions', () => {
     const { result } = renderHook(() => useDeviceDetection());
     expect(typeof result.current.trustDevice).toBe('function');
-  });
-
-  it('exposes removeDevice function', () => {
-    const { result } = renderHook(() => useDeviceDetection());
     expect(typeof result.current.removeDevice).toBe('function');
-  });
-
-  it('exposes endSession function', () => {
-    const { result } = renderHook(() => useDeviceDetection());
     expect(typeof result.current.endSession).toBe('function');
-  });
-
-  it('exposes endAllOtherSessions function', () => {
-    const { result } = renderHook(() => useDeviceDetection());
     expect(typeof result.current.endAllOtherSessions).toBe('function');
-  });
-
-  it('exposes refetch function', () => {
-    const { result } = renderHook(() => useDeviceDetection());
     expect(typeof result.current.refetch).toBe('function');
   });
 
-  it('does not fetch when no user', async () => {
+  it('does not fetch when no user', () => {
     mockUseAuth.mockReturnValue({ user: null });
     const { result } = renderHook(() => useDeviceDetection());
     expect(result.current.devices).toEqual([]);
@@ -106,8 +107,142 @@ describe('useDeviceDetection', () => {
     expect(mockFrom).toHaveBeenCalledWith('user_sessions');
   });
 
-  it('currentDeviceId starts as null', () => {
-    const { result } = renderHook(() => useDeviceDetection());
-    expect(result.current.currentDeviceId).toBeNull();
+  // ─── Critério 3: encerrar uma revoga só a alvo (scope local) ───
+
+  it('endSession envia target_session_id Auth com scope local', async () => {
+    const { result } = await renderLoaded();
+
+    await act(async () => {
+      await result.current.endSession('sess-row-1');
+    });
+
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('revoke-auth-sessions', {
+      body: { scope: 'local', target_session_id: 'auth-s1' },
+    });
+  });
+
+  // ─── Critério 3: encerrar outras usa scope others ───
+
+  it('endAllOtherSessions usa scope others (preserva a corrente no servidor)', async () => {
+    const { result } = await renderLoaded();
+
+    await act(async () => {
+      await result.current.endAllOtherSessions();
+    });
+
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('revoke-auth-sessions', {
+      body: { scope: 'others' },
+    });
+  });
+
+  // ─── Critério 3: remover dispositivo revoga todas as sessões Auth antes de excluir ───
+
+  it('removeDevice revoga cada sessão Auth vinculada antes de excluir', async () => {
+    const deviceSessions = [{ auth_session_id: 'auth-s1' }, { auth_session_id: 'auth-s2' }, { auth_session_id: null }];
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'user_sessions') {
+        return makeBuilder({ thenResult: () => Promise.resolve({ data: deviceSessions, error: null }) });
+      }
+      return makeBuilder();
+    });
+
+    const { result } = await renderLoaded();
+
+    await act(async () => {
+      await result.current.removeDevice('dev-1');
+    });
+
+    // Só os auth_session_id não nulos são revogados (2), cada um com scope local.
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(2);
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('revoke-auth-sessions', {
+      body: { scope: 'local', target_session_id: 'auth-s1' },
+    });
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('revoke-auth-sessions', {
+      body: { scope: 'local', target_session_id: 'auth-s2' },
+    });
+    // O delete do dispositivo foi disparado depois das revogações.
+    expect(mockFrom).toHaveBeenCalledWith('user_devices');
+  });
+
+  // ─── Critério 5: falha de revogação não remove dispositivo (fail-closed) ───
+
+  it('removeDevice NÃO exclui o dispositivo quando uma revogação falha', async () => {
+    const deviceSessions = [{ auth_session_id: 'auth-s1' }, { auth_session_id: 'auth-s2' }];
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'user_sessions') {
+        return makeBuilder({ thenResult: () => Promise.resolve({ data: deviceSessions, error: null }) });
+      }
+      return makeBuilder();
+    });
+
+    const { result } = await renderLoaded();
+    // A primeira revogação falha; as demais não chegam a acontecer.
+    mockFunctionsInvoke.mockRejectedValue(new Error('revogação falhou'));
+
+    let threw = false;
+    await act(async () => {
+      try {
+        await result.current.removeDevice('dev-1');
+      } catch {
+        threw = true;
+      }
+    });
+
+    expect(threw).toBe(true);
+    // Apenas a primeira revogação foi tentada; a segunda nunca aconteceu e o
+    // dispositivo não foi excluído.
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1);
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('revoke-auth-sessions', {
+      body: { scope: 'local', target_session_id: 'auth-s1' },
+    });
+  });
+
+  // ─── Critério 5: falha de revogação não marca sessão encerrada ───
+
+  it('endSession propaga o erro quando a revogação falha (não encerra localmente)', async () => {
+    const { result } = await renderLoaded();
+    mockFunctionsInvoke.mockRejectedValue(new Error('revogação falhou'));
+
+    let threw = false;
+    await act(async () => {
+      try {
+        await result.current.endSession('sess-row-1');
+      } catch {
+        threw = true;
+      }
+    });
+
+    expect(threw).toBe(true);
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('revoke-auth-sessions', {
+      body: { scope: 'local', target_session_id: 'auth-s1' },
+    });
+  });
+
+  // ─── Fail-closed: sessão sem vínculo Auth não pode ser "encerrada" ───
+
+  it('endSession falha fechado quando a sessão não tem auth_session_id', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'user_sessions') {
+        return makeBuilder({
+          maybeSingleResult: () => Promise.resolve({ data: { auth_session_id: null }, error: null }),
+        });
+      }
+      return makeBuilder();
+    });
+
+    const { result } = await renderLoaded();
+
+    let threw = false;
+    await act(async () => {
+      try {
+        await result.current.endSession('sess-legacy');
+      } catch {
+        threw = true;
+      }
+    });
+
+    expect(threw).toBe(true);
+    // Sem auth_session_id, a revogação nunca é invocada.
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
 });

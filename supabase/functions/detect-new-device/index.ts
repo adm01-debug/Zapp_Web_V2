@@ -1,9 +1,86 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getClientIP } from "../_shared/validation.ts";
+import {
+  handleCors,
+  errorResponse,
+  jsonResponse,
+  requireEnv,
+  Logger,
+  getClientIP,
+  internalErrorResponse,
+} from "../_shared/validation.ts";
 import { DetectNewDeviceSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
-Deno.serve(async (req) => {
+// R2-AUTH-004 (item 6): inventário de sessões vinculado à sessão Auth real.
+// O `session_id` do claim JWT (validado no servidor por getUser()) mapeia a visita
+// para a sessão Auth e é usado como chave de UPSERT da linha pública em
+// `user_sessions` por (user_id, auth_session_id) — nunca se insere uma linha nova a
+// cada visita e nunca se recebe/confia em session_id vindo do browser. Nenhum token
+// é persistido: só o UUID da sessão Auth entra no inventário.
+
+// ─── Helpers puros (testáveis, sem rede) ──────────────────────────────────────
+
+/** Decodifica o payload (base64url) de um JWT de acesso, sem validar assinatura —
+ * a assinatura já foi validada pelo getUser(). Serve só para extrair o claim. */
+export function decodeJwtClaims(token: string): Record<string, unknown> {
+  const parts = token.split(".");
+  if (parts.length !== 3) return {};
+  try {
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    const decoded = atob(padded);
+    return JSON.parse(decoded) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Extrai o `session_id` do claim JWT já validado no servidor. O schema
+ * DetectNewDeviceSchema não tem campo `session_id`, então nada do corpo da
+ * requisição é aceito aqui — a sessão Auth é sempre derivada do token.
+ */
+export function extractAuthSessionId(token: string): string | null {
+  const claims = decodeJwtClaims(token);
+  const sid = claims.session_id;
+  return typeof sid === "string" && sid.length > 0 ? sid : null;
+}
+
+export type SessionUpsertDecision =
+  | { kind: "update"; sessionId: string }
+  | { kind: "insert" };
+
+/**
+ * Decide se a linha pública desta sessão Auth já existe. Mesma sessão Auth
+ * (mesmo auth_session_id) → atualiza a linha existente (sem duplicar); primeira
+ * visita desta sessão Auth → insere. A unicidade é reforçada no banco pelo índice
+ * parcial idx_user_sessions_auth_session_id (migration do cartão backend).
+ */
+export function decideSessionUpsert(existingSessionId: string | null): SessionUpsertDecision {
+  return existingSessionId ? { kind: "update", sessionId: existingSessionId } : { kind: "insert" };
+}
+
+/** Monta a linha de inventário. Só o UUID auth_session_id entra — nunca o token. */
+export function buildSessionInsert(args: {
+  userId: string;
+  deviceId: string;
+  authSessionId: string;
+  ipAddress: string;
+  userAgent: string;
+  now: Date;
+}): Record<string, unknown> {
+  return {
+    user_id: args.userId,
+    device_id: args.deviceId,
+    auth_session_id: args.authSessionId,
+    ip_address: args.ipAddress,
+    user_agent: args.userAgent,
+    is_active: true,
+    expires_at: new Date(args.now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+  };
+}
+
+export async function handleDetectNewDevice(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -29,6 +106,10 @@ Deno.serve(async (req) => {
     }
 
     log.info("User authenticated", { userId: user.id });
+
+    // session_id vem do claim JWT validado no servidor — nunca do corpo.
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const authSessionId = extractAuthSessionId(token);
 
     const parsed = parseBody(DetectNewDeviceSchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
@@ -139,34 +220,67 @@ Deno.serve(async (req) => {
         .eq("id", deviceId);
     }
 
-    // Create or update session
-    const { data: session, error: sessionError } = await supabaseAdmin
-      .from("user_sessions")
-      .insert({
-        user_id: user.id,
-        device_id: deviceId,
-        ip_address: clientIp,
-        user_agent: req.headers.get("user-agent") || "unknown",
-        is_active: true,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      })
-      .select()
-      .single();
+    // Inventário da sessão por (user_id, auth_session_id) — UPSERT, não insert por visita.
+    let sessionId: string | null = null;
+    if (authSessionId) {
+      const { data: existingSession, error: existingErr } = await supabaseAdmin
+        .from("user_sessions")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("auth_session_id", authSessionId)
+        .maybeSingle();
 
-    if (sessionError) {
-      log.error("Error creating session", { error: sessionError.message });
+      if (existingErr) throw existingErr;
+
+      const decision = decideSessionUpsert(existingSession?.id ?? null);
+      const userAgent = req.headers.get("user-agent") || "unknown";
+
+      if (decision.kind === "update") {
+        const { error: updateErr } = await supabaseAdmin
+          .from("user_sessions")
+          .update({
+            device_id: deviceId,
+            ip_address: clientIp,
+            user_agent: userAgent,
+            last_activity_at: new Date().toISOString(),
+          })
+          .eq("id", decision.sessionId);
+
+        if (updateErr) throw updateErr;
+        sessionId = decision.sessionId;
+      } else {
+        const { data: created, error: insertErr } = await supabaseAdmin
+          .from("user_sessions")
+          .insert(buildSessionInsert({
+            userId: user.id,
+            deviceId,
+            authSessionId,
+            ipAddress: clientIp,
+            userAgent,
+            now: new Date(),
+          }))
+          .select()
+          .single();
+
+        if (insertErr) throw insertErr;
+        sessionId = created?.id ?? null;
+      }
+    } else {
+      log.warn("JWT sem claim session_id; inventário de sessão não foi criado/atualizado");
     }
 
     log.done(200);
     return jsonResponse({
       is_new_device: isNewDevice,
       device_id: deviceId,
-      session_id: session?.id,
+      session_id: sessionId,
       message: isNewDevice ? "New device detected and email sent" : "Known device updated"
     }, 200, req);
 
   } catch (error: unknown) {
     log.error("Error", { error: error instanceof Error ? error.message : String(error) });
-    return errorResponse(error instanceof Error ? error.message : "Unknown error", 500, req);
+    return internalErrorResponse(error, req);
   }
-});
+}
+
+if (import.meta.main) Deno.serve(handleDetectNewDevice);
