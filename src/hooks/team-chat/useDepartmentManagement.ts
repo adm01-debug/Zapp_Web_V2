@@ -34,6 +34,27 @@ export interface DepartmentWhatsAppCredentials {
   evolution_url: string | null;
 }
 
+const WHATSAPP_MODES = ['none', 'evolution', 'official'] as const;
+
+/**
+ * A RPC `get_department_whatsapp_credentials` devolve jsonb com as chaves do banco
+ * (`whatsapp_mode`, `whatsapp_api_key`, `whatsapp_instance_id`), nao com o formato do
+ * hook. Devolver o payload cru deixava `credentials.mode` indefinido e a tela do
+ * departamento nunca carregava o modo salvo (familia TC-015: implementacao que nao
+ * corresponde ao contrato atual). A URL nao e exposta pela RPC — o campo fica nulo
+ * para o formulario nao preencher nada.
+ */
+export function toDepartmentWhatsAppCredentials(payload: unknown): DepartmentWhatsAppCredentials {
+  const row = (Array.isArray(payload) ? payload[0] : payload) as Record<string, unknown> | null | undefined;
+  if (!row) return { mode: 'none', evolution_url: null };
+  const raw = row.whatsapp_mode;
+  const mode = (WHATSAPP_MODES as readonly string[]).includes(raw as string)
+    ? (raw as DepartmentWhatsAppCredentials['mode'])
+    : 'none';
+  const url = row.evolution_url;
+  return { mode, evolution_url: typeof url === 'string' ? url : null };
+}
+
 /**
  * Codigo do convite de departamento — credencial: quem digita entra no departamento.
  * PRNG previsivel aqui e vulnerabilidade (typescript:S2245), nao enfeite.
@@ -112,7 +133,7 @@ export function useDepartmentWhatsAppCredentials(departmentId: string) {
       const { data, error } = await supabase
         .rpc('get_department_whatsapp_credentials', { p_department_id: departmentId });
       if (error) throw error;
-      return (data as unknown as DepartmentWhatsAppCredentials) ?? { mode: 'none', evolution_url: null };
+      return toDepartmentWhatsAppCredentials(data);
     },
     staleTime: 60 * 1000,
   });
