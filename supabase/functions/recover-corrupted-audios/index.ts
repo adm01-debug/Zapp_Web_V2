@@ -7,6 +7,7 @@ import {
   Logger,
 } from "../_shared/validation.ts";
 import { evoFetch, extractBase64Media } from "../_shared/evolution-send.ts";
+import { resolveInstanceToken, type InstanceTokenClient } from "../_shared/evolution-instance-token.ts";
 
 function isValidAudioBytes(bytes: Uint8Array): boolean {
   if (bytes.length < 4) return false;
@@ -23,15 +24,21 @@ function isValidAudioBytes(bytes: Uint8Array): boolean {
 // então na GO este utilitário só recupera o que ainda estiver acessível e
 // reporta o resto como falha, sem quebrar.
 async function getMediaBase64(
+  tokenClient: InstanceTokenClient,
   evolutionUrl: string,
   evolutionKey: string,
   instanceName: string,
   messageId: string,
 ): Promise<string | null> {
   try {
+    // TRA-002: a mídia é da instância que a recebeu — token DELA; sem
+    // credencial, null (falha do lote) em vez de buscar na instância errada.
+    const instanceToken = await resolveInstanceToken(tokenClient, instanceName);
+    if (!instanceToken) return null;
     const resp = await evoFetch(evolutionUrl.replace(/\/+$/, ""), evolutionKey,
       `/chat/getBase64FromMediaMessage/${instanceName}`,
-      { message: { key: { id: messageId } }, convertToMp4: false });
+      { message: { key: { id: messageId } }, convertToMp4: false },
+      undefined, undefined, undefined, instanceToken);
     if (!resp.ok) return null;
     const data = await resp.json();
     const media = extractBase64Media(data);
@@ -161,7 +168,7 @@ export async function handleRecoverCorruptedAudios(
           } catch { /* proceed to re-download */ }
         }
 
-        const base64 = await getMediaBase64(evolutionUrl, evolutionKey, instanceName, msg.external_id!);
+        const base64 = await getMediaBase64(supabase, evolutionUrl, evolutionKey, instanceName, msg.external_id!);
         if (!base64) { results.failed++; results.errors.push(`${msg.external_id}: no base64 from API`); continue; }
 
         const binaryStr = atob(base64);

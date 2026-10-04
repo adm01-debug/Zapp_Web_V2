@@ -1,6 +1,7 @@
 // Shared media persistence helpers for Evolution API functions
 import { isRecord } from "./evolution-helpers.ts";
 import { evoFetch, extractBase64Media } from "./evolution-send.ts";
+import { resolveInstanceToken } from "./evolution-instance-token.ts";
 import { downloadMediaWithEgressPolicy } from "./media-egress.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
 
@@ -164,10 +165,15 @@ export async function persistMediaViaApi(
     if (!evolutionUrl || !evolutionKey) return null;
 
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
+    // TRA-002: a mídia pertence à instância que a recebeu — token DAQUELA
+    // instância; sem ele, null (best-effort) em vez de operar na padrão.
+    const instanceToken = await resolveInstanceToken(supabase, instance);
+    if (!instanceToken) return null;
     const resp = await evoFetch(baseUrl, evolutionKey,
       `/chat/getBase64FromMediaMessage/${instance}`,
       { message: { key: data.key, message: data.message }, convertToMp4: false },
-      (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }));
+      (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }),
+      undefined, undefined, instanceToken);
 
     if (!resp.ok) { console.error(`[MEDIA] getBase64 API error (${resp.status})`); return null; }
 

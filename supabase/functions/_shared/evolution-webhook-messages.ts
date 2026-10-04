@@ -7,6 +7,7 @@ import {
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
+import { resolveInstanceToken } from "./evolution-instance-token.ts";
 import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
 
@@ -482,7 +483,7 @@ export async function handleIncomingMessage(
 
   // Avatar fica fora da transacao: chamada externa a Evolution GO.
   if (tx.contact_created || !tx.avatar_url || isWhatsAppCdnUrl(tx.avatar_url)) {
-    const picUrl = await fetchProfilePicFromApi(instance, phone);
+    const picUrl = await fetchProfilePicFromApi(instance, phone, supabase);
     if (picUrl) {
       const avatarUrl = await persistProfilePicture(supabase, phone, picUrl);
       if (avatarUrl) await supabase.from('contacts').update({ avatar_url: avatarUrl }).eq('id', tx.contact_id);
@@ -540,8 +541,7 @@ export async function handleIncomingMessage(
             const evolutionKey = Deno.env.get('EVOLUTION_API_KEY') ?? '';
             const autoReply = await loadOptOutAutoreply(supabase);
             if (evolutionUrl && autoReply) {
-              const { data: tokenData } = await supabase.rpc('get_instance_token', { p_instance_id: instance });
-              const instanceToken = typeof tokenData === 'string' && tokenData.length > 0 ? tokenData : null;
+              const instanceToken = await resolveInstanceToken(supabase, instance);
               if (!instanceToken) {
                 console.warn('[OPT-OUT] Token da instancia ausente — confirmacao nao enviada (' + instance + ')');
               } else {
@@ -670,10 +670,14 @@ export async function handleStickerMedia(
       const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
       const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
       if (evolutionUrl && evolutionKey) {
+        // TRA-002: a mídia da sticker é da instância que a recebeu.
+        const instanceToken = await resolveInstanceToken(supabase, instance);
+        if (!instanceToken) return null;
         const resp = await evoFetch(evolutionUrl.replace(/\/+$/, ''), evolutionKey,
           `/chat/getBase64FromMediaMessage/${instance}`,
           { message: { key: data.key, message: data.message }, convertToMp4: false },
-          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }));
+          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }),
+          undefined, undefined, instanceToken);
         if (resp.ok) {
           const result = await resp.json();
           const media = extractBase64Media(result);

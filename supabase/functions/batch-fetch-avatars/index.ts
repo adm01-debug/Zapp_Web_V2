@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
+import { resolveInstanceToken } from '../_shared/evolution-instance-token.ts';
 import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
 import { errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
@@ -76,6 +77,12 @@ export async function handleBatchFetchAvatars(
     const connectionMap = new Map(connections.map(c => [c.id, c.instance_id]));
     const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
     const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
+    // TRA-002: token por instância — os avatares dos contatos de B saem com a
+    // credencial de B; instância sem token tem os contatos marcados skipped.
+    const tokenMap = new Map<string, string | null>();
+    for (const inst of new Set(connectionMap.values())) {
+      if (inst) tokenMap.set(inst, await resolveInstanceToken(supabase, inst));
+    }
 
     let updated = 0, failed = 0, skipped = 0;
 
@@ -84,7 +91,8 @@ export async function handleBatchFetchAvatars(
 
       await Promise.allSettled(batch.map(async (contact) => {
         const instanceId = connectionMap.get(contact.whatsapp_connection_id);
-        if (!instanceId || !evolutionUrl || !evolutionKey) { skipped++; return; }
+        const instanceToken = instanceId ? tokenMap.get(instanceId) : null;
+        if (!instanceId || !instanceToken || !evolutionUrl || !evolutionKey) { skipped++; return; }
 
         // Marca attempted_at em todos os tentados (sucesso E falha) para o
         // backoff de 7d funcionar nos contatos ocultos/sem-foto.
@@ -97,7 +105,8 @@ export async function handleBatchFetchAvatars(
           const baseUrl = evolutionUrl.replace(/\/+$/, '');
           const resp = await evoFetch(baseUrl, evolutionKey,
             `/chat/fetchProfilePictureUrl/${instanceId}`, { number: contact.phone },
-            (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }));
+            (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }),
+            undefined, undefined, instanceToken);
           if (!resp.ok) { failed++; await markAttempted(); return; }
           const result = await resp.json();
           const picUrl = extractAvatarUrl(result);

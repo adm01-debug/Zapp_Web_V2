@@ -116,6 +116,14 @@
  *    Nenhum dos três produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem
  *    idênticos — só o total varrido sobe (214 → 218, absorvendo +1 de outro chat sem entry + os 3
  *    da X034), medido pela varredura depois do merge.
+ *  - 233: TRA-002 (06/10/2026) — `_shared/evolution-instance-token.ts` (resolvedor único do token
+ *    por instância: Vault via get_instance_token + fallback de transição estrito à instância
+ *    padrão + gate goTokenMatches do webhook) e `_shared/__tests__/evolution-instance-token.test.ts`
+ *    (prova Deno: tokens distintos A/B, fallback só na padrão, token trocado rejeitado). Nenhum
+ *    produz token legado: o mapa INVENTARIO e a contagem (3) seguem idênticos — só o total varrido
+ *    sobe (218 → 233), medido pela varredura depois do merge. Observação: 13 arquivos entraram por
+ *    merges anteriores sem entrada neste cabeçalho (o pin 218 já estava atrasado em relação à
+ *    árvore); a contagem corrigida foi medida de novo, não extrapolada.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -190,8 +198,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('218 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(218);
+  it('233 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(233);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

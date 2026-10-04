@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
+import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 
 serve(async (req) => {
@@ -76,8 +77,13 @@ serve(async (req) => {
     }
 
     // E22: chave do circuit breaker por instância — '__admin' para list-instances.
-    const proxy = (path: string, method = 'POST', body?: unknown) =>
-      proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin');
+    // E16/TRA-002: toda ação de instância envia o token DELA (Vault via
+    // get_instance_token, cacheado por isolate) — nunca a credencial da
+    // padrão. Sem token resolvido, o proxy falha explícito (exceto a padrão,
+    // que ainda pode cair no fallback de transição EVOLUTION_INSTANCE_TOKEN).
+    const proxy = async (path: string, method = 'POST', body?: unknown) =>
+      proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin',
+        instance ? (await resolveInstanceToken(supabase, instance)) ?? undefined : undefined);
 
     // ─── 0. Janela de manutenção (proteção contra bloqueio da Meta) ───
     // Enquanto whatsapp_maintenance_until estiver no futuro, ações que fazem a
@@ -382,7 +388,13 @@ serve(async (req) => {
     if (action === 'list-instances') return await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET');
 
     if (action === 'connect') {
-      const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
+      // TRA-002: token DA instância (Vault); a GO seleciona a instância pela
+      // credencial — a da padrão conectaria a instância errada. A padrão ainda
+      // pode vir do fallback de transição dentro do resolver.
+      const instToken = await resolveInstanceToken(supabase, instance);
+      if (!instToken) {
+        return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       // NUNCA body vazio: o GO persiste webhook/subscribe do body — {} apagaria
       // o webhook da instância e derrubaria a entrega de eventos (o guard
       // instance.Webhook != "" bloqueia até o WEBHOOK_URL global). Reafirmar a
@@ -515,10 +527,8 @@ serve(async (req) => {
         } catch { /* GO indisponível: cai no 409 abaixo */ }
       }
       if (goOrphan) {
-        if (!Deno.env.get('EVOLUTION_INSTANCE_TOKEN')) {
-          new Logger('evolution-api').error('connect: EVOLUTION_INSTANCE_TOKEN não configurado — recriação de instância órfã abortada', { instance });
-          return new Response(JSON.stringify({ error: true, status: 503, message: 'A recriação automática da instância exige que o secret EVOLUTION_INSTANCE_TOKEN esteja configurado na Edge Function. Configure o secret e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        }
+        // instToken já foi resolvido acima (Vault ou fallback da padrão) — a
+        // recriação usa o MESMO token da instância, preservando a credencial.
         new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
         // Security: sanitizar o id para evitar path traversal — só alfanumérico e hífen.
         const safeGoId = goOrphan.id.replace(/[^a-zA-Z0-9\-_]/g, '');
@@ -571,7 +581,10 @@ serve(async (req) => {
     }
 
     if (action === 'status') {
-      const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
+      const instToken = await resolveInstanceToken(supabase, instance);
+      if (!instToken) {
+        return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       const response = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
       // Resposta de /instance/status. A GO manda `data` aninhado e nem sempre concorda
       // entre loggedIn/connected/State; o DTO mantém o índice aberto porque o payload varia.
@@ -625,7 +638,11 @@ serve(async (req) => {
     if (action === 'restart-instance') return await proxy(`/instance/restart/${instance}`, 'PUT');
 
     if (action === 'disconnect') {
-      const response = await fetch(`${evolutionApiUrl}/instance/logout`, { method: 'DELETE', headers: { 'apikey': Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey } });
+      const instToken = await resolveInstanceToken(supabase, instance);
+      if (!instToken) {
+        return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const response = await fetch(`${evolutionApiUrl}/instance/logout`, { method: 'DELETE', headers: { 'apikey': instToken } });
       let data: { message?: unknown; [k: string]: unknown } = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao desconectar instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -772,7 +789,10 @@ serve(async (req) => {
       // O GO exige os 7 campos no POST /user/privacy (parcial → 400). Faz GET
       // + merge para atualizar só o que veio, sem resetar o resto para 'all'.
       if (isGoFlavor) {
-        const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
+        const instToken = await resolveInstanceToken(supabase, instance);
+        if (!instToken) {
+          return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
         let current: Record<string, unknown> = {};
         try {
           const curRes = await fetch(`${evolutionApiUrl}/user/privacy`, { headers: { 'apikey': instToken } });

@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, jsonResponse, errorResponse, internalErrorResponse, Logger, requireEnv } from "../_shared/validation.ts";
 import { evoFetch, extractBase64Media } from "../_shared/evolution-send.ts";
+import { resolveInstanceToken, type InstanceTokenClient } from "../_shared/evolution-instance-token.ts";
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -76,8 +77,13 @@ serve(async (req) => {
           const instancesToTry = instance ? [instance] : Array.from(instanceMap.values());
 
           for (const inst of instancesToTry) {
+            // TRA-002: tenta cada instância SÓ com a credencial dela; sem
+            // token cadastrado a tentativa falha (antes caía na padrão e
+            // podia ler mídia da instância errada).
+            const instToken = await resolveInstanceToken(supabase, inst);
+            if (!instToken) continue;
             permanentUrl = await getBase64Fallback(
-              supabase, evolutionUrl, evolutionKey, inst,
+              supabase, evolutionUrl, evolutionKey, inst, instToken,
               msg.external_id, msg.message_type, msg.id, log
             );
             if (permanentUrl) break;
@@ -156,6 +162,7 @@ async function getBase64Fallback(
   evolutionUrl: string,
   evolutionKey: string,
   instance: string,
+  instanceToken: string,
   externalId: string,
   messageType: string,
   messageId: string,
@@ -166,7 +173,8 @@ async function getBase64Fallback(
     const resp = await evoFetch(baseUrl, evolutionKey,
       `/chat/getBase64FromMediaMessage/${instance}`,
       { message: { key: { id: externalId } }, convertToMp4: false },
-      (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }));
+      (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }),
+      undefined, undefined, instanceToken);
 
     if (!resp.ok) {
       log.warn(`getBase64 API error for ${messageId}`, { status: resp.status });

@@ -20,7 +20,8 @@ import {
 import {
   handleIncomingMessage, handleOutgoingWhatsAppMessage,
 } from "../_shared/evolution-webhook-messages.ts";
-import { WebhookSecurityService, timingSafeEqual } from "../_shared/hmac-validation.ts";
+import { WebhookSecurityService } from "../_shared/hmac-validation.ts";
+import { goTokenMatches, resolveInstanceToken, type InstanceTokenClient } from "../_shared/evolution-instance-token.ts";
 import type { EvolutionDbClient } from "../_shared/evolution-types.ts";
 
 // ---------------------------------------------------------------------------
@@ -61,20 +62,19 @@ const enforceMode = Deno.env.get('EVOLUTION_WEBHOOK_ENFORCE') || 'shadow';
 if (enforceMode !== 'shadow' && enforceMode !== 'token') {
   throw new Error(`EVOLUTION_WEBHOOK_ENFORCE invalido: ${enforceMode} (use 'shadow' ou 'token')`);
 }
-// Em token mode sem token configurado, goTokenMatches devolve false para todo
-// corpo e a GO — que nunca assina HMAC — levaria 401 em 100% dos eventos, sem
-// nenhum sinal de que a causa e configuracao. Falha no boot em vez disso.
+// TRA-002: a fonte de verdade passou a ser o Vault por instância — um deploy
+// válido pode NÃO ter EVOLUTION_INSTANCE_TOKEN (só tokens por conexão), então
+// o boot não pode mais exigi-lo. Sem a env e sem tokens no Vault, todo corpo
+// falha o gate com 401 — o warn deixa o sinal de causa visível nos logs.
 if (enforceMode === 'token' && !instanceToken) {
-  throw new Error('EVOLUTION_WEBHOOK_ENFORCE=token exige EVOLUTION_INSTANCE_TOKEN configurado');
+  console.warn('EVOLUTION_WEBHOOK_ENFORCE=token sem EVOLUTION_INSTANCE_TOKEN — a validação depende 100% dos tokens por instância no Vault.');
 }
 
 let tokenOkLogged = false;
 
-function goTokenMatches(body: Record<string, unknown>): boolean {
-  if (!instanceToken) return false;
-  const tok = body.instanceToken;
-  return typeof tok === 'string' && timingSafeEqual(tok, instanceToken);
-}
+// TRA-002/E30: o gate (goTokenMatches, em _shared/evolution-instance-token.ts)
+// compara o instanceToken do corpo com o token DA instância nomeada no evento
+// (Vault via get_instance_token) — não mais com um único global.
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -127,17 +127,26 @@ serve(async (req) => {
       return validationErrorResponse([{ path: '(root)', message: 'Body must be a valid JSON object', code: 'invalid_type' }], req);
     }
 
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    // O client é criado ANTES do gate: goTokenMatches resolve o token da
+    // instância no Vault (service_role tem EXECUTE em get_instance_token).
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     // Sem assinatura HMAC válida (a GO nunca envia uma), o gate é o
-    // instanceToken do corpo. Em 'shadow' apenas observa via logs.
+    // instanceToken do corpo — comparado com o token DA instância do evento.
+    // Em 'shadow' apenas observa via logs.
     if (!validation.signatureValid) {
       const bodyRec = rawBody as Record<string, unknown>;
-      if (!goTokenMatches(bodyRec)) {
+      if (!await goTokenMatches(bodyRec, (name) => resolveInstanceToken(supabase as InstanceTokenClient, name))) {
         // C11: v2-shaped payloads (with 'instance' field, no 'instanceName') also
         // reach this branch because isGoPayload() returns false — but the token check
         // runs here on the raw body regardless of shape. In shadow mode all payloads
         // are accepted; in token mode both GO and v2-shaped payloads are rejected.
         const payloadShape = typeof (bodyRec as Record<string, unknown>).instanceName === 'string' ? 'go' : 'v2';
-        console.warn(`[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken ${bodyRec.instanceToken === undefined ? 'ausente' : 'divergente'} (enforce=${enforceMode}, tokenConfigurado=${instanceToken !== ''}, shape=${payloadShape})`);
+        const instanceName = typeof bodyRec.instanceName === 'string' ? bodyRec.instanceName
+          : typeof bodyRec.instance === 'string' ? bodyRec.instance : '';
+        console.warn(`[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken ${bodyRec.instanceToken === undefined ? 'ausente' : 'divergente'} (enforce=${enforceMode}, instance=${instanceName || 'desconhecida'}, shape=${payloadShape})`);
         if (enforceMode === 'token') {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
             status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -154,11 +163,8 @@ serve(async (req) => {
     delete (rawBody as Record<string, unknown>).instanceToken;
 
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     // Cast unico (ver evolution-types.ts): comparar o client real com EvolutionDbClient
     // a cada chamada de handler estoura o TS2589 do Deno. Uma vez so, aqui, sai barato.
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const db = supabase as unknown as EvolutionDbClient;
 
     let payload: WebhookPayload = rawBody as WebhookPayload;

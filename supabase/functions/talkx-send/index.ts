@@ -9,6 +9,7 @@ import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
+import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 import {
@@ -145,6 +146,12 @@ export async function handleTalkxSend(
       if (!testInstanceId) {
         return new Response(JSON.stringify({ error: "Nenhuma conexao WhatsApp ativa" }), { status: 400, headers });
       }
+      // TRA-002: o envio de teste sai com o token DA conexao escolhida (Vault);
+      // sem credencial falha explicito — nunca pela padrão emprestada.
+      const testInstanceToken = await resolveInstanceToken(supabase, testInstanceId);
+      if (!testInstanceToken) {
+        return new Response(JSON.stringify({ error: "Credencial da instância não configurada para a conexão ativa" }), { status: 409, headers });
+      }
       // Personalizar com dados ficticios para preview
       const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
       let personalizedText: string;
@@ -202,11 +209,12 @@ export async function handleTalkxSend(
             isAudio
               ? { number: cleanPhone, audio: mediaUrl }
               : { number: cleanPhone, mediatype: mediaType, media: mediaUrl, caption: personalizedText },
+            undefined, undefined, undefined, testInstanceToken,
           );
         } else {
           sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${testInstanceId}`, {
             number: cleanPhone, text: personalizedText,
-          });
+          }, undefined, undefined, undefined, testInstanceToken);
         }
         if (!sendRes.ok) {
           const errBody = await sendRes.text().catch(() => '');

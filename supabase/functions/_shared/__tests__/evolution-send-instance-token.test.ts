@@ -38,8 +38,12 @@ Deno.test("evoFetch usa o instanceToken explicito quando informado (nunca a key 
   });
 });
 
-Deno.test("evoFetch cai no fallback EVOLUTION_INSTANCE_TOKEN quando instanceToken nao vem (transicao pre-E10)", async () => {
-  await withEnv({ EVOLUTION_API_FLAVOR: "go", EVOLUTION_INSTANCE_TOKEN: "token-env-fallback" }, async () => {
+Deno.test("evoFetch cai no fallback EVOLUTION_INSTANCE_TOKEN somente quando o path e da instancia padrao (transicao pre-E10)", async () => {
+  await withEnv({
+    EVOLUTION_API_FLAVOR: "go",
+    EVOLUTION_INSTANCE_TOKEN: "token-env-fallback",
+    EVOLUTION_INSTANCE_NAME: "PRINCIPAL",
+  }, async () => {
     let apikeyRecebida = "";
     const fetcherFalso = (_url: string, opcoes: RequestInit) => {
       apikeyRecebida = (opcoes.headers as Record<string, string>).apikey;
@@ -47,6 +51,48 @@ Deno.test("evoFetch cai no fallback EVOLUTION_INSTANCE_TOKEN quando instanceToke
     };
     await evoFetch("https://go.example.com", "admin-key-global", V2_SEND_TEXT_PATH, V2_SEND_BODY, fetcherFalso);
     assertEquals(apikeyRecebida, "token-env-fallback");
+  });
+});
+
+// TRA-002 (regressao): uma rota da instancia SECUNDARIA sem token proprio NAO
+// pode herdar EVOLUTION_INSTANCE_TOKEN da padrao — na GO ela operaria na
+// instancia errada com a credencial dela.
+Deno.test("evoFetch nao empresta o token da instancia padrao a outra instancia (TRA-002)", async () => {
+  await withEnv({
+    EVOLUTION_API_FLAVOR: "go",
+    EVOLUTION_INSTANCE_TOKEN: "token-env-fallback",
+    EVOLUTION_INSTANCE_NAME: "PRINCIPAL",
+  }, async () => {
+    let fetcherChamado = false;
+    const fetcherFalso = () => {
+      fetcherChamado = true;
+      return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    };
+    const resposta = await evoFetch(
+      "https://go.example.com", "admin-key-global",
+      "/message/sendText/SECUNDARIA", V2_SEND_BODY, fetcherFalso,
+    );
+    assertEquals(fetcherChamado, false);
+    assertEquals(resposta.status, 400);
+    const corpo = await resposta.json();
+    assertEquals(corpo.error, "instance token ausente");
+  });
+});
+
+// TRA-002: duas instancias produzem apikeys diferentes — o header sai com o
+// token da instancia do path, nao com uma credencial compartilhada.
+Deno.test("evoFetch emite apikeys distintas para instancias A e B (TRA-002)", async () => {
+  await withEnv({ EVOLUTION_API_FLAVOR: "go" }, async () => {
+    const apikeys: string[] = [];
+    const fetcherFalso = (_url: string, opcoes: RequestInit) => {
+      apikeys.push((opcoes.headers as Record<string, string>).apikey);
+      return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    };
+    await evoFetch("https://go.example.com", "admin-key", "/message/sendText/INST_A", V2_SEND_BODY,
+      fetcherFalso, "POST", undefined, "token-a");
+    await evoFetch("https://go.example.com", "admin-key", "/message/sendText/INST_B", V2_SEND_BODY,
+      fetcherFalso, "POST", undefined, "token-b");
+    assertEquals(apikeys, ["token-a", "token-b"]);
   });
 });
 

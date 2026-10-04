@@ -10,6 +10,7 @@ import {
   requireEnv,
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
+import { resolveInstanceToken } from '../_shared/evolution-instance-token.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
 import {
   EFFECT_MESSAGE_SEND,
@@ -298,8 +299,19 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       if (metadataError || !richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
+    // E18/TRA-002: a mensagem sai pela conexão DO CLAIM — o token dela vem do
+    // Vault (get_instance_token); a da padrão ainda pode vir do fallback de
+    // transição. Sem credencial para a instância, a entrega falha de forma
+    // explícita — nunca envia pela padrão com o corpo de outra conexão.
+    const instanceToken = await resolveInstanceToken(service, claim.whatsapp_instance_name);
+    if (!instanceToken) {
+      await failClaim(service, claim);
+      console.error(JSON.stringify({ event: 'message_delivery_no_instance_token', instance: claim.whatsapp_instance_name }));
+      return errorResponse('Message provider credential is not configured for this connection', 502, req);
+    }
     providerPostAttempted = true;
-    const providerResponse = await evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body);
+    const providerResponse = await evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body,
+      undefined, undefined, undefined, instanceToken);
     const raw = await providerResponse.text();
     let providerData: unknown = null;
     try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
