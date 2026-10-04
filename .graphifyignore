@@ -15,3 +15,6 @@ graphify-out/graph.html
 
 # Relatórios de auditoria (docs/reconciliation): ~4.700 nós de texto que poluem a busca do grafo
 docs/reconciliation/
+
+# Captura com possiveis telefones reais: nao entra no grafo nem vai para IA externa.
+docs/catalogo/screens/D-selecionar-contato.jpg
