@@ -246,6 +246,13 @@ jobs:
           WEBHOOK_ACL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-webhook-failures-acl.test.sh
 
+      # M-DB-02: nenhuma SECURITY DEFINER de public com EXECUTE para PUBLIC/anon
+      # (a T26 abriu uma assim por create or replace com parametro novo).
+      - name: Simular SECURITY DEFINER aberta para PUBLIC/anon
+        env:
+          SECDEF_EXEC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-secdef-public-execute.test.sh
+
       - name: Provar remoção do token legado da API pública
         env:
           PUBLIC_API_DISABLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
