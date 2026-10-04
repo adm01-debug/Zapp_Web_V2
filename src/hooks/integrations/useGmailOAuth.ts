@@ -62,14 +62,22 @@ const VALID_INTEGRATION_VIEWS = new Set(['gmail', 'whatsapp', 'calendar']);
        returnToSavedView();
        return;
      }
- 
+
+     // CSRF guard (RFC 6749 §10.12): an unbound return (missing/invalid state)
+     // must abort BEFORE the code exchange — never hand the code to the edge.
+     if (!oauthState) {
+       toast.error('Retorno da conexão com o Gmail inválido ou expirado. Inicie a conexão novamente.');
+       returnToSavedView();
+       return;
+     }
+
      void (async () => {
        try {
          const { data: { session } } = await supabase.auth.getSession();
          if (!session) throw new Error('Sessão expirada.');
- 
+
          const response = await supabase.functions.invoke('gmail-oauth', {
-           body: { action: 'exchange-code', code },
+           body: { action: 'exchange-code', code, state: searchParams.get('state') },
            headers: { Authorization: `Bearer ${session.access_token}` },
          });
  

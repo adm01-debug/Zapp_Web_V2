@@ -65,7 +65,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
   });
 
   const exchangeCode = useMutation({
-    mutationFn: async (code: string) => callGmailFunction('gmail-oauth', { action: 'exchange-code', code }),
+    mutationFn: async (params: { code: string; state: string }) => callGmailFunction('gmail-oauth', { action: 'exchange-code', ...params }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-accounts'] }); toast.success('Gmail conectado com sucesso!'); },
     onError: (error: Error) => { toast.error(`Erro na autenticação: ${error.message}`); },
   });
