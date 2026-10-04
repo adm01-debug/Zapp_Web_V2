@@ -98,7 +98,7 @@ export function OmnichannelInbox() {
       await loadConnections();
       await loadUnifiedInbox();
     };
-    init();
+    void init();
   }, []);
 
   const filteredMessages = messages.filter(m => {
@@ -294,7 +294,7 @@ export function OmnichannelInbox() {
 
         {/* Email Chat tab */}
         <TabsContent value="email" className="flex-1 mt-0 min-h-0">
-          <EmailChatInbox />
+          <EmailChatInbox embedded />
         </TabsContent>
       </Tabs>
     </div>

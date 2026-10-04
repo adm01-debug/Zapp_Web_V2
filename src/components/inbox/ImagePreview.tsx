@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { toast } from 'sonner';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
+import { cfImagesSrcSet } from '@/lib/cfImages';
 
 interface ImagePreviewProps {
   src: string;
@@ -83,7 +84,7 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
             className={!canDownload ? 'opacity-50 cursor-not-allowed' : ''}
             onClick={(e) => {
               e.stopPropagation();
-              handleDownload();
+              void handleDownload();
             }}
           >
             <Download className="w-4 h-4" />
@@ -136,6 +137,8 @@ export function MessageImage({ src, alt = 'Image' }: MessageImageProps) {
           <motion.img
             key={resolvedUrl}
             src={resolvedUrl}
+            srcSet={cfImagesSrcSet(resolvedUrl) ?? undefined}
+            sizes="(max-width: 768px) 90vw, 280px"
             alt={alt}
             onLoad={() => setIsLoaded(true)}
             onError={() => { setIsLoaded(false); void refresh(); }}

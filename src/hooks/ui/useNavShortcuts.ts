@@ -9,6 +9,11 @@ const SHORTCUT_TO_VIEW: Record<string, string> = {
   KeyO: 'contacts',
   KeyR: 'dashboard',
   KeyP: 'pipeline',
+  // E.5/atalhos: a sidebar anuncia "Alt+K" no item Tarefas (`NavigationService`
+  // carrega `shortcut: 'Alt+K'`) mas o mapa nao tinha `KeyK` — o atalho nao fazia
+  // nada. (Mesma lacuna em Alt+A/Catálogo, Alt+T/Telefonia e Alt+Q/Conquistas,
+  // deixadas fora deste diff por nao serem exigidas pelo E.5.)
+  KeyK: 'tasks',
   KeyN: 'talkx',
   KeyG: 'settings',
 };

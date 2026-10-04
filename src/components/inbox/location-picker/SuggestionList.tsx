@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapPin, Route, Building2, Milestone, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -68,7 +68,7 @@ function PausedNotice({ blocked, pausedUntil, query, onRetry }: {
     <div className="px-3 py-3 space-y-1">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm text-muted-foreground">{pausedNoticeText(blocked, segundos)}</p>
-        {podeTentar && <Button size="sm" variant="ghost" onClick={onRetry}>Tentar novamente</Button>}
+        {podeTentar && <Button size="sm" variant="ghost" className="min-h-11" onClick={onRetry}>Tentar novamente</Button>}
       </div>
       <p className="text-xs text-muted-foreground/70">
         Enquanto isso, o Enter busca &quot;{query.trim()}&quot; pelo endereço.
@@ -98,15 +98,41 @@ export function SuggestionList({
   onRetry,
 }: SuggestionListProps) {
   const digitando = status === 'typing' || status === 'loading';
+  // E60: com o teclado virtual aberto o viewport visivel encolhe e a lista ficava escondida atras
+  // dele. Recalcula o teto a partir do `visualViewport` e limpa os listeners no unmount.
+  const cascaRef = useRef<HTMLDivElement | null>(null);
+  const [tetoTeclado, setTetoTeclado] = useState<number | null>(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const recalcular = () => {
+      const topo = cascaRef.current?.getBoundingClientRect().top ?? 0;
+      const disponivel = vv.height - topo - 12;
+      setTetoTeclado(disponivel > 0 ? Math.round(disponivel) : null);
+    };
+    recalcular();
+    vv.addEventListener('resize', recalcular);
+    
+    vv.addEventListener('scroll', recalcular);
+    return () => {
+      vv.removeEventListener('resize', recalcular);
+      vv.removeEventListener('scroll', recalcular);
+    };
+  }, [status]);
+
   return (
+      // E59: em tela pequena (< 640px) a lista sai do fluxo do campo e se ancora as bordas da
+      // tela com teto de 40vh — em 360px de largura ela nao estoura a horizontal. De sm: para
+      // cima volta ao comportamento ancorado no campo, com o teto de sempre.
     <div
-      id={listboxId}
-      role="listbox"
-      className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg max-h-64 overflow-y-auto"
+      ref={cascaRef}
+      data-testid="lista-sugestoes"
+      className="fixed inset-x-4 z-20 mt-1 rounded-lg border border-border bg-popover shadow-lg overflow-y-auto max-h-[40vh] sm:absolute sm:inset-x-auto sm:left-0 sm:right-0 sm:w-full sm:max-h-64"
+      style={tetoTeclado ? { maxHeight: `${tetoTeclado}px` } : undefined}
     >
       {digitando && (
         <div className="p-2 space-y-2">
-          {[0, 1, 2].map((i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse" />)}
+          {[0, 1, 2].map((i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse motion-reduce:animate-none" />)}
         </div>
       )}
       {status === 'error' && (
@@ -117,7 +143,7 @@ export function SuggestionList({
             <p className="text-sm font-medium">Falha ao buscar sugestões.</p>
             <p className="text-xs text-muted-foreground">{error ? searchFailureText(error) : 'Tente de novo em instantes.'}</p>
           </div>
-          <Button size="sm" variant="ghost" onClick={onRetry}>Tentar novamente</Button>
+          <Button size="sm" variant="ghost" className="min-h-11" onClick={onRetry}>Tentar novamente</Button>
         </div>
       )}
       {status === 'paused' && (
@@ -127,7 +153,7 @@ export function SuggestionList({
         <p className="px-3 py-3 text-sm text-muted-foreground">Nada encontrado para &quot;{query}&quot;.</p>
       )}
       {status === 'ok' && (
-        <div className="divide-y divide-border">
+        <div id={listboxId} role="listbox" aria-label="Sugestões de endereço" className="divide-y divide-border">
           {suggestions.map((suggestion, index) => {
             const Icon = SUGGESTION_ICON[suggestion.kind];
             const highlighted = index === highlightedIndex;
@@ -141,7 +167,7 @@ export function SuggestionList({
                 type="button"
                 onClick={() => onSelect(index)}
                 className={cn(
-                  'w-full flex items-start gap-2 text-left px-3 py-2 min-h-11 hover:bg-muted/60 transition-colors',
+                  'w-full flex items-start gap-2 text-left px-3 py-2 min-h-11 hover:bg-muted/60 transition-colors motion-reduce:transition-none',
                   highlighted && 'bg-muted/60'
                 )}
               >
@@ -161,7 +187,7 @@ export function SuggestionList({
                   )}
                 </div>
                 {retrievingId === suggestion.id && (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0 mt-0.5" />
+                  <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none text-muted-foreground shrink-0 mt-0.5" />
                 )}
               </button>
             );
@@ -170,10 +196,28 @@ export function SuggestionList({
       )}
       <p className="px-3 py-1.5 text-3xs text-muted-foreground/70 bg-muted/30 border-t border-border">
         Powered by{' '}
-        <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer" className="underline">
+        <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center min-h-11">
           Mapbox
         </a>
       </p>
+      {/* E57: quem usa leitor de tela não "vê" a lista aparecer. A região viva anuncia ESTADO e
+          CONTAGEM, com redação própria — nunca copia o texto visível (repetir o mesmo texto no DOM
+          viraria eco e quebraria qualquer `getByText` de terceiro com "Found multiple elements").
+          O texto depende só de `status` e de `suggestions.length`: digitar não muda nenhum dos
+          dois, então não há anúncio a cada tecla. */}
+      <div role="status" aria-live="polite" className="sr-only" data-testid="sr-aviso">
+        {status === 'ok'
+          ? `${suggestions.length} sugestões`
+          : digitando
+            ? 'Buscando…'
+            : status === 'empty'
+              ? 'Nenhum resultado'
+              : status === 'error'
+                ? 'Erro na busca de sugestões'
+                : status === 'paused'
+                  ? 'Sugestões pausadas'
+                  : ''}
+      </div>
     </div>
   );
 }

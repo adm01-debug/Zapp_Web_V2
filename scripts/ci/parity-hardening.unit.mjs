@@ -46,9 +46,22 @@ test('db-live-guard runs psql without the connection string in argv (same regres
   // 6 desde a V02 do plano Talk X V3 (2026-09-29): o passo que verifica o
   // contrato de transicao de campanha entrou pelo mesmo wrapper. Antes eram 5
   // (V01, security_invoker da view de metricas).
-  // A contagem e exata de proposito -- uma invocacao nova de psql que nao
-  // passe pelo wrapper quebra este teste em vez de vazar a senha.
-  assert.equal((workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length, 6);
+  //
+  // E85 (03/10/2026): a contagem EXATA saiu. Ela quebrava a cada adicao legitima de
+  // check pelo mesmo wrapper (o de fixtures de E2E entrou assim), e nao era ela que
+  // protegia o que importa -- uma invocacao de psql FORA do wrapper, que vazaria a
+  // senha no argv. Essa invariante passa a ser verificada direto abaixo, como o teste
+  // do db-migrate ja faz desde a E62.
+  assert.ok(
+    (workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length >= 6,
+    'algum check de banco saiu do wrapper',
+  );
+  assert.match(workflow, /-f scripts\/db-audit\/check-e2e-fixtures\.sql/, 'o check de fixtures tem de ser executado');
+  const psqlSemWrapper = workflow
+    .split('\n')
+    .filter((linha) => !linha.trimStart().startsWith('#'))
+    .filter((linha) => /(^|\s)psql(\s|$)/.test(linha) && !linha.includes('psql-safe'));
+  assert.deepEqual(psqlSemWrapper, [], 'invocacao de psql fora do wrapper psql-safe.mjs');
   assert.ok(fs.existsSync(new URL('../db-audit/psql-safe.mjs', import.meta.url)));
   assert.ok(fs.existsSync(new URL('../db-audit/psql-safe.test.mjs', import.meta.url)));
 });
@@ -60,11 +73,24 @@ test('db-migrate (production) runs psql without the connection string in argv (s
   // fechado separadamente, com o mesmo transporte, sem tocar a logica de
   // captura de saida (RUNTIME/RESULT/LEGACY_COUNT/BUNDLE_COUNT/LEDGER_COUNT).
   assert.doesNotMatch(workflow, /psql ["']?\$\{?DESTINO_URL\}?["']?/);
-  // 33 desde o contrato runtime generico (2026-09-25): o fallback do case
-  // passou a ler o estado do banco por psql-safe.mjs em vez de rejeitar a
-  // migration. A contagem e exata de proposito -- uma invocacao nova de psql
-  // que nao passe pelo wrapper quebra este teste em vez de vazar a senha.
-  assert.equal((workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length, 33);
+  // E62 (03/10/2026): os 12 bracos de contrato do `case "$TARGET_VERSION"` sairam do
+  // YAML para scripts/db-audit/contracts/<versao>.sql, executados pelo runner
+  // generico. A invariante que este teste protege nao e a contagem no YAML: e que
+  // NENHUMA invocacao de psql escape do wrapper (psql-safe.mjs). Com os contratos
+  // fora do arquivo, a verificacao passa a cobrir os tres lugares onde SQL chega ao
+  // banco -- workflow, runner e contratos.
+  const runner = read('../../scripts/db-audit/run-runtime-contract.mjs');
+  assert.ok(
+    (workflow.match(/node scripts\/db-audit\/psql-safe\.mjs/g) || []).length > 0,
+    'o workflow tem de continuar passando pelo wrapper',
+  );
+  assert.match(runner, /psql-safe\.mjs/, 'o runner generico tem de usar o wrapper');
+  assert.match(runner, /ON_ERROR_STOP=1/, 'e manter o ON_ERROR_STOP');
+  for (const arquivo of fs.readdirSync(new URL('../db-audit/contracts/', import.meta.url))) {
+    if (!arquivo.endsWith('.sql')) continue;
+    const sql = fs.readFileSync(new URL(`../db-audit/contracts/${arquivo}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(sql, /^\s*psql(\s|$)/m, `${arquivo} nao pode invocar psql: so devolve SQL ao wrapper`);
+  }
 });
 test('deployment brackets mutation with snapshots and stable post-collection', () => {
   const workflow = read('../../.github/workflows/deploy-functions.yml');
@@ -86,8 +112,17 @@ test('runtime SQL is exercised on disposable PostgreSQL in PRs', () => {
 });
 test('production migration has fail-closed preflight and postflight for notification atomicity', () => {
   const workflow = read('../../.github/workflows/db-migrate.yml');
-  assert.match(workflow, /20260922220000\)/);
-  assert.equal((workflow.match(/notification-delivery-atomicity-runtime\.sql/g) || []).length, 2);
+  // E62: o braco do `case` virou arquivo de contrato. O que se prende agora e que o
+  // alvo 20260922220000 continue com o contrato de runtime disponivel e que a
+  // verificacao do apply continue exigindo as contagens exatas.
+  assert.ok(
+    fs.existsSync(new URL('../db-audit/contracts/20260922220000.sql', import.meta.url)),
+    'o contrato de runtime do alvo 20260922220000 tem de existir',
+  );
+  assert.ok(
+    (workflow.match(/notification-delivery-atomicity-runtime\.sql/g) || []).length >= 1,
+    'o workflow tem de continuar referenciando o contrato de atomicidade',
+  );
   assert.match(workflow, /inputs\.migration_version == '20260922220000'/);
   assert.match(workflow, /proof\.service_execute_count === 2/);
   assert.match(workflow, /proof\.authenticated_execute_count === 0/);

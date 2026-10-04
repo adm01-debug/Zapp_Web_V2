@@ -54,20 +54,44 @@ GRANT USAGE ON SCHEMA auth TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION auth.uid(), auth.role() TO authenticated, service_role;
 
 CREATE TABLE public.profiles (id uuid PRIMARY KEY, user_id uuid NOT NULL UNIQUE, is_active boolean NOT NULL DEFAULT true);
+CREATE TABLE public.user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  role text NOT NULL,
+  UNIQUE (user_id, role)
+);
 CREATE TABLE public.talkx_campaigns (
   id uuid PRIMARY KEY, created_by uuid, status text NOT NULL DEFAULT 'draft', scheduled_at timestamptz,
   total_recipients integer NOT NULL DEFAULT 0, sent_count integer NOT NULL DEFAULT 0,
   failed_count integer NOT NULL DEFAULT 0, delivered_count integer NOT NULL DEFAULT 0,
+  outcome_unknown_count integer NOT NULL DEFAULT 0, replied_count integer NOT NULL DEFAULT 0,
+  message_template text NOT NULL DEFAULT 'Olá', media_url text,
   send_window_start time, send_window_end time, business_hours_only boolean NOT NULL DEFAULT false,
+  -- X014: colunas que o gatilho vigente (worker lease) referencia.
+  worker_id text, worker_lease_expires_at timestamptz,
   started_at timestamptz, completed_at timestamptz, updated_at timestamptz NOT NULL DEFAULT statement_timestamp()
 );
 CREATE TABLE public.contacts (id uuid PRIMARY KEY, visible boolean NOT NULL DEFAULT true);
 CREATE TABLE public.talkx_recipients (campaign_id uuid NOT NULL REFERENCES public.talkx_campaigns(id) ON DELETE CASCADE, contact_id uuid NOT NULL REFERENCES public.contacts(id), status text NOT NULL DEFAULT 'pending', UNIQUE (campaign_id, contact_id));
+-- X014: objetos que a migration de role gates cria/ajusta.
+CREATE TABLE public.talkx_settings (key text PRIMARY KEY, value jsonb NOT NULL);
+CREATE TABLE public.talkx_blacklist (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.talkx_links (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), campaign_id uuid);
+CREATE TABLE public.talkx_link_clicks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), link_id uuid);
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.talkx_campaigns, public.talkx_recipients TO authenticated, service_role;
-CREATE FUNCTION public.is_admin_or_supervisor(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
+-- X014: portao de papel (mesma forma da funcao real: SECURITY DEFINER sobre user_roles).
+CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = _user_id AND role IN ('admin', 'supervisor')
+  )
+$$;
 CREATE FUNCTION public.is_contact_visible_to_user(uuid, uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT visible FROM public.contacts WHERE id = $1 $$;
 
 INSERT INTO public.profiles (id, user_id) VALUES ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001');
+-- X014: o dono passa a ser admin (criar/agendar/alterar exige papel).
+INSERT INTO public.user_roles (user_id, role) VALUES ('20000000-0000-0000-0000-000000000001', 'admin');
 INSERT INTO public.contacts (id) VALUES ('30000000-0000-0000-0000-000000000001');
 INSERT INTO public.talkx_campaigns (id, created_by, status) VALUES ('40000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'draft');
 SQL
@@ -76,6 +100,12 @@ psql_test < "$migration" >/dev/null
 psql_test < "$forward_hardening_migration" >/dev/null
 psql_test < "$outcome_counter_migration" >/dev/null
 psql_test < "$schedule_timezone_migration" >/dev/null
+
+# X014: o gatilho vigente (worker lease) passa a recusar `scheduled` sem papel e as
+# RPCs de rascunho passam a exigir admin/supervisor.
+role_gates_migration="$repo_root/supabase/migrations/20261002381230_talkx_role_gates.sql"
+[[ -f "$role_gates_migration" ]] || fail 'migration da X014 não existe'
+psql_test < "$role_gates_migration" >/dev/null
 
 owner_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000001';"
 service_session="SET ROLE service_role; SET request.jwt.claim.role='service_role';"

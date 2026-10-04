@@ -1,5 +1,20 @@
 # Catálogo · ZAPP Web V2 — Plano de Implementação em 100 Etapas
 
+> ## ⛔ SUPERSEDIDO
+>
+> **Este plano está SUPERSEDIDO por [`PLANO_FINALIZACAO_CATALOGO_100.md`](./PLANO_FINALIZACAO_CATALOGO_100.md)**
+> desde **2026-09-29** (execução 01–02/10/2026). **Motivo:** a auditoria de 29/09
+> (`docs/catalogo/AUDITORIA_CATALOGO_2026-09-29.md`) mediu, sobre este plano de 11/09,
+> **41 DONE · 1 DESCARTADO · 38 PARCIAL · 20 AUSENTE** — o escopo original ficou defasado
+> e o plano de finalização reescreveu as etapas (CT-01..CT-100) com evidência por etapa.
+> **Não reabrir este arquivo**; ele fica como registro do escopo original e dos mocks.
+>
+> **Os 396 checkboxes abaixo NÃO foram marcados** (decisão do CT-99): o validador
+> `scripts/catalog/validate-plan.mjs` exige **≥ 3 itens `- [ ]` por bloco E** e cada bloco
+> tem **exatamente 4** — marcar mais de um por bloco **quebraria o validador**, que é
+> justamente o que o aceite do CT-99 manda preservar. A contradição de aceite está
+> registrada no `PLANO_FINALIZACAO_CATALOGO_100.md` §10 (CT-99).
+
 **Repo:** `adm01-debug/Zapp_Web_V2` · **main na geração:** `9c99b164` · **Deploy:** Vercel `zapp-web-v2.vercel.app/?view=catalog`
 **DB canônico:** Supabase Cloud `tnnnlkbymytvtqngbbqh` (MCP `SUPABASE - ZAPP WEB V2 - MCP`) · **DB externo (PromoGifts):** MCP `SUPABASE - GESTÃO DE PRODUTOS`
 **Referência visual:** `docs/catalogo/screens/` — A = catálogo, B = detalhes, C = enviar produto, D = selecionar contato, 00 = estado atual em produção

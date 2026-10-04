@@ -5,6 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
+import { resolverExecutavel } from "../lib/seguranca-processo.mjs";
 
 const SCHEMA_VERSION = 1;
 const DEFAULT_BASELINE = "scripts/ci/eslint-baseline.json";
@@ -211,7 +212,7 @@ function createSnapshot(report, root = process.cwd()) {
 
   files.sort((left, right) => left.path.localeCompare(right.path));
   issues.sort((left, right) => issueSortKey(left).localeCompare(issueSortKey(right)));
-  scannedFiles.sort();
+  scannedFiles.sort((a, b) => a.localeCompare(b));
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -284,7 +285,7 @@ function uniqueRenameAliases(baseline, current) {
 // (repo inteiro) bloqueiam o commit por causa disso. A posicao continua sendo exigida pelas fases de
 // localizacao e de ancora (line/column/spanHash/lineHash/contextHash); aqui sai apenas o ruido de
 // posicao que vive dentro do TEXTO da mensagem.
-const CODE_FRAME_LINE_NUMBER = /(^|\s)>?\s*\d{1,7}\s*\|(?=\s)/g;
+const CODE_FRAME_LINE_NUMBER = /(^|\s)>?\s*\d{1,7}\s*\|(?=\s|$)/g;
 const MESSAGE_FILE_LOCATION = /(?<=[A-Za-z_./\\-]):\d{1,7}:\d{1,7}(?=\s|$)/g;
 
 export function stripVolatilePosition(message) {
@@ -386,14 +387,14 @@ export function compareBaseline(baseline, report, root = process.cwd()) {
     matchedCount: currentMatched.size,
     added,
     removed,
-    renameAliases: Object.fromEntries([...aliases.entries()].sort()),
+    renameAliases: Object.fromEntries([...aliases.entries()].sort((a, b) => a[0].localeCompare(b[0]))),
   };
 }
 
 // --no-renames: renomeacao aparece como remocao do caminho antigo + adicao do novo, que e
 // exatamente o par que o reconhecimento de renomeacao por hash do baseline precisa.
 function stagedPaths(root, diffFilter) {
-  const result = spawnSync("git", ["diff", "--cached", "--name-only", "--no-renames", `--diff-filter=${diffFilter}`, "-z"], {
+  const result = spawnSync(resolverExecutavel("git"), ["diff", "--cached", "--name-only", "--no-renames", `--diff-filter=${diffFilter}`, "-z"], {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,

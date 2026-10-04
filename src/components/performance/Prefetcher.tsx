@@ -138,7 +138,7 @@ export function CriticalRoutePrefetcher() {
     if ('requestIdleCallback' in window) {
       window.requestIdleCallback(() => prefetchCritical());
     } else {
-      prefetchCritical();
+      void prefetchCritical();
     }
   }, []);
 

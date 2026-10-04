@@ -120,8 +120,7 @@ então esse caminho nunca foi executável por agente de qualquer forma.
 
 ## Auditoria e plano de correções (2026-09-16)
 
-**Plano vigente:** `docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md` (sucessor; herda
-os 80 checkboxes abertos de 16/09 e adiciona o aprendido em 17/09).
+**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 17 workflows + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
 Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
 Estado dos achados após re-auditoria de 2026-09-17:
 - `messages` >75% dead tuples — **RESOLVIDO**: autovacuum executou em 2026-09-16 18:37; em
@@ -177,16 +176,16 @@ Estado dos achados após re-auditoria de 2026-09-17:
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
-Auditoria dos 13 workflows + 3 dinâmicos (16 total), da branch protection, dos secrets e dos environments. O que passou a
+Auditoria dos 14 workflows + 3 dinâmicos (17 total), da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 13 arquivos em
+**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 14 arquivos em
 `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
+`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
 `types-sync.yml`), mais 3 workflows dinâmicos que não têm arquivo próprio no repo (Dependabot
-Updates, Dependency Graph, Copilot reviewer) — 16 no total. Plano completo em
-`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md`.
+Updates, Dependency Graph, Copilot reviewer) — 17 no total. Plano completo em
+`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
 **Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
@@ -377,6 +376,13 @@ por tema em `src/styles/tokens.css`, classe Tailwind `bg-inbox-panel`) — usa-l
 o bug. Referência: `docs/audits/` não tem entrada dedicada; a auditoria completa (5 agentes,
 cálculo de contraste WCAG) ficou só na sessão que corrigiu.
 
+## Lição de UI (2026-10-02) — SalesView/Journey: renomear rótulo ≠ renomear id
+
+SalesView/Journey (2026-10-02): os ids internos `orders`/`history` ficaram; só rótulo, conteúdo
+e pasta mudaram. Quem for renomear id precisa de `TAB_REDIRECTS` em `useInboxUIState.ts`
+(precedente `reminders → tasks`). Estatísticas do contato não têm série histórica — não
+reintroduzir % de variação sem query real. Plano: `docs/design/PLANO_SALESVIEW_JOURNEY_50_ETAPAS_2026-10-02.md`.
+
 ## Decisões de 2026-09-26 — como DDL entra em produção, e por que merge ≠ deploy
 
 **DDL em produção vai por MCP (`db_query`) + registro no ledger no mesmo turno, não pelo
@@ -423,8 +429,17 @@ com outra migration real. Regras:
 
 ## graphify
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-- For codebase questions: `graphify query "<question>"` when graph.json exists.
-- After modifying code: `graphify update .` to keep graph current.
+- For codebase questions: `graphify query "<question>"` when graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code: `graphify update .` to keep graph current (AST-only, no API cost).
+
+Instalação por clone (Linux, macOS ou WSL; precisa de `uv` ou `pipx`), depois do `bun install`: `bun run graph:setup`
+(`scripts/graphify/setup.sh`). Instala `graphifyy[sql]` com versão fixada (o pacote oficial no
+PyPI tem dois "y"; o comando é `graphify`), gera `.husky/post-commit` e `.husky/post-checkout`
+(rebuild do grafo em background) e roda o primeiro `graphify update .`. `graphify-out/` (~50 MB)
+e os dois hooks do husky ficam no `.gitignore`: cada clone gera os seus, porque os hooks gravam o
+caminho do Python da máquina. Os hooks do Claude Code em `.claude/settings.json` chamam
+`graphify hook-guard` pelo PATH e não fazem nada onde o graphify não estiver instalado.
 
 ## Frescura do Grafo
 ```sh
@@ -436,20 +451,52 @@ do N8N (id `67dWSoWEPUGTX5mA`) existe e está ativo, mas a cadência de 15min n�
 prática (execução de 2026-09-15 12:00 falhou; nenhuma outra até 2026-09-17) — não depender dele
 como única via de atualização.
 
+## db-guard.yml — `docker-shim` e `SKIP_DOCKER_SHIM` (adicionado em E47, 2026-10-02)
+
+E47 (PR #1538) consolidou os ~48 containers Docker por passo em um único `postgres:17-alpine`
+como `services:` + script `scripts/db-audit/docker-shim` (instalado em `$HOME/.local/bin/docker`).
+
+O shim intercepta os comandos Docker e os roteia para o container compartilhado.
+Passos **incompatíveis** com o shim precisam de `SKIP_DOCKER_SHIM: "1"` no `env:` do step
+(isso causa passthrough para o Docker real). Os 11 passos com essa exceção hoje são:
+
+1. `catalog-manifest.test.sh` — usa `docker logs` para aguardar readiness
+2. `inbox-contact-authorization.test.sh` — idem
+3. `cron-secret-l5-contract.test.sh` — idem
+4. `talkx-template-history-behavior.test.sh` — idem
+5. `talkx-transition-overload-postgrest.test.sh` — depende de PostgREST
+6. `message-delivery-phase1-behavior.test.sh` — idem
+7. `notification-delivery-atomicity.test.sh` — idem
+8. `generic-migration-runtime.test.sh` — idem
+9. `runtime-config.test.sh` — idem
+10. `psql-environment.integration.mjs` — idem
+11. `l11-departments-acl-escrita.test.sh` — idem
+
+Ao adicionar novo passo em `db-guard.yml`, verificar se o script usa `docker logs` para readiness
+ou depende de PostgREST — se sim, adicionar `SKIP_DOCKER_SHIM: "1"`.
+
 ## Talk X / Campanhas
-Módulo em desenvolvimento ativo. Fase 0 (saneamento, E01–E10) e Fase 1 (design system, E11–E20)
-já mergeadas em `main` (Fase 1 via PR #370, branch `feat/catalog-f1-design`). `feat/talkx-f0-remaining`
-não existe mais — próximas fases usam branch novo por fase, padrão `feat/talkx-f{N}-*`.
-- Plano completo: `docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md`
+Módulo em desenvolvimento ativo. **Plano vigente:** `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`
+(200 etapas X001–X200). Os planos anteriores (`PLANO_IMPLEMENTACAO_TALKX_100.md`,
+`PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md`, `PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md` e
+`PARIDADE.md`) estão marcados como SUBSTITUÍDO — não executar.
+- Convenção V4: uma etapa = uma PR; branch `<agente>/<tipo>-talkx-x<NNN>-<slug>-<AAMMDD-HHMM>`; título de
+  PR terminando em `(X<NNN>)`. Etapa do V3 em curso (PR aberta) termina pelo número V4 equivalente da tabela
+  "V3 → V4" do plano.
 - **NUNCA** imprimir tokens ou secrets no output.
 
 ## Contatos — critério de contato visível (2026-10-01, F5 / decisão D4)
-
-- **Tipos canônicos**: 6 (`cliente`, `fornecedor`, `transportadora`, `colaborador`, `prestador_servico`, `parceiro`) — `CONTACT_TYPES` em `src/utils/whatsappFileTypes.ts` ≡ CHECK `chk_contact_type` (guard `scripts/db-audit/contact-types-contract.test.mjs`). `sicoob_gifts` e `lead` são extintos: a Sicoob Bridge é desligada (decisão D2), não reativar o tipo no CHECK.
-- **Ícone e cor por tipo** vivem só em `src/components/contacts/contactTypeConfig.tsx`; ordem e tipos válidos de aba/preset em `contactTypeOrder.ts`. Não criar mapa paralelo.
-- **Exclusão** é soft-delete pelas RPCs `delete_contact(p_id)` / `delete_contacts(p_ids)` (decisão D1). Nunca `.delete()` direto em `contacts` (RLS sem policy de DELETE devolve 0 linhas sem erro). RPC com erro ou `null` = falha na UI. Restaurar: `docs/runbooks/contatos-exclusao-e-legados.md`.
 
 - **Contato visível em Contatos** = `deleted_at IS NULL` + `is_lid_legacy = false` + `phone ~ '^[0-9]{10,15}$'`.
 - `search_contacts(..., include_legacy boolean DEFAULT false)` e `contacts_count_by_type(include_legacy boolean DEFAULT false)` aplicam o critério quando `include_legacy` é falso (migration `20260930450000`).
 - O front só envia `include_legacy: true` quando o toggle "Mostrar legados" está ligado (`localStorage` `contact-show-legacy`); `useContactsKpi(includeLegacy)` repete o filtro para KPI Total == aba "Todos".
 - Mudar o critério = mudar os três juntos (migration + `CONTACT_VISIBLE_PHONE_PATTERN` em `src/hooks/crm/contactsAggregates.ts` + `scripts/db-audit/contacts-legacy-visibility.test.sh`).
+
+## Issues de alerta — política de comentários excessivos de bot (2026-10-02, E51)
+
+Issues com > 20 comentários de bot (ex.: `types-sync`, `db-live-guard`) acumulam ruído sem
+valor — comentários individuais não podem ter labels removidas e a issue fica ilegível.
+**Quando uma issue de alerta superar 20 comentários de bot: fechar a issue existente com
+comentário-resumo e abrir uma nova limpa** (mesmo título + link para a anterior). O
+`db-live-guard` já tem dedupe de 6 h (E44); o `types-sync` ganhará dedupe em E20.
+Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01.

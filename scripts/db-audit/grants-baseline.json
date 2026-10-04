@@ -1,8 +1,10 @@
 {
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
+        "multiplix_audiences_validate_shared_roles()",
+        "record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean, p_direction text)"
     ],
-    "generated_at": "2026-10-01",
+    "generated_at": "2026-10-03",
     "anon_table_select": [
         "agent_achievements",
         "agent_presence",
@@ -108,7 +110,6 @@
         "talkx_campaigns",
         "talkx_recipients",
         "talkx_segments",
-        "talkx_settings",
         "talkx_templates",
         "training_sessions",
         "user_devices",
@@ -130,6 +131,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 220,
-    "authenticated_execute_count": 146
+    "service_role_execute_count": 238,
+    "authenticated_execute_count": 125
 }

@@ -2,10 +2,10 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { useTalkXSegments, resolveAudience, countAudience, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, resolveAudience, countAudience, RULE_FIELDS, RULE_OPS, emptyRules, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type RuleField, type RuleOp } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
-import { useTalkXEventLogger } from '@/hooks/integrations/useTalkXEvents';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { SPEED_PROFILES, estimateSeconds, fmtDurationShort } from './talkxShared';
 
 export const VARIABLES = [
@@ -98,10 +98,17 @@ function zonedParts(instantMs: number, timezone: string): LocalDateTimeParts & {
   }
 }
 
-function initialWizardStep(): WizardStep {
+function isWizardStep(value: number): boolean {
+  return Number.isInteger(value) && value >= 1 && value <= 4;
+}
+
+/** Passo inicial: a URL manda; sem passo válido nela, vale o salvo no rascunho (V23). */
+function initialWizardStep(savedStep?: number | null): WizardStep {
   const raw = new URLSearchParams(window.location.search).get('step');
   const step = Number(raw);
-  return step >= 1 && step <= 4 && Number.isInteger(step) ? step as WizardStep : 1;
+  if (isWizardStep(step)) return step as WizardStep;
+  const saved = Number(savedStep);
+  return isWizardStep(saved) ? saved as WizardStep : 1;
 }
 
 function newDraftCreationKey(): string {
@@ -170,17 +177,147 @@ export function localToUTCInTimezone(localStr: string, tz: string): string {
   }
   return new Date(candidates[0]).toISOString();
 }
-export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
-  const { saveDraftCampaign, updateCampaign, replaceDraftRecipients, startCampaign } = useTalkX();
-  const { segments } = useTalkXSegments();
-  const { templates, registerUse } = useTalkXTemplates();
-  const logEvent = useTalkXEventLogger();
 
-  const [step, setStep] = useState<WizardStep>(() => initial?.step ?? initialWizardStep());
+/* ------------------------------------------------------------------ */
+/* V24 — filtros de audiência como regras (motor dos segmentos)        */
+/* ------------------------------------------------------------------ */
+
+/** Debounce das regras antes de consultar o motor (não consultar a cada tecla). */
+const AUDIENCE_FILTER_DEBOUNCE_MS = 350;
+/**
+ * Teto da amostra do passo 1 — mesmo teto que o motor usa em `resolveAudience`.
+ * Não é o snapshot de destinatários: quem gera os recipients é `persistSave`.
+ */
+export const AUDIENCE_PREVIEW_LIMIT = 5000;
+/** Chave do snapshot antigo (V23) que guardava a busca textual livre. */
+const AUDIENCE_SEARCH_KEY = 'search';
+
+/**
+ * Converte o snapshot solto do V23 (`company`/`tag`/`city`/`state`/`status`) nas
+ * regras do motor. `group`/`inactive`/`birthday` eram filtros MORTOS — as
+ * colunas nunca entravam no SELECT e eles nunca filtraram nada — então são
+ * descartados em vez de convertidos.
+ */
+function legacySnapshotToRules(snapshot: Record<string, unknown>): SegmentRules {
+  const rules: SegmentRule[] = [];
+  const add = (field: RuleField, op: RuleOp, value: unknown) => {
+    if (typeof value !== 'string') return;
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === 'all') return;
+    rules.push({ id: crypto.randomUUID(), field, op, value: trimmed });
+  };
+  add('company', 'eq', snapshot.company);
+  add('tags', 'contains', snapshot.tag);
+  add('city', 'eq', snapshot.city);
+  add('state', 'eq', snapshot.state);
+  add('conversation_status', 'eq', snapshot.status);
+  return { groups: [{ id: crypto.randomUUID(), match: 'and', rules }] };
+}
+
+/** Já está no formato de regras do motor quando traz `groups` com `rules`. */
+export function isSegmentRules(value: unknown): value is SegmentRules {
+  if (!value || typeof value !== 'object') return false;
+  const groups = (value as { groups?: unknown }).groups;
+  return Array.isArray(groups)
+    && groups.every((group) => !!group && Array.isArray((group as { rules?: unknown }).rules));
+}
+
+/** Hidratação: usa as regras do V24 quando existem; senão converte o snapshot do V23. */
+export function hydrateAudienceRules(filters: Record<string, unknown> | null | undefined): SegmentRules {
+  // Normaliza (`{ groups }` e só): o payload do V24 carrega também a busca
+  // textual como chave irmã, que não pode viajar dentro das regras.
+  if (isSegmentRules(filters)) return { groups: filters.groups };
+  return filters ? legacySnapshotToRules(filters) : emptyRules();
+}
+
+/**
+ * A busca textual continua em estado separado: nome/apelido/telefone não são
+ * campos do catálogo de regras (só empresa/e-mail/tags são), então a busca só
+ * refina a lista já filtrada pelo motor, sem ir ao servidor.
+ */
+export function hydrateContactSearch(filters: Record<string, unknown> | null | undefined): string {
+  const search = filters?.[AUDIENCE_SEARCH_KEY];
+  return typeof search === 'string' ? search : '';
+}
+
+/**
+ * Uma regra ainda em branco não pode ir para o motor: `rulesToPostgrest` lança
+ * em regra inválida (de propósito — nunca ampliar a audiência em silêncio).
+ */
+function isRuleComplete(rule: SegmentRule): boolean {
+  if (!RULE_FIELDS.some((field) => field.value === rule.field)) return false;
+  if (rule.op === 'is_set' || rule.op === 'is_empty') return true;
+  return rule.value.trim().length > 0;
+}
+
+/** Remove as regras incompletas antes de consultar e antes de persistir. */
+export function completedRules(rules: SegmentRules): SegmentRules {
+  return {
+    groups: rules.groups.map((group) => ({ ...group, rules: group.rules.filter(isRuleComplete) })),
+  };
+}
+
+/** Valor atual de uma regra simples de um campo (atalhos Empresa/Tag do seletor). */
+function findRuleValue(rules: SegmentRules, field: RuleField, op: RuleOp): string | null {
+  for (const group of rules.groups) {
+    const found = group.rules.find((rule) => rule.field === field && rule.op === op && rule.value.trim());
+    if (found) return found.value;
+  }
+  return null;
+}
+
+/**
+ * Garante pelo menos um grupo. O id do grupo novo chega pronto de fora para que
+ * a geração de id (`crypto.randomUUID`) nunca aconteça dentro do updater.
+ */
+function ensureGroups(rules: SegmentRules, freshGroupId: string): SegmentRuleGroup[] {
+  return rules.groups.length > 0 ? rules.groups : [{ id: freshGroupId, match: 'and', rules: [] }];
+}
+
+/** Acrescenta (ou substitui) a regra de um campo no primeiro grupo. */
+function upsertFieldRule(rules: SegmentRules, rule: SegmentRule, freshGroupId: string): SegmentRules {
+  const [first, ...rest] = ensureGroups(rules, freshGroupId);
+  const alreadyPresent = first.rules.some((item) => item.field === rule.field && item.op === rule.op && item.value === rule.value);
+  const kept = first.rules.filter((item) => item.field !== rule.field);
+  return { groups: [{ ...first, rules: alreadyPresent ? kept : [...kept, rule] }, ...rest] };
+}
+
+/** Acrescenta a regra informada ao primeiro grupo (sem deduplicar). */
+function appendFieldRule(rules: SegmentRules, rule: SegmentRule, freshGroupId: string): SegmentRules {
+  const [first, ...rest] = ensureGroups(rules, freshGroupId);
+  return { groups: [{ ...first, rules: [...first.rules, rule] }, ...rest] };
+}
+
+/** Remove todas as regras de um campo. */
+function removeFieldRules(rules: SegmentRules, field: RuleField): SegmentRules {
+  return {
+    groups: rules.groups.map((group) => ({ ...group, rules: group.rules.filter((rule) => rule.field !== field) })),
+  };
+}
+
+/** Debounce de um valor qualquer (as regras mudam a cada tecla digitada). */
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return debounced;
+}
+
+export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
+  const { saveDraftCampaign, updateCampaign, snapshotDraftAudience, startCampaign } = useTalkX();
+  const { segments } = useTalkXSegments();
+  const { templates } = useTalkXTemplates();
+  const { profile } = useAuth();
+
+  const [step, setStep] = useState<WizardStep>(() => initial?.step ?? initialWizardStep(campaign?.draft_step));
   const [name, setName] = useState(campaign?.name || '');
   const [description, setDescription] = useState(campaign?.description || '');
   const [objective, setObjective] = useState(campaign?.objective || 'engajamento');
-  const [suppressedByPhoneCount, setSuppressedByPhoneCount] = useState(0); // E63 phone-based
+  // X017: a supressão passa a ser calculada pelo servidor no snapshot; o último
+  // resultado confirma quantos contatos foram excluídos do público.
+  const [snapshotSuppressedCount, setSnapshotSuppressedCount] = useState(0);
   const [lastAutosave, setLastAutosave] = useState<Date | null>(null); // E68
   const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'error' | 'offline'>('idle');
   const [autosaveError, setAutosaveError] = useState<string | null>(null);
@@ -195,6 +332,15 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [audienceSource, setAudienceSource] = useState<AudienceSource>(campaign?.audience_source || (initial?.segmentId ? 'segment' : 'contacts'));
   const [segmentId, setSegmentId] = useState(campaign?.segment_id || initial?.segmentId || '');
   const [templateId, setTemplateId] = useState(campaign?.template_id || initial?.templateId || '');
+  // V26 — versão do template que originou a mensagem (talkx_template_versions.id).
+  // Resolvida a partir de `talkx_templates.current_version_id`, o ponteiro para a
+  // versão do conteúdo VIVO (mantido pela RPC update_talkx_template_with_snapshot).
+  // NÃO usar `max(version_number)` do histórico: até a V26 essa linha mais recente
+  // era o estado ANTERIOR à edição, então apontaria para o template errado numa
+  // coluna de auditoria (decisão 20261001-223527-33aa). O campo pode continuar
+  // nulo quando o template não tem versão corrente (ex.: criado antes do backfill
+  // e nunca editado) — nesse caso não há ponteiro correto a gravar.
+  const [templateVersionId, setTemplateVersionId] = useState<string | null>(campaign?.template_version_id ?? null);
   const [messageTemplate, setMessageTemplate] = useState(campaign?.message_template || '');
   const [typingDelay, setTypingDelay] = useState([
     (campaign?.typing_delay_min || 1500) / 1000,
@@ -206,6 +352,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   ]);
   const [speedProfile, setSpeedProfileState] = useState<'slow' | 'moderate' | 'fast'>(campaign?.speed_profile || 'moderate');
   const [connectionId, setConnectionId] = useState(campaign?.whatsapp_connection_id || '');
+  // V25 — responsável da campanha (profiles.id). Hidrata do rascunho; sem
+  // responsável gravado, cai no perfil do usuário logado (efeito abaixo).
+  const [owner, setOwner] = useState<string | null>(campaign?.owner ?? null);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [hydratedRecipientCampaignId, setHydratedRecipientCampaignId] = useState<string | null>(null);
   // Estado React sozinho não é suficiente para saves enfileirados: o callback
@@ -217,14 +366,15 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [draftCreationKey] = useState<string | null>(() => campaign?.id ? null : restoreOrCreateDraftCreationKey());
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const [showPreview, setShowPreview] = useState(true);
-  const [contactSearch, setContactSearch] = useState('');
+  // V24: o recorte do passo 1 é um conjunto de REGRAS do mesmo motor dos
+  // segmentos (antes era um snapshot solto, em parte com filtros mortos).
+  // A hidratação aceita o formato novo e converte o rascunho antigo do V23.
+  const savedFilters = (campaign?.audience_filters ?? null) as Record<string, unknown> | null;
+  const [audienceRules, setAudienceRules] = useState<SegmentRules>(() => hydrateAudienceRules(savedFilters));
+  // A busca textual não tem campo no catálogo (nome/apelido/telefone não são
+  // regra), por isso continua como estado próprio — só refina a lista.
+  const [contactSearch, setContactSearch] = useState(() => hydrateContactSearch(savedFilters));
   const [saving, setSaving] = useState(false);
-  const [companyFilter, setCompanyFilter] = useState('all');
-  const [tagFilter, setTagFilter] = useState('all');
-  const [cityFilter, setCityFilter] = useState('all');      // E63
-  const [groupFilter, setGroupFilter] = useState('all');    // E63
-  const [inactiveFilter, setInactiveFilter] = useState(false); // E63: sem interacao nos ultimos N dias
-  const [birthdayFilter, setBirthdayFilter] = useState(''); // E63: 'this_month' | 'next_30d' | ''
   const [mediaUrl, setMediaUrl] = useState(campaign?.media_url || '');
   const [mediaType, setMediaType] = useState(campaign?.media_type || '');
   const [hasMedia, setHasMedia] = useState(!!campaign?.media_url);
@@ -236,8 +386,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [sendWindowStart, setSendWindowStart] = useState(campaign?.send_window_start?.slice(0, 5) || '08:00');
   const [sendWindowEnd, setSendWindowEnd] = useState(campaign?.send_window_end?.slice(0, 5) || '18:00');
   const [businessHoursOnly, setBusinessHoursOnly] = useState(!!campaign?.business_hours_only);
-  const [respectSuppression, setRespectSuppression] = useState(true);
-  const [confirmConsent, setConfirmConsent] = useState(false);
+  const [respectSuppression, setRespectSuppression] = useState(campaign?.respect_suppression ?? true);
+  const [confirmConsent, setConfirmConsent] = useState(!!campaign?.confirm_consent);
   const [confirmContent, setConfirmContent] = useState(false);
   const [confirmSuppression, setConfirmSuppression] = useState(false);
 
@@ -247,12 +397,19 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     return () => window.clearInterval(timer);
   }, [isScheduled]);
 
-  // Template inicial (vindo da galeria) preenche a mensagem uma vez.
+  // Template inicial (vindo da galeria) preenche a mensagem e a versão uma vez.
   useEffect(() => {
     if (!campaign && templateId && !messageTemplate) {
       const t = templates.find((x) => x.id === templateId);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (t) { setMessageTemplate(t.content); if (t.media_url) { setHasMedia(true); setMediaUrl(t.media_url); setMediaType(t.media_type || 'image'); } }
+      /* eslint-disable react-hooks/set-state-in-effect -- hidratação única do template inicial */
+      if (t) {
+        setMessageTemplate(t.content);
+        // V26 — mesma regra do applyTemplate: a versão vem do ponteiro da coluna
+        // (conteúdo vivo), não do histórico; ausente/no nulo => permanece nulo.
+        setTemplateVersionId(t.current_version_id ?? null);
+        if (t.media_url) { setHasMedia(true); setMediaUrl(t.media_url); setMediaType(t.media_type || 'image'); }
+      }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId, templates.length]);
@@ -282,16 +439,57 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     if (!connectionId && connections && connections.length > 0) setConnectionId(connections[0].id);
   }, [connections, connectionId]);
 
-
-
-  const { data: contacts } = useQuery({
-    queryKey: ['contacts-talkx'],
+  // V25 — responsáveis elegíveis: perfis ativos. Exibimos `name` (fallback
+  // e-mail) e gravamos `id` (uuid de profiles.id), como em TalkXSuppression.
+  const { data: ownerProfiles } = useQuery({
+    queryKey: ['talkx-owner-profiles'],
     queryFn: async () => {
-      const { data } = await supabase.from('contacts')
-        .select('id, name, nickname, phone, company, avatar_url, tags')
-        .not('phone', 'is', null).order('name');
-      return data || [];
+      const { data } = await supabase.from('profiles')
+        .select('id, name, email')
+        .eq('is_active', true)
+        .order('name');
+      return (data ?? []) as { id: string; name: string | null; email: string | null }[];
     },
+  });
+
+  // Sem responsável gravado no rascunho, assume o perfil do usuário logado.
+  // Nunca sobrescreve uma escolha explícita (owner já definido).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!owner && profile?.id) setOwner(profile.id);
+  }, [owner, profile?.id]);
+
+
+
+  // V24 — o passo 1 consulta o MESMO motor dos segmentos: a lista e a contagem
+  // passam a respeitar cidade/UF/grupo/última interação (antes o SELECT não
+  // trazia essas colunas e os filtros correspondentes nunca filtravam nada).
+  // Debounce nas regras para não consultar a cada tecla.
+  const debouncedAudienceRules = useDebouncedValue(audienceRules, AUDIENCE_FILTER_DEBOUNCE_MS);
+  const effectiveAudienceRules = useMemo(() => completedRules(debouncedAudienceRules), [debouncedAudienceRules]);
+  const audienceRulesKey = JSON.stringify(effectiveAudienceRules);
+
+  // `resolveAudience`/`countAudience` ainda não aceitam AbortSignal; o
+  // cancelamento é aplicado aqui, no ponto de uso (sem tocar no arquivo do
+  // motor): o resultado de uma consulta já substituída não hidrata a lista.
+  const { data: contacts } = useQuery({
+    queryKey: ['talkx-audience-contacts', audienceRulesKey],
+    queryFn: async ({ signal }) => {
+      const rows = await resolveAudience(effectiveAudienceRules, AUDIENCE_PREVIEW_LIMIT);
+      if (signal.aborted) throw new DOMException('Consulta de audiência cancelada', 'AbortError');
+      return rows;
+    },
+    enabled: audienceSource === 'contacts',
+  });
+
+  const { data: audienceCount } = useQuery({
+    queryKey: ['talkx-audience-count', audienceRulesKey],
+    queryFn: async ({ signal }) => {
+      const total = await countAudience(effectiveAudienceRules);
+      if (signal.aborted) throw new DOMException('Consulta de audiência cancelada', 'AbortError');
+      return total;
+    },
+    enabled: audienceSource === 'contacts',
   });
 
   // Um draft existente precisa reabrir a sua audiência real. Sem este
@@ -322,22 +520,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     || (campaign.status !== 'draft' && campaign.status !== 'scheduled')
     || hydratedRecipientCampaignId === campaign.id;
 
-  // E54: filtragem por phone + contact_id com soft-delete e expiração
-  const { data: blacklistData } = useQuery({
-    queryKey: ['talkx-blacklist-ids'],
-    queryFn: async () => {
-      const now = new Date().toISOString();
-      const { data } = await supabase.from('talkx_blacklist')
-        .select('contact_id, phone').is('removed_at', null)
-        .or('expires_at.is.null,expires_at.gt.' + now);
-      return {
-        ids: new Set((data || []).map((b) => b.contact_id).filter(Boolean) as string[]),
-        phones: new Set((data || []).map((b) => b.phone?.replace(/\D/g, '') || null).filter(Boolean) as string[]),
-      };
-    },
-  });
-  const blacklistIds = blacklistData?.ids;
-  const blacklistPhones = blacklistData?.phones;
+  // X017: a lista de supressão (talkx_blacklist) deixou de ser lida no navegador.
+  // O servidor aplica o critério de elegível/suprimido no snapshot; nada aqui
+  // filtra ids antes de salvar (era a origem de divergência entre tela e disparo).
 
   const selectedSegment = useMemo(() => segments.find((s) => s.id === segmentId) ?? null, [segments, segmentId]);
   const selectedTemplate = useMemo(() => templates.find((t) => t.id === templateId) ?? null, [templates, templateId]);
@@ -356,49 +541,72 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       if (c.company) companySet.add(c.company);
       if (c.tags && Array.isArray(c.tags)) c.tags.forEach((t: string) => tagSet.add(t));
     });
-    return { companies: Array.from(companySet).sort(), tags: Array.from(tagSet).sort() };
+    return { companies: Array.from(companySet).sort((a, b) => a.localeCompare(b)), tags: Array.from(tagSet).sort((a, b) => a.localeCompare(b)) };
   }, [contacts]);
 
+  // V24 — os filtros de Empresa/Tag do seletor viram atalhos para regras do
+  // motor: o valor é lido das próprias regras e a lista já chega filtrada.
+  const companyFilter = findRuleValue(audienceRules, 'company', 'eq') ?? 'all';
+  const setCompanyFilter = useCallback((value: string) => {
+    const rule: SegmentRule = { id: crypto.randomUUID(), field: 'company', op: 'eq', value };
+    const freshGroupId = crypto.randomUUID();
+    setAudienceRules((prev) => (value === 'all' ? removeFieldRules(prev, 'company') : upsertFieldRule(prev, rule, freshGroupId)));
+  }, []);
+  const tagFilter = findRuleValue(audienceRules, 'tags', 'contains') ?? 'all';
+  const setTagFilter = useCallback((value: string) => {
+    const rule: SegmentRule = { id: crypto.randomUUID(), field: 'tags', op: 'contains', value };
+    const freshGroupId = crypto.randomUUID();
+    setAudienceRules((prev) => (value === 'all' ? removeFieldRules(prev, 'tags') : upsertFieldRule(prev, rule, freshGroupId)));
+  }, []);
+
+  // A busca textual refina a lista recebida do motor (nome/apelido/telefone não
+  // são campos do catálogo de regras), sem ir ao servidor.
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
-    let result = contacts;
-    if (companyFilter !== 'all') result = result.filter((c) => c.company === companyFilter);
-    if (tagFilter !== 'all') result = result.filter((c) => c.tags && Array.isArray(c.tags) && c.tags.includes(tagFilter));
-    if (cityFilter !== 'all') result = result.filter((c) => (c as Record<string,unknown>).city === cityFilter); // E63
-    if (groupFilter !== 'all') result = result.filter((c) => (c as Record<string,unknown>).group === groupFilter); // E63
-    if (inactiveFilter) result = result.filter((c) => {
-      const lastContact = (c as Record<string,unknown>).last_contact as string | null | undefined;
-      if (!lastContact) return true; // sem contato = inativo
-      return new Date().getTime() - new Date(lastContact).getTime() > 30 * 24 * 60 * 60 * 1000;
-    }); // E63
-    if (birthdayFilter) {
-      const now = new Date(); const mm = now.getMonth() + 1;
-      result = result.filter((c) => {
-        const bm = (c as Record<string,unknown>).birth_month as number | null | undefined;
-        if (!bm) return false;
-        if (birthdayFilter === 'this_month') return bm === mm;
-        if (birthdayFilter === 'next_30d') return bm === mm || bm === (mm % 12) + 1;
-        return false;
-      });
-    } // E63
-    if (contactSearch.trim()) {
-      const q = contactSearch.toLowerCase();
-      result = result.filter((c) =>
-        c.name?.toLowerCase().includes(q) || c.nickname?.toLowerCase().includes(q) ||
-        c.phone?.includes(q) || c.company?.toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [contacts, contactSearch, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter]); // E63
+    const query = contactSearch.trim().toLowerCase();
+    if (!query) return contacts;
+    return contacts.filter((c) =>
+      c.name?.toLowerCase().includes(query) || c.nickname?.toLowerCase().includes(query) ||
+      c.phone?.includes(query) || c.company?.toLowerCase().includes(query)
+    );
+  }, [contacts, contactSearch]);
+
+  const addAudienceRule = useCallback((field: RuleField = 'city') => {
+    const kind = RULE_FIELDS.find((definition) => definition.value === field)?.kind ?? 'text';
+    const op = RULE_OPS[kind]?.[0]?.value ?? 'eq';
+    const rule: SegmentRule = { id: crypto.randomUUID(), field, op, value: '' };
+    const freshGroupId = crypto.randomUUID();
+    setAudienceRules((prev) => appendFieldRule(prev, rule, freshGroupId));
+  }, []);
+
+  const updateAudienceRule = useCallback((id: string, patch: Partial<Omit<SegmentRule, 'id'>>) => {
+    setAudienceRules((prev) => ({
+      groups: prev.groups.map((group) => ({
+        ...group,
+        rules: group.rules.map((rule) => (rule.id === id ? { ...rule, ...patch } : rule)),
+      })),
+    }));
+  }, []);
+
+  const removeAudienceRule = useCallback((id: string) => {
+    setAudienceRules((prev) => ({
+      groups: prev.groups.map((group) => ({ ...group, rules: group.rules.filter((rule) => rule.id !== id) })),
+    }));
+  }, []);
+
+  const setGroupMatch = useCallback((groupId: string, match: 'and' | 'or') => {
+    setAudienceRules((prev) => ({
+      groups: prev.groups.map((group) => (group.id === groupId ? { ...group, match } : group)),
+    }));
+  }, []);
 
   /** Público total antes da supressão. */
   const audienceTotal = audienceSource === 'segment' ? (segmentEstimate ?? selectedSegment?.estimated_count ?? 0) : selectedContacts.length;
-  /** Bloqueados por supressão dentro do público selecionado (só calculável para seleção manual). */
+  /** Bloqueados por supressão dentro do público (calculado no servidor — X017). */
   const suppressedCount = useMemo(() => {
     if (audienceSource !== 'contacts') return 0;
-    const byId = blacklistIds ? selectedContacts.filter((id) => blacklistIds.has(id)).length : 0;
-    return byId + suppressedByPhoneCount; // E63: inclui phone-based
-  }, [blacklistIds, selectedContacts, audienceSource, suppressedByPhoneCount]);
+    return snapshotSuppressedCount;
+  }, [audienceSource, snapshotSuppressedCount]);
   const eligibleCount = Math.max(0, audienceTotal - suppressedCount);
 
   const previewMessage = useMemo(() => {
@@ -442,6 +650,14 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         setMediaUrl('');
         setMediaType('');
       }
+      // V26 — grava o ponteiro da versão do conteúdo VIVO do template
+      // (talkx_templates.current_version_id), e NÃO o max(version_number) do
+      // histórico: até a V26 essa linha mais recente era o estado ANTERIOR à
+      // edição (update_talkx_template_with_snapshot gravava a linha lida antes
+      // do UPDATE), então apontaria para o template errado numa coluna de
+      // auditoria (decisão 20261001-223527-33aa). Template sem versão corrente
+      // resulta em nulo — não há ponteiro correto a gravar.
+      setTemplateVersionId(t.current_version_id ?? null);
     }
   }, [templates]);
 
@@ -493,22 +709,33 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   }, [filteredContacts, selectedContacts]);
 
   const canProceed = useMemo(() => ({
-    1: name.trim().length > 0 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
-    2: messageTemplate.trim().length > 0,
+    1: name.trim().length >= 3 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
+    // V26 — só-mídia passa: aceita texto OU uma mídia real (URL preenchida; a RPC
+    // exige media_url e media_type juntos, então um tipo sem URL não pode avançar).
+    2: messageTemplate.trim().length > 0 || (hasMedia && mediaUrl.trim().length > 0),
     3: scheduleConfigIsValid,
     4: confirmConsent && confirmContent && confirmSuppression,
-  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
+  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, hasMedia, mediaUrl, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
 
   const buildPayload = useCallback((): Partial<TalkXCampaign> => ({
     name, description: description || null, objective, message_template: messageTemplate,
     audience_source: audienceSource,
-    audience_filters: audienceSource === 'contacts' ? { company: companyFilter, tag: tagFilter, city: cityFilter, group: groupFilter, inactive: inactiveFilter, birthday: birthdayFilter, search: contactSearch } : {}, // E63
+    // V24: as regras vão no MESMO JSON do motor de segmentos. `search` é o
+    // único resto do snapshot antigo (busca livre não existe no catálogo).
+    // X017: a seleção manual também é persistida — o servidor intersecta
+    // regras × seleção ao gerar o snapshot (não há mais envio de ids no save).
+    audience_filters: audienceSource === 'contacts'
+      ? { ...completedRules(audienceRules), search: contactSearch, contact_ids: selectedContacts }
+      : {},
     segment_id: audienceSource === 'segment' ? segmentId || null : null,
     template_id: templateId || null,
+    // V26 — versão do template usada (auditoria do que a campanha enviou).
+    template_version_id: templateVersionId || null,
     typing_delay_min: Math.round(typingDelay[0] * 1000), typing_delay_max: Math.round(typingDelay[1] * 1000),
     send_interval_min: Math.round(sendInterval[0] * 1000), send_interval_max: Math.round(sendInterval[1] * 1000),
     speed_profile: speedProfile,
     whatsapp_connection_id: connectionId || null,
+    owner: owner || null,
     media_url: hasMedia ? mediaUrl || null : null,
     media_type: hasMedia ? mediaType || null : null,
     scheduled_at: isScheduled && scheduledAt ? localToUTCInTimezone(scheduledAt, scheduleTimezone) : null,
@@ -516,7 +743,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     send_window_start: sendWindowEnabled ? `${sendWindowStart}:00` : null,
     send_window_end: sendWindowEnabled ? `${sendWindowEnd}:00` : null,
     business_hours_only: businessHoursOnly,
-  }), [name, description, objective, messageTemplate, audienceSource, companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch, segmentId, templateId, typingDelay, sendInterval, speedProfile, connectionId, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly]);
+    respect_suppression: respectSuppression,
+    confirm_consent: confirmConsent,
+    // V23: o passo atual do wizard é persistido para reabrir o rascunho no mesmo passo.
+    draft_step: step,
+  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, selectedContacts, segmentId, templateId, templateVersionId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
 
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
@@ -544,49 +775,41 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       const id = savedDraft.campaignId;
       draftRevisionRef.current = savedDraft.revision;
       setDraftRevision(savedDraft.revision);
-      if (persistedCampaignId) {
-        await logEvent(id, 'updated', 'Campanha atualizada');
-      } else {
+      if (!persistedCampaignId) {
+        // X025: os eventos 'created'/'updated' passaram a ser gravados pelo
+        // trigger do servidor (X024). O cliente não escreve mais eventos de
+        // ciclo de vida — só a trilha de operador (note/checklist).
         draftCampaignIdRef.current = id;
         setDraftCampaignId(id);
-        await logEvent(id, 'created', 'Campanha criada');
       }
 
-      let contactIds: string[] = [];
+      // X017: os destinatários são gerados NO SERVIDOR a partir do rascunho
+      // recém-salvo (origem, segmento, audience_filters e seleção manual). Uma
+      // única chamada transacional substitui a resolução de ids no navegador, o
+      // filtro de blacklist e o replace separado.
+      const snapshot = await snapshotDraftAudience.mutateAsync({
+        campaignId: id,
+        expectedRevision: draftRevisionRef.current,
+      });
+      setSnapshotSuppressedCount(snapshot?.suppressed ?? 0);
       if (audienceSource === 'segment' && selectedSegment) {
-        const audience = await resolveAudience(selectedSegment.rules as SegmentRules);
-        contactIds = audience.map((c) => c.id);
         await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).eq('id', selectedSegment.id);
-      } else {
-        contactIds = selectedContacts;
       }
-      if (respectSuppression && (blacklistIds || blacklistPhones)) {
-        if (blacklistIds) contactIds = contactIds.filter((contactId) => !blacklistIds.has(contactId));
-        if (blacklistPhones && blacklistPhones.size > 0) {
-          const { data: cPhones } = await supabase.from('contacts').select('id, phone').in('id', contactIds);
-          const byPhone = new Set((cPhones ?? []).filter((cp) => cp.phone && blacklistPhones.has(cp.phone.replace(/\D/g, ''))).map((cp) => cp.id));
-          if (byPhone.size > 0) { setSuppressedByPhoneCount(byPhone.size); contactIds = contactIds.filter((contactId) => !byPhone.has(contactId)); }
-        }
-      }
-      await replaceDraftRecipients.mutateAsync({ campaignId: id, contactIds });
-      if (!persistedCampaignId && selectedTemplate) await registerUse(selectedTemplate.id, selectedTemplate.use_count);
 
       if (mode === 'schedule' && payload.scheduled_at) {
         await updateCampaign.mutateAsync({ id, status: 'scheduled' });
-        await logEvent(id, 'scheduled', `Agendada para ${utcToLocalInTimezone(payload.scheduled_at, scheduleTimezone)} (${scheduleTimezone})`);
       }
       if (mode === 'launch') {
-        // A trilha de auditoria só é gravada após a Edge Function confirmar a
-        // solicitação; isso impede um falso "iniciado" quando o invoke falha.
+        // V12: a trilha (started) é gravada pelo servidor na transição; o cliente
+        // não insere o evento para não duplicar.
         const started = await startCampaign(id);
         if (!started) throw new Error('A campanha não foi iniciada. Verifique a conexão e tente novamente.');
-        await logEvent(id, 'started', 'Envio iniciado manualmente');
       }
       return id;
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, logEvent, audienceSource, selectedSegment, selectedContacts, respectSuppression, blacklistIds, blacklistPhones, replaceDraftRecipients, selectedTemplate, registerUse, startCampaign, scheduleTimezone]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegment, snapshotDraftAudience, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
@@ -611,10 +834,12 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   // E68: autosave debounce 3s -- dispara apenas apos mudanca real (nao na abertura)
   const autosaveFields = JSON.stringify({
     name, description, objective, messageTemplate, mediaUrl, hasMedia, mediaType,
-    audienceSource, segmentId, templateId, connectionId, speedProfile,
+    audienceSource, segmentId, templateId, connectionId, owner, speedProfile,
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
-    companyFilter, tagFilter, cityFilter, groupFilter, inactiveFilter, birthdayFilter, contactSearch,
+    audienceRules, contactSearch,
+    templateVersionId, // V26: versão do template aplicado (current_version_id; pode ser nula).
+    step, // V23: o passo do wizard entra no autosave — sair no passo 2 e reabrir volta ao passo 2.
   });
   const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
 
@@ -667,7 +892,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     }
   }, [autosaveFields, handleSave]);
 
-  const clearFilters = useCallback(() => { setContactSearch(''); setCompanyFilter('all'); setTagFilter('all'); setCityFilter('all'); setGroupFilter('all'); setInactiveFilter(false); setBirthdayFilter(''); }, [setCityFilter, setGroupFilter, setInactiveFilter, setBirthdayFilter]);
+  const clearFilters = useCallback(() => { setAudienceRules(emptyRules()); setContactSearch(''); }, []);
   const toggleMedia = useCallback((v: boolean) => { setHasMedia(v); if (!v) { setMediaUrl(''); setMediaType(''); } }, []);
   const toggleSchedule = useCallback((v: boolean) => {
     setIsScheduled(v);
@@ -680,12 +905,18 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     name, setName, description, setDescription, objective, setObjective,
     audienceSource, setAudienceSource, segmentId, setSegmentId, segments, selectedSegment, segmentEstimate,
     templateId, applyTemplate, templates, selectedTemplate,
+    // V26 — versão do template aplicada (talkx_template_versions.id do conteúdo
+    // vivo, via current_version_id); nula quando o template não tem versão corrente.
+    templateVersionId,
     messageTemplate, setMessageTemplate,
     typingDelay, setTypingDelay, sendInterval, setSendInterval, speedProfile, setSpeedProfile, messagesPerMinute,
     connectionId, setConnectionId, selectedContacts, showPreview, setShowPreview,
+    // V25 — responsável (profiles.id) e perfis ativos para o seletor do passo 1.
+    owner, setOwner, owners: ownerProfiles ?? [],
     contactSearch, setContactSearch, saving, companyFilter, setCompanyFilter,
-    tagFilter, setTagFilter, cityFilter, setCityFilter, groupFilter, setGroupFilter, // E63
-    inactiveFilter, setInactiveFilter, birthdayFilter, setBirthdayFilter, // E63
+    tagFilter, setTagFilter,
+    // V24 — regras de audiência (mesmo motor dos segmentos)
+    audienceRules, setAudienceRules, addAudienceRule, updateAudienceRule, removeAudienceRule, setGroupMatch, audienceCount,
     lastAutosave, autosaveStatus, autosaveError, autosaveIsDirty, retryAutosave, // E68
     scheduleTimezone, setScheduleTimezone: changeScheduleTimezone, scheduleConfigError, minimumScheduledAt, // E69
     mediaUrl, setMediaUrl, mediaType, setMediaType,

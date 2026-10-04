@@ -22,7 +22,7 @@ export function StickerCategoryBar({
   onToggleFavorites,
   onToggleRecent,
 }: StickerCategoryBarProps) {
-  const categories = [...new Set(stickers.map(s => s.category).filter(Boolean))].sort();
+  const categories = [...new Set(stickers.map(s => s.category).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const favCount = stickers.filter(s => s.is_favorite).length;
 
   return (

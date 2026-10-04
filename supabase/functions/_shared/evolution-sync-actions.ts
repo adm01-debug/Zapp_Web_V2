@@ -1,22 +1,35 @@
 // Shared sync action handlers for evolution-sync/index.ts
 import { evoFetch } from './evolution-send.ts';
+import type { EvolutionDbClient } from "./evolution-types.ts";
 
 const isGoFlavor = () => (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
 
 // Normaliza contato v2 ({id|remoteJid, pushName, profilePictureUrl}) e
 // GO /user/contacts ({Jid, FullName, PushName, BusinessName}) num shape único.
-// deno-lint-ignore no-explicit-any
-function normalizeEvoContact(contact: any): { remoteJid: string; name: string; avatarUrl: string | null } {
-  const remoteJid: string = contact.id || contact.remoteJid || contact.Jid || contact.jid || '';
-  const name: string = contact.pushName || contact.name || contact.verifiedName ||
-    contact.FullName || contact.PushName || contact.BusinessName || contact.FirstName || '';
-  const avatarUrl: string | null = contact.profilePictureUrl || contact.profilePicUrl || null;
+/**
+ * Contato como a Evolution devolve: v2 (`{id, name, pushName, profilePicUrl}`) ou
+ * GO (`{Jid, FullName, PushName, BusinessName}`). Só os campos que o normalizador lê —
+ * `isGroup` entra porque quem consome a lista filtra por ele.
+ */
+interface EvolutionContactPayload {
+  id?: string; remoteJid?: string; Jid?: string; jid?: string;
+  pushName?: string; name?: string; verifiedName?: string;
+  FullName?: string; PushName?: string; BusinessName?: string; FirstName?: string;
+  profilePictureUrl?: string | null; profilePicUrl?: string | null;
+  isGroup?: boolean;
+}
+
+function normalizeEvoContact(contact: unknown): { remoteJid: string; name: string; avatarUrl: string | null } {
+  const c = contact as EvolutionContactPayload;
+  const remoteJid: string = c.id || c.remoteJid || c.Jid || c.jid || '';
+  const name: string = c.pushName || c.name || c.verifiedName ||
+    c.FullName || c.PushName || c.BusinessName || c.FirstName || '';
+  const avatarUrl: string | null = c.profilePictureUrl || c.profilePicUrl || null;
   return { remoteJid, name, avatarUrl };
 }
 
 // Busca contatos na Evolution (v2: POST /chat/findContacts · GO: GET /user/contacts via tradutor).
-// deno-lint-ignore no-explicit-any
-async function fetchEvolutionContacts(evolutionApiUrl: string, evolutionApiKey: string, instanceName: string): Promise<any[]> {
+async function fetchEvolutionContacts(evolutionApiUrl: string, evolutionApiKey: string, instanceName: string): Promise<EvolutionContactPayload[]> {
   const resp = await evoFetch(evolutionApiUrl, evolutionApiKey,
     `/chat/findContacts/${instanceName}`, { where: {} });
   if (!resp.ok) {
@@ -29,9 +42,8 @@ async function fetchEvolutionContacts(evolutionApiUrl: string, evolutionApiKey: 
   return [];
 }
 
-// deno-lint-ignore no-explicit-any
 export async function syncContacts(
-  supabase: any, evolutionApiUrl: string, evolutionApiKey: string,
+  supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, corsHeaders: Record<string, string>, page: number, offset: number
 ): Promise<Response> {
   console.log(`[Sync] Fetching contacts from instance ${instanceName}`);
@@ -87,9 +99,8 @@ export function goHistoryNotSupported(actionName: string, corsHeaders: Record<st
   }, corsHeaders);
 }
 
-// deno-lint-ignore no-explicit-any
 export async function syncMessages(
-  supabase: any, evolutionApiUrl: string, evolutionApiKey: string,
+  supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, contactPhone: string, corsHeaders: Record<string, string>
 ): Promise<Response> {
   if (!contactPhone) throw new Error('contactPhone is required');
@@ -140,9 +151,8 @@ export async function syncMessages(
   return jsonRes({ success: true, synced, totalFetched: messages.length }, corsHeaders);
 }
 
-// deno-lint-ignore no-explicit-any
 export async function syncAllMessages(
-  supabase: any, evolutionApiUrl: string, evolutionApiKey: string,
+  supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, messagesPerContact: number, corsHeaders: Record<string, string>
 ): Promise<Response> {
   if (isGoFlavor()) return goHistoryNotSupported('sync-all-messages', corsHeaders);
@@ -198,7 +208,6 @@ export async function syncAllMessages(
 
 // v2: POST /webhook/set · GO: o tradutor converte em POST /instance/connect
 // {webhookUrl, subscribe:['ALL'], immediate} com o token da instância (GO_GAPS D1).
-// deno-lint-ignore no-explicit-any
 export async function setupWebhook(
   evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, supabaseUrl: string, webhookUrlOverride: string | undefined, corsHeaders: Record<string, string>
@@ -215,11 +224,10 @@ export async function setupWebhook(
   });
 }
 
-// deno-lint-ignore no-explicit-any
-export async function cleanupMock(supabase: any, corsHeaders: Record<string, string>): Promise<Response> {
+export async function cleanupMock(supabase: EvolutionDbClient, corsHeaders: Record<string, string>): Promise<Response> {
   const { data: mockContacts } = await supabase.from('contacts').select('id').like('id', 'c1000001-%');
   if (mockContacts?.length) {
-    const mockIds = mockContacts.map((c: { id: string }) => c.id);
+    const mockIds = mockContacts.map((c) => (c as { id: string }).id);
     await supabase.from('messages').delete().in('contact_id', mockIds);
     await supabase.from('contact_notes').delete().in('contact_id', mockIds);
     await supabase.from('contacts').delete().in('id', mockIds);
@@ -228,9 +236,8 @@ export async function cleanupMock(supabase: any, corsHeaders: Record<string, str
   return jsonRes({ success: true, removed: 0, message: 'No mock data found' }, corsHeaders);
 }
 
-// deno-lint-ignore no-explicit-any
 export async function fullSync(
-  supabase: any, evolutionApiUrl: string, evolutionApiKey: string,
+  supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, supabaseUrl: string, corsHeaders: Record<string, string>
 ): Promise<Response> {
   const results: Record<string, unknown> = {};
@@ -238,7 +245,7 @@ export async function fullSync(
   // Cleanup
   const { data: mockContacts } = await supabase.from('contacts').select('id').like('id', 'c1000001-%');
   if (mockContacts?.length) {
-    const mockIds = mockContacts.map((c: { id: string }) => c.id);
+    const mockIds = mockContacts.map((c) => (c as { id: string }).id);
     await supabase.from('messages').delete().in('contact_id', mockIds);
     await supabase.from('contact_notes').delete().in('contact_id', mockIds);
     await supabase.from('contacts').delete().in('id', mockIds);
@@ -266,7 +273,7 @@ export async function fullSync(
       if (!jid.endsWith('@s.whatsapp.net') || c.isGroup) { totalSkipped++; continue; }
       const phone = jid.replace('@s.whatsapp.net', '');
       if (!phone || phone.length < 6) { totalSkipped++; continue; }
-      validContacts.push({ phone, name: name.trim() || phone, avatar_url: avatarUrl, whatsapp_connection_id: conn!.id });
+      validContacts.push({ phone, name: name.trim() || phone, avatar_url: avatarUrl, whatsapp_connection_id: conn!.id as string });
     }
     const limit = Math.min(validContacts.length, 500);
     for (let i = 0; i < limit; i++) {
@@ -304,16 +311,28 @@ export const WEBHOOK_EVENTS = [
   'LABELS_EDIT', 'LABELS_ASSOCIATION', 'CALL',
 ];
 
-// deno-lint-ignore no-explicit-any
-function parseEvolutionMessage(messageObj: any): { content: string; messageType: string; shouldSkip?: boolean } {
-  if (messageObj.conversation) return { content: messageObj.conversation, messageType: 'text' };
-  if (messageObj.extendedTextMessage?.text) return { content: messageObj.extendedTextMessage.text, messageType: 'text' };
-  if (messageObj.imageMessage) return { content: messageObj.imageMessage.caption || '[Imagem]', messageType: 'image' };
-  if (messageObj.videoMessage) return { content: messageObj.videoMessage.caption || '[Vídeo]', messageType: 'video' };
-  if (messageObj.audioMessage) return { content: '[Áudio]', messageType: 'audio' };
-  if (messageObj.documentMessage) return { content: messageObj.documentMessage.fileName || '[Documento]', messageType: 'document' };
-  if (messageObj.stickerMessage) return { content: '[Sticker]', messageType: 'sticker' };
-  if (messageObj.reactionMessage) return { content: '', messageType: 'reaction', shouldSkip: true };
+/** Mensagem recebida como a Evolution manda (v2/GO): só os campos que este parser lê. */
+interface EvolutionInboundMessage {
+  conversation?: string;
+  extendedTextMessage?: { text?: string };
+  imageMessage?: { caption?: string };
+  videoMessage?: { caption?: string };
+  audioMessage?: unknown;
+  documentMessage?: { fileName?: string };
+  stickerMessage?: unknown;
+  reactionMessage?: unknown;
+}
+
+function parseEvolutionMessage(messageObj: unknown): { content: string; messageType: string; shouldSkip?: boolean } {
+  const message = messageObj as EvolutionInboundMessage;
+  if (message.conversation) return { content: message.conversation, messageType: 'text' };
+  if (message.extendedTextMessage?.text) return { content: message.extendedTextMessage.text, messageType: 'text' };
+  if (message.imageMessage) return { content: message.imageMessage.caption || '[Imagem]', messageType: 'image' };
+  if (message.videoMessage) return { content: message.videoMessage.caption || '[Vídeo]', messageType: 'video' };
+  if (message.audioMessage) return { content: '[Áudio]', messageType: 'audio' };
+  if (message.documentMessage) return { content: message.documentMessage.fileName || '[Documento]', messageType: 'document' };
+  if (message.stickerMessage) return { content: '[Sticker]', messageType: 'sticker' };
+  if (message.reactionMessage) return { content: '', messageType: 'reaction', shouldSkip: true };
   return { content: '[Mensagem não suportada]', messageType: 'text' };
 }
 

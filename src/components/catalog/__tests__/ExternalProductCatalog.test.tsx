@@ -3,6 +3,10 @@
  *
  * Cobre: grade/lista reusando CatalogProductCard, paginação TalkXPagination,
  * estados de vazio/erro do Talk X e o chip "Meus favoritos" (catalog_favorites).
+ * CT-26 — cabeçalho sticky da lista (`talkx-table`, linhas de 72px, role="row").
+ * CT-29 — paginação sem flash (opacity-60 + barra fina em `isFetching`).
+ * A virtualização do CT-27 tem teste próprio (usa o virtualizador real e mede
+ * a janela renderizada): ExternalProductCatalog.virtualizacao.test.tsx.
  */
 import { toastError } from './catalogMocks';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -29,21 +33,27 @@ vi.mock('../CatalogProductCard', () => ({
     mode,
     priority,
     sizes,
+    isFavorite,
+    onToggleFavorite,
   }: {
     product: ExternalProduct;
     onSend?: (p: ExternalProduct) => void;
     mode?: string;
     priority?: boolean;
     sizes?: string;
+    isFavorite?: boolean;
+    onToggleFavorite?: (id: string) => void;
   }) => (
     <div
       data-testid={`card-${product.id}`}
       data-mode={mode}
       data-priority={priority ? 'true' : 'false'}
       data-sizes={sizes ?? ''}
+      data-favorite={isFavorite ? 'true' : 'false'}
     >
       <span>{product.name}</span>
       <button type="button" onClick={() => onSend?.(product)}>Enviar</button>
+      <button type="button" onClick={() => onToggleFavorite?.(product.id)}>Favoritar</button>
     </div>
   ),
   CatalogProductCardSkeleton: ({ mode }: { mode?: string }) => (
@@ -93,6 +103,10 @@ const baseCatalog = () => ({
   categories: [{ id: 'cat1', name: 'Brindes', parent_id: null, products_count: 12 }],
   suppliers: [{ id: 'sup1', name: 'Promo Brindes' }],
   loading: false,
+  // CT-29 — o hook real expõe as duas flags separadas (loading = isLoading ||
+  // isFetching); a UI usa isInitialLoading p/ skeleton e isFetching p/ a barra.
+  isInitialLoading: false,
+  isFetching: false,
   error: null as string | null,
   errorCode: null as string | null,
   errorStatus: null as number | null,
@@ -269,12 +283,14 @@ describe('ExternalProductCatalog — CT-16 (chip Meus favoritos)', () => {
     expect(screen.getByText('Sem favoritos ainda')).toBeInTheDocument();
   });
 
-  it('envia pelo SendProductDialog já com o contato da conversa (CT-14)', () => {
+  it('envia pelo SendProductDialog já com o contato da conversa (CT-14)', async () => {
     renderCatalog({ presetContact: CONTACT });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Enviar' })[0]);
 
-    expect(screen.getByTestId('send-dialog')).toHaveTextContent('Caneta Bambu|Cliente da Conversa');
+    // CT-71 — o dialog entra por React.lazy: aguarda o chunk resolver.
+    const dialog = await screen.findByTestId('send-dialog');
+    expect(dialog).toHaveTextContent('Caneta Bambu|Cliente da Conversa');
   });
 });
 
@@ -292,5 +308,153 @@ describe('ExternalProductCatalog — CT-72 (capas acima da dobra)', () => {
     );
 
     expect(prioridades).toEqual(['true', 'true', 'true', 'true', 'false', 'false']);
+  });
+});
+
+describe('ExternalProductCatalog — CT-26 (cabeçalho sticky no modo lista)', () => {
+  it('lista: tabela .talkx-table com cabeçalho sticky, 5 colunas e linhas de 72px com role="row"', () => {
+    mockCatalog.mockReturnValue({
+      ...baseCatalog(),
+      products: [product('p1', 'Caneta Bambu'), product('p2', 'Squeeze Aço')],
+      totalProducts: 2,
+    });
+    const { container } = renderCatalog();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver em lista' }));
+
+    // o DialogContent (Radix) é portalado para o body — não está dentro de
+    // `container`; por isso as buscas de tabela usam o document.
+    const table = document.querySelector('table.talkx-table');
+    expect(table).not.toBeNull();
+
+    // cabeçalho de colunas fixo no topo do container de scroll (mesmo padrão
+    // de stickyHeader do talkxShared.TalkXTable)
+    const thead = table!.querySelector('thead') as HTMLElement;
+    expect(thead.className).toContain('sticky');
+    expect(thead.className).toContain('top-0');
+    expect(Array.from(thead.querySelectorAll('th')).map((th) => th.textContent)).toEqual([
+      'Produto',
+      'Marca / Fornecedor',
+      'Preço',
+      'Estoque',
+      'Ações',
+    ]);
+    expect(thead.querySelectorAll('th[scope="col"]')).toHaveLength(5);
+
+    const linhas = Array.from(document.querySelectorAll('tbody tr[role="row"]'));
+    expect(linhas).toHaveLength(2);
+    linhas.forEach((linha) => expect((linha as HTMLElement).style.height).toBe('72px'));
+    // a linha cobre as 5 colunas do cabeçalho e o conteúdo é o card em modo lista
+    expect(linhas[0].querySelector('td')?.getAttribute('colspan')).toBe('5');
+    expect(screen.getByTestId('card-p1')).toHaveAttribute('data-mode', 'list');
+    expect(screen.getByTestId('card-p2')).toHaveAttribute('data-mode', 'list');
+  });
+
+  it('grade continua sem tabela (o cabeçalho é só da lista)', () => {
+    mockCatalog.mockReturnValue({
+      ...baseCatalog(),
+      products: [product('p1', 'Caneta Bambu')],
+      totalProducts: 1,
+    });
+    const { container } = renderCatalog();
+
+    expect(document.querySelector('table.talkx-table')).toBeNull();
+    expect(container.querySelector('table')).toBeNull();
+    expect(screen.getByTestId('card-p1')).toHaveAttribute('data-mode', 'grade');
+  });
+});
+
+describe('ExternalProductCatalog — CT-29 (paginação sem flash)', () => {
+  it('isFetching durante a paginação: mantém os cards com opacity-60 + barra, sem skeleton', () => {
+    // o hook real mantém `loading` true durante qualquer fetch (isLoading ||
+    // isFetching) — é justamente esse valor que trocava os cards por skeleton.
+    mockCatalog.mockReturnValue({ ...baseCatalog(), loading: true, isInitialLoading: false, isFetching: true });
+    renderCatalog();
+
+    expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument();
+    expect(screen.getByTestId('card-p1')).toBeInTheDocument();
+    expect(screen.getByTestId('card-p2')).toBeInTheDocument();
+    expect(screen.getByTestId('catalog-products')).toHaveClass('opacity-60');
+    expect(screen.getByTestId('catalog-fetching-bar')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Atualizando produtos' })).toBeInTheDocument();
+  });
+
+  it('carga inicial (isInitialLoading): aí sim mostra os skeletons e nenhuma barra', () => {
+    mockCatalog.mockReturnValue({
+      ...baseCatalog(),
+      products: [],
+      totalProducts: 0,
+      loading: true,
+      isInitialLoading: true,
+      isFetching: true,
+    });
+    renderCatalog();
+
+    expect(screen.getAllByTestId('skeleton')).toHaveLength(8);
+    expect(screen.queryByTestId('catalog-fetching-bar')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('catalog-products')).not.toBeInTheDocument();
+  });
+
+  it('modo lista também esmaece as linhas antigas em refetch (sem skeleton)', () => {
+    mockCatalog.mockReturnValue({ ...baseCatalog(), isFetching: true });
+    renderCatalog();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver em lista' }));
+
+    expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument();
+    expect(screen.getByTestId('card-p1')).toHaveAttribute('data-mode', 'list');
+    expect(screen.getByTestId('catalog-products')).toHaveClass('opacity-60');
+    expect(screen.getByTestId('catalog-fetching-bar')).toBeInTheDocument();
+  });
+
+  it('sem fetch em andamento: cards sem opacity reduzida e sem barra', () => {
+    renderCatalog();
+
+    expect(screen.getByTestId('catalog-products')).not.toHaveClass('opacity-60');
+    expect(screen.queryByTestId('catalog-fetching-bar')).not.toBeInTheDocument();
+  });
+});
+
+describe('ExternalProductCatalog — CT-25 (favoritar pelo card)', () => {
+  it('o card recebe isFavorite + onToggleFavorite: clicar favorita via hook (id → produto)', () => {
+    const toggle = vi.fn();
+    mockFavorites.mockReturnValue({
+      favorites: [],
+      favoriteIds: new Set<string>(),
+      isFavorite: () => false,
+      isLoading: false,
+      toggle,
+    });
+    renderCatalog();
+
+    // o catálogo liga o toggle do hook ao card (sem ele o menu/coração nem
+    // renderiza — o item "Favoritar" é condicionado ao callback)
+    expect(screen.getByTestId('card-p1')).toHaveAttribute('data-favorite', 'false');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Favoritar' })[0]);
+
+    expect(toggle).toHaveBeenCalledTimes(1);
+    expect(toggle).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'p1', name: 'Caneta Bambu', sku: 'SKU-p1' })
+    );
+  });
+
+  it('no chip "Meus favoritos" o card mostra o estado favorito e remove pelo mesmo toggle', () => {
+    const toggle = vi.fn();
+    mockFavorites.mockReturnValue({
+      favorites: [FAVORITE],
+      favoriteIds: new Set(['p9']),
+      isFavorite: (id: string) => id === 'p9',
+      isLoading: false,
+      toggle,
+    });
+    renderCatalog();
+
+    fireEvent.click(screen.getByRole('button', { name: /Meus favoritos/i }));
+
+    expect(screen.getByTestId('card-p9')).toHaveAttribute('data-favorite', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Favoritar' }));
+    expect(toggle).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'p9', name: 'Caneca Favorita', sku: 'SKU-P9' })
+    );
   });
 });

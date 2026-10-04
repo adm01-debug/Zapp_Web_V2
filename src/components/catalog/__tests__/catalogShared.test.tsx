@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, renderHook, act } from '@testing-library/react';
-import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar, MetaTile, SectionCard, AdvancedFilterChips, countAdvancedFilters, DEFAULT_ADVANCED_FILTERS, matchesAnySelected, TagMultiSelectChips, countLabel, CatalogErrorState, useRateLimitCooldown, type AdvancedFilters } from '../catalogShared';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { formatPrice, formatStock, resolveProductBadge, ColorChips, ColorSwatch, PriceTag, StockPill, LowStockPill, ProductThumb, FavoriteButton, CatalogKpiStrip, CategoryChips, CatalogFilterBar, MetaTile, SectionCard, AdvancedFilterChips, countAdvancedFilters, DEFAULT_ADVANCED_FILTERS, matchesAnySelected, TagMultiSelectChips, countLabel, CatalogErrorState, useRateLimitCooldown, PhonePreview, type AdvancedFilters } from '../catalogShared';
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { Layers } from 'lucide-react';
 
@@ -215,9 +217,15 @@ const mockStats = (overrides: Partial<CatalogStats> = {}): CatalogStats => ({
 });
 
 describe('CatalogKpiStrip', () => {
-  it('sem stats (undefined), não renderiza nada', () => {
+  // CT-74: este caso mudou DE PROPOSITO. O strip sem dados passou a reservar o
+  // espaço (esqueleto) porque devolver `null` fazia a faixa nascer depois do
+  // primeiro paint e empurrar a grade — 0,2211 dos 0,2455 de CLS medidos no
+  // Lighthouse de produção em 02/10.
+  it('sem stats (undefined), reserva o espaço com o esqueleto (não some)', () => {
     const { container } = render(<CatalogKpiStrip stats={undefined} />);
-    expect(container.firstChild).toBeNull();
+
+    expect(container.querySelector('[data-testid="catalog-kpi-strip-placeholder"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="catalog-kpi-strip"]')).toBeNull();
   });
 
   it('com stats completo, renderiza os 6 KPIs', () => {
@@ -616,5 +624,44 @@ describe('catalogShared — CT-59/CT-60', () => {
       render(<CatalogErrorState code="CATALOG_NOT_CONFIGURED" />);
       expect(screen.getByText('CATALOG_NOT_CONFIGURED')).toBeInTheDocument();
     });
+  });
+});
+
+describe('PhonePreview (CT-37)', () => {
+  it('renderiza a moldura .catalog-phone com cabeçalho, bolha e a mensagem', () => {
+    const { container } = render(
+      <PhonePreview message="Oi! Olha esse produto" images={[{ url: 'https://x/a.jpg', label: 'Azul' }]} />
+    );
+
+    const phone = container.querySelector('.catalog-phone');
+    expect(phone).not.toBeNull();
+    expect(phone!.querySelector('.catalog-phone__header')).toHaveTextContent('Cliente');
+    expect(phone!.querySelector('.catalog-phone__bubble')).toHaveTextContent('Oi! Olha esse produto');
+    expect(screen.getByAltText('Prévia')).toHaveAttribute('src', 'https://x/a.jpg');
+  });
+
+  it('usa o título recebido e mostra o contador "1/N" com mais de uma foto', () => {
+    const { container } = render(
+      <PhonePreview
+        title="Tomaz"
+        message="oi"
+        images={[{ url: 'https://x/a.jpg', label: 'A' }, { url: 'https://x/b.jpg', label: 'B' }]}
+      />
+    );
+
+    expect(container.querySelector('.catalog-phone__header')).toHaveTextContent('Tomaz');
+    expect(screen.getByText('1/2')).toBeInTheDocument();
+  });
+
+  it('sem fotos, mantém a bolha com o texto e não renderiza imagem', () => {
+    const { container } = render(<PhonePreview message="só texto" images={[]} />);
+
+    expect(container.querySelector('.catalog-phone__bubble')).toHaveTextContent('só texto');
+    expect(screen.queryByAltText('Prévia')).not.toBeInTheDocument();
+  });
+
+  it('catalogShared.tsx não contém cor hexadecimal literal (aceite CT-37)', () => {
+    const fonte = readFileSync(path.resolve(__dirname, '..', 'catalogShared.tsx'), 'utf8');
+    expect(fonte.match(/#[0-9a-fA-F]{6}\b/g)).toBeNull();
   });
 });

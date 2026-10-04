@@ -43,6 +43,7 @@ CREATE TABLE public.queue_members(id int);
 CREATE TABLE public.queues(id int);
 CREATE TABLE public.sales_deals(id int);
 CREATE TABLE public.talkx_campaign_events(id int);
+CREATE TABLE public.talkx_campaign_segments(id int);
 CREATE TABLE public.talkx_campaigns(id int);
 CREATE TABLE public.talkx_recipients(id int);
 CREATE TABLE public.talkx_segments(id int);
@@ -62,7 +63,7 @@ CREATE PUBLICATION supabase_realtime FOR TABLE
   public.messages, public.multiplix_dispatches, public.multiplix_recipients,
   public.notifications, public.payment_links,
   public.queue_goals, public.queue_members, public.queues, public.sales_deals,
-  public.talkx_campaign_events, public.talkx_campaigns, public.talkx_recipients,
+  public.talkx_campaign_events, public.talkx_campaign_segments, public.talkx_campaigns, public.talkx_recipients,
   public.talkx_segments, public.talkx_templates,
   public.team_conversation_members, public.team_conversations, public.team_message_reactions, public.team_message_receipts, public.team_messages, public.warroom_alerts,
   public.whatsapp_connections, public.whisper_messages;

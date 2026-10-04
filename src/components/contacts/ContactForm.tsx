@@ -85,11 +85,16 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
   const v = useContactFormValidation(values, onChange, onSubmit, excludeContactId);
 
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  // E81: o token so e buscado quando o campo de endereco ganha foco. Antes o efeito
+  // abaixo rodava no mount (deps []), entao abrir o cadastro ja gastava um get-mapbox-token,
+  // mesmo sem o operador tocar no campo.
+  const [addressFocused, setAddressFocused] = useState(false);
   useEffect(() => {
+    if (!addressFocused) return;
     let cancelled = false;
     getMapboxToken().then((token) => { if (!cancelled) setMapboxToken(token); }).catch(() => {});
     return () => { cancelled = true; };
-  }, []);
+  }, [addressFocused]);
 
   const addressAutocomplete = useAddressAutocomplete({
     token: mapboxToken,
@@ -218,7 +223,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
           <div className="space-y-1.5">
             <Label htmlFor="contact_type">Tipo de Contato</Label>
             <Select value={values.contact_type || 'cliente'} onValueChange={(val) => onChange('contact_type', val)}>
-              <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Tipo de contato" className="bg-input border-border"><SelectValue /></SelectTrigger>
               <SelectContent>{CONTACT_TYPES.map((type) => (
                 <SelectItem key={type.value} value={type.value}><div className="flex items-center gap-2"><span className={cn("w-2 h-2 rounded-full", type.color)} />{type.label}</div></SelectItem>
               ))}</SelectContent>
@@ -315,7 +320,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
         {/* Endereço */}
         <div className="space-y-3 pt-2 border-t border-border/30">
           <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5" /> Endereço <span className="text-muted-foreground/60">(opcional)</span>
+            <MapPin className="w-3.5 h-3.5" /> Endereço <span className="text-muted-foreground">(opcional)</span>
           </p>
 
           <div className="grid grid-cols-3 gap-4">
@@ -347,7 +352,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
                     addressAutocomplete.setQuery(e.target.value);
                     setAddressListOpen(true);
                   }}
-                  onFocus={() => setAddressListOpen(true)}
+                  onFocus={() => { setAddressFocused(true); setAddressListOpen(true); }}
                   onKeyDown={(e) => {
                     addressAutocomplete.onKeyDown(e);
                     if (e.key === 'Escape') setAddressListOpen(false);
@@ -376,6 +381,11 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
                     onRetry={() => addressAutocomplete.retrySuggest()}
                   />
                 )}
+                {/* E64: o leitor de tela anuncia o endereço escolhido. Vive fora da lista (que
+                    desmonta ao selecionar) e o nome nunca entra em logAudit (E50). */}
+                <div role="status" aria-live="polite" className="sr-only" data-testid="sr-selecao-endereco">
+                  {addressAutocomplete.selectionAnnouncement}
+                </div>
               </div>
             </div>
           </div>

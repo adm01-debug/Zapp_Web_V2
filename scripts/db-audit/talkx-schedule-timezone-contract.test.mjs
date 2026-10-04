@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [migration, sender, editor, delivery, scheduled, windowShared, scheduler, resumePolicy] = await Promise.all([
+const [migration, sender, editor, delivery, scheduled, windowShared, scheduler, resumePolicy, recipientProcessor] = await Promise.all([
   readFile(new URL('../../supabase/migrations/20260911200000_persist_talkx_schedule_timezone.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/useCampaignEditor.ts', import.meta.url), 'utf8'),
@@ -11,6 +11,9 @@ const [migration, sender, editor, delivery, scheduled, windowShared, scheduler, 
   readFile(new URL('../../supabase/functions/_shared/talkx-window.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-scheduler/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/talkx-resume-policy.ts', import.meta.url), 'utf8'),
+  // X011: o corpo por-destinatário saiu de index.ts para process-recipient.ts —
+  // a asserção de `missing_provider_message_id` segue o dono da lógica.
+  readFile(new URL('../../supabase/functions/talkx-send/process-recipient.ts', import.meta.url), 'utf8'),
 ]);
 
 test('Talk X persists an IANA timezone and rejects unsafe scheduling configuration', () => {
@@ -30,14 +33,14 @@ test('Talk X evaluates the delivery window in the campaign timezone and fails cl
   // deliveryWindowStatus foi extraida para _shared/talkx-window.ts (auditoria
   // 2026-09-16) para que talkx-scheduler reuse a MESMA logica em vez de
   // reimplementar; talkx-send agora importa em vez de definir localmente.
-  assert.match(sender, /import \{ DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus \} from "\.\.\/_shared\/talkx-window\.ts"/);
+  assert.match(sender, /import \{ DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours \} from "\.\.\/_shared\/talkx-window\.ts"/);
   assert.match(windowShared, /function deliveryWindowStatus/);
   assert.match(windowShared, /invalid_schedule_timezone/);
   assert.doesNotMatch(sender, /nowBR|hmBR|horário de Brasília/);
-  assert.match(sender, /const windowStatus = deliveryWindowStatus\(campaign\)/);
+  assert.match(sender, /const windowStatus = deliveryWindowStatus\(campaign/);
   assert.match(sender, /extractMessageId/);
   assert.match(sender, /sendWhatsAppAudio/);
-  assert.match(sender, /missing_provider_message_id/);
+  assert.match(recipientProcessor, /missing_provider_message_id/);
 });
 
 test('Talk X wizard preserves the selected timezone through payload and review', () => {

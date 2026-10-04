@@ -10,43 +10,40 @@ import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCa
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { Database } from '@/integrations/supabase/types';
-import { IconTile, TalkXEmptyState, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
+import { IconTile, TalkXEmptyState, TalkXErrorState, TalkXSkeletonRows, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
 
-interface Props { campaigns: TalkXCampaign[] }
+interface Props { campaigns: TalkXCampaign[]; isLoading?: boolean; isError?: boolean }
 type Period = '7d' | '30d' | '90d';
-type TalkXRecipientReplyRow = Pick<
-  Database['public']['Tables']['talkx_recipients']['Row'],
-  'contact_id' | 'sent_at'
->;
 const PERIOD_LABELS: Record<Period, string> = { '7d': 'Últimos 7 dias', '30d': 'Últimos 30 dias', '90d': 'Últimos 90 dias' };
 const DAYS: Record<Period, number> = { '7d': 7, '30d': 30, '90d': 90 };
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-export function TalkXAnalytics({ campaigns }: Props) {
+export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   const [period, setPeriod] = useState<Period>('30d');
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null); // E74
   const days = DAYS[period];
   // pageLoadTime captured once via lazy init (outside render); cutoff derived stably
   const [pageLoadTime] = useState<number>(() => Date.now());
   const cutoff = useMemo(() => new Date(pageLoadTime - days * 86_400_000), [pageLoadTime, days]);
-  const filtered = useMemo(() => campaigns.filter((c) => !c.started_at || new Date(c.started_at) >= cutoff), [campaigns, cutoff]);
+  const filtered = useMemo(() => campaigns.filter((c) => c.started_at && new Date(c.started_at) >= cutoff), [campaigns, cutoff]);
 
   const stats = useMemo(() => {
     const sent = filtered.reduce((a, c) => a + c.sent_count, 0);
     const failed = filtered.reduce((a, c) => a + c.failed_count, 0);
     const delivered = filtered.reduce((a, c) => a + c.delivered_count, 0);
+    const read = filtered.reduce((a, c) => a + (c.read_count ?? 0), 0);
     const outcomeUnknown = filtered.reduce((a, c) => a + (c.outcome_unknown_count ?? 0), 0);
     const total = sent + failed + outcomeUnknown;
-    return { sent, failed, delivered, outcomeUnknown, total, successRate: total > 0 ? Math.round((sent / total) * 1000) / 10 : 0 };
+    return { sent, failed, delivered, read, outcomeUnknown, total, successRate: total > 0 ? Math.round((sent / total) * 1000) / 10 : 0 };
   }, [filtered]);
 
   const { data: hourlyData } = useQuery({
     queryKey: ['talkx-hourly-stats', period],
     queryFn: async () => {
       const { data } = await fromTable('talkx_recipients')
-        .select('sent_at, status').eq('status', 'sent')
+        .select('sent_at, status').in('status', ['sent', 'delivered'])
         .gte('sent_at', cutoff.toISOString()).not('sent_at', 'is', null);
       const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
       const hourTotals: number[] = Array(24).fill(0);
@@ -87,43 +84,12 @@ export function TalkXAnalytics({ campaigns }: Props) {
       .slice(0, 3);
   }, [filtered, allSegments]);
 
-  const { data: replyData, isLoading: replyLoading } = useQuery({
-    queryKey: ['talkx-reply-rate', period, sentCampaignIds.join(',')],
-    queryFn: async () => {
-      if (sentCampaignIds.length === 0) return { replied: 0, sent: 0 };
-      const { data: recips } = await fromTable('talkx_recipients')
-        .select('contact_id, sent_at').in('campaign_id', sentCampaignIds)
-        .eq('status', 'sent').not('sent_at', 'is', null).limit(5000);
-      if (!recips?.length) return { replied: 0, sent: 0 };
-      // Guarda TODOS os sent_at de cada contato (multiplas campanhas)
-      const recipMap = new Map<string, number[]>();
-      (recips as TalkXRecipientReplyRow[]).forEach((r) => {
-        if (!r.contact_id || !r.sent_at) return;
-        const ts = new Date(r.sent_at).getTime();
-        if (!recipMap.has(r.contact_id)) recipMap.set(r.contact_id, []);
-        recipMap.get(r.contact_id)!.push(ts);
-      });
-      const contactIds = Array.from(recipMap.keys());
-      const { data: msgs } = await supabase.from('messages')
-        .select('contact_id, created_at').in('contact_id', contactIds)
-        .eq('sender', 'contact').gte('created_at', cutoff.toISOString()).limit(5000);
-      const replied = new Set<string>();
-      const WINDOW = 24 * 3_600_000;
-      (msgs ?? []).forEach((m: { contact_id: string | null; created_at: string }) => {
-        if (!m.contact_id) return;
-        const sentTimes = recipMap.get(m.contact_id);
-        if (!sentTimes) return;
-        const mt = new Date(m.created_at).getTime();
-        // Conta se a resposta esta dentro de 24h de QUALQUER envio do contato
-        if (sentTimes.some((st) => mt - st >= 0 && mt - st <= WINDOW)) replied.add(m.contact_id);
-      });
-      return { replied: replied.size, sent: contactIds.length, repliedIds: Array.from(replied) };
-    },
-    enabled: sentCampaignIds.length > 0,
-    staleTime: 120_000,
-  });
-  const replyRate = replyData && replyData.sent > 0
-    ? Math.round((replyData.replied / replyData.sent) * 1000) / 10 : null;
+  // V18: taxa de resposta calculada no servidor (replied_count / sent_count),
+  // sem re-query de talkx_recipients/messages no cliente.
+  const repliedTotal = filtered.reduce((a, c) => a + (c.replied_count ?? 0), 0);
+  const sentTotal = filtered.reduce((a, c) => a + c.sent_count, 0);
+  const replyRate = sentTotal > 0
+    ? Math.round((repliedTotal / sentTotal) * 1000) / 10 : null;
 
   // E74: recipients do painel lateral
   const { data: panelRecipients, isLoading: panelLoading } = useQuery({
@@ -169,11 +135,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
     return [
       { name: 'Enviadas', value: stats.sent, reported: true, fill: 'hsl(var(--primary))' },
       { name: 'Entregues', value: stats.delivered, reported: true, fill: 'hsl(var(--dash-green))' },
-      // A base atual não registra confirmação de leitura nem atribuição de
-      // conversão. Exibir uma projeção como se fosse telemetria induziria uma
-      // decisão comercial errada; estes estágios só serão numéricos quando
-      // houver eventos canônicos para eles.
-      { name: 'Lidas', value: null, reported: false, fill: 'hsl(var(--dash-violet))' },
+      { name: 'Lidas', value: stats.read, reported: true, fill: 'hsl(var(--dash-violet))' },
       { name: 'Conversões', value: null, reported: false, fill: 'hsl(var(--dash-amber))' },
     ];
   }, [stats]);
@@ -195,15 +157,19 @@ export function TalkXAnalytics({ campaigns }: Props) {
     return { hour: h, day: bestDay && bestDay.dw >= 0 ? DAY_LABELS[bestDay.dw] : null, count: max };
   }, [hourlyData]);
 
-  if (campaigns.length === 0) return <TalkXEmptyState icon={BarChart3} title="Nenhuma campanha para analisar" description="Execute pelo menos uma campanha para ver os analytics." />;
-
-  // E94: insights heurísticos
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // E94: insights heurísticos — hook SEMPRE antes do return antecipado (regra dos
+  // hooks); chamar depois dele causava "Rendered more hooks" quando a lista ia de
+  // 0 para 1 campanha.
   const { data: insights } = useTalkXInsights();
 
+  if (isError) return <TalkXErrorState />;
+  if (isLoading) return <TalkXSkeletonRows rows={6} />;
+  if (campaigns.length === 0) return <TalkXEmptyState icon={BarChart3} title="Nenhuma campanha para analisar" description="Execute pelo menos uma campanha para ver os analytics." />;
+
   return (
-    <div className="space-y-4 min-w-0">
-      <div className="flex items-center gap-2 flex-wrap">
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-4 min-w-0">
+      <div className="min-w-0 space-y-4">
+        <div className="flex items-center gap-2 flex-wrap">
         {(['7d', '30d', '90d'] as Period[]).map((p) => (
           <button key={p} type="button" onClick={() => setPeriod(p)} className={cn('h-8 px-3.5 rounded-lg text-xs font-medium border transition-colors', period === p ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>{PERIOD_LABELS[p]}</button>
         ))}
@@ -212,7 +178,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
       <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3">
         <DashboardKpiCard size="hero" index={0} label="Campanhas enviadas" value={fmtInt(filtered.length)} delta={null} tile="blue" icon={Zap} bars={barsByDay(filtered.map((c) => c.started_at))} barsColor="blue" />
         <DashboardKpiCard size="hero" index={1} label="Taxa de envio" value={stats.total > 0 ? `${String(stats.successRate).replace('.', ',')}%` : '—'} delta={null} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
-        <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={replyLoading ? { text: 'calculando…', tone: 'muted' } : replyData && replyData.sent > 0 ? { text: `${replyData.replied} de ${replyData.sent} responderam`, tone: 'muted' } : { text: 'sem envios no período', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
+        <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={sentTotal > 0 ? { text: `${repliedTotal} de ${sentTotal} responderam`, tone: 'muted' } : { text: 'sem envios no período', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
         <DashboardKpiCard size="hero" index={3}
           label="Envio por segmento"
           value={top3Segments.length > 0 ? `${top3Segments[0].rate.toString().replace('.', ',')}%` : '—'}
@@ -224,18 +190,8 @@ export function TalkXAnalytics({ campaigns }: Props) {
         <DashboardKpiCard size="hero" index={5} label="Falhas" value={fmtInt(stats.failed)} delta={stats.total > 0 ? { pct: -Math.round((stats.failed / stats.total) * 100), invert: true } : null} tile="red" icon={XCircle} bars={null} barsColor="red" chart="none" />
       </div>
 
-      {/* E75: segmentacao de respondentes */}
-      {replyData && (replyData.repliedIds ?? []).length > 0 && (
-        <section className="rounded-2xl bg-card border border-dash-violet/30 p-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <IconTile icon={Users} color="violet" size={36} />
-            <div>
-              <p className="text-sm font-bold text-foreground">{replyData.replied} contatos responderam</p>
-              <p className="text-xs text-foreground-secondary">dentro de 24h de uma mensagem da campanha</p>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* E75: respondentes agora derivam de replied_count no servidor (V18); a
+          segmentação individual de respondentes deixa de ser consultada aqui. */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {barData.length > 0 && (
@@ -369,7 +325,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
                     <td className="px-3 py-2.5"><button type="button" onClick={() => setSelectedCampaignId((prev) => prev === c.id ? null : c.id)} className="text-left hover:text-primary transition-colors"><p className="text-[13px] font-semibold text-foreground truncate max-w-[240px]">{c.name}</p></button></td>
                     <td className="px-3 py-2.5"><span className="text-xs text-whatsapp">WhatsApp</span></td>
                     <td className="px-3 py-2.5 text-[13px] font-semibold text-foreground">{fmtInt(c.sent_count)}</td>
-                    <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold">{c.sent_count + c.failed_count > 0 ? fmtPct(c.sent_count, c.sent_count + c.failed_count) : '—'}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold">{c.sent_count > 0 ? fmtPct(c.delivered_count, c.sent_count) : '—'}</td>
                     <td className="px-3 py-2.5 text-[13px] text-foreground-secondary">{c.failed_count > 0 ? fmtInt(c.failed_count) : '—'}</td>
                   </tr>
                 ))}
@@ -463,9 +419,11 @@ export function TalkXAnalytics({ campaigns }: Props) {
         </section>
       )}
 
-      {/* E94: Insights heurísticos */}
-      {insights && insights.length > 0 && (
-        <section className="space-y-3">
+        </div>
+        <div className="space-y-4 min-w-0">
+          {/* E94: Insights heurísticos */}
+          {insights && insights.length > 0 && (
+            <section className="space-y-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold text-foreground">Insights</h3>
@@ -485,6 +443,7 @@ export function TalkXAnalytics({ campaigns }: Props) {
           </div>
         </section>
       )}
+        </div>
     </div>
   );
 }

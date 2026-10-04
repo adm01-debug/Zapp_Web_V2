@@ -14,6 +14,9 @@ interface SessionState {
   lastActivityAt: number;
   suggestCount: number;
   retrieved: boolean;
+  source: string;
+  /** E100 · O evento de sessão já foi gravado? Ver `noteSessionUsage()`. */
+  audited: boolean;
 }
 
 let session: SessionState | null = null;
@@ -23,8 +26,31 @@ export function newSessionToken(): string {
 }
 
 function createSession(now: number, source: string): SessionState {
-  void logAudit({ action: 'searchbox_session', details: { source } });
-  return { token: newSessionToken(), lastActivityAt: now, suggestCount: 0, retrieved: false };
+  // E100 · NÃO grava o evento aqui. A Mapbox cobra por sessão FATURADA ("até 50 `/suggest` + 1
+  // `/retrieve` sob o mesmo token contam como 1 sessão"), e uma sessão que nunca disparou request
+  // não é faturada. Gravar na abertura fazia `count_searchbox_sessions_this_month()` contar
+  // intenção em vez de uso — e esse número é o que degrada o autocomplete em 450
+  // (`mapboxCostGuard.ts`) e dispara o alerta de custo em 400 (E91). O evento é adiado para o
+  // primeiro request real (`noteSessionUsage`).
+  return {
+    token: newSessionToken(),
+    lastActivityAt: now,
+    suggestCount: 0,
+    retrieved: false,
+    source,
+    audited: false,
+  };
+}
+
+/**
+ * E100 · Grava o evento `searchbox_session` no PRIMEIRO request faturado da sessão — e uma vez só,
+ * por mais requests que venham sob o mesmo token. Antes disso a sessão não existe para o contador,
+ * que passa a medir uso faturado e não abertura de token.
+ */
+function noteSessionUsage(s: SessionState): void {
+  if (s.audited) return;
+  s.audited = true;
+  void logAudit({ action: 'searchbox_session', details: { source: s.source } });
 }
 
 /**
@@ -79,6 +105,7 @@ export function noteSuggestCall(): void {
   const current = activeSessionOrNull('noteSuggestCall');
   if (!current) return;
   current.suggestCount += 1;
+  noteSessionUsage(current);
 }
 
 /** Marca que a sessão corrente já foi usada num `/retrieve` — força sessão nova na próxima busca
@@ -87,6 +114,7 @@ export function noteRetrieveCall(): void {
   const current = activeSessionOrNull('noteRetrieveCall');
   if (!current) return;
   current.retrieved = true;
+  noteSessionUsage(current);
 }
 
 /** Encerra a sessão explicitamente (após `/retrieve` bem-sucedido, ou ao fechar o picker). */

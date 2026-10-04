@@ -3,23 +3,20 @@ import { motion } from 'framer-motion';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Plus, Tag, Sparkles, User, BarChart3, Brain, Info, TagsIcon, MessageCircle, BookOpen, TrendingUp, ShoppingBag, GitBranch, X, Layers, Activity } from 'lucide-react';
+import { ChevronDown, Plus, Tag, Sparkles, User, Brain, Info, TagsIcon, MessageCircle, BookOpen, TrendingUp, GitBranch, X, Layers, Activity } from 'lucide-react';
 import { Conversation, ConversationContact as Contact } from '@/types/chat';
 
 import { ContactInfoSection } from './ContactInfoSection';
 import { AssignmentSection } from './AssignmentSection';
-import { ContactStatsSection } from './ContactStatsSection';
 import { SLAAndAITagsSection } from './SLAAndAITagsSection';
 import { ExternalContact360Panel } from './ExternalContact360Panel';
 import { ContactIntelligencePanel } from './ContactIntelligencePanel';
 import { WhatsAppStatusSection } from './WhatsAppStatusSection';
 import { EvolutionContactProfileSection } from './EvolutionContactProfileSection';
-import { ComercialSummaryWidget } from './ComercialSummaryWidget';
 import { AIInsightsWidget } from './AIInsightsWidget';
 import { LastActivityWidget } from './LastActivityWidget';
 import { ConversationMemoryPanel } from '../ConversationMemoryPanel';
 import { LeadRiskScorePanel } from '../LeadRiskScorePanel';
-import { ContactPurchasesPanel } from '../ContactPurchasesPanel';
 import { ConversationTimeline } from '../ConversationTimeline';
 import { KnowledgeBaseSearchPanel } from '../KnowledgeBaseSearchPanel';
 import { AnalysisBadges } from '../AnalysisBadges';
@@ -80,10 +77,6 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
         <TagsContent contact={contact} conversation={conversation} />
       </Section>
 
-      <Section index={3} value="commercial-summary" icon={<BarChart3 className="w-3.5 h-3.5" />} label="Resumo Comercial">
-        <ComercialSummaryWidget contactId={contact.id} />
-      </Section>
-
       <AIInsightsWidget contactId={contact.id} />
 
       <Section index={6} value="last-activity" icon={<Activity className="w-3.5 h-3.5" />} label="Última atividade">
@@ -119,14 +112,8 @@ export function ContactAccordionSections({ contact, conversation, enrichedData, 
             <MoreDetailsBlock icon={<TrendingUp className="w-3.5 h-3.5 text-primary" />} label="Scoring & LGPD">
               <LeadRiskScorePanel contactId={contact.id} />
             </MoreDetailsBlock>
-            <MoreDetailsBlock icon={<ShoppingBag className="w-3.5 h-3.5 text-primary" />} label="Compras & Propostas">
-              <ContactPurchasesPanel contactId={contact.id} profileId={profileId} />
-            </MoreDetailsBlock>
             <MoreDetailsBlock icon={<GitBranch className="w-3.5 h-3.5 text-primary" />} label="Linha do Tempo">
               <ConversationTimeline contactId={contact.id} />
-            </MoreDetailsBlock>
-            <MoreDetailsBlock icon={<BarChart3 className="w-3.5 h-3.5 text-primary" />} label="Estatísticas">
-              <ContactStatsSection contactId={contact.id} />
             </MoreDetailsBlock>
             <MoreDetailsBlock icon={<BookOpen className="w-3.5 h-3.5 text-primary" />} label="Base de Conhecimento">
               <KnowledgeBaseSearchPanel />
@@ -195,7 +182,7 @@ function TagsContent({ contact, conversation }: { contact: Contact; conversation
       {(contact.tags ?? []).length === 0 && conversation.tags.length === 0 && (
         <div className="flex flex-col items-center gap-1.5 w-full py-4 text-center">
           <div className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center"><TagsIcon className="w-5 h-5 text-muted-foreground/30" /></div>
-          <p className="text-xs text-muted-foreground/60">Nenhuma tag adicionada</p>
+          <p className="text-xs text-muted-foreground">Nenhuma tag adicionada</p>
         </div>
       )}
       <Button variant="ghost" size="sm" className="h-6 text-xs hover:bg-primary/10 hover:text-primary border border-dashed border-border/40 hover:border-primary/30">

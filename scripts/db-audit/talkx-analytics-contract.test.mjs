@@ -22,17 +22,21 @@ const monitor = await readFile(
   new URL('../../src/components/talkx/TalkXLiveMonitor.tsx', import.meta.url),
   'utf8',
 );
-const shared = await readFile(
-  new URL('../../src/components/talkx/talkxShared.tsx', import.meta.url),
+const sharedDialogs = await readFile(
+  new URL('../../src/components/talkx/kit/dialogs.tsx', import.meta.url),
+  'utf8',
+);
+const sharedPrimitives = await readFile(
+  new URL('../../src/components/talkx/kit/primitives.tsx', import.meta.url),
   'utf8',
 );
 
-test('Talk X analytics does not manufacture delivery, read, or conversion metrics', () => {
+test('Talk X analytics reports read from read_count, keeps delivery/read honest', () => {
   assert.doesNotMatch(analytics, /stats\.sent\s*\*\s*0\.964/);
   assert.doesNotMatch(analytics, /0\.128/);
   assert.doesNotMatch(analytics, /0\.046/);
   assert.match(analytics, /name: 'Entregues', value: stats\.delivered, reported: true/);
-  assert.match(analytics, /name: 'Lidas', value: null, reported: false/);
+  assert.match(analytics, /name: 'Lidas', value: stats\.read, reported: true/);
   assert.match(analytics, /name: 'Conversões', value: null, reported: false/);
   assert.match(analytics, /'Não rastreado'/);
   assert.match(analytics, /outcomeUnknown = filtered\.reduce/);
@@ -69,6 +73,6 @@ test('Talk X lê o status real da conexão WA em vez de "Conectada" fixo', () =>
 });
 
 test('TalkXConfirmDialog desabilita de verdade o botão de confirmar', () => {
-  assert.match(shared, /disabled=\{!allChecked \|\| loading\}/);
-  assert.match(shared, /disabled=\{disabled \|\| loading\}/);
+  assert.match(sharedDialogs, /disabled=\{!allChecked \|\| loading\}/);
+  assert.match(sharedPrimitives, /disabled=\{disabled \|\| loading\}/);
 });

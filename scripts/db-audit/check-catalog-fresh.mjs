@@ -19,24 +19,46 @@
  */
 import fs from 'node:fs';
 
+import { resolverCaminhoPermitido } from '../lib/seguranca-processo.mjs';
 import {
   carregarIdentidadeEsperada,
   validarDestino,
   validarIdentidadeDoArtefato,
 } from './database-identity.mjs';
 
+// S8707: caminho de entrada nunca entra cru num fs.* — a guarda vive no modulo
+// compartilhado (scripts/lib/seguranca-processo.mjs): resolve e exige que o
+// resultado fique dentro do repositorio ou do diretorio temporario do sistema
+// (as duas raizes legitimas: snapshot commitado e arquivo fresco gerado pelo
+// psql num tmp). Um `../../etc/passwd` ou um absoluto fora delas e recusado.
+// Fail-closed: fora da raiz encerra com exit 2 (mesmo codigo de entrada invalida).
 const fresco = process.argv[2];
 if (!fresco) {
   console.error('uso: node check-catalog-fresh.mjs <catalogo_fresco.json>');
   process.exit(2);
 }
 
-const catalogoCommitado = process.env.CATALOG_PATH || 'supabase/schema-catalog.json';
-const identidadePath = process.env.CATALOG_IDENTITY_PATH || 'scripts/db-audit/database-identity.json';
+let frescoPath;
+let catalogoCommitado;
+let identidadePath;
+try {
+  frescoPath = resolverCaminhoPermitido(fresco, 'catalogo fresco');
+  catalogoCommitado = resolverCaminhoPermitido(
+    process.env.CATALOG_PATH || 'supabase/schema-catalog.json',
+    'catalogo commitado',
+  );
+  identidadePath = resolverCaminhoPermitido(
+    process.env.CATALOG_IDENTITY_PATH || 'scripts/db-audit/database-identity.json',
+    'identidade do banco',
+  );
+} catch (erro) {
+  console.error('ERRO: ' + erro.message);
+  process.exit(2);
+}
 
 function lerCatalogo(arquivo, rotulo) {
   try {
-    const catalogo = JSON.parse(fs.readFileSync(arquivo, 'utf8'));
+    const catalogo = JSON.parse(fs.readFileSync(arquivo, 'utf8')); // NOSONAR(S8707): os dois chamadores passam 'catalogoCommitado'/'frescoPath', ja resolvidos por resolverCaminhoPermitido (exit 2 fora do repo/tmp); argv/env nao entram crus aqui
     if (!catalogo || typeof catalogo !== 'object' || Array.isArray(catalogo)) {
       throw new Error('a raiz precisa ser um objeto JSON');
     }
@@ -48,7 +70,7 @@ function lerCatalogo(arquivo, rotulo) {
 }
 
 const A = lerCatalogo(catalogoCommitado, 'commitado');
-const B = lerCatalogo(fresco, 'fresco');
+const B = lerCatalogo(frescoPath, 'fresco');
 const SECOES = ['tables', 'views', 'columns', 'functions', 'function_signatures', 'check_constraints'];
 
 let identidadeEsperada;
@@ -124,8 +146,8 @@ for (const secao of SECOES) {
   const setB = new Set(arrayB);
   const duplicadosA = arrayA.length - setA.size;
   const duplicadosB = arrayB.length - setB.size;
-  const soNoArquivo = [...setA].filter((x) => !setB.has(x)).sort();
-  const soNoBanco = [...setB].filter((x) => !setA.has(x)).sort();
+  const soNoArquivo = [...setA].filter((x) => !setB.has(x)).sort((a, b) => a.localeCompare(b));
+  const soNoBanco = [...setB].filter((x) => !setA.has(x)).sort((a, b) => a.localeCompare(b));
   drifts += soNoArquivo.length + soNoBanco.length + duplicadosA;
   errosOperacionais += duplicadosB;
   console.log(

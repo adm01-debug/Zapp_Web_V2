@@ -60,7 +60,7 @@ export function AutomationSettings({ settings, updateSettings }: AutomationSetti
             <Input
               type="number"
               value={settings.inactivity_timeout}
-              onChange={(e) => updateSettings({ inactivity_timeout: parseInt(e.target.value) || 0 })}
+              onChange={(e) => updateSettings({ inactivity_timeout: Number.parseInt(e.target.value) || 0 })}
               min={0} max={1440}
             />
           </div>

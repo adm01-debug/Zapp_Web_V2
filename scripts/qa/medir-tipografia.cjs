@@ -77,9 +77,9 @@ function parseScale() {
 
 const toPx = (v) => {
   if (!v) return null;
-  if (v.endsWith('rem')) return parseFloat(v) * 16;
-  if (v.endsWith('px')) return parseFloat(v);
-  const n = parseFloat(v);
+  if (v.endsWith('rem')) return Number.parseFloat(v) * 16;
+  if (v.endsWith('px')) return Number.parseFloat(v);
+  const n = Number.parseFloat(v);
   return Number.isNaN(n) ? null : n; // unitless ratio, resolvido depois
 };
 
@@ -115,7 +115,7 @@ function scanCss(stylesDir = STYLES) {
     let m;
     fontSizeRe.lastIndex = 0;
     while ((m = fontSizeRe.exec(txt))) {
-      const px = parseFloat(m[1]);
+      const px = Number.parseFloat(m[1]);
       if (!Number.isInteger(px)) {
         const line = txt.slice(0, m.index).split('\n').length;
         halfStep.push({ where: `${rel}:${line}`, px });
@@ -268,7 +268,7 @@ function main() {
     }
     arbRe.lastIndex = 0;
     while ((m = arbRe.exec(txt))) {
-      const raw = parseFloat(m[1]);
+      const raw = Number.parseFloat(m[1]);
       const px = m[2] === 'px' ? raw : raw * 16; // rem/em: 1 unidade = 16px (raiz do documento)
       usage.arbitrary[px] = (usage.arbitrary[px] || 0) + 1;
       (byFile[rel] ||= { named: 0, arbitrary: 0 }).arbitrary++;
@@ -288,7 +288,7 @@ function main() {
     const lhRaw = v.lineHeight;
     // line-height sem unidade e razao: resolve multiplicando pelo font-size
     const unitless = !/rem|px|em|%/.test(lhRaw);
-    const lhPx = unitless ? +(fsPx * parseFloat(lhRaw)).toFixed(2) : toPx(lhRaw);
+    const lhPx = unitless ? +(fsPx * Number.parseFloat(lhRaw)).toFixed(2) : toPx(lhRaw);
     resolved[k] = { fontSizePx: fsPx, lineHeightPx: lhPx, lineHeightDeclarado: lhRaw, usos: usage.named[k] || 0 };
   }
   const arbitraryResolved = {};
@@ -315,7 +315,7 @@ function main() {
     commit: process.env.GIT_SHA || null,
     // Etapa 21: excecoes nomeadas que podem passar de 16px. Preservadas no
     // round-trip do --json para a lista nao sumir ao regenerar o budget.
-    allowAbove16: [...allowAbove16].sort(),
+    allowAbove16: [...allowAbove16].sort((a, b) => a.localeCompare(b)),
     escala: resolved,
     arbitrarios: arbitraryResolved,
     totais: {

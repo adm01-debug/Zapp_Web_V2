@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    circle: (props: any) => <circle {...props} />,
+    div: ({ children, ...props }: ComponentProps<'div'>) => <div {...props}>{children}</div>,
+    circle: (props: ComponentProps<'circle'>) => <circle {...props} />,
   },
 }));
 

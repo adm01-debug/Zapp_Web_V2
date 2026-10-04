@@ -235,7 +235,7 @@ export function GroupsView() {
                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); toggleGroupSelection(group.id); setIsBroadcastOpen(true); }}>
                             <MessageSquare className="w-4 h-4 mr-2" />Enviar mensagem
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(group.group_id); toast.success('ID copiado!'); }}>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); void navigator.clipboard.writeText(group.group_id); toast.success('ID copiado!'); }}>
                             <LinkIcon className="w-4 h-4 mr-2" />Copiar ID
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }}>

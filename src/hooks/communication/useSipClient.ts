@@ -1,13 +1,16 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useSipConnection } from '../sip/useSipConnection';
-import { novoCallId, desfechoDaChamada, criarFilaDePersistencia, type CallEndOutcome, type UpsertMyCallInput } from '@/lib/calls/persistence';
+import { criarFilaDePersistencia, type CallEndOutcome } from '@/lib/calls/persistence';
 import { phoneQueryVariants, pickUniquePhoneMatch } from '@/lib/calls/phone';
 import { SipCallAdapter } from '@/lib/calls/adapters/SipCallAdapter';
+import { provisionarSip } from '@/lib/calls/sipProvisioning';
+import { useMicrophoneGuard } from './useMicrophoneGuard';
+import { useTabLeaderRole } from './useTabLeaderRole';
+import { useCallEngineSink } from './useCallEngineSink';
 import { CallEngine } from '@/lib/calls/adapters/CallEngine';
-import type { CallEngineSink, EngineStatus } from '@/lib/calls/adapters/CallEngine';
+import type { EngineStatus } from '@/lib/calls/adapters/CallEngine';
 import type { AdapterDirection } from '@/lib/calls/adapters/CallAdapter';
 
 export type { SipStatus } from '../sip/useSipConnection';
@@ -33,7 +36,9 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   const directionRef = useRef<CallDirection | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stopTimer = useCallback(() => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }, []);
-  const startTimer = useCallback(() => { setCallDuration(0); timerRef.current = setInterval(() => setCallDuration(p => p + 1), 1000); }, []);
+  // Idempotente de propósito: um `Established` reemitido (re-INVITE/reconexão) não pode somar um
+  // SEGUNDO intervalo — com dois, o cronômetro anda 2x por segundo e o `stopTimer` mata só um deles.
+  const startTimer = useCallback(() => { stopTimer(); setCallDuration(0); timerRef.current = setInterval(() => setCallDuration(p => p + 1), 1000); }, [stopTimer]);
   // T14: correspondência só por E.164 completo (nunca por sufixo de 8 dígitos).
   const findContactByPhone = useCallback(async (phone: string): Promise<string | null> => {
     const variants = phoneQueryVariants(phone);
@@ -46,74 +51,50 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
       return null;
     }
   }, []);
-  const sink: CallEngineSink = useMemo(() => {
-    const persistir = async (input: UpsertMyCallInput) => {
-      const { ok, error } = await filaDePersistencia.executar(input);
-      // Falha de banco nunca é silenciosa: log com o id da chamada + toast.
-      if (!ok) { log.error(`Falha ao gravar a chamada (id=${input.id})`, error); toast.error('Não foi possível salvar a ligação'); }
-    };
-    return {
-      onStatus: setCallStatus,
-      onSession: (direction, number) => { directionRef.current = direction; setCallDirection(direction); setCurrentNumber(number); },
-      onEstablished: startTimer,
-      onTerminated: stopTimer,
-      onMuted: setIsMuted,
-      onError: (message) => toast.error(message),
-      create: async (params) => {
-        const id = novoCallId(params.sessionId);
-        setCurrentCallId(id);
-        const contactId = await findContactByPhone(params.contactPhone);
-        await persistir({ id, direction: params.direction, status: 'ringing', channel: 'voip', peerNumber: params.contactPhone, contactId, providerCallId: params.providerCallId });
-        return id;
-      },
-      onAnswered: (callId) => {
-        void persistir({ id: callId, direction: directionRef.current ?? 'outbound', status: 'answered', answeredAt: new Date().toISOString() });
-      },
-      onFinished: (callId, talkSeconds, outcome) => {
-        const direction = directionRef.current ?? 'outbound';
-        setCurrentCallId(null); onEnd?.(outcome); // a próxima discagem não reaproveita a linha anterior
-        void persistir({ id: callId, direction, endedAt: new Date().toISOString(), talkSeconds, ...desfechoDaChamada(talkSeconds, direction, outcome) });
-      },
-    };
-  }, [startTimer, stopTimer, findContactByPhone, filaDePersistencia, onEnd]);
+  const sink = useCallEngineSink({
+    setCallStatus, setCallDirection, setCurrentNumber, setIsMuted, setCurrentCallId,
+    directionRef, startTimer, stopTimer, findContactByPhone, filaDePersistencia, onEnd,
+  });
 
   // Lazy init (não `useRef`): o motor é criado uma vez e nunca lido em render.
   const [engine] = useState(() => new CallEngine(new SipCallAdapter(log)));
   useEffect(() => { engine.bind(sink); }, [engine, sink]);
   const handleInvitation = useCallback((invitation: Parameters<CallEngine['handleInvitation']>[0]) => engine.handleInvitation(invitation), [engine]);
-  const { sipStatus, uaRef, connect, disconnect } = useSipConnection(handleInvitation);
+  const { sipStatus, sipReason, setSipReason, uaRef, connect, disconnect } = useSipConnection(handleInvitation);
 
+  // T17: o microfone é conferido ANTES de discar E de atender — este é o funil
+  // real dos dois caminhos (o painel VoIP chama o SIP direto, sem passar pelo
+  // provider). Sem isto a negativa virava "Erro ao ligar" genérico.
+  const { micReason, garantirMicrofone } = useMicrophoneGuard();
   // O `sessionId` vem do provider: é o id da linha e o mesmo do evento `DIAL`.
-  const makeCall = useCallback((number: string, sessionId?: string) => engine.makeCall(number, uaRef.current, sipStatus === 'registered', sessionId), [engine, sipStatus, uaRef]);
+  const makeCall = useCallback(async (number: string, sessionId?: string) => {
+    if (!(await garantirMicrofone())) return;
+    engine.makeCall(number, uaRef.current, sipStatus === 'registered', sessionId);
+  }, [engine, sipStatus, uaRef, garantirMicrofone]);
   const hangUp = useCallback(() => engine.hangUp(), [engine]);
   const toggleMute = useCallback(() => engine.toggleMute(), [engine]);
   const sendDTMF = useCallback((digit: string) => engine.sendDTMF(digit), [engine]);
-  const acceptIncomingCall = useCallback(async () => { await engine.accept(); }, [engine]);
+  const acceptIncomingCall = useCallback(async () => { if (await garantirMicrofone()) await engine.accept(); }, [engine, garantirMicrofone]);
   const rejectIncomingCall = useCallback(async () => { await engine.reject(); }, [engine]);
 
   const connectWithStoredCredentials = useCallback(async () => {
-    const { data, error } = await supabase.functions.invoke('get-sip-password');
-    const password = data?.password;
-    // T15: host/usuário/porta vêm do servidor — o front não conhece mais a linha.
-    const { server, user, wsPort } = data ?? {};
-    if (error || !password || !server || !user || !wsPort) {
-      // FunctionsHttpError.context pode ser Response (status) ou corpo já
-      // parseado (code), dependendo da versão do supabase-js.
-      const ctx = (error as { context?: { status?: number; code?: string } } | null)?.context;
-      const isMissingSecret = error ? ctx?.status === 503 || ctx?.code === 'SIP_NOT_CONFIGURED' : !password;
-      // Sem erro e sem os campos = função ainda antiga (janela entre o deploy do
-      // front, imediato, e o da Edge): avisa em vez de conectar com valor velho.
-      toast.error(isMissingSecret ? 'Senha SIP não configurada. Adicione o segredo SIP_PASSWORD no Supabase.' : error ? 'Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente.' : 'Provisionamento SIP indisponível (função desatualizada). Tente novamente após a publicação.');
-      return;
-    }
-    await connect({ server, user, password, wsPort });
+    const config = await provisionarSip();
+    if (config) await connect(config);
   }, [connect]);
+
+  // T20: só a TRANSIÇÃO de papel age (o papel de nascença não conecta). Os
+  // callbacks vão numa ref dentro do hook — a identidade deles não agenda o
+  // efeito, então não há loop de disconnect a cada render.
+  useTabLeaderRole({
+    onBecameLeader: () => { void connectWithStoredCredentials(); },
+    onBecameFollower: () => { void disconnect().then(() => setSipReason('line_in_use_other_tab')); },
+  });
 
   useEffect(() => () => { stopTimer(); engine.dispose(); }, [stopTimer, engine]);
 
   return {
-    sipStatus, callStatus, callDuration, isMuted, currentNumber, callDirection, currentCallId,
+    sipStatus, sipReason, micReason, callStatus, callDuration, isMuted, currentNumber, callDirection, currentCallId,
     connect, connectWithStoredCredentials, disconnect, makeCall, hangUp, toggleMute, sendDTMF,
-    acceptIncomingCall, rejectIncomingCall,
+    acceptIncomingCall, rejectIncomingCall, garantirMicrofone,
   };
 }

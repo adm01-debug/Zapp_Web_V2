@@ -11,8 +11,6 @@
  * sempre reaplica o par certo, nunca mistura.
  */
 
-import { coresComContrasteAA } from './contrasteAA';
-
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
 export interface ThemeModeColors {
@@ -210,7 +208,9 @@ function buildPreset(p: PresetParams): ThemePreset {
     secondary,
     'secondary-foreground': '210 40% 92%',
     muted: `${h} 15% 92%`,
-    'muted-foreground': `${h} 10% 45%`,
+    // E62: L40 (era 45) para o texto secundário fechar 4,5:1 sobre o `<mark>` da busca
+    // no popover claro. Ver comentário em tokens.css.
+    'muted-foreground': `${h} 10% 40%`,
     accent: `${h} 55% 95%`,
     'accent-foreground': `${h} ${s}% ${Math.max(l - 8, 5)}%`,
     border: `${h} 15% 90%`,
@@ -676,10 +676,7 @@ export function applyThemePreset(
   root.classList.add('theme-transitioning');
   root.dataset.presetId = presetId;
 
-  const colors = coresComContrasteAA(
-    preset[mode] as unknown as Record<string, string>,
-    mode,
-  ) as unknown as typeof preset.light;
+  const colors = preset[mode];
   const cache: Record<string, string> = {};
   // Alto contraste manda nas CORES (`.high-contrast`, em src/styles/accessibility.css).
   // Escrever os tokens do preset aqui — inline, no mesmo `<html>` — venceria a classe e

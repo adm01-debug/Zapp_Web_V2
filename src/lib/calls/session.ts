@@ -234,9 +234,14 @@ export function isBusyHere(state: CallSessionState, event: CallSessionEvent): bo
   return event.type === 'INVITE_RECEIVED' && state.status !== 'idle';
 }
 
-/** Resultado a persistir para a segunda chamada que chega com a linha ocupada. */
+/**
+ * Resultado a persistir para a segunda chamada que chega com a linha ocupada.
+ * O par tem de estar DENTRO da tabela canônica `persistedStatusForEndReason`:
+ * `busy_here → missed` (`busy → busy` é outro par, o de quem LIGOU para uma
+ * linha ocupada). Gravar `(missed, busy)` era um par que a tabela não produz.
+ */
 export function busyHereOutcome(): { persistedStatus: PersistedStatus; endReason: EndReason } {
-  return { persistedStatus: 'missed', endReason: 'busy' };
+  return { persistedStatus: 'missed', endReason: 'busy_here' };
 }
 
 /**

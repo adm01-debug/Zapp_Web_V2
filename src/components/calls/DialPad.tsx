@@ -8,6 +8,8 @@ import {
   Phone, PhoneOff, Mic, MicOff, Delete, Wifi, WifiOff, Loader2,
 } from 'lucide-react';
 import type { SipStatus, CallStatus, CallDirection } from '@/hooks/communication/useSipClient';
+import { describeReason, type CapabilityReason } from '@/lib/calls/capabilities';
+import { Keypad } from './Keypad';
 
 interface DialPadProps {
   sipStatus: SipStatus;
@@ -15,7 +17,21 @@ interface DialPadProps {
   callDuration: number;
   isMuted: boolean;
   currentNumber: string;
+  /**
+   * Numero ja pedido pelo clique-para-discar (T29). Preenche o campo SOMENTE se
+   * ele estiver vazio - nunca apaga o que o agente digitou.
+   */
+  numeroInicial?: string | null;
   callDirection: CallDirection | null;
+  /**
+   * T20 — motivo (opcional) da linha VoIP limitada, o mesmo `CapabilityReason`
+   * que circula para microfone (T17) e para `line_in_use_other_user`. Quando é
+   * `line_in_use_other_tab`, esta aba NÃO é dona do registro SIP: o rótulo de
+   * estado da conexão dá lugar ao texto operacional do motivo e o botão de
+   * conectar fica desabilitado (não se oferece conectar numa aba que não é a
+   * dona do registro). Ausente/`null` → comportamento antigo, intacto.
+   */
+  sipReason?: CapabilityReason | null;
   onConnect: () => void;
   onDisconnect: () => void;
   onCall: (number: string) => void;
@@ -25,19 +41,6 @@ interface DialPadProps {
   onDTMF: (digit: string) => void;
 }
 
-const dialButtons = [
-  ['1', '2', '3'],
-  ['4', '5', '6'],
-  ['7', '8', '9'],
-  ['*', '0', '#'],
-];
-
-const subLabels: Record<string, string> = {
-  '2': 'ABC', '3': 'DEF', '4': 'GHI', '5': 'JKL',
-  '6': 'MNO', '7': 'PQRS', '8': 'TUV', '9': 'WXYZ',
-  '0': '+',
-};
-
 function formatTime(seconds: number) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
@@ -46,13 +49,21 @@ function formatTime(seconds: number) {
 }
 
 export function DialPad({
-  sipStatus, callStatus, callDuration, isMuted, currentNumber, callDirection,
+  sipStatus, callStatus, callDuration, isMuted, currentNumber, callDirection, sipReason = null, numeroInicial = null,
   onConnect, onDisconnect, onCall, onHangUp, onAcceptIncoming, onToggleMute, onDTMF,
 }: DialPadProps) {
-  const [number, setNumber] = useState('');
+  // T29: o clique-para-discar abre este painel ja preenchido. O numero entra como
+  // estado INICIAL (o painel monta ao navegar para ?view=voip) em vez de um efeito
+  // que chama setState - efeito aqui causaria render em cascata (e a guarda de
+  // react-hooks do repo reprova, com razao).
+  const [number, setNumber] = useState(() => numeroInicial ?? '');
   const isInCall = callStatus === 'calling' || callStatus === 'ringing' || callStatus === 'active';
   const isIncomingRinging = callStatus === 'ringing' && callDirection === 'inbound';
   const isConnected = sipStatus === 'registered';
+  // T20: a linha está tocando em OUTRA aba — esta não é a dona do registro.
+  // O texto vem do domínio (`REASON_LABEL` via `describeReason`), nunca solto aqui.
+  const lineInUseOtherTab = sipReason === 'line_in_use_other_tab';
+  const reasonLabel = describeReason(sipReason);
 
   const handleDigit = useCallback((digit: string) => {
     if (isInCall) {
@@ -90,21 +101,13 @@ export function DialPad({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      {/* Connection Status */}
+      {/* Connection Status — T20: com a linha em outra aba o estado da conexão
+          dá lugar ao motivo operacional (texto do domínio). */}
       <div className="flex items-center gap-2 w-full justify-between">
-        <Badge className={`${statusColor[sipStatus]} text-xs`}>
+        <Badge className={`${lineInUseOtherTab ? 'bg-warning/20 text-warning' : statusColor[sipStatus]} text-xs`}>
           {sipStatus === 'registered' ? <Wifi className="w-3 h-3 mr-1" /> : <WifiOff className="w-3 h-3 mr-1" />}
-          {statusLabel[sipStatus]}
+          {lineInUseOtherTab ? reasonLabel : statusLabel[sipStatus]}
         </Badge>
-        <Button
-          variant={isConnected ? 'destructive' : 'default'}
-          size="sm"
-          onClick={isConnected ? onDisconnect : onConnect}
-          disabled={sipStatus === 'connecting'}
-        >
-          {sipStatus === 'connecting' && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
-          {isConnected ? 'Desconectar' : 'Conectar SIP'}
-        </Button>
       </div>
 
       {/* Active Call Display */}
@@ -199,24 +202,13 @@ export function DialPad({
         </div>
       )}
 
-      {/* Dial Grid */}
-      <div className="grid grid-cols-3 gap-2 w-full max-w-[280px]">
-        {dialButtons.map((row) =>
-          row.map((digit) => (
-            <motion.button
-              key={digit}
-              whileTap={{ scale: 0.92 }}
-              onClick={() => handleDigit(digit)}
-              className="flex flex-col items-center justify-center w-full h-16 rounded-xl bg-muted/50 hover:bg-muted border border-border/50 transition-colors"
-            >
-              <span className="text-xl font-semibold text-foreground">{digit}</span>
-              {subLabels[digit] && (
-                <span className="text-[9px] text-muted-foreground tracking-widest">{subLabels[digit]}</span>
-              )}
-            </motion.button>
-          ))
-        )}
-      </div>
+      {/* Teclado (T58): extraido para Keypad.tsx e reusado pelo painel lateral.
+          Em chamada as teclas viram tom (DTMF); fora dela, montam o numero. */}
+      <Keypad
+        onKey={handleDigit}
+        onBackspace={isInCall ? undefined : handleDelete}
+        mode={isInCall ? 'dtmf' : 'edit'}
+      />
 
       {/* Call Button */}
       {!isInCall && (

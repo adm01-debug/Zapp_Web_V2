@@ -51,4 +51,14 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // `console` nao tem substituto nesses dois lugares, e trocar as chamadas
+    // seria mudanca de codigo sem ganho: `src/lib/logger.ts` E a implementacao
+    // do logger (o console e o transporte dele), e as edge functions rodam em
+    // Deno, onde nao existe o logger do front — o log da funcao vai para o
+    // function_logs do Supabase por console. A regra segue valendo no resto do
+    // src/ (nenhum console.log solto em producao: ver lint-ratchet).
+    files: ["src/lib/logger.ts", "supabase/functions/**/*.ts"],
+    rules: { "no-console": "off" },
+  },
 );

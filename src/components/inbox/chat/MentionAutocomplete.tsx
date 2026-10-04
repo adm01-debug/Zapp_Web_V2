@@ -41,7 +41,7 @@ export function MentionAutocomplete({ inputValue, cursorPosition, onSelect, onCl
       if (!isMountedRef.current) return;
       if (data) setAgents(data as AgentMention[]);
     };
-    fetchAgents();
+    void fetchAgents();
   }, []);
 
   // Detect @ mention

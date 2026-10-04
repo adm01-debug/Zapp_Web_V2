@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: pull_request e agendado
+#   prova: analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows
+#   falha: alerta aparece em Security -> Code scanning
+#   avisa: aba Security e revisores do PR
 # =================================================
 # CodeQL — analise estatica de seguranca (SAST)
 # =================================================
@@ -20,6 +25,16 @@ on:
   # db-guard.yml e codeql.yml ficam presentes mas nao disparam (sem custo).
   pull_request:
     branches: [main]
+    # E78 (auditoria de 01/10/2026): 354 runs em 37 h, boa parte de PR que so mexe em
+    # docs, markdown ou SQL de migration. O CodeQL nao analisa nada disso -- ele cobre
+    # src/, scripts/, supabase/functions/ e os proprios workflows -- mas cada PR pagava
+    # a varredura inteira. Como o check NAO e required, ignorar esses caminhos nao trava
+    # merge nenhum. O `schedule` semanal segue sem filtro: o repositorio inteiro e
+    # varrido de qualquer forma, entao um PR so de docs nao escapa da analise.
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'supabase/migrations/**'
   schedule:
     - cron: '30 9 * * 1' # segunda 06:30 BRT
 

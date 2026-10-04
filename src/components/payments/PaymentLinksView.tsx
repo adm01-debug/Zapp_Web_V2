@@ -30,7 +30,7 @@ export function PaymentLinksView() {
 
   const handleCreateLink = async () => {
     if (!formTitle.trim() || !formAmount) return;
-    const amount = parseFloat(formAmount);
+    const amount = Number.parseFloat(formAmount);
     if (isNaN(amount) || amount <= 0) return;
 
     // Generate a simple payment URL (in production would integrate with Stripe/payment provider)

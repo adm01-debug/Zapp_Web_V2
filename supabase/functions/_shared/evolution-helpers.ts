@@ -1,5 +1,6 @@
 // Shared helpers for Evolution API webhook and sync functions
 import { evoFetch, extractAvatarUrl } from './evolution-send.ts';
+import type { EvolutionDbClient } from "./evolution-types.ts";
 
 export interface WebhookPayload {
   event: string;
@@ -194,7 +195,7 @@ export function invalidateConnectionCache(instance?: string): void {
 
 // deno-lint-ignore no-explicit-any
 export async function getConnectionByInstance(
-  supabase: any,
+  supabase: EvolutionDbClient,
   instance: string,
 ): Promise<{ id: string } | null> {
   const now = Date.now();
@@ -211,16 +212,16 @@ export async function getConnectionByInstance(
     .maybeSingle();
 
   connectionCache.set(instance, {
-    data,
+    data: data as { id: string } | null,
     expiresAt: now + CONNECTION_CACHE_TTL_MS,
   });
 
-  return data;
+  return data as { id: string } | null;
 }
 
 // deno-lint-ignore no-explicit-any
 export async function getContactByPhone(
-  supabase: any,
+  supabase: EvolutionDbClient,
   phone: string,
   connectionId: string
 ): Promise<{ id: string; avatar_url: string | null; assigned_to: string | null; name: string | null } | null> {
@@ -230,6 +231,8 @@ export async function getContactByPhone(
     .select('id, avatar_url, assigned_to, name')
     .in('phone', phonesVariants)
     .eq('whatsapp_connection_id', connectionId)
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
     .limit(1)
     .maybeSingle();
   
@@ -239,6 +242,8 @@ export async function getContactByPhone(
       .from('contacts')
       .select('id, avatar_url, assigned_to, name')
       .in('phone', phonesVariants)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
       .limit(1)
       .maybeSingle();
     if (anyConnection) {
@@ -247,11 +252,15 @@ export async function getContactByPhone(
         .update({ whatsapp_connection_id: connectionId, updated_at: new Date().toISOString() })
         .eq('id', anyConnection.id);
       console.log(`[CONTACT] Found contact ${anyConnection.id} via phone variant, relinked to connection ${connectionId}`);
-      return anyConnection;
+      return anyConnection as {
+        id: string; avatar_url: string | null; assigned_to: string | null; name: string | null;
+      };
     }
   }
   
-  return data;
+  return data as {
+    id: string; avatar_url: string | null; assigned_to: string | null; name: string | null;
+  } | null;
 }
 
 /**
@@ -319,7 +328,7 @@ export function avatarObjectPath(phone: string): string {
 }
 
 // deno-lint-ignore no-explicit-any
-export async function persistProfilePicture(supabase: any, phone: string, profilePicUrl: string): Promise<string | null> {
+export async function persistProfilePicture(supabase: EvolutionDbClient, phone: string, profilePicUrl: string): Promise<string | null> {
   try {
     const response = await fetch(profilePicUrl, { signal: AbortSignal.timeout(5000) });
     if (!response.ok) return null;
@@ -341,7 +350,7 @@ export async function persistProfilePicture(supabase: any, phone: string, profil
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleReactionEvent(supabase: any, reactionMessage: Record<string, unknown>, actorFromMe: boolean) {
+export async function handleReactionEvent(supabase: EvolutionDbClient, reactionMessage: Record<string, unknown>, actorFromMe: boolean) {
   const emoji = (reactionMessage.text as string) || '';
   const reactKey = reactionMessage.key as Record<string, unknown> | undefined;
   if (!reactKey?.id) return;

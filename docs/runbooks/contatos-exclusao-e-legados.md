@@ -78,3 +78,33 @@ com o mesmo `WHERE`, para conferir o tamanho do lote.
 > Estas receitas foram escritas a partir das migrations citadas e **não** foram executadas contra
 > produção quando o runbook foi criado (a sessão não tinha acesso ao banco). Na primeira execução real,
 > registre a data e o resultado aqui.
+
+## Verificação em 2026-10-01 (read-only)
+
+O encerramento do plano (etapas 95–100) tinha acesso **somente leitura** ao banco (`zapp-v2-db-ro`);
+DML em produção é proibido. Portanto as duas receitas seguem **não testadas por execução** — o que
+deu para provar é que os objetos que elas tocam existem, com os nomes e tipos citados:
+
+```sql
+-- executado 2026-10-01 via MCP read-only
+SELECT 'col' AS kind, column_name AS obj FROM information_schema.columns
+ WHERE table_schema='public' AND table_name='contacts'
+   AND column_name IN ('deleted_at','is_lid_legacy','phone','assigned_to')
+UNION ALL SELECT 'table', table_name FROM information_schema.tables
+ WHERE table_schema='public' AND table_name='contact_deletion_audit'
+UNION ALL SELECT 'trigger', tgname FROM pg_trigger
+ WHERE tgname='trg_audit_contact_deletion_change'
+UNION ALL SELECT 'rpc', proname FROM pg_proc
+ WHERE pronamespace='public'::regnamespace AND proname IN ('delete_contact','delete_contacts');
+```
+
+Resultado bruto (8 linhas): `assigned_to`, `deleted_at`, `is_lid_legacy`, `phone` (colunas);
+`contact_deletion_audit` (tabela); `trg_audit_contact_deletion_change` (trigger);
+`delete_contact`, `delete_contacts` (RPCs). Bate com o texto das receitas.
+
+Contexto numérico do mesmo dia (`deleted_at IS NULL`): 3.106 linhas na tabela, 3.104 visíveis com o
+toggle "Mostrar legados" ligado e 2.504 na visão padrão (sem legados) — a receita 1 opera sobre esse
+universo, a receita 2 só troca o predicado de visibilidade.
+
+Pendência: na primeira execução real das receitas (por quem tiver escrita), anotar aqui data,
+`contact_id` e o `RETURNING` obtido.

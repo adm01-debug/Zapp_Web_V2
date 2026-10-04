@@ -255,6 +255,49 @@ LIMIT 10;
 
 ---
 
+## 📭 INCIDENTE: Disparo Multiplix com falhas / itens em dead letter (SEV-3)
+
+**Quando usar:** um disparo do Multiplix não entregou tudo e você precisa saber **o que falhou, por
+quê e quando** — sem abrir tela nova (o disparo não tem painel; a consulta é por função).
+
+**Consultar os itens que esgotaram as tentativas (dead letter).** Rode como **admin/supervisor**
+(usuário sem esse papel é recusado de propósito — a função exige o papel dentro dela):
+
+```sql
+-- Todos os disparos (mais recentes primeiro), no máximo 500:
+SELECT * FROM public.list_multiplix_dead_letters(100);
+
+-- Só um disparo:
+SELECT * FROM public.list_multiplix_dead_letters(100, '<dispatch_id>');
+
+-- Só o número (para alerta/painel):
+SELECT public.count_multiplix_dead_letters('<dispatch_id>');
+```
+
+Retorna: `item_id`, `dispatch_id`, `dispatch_name`, `recipient_id`, `block_id`, `block_order`,
+`attempt_count`, `error_class`, `error_message` (o **motivo**), `failed_at` (o **quando**),
+`next_attempt_at` e `destino_mascarado` (só os 4 últimos dígitos — diagnóstico não precisa do
+contato inteiro).
+
+**⚠️ Dead letter NÃO é `status='failed_permanent'`** — esse status não existe. O dead letter é o
+par **`status='failed'` E `next_attempt_at IS NULL`** (tentativas esgotadas). Um item `failed` que
+ainda tem `next_attempt_at` marcado é falha **transitória**: o sistema ainda vai retentar e ele
+**não** aparece na consulta. Se você procurar pelo nome errado, a lista volta vazia e parece que
+está tudo bem.
+
+**O que fazer com o resultado:**
+
+| Situação | Ação |
+|---|---|
+| `error_class` de número inválido/inexistente | Nada a fazer no sistema — é dado de cadastro ruim; corrigir a origem. |
+| Falhas em massa no mesmo disparo | Verificar a conexão da instância (`whatsapp_connections.status`) e o nível de erro do provedor antes de reenviar. |
+| Opt-out (supressão) no meio do disparo | **Esperado**: quem pediu opt-out depois do agendamento é suprimido na hora e não recebe. Não é falha; a lista do disparo não muda. |
+| Muitos `outcome_unknown` | É quarentena (resposta do provedor não confirmada), não dead letter — ver o fluxo de resolução. |
+| Quero reprocessar | Não há reprocessamento em massa pela função: a consulta é **somente leitura** (é diagnóstico). Reprocessar exige ação própria. |
+
+**Por que não há tela:** decisão do dono (F59, 02/10/2026) — consulta operacional por função, sem
+construir painel. Fundamento em `docs/adr/ADR-007-multiplix-ponte-singu-canal-e-aptidao.md` (D5).
+
 ## 📋 Checklist Geral de Incidente
 
 ### Durante o Incidente
@@ -284,6 +327,7 @@ LIMIT 10;
 
 ### Documentação
 - [Backup & Recovery](./BACKUP-RECOVERY-STRATEGY.md)
+- [Runbook: Auth pendurado por saturação do Postgres](./runbooks/auth-pendurado-saturacao-postgres.md)
 - [Arquitetura do Sistema](./ZAPP-ESPECIFICACAO-TECNICA-COMPLETA-V2.md)
 - [API Reference](./API-REFERENCE-COMPLETA.md)
 

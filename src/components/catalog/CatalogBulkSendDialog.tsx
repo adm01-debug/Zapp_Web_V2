@@ -20,7 +20,7 @@ import { buildMessage } from './sendProductUtils';
 import { useContactSearch, type ContactResult } from './useSendProduct';
 import { ContactSelectionStep } from './ContactSelectionStep';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { formatPrice, ProductThumb } from './catalogShared';
+import { formatPrice, ProductThumb, CATALOG_FOCUS_VISIBLE } from './catalogShared';
 import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { logCatalogSendEvent } from '@/hooks/integrations/useCatalogContactSearch';
@@ -43,7 +43,7 @@ async function sendSingleProduct(
   product: ExternalProduct,
   agentId: string | null | undefined,
 ): Promise<'ok' | 'partial' | 'fail'> {
-  const message = buildMessage(product, 'informal', null);
+  const message = buildMessage(product, 'informal', null, contact);
   const imgUrl = product.primary_image_url;
   const messageIds: string[] = [];
   let imageOk = true;
@@ -177,9 +177,9 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
             </ScrollArea>
 
             <div className="p-4 border-t flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => handleClose(false)}>Cancelar</Button>
+              <Button variant="outline" className={`flex-1 ${CATALOG_FOCUS_VISIBLE}`} onClick={() => handleClose(false)}>Cancelar</Button>
               <Button
-                className="flex-1 gap-2"
+                className={`flex-1 gap-2 ${CATALOG_FOCUS_VISIBLE}`}
                 onClick={() => { setStep('selectContact'); resetContactSelection(); }}
               >
                 <Send className="w-4 h-4" />

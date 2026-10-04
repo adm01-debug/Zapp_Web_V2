@@ -1,12 +1,11 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 const mockFrom = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
     auth: {
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
@@ -17,7 +16,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 const mockUseAuth = vi.fn();
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => mockUseAuth(),
-  AuthProvider: ({ children }: any) => children,
+  AuthProvider: ({ children }: { children?: import("react").ReactNode }) => children,
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -97,5 +96,55 @@ describe('useOnboarding', () => {
     const { result } = renderHook(() => useOnboarding());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(typeof result.current.completeOnboarding).toBe('function');
+  });
+
+  // A checagem de "já completou" é a existência de linha em `user_settings`, então
+  // concluir o tour sem gravar no banco fazia o overlay voltar em todo navegador
+  // novo — e ele cobre o app inteiro, interceptando cliques.
+  it('persiste a conclusão em user_settings ao concluir o tour', async () => {
+    mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+      upsert,
+    });
+
+    const { result } = renderHook(() => useOnboarding());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => result.current.completeOnboarding());
+
+    await waitFor(() =>
+      expect(upsert).toHaveBeenCalledWith(
+        { user_id: 'u1' },
+        { onConflict: 'user_id', ignoreDuplicates: true },
+      ),
+    );
+    expect(mockFrom).toHaveBeenCalledWith('user_settings');
+    await waitFor(() => expect(result.current.hasCompletedOnboarding).toBe(true));
+  });
+
+  it('mantém a conclusão quando a gravação no banco falha', async () => {
+    mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+      upsert: vi.fn().mockRejectedValue(new Error('db offline')),
+    });
+
+    const { result } = renderHook(() => useOnboarding());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => result.current.completeOnboarding());
+
+    await waitFor(() => expect(result.current.hasCompletedOnboarding).toBe(true));
+    expect(localStorage.getItem('onboarding_completed_u1')).toBe('true');
   });
 });

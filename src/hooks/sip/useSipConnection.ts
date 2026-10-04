@@ -3,6 +3,7 @@ import { getLogger } from '@/lib/logger';
 import type { UserAgent, Registerer, Invitation } from 'sip.js';
 import { toast } from 'sonner';
 import { REASON_LABEL, type CapabilityReason } from '@/lib/calls/capabilities';
+import { isLeader } from '@/lib/calls/tabLeaderStore';
 
 const log = getLogger('SipConnection');
 
@@ -54,6 +55,16 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
   }, []);
 
   const connect = useCallback(async (config: SipConfig) => {
+    // T20: uma aba por linha. Quem decide o papel é a eleição do
+    // `tabLeaderStore` — este hook só obedece. A aba SEGUIDORA não registra: a
+    // líder é quem segura o ramal no servidor, e um REGISTER concorrente daqui
+    // só tomaria a linha de volta (403), deixando as duas abas parecendo
+    // "conectadas". O portão fica ANTES de criar o UserAgent porque é o único
+    // caminho de registro: sem UA não há REGISTER, retry nem áudio.
+    if (!isLeader()) {
+      setSipReason('line_in_use_other_tab');
+      return;
+    }
     // T16: um UA por vez. Sem a guarda, dois cliques (ou um retry sobre um UA
     // vivo) criavam dois registros da MESMA linha — e o servidor devolvia 403.
     if (uaRef.current) return;
@@ -155,5 +166,8 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
     } catch (err) { log.error('SIP disconnect error:', err); }
   }, [clearReconnectTimer]);
 
-  return { sipStatus, sipReason, uaRef, connect, disconnect };
+  // T20: `setSipReason` sai daqui para o consumidor (useSipClient) marcar o
+  // motivo que a ELEIÇÃO provoca (virou seguidora) — o hook não decide papel,
+  // só oferece a via de escrita tipada, sem quebrar a API existente.
+  return { sipStatus, sipReason, setSipReason, uaRef, connect, disconnect };
 }

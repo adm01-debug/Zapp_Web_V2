@@ -6,6 +6,8 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+// E37: helper de srcSet do CF Images extraído para src/lib/ para ser usável fora do catálogo.
+import { cfImagesSrcSet } from '@/lib/cfImages';
 import { Package, type LucideIcon, X } from 'lucide-react';
 // CatalogStats vem de useExternalCatalog.ts (E24 — formato exato de
 // public.zapp_catalog_stats()); reimportado aqui para não duplicar.
@@ -31,10 +33,65 @@ export const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
   if (fallback) fallback.style.display = 'flex';
 };
 
+// ─── CT-68/CT-69 — acessibilidade visual e alt do módulo ────────────────
+/**
+ * CT-68 — anel de foco visível reutilizável (WCAG 2.4.7 "Focus Visible").
+ * Usa só tokens (`ring-ring`/`ring-offset-background`, isto é, `--ring` e
+ * `--background`) — nenhuma cor literal. O `:focus-visible` global
+ * (src/styles/base.css:210) já cobre o caso genérico; a classe explícita
+ * garante o anel sobre as superfícies próprias do módulo (card, mídia, chip) e
+ * deixa o alvo de foco legível no próprio componente.
+ */
+export const CATALOG_FOCUS_VISIBLE =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
+/**
+ * CT-69 — texto alternativo descritivo das imagens de produto/variação:
+ * `Nome — Cor` quando a cor é conhecida, só `Nome` quando não é. O `alt=""`
+ * proposital das miniaturas decorativas do strip (ProductDetailDialog) segue
+ * vazio de propósito: é decorativo e repetiria o mesmo nome a cada thumb.
+ */
+export function productImageAlt(name: string, color?: string | null): string {
+  const extra = color?.trim();
+  return extra ? `${name} — ${extra}` : name;
+}
+
+/**
+ * CT-69 — cor de capa do produto para o alt: só devolve uma cor quando o
+ * produto tem EXATAMENTE uma cor nomeada. Em produto multi-cor a capa não é de
+ * uma cor específica e rotulá-la com a 1ª descreveria errado a foto — nesse
+ * caso o alt fica só com o nome.
+ */
+export function singleProductColor(product: Pick<ExternalProduct, 'colors' | 'color_swatches'>): string | null {
+  const swatches = (product.color_swatches ?? [])
+    .map((s) => s.color_name?.trim())
+    .filter((n): n is string => !!n);
+  const names = swatches.length > 0
+    ? swatches
+    : (product.colors ?? []).map((c) => c.trim()).filter((n) => n.length > 0);
+  const unique = Array.from(new Set(names));
+  return unique.length === 1 ? unique[0] : null;
+}
+
+/**
+ * CT-68/CT-71 — fallback do `Suspense` dos modais lazy: spinner curto e
+ * discreto, com tokens. Nunca texto grande (troca o dialog inteiro por uma
+ * frase). Os `Sheet`/`Dialog` sempre montados (fechados desde o 1º paint) usam
+ * `fallback={null}` — um spinner apareceria na página enquanto o chunk carrega,
+ * o que é pior que o silêncio; ao abrir, o chunk já resolveu.
+ */
+export function CatalogDialogFallback() {
+  return (
+    <div className="flex items-center justify-center py-6 text-muted-foreground" role="status" aria-label="Carregando">
+      <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-hidden="true" />
+    </div>
+  );
+}
+
 // ProductImage removido na E15 — substituído por ProductThumb (skeleton + srcSet real + fallback em cascata).
 
 // ─── ProductBadge (E12) ─────────────────────────────────────────
-import { Check, Flame, Sparkles, Star, XCircle } from 'lucide-react';
+import { Check, Flame, Sparkles, Star, User, XCircle } from 'lucide-react';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 
 export type ProductBadgeKind = 'out' | 'bestseller' | 'new' | 'featured' | 'instock';
@@ -181,37 +238,8 @@ export function LowStockPill({ qty, threshold = 10 }: { qty: number; threshold?:
 }
 
 // ─── ProductThumb (E15) ─────────────────────────────────────────
-/**
- * Variantes reais do Cloudflare Images da conta do PromoGifts, confirmadas
- * via CF Images API em 2026-09-12 (todas JPEG): thumbnail 150×150,
- * small 300×300, card 400×400, medium/public 600×600, large 1200×1200.
- */
-const CF_IMAGES_HOST = 'imagedelivery.net';
-const CF_VARIANT_WIDTHS: Record<string, number> = {
-  thumbnail: 150,
-  small: 300,
-  card: 400,
-  medium: 600,
-  public: 600,
-  large: 1200,
-};
-
-function cfImagesSrcSet(url: string): string | null {
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return null;
-  }
-  if (parsed.hostname !== CF_IMAGES_HOST) return null;
-  const parts = parsed.pathname.split('/').filter(Boolean); // [accountHash, imageId, variant]
-  if (parts.length < 3) return null;
-  const base = `${parsed.origin}/${parts.slice(0, -1).join('/')}`;
-  return Object.entries(CF_VARIANT_WIDTHS)
-    .filter(([variant]) => variant !== 'public') // 'public' == 'medium' (mesmo byte a byte); evita w duplicado
-    .map(([variant, w]) => `${base}/${variant} ${w}w`)
-    .join(', ');
-}
+// As variantes do CF Images e o `cfImagesSrcSet` vivem em src/lib/cfImages.ts (E37) para
+// serem usáveis fora do catálogo — o Inbox também renderiza imagem que pode vir do CF.
 
 interface ProductThumbProps {
   src: string | null;
@@ -333,19 +361,25 @@ interface CatalogKpiStripProps {
 
 /**
  * 6 KPIs do topo do mock A. Cada card só aparece se o campo vier como
- * número (a RPC catalog_stats da E24 ainda não existe — hoje `stats` é
- * `undefined` e o strip inteiro fica oculto, sem "—" decorativo).
+ * número (nada de "—" decorativo). Sem nenhum número, o strip **mantém o
+ * espaço** com o esqueleto em vez de sumir — ver o comentário de CLS abaixo.
  */
 export function CatalogKpiStrip({ stats, loading, onSelect }: CatalogKpiStripProps) {
-  if (loading) {
+  const visible = CATALOG_KPI_DEFS.filter((d) => typeof stats?.[d.key] === 'number');
+  // CT-74 — CLS medido em produção (02/10): 0,2211 dos 0,2455 vinham deste bloco, porque
+  // ele devolvia `null` sem dados e assim NASCIA depois do primeiro paint, empurrando a
+  // grade para baixo. Sem dados, o esqueleto ocupa o lugar (mesma grade, mesma altura).
+  if (loading || visible.length === 0) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div
+        data-testid="catalog-kpi-strip-placeholder"
+        className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3"
+        aria-hidden="true"
+      >
         {Array.from({ length: 6 }).map((_, i) => <KpiCardSkeleton key={i} compact />)}
       </div>
     );
   }
-  const visible = CATALOG_KPI_DEFS.filter((d) => typeof stats?.[d.key] === 'number');
-  if (visible.length === 0) return null;
   return (
     <div data-testid="catalog-kpi-strip" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
       {visible.map((d, i) => (
@@ -436,7 +470,7 @@ export function CategoryChips({ categories, activeId, onChange, max = 7 }: Categ
       <button
         type="button"
         onClick={() => onChange(null)}
-        className={`catalog-category-chip ${activeId === null ? 'catalog-category-chip--active' : ''}`}
+        className={cn('catalog-category-chip', activeId === null && 'catalog-category-chip--active', CATALOG_FOCUS_VISIBLE)}
       >
         Todos
       </button>
@@ -446,7 +480,7 @@ export function CategoryChips({ categories, activeId, onChange, max = 7 }: Categ
           type="button"
           onClick={() => onChange(c.id)}
           title={c.products_count != null ? `${c.products_count} produtos` : undefined}
-          className={`catalog-category-chip ${activeId === c.id ? 'catalog-category-chip--active' : ''}`}
+          className={cn('catalog-category-chip', activeId === c.id && 'catalog-category-chip--active', CATALOG_FOCUS_VISIBLE)}
         >
           {c.icon && <CategoryChipIcon name={c.icon} />}
           {c.name}
@@ -455,7 +489,7 @@ export function CategoryChips({ categories, activeId, onChange, max = 7 }: Categ
       {rest.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="catalog-category-chip">
+            <button type="button" className={cn('catalog-category-chip', CATALOG_FOCUS_VISIBLE)}>
               Mais <ChevronDown className="w-3 h-3 ml-1" />
             </button>
           </DropdownMenuTrigger>
@@ -681,6 +715,67 @@ export function SectionCard({ title, children }: { title: string; children: Reac
   );
 }
 
+// ── CT-37: PhonePreview (prévia estilo WhatsApp) ──────────────────────────
+export interface PhonePreviewImage {
+  url: string;
+  label: string;
+}
+
+interface PhonePreviewProps {
+  message: string;
+  images: PhonePreviewImage[];
+  /** Nome exibido no cabeçalho do mock; padrão "Cliente". */
+  title?: string;
+}
+
+/**
+ * Prévia visual estilo WhatsApp da mensagem/fotos selecionadas (E74),
+ * extraída do SendProductDialog para virar primitivo reutilizável do módulo.
+ *
+ * - a moldura e as partes internas usam as classes `.catalog-phone*`
+ *   (src/styles/components.css), cujas cores saem dos tokens `--wa-*`
+ *   (tokens.css) — nenhum hex/rgb/hsl literal neste arquivo;
+ * - os ícones são decorativos (aria-hidden) e o texto alternativo da foto
+ *   continua em pt-BR.
+ */
+export function PhonePreview({ message, images, title = 'Cliente' }: PhonePreviewProps) {
+  const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const firstImage = images[0];
+  return (
+    <div className="space-y-2">
+      <span className="text-sm text-muted-foreground">Pré-visualização</span>
+      <div className="catalog-phone">
+        <div className="catalog-phone__header">
+          <div className="catalog-phone__avatar">
+            <User className="w-4 h-4" aria-hidden="true" />
+          </div>
+          <span className="text-sm font-medium">{title}</span>
+        </div>
+        <div className="catalog-phone__body">
+          {firstImage && (
+            <div className="relative inline-block rounded-lg overflow-hidden max-w-[70%] align-top">
+              <img src={firstImage.url} alt="Prévia" className="w-full h-auto max-h-40 object-cover" />
+              {images.length > 1 && (
+                <span className="catalog-phone__counter text-3xs leading-none">
+                  1/{images.length}
+                </span>
+              )}
+            </div>
+          )}
+          <div className="catalog-phone__bubble">
+            <p className="text-sm whitespace-pre-line">{message}</p>
+            <div className="flex items-center justify-end gap-0.5 mt-1">
+              <span className="catalog-phone__time text-3xs">{time}</span>
+              <Check className="catalog-phone__tick w-3 h-3" aria-hidden="true" />
+              <Check className="catalog-phone__tick w-3 h-3 -ml-2" aria-hidden="true" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── E36: tipos e helpers de filtros avançados ─────────────────────────────
 export interface AdvancedFilters {
   isBestseller: boolean;
@@ -755,7 +850,8 @@ export function AdvancedFilterChips({
           onClick={chip.onRemove}
           className={cn(
             'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
-            'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors'
+            'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors',
+            CATALOG_FOCUS_VISIBLE
           )}
         >
           {chip.label}
@@ -837,7 +933,7 @@ export function TagMultiSelectChips({ options, selected, onChange }: TagMultiSel
           onClick={() => toggle(opt.label)}
           title={`${opt.count} produtos`}
           aria-pressed={isSelected(opt.label)}
-          className={`catalog-category-chip ${isSelected(opt.label) ? 'catalog-category-chip--active' : ''}`}
+          className={cn('catalog-category-chip', isSelected(opt.label) && 'catalog-category-chip--active', CATALOG_FOCUS_VISIBLE)}
         >
           {opt.label}
         </button>

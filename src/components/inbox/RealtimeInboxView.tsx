@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
+import { resolverAbaAtiva, type TabState } from '@/components/inbox/resolveActiveTab';
 import { NewMessageIndicator } from './NewMessageIndicator';
 import { InboxEmptyChat } from './InboxEmptyChat';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
@@ -76,6 +77,17 @@ function TalkMeHeaderButton({ testId, count, loading, queueName, onClick }: Talk
   );
 }
 
+/**
+ * Etapa 74 — a aba Tarefas monta sob demanda (lazy + Suspense), então o QuickAdd
+ * ainda não existe no instante do atalho: tenta focar por alguns frames até ele
+ * aparecer no DOM.
+ */
+function focarQuickAdd(tentativas = 20): void {
+  const campo = document.querySelector<HTMLInputElement>('[data-testid="quick-add-input"]');
+  if (campo) { campo.focus(); return; }
+  if (tentativas > 0) window.requestAnimationFrame(() => focarQuickAdd(tentativas - 1));
+}
+
 export function RealtimeInboxView() {
   const isMobile = useIsMobile();
   const inbox = useRealtimeInbox();
@@ -101,19 +113,33 @@ export function RealtimeInboxView() {
   // Ao trocar de conversa o id deixa de bater e o valor derivado volta a 'chat'
   // sem efeito nem setState em cascata — manter 'Notas' aberto ao clicar noutro
   // contato seria desorientador.
-  const [tabState, setTabState] = useState<{ contactId: string | null; tab: ConversationTab }>(
-    { contactId: null, tab: 'chat' }
+  const [tabState, setTabState] = useState<TabState>(
+    // Etapa 73 — a aba persistida já chega normalizada ('reminders' → 'tasks').
+    // `restaurada: true`: a preferência do localStorage vale como padrão da sessão,
+    // inclusive na primeira conversa aberta depois do reload. Sem isso ela ficava
+    // ancorada em `contactId: null` e morria no instante em que o usuário abria
+    // qualquer conversa — descartada exatamente quando importava (medido em
+    // produção em 03/10: item 6 do S41, persistia e não restaurava).
+    () => ({ contactId: null, tab: inbox.conversationTab, restaurada: true })
   );
-  const activeTab: ConversationTab =
-    tabState.contactId === inbox.selectedContactId ? tabState.tab : 'chat';
+  const activeTab: ConversationTab = resolverAbaAtiva(tabState, inbox.selectedContactId);
+  // `setConversationTab` desestruturado: chamá-lo como `inbox.setConversationTab`
+  // faria o exhaustive-deps exigir o objeto `inbox` inteiro (recriado a cada render).
+  const { setConversationTab } = inbox;
   const setActiveTab = useCallback(
-    (tab: ConversationTab) => setTabState({ contactId: inbox.selectedContactId, tab }),
-    [inbox.selectedContactId]
+    (tab: ConversationTab) => {
+      setTabState({ contactId: inbox.selectedContactId, tab, restaurada: false });
+      setConversationTab(tab);
+    },
+    [inbox.selectedContactId, setConversationTab]
   );
   const { counts: tabCounts } = useConversationTabCounts(inbox.selectedContactId);
-  // Badge da aba Pedidos vem do CRM 360° (client-side) — a RPC get_conversation_tab_counts não muda.
+  // Badge da aba SalesView vem do CRM 360° (client-side) — a RPC get_conversation_tab_counts não muda.
   const { data: crm360ForOrdersBadge } = useContactCrm360(inbox.selectedContactId);
-  const tabExtraCounts = { orders: crm360ForOrdersBadge?.purchases.length ?? 0 };
+  // Badge da SalesView = compras + propostas em aberto — a aba mostra as duas coisas.
+  const tabExtraCounts = {
+    orders: (crm360ForOrdersBadge?.purchases.length ?? 0) + (crm360ForOrdersBadge?.openDeals.length ?? 0),
+  };
 
   // "Usar resposta" (aba IA) — leva o texto sugerido para o input do Chat e troca de aba.
   const [pendingDraft, setPendingDraft] = useState<string | null>(null);
@@ -136,7 +162,7 @@ export function RealtimeInboxView() {
       inbox.setPendingContactId(null);
     };
 
-    handlePendingContact();
+    void handlePendingContact();
   // inbox e inboxFilters são facades recriadas a cada render; depender dos objetos
   // inteiros repetiria o deep-link enquanto as funções assíncronas atualizam estado.
   }, [inbox.pendingContactId, inbox.loading]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -154,6 +180,17 @@ export function RealtimeInboxView() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [bulkActions]);
+
+  // Etapa 74 — Alt+T (atalho global 'open-tasks-tab') abre a aba Tarefas desta
+  // conversa e leva o foco para o QuickAdd assim que ele monta.
+  useEffect(() => {
+    const abrirTarefas = () => {
+      setActiveTab('tasks');
+      focarQuickAdd();
+    };
+    window.addEventListener('inbox-open-tasks-tab', abrirTarefas);
+    return () => window.removeEventListener('inbox-open-tasks-tab', abrirTarefas);
+  }, [setActiveTab]);
 
   const handleGlobalSearchResult = (result: SearchResult) => {
     if (result.contactId) inbox.handleSelectConversation(result.contactId);
@@ -256,6 +293,7 @@ export function RealtimeInboxView() {
                     conversation={inbox.legacyConversation}
                     messages={inbox.legacyMessages}
                     onUseSuggestion={handleUseSuggestion}
+                    profileId={inbox.profile?.id ?? null}
                   >
                   <SectionErrorBoundary sectionName="Chat" className="h-full">
                     <ChatPanel

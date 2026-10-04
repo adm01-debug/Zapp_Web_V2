@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { Info, Smartphone, BadgeCheck, Brain, Sparkles, Tag, User, FileText, Clock, BarChart3, Image, TrendingUp, ShoppingBag, GitBranch, CircleDollarSign, Layers, Activity } from 'lucide-react';
+import { Info, Smartphone, BadgeCheck, Brain, Sparkles, Tag, User, FileText, Clock, Image, TrendingUp, GitBranch, Layers, Activity } from 'lucide-react';
 
 export interface AccordionSectionConfig {
   value: string;
@@ -17,21 +17,18 @@ export const CONTACT_DETAIL_SECTIONS: AccordionSectionConfig[] = [
   { value: 'crm-360', label: 'CRM 360°', icon: Sparkles, customIndex: 2 },
   { value: 'intelligence', label: 'Inteligência Comercial', icon: Brain, customIndex: 2.5 },
   { value: 'tags', label: 'Tags', icon: Tag, customIndex: 3 },
-  { value: 'commercial-summary', label: 'Resumo Comercial', icon: CircleDollarSign, customIndex: 3.5 },
   { value: 'assignment', label: 'Atribuição', icon: User, customIndex: 4 },
   { value: 'memory', label: 'Memória Viva', icon: Brain, customIndex: 5.9 },
   { value: 'scoring', label: 'Scoring & LGPD', icon: TrendingUp, customIndex: 6 },
-  { value: 'purchases', label: 'Compras & Propostas', icon: ShoppingBag, customIndex: 6.2 },
   { value: 'notes', label: 'Notas Privadas', icon: FileText, customIndex: 6 },
   { value: 'timeline', label: 'Linha do Tempo', icon: GitBranch, customIndex: 6.8 },
   { value: 'history', label: 'Histórico', icon: Clock, customIndex: 7 },
-  { value: 'stats', label: 'Estatísticas', icon: BarChart3, customIndex: 8 },
   { value: 'media', label: 'Mídia Compartilhada', icon: Image, customIndex: 8 },
   { value: 'last-activity', label: 'Última atividade', icon: Activity, customIndex: 8.5 },
   { value: 'more-details', label: 'Mais detalhes', icon: Layers, customIndex: 9 },
 ];
 
-export const DEFAULT_OPEN_SECTIONS = ['info', 'whatsapp-status', 'tags', 'commercial-summary'];
+export const DEFAULT_OPEN_SECTIONS = ['info', 'whatsapp-status', 'tags'];
 
 const ACCORDION_STORAGE_KEY = 'contact-details-accordion-state';
 

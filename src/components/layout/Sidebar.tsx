@@ -9,6 +9,7 @@ import { PushNotificationToggle } from '@/components/notifications/PushNotificat
 import { ScreenProtectionToggle } from '@/components/notifications/ScreenProtectionToggle';
 import { SoundVolumeControl } from '@/components/notifications/SoundVolumeControl';
 import { MediaVolumeToggle } from './MediaVolumeToggle';
+import { AccessibilitySettings } from '@/components/theme/HighContrastToggle';
 import { SidebarNavItem } from './SidebarNavItem';
 import { SidebarNavGroup } from './SidebarNavGroup';
 import { SidebarUserPill } from './SidebarUserPill';
@@ -17,7 +18,7 @@ import { primaryNav, sidebarGroups, advancedNav } from './sidebarNavConfig';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { NavigationService } from '@/services/navigation.service';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
-import { useMyWorkItemsBadge } from '@/hooks/tasks/useMyWorkItems';
+import { useMyWorkItemsBadgeInfo } from '@/hooks/tasks/useMyWorkItems';
 
 interface SidebarProps {
   currentView: string;
@@ -44,23 +45,24 @@ export const Sidebar = React.memo(function Sidebar({
   const isDark = resolvedTheme === 'dark';
   const { collapsed, toggle } = useSidebarCollapse();
   const { favorites, toggleFavorite, isFavorite } = useSidebarFavorites();
-  const { roles } = useUserRole();
+  const { roles, permissions } = useUserRole();
 
   // Fase F (etapa 62): badge do item Tarefas = atrasadas + avisos já disparados
-  // e ainda não tratados (mesma regra do `useMyWorkItemsBadge`).
-  const tasksBadge = useMyWorkItemsBadge();
+  // e ainda não tratados. A COR diz o estado: vermelho quando ha tarefa atrasada,
+  // amarelo quando o badge e so de avisos disparados.
+  const tasksBadgeInfo = useMyWorkItemsBadgeInfo();
 
   const filteredPrimaryNav = useMemo(() =>
-    NavigationService.filterNavItems(primaryNav, roles),
-    [roles]
+    NavigationService.filterNavItems(primaryNav, roles, permissions),
+    [roles, permissions]
   );
 
   const filteredGroups = useMemo(() =>
     sidebarGroups.map(group => ({
       ...group,
-      items: NavigationService.filterNavItems(group.items, roles)
+      items: NavigationService.filterNavItems(group.items, roles, permissions)
     })).filter(group => group.items.length > 0),
-    [roles]
+    [roles, permissions]
   );
 
   const allNavItems = useMemo(() =>
@@ -78,12 +80,12 @@ export const Sidebar = React.memo(function Sidebar({
     favorites
       .map(id => allNavItems.find(item => item.id === id))
       .filter(Boolean)
-      .filter(item => !primaryNavIds.has(item!.id) && NavigationService.canAccess(item!.id, roles)) as typeof allNavItems,
-    [favorites, allNavItems, primaryNavIds, roles]
+      .filter(item => !primaryNavIds.has(item!.id) && NavigationService.canAccess(item!.id, roles, permissions)) as typeof allNavItems,
+    [favorites, allNavItems, primaryNavIds, roles, permissions]
   );
 
   return (
-    <aside id="main-navigation" role="navigation" aria-label="Menu de navegação principal"
+    <nav id="main-navigation" aria-label="Menu de navegação principal"
       className={cn('flex flex-col h-screen supports-[height:100dvh]:h-[100dvh] border-r border-border bg-sidebar shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden', collapsed ? 'w-[var(--sidebar-w-collapsed)]' : 'w-[var(--sidebar-w)]')}>
 
       {/* Logo + Toggle */}
@@ -131,7 +133,10 @@ export const Sidebar = React.memo(function Sidebar({
                   item={item}
                   currentView={currentView}
                   onViewChange={onViewChange}
-                  badge={item.id === 'inbox' ? inboxBadge : item.id === 'tasks' ? tasksBadge : undefined}
+                  badge={item.id === 'inbox' ? inboxBadge : item.id === 'tasks' ? tasksBadgeInfo.count : undefined}
+                  badgeVariant={
+                    item.id === 'tasks' && !tasksBadgeInfo.hasOverdue ? 'warning' : 'destructive'
+                  }
                   collapsed={collapsed}
                 />
               </li>
@@ -237,8 +242,17 @@ export const Sidebar = React.memo(function Sidebar({
               </button>
             </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">{isDark ? 'Modo claro' : 'Modo escuro'}</TooltipContent></Tooltip>
           </div>
+          {/* Acessibilidade (alto contraste, nivel de contraste, movimento reduzido, texto grande)
+              em LINHA PROPRIA: o `AccessibilitySettings` e um botao de 36px, e um sexto controle
+              na linha de cima daria 6 × 36px + 5 gaps = 236px — estoura os 228px uteis da sidebar
+              (a conta dos 5 controles atuais esta no comentario do E28 acima). Antes desta
+              correcao o componente existia mas nao era renderizado em tela nenhuma: o usuario so
+              conseguia ligar o alto contraste por localStorage. */}
+          <div className={cn('flex items-center gap-1', collapsed ? 'flex-col' : 'flex-row')}>
+            <AccessibilitySettings />
+          </div>
         </div>
       </div>
-    </aside>
+    </nav>
   );
 });

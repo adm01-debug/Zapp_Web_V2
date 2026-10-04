@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 vi.mock('@/hooks/crm/useExternalCargos', () => ({ useExternalCargos: () => ({ data: [] }) }));
 vi.mock('@/hooks/crm/useExternalEmpresas', () => ({ useExternalEmpresas: () => ({ data: [] }) }));
@@ -108,6 +109,32 @@ describe('ContactForm — autocomplete de endereço (E41)', () => {
     h.suggestions = [
       { id: 's1', name: 'Avenida Paulista', address: 'Avenida Paulista, São Paulo - SP, Brasil', kind: 'street' },
     ];
+  });
+
+  it('E58 (2º consumidor): o combobox de endereço do cadastro não tem violação de acessibilidade (axe)', async () => {
+    h.suggestions = [
+      { id: 's1', name: 'Rua A, 1', address: 'Rua A, 1, São Paulo', kind: 'street' },
+      { id: 's2', name: 'Rua B, 2', address: 'Rua B, 2, São Paulo', kind: 'address' },
+      { id: 's3', name: 'Rua C, 3', address: 'Rua C, 3, São Paulo', kind: 'poi' },
+    ];
+    // `ContactForm` renderiza inline (sem portal) — a varredura no `container` do render
+    // cobre o combobox e a listbox reais, sem depender do `document.body` global.
+    const { container } = render(
+      <ContactForm
+        values={{ ...base }}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        submitLabel="Salvar"
+      />,
+    );
+    fireEvent.focus(screen.getByLabelText('Logradouro'));
+    expect(screen.getAllByRole('option').length).toBe(3);
+    // jsdom não calcula contraste (o axe não tem layout real) — fora da varredura, declarado.
+    const results = await axe(container, {
+      rules: { region: { enabled: false }, 'color-contrast': { enabled: false } },
+    });
+    expect(results).toHaveNoViolations();
   });
 
   it('escolher uma sugestão preenche logradouro, número, bairro, cidade, UF, CEP e coordenada — e o campo continua editável', async () => {

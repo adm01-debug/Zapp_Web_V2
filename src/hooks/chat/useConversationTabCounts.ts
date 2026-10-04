@@ -5,25 +5,28 @@ export interface ConversationTabCounts {
   tasksOpen: number;
   notesTotal: number;
   filesTotal: number;
-  remindersPending: number;
 }
 
-const EMPTY: ConversationTabCounts = { tasksOpen: 0, notesTotal: 0, filesTotal: 0, remindersPending: 0 };
+const EMPTY: ConversationTabCounts = { tasksOpen: 0, notesTotal: 0, filesTotal: 0 };
 
-/** Shape real do RPC — types.ts gerado ainda não reflete reminders_pending
- *  (fica desatualizado até o types-sync rodar pós-merge da migration). */
+/** Shape real do RPC.
+ *
+ *  `reminders_pending` foi abandonada (decisão 20261003-121143): a migration que adicionaria a coluna
+ *  nunca aplicou — `create or replace` não muda tipo de retorno e o `DROP FUNCTION` que resolveria está
+ *  comentado no arquivo irmão. O RPC devolve apenas as três colunas abaixo e o `types.ts` gerado já
+ *  reflete isso. Se a aba um dia precisar de lembretes pendentes, entra por versão nova de migration
+ *  (DROP + CREATE da função). */
 type TabCountsRpcRow = {
   tasks_open: number;
   notes_total: number;
   files_total: number;
-  reminders_pending: number;
 };
 
 /**
- * Badges das abas da conversa (Tarefas / Notas / Arquivos / Lembretes).
+ * Badges das abas da conversa (Tarefas / Notas / Arquivos).
  *
- * Usa a RPC get_conversation_tab_counts, que resolve os 4 counts numa única
- * ida ao banco — evita 4 queries por conversa aberta.
+ * Usa a RPC get_conversation_tab_counts, que resolve os counts numa única
+ * ida ao banco — evita 3 queries por conversa aberta.
  */
 export function useConversationTabCounts(contactId: string | null | undefined) {
   const query = useQuery({
@@ -43,7 +46,6 @@ export function useConversationTabCounts(contactId: string | null | undefined) {
         tasksOpen: Number(row.tasks_open ?? 0),
         notesTotal: Number(row.notes_total ?? 0),
         filesTotal: Number(row.files_total ?? 0),
-        remindersPending: Number(row.reminders_pending ?? 0),
       };
     },
     enabled: !!contactId,

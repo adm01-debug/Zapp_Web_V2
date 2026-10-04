@@ -314,7 +314,8 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
             onKeyDown={handleKeyDown}
             placeholder={placeholder ?? 'Adicionar tarefa… (Enter para criar)'}
             title="Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"
-            className="flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground/60 outline-none"
+            aria-label="Adicionar tarefa"
+            className="flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"
             disabled={loading}
           />
           {title && (

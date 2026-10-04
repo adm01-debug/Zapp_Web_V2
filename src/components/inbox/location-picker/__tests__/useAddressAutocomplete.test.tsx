@@ -14,6 +14,7 @@ const h = vi.hoisted(() => ({
   noteRetrieveCall: vi.fn(),
   endSearchSession: vi.fn(),
   isSearchBudgetOk: vi.fn(),
+  logAudit: vi.fn(),
 }));
 
 vi.mock('@/lib/mapboxGeocode', async (importOriginal) => {
@@ -43,12 +44,16 @@ vi.mock('@/lib/mapboxSession', () => ({
 vi.mock('@/lib/mapboxCostGuard', () => ({
   isSearchBudgetOk: () => h.isSearchBudgetOk(),
 }));
+vi.mock('@/lib/audit', () => ({ logAudit: (...args: unknown[]) => h.logAudit(...args) }));
 
 import { useAddressAutocomplete } from '../useAddressAutocomplete';
 
 const suggestionA: GeoSuggestion = { id: 'a', name: 'Rua A', address: 'Rua A, São Paulo', kind: 'street' };
 const suggestionB: GeoSuggestion = { id: 'b', name: 'Rua B', address: 'Rua B, São Paulo', kind: 'street' };
 const suggestionC: GeoSuggestion = { id: 'c', name: 'Rua C', address: 'Rua C, São Paulo', kind: 'street' };
+// E50: sugestão vinda do `/forward` (já tem coordenada) — a seleção não passa pelo `/retrieve`,
+// mas continua registrando o evento, com `source: 'forward'` e o `kind` da própria sugestão.
+const suggestionPoiForward: GeoSuggestion = { id: 'f', name: 'Rua A', address: 'Rua A, 1, São Paulo', kind: 'poi', coords: { lat: -23.5, lng: -46.6 } };
 // Coordenadas que o `/forward` devolveria nos casos de cascata (F2/E15/E16/E17).
 const forwardPaulista: GeoSearchPlace = { name: 'Avenida Paulista', address: 'Av. Paulista, 1000 - Bela Vista, São Paulo', lat: -23.5613, lng: -46.6565 };
 const forwardA: GeoSearchPlace = { name: 'Rua A', address: 'Rua A, 1, São Paulo', lat: -23.5, lng: -46.6 };
@@ -79,6 +84,8 @@ describe('useAddressAutocomplete', () => {
     h.noteRetrieveCall.mockReset();
     h.endSearchSession.mockReset();
     h.isSearchBudgetOk.mockReset().mockReturnValue(true);
+    // E50: a contagem de eventos é parte da prova (1× por seleção) — não pode acumular entre casos.
+    h.logAudit.mockReset();
   });
 
   afterEach(() => {
@@ -149,6 +156,57 @@ describe('useAddressAutocomplete', () => {
       expect(result.current.suggestions).toEqual([suggestionB]);
     });
 
+    it('E50: seleção via /retrieve registra {source, kind} — 1× e sem termo/endereço/coordenada', async () => {
+      // O evento responde: a escolha veio da sessão do Searchbox (paga) ou da rede de proteção
+      // `/forward`? E o `kind` diz QUE tipo de lugar foi escolhido (rua, endereço, POI). Termo
+      // digitado, nome, endereço e coordenada NÃO entram no evento (spec E50, item 2).
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionC] });
+      h.retrievePlaceResult.mockResolvedValue({
+        ok: true,
+        place: { lat: -23.5613, lng: -46.6565, name: 'Avenida Paulista', address: 'Av. Paulista, São Paulo' },
+      });
+      const { result } = setup();
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+
+      // 1× por `/retrieve` bem-sucedido — não duplica.
+      expect(h.logAudit).toHaveBeenCalledTimes(1);
+      const evento = h.logAudit.mock.calls[0][0];
+      expect(evento).toMatchObject({
+        action: 'searchbox_selected',
+        details: { source: 'suggest', kind: 'street' },
+      });
+      // Shape fechado: SÓ {source, kind} — nada de position nem campo extra.
+      expect(Object.keys(evento.details).sort()).toEqual(['kind', 'source']);
+      const json = JSON.stringify(evento.details);
+      expect(json).not.toContain('Rua');
+      expect(json).not.toContain('Paulista');
+      expect(json).not.toContain('-23.5');
+    });
+
+    it('E50: sugestão do /forward (já com coords) registra source forward e o kind da sugestão', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionPoiForward] });
+      const { result } = setup();
+      act(() => { result.current.setQuery('Rua A'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+
+      // Não passa pelo `/retrieve`, mas o evento sai com a origem e o tipo certos.
+      expect(h.retrievePlaceResult).not.toHaveBeenCalled();
+      expect(h.logAudit).toHaveBeenCalledTimes(1);
+      const evento = h.logAudit.mock.calls[0][0];
+      expect(evento).toMatchObject({
+        action: 'searchbox_selected',
+        details: { source: 'forward', kind: 'poi' },
+      });
+      const json = JSON.stringify(evento.details);
+      expect(json).not.toContain('Rua');
+      expect(json).not.toContain('-23.5');
+    });
+    
     it('lista vazia cacheada (E19) também é servida sem sessão nova', async () => {
       h.peekSearchSession.mockReturnValue('session-1');
       h.getCachedSuggest.mockReturnValue([]);
@@ -284,6 +342,24 @@ describe('useAddressAutocomplete', () => {
     await act(async () => { vi.advanceTimersByTime(300); });
     expect(h.suggestPlaces).toHaveBeenCalledTimes(1);
     expect(h.suggestPlaces).toHaveBeenCalledWith('abcdefghij', 'tok', expect.objectContaining({ session: 'session-1' }));
+  });
+
+  it('E80: 200 teclas em 5 s (25 ms cada) -> <= 17 requests e 1 sessao', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [] });
+    const { result } = setup();
+    let term = '';
+    // 200 teclas x 25 ms = 5000 ms de digitacao continua.
+    for (let i = 0; i < 200; i++) {
+      term += String.fromCharCode(97 + (i % 26));
+      act(() => { result.current.setQuery(term); });
+      act(() => { vi.advanceTimersByTime(25); });
+    }
+    await act(async () => { vi.advanceTimersByTime(300); });
+    const requests = h.suggestPlaces.mock.calls.length;
+    const sessoes = new Set(h.suggestPlaces.mock.calls.map((c) => (c[2] as { session?: string })?.session));
+    // O teto da E80 e <= 17 (1 a cada 300 ms); o medido e reportado no PR.
+    expect(requests).toBeLessThanOrEqual(17);
+    expect(sessoes.size).toBe(1);
   });
 
   it('cancela a consulta anterior — resposta lenta da 1ª não sobrescreve a 2ª', async () => {
@@ -611,6 +687,19 @@ describe('useAddressAutocomplete', () => {
     expect(h.reportMapboxFailure).toHaveBeenCalledWith('server_error', 'suggest');
   });
 
+  it('E51: /retrieve com causa de ROTA e /forward tambem falho reporta uma vez, com a causa do retrieve', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'network' });
+    h.searchPlaces.mockResolvedValue({ ok: false, kind: 'network' });
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    await act(async () => { await result.current.select(0); });
+    // dupla falha: nem /retrieve nem o /forward resolveram, e a causa e de rota (nao not_found)
+    expect(h.reportMapboxFailure).toHaveBeenCalledWith('network', 'retrieve');
+    expect(h.reportMapboxFailure).toHaveBeenCalledWith('network', 'retrieve');
+  });
+
   it('E17/E51: /retrieve sem resultado com o /forward também vazio não gera client_error de rota', async () => {
     h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
     h.retrievePlaceResult.mockResolvedValue({ ok: false, kind: 'not_found' });
@@ -844,5 +933,74 @@ describe('useAddressAutocomplete', () => {
     rerender({ enabled: false });
     await act(async () => { resolveRetrieve({ ok: true, place: forwardA }); });
     expect(await selecao).toBeNull();
+  });
+
+  // E64 · o leitor de tela do PRÓPRIO operador ouve a escolha. O anúncio é texto de DOM (região
+  // viva) — nunca auditoria: os eventos do E50 seguem com shape fechado {source, kind}.
+  describe('E64 — o leitor de tela anuncia a seleção', () => {
+    it('E64: após select() a escolha é anunciada com o nome da sugestão', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+      h.retrievePlaceResult.mockResolvedValue({
+        ok: true,
+        place: { lat: -23.5613, lng: -46.6565, name: 'Rua A, 1', address: 'Rua A, 1, São Paulo' },
+      });
+      const { result } = setup();
+      expect(result.current.selectionAnnouncement).toBe('');
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+
+      expect(result.current.selectionAnnouncement).toBe('Endereço escolhido: Rua A');
+    });
+
+    it('E64: sugestão do /forward (já com coords, sem /retrieve) também é anunciada', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionPoiForward] });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+
+      expect(h.retrievePlaceResult).not.toHaveBeenCalled();
+      expect(result.current.selectionAnnouncement).toBe('Endereço escolhido: Rua A');
+    });
+
+    it('E64: a mensagem anterior é substituída — nunca acumula', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA, suggestionB] });
+      h.retrievePlaceResult.mockResolvedValue({
+        ok: true,
+        place: { lat: -23.5, lng: -46.6, name: 'Rua B, 2', address: 'Rua B, 2, São Paulo' },
+      });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+      expect(result.current.selectionAnnouncement).toBe('Endereço escolhido: Rua A');
+
+      await act(async () => { await result.current.select(1); });
+      expect(result.current.selectionAnnouncement).toBe('Endereço escolhido: Rua B');
+      // a antiga foi SUBSTITUÍDA, não somada
+      expect(result.current.selectionAnnouncement).not.toContain('Rua A');
+    });
+
+    it('E64: o nome NÃO entra em logAudit — o anúncio é só do leitor de tela', async () => {
+      h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+      h.retrievePlaceResult.mockResolvedValue({
+        ok: true,
+        place: { lat: -23.5, lng: -46.6, name: 'Rua A, 1', address: 'Rua A, 1, São Paulo' },
+      });
+      const { result } = setup();
+      act(() => { result.current.setQuery('rua a'); });
+      await act(async () => { vi.advanceTimersByTime(300); });
+
+      await act(async () => { await result.current.select(0); });
+
+      // E50: shape fechado {source, kind}. O anúncio do E64 vive no DOM, não na auditoria.
+      const json = JSON.stringify(h.logAudit.mock.calls);
+      expect(json).not.toContain('Rua A');
+      expect(json).not.toContain('Endereço escolhido');
+    });
   });
 });

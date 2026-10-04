@@ -46,7 +46,7 @@ export function TranscriptionsHistoryView() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchTranscriptions(); }, []);
+  useEffect(() => { void fetchTranscriptions(); }, []);
 
   const filteredTranscriptions = useMemo(() => {
     let filtered = transcriptions;
@@ -75,7 +75,13 @@ export function TranscriptionsHistoryView() {
     return grouped;
   }, [filteredTranscriptions]);
 
-  const toggleContact = (id: string) => setExpandedContacts(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  const toggleContact = (id: string) => {
+    setExpandedContacts(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  };
   const expandAll = () => setExpandedContacts(new Set(Object.keys(groupedByContact)));
   const collapseAll = () => setExpandedContacts(new Set());
 

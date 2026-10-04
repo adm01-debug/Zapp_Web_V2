@@ -156,7 +156,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                 placeholder="Escreva uma nota..."
                 className="text-xs min-h-[60px] resize-none"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAdd();
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void handleAdd();
                 }}
               />
               <div className="flex justify-end gap-1.5">

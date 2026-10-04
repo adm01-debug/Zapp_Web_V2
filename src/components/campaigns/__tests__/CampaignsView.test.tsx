@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 
@@ -23,7 +22,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'user-1' }, session: {}, profile: null, loading: false }),
-  AuthProvider: ({ children }: any) => children,
+  AuthProvider: ({ children }: { children?: import("react").ReactNode }) => children,
 }));
 
 vi.mock('sonner', () => ({
@@ -32,9 +31,9 @@ vi.mock('sonner', () => ({
 
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div>,
   },
-  AnimatePresence: ({ children }: any) => children,
+  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
 }));
 
 // Mock the useCampaigns hook

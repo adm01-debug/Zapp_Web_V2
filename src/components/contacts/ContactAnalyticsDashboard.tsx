@@ -6,7 +6,8 @@ import {
   BarChart3, Users, TrendingUp, Building, Tag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, subDays, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
+import { appDayKey, appDayKeyLabel, appDayStart, appShiftDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 
@@ -60,19 +61,15 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
     // Daily growth (last 14 days)
     const dailyGrowth: { date: string; count: number }[] = [];
     for (let i = 13; i >= 0; i--) {
-      const day = startOfDay(subDays(new Date(), i));
-      const dayStr = format(day, 'yyyy-MM-dd');
-      const label = format(day, 'dd/MM');
-      const count = contacts.filter(c => {
-        const d = format(startOfDay(new Date(c.created_at)), 'yyyy-MM-dd');
-        return d === dayStr;
-      }).length;
+      const dayStr = appShiftDayKey(appDayKey(new Date()), -i);
+      const label = appDayKeyLabel(dayStr);
+      const count = contacts.filter(c => appDayKey(c.created_at) === dayStr).length;
       dailyGrowth.push({ date: label, count });
     }
 
-    // New this week
-    const weekAgo = subDays(new Date(), 7);
-    const newThisWeek = contacts.filter(c => new Date(c.created_at) >= weekAgo).length;
+    // New this week — últimos 7 dias de calendário (hoje + 6 anteriores), no fuso do app.
+    const semanaAtras = appDayStart(6);
+    const newThisWeek = contacts.filter(c => new Date(c.created_at) >= semanaAtras).length;
 
     return { typeDistribution, topCompanies, topTags, dailyGrowth, newThisWeek };
   }, [contacts]);
@@ -195,7 +192,7 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
                   {analytics.topTags.map(([tag, count]) => (
                     <Badge key={tag} variant="outline" className="text-3xs gap-1">
                       {tag}
-                      <span className="text-muted-foreground/60">{count}</span>
+                      <span className="text-muted-foreground">{count}</span>
                     </Badge>
                   ))}
                 </div>

@@ -1,13 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
-import { AiConversationSummarySchema, CONTEXT_CONTRACT_VERSION, measureConversationContext, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { AiConversationSummarySchema, CONTEXT_CONTRACT_VERSION, contextCancelledEnvelope, measureConversationContext, parseBody, revalidateContextBeforeEffect, validationErrorResponse } from "../_shared/schemas.ts";
 import { normalizeSentiment, normalizeUrgency, urgencyToOperationalPriority } from "../_shared/ai-vocabulary.ts";
 import { normalizeScore } from "../_shared/ai-values.ts";
 import { ConversationSummaryOutput, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { parseJsonObject } from "../_shared/ai-json.ts";
-import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
-import { CHURN_RISK_TOOL_SCHEMA, CONVERSATION_STATUS_TOOL_SCHEMA, KEY_POINTS_TOOL_SCHEMA, NEXT_STEPS_TOOL_SCHEMA, SENTIMENT_TOOL_SCHEMA, type ConversationToolDefinition, applyVocabularyConversion, buildConversationModelBody, buildConversationText, collectValueIssues, contractRejectionEvidence, conversationRunEnvelope, loadContactPromptContext, noModelPayloadResponse, persistenceFailureEnvelope, requestConversationModelJson, resolveVisibleContactId, summarizeContractIssues } from "../_shared/ai-conversation-pipeline.ts";
+import { CHURN_RISK_TOOL_SCHEMA, CONVERSATION_STATUS_TOOL_SCHEMA, KEY_POINTS_TOOL_SCHEMA, NEXT_STEPS_TOOL_SCHEMA, SENTIMENT_TOOL_SCHEMA, type ConversationToolDefinition, applyVocabularyConversion, buildConversationModelBody, buildConversationText, collectValueIssues, contractRejectionEvidence, conversationRunEnvelope, loadContactProjectionVersion, loadContactPromptContext, noModelPayloadResponse, persistenceFailureEnvelope, requestConversationModelJson, resolveVisibleContactId, summarizeContractIssues } from "../_shared/ai-conversation-pipeline.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -31,11 +31,31 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { messages, contactName, contactId, periodDays } = parsed.data;
-    const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
+    // IA-048: identidade da requisição e versão do contexto declarada pelo cliente.
+    const requestId = parsed.data.requestId ?? null;
+    // `contextVersion` (nome semântico) ou `periodKey` (nome canônico do frontend):
+    // o mesmo identificador de contexto pode chegar por qualquer um dos dois.
+    const declaredContextVersion = parsed.data.contextVersion ?? parsed.data.periodKey ?? null;
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
     // Visibilidade do contato (IA-004): este client é service_role (bypassa RLS).
     const visibleContactId = await resolveVisibleContactId(req, contactId);
+
+    // IA-048: versão do contato no INÍCIO da requisição (antes de chamar o modelo).
+    // `undefined` = não foi possível medir (a revalidação não cancela no escuro);
+    // `null` = medido, o contato ainda não tem projeção.
+    let versionAtRequestStart: string | null | undefined;
+    if (visibleContactId) {
+      try {
+        versionAtRequestStart = await loadContactProjectionVersion(supabase, visibleContactId);
+      } catch (versionError) {
+        versionAtRequestStart = undefined;
+        log.warn("Não foi possível ler a versão do contato no início da requisição", {
+          contactId: visibleContactId,
+          error: versionError instanceof Error ? versionError.message : String(versionError),
+        });
+      }
+    }
 
     // Fetch contact context for richer analysis
     let contactContext = '';
@@ -111,8 +131,10 @@ Foque em:
 
     const { failure, rawOutput } = await requestConversationModelJson({
       functionName: 'ai-conversation-summary',
+      purpose: 'summary',
       userId,
-      apiKey: LOVABLE_API_KEY,
+      // IA-051 — o id do clique (IA-048) atravessa o pipeline até o log de consumo.
+      requestId,
       body: buildConversationModelBody({ systemPrompt, contactName, conversationText, tool: conversationTool }),
       log,
       req,
@@ -170,6 +192,32 @@ Foque em:
     let projected = false;
 
     if (visibleContactId) {
+      // IA-048: REVALIDA o contexto (contato ainda visível + versão vigente) ANTES
+      // de qualquer efeito no servidor. Uma resposta atrasada de um período antigo
+      // encontra a versão avançada e é cancelada — nada é persistido e nada
+      // sobrescreve a projeção do contato.
+      const revalidation = await revalidateContextBeforeEffect({
+        expectedContactId: visibleContactId,
+        declaredVersion: declaredContextVersion,
+        versionAtRequestStart,
+        reloadVisibleContactId: () => resolveVisibleContactId(req, visibleContactId),
+        loadCurrentVersion: () => loadContactProjectionVersion(supabase, visibleContactId),
+      });
+      if (!revalidation.current) {
+        log.info("Contexto superado; resumo não persistido", {
+          requestId,
+          reason: revalidation.reason,
+          currentVersion: revalidation.currentVersion,
+        });
+        return jsonResponse(contextCancelledEnvelope({
+          capability: 'ai-conversation-summary',
+          requestId,
+          context: contextBudget,
+          reason: revalidation.reason,
+          currentVersion: revalidation.currentVersion,
+        }), 200, req);
+      }
+
       // Uma única transação no banco: grava a análise COMPLETA (incluindo
       // department/relationshipType/agentPerformance/churnRisk/salesOpportunity,
       // hoje descartados) e projeta no contato com trava de recência
@@ -222,7 +270,7 @@ Foque em:
       ...buildAiEnvelope({
         capability: 'ai-conversation-summary',
         status: Object.keys(valueIssues).length > 0 ? 'partial' : 'ok',
-        ...conversationRunEnvelope(contextBudget, valueIssues, vocabularyConversions, projected),
+        ...conversationRunEnvelope(contextBudget, valueIssues, vocabularyConversions, projected, requestId),
         data: analysis,
       }),
       analysisId,

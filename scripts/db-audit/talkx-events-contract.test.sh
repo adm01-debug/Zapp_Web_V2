@@ -288,6 +288,33 @@ assert_eq 'REVOKE: authenticated mantém SELECT (o app lê a trilha)' 'true' \
 assert_fails_like 'REVOKE: DELETE direto de evento é negado ao dono' 'permission denied' \
   "SET LOCAL role authenticated; SET LOCAL request.jwt.claim.sub='$OWNER_UID'; DELETE FROM public.talkx_campaign_events WHERE campaign_id='$CAMPAIGN'"
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# X021 — 8 novos event_type (links, investimento, relatório, importação)
+# ═══════════════════════════════════════════════════════════════════════════════
+# A migration X021 inteira (escrita/leitura de links, dedup de conversão,
+# investimento) é provada em scripts/db-audit/talkx-links-conversions.test.sh.
+# Aqui cobre-se só o pedaço do CONTRATO DE EVENTOS: o CHECK de tipo passa a
+# aceitar 8 valores novos — superconjunto dos 19 do V11, então nenhuma linha
+# existente viola.
+psql_script >/dev/null <<'SQL'
+ALTER TABLE public.talkx_campaign_events DROP CONSTRAINT IF EXISTS talkx_campaign_events_type_check;
+ALTER TABLE public.talkx_campaign_events ADD CONSTRAINT talkx_campaign_events_type_check
+  CHECK (event_type IN (
+    'created','updated','scheduled','started','paused','resumed','cancelled','completed','note',
+    'scheduled_updated','limits_updated','connection_failed','resumed_auto','skipped_suppressed',
+    'suppression_add','suppression_remove','suppression_update','segments_reviewed','checklist',
+    'link_created','link_updated','link_deleted','investment_updated',
+    'report_exported','report_shared','import_created','import_completed'
+  ));
+SQL
+pass 'X021 estende o CHECK de event_type (27 valores)'
+
+for tipo in link_created link_updated link_deleted investment_updated \
+            report_exported report_shared import_created import_completed; do
+  assert_ok "tipo aceito: $tipo" \
+    "INSERT INTO public.talkx_campaign_events(campaign_id, event_type) VALUES ('$CAMPAIGN', '$tipo')"
+done
+
 # ── CASCADE sobrevive ao REVOKE (o teste que decidiu a V11.1) ────────────────
 # Como DONO e sob RLS, apaga o próprio rascunho de campanha. O cascade no filho
 # roda com privilégio do owner da tabela filha, então não depende do DELETE que
@@ -298,4 +325,4 @@ as_user "$OWNER_UID" "DELETE FROM public.talkx_campaigns WHERE id = '$CAMPAIGN'"
 assert_eq 'CASCADE sobrevive ao REVOKE: eventos do rascunho apagado somem (0 linhas, visto por superuser)' '0' \
   "$(psql_query "SELECT count(*) FROM public.talkx_campaign_events WHERE campaign_id = '$CAMPAIGN'")"
 
-printf '[OK] Talk X V11/V11.1: contrato de eventos aceita os 19 tipos, alvo XOR obrigatorio, formato do entity_type guardado e trilha append-only com cascade preservado (%s cenarios).\n' "$passed"
+printf '[OK] Talk X V11/V11.1/X021: contrato de eventos aceita os 27 tipos (19 do V11 + 8 do X021), alvo XOR obrigatorio, formato do entity_type guardado e trilha append-only com cascade preservado (%s cenarios).\n' "$passed"

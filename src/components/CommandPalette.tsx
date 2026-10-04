@@ -34,7 +34,7 @@ function pushRecent(id: string) {
 }
 
  export function CommandPalette({ onNavigate }: CommandPaletteProps) {
-   const { roles } = useUserRole();
+   const { roles, permissions } = useUserRole();
  
    const filteredGroups = useMemo(() => {
      const groups = [
@@ -44,9 +44,9 @@ function pushRecent(id: string) {
      ];
      return groups.map(g => ({
        ...g,
-       items: NavigationService.filterNavItems(g.items, roles)
+       items: NavigationService.filterNavItems(g.items, roles, permissions)
      })).filter(g => g.items.length > 0);
-   }, [roles]);
+   }, [roles, permissions]);
  
    const allItems = useMemo(() => filteredGroups.flatMap(g => g.items), [filteredGroups]);
  
@@ -126,7 +126,7 @@ function pushRecent(id: string) {
                   <CommandItem key={item.id} onSelect={() => select(item.id)} className="gap-2 cursor-pointer">
                     <Icon className="w-4 h-4 text-muted-foreground" />
                     <span>{item.label}</span>
-                    <span className="ml-auto text-3xs text-muted-foreground/60 font-mono">#{item.id}</span>
+                    <span className="ml-auto text-3xs text-muted-foreground font-mono">#{item.id}</span>
                   </CommandItem>
                 );
               })}

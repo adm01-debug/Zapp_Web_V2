@@ -62,8 +62,8 @@ export function PerformanceMonitor() {
 
     const cacheKeys = Object.keys(localStorage).filter(k => k.startsWith('cache_') || k.startsWith('tanstack'));
     setCacheStats({
-      hits: parseInt(localStorage.getItem('cache_hits') || '0'),
-      misses: parseInt(localStorage.getItem('cache_misses') || '0'),
+      hits: Number.parseInt(localStorage.getItem('cache_hits') || '0'),
+      misses: Number.parseInt(localStorage.getItem('cache_misses') || '0'),
       size: cacheKeys.length,
     });
 
@@ -93,7 +93,7 @@ export function PerformanceMonitor() {
 
   // Load DB history on mount and when period changes
   useEffect(() => {
-    loadHistory(parseInt(period));
+    loadHistory(Number.parseInt(period));
   }, [loadHistory, period]);
 
   const overallScore = Math.round((metrics.filter(m => m.status === 'good').length / Math.max(metrics.length, 1)) * 100);
@@ -182,7 +182,7 @@ export function PerformanceMonitor() {
                  overallScore >= 50 ? 'Razoável. Há oportunidades de otimização.' :
                  'Atenção! Performance precisa de melhorias.'}
               </p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 <Clock className="w-3 h-3 inline mr-1" />
                 {dbHistory.length} snapshots no período selecionado
               </p>

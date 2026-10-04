@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { useIsMobile } from '@/hooks/ui/use-mobile';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
@@ -26,13 +28,16 @@ import { toast } from 'sonner';
 import { useCatalogSendReadiness } from '@/hooks/integrations/useCatalogSendReadiness';
 import { cn } from '@/lib/utils';
 import {
-  type MessageTemplate, type SendMode, buildMessage, collectAllImages,
+  type MessageTemplate, type SendMode, buildMessage, collectAllImages, downloadImageAsBlob,
 } from './sendProductUtils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { AlertCard } from '@/components/talkx/talkxShared';
+import { AlertCard, personalizePreview } from '@/components/talkx/talkxShared';
 import { useContactSearch, useSendToContact, type ContactResult } from './useSendProduct';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { ContactSelectionStep } from './ContactSelectionStep';
+// CT-37 — PhonePreview (prévia estilo WhatsApp) subiu para catalogShared,
+// junto com a classe .catalog-phone e os tokens --wa-*.
+import { PhonePreview, CATALOG_FOCUS_VISIBLE, productImageAlt } from './catalogShared';
 
 interface SendProductDialogProps {
   product: ExternalProduct;
@@ -91,45 +96,8 @@ const readDraft = (productId: string): SendDraft | null => {
   } catch { return null; }
 };
 
-/** Prévia visual estilo WhatsApp da mensagem/fotos selecionadas (E74). */
-const WhatsAppPreview: React.FC<{ message: string; images: { url: string; label: string }[] }> = ({ message, images }) => {
-  const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  const firstImage = images[0];
-  return (
-    <div className="space-y-2">
-      <span className="text-sm text-muted-foreground">Pré-visualização</span>
-      <div className="rounded-lg overflow-hidden border border-border/50">
-        <div className="flex items-center gap-2 bg-[#075E54] text-white px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-            <User className="w-4 h-4" />
-          </div>
-          <span className="text-sm font-medium">Cliente</span>
-        </div>
-        <div className="bg-[#e5ddd5] p-3 space-y-2">
-          {firstImage && (
-            <div className="relative inline-block rounded-lg overflow-hidden max-w-[70%] align-top">
-              <img src={firstImage.url} alt="Prévia" className="w-full h-auto max-h-40 object-cover" />
-              {images.length > 1 && (
-                <span className="absolute bottom-1 right-1 text-3xs leading-none bg-black/60 text-white px-1.5 py-0.5 rounded">
-                  1/{images.length}
-                </span>
-              )}
-            </div>
-          )}
-          <div className="bg-[#dcf8c6] rounded-lg px-3 py-2 max-w-[85%] ml-auto">
-            <p className="text-sm whitespace-pre-line text-black">{message}</p>
-            <div className="flex items-center justify-end gap-0.5 mt-1">
-              <span className="text-3xs text-black/50 mr-1">{time}</span>
-              <Check className="w-3 h-3 text-blue-500" />
-              <Check className="w-3 h-3 text-blue-500 -ml-2" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
+/** Prévia visual da mensagem/fotos (E74) agora é o PhonePreview de
+ * catalogShared (CT-37) — reutilizável e sem hex/tokens locais. */
 export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   product, open, onOpenChange, onConfirmSend, initialVariantColor, presetContact = null,
 }) => {
@@ -227,7 +195,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     : null;
 
   const allImages = useMemo(() => collectAllImages(fullProduct), [fullProduct]);
-  const visibleImages = useMemo(() => {
+  const baseImages = useMemo(() => {
     if (sendMode === 'variant' && activeGroup) {
       const imgs: { url: string; label: string }[] = [];
       if (fullProduct.primary_image_url) imgs.push({ url: fullProduct.primary_image_url, label: 'Principal' });
@@ -239,20 +207,36 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     return allImages;
   }, [sendMode, activeGroup, allImages, fullProduct.primary_image_url]);
 
+  // CT-39 — "Adicionar fotos": em modo variante o picker nasce só com as fotos da
+  // cor escolhida (baseImages); o botão abaixo acrescenta as fotos das variantes
+  // NÃO selecionadas, que é o caso nomeado no plano. Elas vivem em `extraImages`
+  // justamente para não entrarem na chave de reset — acrescentar foto não pode
+  // apagar a seleção que o agente já fez.
+  const [extraImages, setExtraImages] = useState<{ url: string; label: string }[]>([]);
+  const visibleImages = useMemo(() => [...baseImages, ...extraImages], [baseImages, extraImages]);
+
   // Reseta a selecao de fotos sempre que o conjunto de imagens visiveis
   // muda (produto carregado, troca de modo produto/variante ou de cor) -
   // sem efeito e sem ref (o linter deste repo bane ref-durante-render):
   // duas useState comparadas no proprio corpo do render, no padrao
   // documentado em https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes.
-  const visibleImagesKey = visibleImages.map((i) => i.url).join('|');
-  const [selectedImages, setSelectedImages] = useState<Set<string>>(() => new Set(visibleImages.map((i) => i.url)));
-  const [prevVisibleImagesKey, setPrevVisibleImagesKey] = useState(visibleImagesKey);
-  if (prevVisibleImagesKey !== visibleImagesKey) {
-    setPrevVisibleImagesKey(visibleImagesKey);
-    setSelectedImages(new Set(visibleImages.map((i) => i.url)));
+  const baseImagesKey = baseImages.map((i) => i.url).join('|');
+  const [selectedImages, setSelectedImages] = useState<Set<string>>(() => new Set(baseImages.map((i) => i.url)));
+  const [prevVisibleImagesKey, setPrevVisibleImagesKey] = useState(baseImagesKey);
+  if (prevVisibleImagesKey !== baseImagesKey) {
+    setPrevVisibleImagesKey(baseImagesKey);
+    setSelectedImages(new Set(baseImages.map((i) => i.url)));
+    setExtraImages([]);
   }
 
-  const message = isEditing ? customMessage : buildMessage(fullProduct, template, sendMode === 'variant' ? activeGroup : null);
+  // CT-45 — a mensagem (do modelo ou editada à mão) é personalizada com o
+  // contato selecionado: {{nome}}/{{empresa}} resolvem aqui e o preview
+  // acompanha a troca de contato. Sem contato, cada caminho devolve o texto
+  // cru — chamar o helper com `null` cairia no contato de exemplo
+  // ("João Silva"/"Sua Empresa") e mostraria dados que não existem.
+  const message = isEditing
+    ? (selectedContact ? personalizePreview(customMessage, selectedContact) : customMessage)
+    : buildMessage(fullProduct, template, sendMode === 'variant' ? activeGroup : null, selectedContact);
   const messageTooLong = message.length > MAX_MESSAGE_LENGTH;
   const selectedImagesList = useMemo(
     () => visibleImages.filter((i) => selectedImages.has(i.url)),
@@ -269,6 +253,33 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
       return;
     }
     setSelectedImages((prev) => { const next = new Set(prev); next.add(url); return next; });
+  };
+
+  // CT-39 — acrescenta as fotos das variantes não selecionadas ao picker e já as
+  // marca, respeitando o teto de MAX_IMAGES (marcar em massa sem teto furava a
+  // trava de 10 fotos do toggleImage).
+  const handleAddPhotos = () => {
+    const faltantes = allImages.filter((i) => !visibleImages.some((v) => v.url === i.url));
+    if (faltantes.length === 0) {
+      toast.error('Não há outras fotos para adicionar');
+      return;
+    }
+    setExtraImages((prev) => {
+      const next = [...prev];
+      faltantes.forEach((f) => { if (!next.some((n) => n.url === f.url)) next.push(f); });
+      return next;
+    });
+    const cabem = Math.max(0, MAX_IMAGES - selectedImages.size);
+    setSelectedImages((prev) => {
+      const next = new Set(prev);
+      faltantes.slice(0, cabem).forEach((f) => next.add(f.url));
+      return next;
+    });
+    toast.success(
+      cabem >= faltantes.length
+        ? `${faltantes.length} foto(s) adicionada(s)`
+        : `${cabem} de ${faltantes.length} adicionada(s) — limite de ${MAX_IMAGES} fotos por envio`
+    );
   };
 
   const handleEditMessage = () => { if (!isEditing) setCustomMessage(message); setIsEditing(!isEditing); };
@@ -289,14 +300,24 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     } catch { toast.error('Erro ao copiar link'); }
   };
 
-  const handleDownloadImages = () => {
+  const handleDownloadImages = async () => {
     const urls = Array.from(selectedImages);
     if (urls.length === 0) { toast.error('Nenhuma foto selecionada'); return; }
-    urls.forEach((url, i) => {
-      const a = document.createElement('a'); a.href = url; a.download = `${fullProduct.name.replace(/\s+/g, '_')}_${i + 1}.jpg`;
-      a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    });
-    toast.success('📥 Download iniciado', { description: `${urls.length} foto(s)` });
+    const baseName = fullProduct.name.replace(/\s+/g, '_');
+    // CT-39 — sem JSZip/fflate/archiver no bundle (nenhuma dependência nova é
+    // autorizada), o "zip" do plano vira o download individual previsto no
+    // fallback. Cada foto desce como Blob (o `download` do <a> é ignorado em
+    // URL cross-origin, imagedelivery.net) e o toast só promete o que saiu de
+    // verdade.
+    const results = await Promise.all(
+      urls.map((url, i) => downloadImageAsBlob(url, `${baseName}_${i + 1}.jpg`))
+    );
+    const downloaded = results.filter(Boolean).length;
+    if (downloaded === 0) {
+      toast.error('Não foi possível baixar as fotos', { description: 'Abra cada foto em uma nova aba.' });
+      return;
+    }
+    toast.success('📥 Download iniciado', { description: `${downloaded} de ${urls.length} foto(s)` });
   };
 
   const handleSend = () => {
@@ -366,9 +387,14 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     );
   };
 
-  return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { requestClose(); return; } onOpenChange(v); }}>
-      <DialogContent aria-describedby={undefined} className="max-w-lg max-h-[85vh] p-0 gap-0" onKeyDown={handleContentKeyDown} onEscapeKeyDown={handleEscapeKeyDown}>
+  const isMobile = useIsMobile();
+
+  // CT-30 — o miolo do dialog (passos de configuração/contato) é único; abaixo
+  // de md (768px) ele é montado num Drawer (vaul) e acima disso no Dialog atual.
+  const requestOpenChange = (v: boolean) => { if (!v) { requestClose(); return; } onOpenChange(v); };
+
+  const panel = (
+    <>
         {step === 'configure' && (
           <>
             <DialogHeader className="p-5 pb-3">
@@ -391,7 +417,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                     {fullProduct.primary_image_url && (
                       <img
                         src={fullProduct.primary_image_url}
-                        alt={fullProduct.name}
+                        alt={productImageAlt(fullProduct.name)}
                         className="w-10 h-10 rounded-md object-cover flex-shrink-0"
                         loading="lazy"
                         decoding="async"
@@ -422,10 +448,10 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                 {variantGroups.length > 0 && (
                   <div className="space-y-3">
                     <div className="flex gap-2">
-                      <Button variant={sendMode === 'product' ? 'default' : 'outline'} size="sm" className="text-xs h-8 gap-1.5" onClick={() => { setSendMode('product'); setSelectedColorGroup(null); setIsEditing(false); }}>
+                      <Button variant={sendMode === 'product' ? 'default' : 'outline'} size="sm" className={cn('text-xs h-8 gap-1.5', CATALOG_FOCUS_VISIBLE)} onClick={() => { setSendMode('product'); setSelectedColorGroup(null); setIsEditing(false); }}>
                         <Package className="w-3.5 h-3.5" />Produto Completo
                       </Button>
-                      <Button variant={sendMode === 'variant' ? 'default' : 'outline'} size="sm" className="text-xs h-8 gap-1.5" onClick={() => { setSendMode('variant'); if (!selectedColorGroup && variantGroups.length > 0) setSelectedColorGroup(variantGroups[0].colorName); setIsEditing(false); }}>
+                      <Button variant={sendMode === 'variant' ? 'default' : 'outline'} size="sm" className={cn('text-xs h-8 gap-1.5', CATALOG_FOCUS_VISIBLE)} onClick={() => { setSendMode('variant'); if (!selectedColorGroup && variantGroups.length > 0) setSelectedColorGroup(variantGroups[0].colorName); setIsEditing(false); }}>
                         <Palette className="w-3.5 h-3.5" />Variação Específica
                       </Button>
                     </div>
@@ -439,8 +465,8 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                             const groupStock = group.variants.reduce((s, v) => s + v.stock_quantity, 0);
                             return (
                               <button key={group.colorName} onClick={() => { setSelectedColorGroup(group.colorName); setIsEditing(false); }}
-                                className={cn('flex items-center gap-3 p-2.5 rounded-lg border-2 transition-all text-left', isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border/50 hover:border-border')}>
-                                {group.images[0] ? <img src={group.images[0]} alt={group.colorName} className="w-10 h-10 rounded-md object-cover flex-shrink-0" loading="lazy" />
+                                className={cn('flex items-center gap-3 p-2.5 rounded-lg border-2 transition-all text-left', isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border/50 hover:border-border', CATALOG_FOCUS_VISIBLE)}>
+                                {group.images[0] ? <img src={group.images[0]} alt={productImageAlt(fullProduct.name, group.colorName)} className="w-10 h-10 rounded-md object-cover flex-shrink-0" loading="lazy" />
                                   : group.colorHex ? <div className="w-10 h-10 rounded-md border flex-shrink-0" style={{ backgroundColor: group.colorHex }} />
                                     : <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center flex-shrink-0"><Palette className="w-4 h-4 text-muted-foreground" /></div>}
                                 <div className="min-w-0 flex-1">
@@ -468,18 +494,30 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
                 <Separator />
 
+                {/* CT-39 — o botão "Adicionar fotos" só faz sentido em modo
+                    variante: ali o picker lista apenas as fotos da cor escolhida
+                    e o botão traz as das outras variantes. Em modo produto o
+                    picker já lista todas (collectAllImages), então ele nem
+                    aparece; o toggle "Selecionar/Desmarcar todas" continua. */}
                 {visibleImages.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">{selectedImages.size} de {visibleImages.length} fotos selecionadas</span>
-                      <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => selectedImages.size === visibleImages.length ? setSelectedImages(new Set()) : setSelectedImages(new Set(visibleImages.map((i) => i.url)))}>
-                        {selectedImages.size === visibleImages.length ? 'Desmarcar todas' : 'Selecionar todas'}
-                      </Button>
+                      <div className="flex items-center gap-3">
+                        {sendMode === 'variant' && allImages.some((i) => !visibleImages.some((v) => v.url === i.url)) && (
+                          <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={handleAddPhotos}>
+                            Adicionar fotos
+                          </Button>
+                        )}
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => selectedImages.size === visibleImages.length ? setSelectedImages(new Set()) : setSelectedImages(new Set(visibleImages.map((i) => i.url)))}>
+                          {selectedImages.size === visibleImages.length ? 'Desmarcar todas' : 'Selecionar todas'}
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {visibleImages.map((img) => (
-                        <button key={img.url} onClick={() => toggleImage(img.url)} className={cn('relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all', selectedImages.has(img.url) ? 'border-primary ring-2 ring-primary/30' : 'border-border/50 opacity-60 hover:opacity-100')}>
-                          <img src={img.url} alt={img.label} className="w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                        <button key={img.url} onClick={() => toggleImage(img.url)} className={cn('relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all', selectedImages.has(img.url) ? 'border-primary ring-2 ring-primary/30' : 'border-border/50 opacity-60 hover:opacity-100', CATALOG_FOCUS_VISIBLE)}>
+                          <img src={img.url} alt={productImageAlt(fullProduct.name, img.label)} className="w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                           {selectedImages.has(img.url) && <div className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center"><Check className="w-3 h-3 text-primary-foreground" /></div>}
                         </button>
                       ))}
@@ -525,7 +563,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
                 <Separator />
 
-                <WhatsAppPreview message={message} images={selectedImagesList} />
+                <PhonePreview message={message} images={selectedImagesList} />
               </div>
             </ScrollArea>
 
@@ -554,6 +592,14 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
               <div className="flex items-center gap-2">
               <Button variant="outline" className="flex-1" onClick={requestClose}>Cancelar</Button>
               <div className="flex flex-1">
+                {/* CT-68 — progresso de envio anunciado: o texto do botão muda a
+                    cada lote, mas botão não é região viva; esta é a fonte do
+                    anúncio para o leitor de tela (visually hidden). */}
+                {isSending && (
+                  <span className="sr-only" role="status" aria-live="polite" data-testid="send-progress-live">
+                    {sendProgress ? `Enviando ${sendProgress.done} de ${sendProgress.total}` : 'Enviando'}
+                  </span>
+                )}
                 <Button
                   className="flex-1 rounded-r-none gap-2"
                   onClick={presetContact ? handleSendToContact : handleSend}
@@ -572,7 +618,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                     : 'Selecionar Contato'}
                 </Button>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button className="rounded-l-none border-l border-primary-foreground/20 px-2"><ChevronDown className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                  <DropdownMenuTrigger asChild><Button aria-label="Mais ações de envio" className="rounded-l-none border-l border-primary-foreground/20 px-2"><ChevronDown className="w-4 h-4" /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
                     <DropdownMenuItem onClick={handleCopyDescription}><Copy className="w-4 h-4 mr-2" />Copiar Descrição</DropdownMenuItem>
                     <DropdownMenuItem onClick={handleDownloadImages}><Download className="w-4 h-4 mr-2" />Download ({selectedImages.size} fotos)</DropdownMenuItem>
@@ -606,7 +652,36 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
             onSend={handleSendToContact}
           />
         )}
-      </DialogContent>
+    </>
+  );
+
+  return (
+    <>
+      {isMobile ? (
+        <Drawer open={open} onOpenChange={requestOpenChange}>
+          <DrawerContent
+            data-testid="send-product-drawer"
+            aria-describedby={undefined}
+            className="max-h-[85vh] gap-0 p-0"
+            onKeyDown={handleContentKeyDown}
+            onEscapeKeyDown={handleEscapeKeyDown}
+          >
+            {panel}
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={open} onOpenChange={requestOpenChange}>
+          <DialogContent
+            data-testid="send-product-dialog"
+            aria-describedby={undefined}
+            className="max-w-lg max-h-[85vh] p-0 gap-0"
+            onKeyDown={handleContentKeyDown}
+            onEscapeKeyDown={handleEscapeKeyDown}
+          >
+            {panel}
+          </DialogContent>
+        </Dialog>
+      )}
 
       <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
         <AlertDialogContent>
@@ -622,6 +697,6 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Dialog>
+    </>
   );
 };

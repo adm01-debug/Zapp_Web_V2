@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: dispatch (manual; o cron foi desligado por rodar 100% skipped)
+#   prova: sincronizacao do CRM executada de ponta a ponta
+#   falha: o job fica vermelho e nada e sincronizado
+#   avisa: quem disparou
 name: CRM Sync Worker
 
 on:
@@ -15,6 +20,10 @@ on:
         required: false
         default: '1'
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 permissions:
   contents: read
 
@@ -31,7 +40,7 @@ jobs:
     steps:
       - name: Validar configuracao e processar lote
         env:
-          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          PROJECT_REF: tnnnlkbymytvtqngbbqh
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           INPUT_BATCH: ${{ inputs.batch_size }}
         run: |
@@ -51,7 +60,7 @@ jobs:
             echo "::error::batch_size fora de 1..10."
             exit 1
           fi
-          HEALTH_STATUS=$(curl --silent --show-error --output "$RUNNER_TEMP/crm-health.json" --write-out '%{http_code}' \
+          HEALTH_STATUS=$(curl --proto '=https' --tlsv1.2 --silent --show-error --output "$RUNNER_TEMP/crm-health.json" --write-out '%{http_code}' \
             --connect-timeout 10 --max-time 45 \
             "https://$PROJECT_REF.supabase.co/functions/v1/crm-integration" \
             -H 'Content-Type: application/json' \
@@ -62,7 +71,7 @@ jobs:
             exit 1
           fi
           node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/crm-health.json','utf8'));if(r?.data?.external_reachable!==true||!r?.data?.queue)process.exit(1);console.log('CRM health: external=ok, queue=ok')"
-          STATUS=$(curl --silent --show-error --output "$RUNNER_TEMP/crm-worker.json" --write-out '%{http_code}' \
+          STATUS=$(curl --proto '=https' --tlsv1.2 --silent --show-error --output "$RUNNER_TEMP/crm-worker.json" --write-out '%{http_code}' \
             --connect-timeout 10 --max-time 150 \
             "https://$PROJECT_REF.supabase.co/functions/v1/crm-integration" \
             -H 'Content-Type: application/json' \

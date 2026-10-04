@@ -28,8 +28,10 @@ test.describe('Contatos — seleção e ações em lote', () => {
     }
 
     await page.getByRole('button', { name: /Comparar/ }).click();
-    await expect(page.getByRole('dialog', { name: 'Comparar Contatos' })).toBeVisible();
+    const compare = page.getByRole('dialog', { name: 'Comparar Contatos' });
+    await expect(compare).toBeVisible();
     await page.keyboard.press('Escape');
+    await expect(compare).toBeHidden();
 
     const merge = page.getByRole('button', { name: /Mesclar/ });
     test.skip((await merge.count()) === 0, 'Mesclar exige perfil admin/supervisor');

@@ -80,21 +80,14 @@ test.describe('Talk X module', () => {
     await expect(dialog).not.toBeVisible();
   });
 
-  test('segments and templates tabs render', async ({ page }) => {
-    await page.goto('/');
-    await expandCampanhasGroup(page);
-    await page
-      .getByRole('navigation', { name: 'Menu de navegação principal' })
-      .getByRole('button', { name: 'Campanhas', exact: true })
-      .first()
-      .click();
-
-    await page.getByRole('tab', { name: 'Segmentos' }).click();
-    await expect(page.getByRole('tab', { name: 'Segmentos' })).toHaveAttribute('data-state', 'active');
+  test('segments and templates render via deep links', async ({ page }) => {
+    // Após X007, "Segmentos" e "Templates" deixaram de ser abas (role=tab) e viraram
+    // itens de menu ("Analytics ▾" / "Templates ▾"). Cada aba tem endereço próprio
+    // (?tab=), que é o comportamento aceite da etapa — a régua visual (X004) navega assim.
+    await page.goto('/?view=talkx&tab=segments');
     await expect(page.getByPlaceholder('Buscar segmentos…')).toBeVisible();
 
-    await page.getByRole('tab', { name: 'Templates' }).click();
-    await expect(page.getByRole('tab', { name: 'Templates' })).toHaveAttribute('data-state', 'active');
+    await page.goto('/?view=talkx&tab=templates');
     await expect(page.getByPlaceholder('Buscar templates…')).toBeVisible();
   });
 
@@ -145,7 +138,9 @@ test.describe('Talk X module', () => {
     await expect(page.getByText('Revisão').first()).toBeVisible();
 
     // "Continuar" is disabled until canProceed[1] is satisfied:
-    //   name.trim().length > 0 && !!connectionId && (segmentId || selectedContacts.length > 0)
+    //   name.trim().length >= 3 && !!connectionId && (segmentId || selectedContacts.length > 0)
+    // V25: o mínimo do nome subiu de "não vazio" para 3 caracteres (e o passo 1
+    // passou a mostrar "O nome precisa de pelo menos 3 caracteres" com 1 ou 2).
     // The wizard starts with an empty form, so canProceed[1] is always false on open.
     // IMPORTANT: do NOT fill any field — useCampaignEditor autosave fires ~3 s after
     // the first keystroke and creates real draft records on every CI run.
@@ -160,6 +155,12 @@ test.describe('Talk X module', () => {
   test('wizard advances to step 2 (Mensagem) after filling step 1', async ({ page }) => {
     // Navigate directly to campaigns overview via URL deep-link.
     await page.goto('/?view=talkx');
+
+    // O parametro `view` so' e' aplicado depois que o SPA hidrata. Sem esperar o
+    // shell, a assercao do titulo corre contra o boot -- e o Firefox, que hidrata
+    // mais devagar, e' quem perde a corrida no CI (nao reproduzido localmente em
+    // 3 execucoes em 02/10; endurecido pelo mecanismo, nao por timeout maior).
+    await page.locator('#main-navigation').waitFor({ state: 'visible', timeout: 15_000 });
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
 
     // .first() because TalkXView and TalkXOverview both render a 'Nova campanha' button.
@@ -173,7 +174,9 @@ test.describe('Talk X module', () => {
     await page.getByPlaceholder('Ex: Lançamento Linha Office').fill('[E2E] Campanha de Teste');
 
     // Step 1 — select WhatsApp connection (fixture connection, may be disconnected).
-    // StepAudience renders two comboboxes: index 0 = Objetivo, index 1 = Conexão WhatsApp.
+    // StepAudience renders three comboboxes: index 0 = Objetivo, index 1 = Conexão
+    // WhatsApp e, desde a V25, index 2 = Responsável. Os dois primeiros índices
+    // seguem valendo — o campo novo entrou depois.
     // O trigger do Select de conexão agora tem aria-label="Conexão WhatsApp", então
     // miramos pelo nome (determinístico) em vez de .nth(1) — .nth(1) é ambíguo quando o
     // overview renderiza comboboxes atrás do wizard, e o Radix Select é flaky no WebKit

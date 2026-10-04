@@ -1,9 +1,122 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   CONTACT_SEARCH_MIN_CHARS,
   buildContactSearchFilter,
   contactSearchDigits,
+  logCatalogSendEvent,
+  type CatalogSendEventInput,
 } from '../useCatalogContactSearch';
+
+// CT-78 — o cliente Supabase é a ÚNICA dependência externa de
+// `logCatalogSendEvent`; é ele que muda (não a função sob teste). `insert` é um
+// thenable que resolve `{ error }`, exatamente como o builder do PostgREST.
+const { mockFrom, mockInsert } = vi.hoisted(() => ({
+  mockFrom: vi.fn(),
+  mockInsert: vi.fn(),
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { from: (...args: unknown[]) => mockFrom(...args) },
+}));
+
+const BASE_INPUT: CatalogSendEventInput = {
+  productId: 'p1',
+  productName: 'Caneta Azul',
+  productSku: 'PO-13153',
+  variantLabel: 'Azul',
+  contactId: 'c1',
+  agentId: 'agent-1',
+  template: 'informal',
+  imagesCount: 3,
+  messageLength: 42,
+  status: 'partial',
+  messageIds: ['m1', 'm2'],
+};
+
+const LAST_PAYLOAD = () => mockInsert.mock.calls[0][0] as Record<string, unknown>;
+
+describe('logCatalogSendEvent — CT-78 (implementação real, sem mock da função)', () => {
+  beforeEach(() => {
+    mockFrom.mockReset();
+    mockInsert.mockReset();
+    mockFrom.mockReturnValue({ insert: mockInsert });
+    mockInsert.mockResolvedValue({ error: null });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('grava em catalog_send_events com o payload snake_case completo', async () => {
+    await logCatalogSendEvent(BASE_INPUT);
+
+    expect(mockFrom).toHaveBeenCalledWith('catalog_send_events');
+    expect(mockInsert).toHaveBeenCalledWith({
+      product_id: 'p1',
+      product_name: 'Caneta Azul',
+      product_sku: 'PO-13153',
+      variant_label: 'Azul',
+      contact_id: 'c1',
+      agent_id: 'agent-1',
+      template: 'informal',
+      images_count: 3,
+      message_length: 42,
+      status: 'partial',
+      message_ids: ['m1', 'm2'],
+    });
+  });
+
+  it('campos opcionais ausentes viram null (nunca undefined)', async () => {
+    await logCatalogSendEvent({
+      productId: 'p2',
+      productName: 'Só o mínimo',
+      contactId: 'c2',
+      imagesCount: 0,
+      messageLength: 0,
+      status: 'failed',
+      messageIds: [],
+    });
+
+    const payload = LAST_PAYLOAD();
+    expect(payload.product_sku).toBeNull();
+    expect(payload.variant_label).toBeNull();
+    expect(payload.agent_id).toBeNull();
+    expect(payload.template).toBeNull();
+    // `images_count`/`message_length` são números reais (0), não null.
+    expect(payload.images_count).toBe(0);
+    expect(payload.message_length).toBe(0);
+  });
+
+  it('aceita os 3 status possíveis sem transformá-los', async () => {
+    for (const status of ['sent', 'partial', 'failed'] as const) {
+      await logCatalogSendEvent({ ...BASE_INPUT, status });
+    }
+
+    expect(mockInsert.mock.calls.map((c) => (c[0] as { status: string }).status)).toEqual([
+      'sent',
+      'partial',
+      'failed',
+    ]);
+  });
+
+  it('resolve sem lançar e não loga quando o insert tem sucesso', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(logCatalogSendEvent(BASE_INPUT)).resolves.toBeUndefined();
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it('falha silenciosa: insert com erro resolve void (não rejeita) e loga a mensagem', async () => {
+    mockInsert.mockResolvedValue({ error: { message: 'duplicate key value violates unique constraint' } });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(logCatalogSendEvent(BASE_INPUT)).resolves.toBeUndefined();
+
+    const logged = errorSpy.mock.calls.map((args) => args.join(' ')).join('\n');
+    expect(logged).toContain('Falha ao registrar evento de envio do catálogo:');
+    expect(logged).toContain('duplicate key value violates unique constraint');
+  });
+});
 
 describe('buildContactSearchFilter — CT-43 (busca de contato)', () => {
   it('abaixo do mínimo de 2 caracteres não monta filtro nenhum', () => {

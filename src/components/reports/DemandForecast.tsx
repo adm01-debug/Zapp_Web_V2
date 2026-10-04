@@ -7,6 +7,7 @@ import { format, subDays, startOfDay, getDay, getHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
+import { secureRandomFloat } from '@/lib/secureRandom';
 
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -56,14 +57,14 @@ export function DemandForecast() {
       forecast.push({
         day: format(targetDate, 'EEE dd/MM', { locale: ptBR }),
         actual: i === 0 ? avgForDay : 0,
-        predicted: avgForDay + (i > 0 ? Math.round(Math.random() * variance * 2 - variance) : 0),
+        predicted: avgForDay + (i > 0 ? Math.round(secureRandomFloat() * variance * 2 - variance) : 0),
       });
     }
     setHistoricalData(forecast);
 
     // Peak hours
     const peaks = Object.entries(hourBuckets)
-      .map(([h, counts]) => ({ hour: parseInt(h), avg: Math.round(counts.length / 28) }))
+      .map(([h, counts]) => ({ hour: Number.parseInt(h), avg: Math.round(counts.length / 28) }))
       .sort((a, b) => b.avg - a.avg);
     setPeakHours(peaks);
 

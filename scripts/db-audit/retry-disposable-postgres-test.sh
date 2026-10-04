@@ -62,7 +62,7 @@ pre_pull_images() {
     return 0
   fi
 
-  local var imagem tentativa espera espelho
+  local var imagem tentativa espera espelho espelho_tag
   while read -r var; do
     imagem="${!var}"
     [[ -n "$imagem" ]] || continue
@@ -73,10 +73,14 @@ pre_pull_images() {
         break
       fi
       espelho="$(espelho_do_ecr "$imagem")"
-      if [[ -n "$espelho" ]] && docker pull "$espelho" >/dev/null 2>&1; then
-        docker tag "$espelho" "$imagem"
-        printf 'INFO: imagem obtida do espelho %s (o ECR limita pull anonimo)\n' "$espelho"
-        break
+      espelho_tag="${espelho%%@*}"
+      if [[ -n "$espelho_tag" ]] && docker pull "$espelho_tag" >/dev/null 2>&1; then
+        docker tag "$espelho_tag" "${imagem%%@*}"
+        if docker image inspect "$imagem" >/dev/null 2>&1; then
+          printf 'INFO: imagem obtida do espelho %s (o ECR limita pull anonimo)\n' "$espelho_tag"
+          break
+        fi
+        printf 'WARN: espelho %s tem digest diferente do esperado; tentando ECR direto\n' "$espelho_tag" >&2
       fi
       if docker pull "$imagem" >/dev/null 2>&1; then
         printf 'INFO: imagem baixada: %s\n' "$imagem"
@@ -97,7 +101,15 @@ pre_pull_images() {
 
 pre_pull_images
 
-attempts=3
+# Espera crescente entre tentativas de bootstrap. O container do Postgres leva
+# alguns segundos para comecar a aceitar conexao, e sondar o socket antes disso
+# gasta todas as tentativas em segundos. Medido em 02/10/2026 no job "Contrato DB
+# offline": 3 tentativas em 2,9 segundos, todas com
+# "connection to server on socket ... failed: No such file or directory" -- o
+# servidor nunca teve janela para subir. O contrato de RLS NAO e afrouxado: so
+# falhas com a assinatura de bootstrap repetem (ver o bloco no fim do laco).
+attempts="${DISPOSABLE_PG_ATTEMPTS:-6}"
+espera="${DISPOSABLE_PG_BASE_WAIT:-5}"
 for attempt in $(seq 1 "$attempts"); do
   log_file=$(mktemp)
   if "$@" >"$log_file" 2>&1; then
@@ -107,13 +119,35 @@ for attempt in $(seq 1 "$attempts"); do
   else
     status=$?
   fi
-  if ! grep -Eq "$BOOTSTRAP_FAILURE_PATTERN" "$log_file" || [[ "$attempt" -eq "$attempts" ]]; then
+  if ! grep -Eq "$BOOTSTRAP_FAILURE_PATTERN" "$log_file"; then
+    # Falha que NAO e de bootstrap (SQL, ACL, policy ou assercao do contrato):
+    # nao repetir. Repetir aqui mascararia defeito real de RLS.
     cat "$log_file" >&2
     rm -f "$log_file"
     exit "$status"
   fi
 
+  if [[ "$attempt" -eq "$attempts" ]]; then
+    causa=$(grep -Eo "$BOOTSTRAP_FAILURE_PATTERN" "$log_file" | head -1)
+    ultima=$(grep -E 'No such file or directory|connection to server|server closed|shutting down|FATAL' \
+      "$log_file" | tail -1)
+    cat "$log_file" >&2
+    rm -f "$log_file"
+    printf '\nERRO: o PostgreSQL descartavel nao subiu em %s tentativas.\n' "$attempt" >&2
+    printf 'ERRO: assinatura de bootstrap casada: %s\n' "${causa:-<nao capturada>}" >&2
+    printf 'ERRO: ultima linha do servidor: %s\n' "${ultima:-<nenhuma>}" >&2
+    printf 'ERRO: isto NAO e falha do contrato de RLS -- o servidor descartavel nao ficou pronto.\n' >&2
+    exit "$status"
+  fi
+
   cat "$log_file" >&2
   rm -f "$log_file"
-  printf 'WARN: PostgreSQL descartável não estabilizou; repetindo bootstrap (%s/%s)\n' "$attempt" "$attempts" >&2
+  printf 'WARN: PostgreSQL descartável não estabilizou; nova tentativa em %ss (%s/%s)\n' \
+    "$espera" "$attempt" "$attempts" >&2
+  sleep "$espera"
+  if [[ "$espera" -lt 60 ]]; then
+    espera=$(( espera * 2 ))
+  else
+    espera=60
+  fi
 done

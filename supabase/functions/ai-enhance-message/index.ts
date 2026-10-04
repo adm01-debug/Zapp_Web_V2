@@ -1,9 +1,10 @@
 import {
   handleCors, errorResponse, jsonResponse,
-  sanitizeString, isValidUUID, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth,
+  sanitizeString, isValidUUID, checkRateLimit, getClientIP, Logger, requireAuth,
 } from "../_shared/validation.ts";
 import { AiEnhanceMessageSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
-import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
 const tonePrompts: Record<string, string> = {
@@ -37,7 +38,8 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { message, tone, contactName } = parsed.data;
-    const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
+    // IA-048: identidade da requisição, ecoada no corpo (só eco — sem efeito novo).
+    const requestId = parsed.data.requestId ?? null;
     const systemPrompt = tonePrompts[tone as string];
 
     const firstName = contactName ? contactName.split(' ')[0] : null;
@@ -47,16 +49,11 @@ Deno.serve(async (req) => {
 
     log.info("Enhancing message", { tone, len: message.length, hasContactName: !!firstName });
 
-    const { response, data } = await callAiWithTracking({
+    const { response, data } = await generateWithRouting({
+      purpose: 'copilot',
       functionName: 'ai-enhance-message',
       userId,
-      apiKey: LOVABLE_API_KEY,
-      body: {
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `Você trabalha em uma empresa distribuidora/comercial com múltiplos departamentos (Vendas, Compras, Logística, RH, Financeiro, SAC). Identifique o contexto da mensagem e adapte o tom adequadamente.
+      system: `Você trabalha em uma empresa distribuidora/comercial com múltiplos departamentos (Vendas, Compras, Logística, RH, Financeiro, SAC). Identifique o contexto da mensagem e adapte o tom adequadamente.
 
 ${systemPrompt}
 
@@ -66,10 +63,9 @@ Regras importantes:
 - Mantenha o mesmo idioma da mensagem original.
 - Mantenha emojis se houverem na mensagem original.
 - A mensagem é para ser enviada via WhatsApp.${humanizationRule}`,
-          },
-          { role: "user", content: message },
-        ],
-      },
+      messages: [
+        { role: "user", content: message },
+      ],
     });
 
     if (!response.ok || !data) {
@@ -82,7 +78,7 @@ Regras importantes:
     if (!enhancedMessage) throw new Error("Resposta vazia da IA");
 
     log.done(200);
-    return jsonResponse({ enhanced: enhancedMessage }, 200, req);
+    return jsonResponse({ enhanced: enhancedMessage, ...(requestId ? { requestId } : {}) }, 200, req);
   } catch (error: unknown) {
     log.error("Unhandled error", { error: error instanceof Error ? error.message : String(error) });
     return errorResponse(error instanceof Error ? error.message : "Erro desconhecido", 500, req);

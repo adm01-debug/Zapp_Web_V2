@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,18 +18,35 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Search, Package, Grid3X3, List, X, Heart } from 'lucide-react';
+import { Search, Package, Grid3X3, List, X, Heart, CheckSquare } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { cn } from '@/lib/utils';
 import {
   useExternalCatalog,
   useCatalogFavorites,
   type ExternalProduct,
 } from '@/hooks/integrations/useExternalCatalog';
 import { CatalogProductCard, CatalogProductCardSkeleton } from './CatalogProductCard';
-import { SendProductDialog } from './SendProductDialog';
-import { favoriteToProduct, CatalogErrorState, countLabel, useRateLimitCooldown } from './catalogShared';
+// CT-71 — modais em `React.lazy` (chunk próprio, fora do bundle inicial).
+// `lazy()` fica em ESCOPO DE MÓDULO: a regra `react-hooks/static-components`
+// rejeita lazy dentro do corpo do render (documentado em catalogShared.tsx:399).
+// Os dois dialogs abaixo só montam sob demanda (`{sendProduct && …}`), então o
+// `<Suspense fallback>` discreto aparece só enquanto o chunk baixa.
+const SendProductDialog = lazy(() =>
+  import('./SendProductDialog').then((m) => ({ default: m.SendProductDialog }))
+);
+import { CatalogBulkBar, CATALOG_BULK_SEND_MAX } from './CatalogBulkBar';
+const CatalogBulkSendDialog = lazy(() =>
+  import('./CatalogBulkSendDialog').then((m) => ({ default: m.CatalogBulkSendDialog }))
+);
+// CT-28 — "Exportar seleção" reusa os builders puros do CSV (CT-20); nada é
+// buscado na edge: as linhas são exatamente os produtos selecionados.
+import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
+import { favoriteToProduct, CatalogErrorState, countLabel, useRateLimitCooldown, CatalogDialogFallback } from './catalogShared';
 import { TalkXPagination, TalkXEmptyState } from '@/components/talkx/talkxShared';
 import type { ContactResult } from './useSendProduct';
+import { toast } from 'sonner';
 
 interface ExternalProductCatalogProps {
   /**
@@ -44,6 +61,18 @@ interface ExternalProductCatalogProps {
 }
 
 const PAGE_SIZE = 24;
+/** CT-26 — altura da linha do modo lista (56 px do thumb + 8 px de padding em cima/embaixo). */
+const LIST_ROW_HEIGHT = 72;
+/** CT-26 — colunas do cabeçalho sticky do modo lista (todas as linhas usam colSpan fixo). */
+const LIST_COLUMNS = 5;
+/**
+ * CT-27 — a partir deste `pageSize` o modo lista virtualiza. 48 não é uma
+ * opção do `TalkXPagination` (8/10/20/50): o limite existe para o corte não
+ * acontecer numa página pequena, onde renderizar tudo é mais barato que medir.
+ */
+const VIRTUALIZE_MIN_PAGE_SIZE = 48;
+/** CT-27 — linhas extras renderizadas fora da janela visível (scroll sem buracos). */
+const LIST_OVERSCAN = 6;
 
 export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   presetContact = null,
@@ -57,11 +86,14 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     categories,
     suppliers,
     loading,
+    isInitialLoading,
+    isFetching,
     error,
     errorCode,
     fetchProducts,
     fetchCategories,
     fetchSuppliers,
+    prefetchNextPage,
   } = useExternalCatalog();
 
   // CT-59 — 429 da edge: toast + botões desabilitados por 10 s.
@@ -79,11 +111,22 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [page, setPage] = useState(0);
+  // CT-27 — antes era o `PAGE_SIZE` fixo (24) e o select do TalkXPagination era
+  // um no-op; agora o tamanho da página é estado, o fetch acompanha e o modo
+  // lista virtualiza a partir de `VIRTUALIZE_MIN_PAGE_SIZE`.
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   // CT-16 — chip "Meus favoritos" dentro do dialog do chat.
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
+  // CT-34 — cor escolhida no detalhe (2º argumento do onSend), repassada como
+  // `initialVariantColor` ao SendProductDialog.
+  const [sendVariantColor, setSendVariantColor] = useState<string | undefined>(undefined);
+  // CT-28 — seleção em massa da lista exibida (grade ou lista).
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkSendOpen, setBulkSendOpen] = useState(false);
 
-  const { favorites, isFavorite } = useCatalogFavorites();
+  const { favorites, isFavorite, toggle: toggleFavorite } = useCatalogFavorites();
 
   // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
   const prefersReducedMotion = useReducedMotion();
@@ -95,8 +138,8 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   const doFetch = useCallback(
     (overrides: Record<string, unknown> = {}) => {
       const params: Record<string, unknown> = {
-        limit: PAGE_SIZE,
-        offset: page * PAGE_SIZE,
+        limit: pageSize,
+        offset: page * pageSize,
         only_in_stock: onlyInStock,
         ...overrides,
       };
@@ -105,7 +148,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
       if (supplierId !== 'all') params.supplier_id = supplierId;
       fetchProducts(params);
     },
-    [page, search, categoryId, supplierId, onlyInStock, fetchProducts]
+    [page, pageSize, search, categoryId, supplierId, onlyInStock, fetchProducts]
   );
 
   // `doFetch` muda de identidade a cada mudanca de filtro OU de `page` (o
@@ -149,11 +192,99 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     if (isOpenRef.current && page > 0) doFetchRef.current();
   }, [page]);
 
+  // CT-61 — mesmos atalhos da tela de Catálogo, válidos só com o dialog aberto
+  // (o catálogo do chat fica montado mesmo fechado): `/` e Ctrl/Cmd+F focam a
+  // busca, Esc limpa. O listener fica em CAPTURA no window por causa do
+  // Ctrl/Cmd+F nativo do browser (ver comentário em ExternalProductManagement).
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const isEditable = (target: EventTarget | null): boolean => {
+      const el = target as HTMLElement | null;
+      if (!el) return false;
+      return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable;
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (event.key === '/' && !isEditable(event.target)) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (event.key === 'Escape') {
+        setSearch('');
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [isOpen]);
+
+  // CT-29 — o skeleton só pode aparecer na carga inicial. O `loading` do hook é
+  // `isLoading || isFetching` (useExternalCatalog.ts:315), então durante a
+  // paginação ele também ficava true e os cards davam lugar a 8 skeletons: era
+  // esse o flash. `isInitialLoading` (isLoading puro) separa os dois casos;
+  // o fallback em `loading` cobre consumidores/mocks que ainda não o expõem.
+  const initialLoading = isInitialLoading === undefined ? loading : isInitialLoading;
+  // CT-29 — com dado antigo na tela: cards esmaecem + barra fina de progresso.
+  const refreshing = !!isFetching && !initialLoading;
+
+  // CT-27 — virtualização só no modo lista (o card da grade não tem altura de
+  // linha previsível). `enabled` desliga observação/medição enquanto a lista
+  // está numa página pequena; a grade nunca virtualiza.
+  const productsScrollRef = useRef<HTMLDivElement>(null);
+  const getScrollElement = useCallback(() => productsScrollRef.current, []);
+  const estimateListRow = useCallback(() => LIST_ROW_HEIGHT, []);
+  const virtualizeList = viewMode === 'list' && !favoritesOnly && pageSize >= VIRTUALIZE_MIN_PAGE_SIZE;
+  // TanStack Virtual devolve funcoes nao memoizaveis pelo React Compiler —
+  // mesma limitacao ja aceita na baseline do ratchet em
+  // inbox/VirtualizedRealtimeList.tsx para este mesmo hook.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const listVirtualizer = useVirtualizer({
+    count: products.length,
+    getScrollElement,
+    estimateSize: estimateListRow,
+    overscan: LIST_OVERSCAN,
+    enabled: virtualizeList,
+  });
+
+  const virtualItems = virtualizeList ? listVirtualizer.getVirtualItems() : [];
+  const listRows = virtualizeList
+    ? virtualItems.flatMap((item) => {
+        const product = products[item.index];
+        return product ? [{ product, index: item.index }] : [];
+      })
+    : products.map((product, index) => ({ product, index }));
+  // Espaçadores que preservam a altura total da lista quando só a janela
+  // visível é renderizada — sem eles a barra de rolagem acharia que a lista
+  // acabou no fim da janela.
+  const listTotalSize = virtualizeList ? listVirtualizer.getTotalSize() : products.length * LIST_ROW_HEIGHT;
+  const listTopSpacer = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const lastVirtualItem = virtualItems[virtualItems.length - 1];
+  const listBottomSpacer = lastVirtualItem
+    ? Math.max(0, listTotalSize - (lastVirtualItem.start + lastVirtualItem.size))
+    : 0;
+
+  // CT-27 — trocar o tamanho da página volta para a 1ª e refaz o fetch com o
+  // novo `limit` (o efeito de filtros não observa `pageSize` de propósito).
+  const handlePageSize = (n: number) => {
+    setPageSize(n);
+    setPage(0);
+    clearSelection();
+    doFetchRef.current({ limit: n, offset: 0 });
+  };
+
   // CT-14 — o envio deixou de ser um callback do chat (que montava um texto
   // único, sem foto e sem log): agora o catálogo abre o mesmo
   // `SendProductDialog` da tela de catálogo, com o contato da conversa já
   // preenchido, e o envio passa a gravar `catalog_send_events`.
-  const handleSend = (product: ExternalProduct) => {
+  // CT-34 — `variantColor` é o 2º argumento do CTA "Enviar variação" do
+  // ProductDetailDialog e vira o `initialVariantColor` do dialog de envio.
+  const handleSend = (product: ExternalProduct, variantColor?: string) => {
+    setSendVariantColor(variantColor);
     setSendProduct(product);
     setIsOpen(false);
   };
@@ -172,6 +303,64 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   const gridClass = viewMode === 'grid'
     ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
     : 'space-y-2';
+
+  /**
+   * CT-28/CT-36 — a lista exibida agora, na ordem da tela (favoritos ou
+   * resultado paginado/filtrado). É ela que alimenta a seleção em massa e a
+   * navegação ‹ › do detalhe.
+   */
+  const displayedProducts = favoritesOnly ? favoriteProducts : products;
+  /**
+   * CT-25 — o menu do card (e o coração da lista) só mostra "Favoritar/Remover"
+   * quando o caller passa `onToggleFavorite`; o card entrega o id, então aqui a
+   * busca do produto é feita na lista exibida (resultado paginado ou
+   * favoritos). Reusa o mesmo `toggle` do hook de favoritos — sem duplicar a
+   * escrita/otimismo do E27.
+   */
+  const handleToggleFavorite = useCallback((id: string) => {
+    const p = displayedProducts.find((x) => x.id === id);
+    if (p) void toggleFavorite({ id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
+  }, [displayedProducts, toggleFavorite]);
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const clearSelection = () => setSelectedIds(new Set());
+  const toggleSelectAll = () =>
+    setSelectedIds((prev) => {
+      const ids = displayedProducts.map((p) => p.id);
+      const allSelected = ids.length > 0 && ids.every((id) => prev.has(id));
+      const next = new Set(prev);
+      ids.forEach((id) => (allSelected ? next.delete(id) : next.add(id)));
+      return next;
+    });
+  const allPageSelected = displayedProducts.length > 0 && displayedProducts.every((p) => selectedIds.has(p.id));
+  const selectedProducts = displayedProducts.filter((p) => selectedIds.has(p.id));
+
+  /** CT-28 — "Exportar seleção": CSV com exatamente os produtos escolhidos. */
+  const handleExportSelection = () => {
+    if (selectedProducts.length === 0) return;
+    triggerCsvDownload(buildCatalogCsv(selectedProducts), catalogExportFilename('selecao', new Date()));
+    toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
+  };
+
+  /** CT-28 — "Favoritar N": favorita só quem ainda não é favorito. */
+  const handleFavoriteSelection = () => {
+    const toFavorite = selectedProducts.filter((p) => !isFavorite(p.id));
+    toFavorite.forEach((p) => {
+      void toggleFavorite({ id: p.id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
+    });
+    if (toFavorite.length > 0) toast.success(`${toFavorite.length} produto(s) adicionado(s) aos favoritos`);
+  };
+
+  /** CT-28 — entra/sai do modo seleção (sair limpa a seleção). */
+  const handleSelectMode = () => {
+    if (selectMode) clearSelection();
+    setSelectMode(!selectMode);
+  };
 
   return (
     <>
@@ -202,6 +391,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
               <div className="flex-1 min-w-[200px] relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
+                  ref={searchInputRef}
                   placeholder="Buscar por nome, SKU ou marca..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -277,21 +467,40 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
               </Button>
 
               <div className="flex border rounded-md">
-                <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-r-none" onClick={() => setViewMode('grid')}>
+                <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-r-none" aria-label="Ver em grade" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')}>
                   <Grid3X3 className="w-4 h-4" />
                 </Button>
-                <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-l-none" onClick={() => setViewMode('list')}>
+                <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-l-none" aria-label="Ver em lista" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}>
                   <List className="w-4 h-4" />
                 </Button>
               </div>
+
+              {/* CT-28 — liga a seleção em massa (checkboxes + CatalogBulkBar)
+                  nos dois modos; fora do modo seleção o card segue abrindo o
+                  detalhe no clique, como antes. */}
+              <Button
+                variant={selectMode ? 'secondary' : 'ghost'}
+                size="sm"
+                className="gap-1.5"
+                aria-pressed={selectMode}
+                onClick={handleSelectMode}
+              >
+                <CheckSquare className="w-4 h-4" />
+                Selecionar
+              </Button>
             </div>
 
             {/* Status bar */}
             <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>
+              {/* CT-68 — role="status" + aria-live: o leitor de tela anuncia a
+                  contagem quando ela muda. Sem debounce extra: a contagem só
+                  muda quando `totalProducts` volta do fetch, que o efeito de
+                  filtros já debounce em 300ms — digitar não gera um anúncio por
+                  tecla, só o resultado final da busca. */}
+              <span role="status" aria-live="polite" data-testid="catalog-result-count">
                 {favoritesOnly
                   ? `Mostrando ${favoriteProducts.length} produto(s) favorito(s)`
-                  : `Mostrando ${Math.min(page * PAGE_SIZE + 1, totalProducts)}-${Math.min((page + 1) * PAGE_SIZE, totalProducts)} de ${totalProducts.toLocaleString('pt-BR')}`}
+                  : `Mostrando ${Math.min(page * pageSize + 1, totalProducts)}-${Math.min((page + 1) * pageSize, totalProducts)} de ${totalProducts.toLocaleString('pt-BR')}`}
               </span>
               {hasFilters && !favoritesOnly && (
                 <Button variant="link" size="sm" onClick={clearFilters} className="h-auto p-0">
@@ -300,8 +509,27 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
               )}
             </div>
 
+            {/* CT-29 — refetch (paginação/filtro) com o dado anterior na tela:
+                barra fina de progresso + cards com opacity-60, no lugar de
+                trocar tudo por skeleton. */}
+            {refreshing && (
+              <div
+                role="progressbar"
+                aria-label="Atualizando produtos"
+                data-testid="catalog-fetching-bar"
+                className="h-0.5 w-full overflow-hidden rounded-full bg-muted"
+              >
+                <motion.div
+                  className="h-full w-1/3 rounded-full bg-primary"
+                  initial={prefersReducedMotion ? { width: '100%' } : { x: '-100%' }}
+                  animate={prefersReducedMotion ? undefined : { x: '300%' }}
+                  transition={prefersReducedMotion ? undefined : { repeat: Infinity, duration: 1.2, ease: 'linear' }}
+                />
+              </div>
+            )}
+
             {/* Products */}
-            <div className="h-[50vh] overflow-y-auto pr-1">
+            <div ref={productsScrollRef} className="h-[50vh] overflow-y-auto pr-1">
               {favoritesOnly ? (
                 favoriteProducts.length === 0 ? (
                   <TalkXEmptyState
@@ -315,14 +543,18 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                       <CatalogProductCard
                         key={product.id}
                         product={product}
+                        products={displayedProducts}
                         mode={viewMode === 'list' ? 'list' : 'grade'}
                         onSend={handleSend}
                         isFavorite={isFavorite(product.id)}
+                        onToggleFavorite={handleToggleFavorite}
+                        isSelected={selectedIds.has(product.id)}
+                        onToggleSelect={selectMode ? toggleSelect : undefined}
                       />
                     ))}
                   </div>
                 )
-              ) : loading ? (
+              ) : initialLoading ? (
                 <div className={gridClass}>
                   {[...Array(8)].map((_, i) => (
                     <CatalogProductCardSkeleton key={i} mode={viewMode === 'list' ? 'list' : 'grade'} />
@@ -341,9 +573,68 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                   title="Nenhum produto encontrado"
                   description="Tente ajustar os filtros de busca."
                 />
+              ) : viewMode === 'list' ? (
+                /* CT-26 — o modo lista usa a tabela densa do Talk X: cabeçalho de
+                   colunas sticky dentro do container de scroll, linhas de 72px e
+                   role="row" (mesmo padrão de talkxShared.TalkXTable).
+                   CT-27 — com pageSize >= 48 só a janela visível entra no DOM; as
+                   linhas de espaçador preservam a altura total da lista. */
+                <div
+                  className={cn(refreshing && 'opacity-60 transition-opacity')}
+                  data-testid="catalog-products"
+                >
+                  <table className="talkx-table">
+                    <thead className="sticky top-0 z-10 bg-card">
+                      <tr role="row">
+                        <th scope="col">Produto</th>
+                        <th scope="col">Marca / Fornecedor</th>
+                        <th scope="col" className="text-right">Preço</th>
+                        <th scope="col" className="text-right">Estoque</th>
+                        <th scope="col" className="text-right">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {listTopSpacer > 0 && (
+                        <tr aria-hidden="true" data-testid="catalog-virtual-spacer-top">
+                          <td colSpan={LIST_COLUMNS} style={{ height: listTopSpacer, padding: 0 }} />
+                        </tr>
+                      )}
+                      {listRows.map(({ product, index }) => (
+                        <tr key={product.id} role="row" style={{ height: LIST_ROW_HEIGHT }}>
+                          {/* A linha é o próprio card no modo lista; o padding
+                              vertical dele cai para 8px (56px do thumb + 16px =
+                              72px exatos) e o resto do conteúdo fica com o card. */}
+                          <td colSpan={LIST_COLUMNS} className="p-0 [&>div]:!py-2">
+                            <CatalogProductCard
+                              product={product}
+                              products={displayedProducts}
+                              mode="list"
+                              onSend={handleSend}
+                              isFavorite={isFavorite(product.id)}
+                              onToggleFavorite={handleToggleFavorite}
+                              isSelected={selectedIds.has(product.id)}
+                              onToggleSelect={selectMode ? toggleSelect : undefined}
+                              // CT-72 — as 4 capas acima da dobra saem eager + fetchpriority=high.
+                              priority={index < 4}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                      {listBottomSpacer > 0 && (
+                        <tr aria-hidden="true" data-testid="catalog-virtual-spacer-bottom">
+                          <td colSpan={LIST_COLUMNS} style={{ height: listBottomSpacer, padding: 0 }} />
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <AnimatePresence mode="popLayout">
-                  <motion.div layout={!prefersReducedMotion} className={gridClass}>
+                  <motion.div
+                    layout={!prefersReducedMotion}
+                    className={cn(gridClass, refreshing && 'opacity-60 transition-opacity')}
+                    data-testid="catalog-products"
+                  >
                     {products.map((product, index) => (
                       <motion.div
                         key={product.id}
@@ -354,9 +645,13 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                       >
                         <CatalogProductCard
                           product={product}
-                          mode={viewMode === 'list' ? 'list' : 'grade'}
+                          products={displayedProducts}
+                          mode="grade"
                           onSend={handleSend}
                           isFavorite={isFavorite(product.id)}
+                          onToggleFavorite={handleToggleFavorite}
+                          isSelected={selectedIds.has(product.id)}
+                          onToggleSelect={selectMode ? toggleSelect : undefined}
                           // CT-72 — as 4 capas acima da dobra saem eager + fetchpriority=high.
                           priority={index < 4}
                         />
@@ -368,28 +663,77 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
             </div>
 
             {/* Pagination */}
-            {!favoritesOnly && totalProducts > PAGE_SIZE && (
-              <TalkXPagination
-                page={page + 1}
-                pageSize={PAGE_SIZE}
-                total={totalProducts}
-                onPage={(p) => setPage(p - 1)}
-                onPageSize={() => {}}
-                noun="produtos"
+            {!favoritesOnly && totalProducts > pageSize && (
+              // CT-29 — prefetch da próxima página: o botão "Próxima" é renderizado
+              // dentro do TalkXPagination compartilhado (não dá para pendurar o
+              // handler nele sem tocar em talkxShared), então o intent — hover/foco
+              // na região da paginação que o contém — adianta o fetch; o hook ignora
+              // quando a página atual já é a última. O prefetch é OTIMIZAÇÃO, não requisito:
+              // daí o encadeamento opcional — a suíte tem mocks parciais do hook (sem a função
+              // nova) e a UI não pode quebrar por causa de um atalho.
+              <div
+                onMouseEnter={() => void prefetchNextPage?.()}
+                onFocus={() => void prefetchNextPage?.()}
+              >
+                <TalkXPagination
+                  page={page + 1}
+                  pageSize={pageSize}
+                  total={totalProducts}
+                  // trocar de página limpa a seleção (os ids antigos saem da tela)
+                  onPage={(p) => { setPage(p - 1); clearSelection(); }}
+                  onPageSize={handlePageSize}
+                  noun="produtos"
+                />
+              </div>
+            )}
+
+            {/* CT-28 — barra de seleção em massa (grade e lista): só existe
+                enquanto há itens selecionados no modo seleção. */}
+            {selectMode && selectedIds.size > 0 && (
+              <CatalogBulkBar
+                count={selectedIds.size}
+                pageTotal={displayedProducts.length}
+                allPageSelected={allPageSelected}
+                onToggleSelectAll={toggleSelectAll}
+                onClear={clearSelection}
+                onSend={() => setBulkSendOpen(true)}
+                onExport={handleExportSelection}
+                onFavorite={handleFavoriteSelection}
+                maxSend={CATALOG_BULK_SEND_MAX}
               />
             )}
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* CT-28 — envio em massa dos selecionados: mesmo fluxo da tela de
+          Catálogo (revisar → escolher contato → enviar). Montado só quando
+          aberto: ele depende do AuthProvider (useAuth) e o dialog do chat não
+          precisa disso fechado. */}
+      {bulkSendOpen && (
+        <Suspense fallback={<CatalogDialogFallback />}>
+          <CatalogBulkSendDialog
+            products={selectedProducts}
+            open
+            onOpenChange={setBulkSendOpen}
+            onSent={clearSelection}
+          />
+        </Suspense>
+      )}
+
+      {/* CT-34 — a cor escolhida no detalhe entra como `initialVariantColor`
+          (preset que o SendProductDialog aplica na 1ª renderização). */}
       {sendProduct && (
-        <SendProductDialog
-          key={sendProduct.id}
-          product={sendProduct}
-          open={!!sendProduct}
-          onOpenChange={(v) => { if (!v) setSendProduct(null); }}
-          presetContact={presetContact}
-        />
+        <Suspense fallback={<CatalogDialogFallback />}>
+          <SendProductDialog
+            key={sendProduct.id}
+            product={sendProduct}
+            open={!!sendProduct}
+            onOpenChange={(v) => { if (!v) { setSendProduct(null); setSendVariantColor(undefined); } }}
+            presetContact={presetContact}
+            initialVariantColor={sendVariantColor}
+          />
+        </Suspense>
       )}
     </>
   );

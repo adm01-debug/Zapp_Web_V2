@@ -1,12 +1,20 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
-import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, Logger, markDegraded, degradedCounters } from "../_shared/validation.ts";
 
-const jsonRes = (body: unknown, status = 200, req?: Request) =>
-  new Response(JSON.stringify(body), {
+const jsonRes = (body: unknown, status = 200, req?: Request) => {
+  // CT-19 — a degradacao viaja no cabecalho quando acontece: fail-open silencioso ja
+  // mascarou uma medicao inteira (o log tinha o erro, a resposta era 200 e eu li 200
+  // como "esta tudo certo"). Sem degradacao marcada, nenhum cabecalho novo aparece.
+  const contadores = degradedCounters();
+  const degradado: Record<string, string> = Object.keys(contadores).length
+    ? { "x-degraded": Object.entries(contadores).map(([motivo, total]) => `${motivo}=${total}`).join(";") }
+    : {};
+  return new Response(JSON.stringify(body), {
     status,
-    headers: { ...(req ? getCorsHeaders(req) : getCorsHeaders()), "Content-Type": "application/json" },
+    headers: { ...(req ? getCorsHeaders(req) : getCorsHeaders()), "Content-Type": "application/json", ...degradado },
   });
+};
 
 // ─── Input Schemas ────────────────────────────────────────────
 const ALLOWED_ORDER_FIELDS = ["name", "sale_price", "stock_quantity", "brand", "created_at", "sku", "order_count"] as const;
@@ -63,6 +71,11 @@ const ActionSchema = z.object({
   params: z.record(z.unknown()).optional().default({}),
 });
 
+/** CT-19 — união derivada do schema. O mapa de cotas por ação usa este tipo,
+ * então incluir uma ação nova no enum sem definir sua cota quebra o typecheck
+ * (fail-closed: ação nova nunca cai no fallback por acidente). */
+type CatalogAction = z.infer<typeof ActionSchema>["action"];
+
 function sanitizeSearch(input: string): string {
   // Vírgula é o separador de cláusulas do OR-expr do PostgREST (.or("a,b"));
   // um valor com vírgula literal quebra o parsing da expressão (ver
@@ -96,7 +109,7 @@ export function buildTagOrExpr(column: "colors" | "materials", values: string[])
   return clauses.length > 0 ? clauses.join(",") : null;
 }
 
-const PRODUCT_RELATIONS = `categories:category_id(id, name, slug, parent_id),
+const PRODUCT_RELATIONS = `categories:category_id(id, name, slug, parent_id, full_path_readable),
   suppliers:supplier_id(id, name)`;
 
 // Payload do card (grade/lista): só o que a UI mostra por item.
@@ -127,21 +140,67 @@ const PRODUCT_FIELDS = `id, name, description, short_description, sku, sale_pric
 let catalogStatsCache: { data: unknown; expiresAt: number } | null = null;
 const CATALOG_STATS_TTL_MS = 60_000;
 
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+// CT-19: o contador NAO mora mais aqui. Ele e uma linha por (usuario, acao) na tabela
+// public.catalog_rate_limits, checada atomicamente pela funcao catalog_rate_limit_hit.
+// O Map em memoria por isolate nao limitava sob concorrencia (medido: 61, 120 e 300
+// chamadas paralelas em producao -> zero 429).
 // CT-77: exportado para o teste de rate limit derivar o limite do próprio
-// módulo — quando o CT-19 subir para 120/min, o teste acompanha sem edição.
+// módulo em vez de fixar o número.
+// CT-19: RATE_LIMIT virou o TETO GLOBAL, usado como fallback quando a ação não
+// é conhecida (corpo inválido/malformado). O limite efetivo está por ação, em
+// ACTION_RATE_LIMITS.
 export const RATE_LIMIT = 60;
 export const RATE_WINDOW_MS = 60_000;
 
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(userId);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_WINDOW_MS });
+/**
+ * CT-19 (E26.3) — limite POR AÇÃO. `list_products` é a ação que abre a tela e
+ * refaz a consulta a cada busca/página, por isso 120/min (o dobro das demais);
+ * as outras 5 ações ficam no teto global de 60/min. O `Record` é ancorado no
+ * enum do ActionSchema — ação nova sem cota falha no typecheck em vez de cair
+ * silenciosamente no fallback.
+ */
+export const ACTION_RATE_LIMITS: Record<CatalogAction, number> = {
+  list_products: 120,
+  get_product: RATE_LIMIT,
+  list_categories: RATE_LIMIT,
+  list_suppliers: RATE_LIMIT,
+  catalog_stats: RATE_LIMIT,
+  bootstrap: RATE_LIMIT,
+};
+
+/**
+ * CT-19 — cota por usuário E por ação: cada ação tem o próprio balde, então uma
+ * rajada de `list_products` não consome (nem afrouxa) a cota de `bootstrap`.
+ * `action = null` (corpo inválido/malformado) cai no teto global como fallback:
+ * preserva o comportamento antigo e não abre bypass a requisição inválida.
+ */
+async function checkRateLimit(
+  client: SupabaseClient,
+  userId: string,
+  action: CatalogAction | null,
+  log: Logger,
+): Promise<boolean> {
+  const limit = action ? ACTION_RATE_LIMITS[action] : RATE_LIMIT;
+  const { data, error } = await client.rpc("catalog_rate_limit_hit", {
+    p_user: userId,
+    p_action: action ?? "global",
+    p_limit: limit,
+    p_window_ms: RATE_WINDOW_MS,
+  });
+  if (error) {
+    // CT-19 — falha ABERTA de proposito: se o contador compartilhado estiver
+    // indisponivel, o catalogo continua servindo (o limite e protecao, nao caminho
+    // critico). O erro fica registrado para nao passar em silencio — e o contador de
+    // degradacao viaja no cabecalho `x-degraded`, para que a proxima medicao nao leia
+    // um 200 e conclua que o limitador esta funcionando.
+    log.error("Rate limit store unavailable", {
+      error: error.message,
+      action: action ?? "global",
+    });
+    markDegraded("rate_limit_store_unavailable");
     return true;
   }
-  entry.count++;
-  return entry.count <= RATE_LIMIT;
+  return data === true;
 }
 
 interface ExternalDatabaseError {
@@ -209,7 +268,31 @@ export async function promogiftsCatalogHandler(
       return jsonRes({ error: "Unauthorized" }, 401, req);
     }
 
-    if (!checkRateLimit(userData.user.id)) {
+    // CT-19 — a cota é POR AÇÃO (list_products 120/min; demais 60/min), então a
+    // ação precisa ser conhecida ANTES de checar o limite. O corpo é lido e
+    // validado aqui (antes era lido só depois do 503 de configuração) e a cota
+    // só é cobrada em seguida — daí a inversão da ordem antiga, que checava o
+    // teto fixo de 60/min antes de saber qual ação estava sendo chamada.
+    // Corpo inválido/malformado continua consumindo cota (agora no teto global
+    // RATE_LIMIT, como fallback) e devolve o mesmo 400/500 de antes.
+    let action: CatalogAction | null = null;
+    let params: Record<string, unknown> = {};
+    let bodyResponse: Response | null = null;
+
+    try {
+      const bodyParse = ActionSchema.safeParse(await req.json());
+      if (bodyParse.success) {
+        action = bodyParse.data.action;
+        params = bodyParse.data.params;
+      } else {
+        bodyResponse = jsonRes({ error: "Invalid request", details: bodyParse.error.flatten().fieldErrors }, 400, req);
+      }
+    } catch (err) {
+      log.error("Error", { error: err instanceof Error ? err.message : String(err) });
+      bodyResponse = jsonRes({ error: "Internal catalog error", code: "CATALOG_INTERNAL_ERROR" }, 500, req);
+    }
+
+    if (!(await checkRateLimit(localClient, userData.user.id, action, log))) {
       return jsonRes({ error: "Too many requests. Try again in 1 minute." }, 429, req);
     }
 
@@ -228,12 +311,13 @@ export async function promogiftsCatalogHandler(
       }, 503, req);
     }
 
-    const rawBody = await req.json();
-    const bodyParse = ActionSchema.safeParse(rawBody);
-    if (!bodyParse.success) {
-      return jsonRes({ error: "Invalid request", details: bodyParse.error.flatten().fieldErrors }, 400, req);
+    // CT-19 — o corpo já foi lido/validado acima (antes do rate limit, para a
+    // cota ser por ação). Requisição sem ação conhecida: devolve o 400 de
+    // schema ou o 500 de JSON malformado, depois do 503 de configuração, para
+    // não alterar o comportamento de ambiente sem secrets.
+    if (action === null || bodyResponse) {
+      return bodyResponse ?? jsonRes({ error: "Invalid request" }, 400, req);
     }
-    const { action, params } = bodyParse.data;
     const startTime = performance.now();
 
     if (action === "list_products") {

@@ -3,101 +3,43 @@
  * Simulates typing, personalized messages with {{nome}}, {{apelido}}, {{empresa}}, {{saudacao}}
  * Supports text + media (image, video, document, audio)
  */
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
-import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
+import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
+import {
+  newCorrelationId,
+  personalize,
+  randomBetween,
+  sleep,
+} from "../_shared/messaging/index.ts";
+import {
+  processRecipient,
+  type ProcessRecipientRow,
+  type ProcessResult,
+} from "./process-recipient.ts";
 
-function getGreeting(timeZone = DEFAULT_SCHEDULE_TIMEZONE): string {
-  const hour = new Date().toLocaleString("pt-BR", { timeZone, hour: "numeric", hour12: false });
-  const h = parseInt(hour, 10);
-  if (h >= 5 && h < 12) return "Bom dia";
-  if (h >= 12 && h < 18) return "Boa tarde";
-  return "Boa noite";
-}
+// F43: as duplicatas locais (`randomBetween`, `sleep`, `getMediaEndpoint`) foram
+// removidas — vêm do kernel compartilhado. `personalize` (F37) segue reexportado,
+// junto com `randomBetween`, para não quebrar os importadores deste módulo
+// (index.test.ts importa ambos daqui).
+export { personalize, randomBetween };
 
-// Nomes reservados aos built-ins — um campo customizado do CRM com um desses
-// nomes (ex.: contato com campo "link") nunca pode sequestrar o placeholder
-// built-in correspondente (achado do review: "link" comeria {{link}} antes do
-// passe de tracking).
-const RESERVED_PLACEHOLDER_KEYS = new Set(["saudacao", "link", "nome", "nome_completo", "apelido", "empresa"]);
-
-export function personalize(
-  template: string,
-  contact: { name?: string | null; nickname?: string | null; company?: string | null },
-  customValues: Record<string, string> = {},
-  timeZone = DEFAULT_SCHEDULE_TIMEZONE,
-  trackingUrl?: string,
-): string {
-  const firstName = (contact.name || '').split(' ')[0] || '';
-  const contactValues: Record<string, string> = {
-    nome: firstName,
-    nome_completo: contact.name || '',
-    apelido: contact.nickname || firstName,
-    empresa: contact.company || '',
-  };
-  // Nome do campo customizado vem do CRM (case livre, ex.: "CPF"); o editor de
-  // template força minúsculo no placeholder — casar por chave normalizada.
-  const normalizedCustomValues = new Map<string, string>();
-  for (const [key, value] of Object.entries(customValues)) {
-    const normalizedKey = key.toLowerCase();
-    if (RESERVED_PLACEHOLDER_KEYS.has(normalizedKey)) continue;
-    normalizedCustomValues.set(normalizedKey, value);
-  }
-  // Passe único sobre o template original: um valor inserido (campo customizado
-  // ou dado de contato) nunca é rescaneado como se fosse sintaxe de placeholder
-  // (achado do review: {{cargo}} com valor literal "{{empresa}}" não pode virar
-  // o nome da empresa).
-  return template.replace(/\{\{([^}]+)\}\}/g, (fullMatch, rawKey: string) => {
-    const key = rawKey.toLowerCase();
-    if (key === "saudacao") return getGreeting(timeZone);
-    // E90: {{link}} -> URL de rastreamento por destinatário
-    if (key === "link") return trackingUrl ?? `[${rawKey}]`;
-    // hasOwnProperty (não "in"): "in" também acha propriedades herdadas de
-    // Object.prototype — um placeholder {{constructor}}/{{__proto__}} vazaria
-    // texto de função/objeto em vez de cair no fallback (achado do review).
-    if (Object.prototype.hasOwnProperty.call(contactValues, key)) return contactValues[key];
-    if (normalizedCustomValues.has(key)) return normalizedCustomValues.get(key)!;
-    // Uma variável sem valor (nome digitado errado, campanha sem template com
-    // placeholder solto, ou contato sem aquele campo customizado preenchido)
-    // antes derrubava o envio inteiro para o destinatário (unknown_placeholder).
-    // Mostrar "[variavel]" é sempre melhor que vazar "{{variavel}}" cru ou
-    // bloquear o disparo.
-    return `[${rawKey}]`;
-  });
-}
-
-/** E49: sorteia variante A/B pelo peso. Retorna null se nao houver variantes. */
-async function pickVariant(supabase: SupabaseClient, templateId: string): Promise<{ id: string; content: string; media_url: string | null; media_type: string | null } | null> {
-  const { data: variants, error: varErr } = await supabase
-    .from('talkx_template_variants')
-    .select('id,content,media_url,media_type,weight')
-    .eq('template_id', templateId);
-  if (varErr) throw new Error(`variant_lookup_failed: ${varErr.message}`);
-  if (!variants || variants.length === 0) return null;
-  const total = variants.reduce((s: number, v: { weight: number }) => s + v.weight, 0);
-  let roll = Math.random() * total;
-  for (const v of variants) { roll -= v.weight; if (roll <= 0) return v; }
-  return variants[variants.length - 1];
-}
-
-export function randomBetween(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function getMediaEndpoint(mediaType: string): string {
-  switch (mediaType) {
-    case "audio": return "sendWhatsAppAudio";
-    default: return "sendMedia";
-  }
+/**
+ * IA-047 — chave estável (SHA-256 em hex) do pedido de envio de TESTE, derivada
+ * dos campos que definem o pedido. Determinística: o mesmo pedido produz a MESMA
+ * chave, então repetir o clique cai na UNIQUE de `talkx_test_send_claims`.
+ */
+async function deriveTestSendKey(parts: Array<string | null | undefined>): Promise<string> {
+  const data = new TextEncoder().encode(parts.map((p) => p ?? "").join("\u0000"));
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export async function handleTalkxSend(
@@ -110,6 +52,9 @@ export async function handleTalkxSend(
 
   const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
   const log = new Logger("talkx-send");
+  // F43: UM correlation_id por request, propagado ao log estruturado.
+  // Opaco de proposito: nao deriva de telefone, nome ou conteudo.
+  const correlationId = newCorrelationId();
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -119,43 +64,75 @@ export async function handleTalkxSend(
 
     const supabase = _injected?.supabase ?? createClient(supabaseUrl, serviceKey);
 
-    // Auth: service-role key (scheduler/server-side) OR user JWT with admin/manager role.
+    // Auth: x-cron-secret (pg_cron, sem Bearer) OU service-role key OU JWT admin/supervisor.
+    // O x-cron-secret é conferido ANTES do guard de Bearer porque o tick do motor
+    // (X012) leva o Bearer da anon key — exigido pelo gateway (verify_jwt=true) —
+    // e a anon key não é a service key: sem esse curto-circuito o cron levaria 401.
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    const cronSecretHeader = req.headers.get("x-cron-secret");
+    let isCronAuth = false;
+    if (cronSecretHeader) {
+      const { data: vaultSecret, error: rpcError } = await supabase.rpc("get_talkx_cron_secret");
+      if (!rpcError && typeof vaultSecret === "string") {
+        isCronAuth = timingSafeEqual(cronSecretHeader, vaultSecret);
+      }
     }
-    const token = authHeader.slice(7);
-    // Comparação constant-time: `===` retorna cedo no primeiro byte diferente e vaza timing.
-    const isServiceKey = timingSafeEqual(token, serviceKey);
-    if (!isServiceKey) {
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      if (authError || !user) {
+    // V12: ator da transição — perfil do JWT (quando não é service key) ou null (worker).
+    let actorId: string | null = null;
+    let isServiceKey = false;
+    if (!isCronAuth) {
+      if (!authHeader?.startsWith("Bearer ")) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
       }
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .in("role", ["admin", "supervisor"])
-        .maybeSingle();
-      if (!roleData) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
+      const token = authHeader.slice(7);
+      // Comparação constant-time: `===` retorna cedo no primeiro byte diferente e vaza timing.
+      isServiceKey = timingSafeEqual(token, serviceKey);
+      if (!isServiceKey) {
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+        }
+        // X013: a RPC pública resolve admin/supervisor numa linha booleana. O
+        // `.in([...]).maybeSingle()` antigo devolvia DUAS linhas (e virava erro
+        // → 403) para quem tem admin E supervisor ao mesmo tempo.
+        const { data: isPrivileged, error: roleError } = await supabase.rpc(
+          "is_admin_or_supervisor",
+          { _user_id: user.id },
+        );
+        if (roleError || isPrivileged !== true) {
+          return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
+        }
+        // X025: a transição grava `actor_id`, que é FK para `profiles.id` — logo
+        // o ator tem de ser o profiles.id do JWT, NÃO o auth.users.id. Perfil
+        // ausente/inativo ⇒ ator nulo (o evento sai sem autor, como no worker).
+        const { data: actorProfile, error: actorProfileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (actorProfileError) {
+          log.warn("Falha ao resolver o perfil do ator da transição", { correlationId, error: actorProfileError.message });
+        } else if (actorProfile && typeof (actorProfile as { id?: unknown }).id === "string") {
+          actorId = (actorProfile as { id: string }).id;
+        }
       }
     }
 
     const body = await req.json();
-    const { campaignId, action } = body;
+    const { campaignId, action, reason } = body;
 
     // E47: action test --- envia template de teste para um numero
     if (action === "test") {
       // customVariables (nomes) e aceito no corpo por retrocompatibilidade com o
       // frontend, mas nao e mais necessario: qualquer placeholder sem valor real
       // vira "[nome]" automaticamente (ver personalize()).
-      const { templateContent, mediaUrl, mediaType, phone } = body as {
+      const { templateContent, mediaUrl, mediaType, phone, idempotencyKey } = body as {
         templateContent: string;
         mediaUrl?: string | null;
         mediaType?: string | null;
         phone: string;
+        idempotencyKey?: string | null;
         customVariables?: string[];
       };
       if (!templateContent || !phone) {
@@ -172,11 +149,48 @@ export async function handleTalkxSend(
       const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
       let personalizedText: string;
       try {
-        personalizedText = personalize(templateContent, dummyContact);
+        personalizedText = personalize(templateContent, dummyContact).text;
       } catch (e) {
         return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Placeholder invalido" }), { status: 400, headers });
       }
       const cleanPhone = phone.replace(/\D/g, "");
+
+      // IA-047: chave estável do envio de teste. Preferimos a chave do cliente
+      // (idempotencyKey) — o front a deriva uma vez por clique; sem ela, o hash
+      // do pedido (instância + telefone + template + mídia) faz o mesmo papel.
+      // Repetir o mesmo pedido NÃO pode virar um segundo POST ao provedor.
+      const requestKey = idempotencyKey && idempotencyKey.trim() !== ""
+        ? idempotencyKey.trim()
+        : await deriveTestSendKey([testInstanceId, cleanPhone, templateContent, mediaUrl ?? "", mediaType ?? ""]);
+
+      // Claim ANTES do POST: quem registra primeiro envia; a repetição cai na
+      // UNIQUE (23505) e é resolvida SEM tocar o provedor de novo.
+      const { error: claimError } = await supabase
+        .from("talkx_test_send_claims")
+        .insert({ request_key: requestKey });
+
+      if (claimError && (claimError as { code?: string }).code === "23505") {
+        const { data: existing, error: lookupError } = await supabase
+          .from("talkx_test_send_claims")
+          .select("provider_message_id")
+          .eq("request_key", requestKey)
+          .maybeSingle();
+        if (lookupError) {
+          return new Response(JSON.stringify({ error: `claim_lookup_failed: ${lookupError.message}` }), { status: 500, headers });
+        }
+        const jaEnviado = (existing as { provider_message_id?: string | null } | null)?.provider_message_id;
+        if (typeof jaEnviado === "string" && jaEnviado.length > 0) {
+          // Repetição de um envio já confirmado: devolve o MESMO id, sem POST.
+          return new Response(JSON.stringify({ success: true, provider_message_id: jaEnviado, idempotent: true }), { headers });
+        }
+        // Claim registrado mas ainda não confirmado (duplo clique simultâneo):
+        // NÃO reenvia — o primeiro request é quem manda.
+        return new Response(JSON.stringify({ success: true, pending: true, idempotent: true }), { status: 202, headers });
+      }
+      if (claimError) {
+        return new Response(JSON.stringify({ error: `claim_failed: ${claimError.message}` }), { status: 500, headers });
+      }
+
       try {
         let sendRes: Response;
         if (mediaUrl && mediaType) {
@@ -195,18 +209,66 @@ export async function handleTalkxSend(
           });
         }
         if (!sendRes.ok) {
-          const body = await sendRes.text().catch(() => '');
-          return new Response(JSON.stringify({ error: `Evolution retornou ${sendRes.status}: ${body}` }), { status: 502, headers });
+          const errBody = await sendRes.text().catch(() => '');
+          // Resposta DEFINITIVA de falha: o provedor não entregou — libera o claim
+          // para permitir um retry deliberado (não houve efeito externo).
+          await supabase.from("talkx_test_send_claims").delete().eq("request_key", requestKey);
+          return new Response(JSON.stringify({ error: `Evolution retornou ${sendRes.status}: ${errBody}` }), { status: 502, headers });
         }
         const providerResult = await sendRes.json().catch(() => null);
         const providerMessageId = extractMessageId(providerResult);
         if (!providerMessageId || providerMessageId.length > 512) {
           return new Response(JSON.stringify({ error: "Evolution não confirmou um identificador de entrega" }), { status: 502, headers });
         }
+        // Confirma no claim: a próxima repetição devolve este id SEM novo POST.
+        await supabase
+          .from("talkx_test_send_claims")
+          .update({ provider_message_id: providerMessageId, sent_at: new Date().toISOString() })
+          .eq("request_key", requestKey);
         return new Response(JSON.stringify({ success: true, provider_message_id: providerMessageId }), { headers });
       } catch (e) {
+        // Exceção (rede/timeout): o efeito externo ficou INDETERMINADO, então o
+        // claim NÃO é liberado — repetir não pode virar um segundo POST (não se
+        // presume exactly-once externo).
         return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro ao enviar" }), { status: 500, headers });
       }
+    }
+
+    // V19: retry manual de um destinatário terminal (failed/outcome_unknown).
+    // Não reenvia cego: revalida a supressão e o RPC respeita attempt_count < 3.
+    if (action === "retry") {
+      const { recipientId } = body as { recipientId?: string };
+      if (!recipientId) {
+        return new Response(JSON.stringify({ error: "recipientId required" }), { status: 400, headers });
+      }
+      const { data: retryRecipient, error: retryLookupError } = await supabase
+        .from("talkx_recipients")
+        .select("id, contact_id, status, attempt_count")
+        .eq("id", recipientId)
+        .single();
+      if (retryLookupError || !retryRecipient) {
+        return new Response(JSON.stringify({ error: "Recipient not found" }), { status: 404, headers });
+      }
+      if (!["failed", "outcome_unknown"].includes(retryRecipient.status as string)) {
+        return new Response(JSON.stringify({ error: "Recipient not retryable" }), { status: 409, headers });
+      }
+      const { data: suppressed, error: suppressionError } = await supabase.rpc("talkx_recipient_is_suppressed", {
+        p_contact_id: retryRecipient.contact_id,
+        p_phone: null,
+      });
+      if (suppressionError) {
+        return new Response(JSON.stringify({ error: suppressionError.message }), { status: 500, headers });
+      }
+      if (suppressed === true) {
+        return new Response(JSON.stringify({ success: false, reason: "suppressed" }), { headers });
+      }
+      const { data: retried, error: retryError } = await supabase.rpc("retry_talkx_recipient", {
+        p_recipient_id: recipientId,
+      });
+      if (retryError) {
+        return new Response(JSON.stringify({ error: retryError.message }), { status: 409, headers });
+      }
+      return new Response(JSON.stringify({ success: retried === true }), { headers });
     }
 
     if (!campaignId) {
@@ -215,13 +277,33 @@ export async function handleTalkxSend(
 
     const campaignAction = action ?? "start";
 
+    // X025: status ATUAL da conexão para o evento `connection_failed`. O SELECT
+    // que valida o envio filtra por `status = 'connected'` e, numa queda, volta
+    // vazio — por isso a leitura do status é feita SEM esse filtro.
+    const readConnectionStatus = async (connectionId: unknown): Promise<string> => {
+      if (typeof connectionId !== "string") return "unknown";
+      const { data } = await supabase
+        .from("whatsapp_connections").select("status").eq("id", connectionId).maybeSingle();
+      const status = (data as { status?: unknown } | null)?.status;
+      return typeof status === "string" ? status : "unknown";
+    };
+
     // Pause/cancel share the same locked database transition used by start.
     // An update without this lock could resurrect a campaign cancelled by a
     // concurrent request between its read and write.
     if (campaignAction === "pause" || campaignAction === "cancel") {
+      // X025: o motivo vem do corpo e vira a mensagem do evento `paused`; o
+      // servidor não aceita motivo acima de 500 caracteres (mesmo teto do resto
+      // do motor).
+      const pauseReason = typeof reason === "string" ? reason : null;
+      if (pauseReason !== null && pauseReason.length > 500) {
+        return new Response(JSON.stringify({ error: "reason_too_long" }), { status: 400, headers });
+      }
       const { data, error } = await supabase.rpc("transition_talkx_campaign", {
         p_campaign_id: campaignId,
         p_action: campaignAction,
+        p_actor_id: actorId,
+        p_pause_reason: pauseReason,
       });
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 409, headers });
@@ -230,79 +312,177 @@ export async function handleTalkxSend(
       return new Response(JSON.stringify({ success: true, status: transition?.current_status }), { headers });
     }
 
-    if (campaignAction !== "start") {
-      return new Response(JSON.stringify({ error: "Invalid campaign action" }), { status: 400, headers });
-    }
+    // ---------------------------------------------------------------------
+    // Helpers compartilhados entre start e continue (X011).
+    // ---------------------------------------------------------------------
 
-    // Get campaign
-    const { data: initialCampaign, error: campErr } = await supabase
-      .from("talkx_campaigns").select("*").eq("id", campaignId).single();
+    const loadBusinessHoursAndDailyLimit = async (): Promise<{
+      businessHours: { start?: string; end?: string; days?: number[] } | null;
+      dailyLimit: number;
+    }> => {
+      let businessHours: { start?: string; end?: string; days?: number[] } | null = null;
+      let dailyLimit = 0;
+      const { data: settingsRows, error: settingsErr } = await supabase
+        .from("talkx_settings").select("key, value")
+        .in("key", ["business_hours", "daily_limit_per_connection"]);
+      if (!settingsErr) {
+        for (const row of (settingsRows ?? []) as { key: string; value: string }[]) {
+          if (row.key === "business_hours") {
+            const parsed = parseBusinessHours(row.value);
+            if (parsed) businessHours = parsed;
+          } else if (row.key === "daily_limit_per_connection") {
+            const n = Number(row.value);
+            if (Number.isFinite(n) && n > 0) dailyLimit = n;
+          }
+        }
+      }
+      return { businessHours, dailyLimit };
+    };
 
-    if (campErr || !initialCampaign) {
-      return new Response(JSON.stringify({ error: "Campaign not found" }), { status: 404, headers });
-    }
-    let campaign = initialCampaign;
-    // Get WhatsApp connection instance
-    const { data: connection } = await supabase
-      .from("whatsapp_connections").select("status, instance_id")
-      .eq("id", campaign.whatsapp_connection_id).eq("status", "connected").single();
+    const countSentTodayForConnection = async (whatsappConnectionId: string): Promise<number> => {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const { data: connCampaigns } = await supabase.from("talkx_campaigns")
+        .select("id").eq("whatsapp_connection_id", whatsappConnectionId);
+      const connIds = ((connCampaigns ?? []) as { id: string }[]).map((c) => c.id);
+      if (connIds.length === 0) return 0;
+      const { count } = await supabase.from("talkx_recipients")
+        .select("id", { count: "exact", head: true })
+        .in("campaign_id", connIds).gte("sent_at", todayStart.toISOString());
+      return typeof count === "number" ? count : 0;
+    };
 
-    const initialInstanceId = liveTalkXInstanceId(connection);
-    if (!initialInstanceId) {
-      // E91: conexão perdida — pausa automática da campanha
-      try {
-        await supabase.rpc("transition_talkx_campaign", {
-          p_campaign_id: campaignId,
-          p_action: "pause",
-          p_pause_reason: "connection_lost",
-        });
-      } catch { /* já pausada ou outro estado — ignora */ }
-      return new Response(JSON.stringify({ error: "WhatsApp connection lost: campaign paused" }), { status: 409, headers });
-    }
-
-    // Enforce delivery limits in the selected IANA timezone before the locked
-    // transition. An invalid legacy timezone fails closed instead of falling
-    // back to Brasília and sending at an unintended local hour.
-    const windowStatus = deliveryWindowStatus(campaign);
-    if (!windowStatus.allowed) {
-      return new Response(JSON.stringify({ ok: false, reason: windowStatus.reason, next_window: windowStatus.next_window }), { headers });
-    }
-
-    // The transition RPC locks the campaign row and revalidates the state and
-    // minimum launch invariants immediately before any recipient can be claimed.
-    const { error: transitionError } = await supabase.rpc("transition_talkx_campaign", {
-      p_campaign_id: campaignId,
-      p_action: "start",
-    });
-    if (transitionError) {
-      return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
-    }
-
-    // Get pending recipients with contact info
-    const { data: recipients, error: recipientsError } = await supabase
-      .from("talkx_recipients")
-      .select("*, contacts:contact_id(name, nickname, phone, company)")
-      .eq("campaign_id", campaignId)
-      .in("status", ["pending", "sending"])
-      // E91: exclui recipients cujo retry_after ainda não venceu
-      .or("retry_after.is.null,retry_after.lte." + new Date().toISOString())
-      .order("created_at");
-    if (recipientsError) throw new Error(`talkx_recipients_lookup_failed: ${recipientsError.message}`);
+    // X019: orçamento por minuto/dia da conexão (Talk X + Multiplix), vindo da
+    // RPC da X018 — substitui a contagem só-diária da V20 por minuto + dia.
+    type ConnectionBudget = {
+      minute_limit: number;
+      minute_sent: number;
+      minute_remaining: number;
+      day_limit: number;
+      day_sent: number;
+      day_remaining: number;
+      next_day_at: string | null;
+    };
+    const loadConnectionBudget = async (whatsappConnectionId: string): Promise<ConnectionBudget> => {
+      const { data, error } = await supabase.rpc("talkx_connection_send_budget", {
+        p_connection_id: whatsappConnectionId,
+      });
+      if (error) throw new Error(`talkx_connection_budget_failed: ${error.message}`);
+      const b = (data ?? {}) as Record<string, unknown>;
+      return {
+        minute_limit: Number(b.minute_limit ?? 0),
+        minute_sent: Number(b.minute_sent ?? 0),
+        minute_remaining: Number(b.minute_remaining ?? 0),
+        day_limit: Number(b.day_limit ?? 0),
+        day_sent: Number(b.day_sent ?? 0),
+        day_remaining: Number(b.day_remaining ?? 0),
+        next_day_at: typeof b.next_day_at === "string" ? b.next_day_at : null,
+      };
+    };
 
     // E90: link rastreável referenciado por {{link}} no template. Uma campanha
     // pode ter mais de um link cadastrado; o placeholder é único, então usamos
     // o mais antigo como canônico em vez de deixar o {{link}} sem substituição.
-    const { data: trackingLink } = await supabase
-      .from("talkx_links")
-      .select("slug")
-      .eq("campaign_id", campaignId)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    const trackingUrlFor = (recipientId: string) =>
-      trackingLink?.slug
-        ? `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(trackingLink.slug)}&r=${encodeURIComponent(recipientId)}`
-        : undefined;
+    // X020: a base da URL passa a vir de TALKX_LINK_BASE_URL (sem o secret,
+    // mantém a URL atual do projeto). O secret nunca é interpolado no texto.
+    // X022: {{link:rotulo}} referencia um link pelo rótulo — vários por mensagem.
+    // Com o domínio próprio, a URL é /l/:slug (rewrite no vercel.json); sem ele,
+    // cai no caminho direto da edge (?s=...&r=...).
+    const loadTrackingLinks = async (): Promise<{
+      trackingUrlFor: (recipientId: string) => string | undefined;
+      linksByLabelFor: (recipientId: string) => Record<string, string>;
+    }> => {
+      const { data: links } = await supabase
+        .from("talkx_links")
+        .select("slug, label")
+        .eq("campaign_id", campaignId)
+        .order("created_at", { ascending: true });
+      const configuredBase = (Deno.env.get("TALKX_LINK_BASE_URL") ?? "").trim().replace(/\/+$/, "");
+      const urlFor = (slug: string, recipientId: string) =>
+        configuredBase.length > 0
+          ? `${configuredBase}/l/${encodeURIComponent(slug)}?r=${encodeURIComponent(recipientId)}`
+          : `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(slug)}&r=${encodeURIComponent(recipientId)}`;
+      const rows = (links ?? []) as { slug?: unknown; label?: unknown }[];
+      const oldestSlug = typeof rows[0]?.slug === "string" ? rows[0].slug : undefined;
+      const slugByLabel = new Map<string, string>();
+      for (const row of rows) {
+        if (typeof row.slug === "string" && typeof row.label === "string" && row.label.trim()) {
+          slugByLabel.set(row.label.trim().toLowerCase(), row.slug);
+        }
+      }
+      const trackingUrlFor = (recipientId: string) =>
+        oldestSlug ? urlFor(oldestSlug, recipientId) : undefined;
+      const linksByLabelFor = (recipientId: string) => {
+        const out: Record<string, string> = {};
+        for (const [label, slug] of slugByLabel) out[label] = urlFor(slug, recipientId);
+        return out;
+      };
+      return { trackingUrlFor, linksByLabelFor };
+    };
+
+    // X022: rótulos de link cadastrados na campanha. {{link:rotulo}} com rótulo
+    // registrado é "known" no lançamento; rótulo não cadastrado vira "unknown" e
+    // bloqueia o lançamento (CAP-074) — nunca sai "[link:rotulo]" no cliente.
+    const loadLinkLabels = async (): Promise<Record<string, string>> => {
+      const { data } = await supabase
+        .from("talkx_links")
+        .select("label")
+        .eq("campaign_id", campaignId);
+      const out: Record<string, string> = {};
+      for (const row of (data ?? []) as { label?: unknown }[]) {
+        if (typeof row.label === "string" && row.label.trim() !== "") {
+          out[row.label.trim().toLowerCase()] = "https://talkx-link.example/__probe__";
+        }
+      }
+      return out;
+    };
+
+    // X020: nomes de campos customizados que EXISTEM no CRM (qualquer contato).
+    // Um placeholder com um desses nomes não é "desconhecido". Best-effort: uma
+    // falha de leitura não pode impedir o lançamento (o pior caso é o próprio
+    // personalize marcar a chave e o destinatário virar skipped, nunca
+    // "{{xpto}}" vazando).
+    const loadKnownCustomFieldNames = async (): Promise<Set<string>> => {
+      const names = new Set<string>();
+      const PAGE = 1000;
+      for (let offset = 0; ; offset += PAGE) {
+        const { data, error } = await supabase
+          .from("contact_custom_fields")
+          .select("field_name")
+          .order("id", { ascending: true })
+          .range(offset, offset + PAGE - 1);
+        if (error) break;
+        for (const row of (data ?? []) as { field_name?: unknown }[]) {
+          if (typeof row.field_name === "string" && row.field_name.trim() !== "") {
+            names.add(row.field_name.toLowerCase());
+          }
+        }
+        if (!data || data.length < PAGE) break;
+      }
+      return names;
+    };
+
+    // X020: todos os textos que a campanha pode enviar (texto próprio, conteúdo
+    // do template e variantes) — a validação de variável desconhecida cobre
+    // qualquer um deles.
+    const loadCampaignTemplateTexts = async (campaignRow: Record<string, unknown>): Promise<string[]> => {
+      const texts: string[] = [];
+      if (typeof campaignRow.message_template === "string" && campaignRow.message_template.trim() !== "") {
+        texts.push(campaignRow.message_template);
+      }
+      if (campaignRow.template_id) {
+        const { data: templateRow } = await supabase
+          .from("talkx_templates").select("content").eq("id", campaignRow.template_id).maybeSingle();
+        const templateContent = (templateRow as { content?: unknown } | null)?.content;
+        if (typeof templateContent === "string") texts.push(templateContent);
+        const { data: variantRows } = await supabase
+          .from("talkx_template_variants").select("content").eq("template_id", campaignRow.template_id);
+        for (const v of (variantRows ?? []) as { content?: unknown }[]) {
+          if (typeof v.content === "string") texts.push(v.content);
+        }
+      }
+      return texts;
+    };
 
     // Valor real de variável customizada (ex.: {{cargo}}) vem de
     // contact_custom_fields, por contato — nunca do template. Antes, o valor
@@ -310,12 +490,15 @@ export async function handleTalkxSend(
     // nunca o dado de verdade; e campanha sem template salvo (template_id
     // null) derrubava 100% dos destinatários com unknown_placeholder. Busca
     // única em lote para todos os contact_id da leva atual, não por
-    // destinatário.
-    const recipientContactIds = Array.from(
-      new Set((recipients || []).map((r: { contact_id?: string | null }) => r.contact_id).filter((id: unknown): id is string => typeof id === "string")),
-    );
-    const customFieldsByContact = new Map<string, Record<string, string>>();
-    if (recipientContactIds.length > 0) {
+    // destinatário. X011: a pré-carga passou a ser POR PASSADA no `continue`.
+    const loadCustomFieldsByContact = async (
+      rows: ProcessRecipientRow[],
+    ): Promise<Map<string, Record<string, string>>> => {
+      const recipientContactIds = Array.from(
+        new Set(rows.map((r) => r.contact_id).filter((id): id is string => typeof id === "string")),
+      );
+      const customFieldsByContact = new Map<string, Record<string, string>>();
+      if (recipientContactIds.length === 0) return customFieldsByContact;
       // .in() serializa cada contact_id (UUID) na URL da requisição — uma leva
       // grande (ex.: 1000 destinatários) geraria ~37KB só de filtro, arriscando
       // rejeição por tamanho de URL no gateway antes mesmo de paginar o
@@ -362,7 +545,8 @@ export async function handleTalkxSend(
           if (!customFieldRows || customFieldRows.length < CUSTOM_FIELDS_PAGE_SIZE) break;
         }
       }
-    }
+      return customFieldsByContact;
+    };
 
     // Check against the source of truth for every recipient. This makes a
     // phone-only, formatted legacy opt-out equivalent to the contact phone
@@ -378,28 +562,144 @@ export async function handleTalkxSend(
       return data;
     };
 
-    let sentCount = campaign.sent_count || 0;
-    let failedCount = campaign.failed_count || 0;
-    let blacklistedCount = 0;
-    let outcomeUnknownCount = 0;
-    let processedCount = 0; // E78: reler parametros a cada RELOAD_EVERY envios
+    // Estado mutável do motor (compartilhado entre start e continue): a campanha
+    // relida a cada destinatário e os contadores que a resposta reporta.
+    // X033 — linha de log por destinatário, acumulada na passada e gravada em
+    // lote no fim dela (talkx_delivery_log). Só ids/códigos/métricas: nunca
+    // telefone nem texto de mensagem.
+    interface DeliveryLogEntry {
+      campaign_id: string;
+      recipient_id: string;
+      attempt: number;
+      stage: string;
+      outcome: string;
+      http_status: number | null;
+      error_code: string | null;
+      worker_id: string;
+      duration_ms: number;
+    }
+
+    interface EngineState {
+      campaign: Record<string, unknown>;
+      businessHours: { start?: string; end?: string; days?: number[] } | null;
+      dailyLimit: number;
+      sentTodayTotal: number;
+      minuteLimit: number;
+      minuteRemaining: number;
+      dayRemaining: number;
+      sent: number;
+      failed: number;
+      blacklisted: number;
+      outcomeUnknown: number;
+      processed: number;
+      handled: number;
+      workerId: string;
+      initialInstanceId: string;
+      instanceToken: string | null;
+      evolutionUrl: string;
+      evolutionKey: string;
+      supabaseUrl: string;
+      trackingUrlFor: (recipientId: string) => string | undefined;
+      linksByLabelFor: (recipientId: string) => Record<string, string>;
+      mediaForSend: () => Promise<string>;
+      deliveryLogs: DeliveryLogEntry[];
+    }
+
+    // E78: reler parametros a cada RELOAD_EVERY envios
     const RELOAD_EVERY = 20;
-    // Cada invocação só pode enviar depois de reivindicar o destinatário no
-    // Postgres. O lease impede que dois workers concorrentes disparem para o
-    // mesmo contato; uma execução morta expira e pode ser recuperada.
-    const workerId = `talkx-send:${crypto.randomUUID()}`;
-    // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
-    // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
-    // com typingDelay por envio passam do TTL.
-    let signedMedia: { url: string; at: number } | null = null;
-    const mediaForSend = async () => {
-      if (!signedMedia || Date.now() - signedMedia.at > 240_000) {
-        signedMedia = { url: await resolvePrivateBucketUrl(supabase, campaign.media_url, undefined, supabaseUrl), at: Date.now() };
-      }
-      return signedMedia.url;
+
+    const pauseCampaign = async (pauseReason: string | null) => {
+      const { error } = await supabase.rpc("transition_talkx_campaign", {
+        p_campaign_id: campaignId,
+        p_action: "pause",
+        p_pause_reason: pauseReason,
+      });
+      if (error) throw new Error(`talkx_campaign_auto_pause_failed: ${error.message}`);
     };
 
-    for (const recipient of recipients || []) {
+    // X019: recarrega o orçamento por minuto/dia no meio do lote (a cada
+    // RELOAD_EVERY e quando o minuto esgota).
+    const refreshBudget = async (state: EngineState) => {
+      const connId = state.campaign.whatsapp_connection_id as string | undefined;
+      if (!connId) return;
+      const b = await loadConnectionBudget(connId);
+      state.minuteLimit = b.minute_limit;
+      state.minuteRemaining = b.minute_remaining;
+      state.dayRemaining = b.day_remaining;
+      state.dailyLimit = b.day_limit;
+      state.sentTodayTotal = b.day_sent;
+    };
+
+    // X033 — traduz o resultado do processamento de UM destinatário para a linha
+    // de log (etapa/resultado/código/status). Mapeamento TOTAL: toda variante de
+    // ProcessResult cai num valor aceito pelo CHECK de talkx_delivery_log.
+    const deliveryLogEntryFor = (
+      result: ProcessResult,
+      recipientId: string,
+      attempt: number,
+      workerId: string,
+      durationMs: number,
+    ): DeliveryLogEntry => {
+      let stage = "complete";
+      let outcome = "failed";
+      let errorCode: string | null = null;
+      let httpStatus: number | null = null;
+      switch (result.kind) {
+        case "no_claim": stage = "claim"; outcome = "no_claim"; break;
+        case "skipped_blacklisted": stage = "suppress_check"; outcome = "skipped"; errorCode = "blacklisted"; break;
+        case "skipped_no_phone": stage = "claim"; outcome = "skipped"; errorCode = "no_phone"; break;
+        case "skipped_missing_variable": outcome = "skipped"; errorCode = "missing_variable"; break;
+        case "message_failed": outcome = "failed"; errorCode = result.errorCode ?? "message_failed"; break;
+        case "sent": stage = "dispatch"; outcome = "sent"; break;
+        case "failed": stage = "dispatch"; outcome = "failed"; errorCode = result.errorCode ?? "provider_error"; httpStatus = result.httpStatus ?? null; break;
+        case "outcome_unknown": stage = "dispatch"; outcome = "outcome_unknown"; errorCode = result.errorCode ?? "provider_outcome_unknown"; break;
+        case "rescheduled": stage = "dispatch"; outcome = result.deadLettered ? "failed" : "rescheduled"; errorCode = result.errorCode ?? "pre_dispatch_error"; break;
+        case "stopped": outcome = "stopped"; errorCode = "campaign_stopped"; break;
+      }
+      return {
+        campaign_id: campaignId,
+        recipient_id: recipientId,
+        attempt,
+        stage,
+        outcome,
+        http_status: httpStatus,
+        error_code: errorCode,
+        worker_id: workerId,
+        duration_ms: durationMs,
+      };
+    };
+
+    // X033 — grava em LOTE, ao fim de cada passada, as linhas de log dos
+    // destinatários processados nela. Best-effort de propósito: o log nunca pode
+    // derrubar um lote. Sem telefone nem texto — só os campos de DeliveryLogEntry.
+    const flushDeliveryLogs = async (state: EngineState) => {
+      if (state.deliveryLogs.length === 0) return;
+      const batch = state.deliveryLogs.splice(0, state.deliveryLogs.length);
+      try {
+        const { error } = await supabase.from("talkx_delivery_log").insert(batch);
+        if (error) {
+          log.warn("Falha ao gravar talkx_delivery_log (best-effort)", {
+            correlationId, campaign_id: campaignId, count: batch.length, error: error.message,
+          });
+        }
+      } catch (err) {
+        log.warn("Exceção ao gravar talkx_delivery_log (best-effort)", {
+          correlationId, campaign_id: campaignId, count: batch.length,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    };
+
+    // Processa UM destinatário sob o lease de campanha: relê o estado, checa
+    // janela/cota, chama o corpo extraído (process-recipient.ts), aplica os
+    // contadores e roda a cauda (RELOAD_EVERY + ritmo). Devolve 'stop' quando o
+    // laço tem de encerrar (campanha fora de sending, janela fechada, cota
+    // esgotada ou pausa detectada dentro do corpo).
+    const runRecipient = async (
+      state: EngineState,
+      recipient: ProcessRecipientRow,
+      customFieldsByContact: Map<string, Record<string, string>>,
+    ): Promise<"next" | "stop"> => {
       // Re-read the state and send limits before each claim. A single initial
       // check is not enough when a campaign crosses a local-time boundary.
       const { data: currentCampaign, error: currentCampaignError } = await supabase
@@ -407,405 +707,512 @@ export async function handleTalkxSend(
         .select("status, send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone")
         .eq("id", campaignId).single();
       if (currentCampaignError) throw new Error(`talkx_campaign_state_lookup_failed: ${currentCampaignError.message}`);
-      if (currentCampaign?.status !== "sending") break;
-      campaign = { ...campaign, ...currentCampaign };
-      const currentWindowStatus = deliveryWindowStatus(campaign);
+      if (currentCampaign?.status !== "sending") return "stop";
+      state.campaign = { ...state.campaign, ...currentCampaign };
+      const currentWindowStatus = deliveryWindowStatus(state.campaign, undefined, state.businessHours);
       if (!currentWindowStatus.allowed) {
         // V03: grava POR QUE pausou — sem isso a retomada automática não tinha
         // como distinguir pausa da janela de pausa do operador.
-        const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
-          p_campaign_id: campaignId,
-          p_action: "pause",
-          p_pause_reason: pauseReasonForWindow(currentWindowStatus),
-        });
-        if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
-        break;
+        await pauseCampaign(pauseReasonForWindow(currentWindowStatus));
+        return "stop";
       }
 
-      const { data: claimRows, error: claimError } = await supabase.rpc("claim_talkx_recipient", {
-        p_campaign_id: campaignId,
-        p_recipient_id: recipient.id,
-        p_worker: workerId,
-        p_lease_seconds: 90,
+      // X019: orçamento por minuto/dia da conexão (RPC da X018). Dia esgotado →
+      // pausa com daily_limit (scheduler retoma quando day_remaining > 0).
+      if (state.dayRemaining <= 0) {
+        await pauseCampaign("daily_limit");
+        return "stop";
+      }
+      // Minuto esgotado: recarrega (pode ter virado) e, se continuar esgotado,
+      // aguarda a virada antes de tentar de novo; o laço externo encerra pelo
+      // orçamento de tempo quando não couber mais envio.
+      if (state.minuteRemaining <= 0) {
+        await refreshBudget(state);
+        if (state.minuteRemaining <= 0) await sleep(60_000);
+        return "next";
+      }
+
+      state.handled++;
+      // X033 — tentativa ordinal + logger filho com o contexto fixo do
+      // destinatário (campaign_id/recipient_id/attempt em toda entrada de log).
+      const recipientAttempt = (typeof recipient.attempt_count === "number" ? recipient.attempt_count : 0) + 1;
+      const recipientStartedAt = Date.now();
+      const recipientLog = log.child({
+        campaign_id: campaignId,
+        recipient_id: recipient.id,
+        attempt: recipientAttempt,
       });
-      if (claimError) throw new Error(`talkx_recipient_claim_failed: ${claimError.message}`);
-      const claim = Array.isArray(claimRows) ? claimRows[0] : null;
-      // Outro worker já concluiu ou ainda possui o lease deste destinatário.
-      if (!claim?.claim_token) continue;
+      const result = await processRecipient({
+        supabase,
+        campaignId,
+        campaign: state.campaign,
+        businessHours: state.businessHours,
+        initialInstanceId: state.initialInstanceId,
+        instanceToken: state.instanceToken,
+        evolutionUrl: state.evolutionUrl,
+        evolutionKey: state.evolutionKey,
+        supabaseUrl: state.supabaseUrl,
+        workerId: state.workerId,
+        trackingUrlFor: state.trackingUrlFor,
+        linksByLabelFor: state.linksByLabelFor,
+        customFieldsByContact,
+        log: recipientLog,
+        correlationId,
+        isRecipientSuppressed,
+        mediaForSend: state.mediaForSend,
+      }, recipient);
 
-      const contact = recipient.contacts as Record<string, unknown>;
-      const recipientPhone = (contact?.phone as string | undefined)?.replace(/\D/g, '');
-      if (await isRecipientSuppressed(recipient.contact_id as string | null, recipientPhone ?? null)) {
-        const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
-          p_recipient_id: recipient.id,
-          p_claim_token: claim.claim_token,
-          p_status: "skipped",
-          p_error_message: "Contato na lista negra (opt-out)",
-        });
-        if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
-        blacklistedCount++;
-        continue;
-      }
-      if (!contact?.phone) {
-        const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
-          p_recipient_id: recipient.id,
-          p_claim_token: claim.claim_token,
-          p_status: "skipped",
-          p_error_message: "Sem número de telefone",
-        });
-        if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
-        continue;
-      }
+      // X033 — acumula a linha de log desta passada (gravada em lote no fim dela).
+      state.deliveryLogs.push(
+        deliveryLogEntryFor(result, recipient.id, recipientAttempt, state.workerId, Date.now() - recipientStartedAt),
+      );
 
-      // Persist the actual message selected for this recipient before a
-      // provider call. A mutable template variant must never change what a
-      // retry, audit export, or delayed worker would send later.
-      const recipientRecord = recipient as Record<string, unknown>;
-      const hasSnapshot = typeof recipientRecord.message_snapshot_at === "string"
-        && typeof recipientRecord.personalized_message === "string"
-        && recipientRecord.personalized_message.trim().length > 0;
-      let personalizedMsg: string;
-      let effectiveMediaUrl: string | null;
-      let effectiveMediaType: string | null;
-
-      if (hasSnapshot) {
-        personalizedMsg = recipientRecord.personalized_message as string;
-        effectiveMediaUrl = typeof recipientRecord.media_url_snapshot === "string"
-          ? recipientRecord.media_url_snapshot
-          : null;
-        effectiveMediaType = typeof recipientRecord.media_type_snapshot === "string"
-          ? recipientRecord.media_type_snapshot
-          : null;
-      } else {
-        const existingVid = typeof recipientRecord.variant_id === "string" ? recipientRecord.variant_id : null;
-        const legacyPersonalizedMessage = typeof recipientRecord.personalized_message === "string"
-          && recipientRecord.personalized_message.trim().length > 0
-          ? recipientRecord.personalized_message
-          : null;
-        let variant: { id: string; content: string; media_url: string | null; media_type: string | null; weight?: number } | null = null;
-        if (existingVid) {
-          const { data: vData, error: vErr } = await supabase
-            .from('talkx_template_variants').select('id,content,media_url,media_type,weight')
-            .eq('id', existingVid).single();
-          if (vErr || !vData) {
-            // A legacy worker may already have persisted the exact text. In
-            // that case retain it; otherwise fail closed rather than silently
-            // fall back to a changed campaign template.
-            if (!legacyPersonalizedMessage) {
-              throw new Error(`talkx_variant_snapshot_source_unavailable: ${vErr?.message ?? "variant_not_found"}`);
-            }
-          } else {
-            variant = vData;
-          }
-        } else if (campaign.template_id) {
-          variant = await pickVariant(supabase, campaign.template_id);
-        }
-
-        const contentToSend = legacyPersonalizedMessage ?? variant?.content ?? campaign.message_template;
-        const candidateMediaUrl = variant?.media_url ?? campaign.media_url ?? null;
-        const candidateMediaType = variant?.media_type ?? campaign.media_type ?? null;
-        if ((candidateMediaUrl === null) !== (candidateMediaType === null)) {
-          throw new Error("talkx_invalid_media_snapshot_source");
-        }
-        let calculatedMessage: string;
-        const customValues = customFieldsByContact.get(recipient.contact_id as string) ?? {};
-        try {
-          calculatedMessage = legacyPersonalizedMessage ?? personalize(
-            contentToSend,
-            contact as { name: string; nickname?: string; company?: string },
-            customValues,
-            typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-            trackingUrlFor(recipient.id as string),
-          );
-        } catch (e) {
-          // Placeholder desconhecido no roteiro: falha permanente deste destinatário (não do
-          // provedor, nenhum POST foi feito). Não pode derrubar o lote inteiro nem deixar
-          // "{{...}}" vazar para a mensagem real dos demais destinatários já processados.
-          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
-            p_recipient_id: recipient.id,
-            p_claim_token: claim.claim_token,
-            p_status: "failed",
-            p_error_message: e instanceof Error ? e.message : "Erro ao montar mensagem",
-          });
-          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
-          failedCount++;
-          processedCount++;
-          continue;
-        }
-        const { data: snapshotRows, error: snapshotError } = await supabase.rpc("persist_talkx_recipient_message_snapshot", {
-          p_recipient_id: recipient.id,
-          p_claim_token: claim.claim_token,
-          p_personalized_message: calculatedMessage,
-          p_media_url: candidateMediaUrl,
-          p_media_type: candidateMediaType,
-          p_variant_id: variant?.id ?? existingVid,
-        });
-        if (snapshotError) throw new Error(`talkx_message_snapshot_failed: ${snapshotError.message}`);
-        const snapshot = Array.isArray(snapshotRows) ? snapshotRows[0] as Record<string, unknown> | undefined : undefined;
-        if (!snapshot || typeof snapshot.personalized_message !== "string") {
-          throw new Error("talkx_message_snapshot_invalid_response");
-        }
-        personalizedMsg = snapshot.personalized_message;
-        effectiveMediaUrl = typeof snapshot.media_url_snapshot === "string" ? snapshot.media_url_snapshot : null;
-        effectiveMediaType = typeof snapshot.media_type_snapshot === "string" ? snapshot.media_type_snapshot : null;
-      }
-      if ((effectiveMediaUrl === null) !== (effectiveMediaType === null)) {
-        throw new Error("talkx_invalid_persisted_media_snapshot");
-      }
-      const recipientHasMedia = effectiveMediaUrl !== null && effectiveMediaType !== null;
-
-      let providerPostAttempted = false;
-      // Precisa viver fora do try: o catch chama clearTimeout(sendTimeout) para
-      // qualquer erro dentro do try, inclusive os lançados antes da linha que
-      // cria o timeout — declarado como `const` dentro do try, essa variável
-      // não existia no escopo do catch (ReferenceError em runtime a cada erro
-      // pré-dispatch, mascarando o erro original em vez de acionar o backoff).
-      let sendTimeout: ReturnType<typeof setTimeout> | undefined;
-      try {
-        const phone = (contact.phone as string).replace(/\D/g, "");
-        const typingDelay = randomBetween(campaign.typing_delay_min, campaign.typing_delay_max);
-
-        try {
-          await evoFetch(evolutionUrl, evolutionKey,
-            `/chat/updatePresence/${initialInstanceId}`,
-            { number: phone, presence: "composing" });
-        } catch { /* Presence update is best-effort */ }
-
-        await sleep(typingDelay);
-
-        // Pause/cancel can race with the presence update or typing delay. Do
-        // not begin a provider POST after the campaign has left `sending`.
-        const { data: beforeSend, error: beforeSendError } = await supabase
-          .from("talkx_campaigns")
-          .select("status, send_window_start, send_window_end, business_hours_only, schedule_timezone")
-          .eq("id", campaignId).single();
-        if (beforeSendError) throw new Error(`talkx_campaign_state_lookup_failed: ${beforeSendError.message}`);
-        const beforeSendWindowStatus = beforeSend ? deliveryWindowStatus(beforeSend) : { allowed: false as const, reason: "campaign_not_found" };
-        const { data: beforeSendConnection, error: beforeSendConnectionError } = await supabase
-          .from("whatsapp_connections")
-          .select("status, instance_id")
-          .eq("id", campaign.whatsapp_connection_id)
-          .maybeSingle();
-        if (beforeSendConnectionError) throw new Error(`talkx_connection_state_lookup_failed: ${beforeSendConnectionError.message}`);
-        const beforeSendInstanceId = liveTalkXInstanceId(beforeSendConnection);
-        if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed || !beforeSendInstanceId) {
-          if (beforeSend?.status === "sending") {
-            // V03: mesmo cuidado do mid-loop — o motivo gravado diz se a pausa
-            // foi da janela ou da conexão (era nulo nos dois casos).
-            const autoPauseReason = !beforeSendWindowStatus.allowed
-              ? pauseReasonForWindow(beforeSendWindowStatus)
-              : "connection_lost";
-            const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
-              p_campaign_id: campaignId,
-              p_action: "pause",
-              p_pause_reason: autoPauseReason,
-            });
-            if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
-          }
-          if (!beforeSendInstanceId) {
-            log.warn("Campanha pausada: conexão WhatsApp indisponível antes do envio", { campaignId });
-          }
-          const { data: released, error: releaseError } = await supabase.rpc("release_talkx_recipient_claim", {
-            p_recipient_id: recipient.id,
-            p_claim_token: claim.claim_token,
-          });
-          if (releaseError || released !== true) {
-            throw new Error(`talkx_recipient_claim_release_failed: ${releaseError?.message ?? "claim_not_owned"}`);
-          }
+      switch (result.kind) {
+        case "no_claim":
+          return "next";
+        case "skipped_blacklisted":
+          state.blacklisted++;
+          return "next";
+        case "skipped_no_phone":
+          return "next";
+        case "skipped_missing_variable":
+          // X020: variável sem valor/desconhecida — nenhum POST saiu; o
+          // destinatário já está marcado skipped com missing_variable:<nome>.
+          return "next";
+        case "message_failed":
+          state.failed++;
+          state.processed++;
+          return "next";
+        case "outcome_unknown":
+          state.outcomeUnknown++;
+          state.processed++;
+          return "next";
+        case "rescheduled":
+          if (result.deadLettered) state.failed++;
+          state.processed++;
+          return "next";
+        case "stopped":
+          return "stop";
+        case "sent":
+          state.sent++;
+          state.sentTodayTotal++;
+          state.minuteRemaining = Math.max(0, state.minuteRemaining - 1);
+          state.dayRemaining = Math.max(0, state.dayRemaining - 1);
           break;
-        }
-
-        // A contact may opt out after this worker claimed its lease, while it
-        // was waiting for the humanized typing delay. Recheck the normalized,
-        // server-side predicate immediately before a provider request.
-        if (await isRecipientSuppressed(recipient.contact_id as string | null, recipientPhone ?? null)) {
-          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
-            p_recipient_id: recipient.id,
-            p_claim_token: claim.claim_token,
-            p_status: "skipped",
-            p_error_message: "Contato na lista negra (opt-out)",
-          });
-          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
-          blacklistedCount++;
-          continue;
-        }
-
-        let sendResponse: Response;
-        const markProviderDispatch = async () => {
-          const { error } = await supabase.rpc("mark_talkx_recipient_dispatch_started", {
-            p_recipient_id: recipient.id,
-            p_claim_token: claim.claim_token,
-          });
-          if (error) throw new Error(`talkx_provider_dispatch_mark_failed: ${error.message}`);
-        };
-
-        // E91: timeout de segurança por envio
-        const abortCtrl = new AbortController();
-        sendTimeout = setTimeout(() => abortCtrl.abort(), 20_000);
-
-        if (recipientHasMedia) {
-          const mediaEndpoint = getMediaEndpoint(effectiveMediaType!);
-          const mediaSource = (effectiveMediaUrl !== campaign.media_url)
-            ? await resolvePrivateBucketUrl(supabase, effectiveMediaUrl!, undefined, supabaseUrl)
-            : await mediaForSend();
-          await markProviderDispatch();
-          providerPostAttempted = true;
-          sendResponse = await evoFetch(evolutionUrl, evolutionKey,
-            `/message/${mediaEndpoint}/${beforeSendInstanceId}`,
-            effectiveMediaType === "audio"
-              ? { number: phone, audio: mediaSource, delay: 0 }
-              : { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
-            undefined, undefined, abortCtrl.signal,
-          );
-        } else {
-          await markProviderDispatch();
-          providerPostAttempted = true;
-          sendResponse = await evoFetch(evolutionUrl, evolutionKey,
-            `/message/sendText/${beforeSendInstanceId}`,
-            { number: phone, text: personalizedMsg, delay: 0 },
-            undefined, undefined, abortCtrl.signal,
-          );
-        }
-        clearTimeout(sendTimeout);
-
-        // POST retries are unsafe without a provider idempotency contract. A
-        // 5xx/connection/parser ambiguity keeps the lease for reconciliation
-        // instead of classifying or resending a message blindly.
-        if (sendResponse.status >= 500) {
-          throw new Error(`talkx_provider_outcome_unknown: HTTP ${sendResponse.status}`);
-        }
-        let sendResult: Record<string, unknown>;
-        try {
-          sendResult = await sendResponse.json();
-        } catch {
-          throw new Error("talkx_provider_outcome_unknown: invalid_response_body");
-        }
-
-        const providerMessageId = extractMessageId(sendResult);
-        if (sendResponse.ok && !sendResult.error && providerMessageId && providerMessageId.length <= 512) {
-          sentCount++;
-          const { error: completionError } = await supabase.rpc("record_talkx_recipient_sent", {
-            p_recipient_id: recipient.id,
-            p_claim_token: claim.claim_token,
-            p_external_id: providerMessageId,
-          });
-          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
-        } else if (sendResponse.ok && !sendResult.error) {
-          throw new Error("talkx_provider_outcome_unknown: missing_provider_message_id");
-        } else {
-          failedCount++;
-          const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
-            p_recipient_id: recipient.id,
-            p_claim_token: claim.claim_token,
-            p_status: "failed",
-            p_error_message: String(sendResult?.message || sendResult?.error || "Erro ao enviar"),
-          });
-          if (completionError) throw new Error(`talkx_recipient_completion_failed: ${completionError.message}`);
-        }
-      } catch (err) {
-        clearTimeout(sendTimeout);
-        // E91: erro antes do POST ao provedor — pode reagendar com backoff
-        if (!providerPostAttempted) {
-          const backoffMs = [30_000, 120_000, 600_000];
-          const attemptSoFar = typeof (recipient as Record<string, unknown>).attempt_count === 'number'
-            ? (recipient as Record<string, unknown>).attempt_count as number
-            : 0;
-          const delayMs = backoffMs[Math.min(attemptSoFar, backoffMs.length - 1)];
-          const retryAfter = new Date(Date.now() + delayMs).toISOString();
-          const reason = err instanceof Error ? err.message : "pre_dispatch_error";
-          const { data: schedResult } = await supabase.rpc("reschedule_talkx_recipient", {
-            p_recipient_id: recipient.id,
-            p_claim_token: claim.claim_token,
-            p_retry_after: retryAfter,
-            p_error_message: reason.slice(0, 500),
-          });
-          if (schedResult?.action === 'dead_lettered') failedCount++;
-          processedCount++;
-          const interval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);
-          await sleep(interval);
-          continue;
-        }
-        // A chamada ao provedor pode ter sido aceita quando a confirmação no
-        // banco falhou. Ela nunca pode voltar automaticamente para `pending`:
-        // ao expirar o lease, isso permitiria um segundo POST ao mesmo número.
-        if (providerPostAttempted) {
-          const reason = err instanceof Error ? err.message : "request_failed";
-          const { error: quarantineError } = await supabase.rpc("complete_talkx_recipient", {
-            p_recipient_id: recipient.id,
-            p_claim_token: claim.claim_token,
-            p_status: "outcome_unknown",
-            p_error_message: `Provider outcome unknown: ${reason}`.slice(0, 1000),
-          });
-          if (quarantineError) {
-            // Do not lie about the outcome. A failed quarantine keeps the
-            // lease intact, so it remains visible instead of being retried in
-            // the same invocation.
-            throw new Error(`talkx_recipient_quarantine_failed: ${quarantineError.message}`);
-          }
-          outcomeUnknownCount++;
-          processedCount++;
-          const interval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);
-          await sleep(interval);
-          continue;
-        }
-        failedCount++;
-        const { error: completionError } = await supabase.rpc("complete_talkx_recipient", {
-          p_recipient_id: recipient.id,
-          p_claim_token: claim.claim_token,
-          p_status: "failed",
-          p_error_message: err instanceof Error ? err.message : "Erro desconhecido",
-        });
-        if (completionError) throw new Error(`talkx_recipient_failure_completion_failed: ${completionError.message}`);
+        case "failed":
+          state.failed++;
+          break;
       }
 
-      processedCount++;
+      state.processed++;
       // E78: reler parametros de campanha a cada RELOAD_EVERY envios
-      if (processedCount % RELOAD_EVERY === 0) {
+      if (state.processed % RELOAD_EVERY === 0) {
+        await refreshBudget(state);
         const { data: fresh } = await supabase
           .from("talkx_campaigns")
           .select("send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone")
           .eq("id", campaignId).single();
         if (fresh) {
-          campaign = { ...campaign, ...fresh };
+          state.campaign = { ...state.campaign, ...fresh };
           // Recheck the campaign's own IANA window after configuration reload.
           // The locked transition preserves a concurrent manual pause/cancel.
-          const refreshedWindowStatus = deliveryWindowStatus(campaign);
+          const refreshedWindowStatus = deliveryWindowStatus(state.campaign, undefined, state.businessHours);
           if (!refreshedWindowStatus.allowed) {
-            log.warn('Campanha pausada automaticamente: fora da janela de envio', { campaignId });
-            const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
-              p_campaign_id: campaignId,
-              p_action: "pause",
-              p_pause_reason: pauseReasonForWindow(refreshedWindowStatus),
-            });
-            if (pauseError) throw new Error(`talkx_campaign_auto_pause_failed: ${pauseError.message}`);
-            break;
+            log.warn('Campanha pausada automaticamente: fora da janela de envio', { correlationId, campaignId });
+            await pauseCampaign(pauseReasonForWindow(refreshedWindowStatus));
+            return "stop";
           }
         }
       }
-      const sendInterval = randomBetween(campaign.send_interval_min, campaign.send_interval_max);
+      const sendInterval = randomBetween(
+        state.campaign.send_interval_min as number,
+        state.campaign.send_interval_max as number,
+      );
       await sleep(sendInterval);
+      return "next";
+    };
+
+    const buildEngineState = async (
+      campaign: Record<string, unknown>,
+      workerId: string,
+      initialInstanceId: string,
+      instanceToken: string | null,
+      dailyLimit: number,
+      sentTodayTotal: number,
+      minuteLimit: number,
+      minuteRemaining: number,
+      dayRemaining: number,
+      businessHours: { start?: string; end?: string; days?: number[] } | null,
+      trackingUrlFor: (recipientId: string) => string | undefined,
+      linksByLabelFor: (recipientId: string) => Record<string, string>,
+    ): Promise<EngineState> => {
+      // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
+      // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
+      // com typingDelay por envio passam do TTL.
+      let signedMedia: { url: string; at: number } | null = null;
+      const mediaForSend = async () => {
+        if (!signedMedia || Date.now() - signedMedia.at > 240_000) {
+          signedMedia = { url: await resolvePrivateBucketUrl(supabase, campaign.media_url as string, undefined, supabaseUrl), at: Date.now() };
+        }
+        return signedMedia.url;
+      };
+      return {
+        campaign,
+        businessHours,
+        dailyLimit,
+        sentTodayTotal,
+        minuteLimit,
+        minuteRemaining,
+        dayRemaining,
+        sent: Number(campaign.sent_count ?? 0),
+        failed: Number(campaign.failed_count ?? 0),
+        blacklisted: 0,
+        outcomeUnknown: 0,
+        processed: 0,
+        handled: 0,
+        workerId,
+        initialInstanceId,
+        instanceToken,
+        evolutionUrl,
+        evolutionKey,
+        supabaseUrl,
+        trackingUrlFor,
+        linksByLabelFor,
+        mediaForSend,
+        deliveryLogs: [],
+      };
+    };
+
+    // ---------------------------------------------------------------------
+    // action=continue (X011): passadas com orçamento de tempo e lease de worker.
+    // ---------------------------------------------------------------------
+    if (campaignAction === "continue") {
+      // Só service key ou x-cron-secret podem dirigir a fila. Um JWT admin
+      // (que passa a auth acima) NÃO pode reivindicar o lease da campanha.
+      if (!isCronAuth && !isServiceKey) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
+      }
+
+      const { data: campaignRow, error: campaignLookupError } = await supabase
+        .from("talkx_campaigns").select("*").eq("id", campaignId).single();
+      if (campaignLookupError || !campaignRow) {
+        return new Response(JSON.stringify({ error: "Campaign not found" }), { status: 404, headers });
+      }
+
+      const workerId = `talkx-send:${crypto.randomUUID()}`;
+      const { data: claimed, error: claimError } = await supabase.rpc("claim_talkx_campaign_worker", {
+        p_campaign_id: campaignId,
+        p_worker: workerId,
+        p_lease_seconds: 90,
+      });
+      if (claimError) throw new Error(`talkx_campaign_claim_failed: ${claimError.message}`);
+      // Lease vivo de outro worker (ou campanha fora de 'sending'): não toca o
+      // provedor nem a fila — o próximo tick tenta de novo.
+      if (claimed !== true) {
+        return new Response(JSON.stringify({
+          success: true, skipped: "worker_alive", processed: 0, remaining: 0, has_more: true,
+        }), { headers });
+      }
+
+      try {
+        const { businessHours } = await loadBusinessHoursAndDailyLimit();
+
+        // Get WhatsApp connection instance
+        const { data: connection } = await supabase
+          .from("whatsapp_connections").select("status, instance_id")
+          .eq("id", campaignRow.whatsapp_connection_id).eq("status", "connected").single();
+        const initialInstanceId = liveTalkXInstanceId(connection);
+        if (!initialInstanceId) {
+          // E91: conexão perdida — pausa automática da campanha
+          try {
+            await supabase.rpc("transition_talkx_campaign", {
+              p_campaign_id: campaignId,
+              p_action: "pause",
+              p_pause_reason: "connection_lost",
+            });
+          } catch { /* já pausada ou outro estado — ignora */ }
+          // X025: grava 1 evento `connection_failed` com o status lido da conexão.
+          const connectionStatus = await readConnectionStatus(campaignRow.whatsapp_connection_id);
+          try {
+            await supabase.from("talkx_campaign_events").insert({
+              campaign_id: campaignId,
+              event_type: "connection_failed",
+              message: `Falha de conexão (status: ${connectionStatus})`,
+            });
+          } catch { /* timeline é best-effort */ }
+          return new Response(JSON.stringify({ error: "WhatsApp connection lost: campaign paused" }), { status: 409, headers });
+        }
+
+        // X019: token da instância, resolvido uma vez por invocação e passado a
+        // todos os evoFetch (presença, texto, mídia). Sem token cadastrado, usa o
+        // fallback global SÓ na instância padrão; senão pausa com connection_lost.
+        const { data: resolvedToken, error: tokenError } = await supabase.rpc("get_instance_token", {
+          p_instance_id: initialInstanceId,
+        });
+        if (tokenError) throw new Error(`talkx_instance_token_failed: ${tokenError.message}`);
+        let instanceToken = typeof resolvedToken === "string" && resolvedToken.length > 0 ? resolvedToken : null;
+        if (!instanceToken) {
+          if (initialInstanceId === Deno.env.get("EVOLUTION_INSTANCE_NAME")) {
+            instanceToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN") ?? null;
+          } else {
+            await pauseCampaign("connection_lost");
+            return new Response(JSON.stringify({ error: "WhatsApp connection instance token missing: campaign paused" }), { status: 409, headers });
+          }
+        }
+
+        // X019: orçamento por minuto/dia (Talk X + Multiplix) via RPC da X018.
+        const budget = await loadConnectionBudget(campaignRow.whatsapp_connection_id as string);
+        const {
+          minute_limit: minuteLimit,
+          minute_remaining: minuteRemaining,
+          day_remaining: dayRemaining,
+          day_limit: dailyLimit,
+          day_sent: sentTodayTotal,
+        } = budget;
+
+        const { trackingUrlFor, linksByLabelFor } = await loadTrackingLinks();
+        const state = await buildEngineState(
+          campaignRow, workerId, initialInstanceId, instanceToken,
+          dailyLimit, sentTodayTotal, minuteLimit, minuteRemaining, dayRemaining, businessHours, trackingUrlFor, linksByLabelFor,
+        );
+
+        const parsedBatchSize = Number.parseInt(Deno.env.get("TALKX_BATCH_SIZE") ?? "", 10);
+        const batchSize = Number.isFinite(parsedBatchSize) && parsedBatchSize > 0 ? Math.min(parsedBatchSize, 200) : 20;
+        const parsedBudget = Number.parseInt(Deno.env.get("TALKX_BATCH_BUDGET_MS") ?? "", 10);
+        const budgetMs = Number.isFinite(parsedBudget) && parsedBudget > 0 ? parsedBudget : 50_000;
+        const startedAt = Date.now();
+        const remainingBudgetMs = () => budgetMs - (Date.now() - startedAt);
+        const minNeededMs = () => Number(state.campaign.typing_delay_max ?? 0) + 25_000;
+
+        let remaining = 0;
+        let hasMore = false;
+        let drained = false;
+        while (true) {
+          const { data: rows, error: recipientsError } = await supabase.rpc("talkx_next_recipients", {
+            p_campaign_id: campaignId,
+            p_limit: batchSize,
+          });
+          if (recipientsError) throw new Error(`talkx_recipients_lookup_failed: ${recipientsError.message}`);
+          const batch = (rows ?? []) as Record<string, unknown>[];
+          // Passada vazia: a fila drenou — só agora a conclusão pode ser tentada.
+          if (batch.length === 0) { drained = true; break; }
+
+          const processRows = batch.map((row): ProcessRecipientRow => ({
+            id: row.recipient_id as string,
+            contact_id: (row.contact_id as string | null) ?? null,
+            status: row.status as string,
+            attempt_count: (row.attempt_count as number | null) ?? 0,
+            personalized_message: (row.personalized_message as string | null) ?? null,
+            contacts: {
+              name: (row.contact_name as string | null) ?? null,
+              nickname: (row.contact_nickname as string | null) ?? null,
+              phone: (row.contact_phone as string | null) ?? null,
+              company: (row.contact_company as string | null) ?? null,
+            },
+          }));
+
+          // Pré-carga de campos customizados POR PASSADA (não mais uma vez para
+          // a campanha inteira).
+          const customFieldsByContact = await loadCustomFieldsByContact(processRows);
+
+          const blacklistedBeforeBatch = state.blacklisted;
+          let index = 0;
+          for (; index < processRows.length; index++) {
+            // Não começa destinatário novo se o tempo restante não cobre o
+            // typing_delay máximo + 25s de folga (timeout por envio).
+            if (remainingBudgetMs() < minNeededMs()) break;
+            const step = await runRecipient(state, processRows[index], customFieldsByContact);
+            if (step === "stop") break;
+          }
+          // X033: grava em lote, ao fim da passada, o log dos destinatários que
+          // ela processou (uma inserção por passada; best-effort).
+          await flushDeliveryLogs(state);
+          // X025: ao FIM de cada lote, grava 1 evento AGREGADO quando houve
+          // pulados por supressão. Antes o contador só existia em memória e a
+          // timeline nunca registrava esses pulos.
+          const skippedBySuppression = state.blacklisted - blacklistedBeforeBatch;
+          if (skippedBySuppression > 0) {
+            try {
+              await supabase.from("talkx_campaign_events").insert({
+                campaign_id: campaignId,
+                event_type: "skipped_suppressed",
+                message: `${skippedBySuppression} destinatário(s) pulado(s) por supressão`,
+              });
+            } catch { /* timeline é best-effort */ }
+          }
+          if (index < processRows.length) {
+            remaining = processRows.length - index;
+            hasMore = true;
+            break;
+          }
+        }
+
+        // complete_talkx_campaign_if_drained só quando a passada voltou vazia.
+        let completed = false;
+        if (drained) {
+          const { data: completedData, error: completionError } = await supabase.rpc(
+            "complete_talkx_campaign_if_drained",
+            { p_campaign_id: campaignId },
+          );
+          if (completionError) throw new Error(`talkx_campaign_completion_failed: ${completionError.message}`);
+          completed = completedData === true;
+        }
+
+        log.done(200, { correlationId, campaign_id: campaignId, sent: state.sent, failed: state.failed, outcomeUnknown: state.outcomeUnknown });
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            processed: state.handled,
+            remaining,
+            has_more: hasMore,
+            sent: state.sent,
+            failed: state.failed,
+            blacklisted: state.blacklisted,
+            outcome_unknown: state.outcomeUnknown,
+            completed,
+          }),
+          { headers },
+        );
+      } finally {
+        // Solta o lease ao sair (inclusive sob exceção). Se falhar, o lease
+        // expira sozinho em 90s — nunca mascara a resposta.
+        const { error: releaseError } = await supabase.rpc("release_talkx_campaign_worker", {
+          p_campaign_id: campaignId,
+          p_worker: workerId,
+        });
+        if (releaseError) {
+          log.warn("Falha ao soltar o lease da campanha (expira sozinho)", { correlationId, campaignId, error: releaseError.message });
+        }
+      }
     }
 
-    const { data: completed, error: completionError } = await supabase.rpc(
-      "complete_talkx_campaign_if_drained",
-      { p_campaign_id: campaignId },
-    );
-    if (completionError) throw new Error(`talkx_campaign_completion_failed: ${completionError.message}`);
+    if (campaignAction !== "start") {
+      return new Response(JSON.stringify({ error: "Invalid campaign action" }), { status: 400, headers });
+    }
 
-    log.done(200, { sent: sentCount, failed: failedCount, outcomeUnknown: outcomeUnknownCount });
+    // Get campaign
+    const { data: initialCampaign, error: campErr } = await supabase
+      .from("talkx_campaigns").select("*").eq("id", campaignId).single();
+
+    if (campErr || !initialCampaign) {
+      return new Response(JSON.stringify({ error: "Campaign not found" }), { status: 404, headers });
+    }
+    const campaign = initialCampaign;
+    // X020 — impede LANÇAR uma campanha com variável desconhecida: nome que não
+    // é nativo, nem campo customizado existente no CRM, nem link cadastrado.
+    // Roda ANTES de qualquer transição/kick: 422 com a lista, nenhum
+    // destinatário é tocado e nenhum POST sai.
+    {
+      const probeTimeZone = typeof campaign.schedule_timezone === "string"
+        ? campaign.schedule_timezone
+        : DEFAULT_SCHEDULE_TIMEZONE;
+      const knownCustomFieldNames = await loadKnownCustomFieldNames();
+      const presenceValues: Record<string, string> = {};
+      for (const name of knownCustomFieldNames) presenceValues[name] = "x";
+      const linkLabels = await loadLinkLabels();
+      const templateTexts = await loadCampaignTemplateTexts(campaign as Record<string, unknown>);
+      const unknownVariableNames = new Set<string>();
+      for (const templateText of templateTexts) {
+        // trackingUrl de prova: {{link}} é nativo/known — a validação de nome
+        // desconhecido não pode confundir "sem link cadastrado" (missing, por
+        // destinatário) com "nome inexistente" (erro de lançamento).
+        const probe = personalize(
+          templateText,
+          { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" },
+          presenceValues,
+          probeTimeZone,
+          "https://talkx-link.example/__probe__",
+          linkLabels,
+        );
+        for (const name of probe.unknown) unknownVariableNames.add(name);
+      }
+      if (unknownVariableNames.size > 0) {
+        return new Response(
+          JSON.stringify({ error: "unknown_variables", variables: Array.from(unknownVariableNames) }),
+          { status: 422, headers },
+        );
+      }
+    }
+    // V20: horário comercial + limite diário por conexão (talkx_settings)
+    const { businessHours, dailyLimit } = await loadBusinessHoursAndDailyLimit();
+    const sentTodayTotal = dailyLimit > 0
+      ? await countSentTodayForConnection(campaign.whatsapp_connection_id)
+      : 0;
+    // Get WhatsApp connection instance
+    const { data: connection } = await supabase
+      .from("whatsapp_connections").select("status, instance_id")
+      .eq("id", campaign.whatsapp_connection_id).eq("status", "connected").single();
+
+    const initialInstanceId = liveTalkXInstanceId(connection);
+    if (!initialInstanceId) {
+      // E91: conexão perdida — pausa automática da campanha
+      try {
+        await supabase.rpc("transition_talkx_campaign", {
+          p_campaign_id: campaignId,
+          p_action: "pause",
+          p_pause_reason: "connection_lost",
+        });
+      } catch { /* já pausada ou outro estado — ignora */ }
+      // X025: grava 1 evento connection_failed com o status lido da conexão.
+      const connectionStatus = await readConnectionStatus(campaign.whatsapp_connection_id);
+      try {
+        await supabase.from("talkx_campaign_events").insert({
+          campaign_id: campaignId,
+          event_type: "connection_failed",
+          message: `Falha de conexão (status: ${connectionStatus})`,
+        });
+      } catch { /* timeline é best-effort */ }
+      return new Response(JSON.stringify({ error: "WhatsApp connection lost: campaign paused" }), { status: 409, headers });
+    }
+
+    // Enforce delivery limits in the selected IANA timezone before the locked
+    // transition. An invalid legacy timezone fails closed instead of falling
+    // back to Brasília and sending at an unintended local hour.
+    const windowStatus = deliveryWindowStatus(campaign, undefined, businessHours);
+    if (!windowStatus.allowed) {
+      return new Response(JSON.stringify({ ok: false, reason: windowStatus.reason, next_window: windowStatus.next_window }), { headers });
+    }
+
+    // The transition RPC locks the campaign row and revalidates the state and
+    // minimum launch invariants immediately before any recipient can be claimed.
+    const { error: transitionError } = await supabase.rpc("transition_talkx_campaign", {
+      p_campaign_id: campaignId,
+      p_action: "start",
+      p_actor_id: actorId,
+    });
+    if (transitionError) {
+      return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
+    }
+
+    // X013: o limite diário é conferido aqui, não mais no laço inline. A
+    // campanha acabou de virar 'sending' na transição acima, então a pausa
+    // (válida só a partir de 'sending') reproduz o comportamento antigo: não
+    // dispara um lote que a primeira passada já pausaria por cota esgotada.
+    if (dailyLimit > 0 && sentTodayTotal >= dailyLimit) {
+      await pauseCampaign("daily_limit");
+      return new Response(JSON.stringify({ ok: false, reason: "daily_limit" }), { headers });
+    }
+
+    // X013: lançamento assíncrono — o lote roda em OUTRA invocação da edge
+    // (action=continue). Aqui só sinalizamos a fila: nenhum destinatário é lido
+    // e nenhum POST sai para o provedor nesta requisição. Se o kick falhar, o
+    // lançamento não foi agendado — a resposta é 500, nunca "accepted".
+    const { error: kickError } = await supabase.rpc("kick_talkx_campaign", {
+      p_campaign_id: campaignId,
+    });
+    if (kickError) {
+      return new Response(JSON.stringify({ error: kickError.message }), { status: 500, headers });
+    }
+
+    log.done(200, { correlationId, campaignId, accepted: true });
 
     return new Response(
-      JSON.stringify({
-        success: true, sent: sentCount, failed: failedCount,
-        total: (recipients || []).length,
-        blacklisted: blacklistedCount,
-        outcome_unknown: outcomeUnknownCount,
-        completed: completed === true,
-      }),
-      { headers }
+      JSON.stringify({ success: true, accepted: true, status: "sending" }),
+      { headers },
     );
   } catch (err) {
-    log.error("Talk X error", { error: err instanceof Error ? err.message : String(err) });
+    log.error("Talk X error", { correlationId, error: err instanceof Error ? err.message : String(err) });
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
       { status: 500, headers }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { log } from '@/lib/logger';
 import { Sparkles, Loader2, Check, MessageCircle, HelpCircle, X } from 'lucide-react';
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/ui/use-toast';
+import { useAiRequestGeneration } from '@/lib/aiRequest/context';
 
 interface Message {
   id: string;
@@ -34,6 +35,31 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const { toast } = useToast();
 
+  // IA-048 — a sugestão pertence ao contato de origem. Sem reset por contato, a
+  // sugestão do contato A sobrevive à troca e "Usar" insere o texto de A no
+  // rascunho de B. A versão inclui só o contato (não há período aqui) e NUNCA
+  // as mensagens vivas.
+  const {
+    begin: beginRequest,
+    isCurrent: isRequestCurrent,
+    invalidate: invalidateRequests,
+  } = useAiRequestGeneration({ contactId: contactId ?? '', periodKey: 'current' });
+
+  useEffect(() => {
+    // Troca de contato invalida a requisição em voo e zera as sugestões do
+    // contato anterior — o painel pode continuar aberto, mas nunca mostra nem
+    // deixa "Usar" aplicar um texto que pertence a outro contato.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset de estado ancorado na identidade do contato; o hook de geração já vive fora do React.
+    invalidateRequests();
+    setSuggestions([]);
+    setIsLoading(false);
+  }, [contactId, invalidateRequests]);
+
+  useEffect(() => {
+    // Desmontar (troca de aba) também descarta resposta que ainda não chegou.
+    return () => { invalidateRequests(); };
+  }, [invalidateRequests]);
+
   const fetchSuggestions = async () => {
     if (messages.length === 0) {
       toast({
@@ -44,9 +70,10 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
       return;
     }
 
+    const request = beginRequest();
     setIsLoading(true);
     setIsOpen(true);
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('ai-suggest-reply', {
         body: {
@@ -56,15 +83,22 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
           })),
           contactName,
           contactId,
+          // IA-051 — o id do clique (IA-048) viaja junto para o log de consumo
+          // poder responder de qual requisição veio o gasto. É uuid opaco: nada
+          // de conteúdo de conversa nem de contato.
+          requestId: request.requestId,
         }
       });
 
+      // IA-048 — checagem DEPOIS do await: resposta de contato antigo é descartada.
+      if (!isRequestCurrent(request)) return;
       if (error) throw error;
-      
+
       if (data?.suggestions) {
         setSuggestions(data.suggestions);
       }
     } catch (err) {
+      if (!isRequestCurrent(request)) return;
       const error = err instanceof Error ? err : new Error('Unknown error');
       log.error('Error fetching suggestions:', error);
       toast({
@@ -74,7 +108,7 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
       });
       setIsOpen(false);
     } finally {
-      setIsLoading(false);
+      if (isRequestCurrent(request)) setIsLoading(false);
     }
   };
 

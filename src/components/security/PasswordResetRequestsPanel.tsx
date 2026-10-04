@@ -126,7 +126,7 @@ export function PasswordResetRequestsPanel() {
                     {req.status === 'pending' && (
                       <div className="flex gap-2 shrink-0">
                         <Button size="sm" variant="outline" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { setSelectedRequest(req); setRejectDialogOpen(true); }}><XCircle className="w-4 h-4 mr-1" />Rejeitar</Button>
-                        <Button size="sm" onClick={() => { setSelectedRequest(req); handleApprove(req); }} disabled={processing}><CheckCircle className="w-4 h-4 mr-1" />Aprovar</Button>
+                        <Button size="sm" onClick={() => { setSelectedRequest(req); void handleApprove(req); }} disabled={processing}><CheckCircle className="w-4 h-4 mr-1" />Aprovar</Button>
                       </div>
                     )}
                   </div>

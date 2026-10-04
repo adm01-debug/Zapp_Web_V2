@@ -1,0 +1,19 @@
+{
+  "features": [
+    {
+      "geometry": { "coordinates": [-46.61563441, -23.56672978] },
+      "properties": {
+        "name": "XBZ Brindes",
+        "full_address": "R. da Independência, São Paulo, 01524, Brazil",
+        "context": {
+          "street": { "name": "R. da Independência" },
+          "address": { "address_number": "100" },
+          "neighborhood": { "name": "Liberdade" },
+          "place": { "name": "São Paulo" },
+          "region": { "region_code": "SP" },
+          "postcode": { "name": "01524-000" }
+        }
+      }
+    }
+  ]
+}

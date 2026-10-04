@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { TourProvider, useTour, DEFAULT_ONBOARDING_STEPS, TourStep } from '../OnboardingTour';
@@ -263,5 +262,49 @@ describe('Keyboard navigation', () => {
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     fireEvent.keyDown(window, { key: 'ArrowLeft' });
     expect(screen.getByTestId('current-step').textContent).toBe('0');
+  });
+});
+
+describe('WelcomeModal', () => {
+  // O overlay é um `motion.div` de tela cheia (não é Dialog do Radix): sem tratador
+  // próprio, Escape não fechava e a única saída era achar o X ou o "Pular tour".
+  it('fecha no Escape', () => {
+    const onClose = vi.fn();
+    render(<WelcomeModal isOpen onClose={onClose} onStartTour={vi.fn()} />);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('não fecha com outras teclas', () => {
+    const onClose = vi.fn();
+    render(<WelcomeModal isOpen onClose={onClose} onStartTour={vi.fn()} />);
+
+    fireEvent.keyDown(document, { key: 'a' });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('não reage ao Escape quando está fechado', () => {
+    const onClose = vi.fn();
+    render(<WelcomeModal isOpen={false} onClose={onClose} onStartTour={vi.fn()} />);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('se anuncia como diálogo modal', () => {
+    render(<WelcomeModal isOpen onClose={vi.fn()} onStartTour={vi.fn()} />);
+
+    // UM diálogo só, no card, com o nome acessível vindo do h2 (aria-labelledby="welcome-modal-title"
+    // -> "Bem-vindo!"). Antes o overlay também era role=dialog com aria-label="Boas-vindas", o que
+    // aninhava dois diálogos.
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.getByRole('dialog', { name: /bem-vindo/i })).toHaveAttribute(
+      'aria-modal',
+      'true',
+    );
   });
 });

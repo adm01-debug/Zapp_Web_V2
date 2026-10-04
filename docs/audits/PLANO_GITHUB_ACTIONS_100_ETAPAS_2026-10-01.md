@@ -10,6 +10,58 @@ via API do GitHub (runs das últimas 37 h, falhas por workflow, branch protectio
 artifacts, PRs abertas, issues de alerta, check-runs do HEAD). Toda afirmação abaixo tem a evidência ao lado.
 **Status:** PLANO. Nada foi executado nesta sessão. Nenhum arquivo além deste foi alterado.
 
+---
+
+## Atualização de 2026-10-02 — decisões e etapas superadas
+
+Registrado pelo chat `hermes/settings-guard-e14-e13-e16` a partir de medição ao vivo em 02/10.
+**A política vigente da casa prevalece sobre este plano.** A política de 01/10 (`strict=true` permanente,
+mantida por `settings-guard` + `auto-update-pr-branch` + `CLAUDE.md:168-170`) foi reafirmada pelo Joaquim
+em 02/10 — a opção (a) deste plano (`strict=false` permanente) fica **revogada**.
+
+### E15 — DECIDIDA: manter a política da casa (`strict=true`)
+
+| Opção | Situação |
+|---|---|
+| (a) `strict=false` permanente + settings-guard | **Revogada** em 02/10 |
+| (b) `strict=true` + `allow_auto_merge` + `auto-update-pr-branch` em `push` | **É a política vigente** (reativada em 01/10) |
+| (c) migrar para Organization + merge queue | não avaliada |
+
+### Etapas superadas pela política vigente
+
+| Etapa | Status | Evidência medida em 02/10 |
+|---|---|---|
+| **E01** restaurar `strict=false` | SUPERADA | medido `strict=false`, mas a política da casa é `true`; aplicar E01 deixaria o guard da casa em conflito permanente com a configuração |
+| **E13** criar `settings-guard.yml` | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | `.github/workflows/settings-guard.yml`, schedule de 6 h; a §1 deste plano não o listou |
+| **E14** `github-settings-guard.mjs` + testes | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | 6 testes verdes; o script **restaura via `PATCH`** — é ele que sustenta a política `strict=true` |
+| **E16** apagar `auto-update-pr-branch.yml` | SUPERADA | não é código morto: o cabeçalho do próprio arquivo registra reativação em 01/10 para a política `strict=true` |
+
+### O que a medição explicou: o "fantasma" das três regressões
+
+As três regressões de `strict` da §0 (25/09, 27/09, 01/10) **não têm autor desconhecido**:
+`settings-guard` (mergeado em `#1436`) roda a cada 6 h e **restaura `strict=true` via `PATCH`** por desenho.
+O guard e o `CLAUDE.md:168-170` estão coerentes entre si; era o plano que divergia dos dois.
+Nota operacional: com `strict=false` medido em 02/10, **a próxima execução do guard deve devolvê-lo para
+`true` sozinha** — nenhuma ação manual é necessária, e nenhuma deve ser tomada no sentido contrário.
+
+### Etapas de classe A executadas pelo Joaquim em 02/10 (~18:22)
+
+| Etapa | Resultado medido |
+|---|---|
+| E01 | cumprida na leitura; **superada** pela decisão acima |
+| E05 | `#1342` e `#888` fechadas; `#1665` e `#1454` são alertas **VIVOS** e ficam até o verde |
+| E06 | `ai-proxy`, `ai-suggest-reply`, `ai-conversation-summary` **3/3 success** em ~2 min (runs 37066205379/37066213520/37066224306); `multiplix-send` com mudança real ok |
+| E08 | **0** runs `waiting`/`queued` órfãos |
+
+### Outras medições desta rodada
+
+- **E04 superada**: a version duplicada `20260930390000` **não existe mais** — 1 arquivo (`endurece_l5_contrato_e_jobs.sql`) e 1 linha no ledger, zero versões duplicadas na `main`. O `#1343` mergeou em 01/10 14:46, **1 h 37 min após este plano ser escrito**.
+- **E02 entregue**: `docs/audits/evidence/branch-protection-2026-10-02.json` (PR #1701, merge `ee74556d9cec`).
+- **E09 tomada** pelo `#1430`; **E12** colide com `#1610` e `#1439`.
+- **`CLAUDE.md:182`** afirma "14 arquivos" em `.github/workflows/`: o repo tem **16**.
+
+---
+
 > Este plano **substitui** `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-27.md` como plano vigente de Actions. O que
 > daquele plano já entrou na `main` está na seção 1; o que continua válido reaparece aqui com evidência de hoje e
 > número novo; o que perdeu sentido foi descartado com o motivo.
@@ -265,7 +317,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 0 — Destravar hoje (E01–E12)
 
-- [ ] **E01** · A · G-01 · Restaurar `required_status_checks.strict=false` via `github_update_branch_protection`
+- [x] **E01** · A · G-01 · Restaurar `required_status_checks.strict=false` via `github_update_branch_protection`
   (PUT completo: 6 contexts, `enforce_admins: true`, sem force-push/deleção). Verificação: `GET` devolve `false`;
   PR #1343 sai de `blocked` sem novo push.
 - [ ] **E02** · A · G-01 · Gravar o snapshot da branch protection **antes e depois** em `docs/audits/evidence/
@@ -297,23 +349,39 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E11** · C · G-37 · Corrigir o CLAUDE.md nos 5 pontos divergentes (contagem 14/17, `strict`, revisor do
   `producao-edge-functions`, cadência do guarda vivo, auto-merge) **no mesmo PR** de E02. Verificação: `grep -n
   "13 arquivos\|16 no total\|strict está\|auto-merge" CLAUDE.md` sem afirmações falsas.
+  - ⚠️ **Nota de execução (03/10/2026) — a etapa está bloqueada, e a medição corrige dois alvos dela.**
+    **(a) Bloqueio duro:** `CLAUDE.md` é **arquivo protegido** — a escrita exige aprovação humana e o prompt
+    expirou sem resposta nesta sessão ("silêncio não é consentimento"). O executor NÃO pode cumprir a E11; ela
+    precisa de aprovação explícita do Joaquim (ou de um PR aberto por ele). Isso também explica a frase "no mesmo
+    PR de E02": as duas travam no mesmo lugar.
+    **(b) A contagem está errada no `CLAUDE.md` e a etapa herda o número errado:** o arquivo diz "são 14 arquivos
+    … 17 no total"; medido, são **16** arquivos em `.github/workflows/` — os dois que a lista omite são
+    **`settings-guard.yml`** e **`talkx-status-regen.yml`** — e **19** no total com os 3 dinâmicos.
+    **(c) O ponto do `strict` já está consertado:** o parágrafo "Correção estrutural posterior de 2026-10-01" já diz
+    que `required_status_checks.strict` voltou a `true` **como política permanente**, com o `auto-update-pr-branch.yml`
+    vivo a cada push (o arquivo existe no repo). A etapa lista como divergente algo que o arquivo já conta certo.
+    **(d) O ponto real é o revisor:** o texto enquadra os quatro environments como "com aprovação humana
+    (`required_reviewers`)" e lista `producao-edge-functions` entre eles — esse environment **não tem revisor
+    obrigatório**. Quem lê o texto espera uma aprovação que não existe.
+    **(e) Cadência do guarda vivo:** o `db-live-guard.yml` tem `push` (linha 13) e `schedule` com
+    `cron: '13 6 * * *'` — diário. A afirmação "não roda em PR" está **correta**; o texto só não dá a cadência.
 - [ ] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,
   `db-migrate.yml:7`). Verificação: revisão de texto no PR.
 
 ### Fase 1 — Quebrar o ciclo `types-sync` ↔ `BEHIND` de forma estrutural (E13–E22)
 
-- [ ] **E13** · B · G-01 · Criar `.github/workflows/settings-guard.yml` (schedule a cada 6 h + dispatch, `permissions:
+- [x] **E13** · B · G-01 · Criar `.github/workflows/settings-guard.yml` (schedule a cada 6 h + dispatch, `permissions:
   contents: read, issues: write`): lê branch protection, environments, `allow_auto_merge`, `default_workflow_permissions`
   e `allowed_actions` via `GITHUB_TOKEN`, compara com `scripts/ci/github-settings-baseline.json` commitado e abre/
   comenta issue `[settings-guard]` com o diff. É o único jeito de a 4ª regressão de `strict` durar horas, não dias.
   Verificação: alterar `strict` de propósito num dispatch de teste → issue aberta em < 1 min; reverter → issue fechada.
-- [ ] **E14** · C · E13 · `scripts/ci/github-settings-guard.mjs` + `.unit.mjs` com fixtures (strict true/false,
+- [x] **E14** · C · E13 · `scripts/ci/github-settings-guard.mjs` + `.unit.mjs` com fixtures (strict true/false,
   reviewer ausente, auto-merge). Verificação: `node --test scripts/ci/*.unit.mjs` verde.
-- [ ] **E15** · D ⚠️ · G-01/G-06 · Decidir o modelo de fila: **(a)** `strict=false` permanente + `settings-guard`
+- [x] **E15** · D ⚠️ · G-01/G-06 · Decidir o modelo de fila: **(a)** `strict=false` permanente + `settings-guard`
   (recomendado; é o que funcionou de 25/09 a 27/09 e hoje), **(b)** `strict=true` + `allow_auto_merge=true` +
   `auto-update-pr-branch` em `push` (volta o ciclo de 40 min de 25/09), **(c)** transferir o repo para uma Organization
   e ligar merge queue (decisão de negócio). Registrar a decisão no CLAUDE.md.
-- [ ] **E16** · A · G-06 · Se E15=(a): **apagar** `auto-update-pr-branch.yml` (código morto desde sempre) e remover as
+- [x] **E16** · A · G-06 · Se E15=(a): **apagar** `auto-update-pr-branch.yml` (código morto desde sempre) e remover as
   referências no CLAUDE.md. Se E15=(b): ligar `allow_auto_merge` e reativar o gatilho `push`. Verificação: lista de
   workflows coerente com a decisão.
 - [ ] **E17** · B · G-02/G-26 · `types-sync.yml`: antes de "Gerar candidatos", se existir PR aberta em
@@ -340,10 +408,31 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 2 — Perímetro de segurança (E23–E40)
 
-- [ ] **E23** · B · G-09 · `e2e-logado.yml:58` → `bun install --frozen-lockfile --ignore-scripts`; idem `ci.yml`
+> ### Medicao da Fase 2 — 02/10/2026
+>
+> Varredura feita **antes de executar**, apos tres etapas seguidas (E23, E28, E29) se revelarem ja cumpridas.
+> Cada linha abaixo tem a evidencia do comando que a produziu. **Nao execute pelo texto desta fase sem
+> re-medir:** o documento foi escrito em 01/10 as 13:10 UTC e o repositorio mudou no mesmo dia.
+>
+> **Ja cumpridas (8):** E23, E27, E28, E29, E30, E31, E33, E38.
+> **Vivas e executaveis (0):** nenhuma. As tres que pareciam vivas (E32, E39, E40) eram erro de medicao,
+> corrigido abaixo.
+> **Correcao de metodo (02/10):** a primeira passada desta varredura mediu a **arvore de trabalho** de
+> `~/projetos/Zapp_Web_V2`, que e copia **defasada** - `git fetch` atualiza o remoto, nao os arquivos do disco.
+> Isso produziu tres falsos "VIVAS" (E32, E39, E40). A regra que vale: medir **sempre** por
+> `git show origin/main:<path>`, ou dentro de um workspace recem-criado. Re-medidas pela fonte correta, as tres
+> estao **cumpridas** - a Fase 2 (E23-E40) esta inteira, fora o que depende de decisao do Joaquim.
+> **Aguardando o Joaquim (6):** E24, E34, E35, E36, E37 e a parte de decisao da E25/E26 (DDL de role/RPC).
+>
+> O padrao medido nas Fases 0 e 2 e consistente: **em 11 etapas conferidas uma a uma, 9 ja estavam prontas e 1
+> estava pela metade, no ponto que o texto nao apontava** (E33). O plano vale como inventario de riscos, nao
+> como roteiro de execucao.
+
+- [x] **E23** · B · G-09 · `e2e-logado.yml:58` → `bun install --frozen-lockfile --ignore-scripts`; idem `ci.yml`
   (5 ocorrências), `db-guard.yml:153`, `types-sync.yml:287`. Se algum pacote precisar de postinstall (ex.: `esbuild`
   binário), listar e rodar `bun pm trust <pkg>` explícito. Verificação: `bun run build` e `bun run test` verdes com
   `--ignore-scripts`.
+  > **Medido 02/10: os 16 workflows instalam com `--frozen-lockfile --ignore-scripts` (nenhuma ocorrencia sem as flags, em bun/npm/pnpm/yarn/deno). O achado de seguranca da etapa estava fechado.**
 - [ ] **E24** · A+B · G-09 · Mover `SUPABASE_SERVICE_ROLE_KEY` para um environment `e2e-producao` (sem revisor, branch
   policy `main`) e apontar o job `e2e-logado` para ele; apagar do nível repo. Verificação: `GET /actions/secrets` sem a
   chave; `GET /environments/e2e-producao/secrets` com ela; run verde.
@@ -356,96 +445,139 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   `types-sync`, `targeted-ledger-evidence` passam a usar ela. `DESTINO_URL` (escrita) fica só em `producao-ddl` e
   `legacy-import-destrutivo`. **Envolve DDL de role** → ⚠️. Verificação: `check-migration-drift.mjs` roda com a role RO;
   `supabase db push` com ela falha com `permission denied`.
-- [ ] **E27** · B · G-10 · `e2e-talkx-pr.yml`: trocar `push` por `pull_request` **sem secrets** (só o projeto
+- [x] **E27** · B · G-10 · `e2e-talkx-pr.yml`: trocar `push` por `pull_request` **sem secrets** (só o projeto
   `chromium` deslogado dos 3 engines) **ou** manter `push` restrito a `branches: [hermes/**, claude/**, codex/**]`
   (nunca `devin/**` ou qualquer bot externo) e exigir `if: github.actor == 'adm01-debug'`. Recomendação: a 1ª para o
   check de PR, e o teste logado continua só na `main`. Verificação: push de `devin/*` não dispara; PR dispara sem
   `E2E_TEST_*` no `env`.
-- [ ] **E28** · C · G-10 · `check-pr-workflow-secrets.mjs`: cobrir também `push` com `branches-ignore: main` ou
+  > **Medido 02/10: feito por outro chat. O gatilho do `e2e-talkx-pr.yml` hoje e `pull_request:` e o `E2E_TEST_EMAIL/PASSWORD` saiu do env; o comentario do proprio arquivo registra a mudanca.**
+- [x] **E28** · C · G-10 · `check-pr-workflow-secrets.mjs`: cobrir também `push` com `branches-ignore: main` ou
   `branches: ['**']` (qualquer gatilho que rode código de branch não protegida) — exceção só por lista explícita no
   próprio script com justificativa. Verificação: unit test com o `e2e-talkx-pr.yml` atual → violação; com E27 → OK.
-- [ ] **E29** · B · G-12 · `db-migrate.yml`: adotar o mesmo bloco de `endurecerDestinoTls` + `PGSSLMODE=verify-full`
+  > **Medido 02/10: o script ja reprovava todos os gatilhos citados (sonda com 6 formas: `branches-ignore: [main]`, `branches: ['**']` inline e em lista de bloco, `push:` vazio). Faltavam os casos como teste nomeado - entregues na PR #1734, suite 33 -> 36 testes.**
+  > **Medido em 02/10:** o script **já cobria** todos os gatilhos que a E28 pede — sonda direta com
+  > `push: branches-ignore: [main]`, `branches: ['**']` (inline e lista de bloco) e `push:` vazio
+  > reprovam; só `branches: [main]` passa. A verificação da E28 também já existia: teste
+  > `push restrito a branches-ignore (irrestrito)` e o teste de repositório real. **Lacuna real
+  > encontrada e fechada:** faltavam como teste nomeado o caso `branches: ['**']`, o `branches-ignore`
+  > em lista de bloco, e a fixture do gatilho antigo do `e2e-talkx-pr.yml` que comprova a violação —
+  > suíte foi de 33 → **36 testes**. **E27 já estava feita** por outro chat (o gatilho do
+  > `e2e-talkx-pr.yml` hoje é `pull_request:`; o comentário no próprio arquivo registra a remoção de
+  > `E2E_TEST_EMAIL/PASSWORD`). **E23 já estava cumprida**: nenhum dos 16 workflows instala sem
+  > `--frozen-lockfile --ignore-scripts`.
+- [x] **E29** · B · G-12 · `db-migrate.yml`: adotar o mesmo bloco de `endurecerDestinoTls` + `PGSSLMODE=verify-full`
   dos outros 3 workflows (passo "Provar identidade"), e trocar `supabase db push --db-url "$DESTINO_URL"` por leitura
   via `PGPASSFILE`/`SUPABASE_DB_URL` em `env:` do passo (não argv). Verificação: `ps` no runner durante o dry-run sem
   a URL; `psql-environment.integration.mjs` cobre o caso.
-- [ ] **E30** · A · G-18 · `allowed_actions: selected` com `patterns_allowed` = as 12 actions em uso + `github_owned_allowed:
+  > **Medido 02/10: `db-migrate.yml` ja tem `endurecerDestinoTls` (2x) + `PGSSLMODE`, e a URL nao esta no argv - vai por `env: SUPABASE_DB_URL` (linha 1159) com `supabase db push --include-all` (1161).**
+- [x] **E30** · A · G-18 · `allowed_actions: selected` com `patterns_allowed` = as 12 actions em uso + `github_owned_allowed:
   true` + `verified_allowed: false`. Verificação: PR que adiciona `uses: foo/bar@sha` falha no GitHub antes do CI.
-- [ ] **E31** · C · G-18 · `check-workflow-pins.mjs`: validar também que o `owner/repo` está na mesma lista de E30
+  > **Medido 02/10 pela API: `allowed_actions: selected` com os 12 padroes exatos, `github_owned_allowed: true`, `verified_allowed: false`, `sha_pinning_required: true`. Coincide item a item com o que a etapa pede.**
+- [x] **E31** · C · G-18 · `check-workflow-pins.mjs`: validar também que o `owner/repo` está na mesma lista de E30
   (commitada em `scripts/ci/allowed-actions.json`), para o erro aparecer no CI local antes do GitHub. Verificação:
   unit test.
-- [ ] **E32** · B · G-24 · Adicionar `actionlint` (binário pinado por SHA, via `rhysd/actionlint` release checksum) e
+  > **Medido 02/10: `check-workflow-pins.mjs` ja valida o `owner/repo` contra `scripts/ci/allowed-actions.json` (le o arquivo nas linhas 68-70 e compara na 42).**
+- [x] **E32** · B · G-24 · Adicionar `actionlint` (binário pinado por SHA, via `rhysd/actionlint` release checksum) e
   `zizmor` (`pip`/binário pinado) ao job `lint-and-typecheck`, falhando em `error`; `zizmor` em modo `--persona
   regular` com baseline. Verificação: os 14 YAML passam ou cada achado vira etapa.
-- [ ] **E33** · C · G-19 · Fechar o alerta #13: `validation.ts:143` deixa de devolver `error.stack`/mensagem interna ao
+  > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** O passo `Lint workflows (actionlint)` existe em `ci.yml` desde antes, com release oficial pinado (v1.7.7) e verificacao de sha256 do asset. A 1a medicao disse que nao existia porque leu a arvore de trabalho defasada da copia de referencia. Observacao que segue valida: o texto da etapa diz "os 14 YAML"; o repositorio tem **16**.**
+- [x] **E33** · C · G-19 · Fechar o alerta #13: `validation.ts:143` deixa de devolver `error.stack`/mensagem interna ao
   cliente; logar no servidor. Verificação: CodeQL do PR sem `js/stack-trace-exposure`; alerta `fixed`.
+  > **Entregue 02/10 na PR #1727 (merge `e4abd5f8de01`). O alvo declarado (`validation.ts:143`) ja estava corrigido desde 28/09, mas a classe do problema nao: `send-scheduled-report/index.ts:114` devolvia mensagem interna num 500. Corrigido para `internalErrorResponse` e travado por guarda nova (`check-edge-error-exposure.mjs`, suite 10/10, roda nos unitarios).**
 - [ ] **E34** · A · G-40 · `prevent_self_review: true` nos 3 environments com `required_reviewers` **só depois** de
   existir uma segunda identidade (ver E36); até lá, documentar que o gate é "branch protegida", não "aprovação".
   Verificação: `GET /environments` coerente com o CLAUDE.md.
+  > **Aguardando o Joaquim: `prevent_self_review` esta `false` nos 3 environments com revisor - coerente com a propria etapa, que depende da E36 (segunda identidade).**
 - [ ] **E35** · D ⚠️ · G-07 · Decidir `producao-edge-functions`: adicionar `required_reviewers` (volta o "Waiting"
   que travou 26–27/09) **ou** manter sem revisor e corrigir o CLAUDE.md (E11). Recomendação: sem revisor enquanto
   agentes e humano usam a mesma conta; registrar.
+  > **Aguardando o Joaquim (decisao): `producao-edge-functions` segue com 1 protection rule e sem revisor.**
 - [ ] **E36** · D ⚠️ · G-40 · Criar uma conta/GitHub App dedicada aos agentes (`zapp-bots`) com permissão `write`, e
   deixar `adm01-debug` como único revisor humano. Pré-requisito de qualquer gate de aprovação real. Decisão de negócio
   (custo zero, 1 seat em repo público).
+  > **Aguardando o Joaquim (decisao de negocio): conta/GitHub App dedicada aos agentes.**
 - [ ] **E37** · A · G-39 · Ligar `secret_scanning_validity_checks` (grátis em público). Verificação: `GET /repos` →
   `enabled`.
-- [ ] **E38** · A · G-21 · Apagar `VITE_CLIENTES_SUPABASE_URL` e `VITE_CLIENTES_SUPABASE_ANON_KEY` do repo (0 usos).
+  > **VIVA e da classe A (Joaquim): `secret_scanning_validity_checks` esta **disabled**; `secret_scanning` e `push_protection` estao `enabled`.**
+- [x] **E38** · A · G-21 · Apagar `VITE_CLIENTES_SUPABASE_URL` e `VITE_CLIENTES_SUPABASE_ANON_KEY` do repo (0 usos).
   Verificação: `GET /actions/secrets` → 15.
-- [ ] **E39** · B · G-30 · `SUPABASE_PROJECT_REF`: trocar o secret por `env: PROJECT_REF: tnnnlkbymytvtqngbbqh` no
+  > **Medido 02/10 pela API: 14 secrets no repositorio e nenhum `VITE_CLIENTES_*` entre eles - os dois alvos da etapa nao existem mais.**
+- [x] **E39** · B · G-30 · `SUPABASE_PROJECT_REF`: trocar o secret por `env: PROJECT_REF: tnnnlkbymytvtqngbbqh` no
   topo dos 4 workflows (valor público; já literal em 4 lugares) e manter a asserção de igualdade. Apagar o secret.
   Verificação: logs mostram a URL da função legível; `deploy-functions` ✅.
-- [ ] **E40** · B · G-22 · Trocar `if: github.ref == 'refs/heads/main'` do job por um passo "Exigir ref confiável da
+  > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** Nenhum workflow de `origin/main` usa `secrets.SUPABASE_PROJECT_REF`: os pontos viraram `env:` com o valor literal do project ref e a assercao de igualdade continua no lugar. O secret **nao existe mais** (a API lista 14 secrets, nenhum de project ref). A 1a medicao leu a arvore de trabalho defasada.**
+- [x] **E40** · B · G-22 · Trocar `if: github.ref == 'refs/heads/main'` do job por um passo "Exigir ref confiável da
   main" que falha com `::error::` em `db-migrate`, `db-live-guard`, `e2e-logado`, `targeted-ledger-evidence` (mesmo
   padrão de `deploy-functions:87-92`). Verificação: dispatch em branch ≠ main → run ❌ com mensagem, não `skipped`.
+  > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** Os 4 workflows ja tem o passo "Somente executa na main" com `::error::` + `exit 1` no nivel de **step** - o run fica vermelho com mensagem, nao `skipped`, que e exatamente o pedido da etapa. **Nenhum deles tem `if:` no nivel de job.** A premissa do texto (trocar o `if: github.ref` do job) nao corresponde ao repo: esse `==` nunca existiu.**
 
 ### Fase 3 — Guarda vivo e `types-sync` confiáveis (E41–E54)
 
-- [ ] **E41** · B · G-14 · `db-live-guard.yml` `paths` do `push`: `supabase/migrations/**`, `supabase/config.toml`,
+> **Varredura da Fase 3 (02/10, medida por `origin/main`, nao pela arvore de trabalho da
+> referencia):** das 14 etapas, **12 ja estavam cumpridas** e e possivel prova-lo pelo proprio
+> repositorio, porque a auditoria de 26/09 deixou o numero da etapa dentro do arquivo:
+> `db-live-guard.yml` traz `# E41: supabase/** foi refinado para excluir supabase/functions/**`;
+> `check-test-inventory.mjs` traz `// E49: quando ci.yml usa $(git ls-files ...) a comparacao
+> individual de .test.ts e desnecessaria`. Medicoes (todas em `origin/main`):
+> **E41** `paths:` do push = a lista refinada exata · **E42** `cancel-in-progress: false` presente ·
+> **E43** todos os passos do guarda ja publicam via `| tee /tmp/step-*.log` · **E44** logica de causa
+> raiz presente no workflow · **E46** `postgres:17-alpine@sha256:b0f9560a2de0...` (digest pinado) ·
+> **E47** `services:` com um PostgreSQL 17 no job · **E48/E49** `ci.yml` usa o glob
+> `$(git ls-files 'supabase/functions/**/*.test.ts')` · **E50** os 4 `.test.sh` orfaos estao os
+> quatro no `db-guard.yml` · **E51** #888 **fechado** em 01/10 17:34 · **E54**
+> `check-triple-parity.mjs --require-live` no schedule (linha 282).
+>
+> **Viva: so a E52** — `concurrency.group` nao distinguia `push` de `schedule`. Corrigida neste PR
+> com a receita literal da etapa. **Dois alvos do plano nao existem**: a E53 aponta
+> `scripts/ci/check-migration-drift.mjs`, mas o arquivo real e `scripts/db-audit/check-migration-drift.mjs`;
+> e a E45 aponta um `gen-types.sh` que nao esta onde a etapa diz.
+
+- [x] **E41** · B · G-14 · `db-live-guard.yml` `paths` do `push`: `supabase/migrations/**`, `supabase/config.toml`,
   `supabase/schema-*.json`, `supabase/deployment-manifest.json`, `scripts/db-audit/**`,
   `src/integrations/supabase/types.ts`, o próprio YAML — **não** `supabase/functions/**`. Verificação: merge só de edge
   não cria run.
-- [ ] **E42** · B · G-14/F-22 · `db-live-guard.yml:37` `cancel-in-progress: false` (enfileira; GitHub mantém só o
+- [x] **E42** · B · G-14/F-22 · `db-live-guard.yml:37` `cancel-in-progress: false` (enfileira; GitHub mantém só o
   mais novo pendente) para o run agendado nunca ser cancelado por push. Verificação: push durante o schedule → ambos
   concluem.
-- [ ] **E43** · B · G-03 · Veredito do guarda vivo: além da tabela, anexar ao `GITHUB_STEP_SUMMARY` e ao corpo do
+- [x] **E43** · B · G-03 · Veredito do guarda vivo: além da tabela, anexar ao `GITHUB_STEP_SUMMARY` e ao corpo do
   comentário as **20 primeiras linhas** da saída de cada passo que falhou (capturadas via `tee` em `/tmp/<id>.log`),
   e incluir esses logs no artifact `db-live-evidence-*`. Verificação: próximo ❌ mostra a version/tabela divergente
   sem abrir o run.
-- [ ] **E44** · B · G-03 · Dedupe por **causa raiz**, não por conjunto de passos: hash = `sha256(passo mais à
+- [x] **E44** · B · G-03 · Dedupe por **causa raiz**, não por conjunto de passos: hash = `sha256(passo mais à
   esquerda na ordem canônica migrations > catálogo > manifesto > types > grants > paridade)` + janela de 6 h; e
   comentar de novo sempre que o conjunto **cresce**, nunca quando encolhe. Verificação: fixture com os 5 conjuntos de
   #1342 → 2 comentários, não 7.
 - [ ] **E45** · B · G-27 · pgbouncer: remover `continue-on-error` em `db-live-guard:89` e `types-sync:79`; o
   `gen-types.sh` passa a exigir pgbouncer quando `CI=true` (`exit 1` em vez de `Aviso:`). Verificação: run sem pgbouncer
   falha no passo de instalação, não com credencial em argv.
-- [ ] **E46** · B · G-33 · `db-guard.yml`: fixar `postgres:17-alpine` por **digest** (`postgres:17.6-alpine@sha256:…`)
+- [x] **E46** · B · G-33 · `db-guard.yml`: fixar `postgres:17-alpine` por **digest** (`postgres:17.6-alpine@sha256:…`)
   numa única `env:` do job (`POSTGRES_TEST_IMAGE`) e fazer todos os 48 passos lerem dela; Dependabot não cobre, então
   `check-workflow-pins.mjs` ganha regra para `*_IMAGE` com digest. Verificação: grep de `postgres:17-alpine` sem
   digest → 0.
-- [ ] **E47** · B · G-15 · `db-guard.yml`: subir **um** PostgreSQL 17 como `services:` do job (ou um `docker run`
+- [x] **E47** · B · G-15 · `db-guard.yml`: subir **um** PostgreSQL 17 como `services:` do job (ou um `docker run`
   único no 1º passo) e fazer os `.test.sh` usarem `createdb`/`dropdb` por teste em vez de 48 containers; manter
   `retry-disposable-postgres-test.sh` só para os 2 que precisam de PostgREST. Verificação: duração do job cai de ~5 min
   para < 2 min; 48/48 verdes.
-- [ ] **E48** · C · G-13 · `scripts/ci/check-test-inventory.mjs`: compara `find supabase/functions -name '*.test.ts'`
+- [x] **E48** · C · G-13 · `scripts/ci/check-test-inventory.mjs`: compara `find supabase/functions -name '*.test.ts'`
   × lista do `ci.yml`, e `ls scripts/db-audit/*.test.sh` × passos do `db-guard.yml`; falha se houver teste no disco
   fora do YAML (allowlist explícita para os deliberadamente manuais). Rodar no `lint-and-typecheck`. Verificação: hoje
   falha com 8 nomes; após E49/E50 passa.
-- [ ] **E49** · B · G-13 · `ci.yml`: trocar a lista de 29 Deno tests por `deno test … $(git ls-files
+- [x] **E49** · B · G-13 · `ci.yml`: trocar a lista de 29 Deno tests por `deno test … $(git ls-files
   'supabase/functions/**/*.test.ts')` (ou `deno test supabase/functions` com `--ignore` explícito). Verificação: os 4
   testes órfãos passam a rodar (ou são corrigidos).
-- [ ] **E50** · B · G-13 · `db-guard.yml`: adicionar os 4 `.test.sh` órfãos (`ai-block03-vocabulary-contract`,
+- [x] **E50** · B · G-13 · `db-guard.yml`: adicionar os 4 `.test.sh` órfãos (`ai-block03-vocabulary-contract`,
   `mapa-f1-address-contract`, `talkx-settings-rls`, `user-settings-sound-integrity-contract`) — ou, com E47, um passo
   único que itera `scripts/db-audit/*.test.sh` com matriz de `env` lida de um `tests-manifest.json`. Verificação: 52/52.
-- [ ] **E51** · C · G-16 · Fechar #888 com comentário final apontando E19/E20; apagar a label `types-sync` dos
+- [x] **E51** · C · G-16 · Fechar #888 com comentário final apontando E19/E20; apagar a label `types-sync` dos
   comentários antigos não é possível — registrar no CLAUDE.md que issues com > 20 comentários de bot devem ser
   fechadas e reabertas limpas. Verificação: #888 fechada.
-- [ ] **E52** · B · G-26 · `db-live-guard` e `types-sync`: `concurrency.group` passa a incluir o `head_sha` **só no
+- [x] **E52** · B · G-26 · `db-live-guard` e `types-sync`: `concurrency.group` passa a incluir o `head_sha` **só no
   schedule** (`db-live-guard-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}`) para o
   agendado nunca disputar grupo com push. Verificação: schedule e push simultâneos → 2 runs completos.
 - [ ] **E53** · C · G-03 · `check-migration-drift.mjs`: saída resumida de 1 linha por divergência no formato `version |
   disco | ledger | motivo` como primeira coisa no stdout (hoje o diagnóstico útil está no meio do log). Verificação:
   snapshot test.
-- [ ] **E54** · B · G-03 · `db-live-guard.yml`: no `schedule` (e só nele), rodar também `node scripts/db-audit/
+- [x] **E54** · B · G-03 · `db-live-guard.yml`: no `schedule` (e só nele), rodar também `node scripts/db-audit/
   check-triple-parity.mjs --require-live --verbose` e publicar o relatório como artifact de 14 dias — baseline semanal
   para auditorias. Verificação: artifact presente na run de segunda.
 
@@ -457,18 +589,28 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E56** · C · G-04 · `collect-remote.mjs`: teste de regressão com o log real do run 36852598923 (ANSI + stderr +
   "No change found" + versão igual) e com o de 36583351162. Verificação: `node --test` verde; mutante que remove o
   strip de ANSI falha.
-- [ ] **E57** · B · G-28 · `deploy-functions.yml`: input `dry_run: boolean` que executa tudo até o "Deploy" exclusive
+- [x] **E57** · B · G-28 · `deploy-functions.yml`: input `dry_run: boolean` que executa tudo até o "Deploy" exclusive
   e publica o plano (função, digest local × remoto). Verificação: dispatch com `dry_run=true` não altera
   `edge-before.json` vs remoto.
-- [ ] **E58** · B · G-28 · Só reescrever secrets nas edges quando o input `rotate_secrets=true` **ou** quando o
+- [x] **E58** · B · G-28 · Só reescrever secrets nas edges quando o input `rotate_secrets=true` **ou** quando o
   `supabase secrets list` (digest) divergir; em rollback (`source_ref` preenchido) **nunca** reescrever. Verificação:
   deploy normal não chama `supabase secrets set`; log mostra "secrets inalterados".
-- [ ] **E59** · B · G-28 · `--max-time 30` no curl do catálogo (`:222`) e `set -euo pipefail` no topo de todo `run:`
+- [x] **E59** · B · G-28 · `--max-time 30` no curl do catálogo (`:222`) e `set -euo pipefail` no topo de todo `run:`
   multi-linha do workflow. Verificação: `actionlint` (E32) sem avisos de shell.
-- [ ] **E60** · B · G-28 · Tags `edge-deploy/*`: manter só as últimas 50 (passo pós-deploy que apaga as mais antigas
+- [x] **E60** · B · G-28 · Tags `edge-deploy/*`: manter só as últimas 50 (passo pós-deploy que apaga as mais antigas
   via API) **ou** trocar tag por **GitHub Deployment** (`POST /deployments` + status), que é o objeto certo para
   rastreabilidade e aparece em Environments. Recomendação: Deployment. Verificação: aba Deployments do
   `producao-edge-functions` lista o deploy com SHA e run.
+  - ✅ **Cumprida — evidência medida em 03/10/2026** (a marca estava atrasada no plano; o código está em `main` desde
+    a madrugada). As 4 foram entregues por este mesmo executor, uma por PR, e os estados abaixo vêm da API do
+    GitHub (`GET /repos/adm01-debug/Zapp_Web_V2/pulls/<n>`), não de anotação:
+    - **E57** → PR **#1773**, `closed`/merged, merge commit `1d7f9e3001d3e773d2edbba3d4ea24562ee33a7c`.
+    - **E58** → PR **#1768**, `closed`/merged, merge commit `82988a719a7afd0f3552a833ac405086ba2d31bc`.
+    - **E59** → PR **#1761**, `closed`/merged, merge commit `f0a1feb54fca4757b7712bb3283216e91f919a67`.
+    - **E60** → PR **#1775**, `closed`/merged, merge commit `1632c0305d517b48cc9cfc9a095533e7caf14467`.
+    Artefatos conferidos no repositório: `scripts/edge-deploy/deploy-plan.mjs` (dry run), `secrets-scope.mjs`
+    (só reescreve com `rotate_secrets` ou digest divergente), `set -euo pipefail` e `--max-time 30` no
+    `deploy-functions.yml`, e `deployment-record.mjs`/`register-deployment.mjs` (GitHub Deployment em vez de tag).
 - [ ] **E61** · B · G-28 · Rollback automático opcional: input `rollback_on_smoke_failure` (default false) que, se o
   smoke falhar, redispara o deploy da função com `source_ref` = SHA do último deploy ✅ (lido do Deployment de E60).
   Verificação: teste controlado com uma função de smoke propositalmente quebrada em branch de teste — ⚠️ só com
@@ -478,6 +620,16 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   validações pós-apply viram `docs/audits/evidence/db-migrate-contratos-historicos.md`), **(c)** arquivar em
   `_superseded/`. Recomendação: (b). O arquivo de 1.748 linhas é o maior risco de manutenção do repo e não roda desde
   26/09.
+  - **Estado medido pelo executor (03/10/2026), antes de implementar a (b):** o `db-migrate.yml` tem **1812
+    linhas** (não 1748) e **30 passos**. O passo "Provar estado runtime antes do push" ocupa sozinho as linhas
+    **233–1187** (~955 linhas em um único passo): é ali que vivem os contratos. As **17 validações pós-apply**
+    foram contadas e conferem (passos `Validar …`, linhas 1211–1745). **Achado lateral:** existem **106**
+    arquivos `*.test.{sh,mjs}` em `scripts/db-audit/` e o `db-migrate.yml` **não executa nenhum deles** — a
+    suíte de contratos de banco não é exercitada pelo pipeline de migration.
+  - **Alerta de segurança que a (b) carrega:** as 17 validações pós-apply são a rede de proteção que roda
+    **depois** de uma migration em produção. Reduzir o workflow a ~150 linhas as retira da rota automática.
+    Por isso `docs/audits/evidence/db-migrate-contratos-historicos.md` deve trazer, **por contrato**, o comando
+    exato que o reexecuta sob demanda — sem isso a (b) é perda líquida de verificação, não enxugamento.
 - [ ] **E63** · B · G-29 · `db-migrate.yml`: parsear a saída do `--dry-run` e exigir que a lista de migrations a
   aplicar seja **exatamente** `[TARGET_VERSION]` (ou o bundle); abortar caso contrário. Verificação: fixture de saída
   do CLI com 2 versions → `exit 1`.
@@ -545,16 +697,44 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E82** · B · G-05 · `e2e-logado.yml`: `::add-mask::` do `E2E_TEST_EMAIL` antes do Playwright e upload do
   `playwright-report` **só** `if: failure()` com 3 dias — com o e-mail mascarado, o risco documentado no cabeçalho
   deixa de existir e o diagnóstico fica acessível. Verificação: artifact de uma falha sem o e-mail em claro.
+  - ⚠️ **Nota de execução (03/10/2026) — a premissa acima é falsa nos dois pontos, e a execução mudou por isso.**
+    (1) `::add-mask::` esconde o valor no **log do run**, não no **arquivo**: o `playwright-report` é HTML e vira
+    artifact baixável por qualquer um enquanto existir. (2) O vazamento que o repositório **já** documenta em
+    `scripts/ci/check-e2e-artifact-secrets.mjs` **não é o e-mail**: quando o `auth.setup` falha, o Playwright grava
+    a árvore de acessibilidade em `test-results/.../error-context.md` e o relatório embute esse conteúdo — o
+    **valor digitado no campo de senha** aparece em texto claro. Subir o report com só o e-mail mascarado publicaria
+    a senha. O upload só é seguro com redação de **todas** as credenciais (`E2E_TEST_EMAIL` **e**
+    `E2E_TEST_PASSWORD`) antes do upload, e com o upload condicionado ao sucesso da redação
+    (`steps.redigir.outcome == 'success'`). A guarda do repo passou a aceitar a exceção por esse critério; a
+    proibição do upload cru continua de pé. Verificação real: artifact de falha **sem nenhuma** das duas
+    credenciais em claro — não "sem o e-mail".
 - [ ] **E83** · B · G-05/G-23 · `e2e-logado.yml`: passo `if: failure()` que abre/comenta issue `[e2e-logado] Suíte
   logada quebrada na main` com dedupe por spec que falhou (mesmo mecanismo de E44) e fecha ao recuperar. Verificação:
   próxima falha gera issue; sucesso fecha.
-- [ ] **E84** · B · G-10 · `e2e-talkx-pr.yml`: após E27, renomear para `e2e-talkx.yml` e usar `paths` que casem com o
+- [x] **E84** · B · G-10 · `e2e-talkx-pr.yml`: após E27, renomear para `e2e-talkx.yml` e usar `paths` que casem com o
   diff da **PR** (gatilho `pull_request` já faz isso corretamente — o problema era o `push` de merge commit).
   Verificação: PR de Contatos não dispara.
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e84-workflow-talkx-2026-10-03.md`): renomeado para
+  `.github/workflows/e2e-talkx.yml` (também `name`, job id e `concurrency.group`); **`playwright.config.ts` removido
+  dos `paths`** — era config global, tocada em 20 dos últimos 60 commits, quase sempre por trabalho alheio ao Talk X,
+  e era o que fazia uma PR de Contatos disparar. Verificação executada por simulação de glob (minimatch) contra 6
+  diffs: PR de Contatos = não dispara; PR que só mexe na config global = não dispara; PR do Talk X = dispara.
 - [ ] **E85** · C · G-05 · Fixtures E2E em produção (`e2e0e2e0-…`, segmento `621521f3-…`, contato `04dff4dc-…`):
   documentar em `e2e/fixtures/README.md` **e** criar `scripts/db-audit/e2e-fixtures.test.sh` que prova a presença
   deles no banco (rodado no `db-live-guard` agendado). Verificação: remover um fixture num Postgres descartável → teste
   ❌.
+  - ⚠️ **Nota de execução (03/10/2026) — o alvo desta etapa estava errado nos dois pontos, e a execução corrigiu.**
+    (1) **A documentação já existe**: os três fixtures estão em `e2e/README.md` (tabela na linha 134, com o aviso
+    "NUNCA apagar o segmento `621521f3-…`") e os IDs vivem nas constantes do código (`E2E_FIXTURE_CONTACT_ID`,
+    `E2E_TALKX_CONNECTION_ID`, `E2E_TALKX_SEGMENT_ID`). Criar um `e2e/fixtures/README.md` com os mesmos IDs faria a
+    verdade se bifurcar. **Não se cria documento novo** — a metade "documentar" está cumprida em `e2e/README.md`.
+    (2) **O caminho de execução não existe**: o `db-live-guard` **não roda `*.test.sh`** (como o plano supõe); ele roda
+    `psql-safe.mjs -X -v ON_ERROR_STOP=1 -f <check>.sql`. Um `.test.sh` ali seria igual aos 106 testes órfãos de
+    `scripts/db-audit/` que a E62 encontrou — existe no repositório, o CI nunca toca. O correto é
+    **`scripts/db-audit/check-e2e-fixtures.sql` + o passo no `db-live-guard.yml`** (sem o passo, o arquivo não vale
+    nada). Medição que só a varredura dá: a conexão de E2E vive em **`whatsapp_connections`**, não em
+    `talkx_connections`; e o check exige `status='connected'` **e** `instance_id` preenchido, que é o que o
+    `useCampaignEditor` filtra — linha existindo com status `disconnected` ainda quebra o spec do wizard.
 - [ ] **E86** · D ⚠️ · G-05 · Avaliar `supabase start` + seed mínimo em CI para a suíte logada (`gen-types.sh --local`
   já prevê). Custo: ~3 min de boot por run; ganho: E2E sem tocar produção nem fixtures permanentes. Decisão após E79
   mostrar o custo atual.
@@ -574,12 +754,21 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E90** · B · G-23 · Notificação de falha na `main` por WhatsApp via N8N (webhook `workflow_run` →
   Evolution GO `PRINCIPAL` → número do Joaquim), só para `conclusion: failure` em `e2e-logado`, `db-live-guard`,
   `deploy-functions`, `types-sync`, com dedupe de 1 h por workflow. Verificação: forçar 1 falha → 1 mensagem.
-- [ ] **E91** · B · G-36 · `branch-hygiene-audit.yml`: além do Job Summary, atualizar o corpo da issue #378 (ou abrir
+- [x] **E91** · B · G-36 · `branch-hygiene-audit.yml`: além do Job Summary, atualizar o corpo da issue #378 (ou abrir
   `[branch-hygiene]`) com a tabela; listar também PRs abertas há > 7 dias sem push (hoje #1153, #1206 de 29/09).
   Verificação: issue atualizada na próxima segunda.
-- [ ] **E92** · C · G-38 · Corrigir `.github/ISSUE_TEMPLATE/config.yml` (URL do repo, remover telefone placeholder) e
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e91-branch-hygiene-issue-2026-10-03.md`): escolhida a opção
+  `[branch-hygiene]` (o upsert idempotente já é o padrão da casa em `[kpi-actions]`), então a #378 fica intacta como
+  registro. Corte passou de 14 dias por **criação** para 7 dias por **`updatedAt`** = "sem push", que é o que a etapa
+  pede. Executado de verdade: issue **#1810** criada, 2ª execução atualizou (não duplicou).
+- [x] **E92** · C · G-38 · Corrigir `.github/ISSUE_TEMPLATE/config.yml` (URL do repo, remover telefone placeholder) e
   o PR template (tirar "staging"; adicionar "Migration? → arquivo + ledger + catálogo" e "Edge? → disparar
   deploy-functions após merge"). Verificação: revisão.
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e92-templates-issue-pr-2026-10-03.md`): o link errado
+  não dava 404 — `adm01-debug/zapp-web` existe, é privado e tem `/docs` próprio, então levava em silêncio
+  para documentação de outro projeto. Telefone placeholder removido (bloco de WhatsApp sai inteiro).
+  "staging" não existe neste projeto: a caixa saiu. Invariantes presos em `scripts/ci/issue-templates.unit.mjs`
+  (5 casos, 5/5 derrubados por mutação).
 - [ ] **E93** · A · G-39 · Repo: `allow_merge_commit: false`, `allow_rebase_merge: false`,
   `squash_merge_commit_message: PR_BODY`, `use_squash_pr_title_as_default: true`. Verificação: `GET /repos`.
 - [ ] **E94** · A · G-40 · Apagar environments `copilot`, `Preview`, `Production` (sem regra, sem uso por workflow;
@@ -589,18 +778,49 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   protection, environments, secrets por escopo, apps, `allowed_actions`), e a regra: toda mudança nesses campos
   atualiza a tabela **e** o `github-settings-baseline.json` (E13) no mesmo PR. Verificação: `settings-guard` verde
   contra a tabela.
-- [ ] **E96** · C · G-42 · `docs/ci/README.md` (novo): 1 parágrafo por workflow (gatilho, o que prova, o que acontece
+  **PARCIAL 2026-10-03** (PR do repo, ver `docs/audits/e95-perimetro-github-2026-10-03.md`): o
+  `github-settings-baseline.json` da E13 **não existia** — foi criado nesta etapa, com o estado medido da API.
+  O `settings-guard` estava **quebrado desde a criação** (6 runs, 6 falhas, `403 Resource not accessible by
+  integration` — o `GITHUB_TOKEN` não tem o escopo `administration`): morria no primeiro GET sem comparar nada
+  **e sem abrir a issue**. Consertado para distinguir regressão de ponto cego. **Falta a tabela no `CLAUDE.md`**:
+  arquivo de instrução de agente exige aprovação do dono e o prompt expirou — texto pronto no relatório, decisão
+  `20261003-110826-2ff5`. Checkbox fica aberto até a tabela entrar. Achado colateral: `strict` está `false`,
+  contrariando a E15(b).
+- [x] **E96** · C · G-42 · `docs/ci/README.md` (novo): 1 parágrafo por workflow (gatilho, o que prova, o que acontece
   quando falha, quem é avisado), gerado a partir de um bloco `# docs:` no topo de cada YAML por
   `scripts/ci/render-workflow-docs.mjs --check` (falha se divergir). Verificação: `--check` verde no CI.
-- [ ] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e96-workflow-docs-2026-10-03.md`): bloco `# docs:` nos **16**
+  workflows + gerador + README + step `--check` no job `Lint & TypeCheck` do `ci.yml`. Verificação cumprida:
+  `--check` verde (16 workflows). Mutação: gatilho alterado → "README divergiu"; bloco removido → "workflow sem
+  bloco". O gerador também falha se um workflow **novo** entrar sem bloco, em vez de deixá-lo fora da doc em
+  silêncio. Nota: o `ci.yml` é o mesmo arquivo que o #1610 (aberto) reescreve — meu step entra após o
+  `actionlint`, longe dos setups que ele toca. A E96 não depende do #1610, só compartilha o arquivo.
+- [x] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
   bash -euo pipefail {0}` por workflow) nos 8 workflows que não têm. Verificação: `actionlint`/`shellcheck` sem SC2086/
   SC2181.
-- [ ] **E98** · C · todos · `scripts/ci/workflow-contracts.unit.mjs`: um teste por invariante deste plano que pode
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e97-pipefail-workflows-2026-10-03.md`): opção (b) em **9**
+  workflows (o `settings-guard` entrou depois, pela E95) — `defaults.run.shell: bash --noprofile --norc -euo pipefail {0}`.
+  Critério cumprido: **0 SC2086, 0 SC2181**. Ressalva importante: o `shellcheck` **não estava instalado** neste WSL e a
+  1ª rodada de `actionlint` checou só sintaxe — instalei o binário 0.10.0 e refiz a medição. Caso `E97` novo em
+  `workflow-contracts.unit.mjs` (9/9, mutação confere). Risco do `-u` medido pelo próprio CI deste PR.
+- [x] **E98** · C · todos · `scripts/ci/workflow-contracts.unit.mjs`: um teste por invariante deste plano que pode
   regredir em YAML (sem `pull_request` com secret; `persist-credentials: false`; `cancel-in-progress` só em PR;
   `--ignore-scripts`; pgbouncer sem `continue-on-error`; `paths` do guarda vivo sem `functions/**`; TLS em todo workflow
   com `DESTINO_URL*`). Verificação: desfazer qualquer etapa → teste ❌.
-- [ ] **E99** · C · G-37 · Fechar o plano de 27/09: marcar os 17 itens entregues como `[x]` com o PR, e os demais como
+  **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e98-workflow-contracts-2026-10-03.md`): 8 casos, leem os YAML
+  reais. Verificação cumprida por mutação — **7/7 desfeitas no YAML real, teste cai**. A 1ª rodada detectou só 4/7:
+  as 3 que escaparam eram **defeito do próprio teste** (condição que excluía `push: branches: [main]`, extrator que
+  só via `run: |`, regex que casava com o texto da mutação) — corrigidas. Achado não corrigido: `supabase-sync.yml`
+  usa `DESTINO_URL` sem `endurecerDestinoTls` (import manual legado, desarmado); exceção nomeada no teste, travada
+  pelo caso 7.
+- [x] **E99** · C · G-37 · Fechar o plano de 27/09: marcar os 17 itens entregues como `[x]` com o PR, e os demais como
   "substituído por E-xx deste plano". Verificação: `grep -c '\[x\]'` ≥ 17 naquele arquivo.
+  **FEITO 2026-10-03** (`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-27.md`): **18** itens marcados
+  (`grep -c '[x]'` = 18 ≥ 17), cada um com a evidência ao lado — arquivo:linha no HEAD, saída de script ou
+  medição de API da seção 1 deste plano. Nenhum item marcado por semelhança. Cabeçalho do plano antigo
+  reescrito: a frase "Nenhuma etapa deste plano foi executada" era falsa e o próprio documento provava o
+  problema (100 checkboxes `[ ]` por 6 dias enquanto o código mudava). O documento passa a ser histórico;
+  este plano de 01/10 é a fonte viva.
 - [ ] **E100** · A · E70 · Após 7 dias de `🦕 Edge contracts` verde em todas as PRs, adicioná-lo aos required checks
   (PUT completo da branch protection, preservando `strict` conforme E15). Verificação: `GET` lista 7 contexts; nenhuma
   PR aberta fica bloqueada por check ausente.

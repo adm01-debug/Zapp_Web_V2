@@ -218,7 +218,7 @@ export function useImagePrefetch() {
   }, []);
 
   const prefetchImages = useCallback((srcs: string[]): Promise<void[]> => {
-    return Promise.all(srcs.map(prefetchImage));
+    return Promise.all(srcs.map((src) => prefetchImage(src)));
   }, [prefetchImage]);
 
   return { prefetchImage, prefetchImages };

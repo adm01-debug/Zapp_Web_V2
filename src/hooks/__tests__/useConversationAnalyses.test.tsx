@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 
@@ -7,8 +6,8 @@ const mockGetUser = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
-    auth: { getUser: (...args: any[]) => mockGetUser(...args) },
+    from: (...args: unknown[]) => mockFrom(...args),
+    auth: { getUser: (...args: unknown[]) => mockGetUser(...args) },
   },
 }));
 

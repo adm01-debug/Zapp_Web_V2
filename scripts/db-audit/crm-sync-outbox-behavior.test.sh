@@ -17,7 +17,7 @@ for _ in $(seq 1 90); do
   # shutdown. Require the final (second) readiness marker and a live query.
   ready_markers="$(docker logs "$container_name" 2>&1 \
     | grep -c 'database system is ready to accept connections' || true)"
-  if [ "$ready_markers" -ge 2 ] \
+  if [[ "$ready_markers" -ge 2 ]] \
     && docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' \
       >/dev/null 2>&1; then
     postgres_ready=true
@@ -26,7 +26,7 @@ for _ in $(seq 1 90); do
   sleep 1
 done
 
-if [ "$postgres_ready" != true ]; then
+if [[ "$postgres_ready" != true ]]; then
   echo "PostgreSQL test container did not reach final readiness." >&2
   docker logs --tail 100 "$container_name" >&2 || true
   exit 1
@@ -40,6 +40,7 @@ CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE service_role NOLOGIN;
 CREATE SCHEMA auth;
+CREATE TYPE public.app_role AS ENUM ('admin', 'supervisor', 'agent');
 CREATE TABLE public.feature_flags (
   key text PRIMARY KEY,
   enabled boolean NOT NULL DEFAULT false,
@@ -53,7 +54,22 @@ $$;
 CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$
   SELECT nullif(current_setting('request.jwt.claim.role', true), '')
 $$;
-CREATE TABLE public.profiles (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL UNIQUE
+);
+CREATE TABLE public.permissions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL UNIQUE,
+  description text,
+  category text NOT NULL DEFAULT 'general'
+);
+CREATE TABLE public.role_permissions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  role public.app_role NOT NULL,
+  permission_id uuid NOT NULL REFERENCES public.permissions(id),
+  UNIQUE(role, permission_id)
+);
 CREATE TABLE public.contacts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text NOT NULL, phone text,
   surname text, nickname text, email text, company text, job_title text,
@@ -95,6 +111,8 @@ VALUES ('00000000-0000-0000-0000-000000000011','legacy:false-success','551199999
 SQL
 psql_test < "$repo_root/supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql" >/dev/null
 psql_test < "$repo_root/supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql" >/dev/null
+psql_test < "$repo_root/supabase/migrations/20261003151520_add_manual_email_crm_link_guard.sql" >/dev/null
+psql_test < "$repo_root/supabase/migrations/20261003160000_add_email_crm_link_permission.sql" >/dev/null
 
 output="$(psql_test -At <<'SQL'
 INSERT INTO contacts(id,name,phone) VALUES
@@ -223,6 +241,36 @@ BEGIN
   END;
 END $$;
 SELECT 'guarded_link=ok';
+INSERT INTO profiles(id,user_id) VALUES
+  ('90000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001');
+INSERT INTO contacts(id,name,phone) VALUES
+  ('00000000-0000-0000-0000-000000000040','Manual actor','5511999990040');
+SELECT link_email_crm_contact_guarded(
+  '00000000-0000-0000-0000-000000000040', 'external-40', 'company-40', '5511999990040',
+  '90000000-0000-0000-0000-000000000001'
+);
+SELECT 'manual_link_actor_profile=' || CASE WHEN EXISTS (
+  SELECT 1 FROM crm_contact_links
+  WHERE zapp_contact_id='00000000-0000-0000-0000-000000000040'
+    AND linked_by='90000000-0000-0000-0000-000000000001'
+) THEN 'ok' ELSE 'fail' END;
+DO $$
+BEGIN
+  BEGIN
+    PERFORM link_email_crm_contact_guarded(
+      '00000000-0000-0000-0000-000000000040', 'external-40', 'company-40', '5511999990040',
+      '91000000-0000-0000-0000-000000000001'
+    );
+    RAISE EXCEPTION 'auth.users id was accepted as profiles.id';
+  EXCEPTION WHEN foreign_key_violation THEN NULL;
+  END;
+END $$;
+SELECT 'email_link_permission_matrix=' || CASE WHEN
+  (SELECT count(*) FROM role_permissions rp JOIN permissions p ON p.id=rp.permission_id
+    WHERE p.name='crm.email_contact_link.manage' AND rp.role IN ('admin', 'supervisor')) = 2
+  AND NOT EXISTS (SELECT 1 FROM role_permissions rp JOIN permissions p ON p.id=rp.permission_id
+    WHERE p.name='crm.email_contact_link.manage' AND rp.role='agent')
+THEN 'ok' ELSE 'fail' END;
 INSERT INTO contacts(id,name,phone) VALUES
   ('00000000-0000-0000-0000-000000000030','Conflict primary','5511999990030'),
   ('00000000-0000-0000-0000-000000000031','Conflict secondary','5511999990031');
@@ -264,7 +312,7 @@ SELECT 'cleanup_bounded=' || CASE WHEN (SELECT deleted FROM cleanup_result)=1
 SQL
 )"
 
-for proof in fencing=ok max_attempts=ok first_backoff=ok terminal_error=ok invalid_phone=ok audit_survives_delete=ok health_null_claims=ok constraints_validated=ok legacy_quarantined=ok links_acl=ok atomic_merge=ok guarded_link=ok merge_conflict_rollback=ok cleanup_bounded=ok; do
+for proof in fencing=ok max_attempts=ok first_backoff=ok terminal_error=ok invalid_phone=ok audit_survives_delete=ok health_null_claims=ok constraints_validated=ok legacy_quarantined=ok links_acl=ok atomic_merge=ok guarded_link=ok manual_link_actor_profile=ok email_link_permission_matrix=ok merge_conflict_rollback=ok cleanup_bounded=ok; do
   grep -Fx "$proof" <<<"$output" >/dev/null || { echo "Missing proof: $proof" >&2; echo "$output" >&2; exit 1; }
 done
 echo "CRM outbox PostgreSQL 17 behavioral contract: PASS"

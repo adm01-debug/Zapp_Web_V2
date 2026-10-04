@@ -1,7 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, verifyHmacSignature, createAuthedClient } from "../_shared/validation.ts";
 import { ChatbotL1Schema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
-import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { ChatbotL1Output, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { normalizeSentiment, normalizeOperationalPriority } from "../_shared/ai-vocabulary.ts";
@@ -44,7 +45,6 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { contactId, message, connectionId } = parsed.data;
-    const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
     // Chamada autenticada por JWT (não-webhook): sem esta checagem, um agente
@@ -168,19 +168,16 @@ Responda em JSON:
   "detected_sentiment": "positivo|neutro|negativo|critico"
 }`;
 
-    const { response, data } = await callAiWithTracking({
+    const { response, data } = await generateWithRouting({
+      purpose: 'auto_reply',
       functionName: 'chatbot-l1',
       userId,
-      apiKey: LOVABLE_API_KEY,
-      body: {
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...conversationHistory,
-          { role: "user", content: message },
-        ],
-        temperature: 0.3,
-      },
+      system: systemPrompt,
+      messages: [
+        ...conversationHistory,
+        { role: "user", content: message },
+      ],
+      temperature: 0.3,
     });
 
     if (!response.ok || !data) {

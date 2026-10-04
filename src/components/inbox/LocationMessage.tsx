@@ -132,7 +132,7 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   useEffect(() => {
     if (location.address || !mapboxToken) return;
     let cancelled = false;
-    reverseGeocodeAddress(location.latitude, location.longitude, mapboxToken).then((address) => {
+    void reverseGeocodeAddress(location.latitude, location.longitude, mapboxToken).then((address) => {
       if (!cancelled && isMountedRef.current && address) setResolved({ key: coordinate, address });
     });
     return () => { cancelled = true; };

@@ -92,7 +92,7 @@ export function MobileDrawerMenu({
   const [search, setSearch] = useState('');
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
-  const { roles } = useUserRole();
+  const { roles, permissions } = useUserRole();
 
   const initials = agentName
     ?.split(' ')
@@ -103,7 +103,7 @@ export function MobileDrawerMenu({
   const filteredSections = useMemo(() => {
     const authorizedSections = sections.map((s) => ({
       ...s,
-      items: NavigationService.filterNavItems(s.items, roles),
+      items: NavigationService.filterNavItems(s.items, roles, permissions),
     }));
     if (!search.trim()) return authorizedSections.filter((s) => s.items.length > 0);
     return authorizedSections
@@ -114,13 +114,13 @@ export function MobileDrawerMenu({
         ),
       }))
       .filter((s) => s.items.length > 0);
-  }, [search, roles]);
+  }, [search, roles, permissions]);
 
   const recentIds = isOpen ? getRecents() : [];
   const recentItems = recentIds
     .map(id => allItems.find(i => i.id === id))
     .filter(Boolean)
-    .filter((i) => NavigationService.canAccess(i!.id, roles)) as typeof allItems;
+    .filter((i) => NavigationService.canAccess(i!.id, roles, permissions)) as typeof allItems;
 
   const handleNav = (id: string) => {
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(5);

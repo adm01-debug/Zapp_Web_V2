@@ -5,15 +5,22 @@ import { sanitizeEmailHtml, buildBodyPreview } from '@/lib/emailHtml';
 import { EmailFullViewDialog } from './EmailFullViewDialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { Paperclip, ChevronDown, Reply, ReplyAll, Forward, Star, Check, CheckCheck } from 'lucide-react';
-import type { EmailMessage } from '@/hooks/integrations/useGmail';
+import { Download, Eye, Loader2, Paperclip, ChevronDown, Reply, ReplyAll, Forward, Star } from 'lucide-react';
+import type { EmailAttachment, EmailMessage } from '@/hooks/integrations/useGmail';
+import { formatEmailFileSize } from '@/lib/emailAttachments';
+import { canPreviewEmailAttachment } from '@/lib/emailAttachmentPreview';
 
 interface EmailChatBubbleProps {
   message: EmailMessage;
   isLast: boolean;
+  showSubject?: boolean;
   onReply?: (message: EmailMessage) => void;
   onReplyAll?: (message: EmailMessage) => void;
   onForward?: (message: EmailMessage) => void;
+  attachments?: EmailAttachment[];
+  downloadingAttachmentId?: string;
+  onDownloadAttachment?: (attachment: EmailAttachment) => void;
+  onPreviewAttachment?: (attachment: EmailAttachment) => void;
 }
 
 function getInitials(name: string | null | undefined, email?: string): string {
@@ -34,7 +41,7 @@ function formatFullDate(dateStr: string): string {
   });
 }
 
-export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, onReply, onReplyAll, onForward }: EmailChatBubbleProps) {
+export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, showSubject = false, onReply, onReplyAll, onForward, attachments = [], downloadingAttachmentId, onDownloadAttachment, onPreviewAttachment }: EmailChatBubbleProps) {
   const [expanded, setExpanded] = useState(isLast);
   const [fullView, setFullView] = useState(false);
   const isSent = message.direction === 'outbound';
@@ -70,7 +77,7 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
         <div className="max-w-[75%] space-y-0.5 relative">
           {/* Hover actions */}
           <div className={cn(
-            'absolute top-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10',
+            'absolute top-0 z-10 flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100',
             isSent ? 'right-full mr-1' : 'left-full ml-1'
           )}>
             {onReply && (
@@ -135,12 +142,12 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
             className={cn(
               'rounded-2xl px-3.5 py-2.5 shadow-sm relative',
               isSent
-                ? 'rounded-br-md bg-primary text-primary-foreground'
-                : 'rounded-bl-md bg-card border border-border/30 text-foreground'
+                ? 'rounded-br-md border border-primary/20 bg-chat-sent text-chat-sent-foreground shadow-sm'
+                : 'rounded-bl-md border border-border bg-chat-received text-chat-received-foreground shadow-sm'
             )}
           >
             {/* Subject line if present */}
-            {message.subject && (
+            {showSubject && message.subject && (
               <p className={cn(
                 'text-2xs font-semibold mb-1.5 pb-1.5 border-b',
                 isSent ? 'border-primary-foreground/20' : 'border-border/30'
@@ -189,12 +196,14 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
 
             {/* Attachments */}
             {message.has_attachments && (
-              <div className={cn(
-                'flex items-center gap-1 mt-1.5 pt-1.5 border-t text-3xs',
-                isSent ? 'border-primary-foreground/20 text-primary-foreground/70' : 'border-border/30 text-muted-foreground'
-              )}>
-                <Paperclip className="w-3 h-3" />
-                <span>Anexo(s)</span>
+              <div className={cn('mt-2 space-y-1 border-t pt-2 text-3xs', isSent ? 'border-primary-foreground/20' : 'border-border')}>
+                {attachments.length === 0 ? <span className="flex items-center gap-1 opacity-70"><Paperclip className="h-3 w-3" />Metadados do anexo indisponíveis</span> : attachments.map(attachment => (
+                  <div key={attachment.id} className="flex w-full items-center gap-2 rounded-lg bg-foreground/10 px-2 py-1.5">
+                    <Paperclip className="h-3 w-3 shrink-0" /><span className="min-w-0 flex-1 truncate" title={attachment.filename || 'Anexo'}>{attachment.filename || 'Anexo'}</span><span className="opacity-60">{formatEmailFileSize(attachment.size_bytes || 0)}</span>
+                    {canPreviewEmailAttachment(attachment.mime_type) && <button type="button" aria-label={`Visualizar ${attachment.filename || 'anexo'}`} className="rounded p-1 hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring" onClick={() => onPreviewAttachment?.(attachment)}><Eye className="h-3 w-3" /></button>}
+                    <button type="button" aria-label={`Baixar ${attachment.filename || 'anexo'}`} className="rounded p-1 hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring" onClick={() => onDownloadAttachment?.(attachment)} disabled={downloadingAttachmentId === attachment.id}>{downloadingAttachmentId === attachment.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}</button>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -210,11 +219,6 @@ export const EmailChatBubble = memo(function EmailChatBubble({ message, isLast, 
                 </TooltipTrigger>
                 <TooltipContent>{formatFullDate(message.internal_date)}</TooltipContent>
               </Tooltip>
-              {isSent && (
-                message.is_read
-                  ? <CheckCheck className="w-3 h-3" />
-                  : <Check className="w-3 h-3" />
-              )}
             </div>
           </motion.div>
         </div>

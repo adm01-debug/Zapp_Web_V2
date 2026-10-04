@@ -26,6 +26,7 @@ import { useAnalysisTts } from './ai-tools/useAnalysisTts';
 import { AnalysisTabs } from './ai-tools/AnalysisTabs';
 import { type AnalysisData, type AnalysisMessage, type AiEnvelope, aiEnvelopeErrorMessage, readAiErrorEnvelope, sentimentConfig } from './ai-tools/analysisConfigs';
 import { normalizeScore } from '@/lib/ai-values';
+import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
 
 interface AIConversationAssistantProps {
   messages: AnalysisMessage[];
@@ -65,11 +66,26 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
 
   const canAnalyze = filteredMessages.length >= 5;
 
+  // IA-048 — identidade da requisição: contato + período ESCOLHIDO. Não inclui
+  // `messages`/`filteredMessages` de propósito; mensagens que chegam por tempo
+  // real não podem invalidar uma análise em voo.
+  const {
+    begin: beginRequest,
+    isCurrent: isRequestCurrent,
+    invalidate: invalidateRequests,
+  } = useAiRequestGeneration({
+    contactId,
+    periodKey: buildPeriodKey(analysisPeriod, customDateFrom, customDateTo),
+  });
+
   useEffect(() => {
     setAnalysis(null);
     setActiveTab('resumo');
     stopTts();
-  }, [analysisPeriod, customDateFrom, customDateTo, contactId, stopTts]);
+    // Invalida resposta em voo e encerra o spinner do pedido abandonado.
+    invalidateRequests();
+    setIsLoading(false);
+  }, [analysisPeriod, customDateFrom, customDateTo, contactId, stopTts, invalidateRequests]);
 
   const handlePlaySummary = useCallback(() => {
     if (!analysis?.summary) return;
@@ -82,6 +98,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
       return;
     }
 
+    const request = beginRequest();
     setIsLoading(true);
 
     try {
@@ -99,6 +116,10 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
               contactName,
               contactId,
               periodDays: getPeriodDays(analysisPeriod),
+              // IA-051 — mesmo id em todas as tentativas de `withRetry`: as linhas
+              // de `ai_usage_logs` ficam agrupadas por clique, e um retry aparece
+              // como segunda linha em vez de virar gasto órfão.
+              requestId: request.requestId,
             },
           });
 
@@ -125,6 +146,10 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
 
       if (!isMountedRef.current) return;
 
+      // IA-048 — a resposta só vale se contato/período ainda forem os do clique.
+      // A checagem vem DEPOIS do `withRetry`: é no await que a resposta chega.
+      if (!isRequestCurrent(request)) return;
+
       // `payload.error` + `status === 'error'` vira mensagem ao usuário, não silêncio.
       if (payload?.status === 'error') {
         toast.error(aiEnvelopeErrorMessage(payload.error, 'A IA não devolveu uma análise válida.'));
@@ -139,6 +164,10 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
       setAnalysis(analysisData);
       setActiveTab('resumo');
       await refetch();
+
+      // `refetch` também é await: revalida antes do efeito no servidor para não
+      // disparar alerta de sentimento do contato anterior sob o contato atual.
+      if (!isRequestCurrent(request)) return;
 
       // Nota ausente/inválida não vira 50: só dispara alerta com número válido (IA-023).
       const score = normalizeScore(analysisData.sentimentScore, { min: 0, max: 100, scale: 'percent' });
@@ -156,12 +185,14 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
 
       toast.success('Análise completa!');
     } catch (error) {
+      // Falha de requisição superada não vira erro na tela do contato novo.
+      if (!isMountedRef.current || !isRequestCurrent(request)) return;
       log.error('Error analyzing conversation:', error);
       toast.error('Erro ao analisar conversa. Tente novamente.');
     } finally {
-      if (isMountedRef.current) setIsLoading(false);
+      if (isMountedRef.current && isRequestCurrent(request)) setIsLoading(false);
     }
-  }, [analysisPeriod, analyses, canAnalyze, checkAndTriggerAlert, contactId, contactName, filteredMessages, refetch]);
+  }, [analysisPeriod, analyses, beginRequest, canAnalyze, checkAndTriggerAlert, contactId, contactName, filteredMessages, isRequestCurrent, refetch]);
 
   useEffect(() => {
     isMountedRef.current = true;

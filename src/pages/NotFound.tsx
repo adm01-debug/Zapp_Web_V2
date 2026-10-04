@@ -69,7 +69,7 @@ const NotFound = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="text-xs text-muted-foreground/60 mt-8"
+          className="text-xs text-muted-foreground mt-8"
         >
           Dica: use <kbd className="px-1.5 py-0.5 rounded bg-muted text-3xs font-mono border border-border/50">⌘K</kbd> para navegar rapidamente
         </motion.p>

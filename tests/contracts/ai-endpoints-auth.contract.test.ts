@@ -16,6 +16,28 @@ const read = (path: string) => readFileSync(path, 'utf8');
 const semImports = (source: string) => source.replace(/^import[\s\S]*?;\s*$/gm, '');
 const corpo = (path: string) => semImports(read(path));
 
+/**
+ * Canais conhecidos de gasto em provedor.
+ *
+ * Até o Bloco 03 o único canal era a URL do gateway fixo. O Bloco 04 criou o
+ * despacho central (`ai-generate.ts` → `generateWithRouting`), e os consumidores
+ * migrados (IA-032 e, aqui, IA-033) deixaram de conter a URL antiga de propósito —
+ * o aceite é justamente "não restam chamadas pagas desconhecidas".
+ *
+ * Se este contrato continuasse preso à URL antiga, ele ficaria VERDE exatamente
+ * quando ninguém mais usasse o gateway antigo, ou seja: a asserção mais frágil no
+ * momento mais importante. O que o IA-011 protege é a ORDEM (autenticar antes de
+ * gastar), então o teste aceita qualquer canal conhecido — e exige que exista um.
+ * Os dois canais casam só a CHAMADA (os `import` são removidos antes da busca).
+ */
+const CANAIS_DE_PROVEDOR = ['generateWithRouting(', 'ai.gateway.lovable.dev'] as const;
+
+/** Índice do primeiro gasto em provedor no corpo do arquivo (-1 se não houver). */
+const chamadaDeProvedor = (fonte: string): number => {
+  const indices = CANAIS_DE_PROVEDOR.map((canal) => fonte.indexOf(canal)).filter((i) => i > -1);
+  return indices.length ? Math.min(...indices) : -1;
+};
+
 describe('endpoints de IA — ordem entre autenticação e gasto de provedor (IA-011)', () => {
   const semIdentidade = [
     'voice-agent',
@@ -28,9 +50,9 @@ describe('endpoints de IA — ordem entre autenticação e gasto de provedor (IA
     it(`${fn} autentica o chamador antes de chamar o provedor`, () => {
       const source = corpo(`supabase/functions/${fn}/index.ts`);
       const auth = source.indexOf('requireAiIdentity');
-      const provider = source.indexOf('ai.gateway.lovable.dev');
+      const provider = chamadaDeProvedor(source);
       expect(auth, `${fn} não usa requireAiIdentity`).toBeGreaterThan(-1);
-      expect(provider, `${fn} não chama o gateway`).toBeGreaterThan(-1);
+      expect(provider, `${fn} não gasta em provedor por canal conhecido`).toBeGreaterThan(-1);
       expect(auth, `${fn} chama o provedor antes de autenticar`).toBeLessThan(provider);
     });
   }

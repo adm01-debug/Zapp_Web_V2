@@ -4,11 +4,22 @@ import {
   ensureFixtureConversationOpen,
   cleanupFixtureMessages,
   cleanupE2EReactions,
+  ensureReactionAbsent,
 } from './fixtures/e2e-contact';
+import { dispensarOnboarding } from './fixtures/onboarding';
 
 test.describe('Reactions flow', () => {
+  // Orcamento explicito (o padrao do projeto e 30 s): este fluxo e multi-etapa --
+  // no beforeEach vai goto + onboarding + fixture + cleanup + reload, e no corpo
+  // hover, espera da barra, normalizacao do estado e duas assercoes de 8 s. Com o
+  // teto global de 30 s o teste estourava por TEMPO em execucao lenta (repeat2
+  // medido em 03/10/2026), nao por ausencia de reacao: se a reacao nao aparecer,
+  // o toBeVisible de 8 s continua falhando normalmente.
+  test.setTimeout(60_000);
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await dispensarOnboarding(page);
     // ensureFixtureConversationOpen valida o token do Supabase explicitamente
     // (lanca erro se nao encontrado). Chamar ANTES do cleanupE2EReactions garante
     // que o localStorage esta carregado quando o cleanup precisa do access_token.
@@ -56,28 +67,41 @@ test.describe('Reactions flow', () => {
     await conversation.click();
     await page.waitForSelector('[data-testid="message-group"]', { timeout: 10_000 });
 
-    // Hover over the first message to reveal the quick reaction bar
-    const firstMessage = page.locator('[data-testid="message-group"]').first();
-    await firstMessage.hover();
+    // Alvo ESTAVEL (causa raiz do vermelho do workflow e2e-logado): a lista de
+    // mensagens e virtualizada e o PRIMEIRO `message-group` fica ACIMA da viewport
+    // (medido: y=-547 numa viewport de 720). O hover nao se sustenta ali -- a lista
+    // reancora na mensagem mais nova -- entao a barra de reacao fica `opacity: 0` e
+    // o clique com `force` cai em coordenadas vazias (elementFromPoint = null):
+    // nenhuma mutacao e disparada, nada e inserido em message_reactions e o badge
+    // nunca aparece (so o DELETE do cleanup aparece na rede). O ULTIMO grupo esta em
+    // tela; escopar barra/emoji/badge a ele e esperar a barra ativa (opacity 1)
+    // torna o teste deterministico em vez de depender do instante do auto-scroll.
+    const message = page.locator('[data-testid="message-group"]').last();
+    await message.scrollIntoViewIfNeeded();
+    await message.hover();
 
-    // Wait for profile query to resolve before clicking -- addMutation throws when
-    // profileId is null (profile React Query not yet settled), causing the badge to
-    // never appear. data-profile-ready is set by QuickReactionBar once currentProfileId
-    // is non-null.
-    await page
-      .locator('[data-testid="quick-reaction-bar"][data-profile-ready="true"]')
-      .first()
-      .waitFor({ timeout: 10_000 });
+    // data-profile-ready e setado pela QuickReactionBar quando currentProfileId
+    // deixa de ser nulo (addMutation lanca com profileId nulo).
+    const bar = message.locator('[data-testid="quick-reaction-bar"][data-profile-ready="true"]');
+    await bar.waitFor({ timeout: 10_000 });
+    await expect(bar).toHaveCSS('opacity', '1', { timeout: 5_000 });
 
-    // Force-click thumbsup (bar may still be opacity-0 in Playwright rendering context)
-    await page
-      .locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]')
-      .first()
-      .click({ force: true });
+    // Normaliza o estado pela UI ANTES de clicar: se uma reacao de run anterior
+    // sobreviveu na mensagem alvo, o clique abaixo REMOVERIA em vez de adicionar
+    // (root cause medido das falhas :53/:88). O cleanup por API nao garante isso:
+    // depende de RLS e de o profile do caller estar certo.
+    await ensureReactionAbsent(page, message, '👍');
+    await message.hover();
+    // 3 s basta: a barra ja foi confirmada acima com opacity 1; este waitFor so
+    // reconfirma que ela voltou depois de o mouse sair e voltar. Os 10 s de antes
+    // somavam ao orcamento do teste sem necessidade.
+    await bar.waitFor({ timeout: 3_000 });
+
+    await message.locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]').click();
 
     // Reaction badge should appear below the message
     await expect(
-      page.locator('[data-testid="reaction-badge"][data-emoji="👍"]').first()
+      message.locator('[data-testid="reaction-badge"][data-emoji="👍"]')
     ).toBeVisible({ timeout: 8_000 });
   });
 
@@ -89,31 +113,33 @@ test.describe('Reactions flow', () => {
     await conversation.click();
     await page.waitForSelector('[data-testid="message-group"]', { timeout: 10_000 });
 
-    const firstMessage = page.locator('[data-testid="message-group"]').first();
-    await firstMessage.hover();
+    // Mesmo alvo estavel do teste anterior: a lista e virtualizada e o primeiro
+    // `message-group` fica acima da viewport (hover nao se sustenta la).
+    const message = page.locator('[data-testid="message-group"]').last();
+    await message.scrollIntoViewIfNeeded();
+    await message.hover();
 
-    // Wait for profile query to resolve before clicking -- addMutation throws when
-    // profileId is null (profile React Query not yet settled), causing the badge to
-    // never appear.
-    await page
-      .locator('[data-testid="quick-reaction-bar"][data-profile-ready="true"]')
-      .first()
-      .waitFor({ timeout: 10_000 });
+    const bar = message.locator('[data-testid="quick-reaction-bar"][data-profile-ready="true"]');
+    await bar.waitFor({ timeout: 10_000 });
+    await expect(bar).toHaveCSS('opacity', '1', { timeout: 5_000 });
+
+    // Normaliza o estado pela UI antes de 'adicionar' (mesmo motivo do teste acima:
+    // reacao sobrevivente de run anterior faz o clique remover em vez de adicionar).
+    await ensureReactionAbsent(page, message, '👍');
+    await message.hover();
+    // 3 s basta: a barra ja foi confirmada acima com opacity 1; este waitFor so
+    // reconfirma que ela voltou depois de o mouse sair e voltar. Os 10 s de antes
+    // somavam ao orcamento do teste sem necessidade.
+    await bar.waitFor({ timeout: 3_000 });
 
     // Add the reaction
-    await page
-      .locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]')
-      .first()
-      .click({ force: true });
+    await message.locator('[data-testid="quick-reaction-emoji"][data-emoji="👍"]').click();
 
-    const badge = page.locator('[data-testid="reaction-badge"][data-emoji="👍"]').first();
+    const badge = message.locator('[data-testid="reaction-badge"][data-emoji="👍"]');
     await expect(badge).toBeVisible({ timeout: 8_000 });
 
-    // Toggle it off -- move mouse away first to dismiss the quick-reaction-bar overlay.
-    // firstMessage.hover() earlier activated the bar (CSS opacity transition); the
-    // quick-reaction-emoji (data-index virtualised row) intercepts pointer events
-    // and blocks badge.click(). Moving mouse to (0,0) removes the hover, collapsing
-    // the bar before we click the badge.
+    // Toggle it off -- move mouse away first to dismiss the quick-reaction-bar overlay
+    // (com o hover ativo a barra fica por cima do badge e intercepta o clique).
     await page.mouse.move(0, 0);
     await badge.click();
     await expect(badge).not.toBeVisible({ timeout: 8_000 });

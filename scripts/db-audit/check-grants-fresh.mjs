@@ -20,17 +20,36 @@
  */
 import fs from 'node:fs';
 
+import { resolverCaminhoPermitido } from '../lib/seguranca-processo.mjs';
+
+// S8707: caminho de entrada nunca entra cru num fs.* — a guarda vive no modulo
+// compartilhado (scripts/lib/seguranca-processo.mjs): resolve e exige que o
+// resultado fique dentro do repositorio ou do diretorio temporario do sistema
+// (as duas raizes legitimas: snapshot commitado e arquivo fresco do psql num
+// tmp). `../../etc/passwd` ou absoluto fora delas e recusado. Fail-closed:
+// fora da raiz encerra com exit 2 (mesmo codigo de entrada invalida).
 const fresco = process.argv[2];
 if (!fresco) {
   console.error('uso: node check-grants-fresh.mjs <grants_fresco.json>');
   process.exit(2);
 }
 
-const commitadoPath = process.env.GRANTS_BASELINE_PATH || 'scripts/db-audit/grants-baseline.json';
+let frescoPath;
+let commitadoPath;
+try {
+  frescoPath = resolverCaminhoPermitido(fresco, 'baseline de grants fresco');
+  commitadoPath = resolverCaminhoPermitido(
+    process.env.GRANTS_BASELINE_PATH || 'scripts/db-audit/grants-baseline.json',
+    'baseline de grants commitado',
+  );
+} catch (erro) {
+  console.error('ERRO: ' + erro.message);
+  process.exit(2);
+}
 
 function ler(arquivo, rotulo) {
   try {
-    return JSON.parse(fs.readFileSync(arquivo, 'utf8'));
+    return JSON.parse(fs.readFileSync(arquivo, 'utf8')); // NOSONAR(S8707): 'arquivo' so recebe frescoPath/commitadoPath, ja resolvidos por resolverCaminhoPermitido (exit 2 fora do repo/tmp) antes deste read
   } catch (error) {
     console.error('ERRO: baseline de grants ' + rotulo + ' invalido (' + arquivo + '): ' + error.message);
     return null;
@@ -52,13 +71,13 @@ const valid = (value) => value && typeof value === 'object' && !Array.isArray(va
 const METADADOS = new Set(['generated_at', 'note', 'how_to_regenerate']);
 const canon = (value) => Array.isArray(value) ? value.map(canon)
   : value && typeof value === 'object'
-    ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canon(value[key])]))
+    ? Object.fromEntries(Object.keys(value).sort((a, b) => a.localeCompare(b)).map((key) => [key, canon(value[key])]))
     : value;
 const aclOnly = (value) => Object.fromEntries(
   Object.entries(value).filter(([key]) => !METADADOS.has(key)),
 );
 
-const fresh = ler(fresco, 'fresco');
+const fresh = ler(frescoPath, 'fresco');
 const committed = ler(commitadoPath, 'commitado');
 
 if (!valid(fresh) || !valid(committed)) {

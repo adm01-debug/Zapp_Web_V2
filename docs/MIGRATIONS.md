@@ -13,14 +13,18 @@ Contagem igual esconde erro. Na auditoria de 27/08/2026 havia 267 arquivos e 259
 depois de reconciliar, os dois lados fecharam em 261 com o mesmo hash:
 
 ```sh
-# lado do repo
+# lado do repo (mesma receita do scripts/db-audit/check-triple-parity.mjs: versões
+# ordenadas, separadas por \n, com \n final — o script é a fonte da verdade)
 ls supabase/migrations/*.sql | sed 's|.*/||' \
-  | sed -E 's/^([0-9]{14}).*/\1/' | sort | tr -d '\n' | md5sum
+  | sed -E 's/^([0-9]{14}).*/\1/' | sort | paste -sd '\n' - | sha256sum
 
 # lado do banco
 psql "$DESTINO_URL" -At -c \
-  "SELECT md5(string_agg(version,'' ORDER BY version)) FROM supabase_migrations.schema_migrations"
+  "SELECT encode(sha256(convert_to(string_agg(version, E'\n' ORDER BY version) || E'\n','UTF8')),'hex') FROM supabase_migrations.schema_migrations"
 ```
+
+O algoritmo é `sha256` nos dois lados (`sha256()` é built-in do Postgres, PG11+). Trocar
+apenas um dos lados faz a paridade divergir sempre — se mexer num, mexa no outro.
 
 O `db-guard.yml` valida nomes, conteudo local e versoes unicas sem credencial. A
 comparacao com o ledger real ocorre no `db-live-guard.yml`, somente em eventos
@@ -268,7 +272,136 @@ SELECT version, name FROM supabase_migrations.schema_migrations
 WHERE array_to_string(statements,' ') ILIKE '%CREATE TABLE%minha_tabela%';
 ```
 
+### Caso concreto: `20261001341230_f51_*` foi superada — nao editar, a substituta e a `f51c`
+
+`20261001341230_f51_multiplix_confirm_dispatch.sql` declara a funcao com
+`CREATE FUNCTION public.multiplix_confirm_dispatch(...)`, **sem `OR REPLACE`**. Ela aborta com
+`42723 function "multiplix_confirm_dispatch" already exists with same argument types` em
+qualquer banco onde a funcao ja exista — e neste banco ela existe desde
+`20261001351230_f51a_multiplix_confirm_dispatch_fn.sql` (a parte aditiva, aplicada antes).
+
+**Nao edite o arquivo antigo.** A versao que o substitui e:
+
+```
+supabase/migrations/20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql
+```
+
+### Caso concreto: `20261002701230_f62_*` foi superada — a substituta e a `f62b`
+
+`20261002701230_f62_resposta_correlacionada.sql` cria `attribute_multiplix_item_reply(...)` e o
+`CREATE FUNCTION` **passa sem reclamar** — mas a funcao quebra na **primeira chamada**:
+
+- `SELECT COALESCE(NULLIF(value, '')::numeric, 72) INTO v_window FROM public.talkx_settings ...`
+  → `talkx_settings.value` e **jsonb** (nao `text`), e `NULLIF(jsonb, '')` nao existe em Postgres.
+  O sintoma que chega ao log e so o `CONTEXT: PL/pgSQL function
+  attribute_multiplix_item_reply(text,text,text) line 31 at SQL statement`.
+
+O erro nao aparece na criacao da funcao, em `deno check`, nem em revisao de texto: so no primeiro
+contato que responder — isto e, em producao. Um erro irmao (`column item.replied_at does not
+exist`) apareceu so no harness de banco, porque o fixture nao carregava a f51.
+
+**No mesmo PR a `f62` foi descartada da arvore** — ela **nunca chegou a ser aplicada**. A migration
+entregue e a `f62b`, que cria a funcao corrigida na **mesma assinatura** `(text, text, text)`, entao
+nenhum chamador (o edge `_shared/talkx-reply.ts`) precisa mudar.
+
+### Armadilha: editar uma migration ja registrada como pendente nao tem saida pelo caminho feliz
+
+O `hermes-db-migrar` grava o sha256 do arquivo no momento do registro
+(`~/.local/share/hermes-guard/mig-sha/<arquivo>.sql`) e o `hermes-tarefa-fechar` **recusa** fechar
+enquanto o sha do arquivo divergir do registrado. A mensagem orienta a rodar `hermes-db-migrar
+<arquivo>` de novo "para revalidar e registrar" — mas isso **nao funciona**: a guarda de versao exige
+`version > max(version)` do ledger, e basta **outro chat** ter aplicado uma versao maior nesse
+meio-tempo para a revalidacao virar impossivel (`ERRO: versao ... nao e maior que max(version)=... no
+ledger`). O `--dry-run` tambem nao atualiza o sha (so imprime o SQL que seria rodado).
+
+Regra pratica: **nao edite uma migration depois de registra-la como pendente.** Se errou, registre
+uma substituta com `--nova` e **remova o arquivo errado da arvore** (foi o que este PR fez: o
+`hermes-tarefa-fechar` aceita quando o arquivo nao esta mais la, e o `hermes-tarefa-mergear`
+recalcula os pendentes a partir do PR). Deixar o arquivo errado na arvore, com conteudo diferente do
+registrado, trava o fechamento nos dois caminhos.
+
+### O hash da f51 no ledger diverge do arquivo — e a excecao registrada
+
+O `O_MIGRATIONS` do `db-live-guard.yml` fica **vermelho** por causa dessa migration, e nao por
+erro de conteudo: o arquivo no repo declara a funcao com `CREATE FUNCTION` (sem `OR REPLACE`),
+enquanto o que **rodou** — na aplicacao pos-merge de 02/10/2026 — foi a versao equivalente
+**com** `OR REPLACE`, que e a unica diferenca. O ledger preserva o que foi aplicado, entao os
+dois hashes divergem (`arquivo=7cec99db...`, `ledger=ba9faefd...`).
+
+**O arquivo nao pode ser reescrito** (migration registrada e imutavel, regra 7 do CLAUDE.md) e
+**mover para `_superseded/` PIORA**: como a versao esta no ledger, o guard passaria a acusar
+`Registro no banco sem arquivo no repo (DDL fora do Git)`, que e erro sem excecao. O caminho e o
+**registro**:
+
+```
+scripts/db-audit/migration-evidence.json  →  kind: "ledger-divergence/pinned-replay"
+                                              reason: "safer-replay"
+```
+
+Os quatro hashes saem medidos, nunca digitados:
+
+```bash
+# hashes do ARQUIVO (valida contra as entradas existentes: 50 amostras recalcularam certo)
+node .tmp/calc-hashes.mjs supabase/migrations/20261001341230_f51_multiplix_confirm_dispatch.sql
+# hashes do LEDGER: reconstroi os statements com o MESMO splitStatements do
+# register-migration.mjs e confere o resultado contra o valor que o Postgres calcula
+node .tmp/calc-ledger.mjs supabase/migrations/20261001341230_f51_multiplix_confirm_dispatch.sql
+```
+
+Para provar verde **sem** a `DESTINO_URL` (o guard aceita `PSQL_BIN` fake e `MIGRATIONS_DIR` de
+fixture — sao as variaveis que ele documenta para teste offline): monte um diretorio com **so** a
+migration alvo, um `psql` falso que imprime o JSON do ledger e rode com
+`MIGRATION_EVIDENCE_PATH` apontando para um manifesto com **so** a excecao testada. Sem a excecao
+o guard falha com `conteudo SQL divergente`; com ela, `OK`. Medido em 02/10/2026.
+
+**Duas correcoes factuais sobre esta migration** (levantadas na auditoria de ledger de 02/10/2026):
+
+1. O cabecalho da `f51c` afirma que o ledger **nunca** registrou a f51. Isso **deixou de ser
+   verdade** em 02/10/2026: a f51 **esta** registrada (`version=20261001341230`,
+   `name=f51_multiplix_confirm_dispatch`, 22 statements) — foi ela que entrou no ledger na
+   aplicacao pos-merge. A `f51c` continua sendo a substituta canonica do **conteudo**, mas o
+   registro existe. A f51c e migration ja aplicada: **corrigir no texto dela nao vale a pena**
+   (regra 7), a correcao fica aqui.
+
+2. **Num banco zerado, a ordem f51 -> f51a quebra.** A f51 declara a funcao com `CREATE FUNCTION`
+   (sem `OR REPLACE`) e a f51a repete a declaracao: aplicando as duas em sequencia num banco novo,
+   a **f51a** aborta com `42723 function "multiplix_confirm_dispatch" already exists with same
+   argument types` (a f51, vindo antes, ja a criou). No banco atual isso nao aparece porque a
+   f51 nunca rodou de verdade (entrou no ledger pelo replay com `OR REPLACE`). **Efeito pratico:
+   `supabase db reset` / ambiente novo pela cadeia de arquivos nao sobe.** Nao corrigido aqui
+   porque exige mudar uma migration aplicada ou inverter a ordem — decisao de outra tarefa.
+
+Ela reafirma a funcao com `CREATE OR REPLACE` e traz o que faltava (ACL da RPC, `COMMENT`s,
+`CHECK` de `reply_attribution`, as duas funcoes de trigger de bump de versao e os triggers).
+
+Banco novo, com as migrations aplicadas em ordem, **nao tropeca**: `20261001341230` cria a
+funcao (primeira a rodar), `20261001351230_f51a` e idempotente e `20261002461230_f51c` reafirma
+tudo com `OR REPLACE`. O defeito so aparece em banco que **ja** tenha a funcao quando a
+`20261001341230` tenta rodar — por isso a substituta existe, e por isso a `f51c` vai depois
+das duas na ordem de versao.
+
+Para confirmar o que esta no ledger deste banco:
+
+```sql
+SELECT version, name FROM supabase_migrations.schema_migrations
+WHERE name ILIKE '%f51%' ORDER BY version;
+```
+
 ---
+
+### A condicao repetida na f59 (inofensiva, registrada para nao virar duvida)
+
+A `20261002651230_f59_dead_letters_consultavel.sql` tem, no `list_multiplix_dead_letters`, a
+condicao `AND i.status = 'failed'` **duas vezes** — uma antes do comentario que explica o criterio
+do dead letter e outra depois. As duas são a **mesma** condicao, então o resultado e identico e a
+consulta esta correta (provada verde no harness de banco descartavel e conferida no ledger).
+
+**Nao corrija reescrevendo o arquivo**: a migration esta registrada e e imutavel (regra 7 do
+CLAUDE.md) — e o proprio `hermes-db-migrar` recusa, porque a reserva da versao pertence a tarefa
+que a aplicou. Reescrever criaria divergencia arquivo × ledger (o caso da f51 acima) sem ganho
+nenhum, ja que a linha extra nao muda o plano de execucao. Criar uma migration NOVA so para
+reescrever a funcao inteira seria pior: duplicaria ~70 linhas de corpo para tirar uma linha
+repetida. **Fica como esta** — aqui registrado para que ninguem gaste tempo investigando depois.
 
 ## 5. Operacao pontual nao e migration
 
@@ -326,3 +459,68 @@ Se o `types.ts` estiver desatualizado, dispare manualmente:
 O `db-live-guard.yml` tambem verifica o frescor dos tres artefatos contra o banco
 e falha se houver divergencia. Ele nao executa codigo de pull request nem expoe
 `DESTINO_URL` a eventos nao confiaveis.
+
+---
+
+## 7. Auditoria de arquivos que nao aplicam (replay local, 03/10/2026)
+
+O replay local das 768 migrations (`scripts/db-audit/replay-local.sh`, relatorio em
+`docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md`) aponta arquivos que **nao aplicam**. Cada um foi
+investigado no banco canonico — o erro no log **nao** decide se ha trabalho a fazer. Situacao dos seis:
+
+| Arquivo | Erro no replay | Situacao real |
+|---|---|---|
+| `20260927450000_fix_indexes_checks_cleanup.sql` | `syntax error at or near "VAFIDD"` | **Superada.** O ledger atribui esta versao a `gamification_guard_fix_xp_cap`; o arquivo **nunca aplicou**. As constraints que ele cria existem e estao `validated=true`. **Nada a reparar.** |
+| `20260916230000_talkx_e93_settings.sql` | `syntax error at or near "NOT"` (`CREATE POLICY IF NOT EXISTS` nao existe no PG) | **Superada** por `20260930112833_talkx_settings_policies_replay_safe` e `20260930410000_talkx_settings_replay_idempotent`. `talkx_settings` existe, RLS on, 2 politicas. **Nada a reparar.** |
+| `20260929370000_contacts_soft_delete_and_search_filters.sql` | `cannot change return type` | **Superada.** O filtro `deleted_at IS NULL` que ela queria **ja existia** em producao, adicionado antes por `20260929140000_search_contacts_returns_address`; a versao vigente e a de `20260930450000_contacts_include_legacy_filter`. **Nada a reparar.** |
+| `20260925170000_add_reminders_pending_to_tab_counts.sql` | `cannot change return type` | **Superada — abandono formalizado** (decisao `20261003-121143`, opcao b). `get_conversation_tab_counts` em producao devolve 3 colunas; `reminders_pending` **nunca existiu**. Causa: `create or replace` nao muda tipo de retorno e o `DROP FUNCTION` que resolveria esta comentado no arquivo irmao. Impacto zero — nao ha codigo consumindo o campo. **Nao introduzir codigo especulativo:** se a aba algum dia precisar de lembretes pendentes, entra por **versao nova** (`DROP FUNCTION` + `CREATE` da funcao com a coluna, mais o consumo no app). |
+| `20260928140200_tab_counts_tasks_own.sql` | `cannot change return type` | Mesma funcao e mesma situacao do anterior — superada pelo mesmo motivo. |
+| `20260926410000_add_fk_support_indexes.sql` | `relation ... already exists` | **Nao idempotente**, inerte no banco real (o indice ja existe). **Nada a reparar.** |
+
+### Como medir isso (o metodo importa)
+
+Nao basta ler o log do replay. Pergunte ao banco canonico o que **de fato** existe:
+
+```sql
+-- 1) a funcao existe como o arquivo declara?
+select pg_get_function_result(p.oid)
+from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' and p.proname = '<funcao>';
+
+-- 2) os marcadores da intencao estao no corpo aplicado?
+select position('<trecho>' in p.prosrc)  -- 0 = ausente
+from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' and p.proname = '<funcao>';
+```
+
+Contagem de colunas menor que a declarada ⇒ o `create or replace` falhou **em producao tambem**.
+
+**Armadilha que quase virou regressao:** `search_contacts` em producao nao tem a clausula
+`queue_members` que o arquivo de 29/09 carregava — pareceu intencao perdida. Nao era: o ultimo arquivo
+que define a funcao (`20260930450000_contacts_include_legacy_filter.sql`) usa `get_visible_agent_ids`,
+ou seja, o modelo de visibilidade foi **substituido de proposito**. "Reparar" ali teria reintroduzido
+um caminho de autorizacao aposentado. **Compare marcador ausente com o ultimo arquivo que define o
+objeto antes de tratar como defeito.**
+
+### Cascatas: 5 medidas, 4 sao artefato de ordem
+
+O replay classificou 5 falhas como "cascata" (dependem de objeto que outra migration nao criou). O
+mesmo metodo responde: **o objeto existe no banco canonico?**
+
+| Falha | Em producao | Veredito |
+|---|---|---|
+| `notify_due_reminders()` | existe | artefato de ordem — nada a reparar |
+| coluna `notified_at` | existe (2 tabelas) | artefato de ordem — nada a reparar |
+| `sync_contact_status_on_closure()` | existe | artefato de ordem — nada a reparar |
+| coluna `conversation_id` | existe (4 tabelas) | artefato de ordem — nada a reparar |
+| `relation "public.conversations"` | **nao existe** — a tabela e `public.team_conversations` | **real**, baixa severidade: `20260927540000_security_gamification_guards_e2e_cleanup_avg_null.sql` faz limpeza de e2e contra nome renomeado. Reparo por versao nova, em PR proprio. |
+
+```sql
+-- objeto existe no canonico? (o que separa artefato de defeito)
+select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' and p.proname = '<funcao>';
+select table_schema, table_name from information_schema.tables
+where table_name ilike '%<nome>%';   -- confirma rename (ex.: conversations -> team_conversations)
+```
+
+

@@ -125,8 +125,16 @@ export function useMediaLibrary(type: MediaType) {
     return matchSearch && matchCategory;
   });
 
-  const toggleSelect = (id: string) => { setSelected(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; }); };
-  const toggleSelectAll = () => { selected.size === filtered.length ? setSelected(new Set()) : setSelected(new Set(filtered.map(i => i.id))); };
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selected.size === filtered.length) { setSelected(new Set()); } else { setSelected(new Set(filtered.map(i => i.id))); }
+  };
 
   const handleToggleFavorite = async (item: MediaItem) => {
     const newValue = !item.is_favorite;
@@ -183,7 +191,7 @@ export function useMediaLibrary(type: MediaType) {
     setReclassifying(false);
     setSelected(new Set());
     const msg = `${updated}/${toReclassify.length} itens reclassificados com IA`;
-    errors > 0 ? toast.info(`${msg} (${errors} erros)`) : toast.success(msg);
+    if (errors > 0) { toast.info(`${msg} (${errors} erros)`); } else { toast.success(msg); }
   };
 
   const handleSingleCategoryChange = async (item: MediaItem, newCategory: string) => {
@@ -228,7 +236,7 @@ export function useMediaLibrary(type: MediaType) {
     setPlayingId(item.id);
   };
 
-  const existingCategories = [...new Set(items.map(i => i.category))].sort();
+  const existingCategories = [...new Set(items.map(i => i.category))].sort((a, b) => a.localeCompare(b));
 
   return {
     items, loading, search, setSearch,

@@ -25,6 +25,40 @@ export function shouldNotifyIncomingCall(value: unknown): boolean {
   return status === 'offer' || status === 'ringing';
 }
 
+/**
+ * Direcao da chamada a partir do payload do Evolution (T25).
+ *
+ * O plano pede a direcao por `fromMe`/`isOutgoing`; as duas chaves aparecem em
+ * versoes diferentes do provedor, entao leio as duas de forma defensiva — mesmo
+ * padrao de `evolution-webhook/index.ts:208-211`. Sem nenhuma das duas a
+ * chamada e tratada como recebida, que e o comportamento do canal WhatsApp do
+ * produto (T23 marca `canDial: false`).
+ */
+export function direcaoDaChamada(data: Record<string, unknown>): 'inbound' | 'outbound' {
+  const saiu = data.fromMe === true || data.isOutgoing === true;
+  return saiu ? 'outbound' : 'inbound';
+}
+
+/**
+ * Instante do evento segundo o provedor (`data.date`, T25). Devolve `null`
+ * quando ausente ou invalido, para o chamador decidir o fallback (a RPC grava
+ * `now()` hoje). Consumo previsto na etapa T26, junto de `p_direction`.
+ */
+export function instanteDaChamada(data: Record<string, unknown>): string | null {
+  const bruto = data.date;
+  if (typeof bruto !== 'string') return null;
+  const ms = Date.parse(bruto);
+  return Number.isNaN(ms) ? null : new Date(ms).toISOString();
+}
+
+/** Notifica apenas chamada RECEBIDA: saida (`fromMe`/`isOutgoing`) nao alerta. */
+export function deveNotificarChamada(
+  status: unknown,
+  direcao: 'inbound' | 'outbound',
+): boolean {
+  return direcao === 'inbound' && shouldNotifyIncomingCall(status);
+}
+
 export function normalizeEvolutionCallVideo(value: unknown): boolean {
   return value === true || (typeof value === 'string' && value.trim().toLowerCase() === 'true');
 }

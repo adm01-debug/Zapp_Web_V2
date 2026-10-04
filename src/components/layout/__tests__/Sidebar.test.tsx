@@ -19,14 +19,24 @@ vi.mock('@/hooks/ui/useSidebarCollapse', () => ({
 }));
 
 let mockRoles: string[] = ['supervisor'];
+/**
+ * F25 (Bloco B): a entrada do Multiplix deixou de seguir o papel (STAFF_ROLES) e
+ * passa a seguir a permissao nomeada `multiplix.dispatch.create`. O componente
+ * le as permissoes do mesmo hook de acesso que ja entrega os papeis
+ * (useUserRole -> RoleService.checkPermission -> RPC user_has_permission).
+ * Por isso o mock agora tambem injeta as permissoes que o hook entregaria.
+ */
+let mockPermissions: string[] = ['multiplix.dispatch.create'];
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({
     roles: mockRoles,
+    permissions: mockPermissions,
     isAdmin: mockRoles.includes('admin'),
     isSupervisor: mockRoles.includes('supervisor') || mockRoles.includes('admin'),
     isSpecialAgent: mockRoles.includes('special_agent'),
     hasRole: (r: string) => mockRoles.includes(r),
     loading: false,
+    permissionsLoading: false,
     refetch: vi.fn(),
   }),
 }));
@@ -49,9 +59,22 @@ vi.mock('@/components/notifications/SoundVolumeControl', () => ({ SoundVolumeCon
 // e o badge de Tarefas consome `useMyWorkItemsBadge` (useAuth/useQuery). Este teste
 // é sobre a estrutura de navegação, então os dois entram mockados.
 vi.mock('@/components/notifications/NotificationsPopover', () => ({ NotificationsPopover: () => null }));
-vi.mock('@/hooks/tasks/useMyWorkItems', () => ({ useMyWorkItemsBadge: () => 0 }));
+vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
+  useMyWorkItemsBadge: () => 0,
+  useMyWorkItemsBadgeInfo: () => ({ count: 0, hasOverdue: false }),
+}));
 vi.mock('@/components/layout/SidebarUserPill', () => ({ SidebarUserPill: () => null }));
 vi.mock('@/components/layout/SidebarBackButton', () => ({ SidebarBackButton: () => null }));
+/**
+ * Marcador no lugar do painel de acessibilidade: o alvo aqui e o ENCAIXE (o componente era
+ * orfao — existia, tinha teste de tokens, e nenhuma tela o renderizava). O comportamento do
+ * painel e o efeito da classe `.high-contrast` tem cobertura propria em
+ * `src/components/theme/__tests__/HighContrastTokens.test.tsx`.
+ */
+vi.mock('@/components/theme/HighContrastToggle', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/components/theme/HighContrastToggle')>()),
+  AccessibilitySettings: () => <div data-testid="a11y-settings-montado" />,
+}));
 
 import { Sidebar } from '@/components/layout/Sidebar';
 
@@ -70,6 +93,7 @@ function renderSidebar(props = baseProps()) {
 
 beforeEach(() => {
   mockRoles = ['supervisor'];
+  mockPermissions = ['multiplix.dispatch.create'];
   mockFavorites = [];
   mockToggleFavorite.mockClear();
 });
@@ -100,8 +124,30 @@ describe('Sidebar — nav primária e grupos compartilham uma única área de ro
     expect(scrollArea).toContainElement(chatbotButton as HTMLElement);
   });
 
-  it('agente comum não vê Multiplix na nav primária', () => {
+  /**
+   * Gate do Multiplix: ANTES era por papel (STAFF_ROLES = admin/supervisor) e o
+   * agente nunca via o item. AGORA (F25) é pela permissão nomeada
+   * `multiplix.dispatch.create` — o papel não decide mais; staff sem a permissão
+   * perde a entrada e agente com a permissão ganha. Os dois casos são testados
+   * abaixo de propósito, porque a intenção do gate mudou.
+   */
+  it('staff SEM a permissão nomeada não vê Multiplix na nav primária (papel não basta — F25)', () => {
+    mockRoles = ['supervisor', 'admin'];
+    mockPermissions = [];
+    const { container } = renderSidebar();
+    expect(container.querySelector('[data-tour="multiplix"]')).toBeNull();
+  });
+
+  it('agente COM a permissão nomeada vê Multiplix na nav primária (F25)', () => {
     mockRoles = ['agent'];
+    mockPermissions = ['multiplix.dispatch.create'];
+    const { container } = renderSidebar();
+    expect(container.querySelector('[data-tour="multiplix"]')).not.toBeNull();
+  });
+
+  it('agente SEM a permissão nomeada continua sem ver Multiplix na nav primária', () => {
+    mockRoles = ['agent'];
+    mockPermissions = [];
     const { container } = renderSidebar();
     expect(container.querySelector('[data-tour="multiplix"]')).toBeNull();
   });
@@ -126,5 +172,29 @@ describe('Sidebar — Favoritos não duplica item que já vive na nav primária'
 
     fireEvent.click(starButton as HTMLElement);
     expect(mockToggleFavorite).toHaveBeenCalledWith('chatbot');
+  });
+});
+
+/**
+ * O painel de acessibilidade era um componente ORFAO: `AccessibilitySettings` existia com o
+ * switch de alto contraste, o nivel de contraste, movimento reduzido e texto grande — e nenhum
+ * componente o renderizava (`grep` so encontrava a propria definicao e o `displayName`). Na
+ * pratica o usuario so conseguia ligar o alto contraste por `localStorage`, o que inclusive
+ * limitava os specs de e2e (`e2e/theme-alto-contraste.spec.ts` liga por localStorage porque nao
+ * havia como clicar). Este teste cobre o ENCAIXE: sem ele, remover o `<AccessibilitySettings />`
+ * da Sidebar volta a esconder a funcionalidade sem quebrar nada.
+ */
+describe('Sidebar — acessibilidade alcançável pela interface', () => {
+  it('monta o gatilho do painel de acessibilidade', () => {
+    renderSidebar();
+    expect(screen.queryByTestId('a11y-settings-montado')).not.toBeNull();
+  });
+
+  it('o gatilho fica dentro dos controles rápidos, junto dos demais toggles', () => {
+    const { container } = renderSidebar();
+    const gatilho = screen.queryByTestId('a11y-settings-montado');
+    expect(gatilho).not.toBeNull();
+    expect(container.textContent).toContain('Controles rápidos');
+    expect(container.contains(gatilho as HTMLElement)).toBe(true);
   });
 });

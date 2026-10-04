@@ -25,7 +25,7 @@ export const playNotificationSound = (
 ) => {
   try {
     const ctx = getAudioContext();
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state === 'suspended') void ctx.resume();
 
     // O acesso direto `SOUND_CONFIGS[soundType]` estoura quando o valor vem fora do vocabulário
     // (preferência antiga, cache otimista): o erro caía no catch lá embaixo e o alerta ficava

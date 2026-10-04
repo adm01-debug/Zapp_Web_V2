@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { MultiplixEligibility } from '@/lib/multiplix-eligibility';
 
 async function invokeMultiplixAudience<T>(action: string, params?: object): Promise<T> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -104,7 +105,10 @@ export interface MultiplixResolvedRecipient {
   company_name: string | null;
   destino_e164: string | null;
   destino_origem: string | null;
-  elegibilidade: 'apto' | 'destino_invalido' | 'fora_do_escopo';
+  // Enum canonico do banco (ingles), o MESMO do mapa unico em
+  // `_shared/multiplix-eligibility.ts` — a edge traduz o PT do Singu na fronteira
+  // antes de responder, entao o front nunca compara com 'apto'/'fora_do_escopo'.
+  elegibilidade: MultiplixEligibility;
 }
 
 export function useMultiplixResolve() {

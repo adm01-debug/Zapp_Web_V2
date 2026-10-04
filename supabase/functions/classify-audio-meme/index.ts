@@ -1,4 +1,5 @@
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, Logger } from "../_shared/validation.ts";
+import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { ClassifyAudioMemeSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { requireAiIdentity } from "../_shared/ai-auth.ts";
 
@@ -30,8 +31,6 @@ Deno.serve(async (req) => {
       return jsonResponse({ category: 'outros' }, 200, req);
     }
 
-    const lovableApiKey = requireEnv('LOVABLE_API_KEY');
-
     const prompt = `Você é um classificador de áudios meme/sons engraçados para uma biblioteca de atendimento via WhatsApp. 
 Com base no nome do arquivo "${file_name || 'audio'}" e na URL "${audio_url}", classifique em EXATAMENTE UMA das categorias abaixo.
 Responda APENAS com o nome da categoria, sem explicação.
@@ -40,28 +39,28 @@ Categorias: ${AUDIO_CATEGORIES.join(', ')}
 
 REGRA IMPORTANTE: A categoria "viral" deve ser usada SOMENTE para sons que são tendências ATUAIS de TikTok/Reels. Memes brasileiros conhecidos, bordões de TV, frases famosas de celebridades devem ser classificados como "bordão". Sons cômicos e engraçados devem ser "risada" ou "deboche".`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${lovableApiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-lite',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 20,
-        temperature: 0.1,
-      }),
-      signal: AbortSignal.timeout(15000),
+    // Despacho central (auditoria do Bloco 05): sem URL fixa do gateway, sem modelo
+    // fixo e sem chave fixa no consumidor. O provedor e o modelo são decididos no
+    // servidor a partir da finalidade.
+    const gen = await generateWithRouting({
+      purpose: 'tagging',
+      functionName: 'classify-audio-meme',
+      userId: identity.userId,
+      messages: [{ role: 'user', content: prompt }],
+      extraBody: { max_tokens: 20 },
+      temperature: 0.1,
+      timeoutMs: 15000,
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      log.error(`API error ${response.status}`, { detail: errText.substring(0, 200) });
+    // Degradação preservada: falha de roteamento/provedor/HTTP vira 'outros' (200),
+    // nunca 500. O despacho central JÁ registra todo desfecho de erro em
+    // ai_usage_logs, então nada degrada para 'outros' sem trilha.
+    if (!gen.ok || !gen.data) {
+      log.error(`API error ${gen.response.status}`, { detail: gen.errorCode ?? 'unknown' });
       return jsonResponse({ category: 'outros' }, 200, req);
     }
 
-    const result = await response.json();
+    const result = gen.data as { choices?: Array<{ message?: { content?: string } }> };
     const rawCategory = (result.choices?.[0]?.message?.content || 'outros')
       .trim().toLowerCase().replace(/[^a-záàãâéêíóôõúç ]/g, '').trim();
 

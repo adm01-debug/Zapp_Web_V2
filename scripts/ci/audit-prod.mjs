@@ -18,6 +18,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
+import { resolverExecutavel } from "../lib/seguranca-processo.mjs";
 
 const SEVERITIES = ["low", "moderate", "high", "critical"];
 
@@ -81,6 +82,9 @@ function parseArgs(argv) {
   return args;
 }
 
+// S4036/CWE-427: o binario e resolvido para caminho absoluto a partir do PATH do
+// processo pai (scripts/lib/seguranca-processo.mjs), para que o filho nao faca
+// busca por PATH.
 export function main(argv = process.argv.slice(2), root = process.cwd()) {
   const args = parseArgs(argv);
   const pkg = JSON.parse(readFileSync(path.resolve(root, args.packageJson), "utf8"));
@@ -90,7 +94,14 @@ export function main(argv = process.argv.slice(2), root = process.cwd()) {
   if (args.input) {
     text = readFileSync(path.resolve(root, args.input), "utf8");
   } else {
-    const run = spawnSync("bun", ["audit", "--audit-level=low"], { cwd: root, encoding: "utf8" });
+    let bunBin;
+    try {
+      bunBin = resolverExecutavel("bun");
+    } catch (error) {
+      console.error(`ERRO: nao foi possivel executar bun audit: ${error.message}`);
+      return 2;
+    }
+    const run = spawnSync(bunBin, ["audit", "--audit-level=low"], { cwd: root, encoding: "utf8" });
     if (run.error || run.signal) {
       console.error(`ERRO: nao foi possivel executar bun audit: ${run.error?.message ?? `sinal ${run.signal}`}`);
       return 2;

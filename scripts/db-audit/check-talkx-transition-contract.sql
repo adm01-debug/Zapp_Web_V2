@@ -1,6 +1,7 @@
--- Guard fail-closed (V02): public.transition_talkx_campaign precisa ter UMA
--- assinatura, a de 3 argumentos com p_pause_reason DEFAULT — e o CHECK de
--- public.talkx_campaigns.status precisa aceitar 'scheduled'.
+-- Guard fail-closed (V02; assinatura revalidada no V12): public.transition_talkx_campaign
+-- precisa ter UMA assinatura — hoje a de 4 argumentos, com p_pause_reason DEFAULT NULL
+-- e p_actor_id DEFAULT NULL — e o CHECK de public.talkx_campaigns.status precisa aceitar
+-- 'scheduled'.
 --
 -- Por que os dois juntos num guard so: sao o mesmo caminho de escrita do motor
 -- de disparo. Dois overloads ao vivo fazem o PostgREST responder HTTP 300
@@ -10,6 +11,15 @@
 -- A verificacao do DEFAULT e explicita: se alguem recriar a funcao sem
 -- DEFAULT, a chamada de 2 args deixa de casar e a ambiguidade "desaparece"
 -- por outro motivo — o guard precisa pegar os dois jeitos.
+--
+-- V12 (migration 20260930650000, PR #1424) acrescentou p_actor_id uuid DEFAULT NULL
+-- para registrar quem transicionou a campanha: a funcao passou de 3 para 4
+-- argumentos e a Edge talkx-send ja chama com p_actor_id. O guard continuava exigindo
+-- pronargs = 3 e passou a acusar violacao em toda execucao. Medido no banco canonico
+-- antes do ajuste: pronargs = 4, pronargdefaults = 2, proargnames = {p_campaign_id,
+-- p_action, p_pause_reason, p_actor_id, campaign_id, previous_status, current_status}.
+-- A assinatura continua UNICA e os 2 DEFAULTs preservam a chamada de 2 args — o
+-- fail-closed nao afrouxa, so acompanha o contrato vigente.
 
 \set ON_ERROR_STOP on
 \pset tuples_only on
@@ -38,14 +48,14 @@ checks AS (
     (SELECT count(*) FROM target) = 1 AS assinatura_unica,
     COALESCE(
       (SELECT bool_and(
-         pronargs = 3
-         AND pronargdefaults = 1
+         pronargs = 4
+         AND pronargdefaults = 2
          -- proargnames carrega entrada E saída (a RPC devolve SETOF de uma
          -- linha com campaign_id/previous_status/current_status, que o
          -- talkx-send le). Conferido ao vivo no banco canônico: os nomes são
-         -- justamente estes seis.
-         AND proargnames[1:3] = ARRAY['p_campaign_id', 'p_action', 'p_pause_reason']
-         AND proargnames[4:6] = ARRAY['campaign_id', 'previous_status', 'current_status']
+         -- justamente estes sete — p_actor_id entrou no V12.
+         AND proargnames[1:4] = ARRAY['p_campaign_id', 'p_action', 'p_pause_reason', 'p_actor_id']
+         AND proargnames[5:7] = ARRAY['campaign_id', 'previous_status', 'current_status']
        ) FROM target),
       false
     ) AS assinatura_esperada,

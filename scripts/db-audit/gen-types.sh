@@ -27,11 +27,31 @@
 # NAO usa withPsqlEnvironment/PGPASSFILE (diferente de check-migration-drift.mjs,
 # register-migration.mjs etc): a CLI 2.116.0 (rewrite TS/Effect) roda
 # `gen types typescript --db-url` subindo um container Docker
-# (ghcr.io/supabase/postgres-meta), com --network host, que conecta usando a
-# --db-url recebida em texto puro (confirmado empiricamente — nao e
-# in-process nem evita Docker, ao contrario do que versoes anteriores deste
-# comentario afirmavam). Esse caminho nao respeita PGPASSFILE (convencao
-# exclusiva de libpq/psql/pgx). Mitigacao: ver bloco "Proxy local" abaixo.
+# (ghcr.io/supabase/postgres-meta), e entrega a --db-url a esse container em
+# texto puro (confirmado empiricamente — nao e in-process nem evita Docker).
+# Por isso a credencial real de producao nao pode ir direto nela: ver o bloco
+# "Proxy local" abaixo.
+#
+# Sobre o `--network-id host` no comando abaixo: ele torna explicita a rede do
+# container em vez de depender da rede que a CLI gera a cada execucao
+# (documentado como "use the specified docker network instead of a generated
+# one"). IMPORTANTE — ele NAO e correcao do "Error: timeout exceeded when
+# trying to connect", e um comentario anterior aqui afirmava isso e estava
+# errado (o PR #1637 foi mergeado com essa justificativa incorreta).
+# O que os runs mostram:
+#   - o timeout e INTERMITENTE: 2 de 14 runs do db-live-guard na main em
+#     02/10/2026 (bed17931, 73d808b8); os outros 12 conectaram, inclusive 7
+#     ANTES do #1637 existir;
+#   - nos runs que falham, o log traz os clientes do postgres-meta JA
+#     instanciados ("Failed to end the connection on error: { this:
+#     PostgresMetaRelationships { query: [AsyncFunction: query] }, end:
+#     undefined }") — se o container nao alcancasse o loopback do runner, o erro
+#     seria a montante e esses objetos nao existiriam;
+#   - logo o que trava e a QUERY atraves do pgbouncer ate o banco de producao
+#     (verify-full), apos ~16-21s; os runs que passam terminam em 4-8s.
+# A flag fica porque e inofensiva e remove uma dependencia implicita da rede
+# gerada; a causa do timeout segue em investigacao (nao e infra do container).
+#
 # --local nao tem esse problema: nao usa credencial nenhuma, so o Postgres do
 # Docker subido por `supabase db start`.
 set -e
@@ -45,6 +65,37 @@ fi
 OUTPUT="${1:-/tmp/types.generated.ts}"
 TMP="$(mktemp /tmp/types.XXXXXX.ts)"
 trap 'rm -f "$TMP" "${TMP}.normalized"' EXIT HUP INT TERM
+
+# Retry com backoff em volta do `supabase gen types`.
+#
+# Motivo (medido em 02/10/2026): o banco de producao passa por rajadas
+# transitorias de saturacao (varios `canceling statement due to statement
+# timeout` no mesmo minuto, queries de ~11s, `Connection reset by peer`).
+# Nessas janelas o handshake do pgbouncer ate o banco nao completa dentro do
+# timeout do cliente postgres-meta e a CLI morre com "Error: timeout exceeded
+# when trying to connect", com tudo saudavel. Prova: os 2 runs do db-live-guard
+# que falharam caem exatamente nos minutos com statement timeout registrado
+# (14:57 -> 1; 15:35 -> 4), enquanto o run que passou caiu em minuto limpo.
+# Um gate de conformidade nao pode ficar vermelho por saturacao de terceiros:
+# a tentativa extra custa segundos e evita o falso vermelho.
+retry_gen_types() {
+  _tentativa=1
+  _max=3
+  while [ "$_tentativa" -le "$_max" ]; do
+    if supabase gen types typescript "$@" > "$TMP"; then
+      return 0
+    fi
+    if [ "$_tentativa" -eq "$_max" ]; then
+      break
+    fi
+    _espera=$((_tentativa * ${GEN_TYPES_RETRY_DELAY_S:-10}))
+    echo "Aviso: 'supabase gen types' falhou na tentativa ${_tentativa}/${_max}; nova tentativa em ${_espera}s (banco possivelmente saturado)." >&2
+    sleep "$_espera"
+    _tentativa=$((_tentativa + 1))
+  done
+  echo "Erro: 'supabase gen types' falhou em ${_max} tentativas." >&2
+  return 1
+}
 
 if [ "$MODE" = local ]; then
   supabase gen types typescript \
@@ -97,7 +148,15 @@ else
     # nao tem TLS. Sem sslmode=disable aqui, tanto o pg_isready quanto o
     # supabase CLI herdam PGSSLMODE=verify-full do ambiente do job e tentam
     # TLS contra um endpoint loopback que nao fala TLS — falha sempre.
-    PROXY_URL="postgresql://proxy:unused@127.0.0.1:${PROXY_PORT}/proxydb?sslmode=disable"
+    # A perna cliente do proxy (loopback) usa auth_type=trust: a senha NAO e
+    # validada (userlist.txt registra "unused"). O valor aqui e' descartavel,
+    # nunca aponta para producao, e vem do ambiente (ZAPP_PG_PROXY_PASSWORD)
+    # para nao deixar credencial literal no codigo. Sem a variavel cai no
+    # proprio usuario do proxy, que o trust ignora -- o script segue rodando
+    # tanto no CI quanto no uso manual local.
+    PROXY_USER=proxy
+    PROXY_PASSWORD="${ZAPP_PG_PROXY_PASSWORD:-$PROXY_USER}"
+    PROXY_URL="postgresql://${PROXY_USER}:${PROXY_PASSWORD}@127.0.0.1:${PROXY_PORT}/proxydb?sslmode=disable"
 
     i=0
     while [ "$i" -lt 50 ]; do
@@ -112,16 +171,19 @@ else
       exit 1
     fi
 
-    supabase gen types typescript \
+    retry_gen_types \
       --db-url "$PROXY_URL" \
-      --schema public \
-      > "$TMP"
+      --network-id host \
+      --schema public
   else
+    if [ "${CI:-}" = "true" ]; then
+      echo "Erro: pgbouncer ausente em ambiente CI; a credencial DESTINO_URL nao pode ir direto no --db-url. Instale pgbouncer." >&2
+      exit 1
+    fi
     echo "Aviso: pgbouncer ausente; DESTINO_URL vai direto no --db-url (visivel via ps/proc a processos deste job). Instale pgbouncer para blindar a credencial." >&2
-    supabase gen types typescript \
+    retry_gen_types \
       --db-url "$DESTINO_URL" \
-      --schema public \
-      > "$TMP"
+      --schema public
   fi
 fi
 

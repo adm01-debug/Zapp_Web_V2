@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
-import { ArrowLeft, ImageOff, Loader2, Plus, Search, Send, User, Users } from 'lucide-react';
+import { ArrowLeft, Check, Image as ImageIcon, ImageOff, Loader2, MessageSquare, Package, Palette, Plus, Search, Send, User, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertCard, IconTile } from '@/components/talkx/talkxShared';
+import { AlertCard, IconTile, MetaRow, RailCard } from '@/components/talkx/talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { formatPhoneBR } from '@/lib/calls/phone';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -223,29 +223,40 @@ export function ContactSelectionStep({
           </ScrollArea>
         </div>
 
-        <aside className="min-w-0">
-          <div className="rounded-xl border border-border/50 bg-muted/30 p-3 space-y-2">
-            <div className="flex items-start gap-3">
-              {productImageUrl ? (
-                <img
-                  src={productImageUrl}
-                  alt={productName}
-                  className="w-24 h-24 rounded-lg object-cover shrink-0"
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                  <ImageOff className="w-6 h-6 text-muted-foreground" />
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-snug">{productName}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Modelo {templateLabels[template]}</p>
-                {variantLabel ? <p className="text-xs text-muted-foreground">{variantLabel}</p> : null}
+        <aside className="min-w-0 space-y-3">
+          <RailCard icon={Package} color="violet" title="Resumo do envio">
+            {productImageUrl ? (
+              <img
+                src={productImageUrl}
+                alt={productName}
+                className="w-24 h-24 rounded-lg object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center">
+                <ImageOff className="w-6 h-6 text-muted-foreground" />
               </div>
+            )}
+            <div>
+              <MetaRow icon={Package} label="Produto" value={productName} />
+              <MetaRow icon={MessageSquare} label="Modelo" value={templateLabels[template]} />
+              <MetaRow icon={Palette} label="Variação" value={variantLabel ?? 'Produto completo'} />
+              <MetaRow icon={ImageIcon} label="Fotos" value={`${selectedImagesCount} foto(s)`} />
             </div>
-            <p className="text-xs text-muted-foreground">{selectedImagesCount} foto(s)</p>
+          </RailCard>
+          {/* AlertCard não aceita aria-live/role (só children/tone/actionLabel/
+              onAction) — o anúncio acessível fica neste wrapper. O aviso só
+              aparece quando o envio está realmente liberado, para não duplicar
+              o AlertCard de bloqueio do rodapé. */}
+          <div aria-live="polite">
+            {selectedContact && !sendBlockedReason && !checkingSendReadiness && (
+              <AlertCard tone="info">
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5" />Pronto para enviar!
+                </span>
+              </AlertCard>
+            )}
           </div>
         </aside>
       </div>
@@ -255,6 +266,13 @@ export function ContactSelectionStep({
           <AlertCard tone="warning">{sendBlockedReason}</AlertCard>
         )}
         <div className="flex items-center gap-2">
+          {/* CT-68 — progresso do envio anunciado: o rótulo do botão muda a cada
+              lote, mas botão não é região viva. `sr-only` não ocupa layout. */}
+          {isSending && (
+            <span className="sr-only" role="status" aria-live="polite" data-testid="send-progress-live">
+              {sendProgress ? `Enviando ${sendProgress.done} de ${sendProgress.total}` : 'Enviando'}
+            </span>
+          )}
           <Button variant="outline" className="gap-1.5" onClick={onBack}>
             <ArrowLeft className="w-4 h-4" />Voltar
           </Button>

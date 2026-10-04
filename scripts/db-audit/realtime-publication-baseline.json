@@ -22,6 +22,7 @@
     "public.queues",
     "public.sales_deals",
     "public.talkx_campaign_events",
+    "public.talkx_campaign_segments",
     "public.talkx_campaigns",
     "public.talkx_recipients",
     "public.talkx_segments",

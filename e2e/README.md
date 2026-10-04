@@ -57,7 +57,8 @@ npm run test:e2e
 - `.github/workflows/e2e-logado.yml`: roda depois de cada merge na `main` e
   sob demanda (Actions → E2E logado → Run workflow). Numa única invocação:
   `--project=setup --project=chromium-e2e-core --project=chromium-authenticated
-  --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation
+  --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx
+  --project=firefox-conversation
   --project=webkit-conversation`. `setup` gera `e2e/.auth/user.json` uma vez;
   todos os projects com `dependencies: ['setup']` reutilizam o mesmo arquivo de
   sessão — o `storageState` gerado pelo Chrome é browser-agnostic e funciona
@@ -76,11 +77,19 @@ navegação real do job cai num vite frio e estoura o timeout de 30s
 os dois problemas numa invocação só.
 
 `chromium-authenticated` (mesma dependência de `setup`, mas com
-`testIgnore` cobrindo auth + os 2 specs acima) é invocado pelo
-`e2e-logado.yml` junto de `chromium-e2e-core` — uma única chamada do
-Playwright com os 3 projects explícitos (`setup`, `chromium-e2e-core`,
-`chromium-authenticated`). `talkx.spec.ts` roda sob este project: o
-usuário de teste é supervisor e enxerga "Campanhas".
+`testIgnore` cobrindo auth, os 2 specs acima e as 3 specs do módulo MAPA) é
+invocado pelo `e2e-logado.yml` junto de `chromium-e2e-core` — uma única
+chamada do Playwright com os projects explícitos (`setup`,
+`chromium-e2e-core`, `chromium-authenticated`, `chromium-mapa`).
+`talkx.spec.ts` roda sob este project: o usuário de teste é supervisor e
+enxerga "Campanhas".
+
+`chromium-mapa` cobre só as specs do módulo MAPA (`location-picker.spec.ts` —
+E71/E72, `contact-address.spec.ts` — E73, `contact-map-pin.spec.ts` — E74).
+Diferente de `chromium-e2e-core`/`chromium-authenticated`, **não** declara
+`dependencies: ['setup']` nem `storageState`: essas specs autenticam por sessão
+FALSA (`installFakeSession`) com REST/RPC e Mapbox mockados, então rodam sem
+`E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` — nenhum secret novo no `e2e-logado.yml`.
 
 ## Fixture de dados (contato seedado)
 
@@ -135,3 +144,79 @@ habilitado e o wizard avança para o step 2. Isso dispara o autosave do
 real em produção. O `afterAll` do arquivo chama `cleanupE2EDraftCampaigns()`
 (também em `e2e/fixtures/e2e-talkx.ts`) para remover todos os drafts com
 nome iniciando em `[E2E]` após cada run — mantendo o banco limpo.
+
+## Fixture de demonstração determinística (plano V4 · X003)
+
+`e2e/talkx-demo.spec.ts` renderiza o módulo Talk X com dados fake — sem gravar
+nem enviar nada em produção. `e2e/fixtures/talkx-demo.ts` exporta
+`mockTalkXBackend(page, tela)`, que carrega `e2e/fixtures/talkx-demo/<tela>.json`
+e intercepta via `page.route` as chamadas `rest/v1/talkx_*`,
+`rest/v1/rpc/talkx_*` e `functions/v1/talkx-*`: GET devolve a fixture, e
+qualquer escrita é bloqueada com 403 `"escrita não prevista"`. Criadores
+(`get_team_profiles`) e contatos (insights) respondem vazios para o demo não
+ler produção. O relógio é fixado com `page.clock`.
+
+**Contrato de crescimento (oficializado em X003/X004).** A fixture **cresce
+junto com cada etapa de tela**: a etapa que cria uma tabela/RPC Talk X acrescenta
+a resposta dela no JSON da tela correspondente — a fixture de cada tela nasce na
+etapa daquela tela, nunca antes. Enquanto isso, o arquivo da tela é `{}` e:
+
+- `loadDemoData(tela)` (e portanto `mockTalkXBackend`/`mockTalkXVisual`) **lança
+  `FixtureVaziaError`** ao referenciar uma fixture vazia — nunca mais
+  `data[table] ?? []` renderizando a tela em branco em silêncio;
+- a régua visual (`e2e/talkx-visual.spec.ts`) **pula** as telas cuja fixture é
+  `{}` (`fixtureDaTela(nn)` devolve `undefined`) — ausência de fixture não é
+  falha, é "ainda não é a etapa desta tela".
+
+Hoje só a tela 01 (`01-campanhas-visao-geral.json`) tem dados (as 24 campanhas
+do mock, KPI "Total de campanhas" = 24); as demais são `{}` e serão preenchidas
+pelas etapas de cada tela — por isso a régua hoje captura só a 01. O spec roda no
+`e2e-logado.yml` via `chromium-authenticated` (mesmo `storageState` dos demais
+specs autenticados), mas nunca toca o banco de produção do módulo.
+
+## Régua visual lado a lado (plano V4 · X004)
+
+`e2e/talkx-visual.spec.ts` é a **régua informativa** do plano V4: percorre as
+17 telas do mock e captura, em 1672×941 (tema escuro), aquelas cuja fixture tem
+dados reais (hoje só a 01 — ver contrato de crescimento acima), para comparar
+com os mockups de `docs/talkx/references/NN_*.png`. Roda **deslogado** (sem
+`storageState`/secrets) no projeto `chromium-talkx-visual` — a sessão é
+injetada no localStorage por `installFakeSession(page)` de
+`e2e/fixtures/talkx-demo.ts`, que também mocka `profiles`, `user_roles`, a RPC
+`user_has_permission` e marca o onboarding como concluído (senão o
+`WelcomeModal` abre e intercepta os cliques).
+
+As telas **13/14/15** (pausa/retomada, relatório concluído, importação CRM360)
+ainda não existem no app: o spec grava `nao-existe-NN.txt` em vez de capturar.
+
+Além disso, a régua só **captura** as telas cuja fixture tem dados reais
+(contrato de crescimento, seção anterior): hoje só a 01 — as 02..17 são puladas
+(`test.skip`) até que a etapa de cada tela popule a fixture dela, sem que isso
+seja falha do run.
+
+O artefato é montado por `scripts/talkx/lado-a-lado.mjs --out <dir>`, que copia
+mock + captura para `<dir>/img/{mock,captura}` e gera `<dir>/index.html` lado a
+lado. No CI, `e2e-talkx.yml` roda o spec, monta a régua e sobe o HTML como
+artefato `regua-visual-talkx` (14 dias) — informativo, não bloqueia merge.
+
+## Picker de localização (plano MAPA · E71)
+
+`e2e/location-picker.spec.ts` cobre o combobox de endereço do picker **sem
+secret e sem token real**. Reusa `installFakeSession(page)` de
+`e2e/fixtures/talkx-demo.ts` (sessão falsa injetada no localStorage) e mocka o
+backend inteiro com `page.route`: `rest/v1` (contato fixo `04dff4dc-…`,
+`profiles`/`user_roles`/`user_settings`, `messages` só leitura — escritas
+devolvem 403) e, o que importa aqui, `functions/v1/get-mapbox-token` devolve um
+token falso enquanto todo o `searchbox/v1` da Mapbox é respondido com as
+fixtures de `src/lib/__fixtures__/mapbox/` (E68) — inclusive o `/retrieve`,
+que usa o shape de `forward-avenida-paulista-1000.json` porque o E68 não tem
+`retrieve-*` para esse endereço.
+
+O fluxo é: abrir a conversa do contato de teste → "Mais" → "Enviar
+localização" → aba "Escolher no Mapa" → digitar "avenida paulista 1000" →
+esperar `role=listbox` → `ArrowDown` + `Enter` → conferir o cartão de
+confirmação → **fechar sem enviar**. O spec asserta que nenhum POST (insert)
+saiu para `rest/v1/messages`, então nenhum WhatsApp real é gerado (o único
+PATCH é o `is_read` do markAsRead ao abrir a conversa). Roda em
+`chromium-mapa` (E75) — projeto sem `setup`/`storageState`, pois a sessão é
+falsa.

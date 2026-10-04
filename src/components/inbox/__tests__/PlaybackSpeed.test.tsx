@@ -36,13 +36,13 @@ vi.mock('@/lib/logger', () => ({
 
 vi.mock('framer-motion', () => ({
   motion: {
-    div: React.forwardRef((props: any, ref: any) => {
+    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
       const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
       return React.createElement('div', { ...rest, ref });
     }),
-    circle: React.forwardRef((props: any, ref: any) => React.createElement('circle', { ref, ...props })),
+    circle: React.forwardRef((props: Record<string, unknown>, ref: unknown) => React.createElement('circle', { ref, ...props })),
   },
-  AnimatePresence: ({ children }: any) => children,
+  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
 }));
 
 import { AudioMessagePlayer } from '../AudioMessagePlayer';

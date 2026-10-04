@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: agendado (semanal) e dispatch
+#   prova: quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias
+#   falha: relatorio nao e publicado nem a issue e atualizada
+#   avisa: issue `[branch-hygiene]` no repositorio
 # ==================================================================
 # Auditoria semanal de higiene de branches (somente leitura)
 # ==================================================================
@@ -26,6 +31,13 @@ concurrency:
 jobs:
   audit:
     name: Relatorio de branches
+    # E79: as permissoes de escrita ficam no JOB, nunca no nivel do workflow. O zizmor
+    # (regra excessive-permissions, severidade alta) reprova `write` no topo porque o
+    # escopo vale para todos os jobs; no job, o escopo e' exatamente o que ele usa.
+    permissions:
+      contents: read # o passo de relatorio faz git fetch/cherry
+      actions: read # listar os runs do proprio repositorio (KPI)
+      issues: write # criar/atualizar a issue semanal [kpi-actions]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -35,6 +47,19 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: KPI do GitHub Actions
+        # E79: mede o proprio uso do Actions -- runs/semana por workflow, taxa de
+        # cancelamento, taxa de falha, minutos e os 5 jobs mais lentos. Publica no Job
+        # Summary e mantem uma issue aberta `[kpi-actions]` atualizada a cada semana.
+        # A duracao sai de `run_started_at`/`updated_at`: o endpoint de faturamento
+        # devolve `billable: {}` em repositorio publico (medido em 03/10/2026).
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JANELA_DIAS: '7'
+        run: |
+          set -euo pipefail
+          node scripts/ci/actions-kpi.mjs
+
       - name: Gerar relatorio
         env:
           GH_TOKEN: ${{ github.token }}
@@ -43,12 +68,15 @@ jobs:
           set -euo pipefail
           git fetch origin main --quiet
 
+          # $RUNNER_TEMP sobrevive entre passos (cada `run:` e' um shell novo);
+          # `mktemp` sozinho nao — o caminho morreria com o shell do passo 1.
+          RELATORIO="$RUNNER_TEMP/branch-hygiene.md"
           {
             echo "## Auditoria de branches — $(date -u +%Y-%m-%d)"
             echo
             echo "### Patch-equivalentes a \`main\` (candidatos a poda, 0 commits unicos)"
             echo '```'
-            for ref in $(git branch -r --format='%(refname:short)' | grep -v '^origin/HEAD' | grep -v '^origin/main$'); do
+            for ref in $(git branch -r --format='%(refname:short)' | grep -v '^origin/HEAD' | grep -v '^origin/main$' | grep -v '^origin$'); do
               b="${ref#origin/}"
               n=$(git cherry origin/main "$ref" 2>/dev/null | grep -c '^+' || true)
               if [ "$n" = "0" ]; then
@@ -60,7 +88,7 @@ jobs:
             echo "### Sem commit ha mais de 30 dias"
             echo '```'
             CUTOFF=$(date -u -d '30 days ago' +%s 2>/dev/null || date -u -v-30d +%s)
-            for ref in $(git branch -r --format='%(refname:short)' | grep -v '^origin/HEAD' | grep -v '^origin/main$'); do
+            for ref in $(git branch -r --format='%(refname:short)' | grep -v '^origin/HEAD' | grep -v '^origin/main$' | grep -v '^origin$'); do
               ts=$(git log -1 --format=%ct "$ref" 2>/dev/null || echo 0)
               if [ "$ts" -lt "$CUTOFF" ] && [ "$ts" -gt 0 ]; then
                 echo "${ref#origin/} ($(date -u -d "@$ts" +%Y-%m-%d 2>/dev/null || date -u -r "$ts" +%Y-%m-%d))"
@@ -68,11 +96,47 @@ jobs:
             done
             echo '```'
             echo
-            echo "### PRs abertos ha mais de 14 dias"
+            # E91: era 14 dias por *criacao*. O que interessa e PR parada — sem push —,
+            # entao o corte passou a ser 7 dias por *updatedAt* (o push atualiza esse
+            # campo; comentario tambem, e por isso o texto abaixo diz o que mede).
+            echo "### PRs abertos ha mais de 7 dias sem push (updatedAt)"
             echo '```'
             # --limit explicito: o default do gh e 30, e o relatorio truncaria
             # silenciosamente se a fila de PRs abertas passar disso.
-            gh pr list --repo "$REPO" --state open --limit 100 --json number,title,createdAt,url \
-              --jq '.[] | select((now - (.createdAt | fromdateiso8601)) > (14*86400)) | "#\(.number) \(.title) — \(.url)"'
+            gh pr list --repo "$REPO" --state open --limit 100 --json number,title,updatedAt,url \
+              --jq '.[] | select((now - (.updatedAt | fromdateiso8601)) > (7*86400)) | "#\(.number) \(.title) — ultimo movimento \(.updatedAt | split("T")[0]) — \(.url)"'
             echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          } > "$RELATORIO"
+
+          cat "$RELATORIO" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publicar na issue semanal [branch-hygiene]
+        # E91: alem do Job Summary (efemero), mantem UMA issue aberta com a tabela,
+        # para o historico ficar consultavel. Mesmo mecanismo do [kpi-actions] em
+        # actions-kpi.mjs: procura a aberta por titulo e atualiza; se nao houver,
+        # cria. Idempotente — rodar duas vezes no mesmo dia nao duplica.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Cada `run:` e' um shell novo: a variavel do passo anterior nao existe
+          # aqui. O ARQUIVO persiste (mesmo $RUNNER_TEMP), o nome dele nao — por
+          # isso o caminho e' recalculado em vez de herdado.
+          RELATORIO="$RUNNER_TEMP/branch-hygiene.md"
+          if [ ! -s "$RELATORIO" ]; then
+            echo "::error::relatorio nao foi gerado pelo passo anterior ($RELATORIO)"
+            exit 1
+          fi
+          TITULO='[branch-hygiene] Higiene de branches — relatorio semanal'
+          EXISTENTE=$(gh issue list --repo "$REPO" --state open --limit 100 --json number,title \
+            --jq '[.[] | select(.title | startswith("[branch-hygiene]"))][0].number // empty')
+
+          if [ -n "$EXISTENTE" ]; then
+            gh issue edit "$EXISTENTE" --repo "$REPO" --body-file "$RELATORIO"
+            echo "issue atualizada: #$EXISTENTE"
+          else
+            gh issue create --repo "$REPO" --title "$TITULO" --body-file "$RELATORIO"
+            echo "issue criada"
+          fi
+          rm -f "$RELATORIO"

@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
@@ -393,13 +393,11 @@ serve(async (req) => {
       });
       const response = await fetch(`${evolutionApiUrl}/instance/connect`, { method: 'POST', headers: { 'apikey': instToken, 'Content-Type': 'application/json' }, body: connectBody });
       if (!response.ok) {
-        // deno-lint-ignore no-explicit-any
-        let errData: any = {};
+        let errData: { message?: unknown } = {};
         try { const _t = await response.text(); errData = JSON.parse(_t); } catch { /* non-JSON */ }
         return new Response(JSON.stringify({ error: true, status: response.status, message: errData?.message ?? 'Falha ao conectar instância na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
-      // deno-lint-ignore no-explicit-any
-      let data: any = {};
+      let data: Record<string, unknown> = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       // A GO emite o QR de forma ASSÍNCRONA depois do connect: ler /instance/qr
       // uma única vez logo após o connect pega o payload ainda vazio (corrida) e
@@ -411,16 +409,17 @@ serve(async (req) => {
       // como "<dataURI>|<url>", o que quebra o <img src>. Re-renderiza a partir do payload cru.
       const fetchQr = async (): Promise<{ base64?: string; code?: string }> => {
         const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(5000) });
-        // deno-lint-ignore no-explicit-any
-        let qrData: any = {};
+        let qrData: { data?: { code?: string; qrcode?: unknown } } = {};
         try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
         const rawQrCode = String(qrData?.data?.code ?? '').split('#').pop() ?? '';
         let base64 = String(qrData?.data?.qrcode ?? '').split('|')[0] || undefined;
         if (rawQrCode.startsWith('2@')) {
           try {
-            // deno-lint-ignore no-explicit-any
-            const qrMod: any = await import('https://esm.sh/qrcode@1.5.3');
-            const svg = await (qrMod.default ?? qrMod).toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
+            // O esm.sh serve os tipos do qrcode junto do módulo, então não precisa de `any`:
+            // basta escolher entre o default (CJS) e o próprio namespace (ESM).
+            const qrMod = await import('https://esm.sh/qrcode@1.5.3');
+            const qrRenderer = (qrMod as { default?: typeof qrMod }).default ?? qrMod;
+            const svg = await qrRenderer.toString(rawQrCode, { type: 'svg', margin: 2, width: 512 });
             base64 = `data:image/svg+xml;base64,${btoa(svg)}`;
           } catch (err: unknown) {
             new Logger('evolution-api').error('Falha ao re-renderizar QR; usando o da GO', { error: err instanceof Error ? err.message : String(err) });
@@ -574,8 +573,17 @@ serve(async (req) => {
     if (action === 'status') {
       const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
       const response = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
-      // deno-lint-ignore no-explicit-any
-      let data: any = {};
+      // Resposta de /instance/status. A GO manda `data` aninhado e nem sempre concorda
+      // entre loggedIn/connected/State; o DTO mantém o índice aberto porque o payload varia.
+      let data: {
+        state?: string;
+        data?: {
+          loggedIn?: unknown; LoggedIn?: unknown;
+          connected?: unknown; Connected?: unknown;
+          State?: unknown;
+        };
+        [k: string]: unknown;
+      } = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       // Requer loggedIn E connected para mapear 'open'; '||' nao '??' porque
       // loggedIn:false nao pode curto-circuitar o fallback por State (a GO
@@ -618,8 +626,7 @@ serve(async (req) => {
 
     if (action === 'disconnect') {
       const response = await fetch(`${evolutionApiUrl}/instance/logout`, { method: 'DELETE', headers: { 'apikey': Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey } });
-      // deno-lint-ignore no-explicit-any
-      let data: any = {};
+      let data: { message?: unknown; [k: string]: unknown } = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao desconectar instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       // Guard: não sobrescrever qr_pending com disconnected — usuário pode ter iniciado
@@ -639,8 +646,7 @@ serve(async (req) => {
       } else {
         deleteRes = await proxy(`/instance/delete/${instance}`, 'DELETE', body);
       }
-      // deno-lint-ignore no-explicit-any
-      const deleteBody: any = await deleteRes.json().catch(() => ({}));
+      const deleteBody: { error?: unknown; [k: string]: unknown } = await deleteRes.json().catch(() => ({}));
       if (!deleteBody?.error) {
         await supabase.from('whatsapp_connections').delete().eq('instance_id', instance);
       }

@@ -22,7 +22,7 @@ export const AIResponseCard = memo(function AIResponseCard({
   const wordCount = useMemo(() => response.trim().split(/\s+/).filter(Boolean).length, [response]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(response);
+    void navigator.clipboard.writeText(response);
     setCopied(true);
     toast.success('Copiado!');
     setTimeout(() => setCopied(false), 2000);

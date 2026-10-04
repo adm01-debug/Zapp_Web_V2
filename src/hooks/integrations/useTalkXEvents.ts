@@ -10,6 +10,14 @@ export type TalkXEventType = 'created' | 'updated' | 'scheduled' | 'started' | '
   | 'scheduled_updated' | 'limits_updated' | 'connection_failed' | 'resumed_auto' | 'skipped_suppressed'
   | 'suppression_add' | 'suppression_remove' | 'suppression_update' | 'segments_reviewed' | 'checklist';
 
+/**
+ * X025: eventos que o CLIENTE ainda pode gravar. O ciclo de vida
+ * (created/updated/scheduled/started/paused/cancelled/resumed) passou a ser
+ * gravado pelo SERVIDOR (trigger de rascunho + transition_talkx_campaign), e a
+ * policy de INSERT de `authenticated` só aceita esta lista.
+ */
+export type TalkXClientEventType = 'note' | 'checklist' | 'segments_reviewed';
+
 export interface TalkXCampaignEvent {
   id: string;
   /** V11: nulo em evento de entidade (supressão, segmento) — antes era NOT NULL. */
@@ -43,21 +51,28 @@ export function useTalkXEvents(campaignId: string | null) {
     refetchInterval: 10_000,
   });
 
-  const logEvent = async (id: string, event_type: TalkXEventType, message?: string) => {
+  const logEvent = async (id: string, event_type: TalkXClientEventType, message?: string) => {
     try {
       await fromTable('talkx_campaign_events').insert({ campaign_id: id, event_type, message: message ?? null, actor_id: profile?.id ?? null });
       qc.invalidateQueries({ queryKey: ['talkx-events', id] });
     } catch { /* timeline é best-effort */ }
   };
 
-  return { events: query.data ?? [], isLoading: query.isLoading, logEvent, refetch: query.refetch };
+  return {
+    events: query.data ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: (query.error as Error | null) ?? null,
+    logEvent,
+    refetch: query.refetch,
+  };
 }
 
 /** Logger sem estado de query — para usar fora do monitor (lista, wizard). */
 export function useTalkXEventLogger() {
   const qc = useQueryClient();
   const { profile } = useAuth();
-  return async (campaignId: string, event_type: TalkXEventType, message?: string) => {
+  return async (campaignId: string, event_type: TalkXClientEventType, message?: string) => {
     try {
       await fromTable('talkx_campaign_events').insert({ campaign_id: campaignId, event_type, message: message ?? null, actor_id: profile?.id ?? null });
       qc.invalidateQueries({ queryKey: ['talkx-events', campaignId] });

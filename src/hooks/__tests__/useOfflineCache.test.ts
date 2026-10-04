@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 
 // Mock logger
 vi.mock('@/lib/logger', () => ({
@@ -28,7 +29,7 @@ function makeConversation(id: string, msgCount = 1) {
     })),
     lastMessage: { id: `msg-${id}-0`, content: 'Last', created_at: new Date().toISOString() },
     unreadCount: 1,
-  } as any;
+  } as unknown as ConversationWithMessages;
 }
 
 describe('useOfflineCache', () => {

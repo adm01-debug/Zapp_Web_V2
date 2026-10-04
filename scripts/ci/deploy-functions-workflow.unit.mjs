@@ -61,8 +61,17 @@ test('escopo all e serializado contra deploys por funcao antes do Deploy', () =>
   assert.match(workflow.slice(gate, deploy), /edge-tooling\/scripts\/edge-deploy\/serialize-scope\.mjs/);
 });
 
-test('tag de deploy e unica por run (deploys paralelos no mesmo segundo)', () => {
-  assert.match(workflow, /TAG="edge-deploy\/[^"\n]*\$\{GITHUB_RUN_ID\}"/);
+test('registro de deploy e unico por run (deploys paralelos no mesmo segundo)', async () => {
+  // E60 (03/10/2026): o rastro de deploy deixou de ser a tag
+  // `edge-deploy/<data>-<sha8>-<run>` e passou a ser um Deployment do GitHub. A
+  // propriedade que importa continua a mesma -- registros de runs diferentes nao
+  // podem colidir, mesmo terminando no mesmo segundo -- e agora vive no payload,
+  // que carrega o run id e o sha deployado.
+  assert.match(workflow, /register-deployment\.mjs/, 'o passo tem de registrar o Deployment');
+  const cli = await readFile(new URL('../edge-deploy/register-deployment.mjs', import.meta.url), 'utf8');
+  assert.match(cli, /GITHUB_RUN_ID/, 'o registro tem de carregar o run id (unicidade por run)');
+  assert.match(cli, /DEPLOYED_GIT_SHA/, 'e o sha deployado (o que esta no ar, nao a branch)');
+  assert.doesNotMatch(workflow, /TAG="edge-deploy\//, 'a tag de rastreabilidade saiu de cena na E60');
 });
 
 test('timeout do job cobre a espera maxima do gate mais um deploy completo', async () => {
@@ -72,3 +81,15 @@ test('timeout do job cobre a espera maxima do gate mais um deploy completo', asy
   assert.ok(timeout >= MAX_WAIT_MINUTES + 60, `timeout-minutes=${timeout} < ${MAX_WAIT_MINUTES} + 60`);
 });
 
+
+test('E55: o passo de atestacao tem teto proprio de 10 min', () => {
+  // O job tem 100 min, mas a atestacao nao pode consumir esse orcamento: se a
+  // Management API nao estabilizar, o passo falha com lastReason e o run nao
+  // termina em success.
+  const inicio = workflow.indexOf('- name: Capturar e validar manifesto remoto pos-deploy');
+  const fim = workflow.indexOf('- name: Executar smoke positivo e negativo por funcao');
+  assert.ok(inicio > 0 && fim > inicio);
+  const bloco = workflow.slice(inicio, fim);
+  assert.match(bloco, /^        timeout-minutes: 10$/m);
+  assert.ok(workflow.indexOf('    timeout-minutes: 100') < inicio, 'o job mantem os 100 min');
+});

@@ -1,4 +1,5 @@
 import { Phone, PhoneOff, Mic, MicOff } from 'lucide-react';
+import { CallChannelBadge } from './CallChannelBadge';
 import { useNavigationHistory } from '@/hooks/system/useNavigationHistory';
 import { Button } from '@/components/ui/button';
 import { useCallSession } from '@/providers/CallSessionProvider';
@@ -22,59 +23,54 @@ export function ActiveCallBar() {
   if (!isInCall || currentView === 'voip') return null;
 
   const isIncomingRinging = sip.callStatus === 'ringing' && sip.callDirection === 'inbound';
+  const isActive = sip.callStatus === 'active';
 
-  // Na view Contatos há uma pilha de botões flutuantes (novo "+" verde + voltar ao
-  // topo + microfone). A barra sobe acima dessa pilha para não cobrir nenhum deles.
-  // Nas demais views mantém bottom-24 (livre do microfone e do voltar ao topo).
-  const inContacts = currentView === 'contacts';
-  const positionClass = inContacts
-    ? 'bottom-[calc(284px+env(safe-area-inset-bottom,0px))] md:bottom-56'
-    : 'bottom-24';
+
+  const navegarParaTelefonia = () => {
+    // T69: clique na faixa leva o agente para o painel completo da telefonia.
+    window.history.pushState({}, '', '/?view=voip');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view: 'voip' } }));
+  };
 
   return (
-    <div className={`fixed right-4 z-[9998] w-72 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden ${positionClass}`}>
-      <div className="px-4 py-3 flex items-center justify-between gap-2 bg-primary/10">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate">{sip.currentNumber || 'Chamada'}</p>
-          <p className="text-xs text-muted-foreground">
-            {sip.callStatus === 'calling' && 'Chamando...'}
-            {isIncomingRinging && 'Chamada recebida...'}
-            {sip.callStatus === 'ringing' && !isIncomingRinging && 'Tocando...'}
-            {sip.callStatus === 'active' && formatTime(sip.callDuration)}
-          </p>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {isIncomingRinging ? (
-            <Button
-              size="icon"
-              className="w-8 h-8 rounded-full bg-success hover:bg-success/90"
-              onClick={sip.acceptIncomingCall}
-              aria-label="Atender"
-            >
-              <Phone className="w-4 h-4" />
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="icon"
-              className="w-8 h-8 rounded-full"
-              onClick={sip.toggleMute}
-              disabled={sip.callStatus !== 'active'}
-              aria-label={sip.isMuted ? 'Ativar microfone' : 'Silenciar'}
-            >
-              {sip.isMuted ? <MicOff className="w-4 h-4 text-destructive" /> : <Mic className="w-4 h-4" />}
-            </Button>
-          )}
-          <Button
-            variant="destructive"
-            size="icon"
-            className="w-8 h-8 rounded-full"
-            onClick={sip.hangUp}
-            aria-label="Encerrar"
-          >
-            <PhoneOff className="w-4 h-4" />
+    <div
+      className="flex h-12 shrink-0 items-center gap-3 border-b border-border bg-primary/5 px-3"
+      data-testid="tel-active-bar"
+    >
+      <button
+        type="button"
+        onClick={navegarParaTelefonia}
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        aria-label="Abrir a chamada em curso na telefonia"
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <Phone className="h-4 w-4" />
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-medium text-foreground">
+            {sip.currentNumber || 'Chamada em curso'}
+          </span>
+          <span className="block text-xs text-muted-foreground">
+            {isIncomingRinging ? 'Chamada recebida' : sip.callStatus === 'active' ? formatTime(sip.callDuration) : 'Chamando...'}
+          </span>
+        </span>
+        <CallChannelBadge channel={sip.session.channel} />
+      </button>
+
+      <div className="flex shrink-0 items-center gap-1">
+        {isIncomingRinging ? (
+          <Button size="icon" className="h-8 w-8 rounded-full bg-success hover:bg-success/90" onClick={sip.acceptIncomingCall} aria-label="Atender">
+            <Phone className="h-4 w-4" />
           </Button>
-        </div>
+        ) : (
+          <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={sip.toggleMute} disabled={!isActive} aria-pressed={sip.isMuted} aria-label={sip.isMuted ? 'Ativar microfone' : 'Silenciar'}>
+            {sip.isMuted ? <MicOff className="h-4 w-4 text-destructive" /> : <Mic className="h-4 w-4" />}
+          </Button>
+        )}
+        <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={sip.hangUp} aria-label="Encerrar">
+          <PhoneOff className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

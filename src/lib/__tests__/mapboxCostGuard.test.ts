@@ -41,7 +41,11 @@ describe('mapboxCostGuard', () => {
     mockRpc.mockResolvedValue({ data: MONTHLY_SESSION_LIMIT - 10, error: null });
     await forceSearchBudgetRefreshForTests();
     expect(isSearchBudgetOk()).toBe(true);
-    expect(logAudit).not.toHaveBeenCalled();
+    // E49: este valor cai na faixa de aviso antecipado (>=80% do teto), então o
+    // `searchbox_budget_warning` PODE sair — o que este teste garante é que NÃO houve degradação.
+    expect(logAudit).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'searchbox_cost_guard' }),
+    );
   });
 
   it('acima do teto: degrada e registra searchbox_cost_guard uma vez', async () => {

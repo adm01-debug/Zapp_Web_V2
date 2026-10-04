@@ -22,11 +22,16 @@ const requirements: PasswordRequirement[] = [
   { label: 'Caractere especial (!@#$%)', test: (p) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(p), weight: 1 },
 ];
 
-// Simple hash function for k-anonymity check
+// Hash SHA-1 exigido pelo protocolo de k-anonimato da API Pwned Passwords
+// (HaveIBeenPwned): o servico publica as faixas indexadas por SHA-1 e so o
+// prefixo de 5 caracteres do hash viaja na URL -- a senha e o restante do
+// hash nunca saem do navegador. Nao e escolha de seguranca: e o formato da
+// API. Trocar o algoritmo (ex.: SHA-256) muda o prefixo, o servidor deixa de
+// casar as faixas e a checagem de senha vazada desliga em silencio.
 async function sha1Hash(str: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+  const hashBuffer = await crypto.subtle.digest('SHA-1', data); // NOSONAR -- SHA-1 e requisito do protocolo HIBP Pwned Passwords, nao hash de senha em repouso
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
@@ -103,7 +108,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
           const [hashSuffix, count] = line.split(':');
           if (hashSuffix.trim() === suffix) {
             setIsBreached(true);
-            setBreachCount(parseInt(count.trim(), 10));
+            setBreachCount(Number.parseInt(count.trim(), 10));
             return;
           }
         }

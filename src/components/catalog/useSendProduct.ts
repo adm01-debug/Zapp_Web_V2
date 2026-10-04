@@ -14,6 +14,8 @@ export interface ContactResult {
   name: string;
   phone: string;
   avatar_url: string | null;
+  /** CT-45 — alimenta {{empresa}} na personalização da mensagem. */
+  company?: string | null;
 }
 
 /** CT-46 — contador de mensagens do envio em andamento ("Enviando 2/4..."). */
@@ -54,6 +56,12 @@ function randomFraction(): number {
  * .openContactChat — repetir a tentativa cobre a view do inbox ainda montando.
  */
 export function openContactChat(contactId: string): void {
+  // O retry abaixo agenda timers que podem disparar depois de o ambiente de
+  // execução sair de cena (jsdom desmontado no fim da suíte, ou SSR onde
+  // `window` nunca existiu). Sem esta guarda o callback estoura
+  // `ReferenceError: window is not defined` fora de qualquer try/catch e
+  // derruba o processo — era isso que reprovava o `test:coverage` do CI.
+  if (typeof window === 'undefined') return;
   const appWindow = window as Window & { __pendingOpenContactId?: string };
   appWindow.__pendingOpenContactId = contactId;
   if (new URLSearchParams(window.location.search).get('view') !== 'inbox') {
@@ -62,6 +70,9 @@ export function openContactChat(contactId: string): void {
   let attempts = 0;
   const tryDispatch = () => {
     attempts++;
+    // O timer sobrevive ao ambiente (teardown do jsdom): reavaliar antes de
+    // tocar o DOM evita o ReferenceError e encerra a cadeia de retry.
+    if (typeof window === 'undefined') return;
     window.dispatchEvent(new CustomEvent('open-contact-chat', { detail: { contactId } }));
     if (attempts < 15) setTimeout(tryDispatch, 200);
   };

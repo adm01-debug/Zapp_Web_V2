@@ -74,7 +74,7 @@ export function usePushNotifications() {
       });
     };
 
-    checkSupport();
+    void checkSupport();
   }, []);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {

@@ -16,7 +16,6 @@ import {
   saveThemeConfig,
   STORAGE_KEY,
 } from '../presets';
-import { coresComContrasteAA } from '../contrasteAA';
 
 // ─── HSL → sRGB → luminância relativa → contraste WCAG (sem lib nova) ──────
 function parseHsl(s: string): [number, number, number] {
@@ -303,9 +302,7 @@ describe('§5 applyThemePreset', () => {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
     expect(raw.cachePreset).toBe('gx-razer');
     expect(raw.cacheMode).toBe('dark');
-    expect(raw.cssVarsCache.primary).toBe(
-      coresComContrasteAA(getPresetById('gx-razer')!.dark as unknown as Record<string, string>, 'dark').primary,
-    );
+    expect(raw.cssVarsCache.primary).toBe('113 70% 51%');
   });
 });
 

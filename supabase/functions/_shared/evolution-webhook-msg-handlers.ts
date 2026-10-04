@@ -4,9 +4,10 @@ import {
   isRecord, normalizePhone, resolveEventJid, toEventRecords, shouldUpdateStatus,
   getConnectionByInstance, getContactByPhone,
 } from "./evolution-helpers.ts";
+import type { EvolutionDbClient } from "./evolution-types.ts";
 
 // deno-lint-ignore no-explicit-any
-export async function handleSendMessage(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
+export async function handleSendMessage(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
   // Hoisted: mesmo instance em toda a chamada, evita refetch por entry e
   // permite escopar o dup-check abaixo por whatsapp_connection_id.
   const connection = await getConnectionByInstance(supabase, instance);
@@ -32,12 +33,12 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
       .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
     if (existingMessage?.id) {
-      if (shouldUpdateStatus(existingMessage.status, 'sent')) {
+      if (shouldUpdateStatus(existingMessage.status as string | null, 'sent')) {
         await supabase.from('messages')
           .update({ status: 'sent', external_id: externalId, status_updated_at: now })
           .eq('id', existingMessage.id);
       }
-      updatedMessageId = existingMessage.id;
+      updatedMessageId = existingMessage.id as string;
     }
 
     if (!updatedMessageId) {
@@ -67,7 +68,7 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
             await supabase.from('messages')
               .update({ status: 'sent', external_id: externalId, status_updated_at: now })
               .eq('id', pendingMessage.id);
-            updatedMessageId = pendingMessage.id;
+            updatedMessageId = pendingMessage.id as string;
           }
         }
       }
@@ -78,7 +79,7 @@ export async function handleSendMessage(supabase: any, instance: string, data: u
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleMessagesUpdate(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
+export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
   const statusMap: Record<string, string> = {
     'DELIVERY_ACK': 'delivered', 'READ': 'read', 'PLAYED': 'read', 'SERVER_ACK': 'sent', 'ERROR': 'failed',
   };
@@ -106,31 +107,43 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
       if (currentMessage?.id) {
-        if (shouldUpdateStatus(currentMessage.status, newStatus)) {
+        if (shouldUpdateStatus(currentMessage.status as string | null, newStatus)) {
           await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
           console.warn(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
       }
-      // Acknowledge Talk X only for an outbound receipt on the connection that
-      // emitted it. The RPC locks the recipient and increments delivered_count
-      // in the same transaction, so concurrent DELIVERY_ACK events are idempotent.
-      if (newStatus === 'delivered' && key?.fromMe === true && connection?.id) {
-        const { data: recorded, error: deliveryError } = await supabase.rpc('record_talkx_recipient_delivered', {
+      // Recibo Talk X (X028): casa pelo external_id do DESTINATARIO na conexao que
+      // emitiu o evento — um external_id que so existe para mensagem nossa. Por isso
+      // NAO depende de key.fromMe: no Evolution GO o fromMe e inferido por
+      // Chat === Sender (evolution-go-adapter) e pode vir falso mesmo num recibo da
+      // nossa mensagem, o que mantinha delivered/read em zero. A RPC canonica
+      // (record_talkx_recipient_receipt) e idempotente: sem destinatario com esse
+      // external_id devolve false e o log registra o nao-casamento.
+      let talkxReceiptRecorded = false;
+      if ((newStatus === 'delivered' || newStatus === 'read') && connection?.id) {
+        const receiptEvent = newStatus === 'delivered' ? 'delivered' : 'read';
+        const { data: receiptRecorded, error: receiptError } = await supabase.rpc('record_talkx_recipient_receipt', {
           p_external_id: key.id,
           p_connection_id: connection.id,
+          p_event: receiptEvent,
         });
-        if (deliveryError) {
-          console.error(`TalkX delivery acknowledgement failed for ${key.id}: ${deliveryError.message}`);
-        } else if (recorded === true) {
-          console.warn(`TalkX delivery acknowledged: ${key.id}`);
+        if (receiptError) {
+          console.error(`TalkX ${receiptEvent} acknowledgement failed for ${key.id}: ${receiptError.message}`);
+        } else if (receiptRecorded === true) {
+          talkxReceiptRecorded = true;
+          console.warn(`TalkX ${receiptEvent} acknowledged: ${key.id}`);
+        } else {
+          console.warn(`TalkX ${receiptEvent} receipt did not match a recipient for ${key.id}`);
         }
-        if (recorded !== true) {
-          // recorded===false: nao era destinatario Talk X (unique index de
-          // external_id nao bateu com talkx_recipients). deliveryError: o RPC
-          // do TalkX falhou por outro motivo (timeout de pooler, etc.) e isso
-          // nao prova que NAO seja um destinatario Multiplix -- tentar sempre
-          // que o TalkX nao confirmou, nao só quando ele respondeu sem erro.
-          // Mesmo padrao de idempotencia via RPC do lado Multiplix.
+      }
+
+      // Recibos do Multiplix continuam restritos a mensagem NOSSA (fromMe === true):
+      // um recibo do contato nunca resolve destinatario nem item nosso.
+      if (newStatus === 'delivered' && key?.fromMe === true && connection?.id) {
+        // O destinatario Multiplix e registro distinto do Talk X: roda sempre que o
+        // Talk X nao confirmou (false ou erro) — um erro do TalkX nao prova que nao e
+        // destinatario Multiplix. Mesmo padrao de idempotencia via RPC.
+        if (!talkxReceiptRecorded) {
           const { data: multiplixRecorded, error: multiplixError } = await supabase.rpc('record_multiplix_recipient_delivered', {
             p_external_id: key.id,
             p_connection_id: connection.id,
@@ -140,6 +153,35 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
           } else if (multiplixRecorded === true) {
             console.warn(`Multiplix delivery acknowledged: ${key.id}`);
           }
+        }
+
+        // F58: o recibo tambem resolve o ITEM da fila (multiplix_delivery_items, F32b).
+        // E um registro distinto do destinatario e pode existir mesmo quando o TalkX ja
+        // confirmou o dele — por isso fica FORA do encadeamento acima, que so roda quando
+        // o anterior nao confirmou. A RPC e idempotente e devolve false quando nao ha
+        // item com esse external_id (o caso comum enquanto o worker nao migra para a fila).
+        const { data: itemRecorded, error: itemError } = await supabase.rpc('record_multiplix_item_delivered', {
+          p_external_id: key.id,
+          p_connection_id: connection.id,
+        });
+        if (itemError) {
+          console.error(`Multiplix item delivery acknowledgement failed for ${key.id}: ${itemError.message}`);
+        } else if (itemRecorded === true) {
+          console.warn(`Multiplix item delivery acknowledged: ${key.id}`);
+        }
+      } else if (newStatus === 'read' && key?.fromMe === true && connection?.id) {
+        // F58: o READ resolve o ITEM da fila do Multiplix — um READ do provedor nunca marcava
+        // read_at no ITEM do Multiplix. Mesmo encadeamento do delivered, com o evento
+        // explicito; a RPC so eleva (item ja em 'read' devolve false, sem rebaixar).
+        const { data: itemReadRecorded, error: itemReadError } = await supabase.rpc('record_multiplix_item_delivered', {
+          p_external_id: key.id,
+          p_connection_id: connection.id,
+          p_event: 'read',
+        });
+        if (itemReadError) {
+          console.error(`Multiplix item read acknowledgement failed for ${key.id}: ${itemReadError.message}`);
+        } else if (itemReadRecorded === true) {
+          console.warn(`Multiplix item read acknowledged: ${key.id}`);
         }
       } else if (key.fromMe === true) {
         // Recibo de mensagem NOSSA que o frontend ainda nao estampou com
@@ -180,7 +222,7 @@ export async function handleMessagesUpdate(supabase: any, instance: string, data
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleMessagesDelete(supabase: any, instance: string, data: unknown, baseData: Record<string, unknown>) {
+export async function handleMessagesDelete(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
   const connection = await getConnectionByInstance(supabase, instance);
   for (const entry of toEventRecords(data, ['messages', 'keys'])) {
     const keySource = isRecord(entry.key)
@@ -228,7 +270,7 @@ export async function handleMessagesDelete(supabase: any, instance: string, data
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleMessagesSet(supabase: any, instance: string, data: unknown) {
+export async function handleMessagesSet(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const messages = toEventRecords(data, ['messages']);
   if (messages.length === 0) return;
 
@@ -283,7 +325,7 @@ export async function handleMessagesSet(supabase: any, instance: string, data: u
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleMessagesEdited(supabase: any, data: unknown, baseData: Record<string, unknown>) {
+export async function handleMessagesEdited(supabase: EvolutionDbClient, data: unknown, baseData: Record<string, unknown>) {
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { id?: string } | null;

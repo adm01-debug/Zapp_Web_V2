@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
@@ -25,25 +24,25 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'user-1' }, session: {}, profile: null, loading: false }),
-  AuthProvider: ({ children }: any) => children,
+  AuthProvider: ({ children }: { children?: import("react").ReactNode }) => children,
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 vi.mock('framer-motion', () => ({
-  motion: { div: ({ children, ...props }: any) => <div {...props}>{children}</div> },
-  AnimatePresence: ({ children }: any) => children,
+  motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
+  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
 }));
 vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
 vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
 vi.mock('@/components/ui/empty-state', () => ({
-  EmptyState: ({ title }: any) => <div data-testid="empty-state"><span>{title}</span></div>,
+  EmptyState: ({ title }: { title?: string }) => <div data-testid="empty-state"><span>{title}</span></div>,
 }));
 vi.mock('@/components/layout/PageHeader', () => ({
-  PageHeader: ({ title, actions }: any) => <div><h1>{title}</h1>{actions}</div>,
+  PageHeader: ({ title, actions }: { title?: string; actions?: import("react").ReactNode }) => <div><h1>{title}</h1>{actions}</div>,
 }));
 vi.mock('@/hooks/ui/useActionFeedback', () => ({
   useActionFeedback: () => ({
     warning: vi.fn(),
-    withFeedback: vi.fn(async (fn: any, opts: any) => { try { await fn(); opts?.onSuccess?.(); } catch (err) { log.error('Unexpected error in GroupsView.test:', err); } }),
+    withFeedback: vi.fn(async (fn: () => Promise<void>, opts?: { onSuccess?: () => void }) => { try { await fn(); opts?.onSuccess?.(); } catch (err) { log.error('Unexpected error in GroupsView.test:', err); } }),
   }),
 }));
 

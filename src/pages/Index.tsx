@@ -25,6 +25,9 @@ const OfflineIndicator = lazy(() => import('@/components/ui/offline-indicator').
 const ConnectionToast = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.ConnectionToast })));
 const EvolutionDisconnectBanner = lazy(() => import('@/components/alerts/EvolutionDisconnectBanner').then(m => ({ default: m.EvolutionDisconnectBanner })));
 const MfaAdminNudge = lazy(() => import('@/components/security/MfaAdminNudge').then(m => ({ default: m.MfaAdminNudge })));
+// E35 — pré-carrega em tempo ocioso os chunks das views quentes (Chat/Teams/Email/Dashboard).
+// Não entra no bundle inicial: todos continuam lazy, apenas saem antes do clique.
+const HotRoutePrefetcher = lazy(() => import('@/components/performance/HotRoutePrefetcher').then(m => ({ default: m.HotRoutePrefetcher })));
 
 const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _ref) {
    const navigate = useNavigate();
@@ -87,7 +90,7 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
    useEffect(() => {
      if (user && !hasLoggedAudit.current) {
        hasLoggedAudit.current = true;
-       logAudit({ action: 'login', details: { email: user.email } });
+       void logAudit({ action: 'login', details: { email: user.email } });
      }
    }, [user]);
  
@@ -128,6 +131,7 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
           <ConnectionToast />
           <EvolutionDisconnectBanner />
           <MfaAdminNudge onNavigate={setCurrentView} />
+          <HotRoutePrefetcher />
           <WelcomeModal
             isOpen={showWelcome}
             onClose={() => { setShowWelcome(false); completeOnboarding(); }}

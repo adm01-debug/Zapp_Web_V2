@@ -55,7 +55,7 @@ export function ContactPurchaseHistory({ contactId, className }: ContactPurchase
       setPurchases(data || []);
       setLoading(false);
     }
-    fetch();
+    void fetch();
   }, [contactId]);
 
   const totalValue = purchases

@@ -9,7 +9,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: () => ({
       select: () => ({
         order: () => ({
-          then: (r: any) => r({
+          then: (r: (value: unknown) => void) => r({
             data: [
               {
                 id: 'sla-1',
@@ -38,9 +38,9 @@ vi.mock('@/integrations/supabase/client', () => ({
           }),
         }),
       }),
-      insert: () => ({ then: (r: any) => r({ error: null }) }),
-      update: () => ({ eq: () => ({ then: (r: any) => r({ error: null }) }) }),
-      delete: () => ({ eq: () => ({ then: (r: any) => r({ error: null }) }) }),
+      insert: () => ({ then: (r: (value: unknown) => void) => r({ error: null }) }),
+      update: () => ({ eq: () => ({ then: (r: (value: unknown) => void) => r({ error: null }) }) }),
+      delete: () => ({ eq: () => ({ then: (r: (value: unknown) => void) => r({ error: null }) }) }),
     }),
   },
 }));
@@ -112,7 +112,10 @@ describe('SLAConfigurationManager', () => {
 
   it('opens create dialog on "Novo SLA" click', async () => {
     render(<SLAConfigurationManager />, { wrapper: createWrapper() });
-    await waitFor(() => fireEvent.click(screen.getByText('Novo SLA')));
+    await waitFor(() => {
+      expect(screen.getByText('Novo SLA')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Novo SLA'));
     await waitFor(() => {
       expect(screen.getByText('Nova Configuração de SLA')).toBeInTheDocument();
     });

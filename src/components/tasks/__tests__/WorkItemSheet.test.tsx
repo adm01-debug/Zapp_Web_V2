@@ -164,6 +164,64 @@ describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
     render(<WorkItemSheet {...props({ item })} />);
     expect(screen.getByTestId('sheet-avisado')).toHaveTextContent('Avisado em');
   });
+
+  // --- Etapa 88: ampliação das três travas (motivo obrigatório, Fazendo cheio,
+  //     Salvar sem mudança). Os casos acima cobrem o caminho feliz; os de baixo
+  //     cobrem as bordas que ele deixava passar. ---
+
+  it('88: motivo só com espaços em branco NÃO sai de Aguardando (trim no gate)', async () => {
+    const p = props();
+    render(<WorkItemSheet {...p} />);
+    await abrirEstado();
+    fireEvent.click(await screen.findByRole('option', { name: 'Aguardando' }));
+
+    fireEvent.change(await screen.findByTestId('sheet-motivo'), { target: { value: '   ' } });
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    expect(await screen.findByTestId('sheet-motivo-erro')).toHaveTextContent('Diga por que parou');
+    expect(p.onMove).not.toHaveBeenCalled();
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it('88: o motivo gravado sai aparado (espaços das pontas fora)', async () => {
+    const p = props();
+    render(<WorkItemSheet {...p} />);
+    await abrirEstado();
+    fireEvent.click(await screen.findByRole('option', { name: 'Aguardando' }));
+
+    fireEvent.change(await screen.findByTestId('sheet-motivo'), {
+      target: { value: '  aguardando o cliente responder  ' },
+    });
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    expect(p.onMove).toHaveBeenCalledWith(base, 'waiting', 'aguardando o cliente responder');
+  });
+
+  it('88: "Fazendo" continua habilitado quando o item já está em doing, mesmo com a coluna cheia', async () => {
+    render(<WorkItemSheet {...props({ item: { ...base, status: 'doing' }, doingCount: 3 })} />);
+    await abrirEstado();
+
+    // A trava é para ENTRAR em Fazendo; um item já em doing não pode ficar preso.
+    const fazendo = screen.getByRole('option', { name: 'Fazendo' });
+    expect(fazendo.getAttribute('aria-disabled')).not.toBe('true');
+    expect(fazendo).toHaveTextContent('Fazendo');
+  });
+
+  it('88: reverter a alteração volta a desabilitar o Salvar (mudou recalculado)', () => {
+    const p = props();
+    render(<WorkItemSheet {...p} />);
+
+    const salvar = () => screen.getByTestId('sheet-salvar') as HTMLButtonElement;
+    expect(salvar().disabled).toBe(true);
+
+    fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: 'Outro título' } });
+    expect(salvar().disabled).toBe(false);
+
+    // Volta ao valor original: nada mudou de novo, então Salvar re-desabilita.
+    fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: base.title } });
+    expect(salvar().disabled).toBe(true);
+    expect(p.onSave).not.toHaveBeenCalled();
+  });
 });
 
 describe('TasksModule — FASE C (etapas 26 e 27): o Sheet abre pelo card e pelo ?task=', () => {

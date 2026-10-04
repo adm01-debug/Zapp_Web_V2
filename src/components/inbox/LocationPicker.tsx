@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { log } from '@/lib/logger';
 import { MapPin, Search, Crosshair, Clock, Loader2, Send, LocateFixed, Route, Building2, Milestone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { searchFailureText } from './location-picker/searchErrors';
 import { useLocationPicker } from './location-picker/useLocationPicker';
 import { useAddressAutocomplete } from './location-picker/useAddressAutocomplete';
 import type { GeoSuggestion } from '@/lib/mapboxGeocode';
+import { logAudit } from '@/lib/audit';
 
 
 interface LocationPickerProps {
@@ -30,10 +31,15 @@ const ADDRESS_LISTBOX_ID = 'location-picker-address-listbox';
 
 export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerProps) {
   const [activeTab, setActiveTab] = useState<'map' | 'current'>('current');
+  // E63: o cartão de confirmação entra com `motion` (opacidade + deslocamento vertical). Para quem
+  // pediu menos movimento no sistema, a entrada não acontece — o hook do framer-motion lê o
+  // `prefers-reduced-motion` e com ele o `initial` vira `false` (o cartão já nasce no estado final).
+  const reduceMotion = useReducedMotion();
 
   const {
     mapContainer, isMapLoaded, mapError, retryMap, isLoadingLocation, mapboxToken,
     selectedLocation,
+    selectedOrigin,
     chooseSearchResult, getCurrentLocation, searchLocation, reset, proximity,
   } = useLocationPicker(open, activeTab);
 
@@ -106,11 +112,16 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
   };
 
   const handleSend = async () => {
-    if (!selectedLocation) { toast({ title: 'Selecione uma localização', description: 'Clique no mapa ou use sua localização atual.', variant: 'destructive' }); return; }
+    // E50: `selectedLocation` e `selectedOrigin` são setados/limpos juntos pelo hook — a origem
+    // é o que o evento `location_sent` carrega ('suggest' | 'forward' | 'click' | 'gps').
+    if (!selectedLocation || !selectedOrigin) { toast({ title: 'Selecione uma localização', description: 'Clique no mapa ou use sua localização atual.', variant: 'destructive' }); return; }
     try {
       await onSend({
         latitude: selectedLocation.lat, longitude: selectedLocation.lng, name: selectedLocation.name, address: selectedLocation.address,
       });
+      // E50: funil fechado — só a ORIGEM da escolha, nunca termo, endereço, nome ou coordenada
+      // do cliente. Envio que falha mantém o diálogo aberto e não chega aqui.
+      void logAudit({ action: 'location_sent', details: { origin: selectedOrigin } });
       handleClose();
     } catch {
       // The handler owns the user-facing error; preserve the selected point so
@@ -138,11 +149,11 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
 
           <TabsContent value="current" className="mt-0 p-4 space-y-4">
             <Button onClick={getCurrentLocation} disabled={isLoadingLocation} className="w-full gap-2" size="lg">
-              {isLoadingLocation ? <Loader2 className="w-5 h-5 animate-spin" /> : <Crosshair className="w-5 h-5" />}
+              {isLoadingLocation ? <Loader2 className="w-5 h-5 animate-spin motion-reduce:animate-none" /> : <Crosshair className="w-5 h-5" />}
               {isLoadingLocation ? 'Obtendo localização...' : 'Usar localização atual'}
             </Button>
             {selectedLocation && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 rounded-lg bg-muted/50 border border-border space-y-2">
+              <motion.div data-testid="local-atual-card" initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 rounded-lg bg-muted/50 border border-border space-y-2">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><MapPin className="w-5 h-5 text-primary" /></div>
                   <div className="flex-1 min-w-0">
@@ -215,19 +226,25 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                       onRetry={() => autocomplete.retrySuggest()}
                     />
                   )}
+                  {/* E64: depois de escolher um endereço, o leitor de tela ouve o nome do que foi
+                      escolhido. A região vive FORA da lista (que desmonta ao selecionar) e o nome
+                      não entra em nenhum logAudit — é da pessoa que está escolhendo, não telemetria. */}
+                  <div role="status" aria-live="polite" className="sr-only" data-testid="sr-selecao">
+                    {autocomplete.selectionAnnouncement}
+                  </div>
                 </div>
             </div>
             <div className="relative">
               <div ref={mapContainer} className="w-full h-64 bg-muted" />
-              {!isMapLoaded && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>}
+              {!isMapLoaded && !mapError && <div className="absolute inset-0 flex items-center justify-center bg-muted"><Loader2 className="w-6 h-6 animate-spin motion-reduce:animate-none text-muted-foreground" /></div>}
               {mapError && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted text-sm text-muted-foreground">
                   <span>{mapError}</span>
                   <Button size="sm" variant="outline" onClick={retryMap}>Tentar novamente</Button>
                 </div>
               )}
-              <Button size="icon" variant="secondary" className="absolute bottom-3 right-3 shadow-lg" onClick={getCurrentLocation} disabled={isLoadingLocation}>
-                {isLoadingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crosshair className="w-4 h-4" />}
+              <Button size="icon" variant="secondary" aria-label="Usar minha localização atual" className="absolute bottom-3 right-3 shadow-lg" onClick={getCurrentLocation} disabled={isLoadingLocation}>
+                {isLoadingLocation ? <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" /> : <Crosshair className="w-4 h-4" />}
               </Button>
             </div>
             {selectedLocation && (

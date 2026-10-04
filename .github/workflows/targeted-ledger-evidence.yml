@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: dispatch
+#   prova: a evidencia do ledger de migrations para uma version especifica
+#   falha: o job aborta sem publicar evidencia
+#   avisa: operador que disparou
 # Coleta forense manual e somente-leitura. O ledger e cifrado em memoria
 # antes de virar artifact; chave privada e statements nunca chegam aos logs.
 name: Targeted Ledger Evidence
@@ -14,6 +19,10 @@ on:
         required: true
         type: string
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 permissions:
   contents: read
 
@@ -24,11 +33,16 @@ concurrency:
 jobs:
   export-encrypted-evidence:
     name: Exportar ledger alvo cifrado
-    if: github.ref == 'refs/heads/main'
     environment: db-ledger-evidence
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
+      - name: ✋ Somente executa na main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          exit 1
+
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

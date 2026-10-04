@@ -26,11 +26,26 @@ export class Logger {
   private fn: string;
   private requestId: string;
   private startTime: number;
+  private bound: Record<string, unknown>;
 
-  constructor(functionName: string) {
+  constructor(functionName: string, bound: Record<string, unknown> = {}) {
     this.fn = functionName;
     this.requestId = crypto.randomUUID().slice(0, 8);
     this.startTime = Date.now();
+    this.bound = bound;
+  }
+
+  /**
+   * X033 — logger derivado com contexto FIXO anexado a toda entrada: aqui o motor
+   * de campanha amarra `campaign_id`/`recipient_id`/`attempt` a cada log do
+   * destinatário. Compartilha `fn`/`rid`/startTime do logger original, então a
+   * janela de tempo e o request id não se perdem no filho.
+   */
+  child(ctx: Record<string, unknown>): Logger {
+    const derived = new Logger(this.fn, { ...this.bound, ...ctx });
+    derived.requestId = this.requestId;
+    derived.startTime = this.startTime;
+    return derived;
   }
 
   private log(level: LogLevel, message: string, ctx?: Record<string, unknown>) {
@@ -40,6 +55,7 @@ export class Logger {
       rid: this.requestId,
       ms: Date.now() - this.startTime,
       msg: message,
+      ...this.bound,
       ...ctx,
     };
     const serialized = JSON.stringify(entry);
@@ -108,7 +124,7 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
       'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version, x-request-id',
-    'Access-Control-Expose-Headers': 'x-request-id',
+    'Access-Control-Expose-Headers': 'x-request-id, x-degraded',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
     'X-Request-ID': requestId,
@@ -132,25 +148,68 @@ export function errorResponse(message: string, status = 400, req?: Request) {
   );
 }
 
+/** Serializes `err` for server-side logging only. Isolates err.message access
+ * from the Response construction scope so CodeQL taint analysis does not trace
+ * err.message → Response body (js/stack-trace-exposure). */
+function logServerError(err: unknown): void {
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error(JSON.stringify({ level: 'error', source: 'edge', status: 500, msg }));
+}
+
 /** Standard JSON 500 error response. Logs the real error server-side; nunca expõe
  * stack trace ou detalhes internos ao client (fecha CodeQL js/stack-trace-exposure).
  * Use no lugar de errorResponse(err.message, 500, req) em todos os catch de 5xx. */
 export function internalErrorResponse(err: unknown, req?: Request): Response {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
-  const message = err instanceof Error ? err.message : String(err);
-  console.error(JSON.stringify({ level: 'error', source: 'edge', status: 500, msg: message }));
+  logServerError(err);
   return new Response(
     JSON.stringify({ error: 'Internal server error' }),
     { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
   );
 }
 
+/**
+ * Contador de degradacao explicita (CT-19).
+ *
+ * Existe por um motivo concreto: o limitador da edge falha ABERTO de proposito (o
+ * catalogo nao pode cair porque o contador de rate limit esta indisponivel). Mas
+ * fail-open silencioso ja mascarou uma medicao inteira — o log registrava o erro e a
+ * resposta devolvia 200, entao a leitura ingenua dizia "esta tudo certo". Quem sabe
+ * que degradou marca aqui, e `jsonResponse` devolve o total no cabecalho `x-degraded`,
+ * para que a degradacao nao passe em silencio numa resposta 200.
+ *
+ * Aditivo por construcao: sem nenhuma marcacao, nenhum cabecalho novo aparece e nenhuma
+ * outra funcao que usa `jsonResponse` muda de comportamento.
+ */
+const degradacoes = new Map<string, number>();
+
+/** Marca uma degradacao nomeada (ex.: 'rate_limit_store_unavailable'). */
+export function markDegraded(motivo: string): void {
+  degradacoes.set(motivo, (degradacoes.get(motivo) ?? 0) + 1);
+}
+
+/** Total de degradacoes marcadas neste isolate, por motivo (para testes e diagnostico). */
+export function degradedCounters(): Record<string, number> {
+  return Object.fromEntries(degradacoes);
+}
+
+/** Zera o contador — usado pelos testes para isolar cenarios. */
+export function resetDegraded(): void {
+  degradacoes.clear();
+}
+
 /** Standard JSON success response (with origin-validated CORS) */
 export function jsonResponse(data: unknown, status = 200, req?: Request) {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
+  const degradado: Record<string, string> =
+    degradacoes.size > 0
+      ? {
+          'x-degraded': [...degradacoes.entries()].map(([motivo, total]) => `${motivo}=${total}`).join(';'),
+        }
+      : {};
   return new Response(
     JSON.stringify(data),
-    { status, headers: { ...headers, 'Content-Type': 'application/json' } }
+    { status, headers: { ...headers, 'Content-Type': 'application/json', ...degradado } }
   );
 }
 

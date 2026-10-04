@@ -10,7 +10,7 @@ export function useInboxFilterTags() {
       const { data } = await supabase.from('contacts').select('tags').not('tags', 'is', null);
       const tagSet = new Set<string>();
       (data || []).forEach(c => (c.tags || []).forEach((t: string) => tagSet.add(t)));
-      return [...tagSet].sort().map(name => ({ id: name, name, color: '#6366f1' }));
+      return [...tagSet].sort((a, b) => a.localeCompare(b)).map(name => ({ id: name, name, color: '#6366f1' }));
     },
     staleTime: 60_000,
   });

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,7 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const mockInvoke = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    functions: { invoke: (...args: any[]) => mockInvoke(...args) },
+    functions: { invoke: (...args: unknown[]) => mockInvoke(...args) },
   },
 }));
 
@@ -98,8 +97,8 @@ const mockVariant = (overrides: Partial<ExternalProductVariant> = {}): ExternalP
 });
 
 // ─── Helper ───────────────────────────────────────────────────
-function setupMockInvoke(responses: Record<string, any>) {
-  const defaults: Record<string, any> = {
+function setupMockInvoke(responses: Record<string, unknown>) {
+  const defaults: Record<string, unknown> = {
     list_products: { data: [], meta: { total: 0, duration_ms: 1 } },
     list_categories: { data: [] },
     list_suppliers: { data: [] },
@@ -108,9 +107,9 @@ function setupMockInvoke(responses: Record<string, any>) {
     bootstrap: { data: { categories: [], suppliers: [], stats: null } },
   };
   const merged = { ...defaults, ...responses };
-  mockInvoke.mockImplementation(async (fnName: string, opts: any) => {
+  mockInvoke.mockImplementation(async (fnName: string, opts: { body?: { action?: string; params?: { product_id?: string; search?: string } } }) => {
     const action = opts?.body?.action;
-    if (merged[action]) {
+    if (action && merged[action]) {
       return { data: merged[action], error: null };
     }
     return { data: { data: [], meta: { total: 0 } }, error: null };
@@ -171,7 +170,7 @@ describe('useExternalCatalog', () => {
     });
 
     it('sets loading state during fetch', async () => {
-      let resolvePromise: (v: any) => void;
+      let resolvePromise: (v: unknown) => void;
       mockInvoke.mockReturnValue(new Promise(r => { resolvePromise = r; }));
 
       const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
@@ -573,9 +572,9 @@ describe('Edge Function Contract', () => {
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalled();
     });
-    const productCall = mockInvoke.mock.calls.find((c: any) => c[1]?.body?.action === 'list_products');
+    const productCall = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'list_products');
     expect(productCall).toBeTruthy();
-    expect(productCall[1].body.action).toBe('list_products');
+    expect(productCall![1].body.action).toBe('list_products');
   });
 
   it('sends get_product action for single product', async () => {
@@ -584,10 +583,10 @@ describe('Edge Function Contract', () => {
     const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
     await act(async () => { await result.current.fetchProduct('p1'); });
 
-    const call = mockInvoke.mock.calls.find((c: any) => c[1]?.body?.action === 'get_product');
+    const call = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'get_product');
     expect(call).toBeTruthy();
-    expect(call[1].body.action).toBe('get_product');
-    expect(call[1].body.params.product_id).toBe('p1');
+    expect(call![1].body.action).toBe('get_product');
+    expect(call![1].body.params.product_id).toBe('p1');
   });
 
   it('sends bootstrap action for categories (E26 — substitui list_categories isolado)', async () => {
@@ -704,14 +703,14 @@ describe('Data Integrity', () => {
     });
 
     const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
-    let fetched: any;
+    let fetched: ExternalProduct | null = null;
     await act(async () => {
       fetched = await result.current.fetchProduct('p1');
     });
 
-    expect(fetched.variants[0].color_hex).toBe('#4169E1');
-    expect(fetched.variants[1].color_name).toBe('Laranja');
-    expect(fetched.variants[0].stock_quantity).toBe(29982);
+    expect(fetched!.variants![0].color_hex).toBe('#4169E1');
+    expect(fetched!.variants![1].color_name).toBe('Laranja');
+    expect(fetched!.variants![0].stock_quantity).toBe(29982);
   });
 });
 
@@ -807,9 +806,9 @@ describe('Edge Cases & Boundaries', () => {
     });
 
     await waitFor(() => {
-      const call = mockInvoke.mock.calls.find((c: any) => c[1]?.body?.action === 'list_products' && c[1]?.body?.params?.search);
+      const call = mockInvoke.mock.calls.find((c) => c[1]?.body?.action === 'list_products' && c[1]?.body?.params?.search);
       expect(call).toBeTruthy();
-      expect(call[1].body.params.search).toBe("caneta d'água & %");
+      expect(call![1].body.params.search).toBe("caneta d'água & %");
     }, { timeout: 5000 });
   });
 
@@ -1026,19 +1025,39 @@ describe('Security Gaps Audit', () => {
     expect(dangerousSearch).toBeDefined();
   });
 
-  it('edge has per-user rate limiting (60 req/min → 429)', () => {
-    // CORRIGIDO (CT-59): o achado antigo ("no rate limiting on edge function",
-    // hasRateLimit = false) era FALSO — a edge promogifts-catalog tem
-    // checkRateLimit por user_id desde o endurecimento: RATE_LIMIT = 60 numa
-    // janela de 60 s e resposta 429 quando estoura. O teste agora lê o código
-    // real da edge em vez de afirmar uma constante inventada.
+  it('edge tem rate limit POR AÇÃO (list_products 120/min, demais 60/min → 429)', () => {
+    // CT-19: o limite deixou de ser 60/min fixo. A cota efetiva passou a ser
+    // POR AÇÃO, em ACTION_RATE_LIMITS: `list_products` (a ação que a tela
+    // refaz a cada busca/página) ganhou 120/min e as outras 5 continuam no
+    // teto global de 60/min (RATE_LIMIT). Corpo inválido/malformado não tem
+    // ação conhecida e cai no teto global como fallback (fail-closed — não
+    // abre bypass a requisição inválida). Por depender da ação lida do corpo,
+    // a checagem acontece DEPOIS do parse. O teste lê o fonte real da edge.
     const source = fs.readFileSync(
       path.resolve(__dirname, '../../../supabase/functions/promogifts-catalog/index.ts'),
       'utf8',
     );
-    expect(source).toContain('export const RATE_LIMIT = 60');
-    expect(source).toMatch(/checkRateLimit\(userData\.user\.id\)/);
-    expect(source).toMatch(/Too many requests[^"]*"\s*\},\s*429/);
+    // mapa por ação ancorado no enum (ação nova sem cota quebra o typecheck)
+    expect(source).toContain('export const ACTION_RATE_LIMITS: Record<CatalogAction, number> = {');
+    // cota dobrada só para list_products; as demais seguem no teto global
+    expect(source).toMatch(/\blist_products:\s*120,/);
+    expect(source).toMatch(/\bget_product:\s*RATE_LIMIT,/);
+    expect(source).toMatch(/\bbootstrap:\s*RATE_LIMIT,/);
+    // a cota é resolvida pela ação; sem ação o fallback é o teto global
+    expect(source).toContain('const limit = action ? ACTION_RATE_LIMITS[action] : RATE_LIMIT;');
+    // CT-19: o contador passou a ser COMPARTILHADO (função no banco, uma linha por
+    // usuario+acao), não mais um Map em memoria por isolate: era ele que fazia o teto
+    // valer "por isolate" e nao "por usuario" (421 chamadas paralelas em producao sem 429).
+    expect(source).toMatch(/await checkRateLimit\(localClient, userData\.user\.id, action, log\)/);
+    expect(source).toMatch(/rpc\("catalog_rate_limit_hit",\s*\{/);
+    expect(source).not.toContain('const rateLimitMap = new Map<string, { count: number; resetAt: number }>();');
+    // a checagem vem DEPOIS do parse do corpo (a cota depende da ação)
+    const parseIndex = source.indexOf('ActionSchema.safeParse');
+    const rateIndex = source.indexOf('await checkRateLimit(localClient, userData.user.id, action, log)');
+    expect(parseIndex).toBeGreaterThan(-1);
+    expect(rateIndex).toBeGreaterThan(parseIndex);
+    // resposta 429 quando estoura a cota
+    expect(source).toMatch(/Too many requests[^"]*"\s*\}\s*,\s*429/);
   });
 
   it('external elevated credential remains confined to the authenticated read-only edge', () => {
@@ -1315,5 +1334,75 @@ describe('useExternalCatalog — CT-59 (error.code da edge)', () => {
     }, { timeout: 10000 });
     expect(result.current.errorCode).toBeNull();
     expect(result.current.errorStatus).toBeNull();
+  });
+});
+
+
+// ═══════════════════════════════════════════════════════════════════
+// CT-29 — PREFETCH DA PRÓXIMA PÁGINA
+// ═══════════════════════════════════════════════════════════════════
+describe('useExternalCatalog — CT-29 (prefetch da próxima página)', () => {
+  // CT-29 — o mockInvoke é compartilhado pelo arquivo: limpar entre casos evita
+  // que a chamada da página seguinte de um teste apareça no assert do outro.
+  beforeEach(() => { mockInvoke.mockClear(); });
+
+  /** Wrapper que expõe o QueryClient para inspecionar o cache prefetchado. */
+  function createWrapperWithClient() {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: queryClient }, children);
+    return { queryClient, wrapper };
+  }
+
+  /** Chamada registrada no mock de `supabase.functions.invoke`: [nome, opções]. */
+  type InvokeCall = [string, { body: { action: string; params: Record<string, unknown> } }];
+
+  const listProductCalls = (): Record<string, unknown>[] =>
+    (mockInvoke.mock.calls as InvokeCall[])
+      .filter((c) => c[1]?.body?.action === 'list_products')
+      .map((c) => c[1].body.params);
+
+  it('prefetchNextPage busca a próxima página (offset+limit) com os mesmos filtros', async () => {
+    setupMockInvoke({ list_products: { data: [mockProduct()], meta: { total: 100 } } });
+    const { queryClient, wrapper } = createWrapperWithClient();
+
+    const { result } = renderHook(() => useExternalCatalog(), { wrapper });
+    act(() => { result.current.fetchProducts({ limit: 24, offset: 0, search: 'caneta', only_in_stock: false }); });
+    await waitFor(() => { expect(result.current.products).toHaveLength(1); });
+
+    await act(async () => { await result.current.prefetchNextPage(); });
+
+    // segunda chamada de list_products = a página seguinte (offset 24)
+    const next = listProductCalls().find((p) => p.offset === 24);
+    expect(next).toBeTruthy();
+    expect(next?.limit).toBe(24);
+    expect(next?.search).toBe('caneta');      // mesmos filtros da página atual
+    expect(next?.only_in_stock).toBe(false);
+
+    // o prefetch popula o MESMO cache que o clique em "Próxima" vai consultar
+    expect(
+      queryClient.getQueryData([
+        'external-catalog',
+        'products',
+        { limit: 24, offset: 24, search: 'caneta', only_in_stock: false },
+      ]),
+    ).toBeTruthy();
+  });
+
+  it('não dispara prefetch quando a página atual já é a última', async () => {
+    setupMockInvoke({ list_products: { data: [mockProduct()], meta: { total: 24 } } });
+    const { wrapper } = createWrapperWithClient();
+
+    const { result } = renderHook(() => useExternalCatalog(), { wrapper });
+    act(() => { result.current.fetchProducts({ limit: 24, offset: 0 }); });
+    await waitFor(() => { expect(result.current.products).toHaveLength(1); });
+
+    await act(async () => { await result.current.prefetchNextPage(); });
+
+    // última página: nenhum offset além da atual foi buscado
+    expect(listProductCalls().some((p) => p.offset === 24)).toBe(false);
+    expect(listProductCalls()).toHaveLength(1);
   });
 });

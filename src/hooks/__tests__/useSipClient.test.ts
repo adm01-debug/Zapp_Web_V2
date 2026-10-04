@@ -135,6 +135,32 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
+// T20: a eleição de aba vem do `tabLeaderStore`. Aqui ele é MOCKADO (snapshot
+// trocável) para o teste dirigir a transição de papel sem os timers/heartbeat do
+// store REAL — o eleitor de verdade tem teste próprio com `vi.resetModules()` em
+// `src/lib/calls/__tests__/tabLeaderStore.test.ts`. `isLeader` deriva do MESMO
+// snapshot que `getSnapshot`, então o portão do `connect` e o papel observado
+// pelo hook nunca divergem.
+const { tabStore } = vi.hoisted(() => ({
+  tabStore: {
+    snapshot: {
+      role: 'leader' as 'leader' | 'follower',
+      leaderId: 'tab-propria' as string | null,
+      expiresAt: null as number | null,
+      tabId: 'tab-propria',
+    },
+  },
+}));
+
+vi.mock('@/lib/calls/tabLeaderStore', () => ({
+  CALL_SESSION_CHANNEL_NAME: 'zapp-call-session',
+  getSnapshot: () => tabStore.snapshot,
+  subscribe: () => () => {},
+  claimLeadership: vi.fn(),
+  releaseLeadership: vi.fn(),
+  isLeader: () => tabStore.snapshot.role === 'leader',
+}));
+
 import { useSipClient } from '../communication/useSipClient';
 import type { CallEndOutcome } from '@/lib/calls/callStatus';
 import { toast } from 'sonner';
@@ -191,6 +217,9 @@ function esperaRegistro(campos: Record<string, unknown>) {
 describe('useSipClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Snapshot novo a cada teste: um teste que deixou a aba como seguidora não
+    // pode envenenar o seguinte (o mock guarda estado no escopo do módulo).
+    tabStore.snapshot = { role: 'leader', leaderId: 'tab-propria', expiresAt: null, tabId: 'tab-propria' };
     mockStateChangeListeners.length = 0;
     mockRegisterStateListeners.length = 0;
     mockRpc.mockResolvedValue({ data: 'call-1', error: null });
@@ -200,6 +229,9 @@ describe('useSipClient', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    // T17: o gate instala um `navigator.mediaDevices` falso em alguns testes;
+    // sem isto o microfone (que falha) vazaria para os testes seguintes.
+    delete (navigator as { mediaDevices?: unknown }).mediaDevices;
   });
 
   // === CONNECTION TESTS ===
@@ -484,7 +516,10 @@ describe('useSipClient', () => {
 
   it('should not crash sendDTMF without active session', () => {
     const { result } = renderHook(() => useSipClient());
-    act(() => { result.current.sendDTMF('1'); });
+    // Sem sessão ativa o DTMF não tem por onde sair. O contrato do hook é não
+    // lançar: `sendDTMF` só repassa para o motor (useSipClient.ts:74), então o
+    // que este teste guarda é justamente o caminho sem sessão não explodir.
+    expect(() => act(() => { result.current.sendDTMF('1'); })).not.toThrow();
   });
 
   it('should reject a second makeCall while one is already in progress', async () => {
@@ -520,6 +555,63 @@ describe('useSipClient', () => {
     await act(async () => { vi.advanceTimersByTime(5000); });
 
     expect(result.current.callDuration).toBe(aosTresSegundos);
+    vi.useRealTimers();
+  });
+
+  it('cronômetro: Established repetido NÃO soma dois intervalos (não acelera)', async () => {
+    // Um `Established` reemitido (re-INVITE/reconexão) chamava `startTimer` de novo SEM limpar o
+    // intervalo anterior: dois intervalos vivos = cronômetro andando 2x por segundo, e o
+    // `stopTimer` do fim matando só um deles.
+    vi.useFakeTimers();
+    const { result } = await montarRegistrado();
+    await act(async () => { await result.current.makeCall('111'); await escoar(); });
+
+    await evento('Established');
+    await evento('Established');
+    expect(vi.getTimerCount()).toBe(1);
+
+    await act(async () => { vi.advanceTimersByTime(3000); });
+    expect(result.current.callDuration).toBe(3); // e não 6
+    vi.useRealTimers();
+  });
+
+  it('cronômetro: a 2ª chamada reinicia em 0 (não herda a duração da anterior)', async () => {
+    vi.useFakeTimers();
+    const { result } = await montarRegistrado();
+
+    await act(async () => { await result.current.makeCall('111'); await escoar(); });
+    await evento('Established');
+    await act(async () => { vi.advanceTimersByTime(5000); });
+    expect(result.current.callDuration).toBe(5);
+
+    await evento('Terminated');
+    await act(async () => { vi.advanceTimersByTime(2000); await escoar(); }); // `ended` volta a `idle`
+    expect(result.current.callStatus).toBe('idle');
+
+    await act(async () => { await result.current.makeCall('222'); await escoar(); });
+    await evento('Established');
+    // Sem o `setCallDuration(0)` do `startTimer`, a segunda ligação abriria mostrando 5.
+    expect(result.current.callDuration).toBe(0);
+
+    await act(async () => { vi.advanceTimersByTime(4000); });
+    expect(result.current.callDuration).toBe(4);
+    vi.useRealTimers();
+  });
+
+  it('cronômetro: encerrada a chamada não fica nenhum timer vivo (sem zumbi)', async () => {
+    // Cobre o `clearInterval` do `stopTimer`: sem ele o intervalo segue vivo depois de desligar e
+    // a duração continuaria subindo sozinha (a linha gravada no banco sairia errada).
+    vi.useFakeTimers();
+    const { result } = await montarRegistrado();
+    await act(async () => { await result.current.makeCall('111'); await escoar(); });
+    await evento('Established');
+    await act(async () => { vi.advanceTimersByTime(3000); });
+
+    await evento('Terminated');
+    await act(async () => { vi.advanceTimersByTime(2000); await escoar(); }); // o idle-reset já disparou
+
+    expect(result.current.callStatus).toBe('idle');
+    expect(vi.getTimerCount()).toBe(0);
     vi.useRealTimers();
   });
 
@@ -764,5 +856,199 @@ describe('useSipClient', () => {
     await act(async () => { liberarAnswered(); await escoar(20); });
     expect(concluidas).toEqual(['ringing', 'answered', 'ended']);
     expect(gravacoes().map(c => c.p_status)).toEqual(['ringing', 'answered', 'ended']);
+  });
+
+  // === T17: gate de microfone ===
+  // O gate roda ANTES de discar/atender: a negativa sai com o motivo
+  // operacional, e não como o "Erro ao ligar" genérico do catch do adapter.
+
+  /** Instala um `navigator.mediaDevices` cuja sondagem falha com este erro. */
+  function microfoneQueFalha(name: string) {
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockRejectedValue(Object.assign(new Error('recusado'), { name })) },
+    });
+  }
+
+  it("T17: NotAllowedError não disca e diz 'Microfone bloqueado'", async () => {
+    microfoneQueFalha('NotAllowedError');
+    const { result } = await montarRegistrado();
+
+    await discar(result);
+
+    expect(toast.error).toHaveBeenCalledWith('Microfone bloqueado');
+    expect(result.current.micReason).toBe('mic_blocked');
+    expect(result.current.callStatus).toBe('idle');
+    expect(mockInvite).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("T17: NotFoundError não disca e diz 'Nenhum microfone encontrado'", async () => {
+    microfoneQueFalha('NotFoundError');
+    const { result } = await montarRegistrado();
+
+    await discar(result);
+
+    expect(toast.error).toHaveBeenCalledWith('Nenhum microfone encontrado');
+    expect(result.current.micReason).toBe('mic_missing');
+    expect(mockInvite).not.toHaveBeenCalled();
+  });
+
+  it("T17: NotReadableError no ATENDER diz 'Microfone em uso por outro programa' e não atende", async () => {
+    // Este é o teste que pega um gate que só cobrisse a discagem: o microfone é
+    // conferido nos DOIS caminhos, e o painel VoIP chama o SIP direto.
+    const { result } = await montarConectado();
+    let invitation!: Invitation;
+    await act(async () => {
+      invitation = await createMockInvitation();
+      lastOnInvite?.(invitation);
+      await escoar();
+    });
+    microfoneQueFalha('NotReadableError');
+
+    await act(async () => {
+      await result.current.acceptIncomingCall();
+      await escoar();
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('Microfone em uso por outro programa');
+    expect(result.current.micReason).toBe('mic_busy');
+    const accept = (invitation as unknown as { accept: ReturnType<typeof vi.fn> }).accept;
+    expect(accept).not.toHaveBeenCalled();
+  });
+
+  it('T17: sondagem OK disca e devolve as tracks (o microfone não fica quente)', async () => {
+    const stop = vi.fn();
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop }] }) },
+    });
+    const { result } = await montarRegistrado();
+
+    await discar(result);
+
+    // Sondar não é usar: sem o `stop()` a captura seguiria aberta (indicador do
+    // navegador aceso) durante toda a ligação.
+    expect(stop).toHaveBeenCalled();
+    expect(mockInvite).toHaveBeenCalled();
+    expect(result.current.micReason).toBeNull();
+  });
+
+  it('T17: sem mediaDevices o gate não bloqueia (jsdom/navegador antigo)', async () => {
+    const { result } = await montarRegistrado();
+
+    await discar(result);
+
+    expect(mockInvite).toHaveBeenCalled();
+    expect(result.current.micReason).toBeNull();
+  });
+
+  // === T20: eleição de aba + 2ª chamada na linha ocupada ===
+
+  it('T20: virar aba SEGUIDORA solta o registro e expõe o motivo da linha', async () => {
+    const { result, rerender } = await montarRegistrado();
+    expect(result.current.sipStatus).toBe('registered');
+
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: 'outra-aba' };
+      rerender();
+      await escoar(12);
+    });
+
+    expect(result.current.sipStatus).toBe('idle');
+    expect(result.current.sipReason).toBe('line_in_use_other_tab');
+  });
+
+  it('T20: virar aba LÍDER conecta com as credenciais provisionadas', async () => {
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { server: 'sip.prov.com', user: 'phone9', wsPort: 5066, password: 'secret123', profileId: 'p1' },
+      error: null,
+    });
+    // Nasce seguidora (papel inicial do store real): o mount NÃO conecta.
+    tabStore.snapshot = { ...tabStore.snapshot, role: 'follower', leaderId: 'outra-aba' };
+    const { result, rerender } = renderHook(() => useSipClient());
+    expect(result.current.sipStatus).toBe('idle');
+
+    // A aba que segurava a linha saiu: esta assume.
+    await act(async () => {
+      tabStore.snapshot = { ...tabStore.snapshot, role: 'leader', leaderId: 'tab-propria' };
+      rerender();
+      await escoar(12);
+    });
+
+    expect(result.current.sipStatus).toBe('connecting');
+    expect(mockMakeURI).toHaveBeenCalledWith('sip:phone9@sip.prov.com');
+    expect(lastUserAgentOptions?.transportOptions?.server).toBe('wss://sip.prov.com:5066/ws');
+  });
+
+  it('T20: 2ª chamada com a linha ocupada vira missed/busy_here + toast, sem tocar a em curso', async () => {
+    const { result } = await montarConectado();
+
+    await act(async () => {
+      lastOnInvite?.(await createMockInvitation());
+      await escoar();
+    });
+    expect(result.current.callStatus).toBe('ringing');
+    const idDaPrimeira = gravacoes()[0]?.p_id;
+
+    // Segunda chamada chega com a linha ocupada: recusada (486) e registrada
+    // como `missed`/`busy_here`, com id PRÓPRIO.
+    await act(async () => {
+      lastOnInvite?.(await createMockInvitation());
+      await escoar();
+    });
+
+    const perdida = gravacoes().find((c) => c.p_status === 'missed');
+    expect(perdida).toMatchObject({
+      p_status: 'missed', p_end_reason: 'busy_here', p_direction: 'inbound', p_peer_number: '5511988887777',
+    });
+    expect(perdida?.p_id).not.toBe(idDaPrimeira);
+    expect(toast.info).toHaveBeenCalledWith('Você já está em uma ligação');
+    // A chamada em curso não foi afetada por nada disso.
+    expect(result.current.callStatus).toBe('ringing');
+    expect(result.current.currentNumber).toBe('5511988887777');
+  });
+
+  // === T22: fecho das 8 linhas da tabela cenario -> status/end_reason ===
+  // `busy` e `failed` só tinham as METADES testadas (o outcome no motor, de um
+  // lado; o mapa outcome -> persistência, do outro). Estes dois testes fecham o
+  // elo que faltava: o evento SIP entra pelo duble e o que se asserta é a ÚLTIMA
+  // gravação que chegou à RPC `upsert_my_call`.
+
+  it('T22: saída com 486 grava busy/busy ponta a ponta (o elo que faltava)', async () => {
+    // O INVITE de saída recebe resposta final 486 (ocupado). O código NÃO fica
+    // no Inviter (sip.js 0.21 não expõe `lastResponse`): ele chega pelo
+    // `requestDelegate.onReject` que o SipCallAdapter instala. É ESSE callback
+    // que precisa marcar `sipCode` antes de o `Terminated` montar o desfecho —
+    // é justamente esta ligação (evento -> gravação) que os testes de metade
+    // nunca cobriram.
+    mockInvite.mockImplementationOnce(
+      async (options: { requestDelegate: { onReject: (response: { message: { statusCode: number } }) => void } }) => {
+        options.requestDelegate.onReject({ message: { statusCode: 486 } });
+      },
+    );
+
+    const { result } = await montarRegistrado();
+    await discar(result);
+    await evento('Terminated');
+
+    const chamadas = gravacoes();
+    const fim = chamadas[chamadas.length - 1];
+    expect(fim).toMatchObject({ p_status: 'busy', p_end_reason: 'busy', p_direction: 'outbound' });
+  });
+
+  it('T22: falha ao discar (invite rejeita) grava failed/failed ponta a ponta (o elo que faltava)', async () => {
+    // O `invite()` do adapter rejeita (transporte/URI): o motor cai no catch do
+    // `makeCall` (CallEngine.ts:235-238), emite o desfecho `failure` pelo
+    // `callIdPromise` e o Terminated pode nunca chegar. O fim tem de sair como
+    // `failed`/`failed`, não como `no_answer` nem como `Erro ao ligar` silencioso.
+    mockInvite.mockRejectedValueOnce(new Error('transporte caiu'));
+
+    const { result } = await montarRegistrado();
+    await discar(result, '5511999999999', 20);
+
+    const chamadas = gravacoes();
+    const fim = chamadas[chamadas.length - 1];
+    expect(fim).toMatchObject({ p_status: 'failed', p_end_reason: 'failed', p_direction: 'outbound' });
   });
 });

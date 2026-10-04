@@ -8,16 +8,107 @@
  * atualizar o mapa — que é a lista de trabalho da revisão.
  *
  * Medição de origem: 139 arquivos .ts em supabase/functions, 5 ocorrências.
-<<<<<<< HEAD
- * Recontagem em 01/10/2026: 144 arquivos — dois arquivos de TESTE entraram
- * no mesmo dia: `promogifts-catalog/index.actions.test.ts` (CT-77) e
- * `get-sip-password/index.test.ts` (T15). O mapa INVENTARIO e o total de
- * ocorrencias (3) permanecem identicos: nenhum produtor novo entrou.
-=======
- * Recontagem em 01/10/2026: 144 arquivos — o CT-77 acrescentou o arquivo de
- * TESTE `promogifts-catalog/index.actions.test.ts`. O mapa INVENTARIO e o
- * total de ocorrências (3) permanecem idênticos: nenhum produtor novo entrou.
->>>>>>> 99855718 (feat(ia): roteamento determinístico de provedores e modelo no servidor (Bloco 04 - PR-1))
+ * Recontagens em 01/10/2026 — entraram arquivos de TESTE (sem produtor novo):
+ *  - 144: `promogifts-catalog/index.actions.test.ts` (CT-77) e `get-sip-password/index.test.ts` (T15).
+ *  - 145: Bloco 04 — `_shared/ai-routing.ts`.
+ *  - 148: Fase 1 Talk X (V18/V20) — `_shared/__tests__/talkx-reply-window.test.ts` (V18),
+ *    `_shared/__tests__/talkx-v20-window-business-hours.test.ts` e `talkx-send/v20-daily-limit.test.ts` (V20).
+ *  - 149: Bloco 04 (IA-036) — `_shared/ai-capabilities.ts` (módulo de fonte novo: entra na contagem
+ *    de arquivos .ts, mas NÃO produz token legado — verificado pelo próprio mapa INVENTARIO).
+ *  - 150: Bloco 04 (IA-032) — `_shared/ai-generate.ts` (despacho central; também não produz token legado).
+ *  - 151: Bloco 04 (IA-033) — `_shared/ai-image-input.ts` (baixa o objeto do Storage privado e embute a
+ *    imagem como data URL base64; não produz token legado, é transporte de entrada).
+ * O mapa INVENTARIO e o total de ocorrências (3) permanecem idênticos.
+ *  - 152: Bloco C do Multiplix (01/10/2026) — `_shared/multiplix-eligibility.ts` (mapa tipado de
+ *    elegibilidade PT↔EN, a fronteira com o Singu) e `_shared/__tests__/multiplix-eligibility.test.ts`.
+ *    São 2 arquivos novos e NENHUM dos dois produz token legado: o mapa INVENTARIO e a contagem de
+ *    ocorrências (3) seguem idênticos — só o total varrido subiu. O ratchet é atualizado de propósito.
+ *  - 153: PR-B da Decisão 116b (01/10/2026) — `_shared/secure-random.ts` (substituto de `Math.random()`
+ *    para as edge functions, achado S2245). Não produz token legado nem entra no mapa INVENTARIO: o
+ *    total de arquivos varridos sobe de 169 para 170 e a contagem de ocorrências (3) segue idêntica.
+ *    O ratchet é atualizado de propósito.
+ *  - 170: Bloco 05 / PR-2 (IA-043/IA-044) — `_shared/ai-budget.ts` (módulo de reserva de orçamento;
+ *    entra na contagem de arquivos .ts, mas NÃO produz token legado). O mapa INVENTARIO e as
+ *    ocorrências (3) permanecem idênticos — o ratchet sobe de propósito.
+ *  - 172: X011 (01/10/2026) — `talkx-send/process-recipient.ts` (corpo por-destinatário extraído do
+ *    `talkx-send/index.ts` na ação `continue`, sem mudança de comportamento). Não produz token legado:
+ *    o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido subiu.
+ *  - 174: Bloco 05 / PR-3 (IA-045/IA-046) — `_shared/ai-jobs.ts` (máquina de estados e wrappers da
+ *    fila durável de jobs) e `ai-jobs-worker/index.ts` (worker das edge functions que a migration
+ *    `20261002371230` agenda de minuto em minuto). São 2 arquivos novos e NENHUM produz token legado:
+ *    o mapa INVENTARIO e a contagem de ocorrências (3) permanecem idênticos.
+ *    Total FINAL medido na árvore mesclada: **175** (172 da base X011 + 2 deste PR + 1 do PR-D que veio
+ *    da main) — o valor certo não é o de nenhum dos dois lados, é o que o `find` mede depois do merge.
+ *  - 173: PR-D da Decisão 116b (02/10/2026) — `_shared/ai-generate.test.ts` (teste Deno do
+ *    `canonicalize`, que prova a ordenação por code-unit e a estabilidade da forma canônica). É arquivo
+ *    de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem
+ *    idênticos — só o total varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 176: X015 (02/10/2026) — `talkx-scheduler/index.test.ts` (teste Deno do handler exportado do
+ *    scheduler: auth por `x-cron-secret`, timeout de 10 s e limites por tick). É arquivo de teste,
+ *    não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos —
+ *    só o total varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 188: Bloco E / API de dominio do dispatch (02/10/2026) — `multiplix-dispatch/actions/listing.ts`
+ *    (ações de leitura `dispatch.list`/`recipients.list`) e `actions/__tests__/listing.test.ts`.
+ *    Nenhum dos dois produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem
+ *    idênticos — só o total varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 195: X019 (02/10/2026) — `talkx-send/x019-connection-budget.test.ts` (prova Deno do envio
+ *    pela conexão escolhida e dos limites de ritmo por minuto/dia). É arquivo de teste, não
+ *    produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos —
+ *    só o total varrido sobe, e o ratchet é atualizado de propósito.
+ *  - 196: Bloco 06 (IA-051, 02/10/2026) — `ai-jobs-worker/index.test.ts` (guarda de origem da
+ *    correlação: o handler `ai.generate` tem de passar `jobId`/`attempt` do job arrendado e o
+ *    roteador `_shared/ai-generate.ts` tem de repassá-los ao registrador central). É arquivo de
+ *    teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem
+ *    idênticos — só o total varrido sobe (195 → 196: os dois lados somam, o 195 acima é do X019,
+ *    que entrou na main no mesmo rebase) e o ratchet é atualizado de propósito. O valor certo
+ *    não é o de nenhum dos dois lados, é o que a varredura mede depois do merge.
+ *  - 197: Telefonia Fase 2 (02/10/2026) — `_shared/__tests__/evolution-call-events.test.ts`
+ *    (prova Deno dos eventos de chamada do webhook, com as fixtures offer/accept/reject/terminate).
+ *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
+ *    seguem idênticos — só o total varrido sobe (196 → 197), medido pela varredura depois do merge,
+ *    que é a regra declarada neste arquivo.
+ *  - 200: Email NAVY (02/10/2026) — `_shared/gmail-mime.ts`,
+ *    `_shared/__tests__/gmail-mime.test.ts` e `gmail-sync/index.test.ts`. São implementação
+ *    e testes do contrato MIME/sincronização do Gmail; não produzem vocabulário legado e, por
+ *    isso, apenas elevam o total varrido de 197 para 200.
+ *    De propósito NÃO usa o "regex antigo": o fatiamento das chamadas é por `indexOf`.
+ *  - 202: F60 gatilho (02/10/2026) — `_shared/__tests__/evolution-webhook-connection-risk.test.ts`
+ *    (prova Deno de que o webhook avisa a conexao em risco em motivo terminal).
+ *  - 201: X020 (02/10/2026) — `talkx-send/x020-variavel-precedencia.test.ts` (prova Deno do
+ *    retorno {text, missing, unknown} do personalize: fallback de variável com padrão, built-ins
+ *    vendedor/data/telefone, variável sem valor/desconhecida e precedência A/B por hash FNV-1a).
+ *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
+ *    seguem idênticos — só o total varrido sobe (200 → 201), medido pela varredura depois do merge.
+ *  - 203: X022 (03/10/2026) — `talkx-link/index.test.ts` (prova Deno do GET com UTM/404 neutro e
+ *    do POST autenticado por HMAC — sem assinatura/errada/vencida, dedupe e valor inválido).
+ *    É arquivo de teste, não produz token legado: só o total varrido sobe (202 → 203).
+ *  - 204: lote 2 do lint-ratchet (03/10/2026) — `_shared/evolution-types.ts` (contrato tipado do
+ *    client admin da Evolution: substitui 34 `supabase: any` por uma interface com a superfície que
+ *    o código realmente usa — `from/rpc/storage/channel`).
+ *    É arquivo de tipos, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
+ *    seguem idênticos — só o total varrido sobe (203 → 204), medido pela varredura depois do merge.
+ *  - 206: Bloco H / F64 (03/10/2026) — `multiplix-voices/index.ts` (edge que lista as vozes com grant
+ *    do chamador e assina o ativo do bucket privado) e `multiplix-voices/index.test.ts` (13 testes
+ *    Deno das decisões de autorização). São implementação e teste, não produzem token legado: o mapa
+ *    INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido sobe
+ *    (204 → 206), medido pela varredura depois do merge.
+ *  - 210: Fase 7 da telefonia (03/10/2026) — `get-call-recording/index.ts` + `sync-call-records/index.ts`
+ *    e seus testes (206 → 210). O mapa pinado nao muda: as duas sao produtoras novas, nao legadas.
+ *  - 212: X028 (03/10/2026) — `_shared/__tests__/talkx-webhook-receipts.test.ts` e
+ *    `_shared/__tests__/talkx-webhook-reply.test.ts` (provas Deno do recibo de leitura via RPC e da
+ *    atribuição de resposta com await). São arquivos de teste, não produzem token legado: o mapa
+ *    INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido sobe
+ *    (210 → 212), medido pela varredura depois do merge.
+ *  - 213: X030 (03/10/2026) — `_shared/__tests__/talkx-webhook-optout.test.ts` (prova Deno do opt-out
+ *    por palavra configurável, autoresposta pelo token da instância e resposta de botão/lista com id
+ *    `talkx_optout`). É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de
+ *    ocorrências (3) seguem idênticos — só o total varrido sobe (212 → 213), medido pela varredura
+ *    depois do merge.
+ *  - 214: X033 (04/10/2026) — `talkx-send/x033-delivery-log.test.ts` (prova Deno do log por
+ *    destinatário: lote de 3 destinatários grava >= 3 linhas em `talkx_delivery_log` sem
+ *    telefone, e o `Logger.child` anexa campaign_id/recipient_id/attempt a toda entrada).
+ *    É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de ocorrências (3)
+ *    seguem idênticos — só o total varrido sobe (213 → 214), medido pela varredura depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -92,8 +183,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('145 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(145);
+  it('215 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(215);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

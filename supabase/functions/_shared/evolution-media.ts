@@ -1,6 +1,7 @@
 // Shared media persistence helpers for Evolution API functions
 import { isRecord } from "./evolution-helpers.ts";
 import { evoFetch, extractBase64Media } from "./evolution-send.ts";
+import type { EvolutionDbClient } from "./evolution-types.ts";
 
 export function isValidMediaBytes(bytes: Uint8Array, messageType: string): boolean {
   if (bytes.length < 4) return false;
@@ -42,10 +43,11 @@ function detectExtension(respContentType: string, defaultExt: string): string {
 
 // deno-lint-ignore no-explicit-any
 export async function persistMediaToStorage(
-  supabase: any,
+  supabase: EvolutionDbClient,
   cdnUrl: string,
   messageType: string,
   messageId: string,
+  contactId?: string,
 ): Promise<string | null> {
   try {
     const resp = await fetch(cdnUrl, { signal: AbortSignal.timeout(15000) });
@@ -71,7 +73,9 @@ export async function persistMediaToStorage(
     // antigo ficava orfao. Deu 4.248 midias duplicadas (ate 10 copias) e 3,4 GB de
     // lixo no bucket. Com o nome fixo, o upsert abaixo sobrescreve a mesma chave.
     const safeId = messageId.replace(/[^a-zA-Z0-9]/g, '');
-    const fileName = `${messageType}/${safeId}.${ext}`;
+    const fileName = contactId
+      ? `${contactId}/${messageType}/${safeId}.${ext}`
+      : `${messageType}/${safeId}.${ext}`;
     const bucket = messageType === 'audio' ? 'audio-messages' : 'whatsapp-media';
 
     const { error: uploadErr } = await supabase.storage.from(bucket).upload(fileName, bytes, {
@@ -90,11 +94,12 @@ export async function persistMediaToStorage(
 // e pelo fallback via API.
 // deno-lint-ignore no-explicit-any
 export async function persistBase64Media(
-  supabase: any,
+  supabase: EvolutionDbClient,
   b64: string,
   mimetypeHint: string,
   messageType: string,
   messageId: string,
+  contactId?: string,
 ): Promise<string | null> {
   try {
     let mimeType = mimetypeHint || '';
@@ -125,7 +130,9 @@ export async function persistBase64Media(
     else if (mimeType.includes('pdf')) ext = 'pdf';
 
     const safeId = messageId.replace(/[^a-zA-Z0-9]/g, '');
-    const fileName = `${messageType}/${safeId}.${ext}`;
+    const fileName = contactId
+      ? `${contactId}/${messageType}/${safeId}.${ext}`
+      : `${messageType}/${safeId}.${ext}`;
     const bucket = messageType === 'audio' ? 'audio-messages' : 'whatsapp-media';
 
     const { error: uploadErr } = await supabase.storage.from(bucket).upload(fileName, bytes, {
@@ -141,11 +148,12 @@ export async function persistBase64Media(
 
 // deno-lint-ignore no-explicit-any
 export async function persistMediaViaApi(
-  supabase: any,
+  supabase: EvolutionDbClient,
   instance: string,
   data: Record<string, unknown>,
   messageType: string,
   messageId: string,
+  contactId?: string,
 ): Promise<string | null> {
   try {
     const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
@@ -163,7 +171,7 @@ export async function persistMediaViaApi(
     const result = await resp.json();
     const media = extractBase64Media(result);
     if (!media) return null;
-    return await persistBase64Media(supabase, media.base64, media.mimetype, messageType, messageId);
+    return await persistBase64Media(supabase, media.base64, media.mimetype, messageType, messageId, contactId);
   } catch (err) { console.error(`[MEDIA] persistMediaViaApi error:`, err); return null; }
 }
 

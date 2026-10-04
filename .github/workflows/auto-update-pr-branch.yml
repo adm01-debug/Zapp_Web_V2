@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: push na main
+#   prova: PRs abertas ficam com a main e os checks saem de `action_required`
+#   falha: PR atualizado fica esperando aprovacao na aba Actions e o auto-merge nunca dispara
+#   avisa: autor do PR
 name: Auto Update PR Branches
 
 # Heads criados por este workflow nascem com GITHUB_TOKEN e os checks do PR

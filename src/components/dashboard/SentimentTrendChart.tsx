@@ -31,8 +31,8 @@ function sentimentLabel(score: number): { label: string; tone: 'success' | 'warn
 
 export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: string) => void }) {
   const [days, setDays] = useState<'7' | '14' | '30'>('14');
-  const data = useRealSentimentData(parseInt(days));
-  const { data: recent } = useRecentSentimentAlerts(parseInt(days));
+  const data = useRealSentimentData(Number.parseInt(days));
+  const { data: recent } = useRecentSentimentAlerts(Number.parseInt(days));
 
   const stats = useMemo(() => {
     if (!data || data.length === 0) return null;

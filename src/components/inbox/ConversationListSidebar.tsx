@@ -127,7 +127,7 @@ export function ConversationListSidebar({
         {!isMobile && (
           <div className="h-14 px-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground leading-none">Conversas</h2>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground leading-none">Conversas</h1>
               <div className="flex items-center gap-1.5 mt-1">
                 <span className={cn('w-2 h-2 rounded-full shrink-0', inbox.isOnline ? 'bg-success' : 'bg-destructive')} />
                 <span className="text-[13px] text-muted-foreground truncate">{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
@@ -139,13 +139,13 @@ export function ConversationListSidebar({
 
         <div className={cn('flex items-center gap-2 px-4', isMobile ? 'pt-1.5 pb-1' : 'pb-1')}>
           <div className="relative flex-1">
-            <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+            <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               ref={contactSearchRef}
               placeholder="Buscar conversas…"
               value={contactSearch}
               onChange={(e) => handleContactSearch(e.target.value)}
-              className="pl-10 pr-8 h-10 rounded-xl bg-input border border-border text-sm placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/30"
+              className="pl-10 pr-8 h-10 rounded-xl bg-input border border-border text-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/30"
               aria-label="Buscar contato pelo nome"
             />
             {contactSearch && (

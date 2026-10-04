@@ -21,12 +21,25 @@
 import net from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolverCaminhoPermitido } from '../lib/seguranca-processo.mjs';
 import { parseConnection } from './psql-environment.mjs';
 import { endurecerDestinoTls, SUPABASE_CA_PATH } from './database-identity.mjs';
 
-const proxyDir = process.argv[2];
-if (!proxyDir) {
+// S8707: o diretorio do proxy vem do argumento; nunca entra cru num fs.*.
+// A guarda vive no modulo compartilhado (scripts/lib/seguranca-processo.mjs):
+// resolve e exige que fique dentro do repositorio ou do diretorio temporario do
+// sistema (gen-types.sh passa um `mktemp -d`). Fail-closed: fora da raiz
+// encerra com exit 2 (mesmo codigo do uso invalido) antes de qualquer socket.
+const proxyDirArg = process.argv[2];
+if (!proxyDirArg) {
   console.error('uso: local-pg-proxy.mjs <diretorio-temporario-0700>');
+  process.exit(2);
+}
+let proxyDir;
+try {
+  proxyDir = resolverCaminhoPermitido(proxyDirArg, 'diretorio do proxy');
+} catch (erro) {
+  console.error('ERRO: ' + erro.message);
   process.exit(2);
 }
 
@@ -99,12 +112,21 @@ const iniLines = [
   'pool_mode = session',
   'max_client_conn = 10',
   'default_pool_size = 5',
+  // O default do pgbouncer e 15s. Com o banco de producao sob saturacao
+  // transitoria (rajadas de statement timeout), o handshake ate o banco
+  // demora e o pgbouncer desistia antes do cliente postgres-meta, que
+  // reportava "Error: timeout exceeded when trying to connect". 60s da
+  // folga para o handshake completar em vez de abortar. NAO substitui o
+  // retry do lado do gen-types.sh: o cliente postgres-meta tem timeout
+  // proprio (~15-20s, medido), entao este ajuste sozinho nao garante que
+  // uma tentativa sobreviva a saturacao — o retry e a rede de seguranca.
+  'server_connect_timeout = 60',
   'server_tls_sslmode = verify-full',
   `server_tls_ca_file = ${caPath}`,
   '',
 ].join('\n');
 
-fs.writeFileSync(path.join(proxyDir, 'userlist.txt'), '"proxy" "unused"\n', { mode: 0o600 });
-fs.writeFileSync(path.join(proxyDir, 'pgbouncer.ini'), iniLines, { mode: 0o600 });
+fs.writeFileSync(path.join(proxyDir, 'userlist.txt'), '"proxy" "unused"\n', { mode: 0o600 }); // NOSONAR(S8707): 'proxyDir' ja passou por resolverCaminhoPermitido (exit 2 fora do repo/tmp) e o nome do arquivo e literal ('userlist.txt')
+fs.writeFileSync(path.join(proxyDir, 'pgbouncer.ini'), iniLines, { mode: 0o600 }); // NOSONAR(S8707): 'proxyDir' ja passou por resolverCaminhoPermitido (exit 2 fora do repo/tmp) e o nome do arquivo e literal ('pgbouncer.ini')
 
 console.log(String(port));

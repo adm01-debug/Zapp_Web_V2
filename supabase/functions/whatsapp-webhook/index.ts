@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, errorResponse, Logger, requireEnv } from "../_shared/validation.ts";
 import { logWebhookAuthShadow } from "../_shared/hmac-validation.ts";
@@ -109,7 +109,7 @@ serve(async (req) => {
                 .from('messages')
                 .update({
                   status: status.status,
-                  status_updated_at: new Date(parseInt(status.timestamp) * 1000).toISOString(),
+                  status_updated_at: new Date(Number.parseInt(status.timestamp) * 1000).toISOString(),
                 })
                 .eq('external_id', status.id);
 

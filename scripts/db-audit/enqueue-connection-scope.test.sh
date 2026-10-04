@@ -345,7 +345,7 @@ conn_free='e0000000-0000-0000-0000-000000000002'
 
 enq() { # $1=contact $2=connection $3=cid $4=texto  (sem ponto-e-virgula; conexao vazia -> NULL)
   local conn="NULL"
-  [ -n "$2" ] && conn="'$2'::uuid"
+  [[ -n "$2" ]] && conn="'$2'::uuid"
   printf "SELECT public.enqueue_outbound_message('%s'::uuid,'%s'::uuid,'%s','text',NULL,NULL,%s)" "$1" "$3" "$4" "$conn"
 }
 

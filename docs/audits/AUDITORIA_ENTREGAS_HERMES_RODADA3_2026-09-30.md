@@ -131,3 +131,104 @@ Saída crua do passo de re-medição, com as expressões **copiadas verbatim** d
 3. **O PR #1336 corrigiu um defeito de leitura; existe um defeito de escrita da mesma família ainda no ar** (R3-01), além de R3-02/R3-03 ativos e R3-04 de alcance indeterminado.
 4. **Repositório, banco canônico e produção estão sincronizados** — nada a importar, nada a aplicar, nada a republicar.
 5. **Dois métodos de verificação usados antes estavam errados** (§1.1) e foram substituídos; nenhum resultado desta auditoria depende deles.
+
+---
+
+## 9. Verificação de produção do bundle servido (01/10/2026, somente leitura)
+
+Escopo pedido: provar que **R3-01 (#1380), R3-02 (#1392), R3-03 (#1397) e R3-06 (#1401)** estão **no ar** — mergeados não é o mesmo que servidos. Nada foi alterado: só `GET` no site e leitura do repositório.
+
+**Deploy medido.** `https://zapp-web-v2.vercel.app`, deploy de produção `b22b91f8` (2026-10-01T16:06:29Z) — **posterior** aos quatro merges. Ancestralidade conferida pela API (`compare main...<sha>` = `behind frente=0` para `927a5ff9d0`, `c7f870144d`, `824ea0c957` e `409e8fa5fb`): os quatro commits estão contidos na `main` **do commit que foi para produção**.
+
+**Bundle servido.** 385 chunks / 8,4 MB; `index.html` 6.196 B, sha256 `dfd68687ae3b144622720e60eb738ba1e793c1b4611b3cb14417abf03a6d6351`. Grafo fechado a partir do manifesto `m.f=[…]` do entry (build **rolldown**, runtime próprio) e das referências internas de cada chunk.
+
+**O util de data está no ar.** Chunk próprio **`localDay-Dr9m4ORa.js`**, 973 B, sha256 `e7f614bf46ef8b7ac4ad87f938ada4c259c76d704a4b71e669030fdb3b442ec0`, com **4 símbolos exportados** — o quarto (`localInstantFromDayAndTime`) é o que o R3-01 introduziu.
+
+**Consumidores do util — lista fechada, 6 chunks** (todos com `import … from "./localDay-Dr9m4ORa.js"`):
+
+| chunk servido | item | import observado |
+| --- | --- | --- |
+| `ScheduleMessageDialog-ksul1pLU.js` (4.488 B) | **R3-01** | `import{r as x}` — símbolo **diferente** dos de chave-de-dia |
+| `AuditLogDashboard-CWqKoAYw.js` (6.419 B) | **R3-02** | `import{n as O}` |
+| `RealtimeInboxView-DRKkSx0h.js` (131.587 B) | **R3-03** | `import{n as Lt}` |
+| `useConversationHistoryTimeline-qQoFsadf.js` (5.042 B) | **R3-06** | `import{n as i}` |
+| `NotesTab-CmsR55Ri.js` (11.478 B) | #1336 (D2) | `import{n as …}` |
+| `useMyWorkItems-DV_K5AMk.js` (13.505 B) | #1336 (D1) | `import{n as …}` |
+
+**R3-06, verbatim no servido.** `queryFn:async()=>{let e=i,c=a>0?n(r(new Date,a-1)).toISOString():null,…` — ou seja `startOfDay(subDays(new Date(), period - 1))`, aplicado como `gte('created_at', c)` nas **cinco** fontes (mensagens, eventos, notas, tarefas, negócios). A janela móvil antiga **não está** nesse chunk.
+
+**Ausência dos padrões antigos, no bundle inteiro (385 chunks):**
+
+- `setHours(new Date(` → **0 chunks** (a construção do R3-01 desapareceu do ar);
+- janela móvel `Date.now() - X*864e5` → **1 chunk**: `TalkXView-Cpv1Kz5O.js` (ver achado abaixo);
+- `.toISOString().split("T")` → **1 chunk**: `Index-…`, no `p=`${e.id}-${s}-${u.toISOString().split("T")[0]}`` — **dedupe de alerta por dia UTC**, que é o **R3-07 já registrado como latente** (`useGoalNotifications`), não um dos quatro itens.
+
+**Achado novo, mesma família, fora dos quatro — NÃO corrigido.** `src/hooks/integrations/useTalkXSegments.ts:101-108`: os operadores de segmento `in_last_days` / `not_in_last_days`, com rótulos **"nos últimos (dias)"** / **"há mais de (dias)"**, montam o filtro com `Date.now() - d * 86_400_000` — **horas corridas para um rótulo em dias**, exatamente o desencontro do R3-06, agora em **filtro de audiência** (pode incluir/excluir contato um dia fora). Varredura na fonte achou outras janelas móveis que **precisam de triagem** e não foram julgadas aqui: `SupervisorCopilot.tsx:41` e `useDiagnosticsData.ts:71` (24 h), `useAIStats.ts:118` (24 h), `ConversationHeatmap.tsx:62` (30 d), `AdminTelemetriaPage.tsx:66` (7 d), `usePerformanceSnapshots.ts:80` (7 d) — rótulo em **horas** está correto como está; rótulo em **dias** é o mesmo defeito.
+
+**Veredito da verificação.** As quatro correções estão **no ar**, cada uma no chunk da sua tela, consumindo o util compartilhado, e **nenhuma delas carrega o padrão antigo**. Fica aberto como candidato: o `in_last_days` do TalkX (filtro de audiência).
+
+### 9.1 Verificação de produção — decisão `8ea1` (TalkX `in_last_days` e Telemetria `7d`)
+
+**Medição de 01/10/2026, ~23:17Z, somente leitura**, sobre o bundle **servido** por `https://zapp-web-v2.vercel.app`.
+Deploy de produção medido: **`a5116ae31743`** (Vercel, `2026-10-01T23:07:23Z`; `index.html` servido com `last-modified 23:07:33Z`),
+e ele contém **os dois** merges desta decisão — `compare a5116ae3…f9900f52ba` = `behind, frente=0` (item 1),
+`compare a5116ae3…bf70beaf` = `behind, frente=0` (item 2) — com o deploy `identical` à `main`.
+
+Artefatos: `index.html` (6.640 B, sha256 `8c49acee50f99a5b…`) + entry `assets/index-IWph2-N_.js`; o grafo de chunks foi
+percorrido por BFS (manifesto do entry + referências `./`, `assets/` e nomes nus dentro de cada chunk):
+**386 chunks, 8,4 MB, 0 falhas de download**.
+
+**Item 1 — `useTalkXSegments` (`in_last_days` / `not_in_last_days`) — NO AR.** Uma única implementação no bundle
+(`in_last_days` aparece em **1** dos 386 chunks): `TalkXView-LJo2dkM-.js` (261.690 B, sha256 `e37110c788a21b7a…`):
+
+```js
+… ,Gn=`America/Sao_Paulo`,Kn=[…]                                            // fuso do segmento, explícito
+date:[{value:`in_last_days`,label:`nos últimos (dias)`},{value:`not_in_last_days`,label:`há mais de (dias)`}]
+case`in_last_days`:{let t=Number(n);return t?`${e.field}.gte.${c(Gn,t-1)}`:null}
+case`not_in_last_days`:{let t=Number(n);return t?`${e.field}.lt.${c(Gn,t-1)}`:null}
+```
+
+O filtro é montado chamando um helper **com o fuso de São Paulo como argumento** (`c(Gn, dias−1)`) — o helper de dia
+ancorado no fuso, cuja maquinaria está no mesmo chunk (`function kr(e,t){…new Intl.DateTimeFormat('en-CA',{timeZone:t,…hourCycle:'h23'}).formatToParts(…)…}`,
+mais `Pr`/`Fr` com sondagem de offset). A janela móvel antiga **desapareceu do bundle**: `d * 86_400_000` → **0 chunks**.
+
+**Item 2 — Telemetria, `'7d'` = 7 dias de calendário — NO AR.** `AdminTelemetriaPage-7BkCwAb2.js` (15.546 B, sha256 `58ee910a6e29cc43…`):
+
+```js
+function $(e,t=new Date){let n={"1h":1,"6h":6,"24h":24}[e];
+  return n?new Date(t.getTime()-n*36e5).toISOString():g(_(t,6)).toISOString()}
+```
+
+Cadeia dos helpers, fechada em código de produção (não em nome de chunk):
+
+```
+AdminTelemetriaPage-…: import{et as g, f as _, …}from"./vendor-utils-CROwA8Ot.js"
+vendor-utils-CROwA8Ot: export{… b as et … En as f …}
+vendor-utils-CROwA8Ot: function b(t){let n=e(t);return n.setHours(0,0,0,0),n}   // startOfDay
+vendor-utils-CROwA8Ot: function En(e,t){return n(e,-t)}                         // subDays
+```
+
+Ou seja, `'7d'` → **`startOfDay(subDays(agora, 6))`** = 7 dias de **calendário** no fuso do navegador (igual ao R3-06),
+enquanto `1h/6h/24h` seguem janelas corridas em horas (o rótulo promete horas). Nessa função **não há `6048e5`**;
+o único `6048e5` do chunk está na **limpeza/retenção** — `…from('query_telemetry').delete().lt('created_at', new Date(Date.now()-6048e5)…)` —
+que é exatamente o achado de retenção **registrado e deixado fora do escopo** por decisão do plano.
+
+**Ausências varridas nos 386 chunks:** `d * 86_400_000` → **0**; `setHours(new Date(` → **0** (o defeito do R3-01 continua fora do ar);
+`6048e5` → 13 chunks, todos explicáveis por date-fns (`c=6048e5`, constante de dias) ou por retenção/limpeza — nenhum sob rótulo de dias nos caminhos dos dois itens.
+
+**Achados novos, mesma família, NÃO corrigidos** (para triagem do Claude; fora do escopo deste plano):
+
+1. **Painel de campanhas do TalkX** (`TalkXView-LJo2dkM-.js`, componente `Si({campaigns})`) — é o "`X*864e5` residual" que o §9 acima apontava sem identificar.
+   Rótulo em **dias**, aritmética em **horas corridas**:
+   ```js
+   var yi={"7d":`Últimos 7 dias`,"30d":`Últimos 30 dias`,"90d":`Últimos 90 dias`}, bi={"7d":7,"30d":30,"90d":90}, …
+   let a=bi[t], s=useMemo(()=>new Date(o-a*864e5),[o,a]), c=…filter(e=>!e.started_at||new Date(e.started_at)>=s)
+   ```
+2. **Rótulos "Últimos N dias" aparecem em 11 chunks** (`PeriodSelector`, `PeriodFilterSelector`, `HistoryTab`, `AdvancedReportsView`,
+   `AIUsageDashboard`, `DashboardView`, `ChatPanel`, `GlobalSearch`, `ExternalProductManagement`, `SentimentAlertsDashboard`, `TalkXView`).
+   Este documento **não** julga esses 11: é uma varredura de seletores de período, trabalho de triagem com identidade própria. Fica registrado para não se perder.
+
+**Observação de método — build não determinista.** Neste build o util de data **não** é chunk próprio: está *inlined* nos consumidores
+(`TalkXView-…` e `useMyWorkItems-DS3gGdu2.js` carregam `en-CA` + `formatToParts`), enquanto no build do §9 acima ele era `localDay-*.js`.
+Prova de produção aqui é **semântica** (chamada, argumento de fuso, ausência do padrão antigo), nunca por nome de chunk.
+

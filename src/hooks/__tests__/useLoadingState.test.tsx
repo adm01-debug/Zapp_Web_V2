@@ -82,10 +82,17 @@ describe('useLoadingState', () => {
     const { result } = renderHook(() => useLoadingState());
     const fn = vi.fn().mockRejectedValue(new Error('fail'));
 
+    let retorno: unknown = 'nao-chamado';
     await act(async () => {
       try {
-        await result.current.withLoading(fn, { errorMessage: 'Error!' });
+        retorno = await result.current.withLoading(fn, { errorMessage: 'Error!' });
       } catch (err) { log.error('Unexpected error in useLoadingState.test:', err); }
     });
+
+    // O erro é contido pelo wrapper: não propaga para quem chamou (o catch
+    // acima é só rede de segurança e não deveria disparar), vira `undefined` e
+    // o estado do hook passa a 'error' — useLoadingState.ts.
+    expect(retorno).toBeUndefined();
+    expect(result.current.isError).toBe(true);
   });
 });

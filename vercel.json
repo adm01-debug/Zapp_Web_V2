@@ -33,6 +33,10 @@
   ],
   "rewrites": [
     {
+      "source": "/l/:slug",
+      "destination": "https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/talkx-link?s=:slug"
+    },
+    {
       "source": "/((?!assets/|version\\.json$).*)",
       "destination": "/index.html"
     }

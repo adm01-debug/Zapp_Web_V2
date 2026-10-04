@@ -154,7 +154,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
     // E36 — prévia de voice changer é mídia de conversa: respeita o volume global.
     const detachMediaVolume = attachMediaVolume(audio);
     audio.onended = () => { detachMediaVolume(); setIsPlaying(false); };
-    audio.play();
+    void audio.play();
     audioRef.current = audio;
     setIsPlaying(true);
   }, [transformedUrl, isPlaying]);

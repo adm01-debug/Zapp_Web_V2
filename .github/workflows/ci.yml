@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: pull_request, push na main, merge_group e dispatch
+#   prova: lint, tipos, testes, build, security e E2E do codigo
+#   falha: PR fica vermelho e o merge e bloqueado pelos required checks
+#   avisa: autor do PR e revisor, via checks do GitHub
 # =================================================
 # ZAPP-WEB CI/CD Pipeline
 # =================================================
@@ -61,7 +66,7 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📚 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🦕 Setup Deno
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
@@ -73,45 +78,18 @@ jobs:
           deno check --config scripts/ci/deno.json --frozen
           supabase/functions/*/index.ts
 
+      # E49: glob substitui lista hardcoded de ~45 arquivos. Flags combinadas
+      # cobrem os três grupos anteriores (mídia, multiplix, contratos gerais).
       - name: 🧪 Run executable Edge handler contracts
         run: >-
-          deno test --config scripts/ci/deno.json --frozen --allow-env
-          supabase/functions/_shared/__tests__/ssrf.test.ts
-          supabase/functions/_shared/__tests__/secure-egress.test.ts
-          supabase/functions/_shared/__tests__/crm-integration-contract.test.ts
-          supabase/functions/_shared/__tests__/talkx-delivery-connection.test.ts
-          supabase/functions/_shared/__tests__/avatar-storage-path.test.ts
-          supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts
-          supabase/functions/_shared/__tests__/evolution-go-routes.test.ts
-          supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts
-          supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts
-          supabase/functions/_shared/__tests__/gmail-send-schema.test.ts
-          supabase/functions/crm-integration/index.test.ts
-          supabase/functions/promogifts-catalog/index.test.ts
-          supabase/functions/promogifts-catalog/index.actions.test.ts
-          supabase/functions/message-delivery/index.test.ts
-          supabase/functions/sentiment-alert/index.test.ts
-          supabase/functions/talkx-send/index.test.ts
-          supabase/functions/multiplix-audience/index.test.ts
-          supabase/functions/public-api/index.test.ts
-          supabase/functions/webhook-diagnostic/diagnostic.test.ts
-          supabase/functions/talkx-report/index.test.ts
-          supabase/functions/multiplix-send/index.test.ts
-          supabase/functions/get-sip-password/index.test.ts
-          supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts
-          supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts
-          supabase/functions/_shared/__tests__/webhook-signature.test.ts
-          supabase/functions/_shared/__tests__/ai-auth.test.ts
-          supabase/functions/_shared/__tests__/ai-audio-authz.test.ts
-          supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts
-          supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts
-          supabase/functions/_shared/__tests__/webhook-signature-ambiguity.test.ts
-          supabase/functions/_shared/__tests__/voice-copilot-authz.test.ts
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
+          $(git ls-files 'supabase/functions/**/*.test.ts')
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
           node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
           scripts/db-audit/crm-sync-outbox-contract.test.mjs
+          scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs
 
       - name: 🐹 Setup Go for egress-proxy contracts
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -128,6 +106,53 @@ jobs:
 
       - name: 🔒 Verify PR workflow secret boundary
         run: node scripts/ci/check-pr-workflow-secrets.mjs
+
+      - name: 🔐 Verify E2E artifact secret boundary
+        # O report do Playwright embute o error-context, que traz o valor digitado
+        # no campo de senha. Quem usa E2E_TEST_* nao pode publicar esse artifact.
+        run: node scripts/ci/check-e2e-artifact-secrets.mjs
+
+      - name: 📋 Verify Talk X PR body (definição de pronto)
+        if: github.event_name == 'pull_request'
+        run: node scripts/ci/check-talkx-pr-body.mjs
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+
+      - name: 🔬 Lint workflows (actionlint)
+        run: |
+          # actionlint vem do release oficial pinado (v1.7.7) com o sha256
+          # conferido, em vez de `go install ...@versao`: a resolucao de modulo do
+          # go install nao e travada por lock-file (SonarCloud githubactions:S8545).
+          set -euo pipefail
+          actionlint_version="1.7.7"
+          actionlint_asset="actionlint_${actionlint_version}_linux_amd64.tar.gz"
+          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+          actionlint_dir="$RUNNER_TEMP/actionlint"
+          mkdir -p "$actionlint_dir"
+          curl --proto '=https' --tlsv1.2 -sSL -o "$actionlint_dir/$actionlint_asset" \
+            "https://github.com/rhysd/actionlint/releases/download/v${actionlint_version}/${actionlint_asset}"
+          echo "${actionlint_sha256}  ${actionlint_dir}/${actionlint_asset}" | sha256sum --check --strict
+          tar -xzf "$actionlint_dir/$actionlint_asset" -C "$actionlint_dir" actionlint
+          chmod +x "$actionlint_dir/actionlint"
+          echo "$actionlint_dir" >> "$GITHUB_PATH"
+          "$actionlint_dir/actionlint" -shellcheck ''
+
+      - name: 📖 Verify workflow docs are fresh
+        run: |
+          # E96: docs/ci/README.md e' GERADO a partir do bloco `# docs:` no topo de
+          # cada workflow. Se divergir, o README descreve um pipeline que nao existe
+          # mais — pior que nao ter README, porque ninguem confere o que esta escrito.
+          node scripts/ci/render-workflow-docs.mjs --check
+
+      - name: 🛡️ Audit workflow security (zizmor)
+        run: |
+          # --only-binary :all: impede o build de sdist (scripts de setup);
+          # zizmor==0.9.0 publica wheel manylinux (SonarCloud githubactions:S8541).
+          python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==0.9.0
+          # Aceitar apenas exit 11-13 (info/low/medium); falhar em qualquer outro
+          # código, inclusive 1 (parse/erro interno) e 14-15 (high/error).
+          zizmor --persona regular .github/workflows/ || { rc=$?; [ "$rc" -ge 11 ] && [ "$rc" -le 13 ] || exit "$rc"; }
 
       - name: 🧾 Verify Edge deployment manifest freshness
         run: node scripts/edge-deploy/generate-manifest.mjs --check
@@ -152,6 +177,26 @@ jobs:
       - name: 🛡️ Run Supabase usage guard
         run: node scripts/db-audit/supabase-usage-guard.mjs
 
+      - name: 📋 Check test inventory (todo .test.ts/.test.sh tem passo no CI YAML)
+        run: node scripts/ci/check-test-inventory.mjs
+
+      - name: 🧾 Verify Talk X V4 placar freshness (aviso)
+        # O placar compara o STATUS.md commitado com os títulos (X<NNN>) já em
+        # origin/main. Uma etapa recém-mergeada deixa o arquivo 1 passo atrás (o
+        # gerador não conta a própria etapa antes do merge) — então o check NÃO pode
+        # bloquear: `continue-on-error` avisa sem derrubar o job. Quem corrige é o
+        # workflow `talkx-status-regen.yml`, que roda no push e commita o STATUS.md
+        # regenerado (bot via GITHUB_TOKEN, sem loop).
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          # O checkout do job de lint é raso (fetch-depth padrão 1); o placar varre
+          # `git log origin/main` atrás de títulos (X<NNN>), então precisa do histórico
+          # completo de main. `--unshallow` busca a história toda sem tocar no checkout
+          # dos demais steps (e é no-op se o clone já for completo).
+          git fetch origin main --unshallow --quiet
+          node scripts/talkx/v4-status.mjs --check --ref origin/main
+
   # ===========================================
   # JOB 2: Unit Tests
   # ===========================================
@@ -172,7 +217,7 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📚 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🧪 Run Vitest (cobertura com piso em src/lib + src/services)
         run: bun run test:coverage
@@ -218,7 +263,7 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📚 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🏗️ Build for production
         run: bun run build
@@ -273,7 +318,7 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📚 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       # Um unico "bun audit": o relatorio completo (inclui devDependencies) sai sempre,
       # e o gate bloqueante le o mesmo arquivo em vez de consultar o registry de novo.
@@ -314,17 +359,19 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📚 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
-        run: bunx playwright install --with-deps chromium firefox webkit
+        # Versao exata resolvida no bun.lock (SonarCloud githubactions:S8543:
+        # `bunx playwright` sem versao puxaria um release nao verificado).
+        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
 
       # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
       # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
       # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
       # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
       - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-contacts-visual --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
         env:
           CI: true
 
@@ -333,6 +380,74 @@ jobs:
         if: always()
         with:
           name: playwright-report
-          path: playwright-report/
+          # Exclui o snapshot de falha e os traces: sao os unicos arquivos do
+          # report que podem conter valor digitado em campo de formulario.
+          path: |
+            playwright-report/
+            !playwright-report/**/error-context.md
+            !playwright-report/**/*.zip
+            !test-results/**/error-context.md
           retention-days: 3
           if-no-files-found: ignore
+
+  # ===========================================
+  # JOB 6: Mutação do mapa (E70, não bloqueante)
+  # ===========================================
+  # E70: roda o runner de mutação do módulo do mapa (E69,
+  # `scripts/mutation/run-mapa.mjs`) quando um PR toca `src/lib/mapbox*` ou
+  # `src/components/inbox/location-picker/**`. `continue-on-error: true` mantém o
+  # job INFORMATIVO: um mutante sobrevivente nunca trava o merge (não é required).
+  #
+  # O GitHub Actions não oferece `paths:` por job — o filtro `paths` só existe no
+  # gatilho do workflow, e usá-lo aqui restringiria TODOS os jobs do ci.yml. Para
+  # não alterar os jobs existentes, o filtro de caminhos roda em STEP
+  # (`git diff --name-only` contra a base do PR), a alternativa prevista na
+  # auditoria de GitHub Actions (E64).
+  mutation-mapa:
+    name: 🧬 Mutação do mapa (não bloqueante)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    continue-on-error: true
+    needs: lint-and-typecheck
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Histórico completo: o filtro de caminhos compara com a base do PR
+          # (`origin/<base>...HEAD`), o que exige o ancestral comum.
+          fetch-depth: 0
+
+      # Filtro de caminhos (E70): só o módulo do mapa justifica a rodada.
+      - name: 🔎 Detectar mudança no módulo do mapa (paths filter)
+        id: paths
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BASE_REF:-}" ]; then
+            # push/dispatch/merge_group: sem base de PR, roda (fail-open).
+            echo "map_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+          printf 'Arquivos alterados no PR:\n%s\n' "$changed"
+          if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
+            echo "map_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "map_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 🧄 Setup Bun
+        if: steps.paths.outputs.map_changed == 'true'
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 📚 Install dependencies
+        if: steps.paths.outputs.map_changed == 'true'
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: 🧬 Rodar mutação do mapa (E69)
+        if: steps.paths.outputs.map_changed == 'true'
+        run: bun run mutation:mapa

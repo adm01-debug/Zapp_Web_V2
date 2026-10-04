@@ -12,7 +12,7 @@ export function LastActivityWidget({ contactId }: LastActivityWidgetProps) {
   const events = (data?.days ?? []).flatMap((d) => d.events).slice(0, 3);
 
   if (isLoading) return <div className="h-10 rounded-lg bg-muted/20 animate-pulse" />;
-  if (!events.length) return <p className="text-xs text-muted-foreground/60 text-center py-2">Nenhuma atividade recente</p>;
+  if (!events.length) return <p className="text-xs text-muted-foreground text-center py-2">Nenhuma atividade recente</p>;
 
   return (
     <div className="space-y-2">

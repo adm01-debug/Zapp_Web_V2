@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: push na main e dispatch sobre main
+#   prova: o fluxo logado (Playwright com login real) contra producao
+#   falha: artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
+#   avisa: issue de E2E e autor do push
 # ==========================================================================
 # ZAPP-WEB · E2E logado (Playwright, login real)
 # ==========================================================================
@@ -40,10 +45,21 @@ concurrency:
 jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
+    # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
+    # vale para todos os jobs. Foi o que reprovou o merge do #1784.
+    permissions:
+      contents: read # checkout e leitura do repo
+      issues: write # abrir/comentar o alerta em falha e fechar quando a suite volta
     steps:
+      - name: ✋ Somente executa na main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          exit 1
+
       - name: 📥 Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -55,10 +71,10 @@ jobs:
           bun-version: '1.4.0'
 
       - name: 📦 Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
-        run: bunx playwright install --with-deps chromium firefox webkit
+        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
 
       # Uma unica invocacao do Playwright, com os projetos listados
       # EXPLICITAMENTE em vez de confiar na resolucao automatica de dependsOn:
@@ -69,12 +85,69 @@ jobs:
       # (auth cookies do user.json sao browser-agnosticos).
       # firefox-conversation e webkit-conversation cobrem conversation.spec.ts e
       # messaging.spec.ts nos engines alternativos -- mesma logica de browser-agnosticismo.
+      # chromium-mapa cobre as specs do modulo MAPA (E71/E72 picker,
+      # e2e/location-picker.spec.ts; E73 cadastro, e2e/contact-address.spec.ts; E74
+      # mapa/pino, e2e/contact-map-pin.spec.ts). Projeto proprio e SEM setup: essas
+      # specs autenticam por sessao FALSA (installFakeSession) com REST/RPC e a
+      # Mapbox mockados, entao nao usam E2E_TEST_EMAIL/E2E_TEST_PASSWORD nem o
+      # storageState de e2e/.auth/user.json -- nenhum secret novo e necessario.
+      #
+      # catalog.spec.ts (CT-82) e o fluxo de envio do catalogo. O Chromium e
+      # coberto pelo chromium-authenticated (catch-all); firefox-catalog e
+      # webkit-catalog dao a paridade dos 3 browsers pedida no aceite. O spec e
+      # SKIPADO enquanto E2E_CATALOG_PRODUCT_SKU_VERIFIED nao for true (pende a
+      # verificacao do SKU no PromoGifts, sistema externo). NAO entram no ci.yml.
+      # E82: o e-mail do usuario de teste entra no log do Playwright (o fill() imprime o
+      # valor). Mascarar ANTES de qualquer saida, para o ::add-mask:: valer o run todo.
+      - name: 🔒 Mascarar o e-mail do E2E no log
+        env:
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+        run: |
+          set -euo pipefail
+          if [ -n "$E2E_TEST_EMAIL" ]; then
+            echo "::add-mask::$E2E_TEST_EMAIL"
+            echo "e-mail do E2E mascarado no log"
+          else
+            echo "aviso: secret E2E_TEST_EMAIL vazio - nada a mascarar"
+          fi
+
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation
+        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          # Chave publica do projeto, para os asserts por API do catalog.spec.ts
+          # (mesmo secret que o ci.yml entrega ao app; nao e privilegiada). Sem
+          # ela o spec pula em vez de falhar.
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
+      # E82: o ::add-mask:: protege o LOG. O `playwright-report` e um artifact HTML com o
+      # e-mail gravado dentro (titulo de teste, argumento do fill(), URL) -- subir o
+      # relatorio cru publicaria o endereco num repositorio publico, que e exatamente o
+      # risco que o cabecalho deste workflow ja registra. Sao superficies diferentes.
+      # Por isso: redige o arquivo e SO ENTAO sobe -- e o upload exige que a redacao
+      # tenha dado certo. Se a redacao falhar, o relatorio NAO sobe.
+      - name: 🔒 Redigir o relatorio antes de arquivar
+        if: failure()
+        id: redigir
+        env:
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+        run: |
+          set -euo pipefail
+          node scripts/ci/redigir-relatorio.mjs playwright-report \
+            --segredo-env=E2E_TEST_EMAIL \
+            --segredo-env=E2E_TEST_PASSWORD
+
+      - name: 📎 Arquivar relatorio do Playwright (so em falha)
+        if: failure() && steps.redigir.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report-logado-${{ github.run_id }}
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 3
 
       # Teardown: apaga linhas de fixture geradas pelo E2E em producao.
       # contact_id 04dff4dc-c6b1-4283-ac22-bd8639804759 e o contato de teste
@@ -93,10 +166,106 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown pulado"
             exit 0
           fi
-          curl -sf -X DELETE \
+          curl --proto '=https' --tlsv1.2 -sf -X DELETE \
             "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_closures?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
             -H "apikey: $SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
             && echo "teardown OK" \
             || echo "teardown falhou - nao bloqueia CI"
+
+      # Teardown: catalog_send_events e log append-only -- depois do CT-02 o
+      # `authenticated` so tem SELECT/INSERT, entao o cliente NAO consegue apagar
+      # o que o CT-82 grava; a limpeza exige a service role. As mensagens do
+      # envio sao soft-deletadas (is_deleted=true) pelo afterEach do proprio spec.
+      # contact_id 04dff4dc-... e o contato de teste E2E (dedicado).
+      # Requer o secret SUPABASE_SERVICE_ROLE_KEY; se ausente, o step e pulado.
+      - name: 🧹 E2E teardown - limpar envios de catálogo (CT-82)
+        if: always()
+        continue-on-error: true
+        env:
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SERVICE_ROLE_KEY" ]; then
+            echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown de catalog_send_events pulado"
+            exit 0
+          fi
+          curl -sf -X DELETE \
+            "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/catalog_send_events?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
+            -H "apikey: $SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            && echo "teardown catalog_send_events OK" \
+            || echo "teardown catalog_send_events falhou - nao bloqueia CI"
+
+      # E83: alerta da suite logada, no mesmo mecanismo da E44 (db-live-guard.yml) -- um
+      # marcador invisivel identifica a CAUSA (o conjunto de testes que falhou) e o alerta
+      # so e repetido quando ela MUDA. Sem isso, uma suite quebrada por dias geraria um
+      # comentario por execucao e a issue viraria ruido que ninguem le.
+      - name: 🚨 Abrir/comentar a issue da suite logada
+        if: failure()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          TITULO: "[e2e-logado] Suíte logada quebrada na main"
+        with:
+          script: |
+            const { marcadorDe, nomesDeTestResults, corpoDe } = await import(
+              `${process.env.GITHUB_WORKSPACE}/scripts/ci/marcador-specs.mjs`
+            );
+            const titulo = process.env.TITULO;
+            const nomes = nomesDeTestResults('test-results');
+            const marcador = marcadorDe(nomes);
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const { data: abertas } = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', per_page: 50,
+            });
+            const issue = abertas.find((i) => i.title === titulo);
+
+            if (!issue) {
+              await github.rest.issues.create({
+                owner, repo, title: titulo, body: `${corpoDe(nomes)}\n\n${marcador}`,
+              });
+              core.info(`issue aberta com ${nomes.length} teste(s) quebrado(s)`);
+              return;
+            }
+
+            // Mesma regra da E44: so comenta de novo quando a causa muda (o conjunto cresce
+            // ou troca). Conjunto igual -- inclusive um a menos -- nao gera comentario novo.
+            const { data: comentarios } = await github.rest.issues.listComments({
+              owner, repo, issue_number: issue.number, per_page: 100,
+            });
+            const ultimo = comentarios.at(-1)?.body ?? issue.body ?? '';
+            if (ultimo.includes(marcador)) {
+              core.info('mesma causa da ultima vez -- sem comentario novo');
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner, repo, issue_number: issue.number,
+              body: `Falha nova, causa diferente:\n\n${corpoDe(nomes)}\n\n${marcador}`,
+            });
+            core.info('comentario novo: a causa mudou');
+
+      - name: ✅ Fechar a issue quando a suite volta
+        if: success()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          TITULO: "[e2e-logado] Suíte logada quebrada na main"
+        with:
+          script: |
+            const titulo = process.env.TITULO;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const { data: abertas } = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', per_page: 50,
+            });
+            const issue = abertas.find((i) => i.title === titulo);
+            if (!issue) {
+              core.info('nenhuma issue aberta -- nada a fechar');
+              return;
+            }
+            await github.rest.issues.update({
+              owner, repo, issue_number: issue.number, state: 'closed',
+            });
+            core.info(`issue #${issue.number} fechada: a suite voltou a passar na main`);

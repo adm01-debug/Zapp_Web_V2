@@ -1,7 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { AiSuggestReplySchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
-import { callAiWithTracking, extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
+import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 
 Deno.serve(async (req) => {
@@ -26,7 +27,8 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { messages, contactName, contactId, context } = parsed.data;
-    const LOVABLE_API_KEY = requireEnv("LOVABLE_API_KEY");
+    // IA-048: identidade da requisição, ecoada no corpo (só eco — sem efeito novo).
+    const requestId = parsed.data.requestId ?? null;
 
     // Fetch Knowledge Base articles for context
     let knowledgeContext = '';
@@ -137,19 +139,19 @@ Responda APENAS em formato JSON com a seguinte estrutura:
         }))
       : [];
 
-    const { response, data } = await callAiWithTracking({
+    const { response, data } = await generateWithRouting({
+      purpose: 'copilot',
       functionName: 'ai-suggest-reply',
       userId,
-      apiKey: LOVABLE_API_KEY,
-      body: {
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...conversationHistory,
-          { role: "user", content: "Gere 3 sugestões de resposta contextualizadas para a última mensagem do cliente." }
-        ],
-        temperature: 0.7,
-      },
+      // IA-051 — o id do clique (IA-048) chega ao log de consumo: dá para ir do
+      // gasto de volta até a requisição que o originou, sem tocar no conteúdo.
+      requestId,
+      system: systemPrompt,
+      messages: [
+        ...conversationHistory,
+        { role: "user", content: "Gere 3 sugestões de resposta contextualizadas para a última mensagem do cliente." }
+      ],
+      temperature: 0.7,
     });
 
     if (!response.ok || !data) {
@@ -177,6 +179,13 @@ Responda APENAS em formato JSON com a seguinte estrutura:
           { type: "followup", text: "Poderia me fornecer mais detalhes sobre isso?", emoji: "❓", source: null }
         ]
       };
+    }
+
+    // IA-048: ecoa o identificador da requisição no corpo para o cliente descartar
+    // com segurança uma resposta que já não pertence ao contexto atual. Não há
+    // revalidação aqui: esta capacidade não tem efeito de servidor a proteger.
+    if (requestId && suggestions && typeof suggestions === 'object') {
+      (suggestions as Record<string, unknown>).requestId = requestId;
     }
 
     log.done(200);

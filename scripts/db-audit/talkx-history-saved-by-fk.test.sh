@@ -28,7 +28,7 @@ ready=false
 for _ in $(seq 1 90); do
   ready_markers="$(docker logs "$container_name" 2>&1 \
     | grep -c 'database system is ready to accept connections' || true)"
-  if [ "$ready_markers" -ge 2 ] \
+  if [[ "$ready_markers" -ge 2 ]] \
     && docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' \
       >/dev/null 2>&1; then
     ready=true
@@ -36,7 +36,7 @@ for _ in $(seq 1 90); do
   fi
   sleep 1
 done
-[ "$ready" = true ] || fail "PostgreSQL descartavel ($postgres_image) nao ficou pronto"
+[[ "$ready" = true ]] || fail "PostgreSQL descartavel ($postgres_image) nao ficou pronto"
 
 psql_test >/dev/null <<'SQL'
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

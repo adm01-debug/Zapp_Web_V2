@@ -53,6 +53,7 @@ export function useContactsViewState() {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); setIsAddDialogOpen(true); }
       if (e.key === 'Escape') {
+        if (e.defaultPrevented || document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) return;
         if (detailContact) { setDetailContact(null); return; }
         if (selectedIds.length > 0) { setSelectedIds([]); }
         else if (searchInput) { clearSearch(); }
@@ -61,8 +62,9 @@ export function useContactsViewState() {
         e.preventDefault(); handleSelectAll();
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    // Captura: roda antes do Esc do Radix fechar o diálogo, enquanto ele ainda está `data-state="open"`.
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
   }, [selectedIds.length, searchInput, clearSearch, setIsAddDialogOpen, setSelectedIds, handleSelectAll, detailContact]);
 
   return {

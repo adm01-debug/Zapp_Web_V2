@@ -42,7 +42,7 @@ const toDataUrl = (base64?: string | null, mimetype?: string | null) => {
 const getStatusTime = (msg: WhatsAppStatusMessage) => {
   const ts = msg.messageTimestamp;
   if (!ts) return null;
-  const date = new Date(typeof ts === 'string' ? parseInt(ts, 10) * 1000 : ts * 1000);
+  const date = new Date(typeof ts === 'string' ? Number.parseInt(ts, 10) * 1000 : ts * 1000);
   return formatRelativeTime(date);
 };
 
@@ -122,7 +122,7 @@ export function StoryViewer({ messages, initialIndex, open, onClose, pushName }:
         setErroDeMidia({ index, message: error instanceof Error ? error.message : 'Erro ao carregar mídia' });
       } finally { if (!cancelled) setCarregandoMidia({ index, loading: false }); }
     };
-    loadMedia();
+    void loadMedia();
     return () => { cancelled = true; };
   }, [open, index, messages, getMediaBase64]);
 

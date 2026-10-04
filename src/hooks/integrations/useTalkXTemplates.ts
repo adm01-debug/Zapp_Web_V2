@@ -20,6 +20,13 @@ export interface TalkXTemplate {
   custom_variables: string[];
   created_at: string;
   updated_at: string;
+  /**
+   * V26 — versão (talkx_template_versions.id) correspondente ao conteúdo VIVO
+   * do template. Ponteiro mantido por update_talkx_template_with_snapshot; a
+   * listagem já traz a coluna via `select('*')`. Nulo quando o template ainda
+   * não tem versão corrente (ex.: criado antes do backfill e nunca editado).
+   */
+  current_version_id?: string | null;
   creator?: { name: string | null } | null;
 }
 
@@ -64,6 +71,8 @@ export function useTalkXTemplates() {
     queryKey: ['talkx-templates'],
     queryFn: async () => {
       const { data, error } = await fromTable('talkx_templates')
+        // `*` já inclui current_version_id (o ponteiro do conteúdo VIVO, V26),
+        // consumido pelo editor de campanha para gravar template_version_id.
         .select('*, creator:created_by(name)')
         .order('use_count', { ascending: false })
         .order('updated_at', { ascending: false });
@@ -147,10 +156,8 @@ export function useTalkXTemplates() {
   });
 
   /** Incrementa o contador de uso quando um template vira campanha (best-effort). */
-  const registerUse = async (id: string, _current: number) => {
-    await supabase.rpc('increment_talkx_template_use', { p_template_id: id });
-    invalidate();
-  };
+  // V15: removido — o trigger E86 (trg_talkx_increment_template_use_count) já conta
+  // o uso exatamente 1 vez ao lançar a campanha; a RPC no front causava dobro (P2-4).
 
 
 
@@ -222,7 +229,7 @@ export function useTalkXTemplates() {
     isError: query.isError,
     error: query.error as Error | null,
     refetch: query.refetch,
-    createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, registerUse,
+    createTemplate, updateTemplate, deleteTemplate, duplicateTemplate,
     testTemplate,
     fetchVersionHistory,
     fetchVariants, saveVariant, deleteVariant, countVariantRecipients,

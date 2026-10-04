@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
@@ -12,11 +12,10 @@ import {
   PhoneOff,
   Mic,
   MicOff,
-  Volume2,
-  VolumeX,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useCalls } from '@/hooks/communication/useCalls';
+import { useCallSession } from '@/providers/CallSessionProvider';
+import type { CallSessionStatus } from '@/lib/calls/session';
 import { logAudit } from '@/lib/audit';
 
 interface CallDialogProps {
@@ -29,14 +28,55 @@ interface CallDialogProps {
     avatar?: string;
   };
   direction: 'inbound' | 'outbound';
+  /**
+   * @deprecated T21 — o canal da chamada (`calls.whatsapp_connection_id`) agora é
+   * decidido pelo motor/RPC `upsert_my_call`, não pela UI. A prop continua
+   * aceita para não quebrar os chamadores (`IncomingCallAlert`), mas o diálogo
+   * não a consome mais.
+   */
   whatsappConnectionId?: string;
   /** Chamada já identificada e/ou já atendida antes da abertura do diálogo
-   *  (ex.: aceite feito no alerta de chamada recebida) — evita recriar o
-   *  registro e evita pedir "Atender" uma segunda vez. */
+   *  (ex.: aceite feito no alerta de chamada recebida) — evita discar de novo e
+   *  evita pedir "Atender" uma segunda vez. */
   existingCallId?: string | null;
   initialStatus?: 'ringing' | 'answered';
   onAnswer?: () => void;
   onEnd: () => void;
+}
+
+/** Variantes visuais que este diálogo desenha. */
+type VisualStatus = 'ringing' | 'answered' | 'ended';
+
+/**
+ * T21 — traduz o estado da máquina de sessão (`session.status`, do provider)
+ * para as variantes que a UI sempre usou.
+ *
+ * O diálogo não tem mais status próprio: quem sabe se a chamada toca, foi
+ * atendida ou terminou é o `reduce()` de `src/lib/calls/session.ts`, via
+ * `useCallSession()`. O mapeamento é conservador para não regredir a tela:
+ * - `connecting`/`active` → `answered` (aceita ou em curso);
+ * - `ending`/`ended`      → `ended`;
+ * - `dialing`/`ringing_out`/`ringing_in` → `ringing`, EXCETO quando a chamada
+ *   já chegou atendida (`initialStatus='answered'`, ex.: o alerta de chamada
+ *   recebida) — aí não se volta a pedir "Atender";
+ * - `idle` (máquina ainda sem sessão, ex.: antes do `dial()` resolver o gate de
+ *   microfone) → `initialStatus`, ou `ringing` como antes.
+ */
+function visualStatus(status: CallSessionStatus, initial?: 'ringing' | 'answered'): VisualStatus {
+  switch (status) {
+    case 'connecting':
+    case 'active':
+      return 'answered';
+    case 'ending':
+    case 'ended':
+      return 'ended';
+    case 'dialing':
+    case 'ringing_out':
+    case 'ringing_in':
+      return initial === 'answered' ? 'answered' : 'ringing';
+    case 'idle':
+      return initial ?? 'ringing';
+  }
 }
 
 export function CallDialog({
@@ -44,102 +84,68 @@ export function CallDialog({
   onOpenChange,
   contact,
   direction,
-  whatsappConnectionId,
   existingCallId,
   initialStatus,
   onAnswer,
   onEnd,
 }: CallDialogProps) {
-  const [status, setStatus] = useState<'ringing' | 'answered' | 'ended'>(initialStatus ?? 'ringing');
-  const [duration, setDuration] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
-  const [callId, setCallId] = useState<string | null>(existingCallId ?? null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  // T21 — a fonte única da sessão. O diálogo NÃO grava em `calls`: o registro
+  // (RPC `upsert_my_call`) é do MOTOR; aqui só se disca, atende e desliga pela
+  // máquina de estados do provider.
+  const { session, dial, accept, hangup, callDuration, isMuted, toggleMute } = useCallSession();
 
-  const { startCall, answerCall, endCall, missCall } = useCalls();
+  const status = visualStatus(session.status, initialStatus);
 
-  // Start call when dialog opens (pulado quando a chamada já tem id — ex.
-  // aceite feito a partir do alerta de chamada recebida).
-  useEffect(() => {
-    if (open && !callId && !existingCallId) {
-      startCall({
-        contactId: contact.id,
-        contactPhone: contact.phone,
-        contactName: contact.name,
-        direction,
-        whatsappConnectionId,
-      }).then(id => {
-        if (id) setCallId(id);
-      });
-    }
-  }, [open, callId, existingCallId, contact, direction, whatsappConnectionId, startCall]);
+  /**
+   * Guarda de discagem: uma por abertura do diálogo.
+   *
+   * Sem o id/timer local de antes, é este ref que impede discar duas vezes: o
+   * `dial` do provider troca de identidade a cada render (depende do estado do
+   * SIP), então o efeito re-executa o tempo todo e precisa de uma trava própria.
+   * Também preserva o comportamento antigo de não discar quando a chamada já
+   * existe (`existingCallId`).
+   */
+  const discouRef = useRef(false);
 
-  // Timer for call duration
-  useEffect(() => {
-    if (open && status === 'answered') {
-      intervalRef.current = setInterval(() => {
-        setDuration((prev) => prev + 1);
-      }, 1000);
-    }
-    
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [open, status]);
-
-  // Reset state when dialog closes
   useEffect(() => {
     if (!open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reseta para a próxima chamada só quando o diálogo fecha, não em toda renderização.
-      setStatus(initialStatus ?? 'ringing');
-      setDuration(0);
-      setIsMuted(false);
-      setCallId(existingCallId ?? null);
+      // Próxima abertura = próxima chamada.
+      discouRef.current = false;
+      return;
     }
-  }, [open, initialStatus, existingCallId]);
+    if (discouRef.current || existingCallId) return;
+    // Entrada sem id (não acontece pelo `IncomingCallAlert`, que sempre manda
+    // `existingCallId`): quem registra é o motor, via `INVITE_RECEIVED`. Discar
+    // aqui criaria uma SAÍDA para uma chamada que está CHEGANDO.
+    if (direction !== 'outbound') return;
+    discouRef.current = true;
+    void dial(contact.phone);
+  }, [open, existingCallId, direction, contact.phone, dial]);
 
   const handleAnswer = async () => {
-    setStatus('answered');
-    
-    if (callId) {
-      await answerCall(callId);
-    }
-    
+    // A máquina decide: `accept()` despacha ACCEPT (ringing_in → connecting) e
+    // deixa o ESTABLISHED do motor marcar `answeredAt`.
+    await accept();
     onAnswer?.();
-    logAudit({
+    void logAudit({
       action: 'call_started',
       entityType: 'call',
-      entityId: callId || undefined,
+      entityId: session.sessionId ?? undefined,
       details: { direction, contact_phone: contact.phone },
     });
   };
 
-  const handleEnd = async () => {
-    setStatus('ended');
-    
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-    
-    if (callId) {
-      if (status === 'ringing' && direction === 'inbound') {
-        // Missed call if ended while ringing inbound
-        await missCall(callId);
-      } else {
-        await endCall(callId, duration);
-      }
-    }
-    
-    logAudit({
+  const handleEnd = () => {
+    // A máquina decide o desfecho: desligar uma entrada que ainda toca vira
+    // REJECT → `declined`; nos demais estados, HANGUP_LOCAL. O gravação do
+    // desfecho é do motor (RPC), não da UI.
+    hangup();
+    void logAudit({
       action: 'call_ended',
       entityType: 'call',
-      entityId: callId || undefined,
-      details: { direction, duration, contact_phone: contact.phone },
+      entityId: session.sessionId ?? undefined,
+      details: { direction, duration: callDuration, contact_phone: contact.phone },
     });
-    
     onEnd();
     onOpenChange(false);
   };
@@ -167,7 +173,7 @@ export function CallDialog({
                 {contact.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </AvatarFallback>
             </Avatar>
-            
+
             {/* Ringing animation */}
             <AnimatePresence>
               {status === 'ringing' && (
@@ -206,7 +212,7 @@ export function CallDialog({
               </p>
             )}
             {status === 'answered' && (
-              <p className="text-whatsapp font-mono text-lg">{formatDuration(duration)}</p>
+              <p className="text-whatsapp font-mono text-lg">{formatDuration(callDuration)}</p>
             )}
           </motion.div>
 
@@ -222,25 +228,18 @@ export function CallDialog({
                       'w-12 h-12 rounded-full',
                       isMuted && 'bg-destructive/10 border-destructive text-destructive'
                     )}
-                    onClick={() => setIsMuted(!isMuted)}
+                    // T21 — o mudo agora é o REAL do motor (engine.toggleMute()),
+                    // não um estado local que não silenciava nada.
+                    onClick={toggleMute}
                   >
                     {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                   </Button>
                 </motion.div>
 
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className={cn(
-                      'w-12 h-12 rounded-full',
-                      !isSpeakerOn && 'bg-muted'
-                    )}
-                    onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                  >
-                    {isSpeakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-                  </Button>
-                </motion.div>
+                {/* Sem botão de Alto-falante: ele só teria efeito se
+                    `setSinkId` existisse para trocar a saída de áudio, e hoje
+                    não existe em lugar nenhum de src/ — o botão antigo só
+                    alternava um ícone. Volta quando houver troca real de sink. */}
               </>
             )}
 

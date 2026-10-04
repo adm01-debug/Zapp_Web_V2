@@ -1,0 +1,4849 @@
+[
+ {
+  "id": "X001",
+  "fase": 0,
+  "titulo": "Tornar o V4 o plano vigente e marcar os planos anteriores como substituídos",
+  "tela": "—",
+  "camada": "docs",
+  "ddl": false,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X002",
+  "fase": 0,
+  "titulo": "Criar o placar do V4: etapas fechadas e elementos do mock por tela",
+  "tela": "—",
+  "camada": "docs + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X001"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X003",
+  "fase": 0,
+  "titulo": "Criar a base de demonstração determinística das 17 telas para captura",
+  "tela": "01–17",
+  "camada": "testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X004",
+  "fase": 0,
+  "titulo": "Criar a régua visual: captura 1672×941 de cada tela ao lado do mock em toda PR do Talk X",
+  "tela": "01–17",
+  "camada": "testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X003"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X005",
+  "fase": 0,
+  "titulo": "Exigir a definição de pronto no corpo da PR de cada etapa do V4",
+  "tela": "—",
+  "camada": "testes + docs",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X002",
+   "X004"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X006",
+  "fase": 1,
+  "titulo": "Corrigir unidade (ms × s) e efeito da velocidade no modal \"Editar limites\"",
+  "tela": "12",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "T12-058",
+   "T12-011"
+  ]
+ },
+ {
+  "id": "X007",
+  "fase": 1,
+  "titulo": "Corrigir quebra de hooks do Analytics; abas com dropdown, deep link e casca com rail",
+  "tela": "06, 07",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "T06-002",
+   "T06-006",
+   "T06-008",
+   "T07-002",
+   "T07-006",
+   "T07-008",
+   "T07-014",
+   "T07-061",
+   "T07-065",
+   "T07-083",
+   "T07-084"
+  ]
+ },
+ {
+  "id": "X008",
+  "fase": 1,
+  "titulo": "Corrigir condição incompleta no construtor e tirar da tela o que não tem fonte",
+  "tela": "03, 02",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "T03-032"
+  ]
+ },
+ {
+  "id": "X009",
+  "fase": 1,
+  "titulo": "Aceitar rascunho sem mensagem e gravar passo e responsável na RPC de rascunho",
+  "tela": "08",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "T08-064",
+   "T08-013",
+   "T08-040"
+  ]
+ },
+ {
+  "id": "X010",
+  "fase": 2,
+  "titulo": "Aceitar `start` repetido em `sending` e criar lease de worker, fila e segredo do cron",
+  "tela": "motor",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "CAP-007",
+   "CAP-098"
+  ]
+ },
+ {
+  "id": "X011",
+  "fase": 2,
+  "titulo": "Processar a campanha em lotes com orçamento de tempo no `talkx-send`",
+  "tela": "motor",
+  "camada": "edge",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X010"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-007",
+   "CAP-047",
+   "CAP-103"
+  ]
+ },
+ {
+  "id": "X012",
+  "fase": 2,
+  "titulo": "Criar o tick do motor: reaper, conclusão, re-invocação e cron com segredo e timeout",
+  "tela": "motor",
+  "camada": "banco + cron",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X010",
+   "X011"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-006",
+   "CAP-007",
+   "CAP-009",
+   "CAP-011",
+   "CAP-037",
+   "CAP-098"
+  ]
+ },
+ {
+  "id": "X013",
+  "fase": 2,
+  "titulo": "Tornar o lançamento assíncrono: `start` só transiciona e dispara o primeiro lote",
+  "tela": "09, 10, 11",
+  "camada": "edge + front (hook)",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X011",
+   "X012"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-007",
+   "CAP-096"
+  ]
+ },
+ {
+  "id": "X014",
+  "fase": 2,
+  "titulo": "Exigir papel admin/supervisor no banco para criar, agendar e alterar campanha",
+  "tela": "08, 17",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "CAP-096",
+   "CAP-097"
+  ]
+ },
+ {
+  "id": "X015",
+  "fase": 2,
+  "titulo": "Autenticar o `talkx-scheduler` por segredo e limitar o tempo de cada chamada",
+  "tela": "motor",
+  "camada": "edge",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X012",
+   "X013"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-006",
+   "CAP-051",
+   "CAP-098"
+  ]
+ },
+ {
+  "id": "X016",
+  "fase": 2,
+  "titulo": "Criar a RPC única de audiência com elegibilidade, supressão e paginação",
+  "tela": "03, 08, 09",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-003",
+   "CAP-004",
+   "CAP-028",
+   "CAP-029",
+   "CAP-094",
+   "CAP-103"
+  ]
+ },
+ {
+  "id": "X017",
+  "fase": 2,
+  "titulo": "Gerar os destinatários no servidor a partir do rascunho salvo",
+  "tela": "06, 08, 09, 10",
+  "camada": "banco + front (hook)",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X016"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-004",
+   "CAP-028",
+   "CAP-030",
+   "CAP-103"
+  ],
+  "coberto_por": [
+   "20260930640000_talkx_v21_launch_flags"
+  ],
+  "status_nota": "PARCIAL — a V21 já cria talkx_campaigns.respect_suppression (bool not null default true) e a persiste em save_talkx_campaign_draft; desmarcar (false) exige admin/supervisor (talkx_respect_suppression_admin_only). Delta real da X017: audience_snapshot_at; RPC snapshot_talkx_campaign_audience; talkx_audience_query; critério de elegível em replace_talkx_draft_recipients; ajustes de front (editor/segs). Divergência: a X017 previa recusar respect_suppression=false até a decisão N12; a V21 já permite false para admin/supervisor."
+ },
+ {
+  "id": "X018",
+  "fase": 2,
+  "titulo": "Criar no banco os limites por minuto, por dia e por conexão e os perfis de velocidade",
+  "tela": "09, 11, 12, 13",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-035",
+   "CAP-036",
+   "CAP-044",
+   "CAP-110"
+  ]
+ },
+ {
+  "id": "X019",
+  "fase": 2,
+  "titulo": "Enviar pela conexão escolhida e aplicar os limites de ritmo no `talkx-send`",
+  "tela": "09, 10, 11, 13",
+  "camada": "edge",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X011",
+   "X018"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-035",
+   "CAP-036",
+   "CAP-037",
+   "CAP-038"
+  ]
+ },
+ {
+  "id": "X020",
+  "fase": 2,
+  "titulo": "Impedir texto errado: variável sem valor, variável desconhecida e precedência do A/B",
+  "tela": "05, 08, 09",
+  "camada": "edge + front (lib de prévia)",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X011"
+  ],
+  "integra": [
+   "X118"
+  ],
+  "fecha": [
+   "CAP-069",
+   "CAP-074",
+   "CAP-075",
+   "CAP-076"
+  ]
+ },
+ {
+  "id": "X021",
+  "fase": 2,
+  "titulo": "Abrir no banco a escrita de links, a leitura de cliques/conversões e o investimento",
+  "tela": "motor, 08, 14",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-062",
+   "CAP-064",
+   "CAP-065",
+   "CAP-067",
+   "CAP-068"
+  ]
+ },
+ {
+  "id": "X022",
+  "fase": 2,
+  "titulo": "Enviar vários links por rótulo com UTM e domínio próprio; autenticar a conversão",
+  "tela": "motor, 08, 14",
+  "camada": "edge",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X020",
+   "X021"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-061",
+   "CAP-063",
+   "CAP-064",
+   "CAP-065",
+   "CAP-066",
+   "CAP-076"
+  ]
+ },
+ {
+  "id": "X023",
+  "fase": 2,
+  "titulo": "Provar a paridade de deploy das 5 edges e dos segredos antes do primeiro disparo",
+  "tela": "motor",
+  "camada": "docs + testes",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X011",
+   "X013",
+   "X015",
+   "X019",
+   "X020",
+   "X022"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-046",
+   "CAP-051"
+  ]
+ },
+ {
+  "id": "X024",
+  "fase": 3,
+  "titulo": "Gravar eventos de ciclo de vida no servidor com ator e motivo e fechar a fila ao cancelar",
+  "tela": "10, 11, 12, 13, 14, 17",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X010"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-053",
+   "CAP-054",
+   "CAP-055",
+   "CAP-106"
+  ],
+  "coberto_por": [
+   "20260930650000_talkx_v12_server_lifecycle_events"
+  ],
+  "status_nota": "PARCIAL — a V12 entrega o núcleo: transition_talkx_campaign grava started/resumed/paused(motivo)/cancelled com actor_id na mesma transação; cancel marca pending→cancelled; o CHECK de talkx_recipients ganha 'cancelled'; complete_talkx_campaign_if_drained grava 'completed'. Delta real: colunas paused_by/cancelled_by/cancelled_at; evento 'resumed_auto' distinto; claim_talkx_recipient/talkx_next_recipients ignorarem 'cancelled'; save_talkx_campaign_draft gravar created/updated; trigger de scheduled/scheduled_updated; liberar leases no cancel; resumo no completed. ATENÇÃO: V21 (20260930640000) e V12 (20260930650000) recriam a MESMA função; como 650000>640000 a V12 aplica depois e seu corpo não seta launched_by/at — possível regressão do carimbo de lançamento da V21."
+ },
+ {
+  "id": "X025",
+  "fase": 3,
+  "titulo": "Passar ator e motivo pelo `talkx-send` e remover os eventos gravados pelo navegador",
+  "tela": "10, 11, 12, 13",
+  "camada": "edge + front (hooks)",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X024"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-051",
+   "CAP-054",
+   "CAP-055"
+  ],
+  "coberto_por": [
+   "20260930650000_talkx_v12_server_lifecycle_events"
+  ],
+  "status_nota": "PARCIAL — a V12 move a gravação dos eventos de ciclo de vida para o servidor; no front já não há logEvent de started/paused/cancelled/resumed. Delta real: talkx-send resolver profiles.id do JWT e repassar p_actor_id/p_reason; evento connection_failed na queda de conexão; skipped_suppressed agregado por lote; remover o insert de resumed_auto do talkx-scheduler (ainda em supabase/functions/talkx-scheduler/index.ts:278); remover logEvent('updated'/'created') de src/components/talkx/useCampaignEditor.ts:781,785."
+ },
+ {
+  "id": "X026",
+  "fase": 3,
+  "titulo": "Fechar contadores, uso de template, checklist de retomada e excluir/duplicar no banco",
+  "tela": "04, 13, 17",
+  "camada": "banco + front (hook)",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X025"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-056",
+   "CAP-079",
+   "CAP-106",
+   "CAP-107",
+   "CAP-109"
+  ],
+  "coberto_por": [
+   "20260930750000_talkx_v15_replied_count_guard_and_drop_increment"
+  ],
+  "status_nota": "PARCIAL — a V15 aplicada (a 20260930660000 ficou em _superseded por bug de ordem) põe replied_count no guard de imutabilidade e dropa increment_talkx_template_use (fim do use_count em dobro). Delta real: coluna talkx_campaigns.skipped_count + backfill; RPC log_talkx_campaign_checklist; RPC duplicate_talkx_campaign; RPC delete_talkx_campaign; policy de INSERT de eventos limitada a note|checklist|segments_reviewed."
+ },
+ {
+  "id": "X027",
+  "fase": 3,
+  "titulo": "Registrar lidas, respostas e tempo de resposta no banco",
+  "tela": "01, 07, 11, 12, 13, 14",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "CAP-016",
+   "CAP-017",
+   "CAP-018",
+   "CAP-019",
+   "CAP-020",
+   "CAP-099",
+   "CAP-110"
+  ],
+  "coberto_por": [
+   "20260930680000_talkx_v17_read_at"
+  ],
+  "status_nota": "PARCIAL — a V17 entrega talkx_recipients.read_at + índice, record_talkx_recipient_delivered com p_event 'delivered'|'read' (read preenche read_count) e o relatório com read_count. Delta real: RPC attribute_talkx_reply (hoje só função TS _shared/talkx-reply.ts, chamada com void); uso de talkx_settings.reply_window_hours; RPC talkx_campaign_reply_stats; publicação realtime com read_at; índice parcial (contact_id, sent_at desc). (A V16 também está na main e ajusta as séries do relatório, mas fora do núcleo da X027.)"
+ },
+ {
+  "id": "X028",
+  "fase": 3,
+  "titulo": "Ligar o webhook aos recibos de leitura e à atribuição de resposta",
+  "tela": "07, 11, 12, 14",
+  "camada": "edge",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X027"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-016",
+   "CAP-017",
+   "CAP-018"
+  ],
+  "coberto_por": [
+   "20260930680000_talkx_v17_read_at"
+  ],
+  "status_nota": "PARCIAL — a borda de edge veio no mesmo batch: evolution-webhook-msg-handlers.ts:146 já chama record_talkx_recipient_delivered com p_event='read'. Delta real: remover a dependência de key.fromMe===true em delivered/read; trocar attributeTalkXReply (void, TS) pelo await da RPC attribute_talkx_reply com telefone resolvido; criar os testes Deno talkx-webhook-receipts.test.ts / talkx-webhook-reply.test.ts."
+ },
+ {
+  "id": "X029",
+  "fase": 3,
+  "titulo": "Tornar o opt-out configurável e ligado à campanha no banco",
+  "tela": "06, 10, 11, 14",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "CAP-023",
+   "CAP-024",
+   "CAP-026",
+   "CAP-031"
+  ],
+  "status_nota": "NÃO coberta por V12/V21 nem por outra migration da main: não existem talkx_optout_keywords/talkx_match_optout nem parâmetro p_campaign_id em talkx_suppress_contact. Delta real: integral (tabela de palavras, função de match, view talkx_campaign_optouts, seed de autoresposta)."
+ },
+ {
+  "id": "X030",
+  "fase": 3,
+  "titulo": "Usar palavras, autoresposta e campanha do opt-out no webhook",
+  "tela": "06, 11",
+  "camada": "edge",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X028",
+   "X029"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-022",
+   "CAP-023",
+   "CAP-024",
+   "CAP-026",
+   "CAP-110"
+  ],
+  "status_nota": "NÃO coberta por V12/V21: etapa de edge; a V78 não está na main. TALKX_OPT_OUT_RE e a autoresposta fixa seguem em uso (evolution-webhook-messages.ts:334). Delta real: integral."
+ },
+ {
+  "id": "X031",
+  "fase": 3,
+  "titulo": "Criar reenvio manual e resolução de `outcome_unknown` por RPC, com trilha",
+  "tela": "11, 12, 14",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X012",
+   "X024"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-047",
+   "CAP-048",
+   "CAP-049"
+  ],
+  "coberto_por": [
+   "20260930630000_talkx_v19_retry_recipient"
+  ],
+  "status_nota": "PARCIAL — a V19 entrega retry_talkx_recipient(p_recipient_id) (service_role) que reabre failed/outcome_unknown com attempt_count<3. Delta real: RPC batch retry_talkx_recipients(p_campaign_id, p_recipient_ids uuid[]) para admin/supervisor; coluna manual_retry_count; revalidação de supressão/elegibilidade; reabertura de campanha completed para sending; RPC resolve_talkx_outcome_unknown(..., p_confirm_duplicate_risk)."
+ },
+ {
+  "id": "X032",
+  "fase": 3,
+  "titulo": "Aplicar LGPD no motor: consentimento no lançamento e expurgo por prazo",
+  "tela": "03, 09",
+  "camada": "banco + cron",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X012",
+   "X016",
+   "X024",
+   "X029"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-104",
+   "CAP-105",
+   "CAP-106"
+  ]
+ },
+ {
+  "id": "X033",
+  "fase": 3,
+  "titulo": "Criar log por destinatário, visão de saúde do motor e alertas",
+  "tela": "12, 14",
+  "camada": "banco + edge + cron",
+  "ddl": true,
+  "edge": true,
+  "exige": [
+   "X012",
+   "X019",
+   "X032"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-100",
+   "CAP-101"
+  ]
+ },
+ {
+  "id": "X034",
+  "fase": 3,
+  "titulo": "Cobrir o motor com provedor falso: integração multi-destinatário e E2E de lançamento",
+  "tela": "08, 09, 11",
+  "camada": "testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X010",
+   "X011",
+   "X012",
+   "X013",
+   "X014",
+   "X015",
+   "X016",
+   "X017",
+   "X018",
+   "X019",
+   "X020",
+   "X023",
+   "X024",
+   "X025",
+   "X026",
+   "X031"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-007",
+   "CAP-096",
+   "CAP-102"
+  ]
+ },
+ {
+  "id": "X035",
+  "fase": 3,
+  "titulo": "Executar o ensaio real: campanha interna com ≥ 50 destinatários e queda proposital",
+  "tela": "10, 11, 12, 13, 14",
+  "camada": "testes + docs",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X010",
+   "X011",
+   "X012",
+   "X013",
+   "X014",
+   "X015",
+   "X016",
+   "X017",
+   "X018",
+   "X019",
+   "X020",
+   "X023",
+   "X024",
+   "X025",
+   "X026",
+   "X027",
+   "X028",
+   "X029",
+   "X030",
+   "X033"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-007",
+   "CAP-009",
+   "CAP-011",
+   "CAP-016",
+   "CAP-017",
+   "CAP-018",
+   "CAP-022",
+   "CAP-038"
+  ]
+ },
+ {
+  "id": "X036",
+  "fase": 4,
+  "titulo": "Vincular em lote contatos do ZAPP ao CRM 360 por telefone, com trilha e divergências",
+  "tela": "dados",
+  "camada": "banco + edge + cron",
+  "ddl": true,
+  "edge": true,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "CAP-092",
+   "dados:vinculo_crm"
+  ]
+ },
+ {
+  "id": "X037",
+  "fase": 4,
+  "titulo": "Criar a projeção `talkx_contact_attributes` com RLS e os atributos de fonte local",
+  "tela": "dados",
+  "camada": "banco + cron",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X036"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-092",
+   "CAP-093",
+   "dados:vendedor",
+   "dados:regiao",
+   "dados:uf",
+   "dados:estagio_funil",
+   "dados:ultima_interacao"
+  ]
+ },
+ {
+  "id": "X038",
+  "fase": 4,
+  "titulo": "Atualizar a projeção com dados do CRM 360 por job em lotes, com limite e métricas",
+  "tela": "dados",
+  "camada": "edge + banco + cron",
+  "ddl": true,
+  "edge": true,
+  "exige": [
+   "X036",
+   "X037"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-092",
+   "CAP-093",
+   "dados:empresa",
+   "dados:ramo",
+   "dados:pessoa_juridica",
+   "dados:cidade",
+   "dados:uf",
+   "dados:status_cliente",
+   "dados:estagio_funil",
+   "dados:score",
+   "dados:genero",
+   "dados:aniversario"
+  ]
+ },
+ {
+  "id": "X039",
+  "fase": 4,
+  "titulo": "Trazer negócios ganhos do Bitrix24 para `contact_purchases` em modo somente leitura",
+  "tela": "dados",
+  "camada": "banco + edge + cron",
+  "ddl": true,
+  "edge": true,
+  "exige": [
+   "X036"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-093",
+   "dados:compras"
+  ]
+ },
+ {
+  "id": "X040",
+  "fase": 4,
+  "titulo": "Calcular recência, frequência, valor e segmento RFM a partir das compras locais",
+  "tela": "dados",
+  "camada": "banco + cron",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X037",
+   "X039"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-093",
+   "dados:ultima_compra",
+   "dados:ticket_medio",
+   "dados:total_pedidos",
+   "dados:valor_total",
+   "dados:rfm_segmento",
+   "dados:rfm_recencia",
+   "dados:rfm_frequencia",
+   "dados:rfm_monetario"
+  ]
+ },
+ {
+  "id": "X041",
+  "fase": 4,
+  "titulo": "Registrar negócio ganho como conversão na janela de atribuição; receita e ROI",
+  "tela": "motor, 14, 07",
+  "camada": "banco + cron",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X021",
+   "X028",
+   "X039"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-065",
+   "CAP-068"
+  ]
+ },
+ {
+  "id": "X042",
+  "fase": 5,
+  "titulo": "Dividir `talkxShared.tsx` em `kit/*` com barrel, sem mudar comportamento",
+  "tela": "01, 17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X043",
+  "fase": 5,
+  "titulo": "Completar `TalkXTable`: ordenação, seleção em massa, ações de linha e células padrão",
+  "tela": "01, 17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X042"
+  ],
+  "integra": [],
+  "fecha": [
+   "T01-050",
+   "T01-038",
+   "T01-039",
+   "T01-048"
+  ]
+ },
+ {
+  "id": "X044",
+  "fase": 5,
+  "titulo": "`KpiCard` com comparativo de período calculado, anel e estado \"sem dados ainda\"",
+  "tela": "01, 17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X042"
+  ],
+  "integra": [],
+  "fecha": [
+   "T01-026",
+   "T01-029"
+  ]
+ },
+ {
+  "id": "X045",
+  "fase": 5,
+  "titulo": "Unificar a barra de filtros: rótulo \"Todos os …\", período, atualizar e limpar",
+  "tela": "01, 17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X042"
+  ],
+  "integra": [],
+  "fecha": [
+   "T01-031",
+   "T01-033",
+   "T01-034",
+   "T17-005",
+   "T17-006"
+  ]
+ },
+ {
+  "id": "X046",
+  "fase": 5,
+  "titulo": "Reescrever os 6 estados do sistema com os textos e botões do mock 17",
+  "tela": "17, 01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X042"
+  ],
+  "integra": [],
+  "fecha": [
+   "T17-013",
+   "T17-014",
+   "T17-015",
+   "T17-020"
+  ]
+ },
+ {
+  "id": "X047",
+  "fase": 5,
+  "titulo": "Expor erro nos hooks e aplicar carregando/erro/vazio em todas as telas do módulo",
+  "tela": "17, 01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X046"
+  ],
+  "integra": [],
+  "fecha": [
+   "T17-016",
+   "T17-017",
+   "T17-018",
+   "T17-019"
+  ]
+ },
+ {
+  "id": "X048",
+  "fase": 5,
+  "titulo": "Aplicar WhatsApp desconectado, CRM indisponível e sem permissão, com botões ligados",
+  "tela": "17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X014",
+   "X046",
+   "X047"
+  ],
+  "integra": [
+   "X038"
+  ],
+  "fecha": [
+   "T17-021",
+   "T17-022",
+   "T17-023",
+   "T17-024",
+   "T17-025",
+   "T17-026",
+   "T17-027",
+   "T17-028",
+   "T17-029"
+  ]
+ },
+ {
+  "id": "X049",
+  "fase": 5,
+  "titulo": "Modal único do kit com barra de título, tom aplicado, espera da ação e presets do mock",
+  "tela": "17, 01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X042"
+  ],
+  "integra": [],
+  "fecha": [
+   "T17-030",
+   "T17-032",
+   "T17-042",
+   "T17-043",
+   "T17-044"
+  ]
+ },
+ {
+  "id": "X050",
+  "fase": 5,
+  "titulo": "Trocar diálogos soltos e `window.confirm` de Supressão, Templates e limites pelo kit",
+  "tela": "17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X049"
+  ],
+  "integra": [],
+  "fecha": [
+   "T17-038",
+   "T17-039",
+   "T17-041"
+  ]
+ },
+ {
+  "id": "X051",
+  "fase": 5,
+  "titulo": "Unificar pausar, retomar, cancelar e disparar em um fluxo só nas 5 telas",
+  "tela": "17, 01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X013",
+   "X024",
+   "X025",
+   "X049",
+   "X050"
+  ],
+  "integra": [],
+  "fecha": [
+   "T17-045",
+   "T17-046",
+   "T17-047",
+   "T17-048",
+   "T17-050",
+   "T17-052"
+  ]
+ },
+ {
+  "id": "X052",
+  "fase": 5,
+  "titulo": "Colocar aba e campanha aberta na URL e criar abas com menu (Templates, Analytics)",
+  "tela": "01, 17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X042"
+  ],
+  "integra": [],
+  "fecha": [
+   "T01-020",
+   "T01-021",
+   "T01-022",
+   "T01-023",
+   "T01-024",
+   "T17-009"
+  ]
+ },
+ {
+  "id": "X053",
+  "fase": 5,
+  "titulo": "Cabeçalho do módulo: trilha, botão \"Ajuda\" com rótulo e indicador de campanha em andamento",
+  "tela": "01, 17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X052"
+  ],
+  "integra": [],
+  "fecha": [
+   "T01-018",
+   "T17-001",
+   "T17-008"
+  ]
+ },
+ {
+  "id": "X054",
+  "fase": 5,
+  "titulo": "Busca ⌘K do módulo: uma paleta só, itens sem abrir o módulo e que abrem o item certo",
+  "tela": "01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X052"
+  ],
+  "integra": [],
+  "fecha": [
+   "T01-010"
+  ]
+ },
+ {
+  "id": "X055",
+  "fase": 5,
+  "titulo": "Prancha de referência (`TalkXKit`), estado forçado por URL e matriz tela × estado",
+  "tela": "17",
+  "camada": "front + testes + docs",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X043",
+   "X044",
+   "X045",
+   "X046",
+   "X049",
+   "X053"
+  ],
+  "integra": [],
+  "fecha": [
+   "T17-003",
+   "T17-011",
+   "T17-012"
+  ]
+ },
+ {
+  "id": "X056",
+  "fase": 5,
+  "titulo": "Preencher cidade, UF e origem em `contacts` e expor a cobertura por atributo",
+  "tela": "dados, 02, 03, 08",
+  "camada": "banco + front",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X037",
+   "X038",
+   "X040",
+   "X046"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-093",
+   "dados:cidade",
+   "dados:uf",
+   "dados:origem_lead",
+   "dados:cobertura"
+  ]
+ },
+ {
+  "id": "X057",
+  "fase": 6,
+  "titulo": "Permitir vários segmentos por campanha e gravar o segmento de cada destinatário",
+  "tela": "09, 11, 12, 13, 14",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X017"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-012",
+   "CAP-014",
+   "CAP-099"
+  ]
+ },
+ {
+  "id": "X058",
+  "fase": 6,
+  "titulo": "Expor fila por segmento, ordem de envio e lista paginada de destinatários",
+  "tela": "11, 12, 13, 14",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X056",
+   "X057"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-013",
+   "CAP-015",
+   "CAP-103"
+  ]
+ },
+ {
+  "id": "X059",
+  "fase": 6,
+  "titulo": "Gerar a próxima ocorrência de campanha recorrente no tick, com chave única",
+  "tela": "10",
+  "camada": "banco + cron",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X012",
+   "X017",
+   "X024"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-052"
+  ]
+ },
+ {
+  "id": "X060",
+  "fase": 6,
+  "titulo": "Aplicar dias da semana, não perturbe e horário comercial configurável na janela de envio",
+  "tela": "10, 12",
+  "camada": "banco + edge",
+  "ddl": true,
+  "edge": true,
+  "exige": [
+   "X018",
+   "X019"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-040",
+   "CAP-041",
+   "CAP-042",
+   "CAP-110"
+  ]
+ },
+ {
+  "id": "X061",
+  "fase": 6,
+  "titulo": "Criar o bucket privado `talkx-media` e aceitar caminho de mídia nas RPCs",
+  "tela": "04, 05, 08, 10",
+  "camada": "storage + banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-059"
+  ]
+ },
+ {
+  "id": "X062",
+  "fase": 6,
+  "titulo": "Assinar a mídia do bucket no envio e mandar documento com nome de arquivo",
+  "tela": "04, 05, 08, 10",
+  "camada": "edge",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X019",
+   "X061"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-058"
+  ]
+ },
+ {
+  "id": "X063",
+  "fase": 6,
+  "titulo": "Modelar mensagem interativa (botões, lista, enquete) em template e campanha",
+  "tela": "04, 05, 09",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-060"
+  ]
+ },
+ {
+  "id": "X064",
+  "fase": 6,
+  "titulo": "Enviar mensagem interativa com fallback em texto e registrar a resposta",
+  "tela": "04, 05, 09",
+  "camada": "edge",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X028",
+   "X030",
+   "X063"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-060"
+  ]
+ },
+ {
+  "id": "X065",
+  "fase": 6,
+  "titulo": "Fechar o A/B no banco: pesos, atribuição estável, métrica por variante e vencedor",
+  "tela": "05, 14, 17",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X017",
+   "X020",
+   "X027"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-069",
+   "CAP-070",
+   "CAP-071"
+  ]
+ },
+ {
+  "id": "X066",
+  "fase": 6,
+  "titulo": "Exigir aprovação interna de template e gravar a versão usada pela campanha",
+  "tela": "04, 05, 09, 13, 14",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X024",
+   "X063"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-078"
+  ]
+ },
+ {
+  "id": "X067",
+  "fase": 6,
+  "titulo": "Refazer o envio de teste com trilha, limite, conexão escolhida e mídia assinada",
+  "tela": "05, 08",
+  "camada": "banco + edge",
+  "ddl": true,
+  "edge": true,
+  "exige": [
+   "X019",
+   "X020",
+   "X062"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-057"
+  ]
+ },
+ {
+  "id": "X068",
+  "fase": 6,
+  "titulo": "Calcular no servidor ETA, série prevista, sobreposição de segmentos e risco",
+  "tela": "02, 03, 08, 09, 10, 11",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X018",
+   "X060"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-087",
+   "CAP-094"
+  ]
+ },
+ {
+  "id": "X069",
+  "fase": 6,
+  "titulo": "Fechar escala, realtime, histórico da conversa e auditoria de permissões do módulo",
+  "tela": "06, 07, 11, 12, 14",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X027",
+   "X033",
+   "X057",
+   "X058"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-097",
+   "CAP-099",
+   "CAP-103",
+   "CAP-108",
+   "CAP-110"
+  ]
+ },
+ {
+  "id": "X070",
+  "fase": 6,
+  "titulo": "Criar tabela de motivos de supressão e ligar `reason_code` a ela",
+  "tela": "06",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "CAP-032"
+  ]
+ },
+ {
+  "id": "X071",
+  "fase": 6,
+  "titulo": "Gravar trilha da supressão por trigger e encerrar o DELETE físico",
+  "tela": "06",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X070"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-033"
+  ]
+ },
+ {
+  "id": "X072",
+  "fase": 6,
+  "titulo": "Corrigir e parametrizar `talkx_overview_stats` (status, alcance, séries, período anterior)",
+  "tela": "07 (e 01)",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [],
+  "integra": [],
+  "fecha": [
+   "CAP-080",
+   "CAP-084"
+  ]
+ },
+ {
+  "id": "X073",
+  "fase": 6,
+  "titulo": "Acrescentar lidas, conversões, receita e funil a `talkx_overview_stats`",
+  "tela": "07",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X021",
+   "X022",
+   "X028",
+   "X041",
+   "X057",
+   "X072"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-082"
+  ]
+ },
+ {
+  "id": "X074",
+  "fase": 6,
+  "titulo": "Criar RPCs de mapa de calor, top segmentos e ranking de campanhas",
+  "tela": "07",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X021",
+   "X057",
+   "X072"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-081",
+   "CAP-021"
+  ]
+ },
+ {
+  "id": "X075",
+  "fase": 6,
+  "titulo": "Benchmarks por período com nomes e `talkx_insights` por regra no servidor",
+  "tela": "07 (e 01, 02, 04)",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X057",
+   "X074"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-083",
+   "CAP-085"
+  ]
+ },
+ {
+  "id": "X076",
+  "fase": 6,
+  "titulo": "Criar a infra de IA do Talk X: edge `talkx-ai` via `ai-proxy` com teto de custo e trilha",
+  "tela": "02, 03, 04, 07, 09, 11, 12, 14",
+  "camada": "banco + edge",
+  "ddl": true,
+  "edge": true,
+  "exige": [
+   "X075"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-086"
+  ]
+ },
+ {
+  "id": "X077",
+  "fase": 7,
+  "titulo": "KPIs da Visão geral lidos da RPC, com fonte correta e comparativo",
+  "tela": "01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X028",
+   "X044",
+   "X045",
+   "X047",
+   "X072"
+  ],
+  "integra": [],
+  "fecha": [
+   "T01-026",
+   "T01-027",
+   "T01-028",
+   "T01-029"
+  ]
+ },
+ {
+  "id": "X078",
+  "fase": 7,
+  "titulo": "Listagem de campanhas paginada no servidor, com tempo real completo",
+  "tela": "01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X047",
+   "X057"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X079",
+  "fase": 7,
+  "titulo": "Tabela da Visão geral nas colunas do mock, sobre `TalkXTable`",
+  "tela": "01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X028",
+   "X043",
+   "X057",
+   "X061",
+   "X078"
+  ],
+  "integra": [],
+  "fecha": [
+   "T01-040",
+   "T01-042",
+   "T01-044",
+   "T01-045",
+   "T01-046",
+   "T01-050"
+  ]
+ },
+ {
+  "id": "X080",
+  "fase": 7,
+  "titulo": "Ações de linha persistidas: duplicar, excluir com regra, pausar, retomar e cancelar",
+  "tela": "01, 17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X014",
+   "X024",
+   "X025",
+   "X026",
+   "X043",
+   "X049",
+   "X051",
+   "X052",
+   "X078"
+  ],
+  "integra": [],
+  "fecha": [
+   "T01-048",
+   "T17-034",
+   "T17-035",
+   "T17-036",
+   "T17-037"
+  ]
+ },
+ {
+  "id": "X081",
+  "fase": 7,
+  "titulo": "Filtros da Visão geral (status, canal, segmento, criador, período), grade e massa",
+  "tela": "01, 17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X043",
+   "X045",
+   "X078",
+   "X079",
+   "X080"
+  ],
+  "integra": [],
+  "fecha": [
+   "T01-032",
+   "T01-037",
+   "T01-038",
+   "T01-039",
+   "T17-004",
+   "T17-007"
+  ]
+ },
+ {
+  "id": "X082",
+  "fase": 7,
+  "titulo": "Painel lateral: Talk X com 3 números reais, ações rápidas, últimas campanhas e dica do dia",
+  "tela": "01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X021",
+   "X027",
+   "X028",
+   "X052",
+   "X061",
+   "X072",
+   "X075",
+   "X077",
+   "X078",
+   "X080"
+  ],
+  "integra": [
+   "X171"
+  ],
+  "fecha": [
+   "T01-055",
+   "T01-056",
+   "T01-057",
+   "T01-058",
+   "T01-062",
+   "T01-063",
+   "T01-064",
+   "T01-065",
+   "T01-066",
+   "T01-067",
+   "T01-068"
+  ]
+ },
+ {
+  "id": "X083",
+  "fase": 8,
+  "titulo": "Adicionar colunas de canal, ícone, mídia, interativo e arquivo aos templates",
+  "tela": "04, 05",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X061",
+   "X064"
+  ],
+  "integra": [],
+  "fecha": [
+   "T04-016",
+   "T04-026",
+   "T04-027",
+   "T05-019",
+   "T05-052",
+   "T05-053",
+   "T05-054",
+   "T05-056"
+  ]
+ },
+ {
+  "id": "X084",
+  "fase": 8,
+  "titulo": "Criar RPC `save_talkx_template` com versão condicional, nota, limite e restauração",
+  "tela": "05",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X066",
+   "X083"
+  ],
+  "integra": [],
+  "fecha": [
+   "T05-032",
+   "T05-077"
+  ]
+ },
+ {
+  "id": "X085",
+  "fase": 8,
+  "titulo": "Criar no banco variantes em conjunto, duplicar, arquivar, guarda de exclusão e importação",
+  "tela": "04, 05",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014",
+   "X026",
+   "X065",
+   "X083",
+   "X084"
+  ],
+  "integra": [],
+  "fecha": [
+   "T04-036",
+   "T04-052",
+   "T04-053",
+   "T05-031"
+  ]
+ },
+ {
+  "id": "X086",
+  "fase": 8,
+  "titulo": "Criar RPCs de métricas de template: desempenho, usos, KPIs da biblioteca e sugestões",
+  "tela": "04, 05",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X021",
+   "X028",
+   "X030",
+   "X041",
+   "X066",
+   "X083"
+  ],
+  "integra": [],
+  "fecha": [
+   "T04-008",
+   "T04-010",
+   "T04-011",
+   "T04-012",
+   "T04-013",
+   "T04-039",
+   "T04-044",
+   "T04-046",
+   "T04-049",
+   "T05-007",
+   "T05-010",
+   "T05-011",
+   "T05-013",
+   "T05-014",
+   "T05-058",
+   "T05-066",
+   "T05-076"
+  ]
+ },
+ {
+  "id": "X087",
+  "fase": 8,
+  "titulo": "Extrair `TalkXMessageEditor` único para template e wizard, com variáveis e validação",
+  "tela": "05",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X020",
+   "X022",
+   "X055"
+  ],
+  "integra": [],
+  "fecha": [
+   "T05-037",
+   "T05-038",
+   "T05-042",
+   "T05-043",
+   "T05-044",
+   "T05-047",
+   "T05-048",
+   "T05-045",
+   "T05-049"
+  ]
+ },
+ {
+  "id": "X088",
+  "fase": 8,
+  "titulo": "Criar `TalkXMessagePreview` fiel ao WhatsApp com mídia, interativo e tela cheia",
+  "tela": "04, 05",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X061",
+   "X083",
+   "X087"
+  ],
+  "integra": [],
+  "fecha": [
+   "T05-068",
+   "T05-069",
+   "T05-070",
+   "T05-071",
+   "T05-072"
+  ]
+ },
+ {
+  "id": "X089",
+  "fase": 8,
+  "titulo": "Refazer a galeria do mock 04: cartão fiel, filtros, lista, paginação e estados",
+  "tela": "04",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X026",
+   "X055",
+   "X061",
+   "X083",
+   "X086",
+   "X087",
+   "X088"
+  ],
+  "integra": [],
+  "fecha": [
+   "T04-016",
+   "T04-018",
+   "T04-020",
+   "T04-021",
+   "T04-022",
+   "T04-023",
+   "T04-024",
+   "T04-025",
+   "T04-029",
+   "T04-030",
+   "T04-031",
+   "T04-037",
+   "T04-054",
+   "T04-019",
+   "T04-034",
+   "T04-035"
+  ]
+ },
+ {
+  "id": "X090",
+  "fase": 8,
+  "titulo": "Unificar ações de template (menu ⋮, duplicar, testar, arquivar, excluir) e aprovação",
+  "tela": "04, 05",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X066",
+   "X067",
+   "X085",
+   "X089"
+  ],
+  "integra": [],
+  "fecha": [
+   "T04-033",
+   "T04-036",
+   "T05-028",
+   "T05-035",
+   "T05-027"
+  ]
+ },
+ {
+  "id": "X091",
+  "fase": 8,
+  "titulo": "Ligar KPIs das telas 04 e 05, \"Desempenho deste template\" e \"Em andamento\" às RPCs",
+  "tela": "04, 05",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X021",
+   "X030",
+   "X041",
+   "X055",
+   "X066",
+   "X086"
+  ],
+  "integra": [],
+  "fecha": [
+   "T04-008",
+   "T04-010",
+   "T04-011",
+   "T04-012",
+   "T04-013",
+   "T05-005",
+   "T05-006",
+   "T05-007",
+   "T05-008",
+   "T05-009",
+   "T05-010",
+   "T05-011",
+   "T05-012",
+   "T05-013",
+   "T05-014",
+   "T05-057",
+   "T05-058",
+   "T05-059",
+   "T05-060",
+   "T05-061",
+   "T05-062",
+   "T05-063",
+   "T05-064",
+   "T05-065",
+   "T05-066"
+  ]
+ },
+ {
+  "id": "X092",
+  "fase": 8,
+  "titulo": "Montar o painel lateral da tela 04: Mais convertidos, Sugestões e Ações rápidas",
+  "tela": "04",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X076",
+   "X085",
+   "X086",
+   "X090",
+   "X091"
+  ],
+  "integra": [],
+  "fecha": [
+   "T04-038",
+   "T04-039",
+   "T04-040",
+   "T04-042",
+   "T04-044",
+   "T04-045",
+   "T04-046",
+   "T04-047",
+   "T04-048",
+   "T04-049",
+   "T04-051",
+   "T04-052"
+  ]
+ },
+ {
+  "id": "X093",
+  "fase": 8,
+  "titulo": "Importar e exportar templates em CSV ou JSON com prévia, conflitos e trilha",
+  "tela": "04",
+  "camada": "front + testes + docs",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X085",
+   "X087"
+  ],
+  "integra": [],
+  "fecha": [
+   "T04-053"
+  ]
+ },
+ {
+  "id": "X094",
+  "fase": 8,
+  "titulo": "Encaixar a tela 05 no shell: rota, cabeçalho, sub-abas, biblioteca lateral e campos",
+  "tela": "04, 05",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X083",
+   "X086",
+   "X089",
+   "X090",
+   "X091"
+  ],
+  "integra": [],
+  "fecha": [
+   "T04-001",
+   "T04-003",
+   "T04-006",
+   "T05-001",
+   "T05-002",
+   "T05-003",
+   "T05-004",
+   "T05-015",
+   "T05-017",
+   "T05-018",
+   "T05-019",
+   "T05-021",
+   "T05-022",
+   "T05-023",
+   "T05-024",
+   "T05-030",
+   "T05-076",
+   "T05-077",
+   "T05-026",
+   "T05-034",
+   "T05-074"
+  ]
+ },
+ {
+  "id": "X095",
+  "fase": 8,
+  "titulo": "Trocar o campo de URL por envio de arquivo com validação de 16 MB e metadados",
+  "tela": "05",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X061",
+   "X062",
+   "X067",
+   "X083",
+   "X088",
+   "X094"
+  ],
+  "integra": [],
+  "fecha": [
+   "T05-051",
+   "T05-052",
+   "T05-053",
+   "T05-054",
+   "T05-055",
+   "T05-056"
+  ]
+ },
+ {
+  "id": "X096",
+  "fase": 8,
+  "titulo": "Adicionar botões e enquete à mensagem do template, com texto reserva e teste real",
+  "tela": "04, 05",
+  "camada": "front + testes + docs",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X064",
+   "X083",
+   "X088",
+   "X090"
+  ],
+  "integra": [],
+  "fecha": [
+   "T04-026",
+   "T04-027"
+  ]
+ },
+ {
+  "id": "X097",
+  "fase": 8,
+  "titulo": "Construir a aba Variações A/B: lado a lado, pesos em 100, resultado e vencedora",
+  "tela": "05",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X065",
+   "X085",
+   "X087",
+   "X088",
+   "X090",
+   "X094"
+  ],
+  "integra": [],
+  "fecha": [
+   "T05-031"
+  ]
+ },
+ {
+  "id": "X098",
+  "fase": 8,
+  "titulo": "Salvar com nota e atalho, proteger alterações e construir a aba Histórico de Versões",
+  "tela": "05",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X084",
+   "X094"
+  ],
+  "integra": [],
+  "fecha": [
+   "T05-032",
+   "T05-029"
+  ]
+ },
+ {
+  "id": "X099",
+  "fase": 9,
+  "titulo": "Extrair `TalkXSegmentBuilder` com reducer, desfazer/refazer e validação",
+  "tela": "03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X008"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-027",
+   "T03-039",
+   "T03-040"
+  ]
+ },
+ {
+  "id": "X100",
+  "fase": 9,
+  "titulo": "Criar o compilador de regras no servidor com os campos do mock e os operadores novos",
+  "tela": "03, 02",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X017",
+   "X037",
+   "X038",
+   "X039",
+   "X040"
+  ],
+  "integra": [],
+  "fecha": [
+   "T02-031",
+   "T03-052",
+   "T03-055",
+   "T03-068",
+   "T03-070",
+   "T03-074",
+   "CAP-093"
+  ]
+ },
+ {
+  "id": "X101",
+  "fase": 9,
+  "titulo": "Criar o ciclo de vida do segmento no banco: rascunho, versões, tags e guarda de uso",
+  "tela": "02, 03",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X057",
+   "X100"
+  ],
+  "integra": [],
+  "fecha": [
+   "T02-020",
+   "T02-027",
+   "T02-038",
+   "T02-045",
+   "T02-049",
+   "T02-062",
+   "T03-019",
+   "T03-022",
+   "T03-030",
+   "T03-031",
+   "T03-033"
+  ]
+ },
+ {
+  "id": "X102",
+  "fase": 9,
+  "titulo": "Criar a RPC de saúde do segmento: risco de entrega, sinais, composição e sugestões",
+  "tela": "03, 02",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X017",
+   "X038",
+   "X075",
+   "X100"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-084",
+   "T03-086",
+   "T03-091",
+   "T03-101",
+   "T02-056",
+   "T02-060",
+   "T02-067"
+  ]
+ },
+ {
+  "id": "X103",
+  "fase": 9,
+  "titulo": "Criar a RPC da biblioteca e o histórico diário de contagem dos segmentos",
+  "tela": "02, 03",
+  "camada": "banco + cron + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X021",
+   "X057",
+   "X101"
+  ],
+  "integra": [],
+  "fecha": [
+   "T02-012",
+   "T02-017",
+   "T02-033",
+   "T02-037",
+   "T03-009",
+   "T03-082",
+   "T03-085"
+  ]
+ },
+ {
+  "id": "X104",
+  "fase": 9,
+  "titulo": "Adotar o modelo de regras v2 no front e ler contagem e amostra da RPC de audiência",
+  "tela": "03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X017",
+   "X099",
+   "X100"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-080",
+   "T03-081"
+  ]
+ },
+ {
+  "id": "X105",
+  "fase": 9,
+  "titulo": "Desenhar os grupos E/OU como no mock 03: selo, divisor, árvore e menu do grupo",
+  "tela": "03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X099",
+   "X104"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-042",
+   "T03-043",
+   "T03-047",
+   "T03-048",
+   "T03-049",
+   "T03-057",
+   "T03-060"
+  ]
+ },
+ {
+  "id": "X106",
+  "fase": 9,
+  "titulo": "Criar os campos de valor por tipo: vários valores, período, data, moeda e sim/não",
+  "tela": "03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X104",
+   "X105"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-052",
+   "T03-053",
+   "T03-054",
+   "T03-055"
+  ]
+ },
+ {
+  "id": "X107",
+  "fase": 9,
+  "titulo": "Montar o catálogo \"Filtros Disponíveis\" por categoria, com busca, contadores e arrastar",
+  "tela": "03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X037",
+   "X038",
+   "X039",
+   "X040",
+   "X104",
+   "X106"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-063",
+   "T03-064",
+   "T03-065",
+   "T03-066",
+   "T03-067",
+   "T03-068",
+   "T03-069",
+   "T03-070",
+   "T03-071",
+   "T03-072",
+   "T03-073",
+   "T03-074",
+   "T03-076"
+  ]
+ },
+ {
+  "id": "X108",
+  "fase": 9,
+  "titulo": "Completar o \"Resumo do Segmento\" e a amostra de contatos com números do servidor",
+  "tela": "03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X068",
+   "X102",
+   "X103",
+   "X104"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-082",
+   "T03-083",
+   "T03-084",
+   "T03-085",
+   "T03-086",
+   "T03-087",
+   "T03-088",
+   "T03-089",
+   "T03-090",
+   "T03-091",
+   "T03-092",
+   "T03-093",
+   "T03-095",
+   "T03-097",
+   "T03-098",
+   "T03-099",
+   "T03-100"
+  ]
+ },
+ {
+  "id": "X109",
+  "fase": 9,
+  "titulo": "Criar as sub-abas \"Prévia e Contatos\" e \"Sobreposição\" do construtor",
+  "tela": "03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X055",
+   "X068",
+   "X104",
+   "X108"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-034",
+   "T03-035",
+   "T03-036"
+  ]
+ },
+ {
+  "id": "X110",
+  "fase": 9,
+  "titulo": "Separar Salvar (rascunho) de Publicar, com salvamento automático e histórico de versões",
+  "tela": "03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X099",
+   "X101",
+   "X104"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-030",
+   "T03-031",
+   "T03-033"
+  ]
+ },
+ {
+  "id": "X111",
+  "fase": 9,
+  "titulo": "Encaixar a tela 03 no módulo: breadcrumb, cabeçalho, abas superiores e link direto",
+  "tela": "03, 02",
+  "camada": "front + docs + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X060",
+   "X099"
+  ],
+  "integra": [
+   "X189"
+  ],
+  "fecha": [
+   "T03-001",
+   "T03-002",
+   "T03-003",
+   "T03-004",
+   "T03-005",
+   "T03-006",
+   "T03-007",
+   "T02-001",
+   "T02-003",
+   "T02-006",
+   "T02-007",
+   "T02-009"
+  ]
+ },
+ {
+  "id": "X112",
+  "fase": 9,
+  "titulo": "Criar a lista lateral \"Meus Segmentos\" com abas, busca, filtro e cartões",
+  "tela": "03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X101",
+   "X110",
+   "X111"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-012",
+   "T03-013",
+   "T03-014",
+   "T03-015",
+   "T03-016",
+   "T03-017",
+   "T03-018",
+   "T03-019",
+   "T03-020",
+   "T03-021",
+   "T03-022",
+   "T03-024",
+   "T03-026"
+  ]
+ },
+ {
+  "id": "X113",
+  "fase": 9,
+  "titulo": "Dar conteúdo real às abas Regras Avançadas, Audiências e Modelos",
+  "tela": "03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X057",
+   "X103",
+   "X105",
+   "X106",
+   "X110",
+   "X111"
+  ],
+  "integra": [],
+  "fecha": [
+   "T03-008",
+   "T03-009",
+   "T03-010"
+  ]
+ },
+ {
+  "id": "X114",
+  "fase": 9,
+  "titulo": "Refazer KPIs, filtros, seleção em massa, grade e paginação da biblioteca (tela 02)",
+  "tela": "02",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X075",
+   "X101",
+   "X103",
+   "X111",
+   "X112"
+  ],
+  "integra": [],
+  "fecha": [
+   "T02-012",
+   "T02-013",
+   "T02-014",
+   "T02-015",
+   "T02-016",
+   "T02-017",
+   "T02-019",
+   "T02-020",
+   "T02-022",
+   "T02-024",
+   "T02-025",
+   "T02-026",
+   "T02-042"
+  ]
+ },
+ {
+  "id": "X115",
+  "fase": 9,
+  "titulo": "Refazer colunas e ações de linha da biblioteca: critérios legíveis, uso e desempenho",
+  "tela": "02",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X101",
+   "X103",
+   "X104",
+   "X112",
+   "X114"
+  ],
+  "integra": [],
+  "fecha": [
+   "T02-027",
+   "T02-029",
+   "T02-030",
+   "T02-031",
+   "T02-032",
+   "T02-033",
+   "T02-034",
+   "T02-035",
+   "T02-036",
+   "T02-037",
+   "T02-038"
+  ]
+ },
+ {
+  "id": "X116",
+  "fase": 9,
+  "titulo": "Completar o painel \"Detalhes do segmento\": critérios, origem, composição e tags",
+  "tela": "02",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X038",
+   "X055",
+   "X101",
+   "X102",
+   "X104",
+   "X115"
+  ],
+  "integra": [],
+  "fecha": [
+   "T02-043",
+   "T02-045",
+   "T02-048",
+   "T02-049",
+   "T02-050",
+   "T02-051",
+   "T02-052",
+   "T02-053",
+   "T02-054",
+   "T02-055",
+   "T02-056",
+   "T02-057",
+   "T02-058",
+   "T02-059",
+   "T02-060",
+   "T02-061",
+   "T02-062"
+  ]
+ },
+ {
+  "id": "X117",
+  "fase": 9,
+  "titulo": "Ligar sugestões e as abas \"Insights com IA\" a regras calculadas, com botão que aplica",
+  "tela": "02, 03",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X060",
+   "X076",
+   "X102",
+   "X103",
+   "X109",
+   "X113",
+   "X116"
+  ],
+  "integra": [],
+  "fecha": [
+   "T02-065",
+   "T02-066",
+   "T02-067",
+   "T02-068",
+   "T03-011",
+   "T03-037",
+   "T03-101",
+   "T03-102"
+  ]
+ },
+ {
+  "id": "X118",
+  "fase": 10,
+  "titulo": "Criar o gerenciador de links rastreáveis no editor de mensagem",
+  "tela": "08, 05, 14",
+  "camada": "front",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X021",
+   "X022",
+   "X055"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-062"
+  ]
+ },
+ {
+  "id": "X119",
+  "fase": 10,
+  "titulo": "Gravar na RPC de rascunho os campos novos de público, mídia, botões e entrega",
+  "tela": "08, 10",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X009",
+   "X016",
+   "X017",
+   "X019",
+   "X057",
+   "X059",
+   "X060",
+   "X061",
+   "X064",
+   "X066"
+  ],
+  "integra": [],
+  "fecha": [
+   "T09-013",
+   "T10-007",
+   "T10-012",
+   "T10-027"
+  ]
+ },
+ {
+  "id": "X120",
+  "fase": 10,
+  "titulo": "Criar a RPC de checagens de lançamento `talkx_campaign_launch_checks`",
+  "tela": "09, 10",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014",
+   "X016",
+   "X017",
+   "X019",
+   "X020",
+   "X032",
+   "X066",
+   "X118",
+   "X119"
+  ],
+  "integra": [],
+  "fecha": [
+   "T09-016",
+   "T09-020",
+   "T09-041"
+  ]
+ },
+ {
+  "id": "X121",
+  "fase": 10,
+  "titulo": "Persistir as 3 confirmações e quem lançou; confirmar e agendar por RPC",
+  "tela": "09",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014",
+   "X025",
+   "X120"
+  ],
+  "integra": [],
+  "fecha": [
+   "T09-046",
+   "T09-047",
+   "T09-048",
+   "T09-050"
+  ]
+ },
+ {
+  "id": "X122",
+  "fase": 10,
+  "titulo": "Encaixar o wizard no shell: stepper com teclado, rodapé fixo e saída com pendência",
+  "tela": "08, 09",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X014",
+   "X055"
+  ],
+  "integra": [],
+  "fecha": [
+   "T08-001",
+   "T08-009",
+   "T09-001",
+   "T09-004",
+   "T09-005"
+  ]
+ },
+ {
+  "id": "X123",
+  "fase": 10,
+  "titulo": "Restaurar o rascunho inteiro (filtros, passo, opções) e salvar sozinho desde o passo 1",
+  "tela": "08",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X009",
+   "X025",
+   "X119"
+  ],
+  "integra": [],
+  "fecha": [
+   "T08-064"
+  ]
+ },
+ {
+  "id": "X124",
+  "fase": 10,
+  "titulo": "Passo 1 — nome com validação, objetivo com ícone e campo Responsável",
+  "tela": "08",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X009",
+   "X123"
+  ],
+  "integra": [],
+  "fecha": [
+   "T08-013",
+   "T09-012"
+  ]
+ },
+ {
+  "id": "X125",
+  "fase": 10,
+  "titulo": "Origem do público: Contatos ZAPP e CRM 360° resolvidos no servidor",
+  "tela": "08",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X017",
+   "X036",
+   "X038",
+   "X055",
+   "X119",
+   "X123"
+  ],
+  "integra": [],
+  "fecha": [
+   "T08-015",
+   "T08-016"
+  ]
+ },
+ {
+  "id": "X126",
+  "fase": 10,
+  "titulo": "Os 7 filtros de audiência com o catálogo de filtros dos segmentos",
+  "tela": "08",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X037",
+   "X038",
+   "X040",
+   "X107",
+   "X125"
+  ],
+  "integra": [],
+  "fecha": [
+   "T08-020",
+   "T08-021",
+   "T08-022",
+   "T08-023",
+   "T08-024",
+   "T08-025",
+   "T08-026"
+  ]
+ },
+ {
+  "id": "X127",
+  "fase": 10,
+  "titulo": "Origem \"Segmento salvo\": escolher vários segmentos ativos, sem contar contato em dobro",
+  "tela": "08, 09",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X057",
+   "X058",
+   "X119",
+   "X125"
+  ],
+  "integra": [],
+  "fecha": [
+   "T08-017",
+   "T09-013"
+  ]
+ },
+ {
+  "id": "X128",
+  "fase": 10,
+  "titulo": "Mensagem no wizard com o editor único: abas, barra, variáveis do mock e limite 4096",
+  "tela": "08",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X020",
+   "X022",
+   "X062",
+   "X066",
+   "X087",
+   "X118",
+   "X122"
+  ],
+  "integra": [],
+  "fecha": [
+   "T08-030",
+   "T08-031",
+   "T08-032",
+   "T08-033",
+   "T08-035",
+   "T08-036",
+   "T08-037",
+   "T08-038",
+   "T08-039",
+   "T08-040",
+   "T08-045",
+   "T08-046",
+   "T08-047"
+  ]
+ },
+ {
+  "id": "X129",
+  "fase": 10,
+  "titulo": "Anexar mídia por upload (\"Selecionar arquivo\") no wizard",
+  "tela": "08",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X061",
+   "X062",
+   "X119",
+   "X128"
+  ],
+  "integra": [],
+  "fecha": [
+   "T08-048",
+   "T08-049",
+   "T08-030",
+   "T08-031",
+   "T08-032",
+   "T08-033"
+  ]
+ },
+ {
+  "id": "X130",
+  "fase": 10,
+  "titulo": "Botões na mensagem da campanha: edição, prévia e aviso de fallback",
+  "tela": "09",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X064",
+   "X067",
+   "X096",
+   "X119",
+   "X128"
+  ],
+  "integra": [],
+  "fecha": [
+   "T09-029"
+  ]
+ },
+ {
+  "id": "X131",
+  "fase": 10,
+  "titulo": "Painel \"Resumo da campanha\" calculado no servidor",
+  "tela": "08",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X017",
+   "X058",
+   "X068",
+   "X125",
+   "X127"
+  ],
+  "integra": [],
+  "fecha": [
+   "T08-052",
+   "T08-053",
+   "T08-054",
+   "T08-055",
+   "T08-056"
+  ]
+ },
+ {
+  "id": "X132",
+  "fase": 10,
+  "titulo": "Prévia em moldura de celular, contato de amostra real e \"Ver no celular\"",
+  "tela": "08, 09",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X055",
+   "X062",
+   "X067",
+   "X125",
+   "X128"
+  ],
+  "integra": [],
+  "fecha": [
+   "T08-059",
+   "T08-060",
+   "T08-063",
+   "T09-025",
+   "T09-026",
+   "T09-030"
+  ]
+ },
+ {
+  "id": "X133",
+  "fase": 10,
+  "titulo": "Passo Entrega: conexão, velocidade, janela, horário comercial, dias, fuso e limites",
+  "tela": "08, 10",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X017",
+   "X018",
+   "X019",
+   "X060",
+   "X119",
+   "X124"
+  ],
+  "integra": [],
+  "fecha": [
+   "T10-020",
+   "T10-022",
+   "T10-023",
+   "T10-025",
+   "T10-026",
+   "T10-028"
+  ]
+ },
+ {
+  "id": "X134",
+  "fase": 10,
+  "titulo": "Revisão: linhas com dado real e \"Editar\" que leva ao passo certo e volta",
+  "tela": "09",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X066",
+   "X120",
+   "X124",
+   "X127",
+   "X131",
+   "X133"
+  ],
+  "integra": [],
+  "fecha": [
+   "T09-012",
+   "T09-013",
+   "T09-014",
+   "T09-016",
+   "T09-018",
+   "T09-019",
+   "T09-020",
+   "T09-021",
+   "T09-022",
+   "T09-023"
+  ]
+ },
+ {
+  "id": "X135",
+  "fase": 10,
+  "titulo": "Revisão: Resumo operacional, recomendações acionáveis e \"Tudo pronto\" por checagens",
+  "tela": "09",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X068",
+   "X074",
+   "X075",
+   "X076",
+   "X120",
+   "X131"
+  ],
+  "integra": [],
+  "fecha": [
+   "T09-033",
+   "T09-034",
+   "T09-035",
+   "T09-036",
+   "T09-037",
+   "T09-038",
+   "T09-039",
+   "T09-040",
+   "T09-041",
+   "T09-042"
+  ]
+ },
+ {
+  "id": "X136",
+  "fase": 10,
+  "titulo": "Modal \"Confirmar disparo?\" com 3 confirmações gravadas e lançamento que abre o monitor",
+  "tela": "09",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X013",
+   "X014",
+   "X016",
+   "X025",
+   "X055",
+   "X121",
+   "X135"
+  ],
+  "integra": [],
+  "fecha": [
+   "T09-042",
+   "T09-046",
+   "T09-047",
+   "T09-048",
+   "T09-050"
+  ]
+ },
+ {
+  "id": "X137",
+  "fase": 10,
+  "titulo": "Tela 10 — data, horário, fuso, repetição, janela, throttle e supressão; salvar",
+  "tela": "10",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X017",
+   "X018",
+   "X055",
+   "X059",
+   "X060",
+   "X119",
+   "X133"
+  ],
+  "integra": [],
+  "fecha": [
+   "T10-006",
+   "T10-007",
+   "T10-009",
+   "T10-010",
+   "T10-012",
+   "T10-013",
+   "T10-014",
+   "T10-015",
+   "T10-016",
+   "T10-020",
+   "T10-021",
+   "T10-022",
+   "T10-023",
+   "T10-024",
+   "T10-025",
+   "T10-026",
+   "T10-027",
+   "T10-028"
+  ]
+ },
+ {
+  "id": "X138",
+  "fase": 10,
+  "titulo": "Tela 10 — calendário em português e \"Resumo da Programação\" em linha do tempo",
+  "tela": "10",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X025",
+   "X059",
+   "X068",
+   "X137"
+  ],
+  "integra": [],
+  "fecha": [
+   "T10-030",
+   "T10-031",
+   "T10-034",
+   "T10-035",
+   "T10-036",
+   "T10-037"
+  ]
+ },
+ {
+  "id": "X139",
+  "fase": 10,
+  "titulo": "Tela 10 — cabeçalho, \"Resumo da Campanha\" com dados reais e estado \"pronta para envio\"",
+  "tela": "10",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X009",
+   "X019",
+   "X055",
+   "X061",
+   "X068",
+   "X120",
+   "X127",
+   "X137"
+  ],
+  "integra": [],
+  "fecha": [
+   "T10-001",
+   "T10-002",
+   "T10-003",
+   "T10-004",
+   "T10-005",
+   "T10-039",
+   "T10-041",
+   "T10-043",
+   "T10-044",
+   "T10-045"
+  ]
+ },
+ {
+  "id": "X140",
+  "fase": 11,
+  "titulo": "Criar a RPC `talkx_monitor_panel` (KPIs, comparativos, série por minuto, saúde do worker)",
+  "tela": "11, 12, 13",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014",
+   "X019",
+   "X028",
+   "X030",
+   "X057",
+   "X068"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-016",
+   "T11-017",
+   "T11-019",
+   "T11-023",
+   "T11-025",
+   "T11-029",
+   "T11-033",
+   "T11-036",
+   "T11-039",
+   "T11-041",
+   "T11-043",
+   "T12-015",
+   "T12-016",
+   "T12-019",
+   "T12-022",
+   "T12-024",
+   "T12-025",
+   "T12-036",
+   "T12-038",
+   "T12-042",
+   "T12-043",
+   "T13-055"
+  ]
+ },
+ {
+  "id": "X141",
+  "fase": 11,
+  "titulo": "Criar as RPCs de leitura paginada: destinatários e linha do tempo da campanha",
+  "tela": "11, 12, 13",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014",
+   "X024",
+   "X025",
+   "X028",
+   "X031",
+   "X033",
+   "X057",
+   "X058"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-055",
+   "T11-058",
+   "T11-062",
+   "T11-063",
+   "T11-069",
+   "T11-073",
+   "T12-046",
+   "T12-051",
+   "T12-053",
+   "T12-013",
+   "T13-044"
+  ]
+ },
+ {
+  "id": "X142",
+  "fase": 11,
+  "titulo": "Criar as RPCs de leitura: progresso por segmento e pré-checagem de retomada",
+  "tela": "11, 13",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X019",
+   "X030",
+   "X057",
+   "X058",
+   "X059",
+   "X060",
+   "X066"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-046",
+   "T11-052",
+   "T13-022",
+   "T13-030",
+   "T13-035",
+   "T13-037",
+   "T13-041"
+  ]
+ },
+ {
+  "id": "X143",
+  "fase": 11,
+  "titulo": "Rotear a campanha pela situação e dar endereço (URL) a cada tela de acompanhamento",
+  "tela": "11, 12, 13",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055"
+  ],
+  "integra": [
+   "X163"
+  ],
+  "fecha": [
+   "T11-001",
+   "T12-002"
+  ]
+ },
+ {
+  "id": "X144",
+  "fase": 11,
+  "titulo": "Trocar leituras com teto fixo por hooks das RPCs, com tempo real e modo degradado",
+  "tela": "11, 12, 13",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X057",
+   "X140",
+   "X141",
+   "X142"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-007",
+   "T11-040",
+   "CAP-103"
+  ]
+ },
+ {
+  "id": "X145",
+  "fase": 11,
+  "titulo": "Tela 11: criar a aba \"Monitor\" no módulo, com cabeçalho, filtros e seletor de campanha",
+  "tela": "11",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X057",
+   "X143",
+   "X144"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-001",
+   "T11-002",
+   "T11-003",
+   "T11-004",
+   "T11-005",
+   "T11-006",
+   "T11-007",
+   "T11-008",
+   "T11-009",
+   "T11-010",
+   "T11-011",
+   "T11-012",
+   "T11-013",
+   "T11-014"
+  ]
+ },
+ {
+  "id": "X146",
+  "fase": 11,
+  "titulo": "Mostrar KPIs ao vivo com comparativos e mini-gráficos nas telas 11 e 12",
+  "tela": "11, 12",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X028",
+   "X030",
+   "X031",
+   "X055",
+   "X068",
+   "X140",
+   "X144"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-016",
+   "T11-017",
+   "T11-019",
+   "T11-020",
+   "T11-021",
+   "T11-022",
+   "T11-023",
+   "T11-025",
+   "T11-026",
+   "T11-027",
+   "T11-028",
+   "T11-029",
+   "T12-015",
+   "T12-016",
+   "T12-019",
+   "T12-020",
+   "T12-021",
+   "T12-022",
+   "T12-024",
+   "T12-025",
+   "T12-026"
+  ]
+ },
+ {
+  "id": "X147",
+  "fase": 11,
+  "titulo": "Desenhar o ritmo com séries do servidor, janela, previsto e término (telas 11 e 12)",
+  "tela": "11, 12",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X019",
+   "X068",
+   "X140",
+   "X144"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-030",
+   "T11-031",
+   "T11-033",
+   "T11-034",
+   "T11-035",
+   "T11-036",
+   "T11-037",
+   "T12-034",
+   "T12-035",
+   "T12-036",
+   "T12-037",
+   "T12-038",
+   "T12-039",
+   "T12-040"
+  ]
+ },
+ {
+  "id": "X148",
+  "fase": 11,
+  "titulo": "Montar \"Saúde da campanha\", Pausar/Cancelar com modais do kit e chip de insights",
+  "tela": "11, 12",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X012",
+   "X013",
+   "X014",
+   "X024",
+   "X025",
+   "X055",
+   "X075",
+   "X076",
+   "X140",
+   "X144"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-039",
+   "T11-040",
+   "T11-041",
+   "T11-042",
+   "T11-043",
+   "T11-045",
+   "T11-076",
+   "T12-066",
+   "T12-069"
+  ]
+ },
+ {
+  "id": "X149",
+  "fase": 11,
+  "titulo": "Criar o card \"Fila por segmento\" com total, enviadas, restante e progresso",
+  "tela": "11",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X057",
+   "X058",
+   "X142",
+   "X144"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-046",
+   "T11-047",
+   "T11-048",
+   "T11-049",
+   "T11-050",
+   "T11-051",
+   "T11-052"
+  ]
+ },
+ {
+  "id": "X150",
+  "fase": 11,
+  "titulo": "Unificar a tabela de destinatários: colunas, estados, busca, filtro e paginação",
+  "tela": "11, 12",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X028",
+   "X031",
+   "X055",
+   "X057",
+   "X058",
+   "X141",
+   "X144"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-053",
+   "T11-055",
+   "T11-056",
+   "T11-057",
+   "T11-058",
+   "T11-062",
+   "T11-063",
+   "T12-045",
+   "T12-046",
+   "T12-047",
+   "T12-048",
+   "T12-049",
+   "T12-050",
+   "T12-051",
+   "T12-053"
+  ]
+ },
+ {
+  "id": "X151",
+  "fase": 11,
+  "titulo": "Adicionar ações por linha: abrir conversa, reenviar e bloquear o contato",
+  "tela": "11, 12",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X014",
+   "X030",
+   "X031",
+   "X055",
+   "X069",
+   "X071",
+   "X150"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-064",
+   "T11-065",
+   "T11-066",
+   "T11-067",
+   "T12-054"
+  ]
+ },
+ {
+  "id": "X152",
+  "fase": 11,
+  "titulo": "Ler a \"Linha do tempo operacional\" do servidor, com tipos, ícones e \"Ver todos\"",
+  "tela": "11",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X025",
+   "X028",
+   "X030",
+   "X031",
+   "X141",
+   "X144"
+  ],
+  "integra": [],
+  "fecha": [
+   "T11-069",
+   "T11-070",
+   "T11-071",
+   "T11-072",
+   "T11-073",
+   "T11-074",
+   "T11-075"
+  ]
+ },
+ {
+  "id": "X153",
+  "fase": 11,
+  "titulo": "Tela 12: montar cabeçalho, seletor, abas, anel de progresso e \"Pico de respostas\"",
+  "tela": "12",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X028",
+   "X055",
+   "X075",
+   "X143",
+   "X144",
+   "X146",
+   "X147",
+   "X150"
+  ],
+  "integra": [],
+  "fecha": [
+   "T12-001",
+   "T12-002",
+   "T12-003",
+   "T12-004",
+   "T12-005",
+   "T12-006",
+   "T12-029",
+   "T12-030",
+   "T12-031",
+   "T12-032",
+   "T12-041",
+   "T12-042",
+   "T12-043",
+   "T12-044"
+  ]
+ },
+ {
+  "id": "X154",
+  "fase": 11,
+  "titulo": "Tela 12: montar \"Ações da campanha\", \"Configurações atuais\" e a aba Configurações",
+  "tela": "12",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X006",
+   "X018",
+   "X019",
+   "X024",
+   "X055",
+   "X060",
+   "X148"
+  ],
+  "integra": [],
+  "fecha": [
+   "T12-011",
+   "T12-057",
+   "T12-058",
+   "T12-060",
+   "T12-061",
+   "T12-063",
+   "T12-064"
+  ]
+ },
+ {
+  "id": "X155",
+  "fase": 11,
+  "titulo": "Tela 12: dar conteúdo real às abas Destinatários, Mensagens, Resultados e Logs",
+  "tela": "12",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X027",
+   "X028",
+   "X033",
+   "X141",
+   "X144",
+   "X150",
+   "X151"
+  ],
+  "integra": [],
+  "fecha": [
+   "T12-013",
+   "T12-009",
+   "T12-010",
+   "T12-012"
+  ]
+ },
+ {
+  "id": "X156",
+  "fase": 11,
+  "titulo": "Tela 13: criar `TalkXCampaignPaused.tsx` com cabeçalho, banner, Retomar e Encerrar",
+  "tela": "13",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X013",
+   "X014",
+   "X024",
+   "X025",
+   "X055",
+   "X143",
+   "X144",
+   "X148"
+  ],
+  "integra": [],
+  "fecha": [
+   "T13-001",
+   "T13-002",
+   "T13-003",
+   "T13-004",
+   "T13-005",
+   "T13-006",
+   "T13-007",
+   "T13-016",
+   "T13-017",
+   "T13-018",
+   "T13-067",
+   "T13-068",
+   "T13-069",
+   "T13-070",
+   "T13-071"
+  ]
+ },
+ {
+  "id": "X157",
+  "fase": 11,
+  "titulo": "Tela 13: montar as 8 abas com conteúdo real",
+  "tela": "13",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X057",
+   "X059",
+   "X060",
+   "X142",
+   "X149",
+   "X150",
+   "X152",
+   "X154",
+   "X155",
+   "X156"
+  ],
+  "integra": [],
+  "fecha": [
+   "T13-008",
+   "T13-009",
+   "T13-010",
+   "T13-011",
+   "T13-012",
+   "T13-013",
+   "T13-014",
+   "T13-015"
+  ]
+ },
+ {
+  "id": "X158",
+  "fase": 11,
+  "titulo": "Tela 13: montar os 4 KPIs, o anel por audiência e o card \"Segmentos da campanha\"",
+  "tela": "13",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X057",
+   "X058",
+   "X140",
+   "X142",
+   "X146",
+   "X149",
+   "X153",
+   "X156"
+  ],
+  "integra": [],
+  "fecha": [
+   "T13-019",
+   "T13-020",
+   "T13-021",
+   "T13-022",
+   "T13-023",
+   "T13-024",
+   "T13-025",
+   "T13-027",
+   "T13-028",
+   "T13-029",
+   "T13-030",
+   "T13-031",
+   "T13-032",
+   "T13-033",
+   "T13-034",
+   "T13-035"
+  ]
+ },
+ {
+  "id": "X159",
+  "fase": 11,
+  "titulo": "Tela 13: criar o \"Checklist para retomar\" com 5 itens, verificação e persistência",
+  "tela": "13",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X019",
+   "X026",
+   "X030",
+   "X059",
+   "X060",
+   "X066",
+   "X142",
+   "X156"
+  ],
+  "integra": [],
+  "fecha": [
+   "T13-036",
+   "T13-037",
+   "T13-038",
+   "T13-039",
+   "T13-040",
+   "T13-041",
+   "T13-042"
+  ]
+ },
+ {
+  "id": "X160",
+  "fase": 11,
+  "titulo": "Tela 13: montar linha do tempo, \"Resumo de enviados\" e \"Principais métricas\"",
+  "tela": "13",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X025",
+   "X027",
+   "X028",
+   "X057",
+   "X066",
+   "X075",
+   "X140",
+   "X152",
+   "X156"
+  ],
+  "integra": [],
+  "fecha": [
+   "T13-043",
+   "T13-044",
+   "T13-045",
+   "T13-046",
+   "T13-047",
+   "T13-048",
+   "T13-050",
+   "T13-051",
+   "T13-052",
+   "T13-053",
+   "T13-054",
+   "T13-055",
+   "T13-056",
+   "T13-057",
+   "T13-058",
+   "T13-059",
+   "T13-060",
+   "T13-061",
+   "T13-062",
+   "T13-063",
+   "T13-064",
+   "T13-065",
+   "T13-066"
+  ]
+ },
+ {
+  "id": "X161",
+  "fase": 12,
+  "titulo": "Reescrever `talkx_campaign_report`: KPIs, comparativo, séries, funil e período",
+  "tela": "14",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X021",
+   "X028",
+   "X030",
+   "X041",
+   "X057",
+   "X066"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-080"
+  ]
+ },
+ {
+  "id": "X162",
+  "fase": 12,
+  "titulo": "Criar os detalhamentos do relatório (calor, segmento, link, insights) e listas paginadas",
+  "tela": "14",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X028",
+   "X030",
+   "X037",
+   "X038",
+   "X040",
+   "X057",
+   "X065",
+   "X074",
+   "X075",
+   "X161"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-080",
+   "CAP-088"
+  ]
+ },
+ {
+  "id": "X163",
+  "fase": 12,
+  "titulo": "Criar `TalkXCampaignReport`: rota, cabeçalho, período, abas e 6 KPIs",
+  "tela": "14, 01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X030",
+   "X055",
+   "X161"
+  ],
+  "integra": [],
+  "fecha": [
+   "T14-001",
+   "T14-002",
+   "T14-003",
+   "T14-004",
+   "T14-006",
+   "T14-007",
+   "T14-011",
+   "T14-020",
+   "T14-022",
+   "T14-023",
+   "T14-024",
+   "T14-025",
+   "T14-026",
+   "T14-027",
+   "T14-028",
+   "T14-029",
+   "T14-030",
+   "T14-031"
+  ]
+ },
+ {
+  "id": "X164",
+  "fase": 12,
+  "titulo": "Desenhar desempenho (4 séries), funil de 5 degraus e mapa de calor da campanha",
+  "tela": "14",
+  "camada": "front",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X057",
+   "X161",
+   "X162",
+   "X163"
+  ],
+  "integra": [],
+  "fecha": [
+   "T14-032",
+   "T14-033",
+   "T14-034",
+   "T14-035",
+   "T14-036",
+   "T14-037",
+   "T14-038",
+   "T14-039",
+   "T14-040",
+   "T14-041",
+   "T14-042",
+   "T14-043",
+   "T14-044",
+   "T14-045",
+   "T14-046",
+   "T14-047",
+   "T14-048",
+   "T14-061",
+   "T14-062",
+   "T14-063",
+   "T14-064"
+  ]
+ },
+ {
+  "id": "X165",
+  "fase": 12,
+  "titulo": "Montar \"Resumo da campanha\" e \"Insights\" com ações",
+  "tela": "14",
+  "camada": "front",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X041",
+   "X057",
+   "X066",
+   "X075",
+   "X076",
+   "X161",
+   "X162",
+   "X163"
+  ],
+  "integra": [],
+  "fecha": [
+   "T14-049",
+   "T14-050",
+   "T14-051",
+   "T14-052",
+   "T14-053",
+   "T14-054",
+   "T14-055",
+   "T14-056",
+   "T14-057",
+   "T14-058",
+   "T14-059",
+   "T14-060",
+   "T14-076",
+   "T14-077",
+   "T14-078",
+   "T14-079",
+   "T14-080",
+   "T14-081"
+  ]
+ },
+ {
+  "id": "X166",
+  "fase": 12,
+  "titulo": "Entregar as abas Segmentos, Links, Audiência e Conversões e seus cartões-resumo",
+  "tela": "14",
+  "camada": "front",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X037",
+   "X038",
+   "X040",
+   "X056",
+   "X057",
+   "X162",
+   "X163"
+  ],
+  "integra": [],
+  "fecha": [
+   "T14-013",
+   "T14-014",
+   "T14-015",
+   "T14-016",
+   "T14-065",
+   "T14-066",
+   "T14-067",
+   "T14-068",
+   "T14-069",
+   "T14-070",
+   "T14-071",
+   "T14-072",
+   "T14-073",
+   "T14-074",
+   "T14-075"
+  ]
+ },
+ {
+  "id": "X167",
+  "fase": 12,
+  "titulo": "Entregar as abas Mensagens, Respostas e Logs com paginação no servidor",
+  "tela": "14",
+  "camada": "front",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X025",
+   "X027",
+   "X028",
+   "X033",
+   "X055",
+   "X162",
+   "X163"
+  ],
+  "integra": [],
+  "fecha": [
+   "T14-012",
+   "T14-017",
+   "T14-018"
+  ]
+ },
+ {
+  "id": "X168",
+  "fase": 12,
+  "titulo": "Exportar o relatório em PDF (sem `window.print`) e CSV, com permissão e trilha",
+  "tela": "14",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X162",
+   "X163",
+   "X164",
+   "X165"
+  ],
+  "integra": [],
+  "fecha": [
+   "T14-008",
+   "CAP-088"
+  ]
+ },
+ {
+  "id": "X169",
+  "fase": 12,
+  "titulo": "Compartilhar o relatório por link interno e por e-mail; menu de mais ações",
+  "tela": "14",
+  "camada": "edge + front",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X021",
+   "X026",
+   "X161",
+   "X163",
+   "X165"
+  ],
+  "integra": [],
+  "fecha": [
+   "T14-009",
+   "T14-010",
+   "CAP-089",
+   "CAP-090"
+  ]
+ },
+ {
+  "id": "X170",
+  "fase": 13,
+  "titulo": "Criar tabelas e RPCs de ingestão da importação de contatos",
+  "tela": "15",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X014",
+   "X021",
+   "X036"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-091"
+  ]
+ },
+ {
+  "id": "X171",
+  "fase": 13,
+  "titulo": "Criar a tela de importação: entrada, envio seguro do arquivo, mapeamento, prévia e regras",
+  "tela": "15, 01",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X168",
+   "X170"
+  ],
+  "integra": [],
+  "fecha": [
+   "T15-001",
+   "T15-002",
+   "T15-003",
+   "T15-004",
+   "T15-005",
+   "T15-006",
+   "T15-007",
+   "T15-008",
+   "T15-018",
+   "T15-019",
+   "T15-020",
+   "T15-021",
+   "T15-022",
+   "T15-023",
+   "T15-024",
+   "T15-025",
+   "T15-026",
+   "T15-027",
+   "T15-028",
+   "T15-033",
+   "T15-039",
+   "T01-063"
+  ]
+ },
+ {
+  "id": "X172",
+  "fase": 13,
+  "titulo": "Detectar duplicados e aplicar a importação com carteira, consentimento e supressão",
+  "tela": "15",
+  "camada": "banco",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X017",
+   "X032",
+   "X036",
+   "X170"
+  ],
+  "integra": [],
+  "fecha": [
+   "T15-034",
+   "T15-035",
+   "T15-036",
+   "CAP-091"
+  ]
+ },
+ {
+  "id": "X173",
+  "fase": 13,
+  "titulo": "Sugerir vínculo no CRM 360 pelas regras ligadas e executar a importação em lotes",
+  "tela": "15",
+  "camada": "edge + banco + cron",
+  "ddl": true,
+  "edge": true,
+  "exige": [
+   "X036",
+   "X170",
+   "X172"
+  ],
+  "integra": [],
+  "fecha": [
+   "T15-029",
+   "T15-030",
+   "T15-031",
+   "T15-032",
+   "CAP-091",
+   "CAP-092"
+  ]
+ },
+ {
+  "id": "X174",
+  "fase": 13,
+  "titulo": "Executar a importação com progresso, KPIs e fila de pendentes de vínculo",
+  "tela": "15",
+  "camada": "front",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X170",
+   "X171",
+   "X172",
+   "X173"
+  ],
+  "integra": [],
+  "fecha": [
+   "T15-009",
+   "T15-010",
+   "T15-011",
+   "T15-012",
+   "T15-013",
+   "T15-014",
+   "T15-015",
+   "T15-016",
+   "T15-017",
+   "T15-037",
+   "T15-038",
+   "T15-040",
+   "T15-041",
+   "T15-042",
+   "T15-043",
+   "T15-044",
+   "T15-045",
+   "T15-046",
+   "T15-047",
+   "T15-048",
+   "T15-049",
+   "T15-050",
+   "T15-051",
+   "T15-052",
+   "T15-053",
+   "T15-054",
+   "T15-055",
+   "T15-056",
+   "T15-057"
+  ]
+ },
+ {
+  "id": "X175",
+  "fase": 13,
+  "titulo": "Entregar as abas \"CRM 360\" (trazer contatos em lote) e \"Resolver Conflitos\"",
+  "tela": "15, 08",
+  "camada": "edge + front",
+  "ddl": false,
+  "edge": true,
+  "exige": [
+   "X036",
+   "X055",
+   "X170",
+   "X172",
+   "X173",
+   "X174"
+  ],
+  "integra": [],
+  "fecha": [
+   "T15-058",
+   "T15-059",
+   "CAP-091",
+   "CAP-092"
+  ]
+ },
+ {
+  "id": "X176",
+  "fase": 14,
+  "titulo": "Criar RPCs de leitura da supressão: listagem paginada, KPIs e atividade",
+  "tela": "06",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X017",
+   "X029",
+   "X070",
+   "X071"
+  ],
+  "integra": [],
+  "fecha": [
+   "T06-009",
+   "T06-011",
+   "T06-014",
+   "T06-017",
+   "T06-018",
+   "T06-042",
+   "T06-062",
+   "T06-064"
+  ]
+ },
+ {
+  "id": "X177",
+  "fase": 14,
+  "titulo": "Criar RPCs de lote da supressão: importar com prévia e exportar por página",
+  "tela": "06",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X029",
+   "X071",
+   "X176"
+  ],
+  "integra": [],
+  "fecha": [
+   "CAP-034"
+  ]
+ },
+ {
+  "id": "X178",
+  "fase": 14,
+  "titulo": "Unificar o hook de supressão e paginar a tabela no servidor com colunas reais",
+  "tela": "06",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X030",
+   "X055",
+   "X176"
+  ],
+  "integra": [],
+  "fecha": [
+   "T06-031",
+   "T06-032",
+   "T06-033",
+   "T06-034",
+   "T06-035",
+   "T06-036",
+   "T06-037",
+   "T06-039",
+   "T06-042",
+   "T06-043",
+   "T06-044",
+   "T06-072",
+   "T06-073"
+  ]
+ },
+ {
+  "id": "X179",
+  "fase": 14,
+  "titulo": "KPIs da supressão com janela e comparativo; Centro de proteção com medidor",
+  "tela": "06",
+  "camada": "front + docs + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X017",
+   "X176",
+   "X178"
+  ],
+  "integra": [
+   "X189"
+  ],
+  "fecha": [
+   "T06-009",
+   "T06-011",
+   "T06-012",
+   "T06-013",
+   "T06-014",
+   "T06-015",
+   "T06-016",
+   "T06-017",
+   "T06-018",
+   "T06-019",
+   "T06-020",
+   "T06-046",
+   "T06-047",
+   "T06-048",
+   "T06-049",
+   "T06-050",
+   "T06-051",
+   "T06-052",
+   "T06-059"
+  ]
+ },
+ {
+  "id": "X180",
+  "fase": 14,
+  "titulo": "Cinco filtros, busca por nome/telefone/e-mail, ordenação e visão em grade",
+  "tela": "06",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X178"
+  ],
+  "integra": [],
+  "fecha": [
+   "T06-021",
+   "T06-022",
+   "T06-023",
+   "T06-024",
+   "T06-025",
+   "T06-026",
+   "T06-027",
+   "T06-028",
+   "T06-040",
+   "T06-071"
+  ]
+ },
+ {
+  "id": "X181",
+  "fase": 14,
+  "titulo": "Ações de linha, seleção em massa e modais de editar e remover com trilha",
+  "tela": "06",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055",
+   "X071",
+   "X178"
+  ],
+  "integra": [],
+  "fecha": [
+   "T06-029",
+   "T06-030",
+   "T06-041",
+   "T06-066"
+  ]
+ },
+ {
+  "id": "X182",
+  "fase": 14,
+  "titulo": "Card Ações da lista, modal Adicionar contato e modal Gerenciar motivos",
+  "tela": "06",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X029",
+   "X070",
+   "X071",
+   "X178"
+  ],
+  "integra": [],
+  "fecha": [
+   "T06-053",
+   "T06-056",
+   "T06-057",
+   "T06-063",
+   "T06-068"
+  ]
+ },
+ {
+  "id": "X183",
+  "fase": 14,
+  "titulo": "Importar CSV/XLSX/TXT e exportar CSV da lista de supressão",
+  "tela": "06",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X168",
+   "X171",
+   "X177",
+   "X182"
+  ],
+  "integra": [],
+  "fecha": [
+   "T06-054",
+   "T06-055",
+   "T06-067"
+  ]
+ },
+ {
+  "id": "X184",
+  "fase": 14,
+  "titulo": "Atividade recente da supressão lida dos eventos de entidade",
+  "tela": "06",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X071",
+   "X176",
+   "X179"
+  ],
+  "integra": [],
+  "fecha": [
+   "T06-060",
+   "T06-061",
+   "T06-062",
+   "T06-064",
+   "T06-065"
+  ]
+ },
+ {
+  "id": "X185",
+  "fase": 14,
+  "titulo": "Barra de filtros do Analytics, 5 KPIs com comparativo e card Comparativo de períodos",
+  "tela": "07",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X007",
+   "X055",
+   "X072",
+   "X073"
+  ],
+  "integra": [],
+  "fecha": [
+   "T07-009",
+   "T07-010",
+   "T07-011",
+   "T07-012",
+   "T07-013",
+   "T07-015",
+   "T07-017",
+   "T07-018",
+   "T07-019",
+   "T07-020",
+   "T07-021",
+   "T07-022",
+   "T07-023",
+   "T07-024",
+   "T07-025",
+   "T07-026",
+   "T07-027",
+   "T07-028",
+   "T07-076",
+   "T07-077",
+   "T07-078",
+   "T07-079",
+   "T07-080",
+   "T07-081"
+  ]
+ },
+ {
+  "id": "X186",
+  "fase": 14,
+  "titulo": "Gráfico Performance de campanhas com 4 séries e funil em SVG proporcional",
+  "tela": "07",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X072",
+   "X073",
+   "X185"
+  ],
+  "integra": [],
+  "fecha": [
+   "T07-029",
+   "T07-030",
+   "T07-031",
+   "T07-032",
+   "T07-033",
+   "T07-034",
+   "T07-035",
+   "T07-036",
+   "T07-043",
+   "T07-044",
+   "T07-047",
+   "T07-048",
+   "T07-049"
+  ]
+ },
+ {
+  "id": "X187",
+  "fase": 14,
+  "titulo": "Top segmentos, mapa de calor por engajamento e tabela de melhor resultado",
+  "tela": "07",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X007",
+   "X074",
+   "X185"
+  ],
+  "integra": [],
+  "fecha": [
+   "T07-037",
+   "T07-038",
+   "T07-039",
+   "T07-040",
+   "T07-041",
+   "T07-042",
+   "T07-050",
+   "T07-051",
+   "T07-052",
+   "T07-053",
+   "T07-055",
+   "T07-056",
+   "T07-058",
+   "T07-059",
+   "T07-062",
+   "T07-063",
+   "T07-064"
+  ]
+ },
+ {
+  "id": "X188",
+  "fase": 14,
+  "titulo": "Painel Insights com ações que aplicam de verdade e Resumo com estimativa condicionada",
+  "tela": "07 (e 01)",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X007",
+   "X055",
+   "X075",
+   "X076",
+   "X185"
+  ],
+  "integra": [],
+  "fecha": [
+   "T07-066",
+   "T07-067",
+   "T07-068",
+   "T07-069",
+   "T07-070",
+   "T07-071",
+   "T07-072",
+   "T07-073",
+   "T07-074",
+   "T07-075"
+  ]
+ },
+ {
+  "id": "X189",
+  "fase": 15,
+  "titulo": "Transformar a Ajuda em central com artigos em markdown, índice, busca e leitor",
+  "tela": "16",
+  "camada": "front + docs + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X055"
+  ],
+  "integra": [],
+  "fecha": [
+   "T16-001",
+   "T16-002",
+   "T16-003",
+   "T16-006",
+   "T16-007",
+   "T16-008",
+   "T16-010",
+   "T16-019",
+   "T16-020",
+   "T16-026"
+  ]
+ },
+ {
+  "id": "X190",
+  "fase": 15,
+  "titulo": "Escrever os 8 tópicos e os 5 guias da Ajuda",
+  "tela": "16",
+  "camada": "docs + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X118",
+   "X163",
+   "X164",
+   "X165",
+   "X166",
+   "X167",
+   "X168",
+   "X169",
+   "X171",
+   "X172",
+   "X173",
+   "X174",
+   "X175",
+   "X189"
+  ],
+  "integra": [],
+  "fecha": [
+   "T16-011",
+   "T16-012",
+   "T16-013",
+   "T16-014",
+   "T16-015",
+   "T16-016",
+   "T16-017",
+   "T16-018",
+   "T16-021",
+   "T16-022",
+   "T16-023",
+   "T16-024",
+   "T16-025"
+  ]
+ },
+ {
+  "id": "X191",
+  "fase": 15,
+  "titulo": "Ligar checklist, guia rápido, suporte, especialista e vídeos da Ajuda",
+  "tela": "16, 08",
+  "camada": "banco + front + docs",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X016",
+   "X017",
+   "X020",
+   "X021",
+   "X060",
+   "X189",
+   "X190"
+  ],
+  "integra": [],
+  "fecha": [
+   "T16-004",
+   "T16-005",
+   "T16-009",
+   "T16-027",
+   "T16-028",
+   "T16-029",
+   "T16-030",
+   "T16-031",
+   "T16-032",
+   "T16-033",
+   "T16-034",
+   "T16-038",
+   "T16-039"
+  ]
+ },
+ {
+  "id": "X192",
+  "fase": 16,
+  "titulo": "Fechar acessibilidade nas 17 telas: teclado, foco, leitor de tela e contraste nos dois temas",
+  "tela": "01–17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X191"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X193",
+  "fase": 16,
+  "titulo": "Fechar o comportamento em telas menores: 1280, 1024 e 390 px",
+  "tela": "01–17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X191"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X194",
+  "fase": 16,
+  "titulo": "Garantir desempenho: cada tela em arquivo próprio, listas grandes e orçamento do carregamento inicial",
+  "tela": "01–17",
+  "camada": "front + testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X191"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X195",
+  "fase": 16,
+  "titulo": "Tornar a régua visual uma trava: regressão visual obrigatória nas 17 telas",
+  "tela": "01–17",
+  "camada": "testes",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X004",
+   "X192",
+   "X193"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X196",
+  "fase": 16,
+  "titulo": "Provar o banco limpo: ledger, catálogo, replay do zero e permissões do módulo",
+  "tela": "—",
+  "camada": "banco + testes",
+  "ddl": true,
+  "edge": false,
+  "exige": [
+   "X191"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X197",
+  "fase": 16,
+  "titulo": "Reescrever a documentação do módulo a partir da evidência",
+  "tela": "—",
+  "camada": "docs",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X002",
+   "X196"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X198",
+  "fase": 16,
+  "titulo": "Fazer o aceite visual 17/17 em produção, tela a tela, com o dono",
+  "tela": "01–17",
+  "camada": "testes + docs",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X192",
+   "X193",
+   "X194",
+   "X195",
+   "X196"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X199",
+  "fase": 16,
+  "titulo": "Rodar a primeira campanha para clientes reais, pequena, e observar por 7 dias",
+  "tela": "08–14",
+  "camada": "testes + docs",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X198"
+  ],
+  "integra": [],
+  "fecha": []
+ },
+ {
+  "id": "X200",
+  "fase": 16,
+  "titulo": "Publicar o release: versão, registro de mudanças, pendências assumidas e encerramento",
+  "tela": "—",
+  "camada": "docs",
+  "ddl": false,
+  "edge": false,
+  "exige": [
+   "X197",
+   "X198",
+   "X199"
+  ],
+  "integra": [],
+  "fecha": []
+ }
+]

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ReactNode } from 'react';
 import { render, screen, fireEvent, act, waitFor, within } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SendProductDialog } from '../SendProductDialog';
 import type { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
@@ -136,12 +138,13 @@ describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Desmarcar todas' }));
     expect(screen.getByText('0 de 11 fotos selecionadas')).toBeInTheDocument();
 
+    // CT-69 — o alt das fotos do produto agora e "Nome — Cor".
     for (let i = 0; i < 10; i++) {
-      fireEvent.click(screen.getByAltText(`Cor ${i}`).closest('button')!);
+      fireEvent.click(screen.getByAltText(new RegExp(`— Cor ${i}$`)).closest('button')!);
     }
     expect(screen.getByText('10 de 11 fotos selecionadas')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByAltText('Cor 10').closest('button')!);
+    fireEvent.click(screen.getByAltText(/— Cor 10$/).closest('button')!);
     expect(screen.getByText('10 de 11 fotos selecionadas')).toBeInTheDocument();
     expect(mockToast.error).toHaveBeenCalledWith('Limite de 10 fotos por envio', expect.objectContaining({ description: expect.any(String) }));
   });
@@ -175,7 +178,7 @@ describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
     expect(screen.getAllByText(/Olha esse produto/).length).toBe(2);
 
     fireEvent.click(screen.getByRole('button', { name: 'Formal' }));
-    expect(screen.getAllByText(/Prezado\(a\)/).length).toBe(2);
+    expect(screen.getAllByText(/segue informações do produto/i).length).toBe(2);
   });
 });
 
@@ -369,6 +372,37 @@ describe('SendProductDialog — CT-08/CT-09 (checagem pré-envio e teclado)', ()
     });
     expect((mockSendOutboundMessage.mock.calls[0][0] as { caption: string }).caption).toContain('Olha esse produto');
   });
+
+  it('Cmd+Enter (metaKey, Mac) no passo do contato também envia (CT-09)', async () => {
+    mockFetchContacts.mockResolvedValue([CONTACT]);
+    renderDialog();
+
+    fireEvent.click(screen.getByRole('button', { name: /Selecionar Contato/i }));
+    fireEvent.click((await screen.findByText('Tomaz')).closest('button')!);
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter', metaKey: true });
+
+    await waitFor(() => expect(mockSendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(mockSendOutboundMessage.mock.calls[0][0]).toMatchObject({ contactId: 'c1' });
+  });
+
+  it('CT-68: enquanto o envio acontece, o progresso é anunciado numa região viva', async () => {
+    mockFetchContacts.mockResolvedValue([CONTACT]);
+    // promise que nunca resolve: prende o dialog no estado "enviando"
+    mockSendOutboundMessage.mockImplementation(() => new Promise(() => {}));
+    renderDialog();
+
+    expect(screen.queryByTestId('send-progress-live')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Selecionar Contato/i }));
+    fireEvent.click((await screen.findByText('Tomaz')).closest('button')!);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter', ctrlKey: true });
+
+    const live = await screen.findByTestId('send-progress-live');
+    expect(live).toHaveAttribute('role', 'status');
+    expect(live).toHaveAttribute('aria-live', 'polite');
+    expect(live).toHaveTextContent('Enviando');
+  });
 });
 
 describe('SendProductDialog — CT-17 (contato da conversa pré-selecionado)', () => {
@@ -459,7 +493,8 @@ describe('SendProductDialog — CT-38 (card de info do produto no modo completo)
     expect(screen.queryByTestId('product-info-card')).not.toBeInTheDocument();
 
     const variantCard = screen.getByText('Azul').closest('button')!;
-    expect(within(variantCard).getByAltText('Azul')).toHaveAttribute('src', 'https://x/azul.jpg');
+    // CT-69 — alt das fotos de variação agora e "Nome — Cor".
+    expect(within(variantCard).getByAltText(/— Azul$/)).toHaveAttribute('src', 'https://x/azul.jpg');
     expect(within(variantCard).getByText('1 foto · 7 un.')).toBeInTheDocument();
   });
 
@@ -477,5 +512,36 @@ describe('SendProductDialog — CT-38 (card de info do produto no modo completo)
 
     expect(screen.getByTestId('product-info-card')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Enviar para Cliente/i })).toBeInTheDocument();
+  });
+});
+
+describe('SendProductDialog — CT-37 (PhonePreview reutilizável, zero cor literal)', () => {
+  beforeEach(() => {
+    setupDialogMocks();
+    sessionStorage.clear();
+  });
+
+  it('renderiza a prévia com a classe .catalog-phone e a mensagem atual dentro da bolha', () => {
+    renderDialog();
+
+    // O Dialog usa portal (Radix), então a prévia não vive no container do
+    // render e sim em document.body.
+    const phone = document.querySelector('.catalog-phone');
+    expect(phone).not.toBeNull();
+
+    const bubble = phone!.querySelector('.catalog-phone__bubble');
+    expect(bubble).not.toBeNull();
+    expect(within(bubble as HTMLElement).getByText(/Olha esse produto/)).toBeInTheDocument();
+
+    // A foto selecionada continua aparecendo no mock (E74 preservado).
+    expect(within(phone as HTMLElement).getByAltText('Prévia')).toHaveAttribute('src', 'https://x/a.jpg');
+  });
+
+  it('não usa nenhuma cor hexadecimal literal nem bg-white/text-white (aceite CT-37)', () => {
+    const fonte = readFileSync(path.resolve(__dirname, '..', 'SendProductDialog.tsx'), 'utf8');
+
+    expect(fonte.match(/#[0-9a-fA-F]{6}\b/g)).toBeNull();
+    expect(fonte).not.toMatch(/\bbg-white\b/);
+    expect(fonte).not.toMatch(/\btext-white\b/);
   });
 });

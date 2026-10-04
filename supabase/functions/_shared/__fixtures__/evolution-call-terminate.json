@@ -1,0 +1,13 @@
+{
+  "_nota": "Fixture sintetica e anonimizada (T25). Chamada encerrada: status=terminate deve mapear para calls.status='ended'. O plano pede a fixture de 'terminate' especificamente; nao havia nenhuma gravada em webhook_events (a tabela nao existe no banco canonico).",
+  "event": "call",
+  "instance": "instancia-anonimizada-01",
+  "data": {
+    "id": "EV-CALL-TERMINATE-0004",
+    "from": "5511900000001@s.whatsapp.net",
+    "status": "terminate",
+    "isVideo": false,
+    "fromMe": false,
+    "date": "2026-10-02T14:01:10.000Z"
+  }
+}

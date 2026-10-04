@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { type ToneKey, getTonePrompt } from '@/components/inbox/ai-tools/ToneSelector';
 import { usePeriodFilter } from '@/components/inbox/ai-tools/PeriodFilterSelector';
+import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
 
 interface Objection {
   objection: string;
@@ -41,6 +42,19 @@ export function useObjectionDetector(
   const hasPeriodMessages = normalized.length > 0;
 
   const periodFilter = usePeriodFilter(normalized, 'all');
+  const { analysisPeriod: objectionPeriod, customDateFrom: objectionFrom, customDateTo: objectionTo } = periodFilter;
+
+  // IA-048 — identidade da requisição: contato + período ESCOLHIDO. Não deriva das
+  // mensagens vivas, senão uma mensagem nova invalidaria a análise em voo.
+  const {
+    begin: beginRequest,
+    snapshot: snapshotRequest,
+    isCurrent: isRequestCurrent,
+    invalidate: invalidateRequests,
+  } = useAiRequestGeneration({
+    contactId,
+    periodKey: buildPeriodKey(objectionPeriod, objectionFrom, objectionTo),
+  });
 
   const clientMessages = useMemo(() => {
     if (!hasPeriodMessages) return lastMessages;
@@ -50,18 +64,23 @@ export function useObjectionDetector(
   }, [hasPeriodMessages, periodFilter.filteredMessages, lastMessages]);
 
   useEffect(() => {
-    setAnalyzed(false); setObjections([]); setError(null); setRewritingIdx(null); setCopiedIdx(null); setSelectedTone('friendly');
-  }, [contactId]);
+    // Troca de contato: descarta resposta em voo e zera o estado do contato anterior.
+    invalidateRequests();
+    setAnalyzed(false); setObjections([]); setError(null); setRewritingIdx(null); setCopiedIdx(null); setSelectedTone('friendly'); setLoading(false);
+  }, [contactId, invalidateRequests]);
 
   useEffect(() => {
-    setAnalyzed(false); setObjections([]); setError(null);
-  }, [periodFilter.analysisPeriod, periodFilter.customDateFrom, periodFilter.customDateTo]);
+    // Troca de período: descarta resposta em voo e zera o resultado do recorte antigo.
+    invalidateRequests();
+    setAnalyzed(false); setObjections([]); setError(null); setLoading(false);
+  }, [objectionPeriod, objectionFrom, objectionTo, invalidateRequests]);
 
   const analyze = useCallback(async (tone?: ToneKey) => {
     if (clientMessages.length === 0) { toast.warning('Nenhuma mensagem do cliente para analisar.'); return; }
     const now = Date.now();
     if (now - lastCallRef.current < 3000) { toast.warning('Aguarde alguns segundos antes de tentar novamente.'); return; }
     lastCallRef.current = now;
+    const request = beginRequest();
     setLoading(true); setError(null);
     const activeTone = tone ?? selectedTone;
     const activePrompt = getTonePrompt(activeTone);
@@ -92,8 +111,14 @@ Se não houver objeções, retorne []`,
             { role: 'user', content: `Mensagens do cliente:\n${clientMessages.join('\n')}` },
           ],
           model: 'google/gemini-3-flash-preview',
+          // IA-051 — o id do clique (IA-048) para o log de consumo do `ai-proxy`.
+          requestId: request.requestId,
         },
       });
+
+      // IA-048 — checagem DEPOIS do await: objeções de contato/período antigos
+      // não são aplicadas nem disparam toast na tela atual.
+      if (!isRequestCurrent(request)) return;
 
       if (response.error) throw new Error(response.error.message || 'Erro na API');
       const content = response.data?.content || response.data?.choices?.[0]?.message?.content || '[]';
@@ -116,14 +141,19 @@ Se não houver objeções, retorne []`,
         setObjections([]);
       }
     } catch (err) {
+      if (!isRequestCurrent(request)) return;
       const msg = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(msg); setObjections([]);
       toast.error('Falha ao analisar objeções. Tente novamente.');
     }
+    if (!isRequestCurrent(request)) return;
     setAnalyzed(true); setLoading(false);
-  }, [clientMessages, selectedTone, contactName]);
+  }, [beginRequest, clientMessages, contactName, isRequestCurrent, selectedTone]);
 
   const rewriteSingle = useCallback(async (idx: number) => {
+    const target = objections[idx];
+    if (!target) return;
+    const request = snapshotRequest();
     setRewritingIdx(idx);
     const activePrompt = getTonePrompt(selectedTone);
     try {
@@ -131,19 +161,33 @@ Se não houver objeções, retorne []`,
         body: {
           messages: [
             { role: 'system', content: `Reescreva o contra-argumento abaixo mantendo o mesmo significado mas mudando o tom. ${activePrompt}${contactName ? ` IMPORTANTE: A resposta DEVE começar com o nome "${contactName.split(' ')[0]}" de forma natural e humana.` : ''} Responda APENAS com o texto reescrito, sem aspas ou explicações.` },
-            { role: 'user', content: objections[idx].counterArgument },
+            { role: 'user', content: target.counterArgument },
           ],
           model: 'google/gemini-3-flash-preview',
+          // IA-051 — reescrita é requisição derivada (`snapshotRequest`): id próprio,
+          // mesma geração do clique original.
+          requestId: request.requestId,
         },
       });
+      // IA-048 — descarta reescrita de contato/período antigo. O índice pode
+      // apontar para um array já trocado: reancoramos pelo texto original.
+      if (!isRequestCurrent(request)) return;
       const content = response.data?.content || response.data?.choices?.[0]?.message?.content;
       if (content) {
-        setObjections(prev => prev.map((o, i) => i === idx ? { ...o, counterArgument: content.trim() } : o));
+        const rewritten = content.trim();
+        setObjections(prev => {
+          const currentIdx = prev.findIndex((o) => o.counterArgument === target.counterArgument);
+          if (currentIdx === -1) return prev;
+          return prev.map((o, i) => (i === currentIdx ? { ...o, counterArgument: rewritten } : o));
+        });
         toast.success('Resposta reescrita!');
       }
-    } catch { toast.error('Erro ao reescrever. Tente novamente.'); }
-    setRewritingIdx(null);
-  }, [objections, selectedTone, contactName]);
+    } catch {
+      if (!isRequestCurrent(request)) return;
+      toast.error('Erro ao reescrever. Tente novamente.');
+    }
+    if (isRequestCurrent(request)) setRewritingIdx(null);
+  }, [contactName, isRequestCurrent, objections, selectedTone, snapshotRequest]);
 
   const handleSelect = useCallback((text: string, onSelectSuggestion?: (text: string) => void) => {
     onSelectSuggestion?.(text);
@@ -151,7 +195,7 @@ Se não houver objeções, retorne []`,
   }, []);
 
   const handleCopy = useCallback((text: string, idx: number) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     setCopiedIdx(idx);
     toast.success('Copiado!');
     setTimeout(() => setCopiedIdx(null), 2000);

@@ -1,3 +1,18 @@
+> ### 🧊 PLANO CONGELADO — 2026-10-02 · substituído pelo V4 · **não executar**
+>
+> O **V4** (`TALK X 02`) é o **dono do Talk X** desde 01/10/2026. Este V3 fica congelado como **registro histórico**:
+> as etapas da Fase 2 que estavam na minha fila foram executadas e estão marcadas `✅ FEITO` com o PR; as que
+> sobraram (**V27–V30**) **não serão feitas aqui** e passam para o equivalente no V4.
+>
+> **Por que congelou:** dois executores (este chat e o TALK X 02) escreveram no mesmo banco na mesma janela —
+> `save_talkx_campaign_draft` foi recriada 4× em 24 h. Um dono só por módulo elimina essa classe de colisão.
+>
+> **Fase 2 (V21–V30) neste plano:** V21 ✅ · V22 ✅ · V23 ✅ · V24 ✅ · V25 ✅ · V26 ✅ — mais a continuação do
+> `current_version_id` (PRs #1526 e #1532), que fecha a decisão 33aa. **V27–V30 ⏭️ transferidas para o V4.**
+>
+> **Regra a partir daqui:** nenhuma migration nova e nenhuma RPC do Talk X criada por este plano.
+> O V3 passa a receber **apenas documentação**.
+
 # Talk X · Campanhas — Plano V3: 100 etapas para finalizar a implantação
 
 **Gerado:** 2026-09-29 · **Base:** `main` `a0002bb` · **Origem:** [`AUDITORIA_PLANO_TALKX_2026-09-29.md`](./AUDITORIA_PLANO_TALKX_2026-09-29.md)
@@ -71,6 +86,12 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 **Aceite:** `supabase db reset` local aplica as 45+ migrations sem erro; `useTalkXSettings` salva e relê valor alterado.
 **✅ FEITO 2026-10-01:** `TalkXSettings` montado na aba "Configurações" (`TalkXView.tsx:270,307-309`) e salva/relê via `useTalkXSettings.ts:36-44` (policy `talkx_settings_admin_write` já no banco). **PENDENTE (bloqueado pela guarda):** o dedup do `ALTER PUBLICATION` exige editar `20260927570000`, que a guarda "Rejeitar edição de migration já existente" bloqueia (sem exceção para `safer-replay`); decisão registrada para o Joaquim.
 
+**NOTA (02/10/2026) — estado medido da parte `talkx_settings` e opções fechadas:**
+
+- **Núcleo da V06 fechado e provado.** A policy de UPDATE subiu em `20260930112833` (PR #1253) e a cadeia de replay foi fechada por `20260930410000` (PR #1382). Prova em PG17 descartável pelo harness do próprio repo: `bash scripts/db-audit/talkx-settings-replay-idempotent.test.sh` → `[OK] Talk x R2-01: replay do talkx_settings fechado`. No banco canônico, `public.talkx_settings` tem RLS ligado e exatamente as 2 policies (`authenticated_read_talkx_settings`, `talkx_settings_admin_write`).
+- **`_superseded/` NÃO é rota disponível para essas migrations.** Medido no ledger: `20260916230000` (`talkx_e93_settings`, 6 statements), `20260927500001` e `20260927570000` (`talkx_e27_realtime_campaign_events`, 3 statements cada) estão **todas registradas**. Pelo §1 e §4 do `docs/MIGRATIONS.md`, `_superseded/` só vale para migration cuja DDL **nunca foi aplicada aqui** (paridade de conjunto arquivos↔ledger); mover qualquer uma destas quebraria a paridade. Ou seja: editar está barrado pela guarda e mover está barrado pela paridade — o pendente do `ALTER PUBLICATION` continua sendo decisão do Joaquim, agora com o espaço de opções fechado.
+- **Divergência de documentação a corrigir:** o docstring de `20260930112833` afirma que existe uma entrada `safer-replay` em `scripts/db-audit/migration-evidence.json` para a `20260916230000`. Essa entrada **não existe** na `main` (medido: 17 ocorrências de `safer-replay` no manifesto, nenhuma para as versões do `talkx_settings`) e o critério de aceite da V98 pede justamente **0 `pinned-replay` novas** — então a ausência está correta e o texto do docstring é que ficou desatualizado. O arquivo é imutável (aplicado), logo a correção é por nota, não por edição.
+
 ### V07 · Unicidade parcial na supressão (P2-1)
 **Hoje:** `UNIQUE(contact_id)` total; soft-delete impede re-supressão; opt-out repetido vira `console.warn`.
 **Fazer:** migration: `DROP CONSTRAINT talkx_blacklist_contact_id_key`; `CREATE UNIQUE INDEX talkx_blacklist_contact_active_unique ON talkx_blacklist(contact_id) WHERE contact_id IS NOT NULL AND removed_at IS NULL`; revisar `talkx_recipient_is_suppressed` (já filtra `removed_at`) e o webhook (`ON CONFLICT` → `on conflict (contact_id) where removed_at is null do nothing`); teste SQL: adicionar → remover → adicionar de novo = 2 linhas, 1 ativa.
@@ -107,76 +128,117 @@ mesmos arquivos (`talkxShared.tsx` é o ponto de colisão — quem mexer nele ab
 **Hoje:** `talkx-send`/`scheduler` não gravam `started/paused/resumed/cancelled/completed`; timeline depende do cliente (Running e lista pausam sem evento).
 **Fazer:** dentro de `transition_talkx_campaign` (RPC) inserir o evento com `actor_id` (perfil do JWT ou `null` para worker) e `message` (motivo); `complete_talkx_campaign_if_drained` grava `completed`; remover os inserts duplicados do cliente (`TalkXLiveMonitor.tsx:223-231`, `useCampaignEditor.ts:574-584`).
 **Aceite:** teste SQL: sequência start→pause→resume→cancel gera 4 eventos com ator; Running/Monitor/lista mostram a mesma timeline.
+**✅ FEITO 2026-10-01:** migration `20260930650000_talkx_v12_server_lifecycle_events.sql` (transition 4-arg com `p_actor_id`/`p_pause_reason` + eventos started/resumed/paused/cancelled/completed, DROP do overload 3-arg); `logEvent` do cliente removido (Monitor/Editor); harness `scripts/db-audit/talkx-v12-lifecycle-events.test.sh` verde (red-first, 4 eventos com ator).
 
 ### V13 · Pausa com motivo, retomada idempotente
 **Hoje:** action `pause` não repassa `reason` (`talkx-send/index.ts:218-222`); `resume` em `sending` = 409; modal sem textarea.
 **Fazer:** `pause` aceita `{reason}` → `p_pause_reason`; `resume` em `sending` retorna 200 `{noop:true}`; modais de pausa (Overview, Monitor, Running) com textarea opcional; `pause_reason`/`paused_at` na interface `TalkXCampaign`.
 **Aceite:** teste Deno: pause com motivo grava `pause_reason`; resume duplo não erra; UI mostra "Pausada por <ator>: <motivo>".
+**✅ FEITO 2026-10-01:** `pause` repassa `reason`→`p_pause_reason` (`talkx-send/index.ts`, `useTalkX.ts` `pauseCampaign(campaignId, reason?)`); `resume` em `sending` vira no-op **no RPC** (migration V12) — não na edge (teste Deno mocka 'sending' p/ dispatch); modais com textarea em `TalkXCampaignRunning.tsx`/`TalkXLiveMonitor.tsx`; harness V12 prova resume-em-sending=noop.
 
 ### V14 · Cancelar marca pendentes e estados terminais consistentes
 **Hoje:** `cancel` não toca destinatários; status `cancelled` de recipient não existe.
 **Fazer:** migration: `talkx_recipients.status` ganha `cancelled`; `transition_talkx_campaign('cancel')` faz `update talkx_recipients set status='cancelled' where status='pending'` na mesma transação; `RECIPIENT_STATUS` + pill; relatório (V37) mostra "Cancelados".
 **Aceite:** teste SQL com 5 pendentes → 5 `cancelled`; `complete_talkx_campaign_if_drained` não vira `completed` uma campanha cancelada.
+**✅ FEITO 2026-10-01:** migration V12 (seção V14) adiciona `cancelled` à CHECK de `talkx_recipients.status` + `update pending→cancelled` no `cancel` (mesma transação); `RECIPIENT_STATUS.cancelled` (tone muted) em `talkxShared.tsx`; harness V12 (seed 5 pendentes → 5 cancelled).
 
 ### V15 · Contadores íntegros: `replied_count` protegido, `use_count` único (P2-7, P2-4)
 **Fazer:** migration adiciona `replied_count` ao guard de `enforce_talkx_campaign_mutability`; remover chamadas de `increment_talkx_template_use` do front (`useCampaignEditor.ts:572`, `useTalkXTemplates.ts:151`) — o trigger E86 basta; `DROP FUNCTION increment_talkx_template_use` + `REVOKE`.
 **Aceite:** update direto de `replied_count` como authenticated → erro; lançar campanha com template incrementa `use_count` exatamente 1.
+**✅ FEITO 2026-10-01:** migration `20260930750000_talkx_v15_replied_count_guard_and_drop_increment.sql` (guard `replied_count` 42501 + DROP `increment_talkx_template_use`); front sem `registerUse` (`useCampaignEditor.ts`/`useTalkXTemplates.ts`); harness `scripts/db-audit/talkx-v15-replied-count-guard.test.sh` verde (red-first).
 
 ### V16 · Séries temporais contam `sent` + `delivered` (P2-5)
 **Fazer:** `talkx_campaign_report` CTE `hourly` e `TalkXAnalytics.tsx:96` usam `status in ('sent','delivered')` (ou `sent_at is not null`); série diária fixa em 7 dias em `talkx_overview_stats`; `contacts_reached` = `count(distinct contact_id)`.
 **Aceite:** teste SQL com 3 sent + 2 delivered → série = 5; contract test atualizado.
+**✅ FEITO 2026-10-01:** migration `20260930670000_talkx_v16_time_series_sent_delivered.sql` (hourly `status in ('sent','delivered')` + `count(distinct contact_id)` + zero-fill diário); `TalkXAnalytics.tsx` trocou `.eq('status','sent')`→`.in('status',['sent','delivered'])` (2 pontos); harness `talkx-v16-time-series.test.sh` verde (3+2=5).
 
 ### V17 · Lidas reais (`read_at`) e KPI liberado
 **Hoje:** `read_at` não existe; READ só atualiza `messages`; contract test força "Lidas" = `null`.
 **Fazer:** migration `talkx_recipients add read_at timestamptz` + índice; `record_talkx_recipient_delivered` ganha `p_event ('delivered'|'read')`; webhook `READ/PLAYED` chama a RPC; `talkx_campaign_report` e Analytics expõem `read_count`; **inverter** o contract test (Lidas ≠ null quando há `read_at`).
 **Aceite:** teste Deno com webhook sintético READ → `read_at` preenchido; KPI "Lidas" aparece com número real.
+**✅ FEITO 2026-10-01:** migration `20260930680000_talkx_v17_read_at.sql` (`read_at`+índice, RPC `p_event ('delivered'|'read')`, `read_count` no report); webhook READ/PLAYED chama a RPC (`evolution-webhook-msg-handlers.ts`); contract test invertido (Lidas=`stats.read`, reported=true); harness `talkx-v17-read-at.test.sh` verde (read_at+read_count idempotente, red-first).
 
 ### V18 · Respostas: janela configurável, tempo médio, sem recálculo no cliente
 **Hoje:** 72h fixo em `talkx-reply.ts:13`; Analytics recalcula com 24h/limite 5000.
 **Fazer:** `attributeTalkXReply` lê `talkx_settings.reply_window_hours` (cache 5 min); RPC de relatório devolve `avg(replied_at - sent_at)`; Analytics/Monitor/Running usam `replied_count`/RPC.
 **Aceite:** alterar setting para 48h muda a atribuição no teste Deno; Analytics sem `.from('talkx_recipients')` para respostas.
+**✅ FEITO 2026-10-01:** `attributeTalkXReply` lê `talkx_settings.reply_window_hours` (cache 5 min, default 72h — `talkx-reply.ts`); report devolve `avg_reply_secs` (`avg(replied_at-sent_at)` na migration V16); Analytics usa `replied_count` (sem re-query de `talkx_recipients`/`messages`, sem janela 24h fixa); teste Deno `_shared/__tests__/talkx-reply-window.test.ts` (48h vs 72h) + contract test 8/8.
 
 ### V19 · Retry manual, política de `outcome_unknown` e eventos de conexão
 **Hoje:** 5xx/timeout → `outcome_unknown` sem retry; sem action `retry`; sem `connection_failed`; Logger sem `recipient_id/attempt`.
 **Fazer:** action `retry {recipientId}` (só `failed`/`outcome_unknown`, respeita `attempt_count` ≤ 3, revalida supressão, gera nova tentativa via `reschedule_talkx_recipient`); perda de conexão mid-loop grava `pause_reason='connection_lost'` + evento `connection_failed`; scheduler emite `resumed_auto` (V03); Logger com `campaign_id, recipient_id, attempt`; documentar em `OPERACAO.md` que `outcome_unknown` exige decisão humana (não reenvio cego).
 **Aceite:** teste Deno 500→retry manual→200; timeline mostra "Falha de conexão".
+**✅ FEITO 2026-10-01:** action `retry {recipientId}` na `talkx-send` (revalida supressão + RPC `retry_talkx_recipient` respeita `attempt_count < 3` — migration `20260930630000`); evento `connection_failed` (message "Falha de conexão") gravado nos 2 pontos de perda de conexão; Logger com `campaign_id`/`recipient_id`/`attempt`; `docs/talkx/OPERACAO.md` §8.4 documenta que `outcome_unknown` exige decisão humana; testes Deno (33, incl. retry→success e retry→suppressed) + harness `talkx-v19-retry-recipient.test.sh` verdes.
 
 ### V20 · Limite diário por conexão e horário comercial configurável
 **Hoje:** `daily_limit_per_connection` e `business_hours` semeados mas nunca lidos; 08–18 seg–sex fixo em `talkx-window.ts:82` e no front.
 **Fazer:** `talkx-send` conta `sent_at::date = today` por `whatsapp_connection_id` e pausa com `pause_reason='daily_limit'` (scheduler retoma no dia seguinte — V03); `deliveryWindowStatus` lê `talkx_settings.business_hours`; front exibe o mesmo (via `useTalkXSettings`).
 **Aceite:** teste Deno: limite 3 → 4º envio pausa; mudar `business_hours` muda `allowed`.
+**✅ FEITO 2026-10-01:** `talkx-send` lê `talkx_settings.daily_limit_per_connection` (conta `sent_at::date=today` por conexão e pausa com `pause_reason='daily_limit'`); `deliveryWindowStatus(campaign, now, businessHours)` lê `talkx_settings.business_hours` via `parseBusinessHours` (default 08–18 seg–sex); `AUTO_RESUME_REASONS` ganha `daily_limit` com guarda de "só retoma no dia seguinte" (evita loop de churn); scheduler SELECT ganha `paused_at`. Front já exibe/edita via `useTalkXSettings` (genérico). Testes: `_shared/__tests__/talkx-v20-window-business-hours.test.ts` (3) + `talkx-send/v20-daily-limit.test.ts` (integração "limite 3 → pausa sem 4º envio"); Deno 410, typecheck 0, build/test ✓.
 
 ---
 
 # FASE 2 — WIZARD E LANÇAMENTO (V21–V30)
 
+> **Status em 2026-10-02:** fechadas aqui **V21–V26** (6 de 10, todas com PR mergeado e evidência abaixo).
+> **V27–V30 transferidas para o V4** — ver o bloco de handoff antes da V27.
+
 ### V21 · Flags de lançamento persistidas
 **Fazer:** migration `talkx_campaigns add respect_suppression bool not null default true, confirm_consent bool not null default false, launched_by uuid references profiles(id), launched_at timestamptz`; `save_talkx_campaign_draft` aceita as flags; `launch()` grava `launched_by/at` via `transition_talkx_campaign`; checks do passo 3 gravam `respect_suppression`; `respect_suppression=false` só admin + confirmação; KPI "Campanhas protegidas" (V72) passa a ter fonte.
 **Aceite:** hidratação restaura as flags; agente não consegue desmarcar.
+**✅ FEITO 2026-10-01:** migration `20260930640000` adiciona `respect_suppression bool default true`, `confirm_consent bool default false`, `launched_by uuid→profiles`, `launched_at timestamptz`; `transition_talkx_campaign` grava `launched_by`/`launched_at` no `start` (COALESCE preserva o primeiro lançamento); `save_talkx_campaign_draft` aceita as flags no payload + guarda admin (`respect_suppression=false` → 42501 `talkx_respect_suppression_admin_only`); front: `useCampaignEditor` hidrata `respectSuppression`/`confirmConsent` de `campaign.*` e `buildPayload` envia as flags; tipo `TalkXCampaign` ganha os 4 campos. Harness `talkx-v21-launch-flags.test.sh` (colunas+defaults, launched_by/at, guarda 42501, flags persist true:true). typecheck 0, build ✓, test 4827.
 
 ### V22 · Botões "Editar" da revisão respeitam a rota
 **Hoje:** `ed.setStep` (`TalkXWizardDelivery.tsx:154`) é revertido pelo efeito de rota (`TalkXCampaignWizard.tsx:74-79`).
 **Fazer:** "Editar" chama o navegador de rota (`talkxWizardRoute`) com `step=N`; teste em `TalkXView.route.test.tsx`.
 **Aceite:** clicar Editar na revisão abre o passo certo e a URL muda.
+**✅ FEITO 2026-10-01 — PR [#1464](https://github.com/adm01-debug/Zapp_Web_V2/pull/1464) (squash `f4de03c226`):** "Editar" passou a navegar pela rota (`talkxWizardRoute` com `step=N`) em vez de `ed.setStep`, que era revertido pelo efeito de rota (`TalkXCampaignWizard.tsx:74-79`); teste em `TalkXView.route.test.tsx` cobre o clique e a mudança de URL.
 
 ### V23 · Rascunho restaura tudo
 **Hoje:** `audience_filters` volta a `'all'` (`useCampaignEditor.ts:222-227`); `respectSuppression` e o passo não são restaurados; `openEdit` força `step:1`.
 **Fazer:** hidratar filtros, flags e `step` salvo (coluna `draft_step int` opcional via `save_talkx_campaign_draft`); indicador "Rascunho salvo há X"; teste de hidratação completa (`useCampaignEditor.test.tsx`).
 **Aceite:** sair no passo 2 com filtros → reabrir → passo 2 e filtros iguais.
+**✅ FEITO 2026-10-01 — PR [#1475](https://github.com/adm01-debug/Zapp_Web_V2/pull/1475) (squash `a5116ae317`):** coluna `draft_step` (migration `20260930770000_talkx_v23_draft_step`) e `save_talkx_campaign_draft` restaurando passo e filtros; `useCampaignEditor` hidrata `audience_filters`, `respectSuppression` e o passo salvo; indicador "Rascunho salvo há X". Harness `scripts/db-audit/talkx-v23-draft-step.test.sh`.
+**Nota de CI (não era do diff):** o check `Unit Tests` chegou a ficar vermelho por defeito pré-existente em `tests/contracts/contraste-aa-componentes.contract.test.ts` (`--dark` em `src/styles/tokens.css:161`) — resolvido no PR #1478.
 
 ### V24 · Filtros de audiência reais e compartilhados com segmentos
 **Hoje:** UI expõe Busca/Empresa/Tag; estados cidade/grupo/inativo/aniversário mortos e fora do SELECT; `audience_filters` é snapshot solto.
 **Fazer:** passo 1 usa o mesmo `RULE_FIELDS`/`buildFilter` dos segmentos (campos validados no `schema-catalog.json`: `status`, `company`, `tags`, `city`, `state`, `assigned_to`, `pipeline_stage`); `audience_filters` guarda as regras (mesmo JSON do segmento); remover estados mortos; debounce + `signal` nas contagens; `TalkXContactSelector` virtualizado.
 **Aceite:** 6 filtros funcionam com teste ligado à query; `useTalkXSegments.test.ts` cobre os novos campos.
+**✅ FEITO 2026-10-01 — PR [#1498](https://github.com/adm01-debug/Zapp_Web_V2/pull/1498) (squash `201b74d956`):** o passo 1 passou a usar o **mesmo motor de regras dos segmentos** (`rulesToPostgrest` + `RULE_FIELDS`; o `buildFilter` que o plano citava **não existia**), com `audienceRules: SegmentRules`, `resolveAudience`/`countAudience`, debounce de 350 ms e `TalkXContactSelector` virtualizado; `assigned_to` entrou como kind `uuid`.
+**Divergência do plano (medida):** `pipeline_stage`, `status`, `group` e `birthday` **não existem** em `public.contacts` — os campos foram validados contra o `schema-catalog.json` antes de entrar.
 
 ### V25 · Passo 1: responsável, validação e segmentos ativos
 **Fazer:** campo Responsável (`profiles`, default usuário; grava `created_by`/`owner`); nome ≥ 3; objetivo com ícone; só segmentos `status='active'`; conexão continua no passo 3 (E65) com estado `TalkXWhatsAppDisconnectedState` quando não há conexão `connected`.
 **Aceite:** testes de validação; E2E V10 ajustado.
+**✅ FEITO 2026-10-01 — PR [#1508](https://github.com/adm01-debug/Zapp_Web_V2/pull/1508) (squash `cf697e2bda`):** coluna `owner uuid REFERENCES profiles(id) ON DELETE SET NULL` (migration `20261001271230_talkx_v25_campaign_owner`) com `save_talkx_campaign_draft` gravando `owner` no INSERT/UPDATE/idempotência; nome ≥ 3 com aviso `role="alert"`; `OBJECTIVES` com ícone; só segmentos `status='active'`; Select "Responsável" com default do usuário logado; `TalkXWhatsAppDisconnectedState` nos passos **1 e 3**. Harness `talkx-v25-owner.test.sh` (RED antes + dentes por mutação).
+**Divergências do plano (medidas):** 4 das 5 premissas tinham gap real e o campo Responsável **não existia**; o `<p>` que o plano mandava trocar estava no passo **1**, não no 3; `owner` foi **criado** em vez de reusar `created_by` porque a RPC usa `created_by` como identidade do rascunho (`ON CONFLICT (created_by, draft_creation_key)`) e sobrescrevê-lo quebraria a unicidade. O E2E `talkx.spec.ts:148` tinha comentários mentirosos sobre `length > 0`/two comboboxes — corrigidos.
 
 ### V26 · Um editor de mensagem para template e wizard
 **Hoje:** passo 2 é `Textarea` simples; template tem toolbar; sem highlight/validação de variável.
 **Fazer:** extrair `TalkXMessageEditor` (toolbar `*_-`, emoji, link, inserir variável no cursor, contador por limite do provedor, highlight `{{var}}` por overlay, aviso de variável desconhecida) e usar nos dois; aceitar só-mídia; Sheet de templates em modo seleção grava `template_id` e **versão** (`template_version_id`).
 **Aceite:** mesma saída de `personalizePreview` nos dois lugares (teste de paridade); dirty-check.
+**✅ FEITO 2026-10-01 — PR [#1520](https://github.com/adm01-debug/Zapp_Web_V2/pull/1520) (squash `d6bff666b9`):** `src/components/talkx/TalkXMessageEditor.tsx` novo — toolbar (negrito/itálico/lista/emoji/link), inserir variável no cursor, contador pelo limite do provedor, overlay `{{var}}` com scroll sync e aviso de variável desconhecida — usado no passo 2 (`limit=4096`) **e** no editor de template (`limit=1024`); aceitar **só-mídia** (o gate do passo 2 passou a `texto OU (hasMedia && mediaUrl)`); coluna `template_version_id` (migration `20261001291230_talkx_v26_template_version`). Testes: `TalkXMessageEditor.test.tsx` (9) + `useCampaignEditor.test.tsx` (+10).
+**Decisão 33aa (Joaquim) e a continuação:** a única versão arquivada até então era o snapshot **PRÉ-edição** (`update_talkx_template_with_snapshot` arquiva `v_template` e só depois faz o UPDATE), então **nenhum** id apontava para o conteúdo vivo — gravar `template_version_id` ali seria dado enganoso. Na V26 o front manda `null` (coluna e RPC prontas) e a continuação veio em tarefa própria: o **PR [#1526](https://github.com/adm01-debug/Zapp_Web_V2/pull/1526) (`a1249ede92`)** criou `talkx_templates.current_version_id` + backfill, mas o DDL foi **abortado** pelo trigger `trg_guard_talkx_template_update`; o **PR [#1532](https://github.com/adm01-debug/Zapp_Web_V2/pull/1532) (`aa7feb08b9`)** entregou a versão que passa pelo guard (função `SECURITY DEFINER` com `OWNER TO service_role`, dropada no fim). Provado no banco: **5/5** templates backfillados, todos com ponteiro para versão de conteúdo **igual ao vivo**. Isso fecha a parte (i) da decisão 33aa — o ponteiro de versão agora tem origem confiável.
+**Divergências do plano (medidas):** o "Sheet de templates" é **grid de cards** (`TalkXCampaignWizard.tsx:511`), não Sheet; o overlay de `{{var}}` foi **medido em Chromium real** e **não** desalinha (o `<textarea>` já herda `overflow-wrap: break-word` da UA) — só documentado, sem mudança de código.
+
+### ⏭️ V27–V30 · TRANSFERIDAS PARA O V4
+
+> Estas quatro etapas **não serão executadas neste plano**. Passam para o equivalente no **V4** (`TALK X 02`), dono do Talk X desde 01/10/2026.
+>
+> | etapa | o que fica para o V4 |
+> |---|---|
+> | **V27** | mídia: bucket privado `talkx-media`, upload com progresso, URL assinada no envio, `media_url_snapshot` |
+> | **V28** | rail do wizard com `PhonePreview` 320×640 e "Ver no celular" |
+> | **V29** | layout do wizard: rodapé sticky, `Sheet` de resumo, breadcrumb, dirty real |
+> | **V30** | recorrência (`recurrence jsonb`, `nextOccurrence()`, clonagem pelo scheduler) e validação de agendamento |
+>
+> **Contexto medido aqui que evita retrabalho no V4:**
+> - `talkx_templates.current_version_id` **existe e está backfillado** (PRs #1526/#1532) — o ponteiro de versão agora tem origem confiável.
+> - **Migration que escreve em `talkx_templates` é barrada** pelo trigger `trg_guard_talkx_template_update`: só passa `current_user = service_role`, ou mudança exclusiva de `use_count` (+1), ou snapshot casado por `statement_timestamp()` + `saved_by = get_profile_id_for_user(auth.uid())`. Backfill direto exige função `SECURITY DEFINER` com `OWNER TO service_role`.
+> - `ON DELETE SET NULL` da FK `talkx_templates.current_version_id` **não dispara em runtime** (a ação referencial roda como o dono da tabela, e o guard só libera `service_role`).
+> - O applier de migration **trunca a saída em 4000 caracteres** — consultas grandes devem ser fatiadas por `substr`.
+> - Harness de migration em `postgres:17-alpine` funcionando como modelo: `scripts/db-audit/talkx-current-template-version.test.sh` (reproduz os guards reais e o applier não-superuser membro de `service_role`).
 
 ### V27 · Mídia: bucket privado, upload, URL assinada, snapshot
 **Hoje:** nenhum bucket talkx; mídia = URL digitada; RPC exige `^https://`.

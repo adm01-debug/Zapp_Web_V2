@@ -115,7 +115,7 @@ export function ContactsTable({
             <th className="text-right p-3 text-xs font-semibold tracking-normal text-muted-foreground">Ações</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody data-testid="contacts-table-body">
           {sortedContacts.map((contact, index) => {
             const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
             const avatarColors = getAvatarColor(contact.name);

@@ -1,6 +1,7 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mockFrom = vi.fn();
 const mockChannel = vi.fn().mockReturnValue({
@@ -11,9 +12,9 @@ const mockRemoveChannel = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
-    channel: (...args: any[]) => mockChannel(...args),
-    removeChannel: (...args: any[]) => mockRemoveChannel(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
+    channel: (...args: unknown[]) => mockChannel(...args),
+    removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
   },
 }));
 
@@ -26,7 +27,16 @@ vi.mock('@/lib/logger', () => ({
 
 import { useMessages } from '@/hooks/chat/useMessages';
 
-function makeQueryChain(data: any[] = [], error: any = null) {
+/** A etapa 45 usa `useQueryClient` para invalidar as chaves da aba Arquivos; todo render
+ * precisa de um provider (no app ele já existe no topo). */
+function createWrapper() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+}
+
+function makeQueryChain(data: unknown[] = [], error: unknown = null) {
   const rangeMock = vi.fn()
     .mockResolvedValueOnce({ data, error })
     .mockResolvedValue({ data: [], error: null });
@@ -50,7 +60,7 @@ describe('useMessages', () => {
   });
 
   it('returns empty messages when contactId is null', async () => {
-    const { result } = renderHook(() => useMessages({ contactId: null }));
+    const { result } = renderHook(() => useMessages({ contactId: null }), { wrapper: createWrapper() });
 
     // With null contactId, messages should be empty immediately
     // The hook sets loading=false and messages=[] synchronously for null contactId
@@ -70,7 +80,7 @@ describe('useMessages', () => {
     ];
     mockFrom.mockReturnValue(makeQueryChain(mockMessages));
 
-    const { result } = renderHook(() => useMessages({ contactId: 'c1' }));
+    const { result } = renderHook(() => useMessages({ contactId: 'c1' }), { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -83,9 +93,9 @@ describe('useMessages', () => {
   });
 
   it('sets error when fetch fails', async () => {
-    mockFrom.mockReturnValue(makeQueryChain(null, new Error('Network error')));
+    mockFrom.mockReturnValue(makeQueryChain(undefined, new Error('Network error')));
 
-    const { result } = renderHook(() => useMessages({ contactId: 'c1' }));
+    const { result } = renderHook(() => useMessages({ contactId: 'c1' }), { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -95,7 +105,7 @@ describe('useMessages', () => {
   });
 
   it('does not fetch when enabled=false', () => {
-    const { result } = renderHook(() => useMessages({ contactId: 'c1', enabled: false }));
+    const { result } = renderHook(() => useMessages({ contactId: 'c1', enabled: false }), { wrapper: createWrapper() });
     expect(result.current).toBeDefined();
   });
 
@@ -107,7 +117,7 @@ describe('useMessages', () => {
 
     const { result, rerender } = renderHook(
       ({ contactId }: { contactId: string | null }) => useMessages({ contactId }),
-      { initialProps: { contactId: 'c1' as string | null } }
+      { initialProps: { contactId: 'c1' as string | null }, wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -141,7 +151,7 @@ describe('useMessages', () => {
 
     const { result, rerender } = renderHook(
       ({ contactId }) => useMessages({ contactId }),
-      { initialProps: { contactId: 'c1' } },
+      { initialProps: { contactId: 'c1' }, wrapper: createWrapper() },
     );
     rerender({ contactId: 'c2' });
 
@@ -174,7 +184,7 @@ describe('useMessages', () => {
 
     const { result, rerender } = renderHook(
       ({ enabled }) => useMessages({ contactId: 'c1', enabled }),
-      { initialProps: { enabled: true } },
+      { initialProps: { enabled: true }, wrapper: createWrapper() },
     );
     rerender({ enabled: false });
     await act(async () => {
@@ -216,7 +226,7 @@ describe('useMessages', () => {
         const r = useMessages({ contactId: 'c1' });
         seen.push(r.loading);
         return r;
-      });
+      }, { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.messages.map((m) => m.id)).toEqual(['m1']));
       expect(result.current.loading).toBe(false);
 
@@ -243,7 +253,7 @@ describe('useMessages', () => {
         { data: desc([...pagina.slice(1), nova]), error: null },
       ]));
 
-      const { result } = renderHook(() => useMessages({ contactId: 'c1' }));
+      const { result } = renderHook(() => useMessages({ contactId: 'c1' }), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.messages).toHaveLength(1000));
       expect(result.current.hasOlder).toBe(true);
 

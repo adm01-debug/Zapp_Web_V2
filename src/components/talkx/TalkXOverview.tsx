@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Copy, Pause, Square, Trash2, Zap, Plus,
-  FileText, Bookmark, MessageSquare, BarChart3, Filter,
+  FileText, Bookmark, MessageSquare, BarChart3,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -10,7 +10,7 @@ import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
 import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
-  TalkXEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard, TalkXConfirmDialog,
+  TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard, TalkXConfirmDialog,
   InsightCard,
   fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES,
 } from './talkxShared';
@@ -199,10 +199,10 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
             <div className="p-4"><TalkXSkeletonRows rows={5} /></div>
           ) : campaigns.length === 0 ? (
             <div className="p-4">
-              <TalkXEmptyState icon={Zap} title="Crie sua primeira campanha Talk X" description="Envie mensagens personalizadas para vários contatos simulando digitação humana. Use variáveis como {{nome}}, {{apelido}} e {{empresa}}." actionLabel="Criar campanha" onAction={onNew} />
+              <TalkXEmptyState preset="emptyCampaigns" onAction={onNew} />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-4"><TalkXEmptyState icon={Filter} title="Nenhuma campanha encontrada" description="Nenhuma campanha corresponde aos filtros atuais." /></div>
+            <div className="p-4"><TalkXFilteredEmptyState onClearFilters={clear} /></div>
           ) : layout === 'grid' ? (
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
               {pageItems.map((c) => <CampaignGridCard key={c.id} c={c} segmentName={segmentName(c.segment_id)} onView={() => onView(c)} onEdit={() => onEdit(c)} />)}
@@ -269,7 +269,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
                               <DropdownMenuItem onClick={() => onDuplicate(c)}><Copy className="w-4 h-4 mr-2" />Duplicar</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               {(c.status === 'sending' || c.status === 'paused' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'cancel', c })}><Square className="w-4 h-4 mr-2" />Cancelar campanha</DropdownMenuItem>}
-                              {c.status === 'draft' && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'delete', c })}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>}
+                              {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'delete', c })}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </Td>

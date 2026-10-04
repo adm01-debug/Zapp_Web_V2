@@ -52,15 +52,15 @@ export function useRolesPageState() {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, []);
-  useEffect(() => { if (showAddDialog) fetchAvailableUsers(); }, [showAddDialog, users]);
+  useEffect(() => { void fetchUsers(); }, []);
+  useEffect(() => { if (showAddDialog) void fetchAvailableUsers(); }, [showAddDialog, users]);
 
   const handleAddRole = async () => {
     if (!selectedUser || !selectedRole) return;
     setUpdating(true);
     const { error } = await supabase.from('user_roles').insert({ user_id: selectedUser, role: selectedRole });
     if (error) toast.error('Erro ao adicionar role');
-    else { toast.success('Role adicionada com sucesso'); setShowAddDialog(false); setSelectedUser(''); fetchUsers(); }
+    else { toast.success('Role adicionada com sucesso'); setShowAddDialog(false); setSelectedUser(''); void fetchUsers(); }
     setUpdating(false);
   };
 
@@ -69,7 +69,7 @@ export function useRolesPageState() {
     setUpdating(true);
     const { error } = await supabase.from('user_roles').delete().eq('id', userToRemove.id);
     if (error) toast.error('Erro ao remover role');
-    else { toast.success('Role removida com sucesso'); setUserToRemove(null); fetchUsers(); }
+    else { toast.success('Role removida com sucesso'); setUserToRemove(null); void fetchUsers(); }
     setUpdating(false);
   };
 

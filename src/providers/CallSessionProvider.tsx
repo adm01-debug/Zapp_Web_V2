@@ -7,6 +7,7 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
   type ReactNode,
 } from 'react';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
@@ -23,6 +24,7 @@ import {
   type CallSessionState,
   type CallSessionStatus,
 } from '@/lib/calls/session';
+import { onStartCall, type StartCallPayload } from '@/lib/calls/events';
 
 /**
  * T10 — o provider ganha a máquina de estados canônica (`src/lib/calls/session.ts`).
@@ -56,6 +58,17 @@ import {
 /** Rota da view de telefonia — o `ViewRouter` mapeia `voip` → `VoIPPanel`. */
 export const VOIP_VIEW_SEARCH = '?view=voip';
 
+/**
+ * T21 — TTL do toque de uma chamada de ENTRADA: quanto tempo ela toca antes de
+ * a MÁQUINA encerrar sozinha por `TIMEOUT` (`ringing_in` → `timeout`).
+ *
+ * Antes esse relógio era um `setTimeout(dismissCall, 30_000)` na UI
+ * (`IncomingCallAlert`): quem decidia o fim da chamada era a tela. Aqui a
+ * decisão volta para a máquina de sessão, que já sabe persistir e rotular o
+ * desfecho (`END_REASON_LABEL.timeout`).
+ */
+export const RING_TIMEOUT_MS = 30_000;
+
 export type CallSessionApi = ReturnType<typeof useSipClient> & {
   /** Estado da sessão (máquina de `session.ts`). */
   session: CallSessionState;
@@ -68,6 +81,11 @@ export type CallSessionApi = ReturnType<typeof useSipClient> & {
   reject: () => Promise<void>;
   hangup: () => void;
   openDialer: () => void;
+  /**
+   * Numero que o clique-para-discar deixou no discador sem discar (T29).
+   * `null` quando nao ha pedido pendente.
+   */
+  numeroPendente: string | null;
 };
 
 const CallSessionContext = createContext<CallSessionApi | undefined>(undefined);
@@ -227,6 +245,32 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
   }, [session]);
 
   /**
+   * T21 — o TTL do toque vive na MÁQUINA, não na UI.
+   *
+   * Enquanto a sessão está em `ringing_in`, arma o relógio do toque; ao expirar,
+   * despacha `TIMEOUT`, que a máquina aceita só a partir de `ringing_in` e fecha
+   * a sessão em `ended`/`endReason: 'timeout'` (e o restante do ciclo persiste).
+   *
+   * Cancelamento: o cleanup roda quando o status deixa de ser `ringing_in`
+   * (atendeu, recusou, o remoto cancelou) **e** no unmount — nenhum timer vaza e
+   * nenhum dispatch acontece depois de o provider sumir. A guarda `estadoRef`
+   * dentro do callback é a segunda linha de defesa: mesmo que algo escapasse ao
+   * cleanup, o `TIMEOUT` NÃO é despachado fora de `ringing_in` (não dependemos
+   * da rejeição da máquina).
+   *
+   * Depender de `session.status` (e não de `session`) mantém o mesmo timer vivo
+   * por todo o toque: eventos do motor não o reiniciam.
+   */
+  useEffect(() => {
+    if (session.status !== 'ringing_in') return;
+    const timer = setTimeout(() => {
+      if (estadoRef.current.status !== 'ringing_in') return;
+      dispatch({ type: 'TIMEOUT' });
+    }, RING_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [session.status]);
+
+  /**
    * T17 (D8): `true` enquanto o estado terminal veio do fim FRACO (o default do
    * efeito de status) — e não de um desfecho real do motor nem de uma ação do
    * usuário. Só um fim fraco pode ser corrigido por um `onEnd` que chegue depois.
@@ -292,17 +336,43 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dial = useCallback(
-    (phone: string) => {
+    async (phone: string) => {
+      // T17: o microfone é conferido ANTES do `DIAL`. Despachar primeiro e
+      // falhar depois deixaria a máquina presa em `dialing` — nada a encerraria,
+      // e o agente ficaria com uma chamada fantasma na tela.
+      if (!(await sip.garantirMicrofone())) return;
       reiniciarSeTerminal();
       // T11: UM id por chamada — o mesmo uuid no evento `DIAL` (máquina), no
       // `sessionId` do evento e no `p_id` das 3 gravações do banco.
       const id = novoId();
       dispatch({ type: 'DIAL', sessionId: id, channel: 'voip', phone });
       openDialer();
-      sip.makeCall(phone, id);
+      await sip.makeCall(phone, id);
     },
     [openDialer, novoId, reiniciarSeTerminal, sip],
   );
+
+  const [numeroPendente, setNumeroPendente] = useState<string | null>(null);
+
+  /**
+   * T29 - UNICO consumidor do clique-para-discar. Quem pede a ligacao
+   * (`ContactActionButtons`, `ContactHeaderSection`, `ChatHeader`) so emite
+   * `zapp:start-call`; o que fazer com o pedido e decidido aqui, num lugar so.
+   *
+   * `autoDial` ausente/falso (o padrao do contrato) NAO disca: guarda o numero e
+   * abre `?view=voip` - quem aperta o botao do painel e o agente. `autoDial:true`
+   * (botao "Ligar de volta" do historico) disca direto.
+   */
+  useEffect(() => {
+    return onStartCall((pedido: StartCallPayload) => {
+      setNumeroPendente(pedido.phone);
+      if (pedido.autoDial) {
+        void dial(pedido.phone);
+        return;
+      }
+      openDialer();
+    });
+  }, [dial, openDialer]);
 
   const accept = useCallback(async () => {
     // `ACCEPT` só vale a partir de `ringing_in` → `connecting`; sem ele o
@@ -387,8 +457,9 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
       reject,
       hangup,
       openDialer,
+      numeroPendente,
     }),
-    [sip, session, dial, accept, reject, hangup, openDialer],
+    [sip, session, dial, accept, reject, hangup, openDialer, numeroPendente],
   );
 
   return (

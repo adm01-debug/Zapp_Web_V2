@@ -40,6 +40,21 @@ interface Crm360TabProps {
   onTabChange: (tab: ConversationTab) => void;
 }
 
+/**
+ * IA-047 — chave idempotente por ação. Derivada UMA vez por sugestão (fica em
+ * memória do módulo, mesmo padrão de `outbound-message.service.ts`), e não a
+ * cada render: dois cliques na MESMA sugestão de IA reusam a chave e o índice
+ * único parcial de `conversation_tasks` barra a segunda tarefa.
+ */
+const nextActionTaskKeys = new Map<string, string>();
+function nextActionTaskKeyFor(signature: string): string {
+  const existing = nextActionTaskKeys.get(signature);
+  if (existing) return existing;
+  const key = crypto.randomUUID();
+  nextActionTaskKeys.set(signature, key);
+  return key;
+}
+
 export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProps) {
   const contactId = conversation.contact.id;
   const contactName = conversation.contact.name;
@@ -72,6 +87,13 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
   const pipelineTotal = crm360
     ? crm360.pipeline.propostas.total + crm360.pipeline.negociacao.total + crm360.pipeline.ganhos.total
     : 0;
+
+  // IA-047: a sugestão atual e a chave idempotente dela. A chave é derivada uma
+  // vez por ação (assinatura estável), então um duplo clique não cria 2 tarefas.
+  const nextAction = nextActions[0] ?? null;
+  const nextActionTaskKey = nextAction
+    ? nextActionTaskKeyFor(`${contactId}\u0000${nextAction.label}\u0000${nextAction.description}`)
+    : undefined;
 
   return (
     <div className="flex flex-col gap-4" data-testid="crm360-tab">
@@ -168,7 +190,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={ShoppingBag} title="Últimas compras" tone="blue" action={{ label: 'Ver todas →', onClick: () => onTabChange('orders') }}>
+        <SectionCard icon={ShoppingBag} title="Últimas compras" tone="blue" action={{ label: 'Ver no SalesView →', onClick: () => onTabChange('orders') }}>
           {!crm360 || crm360.purchases.length === 0 ? (
             <EmptyState icon={ShoppingBag} title="Nenhuma compra registrada" description="Compras deste contato aparecerão aqui." size="sm" />
           ) : (
@@ -231,7 +253,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
               <button
                 type="button"
                 className="text-xs font-semibold text-primary hover:underline shrink-0"
-                onClick={() => void createTask({ title: nextActions[0].label , contactId })}
+                onClick={() => void createTask({ title: nextActions[0].label, contactId, clientTaskId: nextActionTaskKey })}
               >
                 Criar tarefa →
               </button>
@@ -258,7 +280,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={HistoryIcon} title="Últimas interações comerciais" action={{ label: 'Ver histórico →', onClick: () => onTabChange('history') }} className="xl:col-span-2">
+        <SectionCard icon={HistoryIcon} title="Últimas interações comerciais" action={{ label: 'Ver na Journey →', onClick: () => onTabChange('history') }} className="xl:col-span-2">
           {!crm360 || crm360.interacoes.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma interação comercial</p>
           ) : (

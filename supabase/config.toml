@@ -64,3 +64,15 @@ verify_jwt = false
 # com 401 antes do codigo da funcao rodar, quebrando 100% dos cliques reais.
 [functions.talkx-link]
 verify_jwt = false
+# E91: chamada 1x/dia pelo pg_cron (net.http_post) com x-cron-secret, sem JWT de sessao.
+[functions.searchbox-budget-alert]
+verify_jwt = false
+
+# T72: quem chama e o N8N, com a service_role no Authorization. A funcao confere o token
+# por conta propria, entao o gate de JWT do gateway fica desligado aqui de proposito.
+[functions.sync-call-records]
+verify_jwt = false
+
+# T73: entrega audio de cliente. Exige JWT (padrao) e a RLS decide quem enxerga a chamada.
+[functions.get-call-recording]
+verify_jwt = true

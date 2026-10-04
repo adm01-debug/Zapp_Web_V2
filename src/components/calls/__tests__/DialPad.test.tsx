@@ -1,7 +1,7 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DialPad } from '../DialPad';
+import { REASON_LABEL } from '@/lib/calls/capabilities';
 
 const defaultProps = {
   sipStatus: 'idle' as const,
@@ -9,6 +9,8 @@ const defaultProps = {
   callDuration: 0,
   isMuted: false,
   currentNumber: '',
+  callDirection: null,
+  onAcceptIncoming: vi.fn(),
   onConnect: vi.fn(),
   onDisconnect: vi.fn(),
   onCall: vi.fn(),
@@ -48,15 +50,7 @@ describe('DialPad', () => {
     expect(screen.getByPlaceholderText('Digite o número')).toBeInTheDocument();
   });
 
-  it('renders connect button when disconnected', () => {
-    render(<DialPad {...defaultProps} />);
-    expect(screen.getByText('Conectar SIP')).toBeInTheDocument();
-  });
 
-  it('renders disconnect button when connected', () => {
-    render(<DialPad {...defaultProps} sipStatus="registered" />);
-    expect(screen.getByText('Desconectar')).toBeInTheDocument();
-  });
 
   it('shows Desconectado badge when disconnected', () => {
     render(<DialPad {...defaultProps} />);
@@ -100,23 +94,8 @@ describe('DialPad', () => {
     expect(defaultProps.onDTMF).toHaveBeenCalledWith('5');
   });
 
-  it('calls onConnect when Conectar SIP is clicked', () => {
-    render(<DialPad {...defaultProps} />);
-    fireEvent.click(screen.getByText('Conectar SIP'));
-    expect(defaultProps.onConnect).toHaveBeenCalled();
-  });
 
-  it('calls onDisconnect when Desconectar is clicked', () => {
-    render(<DialPad {...defaultProps} sipStatus="registered" />);
-    fireEvent.click(screen.getByText('Desconectar'));
-    expect(defaultProps.onDisconnect).toHaveBeenCalled();
-  });
 
-  it('disables connect button when connecting', () => {
-    render(<DialPad {...defaultProps} sipStatus="connecting" />);
-    const btn = screen.getByText('Conectar SIP').closest('button');
-    expect(btn).toBeDisabled();
-  });
 
   it('disables call button when not connected', () => {
     render(<DialPad {...defaultProps} />);
@@ -300,5 +279,20 @@ describe('DialPad', () => {
     expect(defaultProps.onDTMF).toHaveBeenCalledWith('*');
     fireEvent.click(screen.getByText('#'));
     expect(defaultProps.onDTMF).toHaveBeenCalledWith('#');
+  });
+});
+
+// === T20 — a aba que NÃO é dona do registro SIP ===
+
+
+
+describe('DialPad (T40)', () => {
+  it('nao oferece mais conectar/desconectar SIP na tela', () => {
+    // T40: os botoes sairam. A prova dos testes antigos (que afirmavam o botao
+    // habilitado/desabilitado) foi SUBSTITUIDA por esta, que afirma a ausencia -
+    // remover a expectativa sem deixar nada esconderia a regressao.
+    render(<DialPad {...defaultProps} />);
+    expect(screen.queryByText('Conectar SIP')).toBeNull();
+    expect(screen.queryByText('Desconectar')).toBeNull();
   });
 });

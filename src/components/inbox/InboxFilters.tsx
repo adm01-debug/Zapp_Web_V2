@@ -18,7 +18,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { format } from 'date-fns';
+import { appDayEnd, appDayStart, appMonthStart } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 import { useInboxFilterTags } from '@/hooks/inbox/useInboxFilterTags';
 import { useAgents } from '@/hooks/crm/useAgents';
@@ -57,10 +58,10 @@ const STATUS_OPTIONS = [
 ];
 
 const DATE_PRESETS = [
-  { label: 'Hoje', getValue: () => ({ from: startOfDay(new Date()), to: endOfDay(new Date()) }) },
-  { label: '7 dias', getValue: () => ({ from: startOfDay(subDays(new Date(), 7)), to: endOfDay(new Date()) }) },
-  { label: '30 dias', getValue: () => ({ from: startOfDay(subDays(new Date(), 30)), to: endOfDay(new Date()) }) },
-  { label: 'Mês', getValue: () => ({ from: startOfDay(new Date(new Date().getFullYear(), new Date().getMonth(), 1)), to: endOfDay(new Date()) }) },
+  { label: 'Hoje', getValue: () => ({ from: appDayStart(0), to: appDayEnd(0) }) },
+  { label: '7 dias', getValue: () => ({ from: appDayStart(7), to: appDayEnd(0) }) },
+  { label: '30 dias', getValue: () => ({ from: appDayStart(30), to: appDayEnd(0) }) },
+  { label: 'Mês', getValue: () => ({ from: appMonthStart(), to: appDayEnd(0) }) },
 ];
 
 export function InboxFilters({

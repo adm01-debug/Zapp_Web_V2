@@ -82,7 +82,7 @@ export default function ChatPopup() {
 
   useEffect(() => {
     if (!contactId) return;
-    (async () => {
+    void (async () => {
       const { data } = await supabase
         .from('contacts')
         .select('*')

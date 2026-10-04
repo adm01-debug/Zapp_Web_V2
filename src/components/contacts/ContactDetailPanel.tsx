@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
   X, MessageSquare, Edit, Phone, Mail, Building, Briefcase,
-  Calendar, Tag, Clock, Zap,
+  Calendar, Tag, Clock, Zap, Package,
 } from 'lucide-react';
 import { ContactActivityTimeline } from './ContactActivityTimeline';
 import { ContactNotes } from './ContactNotes';
@@ -18,6 +18,17 @@ import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { ContactEngagementScore } from './ContactEngagementScore';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
+// Guarda de WhatsApp: o mesmo critério que o resto do app usa para telefone
+// utilizável é o `normalizeE164BR` (src/lib/calls/phone.ts) — devolve `null`
+// quando não dá para extrair um E.164 brasileiro.
+import { normalizeE164BR } from '@/lib/calls/phone';
+// CT-51/CT-52 — o catálogo do chat reusado no painel do contato: abre o mesmo
+// Dialog de envio (CT-14), já com este contato como `presetContact`.
+import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
+// CT-54 — histórico dos produtos já enviados PARA este contato: lê
+// `catalog_send_events` filtrando por `contact_id`. Reusa o hook da aba
+// "Enviados" (CT-57); o filtro SÓ estreita, a RLS por agente segue valendo.
+import { useCatalogSendHistory } from '@/hooks/integrations/useCatalogSendHistory';
 interface ContactDetail {
   id: string;
   name: string;
@@ -42,6 +53,72 @@ interface ContactDetailPanelProps<T extends ContactDetail> {
   lastMessageAt?: string | null;
 }
 
+const SEND_STATUS_LABEL: Record<string, string> = {
+  sent: 'Enviado',
+  partial: 'Parcial',
+  failed: 'Falhou',
+};
+
+/**
+ * CT-54 — bloco "Produtos enviados" no perfil do contato.
+ *
+ * Usa `useCatalogSendHistory({ contactId })` (mesma consulta da aba
+ * "Enviados", agora recortada por destinatário). Estados de carregamento,
+ * erro e vazio são explicitamente tratados — contato sem envio não pode
+ * parecer "carregando para sempre".
+ */
+export function ContactCatalogSendHistory({ contactId }: { contactId: string }) {
+  const { rows, isLoading, error } = useCatalogSendHistory({ contactId });
+
+  return (
+    <div>
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+        <Package className="w-3 h-3" />
+        Produtos enviados
+      </h3>
+
+      {isLoading ? (
+        <div className="space-y-2" data-testid="send-history-loading">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-14 rounded-lg bg-muted/20 animate-pulse" />
+          ))}
+        </div>
+      ) : error ? (
+        <p className="text-xs text-muted-foreground/50" data-testid="send-history-error">
+          Não foi possível carregar o histórico de envios.
+        </p>
+      ) : rows.length === 0 ? (
+        <div className="text-center py-4" data-testid="send-history-empty">
+          <Package className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+          <p className="text-xs text-muted-foreground/50">Nenhum produto enviado para este contato</p>
+        </div>
+      ) : (
+        <div className="space-y-2" data-testid="send-history-list">
+          {rows.map((row) => (
+            <div key={row.id} className="p-3 rounded-lg bg-muted/20 border border-border/20">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground truncate">{row.product_name}</p>
+                  {row.variant_label && <p className="text-caption">{row.variant_label}</p>}
+                </div>
+                {row.status && (
+                  <Badge variant="secondary" className="text-[9px] h-4 px-1.5 shrink-0">
+                    {SEND_STATUS_LABEL[row.status] || row.status}
+                  </Badge>
+                )}
+              </div>
+              <span className="text-caption flex items-center gap-1 mt-2">
+                <Calendar className="w-2.5 h-2.5" />
+                {format(new Date(row.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ContactDetailPanel<T extends ContactDetail>({
   contact, onClose, onOpenChat, onEdit, messageCount = 0, lastMessageAt,
 }: ContactDetailPanelProps<T>) {
@@ -56,6 +133,9 @@ export function ContactDetailPanel<T extends ContactDetail>({
 
   const avatarColors = getAvatarColor(contact.name);
   const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
+  // Sem telefone utilizável (E.164 brasileiro) não há WhatsApp de destino, e
+  // sem destino não há envio de produto: o gatilho do catálogo fica bloqueado.
+  const hasWhatsApp = normalizeE164BR(contact.phone) !== null;
 
   const infoItems = [
     { icon: Phone, label: 'Telefone', value: contact.phone },
@@ -127,19 +207,60 @@ export function ContactDetailPanel<T extends ContactDetail>({
             />
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex gap-2 mt-4">
-            <Button
-              className="flex-1 gap-2 bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
-              onClick={() => onOpenChat(contact.id)}
-            >
-              <MessageSquare className="w-4 h-4" />
-              Conversar
-            </Button>
-            <Button variant="outline" className="gap-2" onClick={() => onEdit(contact)}>
-              <Edit className="w-4 h-4" />
-              Editar
-            </Button>
+          {/* Quick Actions — CT-51: é AQUI o ponto de extensão das ações do
+              contato (o "header" do contato é este painel lateral, não um
+              cabeçalho de página). */}
+          <div className="flex flex-col gap-2 mt-4">
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 gap-2 bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
+                onClick={() => onOpenChat(contact.id)}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Conversar
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={() => onEdit(contact)}>
+                <Edit className="w-4 h-4" />
+                Editar
+              </Button>
+            </div>
+
+            {/* CT-52 — envia um produto do catálogo com ESTE contato já
+                pré-selecionado; o envio grava `catalog_send_events` com o
+                contact_id do perfil (CT-14). O catálogo abre o mesmo Dialog do
+                chat (grade + filtros), não um picker compacto — divergência
+                registrada no relatório. */}
+            <ExternalProductCatalog
+              presetContact={{
+                id: contact.id,
+                name: contact.name,
+                phone: contact.phone,
+                avatar_url: contact.avatar_url ?? null,
+              }}
+              /* Sem WhatsApp o catálogo é forçado fechado (open controlado) e o
+                 gatilho vira um botão desabilitado com o motivo no `title`. O
+                 `title` fica no <span>: o botão desabilitado tem
+                 `disabled:pointer-events-none` e não receberia o hover, e um
+                 Tooltip (src/components/ui/tooltip) não pode ser o filho do
+                 `DialogTrigger asChild` do ExternalProductCatalog. */
+              open={hasWhatsApp ? undefined : false}
+              onOpenChange={hasWhatsApp ? undefined : () => {}}
+              trigger={
+                hasWhatsApp ? (
+                  <Button variant="outline" className="w-full gap-2">
+                    <Package className="w-4 h-4" />
+                    Enviar produto
+                  </Button>
+                ) : (
+                  <span className="block w-full" title="Contato sem WhatsApp">
+                    <Button variant="outline" className="w-full gap-2" disabled>
+                      <Package className="w-4 h-4" />
+                      Enviar produto
+                    </Button>
+                  </span>
+                )
+              }
+            />
           </div>
         </div>
 
@@ -215,6 +336,9 @@ export function ContactDetailPanel<T extends ContactDetail>({
 
             {/* Purchases */}
             <ContactPurchaseHistory contactId={contact.id} />
+
+            {/* CT-54 — Produtos enviados a este contato */}
+            <ContactCatalogSendHistory contactId={contact.id} />
           </div>
         </ScrollArea>
       </motion.div>

@@ -1,0 +1,92 @@
+# docs:
+#   gatilho: pull_request e dispatch
+#   prova: o fluxo do Talk X no navegador
+#   falha: PR fica vermelho com o artefato do Playwright
+#   avisa: autor do PR
+# ==========================================================================
+# ZAPP-WEB · E2E Talk X em PR (Playwright, deslogado, NÃO required)
+# ==========================================================================
+# Roda o spec do Talk X em Chromium quando um PR toca arquivos do Talk X —
+# antes do merge, sem secrets de autenticação.
+#
+# E27 (auditoria GitHub Actions 2026-10-01): gatilho original era `push`
+# branches-ignore:main para contornar check-pr-workflow-secrets.mjs que proíbe
+# pull_request + secrets. Com a remoção de E2E_TEST_EMAIL/PASSWORD, pull_request
+# passa a ser seguro: PRs de fork não têm acesso a secrets de repositório.
+#
+# NÃO é required no branch protection — é informativo.
+# ==========================================================================
+
+name: E2E Talk X
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/components/talkx/**'
+      - 'src/hooks/integrations/useTalkX*'
+      - 'supabase/functions/talkx-*'
+      - 'e2e/talkx.spec.ts'
+      - 'e2e/talkx-visual.spec.ts'
+      - 'e2e/fixtures/talkx-demo.ts'
+      - 'e2e/fixtures/talkx-demo/**'
+      - 'scripts/talkx/lado-a-lado.mjs'
+      # E84: `playwright.config.ts` saiu daqui. Ele é config global da suíte — foi
+      # tocado em 20 dos últimos 60 commits, quase sempre por trabalho que não é do
+      # Talk X, disparando este workflow sem motivo ("PR de Contatos não dispara").
+      # A config global continua coberta pelo job E2E do ci.yml, que é required.
+      - '.github/workflows/e2e-talkx.yml'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-talkx-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  e2e-talkx:
+    name: 🎭 E2E Talk X (Chromium, deslogado)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout confiável
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🥖 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: 🎭 Install Playwright (Chromium)
+        run: bunx playwright@1.63.0 install --with-deps chromium
+
+      - name: 📐 Run Playwright E2E Talk X (Chromium, deslogado)
+        run: bun run test:e2e -- --project=chromium
+        env:
+          CI: true
+
+      - name: 🖼️ Régua visual Talk X (17 telas, deslogado)
+        run: bun run test:e2e -- --project=chromium-talkx-visual
+        env:
+          CI: true
+
+      - name: 📊 Gera régua lado a lado (mock vs captura)
+        run: node scripts/talkx/lado-a-lado.mjs --out .tmp/regua
+
+      - name: ⬆️ Upload régua visual
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: regua-visual-talkx
+          path: .tmp/regua/
+          retention-days: 14

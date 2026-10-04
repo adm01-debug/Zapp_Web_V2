@@ -13,30 +13,30 @@ vi.mock('@/integrations/supabase/client', () => ({
             is: () => ({
               is: () => ({
                 is: () => ({
-                  then: (r: unknown) => (r as Function)({ data: [], error: null }),
+                  then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
                 }),
-                then: (r: unknown) => (r as Function)({ data: [], error: null }),
+                then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
               }),
-              then: (r: unknown) => (r as Function)({ data: [], error: null }),
+              then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
             }),
-            then: (r: unknown) => (r as Function)({ data: [], error: null }),
+            then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
           }),
-          then: (r: unknown) => (r as Function)({ data: [], error: null }),
+          then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
         }),
         not: () => ({
-          then: (r: unknown) => (r as Function)({ data: [], error: null }),
+          then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
         }),
         eq: () => ({
-          then: (r: unknown) => (r as Function)({ data: [], error: null }),
+          then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
         }),
-        then: (r: unknown) => (r as Function)({ data: [], error: null }),
+        then: (r: unknown) => (r as (arg: unknown) => unknown)({ data: [], error: null }),
       }),
-      insert: () => ({ then: (r: unknown) => (r as Function)({ error: null }) }),
+      insert: () => ({ then: (r: unknown) => (r as (arg: unknown) => unknown)({ error: null }) }),
       update: () => ({
-        eq: () => ({ then: (r: unknown) => (r as Function)({ error: null }) }),
+        eq: () => ({ then: (r: unknown) => (r as (arg: unknown) => unknown)({ error: null }) }),
       }),
       delete: () => ({
-        eq: () => ({ then: (r: unknown) => (r as Function)({ error: null }) }),
+        eq: () => ({ then: (r: unknown) => (r as (arg: unknown) => unknown)({ error: null }) }),
       }),
     }),
   },
@@ -94,7 +94,10 @@ describe('SLARulesManager', () => {
 
   it('opens dialog when "Nova Regra" is clicked', async () => {
     render(<SLARulesManager />, { wrapper: createWrapper() });
-    await waitFor(() => fireEvent.click(screen.getByText('Nova Regra')));
+    await waitFor(() => {
+      expect(screen.getByText('Nova Regra')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Nova Regra'));
     await waitFor(() => {
       expect(screen.getByText('Nova Regra de SLA')).toBeInTheDocument();
     });
@@ -102,7 +105,10 @@ describe('SLARulesManager', () => {
 
   it('shows form fields in dialog', async () => {
     render(<SLARulesManager />, { wrapper: createWrapper() });
-    await waitFor(() => fireEvent.click(screen.getByText('Nova Regra')));
+    await waitFor(() => {
+      expect(screen.getByText('Nova Regra')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Nova Regra'));
     await waitFor(() => {
       expect(screen.getByText('Nome da Regra')).toBeInTheDocument();
       expect(screen.getByText('1ª Resposta (min)')).toBeInTheDocument();
@@ -112,7 +118,10 @@ describe('SLARulesManager', () => {
 
   it('shows DialogDescription for accessibility', async () => {
     render(<SLARulesManager />, { wrapper: createWrapper() });
-    await waitFor(() => fireEvent.click(screen.getByText('Nova Regra')));
+    await waitFor(() => {
+      expect(screen.getByText('Nova Regra')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Nova Regra'));
     await waitFor(() => {
       expect(screen.getByText(/Defina prazos específicos de primeira resposta/)).toBeInTheDocument();
     });
@@ -132,7 +141,10 @@ describe('SLARulesManager', () => {
 
   it('has cancel and create buttons in dialog', async () => {
     render(<SLARulesManager />, { wrapper: createWrapper() });
-    await waitFor(() => fireEvent.click(screen.getByText('Nova Regra')));
+    await waitFor(() => {
+      expect(screen.getByText('Nova Regra')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Nova Regra'));
     await waitFor(() => {
       expect(screen.getByText('Cancelar')).toBeInTheDocument();
       expect(screen.getByText('Criar')).toBeInTheDocument();

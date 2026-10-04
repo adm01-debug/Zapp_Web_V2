@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactNode } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 
 const mockFrom = vi.fn();
@@ -7,20 +7,20 @@ const mockFunctionsInvoke = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'token' } } }),
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
       getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
     },
-    functions: { invoke: (...args: any[]) => mockFunctionsInvoke(...args) },
+    functions: { invoke: (...args: unknown[]) => mockFunctionsInvoke(...args) },
   },
 }));
 
 const mockUseAuth = vi.fn();
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => mockUseAuth(),
-  AuthProvider: ({ children }: any) => children,
+  AuthProvider: ({ children }: { children?: ReactNode }) => children,
 }));
 
 vi.mock('@/lib/logger', () => ({

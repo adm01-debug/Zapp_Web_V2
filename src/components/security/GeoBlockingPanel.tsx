@@ -107,7 +107,7 @@ export function GeoBlockingPanel() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                  <Button onClick={() => { const c = COUNTRIES.find(ct => ct.code === selectedCountry); if (c) handleAddCountry(c.code, c.name); }} variant={activeTab === 'blacklist' ? 'destructive' : 'default'}>Adicionar</Button>
+                  <Button onClick={() => { const c = COUNTRIES.find(ct => ct.code === selectedCountry); if (c) void handleAddCountry(c.code, c.name); }} variant={activeTab === 'blacklist' ? 'destructive' : 'default'}>Adicionar</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

@@ -19,7 +19,7 @@ test.describe('Contatos — criar, editar e excluir', () => {
     await gotoContacts(page);
     const search = page.getByPlaceholder(/Buscar por nome, telefone/);
 
-    await page.getByRole('button', { name: 'Novo contato' }).click();
+    await page.getByTestId('contact-create-fab').click();
     const addDialog = page.getByRole('dialog', { name: 'Adicionar Contato' });
     await addDialog.locator('#name').fill(name);
     await addDialog.locator('#phone').fill(phone);

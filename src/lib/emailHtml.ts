@@ -5,7 +5,8 @@ import DOMPurify from 'dompurify';
  * Usado por: EmailChatBubble, EmailThreadView (legado) e EmailFullViewDialog.
  *
  * Política:
- * - Imagens permitidas (lazy, no-referrer); data: URL > 32KB vira placeholder.
+ * - Imagens remotas e cid: bloqueadas por padrão para não acionar pixels de
+ *   rastreamento; data: URL > 32KB também vira placeholder.
  * - Links sempre externos e seguros (target=_blank + rel=noopener noreferrer).
  * - Dimensões fixas do remetente neutralizadas (somente '%' e 'auto' permitidos;
  *   px, em, rem, vh, vw, cm, calc etc. são todos removidos); comentários CSS removidos
@@ -47,7 +48,7 @@ function cssUnescape(s: string): string {
     // continuação de linha: backslash + newline/CRLF/form-feed desaparece (CSS spec)
     .replace(/\\(\r\n|\r|\n|\f|\u2028|\u2029)/g, '')
     .replace(/\\([0-9a-fA-F]{1,6})(\r\n|[ \t\r\n\f])?/g, (_m, hex: string) => {
-      const cp = parseInt(hex, 16);
+      const cp = Number.parseInt(hex, 16);
       try { return cp > 0x10ffff || cp < 0 ? '' : String.fromCodePoint(cp); } catch { return ''; }
     })
     .replace(/\\(.)/g, '$1');
@@ -68,6 +69,12 @@ function installHooks(p: PurifyInstance): void {
       node.setAttribute('loading', 'lazy');
       node.setAttribute('referrerpolicy', 'no-referrer');
       const src = node.getAttribute('src') || '';
+      if (/^(https?:|cid:)/i.test(src)) {
+        node.removeAttribute('src');
+        node.setAttribute('alt', node.getAttribute('alt') || '[imagem externa bloqueada por privacidade]');
+        node.setAttribute('title', 'Imagem externa bloqueada por privacidade');
+        return;
+      }
       if (src.startsWith('data:') && src.length > 32768) {
         node.removeAttribute('src');
         node.setAttribute('alt', node.getAttribute('alt') || '[imagem incorporada muito grande — ver e-mail completo]');

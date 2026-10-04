@@ -12,6 +12,13 @@ import { render, fireEvent } from '@testing-library/react';
  */
 const ctxs: FakeAudioContext[] = [];
 
+const { mockAccept, mockReject, mockAnswerCall, mockMissCall } = vi.hoisted(() => ({
+  mockAccept: vi.fn(),
+  mockReject: vi.fn(),
+  mockAnswerCall: vi.fn(),
+  mockMissCall: vi.fn(),
+}));
+
 class FakeGainNode {
   gain = { value: 0 };
   connect = vi.fn();
@@ -76,7 +83,27 @@ vi.mock('@/hooks/communication/useIncomingCallListener', () => ({
 }));
 
 vi.mock('@/hooks/communication/useCalls', () => ({
-  useCalls: () => ({ answerCall: vi.fn(), missCall: vi.fn() }),
+  useCalls: () => ({ answerCall: mockAnswerCall, missCall: mockMissCall }),
+}));
+
+// O alerta agora fala com a MÁQUINA da sessão: sem este mock o `useCallSession()`
+// lança 'useCallSession deve ser usado dentro de CallSessionProvider' e o render cai.
+vi.mock('@/providers/CallSessionProvider', () => ({
+  useCallSession: () => ({ accept: mockAccept, reject: mockReject }),
+}));
+
+vi.mock('@/hooks/calls/useCallChannels', () => ({
+  useCallChannels: () => ({
+    voip: { channel: 'voip', canDial: true, canReceive: true, canRecord: false, canReject: true },
+    whatsapp: {
+      channel: 'whatsapp',
+      canDial: false,
+      canReceive: true,
+      canRecord: false,
+      canReject: false,
+      reason: 'whatsapp_no_outbound',
+    },
+  }),
 }));
 
 vi.mock('@/hooks/system/useNotificationSettings', () => ({

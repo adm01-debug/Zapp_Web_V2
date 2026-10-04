@@ -47,6 +47,14 @@ async function findContactIdsByNameOrPhone(term: string): Promise<string[] | nul
 
 // "Minhas ligações": histórico paginado e agregados sempre escopados ao
 // próprio agente (profileId), nunca ao universo inteiro da tabela `calls`.
+/**
+ * @deprecated (T41) Os numeros desta tela agora vem da RPC `my_calls_kpi`
+ * (`useCallsKpi`, T37) - calculados no servidor, com o mesmo filtro da URL.
+ * Este hook continua servindo a LISTA do historico (paginacao e `statsRows`),
+ * mas nao deve ganhar consumidor novo para agregacao. Migrar a lista para
+ * `search_my_calls` e a proxima etapa natural; enquanto isso, nao usar
+ * `statsRows` para exibir numero.
+ */
 export function useCallHistory(profileId: string | undefined, filters: CallHistoryFilters = {}) {
   const filterKey = JSON.stringify(filters);
 

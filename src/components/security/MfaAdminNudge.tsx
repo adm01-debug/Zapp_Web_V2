@@ -59,7 +59,7 @@ export function MfaAdminNudge({ onNavigate }: MfaAdminNudgeProps) {
         <button
           type="button"
           onClick={() => onNavigate('security')}
-          className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
+          className="rounded-md bg-warning px-3 py-1.5 text-sm font-medium text-warning-foreground hover:bg-warning/90 focus:outline-none focus:ring-2 focus:ring-warning/60"
         >
           Ativar 2FA
         </button>

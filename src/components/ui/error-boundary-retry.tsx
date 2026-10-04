@@ -103,7 +103,7 @@ export class ErrorBoundaryWithRetry extends React.Component<ErrorBoundaryWithRet
             </p>
 
             {exhaustedRetries && (
-              <p className="text-xs text-muted-foreground/60">
+              <p className="text-xs text-muted-foreground">
                 Tentativas automáticas esgotadas ({maxRetries}). Tente manualmente.
               </p>
             )}

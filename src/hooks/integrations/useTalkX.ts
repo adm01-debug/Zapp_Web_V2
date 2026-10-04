@@ -28,6 +28,8 @@ export interface TalkXCampaign {
   sent_count: number;
   failed_count: number;
   delivered_count: number;
+  read_count?: number;
+  replied_count?: number;
   outcome_unknown_count?: number;
   whatsapp_connection_id: string | null;
   created_by: string | null;
@@ -48,11 +50,23 @@ export interface TalkXCampaign {
   audience_filters?: Record<string, unknown>;
   segment_id?: string | null;
   template_id?: string | null;
+  // V26 — versão do template (talkx_template_versions.id) que originou a
+  // mensagem. Opcional até o types-sync canônico após a migration da coluna.
+  template_version_id?: string | null;
   send_window_start?: string | null;
   send_window_end?: string | null;
   business_hours_only?: boolean;
   speed_profile?: 'slow' | 'moderate' | 'fast';
   paused_at?: string | null;
+  respect_suppression?: boolean;
+  confirm_consent?: boolean;
+  // V23 — passo do wizard persistido no rascunho (migration via hermes-db-migrar --nova).
+  draft_step?: number | null;
+  // V25 — responsável da campanha (profiles.id). Opcional até o types-sync
+  // canônico após a migration que adiciona a coluna `owner`.
+  owner?: string | null;
+  launched_by?: string | null;
+  launched_at?: string | null;
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
   // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
   revision?: number;
@@ -79,6 +93,7 @@ export interface TalkXRecipient {
 
 type TalkXActionResponse = {
   success?: unknown;
+  accepted?: unknown;
   reason?: unknown;
   error?: unknown;
 };
@@ -87,11 +102,13 @@ type TalkXActionResponse = {
  * Edge Functions can deliberately return HTTP 200 for an operational refusal
  * (for example, a campaign outside its send window). Supabase exposes that as
  * `error: null`, so every lifecycle action must validate the body as well.
+ * X013: o lançamento assíncrono responde `{ accepted: true, status: 'sending' }`
+ * (o lote roda em outra invocação) — o corpo não traz `success`.
  */
-function assertTalkXActionAccepted(data: unknown): asserts data is TalkXActionResponse & { success: true } {
-  if (data && typeof data === 'object' && (data as TalkXActionResponse).success === true) return;
-
+function assertTalkXActionAccepted(data: unknown): asserts data is TalkXActionResponse {
   const response = data && typeof data === 'object' ? data as TalkXActionResponse : null;
+  if (response && (response.success === true || response.accepted === true)) return;
+
   const reason = typeof response?.reason === 'string'
     ? response.reason
     : typeof response?.error === 'string'
@@ -290,13 +307,38 @@ export function useTalkX() {
 
   const deleteCampaign = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('talkx_campaigns').delete().eq('id', id);
-      if (error) throw error;
+      // X026: a exclusão passa pela RPC (draft ou scheduled, sem envio). O delete
+      // direto no PostgREST só alcançava rascunho e não deixava rastro/autorização.
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { error } = await rpc('delete_talkx_campaign', { p_campaign_id: id });
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
       toast.success('Campanha excluída');
     },
+    onError: (e: Error) => toast.error(`Erro ao excluir: ${e.message}`),
+  });
+
+  /**
+   * X026: duplicar deixa de ser estado do cliente — a RPC cria um rascunho novo
+   * no banco copiando mensagem, mídia, segmento, limites e janela, sem
+   * destinatários e sem agendamento, e devolve a linha criada.
+   */
+  const duplicateCampaign = useMutation({
+    mutationFn: async (id: string) => {
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('duplicate_talkx_campaign', { p_campaign_id: id });
+      if (error) throw new Error(error.message);
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row || typeof row !== 'object') throw new Error('O banco não confirmou a duplicação da campanha.');
+      return row as unknown as TalkXCampaign;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+      toast.success('Campanha duplicada como rascunho');
+    },
+    onError: (e: Error) => toast.error(`Erro ao duplicar: ${e.message}`),
   });
 
   const addRecipients = useMutation({
@@ -350,6 +392,35 @@ export function useTalkX() {
     },
   });
 
+  /**
+   * X017 — gera o snapshot de destinatários NO SERVIDOR a partir do rascunho
+   * salvo: a RPC relê origem/segmento/audience_filters/seleção manual, aplica o
+   * critério de elegível (talkx_audience_query, X016), regrava talkx_recipients +
+   * total_recipients e exige a revisão corrente (controle otimista). Devolve
+   * { eligible, suppressed, skipped_invalid }.
+   */
+  const snapshotDraftAudience = useMutation({
+    mutationFn: async ({
+      campaignId,
+      expectedRevision,
+    }: {
+      campaignId: string;
+      expectedRevision: number;
+    }) => {
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('snapshot_talkx_campaign_audience', {
+        p_campaign_id: campaignId,
+        p_expected_revision: expectedRevision,
+      });
+      if (error) throw error;
+      return data as { eligible: number; suppressed: number; skipped_invalid: number };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['talkx-recipients'] });
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+    },
+  });
+
   const startCampaign = useCallback(async (campaignId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('talkx-send', {
@@ -358,7 +429,7 @@ export function useTalkX() {
       if (error) throw error;
       assertTalkXActionAccepted(data);
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
-      toast.success('Processamento da campanha confirmado.');
+      toast.success('Envio iniciado; acompanhe no monitor');
       return true;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Erro desconhecido';
@@ -367,18 +438,18 @@ export function useTalkX() {
     }
   }, [queryClient]);
 
-  const pauseCampaign = useCallback(async (campaignId: string) => {
+  const pauseCampaign = useCallback(async (campaignId: string, reason?: string) => {
     const { data, error } = await supabase.functions.invoke('talkx-send', {
-      body: { campaignId, action: 'pause' },
+      body: { campaignId, action: 'pause', reason: reason ?? null },
     });
     if (error) throw error;
     assertTalkXActionAccepted(data);
     queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
-  const cancelCampaign = useCallback(async (campaignId: string) => {
+  const cancelCampaign = useCallback(async (campaignId: string, reason?: string) => {
     const { data, error } = await supabase.functions.invoke('talkx-send', {
-      body: { campaignId, action: 'cancel' },
+      body: { campaignId, action: 'cancel', reason: reason ?? null },
     });
     if (error) throw error;
     assertTalkXActionAccepted(data);
@@ -388,6 +459,9 @@ export function useTalkX() {
   return {
     campaigns: campaignsQuery.data || [],
     isLoading: campaignsQuery.isLoading,
+    isError: campaignsQuery.isError,
+    error: (campaignsQuery.error as Error | null) ?? null,
+    isFetching: campaignsQuery.isFetching,
     isLive,
     recipients: recipientsQuery.data || [],
     recipientsLoading: recipientsQuery.isLoading,
@@ -398,8 +472,10 @@ export function useTalkX() {
     updateCampaignLimits,
     saveDraftCampaign,
     deleteCampaign,
+    duplicateCampaign,
     addRecipients,
     replaceDraftRecipients,
+    snapshotDraftAudience,
     startCampaign,
     pauseCampaign,
     cancelCampaign,

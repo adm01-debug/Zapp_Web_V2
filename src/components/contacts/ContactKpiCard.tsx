@@ -53,7 +53,7 @@ function Sparkline({ series, chart, className }: { series: number[]; chart: 'lin
     const totalW = series.length * barW + (series.length - 1) * gap;
     const offsetX = (w - totalW) / 2;
     return (
-      <svg width={w} height={h} className={className}>
+      <svg data-testid="kpi-sparkline" width={w} height={h} className={className}>
         {series.map((v, i) => {
           const barH = Math.max((v / max) * (h - 4), 2);
           return (
@@ -86,7 +86,7 @@ function Sparkline({ series, chart, className }: { series: number[]; chart: 'lin
   const [lastX, lastY] = points[points.length - 1];
 
   return (
-    <svg width={w} height={h} className={className}>
+    <svg data-testid="kpi-sparkline" width={w} height={h} className={className}>
       <defs>
         <linearGradient id="kpi-spark-area" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
@@ -124,7 +124,7 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
       data-testid="kpi-card"
       className="h-[108px] rounded-[14px] border border-border/70 card-glow py-4 px-4 flex items-center gap-4"
     >
-      <div data-testid="kpi-tile" className={cn('w-[60px] h-[60px] rounded-xl flex items-center justify-center shrink-0', bg)}>
+      <div data-testid="kpi-tile" className={cn('w-[60px] h-[60px] rounded-xl hidden sm:flex items-center justify-center shrink-0', bg)}>
         <Icon className={cn('w-[26px] h-[26px]', fg)} />
       </div>
 
@@ -135,12 +135,12 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
             <CountUp value={value} />
           </p>
           {!noData && !flat && (
-            <span className={cn('flex items-center gap-0.5 text-xs font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
+            <span data-testid="kpi-delta" className={cn('flex items-center gap-0.5 text-xs font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>
               {deltaPct! > 0 ? <TrendingUp className="w-[14px] h-[14px]" /> : <TrendingDown className="w-[14px] h-[14px]" />}
               {deltaPct! > 0 ? '+' : ''}{deltaPct}%
             </span>
           )}
-          {flat && <span className="text-xs font-semibold text-muted-foreground shrink-0">sem alteração</span>}
+          {flat && <span data-testid="kpi-delta" className="text-xs font-semibold text-muted-foreground shrink-0">sem alteração</span>}
         </div>
         {!noData && (
           <p className="text-xs text-muted-foreground/70 mt-0.5 truncate hidden xl:block">vs. período anterior</p>

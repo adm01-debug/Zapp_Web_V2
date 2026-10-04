@@ -90,7 +90,7 @@ export function extractRealtimeSubscriptions(source, fileName = 'fixture.ts') {
     }
 
     if (ts.isVariableStatement(node)
-      && (node.declarationList.flags & ts.NodeFlags.Const) !== 0) {
+      && (node.declarationList.flags & ts.NodeFlags.Const) !== 0) {  // NOSONAR(S1529): mascara de bit real da API do TypeScript (NodeFlags.Const); `&&` mudaria a semantica
       for (const declaration of node.declarationList.declarations) {
         if (!ts.isIdentifier(declaration.name) || !declaration.initializer) continue;
         localDeclarations.add(declaration.name.text);
@@ -209,7 +209,7 @@ function sourceFiles(root) {
     }
   };
   visit(root);
-  return files.sort();
+  return files.sort((a, b) => a.localeCompare(b));
 }
 
 export function evaluateRealtimeSubscriptions(root = 'src', baseline = loadRealtimeBaseline()) {
@@ -220,7 +220,7 @@ export function evaluateRealtimeSubscriptions(root = 'src', baseline = loadRealt
     subscriptions.push(...result.subscriptions);
     unresolved.push(...result.unresolved);
   }
-  const uniqueSubscriptions = [...new Set(subscriptions)].sort();
+  const uniqueSubscriptions = [...new Set(subscriptions)].sort((a, b) => a.localeCompare(b));
   const allowed = new Set(baseline);
   const absentFromPublication = uniqueSubscriptions.filter(table => !allowed.has(table));
   return { subscriptions: uniqueSubscriptions, unresolved, absentFromPublication };

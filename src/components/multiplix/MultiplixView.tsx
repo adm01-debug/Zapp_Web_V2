@@ -195,7 +195,7 @@ export default function MultiplixView() {
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Público</span>
           <Select value={role || 'all'} onValueChange={(v) => setRole(v === 'all' ? '' : (v as typeof role))}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger aria-label="Público" className="w-44"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               {Object.entries(ROLE_LABELS).map(([value, label]) => (
@@ -208,7 +208,7 @@ export default function MultiplixView() {
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Ramo</span>
           <Select value={ramo || 'all'} onValueChange={(v) => setRamo(v === 'all' ? '' : v)} disabled={loadingRamos}>
-            <SelectTrigger className="w-56"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger aria-label="Ramo" className="w-56"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               {(ramos ?? []).map((r) => (
@@ -223,7 +223,7 @@ export default function MultiplixView() {
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">UF</span>
           <Select value={uf || 'all'} onValueChange={(v) => setUf(v === 'all' ? '' : v)} disabled={loadingUfs}>
-            <SelectTrigger className="w-32"><SelectValue placeholder="Todas" /></SelectTrigger>
+            <SelectTrigger aria-label="UF" className="w-32"><SelectValue placeholder="Todas" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>
               {(ufs ?? []).map((u) => (
