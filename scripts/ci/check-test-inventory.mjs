@@ -35,6 +35,9 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // DASH-ACCEPTANCE-001/DASH-092: prova que a RLS do Dashboard isola de verdade
+  // com permissão real (sem service_role/BYPASSRLS). Promover em db-guard.yml.
+  'scripts/db-audit/check-dashboard-rls-enforcement.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
