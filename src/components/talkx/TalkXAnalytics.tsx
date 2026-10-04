@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { Database } from '@/integrations/supabase/types';
 import { IconTile, TalkXEmptyState, TalkXErrorState, TalkXSkeletonRows, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
+import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
 
@@ -162,9 +163,21 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   // 0 para 1 campanha.
   const { data: insights } = useTalkXInsights();
 
-  if (isError) return <TalkXErrorState />;
-  if (isLoading) return <TalkXSkeletonRows rows={6} />;
-  if (campaigns.length === 0) return <TalkXEmptyState icon={BarChart3} title="Nenhuma campanha para analisar" description="Execute pelo menos uma campanha para ver os analytics." />;
+  // X047: os tres returns antecipados (erro, carga, vazio) saem; o boundary decide na ordem
+  // carregando -> erro -> vazio -> conteudo, com o erro tendo precedencia sobre o vazio.
+  if (isError || isLoading || campaigns.length === 0) {
+    return (
+      <TalkXQueryBoundary
+        query={{ isLoading, isError }}
+        entity="as analytics"
+        skeleton={<TalkXSkeletonRows rows={6} />}
+        isEmpty={campaigns.length === 0}
+        empty={<TalkXEmptyState icon={BarChart3} title="Nenhuma campanha para analisar" description="Execute pelo menos uma campanha para ver os analytics." />}
+      >
+        <></>
+      </TalkXQueryBoundary>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-4 min-w-0">
