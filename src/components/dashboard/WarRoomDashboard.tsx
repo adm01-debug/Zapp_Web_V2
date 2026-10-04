@@ -82,7 +82,7 @@ export function WarRoomDashboard({
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <WarRoomMetricCard icon={Users} label="Na Fila" value={globalMetrics.totalWaiting} trend={globalMetrics.totalWaiting > 30 ? 'up' : 'stable'} alert={globalMetrics.totalWaiting > 50} />
         <WarRoomMetricCard icon={XCircle} label="SLA Violados" value={globalMetrics.totalBreaches} trend="up" alert={globalMetrics.totalBreaches > 5} critical={globalMetrics.totalBreaches > 10} />
-        <WarRoomMetricCard icon={AlertTriangle} label="Em Risco" value={globalMetrics.totalWarnings} trend="up" alert={globalMetrics.totalWarnings > 10} />
+        <WarRoomMetricCard icon={AlertTriangle} label="Em Risco" value={globalMetrics.totalWarnings ?? '—'} trend={globalMetrics.totalWarnings === null ? undefined : 'up'} alert={(globalMetrics.totalWarnings ?? 0) > 10} />
         <WarRoomMetricCard icon={Users} label="Agentes Online" value={globalMetrics.onlineAgents} suffix={`/${agents.length}`} trend="stable" />
         <WarRoomMetricCard icon={CheckCircle} label="Resolvidos Hoje" value={globalMetrics.totalResolved} trend="up" positive />
         <WarRoomMetricCard icon={TrendingUp} label="Satisfação" value={globalMetrics.avgSatisfaction.toFixed(1)} suffix="/5" trend="stable" positive />
