@@ -1,4 +1,4 @@
-# Ferramentas de apoio aos agentes — Cartographer, Claude-Mem e Headroom
+# Ferramentas de apoio aos agentes — Cartographer, Claude-Mem, Headroom e Grill Me
 
 Data de referência: 03/10/2026, America/Sao_Paulo. Repositório: `adm01-debug/Zapp_Web_V2`.
 
@@ -12,6 +12,8 @@ Os três nomes foram discutidos como candidatos a prova de conceito, mas não fo
 
 Este é um adendo posterior ao inventário. Os 18 itens AT abaixo têm identidade própria e não alteram os 5.166 registros, 62 fontes e 104 achados do baseline histórico. O [MASTER_LEDGER](MASTER_LEDGER.json) permanece o registro da reconciliação original. Este documento é a fonte das tarefas de avaliação de ferramentas, ligada à [ordem de correções](EXECUTION_WAVES.md).
 
+**Continuação sobre Grill Me:** o [protocolo e revisão de planos](GRILL_ME_PLAN_REVIEW_2026-10-03.md) acrescenta seis tarefas GM: três entregas documentais concluídas e três atividades de integração/validação planejadas. O registro conjunto contém 18 tarefas AT e seis tarefas GM; os estados permanecem individualizados. Instalação e entrevista integral de Grill Me não foram realizadas.
+
 ## Papéis propostos e evidência disponível
 
 | Componente | Papel no trabalho do ZAPP | O que a fonte primária documenta | Estado no projeto |
@@ -19,6 +21,7 @@ Este é um adendo posterior ao inventário. Os 18 itens AT abaixo têm identidad
 | Cartographer | Mapa navegável do código e contexto por tarefa, com rastreabilidade até arquivos e revisões. | A v2 oferece CLI/MCP, grafo local, briefs delimitados, verificação de atualização e auditorias de remoção. O plugin legado de Claude Code é uma modalidade distinta. [Fonte C] | Planejado; versão, modo de uso e POC pendentes. |
 | Claude-Mem | Continuidade entre sessões: decisões, investigações, erros recorrentes e ponto de retomada. | Captura observações de ferramentas, produz resumos e recupera contexto futuro. O projeto anuncia suporte a vários agentes, incluindo Codex e Hermes. [Fonte M] | Planejado; compatibilidade e recuperação no ambiente do usuário pendentes. |
 | Headroom | Redução mensurável de contexto enviado ao modelo, preservando acesso às evidências originais. | Oferece biblioteca, proxy, MCP e wrap para Claude Code/Codex; também possui funções de memória. [Fonte H] | Planejado; benefício, compatibilidade e restauração da configuração pendentes. |
+| Grill Me | Revisão das premissas e dependências antes de consolidar planos ou replanejar decisões relevantes. | A referência RobMitt orienta entrevistas sequenciais e investigação dos arquivos antes das perguntas. [Fonte G] | Protocolo e revisão documental aplicados; instalação, adaptação executável e validação por agente pendentes. |
 
 A presença de suporte na documentação upstream não atesta funcionamento no Claude, Codex ou Hermes usados pelo usuário. Para Headroom/Hermes, a rota genérica por proxy ou MCP é uma hipótese a validar; o README consultado não lista um wrap específico para Hermes.
 
@@ -26,7 +29,7 @@ A presença de suporte na documentação upstream não atesta funcionamento no C
 
 ## Tarefas e critérios de aceite
 
-Todos os itens abaixo estão em **PLANEJADO / POC NÃO EXECUTADA**. Responsabilidade funcional: engenharia e orquestração dos agentes; responsável nominal ainda não designado. A ordem sugerida é preparação comum, Cartographer, Claude-Mem, Headroom e avaliação conjunta. Esta frente pode acompanhar as ondas de correção, sem bloquear o tratamento dos defeitos prioritários.
+As 18 tarefas AT-001 a AT-018 desta tabela estão em **PLANEJADO / POC NÃO EXECUTADA**. As entregas documentais GM têm os estados próprios registrados no adendo Grill Me. Responsabilidade funcional: engenharia e orquestração dos agentes; responsável nominal ainda não designado. A preparação começa pela revisão de decisões documentada em Grill Me e pela definição das dependências abaixo; segue para as POCs de Cartographer, Claude-Mem, Headroom e avaliação conjunta. Esta frente pode acompanhar as ondas de correção, sem bloquear o tratamento dos defeitos prioritários.
 
 | ID | Trabalho a executar no escopo apropriado | Evidência necessária para concluir |
 | --- | --- | --- |
@@ -45,9 +48,15 @@ Todos os itens abaixo estão em **PLANEJADO / POC NÃO EXECUTADA**. Responsabili
 | AT-013 | Comparar tarefas do ZAPP com e sem compressão. | Mesmos SHA, modelo e tarefas; tokens de entrada/saída/cache, latência, custo total e qualidade registrados, incluindo o custo adicional da ferramenta. |
 | AT-014 | Exercitar casos em que detalhes são essenciais à auditoria. | Erros raros em logs, IDs, condições SQL, diferenças de contrato e decisões restritivas continuam detectáveis; recuperação do original funciona na sessão que consome o resumo. |
 | AT-015 | Validar falha, indisponibilidade e remoção da configuração. | Comportamento do agente conhecido quando proxy/cache falha; nenhuma mudança silenciosa de modelo; configuração anterior restaurada e verificada. |
-| AT-016 | Definir a autoridade da memória entre Claude-Mem e Headroom. | Uma fonte primária de continuidade, com política explícita para a outra; ausência de injeção duplicada, conclusões contraditórias e retenção acidental. |
+| AT-016 | Definir a autoridade da memória entre Claude-Mem e Headroom. | Política definida para quem registra, recupera, invalida e retém o contexto; cenários de verificação associados a AT-010/AT-017. A ausência operacional de duplicações e contradições será demonstrada nessas etapas posteriores. |
 | AT-017 | Executar uma avaliação conjunta sobre uma tarefa real, em cópia controlada. | Mapa, memória e compressão rastreados separadamente; resultado funcional comparável à referência; limitações preservadas no relatório. |
 | AT-018 | Registrar decisão de adoção e roteiro de operação por agente. | Parecer adotar/ajustar/descartar com métricas, configuração exata, responsável, manutenção, recuperação e vínculo para evidências. |
+
+## Dependências explícitas entre tarefas
+
+A numeração identifica tarefas e não determina sozinha sua ordem. A revisão GQ-07 em [Grill Me](GRILL_ME_PLAN_REVIEW_2026-10-03.md) explicitou a precedência que faltava: AT-003 e AT-016 devem ser resolvidas antes de captura/injeção persistente em AT-008 ou AT-012. AT-004 antecede AT-006/AT-007; AT-013, AT-014 e AT-015 antecedem AT-017, que antecede a decisão de adoção em AT-018.
+
+A validação do grill-me por agente fica em GM-004 a GM-006. Seu protocolo documental já foi aplicado e não obriga instalar a skill antes de avançar nas correções prioritárias.
 
 ## Regras de encerramento
 
@@ -62,7 +71,8 @@ O ganho de Headroom será medido no trabalho do ZAPP. Percentuais publicados pel
 - **Fonte C:** [Cartographer — repositório e README](https://github.com/kingbootoshi/cartographer), consultado em 03/10/2026 no fuso America/Sao_Paulo.
 - **Fonte M:** [Claude-Mem — repositório e README](https://github.com/thedotmack/claude-mem), consultado na mesma data.
 - **Fonte H:** [Headroom — repositório e README](https://github.com/headroomlabs-ai/headroom), consultado na mesma data.
+- **Fonte G:** [Grill Me — SKILL.md na revisão 31d61d68fc40](https://github.com/RobMitt/grill-me-skill/blob/31d61d68fc406f8cc2a944b4b10e6f23877720f1/SKILL.md); identidade, protocolo e limites no [adendo Grill Me](GRILL_ME_PLAN_REVIEW_2026-10-03.md).
 - **Fonte do estado do projeto:** arquivos README, EXECUTION_WAVES, SESSION_HANDOFF e conteúdo retornado do PR #1869 no head `9b7339d53e08ee6bfdce86b06a52a111fc2b231e`; buscas nominais no branch padrão.
 - **Escopo de gravação vigente:** [README da reconciliação](README.md), somente `docs/reconciliation/**` na branch documental existente; PR mantido em draft.
 
-As fontes upstream são mutáveis; AT-001 exige fixar a revisão utilizada na POC. Esta publicação registra o plano e atualiza seu manifesto de integridade. Não certifica instalações locais/VPS, resultados de benchmark, execução dos 18 itens ou funcionamento do produto.
+As referências C/M/H ainda apontam a fontes upstream mutáveis; a fonte G de Grill Me já está fixada por commit. AT-001 exige fixar as revisões efetivamente utilizadas nas POCs. Esta publicação registra o plano e atualiza seu manifesto de integridade. Não certifica instalações locais/VPS, resultados de benchmark, execução dos 18 itens ou funcionamento do produto.

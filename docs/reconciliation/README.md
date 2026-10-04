@@ -25,4 +25,6 @@ A autorização cobre exclusivamente `docs/reconciliation/**`, na branch `docs/r
 
 ## Adendo de ferramentas para os agentes
 
-[Cartographer, Claude-Mem e Headroom](AGENT_TOOLING_PLAN_2026-10-03.md) passam a constar explicitamente no planejamento, com 18 tarefas de avaliação e critérios de aceite. POCs e instalações seguem pendentes de comprovação. O adendo tem registro próprio, vinculado à ordem futura de correções, e preserva as contagens do inventário histórico.
+[Cartographer, Claude-Mem e Headroom](AGENT_TOOLING_PLAN_2026-10-03.md) constam explicitamente no planejamento, com 18 tarefas AT de avaliação e critérios de aceite. POCs e instalações seguem pendentes de comprovação. O adendo tem registro próprio, vinculado à ordem futura de correções, e preserva as contagens do inventário histórico.
+
+[Grill Me](GRILL_ME_PLAN_REVIEW_2026-10-03.md) foi incorporado ao protocolo de revisão dos planos. A fonte foi fixada e a revisão documental de 12 questões foi aplicada; suas seis tarefas GM se dividem em três entregas documentais concluídas e três atividades de integração/validação planejadas. A instalação e a entrevista integral da skill original não foram realizadas.

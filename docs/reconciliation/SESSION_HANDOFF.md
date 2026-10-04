@@ -23,3 +23,11 @@ Não retomar esta auditoria como se nada tivesse sido concluído. Não repetir a
 Cartographer, Claude-Mem (citado pelo usuário como “claude-men”) e Headroom estavam na discussão de POC, mas não foram localizados no plano consolidado examinado no head `9b7339d53e08ee6bfdce86b06a52a111fc2b231e`. A lacuna documental foi tratada no [plano de ferramentas dos agentes](AGENT_TOOLING_PLAN_2026-10-03.md), com AT-001 a AT-018, todas planejadas e não executadas.
 
 Na retomada dessa frente, conferir instalações existentes e versões antes de qualquer configuração. Não declarar suporte validado no Hermes/Codex/Claude nem memória compartilhada apenas com base no anúncio upstream. Preservar a distinção entre a auditoria histórica concluída, este planejamento adicional e a futura execução das POCs.
+
+## Continuação: Grill Me
+
+O [adendo Grill Me](GRILL_ME_PLAN_REVIEW_2026-10-03.md) registra a referência RobMitt no commit `31d61d68fc406f8cc2a944b4b10e6f23877720f1`, o protocolo documental e a revisão de 12 questões sobre o plano das ferramentas. GM-001 a GM-003 foram concluídas documentalmente; GM-004 a GM-006 permanecem planejadas. As pastas de skills versionadas examinadas no head `400cffa4c71081a68c224274bcf5aacb667c54b9` não apresentaram grill-me; instalações globais/local/VPS não foram verificadas.
+
+Preservar a precedência AT-003/AT-016 antes de captura/injeção de memória em AT-008/AT-012. Continuar a partir das evidências e decisões registradas, sem reiniciar a auditoria histórica ou confundir protocolo documentado com skill carregada no agente. Fonte e inventário: [registro estruturado](evidence/grill-me-review-2026-10-03.json).
+
+**Nova solicitação durante esta continuação:** o usuário pediu reauditoria exaustiva da própria auditoria, buscando arquivos, funções, planos, camadas e microfuncionalidades sem análise suficiente. Essa solicitação autoriza reabrir conclusões e aprofundar a cobertura, preservando os snapshots históricos como evidência. O trabalho segue de análise e documentação, sem mudanças funcionais.

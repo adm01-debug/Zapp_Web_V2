@@ -3,8 +3,8 @@
   "baseline_main_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
   "post_baseline_cutoff_sha": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
   "scope": "docs/reconciliation/**",
-  "file_count": 228,
-  "bytes_of_hashed_files": 28719556,
+  "file_count": 230,
+  "bytes_of_hashed_files": 28743992,
   "excluded": [
     "evidence/ARTIFACT_MANIFEST.json"
   ],
@@ -18,9 +18,9 @@
     },
     {
       "path": "AGENT_TOOLING_PLAN_2026-10-03.md",
-      "bytes": 10309,
-      "sha256": "8d5a280e3630134f38e322a08d87012b799760a4e926e0077950608e47d9eaf0",
-      "git_blob_sha": "c8ea2a5fea9b9f3871cc539e1c800e0764f50677"
+      "bytes": 12331,
+      "sha256": "2ea52a4cad6c79e49e3c6029f4ae73d23f578474a849ce86250d931d7971bb7e",
+      "git_blob_sha": "a0582fd1665d3ac990e819fc09706002af3a8cd0"
     },
     {
       "path": "CODE_TRUTH_STRUCTURAL_SWEEP_2026-10-03.md",
@@ -36,9 +36,9 @@
     },
     {
       "path": "EXECUTION_WAVES.md",
-      "bytes": 4155,
-      "sha256": "b4d646895c23492ce2a10686d1ca0eca385b0506075ae48d389a83e8d52b225f",
-      "git_blob_sha": "bdfcf9c96c241c1ca82ff0d737374e8b6f81d6da"
+      "bytes": 4925,
+      "sha256": "aa30cb38858f10543c7d14bdc994e325072ce84822f5c714fe8183211e25eca1",
+      "git_blob_sha": "40e02368e57e5358394c7387ee82113ac39fb4cc"
     },
     {
       "path": "FINAL_RECONCILIATION_REPORT_2026-10-03.md",
@@ -69,6 +69,12 @@
       "bytes": 430,
       "sha256": "3ed7bc01b570c5768df581eea72900648ee033adc29f70add35b7230dda617f9",
       "git_blob_sha": "be21cbbbfed9a1827aec28c59fb2e40d60cb1ad7"
+    },
+    {
+      "path": "GRILL_ME_PLAN_REVIEW_2026-10-03.md",
+      "bytes": 11828,
+      "sha256": "c63a2346e6ef5cb6ed39d2ec00919791961b1037dbf963669855685d4231fd35",
+      "git_blob_sha": "3fa502d93af63cdf8d43eddeafb6822254d0b7e0"
     },
     {
       "path": "MASTER_LEDGER.json",
@@ -102,9 +108,9 @@
     },
     {
       "path": "README.md",
-      "bytes": 3243,
-      "sha256": "34cb80084f600c7ae6fe01dcfa61932469d959cbe820f13a8d2a4635ec7e81c8",
-      "git_blob_sha": "77d16aa867126ec3f821ee826a37688851b4749f"
+      "bytes": 3624,
+      "sha256": "47dba1a665c002c13ac11c6c2322462f4f8cdc2dced565191aa70ea3f4b50fb8",
+      "git_blob_sha": "5768ca6e246b55148562a0c640fce98feba71267"
     },
     {
       "path": "RECONCILIATION_CHECKPOINT_2026-10-03.md",
@@ -168,9 +174,9 @@
     },
     {
       "path": "SESSION_HANDOFF.md",
-      "bytes": 3115,
-      "sha256": "77a5fb8da3786104e79555353e0e0d6c30956386fbadb752c96f9ca2fbc1ce1f",
-      "git_blob_sha": "72db808d883769c3d6f7921c45258d56a2c218c1"
+      "bytes": 4392,
+      "sha256": "9ccb4b3c47652391d112886cb1b5852fabf94722ca3fc66f4e04ededa57ba13f",
+      "git_blob_sha": "f3cbcdc08eef616fc48ef05a7a514e2b20677f5e"
     },
     {
       "path": "SOURCE_CATALOG.json",
@@ -429,6 +435,12 @@
       "bytes": 1344,
       "sha256": "0f9e7b92b2a228137b9f35bdaf0c9c9bb0e94e797d6e522fdda5d62635dd5917",
       "git_blob_sha": "c84e1daf673ddf67e17f830a9a43c19f86c38c41"
+    },
+    {
+      "path": "evidence/grill-me-review-2026-10-03.json",
+      "bytes": 8158,
+      "sha256": "a684814e88df1c2fd65a743396c28aa19713c86908d5f415b54313d61b3a4b72",
+      "git_blob_sha": "4db7bb27f71004632343e633ac3abb7de5f8fba9"
     },
     {
       "path": "evidence/historical_issue_corrections.json",

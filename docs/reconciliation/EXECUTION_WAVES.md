@@ -20,8 +20,14 @@ Selecione um achado em [FINDINGS.md](FINDINGS.md), siga suas chaves canônicas p
 
 Não somar todos os PARTIAL/NOT_IMPLEMENTED de versões antigas. Não repetir uma migration arquivada para fechar checkbox. Não tomar PR merged como prova de publicação ou observação. As matrizes de [trabalho ativo](ACTIVE_WORK_REGISTRY_2026-10-03.md), [resíduos](RESIDUE_REGISTRY.md) e [riscos](OPEN_RISKS.md) delimitam as dependências.
 
-## Frente de apoio: Cartographer, Claude-Mem e Headroom
+## Frente de apoio: Cartographer, Claude-Mem, Headroom e Grill Me
 
 O [plano de ferramentas dos agentes](AGENT_TOOLING_PLAN_2026-10-03.md) registra os três componentes e as tarefas AT-001 a AT-018: preparação, mapa do código, memória entre sessões, compressão de contexto e avaliação conjunta. Esta frente pode acompanhar as ondas acima; a instalação das ferramentas não é condição para corrigir os defeitos prioritários.
 
 Estado: planejamento explícito, POCs pendentes e instalação/operação no ambiente do usuário não comprovadas. Os critérios de adoção incluem compatibilidade por agente, coexistência com Graphify, evidência de continuidade, qualidade após compressão, custo líquido e restauração. As tarefas AT são posteriores ao inventário e não alteram os totais do MASTER_LEDGER histórico.
+
+### Revisão das decisões com Grill Me
+
+O [protocolo Grill Me](GRILL_ME_PLAN_REVIEW_2026-10-03.md) integra a preparação de planos executáveis e os replanejamentos relevantes. A aplicação documental GQ-01 a GQ-12 já foi registrada; GM-004 a GM-006 conservam instalação/adaptação executável e validação como trabalho pendente. As 18 tarefas AT permanecem planejadas, e as seis GM têm estados próprios.
+
+Dependência corrigida: AT-003 e AT-016 antecedem captura ou injeção persistente em AT-008/AT-012. Definir a autoridade da memória antes de configurar os consumidores evita tratar a numeração do backlog como uma ordem suficiente. Pequenas correções com escopo e aceite definidos seguem seu fluxo, sem reabrir decisões já resolvidas.
