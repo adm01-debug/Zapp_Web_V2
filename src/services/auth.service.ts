@@ -118,6 +118,22 @@ export class AuthService {
     });
   }
 
+  /**
+   * R2-AUTH-003: nível de garantia (AAL) da sessão para o gate de MFA nas rotas.
+   * Retorna os dados crus do Supabase; null em erro — quem decide trata null
+   * como falha fechada, nunca como liberação.
+   */
+  static async getMfaAssurance() {
+    try {
+      const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (error || !data) throw error ?? new Error('sem dados de assurance');
+      return data;
+    } catch (err) {
+      log.error('[AuthService] Erro ao ler nível de garantia MFA:', err);
+      return null;
+    }
+  }
+
   static async signOut() {
     return supabase.auth.signOut();
   }
