@@ -1,6 +1,6 @@
 // Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
 import { evoFetch, extractBase64Media } from './evolution-send.ts';
-import { attributeMultiplixReply, attributeTalkXReply, TALKX_OPT_OUT_RE } from "./talkx-reply.ts";
+import { attributeMultiplixReply, attributeTalkXReply } from "./talkx-reply.ts";
 
 import {
   isRecord, normalizePhone, resolveEventJid,
@@ -8,6 +8,215 @@ import {
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// X030 — opt-out por palavra configurável + autoresposta pelo token da instância
+//
+// A lista fixa `TALKX_OPT_OUT_RE` (removida) foi substituída por
+// `talkx_optout_keywords` (X029). O edge carrega as palavras ativas com cache
+// de 5 min e casa pela MESMA normalização de `talkx_match_optout`; se a leitura
+// não estiver disponível, a RPC autoritativa decide. A palavra casada vai em
+// `reason` e a RPC `talkx_suppress_contact` (origem `auto_optout`) herda a
+// campanha do envio mais recente — o edge NÃO resolve `campaign_id`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Palavra de opt-out vinda de `talkx_optout_keywords`. */
+export interface OptOutKeyword {
+  keyword: string;
+  match_mode: "exact" | "contains";
+}
+
+// Cache L1 module-level (sobrevive entre invocações quentes do isolate), TTL
+// 5 min — mesmo desenho do cache de conexão em evolution-helpers.ts. A leitura
+// é barata mas roda a cada mensagem recebida; 5 min absorve os bursts.
+const OPT_OUT_KEYWORDS_TTL_MS = 5 * 60 * 1_000;
+let optOutKeywordsCache: { data: OptOutKeyword[]; expiresAt: number } | null = null;
+
+/** Zera o cache (testes e troca de palavras em ambiente quente). */
+export function resetOptOutKeywordCache(): void {
+  optOutKeywordsCache = null;
+}
+
+// Espelha public.talkx_normalize_optout_text (X029): minúsculas, acentos latinos
+// dobrados para ASCII e qualquer run de não-alfanumérico vira UM espaço simples,
+// com trim. A paridade com a RPC é o contrato: o edge só decide o casamento
+// porque aplica a MESMA normalização.
+const OPT_OUT_ACCENTS = "áàâãäåéèêëíìîïóòôõöúùûüçñýÁÀÂÃÄÅÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑÝ";
+const OPT_OUT_ASCII = "aaaaaaeeeeiiiiooooouuuucnyaaaaaaeeeeiiiiooooouuuucny";
+
+export function normalizeOptOutText(text: string | null | undefined): string {
+  const lower = (text ?? "").toLowerCase();
+  let mapped = "";
+  for (const ch of lower) {
+    const idx = OPT_OUT_ACCENTS.indexOf(ch);
+    mapped += idx >= 0 ? OPT_OUT_ASCII[idx] : ch;
+  }
+  return mapped.replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/**
+ * Lê as palavras ativas. Devolve a lista (possivelmente vazia) quando a leitura
+ * funcionou e `null` quando NÃO foi possível decidir — aí a RPC decide.
+ */
+async function loadOptOutKeywords(
+  supabase: EvolutionDbClient,
+): Promise<OptOutKeyword[] | null> {
+  const now = Date.now();
+  if (optOutKeywordsCache && optOutKeywordsCache.expiresAt > now) {
+    return optOutKeywordsCache.data;
+  }
+  try {
+    const { data, error } = await supabase
+      .from("talkx_optout_keywords")
+      .select("keyword, match_mode")
+      .eq("active", true);
+    if (error || !Array.isArray(data)) {
+      console.warn("[OPT-OUT] Falha ao ler talkx_optout_keywords:", error?.message);
+      return null;
+    }
+    const list: OptOutKeyword[] = [];
+    for (const row of data) {
+      const keyword = row.keyword;
+      if (typeof keyword !== "string" || keyword.length === 0) continue;
+      list.push({
+        keyword,
+        match_mode: row.match_mode === "contains" ? "contains" : "exact",
+      });
+    }
+    optOutKeywordsCache = { data: list, expiresAt: now + OPT_OUT_KEYWORDS_TTL_MS };
+    return list;
+  } catch (err) {
+    console.warn(
+      "[OPT-OUT] Erro ao ler talkx_optout_keywords:",
+      err instanceof Error ? err.message : String(err),
+    );
+    return null;
+  }
+}
+
+/**
+ * Casa com a MESMA regra de public.talkx_match_optout: `exact` tem prioridade,
+ * depois `contains` por palavra inteira; empate desempata por comprimento da
+ * palavra e ordem alfabética (igual ao ORDER BY da RPC). Devolve a palavra ou
+ * null.
+ */
+function matchOptOutKeywordLocal(
+  text: string,
+  keywords: OptOutKeyword[],
+): string | null {
+  const norm = normalizeOptOutText(text);
+  if (!norm) return null;
+  let best: { keyword: string; exact: boolean; len: number } | null = null;
+  for (const k of keywords) {
+    const kn = normalizeOptOutText(k.keyword);
+    if (!kn) continue;
+    const exact = norm === kn;
+    const contains = k.match_mode === "contains" && !exact &&
+      (norm.startsWith(kn + " ") || norm.endsWith(" " + kn) || norm.includes(" " + kn + " "));
+    if (!exact && !contains) continue;
+    const cand = { keyword: k.keyword, exact, len: k.keyword.length };
+    if (
+      !best ||
+      (cand.exact && !best.exact) ||
+      (cand.exact === best.exact && cand.len > best.len) ||
+      (cand.exact === best.exact && cand.len === best.len && cand.keyword < best.keyword)
+    ) {
+      best = cand;
+    }
+  }
+  return best ? best.keyword : null;
+}
+
+/**
+ * Resolve a palavra de opt-out do texto. Caminho normal: leitura cacheada das
+ * palavras ativas. Quando ela não está disponível (leitura falhou), a RPC
+ * autoritativa `talkx_match_optout` decide — "na dúvida, a RPC decide".
+ */
+async function resolveOptOutKeyword(
+  supabase: EvolutionDbClient,
+  text: string,
+): Promise<string | null> {
+  const keywords = await loadOptOutKeywords(supabase);
+  if (keywords) return matchOptOutKeywordLocal(text, keywords);
+  const { data, error } = await supabase.rpc("talkx_match_optout", { p_text: text });
+  if (error) {
+    console.warn("[OPT-OUT] talkx_match_optout falhou:", error.message);
+    return null;
+  }
+  return typeof data === "string" && data.length > 0 ? data : null;
+}
+
+/**
+ * X064: resposta de botão/lista cujo id é `talkx_optout` aciona o opt-out.
+ * Cobre os shapes v2/Baileys e GO; devolve o id selecionado ou null.
+ */
+export function extractInteractiveResponseId(
+  message: Record<string, unknown> | undefined,
+): string | null {
+  if (!isRecord(message)) return null;
+  const read = (node: unknown, key: string): string | null => {
+    if (!isRecord(node)) return null;
+    const value = node[key];
+    return typeof value === "string" && value.length > 0 ? value : null;
+  };
+  const button = read(message.buttonsResponseMessage, "selectedButtonId") ??
+    read(message.buttonsResponseMessage, "selectedId");
+  if (button) return button;
+  const template = read(message.templateButtonReplyMessage, "selectedId");
+  if (template) return template;
+  const list = message.listResponseMessage;
+  const listId = read(list, "selectedRowId") ??
+    read(isRecord(list) ? list.singleSelectReply : null, "selectedRowId");
+  if (listId) return listId;
+  const interactive = message.interactiveResponseMessage;
+  if (isRecord(interactive)) {
+    const native = interactive.nativeFlowResponseMessage;
+    if (isRecord(native)) {
+      const params = native.paramsJson;
+      if (typeof params === "string" && params) {
+        try {
+          const parsed = JSON.parse(params) as { id?: unknown; buttonId?: unknown };
+          const id = typeof parsed?.id === "string"
+            ? parsed.id
+            : typeof parsed?.buttonId === "string"
+            ? parsed.buttonId
+            : null;
+          if (id) return id;
+        } catch { /* paramsJson não-JSON: ignora */ }
+      }
+      const id = read(native, "id");
+      if (id) return id;
+    }
+  }
+  return null;
+}
+
+const TALKX_OPTOUT_BUTTON_ID = "talkx_optout";
+
+/** Lê `talkx_settings.optout_autoreply` (jsonb string). Vazio => sem autoresposta. */
+async function loadOptOutAutoreply(
+  supabase: EvolutionDbClient,
+): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from("talkx_settings")
+      .select("value")
+      .eq("key", "optout_autoreply")
+      .maybeSingle();
+    if (error) {
+      console.warn("[OPT-OUT] Falha ao ler optout_autoreply:", error.message);
+      return null;
+    }
+    const value = data?.value;
+    return typeof value === "string" && value.trim() ? value : null;
+  } catch (err) {
+    console.warn(
+      "[OPT-OUT] Erro ao ler optout_autoreply:",
+      err instanceof Error ? err.message : String(err),
+    );
+    return null;
+  }
+}
 
 // Resolve a mídia na ordem mais barata: base64 do próprio webhook (Evolution GO
 // com WEBHOOKFILES=true; v2 com webhookBase64) → URL direta (CDN/MinIO) →
@@ -209,7 +418,14 @@ export async function handleIncomingMessage(
   if (parsed.messageType === 'reaction') return;
 
   let { mediaUrl } = parsed;
-  const { content, messageType } = parsed;
+  let { content } = parsed;
+  const { messageType } = parsed;
+
+  // X064/X030: resposta de botão/lista com id `talkx_optout` é uma mensagem útil
+  // mesmo sem texto (o GO entrega só o id selecionado). Sem considerar o id, o
+  // guard de vazio abaixo a descartaria antes de o opt-out ser avaliado.
+  const interactiveResponseId = extractInteractiveResponseId(message);
+  if (!content && interactiveResponseId) content = interactiveResponseId;
 
   // Texto sem conteúdo e sem mídia (undecryptable/protocol residual) viraria
   // linha fantasma vazia — mesmo guard que o caminho de saída já tem.
@@ -280,51 +496,72 @@ export async function handleIncomingMessage(
   if (tx.outcome === 'inserted' && messageType === 'text' && content) {
     void enrichIncomingLinkPreview(supabase, tx.message_id, content, supabaseUrl, supabaseServiceKey);
   }
+  // X030: opt-out por palavra configurada (talkx_optout_keywords, casada com a
+  // MESMA normalização da RPC) OU por resposta de botão/lista com id
+  // `talkx_optout` (X064). Avaliado só para mensagem recebida (nunca a nossa).
+  const optOutKeyword = key.fromMe
+    ? null
+    : interactiveResponseId === TALKX_OPTOUT_BUTTON_ID
+    ? TALKX_OPTOUT_BUTTON_ID
+    : messageType === 'text' && content
+    ? await resolveOptOutKeyword(supabase, content)
+    : null;
+
   // E57: opt-out automatico por palavra-chave (gateado por campanha recente 30 dias)
-  if ((tx.outcome === 'inserted' || tx.outcome === 'updated') && messageType === 'text' && content && !key.fromMe) {
-    if (TALKX_OPT_OUT_RE.test(content.trim()) && tx.contact_id) {
-      // Fix P1: usar phone resolvido via bestJid/normalizePhone (ja disponivel no escopo da funcao pai)
-      const resolvedPhone = phone ?? ((key.remoteJid ?? '').split('@')[0].replace(/\D/g, ''));
-      if (resolvedPhone && resolvedPhone.length >= 8) {
-        // Gate: verificar se ha campanha recente (30 dias) para o contato
-        const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const { data: recentSend } = await supabase.from('talkx_recipients')
-          .select('id').eq('contact_id', tx.contact_id)
-          .not('sent_at', 'is', null).gte('sent_at', cutoff).limit(1);
-        if (recentSend && recentSend.length > 0) {
-          const { data: newId, error: suppErr } = await supabase.rpc('talkx_suppress_contact', {
-            p_contact_id: tx.contact_id,
-            p_phone: resolvedPhone,
-            p_reason: 'Opt-out via mensagem: ' + content.trim().slice(0, 50),
-            p_reason_code: 'opt_out',
-            p_origin: 'auto_optout',
-            p_source_message_id: tx.message_id ?? null,
-          });
-          if (newId) {
-            console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist');
-            // E59: enviar mensagem de confirmacao ao contato
-            try {
-              const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\/+$/, '');
-              const evolutionKey = Deno.env.get('EVOLUTION_API_KEY') ?? '';
-              if (evolutionUrl && evolutionKey) {
+  if (optOutKeyword && (tx.outcome === 'inserted' || tx.outcome === 'updated') && tx.contact_id) {
+    // Fix P1: usar phone resolvido via bestJid/normalizePhone (ja disponivel no escopo da funcao pai)
+    const resolvedPhone = phone ?? ((key.remoteJid ?? '').split('@')[0].replace(/\D/g, ''));
+    if (resolvedPhone && resolvedPhone.length >= 8) {
+      // Gate: verificar se ha campanha recente (30 dias) para o contato
+      const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: recentSend } = await supabase.from('talkx_recipients')
+        .select('id').eq('contact_id', tx.contact_id)
+        .not('sent_at', 'is', null).gte('sent_at', cutoff).limit(1);
+      if (recentSend && recentSend.length > 0) {
+        // X030: a palavra casada vai em `reason`; a campanha NÃO é resolvida na
+        // edge — a RPC talkx_suppress_contact (origem auto_optout) herda a
+        // campanha do envio mais recente quando p_campaign_id é omitido.
+        const { data: newId, error: suppErr } = await supabase.rpc('talkx_suppress_contact', {
+          p_contact_id: tx.contact_id,
+          p_phone: resolvedPhone,
+          p_reason: 'Opt-out via mensagem: ' + optOutKeyword,
+          p_reason_code: 'opt_out',
+          p_origin: 'auto_optout',
+          p_source_message_id: tx.message_id ?? null,
+        });
+        if (newId) {
+          console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist (' + optOutKeyword + ')');
+          // E59: mensagem de confirmacao. O texto vem de
+          // talkx_settings.optout_autoreply e sai pelo token da INSTANCIA que
+          // recebeu a mensagem (resolvido no Vault via get_instance_token).
+          try {
+            const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\/+$/, '');
+            const evolutionKey = Deno.env.get('EVOLUTION_API_KEY') ?? '';
+            const autoReply = await loadOptOutAutoreply(supabase);
+            if (evolutionUrl && autoReply) {
+              const { data: tokenData } = await supabase.rpc('get_instance_token', { p_instance_id: instance });
+              const instanceToken = typeof tokenData === 'string' && tokenData.length > 0 ? tokenData : null;
+              if (!instanceToken) {
+                console.warn('[OPT-OUT] Token da instancia ausente — confirmacao nao enviada (' + instance + ')');
+              } else {
                 await evoFetch(evolutionUrl, evolutionKey, '/message/sendText/' + instance, {
                   number: resolvedPhone,
-                  text: 'Você foi removido da lista de comunicações da Promo Brindes. Não receberemos mais mensagens para este número. Em caso de dúvidas, entre em contato pelo nosso site.',
+                  text: autoReply,
                   delay: 500,
-                });
+                }, undefined, undefined, undefined, instanceToken);
                 console.warn('[OPT-OUT] Confirmacao enviada para', resolvedPhone);
               }
-            } catch (notifErr) {
-              console.warn('[OPT-OUT] Falha ao enviar confirmacao:', notifErr instanceof Error ? notifErr.message : String(notifErr));
             }
-          } else if (!suppErr) {
-            console.warn('[OPT-OUT] ' + resolvedPhone + ' ja suprimido (idempotente): confirmacao nao reenviada');
-          } else {
-            console.warn('[OPT-OUT] Falha:', suppErr?.message);
+          } catch (notifErr) {
+            console.warn('[OPT-OUT] Falha ao enviar confirmacao:', notifErr instanceof Error ? notifErr.message : String(notifErr));
           }
+        } else if (!suppErr) {
+          console.warn('[OPT-OUT] ' + resolvedPhone + ' ja suprimido (idempotente): confirmacao nao reenviada');
         } else {
-          console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
+          console.warn('[OPT-OUT] Falha:', suppErr?.message);
         }
+      } else {
+        console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
       }
     }
   }
@@ -334,8 +571,9 @@ export async function handleIncomingMessage(
   // estar garantido antes de o webhook responder, senão uma resposta podia ser
   // perdida se a função fosse congelada logo após o retorno. O telefone resolvido
   // (bestJid/normalizePhone) cobre o contato que chegou por outro contact_id (LID).
+  // X030: a MESMA mensagem de opt-out (palavra OU botão) não conta como resposta.
   if (tx.outcome === 'inserted' && !key.fromMe && tx.contact_id && tx.message_id) {
-    if (!TALKX_OPT_OUT_RE.test((content ?? '').trim())) {
+    if (!optOutKeyword) {
       await attributeTalkXReply(supabase, tx.contact_id, phone ?? null, tx.message_id);
       // F62: a MESMA resposta tambem fecha o item do Multiplix. A citacao (quando existe)
       // e o unico jeito de saber QUAL envio gerou a resposta — sem ela a atribuicao e por

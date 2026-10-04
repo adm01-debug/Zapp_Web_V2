@@ -30,9 +30,21 @@ function fakeSupabase(chamadas: Chamada[], rpcHandlers: Record<string, RpcHandle
   chain.maybeSingle = async () =>
     tabela === "whatsapp_connections" ? { data: { id: "conn-1" }, error: null } : { data: null, error: null };
   chain.single = chain.maybeSingle;
+  // X030: as palavras de opt-out saíram do regex fixo e agora vêm de
+  // `talkx_optout_keywords`. O fixture devolve o seed da X029 para que "SAIR"
+  // continue sendo reconhecido como opt-out (e não conte como resposta).
+  const SEED_KEYWORDS = [
+    "sair", "parar", "pare", "stop", "cancelar",
+    "remover", "descadastrar", "unsubscribe", "optout", "nao quero",
+  ].map((keyword) => ({ keyword, match_mode: "exact" }));
   // Consultas encadeadas sem terminal (ex.: gate de opt-out em talkx_recipients)
   // resolvem lista vazia — nenhuma campanha recente no fixture.
-  chain.then = (resolve: (value: unknown) => unknown) => resolve({ data: [], error: null });
+  chain.then = (resolve: (value: unknown) => unknown) =>
+    resolve(
+      tabela === "talkx_optout_keywords"
+        ? { data: SEED_KEYWORDS, error: null }
+        : { data: [], error: null },
+    );
   return {
     from: (t: string) => {
       tabela = t;

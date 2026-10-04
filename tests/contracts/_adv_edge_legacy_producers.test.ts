@@ -99,6 +99,11 @@
  *    atribuição de resposta com await). São arquivos de teste, não produzem token legado: o mapa
  *    INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido sobe
  *    (210 → 212), medido pela varredura depois do merge.
+ *  - 213: X030 (03/10/2026) — `_shared/__tests__/talkx-webhook-optout.test.ts` (prova Deno do opt-out
+ *    por palavra configurável, autoresposta pelo token da instância e resposta de botão/lista com id
+ *    `talkx_optout`). É arquivo de teste, não produz token legado: o mapa INVENTARIO e a contagem de
+ *    ocorrências (3) seguem idênticos — só o total varrido sobe (212 → 213), medido pela varredura
+ *    depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -173,8 +178,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('212 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(212);
+  it('213 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(213);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
