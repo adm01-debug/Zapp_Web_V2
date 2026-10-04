@@ -45,13 +45,13 @@ import { TalkXTemplates } from '../TalkXTemplates';
 
 describe('matriz de estados — TalkXTemplates (X047b)', () => {
   it('consulta com erro: mostra o erro e NÃO o vazio da consulta', () => {
-    const { container } = render(<TalkXTemplates />);
+    const { container } = render(<TalkXTemplates onUseTemplate={vi.fn()} />);
     expect(screen.getByText(/Não foi possível carregar/)).toBeTruthy();
     expect(container.querySelector('[data-talkx-query="empty"]')).toBeNull();
   });
 
   it('consulta com erro: não mostra nehum dos vazios da tela', () => {
-    render(<TalkXTemplates />);
+    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
     expect(screen.queryByText('Nenhum template criado')).toBeNull();
     expect(screen.queryByText('Nenhum template encontrado')).toBeNull();
   });
