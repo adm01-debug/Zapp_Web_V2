@@ -1,5 +1,6 @@
 // Shared proxy logic for Evolution API edge function
 import { translateV2ToGo } from "./evolution-go-routes.ts";
+import { instanceNameFromV2Path } from "./evolution-instance-token.ts";
 
 // GO responde envios como { message:'success', data:{ Info:{ ID, Chat, IsFromMe,… }, Message } }.
 // O frontend (messageSender, useChatMediaSending, useSendProduct) lê key.id/messageId (shape v2).
@@ -105,6 +106,12 @@ export async function proxyToEvolution(
   // E22: chave do circuit breaker (normalmente o nome da instância). Cai em
   // instanceInPath ou '__admin' quando o chamador não informa.
   cbKey?: string,
+  // E16/TRA-002: token da instância resolvido pelo chamador via
+  // get_instance_token (evolution-instance-token.ts). Sem ele, o fallback
+  // EVOLUTION_INSTANCE_TOKEN só vale quando o nome NO PATH é a instância
+  // padrão — a GO seleciona a instância pela credencial, então a da padrão
+  // não pode autenticar rota de outra conexão.
+  instanceToken?: string,
 ): Promise<Response> {
   const breakerKey = cbKey || instanceInPath || '__admin';
   if (cbIsOpen(breakerKey)) {
@@ -133,9 +140,26 @@ export async function proxyToEvolution(
       goPath = go.path;
       if (go.contentType) contentType = go.contentType;
       if (go.auth === "instance") {
-        const instToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
-        if (!instToken) console.error(`[Evolution GO] EVOLUTION_INSTANCE_TOKEN ausente — usando a key global em rota de instância (${go.path}); o GO responderá 401.`);
-        apikey = instToken ?? evolutionApiKey;
+        const instName = instanceNameFromV2Path(v2Path);
+        if (instanceToken) {
+          apikey = instanceToken;
+        } else {
+          const envToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+          if (envToken && instName === Deno.env.get("EVOLUTION_INSTANCE_NAME")) {
+            console.error(`[Evolution GO] instanceToken não resolvido para a instância padrão ${instName} (${go.path}) — fallback EVOLUTION_INSTANCE_TOKEN.`);
+            apikey = envToken;
+          } else {
+            // TRA-002: nunca usar a key global nem a credencial da padrão em
+            // rota de outra instância — a GO executaria na instância errada.
+            console.error(`[Evolution GO] rota de instância sem credencial resolvida (${v2Path})`);
+            return new Response(JSON.stringify({
+              error: true,
+              message: `Credencial da instância '${instName || "desconhecida"}' não configurada.`,
+            }), {
+              status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
       }
       console.log(`[Evolution GO] translated → ${method} ${path}`);
     }

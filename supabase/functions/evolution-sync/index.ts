@@ -78,7 +78,7 @@ serve(async (req) => {
     }
 
     if (action === 'setup-webhook') {
-      return await setupWebhook(evolutionApiUrl, evolutionApiKey, instanceName, supabaseUrl, body.webhookUrl, corsHeaders);
+      return await setupWebhook(supabase, evolutionApiUrl, evolutionApiKey, instanceName, supabaseUrl, body.webhookUrl, corsHeaders);
     }
 
     if (action === 'cleanup-mock') {

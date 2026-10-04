@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
+import { resolveInstanceToken } from '../_shared/evolution-instance-token.ts';
 import { errorResponse, jsonResponse, requireEnv } from "../_shared/validation.ts";
 import { escapeHtml } from '../_shared/notification-events.ts';
 import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
@@ -59,42 +60,51 @@ export async function handleConnectionHealthCheck(
       let responseTime = 0;
 
       try {
-        const resp = await evoFetch(baseUrl, evolutionKey,
-          `/instance/connectionState/${conn.instance_id}`, undefined,
-          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'GET');
-        responseTime = Math.round(performance.now() - start);
+        // E24/TRA-002: o status é consultado com a credencial DA conexão
+        // (Vault via get_instance_token). Sem ela, a conexão não é consultada
+        // com a credencial da padrão — marcaria a saúde de A como sendo de B.
+        const instanceToken = await resolveInstanceToken(supabase, conn.instance_id);
+        if (!instanceToken) {
+          healthStatus = 'no_credentials';
+          errorMessage = 'instance token ausente';
+        } else {
+          const resp = await evoFetch(baseUrl, evolutionKey,
+            `/instance/connectionState/${conn.instance_id}`, undefined,
+            (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'GET', undefined, instanceToken);
+          responseTime = Math.round(performance.now() - start);
 
-        if (resp.ok) {
-          const data = await resp.json();
-          const state = extractConnectionState(data);
-          healthStatus = state === 'open' ? 'healthy' : state === 'close' ? 'disconnected' : 'degraded';
+          if (resp.ok) {
+            const data = await resp.json();
+            const state = extractConnectionState(data);
+            healthStatus = state === 'open' ? 'healthy' : state === 'close' ? 'disconnected' : 'degraded';
 
-          // Only update for definitive GO states; skip transient (connecting/qr_pending).
-          const dbStatus = state === 'open' ? 'connected' : state === 'close' ? 'disconnected' : null;
-          if (dbStatus && dbStatus !== conn.status) {
-            // Never overwrite a QR-scan or reconnect transient state with 'disconnected'.
-            const isTransient = conn.status === 'qr_pending' || conn.status === 'connecting';
-            if (dbStatus === 'connected' || !isTransient) {
-              // .eq('status', conn.status): um webhook pode ter mudado a linha
-              // enquanto liamos o estado na GO. Sem isso, um qr_pending recem
-              // gravado viraria 'disconnected' e dispararia alerta falso.
-              // CAS pelo status lido. '.eq' com null nao casa linha nenhuma no
-              // PostgREST, entao conexao com status NULL precisa de 'is.null'.
-              const { data: updated } = await supabase.from('whatsapp_connections')
-                .update({ status: dbStatus, updated_at: new Date().toISOString() })
-                .eq('id', conn.id)
-                .or(conn.status === null || conn.status === undefined
-                  ? 'status.is.null'
-                  : `status.eq.${conn.status}`)
-                .select('id');
-              if (updated?.length && dbStatus === 'disconnected' && conn.status === 'connected') {
-                alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+            // Only update for definitive GO states; skip transient (connecting/qr_pending).
+            const dbStatus = state === 'open' ? 'connected' : state === 'close' ? 'disconnected' : null;
+            if (dbStatus && dbStatus !== conn.status) {
+              // Never overwrite a QR-scan or reconnect transient state with 'disconnected'.
+              const isTransient = conn.status === 'qr_pending' || conn.status === 'connecting';
+              if (dbStatus === 'connected' || !isTransient) {
+                // .eq('status', conn.status): um webhook pode ter mudado a linha
+                // enquanto liamos o estado na GO. Sem isso, um qr_pending recem
+                // gravado viraria 'disconnected' e dispararia alerta falso.
+                // CAS pelo status lido. '.eq' com null nao casa linha nenhuma no
+                // PostgREST, entao conexao com status NULL precisa de 'is.null'.
+                const { data: updated } = await supabase.from('whatsapp_connections')
+                  .update({ status: dbStatus, updated_at: new Date().toISOString() })
+                  .eq('id', conn.id)
+                  .or(conn.status === null || conn.status === undefined
+                    ? 'status.is.null'
+                    : `status.eq.${conn.status}`)
+                  .select('id');
+                if (updated?.length && dbStatus === 'disconnected' && conn.status === 'connected') {
+                  alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+                }
               }
             }
+          } else {
+            healthStatus = 'error';
+            errorMessage = `HTTP ${resp.status}: ${(await resp.text()).slice(0, 200)}`;
           }
-        } else {
-          healthStatus = 'error';
-          errorMessage = `HTTP ${resp.status}: ${(await resp.text()).slice(0, 200)}`;
         }
       } catch (err) {
         responseTime = Math.round(performance.now() - start);

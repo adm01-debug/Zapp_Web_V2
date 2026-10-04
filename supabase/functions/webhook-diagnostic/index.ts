@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
+import { resolveInstanceToken } from '../_shared/evolution-instance-token.ts';
 import { getCorsHeaders, handleCors } from '../_shared/validation.ts';
 import { decideControlAuthz } from '../_shared/evolution-control-authz.ts';
 
@@ -91,13 +92,18 @@ export async function handleWebhookDiagnostic(req: Request, _injected?: WebhookD
 
     for (const conn of instances) {
       const diag: Record<string, unknown> = { instance: conn.instance_id };
+      // TRA-002: rotas de instância saem com o token DESTA conexão — o
+      // diagnóstico de B nunca pode consultar com a credencial de A.
+      const connToken = await resolveInstanceToken(supabase, conn.instance_id);
+      if (!connToken) diag.instanceTokenMissing = true;
 
       // 2a. Check instance status - try multiple endpoints
       try {
         let state = 'unknown';
         const statusRes = await evoFetch(evolutionUrl, evolutionKey,
           `/instance/connectionState/${conn.instance_id}`, undefined,
-          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'GET');
+          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'GET',
+          undefined, connToken ?? undefined);
         if (statusRes.ok) {
           const statusData = await statusRes.json();
           state = extractConnectionState(statusData);
@@ -196,11 +202,17 @@ export async function handleWebhookDiagnostic(req: Request, _injected?: WebhookD
       // 2d. Auto-fix if requested
       if (action === 'auto-fix' && (diag.webhookSeverity === 'critical' || diag.webhookSeverity === 'warning')) {
         try {
+          // TRA-002: /instance/connect é rota DE INSTÂNCIA — o auto-fix de B
+          // usa o token de B; sem ele, não tenta (antes caía na credencial da
+          // instância padrão e consertava a instância errada).
+          if (IS_GO && !connToken) {
+            diag.autoFix = { applied: false, error: 'instance token ausente' };
+          } else {
           const fixRes = IS_GO
             ? await fetch(`${evolutionUrl}/instance/connect`, {
                 method: 'POST',
                 headers: {
-                  apikey: Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionKey,
+                  apikey: connToken!,
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
@@ -228,6 +240,7 @@ export async function handleWebhookDiagnostic(req: Request, _injected?: WebhookD
             signal: AbortSignal.timeout(15000),
           });
           diag.autoFix = { applied: fixRes.ok, status: fixRes.status };
+          }
         } catch (e) {
           diag.autoFix = { applied: false, error: e instanceof Error ? e.message : 'failed' };
         }

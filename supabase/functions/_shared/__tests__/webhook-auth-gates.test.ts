@@ -21,6 +21,7 @@ import {
 import { handleWhatsappWebhook } from "../../whatsapp-webhook/index.ts";
 import { handleGmailWebhook } from "../../gmail-webhook/index.ts";
 import { handleEvolutionWebhook } from "../../evolution-webhook/index.ts";
+import { resetInstanceTokenCache } from "../evolution-instance-token.ts";
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -392,16 +393,38 @@ Deno.test("evolution-webhook: instanceToken divergente -> 401 (inclusive quando 
   );
 });
 
-Deno.test("evolution-webhook: instanceToken global correto -> processa (200, sem 401)", async () => {
+// TRA-002: o token global (EVOLUTION_INSTANCE_TOKEN) é a credencial LEGADA da
+// instância PADRÃO — só vale para ela (fallback de transição do resolvedor).
+// Aceitar o token da padrão num evento de OUTRA instância era o defeito
+// TRA-002: agora falha fechado com 401.
+Deno.test("evolution-webhook: instanceToken global vale SÓ para a instância padrão -> 200", async () => {
   await withEnv(
     {
+      EVOLUTION_INSTANCE_NAME: "INST-A",
       EVOLUTION_INSTANCE_TOKEN: "tok-global",
       SUPABASE_URL: "http://127.0.0.1:9",
       SUPABASE_SERVICE_ROLE_KEY: "fake-service-role",
     },
     async () => {
+      resetInstanceTokenCache();
       const res = await handleEvolutionWebhook(post(EVO_URL, evoBody({ instanceToken: "tok-global" })));
       assertEquals(res.status, 200);
+    },
+  );
+});
+
+Deno.test("evolution-webhook: instanceToken global NÃO vale para outra instância -> 401 (TRA-002)", async () => {
+  await withEnv(
+    {
+      EVOLUTION_INSTANCE_NAME: "PRINCIPAL",
+      EVOLUTION_INSTANCE_TOKEN: "tok-global",
+      SUPABASE_URL: "http://127.0.0.1:9",
+      SUPABASE_SERVICE_ROLE_KEY: "fake-service-role",
+    },
+    async () => {
+      resetInstanceTokenCache();
+      const res = await handleEvolutionWebhook(post(EVO_URL, evoBody({ instanceToken: "tok-global" })));
+      assertEquals(res.status, 401);
     },
   );
 });

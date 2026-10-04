@@ -237,6 +237,12 @@ export async function send(item: SendItem, deps: SendDeps): Promise<SendResult> 
     : { path: plan.v2Path, method: "POST", body: plan.v2Body, auth: "instance" };
   if (go?.invalid) throw new MessagingError("invalid_payload", go.invalid);
   if (!go) throw new MessagingError("unmapped_route", `rota GO não mapeada: ${plan.v2Path}`);
+  // TRA-002: na GO a instância é selecionada pela CREDENCIAL — sem o token da
+  // instância o adaptador mandaria a key global admin, que não é credencial de
+  // instância (ou pior, operaria na padrão). Falha explícita, nunca envia.
+  if (flavor !== "v2" && go.auth === "instance" && !deps.instanceToken) {
+    throw new MessagingError("missing_instance_token", `token da instância ${item.instanceId} ausente`);
+  }
 
   await postPresence(item, presence, deps);
 

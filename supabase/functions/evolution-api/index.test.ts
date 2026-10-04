@@ -1,6 +1,7 @@
 import { assertEquals, assert } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import { handleEvolutionApi } from "./index.ts";
 import { createFakeEvolution } from "../_shared/__tests__/fake-evolution.ts";
+import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- mocks estruturais dos
    clients Supabase (SupabaseClient é genérico e não é importável no teste). */
@@ -106,11 +107,21 @@ Deno.test("R2-API-001: admin conserva a operação (set-webhook chega ao provedo
   const fake = createFakeEvolution();
   Deno.env.set("EVOLUTION_API_URL", fake.url);
   try {
+    // TRA-002: a rota de instância só sai para a GO com o token DELA — o
+    // service client precisa responder get_instance_token, senão o proxy
+    // falha explícito (correto) antes de qualquer request.
+    resetInstanceTokenCache();
+    const supabaseComToken: any = {
+      from: () => makeQuery(),
+      rpc: (fn: string) => fn === "get_instance_token"
+        ? Promise.resolve({ data: "token-instancia-fixture", error: null })
+        : Promise.resolve({ data: null, error: null }),
+    };
     const res = await handleEvolutionApi(
       controlRequest("set-webhook", { instanceName: "PRINCIPAL", url: "https://x/functions/v1/evolution-webhook", enabled: true }),
       {
         callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
-        supabase: makeServiceClient(),
+        supabase: supabaseComToken,
       },
     );
     assert(res.status !== 403, "admin não pode ser barrado");
@@ -224,3 +235,72 @@ Deno.test("R2-API-001: envio direto de agente sem contato visível é negado (fa
     await fake.stop();
   }
 });
+
+// ---------------------------------------------------------------------------
+// TRA-002 — caminho SEM credencial da instância (connect/status/disconnect/
+// update-privacy). A GO seleciona a instância pela CREDENCIAL: sem o token dela
+// no Vault a ação não pode cair na credencial da padrão — seria operar a
+// instância errada. O comportamento correto é a falha explícita
+// `Credencial da instância '<x>' não encontrada` (HTTP 200, contrato da edge) e
+// ZERO request ao provedor.
+//
+// O fake-evolution só registra POST; status usa GET e disconnect DELETE —
+// então aqui o "provedor" é um servidor local que conta QUALQUER método.
+// ---------------------------------------------------------------------------
+
+Deno.env.delete("EVOLUTION_INSTANCE_NAME");
+Deno.env.delete("EVOLUTION_INSTANCE_TOKEN");
+
+/** Provedor local que registra TODA request (qualquer método/path). */
+function createCountingProvider() {
+  const requests: { method: string; path: string }[] = [];
+  const server = Deno.serve(
+    { hostname: "127.0.0.1", port: 0, onListen() {} },
+    (req) => {
+      requests.push({ method: req.method, path: new URL(req.url).pathname });
+      return new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+  );
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("counting provider: esperado listener TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, requests, stop: () => server.shutdown() };
+}
+
+// rpc('get_instance_token') devolve null = instância sem token no Vault; o
+// fallback de transição não se aplica porque a instância não é a padrão.
+const NO_TOKEN_INSTANCE = "loja_sem_token";
+
+for (const action of ["connect", "status", "disconnect", "update-privacy"]) {
+  Deno.test(`TRA-002: ${action} sem credencial da instância falha explícito e não fala com o provedor`, async () => {
+    resetInstanceTokenCache();
+    const provider = createCountingProvider();
+    Deno.env.set("EVOLUTION_API_URL", provider.url);
+    try {
+      const body = action === "update-privacy"
+        ? { instanceName: NO_TOKEN_INSTANCE, readreceipts: "all" }
+        : { instanceName: NO_TOKEN_INSTANCE };
+      const res = await handleEvolutionApi(controlRequest(action, body), {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeServiceClient(),
+      });
+
+      assertEquals(res.status, 200, `${action} mantém o contrato HTTP 200 com erro no corpo`);
+      const json = await res.json();
+      assert(json?.error === true, `resposta deve ser { error: true }: ${JSON.stringify(json)}`);
+      assertEquals(
+        json?.message,
+        `Credencial da instância '${NO_TOKEN_INSTANCE}' não encontrada — recrie a conexão ou grave o token no Vault.`,
+      );
+      assertEquals(
+        provider.requests.length,
+        0,
+        `${action} sem credencial não pode chegar ao provedor: ${JSON.stringify(provider.requests)}`,
+      );
+    } finally {
+      await provider.stop();
+    }
+  });
+}

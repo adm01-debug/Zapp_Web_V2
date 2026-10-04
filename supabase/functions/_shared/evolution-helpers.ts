@@ -1,5 +1,6 @@
 // Shared helpers for Evolution API webhook and sync functions
 import { evoFetch, extractAvatarUrl } from './evolution-send.ts';
+import { resolveInstanceToken, type InstanceTokenClient } from './evolution-instance-token.ts';
 import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
 
@@ -296,15 +297,21 @@ export function generatePhoneVariants(phone: string): string[] {
   return [...variants];
 }
 
-export async function fetchProfilePicFromApi(instance: string, phone: string): Promise<string | null> {
+// TRA-002: o avatar pertence à instância que recebeu o evento — `tokenClient`
+// resolve o token DELA; sem credencial, null (best-effort) em vez de usar a
+// credencial de outra instância.
+export async function fetchProfilePicFromApi(instance: string, phone: string, tokenClient: InstanceTokenClient): Promise<string | null> {
   try {
     const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
     const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
     if (!evolutionUrl || !evolutionKey) return null;
+    const instanceToken = await resolveInstanceToken(tokenClient, instance);
+    if (!instanceToken) return null;
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
     const resp = await evoFetch(baseUrl, evolutionKey,
       `/chat/fetchProfilePictureUrl/${instance}`, { number: phone },
-      (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }));
+      (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }),
+      undefined, undefined, instanceToken);
     if (!resp.ok) return null;
     const result = await resp.json();
     return extractAvatarUrl(result);

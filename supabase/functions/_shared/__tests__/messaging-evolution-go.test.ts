@@ -192,6 +192,25 @@ Deno.test("F41 send recusa texto acima do limite sem tocar a rede", async () => 
   assertEquals(touched, false);
 });
 
+// TRA-002 (regressao): na GO a instância é a do TOKEN — um envio sem
+// instanceToken jamais pode sair com a key global admin (operaria na
+// instância errada ou levaria 401 confuso). Falha explícita antes da rede.
+Deno.test("F41 send sem instanceToken em rota de instância falha missing_instance_token sem tocar a rede (TRA-002)", async () => {
+  let touched = false;
+  const fetcher: Fetcher = () => {
+    touched = true;
+    return Promise.resolve(okResponse());
+  };
+  const deps = depsFor(fetcher);
+  delete deps.instanceToken;
+  const erro = await assertRejects(
+    () => send({ kind: "text", to: "5511999999999", instanceId: "inst-b", text: "oi" }, deps),
+    MessagingError,
+  );
+  assertEquals(erro.code, "missing_instance_token");
+  assertEquals(touched, false);
+});
+
 Deno.test("F41 send propaga erro do provedor (ok=false, status e corpo preservados)", async () => {
   const { fetcher } = recordingFetcher(() =>
     new Response(JSON.stringify({ error: "number is not registered on WhatsApp" }), { status: 400 })

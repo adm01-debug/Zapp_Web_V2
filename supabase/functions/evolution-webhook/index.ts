@@ -20,7 +20,8 @@ import {
 import {
   handleIncomingMessage, handleOutgoingWhatsAppMessage,
 } from "../_shared/evolution-webhook-messages.ts";
-import { WebhookSecurityService, timingSafeEqual } from "../_shared/hmac-validation.ts";
+import { WebhookSecurityService } from "../_shared/hmac-validation.ts";
+import { goTokenMatches, resolveInstanceToken, type InstanceTokenClient } from "../_shared/evolution-instance-token.ts";
 import type { EvolutionDbClient } from "../_shared/evolution-types.ts";
 
 // ---------------------------------------------------------------------------
@@ -60,6 +61,11 @@ function evolutionEnforceMode(): EnforceMode {
 // credencial e os handlers dividem a mesma instância.
 let cachedDb: { url: string; client: SupabaseClient } | null = null;
 
+// TRA-002/E30: o gate usa o resolvedor ÚNICO (goTokenMatches /
+// resolveInstanceToken em _shared/evolution-instance-token.ts) — o token do
+// corpo é comparado com o token DA instância nomeada no evento, nunca com um
+// global. O resolvedor compartilhado tem teto de cache e valida o formato do
+// nome (endurecimento do gate pré-autenticação).
 function getDb(): SupabaseClient {
   const url = Deno.env.get('SUPABASE_URL') || '';
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -68,28 +74,6 @@ function getDb(): SupabaseClient {
     cachedDb = { url, client: createClient(url, key) };
   }
   return cachedDb.client;
-}
-
-const INSTANCE_TOKEN_CACHE_TTL_MS = 5 * 60_000;
-const instanceTokenCache = new Map<string, { token: string; expiresAt: number }>();
-
-// Credencial por instância (Vault via get_instance_token). RPC read-only — é a
-// resolução da credencial, não um efeito. Falha de resolução vale como "sem
-// credencial" (fail-closed); só positivos entram no cache para não atrasar a
-// ativação de instância criada depois.
-async function resolveInstanceToken(instanceName: string): Promise<string | null> {
-  const cached = instanceTokenCache.get(instanceName);
-  if (cached && cached.expiresAt > Date.now()) return cached.token;
-  try {
-    const { data, error } = await getDb().rpc('get_instance_token', { p_instance_id: instanceName });
-    const token = !error && typeof data === 'string' && data ? data : null;
-    if (token) {
-      instanceTokenCache.set(instanceName, { token, expiresAt: Date.now() + INSTANCE_TOKEN_CACHE_TTL_MS });
-    }
-    return token;
-  } catch {
-    return null;
-  }
 }
 
 export async function handleEvolutionWebhook(req: Request): Promise<Response> {
@@ -151,32 +135,22 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
     }
 
     // Sem assinatura HMAC válida (a GO nunca envia uma), a credencial é o
-    // instanceToken do corpo — global por env ou resolvido por instância.
+    // instanceToken do corpo — comparado com o token DA instância nomeada no
+    // evento (Vault via get_instance_token), nunca com um global. A versão
+    // anterior aceitava o token da instância padrão em evento de qualquer
+    // instância (defeito TRA-002). C11: payloads em shape v2 trazem 'instance'
+    // (sem 'instanceName'); o gate roda sobre o corpo cru antes de
+    // isGoPayload/translate, para as duas formas.
     if (!validation.signatureValid) {
       const bodyRec = rawBody as Record<string, unknown>;
-      const presented = typeof bodyRec.instanceToken === 'string' ? bodyRec.instanceToken : '';
-      // C11: v2-shaped payloads trazem 'instance' (sem 'instanceName'); o gate
-      // roda sobre o corpo cru antes de isGoPayload/translate, para as duas
-      // formas.
-      const instanceName =
-        (typeof bodyRec.instanceName === 'string' && bodyRec.instanceName) ||
-        (typeof bodyRec.instance === 'string' && bodyRec.instance) || '';
-
-      const envToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') || '';
-      let tokenOk = false;
-      if (presented && envToken && timingSafeEqual(presented, envToken)) {
-        tokenOk = true;
-      } else if (presented && instanceName) {
-        // Token presente mas diferente do global: resolve a credencial da
-        // instância (RPC read-only). Token AUSENTE nem chega aqui — rejeitado
-        // sem tocar o banco.
-        const expected = await resolveInstanceToken(instanceName);
-        tokenOk = expected !== null && timingSafeEqual(presented, expected);
-      }
-
-      if (!tokenOk) {
+      // getDb() preguiçoso: sem token no corpo, goTokenMatches sai cedo e o
+      // request NÃO abre client nem toca o banco (o gate é pré-autenticação).
+      if (!await goTokenMatches(bodyRec, (name) => resolveInstanceToken(getDb() as unknown as InstanceTokenClient, name))) {
+        const presented = typeof bodyRec.instanceToken === 'string' ? bodyRec.instanceToken : '';
+        const instanceName = typeof bodyRec.instanceName === 'string' ? bodyRec.instanceName
+          : typeof bodyRec.instance === 'string' ? bodyRec.instance : '';
         const motivo = !presented ? 'ausente' : instanceName ? 'divergente' : 'instancia-ausente';
-        console.warn(`[WEBHOOK_AUTH] evolution-webhook: instanceToken ${motivo} (enforce=${enforceMode}, shape=${typeof bodyRec.instanceName === 'string' ? 'go' : 'v2'})`);
+        console.warn(`[WEBHOOK_AUTH] evolution-webhook: instanceToken ${motivo} (enforce=${enforceMode}, instance=${instanceName || 'desconhecida'}, shape=${typeof bodyRec.instanceName === 'string' ? 'go' : 'v2'})`);
         if (enforceMode === 'token') {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
             status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

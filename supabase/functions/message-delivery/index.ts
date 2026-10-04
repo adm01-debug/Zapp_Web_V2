@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
 import {
   enforceRateLimit,
   errorResponse,
@@ -10,6 +10,7 @@ import {
   requireEnv,
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
+import { resolveInstanceToken } from '../_shared/evolution-instance-token.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
 import {
   EFFECT_MESSAGE_SEND,
@@ -41,6 +42,18 @@ interface ServiceClient {
     data: unknown;
     error: { code?: string } | null;
   }>;
+}
+
+/**
+ * Dependências injetáveis — existem SÓ para os testes Deno (sem banco e sem
+ * rede), no molde de `EvolutionApiDeps` do evolution-api. Em produção nada é
+ * passado e os `createClient(...)` abaixo seguem criando service e caller.
+ */
+export interface MessageDeliveryDeps {
+  /** client service-role (claim/fail/complete, leitura de profiles e token no Vault). */
+  supabase?: SupabaseClient;
+  /** client do chamador (anon key + JWT) — usado para assinar URL de mídia privada. */
+  caller?: SupabaseClient;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -209,7 +222,7 @@ async function enqueueDeliveryReconciliation(
   }
 }
 
-export async function handleMessageDeliveryRequest(req: Request): Promise<Response> {
+export async function handleMessageDeliveryRequest(req: Request, _injected?: MessageDeliveryDeps): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
   if (req.method !== 'POST') return errorResponse('Method not allowed', 405, req);
@@ -237,8 +250,8 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     return errorResponse('Message delivery is not configured', 503, req);
   }
 
-  const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-  const caller = createClient(supabaseUrl, anonKey, {
+  const service = _injected?.supabase ?? createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+  const caller = _injected?.caller ?? createClient(supabaseUrl, anonKey, {
     auth: { persistSession: false },
     global: { headers: { Authorization: req.headers.get('authorization') || req.headers.get('Authorization') || '' } },
   });
@@ -298,8 +311,19 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       if (metadataError || !richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
+    // E18/TRA-002: a mensagem sai pela conexão DO CLAIM — o token dela vem do
+    // Vault (get_instance_token); a da padrão ainda pode vir do fallback de
+    // transição. Sem credencial para a instância, a entrega falha de forma
+    // explícita — nunca envia pela padrão com o corpo de outra conexão.
+    const instanceToken = await resolveInstanceToken(service, claim.whatsapp_instance_name);
+    if (!instanceToken) {
+      await failClaim(service, claim);
+      console.error(JSON.stringify({ event: 'message_delivery_no_instance_token', instance: claim.whatsapp_instance_name }));
+      return errorResponse('Message provider credential is not configured for this connection', 502, req);
+    }
     providerPostAttempted = true;
-    const providerResponse = await evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body);
+    const providerResponse = await evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body,
+      undefined, undefined, undefined, instanceToken);
     const raw = await providerResponse.text();
     let providerData: unknown = null;
     try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
@@ -367,4 +391,4 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
   }
 }
 
-if (import.meta.main) Deno.serve(handleMessageDeliveryRequest);
+if (import.meta.main) Deno.serve((req) => handleMessageDeliveryRequest(req));

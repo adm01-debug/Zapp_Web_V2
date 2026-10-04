@@ -314,6 +314,10 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             const remaining = opts.dailyRemaining ?? 500;
             return Promise.resolve({ data: { limit: 500, sent: 500 - remaining, remaining }, error: null });
           }
+          case "get_instance_token":
+            // TRA-002: o worker resolve o token DA instância antes de enviar —
+            // o stub devolve um token válido por instância para o fluxo seguir.
+            return Promise.resolve({ data: `tok-${String(args.p_instance_id ?? "inst")}`, error: null });
           default:
             return Promise.resolve({ data: true, error: null });
         }
