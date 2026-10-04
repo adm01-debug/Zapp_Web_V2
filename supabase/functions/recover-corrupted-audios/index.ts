@@ -1,13 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import {
+  getCorsHeaders,
+  handleCors,
+  errorResponse,
+  internalErrorResponse,
+  Logger,
+} from "../_shared/validation.ts";
 import { evoFetch, extractBase64Media } from "../_shared/evolution-send.ts";
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL")!;
-const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY")!;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 function isValidAudioBytes(bytes: Uint8Array): boolean {
   if (bytes.length < 4) return false;
@@ -23,9 +22,14 @@ function isValidAudioBytes(bytes: Uint8Array): boolean {
 // completo (URL/mediaKey) — lookup só por id não tem equivalente (GO_GAPS),
 // então na GO este utilitário só recupera o que ainda estiver acessível e
 // reporta o resto como falha, sem quebrar.
-async function getMediaBase64(instanceName: string, messageId: string): Promise<string | null> {
+async function getMediaBase64(
+  evolutionUrl: string,
+  evolutionKey: string,
+  instanceName: string,
+  messageId: string,
+): Promise<string | null> {
   try {
-    const resp = await evoFetch(EVOLUTION_API_URL.replace(/\/+$/, ""), EVOLUTION_API_KEY,
+    const resp = await evoFetch(evolutionUrl.replace(/\/+$/, ""), evolutionKey,
       `/chat/getBase64FromMediaMessage/${instanceName}`,
       { message: { key: { id: messageId } }, convertToMp4: false });
     if (!resp.ok) return null;
@@ -39,14 +43,69 @@ async function getMediaBase64(instanceName: string, messageId: string): Promise<
   }
 }
 
-Deno.serve(async (req) => {
+/**
+ * Dependências injetáveis para o teste RED/GREEN. O handler de produção resolve
+ * tudo do ambiente; o teste injeta um client Supabase mockado para provar que a
+ * chamada sem identidade e a de agente comum NÃO chegam a tocar em scan/Storage.
+ */
+interface RecoverDeps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase?: any;
+  supabaseUrl?: string;
+  serviceKey?: string;
+  evolutionUrl?: string;
+  evolutionKey?: string;
+}
+
+/**
+ * Recupera áudios corrompidos (P1 R2-API-022 — autorização).
+ *
+ * Contrato de autorização (decisão t_d8505da9): o preflight CORS continua livre
+ * (`handleCors` acima), mas toda execução exige JWT de admin/supervisor ANTES de
+ * parsear `batch_size`/`offset`/`dry_run`, antes do scan e antes de qualquer
+ * download/upload/update. Sem identidade → 401; usuário comum (agente) → 403.
+ * Não há caminho automático/cron para esta rotina, então o guard é admin-only.
+ */
+export async function handleRecoverCorruptedAudios(
+  req: Request,
+  deps?: RecoverDeps,
+): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
   const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
   const log = new Logger("recover-corrupted-audios");
 
+  const supabaseUrl = deps?.supabaseUrl ?? Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = deps?.serviceKey ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const evolutionUrl = deps?.evolutionUrl ?? Deno.env.get("EVOLUTION_API_URL")!;
+  const evolutionKey = deps?.evolutionKey ?? Deno.env.get("EVOLUTION_API_KEY")!;
+
+  const supabase = deps?.supabase ?? createClient(supabaseUrl, serviceKey);
+
   try {
+    // ── Autorização (antes de qualquer payload/scan/efeito) ──
+    // Execução manual exige JWT válido de admin/supervisor — não agente comum.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return errorResponse("Missing Authorization bearer token", 401, req);
+    }
+    const token = authHeader.slice(7);
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) {
+      return errorResponse("Unauthorized", 401, req);
+    }
+
+    const { data: isAdmin, error: roleError } = await supabase.rpc(
+      "is_admin_or_supervisor",
+      { _user_id: user.id },
+    );
+    if (roleError || isAdmin !== true) {
+      return errorResponse("Only admins can run audio recovery", 403, req);
+    }
+
+    // Só agora o payload do chamador é parseado (a porta acima falha fechada).
     const { batch_size = 20, offset = 0, dry_run = false } = await req.json().catch(() => ({}));
 
     const { data: messages, error: fetchErr } = await supabase
@@ -83,7 +142,7 @@ Deno.serve(async (req) => {
     if (dry_run) {
       return new Response(JSON.stringify({
         dry_run: true, batch_size: messages.length, offset, instance: instanceName,
-        sample_ids: messages.slice(0, 3).map((m) => m.external_id),
+        sample_ids: messages.slice(0, 3).map((m: { external_id: string | null }) => m.external_id),
       }), { headers });
     }
 
@@ -102,7 +161,7 @@ Deno.serve(async (req) => {
           } catch { /* proceed to re-download */ }
         }
 
-        const base64 = await getMediaBase64(instanceName, msg.external_id!);
+        const base64 = await getMediaBase64(evolutionUrl, evolutionKey, instanceName, msg.external_id!);
         if (!base64) { results.failed++; results.errors.push(`${msg.external_id}: no base64 from API`); continue; }
 
         const binaryStr = atob(base64);
@@ -121,7 +180,7 @@ Deno.serve(async (req) => {
 
         if (uploadErr) { results.failed++; results.errors.push(`${msg.external_id}: upload failed - ${uploadErr.message}`); continue; }
 
-        const newUrl = `${SUPABASE_URL}/storage/v1/object/public/audio-messages/${storagePath}`;
+        const newUrl = `${supabaseUrl}/storage/v1/object/public/audio-messages/${storagePath}`;
         await supabase.from("messages").update({ media_url: newUrl }).eq("id", msg.id);
         results.recovered++;
       } catch (err) {
@@ -139,6 +198,12 @@ Deno.serve(async (req) => {
     }), { headers });
   } catch (err) {
     log.error("Error", { error: err instanceof Error ? err.message : String(err) });
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }), { status: 500, headers });
+    return internalErrorResponse(err, req);
   }
-});
+}
+
+// O Deno.serve fica sob import.meta.main: importar este módulo num teste não
+// pode subir um servidor na porta 8000 (mesmo padrão de get-call-recording).
+if (import.meta.main) {
+  Deno.serve((req) => handleRecoverCorruptedAudios(req));
+}
