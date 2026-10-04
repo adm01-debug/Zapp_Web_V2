@@ -1,5 +1,6 @@
 // Shared sync action handlers for evolution-sync/index.ts
 import { evoFetch } from './evolution-send.ts';
+import { resolveInstanceToken } from './evolution-instance-token.ts';
 import type { EvolutionDbClient } from "./evolution-types.ts";
 
 const isGoFlavor = () => (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
@@ -29,9 +30,12 @@ function normalizeEvoContact(contact: unknown): { remoteJid: string; name: strin
 }
 
 // Busca contatos na Evolution (v2: POST /chat/findContacts · GO: GET /user/contacts via tradutor).
-async function fetchEvolutionContacts(evolutionApiUrl: string, evolutionApiKey: string, instanceName: string): Promise<EvolutionContactPayload[]> {
+// TRA-002: na GO a instância é a do token — `instanceToken` é o da instância
+// nomeada, resolvido pelo chamador (Vault via get_instance_token).
+async function fetchEvolutionContacts(evolutionApiUrl: string, evolutionApiKey: string, instanceName: string, instanceToken?: string): Promise<EvolutionContactPayload[]> {
   const resp = await evoFetch(evolutionApiUrl, evolutionApiKey,
-    `/chat/findContacts/${instanceName}`, { where: {} });
+    `/chat/findContacts/${instanceName}`, { where: {} },
+    undefined, undefined, undefined, instanceToken);
   if (!resp.ok) {
     const errText = await resp.text();
     throw new Error(`Evolution API error [${resp.status}]: ${errText}`);
@@ -48,7 +52,11 @@ export async function syncContacts(
 ): Promise<Response> {
   console.log(`[Sync] Fetching contacts from instance ${instanceName}`);
 
-  const contacts = await fetchEvolutionContacts(evolutionApiUrl, evolutionApiKey, instanceName);
+  const instanceToken = await resolveInstanceToken(supabase, instanceName);
+  if (!instanceToken) {
+    return jsonRes({ success: false, error: `Credencial da instância '${instanceName}' não configurada.` }, corsHeaders);
+  }
+  const contacts = await fetchEvolutionContacts(evolutionApiUrl, evolutionApiKey, instanceName, instanceToken);
   if (contacts.length === 0) {
     return jsonRes({ success: true, message: 'No more contacts to sync', synced: 0, page }, corsHeaders);
   }
@@ -209,15 +217,20 @@ export async function syncAllMessages(
 // v2: POST /webhook/set · GO: o tradutor converte em POST /instance/connect
 // {webhookUrl, subscribe:['ALL'], immediate} com o token da instância (GO_GAPS D1).
 export async function setupWebhook(
+  supabase: EvolutionDbClient,
   evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, supabaseUrl: string, webhookUrlOverride: string | undefined, corsHeaders: Record<string, string>
 ): Promise<Response> {
   const webhookUrl = webhookUrlOverride || `${supabaseUrl}/functions/v1/evolution-webhook`;
+  const instanceToken = await resolveInstanceToken(supabase, instanceName);
+  if (!instanceToken) {
+    return jsonRes({ success: false, error: `Credencial da instância '${instanceName}' não configurada.` }, corsHeaders);
+  }
   const webhookResponse = await evoFetch(evolutionApiUrl, evolutionApiKey,
     `/webhook/set/${instanceName}`, {
       enabled: true, url: webhookUrl, webhookByEvents: true, webhookBase64: false,
       events: WEBHOOK_EVENTS,
-    });
+    }, undefined, undefined, undefined, instanceToken);
   const webhookData = await webhookResponse.json();
   return new Response(JSON.stringify({ success: webhookResponse.ok, webhook: webhookData }), {
     status: webhookResponse.ok ? 200 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -264,9 +277,10 @@ export async function fullSync(
   }
 
   // Import contacts (v2 e GO — shapes normalizados)
+  const instanceToken = await resolveInstanceToken(supabase, instanceName);
   let totalSynced = 0, totalSkipped = 0;
   try {
-    const contactsList = await fetchEvolutionContacts(evolutionApiUrl, evolutionApiKey, instanceName);
+    const contactsList = await fetchEvolutionContacts(evolutionApiUrl, evolutionApiKey, instanceName, instanceToken ?? undefined);
     const validContacts: { phone: string; name: string; avatar_url: string | null; whatsapp_connection_id: string }[] = [];
     for (const c of contactsList) {
       const { remoteJid: jid, name, avatarUrl } = normalizeEvoContact(c);
@@ -293,7 +307,8 @@ export async function fullSync(
   try {
     const webhookResponse = await evoFetch(evolutionApiUrl, evolutionApiKey,
       `/webhook/set/${instanceName}`,
-      { enabled: true, url: webhookUrl, webhookByEvents: true, webhookBase64: false, events: WEBHOOK_EVENTS });
+      { enabled: true, url: webhookUrl, webhookByEvents: true, webhookBase64: false, events: WEBHOOK_EVENTS },
+      undefined, undefined, undefined, instanceToken ?? undefined);
     results.webhook = { success: webhookResponse.ok, url: webhookUrl };
   } catch (e) { results.webhook = { success: false, error: String(e) }; }
 

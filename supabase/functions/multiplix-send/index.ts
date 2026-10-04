@@ -10,6 +10,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { enforceRateLimit, getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
+import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
@@ -355,6 +356,16 @@ export async function handleMultiplixSend(
       }
     };
 
+    // TRA-002 (mesmo desenho do X019 no talkx-send): o disparo sai com o token
+    // DA conexao dele (Vault via get_instance_token); a padrão ainda pode vir
+    // do fallback de transição. Sem credencial para a instância, pausa com
+    // connection_lost — nunca envia com a key global nem a token de outra.
+    const initialInstanceToken = await resolveInstanceToken(supabase, initialInstanceId);
+    if (!initialInstanceToken) {
+      await pauseDispatch("connection_lost");
+      return new Response(JSON.stringify({ error: "WhatsApp connection instance token missing: dispatch paused" }), { status: 409, headers });
+    }
+
     // F11a (01/10/2026): UMA passada por invocacao. O `for(;;)` antigo repetia
     // ate drenar o publico inteiro aqui dentro — a edge ficava aberta por horas
     // e podia estourar o limite de tempo, derrubando o disparo no meio. O cron
@@ -528,7 +539,8 @@ export async function handleMultiplixSend(
           const typingDelay = randomBetween(dispatch.typing_delay_min, dispatch.typing_delay_max);
 
           try {
-            await evoFetch(evolutionUrl, evolutionKey, `/chat/updatePresence/${initialInstanceId}`, { number: phone, presence: "composing" });
+            await evoFetch(evolutionUrl, evolutionKey, `/chat/updatePresence/${initialInstanceId}`, { number: phone, presence: "composing" },
+              undefined, undefined, undefined, initialInstanceToken);
           } catch { /* Presence e best-effort */ }
 
           await sleep(typingDelay);
@@ -560,6 +572,26 @@ export async function handleMultiplixSend(
             }
             // F55: esta saida devolve o item a fila (release), entao o timer perde a razao de
             // existir agora — a RPC ja recusaria o token a partir daqui de qualquer forma.
+            stopHeartbeat();
+            break passLoop;
+          }
+
+          // TRA-002: a instância lida de novo pode ter mudado no meio do disparo
+          // — resolve o token DESTA instância (cache torna a consulta barata
+          // quando é a mesma). Sem credencial: mesmo tratamento de conexão
+          // perdida — pausa, devolve o item à fila e encerra a passada.
+          const sendToken = beforeSendInstanceId === initialInstanceId
+            ? initialInstanceToken
+            : await resolveInstanceToken(supabase, beforeSendInstanceId);
+          if (!sendToken) {
+            await pauseDispatch("connection_lost");
+            const { data: released, error: releaseError } = await supabase.rpc("release_multiplix_item_claim", {
+              p_item_id: item.item_id,
+              p_claim_token: claim.claim_token,
+            });
+            if (releaseError || released !== true) {
+              throw new Error(`multiplix_recipient_claim_release_failed: ${releaseError?.message ?? "claim_not_owned"}`);
+            }
             stopHeartbeat();
             break passLoop;
           }
@@ -627,6 +659,10 @@ export async function handleMultiplixSend(
               fetch: (u, o) => fetch(u, o),
               evolutionUrl,
               evolutionKey,
+              // TRA-002: a GO seleciona a instância pela credencial — sem o
+              // token da instância o adaptador falharia explícito em vez de
+              // mandar com a key global.
+              instanceToken: sendToken,
               // O adaptador nao le env (roda tambem fora do Deno); a edge resolve e passa.
               flavor: (Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") === "v2" ? "v2" : "go",
               signal: abortCtrl.signal,

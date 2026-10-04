@@ -1,6 +1,7 @@
 // evolution-send.ts — fetch outbound à Evolution com tradução v2→GO aplicada.
 // Para functions que chamam a API direto, sem passar pelo evolution-api-proxy.
 import { translateV2ToGo } from "./evolution-go-routes.ts";
+import { instanceNameFromV2Path } from "./evolution-instance-token.ts";
 
 type Fetcher = (url: string, options: RequestInit) => Promise<Response>;
 
@@ -12,11 +13,11 @@ export async function evoFetch(
   fetcher: Fetcher = (u, o) => fetch(u, o),
   v2Method = "POST",
   signal?: AbortSignal,
-  // E15 (plano multi-conexão): token da instância, resolvido pelo chamador
-  // (hoje ninguém resolve por instância ainda — isso chega com E16/E18/E19,
-  // depois que E09/E10 existirem no banco). Enquanto nenhum chamador passar
-  // isto, cai no fallback EVOLUTION_INSTANCE_TOKEN abaixo — comportamento
-  // idêntico ao de antes desta etapa.
+  // E15 (plano multi-conexão): token da instância, resolvido pelo chamador via
+  // get_instance_token (evolution-instance-token.ts). TRA-002: sem ele, o
+  // fallback EVOLUTION_INSTANCE_TOKEN só vale quando o nome NO PATH é a
+  // instância padrão (EVOLUTION_INSTANCE_NAME) — emprestá-lo a outra instância
+  // faria a GO operar na padrão em vez da escolhida.
   instanceToken?: string,
 ): Promise<Response> {
   let path = v2Path;
@@ -39,10 +40,11 @@ export async function evoFetch(
       if (go.contentType) contentType = go.contentType;
       if (go.auth === "instance") {
         const fallbackToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+        const instanceName = instanceNameFromV2Path(v2Path);
         if (instanceToken) {
           apikey = instanceToken;
-        } else if (fallbackToken) {
-          console.error(`[Evolution GO] instanceToken não informado para rota de instância (${go.path}) — usando fallback EVOLUTION_INSTANCE_TOKEN (remover após E10/E21).`);
+        } else if (fallbackToken && instanceName === Deno.env.get("EVOLUTION_INSTANCE_NAME")) {
+          console.error(`[Evolution GO] instanceToken não informado para a instância padrão ${instanceName} (${go.path}) — fallback EVOLUTION_INSTANCE_TOKEN (remover após E10/E21).`);
           apikey = fallbackToken;
         } else {
           // Nunca cair silenciosamente na key global (admin): ela não é a
