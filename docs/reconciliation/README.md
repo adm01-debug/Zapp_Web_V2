@@ -22,3 +22,7 @@ Cada arquivo em `tasks/Pxxx.json` é legível isoladamente e contém os requisit
 ## Escopo da publicação
 
 A autorização cobre exclusivamente `docs/reconciliation/**`, na branch `docs/reconciliation-checkpoint-20261003`, vinculada ao [PR #1869, mantido em draft](https://github.com/adm01-debug/Zapp_Web_V2/pull/1869). A conclusão desta auditoria não promove o produto a pronto para produção e não executa os compromissos funcionais identificados. Os arquivos de checkpoint anteriores permanecem em `history/` ou identificados como históricos.
+
+## Adendo de ferramentas para os agentes
+
+[Cartographer, Claude-Mem e Headroom](AGENT_TOOLING_PLAN_2026-10-03.md) passam a constar explicitamente no planejamento, com 18 tarefas de avaliação e critérios de aceite. POCs e instalações seguem pendentes de comprovação. O adendo tem registro próprio, vinculado à ordem futura de correções, e preserva as contagens do inventário histórico.

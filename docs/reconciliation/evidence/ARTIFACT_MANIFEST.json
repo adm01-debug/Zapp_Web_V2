@@ -3,8 +3,8 @@
   "baseline_main_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
   "post_baseline_cutoff_sha": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
   "scope": "docs/reconciliation/**",
-  "file_count": 227,
-  "bytes_of_hashed_files": 28707243,
+  "file_count": 228,
+  "bytes_of_hashed_files": 28719556,
   "excluded": [
     "evidence/ARTIFACT_MANIFEST.json"
   ],
@@ -15,6 +15,12 @@
       "bytes": 4373,
       "sha256": "f0f19892bbc50743257143c6b4386c75a3d7ffdb3b2504b063ffc88deb20db31",
       "git_blob_sha": "040ec740c35986ce32f0d1cae21f847822e89b59"
+    },
+    {
+      "path": "AGENT_TOOLING_PLAN_2026-10-03.md",
+      "bytes": 10309,
+      "sha256": "8d5a280e3630134f38e322a08d87012b799760a4e926e0077950608e47d9eaf0",
+      "git_blob_sha": "c8ea2a5fea9b9f3871cc539e1c800e0764f50677"
     },
     {
       "path": "CODE_TRUTH_STRUCTURAL_SWEEP_2026-10-03.md",
@@ -30,9 +36,9 @@
     },
     {
       "path": "EXECUTION_WAVES.md",
-      "bytes": 3331,
-      "sha256": "0f55613bb3650c4a97573ef2babe70c29c95977899dca868aea1d0ffdbb32e31",
-      "git_blob_sha": "68cae64a1379e339160f69acf5678cca396aad88"
+      "bytes": 4155,
+      "sha256": "b4d646895c23492ce2a10686d1ca0eca385b0506075ae48d389a83e8d52b225f",
+      "git_blob_sha": "bdfcf9c96c241c1ca82ff0d737374e8b6f81d6da"
     },
     {
       "path": "FINAL_RECONCILIATION_REPORT_2026-10-03.md",
@@ -96,9 +102,9 @@
     },
     {
       "path": "README.md",
-      "bytes": 2844,
-      "sha256": "8dc8a179f83ff085532921b7180b92cdc28ae888f49ab54bd03800b336970a5f",
-      "git_blob_sha": "03ceff6a247b715856c7ed62e7295e4834144d2f"
+      "bytes": 3243,
+      "sha256": "34cb80084f600c7ae6fe01dcfa61932469d959cbe820f13a8d2a4635ec7e81c8",
+      "git_blob_sha": "77d16aa867126ec3f821ee826a37688851b4749f"
     },
     {
       "path": "RECONCILIATION_CHECKPOINT_2026-10-03.md",
@@ -162,9 +168,9 @@
     },
     {
       "path": "SESSION_HANDOFF.md",
-      "bytes": 2334,
-      "sha256": "af957aa5b46621922fbbced61ad2242fc4fbfb059433463150380ada98c5e879",
-      "git_blob_sha": "15c1b09e39a3e1e58bcd5be4462abc5ed6819ddb"
+      "bytes": 3115,
+      "sha256": "77a5fb8da3786104e79555353e0e0d6c30956386fbadb752c96f9ca2fbc1ce1f",
+      "git_blob_sha": "72db808d883769c3d6f7921c45258d56a2c218c1"
     },
     {
       "path": "SOURCE_CATALOG.json",

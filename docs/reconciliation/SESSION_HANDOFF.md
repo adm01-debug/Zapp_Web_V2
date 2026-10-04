@@ -17,3 +17,9 @@ A primeira publicação está no commit `9a1c370c1979b5e3f1c59291a2bfac331f689e3
 5. Solicitar nova autorização somente para ações fora do escopo já concedido, com resultado concreto revisável.
 
 Não retomar esta auditoria como se nada tivesse sido concluído. Não repetir as fases1–4 do inventário. Não executar migrations antigas, fundir a branch TeamChat inteira, fechar issues ou apagar candidatos com base somente neste documento. A validação e os hashes estão em `evidence/`; os relatórios especializados em `reports/`.
+
+## Adendo após a conferência de ferramentas
+
+Cartographer, Claude-Mem (citado pelo usuário como “claude-men”) e Headroom estavam na discussão de POC, mas não foram localizados no plano consolidado examinado no head `9b7339d53e08ee6bfdce86b06a52a111fc2b231e`. A lacuna documental foi tratada no [plano de ferramentas dos agentes](AGENT_TOOLING_PLAN_2026-10-03.md), com AT-001 a AT-018, todas planejadas e não executadas.
+
+Na retomada dessa frente, conferir instalações existentes e versões antes de qualquer configuração. Não declarar suporte validado no Hermes/Codex/Claude nem memória compartilhada apenas com base no anúncio upstream. Preservar a distinção entre a auditoria histórica concluída, este planejamento adicional e a futura execução das POCs.
