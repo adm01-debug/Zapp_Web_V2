@@ -750,6 +750,14 @@ jobs:
           TEAM_RECEIPTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-membership.test.sh
 
+      # TC-003 (P1): membership nao protegia bootstrap nem ultimo owner e o GRANT UPDATE
+      # de team_conversations anulava os REVOKEs de coluna. Bloco A prova o defeito no
+      # mesmo container, aplica a migration e o bloco B prova a correcao.
+      - name: Simular guarda de bootstrap e ultimo owner no team chat (TC-003)
+        env:
+          TEAM_MEMBERSHIP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-membership-bootstrap-owner.test.sh
+
       # E76 (plano MAPA Fase 7), ajuste (b) da decisao 20261002-063721: o contrato da
       # RPC `search_contacts` (8 campos de endereco, ACL sem anon/PUBLIC e trigger de
       # auditoria) vive aqui porque este workflow tem gatilho `pull_request` (linha 17) —
