@@ -5,6 +5,61 @@
 
 ---
 
+## 0. Onde se trabalha: banco LOCAL; a produção só recebe o lote do dia (desde 2026-10-04)
+
+**Agente não desenvolve nem testa contra o banco oficial.** O banco da seção 1 é a produção e a fonte
+de verdade da estrutura; o trabalho do dia a dia acontece numa cópia local, uma por cópia de trabalho.
+
+| Situação | Banco | Como |
+|---|---|---|
+| Desenvolver ou testar uma tarefa | **local** | um Supabase local por cópia de trabalho (worktree) |
+| Migration nova durante a tarefa | **local** | arquivo em `supabase/migrations/` + aplicar no banco local da cópia |
+| Portão antes de o commit entrar na branch do dia | **local** | tipos, lint, migrations, estrutura do banco local, testes |
+| Migration chegando à produção | **produção, uma vez por dia** | depois do push e do merge, por `db-migrate.yml` (dry-run + aprovação humana) |
+| Diagnóstico | **produção, só leitura** | consulta `SELECT`; nunca escrita |
+| Migration destrutiva, segredos, rotação de chaves | **só o Joaquim** | — |
+
+Regras que decorrem disso:
+
+1. **Git local, push quando o Joaquim pedir.** Commits entram numa branch local do dia
+   (`dia/AAAA-MM-DD`); um PR por lote. Nenhum agente faz push, abre PR ou mergeia por conta própria.
+2. **Ordem do lote na produção:** push → PR → 6 checks → merge → deploy do código (Vercel e edge
+   functions) → `db-migrate.yml` com `apply=false` → aprovação do Joaquim no environment
+   `producao-ddl` → `apply=true`. É a mesma ordem da regra 6 da seção 1; o que muda é que acontece
+   uma vez por lote, e quem dispara é a sessão do Claude Code que fez o push, nunca um agente executor.
+3. **A exceção da regra 6 (DDL aditivo na produção antes do merge) deixa de valer para trabalho de
+   agente.** Ela existia porque o `supabase-usage-guard` precisava do catálogo regenerado a partir do
+   banco oficial; no fluxo local a estrutura nova é provada no banco local. Só o Joaquim pode
+   autorizar um apply fora do lote.
+4. **O app só fala com o banco local por desvio explícito:** `VITE_ZAPP_LOCAL_SUPABASE_URL` +
+   `VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY`, aceitos apenas fora de build de produção e apenas para
+   `http://127.0.0.1` ou `http://localhost` (`src/config/supabase.ts`). Sem as duas variáveis, o
+   servidor de desenvolvimento aponta para a **produção** — confira antes de testar tela.
+5. **Testes E2E rodam contra o banco local da própria cópia de trabalho**, com os dados de exemplo
+   locais. `e2e/fixtures/supabase-env.ts` já aceita `E2E_SUPABASE_URL_OVERRIDE` e
+   `E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE`. Specs que fixam o identificador do projeto oficial
+   (`e2e/catalog.spec.ts`, `e2e/fixtures/talkx-demo.ts`, `e2e/fixtures/mapa-mocks.ts`) ainda não
+   foram adaptados.
+6. **Um banco local montado com estas migrations chama a produção se ninguém travar.** As migrations
+   gravam a URL do banco oficial em 4 jobs do `pg_cron`, 3 funções e 2 segredos do cofre; com
+   `pg_cron` e `pg_net` ativos, o banco local faz POST nas edge functions reais. Antes de aplicar
+   migrations em qualquer Postgres local: (a) apontar o host do projeto oficial para `127.0.0.1` no
+   `/etc/hosts` do contêiner e (b) `alter system set cron.launch_active_jobs = off`.
+   `scripts/db-audit/replay-local.sh` já faz as duas coisas e aborta se alguma falhar.
+7. **Estrutura local = estrutura da produção só depois da reconciliação.** Reaplicar as migrations
+   do zero deixa 21 falhas esperadas (`scripts/db-audit/replay-known-failures.json`) e, sem ajuste,
+   64 diferenças reais em relação a `supabase/schema-manifest.json` (52 funções, índices, políticas
+   do Team Chat). O banco local só vale como portão quando a comparação com o manifesto dá zero.
+
+Na máquina de desenvolvimento do Joaquim (WSL) existem ferramentas locais, **fora deste
+repositório**, que implementam o acima: `zapp-db-local` (sobe o banco local da cópia, aplica
+migrations, reconciliação e dados de exemplo, e compara com o manifesto), `zapp-db-guard` (recusa
+qualquer comando, ambiente ou cópia que aponte para o banco oficial), `zapp-verify` (o portão) e
+`zapp-db-ler` (leitura só-`SELECT` da produção). Em outra máquina, as regras valem do mesmo jeito;
+as ferramentas é que precisam ser recriadas.
+
+---
+
 ## 1. Banco de dados OFICIAL do projeto
 
 | O que | Valor |
@@ -30,6 +85,8 @@
 4. Validação de fechamento: `node scripts/db-audit/supabase-usage-guard.mjs` exit 0 (`novas: 0`) + paridade arquivos↔registros (count + md5 dos prefixos).
 5. `CREATE INDEX CONCURRENTLY` falha (gateway envolve em transação) — usar `CREATE INDEX` simples (tabelas são pequenas).
 6. **Ordem obrigatória: arquivo → PR → merge em `main` → deploy → apply. Nunca DDL a partir de branch paralelo.**
+   _(Desde 2026-10-04 a exceção abaixo, de DDL aditivo antes do merge, não vale mais para trabalho de
+   agente: a estrutura nova é provada no banco local — ver seção 0, regra 3.)_
    Só aplique DDL em produção **depois** do merge em `main` e do deploy do código que
    depende dele. Única exceção: DDL **aditivo e compatível com o código atual de `main`**
    (tabela/função/coluna nullable/índice novos, que nada em produção usa ainda) pode ser
