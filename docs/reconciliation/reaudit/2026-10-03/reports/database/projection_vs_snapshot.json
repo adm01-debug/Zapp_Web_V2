@@ -1,0 +1,42 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "method": "Correspondência por identidade/assinatura normalizada. Não compara hashes de corpo PostgreSQL com texto SQL nem comprova o schema vivo.",
+  "snapshot_generated_at": "2026-10-03T17:11:29Z",
+  "candidate_source_function_count": 311,
+  "snapshot_function_count": 303,
+  "signature_matches": 303,
+  "source_only_identities": [
+    "public.attribute_talkx_reply(uuid,text,uuid)",
+    "public.delete_talkx_campaign(uuid)",
+    "public.duplicate_talkx_campaign(uuid)",
+    "public.log_talkx_campaign_checklist(uuid,jsonb)",
+    "public.record_talkx_campaign_lifecycle_event()",
+    "public.record_talkx_recipient_receipt(text,uuid,text)",
+    "public.talkx_campaign_reply_stats(uuid)",
+    "supabase_migrations.reserve_migration_version(text,text)"
+  ],
+  "snapshot_only_identities": [],
+  "source_only_explanation": {
+    "supabase_migrations.reserve_migration_version(text,text)": "Fora do schema public capturado.",
+    "seven_public_functions": "Introduzidas em 20261003172707/20261003202707/20261003212707, posteriores à captura de 17:11:29Z. Ausência no snapshot anterior não prova falta no banco vivo."
+  },
+  "policy_projection": {
+    "candidate_count": 499,
+    "snapshot_count": 446,
+    "limitation": "Modelo lexical não expande DO, rename nem toda dependência de DROP TABLE; também inclui storage e ops fora de public. Diferença bruta não é drift comprovado.",
+    "snapshot_identities_requiring_nontrivial_history": [
+      {
+        "identity": "conversation_events.conversation_events_select_policy",
+        "reason": "ALTER POLICY RENAME na migration 20260925150000."
+      },
+      {
+        "identity": "query_telemetry.Users can view own telemetry",
+        "reason": "CREATE POLICY dinâmico em 20260401000946."
+      },
+      {
+        "identity": "sicoob_contact_mapping.Only admins can view sicoob mappings",
+        "reason": "CREATE POLICY dinâmico em 20260321194716."
+      }
+    ]
+  }
+}

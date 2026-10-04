@@ -1,0 +1,986 @@
+[
+  {
+    "id": "R2-MOD-001",
+    "severity": "P1",
+    "title": "Editor de automações reutiliza estado de outro registro",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/automations/AutomationEditorDialog.tsx",
+        "lines": [
+          20,
+          33
+        ],
+        "blob_sha": "ca877500e4c9adc606352916c2c95cddd0262af4"
+      },
+      {
+        "path": "src/components/automations/AutomationsManager.tsx",
+        "lines": [
+          33,
+          38
+        ],
+        "blob_sha": "bea142159b3a6acc8ea5c09c346b9a44b969f51a"
+      },
+      {
+        "path": "src/components/automations/AutomationsManager.tsx",
+        "lines": [
+          90,
+          114
+        ],
+        "blob_sha": "bea142159b3a6acc8ea5c09c346b9a44b969f51a"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-002",
+    "severity": "P1",
+    "title": "Salvar automação substitui condições e lista de ações por configuração incompleta",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/automations/AutomationEditorDialog.tsx",
+        "lines": [
+          20,
+          33
+        ],
+        "blob_sha": "ca877500e4c9adc606352916c2c95cddd0262af4"
+      },
+      {
+        "path": "src/components/automations/AutomationEditorDialog.tsx",
+        "lines": [
+          64,
+          88
+        ],
+        "blob_sha": "ca877500e4c9adc606352916c2c95cddd0262af4"
+      },
+      {
+        "path": "src/components/automations/automationConstants.ts",
+        "lines": [
+          1,
+          17
+        ],
+        "blob_sha": "27329d662d0feaf089529e9ec2da682f55b98ac0"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-003",
+    "severity": "P2",
+    "title": "Editor de automação fecha sem aguardar confirmação da persistência",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/automations/AutomationsManager.tsx",
+        "lines": [
+          33,
+          38
+        ],
+        "blob_sha": "bea142159b3a6acc8ea5c09c346b9a44b969f51a"
+      },
+      {
+        "path": "src/components/automations/AutomationEditorDialog.tsx",
+        "lines": [
+          28,
+          38
+        ],
+        "blob_sha": "ca877500e4c9adc606352916c2c95cddd0262af4"
+      },
+      {
+        "path": "src/components/automations/useAutomations.ts",
+        "lines": [
+          25,
+          77
+        ],
+        "blob_sha": "5958192410fb9c11ada2cf6fa87d8c9fd1f6f9ed"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-004",
+    "severity": "P2",
+    "title": "Formulário da carteira monta SelectItem com valor vazio",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/wallet/ClientWalletView.tsx",
+        "lines": [
+          45,
+          65
+        ],
+        "blob_sha": "2111dcec3f489d95af7bb398ea5fd68059b8faf7"
+      },
+      {
+        "path": "src/components/ui/select.tsx",
+        "lines": [
+          99,
+          112
+        ],
+        "blob_sha": "6f2525465bc450154ac8083461d0f84b2c1360f2"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-005",
+    "severity": "P1",
+    "title": "Campanhas aceita público e mídia sem campos ou materialização correspondente",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/campaigns/CampaignCreateDialog.tsx",
+        "lines": [
+          17,
+          48
+        ],
+        "blob_sha": "7abf055ef2b5356aea23a47889698d6cb83ce268"
+      },
+      {
+        "path": "src/components/campaigns/CampaignCreateDialog.tsx",
+        "lines": [
+          75,
+          103
+        ],
+        "blob_sha": "7abf055ef2b5356aea23a47889698d6cb83ce268"
+      },
+      {
+        "path": "src/hooks/communication/useCampaigns.ts",
+        "lines": [
+          29,
+          95
+        ],
+        "blob_sha": "73aadfdf5fc5c9c884fe5ee20f88be2ff34b0647"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-006",
+    "severity": "P2",
+    "title": "Campanha pausada não tem comando de retomada",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/campaigns/CampaignsView.tsx",
+        "lines": [
+          100,
+          113
+        ],
+        "blob_sha": "d993c5aa11da231838e2c24a25cf66d04f4243b6"
+      },
+      {
+        "path": "src/components/campaigns/CampaignsView.tsx",
+        "lines": [
+          155,
+          179
+        ],
+        "blob_sha": "d993c5aa11da231838e2c24a25cf66d04f4243b6"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-007",
+    "severity": "P1",
+    "title": "Catálogo em lote classifica falha integral de texto como sucesso e limpa seleção falhada",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/catalog/CatalogBulkSendDialog.tsx",
+        "lines": [
+          41,
+          78
+        ],
+        "blob_sha": "e9bbe8ca1179990d4e2e653b451732b8f4386fbe"
+      },
+      {
+        "path": "src/components/catalog/CatalogBulkSendDialog.tsx",
+        "lines": [
+          105,
+          130
+        ],
+        "blob_sha": "e9bbe8ca1179990d4e2e653b451732b8f4386fbe"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-008",
+    "severity": "P2",
+    "title": "Pré-validação de envio do catálogo ausente em lote e permissiva quando a consulta falha",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/catalog/CatalogBulkSendDialog.tsx",
+        "lines": [
+          190,
+          215
+        ],
+        "blob_sha": "e9bbe8ca1179990d4e2e653b451732b8f4386fbe"
+      },
+      {
+        "path": "src/components/catalog/ContactSelectionStep.tsx",
+        "lines": [
+          90,
+          104
+        ],
+        "blob_sha": "407c0a9d3c662d67c5414553cd63263ff85be7c6"
+      },
+      {
+        "path": "src/components/catalog/ContactSelectionStep.tsx",
+        "lines": [
+          250,
+          286
+        ],
+        "blob_sha": "407c0a9d3c662d67c5414553cd63263ff85be7c6"
+      },
+      {
+        "path": "src/hooks/integrations/useCatalogSendReadiness.ts",
+        "lines": [
+          32,
+          95
+        ],
+        "blob_sha": "85c1d7f915d0848fc9fcfefd473d9d2d3bbcae45"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-009",
+    "severity": "P2",
+    "title": "Voltar à primeira página do catálogo não recarrega os produtos",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/catalog/ExternalProductCatalog.tsx",
+        "lines": [
+          169,
+          197
+        ],
+        "blob_sha": "768a320e87b348db6ca1a6ee1b15f757533e9150"
+      },
+      {
+        "path": "src/components/catalog/ExternalProductCatalog.tsx",
+        "lines": [
+          675,
+          686
+        ],
+        "blob_sha": "768a320e87b348db6ca1a6ee1b15f757533e9150"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-010",
+    "severity": "P2",
+    "title": "Catálogo conta seleção persistente mas envia somente produtos do filtro visível",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": [
+        "OTH-001"
+      ],
+      "note": "Mesmo padrão em módulo distinto; OTH-001 refere-se a Arquivos."
+    },
+    "evidence": [
+      {
+        "path": "src/components/catalog/ExternalProductCatalog.tsx",
+        "lines": [
+          179,
+          198
+        ],
+        "blob_sha": "768a320e87b348db6ca1a6ee1b15f757533e9150"
+      },
+      {
+        "path": "src/components/catalog/ExternalProductCatalog.tsx",
+        "lines": [
+          339,
+          348
+        ],
+        "blob_sha": "768a320e87b348db6ca1a6ee1b15f757533e9150"
+      },
+      {
+        "path": "src/components/catalog/ExternalProductCatalog.tsx",
+        "lines": [
+          688,
+          723
+        ],
+        "blob_sha": "768a320e87b348db6ca1a6ee1b15f757533e9150"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-011",
+    "severity": "P2",
+    "title": "Limite de dez imagens não é aplicado à seleção inicial ou ao envio",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/catalog/SendProductDialog.tsx",
+        "lines": [
+          220,
+          256
+        ],
+        "blob_sha": "01b5b9aaa7c2329fa51ace026a1f98d2be2e6d35"
+      },
+      {
+        "path": "src/components/catalog/SendProductDialog.tsx",
+        "lines": [
+          370,
+          384
+        ],
+        "blob_sha": "01b5b9aaa7c2329fa51ace026a1f98d2be2e6d35"
+      },
+      {
+        "path": "src/components/catalog/SendProductDialog.tsx",
+        "lines": [
+          594,
+          609
+        ],
+        "blob_sha": "01b5b9aaa7c2329fa51ace026a1f98d2be2e6d35"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-012",
+    "severity": "P2",
+    "title": "University reaplica resposta de análise após a troca do período",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": [],
+      "note": "O helper IA-048 existe; nenhum dos 104 achados anteriores descreve University."
+    },
+    "evidence": [
+      {
+        "path": "src/hooks/ui/useUniversityHelp.ts",
+        "lines": [
+          48,
+          68
+        ],
+        "blob_sha": "42dd9e1f935dca8e5a467a9d50cbc17136835263"
+      },
+      {
+        "path": "src/hooks/ui/useUniversityHelp.ts",
+        "lines": [
+          87,
+          134
+        ],
+        "blob_sha": "42dd9e1f935dca8e5a467a9d50cbc17136835263"
+      },
+      {
+        "path": "src/components/inbox/UniversityHelp.tsx",
+        "lines": [
+          58,
+          78
+        ],
+        "blob_sha": "60e46676d58ffc0712bc876cf16103855b9f75c3"
+      },
+      {
+        "path": "src/components/inbox/RealtimeInboxView.tsx",
+        "lines": [
+          298,
+          305
+        ],
+        "blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-013",
+    "severity": "P1",
+    "title": "Anotação de chamada acompanha troca de linha e pode sobrescrever outra chamada",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/calls/SelectedCallPanel.tsx",
+        "lines": [
+          34,
+          62
+        ],
+        "blob_sha": "55c3fb28c97f0ea781de761847042e60910045c1"
+      },
+      {
+        "path": "src/components/calls/TelefoniaView.tsx",
+        "lines": [
+          253,
+          277
+        ],
+        "blob_sha": "bc93425fb4ace67d66eba3611739e414e136e343"
+      },
+      {
+        "path": "src/hooks/communication/useCalls.ts",
+        "lines": [
+          194,
+          202
+        ],
+        "blob_sha": "7d6c82a89cfdbdb57432af6c0ab1eabe9fec78d3"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-014",
+    "severity": "P2",
+    "title": "Selecionar chamada fora da primeira página retorna à primeira e perde o detalhe",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/hooks/calls/useTelefoniaFilters.ts",
+        "lines": [
+          61,
+          74
+        ],
+        "blob_sha": "c0b323d932420a8295628fcd5c3a75e784207784"
+      },
+      {
+        "path": "src/components/calls/TelefoniaView.tsx",
+        "lines": [
+          144,
+          146
+        ],
+        "blob_sha": "bc93425fb4ace67d66eba3611739e414e136e343"
+      },
+      {
+        "path": "src/components/calls/TelefoniaView.tsx",
+        "lines": [
+          253,
+          277
+        ],
+        "blob_sha": "bc93425fb4ace67d66eba3611739e414e136e343"
+      },
+      {
+        "path": "src/hooks/calls/__tests__/useTelefoniaFilters.test.tsx",
+        "lines": [
+          32,
+          50
+        ],
+        "blob_sha": "6176e87cbf6a30894672675bfdcf004ec802889e"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-015",
+    "severity": "P2",
+    "title": "Histórico anuncia correção de página inválida sem refazer a consulta",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/hooks/calls/useMyCalls.ts",
+        "lines": [
+          43,
+          77
+        ],
+        "blob_sha": "dd3793e571c494c4f3447446cf01a39953767c18"
+      },
+      {
+        "path": "src/hooks/calls/__tests__/useMyCalls.test.tsx",
+        "lines": [
+          59,
+          65
+        ],
+        "blob_sha": "788c80196ea617d64001defd3ec3ea1bf123549b"
+      },
+      {
+        "path": "src/components/calls/TelefoniaView.tsx",
+        "lines": [
+          242,
+          266
+        ],
+        "blob_sha": "bc93425fb4ace67d66eba3611739e414e136e343"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-016",
+    "severity": "P3",
+    "title": "Discador mantém chip de contato ao alterar número e descarta identidade no provider",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/calls/NewCallPanel.tsx",
+        "lines": [
+          73,
+          99
+        ],
+        "blob_sha": "3c70a473d63f6492ccecb24818ab9d63abb4462f"
+      },
+      {
+        "path": "src/components/calls/ContactPicker.tsx",
+        "lines": [
+          120,
+          133
+        ],
+        "blob_sha": "572639385da6da8776ff429eddb279bb66880e15"
+      },
+      {
+        "path": "src/providers/CallSessionProvider.tsx",
+        "lines": [
+          338,
+          375
+        ],
+        "blob_sha": "47d783cd156b15af5267802d8321875f6c06e085"
+      },
+      {
+        "path": "src/hooks/communication/useSipClient.ts",
+        "lines": [
+          43,
+          56
+        ],
+        "blob_sha": "7e8bb2881d0269faa84fb3f7a8f3360ce2aa3b72"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-017",
+    "severity": "P2",
+    "title": "Relatórios comparam períodos de duração desigual e mostram início anterior diferente do consultado",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/reports/useReportsData.ts",
+        "lines": [
+          28,
+          42
+        ],
+        "blob_sha": "0ca5ffff671f9b2abdda1ebdf09c8e862153a367"
+      },
+      {
+        "path": "src/components/reports/useReportsData.ts",
+        "lines": [
+          190,
+          215
+        ],
+        "blob_sha": "0ca5ffff671f9b2abdda1ebdf09c8e862153a367"
+      },
+      {
+        "path": "src/components/reports/AdvancedReportsView.tsx",
+        "lines": [
+          44,
+          47
+        ],
+        "blob_sha": "fd9f20064b81966425e411717e80365383cbf34e"
+      },
+      {
+        "path": "src/lib/localDay.ts",
+        "lines": [
+          181,
+          188
+        ],
+        "blob_sha": "6bb3e363d6004707db4be23e5c24c0b1cd9f5343"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-018",
+    "severity": "P2",
+    "title": "Totais dos Relatórios Avançados agregam apenas uma página de mensagens e contatos",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/reports/useReportsData.ts",
+        "lines": [
+          44,
+          105
+        ],
+        "blob_sha": "0ca5ffff671f9b2abdda1ebdf09c8e862153a367"
+      },
+      {
+        "path": "src/components/reports/useReportsData.ts",
+        "lines": [
+          115,
+          215
+        ],
+        "blob_sha": "0ca5ffff671f9b2abdda1ebdf09c8e862153a367"
+      },
+      {
+        "path": "src/components/reports/AdvancedReportsView.tsx",
+        "lines": [
+          49,
+          54
+        ],
+        "blob_sha": "fd9f20064b81966425e411717e80365383cbf34e"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-019",
+    "severity": "P2",
+    "title": "Falhas de leitura de Relatórios Avançados são apresentadas como métricas zero",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/reports/useReportsData.ts",
+        "lines": [
+          44,
+          105
+        ],
+        "blob_sha": "0ca5ffff671f9b2abdda1ebdf09c8e862153a367"
+      },
+      {
+        "path": "src/components/reports/useReportsData.ts",
+        "lines": [
+          190,
+          217
+        ],
+        "blob_sha": "0ca5ffff671f9b2abdda1ebdf09c8e862153a367"
+      },
+      {
+        "path": "src/components/reports/useReportsData.ts",
+        "lines": [
+          239,
+          245
+        ],
+        "blob_sha": "0ca5ffff671f9b2abdda1ebdf09c8e862153a367"
+      },
+      {
+        "path": "src/components/reports/AdvancedReportsView.tsx",
+        "lines": [
+          103,
+          129
+        ],
+        "blob_sha": "fd9f20064b81966425e411717e80365383cbf34e"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-020",
+    "severity": "P2",
+    "title": "Taxa de abandono trata mensagem anterior do agente como resposta e não identifica sessões",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/reports/AbandonmentRate.tsx",
+        "lines": [
+          14,
+          54
+        ],
+        "blob_sha": "27dd9ee8f4237f7701698ece28846738bf85ddd1"
+      },
+      {
+        "path": "src/components/reports/AbandonmentRate.tsx",
+        "lines": [
+          75,
+          108
+        ],
+        "blob_sha": "27dd9ee8f4237f7701698ece28846738bf85ddd1"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-021",
+    "severity": "P2",
+    "title": "Monitor Multiplix depende dos cinquenta disparos mais recentes e UI só abre oito",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/multiplix/MultiplixView.tsx",
+        "lines": [
+          172,
+          192
+        ],
+        "blob_sha": "9416eb021af2a962e42afc833ae564fe1ced3e13"
+      },
+      {
+        "path": "src/hooks/integrations/useMultiplixDispatches.ts",
+        "lines": [
+          127,
+          168
+        ],
+        "blob_sha": "eea3cc95099874349e4fc5dab25aedcdf20a7465"
+      },
+      {
+        "path": "src/components/multiplix/MultiplixMonitor.tsx",
+        "lines": [
+          52,
+          65
+        ],
+        "blob_sha": "8ad6063852f2d9bfc0a6e9b706d56c5340b5655d"
+      },
+      {
+        "path": "src/components/multiplix/MultiplixMonitor.tsx",
+        "lines": [
+          102,
+          122
+        ],
+        "blob_sha": "8ad6063852f2d9bfc0a6e9b706d56c5340b5655d"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-022",
+    "severity": "P2",
+    "title": "Lista de destinatários Multiplix descarta continuação e não diferencia falha de vazio",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/hooks/integrations/useMultiplixDispatches.ts",
+        "lines": [
+          172,
+          187
+        ],
+        "blob_sha": "eea3cc95099874349e4fc5dab25aedcdf20a7465"
+      },
+      {
+        "path": "src/components/multiplix/MultiplixMonitor.tsx",
+        "lines": [
+          52,
+          65
+        ],
+        "blob_sha": "8ad6063852f2d9bfc0a6e9b706d56c5340b5655d"
+      },
+      {
+        "path": "src/components/multiplix/MultiplixMonitor.tsx",
+        "lines": [
+          182,
+          205
+        ],
+        "blob_sha": "8ad6063852f2d9bfc0a6e9b706d56c5340b5655d"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-023",
+    "severity": "P1",
+    "title": "Idempotência do composer Multiplix é descartada em falha de resposta da criação",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/hooks/integrations/useMultiplixDispatches.ts",
+        "lines": [
+          254,
+          304
+        ],
+        "blob_sha": "eea3cc95099874349e4fc5dab25aedcdf20a7465"
+      },
+      {
+        "path": "src/components/multiplix/MultiplixComposerDialog.tsx",
+        "lines": [
+          45,
+          71
+        ],
+        "blob_sha": "2b5682a3808000f659cae68554346af23eed025b"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-024",
+    "severity": "P1",
+    "title": "Respostas atrasadas de variantes e histórico são aplicadas ao template seguinte",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/talkx/TalkXTemplateEditor.tsx",
+        "lines": [
+          109,
+          118
+        ],
+        "blob_sha": "1b2377f61c6c4d11cab92887328a870a7c9b15f2"
+      },
+      {
+        "path": "src/components/talkx/TalkXTemplateEditor.tsx",
+        "lines": [
+          149,
+          164
+        ],
+        "blob_sha": "1b2377f61c6c4d11cab92887328a870a7c9b15f2"
+      },
+      {
+        "path": "src/components/talkx/TalkXTemplateEditor.tsx",
+        "lines": [
+          415,
+          449
+        ],
+        "blob_sha": "1b2377f61c6c4d11cab92887328a870a7c9b15f2"
+      },
+      {
+        "path": "src/hooks/integrations/useTalkXTemplates.ts",
+        "lines": [
+          191,
+          215
+        ],
+        "blob_sha": "5ae4fcf9832b5faba387db1ac01278f600983bae"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-025",
+    "severity": "P1",
+    "title": "Reabrir rascunho TalkX grande pode reduzir audiência pelo autosave da primeira página",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/talkx/useCampaignEditor.ts",
+        "lines": [
+          495,
+          521
+        ],
+        "blob_sha": "91f14ebbc2a16edd3affa3966ce480b42b9e9cd6"
+      },
+      {
+        "path": "src/components/talkx/useCampaignEditor.ts",
+        "lines": [
+          720,
+          750
+        ],
+        "blob_sha": "91f14ebbc2a16edd3affa3966ce480b42b9e9cd6"
+      },
+      {
+        "path": "src/components/talkx/useCampaignEditor.ts",
+        "lines": [
+          768,
+          794
+        ],
+        "blob_sha": "91f14ebbc2a16edd3affa3966ce480b42b9e9cd6"
+      },
+      {
+        "path": "src/components/talkx/useCampaignEditor.ts",
+        "lines": [
+          834,
+          874
+        ],
+        "blob_sha": "91f14ebbc2a16edd3affa3966ce480b42b9e9cd6"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-026",
+    "severity": "P2",
+    "title": "Debounce global TalkX descarta atualização de outra campanha e desliga polling",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/hooks/integrations/useTalkX.ts",
+        "lines": [
+          144,
+          198
+        ],
+        "blob_sha": "b68c3b95ef0e3cc5c42b4c0001a730ae90541689"
+      }
+    ]
+  },
+  {
+    "id": "R2-MOD-027",
+    "severity": "P2",
+    "title": "Sair do wizard antes do autosave perde edição sem a proteção beforeunload",
+    "status": "candidate_under_review",
+    "prior_relation": {
+      "classification": "new",
+      "ids": []
+    },
+    "evidence": [
+      {
+        "path": "src/components/talkx/TalkXCampaignWizard.tsx",
+        "lines": [
+          52,
+          57
+        ],
+        "blob_sha": "db4ab96f2ff17a40158849aad4503a19e4d6ad33"
+      },
+      {
+        "path": "src/components/talkx/TalkXCampaignWizard.tsx",
+        "lines": [
+          115,
+          117
+        ],
+        "blob_sha": "db4ab96f2ff17a40158849aad4503a19e4d6ad33"
+      },
+      {
+        "path": "src/components/talkx/useCampaignEditor.ts",
+        "lines": [
+          846,
+          874
+        ],
+        "blob_sha": "91f14ebbc2a16edd3affa3966ce480b42b9e9cd6"
+      }
+    ]
+  }
+]

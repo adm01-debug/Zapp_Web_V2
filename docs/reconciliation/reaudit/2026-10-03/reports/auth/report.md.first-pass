@@ -1,0 +1,772 @@
+# Reauditoria — Auth, usuários, Team Chat, Contatos e ponte Singu
+
+Fonte fixada: `da307ba5626dce892f0b37cb6762463f55d14a96`. Relatório gerado em2026-10-04T01:26:57.481976+00:00.
+
+## Resultado e alcance
+
+Foram identificados20 achados novos confirmados na fonte (8 mecanismos reproduzidos offline) e1 refinamento de achados prévios. Os casos sem consumidor ativo ficam separados e não entram na contagem de falhas em produção. A gravidade descreve a falha de implementação e suas precondições; nenhum item afirma incidente ocorrido no ambiente real.
+
+Os maiores riscos são a verificação WebAuthn sem prova criptográfica, MFA sem gate efetivo, controles de revogação que só alteram tabelas públicas, recuperação de conta interrompida, rascunho entre destinatários e identidade externa trocada na inteligência CRM. Há ainda falhas de confirmação em permissões, roles e mutations e funções de gerenciamento visíveis sem implementação.
+
+Não houve alteração na fonte, banco vivo, envio de mensagens/email, consulta de segredos ou execução de scripts do produto. Os8 probes executam código real transpilado/closures extraídas, com fronteiras sintéticas explicitamente descritas; não representam E2E nem certificação de RLS.
+
+## Inventário dos achados
+
+| ID | Severidade | Status | Achado |
+|---|---|---|---|
+| R2-AUTH-001 | high | CONFIRMED_OFFLINE | WebAuthn aceita verificação sem assinatura, authenticatorData ou validação de origem |
+| R2-AUTH-002 | high | CONFIRMED_STATIC | Login com passkey anuncia autenticação mas somente inicia OTP por email |
+| R2-AUTH-003 | high | CONFIRMED_STATIC | MFA no login está fora da cadeia de autorização das rotas |
+| R2-AUTH-004 | high | CONFIRMED_STATIC | Desativar usuário, forçar logout e encerrar dispositivos não revogam sessões Auth |
+| R2-AUTH-005 | medium | CONFIRMED_OFFLINE | Resposta atrasada de perfil repõe identidade antiga após logout ou troca de usuário |
+| R2-AUTH-006 | high | CONFIRMED_STATIC | Recuperação anônima consulta profiles protegido e não cria solicitação |
+| R2-AUTH-007 | high | CONFIRMED_STATIC | Aprovar recuperação gera link que a UI descarta e anuncia email não enviado |
+| R2-AUTH-008 | high | CONFIRMED_OFFLINE | Troca de papel apaga privilégios antes de confirmar a nova atribuição |
+| R2-AUTH-009 | high | CONFIRMED_OFFLINE | Matriz anuncia permissão removida mesmo quando a revogação retorna erro |
+| R2-AUTH-010 | high | CONFIRMED_OFFLINE | Rascunho e resposta do Team Chat atravessam conversas e permanecem entre contas |
+| R2-AUTH-011 | medium | CONFIRMED_STATIC | Team Chat busca perfis de colegas por tabela proibida aos agentes |
+| R2-AUTH-012 | medium | CONFIRMED_STATIC | Ações VIP, arquivar, bloquear e tags no detalhe do contato não persistem |
+| R2-AUTH-013 | medium | CONFIRMED_OFFLINE | Mutations de Contatos ainda informam sucesso em erros ou lotes parciais |
+| R2-AUTH-014 | medium | CONFIRMED_STATIC | Menus de gerenciamento de agentes possuem opções clicáveis sem ação |
+| R2-AUTH-015 | medium | CONFIRMED_STATIC | Convite de agente não cria convite autenticável nem provisiona papel escolhido |
+| R2-AUTH-016 | medium | CONFIRMED_STATIC | Criação de usuário retorna sucesso mesmo com role/perfil/contas auxiliares falhos |
+| R2-AUTH-017 | medium | REFINED_PRIOR | Gestão de grupo e recursos novos de Team Chat permanecem sem consumidor |
+| R2-AUTH-018 | high | CONFIRMED_OFFLINE | Inteligência CRM aceita pessoa externa diferente do vínculo estável |
+| R2-AUTH-019 | medium | CONFIRMED_STATIC | Edição de empresa/contato no CRM externo aceita zero linhas como sucesso |
+| R2-AUTH-020 | medium | CONFIRMED_STATIC | Capacidade de agentes conta todos os contatos atribuídos como chats ativos |
+| R2-AUTH-021 | medium | CONFIRMED_OFFLINE | Indisponibilidade do Auth é registrada como tentativa de senha incorreta |
+
+## Evidência por achado
+
+### R2-AUTH-001 — WebAuthn aceita verificação sem assinatura, authenticatorData ou validação de origem
+
+**Severidade:** high (P1). **Status:** CONFIRMED_OFFLINE.
+
+**Consumidor → efeito:** Auth/useAuthForm → useWebAuthn.authenticateWithPasskey → webauthn(authentication-options, verify-authentication) → service client lê credencial, incrementa contador e retorna identidade.
+
+**Precondição:** Uma credencial cadastrada e um challenge conhecido para a conta; authentication-options devolve o challenge e IDs de credencial quando encontra o email.
+
+**Falha e consequência:** verify-authentication só compara clientData.type e challenge. Não verifica signature, authenticatorData, RP ID hash, origin, flags UP/UV nem contador assinado. O challenge não é filtrado por expires_at. A prova offline retornou200/success com origem errada, nenhum dado de assinatura e challenge vencido. A inscrição também grava attestationObject como public_key sem extrair/verificar a chave. A resposta inclui userId/email e consome challenge; não emite uma sessão Auth.
+
+**Evidências na fonte:**
+
+- `supabase/functions/webauthn/index.ts:97–128` — verify-registration; blob `9e42845d17a6dead75e6deb95f12be00d9e7b340`.
+- `supabase/functions/webauthn/index.ts:131–181` — authentication-options / verify-authentication; blob `9e42845d17a6dead75e6deb95f12be00d9e7b340`.
+- `supabase/functions/_shared/schemas.ts:338–345` — WebAuthnActionSchema; blob `57b706d77864be9c2c24f0eb57f0728335b0b2d0`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Alegações documentais relacionadas:** 1.10, 24.5 em COMPLETE_SYSTEM_FEATURES.md.
+
+**Reprodução:** P-AUTH-01 em `../../probes/auth/results.json` e `../../probes/auth/source-probes.cjs`.
+
+**Critérios de aceite para correção:**
+
+- Verificar criação e assertions com uma implementação WebAuthn que valide desafio, expiração, origem/RP, assinatura, UP/UV e contador conforme a política escolhida.
+- Rejeitar falta/alteração de signature e authenticatorData, origem ou RP errados, challenge expirado/reutilizado; provar que nenhum caso altera contador ou autentica.
+- Vincular desafio a tentativa/conta e consumir de forma atômica apenas após prova válida.
+
+**Limites:**
+
+- O probe executa o handler real transpilado com DB/CORS/entrada de schema sintéticos. Não é exploração de banco vivo.
+- Não classificado como tomada de sessão: o endpoint não retorna tokens, e o handoff quebrado está em R2-AUTH-002.
+
+### R2-AUTH-002 — Login com passkey anuncia autenticação mas somente inicia OTP por email
+
+**Severidade:** high (P1). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** Auth → handlePasskeyLogin → authenticateWithPasskey → signInWithOtp → toast de autenticado → navigate(/) → ProtectedRoute.
+
+**Precondição:** Usuário sem sessão que conclui a etapa WebAuthn; SDK aceita o envio do OTP.
+
+**Falha e consequência:** signInWithOtp envia o mecanismo de login por email, mas o código não verifica OTP nem recebe/aplica sessão. Mesmo com sucesso do endpoint WebAuthn a página anuncia Autenticado com Passkey e navega para uma rota que volta a /auth. Há falhas adicionais do mesmo fluxo: sem email, authentication-options grava challenge com user_id null, enquanto a verificação procura pelo user_id da credencial; listUsers sem paginação torna a resolução por email incompleta para contas fora da primeira página.
+
+**Evidências na fonte:**
+
+- `src/hooks/auth/useAuthForm.ts:189–202` — handlePasskeyLogin; blob `8425451add33bca558cd2e1a92c520e76041ecba`.
+- `src/hooks/auth/useWebAuthn.ts:109–157` — authenticateWithPasskey; blob `9757ac438d96ce70bd030a5cb12ed4fccf870f99`.
+- `supabase/functions/webauthn/index.ts:131–181` — passkey challenge / identity response; blob `9e42845d17a6dead75e6deb95f12be00d9e7b340`.
+- `src/components/auth/ProtectedRoute.tsx:113–118` — guard de sessão; blob `c16a92880441adf86f2a408382c969fb215eaf75`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Alegações documentais relacionadas:** 1.10, 24.5 em COMPLETE_SYSTEM_FEATURES.md.
+
+**Critérios de aceite para correção:**
+
+- Uma assertion válida deve concluir um fluxo de sessão realmente suportado e produzir usuário/sessão antes de anunciar login.
+- Testar login sem sessão, sem email, conta além da primeira página de usuários, cancelamento e retorno; exigir chegada ao app sem login adicional não anunciado.
+- Se houver continuação por email, mostrar explicitamente esse estado em vez de autenticação concluída.
+
+**Limites:**
+
+- A semântica de signInWithOtp foi conferida na documentação oficial Supabase.
+- Não executado biométrico em navegador nem envio de email.
+
+### R2-AUTH-003 — MFA no login está fora da cadeia de autorização das rotas
+
+**Severidade:** high (P1). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** Login senha/SSO → AuthProvider user → AuthForm navega / → ProtectedRoute checa user/papel/permissão; /2fa é uma rota independente.
+
+**Precondição:** Conta com fator TOTP verificado e sessão aal1 antes do desafio adicional.
+
+**Falha e consequência:** Não existe decisão AAL em ProtectedRoute, AppRoutes ou no redirecionamento do login. TwoFactorAuth só inicia verificação se o usuário visitar a rota. O inventário SQL do agente de banco não encontrou cláusula AAL nas779 migrations ativas. Assim a UI e a cadeia analisada não exigem segundo fator para acessar o app, apesar de existir enrollment e tela funcional de desafio. A própria rota fica indefinidamente em Verificando para usuário sem sessão/sem fator ou erro de assurance.
+
+**Evidências na fonte:**
+
+- `src/hooks/auth/useAuthForm.ts:53–57` — redirect após user; blob `8425451add33bca558cd2e1a92c520e76041ecba`.
+- `src/components/auth/ProtectedRoute.tsx:17–141` — ProtectedRoute; blob `c16a92880441adf86f2a408382c969fb215eaf75`.
+- `src/routes/AppRoutes.tsx:28–113` — rotas auth/2fa/admin; blob `005f7a1a35bfb4cb98161784c7047a4edbc9dc22`.
+- `src/pages/TwoFactorAuth.tsx:17–50` — checkMFAStatus; blob `dccd7a3ba6c07a6dd7124a2e9cbc5dbfd7be2a03`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Alegações documentais relacionadas:** 1.7, 1.8, 1.9, 1.11 em COMPLETE_SYSTEM_FEATURES.md.
+
+**Critérios de aceite para correção:**
+
+- Aplicar decisão de currentLevel/nextLevel antes da autorização do conteúdo protegido.
+- Reforçar os recursos sensíveis na autorização server-side/RLS conforme política MFA, além do redirecionamento.
+- Com fator verificado, senha/SSO aal1 e URL direta devem exigir desafio; aal2 deve entrar; ausência de usuário/fator/erro deve ter estado explícito.
+
+**Limites:**
+
+- Ausência de AAL em SQL baseada na cadeia da fonte, corroborada pelo agente SQL; não houve consulta ao dashboard Auth implantado.
+- 1.20 SSO tem implementação de callback; o problema é o gate posterior de MFA, não a inexistência de SSO.
+
+### R2-AUTH-004 — Desativar usuário, forçar logout e encerrar dispositivos não revogam sessões Auth
+
+**Severidade:** high (P1). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** AdminUsersTable → ForceLogoutButton/useAdminData; Segurança → useDeviceDetection → profiles ou public.user_sessions.
+
+**Precondição:** Usuário com sessão ou credenciais válidas que o administrador tenta desativar/desconectar.
+
+**Falha e consequência:** Forçar logout só atualiza profiles.session_invalidated_at, campo sem leitor na fonte/SQL. Desativar altera is_active, mas auth-login e guardas não o validam e a visibilidade canônica não o consulta. Encerrar sessões só marca public.user_sessions.is_active=false; não há vínculo com auth.sessions, revogação de refresh token ou validação desse registro. detect-new-device insere uma sessão pública nova a cada chamada, sem chave da sessão Auth, e só é chamado nas telas de segurança. As confirmações descrevem efeitos de segurança que esses writes não realizam.
+
+**Evidências na fonte:**
+
+- `src/components/admin/ForceLogoutButton.tsx:26–61` — handleForceLogout e promessa UI; blob `d796604de197b3e648d4b17d96ca45ea218d41df`.
+- `src/components/admin/useAdminData.ts:115–126` — handleToggleActive; blob `9c74e75a5e998a94189ff292ffbdfc113973ef9d`.
+- `src/hooks/ui/useDeviceDetection.ts:174–227` — removeDevice/endSession/endAllOtherSessions; blob `512c3752014ac7a1494bce1ca8eda98e89a1fa28`.
+- `supabase/functions/detect-new-device/index.ts:140–169` — registro de user_sessions; blob `a94779b3b19fcb704eb9a9370cc62267b4e45a33`.
+- `supabase/functions/auth-login/index.ts:72–116` — login sem is_active/session_invalidated_at; blob `a4fe292c8b536d271ff3d65008b5ee8473babc99`.
+- `supabase/migrations/20260315193759_ad5f45ba-4b9f-4b25-b483-7da8b548e8c7.sql:33–40` — adiciona session_invalidated_at; blob `566646ef7d4f844f87bf80f91030daf645fa965f`.
+- `supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql:1–84` — predicado canônico de visibilidade; blob `a0c2e2f7484bfdd3808b3e30f2ca87cb4104428c`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Alegações documentais relacionadas:** 1.11 em COMPLETE_SYSTEM_FEATURES.md.
+
+**Critérios de aceite para correção:**
+
+- Definir e implementar revogação real para logout forçado, término de sessão/dispositivo e desativação de conta.
+- Vincular inventário de dispositivos à sessão Auth que ele pretende encerrar; evitar duplicação por visita à tela.
+- Validar duas sessões independentes: após a ação, sessão alvo não renova/acessa recursos conforme o prazo garantido; desativado não inicia nova sessão; sessão preservada continua.
+
+**Limites:**
+
+- SQL peer confirmou: session_invalidated_at só ADD COLUMN; user_sessions não consulta auth.sessions; can_view_contact não verifica is_active.
+- Não se presume que revogar um refresh token revogue instantaneamente todo JWT já emitido; o aceite deve definir o mecanismo/prazo real.
+
+### R2-AUTH-005 — Resposta atrasada de perfil repõe identidade antiga após logout ou troca de usuário
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_OFFLINE.
+
+**Consumidor → efeito:** AuthProvider.onAuthStateChange / refreshProfile → fetchProfile(userId) → setProfile; consumidores usam profile.id/nome para Team Chat e Contatos.
+
+**Precondição:** Uma consulta de perfil em andamento durante SIGNED_OUT, novo SIGNED_IN ou atualização concorrente.
+
+**Falha e consequência:** fetchProfile guarda apenas um booleano; não confere identidade vigente ou geração ao resolver. O listener libera o booleano a cada sessão e permite consultas concorrentes. O finally do logout limpa profile, porém uma consulta anterior pode escrever depois dessa limpeza; uma resposta A pode sobrescrever a resposta B. Os dois ordenamentos foram reproduzidos na closure real.
+
+**Evidências na fonte:**
+
+- `src/hooks/auth/useAuth.tsx:36–47` — fetchProfile; blob `b6a2c01e872eb422a4c71cab6fff0e58b7f383a4`.
+- `src/hooks/auth/useAuth.tsx:89–118` — onAuthStateChange; blob `b6a2c01e872eb422a4c71cab6fff0e58b7f383a4`.
+- `src/hooks/auth/useAuth.tsx:148–181` — refreshProfile/signOut; blob `b6a2c01e872eb422a4c71cab6fff0e58b7f383a4`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Reprodução:** P-AUTH-02 em `../../probes/auth/results.json` e `../../probes/auth/source-probes.cjs`.
+
+**Critérios de aceite para correção:**
+
+- Vincular cada resposta de perfil à geração de sessão e userId atuais; descartar resultados de gerações encerradas.
+- Invalidar/cancelar consultas de perfil no logout e na troca de usuário e zerar perfil ao iniciar identidade diferente.
+- Provar duas ordens de resolução A/B e conclusão tardia após logout, sem reaparecer perfil anterior.
+
+**Limites:**
+
+- Probe da closure real com promises controladas; transições de sessão simulam pontos de corte do listener, sem renderização React completa.
+- Não afirma bypass de RLS: a falha confirmada é a identidade incorreta no estado do cliente.
+
+### R2-AUTH-006 — Recuperação anônima consulta profiles protegido e não cria solicitação
+
+**Severidade:** high (P1). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** /forgot-password → SELECT profiles(user_id) por email → retorno genérico sem insert.
+
+**Precondição:** Pessoa desconectada tentando recuperar sua conta, o caso normal desta página.
+
+**Falha e consequência:** As policies SELECT atuais de profiles exigem authenticated e permitem próprio usuário/admin/supervisor. Sem sessão, a consulta não retorna a conta. ForgotPassword ignora userError e, quando existingUser é vazio, apresenta sucesso genérico antes do INSERT password_reset_requests. A não enumeração de emails é correta como aparência, mas o pedido real nunca é entregue ao administrador.
+
+**Evidências na fonte:**
+
+- `src/pages/ForgotPassword.tsx:37–68` — handleSubmit; blob `c4a8b964af4313dd0d0da2026c3224076ae34caf`.
+- `supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql:1–26` — SELECT profiles próprio/admin/supervisor e política de equipe transitória; blob `a05f3685643ec445ce07862463a20db859b3faa3`.
+- `supabase/migrations/20260401001655_509f6c72-b9c2-458c-9dc5-af298d512958.sql:1–5` — remove política de equipe; blob `bcef82895cdad989af1c9809d1107b3483cc6b15`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Alegações documentais relacionadas:** 1.4, 1.23 em COMPLETE_SYSTEM_FEATURES.md.
+
+**Critérios de aceite para correção:**
+
+- Mover o registro do pedido para uma fronteira server-side anônima controlada que faça lookup sem expor existência e persista pedido válido.
+- Manter mesma resposta pública para email existente/inexistente; separar falha de infraestrutura de pedido persistido.
+- Verificar anon existente: uma solicitação pendente aparece ao revisor; anon inexistente não enumera; duplicatas/rate limit tratados.
+
+**Limites:**
+
+- Policies exatas: migration com prefixo20260401000858 linhas6–12; remoção da policy de equipe no prefixo20260401001655 linha3. Pins SQL anexados em cross_domain_evidence.
+- Sem teste anônimo em banco vivo.
+
+### R2-AUTH-007 — Aprovar recuperação gera link que a UI descarta e anuncia email não enviado
+
+**Severidade:** high (P1). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** PasswordResetRequestsPanel.handleApprove → approve-password-reset → auth.admin.generateLink → resposta resetLink → UI ignora data.
+
+**Precondição:** Uma solicitação pendente existente e revisor autorizado.
+
+**Falha e consequência:** A Edge gera action_link, marca a solicitação approved e devolve o link. Não há envio de email. O consumidor extrai somente error e informa Email de reset enviado. Mesmo contornando o bloqueio da etapa anterior, o usuário não recebe o link por esse fluxo. A checagem pending e update também são separados, sem compare-and-swap, permitindo decisões concorrentes sobre o mesmo pedido.
+
+**Evidências na fonte:**
+
+- `supabase/functions/approve-password-reset/index.ts:39–104` — leitura/aprovação/generateLink; blob `06449dc84c8bc823cc9505555ba8ef77c8e3d6a2`.
+- `src/components/security/PasswordResetRequestsPanel.tsx:51–60` — handleApprove; blob `871a2b47f2eae46543fa00e15eb0d49ff95d0d06`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Alegações documentais relacionadas:** 1.4, 1.23 em COMPLETE_SYSTEM_FEATURES.md.
+
+**Critérios de aceite para correção:**
+
+- Gerar e entregar o mecanismo de recuperação ao destinatário por transporte verificável; status sent somente após aceite do envio.
+- Não expor link ao revisor se não for parte do fluxo autorizado; a UI deve refletir queued/sent/failed e permitir retry seguro.
+- Condicionar decisão ao estado pending de forma atômica e testar aprovar/rejeitar concorrentes sem múltiplas decisões contraditórias.
+
+**Limites:**
+
+- generateLink é geração de link para transporte próprio conforme documentação oficial, não disparo de email.
+- Nenhum email enviado e nenhum link de recuperação real coletado.
+
+### R2-AUTH-008 — Troca de papel apaga privilégios antes de confirmar a nova atribuição
+
+**Severidade:** high (P1). **Status:** CONFIRMED_OFFLINE.
+
+**Consumidor → efeito:** AdminUsersTable seletor de role → useAdminData.handleRoleChange → DELETE user_roles → INSERT.
+
+**Precondição:** Administrador muda papel; o DELETE conclui e o INSERT falha, ou o DELETE falha silenciosamente.
+
+**Falha e consequência:** A substituição usa dois requests não transacionais. Falha no INSERT deixa o usuário sem qualquer role; falha no DELETE é ignorada e o INSERT pode somar papéis ao antigo. O probe preservou exatamente o caminho real e mostrou admin→[] quando a inserção falha. Um operador pode inclusive retirar seu próprio acesso administrativo.
+
+**Evidências na fonte:**
+
+- `src/components/admin/useAdminData.ts:104–113` — handleRoleChange; blob `9c74e75a5e998a94189ff292ffbdfc113973ef9d`.
+- `src/components/admin/AdminUsersTable.tsx:1–115` — seletor consumidor; blob `b0b64c6e3f23eeda62a9ccf0b679099e40245e4e`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Alegações documentais relacionadas:** 1.12, 1.13 em COMPLETE_SYSTEM_FEATURES.md.
+
+**Reprodução:** P-AUTH-05 em `../../probes/auth/results.json` e `../../probes/auth/source-probes.cjs`.
+
+**Critérios de aceite para correção:**
+
+- Substituir papel por operação server-side atômica com autorização e proteção de último administrador conforme regra de negócio.
+- Erro de qualquer etapa deve manter atribuição anterior e ser refletido na UI.
+- Validar falha/inserção concorrente e múltiplos papéis sem estados intermediários destrutivos.
+
+**Limites:**
+
+- Conclusão da fonte fixada; não atesta comportamento de uma implantação ou banco vivo.
+
+### R2-AUTH-009 — Matriz anuncia permissão removida mesmo quando a revogação retorna erro
+
+**Severidade:** high (P1). **Status:** CONFIRMED_OFFLINE.
+
+**Consumidor → efeito:** PermissionMatrix.handleToggle → usePermissions.removePermissionFromRole/addPermissionToRole → PostgREST → toast.
+
+**Precondição:** Falha explícita da escrita de role_permissions, por ACL, constraint ou serviço.
+
+**Falha e consequência:** O hook retorna false em error e não lança. A matriz ignora o booleano e sempre mostra Permissão removida/adicionada. Probe com42501 retornou sucesso visual e nenhum refetch. Além disso, escritas bem-sucedidas não invalidam user-roles/user-nav-permissions de consumidores; staleTime não funciona como polling e o QueryClient desliga refetch em foco/mount.
+
+**Evidências na fonte:**
+
+- `src/hooks/system/usePermissions.ts:119–141` — mutations retornam boolean; blob `c8242e4421b19780f72aa36765883db807309f60`.
+- `src/components/permissions/PermissionMatrix.tsx:54–72` — handleToggle; blob `9528e77ae5a584e286e70c2fb38a6a5f218e4d62`.
+- `src/hooks/system/useUserRole.ts:1–74` — cache de papéis; blob `bf443c59442e8913b9c65b4114a4e2704c21b313`.
+- `src/lib/queryClient.ts:1–33` — políticas globais de cache; blob `585ce9bf74ebeb3308234c672e6ae0fb98f10b64`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Alegações documentais relacionadas:** 1.17, 1.12 em COMPLETE_SYSTEM_FEATURES.md.
+
+**Reprodução:** P-AUTH-03 em `../../probes/auth/results.json` e `../../probes/auth/source-probes.cjs`.
+
+**Critérios de aceite para correção:**
+
+- Propagar erro de mutation ou exigir retorno true antes de anunciar sucesso; confirmar quantidade efetivamente alterada.
+- Invalidar/reconciliar permissões e papéis usados pela navegação após alteração e em mudanças remotas que o produto precise refletir.
+- Testar revogação403/42501 e falha transitória: permissão permanece visível com erro e nenhuma mensagem de removida.
+
+**Limites:**
+
+- Não classifica hasPermission do hook como bloqueio ativo de agentes: não foi encontrado consumidor ativo desse método genérico fora da matriz.
+- Backend pode continuar autorizando corretamente apesar do cache/UI incorretos.
+
+### R2-AUTH-010 — Rascunho e resposta do Team Chat atravessam conversas e permanecem entre contas
+
+**Severidade:** high (P1). **Status:** CONFIRMED_OFFLINE.
+
+**Consumidor → efeito:** TeamChatView troca conversation no mesmo TeamChatPanel → useTeamChatPanel mantém text/replyTo → TeamChatInputArea/useTeamChatDraft grava sob conversationId novo → send usa destino atual.
+
+**Precondição:** Operador digita texto ou seleciona resposta em A e muda para B antes de enviar; outra conta pode usar o mesmo navegador e conversa depois.
+
+**Falha e consequência:** O painel é reutilizado sem key por conversa; efeito de troca não limpa texto/reply/edit. O hook só restaura B se text estiver vazio e grava o texto antigo sob a chave de B após500ms. As chaves team_draft_+conversationId não têm identidade e não são removidas no logout. Probe mostrou A sobrescrevendo rascunho B e outro profile restaurando A. Enviar em B usa conversationId B e conteúdo/reply pendentes de A.
+
+**Evidências na fonte:**
+
+- `src/components/team-chat/TeamChatView.tsx:35–54` — painel sem key por conversa; blob `8454231c59f5d39daef659d66756ecbe66ed4d2b`.
+- `src/components/team-chat/useTeamChatPanel.ts:27–35` — estado de edição; blob `236c415ea7b224bb41b815097fb75ed4c37c9ce3`.
+- `src/components/team-chat/useTeamChatPanel.ts:116–124` — reset incompleto por conversationId; blob `236c415ea7b224bb41b815097fb75ed4c37c9ce3`.
+- `src/components/team-chat/useTeamChatPanel.ts:190–206` — send atual; blob `236c415ea7b224bb41b815097fb75ed4c37c9ce3`.
+- `src/hooks/chat/useTeamChatDraft.ts:7–53` — chave/auto-save/restore; blob `586bbd32e45e818ee4fac64e38a6e82df4d849dd`.
+- `src/hooks/auth/useAuth.tsx:162–181` — limpeza de logout; blob `b6a2c01e872eb422a4c71cab6fff0e58b7f383a4`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Reprodução:** P-AUTH-04 em `../../probes/auth/results.json` e `../../probes/auth/source-probes.cjs`.
+
+**Critérios de aceite para correção:**
+
+- Escopar todo estado de composição e persistência por usuário e conversa; restaurar B independentemente do conteúdo prévio de A.
+- Zerar reply/edit/arquivo/recording ao mudar de destinatário ou remontar painel com identidade completa.
+- Provar troca A→B com ambos os rascunhos, resposta selecionada, envio e logout→outra conta, sem sobrescrita nem exposição.
+
+**Limites:**
+
+- Nova fronteira de identidade/destinatário; TC-010 anterior tratava perda após erro de envio, que permanece separado.
+- Sem envio real de mensagem; probe do hook com scheduler sintético e retenção do painel confirmada na fonte.
+
+### R2-AUTH-011 — Team Chat busca perfis de colegas por tabela proibida aos agentes
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** TeamChatView/lista → useTeamConversations embed profiles; painel colega → useTeamMemberDetails SELECT profiles.
+
+**Precondição:** Usuário agent/special_agent, colega diferente e policy atual de profiles (próprio/admin/supervisor).
+
+**Falha e consequência:** A lista incorpora perfis diretamente da tabela protegida; dados do outro participante vêm null. DMs sem nome caem em Chat Direto e perdem avatar. O painel individual consulta nome/email/telefone/cargo/aniversário pelo mesmo caminho e fica sem perfil; grupo lista só o que a policy permite, podendo contar1 membro em grupo maior. Há RPC get_team_profiles para projeção controlada em outros consumidores, mas esses caminhos não a usam.
+
+**Evidências na fonte:**
+
+- `src/hooks/team-chat/useTeamConversations.ts:26–68` — embed e displayName fallback; blob `5cf706a571edcaea4d68de8e7ce3037d0d1c761a`.
+- `src/hooks/team-chat/useTeamMemberDetails.ts:40–69` — consultas peer/group; blob `0a3d5c862699b293f8f36e605906af925963b2cf`.
+- `src/components/team-chat/TeamMemberDetails.tsx:35–77` — render detalhes e count; blob `2ae63d3cd4caf36eebf96650834a73d0a582c92f`.
+- `src/hooks/crm/useTeamProfiles.ts:1–19` — projeção existente; blob `fb33eb361c21d30aca245ad165a01f04f33f896b`.
+- `supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql:1–26` — SELECT profiles próprio/admin/supervisor e política de equipe transitória; blob `a05f3685643ec445ce07862463a20db859b3faa3`.
+- `supabase/migrations/20260401001655_509f6c72-b9c2-458c-9dc5-af298d512958.sql:1–5` — remove política de equipe; blob `bcef82895cdad989af1c9809d1107b3483cc6b15`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Critérios de aceite para correção:**
+
+- Usar projeção autorizada e mínima para participantes do Team Chat, sem abrir dados privados inteiros de profiles.
+- Testar agent→agent e group com múltiplos membros: nomes/avatar corretos, somente atributos autorizados, count fiel.
+- Distinguir perfil indisponível de erro de consulta.
+
+**Limites:**
+
+- Cadeia e manifesto SQL confirmados pelo agente SQL: policy de membros ativos foi removida na migration20260401001655.
+- Não sugere afrouxar RLS genericamente nem afirma que agentes deveriam ver todos os dados pessoais do colega.
+
+### R2-AUTH-012 — Ações VIP, arquivar, bloquear e tags no detalhe do contato não persistem
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** ContactActionButtons menu Mais → ContactHeaderSection.onQuickAction → ContactDetails.handleQuickAction; ContactAccordionSections botões/tag X.
+
+**Precondição:** Abrir detalhes do contato e selecionar ação visível do menu ou tags.
+
+**Falha e consequência:** VIP/archive/block só emitem undoToast; não chamam mutation, não alteram estado persistido e undo também só mostra toast. Os botões Adicionar tag/Adicionar e X de tags não têm handler. A UI declara contato bloqueado/arquivado mesmo com dado intacto, levando a decisões operacionais incorretas.
+
+**Evidências na fonte:**
+
+- `src/components/inbox/contact-details/ContactActionButtons.tsx:186–198` — menu alcançável; blob `851aa7e03c6010ebbdd240bfdc5c52ddba94f55d`.
+- `src/components/inbox/ContactDetails.tsx:67–91` — handleQuickAction; blob `eeffb3e8f1a69c737171f4dfb107d2485beec79a`.
+- `src/components/inbox/ContactDetails.tsx:125–136` — wiring consumidor; blob `eeffb3e8f1a69c737171f4dfb107d2485beec79a`.
+- `src/components/inbox/contact-details/ContactAccordionSections.tsx:74–77` — Adicionar tag sem handler; blob `97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed`.
+- `src/components/inbox/contact-details/ContactAccordionSections.tsx:163–190` — TagsContent; blob `97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Alegações documentais relacionadas:** 2.5 em COMPLETE_SYSTEM_FEATURES.md.
+
+**Critérios de aceite para correção:**
+
+- Conectar cada ação ao contrato persistido com autorização e só confirmar após sucesso; undo deve reverter operação real.
+- Se a função ainda não existir, removê-la/desabilitá-la com estado honesto.
+- Reabrir contato após VIP/archive/block/tag e confirmar dado persistido e falhas explícitas.
+
+**Limites:**
+
+- Conclusão da fonte fixada; não atesta comportamento de uma implantação ou banco vivo.
+
+### R2-AUTH-013 — Mutations de Contatos ainda informam sucesso em erros ou lotes parciais
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_OFFLINE.
+
+**Consumidor → efeito:** ContactsView → ContactBulkTagDialog/BulkActionsBar → SELECT/UPDATE contacts; edição avulsa via useContactsCRUD.
+
+**Precondição:** Contato selecionado sem UPDATE permitido, seleção incluindo IDs invisíveis, falha de escrita ou perda de autorização entre leitura e update.
+
+**Falha e consequência:** ContactBulkTagDialog ignora todos os erros dos UPDATE e anuncia contactIds.length, inclusive IDs não lidos. BulkActionsBar.handleBulkTag ignora erros de leitura/escrita; leitura falha vira tags=[], podendo sobrescrever tags se a escrita subsequente passar. Atribuir/tipo/edição só verificam error sem quantidade, então zero/parte das linhas também anunciam sucesso total. DELETE já usa RPC e contagem corretamente; a correção não foi aplicada aos outros caminhos.
+
+**Evidências na fonte:**
+
+- `src/components/contacts/ContactBulkTagDialog.tsx:57–94` — handleApply; blob `386521b4886c48e6ea533072c2522255fca0206c`.
+- `src/components/contacts/BulkActionsBar.tsx:78–144` — tag/assign/type; blob `72312d4b962d491a06f99f1070308c900a3b5878`.
+- `src/components/contacts/BulkActionsBar.tsx:146–177` — contraste interno: delete contabiliza; blob `72312d4b962d491a06f99f1070308c900a3b5878`.
+- `src/components/contacts/useContactsCRUD.ts:187–234` — handleEditContact; blob `8be3bec66e4631d55516b740125ceddcb240cf41`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Reprodução:** P-AUTH-06 em `../../probes/auth/results.json` e `../../probes/auth/source-probes.cjs`.
+
+**Critérios de aceite para correção:**
+
+- Propagar erros SDK e obter quantidade/IDs efetivamente alterados; reportar sucesso parcial e manter seleção recusada.
+- Não fabricar tags vazias quando leitura falha; aplicar adição/remoção atômica para evitar lost update.
+- Testar lote com autorização mista, erro de SELECT, erro UPDATE e zero rows, preservando tags existentes e feedback fiel.
+
+**Limites:**
+
+- O item Atribuir do BulkActionsBar está sem availableAgents no consumidor ContactsView239–248; erro de contagem desse handler é latente nessa montagem. Tag, tipo e edição são alcançáveis.
+
+### R2-AUTH-014 — Menus de gerenciamento de agentes possuem opções clicáveis sem ação
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** AgentsView grid → menu de cada agente ou botão Filtrar.
+
+**Precondição:** Página de agentes carregada e ação selecionada.
+
+**Falha e consequência:** Filtrar, Editar, Configurações e Desativar são renderizados sem onClick/onSelect. Não abrem diálogo, não mudam filtro, não invocam gerenciamento de conta. Há outra superfície Admin funcional para parte dessas operações, mas os controles oferecidos aqui não conduzem a ela.
+
+**Evidências na fonte:**
+
+- `src/components/agents/AgentsView.tsx:145–155` — Filtrar; blob `6708b347500a72eb23c4da5a96cc31e18c8ea715`.
+- `src/components/agents/AgentsView.tsx:205–225` — menu agente; blob `6708b347500a72eb23c4da5a96cc31e18c8ea715`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Critérios de aceite para correção:**
+
+- Ligar ações à superfície canônica de gerenciamento com o agente escolhido ou apresentá-las como indisponíveis.
+- Validar cada opção com teclado/clique e verificar efeito real/autorização, inclusive desativação.
+
+**Limites:**
+
+- Conclusão da fonte fixada; não atesta comportamento de uma implantação ou banco vivo.
+
+### R2-AUTH-015 — Convite de agente não cria convite autenticável nem provisiona papel escolhido
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** AgentsView Novo agente → InviteAgentDialog.handleInvite → send-email.
+
+**Precondição:** Operador seleciona papel admin/supervisor/agent e envia convite.
+
+**Falha e consequência:** O único efeito é email HTML com texto do papel. Não há convite Auth, token/URL de aceite, registro de atribuição pendente ou associação do papel ao email. O destinatário é instruído a criar conta, e o papel selecionado não é comunicado a nenhum contrato de provisionamento. O email pode ser enviado com sucesso, mas não conclui onboarding do papel anunciado.
+
+**Evidências na fonte:**
+
+- `src/components/agents/InviteAgentDialog.tsx:29–65` — handleInvite; blob `c2ec05fe9f8be3135b56bad8e09ff7d954cd1ee2`.
+- `src/components/agents/InviteAgentDialog.tsx:100–110` — papéis selecionáveis; blob `c2ec05fe9f8be3135b56bad8e09ff7d954cd1ee2`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Critérios de aceite para correção:**
+
+- Definir fluxo de convite verificável, com destinatário, expiração, papel autorizado e consumo único.
+- Aplicar atribuição na aceitação server-side, jamais por confiar no texto/email ou metadata fornecida pelo convidado.
+- Testar convite para cada papel, email existente, novo, expirado e uso repetido; UI deve refletir estado de convite/aceite.
+
+**Limites:**
+
+- Não afirma que o email não é enviado: o defeito é o provisionamento ausente e a promessa do papel.
+- send-email não foi executado.
+
+### R2-AUTH-016 — Criação de usuário retorna sucesso mesmo com role/perfil/contas auxiliares falhos
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** AdminView → useAdminData.handleCreateUser → create-user → Auth createUser → updates/inserts públicos →200.
+
+**Precondição:** Criação Auth bem-sucedida e uma etapa posterior de role/perfil/conta auxiliar falha ou não afeta linha.
+
+**Falha e consequência:** Erros das atualizações role e perfil são ignorados; Gmail/serviços/Dropbox apenas logam erro. A Edge sempre responde success:true e UI fecha como criado. Uma conta existe com configuração diferente da solicitada, e repetir a operação esbarra em email já criado. A autorização do criador usa user_roles.single(), incompatível com administrador que tenha mais de uma role, apesar da modelagem por linhas.
+
+**Evidências na fonte:**
+
+- `supabase/functions/create-user/index.ts:35–44` — lookup single de papel; blob `c9f07ddae973e905dfee8d7180e82c3ef02d4eb8`.
+- `supabase/functions/create-user/index.ts:70–152` — provisionamento parcial; blob `c9f07ddae973e905dfee8d7180e82c3ef02d4eb8`.
+- `src/components/admin/useAdminData.ts:237–248` — sucesso pelo HTTP; blob `9c74e75a5e998a94189ff292ffbdfc113973ef9d`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Critérios de aceite para correção:**
+
+- Verificar e persistir resultado de cada etapa obrigatória; tornar retry idempotente e retornar provisionamento parcial explícito quando não for possível transação com Auth.
+- Não sinalizar papel aplicado sem linha confirmada; reconciliar/compensar falha de provisionamento.
+- Autorizar admin por existência do papel, com caso multi-role coberto.
+
+**Limites:**
+
+- Conclusão da fonte fixada; não atesta comportamento de uma implantação ou banco vivo.
+
+### R2-AUTH-017 — Gestão de grupo e recursos novos de Team Chat permanecem sem consumidor
+
+**Severidade:** medium (P2). **Status:** REFINED_PRIOR.
+
+**Consumidor → efeito:** TeamChatView → TeamChatPanel → TeamChatHeader; estados/mutations do hook e diálogos exportados não são ligados ao painel.
+
+**Precondição:** Uso da view de produção e intenção de renomear/sair/transferir/gerenciar grupo ou departamentos.
+
+**Falha e consequência:** Além da gestão de departamento já apontada em TC-005 e da paginação/reação em TC-006, o painel não passa callbacks de rename/leave/transfer para header nem monta GroupManagementDialog/TransferConversationDialog/TeamPerformancePanel. Componentes e hooks não equivalem a operação disponível. GroupManagementDialog ainda trata membership.id como profile.id, mas esse bug foi mantido somente como bloqueio de integração porque o componente não está alcançável.
+
+**Evidências na fonte:**
+
+- `src/components/team-chat/TeamChatPanel.tsx:1–156` — imports e props do header; blob `66db8581e8565112211f289772b49255bd0c237f`.
+- `src/components/team-chat/TeamChatView.tsx:29–55` — props para lista e painel; blob `8454231c59f5d39daef659d66756ecbe66ed4d2b`.
+- `src/components/team-chat/useTeamChatPanel.ts:116–124` — estados de gestão; blob `236c415ea7b224bb41b815097fb75ed4c37c9ce3`.
+- `src/components/team-chat/GroupManagementDialog.tsx:60–70` — shape dormente; blob `bab5c8d48183b3e1e5aa5e76d1632b52bde9a559`.
+- `src/components/team-chat/GroupManagementDialog.tsx:155–167` — ID dormente; blob `bab5c8d48183b3e1e5aa5e76d1632b52bde9a559`.
+
+**Comparação com os104 anteriores:** Amplia a evidência do achado anterior sem contá-lo novamente como defeito independente. IDs: TC-005, TC-006.
+
+**Critérios de aceite para correção:**
+
+- Concluir ligação dos recursos aceitos ao consumidor real; não encerrar tarefa apenas por existir hook/componente.
+- Corrigir shape membership/profile e contratos SQL antes de ativar diálogos.
+- Provar as ações de grupo e departamentos a partir da view normal, com gestão/recusa de usuário sem papel.
+
+**Limites:**
+
+- Refinamento do grupo de achados anteriores, não novo achado de exploração.
+- Bugs em código sem consumidor não foram contados como falha ativa.
+
+### R2-AUTH-018 — Inteligência CRM aceita pessoa externa diferente do vínculo estável
+
+**Severidade:** high (P1). **Status:** CONFIRMED_OFFLINE.
+
+**Consumidor → efeito:** ContactAccordionSections → ContactIntelligencePanel → useContactIntelligence → crm-integration(contactLookup,intelligence) → RPC externa por telefone.
+
+**Precondição:** Contato canônico visível vinculado a external-A; o mesmo telefone no CRM externo passa a resolver external-B, sem mudar o telefone canônico.
+
+**Falha e consequência:** A Edge lê o vínculo estável, mas compara external_contact_id apenas no lookup360. Para intelligence, aceita result.contact_id diferente e entrega briefing/rapport/interações de outra pessoa sob o contato atual. O probe do handler real retornou409 para360 e200 para intelligence com o mesmo vínculo A e resultado B. O caminho batch também só compara normalized_phone e não carrega external_contact_id, deixando logos/empresa do número reciclado sem prova de identidade.
+
+**Evidências na fonte:**
+
+- `supabase/functions/crm-integration/index.ts:568–589` — contactLookup; blob `d51878b27773388bf87396cb82f9b62c8c818c7b`.
+- `supabase/functions/crm-integration/index.ts:590–617` — contactLookupBatch; blob `d51878b27773388bf87396cb82f9b62c8c818c7b`.
+- `src/hooks/crm/useContactIntelligence.ts:79–108` — contact_id e consumidor; blob `18ab915b7c991b6358fcd9d58a8c7e3ef95c4d11`.
+- `src/components/inbox/contact-details/ContactAccordionSections.tsx:95–103` — painel alcançável; blob `97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Reprodução:** P-AUTH-07 em `../../probes/auth/results.json` e `../../probes/auth/source-probes.cjs`.
+
+**Critérios de aceite para correção:**
+
+- Resolver leituras pelo vínculo estável ou conferir identidade retornada em todas as projeções, incluindo intelligence e batch.
+- Em divergência, retornar conflito/estado de reverificação sem exibir dado de outra pessoa.
+- Reproduzir telefone reciclado, vínculo alterado e ausência de vínculo; confirmar que360/intelligence/batch compartilham a mesma autoridade de identidade.
+
+**Limites:**
+
+- External RPC/DB sintéticos, sem provar que já ocorreu reatribuição no Singu real.
+- Authorization do contato canônico está presente; defeito é a identidade externa que ele autoriza a projetar.
+
+### R2-AUTH-019 — Edição de empresa/contato no CRM externo aceita zero linhas como sucesso
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** CRM360ExplorerView → CompanyFormDialog/ContactFormDialog → useExternalMutation → crm-integration mutate update → select result.
+
+**Precondição:** Empresa/contato removido ou ID que não existe mais entre abertura do form e update.
+
+**Falha e consequência:** O gateway transforma retorno vazio em data=[] com200; hook retorna o array e forms ignoram seu conteúdo, anunciam atualizado e fecham. Não há verificação de uma linha efetivamente gravada nem reconciliação de conflito. A invalidação só cobre external-db/tabela, deixando projeções360/intelligence/batch existentes com valores antigos após edição bem-sucedida.
+
+**Evidências na fonte:**
+
+- `supabase/functions/crm-integration/index.ts:676–687` — mutate; blob `d51878b27773388bf87396cb82f9b62c8c818c7b`.
+- `src/hooks/integrations/useExternalDB.ts:138–159` — useExternalMutation; blob `cc0d00e79513ce3b063106102f14879d20cb6a9a`.
+- `src/components/crm360/CompanyFormDialog.tsx:94–115` — handleSubmit; blob `e04475506eb435d2eaa09f00edeb4852feae4023`.
+- `src/components/crm360/ContactFormDialog.tsx:105–125` — handleSubmit; blob `3902767351eb673a9412ce405055e8d34a539c21`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Critérios de aceite para correção:**
+
+- Exigir exatamente uma linha alterada para update de ID único e informar404/conflito sem fechar form quando zero.
+- Definir controle de versão para edição concorrente e invalidar projeções360/intelligence/batch impactadas.
+- Verificar remoção entre read/update e edição de empresa vinculada em aba separada.
+
+**Limites:**
+
+- Conclusão da fonte fixada; não atesta comportamento de uma implantação ou banco vivo.
+
+### R2-AUTH-020 — Capacidade de agentes conta todos os contatos atribuídos como chats ativos
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_STATIC.
+
+**Consumidor → efeito:** useAgents agents-active-chats → COUNT client-side por assigned_to → AgentsView capacidade/chats e totalActiveChats.
+
+**Precondição:** Existem contatos atribuídos com conversa encerrada, histórico antigo ou volume acima do limite de resposta da API.
+
+**Falha e consequência:** A consulta não filtra estado da conversa e conta cada contato atribuído como ativo. A capacidade exibida cresce com o histórico mesmo sem atendimento aberto; a consulta não pagina/agrega no servidor, então volumes maiores também truncam contagem. Loading dos chats não compõe isLoading e falhas podem se apresentar como0. A presença tem fallback por profiles.updated_at, que é atualização de cadastro, não evento de login.
+
+**Evidências na fonte:**
+
+- `src/hooks/crm/useAgents.ts:75–142` — activeChats e stats; blob `9a87db8dcea3d8538a8009cc3986a26cd4dc96c9`.
+- `src/components/agents/AgentsView.tsx:167–168` — capacityPercent; blob `6708b347500a72eb23c4da5a96cc31e18c8ea715`.
+- `src/components/agents/AgentsView.tsx:228–244` — exibição de chats ativos; blob `6708b347500a72eb23c4da5a96cc31e18c8ea715`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Critérios de aceite para correção:**
+
+- Contar o conjunto canônico de atendimentos ativos no servidor com o filtro de status correto e sem limite de paginação implícito.
+- Separar erro/loading/ausência de dado de zero; não estimar presença por edição de perfil.
+- Conferir0 abertos com histórico atribuído, abertos/encerrados mistos e volume maior que uma página.
+
+**Limites:**
+
+- Não afirma que o algoritmo de distribuição do banco usa esta estatística; o defeito confirmado é na UI/estatística de agentes.
+
+### R2-AUTH-021 — Indisponibilidade do Auth é registrada como tentativa de senha incorreta
+
+**Severidade:** medium (P2). **Status:** CONFIRMED_OFFLINE.
+
+**Consumidor → efeito:** AuthService.signIn → auth-login → GoTrue signInWithPassword retorna erro503 → record_failed_login →401 → cliente trata credenciais inválidas.
+
+**Precondição:** GoTrue retorna erro operacional/retryable em vez de uma recusa de credenciais.
+
+**Falha e consequência:** Qualquer signInError entra no mesmo ramo de senha inválida. O handler registra tentativa e responde401, ocultando503/rede e podendo levar usuários legítimos ao lockout ao repetir durante incidente. Probe com upstream503 chamou record_failed_login e retornou Invalid login credentials. Isso contradiz a distinção disponibilidade/credenciais que o cliente pretende manter no ADR-006.
+
+**Evidências na fonte:**
+
+- `supabase/functions/auth-login/index.ts:83–99` — classificação de falha Auth; blob `a4fe292c8b536d271ff3d65008b5ee8473babc99`.
+- `src/lib/serverLogin.ts:96–121` — interpretação de resposta; blob `dd7d79a775127bbb18ee7a64b6e5f730032609aa`.
+- `docs/adr/ADR-006-login-lockout-server-side.md:56–58` — distinção declarada; blob `8e57df3373a358ef6a3ed81776fc277ec535b163`.
+
+**Comparação com os104 anteriores:** Não foi encontrado achado equivalente nos104 registros de FINDINGS.json anterior; comparação feita por área, fluxo e caminhos, não só título.
+
+**Alegações documentais relacionadas:** 1.19 em COMPLETE_SYSTEM_FEATURES.md.
+
+**Reprodução:** P-AUTH-08 em `../../probes/auth/results.json` e `../../probes/auth/source-probes.cjs`.
+
+**Critérios de aceite para correção:**
+
+- Registrar tentativa somente para códigos comprovadamente relativos a credenciais; propagar falhas de rede/5xx/rate limit como indisponibilidade com retry adequado.
+- Não alterar login_attempts por outage do provedor.
+- Testar credencial inválida,503,429 e falha de transporte garantindo categoria/status e contador corretos.
+
+**Limites:**
+
+- Não reabre bypass direto GoTrue: esse limite residual já é explícito e aceito no ADR-00679–85.
+- Nenhuma conta real foi bloqueada.
+
+## Reavaliação dos achados anteriores
+
+- **TC-001:** Mantida evidência frontend de locators/payload de mídia; SQL/Storage final delegado ao agente banco. Não duplicada nos novos IDs.
+- **TC-002, TC-003, TC-004, TC-009:** Delegados para reassessment SQL/grants/RLS pelo agente banco; não encerrados por esta revisão UI.
+- **TC-005, TC-006:** Revalidada montagem/props/hooks e ampliada emR2-AUTH-017; não contar como novo defeito independente.
+- **TC-007:** Mute continua com consumidor user_settings versus writer members; notifications montadas na view. Sem sinal de eliminação no caminho revisado.
+- **TC-008:** Hook de departamento conserva contracts de audit/authUUID e tabela/RPC; entrada UI continua ausente. SQL final delegado.
+- **TC-010:** Envio continua limpando texto/reply antes de await. R2-AUTH-010 adiciona outro mecanismo: troca de destinatário/conta; não substitui a perda pós-falha.
+- **TC-011, TC-012, TC-013, TC-014, TC-015:** Histórico/qualidade de testes/scripts/quarentena preservado; não reexecutado como comprovação deste subescopo.
+- **SV-001, SV-002:** Sem evidência de correção: agregado comercial continua completed/approved; fetchStats estima resposta com200 primeiras mensagens. Não recontados.
+- **SV-003, SV-004, OTH-013, OTH-015:** Evidência visual/externa/histórica não substituída por leitura de código. Mantidas necessidades de aceite e reconciliação documental, sem novo runtime inventado.
+
+## Casos rejeitados como falha ativa ou integração pendente
+
+Estes itens não entram nos20 achados novos. A presença de um hook/componente/teste, ou a conexão do arquivo em um grafo de módulos, não prova que a operação exista no fluxo do usuário.
+
+- **D-AUTH-01 — INTEGRATION_PENDING:** Hooks públicos sem private:true, mas zero importação/chamada de produção encontrada. Não classificar exposição ativa. Se ativados, validar membership no canal privado e identidade de payload. Caminhos: `src/hooks/team-chat/useTeamPresence.ts`, `src/hooks/team-chat/useTeamTyping.ts`.
+- **D-AUTH-02 — NO_ACTIVE_CONSUMER:** CRMSyncButton retém contactNotFound/lastSyncTime e score0 por truthiness, porém somente export/definição foi encontrada. Header usa CrmSyncMenuItem em ContactActionButtons. Não incluir como bug do botão atual. Caminhos: `src/components/inbox/CRMAutoSync.tsx`.
+- **D-AUTH-03 — INTEGRATION_PENDING:** lookup:sidebar não é aceito pelo gateway360/intelligence; hook não tem consumidor UI de produção. DTO/hook/testes existem, não integração atual concluída. Caminhos: `src/hooks/crm/useContactSidebar.ts`, `src/services/crm/external-crm.service.ts`, `src/types/contactSidebar.ts`.
+- **D-AUTH-04 — INTEGRATION_PENDING:** Códigos gerados localmente sem persistência/redeemer, mas componente não aparece em fluxo MFA de produção. Não afirmar que usuário recebe códigos inválidos atualmente. Caminhos: `src/components/mfa/MFABackupCodes.tsx`.
+- **D-AUTH-05 — INTEGRATION_PENDING:** Há shape/ID incorreto em GroupManagementDialog e transferência só atualiza created_by; ausência de consumidor impede classificar operação ativa. Integração de gestão é refinamentoTC005/006. Caminhos: `src/components/team-chat/GroupManagementDialog.tsx`, `src/components/team-chat/TransferConversationDialog.tsx`, `src/hooks/team-chat/useTeamUnreadCount.ts`, `src/hooks/team-chat/useTeamPerformance.ts`.
+- **D-AUTH-06 — NO_ACTIVE_CONSUMER_FOR_SUSPECT_SYMBOL:** useSecureProfile não consumido em produção; hasPermission genérico do hook usePermissions também não é autorização efetiva do app. Não atribuir falha ao consumidor que usa RoleService/RPC. Caminhos: `src/hooks/auth/useSecureProfile.ts`, `src/hooks/system/usePermissions.ts`.
+- **D-AUTH-07 — NO_ACTIVE_CONSUMER_FOR_SUSPECT_SYMBOL:** Promise de requiredPermission não cancela resposta antiga apesar do reset de estado; rotas atuais usam requiredRoles, e não foi encontrado uso ativo de withPermission. Navegação atual usa consultas escopadas. Mantido como revisão futura. Caminhos: `src/components/auth/ProtectedRoute.tsx`.
+- **D-AUTH-08 — LIMITED_CONSUMER_REVIEW:** Estado/fetch não reinicia por contato. Consumidores atuais encontrados são amostra do TalkXWizard, não editor/sidebar; uso só leitura. Transferido ao escopo TalkX sem alegar alteração do contato errado. Caminhos: `src/hooks/crm/useContactCustomFields.ts`.
+- **D-AUTH-09 — ACCEPTED_EXISTING_LIMIT:** Acesso direto ao password grant GoTrue é limite explicitamente aceito79–85. Não reaberto como achado novo. Cliente oficial efetivamente usa auth-login fail-closed. Caminhos: `docs/adr/ADR-006-login-lockout-server-side.md`.
+- **D-AUTH-10 — DESIGN_REQUIREMENT_PRESERVED:** Ocultar erro/offline do painel360 atende tarefa1.4 do prompt antigo; não transformar retorno null nesse painel em novo defeito sem requisito mais recente. Caminhos: `src/components/inbox/contact-details/ExternalContact360Panel.tsx`, `src/services/crm/external-crm.service.ts`.
+
+## Reconciliação CRM360 e sucessão de planos
+
+### T1: Implementado na fonte, requisito visual antigo sujeito à sucessão
+
+Hoje em Mais detalhes, gate runtime crm.integration; mover entre acordeões não reaberto. Contrato mudou de telefone para ID canônico via Edge.
+
+- `src/components/inbox/contact-details/ContactAccordionSections.tsx:95–98`; blob `97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed`.
+- `src/components/inbox/contact-details/ExternalContact360Panel.tsx:21–43`; blob `c870ade2e7add55f099e58e56aa2ee174a8fb64f`.
+
+### T2: Fluxo integrado, aceite visual/externo não executado
+
+AdvancedCRMSearch tem400ms debounce, Sheet/paginação e gate server-side. Importação é imediata no clique se não encontra local; não inventar6gaps. D5 do planoContatos100 linha184 exclui CRM daquele plano, mas HEAD atual passa props; depende da reconciliação de sucessão pelo root.
+
+- `src/components/contacts/ContactsView.tsx:175–176`; blob `805de473b266d4bb067c7bd9875eefeaa612f4dc`.
+- `src/components/contacts/ContactsView.tsx:230–236`; blob `805de473b266d4bb067c7bd9875eefeaa612f4dc`.
+- `src/components/contacts/ContactCRMDialog.tsx:16–60`; blob `1c4187abdb488bea454162b2d2d56647211ddc15`.
+
+### T5: Parcial demonstrável; vendedor no header não encontrado
+
+Logo, tratamento/apelido eVIP existem. Vendedor não aparece no header atual; não presumir requisito vigente sem sucessão design. BancoÚnico151 prevê ficha com vendedor. Root coordenaT3/T4/T6.
+
+- `src/components/inbox/contact-details/ContactHeaderSection.tsx:63–83`; blob `e150d4976513971845879922d8746687e2fbc6c9`.
+- `src/components/inbox/contact-details/ContactHeaderSection.tsx:146–168`; blob `e150d4976513971845879922d8746687e2fbc6c9`.
+- `src/components/inbox/contact-details/ContactHeaderSection.tsx:199–203`; blob `e150d4976513971845879922d8746687e2fbc6c9`.
+
+## Cobertura e microáreas restantes
+
+O catálogo desta subárea contém311 arquivos: 99 semantic, 195 structural, 17 targeted. A enumeração de caminhos não é revisão semântica do repositório inteiro. `coverage.json` contém nível, faixas efetivamente lidas, símbolos, hash e gaps por arquivo.
+
+- Corpos dos arquivos structural, incluindo apresentações secundárias, acessibilidade/responsividade, timers visuais e testes preexistentes.
+- MFA enrollment visual, gerenciamento visual de dispositivos/alertas, SSO OAuth real e entrega real de recuperação: nenhum E2E/browser externo foi executado.
+- Formulários externos: integridade do schema Singu efetivo e contratos RPC externos continuam dependentes de evidência externa autorizada.
+- SQL final/RLS/grants, storage e last-owner/department RPCs: relatório database coordenado.
+- Segurança provedores e proxy de envio; microárea TalkX sampleCustomFields foi informada ao coordenador.
+- Graph AST local confirma conectividade de módulo, não uso de export específico; casos dormentes classificados por busca de símbolo/imports.
+
+## Fontes primárias externas consultadas
+
+As fontes externas fundamentam semântica de APIs/protocolo. As conclusões específicas do projeto estão ancoradas nos blobs e faixas acima.
+
+- [https://www.w3.org/TR/webauthn-2/](https://www.w3.org/TR/webauthn-2/) — Requisitos de validação de assertion/origin/RP/signature e contador, R2-AUTH-001.
+- [https://supabase.com/docs/reference/javascript/auth-signinwithotp](https://supabase.com/docs/reference/javascript/auth-signinwithotp) — Envio de OTP/magic link é etapa de início, R2-AUTH-002.
+- [https://supabase.com/docs/reference/javascript/auth-admin-generatelink](https://supabase.com/docs/reference/javascript/auth-admin-generatelink) — generateLink gera dados/link para envio próprio, R2-AUTH-007.
+- [https://supabase.com/docs/guides/auth/auth-mfa](https://supabase.com/docs/guides/auth/auth-mfa) — AAL e enforcement de MFA, R2-AUTH-003.
+- [https://supabase.com/docs/guides/realtime/authorization](https://supabase.com/docs/guides/realtime/authorization) — Validação de suspeita em hooks dormentes; não usada para contar exposição ativa.
+- [https://supabase.com/changelog](https://supabase.com/changelog) — Changelog obrigatório do skill Supabase, consultado antes de recomendações.
+
+## Artefatos de reprodução
+
+- Resultados completos: `/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/results.json`.
+- Programa offline: `/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/source-probes.cjs`.
+- Arquivos de fonte são lidos em memória; os únicos writes ocorrem em relatórios/probes. Não há credentials reais nos fixtures.

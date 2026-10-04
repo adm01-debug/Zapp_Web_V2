@@ -1,0 +1,244 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "executed_at": "2026-10-04T02:10:38.579Z",
+  "execution": "offline isolated production callbacks; controlled mocks; no DB/network/browser",
+  "source_files": [
+    {
+      "path": "src/components/catalog/CatalogBulkSendDialog.tsx",
+      "blob_sha": "e9bbe8ca1179990d4e2e653b451732b8f4386fbe"
+    },
+    {
+      "path": "src/components/calls/SelectedCallPanel.tsx",
+      "blob_sha": "55c3fb28c97f0ea781de761847042e60910045c1"
+    },
+    {
+      "path": "src/hooks/calls/useTelefoniaFilters.ts",
+      "blob_sha": "c0b323d932420a8295628fcd5c3a75e784207784"
+    },
+    {
+      "path": "src/hooks/ui/useUniversityHelp.ts",
+      "blob_sha": "42dd9e1f935dca8e5a467a9d50cbc17136835263"
+    },
+    {
+      "path": "src/lib/localDay.ts",
+      "blob_sha": "6bb3e363d6004707db4be23e5c24c0b1cd9f5343"
+    },
+    {
+      "path": "src/components/reports/useReportsData.ts",
+      "blob_sha": "0ca5ffff671f9b2abdda1ebdf09c8e862153a367"
+    },
+    {
+      "path": "src/hooks/integrations/useTalkX.ts",
+      "blob_sha": "b68c3b95ef0e3cc5c42b4c0001a730ae90541689"
+    },
+    {
+      "path": "src/hooks/integrations/useMultiplixDispatches.ts",
+      "blob_sha": "eea3cc95099874349e4fc5dab25aedcdf20a7465"
+    },
+    {
+      "path": "src/components/talkx/TalkXCampaignRunning.tsx",
+      "blob_sha": "9c6d1a207d331a72cef5195d49175f12f7816366"
+    },
+    {
+      "path": "src/hooks/tasks/useMyWorkItems.ts",
+      "blob_sha": "30c53078791bcb04ec2651b3bb701a884b488069"
+    },
+    {
+      "path": "src/components/tasks/shared/WorkItemSheet.tsx",
+      "blob_sha": "1ec3e7b894ca9df10e35a6ac43201cc058973a5b"
+    },
+    {
+      "path": "src/components/tasks/shared/QuickAdd.tsx",
+      "blob_sha": "cd42ebbb2f8dca964174fce5f7a8394fc0a6e04f"
+    },
+    {
+      "path": "src/hooks/tasks/workItem.types.ts",
+      "blob_sha": "04bc5b0e475bef89b6656f45134a9421986b0087"
+    },
+    {
+      "path": "src/hooks/tasks/workItemMachine.ts",
+      "blob_sha": "266de050ae37b87f7a1b63a0698d87dd6314d2e7"
+    },
+    {
+      "path": "src/components/tasks/board/resolveDragEnd.ts",
+      "blob_sha": "069700840fa8c8533aad0e7fe98ce5dc94ad9870"
+    },
+    {
+      "path": "src/hooks/tasks/workItemAggregates.ts",
+      "blob_sha": "621ad9cafd66f3e08518c08cf1ddfc9a3a46a450"
+    }
+  ],
+  "probes": [
+    {
+      "id": "R2-MOD-007",
+      "probe": "actual sendSingleProduct callback",
+      "result": {
+        "status": "partial",
+        "attempts": 1,
+        "persisted_message_ids": 0
+      },
+      "note": "No image + the only text attempt rejected still returns partial; production loop counts partial as success."
+    },
+    {
+      "id": "R2-MOD-013",
+      "probe": "actual SelectedCallPanel state and salvar callback under deterministic hook driver",
+      "result": {
+        "written_call": "call-B",
+        "written_notes": "Draft for A"
+      }
+    },
+    {
+      "id": "R2-MOD-014",
+      "probe": "actual useTelefoniaFilters callback",
+      "result": {
+        "page_after_selection": 1,
+        "call": "call-on-page-3"
+      }
+    },
+    {
+      "id": "R2-MOD-012",
+      "probe": "actual useUniversityHelp with deterministic hooks and deferred ai-proxy mock",
+      "result": {
+        "period": "today",
+        "selected_messages": 0,
+        "applied_response": "Answer for previous period",
+        "toast_count": 1
+      },
+      "limitation": "No browser/React renderer. Does not assert cross-contact leakage; current ChatPanel is keyed by conversation."
+    },
+    {
+      "id": "R2-MOD-017",
+      "probe": "actual localDay helpers and useReportsData, fixed 2026-10-04 and 70 synthetic messages per calendar day",
+      "result": {
+        "current_days": 8,
+        "previous_days": 7,
+        "current_total": 560,
+        "reported_average": 80,
+        "actual_average": 70,
+        "queried_previous_start": "2026-09-20T03:00:00.000Z",
+        "displayed_previous_start": "2026-09-19T03:00:00.001Z"
+      }
+    },
+    {
+      "id": "R2-MOD-026",
+      "probe": "actual TalkX UPDATE debounce callback",
+      "result": {
+        "cached_after_two_different_campaign_events": [
+          {
+            "id": "A",
+            "sent_count": 0
+          },
+          {
+            "id": "B",
+            "sent_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "R2-MOD-023",
+      "probe": "actual creation mutation and onSettled with uncertain-outcome mock",
+      "result": {
+        "distinct_creation_keys_after_retry": true,
+        "attempts": 2
+      },
+      "limitation": "Shows client identity change; server commit/lost response is an explicitly synthetic precondition."
+    },
+    {
+      "id": "R2-MOD-032",
+      "probe": "exact TalkXCampaignRunning adjacent effects in declaration order",
+      "result": {
+        "cleanup_state_setters_after_campaign_completed": []
+      },
+      "limitation": "Deterministic hook effect driver; not React/DOM integration. First effect overwrites previous campaign with null before second effect reads the ref."
+    },
+    {
+      "id": "R2-MOD-049",
+      "probe": "actual toDbPatch and toItemPatch helpers",
+      "result": {
+        "input_contact": "contact-B",
+        "database_patch": {},
+        "optimistic_patch": {}
+      }
+    },
+    {
+      "id": "R2-MOD-052",
+      "probe": "actual toDbPatch used by Sheet Save",
+      "result": {
+        "patch": {
+          "remind_at": "2026-10-05T12:00:00.000Z"
+        },
+        "rearms_notified_at": false
+      },
+      "limitation": "Proves emitted DTO only; existing SQL trigger and scheduler were read statically, not executed."
+    },
+    {
+      "id": "R2-MOD-050",
+      "probe": "actual WorkItemSheet/QuickAdd compor functions with TZ=America/Sao_Paulo",
+      "result": {
+        "requested_local_time": "2026-10-05 09:00",
+        "sheet_payload": "2026-10-05T09:00:00",
+        "quick_add_payload": "2026-10-05T12:00:00.000Z",
+        "hours_apart_if_server_interprets_offsetless_as_utc": 3
+      },
+      "limitation": "No PostgreSQL session. The UTC interpretation is an explicit server-timezone precondition, not an observation of the deployed database."
+    },
+    {
+      "id": "R2-MOD-051",
+      "probe": "actual WorkItemSheet salvar callback with unresolved move/save promises",
+      "result": {
+        "order_before_either_write_resolves": [
+          "move-pending",
+          "save-pending",
+          "closed"
+        ]
+      },
+      "limitation": "No server mutation executed; pending promises prove premature close and concurrent dispatch."
+    },
+    {
+      "id": "R2-MOD-055",
+      "probe": "actual resolveDragEnd and persistPositions callbacks with hidden target-column row",
+      "result": {
+        "requested_visible_order": [
+          "A",
+          "X",
+          "B"
+        ],
+        "persisted_visible_order": [
+          "X",
+          "A",
+          "B"
+        ],
+        "written_positions": [
+          {
+            "id": "hidden",
+            "position": 0
+          },
+          {
+            "id": "X",
+            "position": 1
+          },
+          {
+            "id": "A",
+            "position": 2
+          },
+          {
+            "id": "B",
+            "position": 3
+          }
+        ]
+      },
+      "limitation": "Stubbed upsert records payload only; no DnD renderer or database. Hidden row is an explicit active-filter precondition."
+    },
+    {
+      "id": "R2-MOD-056",
+      "probe": "actual QuickAdd state/render synchronization and deferred handleSubmit callback",
+      "result": {
+        "selected_default_day": "2026-10-06T23:59:00.000Z",
+        "internal_applied_marker": "2026-10-06T23:59:00.000Z",
+        "second_create_due_date": "2026-10-05T23:59:00.000Z"
+      },
+      "limitation": "Deterministic hook driver, not browser/React rendering. Actual Agenda leaves day-selection buttons enabled during create."
+    }
+  ]
+}

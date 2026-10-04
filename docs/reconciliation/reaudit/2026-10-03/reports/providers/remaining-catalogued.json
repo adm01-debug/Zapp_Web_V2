@@ -1,0 +1,21 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "delegated_only",
+  "count": 13,
+  "paths": [
+    "supabase/functions/_shared/ai-conversation-pipeline.ts",
+    "supabase/functions/_shared/ai-image-input.ts",
+    "supabase/functions/ai-churn-analysis/index.ts",
+    "supabase/functions/ai-classify-tickets/index.ts",
+    "supabase/functions/ai-conversation-analysis/index.ts",
+    "supabase/functions/ai-conversation-summary/index.ts",
+    "supabase/functions/ai-enhance-message/index.ts",
+    "supabase/functions/ai-suggest-reply/index.ts",
+    "supabase/functions/chatbot-l1/index.ts",
+    "supabase/functions/classify-audio-meme/index.ts",
+    "supabase/functions/classify-emoji/index.ts",
+    "supabase/functions/classify-sticker/index.ts",
+    "supabase/functions/gmail-oauth/index.ts"
+  ],
+  "note": "12 AI paths belong to infra; gmail-oauth belongs to root. No remaining unassigned production path in the providers lot."
+}

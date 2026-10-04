@@ -1,0 +1,628 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "COMPLETED_REVIEW_PASS",
+  "findings": [
+    {
+      "id": "R2-PLAT-001",
+      "title": "Avançar no histórico para uma tela repetida seleciona a ocorrência anterior",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Histórico interno contém a mesma view antes e depois da posição atual, e o navegador avança para a ocorrência posterior. Exemplo A,B,C,B,D com posição em C.",
+      "consumer_chain": "Popstate do navegador → useNavigationHistory.onPopState → índice/breadcrumb → Index e navegação da aplicação.",
+      "observed_behavior": "O callback recebe somente viewId, procura correspondência para trás primeiro e retorna antes de procurar à frente. No exemplo, avançar de C para B escolhe índice 1, embora o destino seja índice 3. A view B é correta, mas sua posição no histórico não é.",
+      "impact": "A trilha e os próximos comandos de voltar/avançar podem operar sobre a ocorrência errada. Não se afirma que toda navegação de uma etapa falhe.",
+      "evidence": [
+        {
+          "path": "src/hooks/system/useNavigationHistory.ts",
+          "line_start": 115,
+          "line_end": 139,
+          "git_blob_sha": "849956d750489f1c3e0bbfd3711f5b3f51907fee",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNavigationHistory.ts#L115-L139"
+        },
+        {
+          "path": "src/hooks/system/useNavigationHistory.ts",
+          "line_start": 211,
+          "line_end": 264,
+          "git_blob_sha": "849956d750489f1c3e0bbfd3711f5b3f51907fee",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNavigationHistory.ts#L211-L264"
+        },
+        {
+          "path": "src/pages/Index.tsx",
+          "line_start": 30,
+          "line_end": 42,
+          "git_blob_sha": "9317b83b809bbb745fd6d5adfe5de3c1e420d16d",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/Index.tsx#L30-L42"
+        },
+        {
+          "path": "src/pages/Index.tsx",
+          "line_start": 107,
+          "line_end": 120,
+          "git_blob_sha": "9317b83b809bbb745fd6d5adfe5de3c1e420d16d",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/Index.tsx#L107-L120"
+        }
+      ],
+      "probes": [
+        "PLAT-P01"
+      ],
+      "acceptance_criteria": [
+        "Vincular cada entrada a uma identidade de history.state e reconciliar travessia por essa identidade.",
+        "Provar ida e volta por views repetidas, reload e navegação programática sem duplicar entradas."
+      ],
+      "limitations": "Callback exato com estado e destino de navegador sintéticos; não foi montada uma interface nem usado o botão do browser.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-002",
+      "title": "Contagem de notificações não lidas diverge da lista após leitura e eventos",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Há outra notificação não lida e o operador abre uma já lida; ou o evento UPDATE da leitura chega antes da conclusão HTTP da mutation.",
+      "consumer_chain": "NotificationItem.onClick → markAsRead e subscription Realtime → unreadCount → badge do NotificationsPopover.",
+      "observed_behavior": "markAsRead decrementa o contador em toda conclusão bem-sucedida, sem conferir a transição anterior. NotificationItem chama essa ação mesmo se a linha já está lida. O UPDATE de Realtime já recalcula o total antes da segunda subtração. INSERT incrementa sem deduplicação/checagem de is_read e DELETE remoto remove a linha sem ajustar a contagem.",
+      "impact": "O badge pode marcar zero com uma notificação não lida visível na lista. São variantes do mesmo contrato de reconciliação, não quatro defeitos contados separadamente.",
+      "evidence": [
+        {
+          "path": "src/hooks/system/useNotifications.ts",
+          "line_start": 80,
+          "line_end": 104,
+          "git_blob_sha": "eb6b8ff5408a0707fe51f7b012c9599c8607ae4d",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNotifications.ts#L80-L104"
+        },
+        {
+          "path": "src/hooks/system/useNotifications.ts",
+          "line_start": 114,
+          "line_end": 130,
+          "git_blob_sha": "eb6b8ff5408a0707fe51f7b012c9599c8607ae4d",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNotifications.ts#L114-L130"
+        },
+        {
+          "path": "src/components/notifications/NotificationItem.tsx",
+          "line_start": 93,
+          "line_end": 108,
+          "git_blob_sha": "dbd90e82a8dd3a04e713b2b119f335e7f24fe9e5",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/notifications/NotificationItem.tsx#L93-L108"
+        },
+        {
+          "path": "src/components/notifications/NotificationsPopover.tsx",
+          "line_start": 22,
+          "line_end": 39,
+          "git_blob_sha": "ff261be91c1dbbd4ea3fca46d01656d87fd6bf48",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/notifications/NotificationsPopover.tsx#L22-L39"
+        },
+        {
+          "path": "src/components/notifications/NotificationsPopover.tsx",
+          "line_start": 90,
+          "line_end": 95,
+          "git_blob_sha": "ff261be91c1dbbd4ea3fca46d01656d87fd6bf48",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/notifications/NotificationsPopover.tsx#L90-L95"
+        }
+      ],
+      "probes": [
+        "PLAT-P02",
+        "PLAT-P03"
+      ],
+      "acceptance_criteria": [
+        "Derivar o contador do conjunto reconciliado ou aplicar deltas idempotentes por transição de estado.",
+        "Provar leitura repetida, evento antes/depois do retorno HTTP, INSERT duplicado/lido e DELETE remoto."
+      ],
+      "limitations": "Callbacks exatos de mutation e evento com estado sintético; nenhum dado ou subscription real foi alterado. Limite de 100 linhas da query é registrado separadamente como limite de cobertura do total.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-003",
+      "title": "Três controles de notificação só alteram cache e voltam ao padrão após recarga",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Usuário desativa Novas Mensagens, Menções ou Violação de SLA na seção Tipos de Notificação.",
+      "consumer_chain": "NotificationTypeSection → updateSettings → React Query cache → user_settings → mapDbToSettings.",
+      "observed_behavior": "Os três booleans newMessageSound, mentionSound e slaBreachSound são aplicados ao cache otimista, mas não são convertidos para nenhum campo de dbUpdates. Uma atualização contendo apenas esses controles não chama o banco. A leitura também não os mapeia e repõe DEFAULT_SETTINGS, todos true. Revisão independente de auth identificou que useRealtimeNotifications também ignora newMessageSound em seus guardas e dependências: o som de mensagem depende da chave global e do horário de silêncio.",
+      "impact": "A configuração exibida como desativada não persiste; ao recarregar, volta a habilitada. A chave de Novas Mensagens tampouco bloqueia o som nesse consumidor enquanto a configuração global permanece ativa. Volume, tipos de som e outros campos possuem mapeamento e não foram classificados como igualmente ausentes.",
+      "evidence": [
+        {
+          "path": "src/hooks/system/useNotificationSettings.ts",
+          "line_start": 10,
+          "line_end": 45,
+          "git_blob_sha": "d576442b7696f7eb30c9043d57c7dc0d1b3d486a",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNotificationSettings.ts#L10-L45"
+        },
+        {
+          "path": "src/hooks/system/useNotificationSettings.ts",
+          "line_start": 84,
+          "line_end": 102,
+          "git_blob_sha": "d576442b7696f7eb30c9043d57c7dc0d1b3d486a",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNotificationSettings.ts#L84-L102"
+        },
+        {
+          "path": "src/hooks/system/useNotificationSettings.ts",
+          "line_start": 110,
+          "line_end": 126,
+          "git_blob_sha": "d576442b7696f7eb30c9043d57c7dc0d1b3d486a",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNotificationSettings.ts#L110-L126"
+        },
+        {
+          "path": "src/hooks/system/useNotificationSettings.ts",
+          "line_start": 135,
+          "line_end": 178,
+          "git_blob_sha": "d576442b7696f7eb30c9043d57c7dc0d1b3d486a",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNotificationSettings.ts#L135-L178"
+        },
+        {
+          "path": "src/components/notifications/NotificationTypeCards.tsx",
+          "line_start": 85,
+          "line_end": 104,
+          "git_blob_sha": "deb07a860ec5270e9057c3dce08695f875a92125",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/notifications/NotificationTypeCards.tsx#L85-L104"
+        },
+        {
+          "path": "src/hooks/realtime/useRealtimeNotifications.ts",
+          "line_start": 25,
+          "line_end": 63,
+          "git_blob_sha": "408174af1e23336ed41e9e75b99513a77e8052e1",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/realtime/useRealtimeNotifications.ts#L25-L63"
+        }
+      ],
+      "probes": [
+        "PLAT-P04"
+      ],
+      "acceptance_criteria": [
+        "Definir armazenamento, leitura e consumo dos três booleans, ou retirar controles que não têm contrato persistente.",
+        "Provar cada alternância, reload e leitura em outra sessão do mesmo usuário, preservando o isolamento entre usuários."
+      ],
+      "limitations": "Hook inteiro executado com React, QueryClient, Auth e banco simulados; zero chamadas ao banco durante as três alterações. A omissão no consumidor Realtime é evidência estática adicional, sem reprodução sonora. desktopAlerts não foi contado como quarto controle exposto.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-004",
+      "title": "Restaurar preferências anuncia sucesso e mantém cache alterado quando o banco rejeita",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "A escrita de restauração retorna {error} por indisponibilidade, permissão ou validação.",
+      "consumer_chain": "NotificationSettingsPanel.handleReset → resetSettings → cache padrão e upsert → aviso de sucesso.",
+      "observed_behavior": "A tela chama resetSettings sem aguardar e anuncia restauração imediatamente. O hook muda o cache antes da escrita e ignora o campo error do upsert; seu catch também apenas registra exceções, sem rollback ou rejeição para a tela.",
+      "impact": "O usuário recebe confirmação e vê valores padrão que não foram gravados. O probe fez a promise resolver apesar do erro sintético de banco.",
+      "evidence": [
+        {
+          "path": "src/components/notifications/NotificationSettingsPanel.tsx",
+          "line_start": 36,
+          "line_end": 39,
+          "git_blob_sha": "a4db861e7a28f6ac0403d8a728399a241fc401a2",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/notifications/NotificationSettingsPanel.tsx#L36-L39"
+        },
+        {
+          "path": "src/hooks/system/useNotificationSettings.ts",
+          "line_start": 198,
+          "line_end": 228,
+          "git_blob_sha": "d576442b7696f7eb30c9043d57c7dc0d1b3d486a",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNotificationSettings.ts#L198-L228"
+        },
+        {
+          "path": "src/hooks/system/useNotificationSettings.ts",
+          "line_start": 180,
+          "line_end": 195,
+          "git_blob_sha": "d576442b7696f7eb30c9043d57c7dc0d1b3d486a",
+          "purpose": "Controle presente no update comum não foi generalizado ao reset.",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNotificationSettings.ts#L180-L195"
+        }
+      ],
+      "probes": [
+        "PLAT-P05"
+      ],
+      "acceptance_criteria": [
+        "Validar o retorno do upsert, aguardar confirmação e propagar falha para a tela.",
+        "Recuperar o estado anterior ou recarregar a fonte persistida após falha; provar sucesso e recusa."
+      ],
+      "limitations": "Hook exato com retorno de banco simulado. O teste não altera preferências reais; o fluxo normal updateSettings já verifica error e informa falhas.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-005",
+      "title": "Falha de carregamento de notificações aparece como ausência confirmada",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Primeira consulta de notificações está pendente ou falha antes de receber uma lista.",
+      "consumer_chain": "fetchNotifications → estado inicial vazio/loading → NotificationsPopover.",
+      "observed_behavior": "O hook registra erro apenas no logger, mantém a lista vazia e encerra loading. O Popover não consome loading nem um estado de erro e mostra Tudo em dia/Nenhuma notificação no momento sempre que a lista está vazia.",
+      "impact": "A interface comunica inexistência de notificações quando a consulta ainda não confirmou esse estado ou não conseguiu consultá-las.",
+      "evidence": [
+        {
+          "path": "src/hooks/system/useNotifications.ts",
+          "line_start": 20,
+          "line_end": 60,
+          "git_blob_sha": "eb6b8ff5408a0707fe51f7b012c9599c8607ae4d",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useNotifications.ts#L20-L60"
+        },
+        {
+          "path": "src/components/notifications/NotificationsPopover.tsx",
+          "line_start": 22,
+          "line_end": 23,
+          "git_blob_sha": "ff261be91c1dbbd4ea3fca46d01656d87fd6bf48",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/notifications/NotificationsPopover.tsx#L22-L23"
+        },
+        {
+          "path": "src/components/notifications/NotificationsPopover.tsx",
+          "line_start": 80,
+          "line_end": 88,
+          "git_blob_sha": "ff261be91c1dbbd4ea3fca46d01656d87fd6bf48",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/notifications/NotificationsPopover.tsx#L80-L88"
+        }
+      ],
+      "probes": [],
+      "acceptance_criteria": [
+        "Separar carregando, erro, vazio confirmado e lista disponível.",
+        "Oferecer nova tentativa em erro e conservar dados anteriores com indicação de atualização falhada quando aplicável."
+      ],
+      "limitations": "Leitura estática do produtor e consumidor; não há prova dinâmica específica nem medição de incidência. A assinatura Realtime pode trazer novos itens depois, mas não confirma o histórico faltante.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-006",
+      "title": "Buscas recentes persistem entre usuários no mesmo perfil de navegador",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Usuário A pesquisa, sai, e B entra na mesma origem/perfil do navegador sem limpar manualmente o histórico. Termos podem conter dados que A digitou.",
+      "consumer_chain": "useGlobalSearchData.addToHistory → localStorage global-search-history → logout → próxima instância de useSearchHistory → GlobalSearch.Buscas recentes.",
+      "observed_behavior": "A chave não inclui usuário nem sessão e armazena query, timestamp e resultCount. O hook lê a mesma chave no mount. Os dois caminhos de logout limpam QueryClient, cache offline e rascunhos de Email, mas não essa chave; o serviço de logout somente delega para supabase.auth.signOut.",
+      "impact": "B pode ver termos e quantidades de resultados das buscas feitas por A. O achado não demonstra acesso aos resultados remotos nem quebra das políticas de consulta.",
+      "evidence": [
+        {
+          "path": "src/hooks/system/useSearchHistory.ts",
+          "line_start": 3,
+          "line_end": 39,
+          "git_blob_sha": "a6006e767ddff617fc67cd17cbbe173241edc411",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useSearchHistory.ts#L3-L39"
+        },
+        {
+          "path": "src/hooks/system/useSearchHistory.ts",
+          "line_start": 51,
+          "line_end": 54,
+          "git_blob_sha": "a6006e767ddff617fc67cd17cbbe173241edc411",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useSearchHistory.ts#L51-L54"
+        },
+        {
+          "path": "src/components/inbox/useGlobalSearchData.ts",
+          "line_start": 223,
+          "line_end": 226,
+          "git_blob_sha": "0d2ec01515522c34a811013da0c2703d5fee4e6c",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/useGlobalSearchData.ts#L223-L226"
+        },
+        {
+          "path": "src/components/inbox/GlobalSearch.tsx",
+          "line_start": 202,
+          "line_end": 225,
+          "git_blob_sha": "3364ad19aec7daf91cea810f117fc0705a6076d1",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/GlobalSearch.tsx#L202-L225"
+        },
+        {
+          "path": "src/hooks/auth/useAuth.tsx",
+          "line_start": 109,
+          "line_end": 117,
+          "git_blob_sha": "b6a2c01e872eb422a4c71cab6fff0e58b7f383a4",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/auth/useAuth.tsx#L109-L117"
+        },
+        {
+          "path": "src/hooks/auth/useAuth.tsx",
+          "line_start": 162,
+          "line_end": 181,
+          "git_blob_sha": "b6a2c01e872eb422a4c71cab6fff0e58b7f383a4",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/auth/useAuth.tsx#L162-L181"
+        },
+        {
+          "path": "src/services/auth.service.ts",
+          "line_start": 121,
+          "line_end": 123,
+          "git_blob_sha": "370289c4cecfa7f4392831fac8ee94b1191ec45c",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/services/auth.service.ts#L121-L123"
+        }
+      ],
+      "probes": [
+        "PLAT-P06"
+      ],
+      "acceptance_criteria": [
+        "Separar o histórico por identidade e definir retenção/limpeza de saída apropriada.",
+        "Provar A→logout→B e retorno a A sem exposição de termos alheios, incluindo logout que falha remotamente."
+      ],
+      "limitations": "Hook inteiro com localStorage/React simulados. Não houve login/logout real nem leitura de termos pessoais; o probe usa somente texto sintético. O botão Limpar existe, mas não é executado automaticamente na troca de usuário.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-007",
+      "title": "Desfazer no aviso anterior reverte a operação seguinte de arquivamento",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Concluir dois arquivamentos em lote com a mesma instância de useUndoableAction dentro da janela de cinco segundos e acionar o Desfazer do primeiro aviso ainda disponível.",
+      "consumer_chain": "RealtimeInboxView → useInboxBulkActions.bulkArchive → useUndoableAction.execute → dois toasts → callback do primeiro.",
+      "observed_behavior": "Cada execute troca pendingActionRef.current, mas não identifica nem descarta o toast anterior. O callback de cada toast consulta essa ref compartilhada na hora do clique, em vez do undoAction de sua operação. Após A e B, o callback do toast A chama undoAction de B e limpa o estado compartilhado.",
+      "impact": "O usuário tenta desfazer A, mas restaura B. A mensagem de confirmação continua sendo a capturada pelo primeiro aviso. O consumidor libera bulkLoading após a mutation, sem aguardar a janela de undo, permitindo a segunda operação.",
+      "evidence": [
+        {
+          "path": "src/hooks/system/useUndoableAction.ts",
+          "line_start": 51,
+          "line_end": 111,
+          "git_blob_sha": "526cf33b6b64ac9e003e200809ce0ecb991f2f85",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useUndoableAction.ts#L51-L111"
+        },
+        {
+          "path": "src/hooks/system/useUndoableAction.ts",
+          "line_start": 113,
+          "line_end": 137,
+          "git_blob_sha": "526cf33b6b64ac9e003e200809ce0ecb991f2f85",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useUndoableAction.ts#L113-L137"
+        },
+        {
+          "path": "src/hooks/inbox/useInboxBulkActions.ts",
+          "line_start": 97,
+          "line_end": 138,
+          "git_blob_sha": "e367da296db645080bb69a62096897453061a02f",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/inbox/useInboxBulkActions.ts#L97-L138"
+        },
+        {
+          "path": "src/components/inbox/RealtimeInboxView.tsx",
+          "line_start": 88,
+          "line_end": 98,
+          "git_blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/RealtimeInboxView.tsx#L88-L98"
+        },
+        {
+          "path": "src/components/inbox/ConversationListSidebar.tsx",
+          "line_start": 112,
+          "line_end": 125,
+          "git_blob_sha": "4f54f1e9dd47cc023ad29dba8804602a8b4594e5",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/ConversationListSidebar.tsx#L112-L125"
+        }
+      ],
+      "probes": [
+        "PLAT-P07"
+      ],
+      "acceptance_criteria": [
+        "Vincular cada toast à identidade/callback de sua operação, ou encerrar explicitamente o undo anterior ao iniciar outra.",
+        "Provar dois lotes seguidos e clicar cada aviso; nenhuma ação deve operar no lote errado."
+      ],
+      "limitations": "Callback execute exato, incluindo o callback de toast que ele produz, com timers não disparados e ações sintéticas. Sonner/React DOM e arquivamento real não foram executados. Não reconta o undo de tarefas da área modules, que usa outro helper.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-008",
+      "title": "Editar atalhos em instâncias separadas perde personalizações e mantém o listener antigo",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Configurações de atalhos e listener global estão montados. Personalizar A e, sem remontar as outras linhas, personalizar B.",
+      "consumer_chain": "KeyboardShortcutsSettings e cada ShortcutRow → instâncias independentes de useCustomShortcuts → localStorage → useGlobalKeyboardShortcuts.",
+      "observed_behavior": "Cada linha e o pai usam um hook com estado próprio, carregado do storage somente no mount. saveShortcuts grava o conjunto completo da instância que está editando, sem reconciliar a gravação da outra. Depois de A salvar, B ainda contém a cópia anterior e salva somente sua alteração, apagando A. O listener global e as props exibidas pelo pai também não recebem atualização dessas instâncias.",
+      "impact": "A tela anuncia Atalho atualizado, mas pode continuar mostrando e executando a combinação anterior; uma segunda edição pode apagar a primeira preferencialmente já gravada. Não é alegação de perda de dados do servidor, pois essas preferências são locais.",
+      "evidence": [
+        {
+          "path": "src/hooks/ui/useCustomShortcuts.ts",
+          "line_start": 41,
+          "line_end": 94,
+          "git_blob_sha": "c025972f580a22c522d09178371fc5efb3280e32",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/ui/useCustomShortcuts.ts#L41-L94"
+        },
+        {
+          "path": "src/components/settings/KeyboardShortcutsSettings.tsx",
+          "line_start": 36,
+          "line_end": 65,
+          "git_blob_sha": "e224bf1b3b94482cb09d7e43dddc35a2bdad180e",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/settings/KeyboardShortcutsSettings.tsx#L36-L65"
+        },
+        {
+          "path": "src/components/settings/KeyboardShortcutsSettings.tsx",
+          "line_start": 173,
+          "line_end": 209,
+          "git_blob_sha": "e224bf1b3b94482cb09d7e43dddc35a2bdad180e",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/settings/KeyboardShortcutsSettings.tsx#L173-L209"
+        },
+        {
+          "path": "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
+          "line_start": 22,
+          "line_end": 25,
+          "git_blob_sha": "62d982de7f85fc09a3c522140f1fe2925c22ca78",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/ui/useGlobalKeyboardShortcuts.ts#L22-L25"
+        },
+        {
+          "path": "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
+          "line_start": 108,
+          "line_end": 143,
+          "git_blob_sha": "62d982de7f85fc09a3c522140f1fe2925c22ca78",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/ui/useGlobalKeyboardShortcuts.ts#L108-L143"
+        },
+        {
+          "path": "src/components/keyboard/GlobalKeyboardProvider.tsx",
+          "line_start": 65,
+          "line_end": 76,
+          "git_blob_sha": "6a4ab495e984466c118ad1232d0ffe528dfdc7d2",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/keyboard/GlobalKeyboardProvider.tsx#L65-L76"
+        }
+      ],
+      "probes": [
+        "PLAT-P08"
+      ],
+      "acceptance_criteria": [
+        "Usar uma fonte compartilhada de estado/assinatura de preferências ou transmitir callbacks e bindings do pai para as linhas.",
+        "Provar duas edições seguidas, atualização da combinação exibida/consumida, reset e remontagem sem perder a primeira mudança."
+      ],
+      "limitations": "Callbacks exatos de atualização/persistência com duas entradas sintéticas e instâncias separadas. Não foi executado React DOM nem pressionado teclado real. Remontagem pode recarregar a última gravação; isso não evita a sobrescrita já ocorrida.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-PLAT-009",
+      "title": "Atalho Ir para Dashboard anuncia navegação sem selecionar a view Dashboard",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Usuário está no Inbox e aciona Ctrl+2, o binding padrão anunciado para Ir para Dashboard, com foco fora de campo editável.",
+      "consumer_chain": "DEFAULT_SHORTCUTS.go-to-dashboard → useGlobalKeyboardShortcuts.defaultActions → navigate('/') → Index/useNavigationHistory.",
+      "observed_behavior": "A ação chama navigate somente para / e mostra toast Dashboard. O estado que governa ViewRouter é currentView de useNavigationHistory; o caminho de seleção correto é setCurrentView/navigateTo ou sua URL ?view=. O provider montado no App não fornece override de go-to-dashboard e esse callback não usa o handler de navegação registrado pelo Index.",
+      "impact": "O atalho pode permanecer no Inbox enquanto informa Dashboard. O problema se refere ao binding Ctrl+2; Alt+R usa outro hook que efetivamente chama onNavigate(dashboard).",
+      "evidence": [
+        {
+          "path": "src/hooks/shortcuts/defaultShortcuts.ts",
+          "line_start": 24,
+          "line_end": 25,
+          "git_blob_sha": "54c248df8d4ce14eeab68ee7081d37672159afc8",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/shortcuts/defaultShortcuts.ts#L24-L25"
+        },
+        {
+          "path": "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
+          "line_start": 32,
+          "line_end": 39,
+          "git_blob_sha": "62d982de7f85fc09a3c522140f1fe2925c22ca78",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/ui/useGlobalKeyboardShortcuts.ts#L32-L39"
+        },
+        {
+          "path": "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
+          "line_start": 108,
+          "line_end": 138,
+          "git_blob_sha": "62d982de7f85fc09a3c522140f1fe2925c22ca78",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/ui/useGlobalKeyboardShortcuts.ts#L108-L138"
+        },
+        {
+          "path": "src/components/keyboard/GlobalKeyboardProvider.tsx",
+          "line_start": 65,
+          "line_end": 76,
+          "git_blob_sha": "6a4ab495e984466c118ad1232d0ffe528dfdc7d2",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/keyboard/GlobalKeyboardProvider.tsx#L65-L76"
+        },
+        {
+          "path": "src/App.tsx",
+          "line_start": 121,
+          "line_end": 143,
+          "git_blob_sha": "4328fcf14cd3765f0cbda0a426a068a21ebc958a",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/App.tsx#L121-L143"
+        },
+        {
+          "path": "src/pages/Index.tsx",
+          "line_start": 37,
+          "line_end": 51,
+          "git_blob_sha": "9317b83b809bbb745fd6d5adfe5de3c1e420d16d",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/Index.tsx#L37-L51"
+        },
+        {
+          "path": "src/pages/Index.tsx",
+          "line_start": 69,
+          "line_end": 77,
+          "git_blob_sha": "9317b83b809bbb745fd6d5adfe5de3c1e420d16d",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/Index.tsx#L69-L77"
+        },
+        {
+          "path": "src/components/layout/AppShell.tsx",
+          "line_start": 147,
+          "line_end": 157,
+          "git_blob_sha": "e38b6cb6b8ba9d1fa755c81125d99ea2d2a0eead",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/layout/AppShell.tsx#L147-L157"
+        }
+      ],
+      "probes": [],
+      "acceptance_criteria": [
+        "Encaminhar o binding pelo mesmo contrato de navegação de sidebar/palette, selecionando explicitamente dashboard.",
+        "Provar o atalho a partir do Inbox e de outra view, conferindo conteúdo, URL e trilha, com paridade ao clique."
+      ],
+      "limitations": "Cadeia de produtor/consumidor lida integralmente, sem browser ou React Router montado. Não se atribui esse defeito ao atalho alternativo Alt+R nem a IDs sem binding padrão.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    }
+  ],
+  "adjudications": [
+    {
+      "candidate": "useResourcePrefetch vaza dados reais entre usuários",
+      "decision": "NOT_PROMOTED",
+      "basis": "O cache genérico não inclui identidade automaticamente, mas não foi encontrado consumidor de produção além de exportações. Não há cadeia concreta de dados sensíveis demonstrada."
+    },
+    {
+      "candidate": "Todos os controles da configuração de notificação são fictícios",
+      "decision": "REJECTED",
+      "basis": "Volume, quiet hours, notificações do browser, sentimento, transcrição e tipos de som têm mapeamento de escrita/leitura. PLAT003 delimita três booleans expostos."
+    },
+    {
+      "candidate": "SkipLinks do App aponta para o alvo incorreto do pacote a11y",
+      "decision": "REJECTED",
+      "basis": "App importa components/ui/skip-link, não o componente homônimo do diretório a11y. Os exports deste pacote a11y não tinham consumidor concreto encontrado."
+    },
+    {
+      "candidate": "useSkillBasedAssign/useVersions/useSearch/useInfiniteScroll falham nas telas atuais",
+      "decision": "NOT_PROMOTED",
+      "basis": "Corpos genéricos lidos, com limitações de chave de cache/paginação/mutation anotadas; apenas barrels e testes encontrados como consumidores. Ausência de uso impede atribuir falha a uma ação atual."
+    },
+    {
+      "candidate": "Sair de Auth encerra necessariamente toda instância SIP",
+      "decision": "OBSERVATION_REQUIRES_CONTRACT",
+      "basis": "AppProviders persiste acima das rotas; Auth logout não chama disconnect SIP e o CallProvider não depende de user. Sem contrato funcional explícito sobre continuidade do ramal, não foi promovido como novo P1 nem como incidente."
+    },
+    {
+      "candidate": "Contagem limitada a100 notificações é total absoluto confirmado",
+      "decision": "LIMITATION",
+      "basis": "fetchNotifications consulta somente100 recentes. Não foram medidos volume nem limite/retensão implantados; PLAT002 prova divergência mesmo com duas linhas, sem depender de truncamento."
+    }
+  ]
+}

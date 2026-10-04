@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "date": "2026-10-04",
+  "authorization": "Somente código e snapshots locais; nenhuma consulta ou mutação de banco vivo.",
+  "boundaries": {
+    "database_queries": 0,
+    "database_mutations": 0,
+    "database_started": false,
+    "dependencies_installed": false,
+    "credentials_loaded": false,
+    "product_source_modified": false
+  },
+  "skills_applied": [
+    "supabase:supabase",
+    "supabase:supabase-postgres-best-practices"
+  ],
+  "instructions_checked": [
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "structural_inventory": {
+    "sql_files": 871,
+    "active_migrations": 779,
+    "categories": {
+      "audit_or_support": 31,
+      "snapshot": 28,
+      "test": 11,
+      "active_migration": 779,
+      "archived_migration": 22
+    },
+    "top_level_event_counts": {
+      "table": 814,
+      "policy": 1746,
+      "function": 626,
+      "trigger": 270,
+      "other": 1186,
+      "dynamic_do": 107,
+      "view": 61,
+      "privilege": 921
+    },
+    "function_identities_with_history": 336,
+    "candidate_final_functions": 311,
+    "candidate_policies": 499,
+    "candidate_views": 11,
+    "candidate_triggers": 123,
+    "table_histories": 169,
+    "unexpanded_do_blocks": 107,
+    "artifact": "sql_inventory.json"
+  },
+  "functions": {
+    "coverage_counts": {
+      "semantic": 311,
+      "targeted": 0,
+      "structural": 0
+    },
+    "roster": "function_review.json",
+    "second_pass_notes": "second_pass_reviews.json",
+    "semantic_definition": "Leitura manual do corpo vencedor e raciocínio sobre um ou mais invariantes e consumidores. Não significa todos os ramos testados.",
+    "targeted_definition": "Revisão manual dirigida de controle/trecho/histórico/consumidor. Não conta como leitura integral.",
+    "structural_definition": "Extração lexical e ligação de assinatura/ACL/snapshot; sem conclusão de segurança da função.",
+    "not_fully_semantically_reviewed": []
+  },
+  "snapshot_crosswalk": {
+    "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "method": "Correspondência por identidade/assinatura normalizada. Não compara hashes de corpo PostgreSQL com texto SQL nem comprova o schema vivo.",
+    "snapshot_generated_at": "2026-10-03T17:11:29Z",
+    "candidate_source_function_count": 311,
+    "snapshot_function_count": 303,
+    "signature_matches": 303,
+    "source_only_identities": [
+      "public.attribute_talkx_reply(uuid,text,uuid)",
+      "public.delete_talkx_campaign(uuid)",
+      "public.duplicate_talkx_campaign(uuid)",
+      "public.log_talkx_campaign_checklist(uuid,jsonb)",
+      "public.record_talkx_campaign_lifecycle_event()",
+      "public.record_talkx_recipient_receipt(text,uuid,text)",
+      "public.talkx_campaign_reply_stats(uuid)",
+      "supabase_migrations.reserve_migration_version(text,text)"
+    ],
+    "snapshot_only_identities": [],
+    "source_only_explanation": {
+      "supabase_migrations.reserve_migration_version(text,text)": "Fora do schema public capturado.",
+      "seven_public_functions": "Introduzidas em 20261003172707/20261003202707/20261003212707, posteriores à captura de 17:11:29Z. Ausência no snapshot anterior não prova falta no banco vivo."
+    },
+    "policy_projection": {
+      "candidate_count": 499,
+      "snapshot_count": 446,
+      "limitation": "Modelo lexical não expande DO, rename nem toda dependência de DROP TABLE; também inclui storage e ops fora de public. Diferença bruta não é drift comprovado.",
+      "snapshot_identities_requiring_nontrivial_history": [
+        {
+          "identity": "conversation_events.conversation_events_select_policy",
+          "reason": "ALTER POLICY RENAME na migration 20260925150000."
+        },
+        {
+          "identity": "query_telemetry.Users can view own telemetry",
+          "reason": "CREATE POLICY dinâmico em 20260401000946."
+        },
+        {
+          "identity": "sicoob_contact_mapping.Only admins can view sicoob mappings",
+          "reason": "CREATE POLICY dinâmico em 20260321194716."
+        }
+      ]
+    }
+  },
+  "view_security_options": {
+    "coverage_level": "targeted",
+    "count": 11,
+    "result": "Todas as 11 definições finais de views da projeção têm security_invoker ativado na criação ou em ALTER posterior identificado. Não basta ler a primeira CREATE VIEW.",
+    "identities": [
+      "public.catalog_send_stats",
+      "public.channel_connections_safe",
+      "public.gmail_accounts_safe",
+      "public.password_reset_requests_safe",
+      "public.profiles_public",
+      "public.searchbox_usage_daily",
+      "public.talkx_campaign_metrics",
+      "public.talkx_campaign_optouts",
+      "public.whatsapp_connections_agent",
+      "public.whatsapp_connections_public",
+      "public.whatsapp_connections_safe"
+    ],
+    "runtime_unknown": "Não se inspecionou pg_class/reloptions em ambiente vivo nem se executou SELECT sob cada papel."
+  },
+  "policy_and_auth_targets": {
+    "coverage_level": "targeted",
+    "tables": [
+      "profiles",
+      "user_roles",
+      "role_permissions",
+      "contacts",
+      "messages",
+      "conversation_tasks",
+      "reminders",
+      "scheduled_messages",
+      "user_sessions",
+      "conversation_sla",
+      "talkx_campaigns",
+      "talkx_recipients",
+      "talkx_blacklist",
+      "multiplix_dispatches",
+      "multiplix_recipients",
+      "multiplix_delivery_items",
+      "team_conversations",
+      "team_conversation_members",
+      "team_messages",
+      "team_message_receipts",
+      "team_message_reactions",
+      "department_invites",
+      "department_audit_logs",
+      "ai_budget_reservations",
+      "storage.objects"
+    ],
+    "checks": [
+      "Profiles SELECT próprio/admin-supervisor e efeitos nos consumidores; ausência de anon.",
+      "role_permissions SELECT admin/supervisor versus consumidor de agentes; comparação com user_has_permission.",
+      "ACL das novas assinaturas e sweep de funções privilegiadas; distinção trigger/RPC.",
+      "Ausência de política SQL de AAL/MFA identificada no conjunto ativo, sem inferir configuração externa de Auth.",
+      "session_invalidated_at/user_sessions não fazem revogação de token por si só; consumidores de presença não equivalem a Auth.",
+      "Guard de payload de mensagens é condicionado a sending/client_message_id/external_id; não bloqueia todo edit sent.",
+      "scheduled_messages tem DDL/RLS/índices mas nenhum motor SQL/cron ativo localizado por referências na fonte; scheduler externo desconhecido."
+    ],
+    "not_claimed": "Não houve revisão semântica completa de todas as 446 policies do snapshot nem execução das policies em roles reais."
+  },
+  "external_singu": {
+    "coverage_level": "semantic",
+    "effective_local_mirror": "supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql",
+    "functions": [
+      "multiplix_validate_scope_signature",
+      "multiplix_count_audience",
+      "multiplix_search_audience",
+      "multiplix_resolve_recipients"
+    ],
+    "checks": "Escopo HMAC, count/search filtrados, resolver/projeção e retorno pela Edge; registro local não prova rollout externo."
+  },
+  "related_team_work": {
+    "auth_users": "Consumidores de profiles/role_permissions, MFA/sessões e reset de senha, sem duplicar seus IDs.",
+    "providers": "Webhook/receipts/thenable heartbeat/opt-out; compartilhadas provas de identidade e lease.",
+    "inbox": "Mensagens, UI e falsos sucessos; confirmado que guard vigente não bloqueia genericamente content/is_deleted de sent.",
+    "grill_me_primary_review": "Paginação do editor e snapshot de audiência; ramo manual intersecta contact_ids e repõe recipients.",
+    "infra": "CI, db-audit, replay, hash e segurança de dry-run permanecem no relatório infra.",
+    "root": "SLA usa 5 minutos no SQL; trigger usa NEW.created_at e status sent. Métricas/configurabilidade consolidadas pelo root."
+  },
+  "known_limits": [
+    "Varredura lexical não é parser PostgreSQL e não executa migrações; 107 DO não expandidos.",
+    "ASSINATURA correspondente no snapshot não garante corpo vencedor, ACL ou ordem real idênticos.",
+    "Inventário inclui fontes históricas e externas, mas não as soma ao schema final do ZAPP.",
+    "A segunda passagem concluiu a leitura manual dos 311 corpos candidatos efetivos; isto não é teste de todos os ramos, prova de aplicação em runtime nem revisão integral de todas as policies/DO.",
+    "Completude, consistência e performance de dados reais, plano de execução, locks em carga, grants efetivos herdados e configuração PostgREST/Auth/Realtime permanecem sem medição.",
+    "Nenhum teste de runtime foi substituído por contagem de arquivos, regex, hash ou simulação da própria implementação."
+  ],
+  "primary_sources": [
+    {
+      "id": "PG-POLICY",
+      "url": "https://www.postgresql.org/docs/17/sql-createpolicy.html",
+      "use": "UPDATE/ALL sem WITH CHECK reaproveita USING; policies permissivas se combinam por OR e restritivas por AND."
+    },
+    {
+      "id": "PG-FUNCTION",
+      "url": "https://www.postgresql.org/docs/17/sql-createfunction.html",
+      "use": "Identidade de função inclui tipos de argumentos; CREATE OR REPLACE da mesma identidade preserva propriedade e permissões; função nova recebe privilégios padrão."
+    },
+    {
+      "id": "PG-DEFAULT-ACL",
+      "url": "https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html",
+      "use": "Privilégios padrão são por criador e escopo; REVOKE de anon não revoga o privilégio de PUBLIC."
+    },
+    {
+      "id": "PG-UPDATE",
+      "url": "https://www.postgresql.org/docs/17/sql-update.html",
+      "use": "UPDATE FROM com várias linhas de origem correspondentes usa uma delas sem escolha previsível."
+    },
+    {
+      "id": "PG-CASE",
+      "url": "https://www.postgresql.org/docs/17/typeconv-union-case.html",
+      "use": "CASE cujos resultados são todos unknown resolve o tipo de resultado para text."
+    },
+    {
+      "id": "PG-CAST",
+      "url": "https://www.postgresql.org/docs/17/sql-createcast.html",
+      "use": "Conversões automáticas de string para tipos definidos pelo usuário são somente explícitas; atribuição precisa de cast adequado."
+    },
+    {
+      "id": "PG-TRIGGER",
+      "url": "https://www.postgresql.org/docs/17/trigger-definition.html",
+      "use": "O trigger integra a transação da instrução que o aciona; erro não tratado desfaz os efeitos de ambos."
+    },
+    {
+      "id": "SUPABASE-AUTH-ROLE",
+      "url": "https://github.com/supabase/auth/blob/master/migrations/20220224000811_update_auth_functions.up.sql",
+      "use": "auth.role() consulta claims da requisição, não current_user; SECURITY DEFINER não transforma o JWT authenticated em service_role."
+    },
+    {
+      "id": "PG-TIMESTAMP",
+      "url": "https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT",
+      "use": "transaction_timestamp representa o início da transação; statement_timestamp representa o comando recebido e pode diferir após a primeira instrução."
+    },
+    {
+      "id": "POSTGREST-TRANSACTION",
+      "url": "https://docs.postgrest.org/en/stable/references/transactions.html",
+      "use": "A requisição passa por START TRANSACTION, configurações da transação e consulta principal; erro na função aborta a transação. A versão e os tempos da implantação não foram medidos."
+    }
+  ]
+}

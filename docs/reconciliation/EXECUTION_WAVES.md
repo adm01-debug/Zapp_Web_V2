@@ -1,5 +1,13 @@
 # Ordem futura de correções — sem execução automática
 
+<!-- BEGIN REAUDIT CHECKPOINT -->
+## Reauditoria atual
+
+**EM ANDAMENTO — checkpoint intermediário.** A solicitação posterior reabriu a análise no pin `da307ba5626dce892f0b37cb6762463f55d14a96`. Este checkpoint contém 282 registros R2; preserva os104 achados históricos e distingue leitura, estrutura, prova isolada e aceite. Consulte [REAUDIT_MICROFUNCTIONS_2026-10-03.md](REAUDIT_MICROFUNCTIONS_2026-10-03.md) para cobertura, precondições e saldo. A revisão continua; esta publicação é exclusivamente documental.
+<!-- END REAUDIT CHECKPOINT -->
+
+## Auditoria documental anterior e planejamento preservado
+
 A auditoria encerrou sua missão documental. Esta sequência organiza as próximas escolhas técnicas a partir dos achados já individualizados; não autoriza implementação, banco, deploy, exclusão ou merge. Não substitui os IDs de origem por outro plano numerado de centenas de tarefas.
 
 | Ordem | Frente | Entradas | Trabalho concreto a preparar | Aceite para encerrar a frente |

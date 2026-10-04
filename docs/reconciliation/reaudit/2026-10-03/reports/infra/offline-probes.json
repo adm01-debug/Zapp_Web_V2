@@ -1,0 +1,115 @@
+{
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "mode": "offline-only",
+  "network_requests": 0,
+  "database_statements": 0,
+  "sourceHashes": {
+    "scripts/db-audit/psql-environment.mjs": "31b08abff2637b7667da21ea86e1502fd27d9dab090bb8cb43bbc82d99349e68",
+    "scripts/db-audit/database-identity.mjs": "08dbca35be2b379bab6df089f4a08241ea556e48a66c02408fb979c48788dded",
+    "scripts/db-audit/run-runtime-contract.mjs": "05cdd5802c16932ce6c4166b90cdebbc5d16b929ac2c3e152125a03c5ada73b1",
+    "scripts/ci/typecheck-ratchet.mjs": "e3f24788610a528b685ef4b350407e079f9eb21fcdb7545d2553b65fc790f537",
+    "scripts/ci/implicit-any-ratchet.mjs": "24f5dabb3ba26c3a599badcd39466c531dd7d7f06145a973f0f410db57e8c345",
+    "scripts/ci/implicit-any-baseline.json": "49bc21d2cc841f2fbaca5448b53244fffc6e2bf5a4deebe42760747b6405143e",
+    "scripts/ci/audit-prod.mjs": "b0be826aa444e58e48f59db249ba17cede5fd68593ea5e789953373185fabb7b",
+    "scripts/edge-deploy/secrets-scope.mjs": "3950de5c8efee1815be60e17bb8b46c7eaab6dd4121892c72525ed6ddcdef9a2",
+    "e2e/fixtures/e2e-contact.ts": "1fd8ce6091aee395a8e43fbb18ebd9b3b81d99eb99a76f5adb43ee78e9315b2a",
+    "scripts/db-tests/run-all.mjs": "65b53dc65af4302e0b06af15173f6e130185829c03534a56373035442ddfd885",
+    "scripts/ci/check-edge-error-exposure.mjs": "0f75d9d6636944f836999df17b789b55f7f6837e40a775845e74112db67b8532",
+    "supabase/functions/searchbox-budget-alert/index.ts": "2909d2324bfb71d4e298c370280b8cdd45d77a1b2a9ca044dc7092394bbfa1d1",
+    "supabase/functions/webhook-diagnostic/index.ts": "df91c8ad62c862151ce56cb1282d0aef775dddf36055dd4573ffad41b5e4d9b6"
+  },
+  "results": [
+    {
+      "id": "tls_raw_override",
+      "actual": {
+        "raw": {
+          "sslmode": null,
+          "sslrootcert": null,
+          "uriLeaked": false
+        },
+        "hardened": {
+          "sslmode": "verify-full",
+          "sslrootcert": "scripts/db-audit/certs/supabase-prod-ca-2021.crt",
+          "uriLeaked": false
+        }
+      },
+      "expected": "The caller must pass the hardened URI; inherited PGSSLMODE is discarded."
+    },
+    {
+      "id": "runtime_contract_shell",
+      "actual": {
+        "firstToken": "RUNTIME=$(node",
+        "existingMigrationContractMissing": true
+      },
+      "expected": "SQL runner receives shell text; other existing versions cannot reach generic fallback."
+    },
+    {
+      "id": "global_compiler_error_passes",
+      "actual": {
+        "exit": 0,
+        "diagnostic": "TS5083"
+      },
+      "expected": "A global TypeScript error must not pass the ratchet."
+    },
+    {
+      "id": "missing_compiler_passes",
+      "actual": {
+        "exit": 0,
+        "report": "implicit-any errors: 0 (baseline: 0)"
+      },
+      "expected": "Missing local compiler must be an operational failure, not zero errors."
+    },
+    {
+      "id": "invalid_audit_report_passes",
+      "actual": {
+        "exit": 0,
+        "input": "error: Could not retrieve the vulnerability database."
+      },
+      "expected": "An error containing the word vulnerability must not qualify as an audit report."
+    },
+    {
+      "id": "dry_run_secret_decisions",
+      "actual": {
+        "decisions": [
+          true,
+          true,
+          true
+        ]
+      },
+      "expected": "The workflow must gate the write step independently on dry_run."
+    },
+    {
+      "id": "reaction_cleanup_scope",
+      "actual": {
+        "query": "?user_id=eq.synthetic-profile"
+      },
+      "expected": "Deletion should be restricted to E2E-owned message IDs or a run-specific fixture, not every reaction of the logged-in profile."
+    },
+    {
+      "id": "db_tests_response_contract",
+      "actual": {
+        "actualRpcEnvelopeExit": 1,
+        "emptyArrayExit": 0,
+        "emptyReport": "RESULTADO: 0 PASS / 0 FAIL"
+      },
+      "expected": "RPC envelopes must be decoded and each expected assertion must return a result; zero assertions is not a pass."
+    },
+    {
+      "id": "multiline_error_guard",
+      "actual": {
+        "matches": 0,
+        "currentSourceScan": [
+          {
+            "path": "supabase/functions/searchbox-budget-alert/index.ts",
+            "matches": 0
+          },
+          {
+            "path": "supabase/functions/webhook-diagnostic/index.ts",
+            "matches": 0
+          }
+        ]
+      },
+      "expected": "Line-based matching misses raw 5xx Response bodies when message precedes status; the shared errorResponse helper separately sanitizes 5xx."
+    }
+  ]
+}

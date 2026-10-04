@@ -1,4 +1,12 @@
-# Reconciliação do ZAPP — auditoria concluída
+# Reconciliação e reauditoria do ZAPP
+
+<!-- BEGIN REAUDIT CHECKPOINT -->
+## Reauditoria atual
+
+**EM ANDAMENTO — checkpoint intermediário.** A solicitação posterior reabriu a análise no pin `da307ba5626dce892f0b37cb6762463f55d14a96`. Este checkpoint contém 282 registros R2; preserva os104 achados históricos e distingue leitura, estrutura, prova isolada e aceite. Consulte [REAUDIT_MICROFUNCTIONS_2026-10-03.md](REAUDIT_MICROFUNCTIONS_2026-10-03.md) para cobertura, precondições e saldo. A revisão continua; esta publicação é exclusivamente documental.
+<!-- END REAUDIT CHECKPOINT -->
+
+## Auditoria documental anterior e planejamento preservado
 
 Este pacote encerra a auditoria documental autorizada do baseline [`2e7cf81c6c4d`](https://github.com/adm01-debug/Zapp_Web_V2/commit/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6). Reúne fontes, requisitos, entregas, defeitos, bloqueios e evidências, preservando as diferenças entre implementação, testes, runtime, documentação e aceite.
 

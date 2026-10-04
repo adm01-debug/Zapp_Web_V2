@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "COMPLETED_REVIEW_PASS",
+  "findings": [
+    {
+      "id": "R2-CALL-001",
+      "priority": "P1",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "title": "Evento tardio da sessão SIP anterior altera a chamada seguinte",
+      "preconditions": "SIP disponível e registrado. A chamada A chega ao watchdog local sem Terminated do adapter; após idle, começa B. Só então o adapter entrega um evento Established ou Terminated de A. Não se afirma que este timing já ocorreu no provedor real.",
+      "consumer_chain": "useSipClient → CallEngine.makeCall → listener capturado por sessão → watchdog/encerrar → nova chamada → listener antigo.",
+      "observed_behavior": "Cada sessão mantém listener, mas handleStateChange não valida a identidade da sessão recebida. O watchdog limpa referências/estado locais sem cancelar a sessão no adapter. Evento Terminated antigo consome callIdPromise da sessão nova; Established antigo marca o ID novo como atendido e anexa o áudio da sessão velha.",
+      "impact": "Uma chamada atual pode receber encerramento, atendimento ou mídia de outra sessão e ter seu registro alterado indevidamente. Os probes do motor real produziram finalização e atendimento de B a partir de eventos de A.",
+      "evidence": [
+        {
+          "path": "src/lib/calls/adapters/CallEngine.ts",
+          "line_start": 162,
+          "line_end": 194,
+          "git_blob_sha": "ac73ac3bb7bd719ab22757ba08a6ef0c0752f68e",
+          "purpose": "Handler sem fence pela identidade da sessão.",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/calls/adapters/CallEngine.ts#L162-L194"
+        },
+        {
+          "path": "src/lib/calls/adapters/CallEngine.ts",
+          "line_start": 213,
+          "line_end": 234,
+          "git_blob_sha": "ac73ac3bb7bd719ab22757ba08a6ef0c0752f68e",
+          "purpose": "Listener fechado sobre inviter, repassado ao handler comum.",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/calls/adapters/CallEngine.ts#L213-L234"
+        },
+        {
+          "path": "src/lib/calls/adapters/CallEngine.ts",
+          "line_start": 313,
+          "line_end": 366,
+          "git_blob_sha": "ac73ac3bb7bd719ab22757ba08a6ef0c0752f68e",
+          "purpose": "Reset/watchdog local e uso da promise corrente.",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/calls/adapters/CallEngine.ts#L313-L366"
+        },
+        {
+          "path": "src/hooks/communication/useSipClient.ts",
+          "line_start": 57,
+          "line_end": 74,
+          "git_blob_sha": "7e8bb2881d0269faa84fb3f7a8f3360ce2aa3b72",
+          "purpose": "Motor ativo e funil de discagem.",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useSipClient.ts#L57-L74"
+        },
+        {
+          "path": "src/providers/CallSessionProvider.tsx",
+          "line_start": 291,
+          "line_end": 305,
+          "git_blob_sha": "47d783cd156b15af5267802d8321875f6c06e085",
+          "purpose": "Revisão cruzada confirma que o provider recebe outcome sem identidade.",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/providers/CallSessionProvider.tsx#L291-L305"
+        },
+        {
+          "path": "src/providers/CallSessionProvider.tsx",
+          "line_start": 410,
+          "line_end": 445,
+          "git_blob_sha": "47d783cd156b15af5267802d8321875f6c06e085",
+          "purpose": "O efeito também aplica status à sessão corrente sem comparar ID.",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/providers/CallSessionProvider.tsx#L410-L445"
+        }
+      ],
+      "probes": [
+        "CALL-P01",
+        "CALL-P02"
+      ],
+      "acceptance_criteria": [
+        "Associar eventos/timers/persistência à geração e ID da chamada a que pertencem; ignorar eventos de sessões encerradas.",
+        "Cancelar/encerrar o transporte quando o watchdog encerra a intenção, observando o contrato real do adapter.",
+        "Provar A timeout→B inicia→A Established/Terminated tardios: B conserva estado, áudio e registro. Repetir Terminated da mesma sessão não afeta a próxima."
+      ],
+      "related_previous_findings": [
+        "TEL-RUNTIME-001"
+      ],
+      "limitations": "Adapter, sink, relógio e timers simulados; execução da classe inteira fixada por blob. Ausência de fence e efeito são confirmados; a incidência e as garantias de timing do SIP publicado não foram medidas."
+    },
+    {
+      "id": "R2-CALL-002",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "title": "Duração gravada da chamada inclui espera após o encerramento",
+      "preconditions": "Uma chamada curta atende e termina antes de resolver a promise inicial de criação/persistência do registro.",
+      "consumer_chain": "sink.create/lookup/persistência → callIdPromise pendente → CallEngine.encerrar → callback tardio → onFinished.",
+      "observed_behavior": "encerrar captura answeredAt, mas calcula Date.now dentro do then de callIdPromise. O sink calcula endedAt ao receber esse callback, também depois da espera. O cronômetro visual já parou em onTerminated.",
+      "impact": "O histórico pode atribuir como tempo de conversa o atraso de lookup/DB que ocorreu depois do término. Com chamada de 10 s e espera adicional de 10 s, o probe gravou talkSeconds=20.",
+      "evidence": [
+        {
+          "path": "src/lib/calls/adapters/CallEngine.ts",
+          "line_start": 315,
+          "line_end": 350,
+          "git_blob_sha": "ac73ac3bb7bd719ab22757ba08a6ef0c0752f68e",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/calls/adapters/CallEngine.ts#L315-L350"
+        },
+        {
+          "path": "src/hooks/communication/useCallEngineSink.ts",
+          "line_start": 54,
+          "line_end": 67,
+          "git_blob_sha": "b0a4873ae2e43b049fa52a8c074b71900d143475",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useCallEngineSink.ts#L54-L67"
+        },
+        {
+          "path": "src/hooks/communication/useSipClient.ts",
+          "line_start": 37,
+          "line_end": 40,
+          "git_blob_sha": "7e8bb2881d0269faa84fb3f7a8f3360ce2aa3b72",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useSipClient.ts#L37-L40"
+        }
+      ],
+      "probes": [
+        "CALL-P03"
+      ],
+      "acceptance_criteria": [
+        "Capturar timestamp/duração no evento de término, antes de aguardar qualquer I/O, e transportar esses valores imutáveis até a persistência.",
+        "Provar término antes/depois da criação do registro e várias latências; duração e endedAt não devem variar com o tempo de gravação."
+      ],
+      "related_previous_findings": [
+        "TEL-RUNTIME-001"
+      ],
+      "limitations": "Relógio e persistência sintéticos; não se mediu latência real. A fila idempotente de gravação existe e não foi negada: o problema é o instante em que o valor é calculado."
+    },
+    {
+      "id": "R2-CALL-003",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "title": "Aba líder suspensa retoma sem ceder à nova líder",
+      "preconditions": "Duas abas do mesmo app com storage e BroadcastChannel disponíveis. A não executa heartbeat por mais de 10 s, B assume pelo TTL, e A volta a executar. Suspensão é uma entrada do cenário, não um evento observado em navegador real.",
+      "consumer_chain": "tabLeaderStore → useTabLeaderRole → useSipConnection.isLeader → registro da linha.",
+      "observed_behavior": "O tick de uma líder chama renewLeadership sem reler o dono do lock. Ao retomar, A sobrescreve a concessão viva de B; ambas ignoram CLAIM/HEARTBEAT alheios enquanto se consideram líderes. O jitter não resolve a retomada de uma líder antiga.",
+      "impact": "Duas abas permanecem elegíveis para registrar o mesmo ramal. O probe manteve ambas como leader com as mensagens de coordenação entregues; a consequência no servidor SIP não foi simulada como incidente real.",
+      "evidence": [
+        {
+          "path": "src/lib/calls/tabLeaderStore.ts",
+          "line_start": 215,
+          "line_end": 229,
+          "git_blob_sha": "57f7bd70390fe8c804b41fc2d1e49a7fae53b0fe",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/calls/tabLeaderStore.ts#L215-L229"
+        },
+        {
+          "path": "src/lib/calls/tabLeaderStore.ts",
+          "line_start": 238,
+          "line_end": 275,
+          "git_blob_sha": "57f7bd70390fe8c804b41fc2d1e49a7fae53b0fe",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/calls/tabLeaderStore.ts#L238-L275"
+        },
+        {
+          "path": "src/lib/calls/tabLeaderStore.ts",
+          "line_start": 278,
+          "line_end": 299,
+          "git_blob_sha": "57f7bd70390fe8c804b41fc2d1e49a7fae53b0fe",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/calls/tabLeaderStore.ts#L278-L299"
+        },
+        {
+          "path": "src/hooks/sip/useSipConnection.ts",
+          "line_start": 57,
+          "line_end": 70,
+          "git_blob_sha": "ff5095f88492b27a0d96bb1635ab340f18e487e0",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sip/useSipConnection.ts#L57-L70"
+        },
+        {
+          "path": "src/hooks/communication/useSipClient.ts",
+          "line_start": 85,
+          "line_end": 91,
+          "git_blob_sha": "7e8bb2881d0269faa84fb3f7a8f3360ce2aa3b72",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useSipClient.ts#L85-L91"
+        }
+      ],
+      "probes": [
+        "CALL-P04"
+      ],
+      "acceptance_criteria": [
+        "Revalidar posse e geração antes de renovar ou usar a liderança; líder antiga deve ceder a uma concessão válida posterior.",
+        "Provar suspensão além do TTL, promoção, retomada e mensagens atrasadas, terminando com uma única líder."
+      ],
+      "related_previous_findings": [
+        "TEL-RUNTIME-001"
+      ],
+      "limitations": "Módulo inteiro executado em duas instâncias sintéticas com storage/canal/relógio controlados. Não se alegou falha quando storage/canal estão indisponíveis: o modo degradado é uma decisão explícita."
+    },
+    {
+      "id": "R2-CALL-004",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "title": "Contrato desconectar e reconectar mantém referência de UA encerrado",
+      "preconditions": "Consumidor chama connect, aguarda conexão, chama disconnect e depois connect novamente na mesma instância do hook. A API é exportada ao provider; não se identificou botão ativo de desconexão na UI atual, e a transição leader→follower→leader depende da eleição.",
+      "consumer_chain": "useSipConnection.disconnect → refs retidos → connect.guard; useSipClient expõe a API e a usa na transição de papel.",
+      "observed_behavior": "disconnect encerra transporte e altera status para idle, mas não limpa uaRef/registererRef. connect retorna imediatamente se uaRef é não nulo, mesmo quando aponta para um UA já parado.",
+      "impact": "A sequência do contrato termina sem nova conexão. O probe criou só um UA e reteve a referência parada após a segunda tentativa. A incidência por controles visíveis não foi alegada.",
+      "evidence": [
+        {
+          "path": "src/hooks/sip/useSipConnection.ts",
+          "line_start": 64,
+          "line_end": 76,
+          "git_blob_sha": "ff5095f88492b27a0d96bb1635ab340f18e487e0",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sip/useSipConnection.ts#L64-L76"
+        },
+        {
+          "path": "src/hooks/sip/useSipConnection.ts",
+          "line_start": 147,
+          "line_end": 172,
+          "git_blob_sha": "ff5095f88492b27a0d96bb1635ab340f18e487e0",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sip/useSipConnection.ts#L147-L172"
+        },
+        {
+          "path": "src/hooks/communication/useSipClient.ts",
+          "line_start": 85,
+          "line_end": 98,
+          "git_blob_sha": "7e8bb2881d0269faa84fb3f7a8f3360ce2aa3b72",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useSipClient.ts#L85-L98"
+        }
+      ],
+      "probes": [
+        "CALL-P05"
+      ],
+      "acceptance_criteria": [
+        "Retirar refs da sessão encerrada de modo seguro e permitir reconexão posterior, inclusive após erro de teardown.",
+        "Testar connect→disconnect→connect e perda/retomada de liderança sem reusar UA parado."
+      ],
+      "related_previous_findings": [
+        "TEL-RUNTIME-001"
+      ],
+      "limitations": "Hook inteiro com substituições mínimas de estado/ref/efeito e classes SIP simuladas; alcance atual da UI explicitamente limitado. Não é uma falha comprovada de clique em botão existente."
+    },
+    {
+      "id": "R2-CALL-005",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "title": "Conexão SIP pendente não é invalidada pelo cancelamento e permite criação concorrente",
+      "preconditions": "connect está em import/ua.start/register pendente quando ocorre disconnect, perda de liderança ou unmount; ou dois consumidores invocam connect antes de a primeira chamada concluir.",
+      "consumer_chain": "connect → await import/start/register → refs atribuídos apenas no final; disconnect/cleanup não invalidam a operação pendente.",
+      "observed_behavior": "As guardas de líder e uaRef são verificadas só antes dos awaits. unmountedRef protege o retry, mas não a operação inicial. Uma conexão pendente continua a REGISTER depois de cancelada; duas chamadas concorrentes passam por uaRef ainda nulo e criam dois UAs.",
+      "impact": "A conexão pode reaparecer após cancelamento ou existir em duplicidade na mesma instância. Os probes registraram o UA após disconnect/unmount e criaram dois UAs em chamadas concorrentes; não mediram o comportamento do servidor.",
+      "evidence": [
+        {
+          "path": "src/hooks/sip/useSipConnection.ts",
+          "line_start": 38,
+          "line_end": 48,
+          "git_blob_sha": "ff5095f88492b27a0d96bb1635ab340f18e487e0",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sip/useSipConnection.ts#L38-L48"
+        },
+        {
+          "path": "src/hooks/sip/useSipConnection.ts",
+          "line_start": 57,
+          "line_end": 82,
+          "git_blob_sha": "ff5095f88492b27a0d96bb1635ab340f18e487e0",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sip/useSipConnection.ts#L57-L82"
+        },
+        {
+          "path": "src/hooks/sip/useSipConnection.ts",
+          "line_start": 118,
+          "line_end": 167,
+          "git_blob_sha": "ff5095f88492b27a0d96bb1635ab340f18e487e0",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sip/useSipConnection.ts#L118-L167"
+        },
+        {
+          "path": "src/hooks/communication/useSipClient.ts",
+          "line_start": 80,
+          "line_end": 93,
+          "git_blob_sha": "7e8bb2881d0269faa84fb3f7a8f3360ce2aa3b72",
+          "purpose": "",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/communication/useSipClient.ts#L80-L93"
+        }
+      ],
+      "probes": [
+        "CALL-P06",
+        "CALL-P07"
+      ],
+      "acceptance_criteria": [
+        "Associar connect a uma geração cancelável e bloquear uma segunda operação enquanto a primeira estiver pendente.",
+        "Após cada await, verificar cancelamento/liderança e encerrar recursos já criados quando a tentativa perdeu validade.",
+        "Provar cancelamento e unmount em cada fronteira async, além de duas chamadas concorrentes, com no máximo um UA válido."
+      ],
+      "related_previous_findings": [
+        "TEL-RUNTIME-001"
+      ],
+      "limitations": "Fronteiras SIP/React simuladas; dados e credenciais sintéticos. A confirmação é do contrato do hook e dos efeitos observáveis na simulação, sem homologação de SIP ou navegadores."
+    }
+  ],
+  "confirmed_controls": [
+    {
+      "contract": "Fila de persistência",
+      "basis": "criarFilaDePersistencia encadeia chamadas e upsertMyCall repete o mesmo payload/id. Não foi alegada ausência de idempotência."
+    },
+    {
+      "contract": "Notificação tardia e identidade do usuário",
+      "basis": "useIncomingCallListener tem active/geração e userId no estado. Consulta de chamada finalizada é best-effort deliberada; falha de leitura não foi rotulada automaticamente como defeito."
+    },
+    {
+      "contract": "Transição de líder da aba",
+      "basis": "useTabLeaderRole guarda callbacks em ref e age só na transição de papel. Não foi extrapolado o ciclo encontrado no Email a este hook."
+    },
+    {
+      "contract": "Busca por telefone",
+      "basis": "useSipClient usa variantes completas e pickUniquePhoneMatch. Não foi inventado sufixo de telefone nesse consumidor; reconciliação Bitrix é um achado antigo diferente."
+    },
+    {
+      "contract": "WhatsApp sem áudio no browser",
+      "basis": "WhatsAppCallAdapter declara o contrato de abrir conversa e registrar intenção local. Dial não suportado e recusa local são decisões explícitas do plano, não defeitos novos."
+    },
+    {
+      "contract": "Encerramento por Realtime",
+      "basis": "terminoRemotoDaChamada compara o ID recebido ao ID em curso. O defeito de evento tardio foi delimitado ao motor SIP, sem negar esse controle no caminho Realtime."
+    }
+  ]
+}

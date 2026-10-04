@@ -1,0 +1,333 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "/root/grill_me_primary_review",
+  "counting_rule": "Observações, limites e extensões sem novos IDs de finding. Não somar às contagens de findings.json.",
+  "observations": [
+    {
+      "id": "MOD-OBS-001",
+      "classification": "PRIOR_FAMILY_RECONFIRMED",
+      "title": "Metas de atendimento continuam apoiadas em proxies e desafios fixos",
+      "prior_finding_ids": [
+        "DASH-METRICS-001"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-063",
+        "R2-MOD-064"
+      ],
+      "observation": "DailyGoalsCard usa totalConversations para o rótulo Responder 10 mensagens e não avalia a hora no desafio das 18h. DashboardWidgetRenderer repete proxies de desafios e exibe progresso fixo. Isso reforça a família anterior; os novos IDs 063 e 064 tratam causas distintas de notificação e persistência de configuração.",
+      "evidence": [
+        {
+          "path": "src/components/dashboard/overview/DailyGoalsCard.tsx",
+          "line_start": 16,
+          "line_end": 40,
+          "git_blob_sha": "136f0de71774fabe8b7c0cb364774fad905d96e5",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/overview/DailyGoalsCard.tsx#L16-L40",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/dashboard/DashboardWidgetRenderer.tsx",
+          "line_start": 155,
+          "line_end": 181,
+          "git_blob_sha": "566782938f8de0bebcd166ded452b4f89970abe3",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/DashboardWidgetRenderer.tsx#L155-L181",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-002",
+      "classification": "CROSS_AGENT_EXTENSION_NO_NEW_ID",
+      "title": "Formulário SLA não expõe o prazo e os históricos usam janelas diferentes",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-SLA-003"
+      ],
+      "observation": "SLAConfigTable oferece nome, prioridade e padrão, sem input para first_response_minutes. SLAMetricsDashboard usa o período selecionado no resumo e 30 dias no histórico. AgentPerformancePanel fixa SLA em week enquanto o ranking recebe outro período. A ausência do prazo foi incorporada por root em R2-SLA-003; as janelas são observações de apresentação, sem aumentar o total de achados.",
+      "evidence": [
+        {
+          "path": "src/components/dashboard/sla/SLAConfigTable.tsx",
+          "line_start": 101,
+          "line_end": 130,
+          "git_blob_sha": "f6ea145c093e0d4cda003759890393f60cd9e5a3",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/sla/SLAConfigTable.tsx#L101-L130",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/dashboard/SLAMetricsDashboard.tsx",
+          "line_start": 30,
+          "line_end": 56,
+          "git_blob_sha": "b18ad017fa90900ec24625ffa36014d71e2993ff",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/SLAMetricsDashboard.tsx#L30-L56",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/dashboard/AgentPerformancePanel.tsx",
+          "line_start": 43,
+          "line_end": 56,
+          "git_blob_sha": "eea32a8b217c0a2a3ab30e1c16b4f16e9829fe38",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/AgentPerformancePanel.tsx#L43-L56",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-003",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "TalkX.test inclui implementações locais que não exercitam a produção",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-MOD-062"
+      ],
+      "observation": "A primeira parte testa useTalkX real com backend simulado, inclusive rejeição lógica. Já os blocos de personalização, duração e filtro declaram funções locais e testam essas cópias. Alterar a função de produção não necessariamente faz esses testes falharem; isso não invalida os testes reais do hook nem os testes separados que importam os helpers de produção.",
+      "evidence": [
+        {
+          "path": "src/components/talkx/__tests__/TalkX.test.tsx",
+          "line_start": 1,
+          "line_end": 127,
+          "git_blob_sha": "940b0de55d924661138f06b994a0156d49f0f5fe",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkX.test.tsx#L1-L127",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/TalkX.test.tsx",
+          "line_start": 131,
+          "line_end": 305,
+          "git_blob_sha": "940b0de55d924661138f06b994a0156d49f0f5fe",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkX.test.tsx#L131-L305",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-004",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Fixtures do editor não cobrem a audiência maior que a página nem a saída antes do debounce",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-MOD-024",
+        "R2-MOD-025",
+        "R2-MOD-027"
+      ],
+      "observation": "useCampaignEditor.test substitui useQuery pela lista persistida do fixture, portanto não exercita paginação real. A hidratação de público usa um contato; o roundtrip espera 3.100 ms antes de desmontar. Esses cenários não cobrem truncação do público nem saída antes do autosave. A serialização de saves e a reutilização de chave de criação de TalkX possuem testes úteis e não devem ser confundidas com o defeito distinto de Multiplix.",
+      "evidence": [
+        {
+          "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+          "line_start": 65,
+          "line_end": 99,
+          "git_blob_sha": "a1883276e9f2c6cb6479b509b50ae6367ab9f96e",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/useCampaignEditor.test.tsx#L65-L99",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+          "line_start": 240,
+          "line_end": 295,
+          "git_blob_sha": "a1883276e9f2c6cb6479b509b50ae6367ab9f96e",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/useCampaignEditor.test.tsx#L240-L295",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+          "line_start": 441,
+          "line_end": 522,
+          "git_blob_sha": "a1883276e9f2c6cb6479b509b50ae6367ab9f96e",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/useCampaignEditor.test.tsx#L441-L522",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-005",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Testes de rota não executam o ciclo do wizard",
+      "prior_finding_ids": [],
+      "related_finding_ids": [
+        "R2-MOD-027"
+      ],
+      "observation": "TalkXView.route substitui TalkXCampaignWizard por um componente de teste. Ele valida navegação e callbacks da rota, mas não o salvamento automático, cancelamento ou recuperação de erro do wizard real.",
+      "evidence": [
+        {
+          "path": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+          "line_start": 23,
+          "line_end": 28,
+          "git_blob_sha": "90f8e6e8d1924f0b3d47ed12d54e1bdf87f1d703",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXView.route.test.tsx#L23-L28",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+          "line_start": 95,
+          "line_end": 114,
+          "git_blob_sha": "90f8e6e8d1924f0b3d47ed12d54e1bdf87f1d703",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXView.route.test.tsx#L95-L114",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+          "line_start": 152,
+          "line_end": 243,
+          "git_blob_sha": "90f8e6e8d1924f0b3d47ed12d54e1bdf87f1d703",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXView.route.test.tsx#L152-L243",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-006",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Kit de estado e filtro testado isoladamente não comprova adoção pelos consumidores",
+      "prior_finding_ids": [
+        "TX03"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-036",
+        "R2-MOD-059",
+        "R2-MOD-060"
+      ],
+      "observation": "A matriz do QueryBoundary e os testes de FilterBar/Table são úteis para seus componentes controlados. Eles não asseguram que cada tela entregue error/retry, onPeriodChange ou onPageSizeChange. Os defeitos registrados permanecem nos consumidores. TalkXAnalytics.hooks declara explicitamente que verifica ordem dos hooks e simula os dados, sem validar a correção das métricas.",
+      "evidence": [
+        {
+          "path": "src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx",
+          "line_start": 1,
+          "line_end": 40,
+          "git_blob_sha": "c7b5c00d4f3c072bae0919f699e5b8e9de507284",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx#L1-L40",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx",
+          "line_start": 1,
+          "line_end": 35,
+          "git_blob_sha": "95fd5e2e894d733d33ad56a821e14de25f29d4af",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx#L1-L35",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/talkx/__tests__/TalkXAnalytics.hooks.test.tsx",
+          "line_start": 1,
+          "line_end": 45,
+          "git_blob_sha": "69085a95cefa7af3883dc0384388e9c26c66dd01",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/talkx/__tests__/TalkXAnalytics.hooks.test.tsx#L1-L45",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-007",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Teste de fuso do Dashboard não cobre selecionar Personalizada",
+      "prior_finding_ids": [
+        "DASH-CONTROLS-001"
+      ],
+      "related_finding_ids": [
+        "R2-MOD-065"
+      ],
+      "observation": "DashboardFilters.fuso testa getDefaultFilters, sem interação no seletor custom. DashboardView.test simula filtros e painéis: valida permissões e roteamento para o consumidor, mas não o seletor real. Por isso não contradiz o caminho sem ação de Personalizada encontrado em 065.",
+      "evidence": [
+        {
+          "path": "src/components/dashboard/__tests__/DashboardFilters.fuso.test.ts",
+          "line_start": 1,
+          "line_end": 36,
+          "git_blob_sha": "2b5c96da0eff2cf1dacd82ea353546efc8396a9b",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/__tests__/DashboardFilters.fuso.test.ts#L1-L36",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/dashboard/__tests__/DashboardView.test.tsx",
+          "line_start": 11,
+          "line_end": 69,
+          "git_blob_sha": "17021de5e159190af8811a52dcb07468d5867ef6",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/__tests__/DashboardView.test.tsx#L11-L69",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-008",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Resumo de IA com 1.500 declarados é teste de contrato de consumo, não de completude da consulta",
+      "prior_finding_ids": [
+        "DASH-METRICS-001"
+      ],
+      "related_finding_ids": [],
+      "observation": "useAIUsageDashboard.agregacao simula um resumo RPC com 1.500 análises e uma página de 50 linhas. Isso demonstra a separação correta entre resumo e página no hook, sem demonstrar que 1.500 registros reais atravessam o SQL, a política ou a janela temporal. useDashboardData.presence também usa respostas simuladas e não comprova a identidade profile_id versus auth.uid no banco.",
+      "evidence": [
+        {
+          "path": "src/hooks/analytics/__tests__/useAIUsageDashboard.agregacao.test.tsx",
+          "line_start": 32,
+          "line_end": 91,
+          "git_blob_sha": "e96dd2b6a38b2b479b3c330062a44b267db557cd",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/analytics/__tests__/useAIUsageDashboard.agregacao.test.tsx#L32-L91",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/analytics/__tests__/useDashboardData.presence.test.tsx",
+          "line_start": 1,
+          "line_end": 42,
+          "git_blob_sha": "e0f9d5c59494d439d03f351e6c97cf7c43abc4b2",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/analytics/__tests__/useDashboardData.presence.test.tsx#L1-L42",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    },
+    {
+      "id": "MOD-OBS-009",
+      "classification": "TEST_SCOPE_LIMIT",
+      "title": "Teste offline da fila verifica texto, não todos os sinais visuais nomeados",
+      "prior_finding_ids": [
+        "DASH-REALTIME-001"
+      ],
+      "related_finding_ids": [],
+      "observation": "O caso offline de QueueHealthTable verifica a presença de Tempo real. Apesar do nome mencionar tom e pulso, o trecho não faz asserções desses atributos. O limite é específico a esse teste; a revisão não realizou renderização visual nem conclui, por esse teste, defeito adicional de presença.",
+      "evidence": [
+        {
+          "path": "src/components/dashboard/__tests__/QueueHealthTable.test.tsx",
+          "line_start": 34,
+          "line_end": 44,
+          "git_blob_sha": "a891068b82bb3cc724c12fedf606d225b0b96c7f",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/__tests__/QueueHealthTable.test.tsx#L34-L44",
+          "purpose": ""
+        }
+      ],
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "runtime_observed": false
+    }
+  ]
+}

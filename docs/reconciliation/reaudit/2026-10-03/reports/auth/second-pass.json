@@ -1,0 +1,4706 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "created_at": "2026-10-04T01:44:03.454343+00:00",
+  "new_findings": [
+    {
+      "id": "R2-AUTH-022",
+      "title": "Bloqueios de IP/país e regras configuráveis não dirigem a autorização local",
+      "severity": "high",
+      "priority": "P1",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "SecurityView abas administrativas → GeoBlockingPanel/IPWhitelistPanel/BlockedIPsPanel/RateLimitConfigPanel → tabelas; login e Edges → checkRateLimit/enforceRateLimit → parâmetros fixados no chamador.",
+      "precondition": "Administrador cadastra IP bloqueado, ativa whitelist geográfica vazia ou altera um limite esperando o efeito descrito na UI.",
+      "failure_and_effect": "A UI persiste geo_blocking_settings, allowed_countries, blocked_countries, blocked_ips, ip_whitelist e rate_limit_configs, mas a cadeia de acesso analisada não lê essas configurações. Os helpers is_country_allowed/is_country_blocked/is_ip_blocked/is_ip_whitelisted existem no SQL e não têm consumidor de produção localizado. enforceRateLimit envia p_max/p_window_seconds definidos no código; consume_rate_limit usa exclusivamente esses parâmetros e edge_rate_limits. Portanto adicionar bloqueio/whitelist ou editar regra não passa a proteger/desobrigar esses caminhos. A afirmação da UI de que whitelist vazia impede todo acesso não é realizada pela fonte.",
+      "evidence": [
+        {
+          "path": "src/components/security/SecurityView.tsx",
+          "start_line": 127,
+          "end_line": 142,
+          "blob_sha": "f98bce6c4ae825ec3591cd58a346ba7390e6caa7",
+          "symbol": "mount administrativo",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/GeoBlockingPanel.tsx",
+          "start_line": 57,
+          "end_line": 86,
+          "blob_sha": "50a103a5fce56641642e7b424a1ec8a91d9898ea",
+          "symbol": "promessas whitelist/blacklist",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/GeoBlockingPanel.tsx",
+          "start_line": 125,
+          "end_line": 127,
+          "blob_sha": "50a103a5fce56641642e7b424a1ec8a91d9898ea",
+          "symbol": "promessa whitelist vazia",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/system/useGeoBlocking.ts",
+          "start_line": 31,
+          "end_line": 99,
+          "blob_sha": "5f214fad63a9de2aa1e41a2aa4e37ca7e095a4ad",
+          "symbol": "persistência de modo/listas",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/IPWhitelistPanel.tsx",
+          "start_line": 146,
+          "end_line": 149,
+          "blob_sha": "7f77b5bc2db1585fcfd14f0286ca7b737c8e1b96",
+          "symbol": "promessa de isenção",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/BlockedIPDialogs.tsx",
+          "start_line": 29,
+          "end_line": 39,
+          "blob_sha": "3bc5df25101d664a10f651422cc496b322a92cad",
+          "symbol": "bloqueio apenas tabela",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/RateLimitConfigPanel.tsx",
+          "start_line": 86,
+          "end_line": 105,
+          "blob_sha": "d530018985f63fc004870100cbc0469e8112e215",
+          "symbol": "persistência rate_limit_configs",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/_shared/validation.ts",
+          "start_line": 187,
+          "end_line": 266,
+          "blob_sha": "3b82137fae8da21224e20fff7e9f073ab67c017c",
+          "symbol": "limite efetivo por parâmetros",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260905020000_edge_rate_limits.sql",
+          "start_line": 19,
+          "end_line": 44,
+          "blob_sha": "34977ef90f88f1eafa141253401c51fcb0d3dba4",
+          "symbol": "consume_rate_limit",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/auth-login/index.ts",
+          "start_line": 20,
+          "end_line": 41,
+          "blob_sha": "a4fe292c8b536d271ff3d65008b5ee8473babc99",
+          "symbol": "entrada de login/limites",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparado com os 104 registros anteriores por caminho, fluxo e assunto; não há equivalente material. Não reconta achado anterior."
+      },
+      "feature_claim_ids": [
+        "24.6",
+        "24.7",
+        "24.8",
+        "24.11"
+      ],
+      "acceptance_criteria": [
+        "Ligar os controles prometidos a uma fronteira de autorização obrigatória nos caminhos abrangidos e definir exatamente o alcance de IP/país/endpoint.",
+        "Validar em ambiente isolado: IP bloqueado negado; IP permitido conforme regra; país fora da whitelist negado; mudança de limite altera a decisão efetiva.",
+        "Se algum controle depender de componente externo, registrar e provar esse consumidor; não anunciar enforcement pela simples gravação da tabela."
+      ],
+      "limitations": [
+        "Há limites reais por código e RPC persistente; este achado não afirma ausência de todo rate limiting.",
+        "Não avaliados WAF/reverse proxy/controles do projeto Auth externos à fonte. A busca negativa abrange src e supabase/functions e foi corroborada pelo agente SQL.",
+        "Conclusão na fonte fixada; não mede implantação, políticas externas ou incidente real."
+      ]
+    },
+    {
+      "id": "R2-AUTH-023",
+      "title": "Salvar regras de rate limit pode apagar a configuração e descarta a ação escolhida",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_OFFLINE",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "Aba Rate Limit → saveRules → DELETE global rate_limit_configs → INSERT novo conjunto → fetchRules.",
+      "precondition": "Falha no INSERT depois de DELETE bem-sucedido; ou escolha Alertar/Limitar seguida de salvar com sucesso.",
+      "failure_and_effect": "A substituição é feita em dois requests sem transação e o resultado do DELETE é ignorado. Uma falha posterior deixa a tabela sem regras; um DELETE negado pode acumular o conjunto em vez de substituir. A propriedade action oferecida no Select não entra no INSERT e fetchRules define block para qualquer linha. P-AUTH-10 reproduziu perda do conjunto sob erro e alert→payload sem action→block após reload. O efeito confirmado é perda/alteração da configuração administrativa; seu desligamento do enforcement é R2-AUTH-022.",
+      "evidence": [
+        {
+          "path": "src/components/security/RateLimitConfigPanel.tsx",
+          "start_line": 37,
+          "end_line": 57,
+          "blob_sha": "d530018985f63fc004870100cbc0469e8112e215",
+          "symbol": "fetchRules transforma toda ação em block",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/RateLimitConfigPanel.tsx",
+          "start_line": 86,
+          "end_line": 110,
+          "blob_sha": "d530018985f63fc004870100cbc0469e8112e215",
+          "symbol": "saveRules não transacional",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/RateLimitConfigPanel.tsx",
+          "start_line": 217,
+          "end_line": 230,
+          "blob_sha": "d530018985f63fc004870100cbc0469e8112e215",
+          "symbol": "Select das ações",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [
+        "P-AUTH-10"
+      ],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparado com os 104 registros anteriores por caminho, fluxo e assunto; não há equivalente material. Não reconta achado anterior."
+      },
+      "feature_claim_ids": [
+        "24.11"
+      ],
+      "acceptance_criteria": [
+        "Salvar o conjunto de regras por operação atômica com validação de todos os campos, ou aplicar alterações individuais com versão e confirmação.",
+        "Persistir e consumir cada ação suportada; retirar opção que não tem semântica implementada.",
+        "Provar erro de inserção mantendo conjunto anterior e round-trip de block/throttle/alert sem mudar a intenção."
+      ],
+      "limitations": [
+        "Não afirma que esta perda desative os limites fixados em código; a separação foi confirmada em R2-AUTH-022.",
+        "Conclusão na fonte fixada; não mede implantação, políticas externas ou incidente real."
+      ]
+    },
+    {
+      "id": "R2-AUTH-024",
+      "title": "Overview de segurança apresenta estados e pontuação sem medição válida",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "SecurityView overview/conta → SecurityOverview e SecuritySettingsPanel → instâncias próprias de useMFA; calculateScore → status exibido.",
+      "precondition": "Conta com TOTP já verificado, ou falha na consulta de alertas; qualquer conta no item Senha Forte.",
+      "failure_and_effect": "useMFA inicializa factors=[] e só carrega por fetchFactors. SecurityOverview e SecuritySettingsPanel nunca chamam fetchFactors, logo exibem MFA desativado/zero fatores mesmo quando a tela MFASettings carrega os fatores corretos em outra instância do hook. calculateScore atribui 25 pontos à senha incondicionalmente e afirma que ela atende aos requisitos; a consulta de alertas que falha deixa [] e termina loading, então SecurityAlertsPanel afirma conta segura sem atividades suspeitas. Esses estados não distinguem ausência, dado ainda não carregado e falha. A revogação/inventário de sessões é tratada separadamente em R2-AUTH-004.",
+      "evidence": [
+        {
+          "path": "src/hooks/auth/useMFA.ts",
+          "start_line": 25,
+          "end_line": 45,
+          "blob_sha": "9bab653552014a797abf58dcd4fbe6dc915e2ecd",
+          "symbol": "estado local e fetchFactors explícito",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/SecurityOverview.tsx",
+          "start_line": 33,
+          "end_line": 81,
+          "blob_sha": "10e091960ce708acde6c9c405c496cbb2bb60418",
+          "symbol": "estado não carregado, erro de alertas e pontuação constante",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/SecurityOverview.tsx",
+          "start_line": 138,
+          "end_line": 145,
+          "blob_sha": "10e091960ce708acde6c9c405c496cbb2bb60418",
+          "symbol": "senha forte sempre enabled",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/SecuritySettingsPanel.tsx",
+          "start_line": 30,
+          "end_line": 57,
+          "blob_sha": "5a903d9cf20298cf2bc3e8ac553939103a16d7a8",
+          "symbol": "instância MFA sem fetch",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/SecurityPanels.tsx",
+          "start_line": 43,
+          "end_line": 57,
+          "blob_sha": "329857e0d1cb4843a65a662f713cf2b4c9323f2c",
+          "symbol": "vazio vira afirmação de segurança",
+          "observation": ""
+        },
+        {
+          "path": "src/components/mfa/MFASettings.tsx",
+          "start_line": 25,
+          "end_line": 33,
+          "blob_sha": "2874304ddab31651243b63e775a5c4f38cf50ba1",
+          "symbol": "contraste: consumidor realmente busca fatores",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparado com os 104 registros anteriores por caminho, fluxo e assunto; não há equivalente material. Não reconta achado anterior."
+      },
+      "feature_claim_ids": [
+        "24.2",
+        "24.3"
+      ],
+      "acceptance_criteria": [
+        "Usar fonte compartilhada e escopada por usuário para fatores, com loading/erro/zero distintos.",
+        "Calcular ou rotular explicitamente os itens que realmente podem ser medidos; nunca afirmar força de senha sem dado verificável.",
+        "Falha ao consultar alertas deve mostrar indisponibilidade, sem diagnóstico de ausência de incidentes; verificar conta com fator ativo e erro de leitura."
+      ],
+      "limitations": [
+        "Falha de diagnóstico da UI; não pressupõe que a senha real seja fraca nem que exista incidente oculto.",
+        "Conclusão na fonte fixada; não mede implantação, políticas externas ou incidente real."
+      ]
+    },
+    {
+      "id": "R2-AUTH-025",
+      "title": "Editor inline de empresa/cargo conserva vazio inicial e pode apagar dado carregado",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_OFFLINE",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "ContactDetails → useContactEnrichedData assíncrono → seção Informações aberta por padrão → EditableField → updateContact.",
+      "precondition": "Empresa/cargo chega do enriquecimento depois de o campo montar vazio; usuário abre edição após ver o valor carregado e confirma sem preencher novamente.",
+      "failure_and_effect": "EditableField copia value para draft apenas no useState inicial. Ao chegar value novo, o texto de leitura mostra o dado atual, mas clicar lápis só altera editing. O editor abre com draft antigo, inclusive vazio. handleSave compara esse draft com value carregado e manda string vazia para contacts, anunciando campo atualizado. P-AUTH-09 executou a declaração e closure de atualização reais e registrou company:'' para o mesmo contato. Escape também mantém rascunho abandonado e reabertura não recopia o valor corrente.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/contact-details/ContactInfoSection.tsx",
+          "start_line": 31,
+          "end_line": 54,
+          "blob_sha": "ef545e34a0f5e4395bded6212635bf98064c0040",
+          "symbol": "draft/handleSave",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ContactInfoSection.tsx",
+          "start_line": 56,
+          "end_line": 99,
+          "blob_sha": "ef545e34a0f5e4395bded6212635bf98064c0040",
+          "symbol": "entrada de edição sem reset",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ContactInfoSection.tsx",
+          "start_line": 109,
+          "end_line": 146,
+          "blob_sha": "ef545e34a0f5e4395bded6212635bf98064c0040",
+          "symbol": "persistência e campos enriquecidos",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/crm/useContactEnrichedData.ts",
+          "start_line": 52,
+          "end_line": 75,
+          "blob_sha": "02f7398107d5debbf70bbda0ce3a85bbcd2a4b5b",
+          "symbol": "consulta assíncrona",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+          "start_line": 49,
+          "end_line": 54,
+          "blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+          "symbol": "consumidor da seção",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/contactDetailSections.ts",
+          "start_line": 31,
+          "end_line": 48,
+          "blob_sha": "fb9d7000347808119e9c9a7b884885baef26c106",
+          "symbol": "info aberto por padrão",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/RealtimeInboxView.tsx",
+          "start_line": 340,
+          "end_line": 343,
+          "blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+          "symbol": "remount por conversa limita hipótese",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [
+        "P-AUTH-09"
+      ],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparado com os 104 registros anteriores por caminho, fluxo e assunto; não há equivalente material. Não reconta achado anterior."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Inicializar o draft com valor corrente ao entrar em edição e encerrar/cancelar de forma explícita; lidar com mudança externa durante edição sem perda silenciosa.",
+        "Não permitir interação de edição como dado vazio enquanto um campo está carregando; preservar o valor conhecido.",
+        "Reproduzir vazio inicial→dado carregado→editar/salvar e cancelar/reabrir; nenhum campo existente deve ser apagado por draft antigo."
+      ],
+      "limitations": [
+        "Não alegado vazamento entre conversas: RealtimeInboxView usa key por conversation.id e remonta o painel. A prova usa o mesmo contato/instância.",
+        "Scheduler mínimo de hooks/JSX e SDK gravador; não substitui teste React/browser completo.",
+        "Conclusão na fonte fixada; não mede implantação, políticas externas ou incidente real."
+      ]
+    },
+    {
+      "id": "R2-AUTH-026",
+      "title": "Excluir nota de colega some da UI mesmo quando RLS preserva a nota",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "ContactsView → ContactDetailPanel → ContactNotes lista todas as notas visíveis → botão excluir → DELETE por id → filtro local + toast.",
+      "precondition": "Usuário vê contato e nota escrita por outro perfil, então clica o botão de excluir oferecido nessa nota.",
+      "failure_and_effect": "A política SELECT final permite ler notas do contato visível, mas DELETE exige também author_id do próprio usuário (sem exceção admin nessa policy). ContactNotes rende botão para toda nota, sem comparar autor, e faz DELETE sem select/count. Para nota de colega, RLS filtra a linha e a operação altera zero sem erro; o componente filtra a nota do estado e afirma Nota excluída. Ao recarregar ela reaparece. O banco preserva corretamente a autorização; a falha é de capacidade/apresentação e confirmação da mutação.",
+      "evidence": [
+        {
+          "path": "src/components/contacts/ContactNotes.tsx",
+          "start_line": 43,
+          "end_line": 70,
+          "blob_sha": "e40f098a2d660b2e8eb88ec405fa506c1651bf11",
+          "symbol": "consulta das notas e autores",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactNotes.tsx",
+          "start_line": 109,
+          "end_line": 121,
+          "blob_sha": "e40f098a2d660b2e8eb88ec405fa506c1651bf11",
+          "symbol": "DELETE e confirmação sem linhas",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactNotes.tsx",
+          "start_line": 191,
+          "end_line": 219,
+          "blob_sha": "e40f098a2d660b2e8eb88ec405fa506c1651bf11",
+          "symbol": "botão para todo autor",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactDetailPanel.tsx",
+          "start_line": 328,
+          "end_line": 338,
+          "blob_sha": "8211a8274c76126952c8f01dee30ce558e9df540",
+          "symbol": "consumidor ativo",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql",
+          "start_line": 136,
+          "end_line": 158,
+          "blob_sha": "a0c2e2f7484bfdd3808b3e30f2ca87cb4104428c",
+          "symbol": "substitui policies e SELECT visível",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql",
+          "start_line": 182,
+          "end_line": 189,
+          "blob_sha": "a0c2e2f7484bfdd3808b3e30f2ca87cb4104428c",
+          "symbol": "DELETE apenas próprio autor",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparado com os 104 registros anteriores por caminho, fluxo e assunto; não há equivalente material. Não reconta achado anterior."
+      },
+      "feature_claim_ids": [],
+      "acceptance_criteria": [
+        "Exibir capacidade de excluir a partir da autorização real e impedir interação de apagar nota alheia quando não permitida.",
+        "Confirmar linha apagada antes de removê-la do estado e anunciar sucesso; zero linhas deve ser rejeição/conflito explícito.",
+        "Testar nota própria, nota de colega, mudança de visibilidade e nota já removida; conferir comportamento coerente após reload."
+      ],
+      "limitations": [
+        "Policy final corroborada pelo agente SQL; não executada requisição em banco vivo.",
+        "Não classificado como bypass de RLS nem exclusão não autorizada; a nota permanece no banco.",
+        "Conclusão na fonte fixada; não mede implantação, políticas externas ou incidente real."
+      ]
+    },
+    {
+      "id": "R2-AUTH-027",
+      "title": "Usuário pode liberar o próprio flag administrativo de download",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "AdminView Permitir Download → useAdminData salva profiles.can_download; ImagePreview → useDownloadPermission lê o mesmo campo → libera handleDownload.",
+      "precondition": "Usuário authenticated dono de um perfil normal, com os campos comparados pela policy preservados e não nulos, cujo can_download foi desabilitado pelo administrador.",
+      "failure_and_effect": "A policy permissiva permite UPDATE do próprio profile. A policy restritiva conserva role/access_level/permissions/is_active, e o trigger vencedor conserva role/access_level/permissions, mas nenhum deles protege can_download. O manifesto mantém grant UPDATE da tabela para authenticated. Um PATCH do próprio can_download=true passa por essas condições sem mudar outro privilégio. Após refetch/reload, o hook passa a permitir o download que a UI dizia depender do administrador.",
+      "evidence": [
+        {
+          "path": "src/components/admin/AdminView.tsx",
+          "start_line": 181,
+          "end_line": 191,
+          "blob_sha": "3e7e78463cbe8c8ab9d310a5f4a1988e2daafd7b",
+          "symbol": "controle administrativo Permitir Download",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/useAdminData.ts",
+          "start_line": 146,
+          "end_line": 165,
+          "blob_sha": "9c74e75a5e998a94189ff292ffbdfc113973ef9d",
+          "symbol": "persistência de can_download",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/system/useDownloadPermission.ts",
+          "start_line": 5,
+          "end_line": 24,
+          "blob_sha": "0c1c6a36db0f658dedad8376aed764addc961134",
+          "symbol": "leitura do flag como autoridade da UI",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/ImagePreview.tsx",
+          "start_line": 22,
+          "end_line": 51,
+          "blob_sha": "76de00c8dede81c06fa8ff859c2f2cef06dc7a4c",
+          "symbol": "bloqueio/desbloqueio e efeito download",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260405230710_35b60740-aa0f-437d-9029-f5c0d8e1edf0.sql",
+          "start_line": 16,
+          "end_line": 41,
+          "blob_sha": "496e76b7a179da518723a777967301693505f1e6",
+          "symbol": "own UPDATE e campos restritos",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql",
+          "start_line": 40,
+          "end_line": 57,
+          "blob_sha": "f1ea0afaa371f86c9b024d4d86719b3dc5ad796d",
+          "symbol": "trigger vencedor omite can_download",
+          "observation": ""
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "start_line": 6662,
+          "end_line": 6666,
+          "blob_sha": "0a608dc2072999f1a3aded5bf6693e7e8c761537",
+          "symbol": "grant UPDATE profiles authenticated no snapshot",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Restringir can_download à autoridade administrativa no banco por privilégio de coluna/RPC ou validação equivalente, mantendo o autoatendimento somente dos campos pessoais autorizados.",
+        "Em ambiente isolado, own UPDATE de can_download deve ser negado para agente e permitido ao administrador; verificar também a revogação/refetch do gate.",
+        "Definir o alcance real da política de download na UI; não apresentar ocultação de botão como garantia de impossibilidade de copiar mídia já legível."
+      ],
+      "limitations": [
+        "Não abre leitura de imagens ou objetos adicionais: ImagePreview já exibe a mídia. O impacto demonstrado é alteração indevida de um flag administrativo e do comportamento oficial de download.",
+        "role/access_level/permissions/is_active possuem proteções verificadas. O achado não afirma elevação a administrador ou reativação irrestrita.",
+        "Sucessão de policies/trigger e grant corroborada pela área database; comparação aqui usa o snapshot e arquivos exatos, sem PATCH real.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-028",
+      "title": "Detalhe do contato mostra zero mensagens e inatividade por props nunca fornecidas",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "ContactsView abre ContactDetailPanel(contact) → defaults messageCount=0/lastMessageAt=undefined → ContactEngagementScore e quadro Atividade.",
+      "precondition": "Qualquer contato com histórico de mensagens ou mensagem recente aberto pelo fluxo de detalhes da página Contatos.",
+      "failure_and_effect": "O único consumidor de produção de ContactDetailPanel não passa messageCount nem lastMessageAt. O painel utiliza os defaults para mostrar 0 Mensagens e nenhuma Última msg e calcula score 0/Inativo. A consulta useContactsSearch chega a enriquecer last_message_at na lista, mas o painel não a utiliza. A timeline possui consulta própria e pode mostrar atividade ao lado desse resumo falso. A ausência da prop é apresentada como ausência de atividade, sem estado desconhecido/loading.",
+      "evidence": [
+        {
+          "path": "src/components/contacts/ContactsView.tsx",
+          "start_line": 221,
+          "end_line": 227,
+          "blob_sha": "805de473b266d4bb067c7bd9875eefeaa612f4dc",
+          "symbol": "montagem omite dados de atividade",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactDetailPanel.tsx",
+          "start_line": 122,
+          "end_line": 124,
+          "blob_sha": "8211a8274c76126952c8f01dee30ce558e9df540",
+          "symbol": "defaults de atividade",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactDetailPanel.tsx",
+          "start_line": 202,
+          "end_line": 207,
+          "blob_sha": "8211a8274c76126952c8f01dee30ce558e9df540",
+          "symbol": "dados enviados ao score",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactDetailPanel.tsx",
+          "start_line": 306,
+          "end_line": 332,
+          "blob_sha": "8211a8274c76126952c8f01dee30ce558e9df540",
+          "symbol": "resumo zero/data ausente e timeline separada",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactEngagementScore.tsx",
+          "start_line": 21,
+          "end_line": 59,
+          "blob_sha": "e697d1012301818b44fa8e506683eeb913c538e2",
+          "symbol": "zero e ausência de recência viram Inativo",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/crm/useContactsSearch.ts",
+          "start_line": 140,
+          "end_line": 154,
+          "blob_sha": "001291ef8b983e934fc3691fe92516168a7549f1",
+          "symbol": "consulta de última mensagem existente",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Obter contagem e última mensagem por consulta canônica de atividade do contato e conectar os valores ao painel.",
+        "Separar zero confirmado, carregamento, indisponibilidade e dado não solicitado; só calcular engajamento quando os insumos necessários forem conhecidos.",
+        "Validar contato com mensagens recentes, sem mensagens e consulta com erro, inclusive coerência entre timeline e resumo."
+      ],
+      "limitations": [
+        "Não afirma perda de mensagens; a falha está na representação e classificação de atividade.",
+        "Não duplica as falhas do Dashboard central: este consumidor e cálculo são componentes específicos da página Contatos.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-029",
+      "title": "Analytics de Contatos rotula agregados da página atual como totais",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "useContactsSearch busca página de 50 → ContactsView filteredContacts → ContactContentArea modo analytics → ContactAnalyticsDashboard.",
+      "precondition": "Resultado filtrado com mais de uma página; há contatos, empresas, tipos, tags ou datas fora da página carregada.",
+      "failure_and_effect": "Todos os agregados de Analytics usam apenas o array da página atual. O cabeçalho apresenta contacts.length como total, e distribuição por tipo, Top Empresas/Tags e crescimento de 14 dias são calculados sobre o mesmo subconjunto sem identificação de amostra/página. Ordenar ou paginar altera os indicadores sem alterar o universo filtrado. A paginação é de substituição, não acumulação. Já useContactsKpi pagina toda a base elegível: essa proteção foi conferida e não é o consumidor desse dashboard.",
+      "evidence": [
+        {
+          "path": "src/hooks/crm/useContactsSearch.ts",
+          "start_line": 11,
+          "end_line": 19,
+          "blob_sha": "001291ef8b983e934fc3691fe92516168a7549f1",
+          "symbol": "limite 50 e ordenação",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/crm/useContactsSearch.ts",
+          "start_line": 89,
+          "end_line": 115,
+          "blob_sha": "001291ef8b983e934fc3691fe92516168a7549f1",
+          "symbol": "consulta com offset e página retornada",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactsView.tsx",
+          "start_line": 199,
+          "end_line": 207,
+          "blob_sha": "805de473b266d4bb067c7bd9875eefeaa612f4dc",
+          "symbol": "envio de filteredContacts",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactContentArea.tsx",
+          "start_line": 125,
+          "end_line": 130,
+          "blob_sha": "84fa3cee69c7e14e8b4311041cf41e2fe4400150",
+          "symbol": "montagem de Analytics",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactAnalyticsDashboard.tsx",
+          "start_line": 26,
+          "end_line": 84,
+          "blob_sha": "df2c96b6afa676690314d46c19d315ecf24128ba",
+          "symbol": "agregação local e rótulo total",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/crm/useContactsKpi.ts",
+          "start_line": 81,
+          "end_line": 105,
+          "blob_sha": "08c8131332c4864ebaa0b1fba0460b472136dc29",
+          "symbol": "controle existente: KPIs paginam toda a base",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "DASH-METRICS-001 e DASH-CONTROLS-001 anteriores abrangem o Dashboard central. Este caminho específico ContactsView→ContactAnalyticsDashboard não aparece nos 104 e tem causa independente: o array paginado da lista alimenta os gráficos."
+      },
+      "acceptance_criteria": [
+        "Calcular os agregados sobre o universo filtrado no servidor ou carregar explicitamente todas as páginas necessárias.",
+        "Se a intenção for analisar somente a página, identificar esse escopo em todos os totais/gráficos e separar o total do universo.",
+        "Conferir conjunto com mais de 50 registros: trocar ordenação/página não deve alterar os agregados do mesmo universo."
+      ],
+      "limitations": [
+        "A ordenação/paginação e os filtros da lista são efetivos; o problema é o escopo apresentado nos indicadores.",
+        "Não amplia a conclusão para os KPIs superiores, cuja paginação completa está implementada.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-030",
+      "title": "Configurações globais de cadastro, grupos, reabertura e chave ElevenLabs não têm consumidor operacional local",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "SettingsView aba global → GlobalSettingsSection/IntegrationKeysSection → useGlobalSettings grava global_settings; fluxos de cadastro, mensagens e ElevenLabs usam outros contratos.",
+      "precondition": "Administrador altera user_creation, check_msg_is_group, group_tickets_enabled, auto_reopen_hours ou salva uma nova elevenlabs_api_key nessa UI esperando o comportamento descrito.",
+      "failure_and_effect": "A busca de todos os consumidores de global_settings encontrou leituras operacionais de outras chaves, mas nenhum uso dessas cinco configurações. Os quatro controles globais gravam tabela e anunciam sucesso sem mudar os caminhos locais indicados. A chave ElevenLabs salva fica como Configurada na UI, enquanto a Edge TTS obtém ELEVENLABS_API_KEY do ambiente e a envia ao provedor; não consulta o valor salvo. A persistência por si só não cumpre o efeito que esses controles anunciam.",
+      "evidence": [
+        {
+          "path": "src/components/settings/SettingsView.tsx",
+          "start_line": 173,
+          "end_line": 179,
+          "blob_sha": "c576115115689b975b3897df601519e09de34f53",
+          "symbol": "montagem da aba global",
+          "observation": ""
+        },
+        {
+          "path": "src/components/settings/GlobalSettingsSection.tsx",
+          "start_line": 14,
+          "end_line": 30,
+          "blob_sha": "aed28a268824b050b0737ccd6f92a4bba8f35101",
+          "symbol": "sucesso após updateSetting",
+          "observation": ""
+        },
+        {
+          "path": "src/components/settings/GlobalSettingsSection.tsx",
+          "start_line": 47,
+          "end_line": 50,
+          "blob_sha": "aed28a268824b050b0737ccd6f92a4bba8f35101",
+          "symbol": "promessas de cadastro/grupos",
+          "observation": ""
+        },
+        {
+          "path": "src/components/settings/GlobalSettingsSection.tsx",
+          "start_line": 86,
+          "end_line": 101,
+          "blob_sha": "aed28a268824b050b0737ccd6f92a4bba8f35101",
+          "symbol": "promessa de reabertura por horas",
+          "observation": ""
+        },
+        {
+          "path": "src/components/settings/IntegrationKeysSection.tsx",
+          "start_line": 19,
+          "end_line": 25,
+          "blob_sha": "324ab15044adc79255aabf561cdfb71c6030dbf3",
+          "symbol": "chave persistida e finalidade prometida",
+          "observation": ""
+        },
+        {
+          "path": "src/components/settings/IntegrationKeysSection.tsx",
+          "start_line": 42,
+          "end_line": 56,
+          "blob_sha": "324ab15044adc79255aabf561cdfb71c6030dbf3",
+          "symbol": "salvar chave e anunciar sucesso",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/system/useGlobalSettings.ts",
+          "start_line": 55,
+          "end_line": 78,
+          "blob_sha": "fd11dfb307d58536fe54b15664a20cb9b49419c6",
+          "symbol": "UPDATE/UPSERT somente em global_settings",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/elevenlabs-tts/index.ts",
+          "start_line": 16,
+          "end_line": 35,
+          "blob_sha": "f49c89be09d3410275bd194fcafbd119ccb8d4a1",
+          "symbol": "credencial efetiva obtida do ambiente",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Conectar cada configuração a um consumidor operacional obrigatório e documentar sua semântica, ou remover/identificar claramente o controle sem efeito.",
+        "Definir uma única autoridade segura para a chave de integração e mostrar o estado da configuração realmente usada.",
+        "Provar em ambiente isolado que cada alteração muda o efeito anunciado e que erros de aplicação não geram mensagem de conclusão."
+      ],
+      "limitations": [
+        "VPS, integrações externas e infraestrutura não incluídas na fonte não foram inspecionadas; um consumidor externo permanece não demonstrado, não é declarado inexistente.",
+        "Existem outras chaves global_settings efetivamente consumidas: manutenção WhatsApp, múltiplas conexões, transcrição automática e Meta. Não é um achado sobre a tabela inteira.",
+        "RLS de leitura permite admin/supervisor e escrita apenas admin; nenhum valor real de credencial foi lido, exportado ou incluído.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-031",
+      "title": "Resposta de verificação da senha anterior pode substituir o veredito da senha atual",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "Cadastro/ResetPassword → PasswordStrengthMeter(password) → efeito com debounce → consulta por prefixo de hash → estado isBreached/breachCount.",
+      "precondition": "Usuário altera uma senha A com consulta já iniciada para senha B; as respostas concluem fora de ordem ou a resposta antiga termina durante o debounce da nova.",
+      "failure_and_effect": "A limpeza do efeito cancela somente o timer, não a consulta já iniciada. checkBreach fecha sobre a senha de sua renderização e grava o estado compartilhado sem comparar a senha/requisição atual. Assim a resposta negativa de A pode sobrescrever o resultado positivo de B e exibir Senha não encontrada em vazamentos conhecidos para B, ou exibir falso comprometimento no sentido inverso. O início da troca também conserva o resultado anterior até a próxima consulta. O feedback de segurança não está vinculado ao valor que ele descreve.",
+      "evidence": [
+        {
+          "path": "src/components/auth/PasswordStrengthMeter.tsx",
+          "start_line": 78,
+          "end_line": 128,
+          "blob_sha": "7b4b33691a370fd30791e6df12980b3bb1d2132d",
+          "symbol": "debounce sem cancelamento/identidade de request",
+          "observation": ""
+        },
+        {
+          "path": "src/components/auth/PasswordStrengthMeter.tsx",
+          "start_line": 200,
+          "end_line": 230,
+          "blob_sha": "7b4b33691a370fd30791e6df12980b3bb1d2132d",
+          "symbol": "veredito apresentado para password atual",
+          "observation": ""
+        },
+        {
+          "path": "src/pages/Auth.tsx",
+          "start_line": 247,
+          "end_line": 248,
+          "blob_sha": "e46405258feeca90108090ebcecdd5d4a42d7325",
+          "symbol": "consumidor de cadastro",
+          "observation": ""
+        },
+        {
+          "path": "src/pages/ResetPassword.tsx",
+          "start_line": 166,
+          "end_line": 175,
+          "blob_sha": "e753267c38793665b3ace3b715488f7da3d6c177",
+          "symbol": "consumidor de recuperação",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Associar veredito ao valor/hash e geração da consulta; cancelar ou ignorar respostas obsoletas.",
+        "Ao mudar senha, apresentar estado não verificado/loading, sem reutilizar a confirmação da senha anterior.",
+        "Provar duas consultas em ordem inversa, alteração para senha curta/vazia e falha de rede; só a resposta do valor atual pode controlar a UI."
+      ],
+      "limitations": [
+        "Não afirma que o Auth implantado aceite senhas comprometidas: a configuração e validação final do servidor não foram medidas.",
+        "Nenhuma senha real nem consulta de senha a serviço externo foi utilizada; a falha decorre da ordem possível de callbacks do código.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-032",
+      "title": "Auditoria não inclui concessões e revogações de roles nos filtros e no contador sensível",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "INSERT/DELETE user_roles → trigger audit_role_changes grava role_granted/role_revoked com entity_type=user_roles → AuditLogDashboard classifica e filtra.",
+      "precondition": "Há uma concessão ou revogação de role entre os registros de auditoria consultados por um administrador.",
+      "failure_and_effect": "O writer vencedor grava role_granted e role_revoked. O contador Ações Sensíveis só reconhece action contendo delete, role_change ou export, portanto essas duas operações de acesso não entram. O filtro de entidade Usuários consulta igualdade com user, e não user_roles, retirando também os registros de concessão/revogação/alteração da lista. A persistência da trilha está implementada; é o consumidor que interpreta outro vocabulário e pode mostrar ausência de mudanças de acesso.",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260409224329_51d839cf-6068-4a17-b32b-9a7e12866a61.sql",
+          "start_line": 51,
+          "end_line": 54,
+          "blob_sha": "fd5fc4f6ad77392976819f631f91bb867e4bd150",
+          "symbol": "trigger ativo de user_roles",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260924125400_fix_audit_role_changes_function_name_mismatch.sql",
+          "start_line": 22,
+          "end_line": 72,
+          "blob_sha": "570d872e5259e2c04d98c71acd1a1e66f2d55626",
+          "symbol": "writer vencedor de ações e entidade",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/AuditLogDashboard.tsx",
+          "start_line": 68,
+          "end_line": 91,
+          "blob_sha": "eeb1ec4850ef61f8c939d7dcf798e0556395db89",
+          "symbol": "filtros exatos e classificação sensível",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/AuditLogDashboard.tsx",
+          "start_line": 130,
+          "end_line": 134,
+          "blob_sha": "eeb1ec4850ef61f8c939d7dcf798e0556395db89",
+          "symbol": "contador anunciado",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/AuditLogDashboard.tsx",
+          "start_line": 185,
+          "end_line": 196,
+          "blob_sha": "eeb1ec4850ef61f8c939d7dcf798e0556395db89",
+          "symbol": "opção Usuários usa user",
+          "observation": ""
+        },
+        {
+          "path": "src/components/security/SecurityView.tsx",
+          "start_line": 144,
+          "end_line": 145,
+          "blob_sha": "f98bce6c4ae825ec3591cd58a346ba7390e6caa7",
+          "symbol": "montagem ativa",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Derivar filtros/categorias de um contrato compartilhado de ações e entidades, incluindo grant, revoke, change e auto-provisionamento conforme política.",
+        "Validar end-to-end isolado INSERT/DELETE/UPDATE de role e conferir filtro de Usuários e contador de ações sensíveis.",
+        "Distinguir consulta sem resultados de erro de carregamento; informar recorte/paginação quando exibir contagens parciais."
+      ],
+      "limitations": [
+        "Os eventos continuam gravados e podem aparecer no filtro Todas ou em outros consumidores. Não é falha de criação nem apagamento da trilha.",
+        "Cadeia do trigger/corpo final foi corroborada pela área database.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-033",
+      "title": "Página de roles usa embed inexistente e transforma erro de consulta em listas vazias",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "Rota /admin/roles → RolesPage → useRolesPageState.fetchUsers → user_roles com embed profiles!user_roles_user_id_fkey.",
+      "precondition": "Administrador abre a página sobre o schema descrito pelas migrations e pelo manifesto fixado.",
+      "failure_and_effect": "A FK user_roles_user_id_fkey foi criada para auth.users(id); não há FK para public.profiles nesse nome. A consulta exige justamente profiles por essa FK, e os tipos exportados registram Relationships=[] para user_roles. O erro de relação no PostgREST não é tratado: fetchUsers apenas pula setUsers e termina loading. As quatro colunas ficam em zero/Nenhum usuário com esta role, embora roles existam, e a lista de atribuição considera todos os profiles como sem role porque users permaneceu vazio. A página AdminView faz outra consulta e join manual por user_id, portanto não está indisponível por esta mesma causa.",
+      "evidence": [
+        {
+          "path": "src/pages/admin/RolesPage.tsx",
+          "start_line": 23,
+          "end_line": 43,
+          "blob_sha": "2570d2624fff497e2a0b241a5578b10b1f26cc65",
+          "symbol": "consumidor e gate administrativo",
+          "observation": ""
+        },
+        {
+          "path": "src/pages/admin/useRolesPageState.ts",
+          "start_line": 29,
+          "end_line": 52,
+          "blob_sha": "fbc2cdb99980e754bc1bb8641224a6a571fb5b4f",
+          "symbol": "embed inválido, erro ignorado e efeito nas opções",
+          "observation": ""
+        },
+        {
+          "path": "src/pages/admin/RolesPage.tsx",
+          "start_line": 77,
+          "end_line": 112,
+          "blob_sha": "2570d2624fff497e2a0b241a5578b10b1f26cc65",
+          "symbol": "listas vazias apresentadas como ausência de roles",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql",
+          "start_line": 4,
+          "end_line": 11,
+          "blob_sha": "c5af0f701bcf7259e01de8785950f9595bf143fb",
+          "symbol": "FK real aponta auth.users",
+          "observation": ""
+        },
+        {
+          "path": "supabase/schema-manifest.json",
+          "start_line": 4562,
+          "end_line": 4562,
+          "blob_sha": "0a608dc2072999f1a3aded5bf6693e7e8c761537",
+          "symbol": "presença da FK no snapshot",
+          "observation": ""
+        },
+        {
+          "path": "src/integrations/supabase/types.ts",
+          "start_line": 8838,
+          "end_line": 8858,
+          "blob_sha": "f641f0d8bd81656165019ced14cf862be7eac489",
+          "symbol": "Relationships vazio no tipo exportado",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/useAdminData.ts",
+          "start_line": 57,
+          "end_line": 75,
+          "blob_sha": "9c74e75a5e998a94189ff292ffbdfc113973ef9d",
+          "symbol": "controle existente: join manual em outra página",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Usar consulta/RPC/view ou relação real autorizada para ligar roles aos perfis pelo user_id, sem inventar relacionamento no select.",
+        "Propagar estado de erro com retry; não transformar falha estrutural de consulta em Nenhum usuário.",
+        "Validar consulta real em schema isolado com admin/supervisor/agente/especial e usuários com e sem role; conferir a lista e as opções de atribuição."
+      ],
+      "limitations": [
+        "Não se afirma que roles foram removidas, nem que a autorização Auth/RLS deixa de funcionar.",
+        "Não foi disparada consulta contra PostgREST implantado; incompatibilidade da relação é estabelecida pela cadeia SQL/snapshot e pela semântica oficial de resource embedding.",
+        "Schema cache/configuração externa fora da fonte não foram medidos.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-034",
+      "title": "Aba Notas trata erros devolvidos pelo serviço como conclusão e descarta o texto antes de salvar",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "ConversationTabContent aba notes → NotesTab AddInline/PromiseItem → useContactNotes mutations → ContactService.addNote/updateNote/deleteNote → resposta Supabase.",
+      "precondition": "A requisição de adicionar, alterar ou excluir nota devolve error no objeto Supabase: por exemplo, INSERT negado após perda de visibilidade, erro de validação/servidor ou alteração de promessa de outro autor.",
+      "failure_and_effect": "ContactService devolve a resposta integral nas três mutations, sem throwOnError nem inspeção de error. useContactNotes retorna essa promessa como mutationFn, também sem conferir error; por isso a promessa resolvida com erro aciona onSuccess. Adicionar/excluir emitem toast de sucesso e atualizar apenas invalida, sem o aviso de falha. Na adição, AddInline chama onSave e limpa value/dueDate imediatamente; NoteCategoryCard fecha o editor antes de aguardar. Assim o operador pode receber Nota adicionada sem persistência e perde o texto que precisaria reenviar. PromiseItem oferece toggle para notas de qualquer autor, embora o botão excluir nesse consumidor compare corretamente author_id.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/chat/ConversationTabContent.tsx",
+          "start_line": 111,
+          "end_line": 117,
+          "blob_sha": "bd077b3c1c296dfc877f6152e15a927b1b6a5a0a",
+          "symbol": "montagem ativa da aba Notas",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/tabs/NotesTab.tsx",
+          "start_line": 25,
+          "end_line": 39,
+          "blob_sha": "9433ea3939aba07342996759a45416b0bf5f8487",
+          "symbol": "submit descarta rascunho sem aguardar onSave",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/tabs/NotesTab.tsx",
+          "start_line": 80,
+          "end_line": 111,
+          "blob_sha": "9433ea3939aba07342996759a45416b0bf5f8487",
+          "symbol": "fechamento imediato e gate correto de excluir",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/tabs/NotesTab.tsx",
+          "start_line": 155,
+          "end_line": 168,
+          "blob_sha": "9433ea3939aba07342996759a45416b0bf5f8487",
+          "symbol": "checkbox sem gate de autoria",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/crm/useContactNotes.ts",
+          "start_line": 54,
+          "end_line": 107,
+          "blob_sha": "e0d514eabe45c0c91b308b1beba975fa736dc154",
+          "symbol": "mutationFn devolve resultado sem verificar error",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/crm/useContactNotes.ts",
+          "start_line": 109,
+          "end_line": 123,
+          "blob_sha": "e0d514eabe45c0c91b308b1beba975fa736dc154",
+          "symbol": "mutateAsync exposto aos consumidores",
+          "observation": ""
+        },
+        {
+          "path": "src/services/contact.service.ts",
+          "start_line": 126,
+          "end_line": 154,
+          "blob_sha": "4b61093c59aeb3aa0700a98163614180b167253f",
+          "symbol": "resposta Supabase não convertida em exceção",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql",
+          "start_line": 154,
+          "end_line": 180,
+          "blob_sha": "a0c2e2f7484bfdd3808b3e30f2ca87cb4104428c",
+          "symbol": "SELECT visível e UPDATE somente pelo autor",
+          "observation": ""
+        },
+        {
+          "path": "src/components/email/EmailContactPanel.tsx",
+          "start_line": 294,
+          "end_line": 307,
+          "blob_sha": "e6654b221d11f9eec8975aef0bf28e3fa864caa4",
+          "symbol": "consumidor de email aguarda promessa mas error não provoca catch",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Converter erros de dados em rejeição explícita no serviço ou no mutationFn e confirmar a linha afetada antes de acionar onSuccess.",
+        "Aguardar a mutation no editor, manter o texto em caso de falha e desabilitar envios duplicados enquanto pendente.",
+        "Exibir capacidades coerentes para alterar promessas e excluir notas; testar retorno {data:null,error}, zero linhas e sucesso com linha confirmada.",
+        "Conferir que erro de persistência gera aviso de erro, mantém editor/rascunho e não emite Nota adicionada ou Nota removida."
+      ],
+      "limitations": [
+        "É outro consumidor/contrato de serviço que AUTH026: ContactNotes da página Contatos confere error, mas não count; aqui o hook ignora error no objeto resolvido.",
+        "Exceções JavaScript realmente lançadas, como perfil ausente, entram no onError existente. A falha se refere ao contrato normal de retorno de erro do cliente Supabase.",
+        "EmailContactPanel também usa o hook e limpa o mesmo texto após await. Ele protege texto novo digitado durante a requisição, mas não percebe o error engolido; essa proteção foi preservada na análise.",
+        "Nenhuma nota real foi criada, alterada ou removida. A garantia de RLS não é contornada; a falha é de feedback e preservação do trabalho.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-035",
+      "title": "Status WhatsApp converte indisponibilidade em ausência de status e apresenta Offline sem medição",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "ContactDetails → ContactAccordionSections Status WhatsApp → useWhatsAppStatus → find-status-messages/send-chat-presence → WhatsAppStatusSection.",
+      "precondition": "Operador abre a seção para contato com uma instância resolvida; modo Evolution GO ou resposta de erro/indisponibilidade na consulta de status.",
+      "failure_and_effect": "O backend GO devolve explicitamente success:false/notSupported:true. extractStatusRecords aceita somente array ou messages.records, e fetchData não lê error/notSupported: o objeto vira lista vazia. A UI passa a dizer Nenhum status disponível e explica expiração em24h, sem revelar a indisponibilidade. Em toda conclusão normal, mesmo com dados, o hook fixa isOnline:false e lastSeen:null; a segunda chamada envia a própria presença paused, não consulta a presença do contato. Portanto Offline é um valor inventado, não um estado observado.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+          "start_line": 70,
+          "end_line": 72,
+          "blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+          "symbol": "montagem ativa da seção",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/integrations/useWhatsAppStatus.ts",
+          "start_line": 106,
+          "end_line": 118,
+          "blob_sha": "8e84cb398425173b7cf683e252cb09695462e27c",
+          "symbol": "objetos não reconhecidos viram array vazio",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/integrations/useWhatsAppStatus.ts",
+          "start_line": 191,
+          "end_line": 219,
+          "blob_sha": "8e84cb398425173b7cf683e252cb09695462e27c",
+          "symbol": "actions e resultado fulfilled sem inspeção de error",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/integrations/useWhatsAppStatus.ts",
+          "start_line": 251,
+          "end_line": 260,
+          "blob_sha": "8e84cb398425173b7cf683e252cb09695462e27c",
+          "symbol": "lista e presença fixa",
+          "observation": ""
+        },
+        {
+          "path": "src/components/inbox/contact-details/WhatsAppStatusSection.tsx",
+          "start_line": 67,
+          "end_line": 85,
+          "blob_sha": "e1091b2e92073a3771f208350a2e63e1168fbe46",
+          "symbol": "ausência e Offline exibidos como fatos",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/evolution-api/index.ts",
+          "start_line": 727,
+          "end_line": 733,
+          "blob_sha": "9cdb8a370723f17a03c0296316ff937636dc1844",
+          "symbol": "gate GO explícito e retorno do ramo v2",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/evolution-api/index.ts",
+          "start_line": 845,
+          "end_line": 845,
+          "blob_sha": "9cdb8a370723f17a03c0296316ff937636dc1844",
+          "symbol": "action envia presença própria",
+          "observation": ""
+        },
+        {
+          "path": "supabase/functions/_shared/evolution-sync-actions.ts",
+          "start_line": 93,
+          "end_line": 100,
+          "blob_sha": "89b3b26f1ce05ce9284c6e313b94489fd8a9e30d",
+          "symbol": "resposta notSupported explícita",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Propagar indisponibilidade/notSupported e erros HTTP/provedor para um estado visual diferente de vazio confirmado.",
+        "Mostrar presença desconhecida/indisponível quando não há fonte real; só afirmar Online/Offline/lastSeen a partir de medição válida.",
+        "Não executar envio de presença como se fosse leitura; manter a decisão de stories desabilitados claramente identificada, sem reabrir sua ativação por inferência.",
+        "Validar resposta GO notSupported, erro no objeto do SDK, lista vazia confirmada e lista real, sem rede de produção."
+      ],
+      "limitations": [
+        "Não afirma que stories devam ser habilitados: GO_GAPS e StoryViewer documentam desativação/ausência de suporte. O achado é a representação enganosa dessa capacidade.",
+        "Correlação por nome/sufixo de telefone no ramo com dados também foi lida, mas não se contou vazamento ou associação real indevida sem cenário/retorno externo demonstrado.",
+        "Não houve consulta de status real nem envio de presença; confirmação do action backend foi corroborada pela área providers.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-036",
+      "title": "Sala de Crise calcula alertas operacionais com mensagens respondidas e contas habilitadas",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "AdminView aba crisis → CrisisRoom.loadMetrics → quatro contagens Supabase → severidades/queueRatio → MODO CRISE ATIVO ou Operação normal.",
+      "precondition": "Há mais de30 mensagens recebidas na última hora, mesmo já respondidas, ou contas habilitadas que não representam agentes online; a sala é aberta pelo staff.",
+      "failure_and_effect": "Msgs sem resposta conta todas as mensagens sender=contact da última hora, sem verificar resposta ou estado da conversa. Esse volume é dividido por profiles.is_active e rotulado conv/agente, embora numerador seja mensagens e denominador contas habilitadas. O mesmo denominador aparece como agentes online. Mais de30 mensagens recebidas já respondidas basta para acionar crise. SLA é contado sem janela/estado e erros de consulta viram zero. O monitor anunciado em tempo real só carrega na montagem ou no botão, sem assinatura/polling, portanto mudanças posteriores também ficam invisíveis até atualização manual.",
+      "evidence": [
+        {
+          "path": "src/components/admin/AdminView.tsx",
+          "start_line": 278,
+          "end_line": 284,
+          "blob_sha": "3e7e78463cbe8c8ab9d310a5f4a1988e2daafd7b",
+          "symbol": "montagem da aba crisis",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/CrisisRoom.tsx",
+          "start_line": 23,
+          "end_line": 43,
+          "blob_sha": "bdac65a1d88c0a8b0f16f789c9369b38cafb9d5f",
+          "symbol": "queries e transformação de unidades",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/CrisisRoom.tsx",
+          "start_line": 45,
+          "end_line": 83,
+          "blob_sha": "bdac65a1d88c0a8b0f16f789c9369b38cafb9d5f",
+          "symbol": "rótulos, thresholds e decisão de crise",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/CrisisRoom.tsx",
+          "start_line": 85,
+          "end_line": 108,
+          "blob_sha": "bdac65a1d88c0a8b0f16f789c9369b38cafb9d5f",
+          "symbol": "carregamento inicial e promessa de tempo real",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/CrisisRoom.tsx",
+          "start_line": 158,
+          "end_line": 162,
+          "blob_sha": "bdac65a1d88c0a8b0f16f789c9369b38cafb9d5f",
+          "symbol": "única atualização adicional manual",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Definir e implementar métricas canônicas de pendência/resposta, conversas atribuídas e presença de agentes, com unidades coerentes.",
+        "Definir a janela e estado do SLA usado na crise e separar erro/indisponibilidade de zero confirmado.",
+        "Conectar atualização operacional real ou identificar claramente o snapshot e a hora da última consulta.",
+        "Conferir fixture com mensagens todas respondidas, contas habilitadas offline, SLA histórico e falha de consulta; nenhum desses proxies deve criar conclusão gerencial sem fundamento."
+      ],
+      "limitations": [
+        "Não é o Dashboard principal coberto por DASH-METRICS-001/DASH-REALTIME-001; CrisisRoom possui suas próprias queries e decisão de severidade, sem referências nos104.",
+        "Nenhuma operação de mitigação é disparada pelo modo crise: o efeito comprovado é alerta/diagnóstico gerencial incorreto.",
+        "Não se mediu operação, presença ou incidentes reais.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-037",
+      "title": "Treinamento apresenta e persiste avaliação de desempenho baseada apenas em sorteio",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "AdminView aba training → TrainingMode.startScenario/sendResponse → finalScore aleatório → feedback sobre empatia/resolução → training_sessions e histórico.",
+      "precondition": "Usuário conclui as respostas do cenário de treinamento com qualquer conteúdo não vazio.",
+      "failure_and_effect": "A nota usa exclusivamente secureRandomFloat, produzindo inteiro entre60 e100, sem avaliar as mensagens do agente. O feedback Excelente/boa empatia e resolução ou Bom/mais proativo depende só dessa nota. Ela é gravada como score/status completed e apresentada no resultado e histórico sem identificar que a avaliação é aleatória. O texto Simulador de atendimento e os roteiros fixos explicam a conversa simulada, mas não tornam um juízo de desempenho por sorteio uma medição. A resposta que exigiria melhorar nunca é alcançada pela faixa atual.",
+      "evidence": [
+        {
+          "path": "src/components/admin/AdminView.tsx",
+          "start_line": 280,
+          "end_line": 282,
+          "blob_sha": "3e7e78463cbe8c8ab9d310a5f4a1988e2daafd7b",
+          "symbol": "montagem do treinamento",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/TrainingMode.tsx",
+          "start_line": 108,
+          "end_line": 145,
+          "blob_sha": "198205753719626442ddd81e7599c0864506420e",
+          "symbol": "resposta, sorteio, feedback e persistência",
+          "observation": ""
+        },
+        {
+          "path": "src/lib/secureRandom.ts",
+          "start_line": 14,
+          "end_line": 17,
+          "blob_sha": "476661d7819c1a27d1bc04b106ba3e2a537d5b8c",
+          "symbol": "fonte uniforme independente do conteúdo",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/TrainingMode.tsx",
+          "start_line": 181,
+          "end_line": 197,
+          "blob_sha": "198205753719626442ddd81e7599c0864506420e",
+          "symbol": "notas no histórico de sessões",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/TrainingMode.tsx",
+          "start_line": 235,
+          "end_line": 245,
+          "blob_sha": "198205753719626442ddd81e7599c0864506420e",
+          "symbol": "nota e juízo apresentados ao usuário",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Identificar claramente notas/dados de demonstração e evitar persistir feedback aleatório como avaliação de desempenho.",
+        "Se a intenção é avaliar, definir critérios verificáveis ligados às respostas e revisão humana adequada; se não, remover os juízos avaliativos e registrar apenas conclusão do exercício.",
+        "Conferir respostas diferentes e repetições da mesma resposta: a saída deve respeitar o contrato de simulação/avaliação comunicado ao usuário.",
+        "Tratar falhas de gravação e manter estado consistente antes de declarar sessão concluída."
+      ],
+      "limitations": [
+        "Não se afirma que o resultado seja usado para promoção, punição ou avaliação definitiva de empregados; nenhum consumidor com esse efeito foi demonstrado.",
+        "Roteiros fixos de simulação são compatíveis com treinamento e não são defeito por si só. O achado se limita à nota/feedback sem fundamento e sua apresentação/persistência.",
+        "Nenhuma sessão de treinamento real foi criada nem pontuação alterada.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-038",
+      "title": "Mapa conta contatos com coordenadas também como localização apenas aproximada",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "ContactContentArea modo map → ContactMapView agrupa todos por DDD e extrai preciseContacts → ContactRegionMap desenha ambos e publica duas contagens.",
+      "precondition": "Existe ao menos um contato carregado com latitude/longitude numéricas e telefone cujo DDD corresponde a uma região plotada. O mapa carrega normalmente.",
+      "failure_and_effect": "O conjunto regions inclui todos os contatos, inclusive aqueles enviados em preciseContacts. ContactRegionMap soma regions para Aproximado pelo DDD e desenha uma bolha por região; em seguida desenha o pino confirmado para o mesmo contato e conta-o de novo em Endereço confirmado. Um único contato com coordenada e DDD conhecido resulta em1 confirmado e1 aproximado, embora haja1 contato mapeado. Pode aparecer em dois locais quando o endereço e o centro do DDD divergem. A legenda promete distinguir quantos contatos estão só por aproximação, mas as populações se sobrepõem.",
+      "evidence": [
+        {
+          "path": "src/components/contacts/ContactContentArea.tsx",
+          "start_line": 125,
+          "end_line": 130,
+          "blob_sha": "84fa3cee69c7e14e8b4311041cf41e2fe4400150",
+          "symbol": "montagem ativa do mapa",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactMapView.tsx",
+          "start_line": 43,
+          "end_line": 60,
+          "blob_sha": "3077b8584decaeecdfdcc1aeffebdcf14c700da7",
+          "symbol": "agrupamento inclui todos e extração independente de coordenadas",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactMapView.tsx",
+          "start_line": 65,
+          "end_line": 82,
+          "blob_sha": "3077b8584decaeecdfdcc1aeffebdcf14c700da7",
+          "symbol": "total de contatos e dois conjuntos passados ao mapa",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactRegionMap.tsx",
+          "start_line": 59,
+          "end_line": 65,
+          "blob_sha": "5eab1972370062e84b2164a5f8a931b7e8c91d41",
+          "symbol": "contagem aproximada sem exclusão dos precisos",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactRegionMap.tsx",
+          "start_line": 146,
+          "end_line": 180,
+          "blob_sha": "5eab1972370062e84b2164a5f8a931b7e8c91d41",
+          "symbol": "duas séries de marcadores",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactRegionMap.tsx",
+          "start_line": 218,
+          "end_line": 234,
+          "blob_sha": "5eab1972370062e84b2164a5f8a931b7e8c91d41",
+          "symbol": "legenda com contagens de confirmação e aproximação",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Definir conjuntos exclusivos para os pinos precisos e as bolhas de contatos sem coordenada; calcular a legenda sobre os conjuntos efetivamente plotados.",
+        "Manter o agrupamento comercial por DDD nos cartões se desejado, mas separar essa classificação do mapa de localização física e dos seus totais.",
+        "Conferir um contato preciso, um apenas aproximado e outro de região não plotável: nenhum contato deve inflar a contagem de localizações por aparecer nos dois conjuntos."
+      ],
+      "limitations": [
+        "Não se reabre a decisão de usar DDD como aproximação quando falta coordenada. A falha é a sobreposição do conjunto de aproximação com os endereços já coordenados.",
+        "Não depende de coordenadas de produção, nem afirma que o endereço de um cliente real esteja incorreto. Trata-se do contrato do mapa para dados válidos.",
+        "Os dados continuam sujeitos ao recorte da lista carregada; AUTH029 trata separadamente do escopo de Analytics.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-039",
+      "title": "Recálculo atrasado grava coordenadas do endereço anterior e apaga o aviso de desatualização",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "ContactDialogs edição → ContactForm campos de endereço/Recalcular → getMapboxToken/searchPlaces → onChange funcional → useContactsCRUD.handleEditContact → contacts UPDATE.",
+      "precondition": "No mesmo formulário e contato, há coordenada anterior; o operador altera o endereço paraB e aciona Recalcular. Antes da resposta, altera um campo paraC e depois salva após a resposta deB.",
+      "failure_and_effect": "recalcularCoordenada captura o endereço alvo e aguarda duas operações, sem versão/cancelamento nem comparação com os valores atuais. Os campos continuam editáveis. A edição paraC marca a coordenada como possivelmente velha, mas a resposta deB escreve latitude/longitude no estado atual por onChange e limpa incondicionalmente o aviso. O salvamento posterior envia o endereçoC junto das coordenadasB. O botão Recalcular evita duas buscas simultâneas, mas não protege a correlação da resposta com o endereço vigente.",
+      "evidence": [
+        {
+          "path": "src/components/contacts/ContactDialogs.tsx",
+          "start_line": 115,
+          "end_line": 129,
+          "blob_sha": "58090d806f7bae4a01a77d70f2dc2011e31c2778",
+          "symbol": "formulário e handlers ativos de edição",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactForm.tsx",
+          "start_line": 117,
+          "end_line": 123,
+          "blob_sha": "7001d84ebda623d6bd8f2903b2afd73fcb730c18",
+          "symbol": "aviso quando endereço muda com coordenada existente",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactForm.tsx",
+          "start_line": 145,
+          "end_line": 172,
+          "blob_sha": "7001d84ebda623d6bd8f2903b2afd73fcb730c18",
+          "symbol": "alvo capturado, await e commit sem comparação",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactForm.tsx",
+          "start_line": 326,
+          "end_line": 365,
+          "blob_sha": "7001d84ebda623d6bd8f2903b2afd73fcb730c18",
+          "symbol": "input de endereço permanece editável",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/ContactForm.tsx",
+          "start_line": 393,
+          "end_line": 435,
+          "blob_sha": "7001d84ebda623d6bd8f2903b2afd73fcb730c18",
+          "symbol": "outros campos editáveis e bloqueio apenas do botão",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/useContactsCRUD.ts",
+          "start_line": 300,
+          "end_line": 306,
+          "blob_sha": "8be3bec66e4631d55516b740125ceddcb240cf41",
+          "symbol": "onChange aplica valores ao estado mais recente",
+          "observation": ""
+        },
+        {
+          "path": "src/components/contacts/useContactsCRUD.ts",
+          "start_line": 187,
+          "end_line": 219,
+          "blob_sha": "8be3bec66e4631d55516b740125ceddcb240cf41",
+          "symbol": "endereço e coordenadas atuais compõem o UPDATE",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Comparados os 104 registros anteriores por assunto, caminho e cadeia de efeito; não foi localizado equivalente material."
+      },
+      "acceptance_criteria": [
+        "Vincular a resposta à assinatura/versão do endereço consultado e descartar conclusão que perdeu essa correspondência.",
+        "Cancelar ou invalidar a consulta ao editar novamente, e só remover o aviso após confirmar que a coordenada pertence ao endereço vigente.",
+        "Conferir B→busca pendente→C→respostaB→salvar no mesmo contato; coordenadaB não deve ser apresentada ou gravada como correspondente aC.",
+        "Preservar a decisão de não apagar automaticamente coordenadas antigas: a correção deve tratar a resposta obsoleta, não remover dados sem ação autorizada."
+      ],
+      "limitations": [
+        "O cenário não depende de alternar contatos nem de remontagem do componente; React.memo não bloqueia a edição, pois os valores mudam.",
+        "Se o operador não muda o endereço enquanto a consulta está em voo, essa corrida não ocorre. Nenhum endereço real foi geocodificado nem salvo.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-040",
+      "title": "Janela relativa do painel de uso de IA fica presa à hora de abertura",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "ViewRouter ai-usage → AIUsageDashboard Última1h/Atualizar → useAIUsageDashboard memo since → polls/refetch de resumo e logs → totais e histórico.",
+      "precondition": "O painel permanece montado com o mesmo filtro por algum tempo, há logs que deixam de pertencer à janela relativa e ocorre polling de30s ou atualização manual.",
+      "failure_and_effect": "since é calculado com Date apenas na montagem ou troca de timeFilter. As consultas periódicas e o botão Atualizar continuam usando esse limite inferior antigo. ai_usage_summary resolve p_until=null para now; a lista usa somente created_at>=since. Logo a janela cresce: selecionada Última1h às12h, a consulta feita às13h ainda inclui registros desde11h, cobrindo duas horas sob o mesmo rótulo. Trocar filtro/remontar recalcula o início, mas o uso contínuo do painel altera o significado dos totais, taxas e gráficos.",
+      "evidence": [
+        {
+          "path": "src/pages/ViewRouter.tsx",
+          "start_line": 92,
+          "end_line": 96,
+          "blob_sha": "9964a4ea364a29ff6a59c5e49e199c2eeab22ec9",
+          "symbol": "view ai-usage registrada",
+          "observation": ""
+        },
+        {
+          "path": "src/pages/lazyViews.ts",
+          "start_line": 55,
+          "end_line": 55,
+          "blob_sha": "25ec6997136245c412cbee7db745690c03a62bc3",
+          "symbol": "componente importado pela view",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/AIUsageDashboard.tsx",
+          "start_line": 13,
+          "end_line": 38,
+          "blob_sha": "70d210e6b14eea8bebfe8dbc42c2c2580cab18c8",
+          "symbol": "consumidor, filtros relativos e atualização manual",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/analytics/useAIUsageDashboard.ts",
+          "start_line": 107,
+          "end_line": 115,
+          "blob_sha": "0513a0133af0880244ce50be2f672d9e6d3b0aca",
+          "symbol": "cálculo relativo ao relógio",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/analytics/useAIUsageDashboard.ts",
+          "start_line": 147,
+          "end_line": 175,
+          "blob_sha": "0513a0133af0880244ce50be2f672d9e6d3b0aca",
+          "symbol": "since memoizado e polling do resumo",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/analytics/useAIUsageDashboard.ts",
+          "start_line": 198,
+          "end_line": 214,
+          "blob_sha": "0513a0133af0880244ce50be2f672d9e6d3b0aca",
+          "symbol": "lista paginada com o mesmo limite antigo",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/analytics/useAIUsageDashboard.ts",
+          "start_line": 287,
+          "end_line": 303,
+          "blob_sha": "0513a0133af0880244ce50be2f672d9e6d3b0aca",
+          "symbol": "refetch sem renovar since",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20261003072707_ia056_agregacao_no_servidor.sql",
+          "start_line": 35,
+          "end_line": 59,
+          "blob_sha": "08b2636612f6a3aa062c8fb497bd490e92b95dfc",
+          "symbol": "RPC amplia fim até now preservando p_since",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "IA-QUOTA-001 trata ação/tentativa/contabilização, e os antigos achados DASH tratam outro painel. Não foi localizado nos104 o timestamp memoizado deste hook."
+      },
+      "acceptance_criteria": [
+        "Calcular limites coerentes para cada ciclo de atualização e compartilhá-los entre resumo, custos e paginação; renovar a janela conforme o filtro relativo anunciado.",
+        "Se a intenção for um intervalo fixo, exibir início/fim absolutos e manter ambos estáveis, sem rótulo de últimas horas.",
+        "Usar relógio controlado em ambiente isolado: após avançar uma hora e refazer Última1h, excluir registros mais antigos que uma hora e conferir limites equivalentes nos consumidores."
+      ],
+      "limitations": [
+        "As agregações no servidor e a paginação real da lista existem; este achado não reabre o antigo limite de1000 linhas nem afirma que o resumo some apenas a página.",
+        "O custo possui contrato próprio com p_until; sua resposta não foi usada para provar crescimento da janela neste registro.",
+        "Nenhuma métrica real ou valor faturado foi consultado.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    },
+    {
+      "id": "R2-AUTH-041",
+      "title": "Consulta de custo de IA passa fim nulo e elimina todas as chamadas da janela",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "CONFIRMED_STATIC",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "audit_pass": "second",
+      "consumer_flow": "AIUsageDashboard → useAIUsageDashboard consulta de custos → ai_usage_cost_summary(p_since,p_until:null) → janela SQL vazia → custoTexto → nenhuma chamada com tarifa aplicável.",
+      "precondition": "Usuário com acesso ao painel e à RPC; existem logs visíveis no período com quantidade medida e tarifa válida para o modelo. A migração versionada está aplicada.",
+      "failure_and_effect": "O cliente envia p_until:null explicitamente em todas as consultas. A função de custo exige created_at<p_until e não converte null em now. A comparação com null não é verdadeira para nenhuma linha, portanto janela/com_tarifa/medido ficam vazios, chamadas=0 e custo_medido=null independentemente das tarifas existentes. A UI interpreta isso como nenhuma chamada com tarifa aplicável. ai_usage_summary possui COALESCE para now, mas a função de custo é um contrato separado e não herda esse comportamento. O bloco de uso pode mostrar chamadas ao lado de uma ausência de custo fabricada pelo parâmetro.",
+      "evidence": [
+        {
+          "path": "src/components/admin/AIUsageDashboard.tsx",
+          "start_line": 13,
+          "end_line": 19,
+          "blob_sha": "70d210e6b14eea8bebfe8dbc42c2c2580cab18c8",
+          "symbol": "consumo do hook e custoTexto",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/analytics/useAIUsageDashboard.ts",
+          "start_line": 181,
+          "end_line": 196,
+          "blob_sha": "0513a0133af0880244ce50be2f672d9e6d3b0aca",
+          "symbol": "RPC de custo recebe p_until null",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20261003102707_ia055_custo_no_relatorio.sql",
+          "start_line": 26,
+          "end_line": 46,
+          "blob_sha": "8ccd359ad959cf7be4775ba4e9364f9c0dff2321",
+          "symbol": "definição única e predicado com limite nulo",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20261003102707_ia055_custo_no_relatorio.sql",
+          "start_line": 80,
+          "end_line": 135,
+          "blob_sha": "8ccd359ad959cf7be4775ba4e9364f9c0dff2321",
+          "symbol": "agregação vazia produz zero chamadas e custo nulo",
+          "observation": ""
+        },
+        {
+          "path": "src/hooks/analytics/useAIUsageDashboard.ts",
+          "start_line": 271,
+          "end_line": 284,
+          "blob_sha": "0513a0133af0880244ce50be2f672d9e6d3b0aca",
+          "symbol": "formatação preserva custo nulo e ausência de tarifa zero",
+          "observation": ""
+        },
+        {
+          "path": "src/components/admin/AIUsageDashboard.tsx",
+          "start_line": 122,
+          "end_line": 134,
+          "blob_sha": "70d210e6b14eea8bebfe8dbc42c2c2580cab18c8",
+          "symbol": "causa falsa exibida no painel",
+          "observation": ""
+        },
+        {
+          "path": "supabase/migrations/20261003072707_ia056_agregacao_no_servidor.sql",
+          "start_line": 47,
+          "end_line": 59,
+          "blob_sha": "08b2636612f6a3aa062c8fb497bd490e92b95dfc",
+          "symbol": "controle positivo: resumo de uso resolve fim nulo",
+          "observation": ""
+        }
+      ],
+      "offline_probes": [],
+      "feature_claim_ids": [],
+      "prior_comparison": {
+        "kind": "new_not_in_previous_104",
+        "ids": [],
+        "assessment": "Nenhum dos104 achados anteriores menciona ai_usage_cost_summary ou o parâmetro final nulo. IA-QUOTA-001 trata quota por ação/tentativa, não esta consulta de tarifa IA-055."
+      },
+      "acceptance_criteria": [
+        "Definir o contrato de limite final e usar a mesma janela válida nas duas RPCs; converter null explicitamente ou enviar fim não nulo pelo consumidor.",
+        "Verificar em ambiente isolado uma chamada tarifada, uma sem tarifa, moedas diferentes e janela vazia real, com o mesmo payload usado pela UI.",
+        "Não apresentar ausência de tarifa quando a consulta perdeu todas as linhas por parâmetro inválido; expor validação/erro de contrato quando necessário.",
+        "Preservar o tratamento existente de moedas diferentes, vigência de tarifa, RLS e ausência real de medição."
+      ],
+      "limitations": [
+        "Sucessão da função conferida por busca da cadeia e corroborada pelo agente database: única criação no arquivo20261003102707. Não houve execução em banco vivo.",
+        "Não afirma custo faturado incorreto ou cobrança indevida; o efeito demonstrado é a falha de medição/apresentação no relatório local.",
+        "Comparação SQL com NULL documentada na fonte primária PostgreSQL. O problema é independente da janela que cresce em AUTH040.",
+        "Fonte fixada e contratos estáticos; não houve alteração de dados, execução de SQL vivo nem comprovação de incidente em produção."
+      ]
+    }
+  ],
+  "amendments": [
+    {
+      "id": "R2-AUTH-004",
+      "append": {
+        "evidence": [
+          {
+            "path": "supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql",
+            "start_line": 201,
+            "end_line": 207,
+            "blob_sha": "26757cd161120a7357018fce06ed2969439e03b0",
+            "symbol": "controle existente de perfil ativo no envio",
+            "observation": ""
+          },
+          {
+            "path": "supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql",
+            "start_line": 538,
+            "end_line": 546,
+            "blob_sha": "26757cd161120a7357018fce06ed2969439e03b0",
+            "symbol": "controle existente de perfil ativo no fechamento",
+            "observation": ""
+          }
+        ],
+        "feature_claim_ids": [
+          "24.4",
+          "24.15"
+        ]
+      }
+    },
+    {
+      "id": "R2-AUTH-007",
+      "append": {
+        "evidence": [
+          {
+            "path": "src/components/security/RejectResetDialog.tsx",
+            "start_line": 30,
+            "end_line": 40,
+            "blob_sha": "82f31696533dc5ff9936c306f9205de30850461d",
+            "symbol": "promessa de notificação por email na rejeição",
+            "observation": ""
+          },
+          {
+            "path": "supabase/functions/approve-password-reset/index.ts",
+            "start_line": 48,
+            "end_line": 64,
+            "blob_sha": "06449dc84c8bc823cc9505555ba8ef77c8e3d6a2",
+            "symbol": "rejeição só atualiza pedido e responde sucesso",
+            "observation": ""
+          }
+        ],
+        "limitations": [
+          "O ramo de rejeição também anuncia notificação por email no diálogo, mas o handler apenas atualiza a solicitação; nenhum transporte de rejeição foi localizado."
+        ]
+      }
+    },
+    {
+      "id": "R2-AUTH-012",
+      "append": {
+        "evidence": [
+          {
+            "path": "src/components/contacts/ContactsTable.tsx",
+            "start_line": 218,
+            "end_line": 237,
+            "blob_sha": "d9d6dce4276ad6e8ae834c4cc9e10269c41f8dd2",
+            "symbol": "menu ativo Gerenciar etiquetas sem handler",
+            "observation": ""
+          },
+          {
+            "path": "src/components/contacts/ContactContentArea.tsx",
+            "start_line": 131,
+            "end_line": 138,
+            "blob_sha": "84fa3cee69c7e14e8b4311041cf41e2fe4400150",
+            "symbol": "consumidor de produção da tabela",
+            "observation": ""
+          }
+        ],
+        "limitations": [
+          "A tabela da página Contatos também oferece Gerenciar etiquetas sem handler; edição, chat e exclusão no mesmo menu possuem handlers reais e gates conferidos. É mais uma superfície do mesmo no-op de tags, não uma contagem adicional."
+        ]
+      }
+    }
+  ],
+  "reviewed_files": {
+    "src/components/security/SecurityPanels.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "SecurityAlertsPanel",
+        "SecurityDevicesPanel"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 133,
+          "symbol": "SecurityAlertsPanel; SecurityDevicesPanel"
+        }
+      ]
+    },
+    "src/components/security/GeoBlockingPanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "GeoBlockingPanel mode controls, add/remove, tabs e promessas"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 157,
+          "symbol": "GeoBlockingPanel mode controls, add/remove, tabs e promessas"
+        }
+      ]
+    },
+    "src/components/security/BlockedIPsPanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchBlockedIPs, filtering, dialogs"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 85,
+          "symbol": "fetchBlockedIPs, filtering, dialogs"
+        }
+      ]
+    },
+    "src/components/security/MfaAdminNudge.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "TTL por usuário, gate isAdmin/useHasVerifiedTotp; enrollment intencionalmente soft"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 81,
+          "symbol": "TTL por usuário, gate isAdmin/useHasVerifiedTotp; enrollment intencionalmente soft"
+        }
+      ]
+    },
+    "src/components/mfa/MFASettings.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchFactors on mount, enrollDialog, handleRemove"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 191,
+          "symbol": "fetchFactors on mount, enrollDialog, handleRemove"
+        }
+      ]
+    },
+    "src/hooks/system/useGeoBlocking.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchData, handleModeChange, handleAddCountry, handleRemoveCountry"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 107,
+          "symbol": "fetchData, handleModeChange, handleAddCountry, handleRemoveCountry"
+        }
+      ]
+    },
+    "src/components/security/BlockedIPDialogs.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "handleBlockIP, handleUnblock, validação/feedback"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 96,
+          "symbol": "handleBlockIP, handleUnblock, validação/feedback"
+        }
+      ]
+    },
+    "src/components/security/SecurityOverview.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchAlerts, calculateScore, securityItems, visualização"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 321,
+          "symbol": "fetchAlerts, calculateScore, securityItems, visualização"
+        }
+      ]
+    },
+    "src/components/security/IPWhitelistPanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchWhitelistedIPs, handleAddIP, handleRemoveIP, promessa CIDR"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 287,
+          "symbol": "fetchWhitelistedIPs, handleAddIP, handleRemoveIP, promessa CIDR"
+        }
+      ]
+    },
+    "src/components/security/SecurityNotificationsPanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "capability disabled, subscribe/test, conteúdo do painel"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 218,
+          "symbol": "capability disabled, subscribe/test, conteúdo do painel"
+        }
+      ]
+    },
+    "src/components/security/QuarantinePanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "handleDecide, notConfigured/error, confirmations, QuarantineRow/EmptyState"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 295,
+          "symbol": "handleDecide, notConfigured/error, confirmations, QuarantineRow/EmptyState"
+        }
+      ]
+    },
+    "src/components/security/RateLimitConfigPanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchRules, saveRules, update/add/removeRule, Select action"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 247,
+          "symbol": "fetchRules, saveRules, update/add/removeRule, Select action"
+        }
+      ]
+    },
+    "src/components/auth/ReauthDialog.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "handleConfirm/cancel, validation/UI"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 140,
+          "symbol": "handleConfirm/cancel, validation/UI"
+        }
+      ]
+    },
+    "src/hooks/system/useSecurityPushNotifications.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "sendSecurityNotification, interval/watermark, serviceWorker messages"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 135,
+          "symbol": "sendSecurityNotification, interval/watermark, serviceWorker messages"
+        }
+      ]
+    },
+    "src/hooks/integrations/useQuarantineMedia.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchRecords, decide, optimistic/rollback, external boundary"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 155,
+          "symbol": "fetchRecords, decide, optimistic/rollback, external boundary"
+        }
+      ]
+    },
+    "src/components/security/SecurityView.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "todas as tabs/gates, montagem de alertas e rotas administrativas"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 207,
+          "symbol": "todas as tabs/gates, montagem de alertas e rotas administrativas"
+        }
+      ]
+    },
+    "src/hooks/system/usePushNotifications.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "capability flag, permission/subscribe/unsubscribe/showNotification"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 201,
+          "symbol": "capability flag, permission/subscribe/unsubscribe/showNotification"
+        }
+      ]
+    },
+    "src/config/service_worker.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "explicit disabled capability"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 8,
+          "symbol": "explicit disabled capability"
+        }
+      ]
+    },
+    "src/components/admin/VisibilityGrantsManager.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchData, add/remove grants, profile identity mapping"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 289,
+          "symbol": "fetchData, add/remove grants, profile identity mapping"
+        }
+      ]
+    },
+    "src/components/team-chat/AddMembersDialog.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "selection, existingMemberIds, useActiveTeamProfiles, mutation call"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 158,
+          "symbol": "selection, existingMemberIds, useActiveTeamProfiles, mutation call"
+        }
+      ]
+    },
+    "src/components/team-chat/DepartmentManagementDialog.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "tabs and child contracts; parent mount previously classified integration pending"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 76,
+          "symbol": "tabs and child contracts; parent mount previously classified integration pending"
+        }
+      ]
+    },
+    "src/components/contacts/useContactFormValidation.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "validateEmail/Phone, formatPhone, seq/debounce, submit"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 161,
+          "symbol": "validateEmail/Phone, formatPhone, seq/debounce, submit"
+        }
+      ]
+    },
+    "src/components/contacts/ContactForm.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "fillFromPlace, recalcularCoordenada, autocomplete, all fields/actions"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 460,
+          "symbol": "fillFromPlace, recalcularCoordenada, autocomplete, all fields/actions"
+        }
+      ]
+    },
+    "src/components/contacts/ContactNotes.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchNotes, add/delete, mount ref, author/button presentation"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 228,
+          "symbol": "fetchNotes, add/delete, mount ref, author/button presentation"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/EditContactDialog.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "contactToFormValues, FIELD_NORMALIZERS, sparse patch, optimistic rollback"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 172,
+          "symbol": "contactToFormValues, FIELD_NORMALIZERS, sparse patch, optimistic rollback"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/editContactShape.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "buildEditContactShape per-field fallback"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 70,
+          "symbol": "buildEditContactShape per-field fallback"
+        }
+      ]
+    },
+    "src/components/contacts/ContactDetailPanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "ContactCatalogSendHistory, panel data/defaults, all actions/subpanels"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 347,
+          "symbol": "ContactCatalogSendHistory, panel data/defaults, all actions/subpanels"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/AssignmentSection.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "agent/queue defaults, assign callbacks, presence labels"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 117,
+          "symbol": "agent/queue defaults, assign callbacks, presence labels"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/ContactInfoSection.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "EditableField draft and actions, updateContact, source mapping"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 156,
+          "symbol": "EditableField draft and actions, updateContact, source mapping"
+        }
+      ]
+    },
+    "src/components/team-chat/TeamFileUploader.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "file validation, preview/upload, URL lifecycle, callback after upload"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 171,
+          "symbol": "file validation, preview/upload, URL lifecycle, callback after upload"
+        }
+      ]
+    },
+    "src/components/team-chat/TeamChatHeader.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "all permission/callback conditional actions and explicit unavailable controls"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 279,
+          "symbol": "all permission/callback conditional actions and explicit unavailable controls"
+        }
+      ]
+    },
+    "src/components/contacts/ContactActivityTimeline.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "three queries, classification, filtering/limits, rendering"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 218,
+          "symbol": "three queries, classification, filtering/limits, rendering"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/contactDetailSections.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "default open info, storage read/write, allowed sections"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 55,
+          "symbol": "default open info, storage read/write, allowed sections"
+        }
+      ]
+    },
+    "src/hooks/crm/useContactEnrichedData.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "useContactEnrichedQuery, AI/SLA, per-contact Realtime invalidation"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 121,
+          "symbol": "useContactEnrichedQuery, AI/SLA, per-contact Realtime invalidation"
+        }
+      ]
+    },
+    "src/hooks/crm/useContactNotes.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "consulta com identidade, categorias, três mutations, invalidação e retorno error não inspecionado"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 140,
+          "symbol": "consulta com identidade, categorias, três mutations, invalidação e retorno error não inspecionado"
+        }
+      ]
+    },
+    "src/hooks/crm/useContactAssignment.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "assignAgent/Queue writes, feedback, current-contact closure"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 38,
+          "symbol": "assignAgent/Queue writes, feedback, current-contact closure"
+        }
+      ]
+    },
+    "supabase/functions/_shared/validation.ts": {
+      "review_level": "targeted",
+      "symbols": [
+        "limiter real e fronteiras Auth"
+      ],
+      "ranges": [
+        {
+          "start_line": 180,
+          "end_line": 320,
+          "symbol": "checkRateLimit, enforceRateLimit, getClientIP, requireAuth, createAuthedClient"
+        }
+      ]
+    },
+    "supabase/migrations/20260905020000_edge_rate_limits.sql": {
+      "review_level": "targeted",
+      "symbols": [
+        "cadeia final corroborada por database"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 50,
+          "symbol": "consume_rate_limit tabela/ACL/algoritmo"
+        }
+      ]
+    },
+    "supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql": {
+      "review_level": "targeted",
+      "symbols": [
+        "controle que estreita R2-AUTH-004"
+      ],
+      "ranges": [
+        {
+          "start_line": 194,
+          "end_line": 210,
+          "symbol": "send active_profile gate"
+        },
+        {
+          "start_line": 534,
+          "end_line": 547,
+          "symbol": "closure active_profile gate"
+        }
+      ]
+    },
+    "supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql": {
+      "review_level": "targeted",
+      "symbols": [
+        "policy final confirmada por database",
+        "policies SELECT/INSERT/UPDATE/DELETE das notas"
+      ],
+      "ranges": [
+        {
+          "start_line": 136,
+          "end_line": 189,
+          "symbol": "contact_notes policy replacement/select/delete"
+        },
+        {
+          "start_line": 154,
+          "end_line": 190,
+          "symbol": "policies SELECT/INSERT/UPDATE/DELETE das notas"
+        }
+      ]
+    },
+    "docs/COMPLETE_SYSTEM_FEATURES.md": {
+      "review_level": "targeted",
+      "symbols": [
+        "alegações de segurança"
+      ],
+      "ranges": [
+        {
+          "start_line": 493,
+          "end_line": 514,
+          "symbol": "feature IDs 24.1–24.18"
+        }
+      ]
+    },
+    "src/components/inbox/RealtimeInboxView.tsx": {
+      "review_level": "targeted",
+      "symbols": [
+        "limite de reachability da hipótese stale contact"
+      ],
+      "ranges": [
+        {
+          "start_line": 340,
+          "end_line": 343,
+          "symbol": "key por conversa no painel de detalhes"
+        }
+      ]
+    },
+    "src/hooks/crm/useAgentPresence.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "join, joinSeq/cancelamento, heartbeat, presença própria e leave"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 178,
+          "symbol": "join, joinSeq/cancelamento, heartbeat, presença própria e leave"
+        }
+      ]
+    },
+    "src/hooks/system/useRateLimitLogs.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "query limitada, polling/abort, cálculo de estatísticas e erro"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 97,
+          "symbol": "query limitada, polling/abort, cálculo de estatísticas e erro"
+        }
+      ]
+    },
+    "src/components/contacts/ContactEngagementScore.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "calculateEngagement, uso de recência/frequência/volume e representação"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 136,
+          "symbol": "calculateEngagement, uso de recência/frequência/volume e representação"
+        }
+      ]
+    },
+    "src/components/security/DevicesPanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "sessões confiáveis, handlers e promessas de encerramento"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 104,
+          "symbol": "sessões confiáveis, handlers e promessas de encerramento"
+        }
+      ]
+    },
+    "src/components/security/DeviceCard.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "SessionCard, dispositivo atual, trust/remove e confirmação"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 109,
+          "symbol": "SessionCard, dispositivo atual, trust/remove e confirmação"
+        }
+      ]
+    },
+    "src/hooks/system/useUserSettings.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchSettings, defaults, ciclo user.id, updateSettings e saveSettings"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 242,
+          "symbol": "fetchSettings, defaults, ciclo user.id, updateSettings e saveSettings"
+        }
+      ]
+    },
+    "src/hooks/system/useGlobalSettings.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "fetchSettings, getSetting, updateSetting, addSetting e montagem"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 86,
+          "symbol": "fetchSettings, getSetting, updateSetting, addSetting e montagem"
+        }
+      ]
+    },
+    "src/hooks/system/useDownloadPermission.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "query por usuário e fail-closed do flag"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 25,
+          "symbol": "query por usuário e fail-closed do flag"
+        }
+      ]
+    },
+    "src/hooks/crm/useContactsSearch.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "filtros/debounce, paginação, lastMessageMap, canDeleteMap, enriquecimento e clearSearch"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 248,
+          "symbol": "filtros/debounce, paginação, lastMessageMap, canDeleteMap, enriquecimento e clearSearch"
+        }
+      ]
+    },
+    "src/hooks/crm/useContactsKpi.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "aggregateKpi, séries/deltas, fetchKpiRows e consulta agregada"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 106,
+          "symbol": "aggregateKpi, séries/deltas, fetchKpiRows e consulta agregada"
+        }
+      ]
+    },
+    "src/components/contacts/ContactContentArea.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "estados vazios, escolha de views, seleção e consumidores de dados"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 157,
+          "symbol": "estados vazios, escolha de views, seleção e consumidores de dados"
+        }
+      ]
+    },
+    "src/hooks/system/useCRUD.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "queries e mutations genéricas; sem consumidor ativo localizado"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 192,
+          "symbol": "queries e mutations genéricas; sem consumidor ativo localizado"
+        }
+      ]
+    },
+    "src/hooks/system/useSupabaseMutation.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "wrapper de mutation, toast/erro; sem consumidor ativo localizado"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 81,
+          "symbol": "wrapper de mutation, toast/erro; sem consumidor ativo localizado"
+        }
+      ]
+    },
+    "src/hooks/system/useFeatureFlag.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "query, gate usuário, defaults e polling"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 43,
+          "symbol": "query, gate usuário, defaults e polling"
+        }
+      ]
+    },
+    "src/hooks/system/useUrlFilters.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "parse/set/clear URL, preservação de outras chaves e dates"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 135,
+          "symbol": "parse/set/clear URL, preservação de outras chaves e dates"
+        }
+      ]
+    },
+    "src/components/contacts/ContactAnalyticsDashboard.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "distribuições, top empresas/tags, crescimentos e escopo dos rótulos"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 206,
+          "symbol": "distribuições, top empresas/tags, crescimentos e escopo dos rótulos"
+        }
+      ]
+    },
+    "src/components/contacts/CRMFiltersPanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "filtros e opções/cap da lista"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 101,
+          "symbol": "filtros e opções/cap da lista"
+        }
+      ]
+    },
+    "src/hooks/crm/contactsAggregates.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "invalidação agregada, preferência de legados e política de refetch"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 64,
+          "symbol": "invalidação agregada, preferência de legados e política de refetch"
+        }
+      ]
+    },
+    "src/components/contacts/ContactKanbanView.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "estado otimista, confirmedTypes, inFlightRef, mutation/rollback e drag"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 274,
+          "symbol": "estado otimista, confirmedTypes, inFlightRef, mutation/rollback e drag"
+        }
+      ]
+    },
+    "src/components/inbox/ImagePreview.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "portal, canDownload, download, resolução de URL e preview"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 165,
+          "symbol": "portal, canDownload, download, resolução de URL e preview"
+        }
+      ]
+    },
+    "src/components/admin/AdminView.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "gate admin/staff, handlers, todos os formulários e tabs de conteúdo"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 287,
+          "symbol": "gate admin/staff, handlers, todos os formulários e tabs de conteúdo"
+        }
+      ]
+    },
+    "src/components/settings/SettingsView.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "settings pessoais/staff, carregamento/salvar e todas as tabs"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 236,
+          "symbol": "settings pessoais/staff, carregamento/salvar e todas as tabs"
+        }
+      ]
+    },
+    "src/components/settings/GlobalSettingsSection.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "toggles, input por request, persistência e promessas"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 107,
+          "symbol": "toggles, input por request, persistência e promessas"
+        }
+      ]
+    },
+    "src/components/settings/IntegrationKeysSection.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "campo de chave, visualização, UPSERT e feedback"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 156,
+          "symbol": "campo de chave, visualização, UPSERT e feedback"
+        }
+      ]
+    },
+    "src/components/email/EmailChatInbox.tsx": {
+      "review_level": "targeted",
+      "symbols": [
+        "cross-review do ciclo callback inline/estado, encaminhado ao root"
+      ],
+      "ranges": [
+        {
+          "start_line": 30,
+          "end_line": 175,
+          "symbol": "cross-review do ciclo callback inline/estado, encaminhado ao root"
+        }
+      ]
+    },
+    "src/components/email/EmailChatThread.tsx": {
+      "review_level": "targeted",
+      "symbols": [
+        "cross-review do useEffect dependente de callback, encaminhado ao root"
+      ],
+      "ranges": [
+        {
+          "start_line": 35,
+          "end_line": 157,
+          "symbol": "cross-review do useEffect dependente de callback, encaminhado ao root"
+        }
+      ]
+    },
+    "src/components/contacts/ContactSearchWithSuggestions.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "input, sugestões, recentes, persistência e limpeza"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 194,
+          "symbol": "input, sugestões, recentes, persistência e limpeza"
+        }
+      ]
+    },
+    "supabase/schema-manifest.json": {
+      "review_level": "targeted",
+      "symbols": [
+        "grant profiles UPDATE authenticated",
+        "FK user_roles conservada no snapshot"
+      ],
+      "ranges": [
+        {
+          "start_line": 6655,
+          "end_line": 6672,
+          "symbol": "grant profiles UPDATE authenticated"
+        },
+        {
+          "start_line": 4558,
+          "end_line": 4566,
+          "symbol": "FK user_roles conservada no snapshot"
+        }
+      ]
+    },
+    "supabase/migrations/20260405230710_35b60740-aa0f-437d-9029-f5c0d8e1edf0.sql": {
+      "review_level": "targeted",
+      "symbols": [
+        "policies own UPDATE e proteção restritiva"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 49,
+          "symbol": "policies own UPDATE e proteção restritiva"
+        }
+      ]
+    },
+    "supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql": {
+      "review_level": "targeted",
+      "symbols": [
+        "is_admin, policies de permissões e trigger de privilégio"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 71,
+          "symbol": "is_admin, policies de permissões e trigger de privilégio"
+        }
+      ]
+    },
+    "supabase/functions/elevenlabs-tts/index.ts": {
+      "review_level": "targeted",
+      "symbols": [
+        "consumer da chave de ambiente e boundary de chamada"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 53,
+          "symbol": "consumer da chave de ambiente e boundary de chamada"
+        }
+      ]
+    },
+    "src/components/team-chat/NewConversationDialog.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "seleção/limpeza de membros e departamento, criação, pendência e UI completa"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 258,
+          "symbol": "seleção/limpeza de membros e departamento, criação, pendência e UI completa"
+        }
+      ]
+    },
+    "src/components/team-chat/TeamConversationList.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "filtros, badges/membros, entrada de gestão e props opcionais"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 221,
+          "symbol": "filtros, badges/membros, entrada de gestão e props opcionais"
+        }
+      ]
+    },
+    "src/components/team-chat/teamChatParts.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "formatação, tipos de mídia, resolução assinada e volume dos players"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 127,
+          "symbol": "formatação, tipos de mídia, resolução assinada e volume dos players"
+        }
+      ]
+    },
+    "src/components/team-chat/TeamChatA11y.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "skip link/announcer, foco e reduced motion; sem consumidor ativo localizado"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 78,
+          "symbol": "skip link/announcer, foco e reduced motion; sem consumidor ativo localizado"
+        }
+      ]
+    },
+    "src/components/team-chat/TeamMemberProfileHeader.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "birthday, roles, info rows, header de grupo e status por is_active"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 115,
+          "symbol": "birthday, roles, info rows, header de grupo e status por is_active"
+        }
+      ]
+    },
+    "src/components/team-chat/department-management/DepartmentAuditView.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "auditoria, vocabulário de ações e estados vazios"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 53,
+          "symbol": "auditoria, vocabulário de ações e estados vazios"
+        }
+      ]
+    },
+    "src/components/team-chat/department-management/DepartmentInvitesView.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "consulta, cópia/criação/exclusão de convite e gate isAdmin"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 92,
+          "symbol": "consulta, cópia/criação/exclusão de convite e gate isAdmin"
+        }
+      ]
+    },
+    "src/components/team-chat/department-management/DepartmentMembersView.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "membros/outros, busca e mutações de departamento"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 134,
+          "symbol": "membros/outros, busca e mutações de departamento"
+        }
+      ]
+    },
+    "src/components/team-chat/department-management/DepartmentWhatsAppView.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "modo, carregamento de URL, segredos sem prefill e payload de salvar"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 132,
+          "symbol": "modo, carregamento de URL, segredos sem prefill e payload de salvar"
+        }
+      ]
+    },
+    "src/components/mfa/MFAEnroll.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "enroll, QR/secret copy, verificação automática e estados de navegação"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 202,
+          "symbol": "enroll, QR/secret copy, verificação automática e estados de navegação"
+        }
+      ]
+    },
+    "src/components/security/PasskeyDialogs.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "registro, rename/delete e fechamento/pending"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 85,
+          "symbol": "registro, rename/delete e fechamento/pending"
+        }
+      ]
+    },
+    "src/components/security/RejectResetDialog.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "estado reason, rejeição e promessa de notificação"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 45,
+          "symbol": "estado reason, rejeição e promessa de notificação"
+        }
+      ]
+    },
+    "src/components/security/QuarantineBadge.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "mapping de decisão, montagem/tooltip e ausência de dado"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 53,
+          "symbol": "mapping de decisão, montagem/tooltip e ausência de dado"
+        }
+      ]
+    },
+    "src/components/security/RateLimitRealtimeAlerts.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "polling/diff, refs de áudio e dismiss/UPDATE"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 174,
+          "symbol": "polling/diff, refs de áudio e dismiss/UPDATE"
+        }
+      ]
+    },
+    "src/components/security/AuditLogDashboard.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "query/filtros, classificação de ações, totais e renderização completa"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 271,
+          "symbol": "query/filtros, classificação de ações, totais e renderização completa"
+        }
+      ]
+    },
+    "src/components/auth/PasswordInput.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "input/reveal, props e acessibilidade"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 45,
+          "symbol": "input/reveal, props e acessibilidade"
+        }
+      ]
+    },
+    "src/components/auth/PasswordStrengthMeter.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "requirements/hash, debounce, consultas em voo e veredito visual"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 287,
+          "symbol": "requirements/hash, debounce, consultas em voo e veredito visual"
+        }
+      ]
+    },
+    "src/pages/admin/RolesPage.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "gate admin, listas, dialogs e permission/visibility tabs"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 184,
+          "symbol": "gate admin, listas, dialogs e permission/visibility tabs"
+        }
+      ]
+    },
+    "src/pages/admin/RateLimitDashboard.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "gates, métricas/unidades, listas, limites de exibição e tabs"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 302,
+          "symbol": "gates, métricas/unidades, listas, limites de exibição e tabs"
+        }
+      ]
+    },
+    "src/components/admin/AdminAuditTable.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "atribuição de usuário, detalhes e renderização de ações"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 50,
+          "symbol": "atribuição de usuário, detalhes e renderização de ações"
+        }
+      ]
+    },
+    "src/components/contacts/ContactResultsSummary.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "contagens, seleção, paginação e early return vazio"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 105,
+          "symbol": "contagens, seleção, paginação e early return vazio"
+        }
+      ]
+    },
+    "src/components/contacts/ContactPurchaseHistory.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "query limitada, erro/estado, totais, moeda e expansão"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 167,
+          "symbol": "query limitada, erro/estado, totais, moeda e expansão"
+        }
+      ]
+    },
+    "src/components/contacts/ContactAdvancedFilters.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "empresa/cargo/tags/período e capacidades opcionais IA"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 196,
+          "symbol": "empresa/cargo/tags/período e capacidades opcionais IA"
+        }
+      ]
+    },
+    "src/components/contacts/FilterPresets.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "validação/migração de presets, armazenamento e aplicação"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 181,
+          "symbol": "validação/migração de presets, armazenamento e aplicação"
+        }
+      ]
+    },
+    "src/pages/Auth.tsx": {
+      "review_level": "targeted",
+      "symbols": [
+        "PasswordStrengthMeter no cadastro"
+      ],
+      "ranges": [
+        {
+          "start_line": 247,
+          "end_line": 248,
+          "symbol": "PasswordStrengthMeter no cadastro"
+        }
+      ]
+    },
+    "src/integrations/supabase/types.ts": {
+      "review_level": "targeted",
+      "symbols": [
+        "relacionamentos user_roles exportados"
+      ],
+      "ranges": [
+        {
+          "start_line": 8838,
+          "end_line": 8858,
+          "symbol": "relacionamentos user_roles exportados"
+        }
+      ]
+    },
+    "supabase/migrations/20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql": {
+      "review_level": "targeted",
+      "symbols": [
+        "FK user_roles para auth.users"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 20,
+          "symbol": "FK user_roles para auth.users"
+        }
+      ]
+    },
+    "supabase/migrations/20260924125400_fix_audit_role_changes_function_name_mismatch.sql": {
+      "review_level": "targeted",
+      "symbols": [
+        "writer e cleanup da função órfã de auditoria de roles"
+      ],
+      "ranges": [
+        {
+          "start_line": 18,
+          "end_line": 76,
+          "symbol": "writer e cleanup da função órfã de auditoria de roles"
+        }
+      ]
+    },
+    "supabase/migrations/20260409224329_51d839cf-6068-4a17-b32b-9a7e12866a61.sql": {
+      "review_level": "targeted",
+      "symbols": [
+        "trigger de auditoria de user_roles"
+      ],
+      "ranges": [
+        {
+          "start_line": 51,
+          "end_line": 54,
+          "symbol": "trigger de auditoria de user_roles"
+        }
+      ]
+    },
+    "src/hooks/crm/useCRMAdminAccess.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "query por usuário, RPC de acesso administrativo e fail-closed"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 19,
+          "symbol": "query por usuário, RPC de acesso administrativo e fail-closed"
+        }
+      ]
+    },
+    "src/hooks/crm/useVisibleAgents.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "query por usuário, RPC de agentes visíveis e propagação de erro"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 25,
+          "symbol": "query por usuário, RPC de agentes visíveis e propagação de erro"
+        }
+      ]
+    },
+    "src/hooks/crm/useAgentsLite.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "lista direta de profiles, query key, RLS e consumidor encaminhado ao inbox"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 25,
+          "symbol": "lista direta de profiles, query key, RLS e consumidor encaminhado ao inbox"
+        }
+      ]
+    },
+    "src/hooks/crm/useExternalEmpresas.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "gate CRM, opções externas e cache da lista"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 21,
+          "symbol": "gate CRM, opções externas e cache da lista"
+        }
+      ]
+    },
+    "src/hooks/crm/useExternalCargos.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "gate CRM, opções externas e cache da lista"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 21,
+          "symbol": "gate CRM, opções externas e cache da lista"
+        }
+      ]
+    },
+    "src/hooks/system/useResourcePrefetch.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "cache/pending compartilhados, líder/seguidores, cancelamento de montagem e utilitários; sem consumidor ativo"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 328,
+          "symbol": "cache/pending compartilhados, líder/seguidores, cancelamento de montagem e utilitários; sem consumidor ativo"
+        }
+      ]
+    },
+    "src/hooks/system/useNavigationHistory.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "URL view, eventos, push/replace, back/forward, estado e history de navegação"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 264,
+          "symbol": "URL view, eventos, push/replace, back/forward, estado e history de navegação"
+        }
+      ]
+    },
+    "src/hooks/crm/useContactPurchases.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "consulta por contato, ordenação, keys e estados de retorno"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 32,
+          "symbol": "consulta por contato, ordenação, keys e estados de retorno"
+        }
+      ]
+    },
+    "src/hooks/crm/useContactStats.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "delegação ao serviço, query key e refetch"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 20,
+          "symbol": "delegação ao serviço, query key e refetch"
+        }
+      ]
+    },
+    "src/hooks/crm/useContactSummaryNote.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "consulta e UPDATE sem retorno de linha, invalidação e contrato do resumo"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 30,
+          "symbol": "consulta e UPDATE sem retorno de linha, invalidação e contrato do resumo"
+        }
+      ]
+    },
+    "src/components/inbox/tabs/NotesTab.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "todas as categorias, rascunhos, autoria, promises, tarefas e resumo comercial"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 270,
+          "symbol": "todas as categorias, rascunhos, autoria, promises, tarefas e resumo comercial"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/sidebar/professionalFallback.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "campos profissionais disponíveis e ausência de inferência de departamento"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 36,
+          "symbol": "campos profissionais disponíveis e ausência de inferência de departamento"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/AIInsightsWidget.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "gate CRM, montagem da query e rendering de insights"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 45,
+          "symbol": "gate CRM, montagem da query e rendering de insights"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/CompactContactHeader.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "identidade, avatar, VIP e empresa"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 38,
+          "symbol": "identidade, avatar, VIP e empresa"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/LastActivityWidget.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "consulta de timeline, recorte das três atividades e estado vazio"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 30,
+          "symbol": "consulta de timeline, recorte das três atividades e estado vazio"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/SLAAndAITagsSection.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "tempos SLA, resposta/violação, tags e confiança IA"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 105,
+          "symbol": "tempos SLA, resposta/violação, tags e confiança IA"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "estados de configuração/erro/carga, perfil empresarial, device e links"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 167,
+          "symbol": "estados de configuração/erro/carga, perfil empresarial, device e links"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/WhatsAppStatusSection.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "status/presença, recarga, empty/error e remontagem do viewer por sessão"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 97,
+          "symbol": "status/presença, recarga, empty/error e remontagem do viewer por sessão"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/Contact360Helpers.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "RFM, empresa, cliente, contato, interações, redes, endereço, canal e radar"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 305,
+          "symbol": "RFM, empresa, cliente, contato, interações, redes, endereço, canal e radar"
+        }
+      ]
+    },
+    "src/components/inbox/contact-details/StoryViewer.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "identificação de mídia, navegação, loading/cancelamento, resolução da instância e renderização"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 213,
+          "symbol": "identificação de mídia, navegação, loading/cancelamento, resolução da instância e renderização"
+        }
+      ]
+    },
+    "src/hooks/integrations/useEvolutionContactProfile.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "variantes JID, lookup externo, montagem/erro e retorno de perfil"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 116,
+          "symbol": "variantes JID, lookup externo, montagem/erro e retorno de perfil"
+        }
+      ]
+    },
+    "src/hooks/integrations/useWhatsAppStatus.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "resolução da instância, matching por telefone/nome, actions e presença fixa"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 284,
+          "symbol": "resolução da instância, matching por telefone/nome, actions e presença fixa"
+        }
+      ]
+    },
+    "src/hooks/ui/useScreenProtection.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "atalhos/copy/print/blur, configuração local, instalação e cleanup de listeners"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 197,
+          "symbol": "atalhos/copy/print/blur, configuração local, instalação e cleanup de listeners"
+        }
+      ]
+    },
+    "src/components/notifications/ScreenProtectionToggle.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "preferência local e evento compartilhado, sem promessa de controle administrativo"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 72,
+          "symbol": "preferência local e evento compartilhado, sem promessa de controle administrativo"
+        }
+      ]
+    },
+    "src/components/team-chat/TeamMessageItem.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "edição/resposta/mídia/reação/TTS/status, gates de autoria e confirmação de exclusão"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 257,
+          "symbol": "edição/resposta/mídia/reação/TTS/status, gates de autoria e confirmação de exclusão"
+        }
+      ]
+    },
+    "src/components/team-chat/TeamMessageReactionsWrapper.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "barra de reação, picker e toggle/fechamento"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 41,
+          "symbol": "barra de reação, picker e toggle/fechamento"
+        }
+      ]
+    },
+    "src/hooks/team-chat/useParticipantStats.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "limite 500, agrupamento, leitura de perfil e status de mensagem; consumidor dormente"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 39,
+          "symbol": "limite 500, agrupamento, leitura de perfil e status de mensagem; consumidor dormente"
+        }
+      ]
+    },
+    "src/hooks/team-chat/useTeamPerformance.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "janela 30min, contagens e média de gaps; consumidor dormente"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 37,
+          "symbol": "janela 30min, contagens e média de gaps; consumidor dormente"
+        }
+      ]
+    },
+    "src/components/team-chat/TransferConversationDialog.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "seleção de destinatário, confirmação, mutations, pending e lista; montagem pendente"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 133,
+          "symbol": "seleção de destinatário, confirmação, mutations, pending e lista; montagem pendente"
+        }
+      ]
+    },
+    "src/components/team-chat/ParticipantStatsGraph.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "simulação identificada, séries e estados de consulta; montagem pendente"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 59,
+          "symbol": "simulação identificada, séries e estados de consulta; montagem pendente"
+        }
+      ]
+    },
+    "src/components/team-chat/TeamPerformancePanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "consulta, métricas, export JSON e gráfico; montagem pendente"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 73,
+          "symbol": "consulta, métricas, export JSON e gráfico; montagem pendente"
+        }
+      ]
+    },
+    "src/hooks/team-chat/teamChatTypes.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "contratos de conversation/member/message e campos opcionais"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 52,
+          "symbol": "contratos de conversation/member/message e campos opcionais"
+        }
+      ]
+    },
+    "src/hooks/team-chat/teamMessageStatus.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "normalização de estados e fallback sent"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 10,
+          "symbol": "normalização de estados e fallback sent"
+        }
+      ]
+    },
+    "src/hooks/team-chat/index.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "re-exports dos hooks e tipos"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 5,
+          "symbol": "re-exports dos hooks e tipos"
+        }
+      ]
+    },
+    "src/components/admin/AdminCRMDashboard.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "health com validação/erro, métricas externas, top clientes, RFM, vendas e navegação"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 303,
+          "symbol": "health com validação/erro, métricas externas, top clientes, RFM, vendas e navegação"
+        }
+      ]
+    },
+    "src/components/admin/MediaMigrationTool.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "invoke da migração, erro, resultado, progresso/contagens e histórico da sessão"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 180,
+          "symbol": "invoke da migração, erro, resultado, progresso/contagens e histórico da sessão"
+        }
+      ]
+    },
+    "src/components/admin/PublicApiDashboard.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "API explicitamente suspensa por segurança; ausência de mutation"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 37,
+          "symbol": "API explicitamente suspensa por segurança; ausência de mutation"
+        }
+      ]
+    },
+    "src/App.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "rotas e providers globais, lazy hooks, gates e hierarquia de montagem"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 154,
+          "symbol": "rotas e providers globais, lazy hooks, gates e hierarquia de montagem"
+        }
+      ]
+    },
+    "src/providers/AppProviders.tsx": {
+      "review_level": "targeted",
+      "symbols": [
+        "cross-review do lifetime AuthProvider/CallSessionProvider"
+      ],
+      "ranges": [
+        {
+          "start_line": 57,
+          "end_line": 90,
+          "symbol": "cross-review do lifetime AuthProvider/CallSessionProvider"
+        }
+      ]
+    },
+    "src/providers/CallSessionProvider.tsx": {
+      "review_level": "targeted",
+      "symbols": [
+        "provider de chamada sem dependência da identidade, cross-review encaminhado ao root"
+      ],
+      "ranges": [
+        {
+          "start_line": 235,
+          "end_line": 477,
+          "symbol": "provider de chamada sem dependência da identidade, cross-review encaminhado ao root"
+        }
+      ]
+    },
+    "src/hooks/communication/useSipClient.ts": {
+      "review_level": "targeted",
+      "symbols": [
+        "cleanup não encerra UA; root detém achado de lifetime SIP"
+      ],
+      "ranges": [
+        {
+          "start_line": 51,
+          "end_line": 100,
+          "symbol": "cleanup não encerra UA; root detém achado de lifetime SIP"
+        }
+      ]
+    },
+    "src/components/inbox/chat/ConversationTabContent.tsx": {
+      "review_level": "targeted",
+      "symbols": [
+        "consumidor ativo de NotesTab"
+      ],
+      "ranges": [
+        {
+          "start_line": 111,
+          "end_line": 117,
+          "symbol": "consumidor ativo de NotesTab"
+        }
+      ]
+    },
+    "src/services/contact.service.ts": {
+      "review_level": "targeted",
+      "symbols": [
+        "fetchNotes e mutations devolvendo resposta integral"
+      ],
+      "ranges": [
+        {
+          "start_line": 99,
+          "end_line": 154,
+          "symbol": "fetchNotes e mutations devolvendo resposta integral"
+        }
+      ]
+    },
+    "src/components/admin/CrisisRoom.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "queries, unidades, thresholds, estado de crise e ciclo de atualização"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 165,
+          "symbol": "queries, unidades, thresholds, estado de crise e ciclo de atualização"
+        }
+      ]
+    },
+    "src/components/admin/TrainingMode.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "cenários, sessões, gravações, respostas, sorteio de nota e feedback"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 266,
+          "symbol": "cenários, sessões, gravações, respostas, sorteio de nota e feedback"
+        }
+      ]
+    },
+    "src/components/admin/SupervisorCopilot.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "perguntas, contexto insuficiente, invoke de IA, erros e histórico; IA-METRICS-001 mantido"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 139,
+          "symbol": "perguntas, contexto insuficiente, invoke de IA, erros e histórico; IA-METRICS-001 mantido"
+        }
+      ]
+    },
+    "src/hooks/system/useNotificationSettings.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "defaults, mapeamento/SELECT, cache optimistic, UPSERT, reset e quiet hours"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 259,
+          "symbol": "defaults, mapeamento/SELECT, cache optimistic, UPSERT, reset e quiet hours"
+        }
+      ]
+    },
+    "src/hooks/system/useNotifications.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "consulta, estados, realtime, contagem e mutations de leitura/exclusão/criação"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 227,
+          "symbol": "consulta, estados, realtime, contagem e mutations de leitura/exclusão/criação"
+        }
+      ]
+    },
+    "src/components/notifications/NotificationSettingsPanel.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "preferências globais/por tipo, teste de som, permissão browser e reset"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 120,
+          "symbol": "preferências globais/por tipo, teste de som, permissão browser e reset"
+        }
+      ]
+    },
+    "src/components/notifications/NotificationTypeCards.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "SoundSelector, toggles por evento, sentimento, horários e handlers"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 271,
+          "symbol": "SoundSelector, toggles por evento, sentimento, horários e handlers"
+        }
+      ]
+    },
+    "src/hooks/realtime/useRealtimeNotifications.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "gate por contato/lida, som/popup, quiet hours, callbacks e refs"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 85,
+          "symbol": "gate por contato/lida, som/popup, quiet hours, callbacks e refs"
+        }
+      ]
+    },
+    "src/hooks/sla/useSLANotifications.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "subscriptions INSERT/UPDATE, dedup, consulta do contato, som/popup e cleanup"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 122,
+          "symbol": "subscriptions INSERT/UPDATE, dedup, consulta do contato, som/popup e cleanup"
+        }
+      ]
+    },
+    "src/hooks/inbox/useSentimentAlerts.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "política canônica Edge, dedup, som por menção, popup e getRecentAlerts"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 135,
+          "symbol": "política canônica Edge, dedup, som por menção, popup e getRecentAlerts"
+        }
+      ]
+    },
+    "src/lib/secureRandom.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "float, rejection sampling de inteiro e caracteres; função de sorteio do treinamento"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 50,
+          "symbol": "float, rejection sampling de inteiro e caracteres; função de sorteio do treinamento"
+        }
+      ]
+    },
+    "src/components/notifications/NotificationsPopover.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "contador, lista, marcação individual/global e estado vazio"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 104,
+          "symbol": "contador, lista, marcação individual/global e estado vazio"
+        }
+      ]
+    },
+    "src/components/notifications/NotificationItem.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "mapa de tipos, alarmes, clique de marcar lida e rendering"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 108,
+          "symbol": "mapa de tipos, alarmes, clique de marcar lida e rendering"
+        }
+      ]
+    },
+    "src/components/notifications/SLANotificationProvider.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "montagem do hook e children"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 9,
+          "symbol": "montagem do hook e children"
+        }
+      ]
+    },
+    "src/components/contacts/ContactToolbar.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "filtros, ordenações, presets, legados, gate de merge e opções da view"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 205,
+          "symbol": "filtros, ordenações, presets, legados, gate de merge e opções da view"
+        }
+      ]
+    },
+    "src/components/contacts/ContactsTable.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "sort local, seleção, cells e menu com handlers/gates e tags sem handler"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 251,
+          "symbol": "sort local, seleção, cells e menu com handlers/gates e tags sem handler"
+        }
+      ]
+    },
+    "src/components/contacts/ContactGroupedList.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "grupo por empresa, ordenação por quantidade, collapse e campos das linhas"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 122,
+          "symbol": "grupo por empresa, ordenação por quantidade, collapse e campos das linhas"
+        }
+      ]
+    },
+    "src/components/contacts/ContactListItem.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "empresa, links wa.me/mailto, seleção, ações e exclusão autorizada"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 178,
+          "symbol": "empresa, links wa.me/mailto, seleção, ações e exclusão autorizada"
+        }
+      ]
+    },
+    "src/components/contacts/ContactCard.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "recência de mensagem e fallback de cadastro, tipos, ações e gate de exclusão"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 188,
+          "symbol": "recência de mensagem e fallback de cadastro, tipos, ações e gate de exclusão"
+        }
+      ]
+    },
+    "src/components/contacts/CRMContactCard.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "seleção, campos externos, vendedor separado e scores"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 89,
+          "symbol": "seleção, campos externos, vendedor separado e scores"
+        }
+      ]
+    },
+    "src/components/contacts/CompanyLogo.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "iniciais/cor determinística, erro de imagem e reset por URL"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 92,
+          "symbol": "iniciais/cor determinística, erro de imagem e reset por URL"
+        }
+      ]
+    },
+    "src/components/contacts/ContactCompareDialog.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "comparação de campos, tags e datas dos contatos selecionados"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 151,
+          "symbol": "comparação de campos, tags e datas dos contatos selecionados"
+        }
+      ]
+    },
+    "src/components/contacts/ContactViewSwitcher.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "modos, callbacks de densidade e agrupamento, todas as opções"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 158,
+          "symbol": "modos, callbacks de densidade e agrupamento, todas as opções"
+        }
+      ]
+    },
+    "src/components/contacts/ContactMapView.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "grupos DDD, preciseContacts, contagens, cartões e props para mapa"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 174,
+          "symbol": "grupos DDD, preciseContacts, contagens, cartões e props para mapa"
+        }
+      ]
+    },
+    "src/components/contacts/ContactRegionMap.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "token/criação/cleanup Mapbox, bolhas, pinos precisos, limites e legendas"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 239,
+          "symbol": "token/criação/cleanup Mapbox, bolhas, pinos precisos, limites e legendas"
+        }
+      ]
+    },
+    "src/components/contacts/contactRegionGeo.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "coordenadas de referência estáticas e lookup/fallback nulo"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 88,
+          "symbol": "coordenadas de referência estáticas e lookup/fallback nulo"
+        }
+      ]
+    },
+    "src/components/contacts/getRegionFromPhone.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "prefixos de país, DDD e fallback de região"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 40,
+          "symbol": "prefixos de país, DDD e fallback de região"
+        }
+      ]
+    },
+    "src/components/contacts/types.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "contratos de Contact, campos de endereço e flags de capacidade"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 37,
+          "symbol": "contratos de Contact, campos de endereço e flags de capacidade"
+        }
+      ]
+    },
+    "src/components/contacts/ContactEmptyState.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "estados de busca/base vazia e ações condicionais"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 119,
+          "symbol": "estados de busca/base vazia e ações condicionais"
+        }
+      ]
+    },
+    "src/components/contacts/ContactKpiCard.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "CountUp, reduced motion, Sparkline, deltas e estados"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 153,
+          "symbol": "CountUp, reduced motion, Sparkline, deltas e estados"
+        }
+      ]
+    },
+    "src/components/contacts/ContactStatsCards.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "props dos KPIs e skeleton de ausência/carregamento"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 65,
+          "symbol": "props dos KPIs e skeleton de ausência/carregamento"
+        }
+      ]
+    },
+    "src/components/contacts/ContactTypeTabs.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "tipos/contagens, ordem, callbacks e animação reduzida"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 80,
+          "symbol": "tipos/contagens, ordem, callbacks e animação reduzida"
+        }
+      ]
+    },
+    "src/components/contacts/ContactsSkeleton.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "estrutura visual dos modos e estados de carga"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 133,
+          "symbol": "estrutura visual dos modos e estados de carga"
+        }
+      ]
+    },
+    "src/components/contacts/HighlightText.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "escape RegExp, split e rendering seguro de destaque textual"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 30,
+          "symbol": "escape RegExp, split e rendering seguro de destaque textual"
+        }
+      ]
+    },
+    "src/components/contacts/contactTypeConfig.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "configuração tipada de tipos, cores, rótulos e render de ícones"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 95,
+          "symbol": "configuração tipada de tipos, cores, rótulos e render de ícones"
+        }
+      ]
+    },
+    "src/components/contacts/contactTypeOrder.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "ordem canônica e conjunto de tipos válidos"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 9,
+          "symbol": "ordem canônica e conjunto de tipos válidos"
+        }
+      ]
+    },
+    "src/components/crm360/CRM360StatsCards.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "contagens estimadas externas, erros e cards de tabelas"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 70,
+          "symbol": "contagens estimadas externas, erros e cards de tabelas"
+        }
+      ]
+    },
+    "src/components/crm360/DataExplorerTable.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "ordenação, paginação, loading/erro, células e ações de criação"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 165,
+          "symbol": "ordenação, paginação, loading/erro, células e ações de criação"
+        }
+      ]
+    },
+    "src/components/crm360/crm360TabsConfig.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "formatadores de data/moeda/objeto/booleano e contrato de tabs"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 61,
+          "symbol": "formatadores de data/moeda/objeto/booleano e contrato de tabs"
+        }
+      ]
+    },
+    "src/components/crm360/crm360TabsData.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "todas as tabelas/colunas externas, campos editáveis e rótulos"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 351,
+          "symbol": "todas as tabelas/colunas externas, campos editáveis e rótulos"
+        }
+      ]
+    },
+    "src/components/auth/HeroBenefits.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "marketing e métricas estáticas; nenhuma comprovação externa de indicadores"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 105,
+          "symbol": "marketing e métricas estáticas; nenhuma comprovação externa de indicadores"
+        }
+      ]
+    },
+    "src/components/auth/SocialProof.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "selos/claims estáticos; certificação e disponibilidade não verificadas"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 25,
+          "symbol": "selos/claims estáticos; certificação e disponibilidade não verificadas"
+        }
+      ]
+    },
+    "src/components/admin/AIUsageDashboard.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "consumidor, filtros, totais, gráficos, usuários, logs e bloco de custo"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 138,
+          "symbol": "consumidor, filtros, totais, gráficos, usuários, logs e bloco de custo"
+        }
+      ]
+    },
+    "src/components/admin/AIUsageLogsTab.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "lista real paginada, total, cabeçalhos e estados"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 80,
+          "symbol": "lista real paginada, total, cabeçalhos e estados"
+        }
+      ]
+    },
+    "src/components/admin/AIUsageUsersTab.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "gráfico top10 e tabela dos usuários agregados recebidos"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 68,
+          "symbol": "gráfico top10 e tabela dos usuários agregados recebidos"
+        }
+      ]
+    },
+    "src/components/admin/PlaybooksManager.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "consultas, editor/etapas, save com error e delete sem error, permissões staff corroboradas"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 283,
+          "symbol": "consultas, editor/etapas, save com error e delete sem error, permissões staff corroboradas"
+        }
+      ]
+    },
+    "src/components/admin/telemetry/TelemetryCharts.tsx": {
+      "review_level": "semantic",
+      "symbols": [
+        "agregações por balde, médias/máximos, top8 e tabela de consultas"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 187,
+          "symbol": "agregações por balde, médias/máximos, top8 e tabela de consultas"
+        }
+      ]
+    },
+    "src/hooks/analytics/useAIUsageDashboard.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "janela memoizada, queries periódicas, resumo/custo/logs, paginação, formatadores e refetch"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 305,
+          "symbol": "janela memoizada, queries periódicas, resumo/custo/logs, paginação, formatadores e refetch"
+        }
+      ]
+    },
+    "src/hooks/auth/index.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "barrel de auth; re-export não implica consumo dos símbolos"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 9,
+          "symbol": "barrel de auth; re-export não implica consumo dos símbolos"
+        }
+      ]
+    },
+    "src/hooks/crm/index.ts": {
+      "review_level": "semantic",
+      "symbols": [
+        "barrel de CRM; re-export não implica integração de componente dormente"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 19,
+          "symbol": "barrel de CRM; re-export não implica integração de componente dormente"
+        }
+      ]
+    },
+    "supabase/migrations/20261003102707_ia055_custo_no_relatorio.sql": {
+      "review_level": "semantic",
+      "symbols": [
+        "função de custo integral, janela, vigência/prioridade de tarifas, moedas, agregação, grants e invoker"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 151,
+          "symbol": "função de custo integral, janela, vigência/prioridade de tarifas, moedas, agregação, grants e invoker"
+        }
+      ]
+    },
+    "src/components/email/EmailContactPanel.tsx": {
+      "review_level": "targeted",
+      "symbols": [
+        "contexto de empresa e consumidor de notas; restante pertence ao root"
+      ],
+      "ranges": [
+        {
+          "start_line": 260,
+          "end_line": 337,
+          "symbol": "contexto de empresa e consumidor de notas; restante pertence ao root"
+        }
+      ]
+    },
+    "supabase/functions/evolution-api/index.ts": {
+      "review_level": "targeted",
+      "symbols": [
+        "actions de histórico/status e resposta GO",
+        "send-chat-presence envia POST de presença"
+      ],
+      "ranges": [
+        {
+          "start_line": 714,
+          "end_line": 738,
+          "symbol": "actions de histórico/status e resposta GO"
+        },
+        {
+          "start_line": 835,
+          "end_line": 863,
+          "symbol": "send-chat-presence envia POST de presença"
+        }
+      ]
+    },
+    "supabase/functions/_shared/evolution-sync-actions.ts": {
+      "review_level": "targeted",
+      "symbols": [
+        "normalização/sync de contato e notSupported GO; restante pertence a providers",
+        "jsonRes notSupported usa status padrão HTTP200"
+      ],
+      "ranges": [
+        {
+          "start_line": 1,
+          "end_line": 110,
+          "symbol": "normalização/sync de contato e notSupported GO; restante pertence a providers"
+        },
+        {
+          "start_line": 339,
+          "end_line": 341,
+          "symbol": "jsonRes notSupported usa status padrão HTTP200"
+        }
+      ]
+    },
+    "supabase/migrations/20261003072707_ia056_agregacao_no_servidor.sql": {
+      "review_level": "targeted",
+      "symbols": [
+        "janela temporal e agregação de uso de IA"
+      ],
+      "ranges": [
+        {
+          "start_line": 35,
+          "end_line": 78,
+          "symbol": "janela temporal e agregação de uso de IA"
+        }
+      ]
+    },
+    "src/pages/ViewRouter.tsx": {
+      "review_level": "targeted",
+      "symbols": [
+        "registro das views administrativas e consumo IA"
+      ],
+      "ranges": [
+        {
+          "start_line": 86,
+          "end_line": 101,
+          "symbol": "registro das views administrativas e consumo IA"
+        }
+      ]
+    },
+    "src/pages/lazyViews.ts": {
+      "review_level": "targeted",
+      "symbols": [
+        "imports lazy de CRM e consumo IA"
+      ],
+      "ranges": [
+        {
+          "start_line": 52,
+          "end_line": 57,
+          "symbol": "imports lazy de CRM e consumo IA"
+        }
+      ]
+    }
+  },
+  "probe_results": [
+    "/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/second-pass-results.json"
+  ],
+  "rejected_or_pending": [
+    {
+      "id": "D-AUTH-11",
+      "paths": [
+        "src/hooks/system/usePushNotifications.ts",
+        "src/config/service_worker.ts",
+        "src/components/security/SecurityNotificationsPanel.tsx"
+      ],
+      "status": "DISABLED_CAPABILITY_EXPLICIT",
+      "reason": "PUSH_NOTIFICATIONS_ENABLED=false; a UI informa indisponibilidade. Subscription sem entrega backend não foi contada como falha ativa de push. Polling/toast existe somente onde montado; entrega fechada depende de ativação futura."
+    },
+    {
+      "id": "D-AUTH-12",
+      "paths": [
+        "src/hooks/integrations/useQuarantineMedia.ts",
+        "src/components/security/QuarantinePanel.tsx",
+        "supabase/functions/external-db-proxy/index.ts"
+      ],
+      "status": "EXTERNAL_EFFECT_UNVERIFIED",
+      "reason": "UI promete storage delete/liberação/whitelist. Hook e Edge (peer providers) só atualizam media_quarantine.decision/reviewed_at; não há fonte de triggers/worker VPS. Marcar efeito externo sem evidência, não afirmar no-op definitivo. Edge exige admin/supervisor para update."
+    },
+    {
+      "id": "D-AUTH-13",
+      "paths": [
+        "supabase/migrations/20260829100000_fix_clear_login_operator_triple_arrow.sql"
+      ],
+      "status": "PRECONDITION_UNVERIFIED",
+      "reason": "Peer SQL identificou guard com NULL quando JWT não possui email em clear_login_attempts. Fluxos de autenticação locais examinados usam email; não há evidência de sessões phone/anonymous/custom sem claim. Não contada exploração de configuração não demonstrada."
+    },
+    {
+      "id": "D-AUTH-14",
+      "paths": [
+        "src/components/inbox/contact-details/ContactInfoSection.tsx",
+        "src/components/inbox/RealtimeInboxView.tsx"
+      ],
+      "status": "CROSS_CONVERSATION_VARIANT_REJECTED",
+      "reason": "Painel é remontado por key conversation.id. R2-AUTH-025 conserva somente caso de enriquecimento assíncrono na mesma instância e reabertura de rascunho; hipótese de estado atravessar conversas foi retirada."
+    },
+    {
+      "id": "D-AUTH-15",
+      "paths": [
+        "src/hooks/system/useCRUD.ts",
+        "src/hooks/system/useSupabaseMutation.ts"
+      ],
+      "status": "NO_ACTIVE_CONSUMER",
+      "reason": "Utilitários genéricos têm limitações de query key/count/retorno de erro, mas a busca encontrou apenas definição, re-export e exemplo. Não contados como falha ativa de cache ou mutation."
+    },
+    {
+      "id": "D-AUTH-16",
+      "paths": [
+        "src/hooks/team-chat/useTeamChatMutations.ts",
+        "src/components/team-chat/useTeamChatPanel.ts"
+      ],
+      "status": "ACTIVE_FLOW_DISTINGUISHED_FROM_DORMANT_RPC",
+      "reason": "Peer SQL identificou search_team_messages sem filtro is_deleted. A UI atual não chama essa RPC e faz DELETE físico; a pesquisa local do Panel não prova reexposição de conteúdo soft-deleted. Resultado encaminhado ao agente SQL."
+    },
+    {
+      "id": "D-AUTH-17",
+      "paths": [
+        "src/hooks/system/useUserSettings.ts"
+      ],
+      "status": "IDENTITY_SWITCH_PRECONDITION_UNVERIFIED",
+      "reason": "Hook conserva settings entre user.id e não cancela fetch anterior; save usa usuário atual. O fluxo normal de logout desmonta a view, portanto não se afirma cópia entre contas sem demonstrar troca direta de identidade com componente preservado. Revisão do mecanismo feita; classificação ativa retida."
+    },
+    {
+      "id": "D-AUTH-18",
+      "paths": [
+        "src/hooks/crm/useContactsSearch.ts",
+        "src/components/contacts/ContactContentArea.tsx"
+      ],
+      "status": "LOW_IMPACT_STATIC_OBSERVATION",
+      "reason": "clearSearch não cancela debounce pendente. Se resultado anterior vazio mantém botão de limpar e usuário digita outro termo e clica antes dos 400ms, o callback pode recolocar termo no filtro com input vazio. O X do input chama handleSearchChange e cancela corretamente. Registrado como observação de UI de baixo impacto, não agregado aos achados materiais."
+    },
+    {
+      "id": "D-AUTH-19",
+      "paths": [
+        "src/components/team-chat/TeamMemberProfileHeader.tsx",
+        "src/hooks/team-chat/useTeamMemberDetails.ts"
+      ],
+      "status": "LOW_IMPACT_STATIC_OBSERVATION",
+      "reason": "DirectProfileHeader mostra Online/Offline pelo profiles.is_active, que indica ativação administrativa, e não presença. Para admin/supervisor que consegue ler o colega, conta habilitada sem sessão aparece Online. Sem impacto provado em roteamento; observação visual separada de AUTH020 e da RLS em AUTH011."
+    },
+    {
+      "id": "D-AUTH-20",
+      "paths": [
+        "src/pages/admin/RateLimitDashboard.tsx",
+        "src/hooks/system/useRateLimitLogs.ts"
+      ],
+      "status": "LOW_IMPACT_STATIC_OBSERVATION",
+      "reason": "TotalRequests soma request_count; Bloqueados e percentual contam linhas; Alertas Ativos é o número de logs históricos blocked, sem consulta de alertas/resolução. A aba promete últimas100 mas renderiza somente20 sem paginação. A unidade e o recorte do painel não são coerentes. Não altera enforcement; nenhum dado real foi consultado."
+    },
+    {
+      "id": "D-AUTH-21",
+      "paths": [
+        "src/components/contacts/ContactPurchaseHistory.tsx"
+      ],
+      "status": "STATIC_PRESENTATION_LIMIT",
+      "reason": "Histórico busca no máximo20 e soma os não-cancelados como Valor total; não identifica o recorte. Lê currency mas rotula qualquer quantia como R$. Moedas diferentes dependem de dados/produtor não validados; não se afirma soma financeira real incorreta no ambiente. Carga/erro também não são separados de Nenhuma compra. Consulta e cálculos revisados integralmente."
+    },
+    {
+      "id": "D-AUTH-22",
+      "paths": [
+        "src/components/security/RateLimitRealtimeAlerts.tsx"
+      ],
+      "status": "LOW_IMPACT_STATIC_OBSERVATION",
+      "reason": "Polling só chama setAlerts e atualiza lastKnownIds se surgir ID novo. Resolver todos os alertas em outra sessão produz fresh=[] e conserva alertas antigos até remontagem/novo evento. Dismiss oculta antes do UPDATE e ignora falha. Gate admin existe; não se afirma incidente de entrega nem ausência de todo alerta."
+    },
+    {
+      "id": "D-AUTH-23",
+      "paths": [
+        "src/components/security/AuditLogDashboard.tsx"
+      ],
+      "status": "STATIC_PRESENTATION_LIMIT",
+      "reason": "Consulta só últimos200, pesquisa texto somente nesse subconjunto e rotula data.length Total de Logs sem explicitar recorte. Erro conserva listas/stats antigos ou zero sem aviso. Os fatos de vocabulário com efeito comprovado em mudanças de acesso estão em AUTH032; retenção/paginação integral não foi executada."
+    },
+    {
+      "id": "D-AUTH-24",
+      "paths": [
+        "src/components/team-chat/TeamChatA11y.tsx"
+      ],
+      "status": "NO_ACTIVE_CONSUMER",
+      "reason": "SkipLink, Announcer, useFocusTrap e usePrefersReducedMotion têm implementação, mas nenhum consumidor de produção foi localizado por busca de símbolo. Não contar como acessibilidade integrada; detalhes de foco dinâmico ficam para o aceite de integração."
+    },
+    {
+      "id": "D-AUTH-25",
+      "paths": [
+        "src/hooks/system/useResourcePrefetch.ts"
+      ],
+      "status": "NO_ACTIVE_CONSUMER",
+      "reason": "Cache de prefetch global não inclui identidade e utilitários de leitura não verificam TTL; a busca de símbolos achou definições/re-export, sem consumidor de produção. Não é uma exposição ativa comprovada. O usePrefetch de outros módulos é função diferente e não foi confundido com esta implementação."
+    },
+    {
+      "id": "D-AUTH-26",
+      "paths": [
+        "src/hooks/ui/useScreenProtection.ts",
+        "src/components/notifications/ScreenProtectionToggle.tsx"
+      ],
+      "status": "LOCAL_UI_CONTROL_LIMIT",
+      "reason": "Proteção de tela instala efeitos locais e pode ser desativada pelo próprio usuário; não equivale a DLP ou bloqueio de captura pelo sistema operacional. Não foi apresentado como bypass de autorização, porque essa UI oferece toggle pessoal e dados já são legíveis ao usuário. Remoção de listeners/overlay no cleanup foi verificada."
+    },
+    {
+      "id": "D-AUTH-27",
+      "paths": [
+        "src/components/admin/AdminCRMDashboard.tsx"
+      ],
+      "status": "STATIC_PRESENTATION_LIMIT",
+      "reason": "Top5 clientes usa vendedor_nome como nome; distribuição RFM agrega no máximo200 registros e não identifica amostra. Erros das métricas viram zero/vazio, mas IntegrationHealth valida shape e mostra Health check indisponível. Não se afirma dado financeiro real incorreto; recorte externo não executado."
+    },
+    {
+      "id": "D-AUTH-28",
+      "paths": [
+        "src/components/admin/SupervisorCopilot.tsx"
+      ],
+      "status": "PRIOR_FINDING_CONFIRMED_NO_NEW_COUNT",
+      "reason": "IA-METRICS-001 anterior já cobre contexto insuficiente para SLA/backlog/performance. Leitura integral confirma o mesmo problema e erros de consultas tratados como zero; nenhum achado novo contado por esta repetição."
+    },
+    {
+      "id": "D-AUTH-29",
+      "paths": [
+        "src/hooks/crm/useContactSummaryNote.ts",
+        "src/components/inbox/tabs/NotesTab.tsx"
+      ],
+      "status": "STRUCTURAL_AUTH_MISMATCH_REJECTED",
+      "reason": "Resumo comercial faz UPDATE sem count e UI fecha editor após promessa, mas SELECT e UPDATE contacts finais usam o mesmo can_edit_contact (SQL corroborado). Não se demonstrou usuário com leitura permitida e UPDATE negado estruturalmente. Conflito concorrente/deleção pode produzir zero rows e permanece risco genérico, não novo bypass ou finding material."
+    },
+    {
+      "id": "D-AUTH-30",
+      "paths": [
+        "src/hooks/system/useNotifications.ts",
+        "src/components/notifications/NotificationItem.tsx",
+        "src/components/notifications/NotificationsPopover.tsx"
+      ],
+      "status": "CROSS_REVIEW_NO_DUPLICATE_COUNT",
+      "reason": "Revisão independente de R2-PLAT-002 do root: unreadCount é estado separado, markAsRead pode decrementar item já lido e UPDATE realtime pode intercalar. Root mantém o achado e probes PLAT-P02/P03. Outros limites visuais: query cap100 sem count, DELETE realtime sem ajuste e popover sem erro/loading. Não duplicados aqui; não se afirma perda de registro."
+    },
+    {
+      "id": "D-AUTH-31",
+      "paths": [
+        "src/hooks/system/useNotificationSettings.ts",
+        "src/components/notifications/NotificationSettingsPanel.tsx"
+      ],
+      "status": "CROSS_REVIEW_NO_DUPLICATE_COUNT",
+      "reason": "Revisão independente de R2-PLAT-004 do root: resetSettings atualiza cache e aguarda upsert sem ler error; handleReset não aguarda e anuncia reset imediato. Root mantém achado e probe PLAT-P05. updateSettings principal checa error e informa falha com invalidação, controle positivo verificado."
+    },
+    {
+      "id": "D-AUTH-32",
+      "paths": [
+        "src/hooks/system/useNotificationSettings.ts",
+        "src/components/notifications/NotificationTypeCards.tsx",
+        "src/hooks/realtime/useRealtimeNotifications.ts",
+        "src/hooks/sla/useSLANotifications.ts",
+        "src/hooks/inbox/useSentimentAlerts.ts"
+      ],
+      "status": "CROSS_REVIEW_NO_DUPLICATE_COUNT",
+      "reason": "Revisão independente de R2-PLAT-003 do root: newMessageSound/mentionSound/slaBreachSound não entram no SELECT/mapDbToSettings/dbUpdates e voltam true ao refetch. useRealtimeNotifications25–63 também ignora newMessageSound; controles SLA53–56 e menção74–79 são efetivos em memória. Root mantém achado/probe PLAT-P04 e ampliou consumo com a evidência enviada. Candidato AUTH038 de notificações não foi publicado nem contado; ID038 é do mapa."
+    },
+    {
+      "id": "D-AUTH-33",
+      "paths": [
+        "src/components/admin/PlaybooksManager.tsx"
+      ],
+      "status": "GENERIC_ERROR_LIMIT_NO_DETERMINISTIC_AUTH_MISMATCH",
+      "reason": "DELETE não lê error antes do toast; UPDATE não confirma count. Porém policies finais de playbooks permitem escrita a admin/supervisor, conforme SQL20260409014536:130–133 corroborado pelo agente database. Não há no-op determinístico de supervisor provado. Falha eventual de transporte permanece observação, sem novo achado material."
+    },
+    {
+      "id": "D-AUTH-34",
+      "paths": [
+        "src/components/auth/HeroBenefits.tsx",
+        "src/components/auth/SocialProof.tsx"
+      ],
+      "status": "EXTERNAL_CLAIMS_NOT_VERIFIED",
+      "reason": "Métricas comerciais, selo SOC2/LGPD e disponibilidade99.9% são textos estáticos. A fonte local não comprova essas declarações; ausência de evidência local não prova que certificação/disponibilidade sejam falsas. Não contado como defeito de segurança nem validação externa concluída."
+    },
+    {
+      "id": "D-AUTH-35",
+      "paths": [
+        "src/components/contacts/ContactsTable.tsx",
+        "src/components/contacts/ContactMapView.tsx",
+        "src/components/contacts/ContactKpiCard.tsx"
+      ],
+      "status": "LOW_IMPACT_STATIC_OBSERVATION",
+      "reason": "Tabela ordena o array da página localmente; percentuais por região usam a maior região como100%, não o total; geometria de Sparkline merece QA visual com muitas amostras. São limites de apresentação/escopo, sem mutação ou inferência de vazamento. O mapa com conjuntos sobrepostos é tratado materialmente em AUTH038."
+    },
+    {
+      "id": "D-AUTH-36",
+      "paths": [
+        "src/components/admin/AIUsageDashboard.tsx",
+        "src/hooks/analytics/useAIUsageDashboard.ts"
+      ],
+      "status": "STATIC_PRESENTATION_LIMIT",
+      "reason": "Gráfico de áreas enumera somente seis chaves fixas FUNCTION_COLORS, embora o resumo retorne chaves dinâmicas; pizza/lista de funções suportam nomes novos. Erros das queries não são expostos pelo hook ao painel. Agregação de totais e paginação real são controles positivos. Recorte visual separado dos contratos temporais/custo AUTH040/041."
+    }
+  ],
+  "notes": [
+    "Foram preservados arquivos first-pass; os oito probes anteriores não foram reexecutados nesta passagem.",
+    "Fonte e banco intactos. Novos probes usam pins do manifesto antes de executar declarações/closures reais em VM.",
+    "Permissões SQL finais continuam coordenadas com agente database."
+  ],
+  "last_extended_at": "2026-10-04T02:34:31.179714+00:00",
+  "external_sources": [
+    {
+      "url": "https://docs.postgrest.org/en/stable/references/api/resource_embedding.html",
+      "purpose": "Resource embedding é determinado pelas FKs; !fk seleciona relação existente, R2-AUTH-033",
+      "retrieval_ref": "turn42view0"
+    },
+    {
+      "url": "https://supabase.com/docs/reference/javascript/insert",
+      "purpose": "Contrato de retorno data/error do cliente Supabase, R2-AUTH-034",
+      "retrieval_ref": "turn50view0"
+    },
+    {
+      "url": "https://tanstack.com/query/latest/docs/framework/react/guides/mutations",
+      "purpose": "Callbacks de mutation conforme promessa resolvida/rejeitada, R2-AUTH-034",
+      "retrieval_ref": "turn50view1"
+    },
+    {
+      "url": "https://www.postgresql.org/docs/current/functions-comparison.html",
+      "purpose": "Comparações ordinárias com NULL produzem resultado desconhecido; efeito do p_until nulo em R2-AUTH-041",
+      "retrieval_ref": "turn55view0"
+    }
+  ]
+}

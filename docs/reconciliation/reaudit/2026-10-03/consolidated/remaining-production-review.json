@@ -1,0 +1,4322 @@
+[
+  {
+    "path": "public/vendor/lamejs-1.2.1.min.js",
+    "bodies_without_containing_review_span": 208,
+    "branch_nodes_in_those_bodies": 1006,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 307
+  },
+  {
+    "path": "src/components/monitoring/MonitoringDiagnosticPanel.tsx",
+    "bodies_without_containing_review_span": 17,
+    "branch_nodes_in_those_bodies": 49,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 202
+  },
+  {
+    "path": "src/components/catalog/catalogShared.tsx",
+    "bodies_without_containing_review_span": 60,
+    "branch_nodes_in_those_bodies": 43,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 988
+  },
+  {
+    "path": "src/components/performance/PerformanceMonitor.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 36,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 291
+  },
+  {
+    "path": "src/components/inbox/AudioMessagePlayer.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 32,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 192
+  },
+  {
+    "path": "src/components/inbox/search/GlobalSearchResults.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 30,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 125
+  },
+  {
+    "path": "src/components/inbox/tabs/Crm360Tab.tsx",
+    "bodies_without_containing_review_span": 21,
+    "branch_nodes_in_those_bodies": 28,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 303
+  },
+  {
+    "path": "src/components/gamification/MiniGameDialogs.tsx",
+    "bodies_without_containing_review_span": 27,
+    "branch_nodes_in_those_bodies": 27,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 171
+  },
+  {
+    "path": "supabase/functions/csp-report/index.ts",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 26,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 127
+  },
+  {
+    "path": "src/lib/web-vitals.ts",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 25,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 187
+  },
+  {
+    "path": "src/components/inbox/SwipeableListItem.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 24,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 144
+  },
+  {
+    "path": "src/components/diagnostics/DiagnosticsView.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 23,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 324
+  },
+  {
+    "path": "src/components/monitoring/MonitoringStatsCards.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 23,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 164
+  },
+  {
+    "path": "src/components/settings/sla/SLARuleFormDialog.tsx",
+    "bodies_without_containing_review_span": 34,
+    "branch_nodes_in_those_bodies": 22,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 282
+  },
+  {
+    "path": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 22,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 346
+  },
+  {
+    "path": "src/components/ui/command-palette.tsx",
+    "bodies_without_containing_review_span": 36,
+    "branch_nodes_in_those_bodies": 21,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 211
+  },
+  {
+    "path": "src/components/ui/chart.tsx",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 21,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 305
+  },
+  {
+    "path": "src/hooks/chat/useChatKeyboardNavigation.ts",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 21,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 147
+  },
+  {
+    "path": "src/lib/formatters.ts",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 21,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 169
+  },
+  {
+    "path": "src/components/inbox/VoiceChangerPicker.tsx",
+    "bodies_without_containing_review_span": 17,
+    "branch_nodes_in_those_bodies": 20,
+    "await_nodes_in_those_bodies": 8,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 310
+  },
+  {
+    "path": "src/utils/audioToMp3.ts",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 20,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 197
+  },
+  {
+    "path": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
+    "bodies_without_containing_review_span": 26,
+    "branch_nodes_in_those_bodies": 20,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 252
+  },
+  {
+    "path": "src/components/inbox/TextToAudioButton.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 19,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 260
+  },
+  {
+    "path": "src/components/monitoring/MonitoringConnectionsList.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 19,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 135
+  },
+  {
+    "path": "src/components/inbox/CustomEmojiPicker.tsx",
+    "bodies_without_containing_review_span": 36,
+    "branch_nodes_in_those_bodies": 19,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 217
+  },
+  {
+    "path": "src/components/inbox/InteractiveMessage.tsx",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 19,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 268
+  },
+  {
+    "path": "src/components/inbox/tabs/FileThumb.tsx",
+    "bodies_without_containing_review_span": 16,
+    "branch_nodes_in_those_bodies": 19,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 204
+  },
+  {
+    "path": "src/components/voice/VoiceOrb.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 19,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 184
+  },
+  {
+    "path": "src/components/ui/mobile-components.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 18,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 263
+  },
+  {
+    "path": "src/components/inbox/LocationMessage.tsx",
+    "bodies_without_containing_review_span": 21,
+    "branch_nodes_in_those_bodies": 18,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 254
+  },
+  {
+    "path": "src/components/inbox/ReplyQuote.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 18,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 152
+  },
+  {
+    "path": "src/components/tasks/board/BoardColumn.tsx",
+    "bodies_without_containing_review_span": 17,
+    "branch_nodes_in_those_bodies": 18,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 144
+  },
+  {
+    "path": "src/hooks/integrations/useTalkXInsights.ts",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 17,
+    "await_nodes_in_those_bodies": 8,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 148
+  },
+  {
+    "path": "src/utils/imageCompression.ts",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 17,
+    "await_nodes_in_those_bodies": 8,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 176
+  },
+  {
+    "path": "src/hooks/chat/useQuickReplies.ts",
+    "bodies_without_containing_review_span": 37,
+    "branch_nodes_in_those_bodies": 17,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 314
+  },
+  {
+    "path": "src/components/groups/GroupsView.tsx",
+    "bodies_without_containing_review_span": 30,
+    "branch_nodes_in_those_bodies": 17,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 312
+  },
+  {
+    "path": "src/components/ai/ChurnPredictionDashboard.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 17,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 269
+  },
+  {
+    "path": "src/components/mobile/SwipeGestures.tsx",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 17,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 144
+  },
+  {
+    "path": "src/lib/mapboxToken.ts",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 17,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 136
+  },
+  {
+    "path": "src/components/calls/IncomingCallAlert.tsx",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 17,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 230
+  },
+  {
+    "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+    "bodies_without_containing_review_span": 21,
+    "branch_nodes_in_those_bodies": 17,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 622
+  },
+  {
+    "path": "src/hooks/system/useDiagnosticsData.ts",
+    "bodies_without_containing_review_span": 17,
+    "branch_nodes_in_those_bodies": 16,
+    "await_nodes_in_those_bodies": 15,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 288
+  },
+  {
+    "path": "src/components/gamification/GamificationProvider.tsx",
+    "bodies_without_containing_review_span": 19,
+    "branch_nodes_in_those_bodies": 16,
+    "await_nodes_in_those_bodies": 11,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 222
+  },
+  {
+    "path": "src/hooks/integrations/usePersonalStickers.ts",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 16,
+    "await_nodes_in_those_bodies": 7,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 84
+  },
+  {
+    "path": "src/hooks/gamification/mutations.ts",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 16,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 98
+  },
+  {
+    "path": "src/components/calls/CallDialog.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 16,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 282
+  },
+  {
+    "path": "src/components/gmail/EmailThreadView.tsx",
+    "bodies_without_containing_review_span": 22,
+    "branch_nodes_in_those_bodies": 16,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 302
+  },
+  {
+    "path": "src/components/inbox/chat/LinkPreviewCard.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 16,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 120
+  },
+  {
+    "path": "src/components/onboarding/TourOverlay.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 16,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 217
+  },
+  {
+    "path": "src/lib/singuLabels.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 16,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 192
+  },
+  {
+    "path": "src/components/inbox/VoiceChanger.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 237
+  },
+  {
+    "path": "supabase/functions/send-rate-limit-alert/index.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 92
+  },
+  {
+    "path": "src/components/inbox/ConversationMemoryPanel.tsx",
+    "bodies_without_containing_review_span": 26,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 252
+  },
+  {
+    "path": "src/hooks/dashboard/useRecentConversationEvents.ts",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 102
+  },
+  {
+    "path": "src/components/monitoring/hooks/useMonitoringData.ts",
+    "bodies_without_containing_review_span": 25,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 115
+  },
+  {
+    "path": "src/components/chatbot/ChatbotFlowEditor.tsx",
+    "bodies_without_containing_review_span": 38,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 140
+  },
+  {
+    "path": "src/components/gamification/AchievementsPanel.tsx",
+    "bodies_without_containing_review_span": 26,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 102
+  },
+  {
+    "path": "src/components/inbox/ConversationListSidebar.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 307
+  },
+  {
+    "path": "src/components/inbox/ForwardMessageDialog.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 302
+  },
+  {
+    "path": "src/components/inbox/InboxFilters.tsx",
+    "bodies_without_containing_review_span": 22,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 316
+  },
+  {
+    "path": "src/components/inbox/TransferDialog.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 335
+  },
+  {
+    "path": "src/components/inbox/chat/ChatHeader.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 213
+  },
+  {
+    "path": "src/components/layout/Sidebar.tsx",
+    "bodies_without_containing_review_span": 19,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 258
+  },
+  {
+    "path": "src/components/monitoring/MonitoringAvailabilityHeatmap.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 151
+  },
+  {
+    "path": "src/components/performance/OptimizedImage.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 296
+  },
+  {
+    "path": "src/components/settings/theme/presets.ts",
+    "bodies_without_containing_review_span": 27,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 747
+  },
+  {
+    "path": "src/components/voice/AudioFrequencyVisualizer.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 15,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 170
+  },
+  {
+    "path": "src/components/monitoring/MonitoringEventTimeline.tsx",
+    "bodies_without_containing_review_span": 20,
+    "branch_nodes_in_those_bodies": 14,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 209
+  },
+  {
+    "path": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+    "bodies_without_containing_review_span": 19,
+    "branch_nodes_in_those_bodies": 14,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 152
+  },
+  {
+    "path": "src/components/inbox/MessagePreview.tsx",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 14,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 179
+  },
+  {
+    "path": "src/components/inbox/tabs/FilesTableView.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 14,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 180
+  },
+  {
+    "path": "src/components/layout/SidebarNavItem.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 14,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 139
+  },
+  {
+    "path": "src/components/mobile/MobileDrawerMenu.tsx",
+    "bodies_without_containing_review_span": 26,
+    "branch_nodes_in_those_bodies": 14,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 320
+  },
+  {
+    "path": "src/components/ui/message-reactions.tsx",
+    "bodies_without_containing_review_span": 16,
+    "branch_nodes_in_those_bodies": 14,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 184
+  },
+  {
+    "path": "src/hooks/chat/useNextBestAction.ts",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 13,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 153
+  },
+  {
+    "path": "src/components/diagnostics/ConnectionHealthPanel.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 13,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 270
+  },
+  {
+    "path": "src/components/onboarding/OnboardingChecklist.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 13,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 137
+  },
+  {
+    "path": "src/components/ai/ticketClassification.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 13,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 81
+  },
+  {
+    "path": "src/components/inbox/tabs/FilesColumnSelector.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 13,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 114
+  },
+  {
+    "path": "src/components/mobile/MobileSlidePanel.tsx",
+    "bodies_without_containing_review_span": 16,
+    "branch_nodes_in_those_bodies": 13,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 165
+  },
+  {
+    "path": "src/components/ui/micro-interactions/buttons.tsx",
+    "bodies_without_containing_review_span": 22,
+    "branch_nodes_in_those_bodies": 13,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 284
+  },
+  {
+    "path": "src/components/settings/ChatbotL1Config.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 251
+  },
+  {
+    "path": "src/hooks/chat/useConversationAnalyses.ts",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 136
+  },
+  {
+    "path": "src/hooks/integrations/useWhatsAppTemplates.ts",
+    "bodies_without_containing_review_span": 17,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 171
+  },
+  {
+    "path": "src/components/admin/GmailWebhookMonitor.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 192
+  },
+  {
+    "path": "src/components/reports/PeriodComparison.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 142
+  },
+  {
+    "path": "src/adapters/evolutionAdapter.ts",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 223
+  },
+  {
+    "path": "src/components/inbox/SLAIndicator.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 161
+  },
+  {
+    "path": "src/components/inbox/chat/HighlightedText.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 123
+  },
+  {
+    "path": "src/components/performance/VirtualizedList.tsx",
+    "bodies_without_containing_review_span": 16,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 264
+  },
+  {
+    "path": "src/components/ui/empty-states.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 191
+  },
+  {
+    "path": "src/hooks/dashboard/useDashboardUrlFilters.ts",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 108
+  },
+  {
+    "path": "src/lib/quarantineStore.ts",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 74
+  },
+  {
+    "path": "src/utils/whatsappFileTypes.ts",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 12,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 204
+  },
+  {
+    "path": "src/hooks/chat/useSavedFilters.ts",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 11,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 196
+  },
+  {
+    "path": "src/components/inbox/VoiceSelector.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 213
+  },
+  {
+    "path": "src/pages/VerifyEmail.tsx",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 193
+  },
+  {
+    "path": "src/components/calls/DialPad.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 233
+  },
+  {
+    "path": "src/components/inbox/FileUploader.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 235
+  },
+  {
+    "path": "src/components/inbox/tabs/AiTab.tsx",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 190
+  },
+  {
+    "path": "src/components/inbox/tabs/filesSort.ts",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 59
+  },
+  {
+    "path": "src/components/integrations/SentryIntegrationView.tsx",
+    "bodies_without_containing_review_span": 20,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 185
+  },
+  {
+    "path": "src/components/layout/PageHeader.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 169
+  },
+  {
+    "path": "src/components/monitoring/MonitoringWebhookPanel.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 176
+  },
+  {
+    "path": "src/components/voice/FloatingParticles.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 11,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 157
+  },
+  {
+    "path": "src/components/omnichannel/OmnichannelManager.tsx",
+    "bodies_without_containing_review_span": 21,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 236
+  },
+  {
+    "path": "src/components/settings/FollowUpSequences.tsx",
+    "bodies_without_containing_review_span": 32,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 264
+  },
+  {
+    "path": "src/components/omnichannel/OmnichannelInbox.tsx",
+    "bodies_without_containing_review_span": 17,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 302
+  },
+  {
+    "path": "src/components/inbox/LeadRiskScorePanel.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 149
+  },
+  {
+    "path": "src/components/inbox/RealtimeTranscription.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 195
+  },
+  {
+    "path": "src/hooks/voice/retry.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 55
+  },
+  {
+    "path": "src/providers/QuarantineMonitorProvider.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 114
+  },
+  {
+    "path": "src/components/integrations/N8nIntegrationView.tsx",
+    "bodies_without_containing_review_span": 29,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 215
+  },
+  {
+    "path": "src/hooks/calls/useCallsKpi.ts",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 123
+  },
+  {
+    "path": "src/hooks/inbox/useRealtimeSentimentAlerts.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 118
+  },
+  {
+    "path": "src/components/inbox/AudioRecorder.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 282
+  },
+  {
+    "path": "src/components/inbox/MediaVolumeControl.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 198
+  },
+  {
+    "path": "src/components/leaderboard/LeaderboardHelpers.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 151
+  },
+  {
+    "path": "src/components/settings/theme/PresetCard.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 109
+  },
+  {
+    "path": "src/components/whatsapp-flows/FlowComponentPreview.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 108
+  },
+  {
+    "path": "src/lib/errorReporter.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 10,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 82
+  },
+  {
+    "path": "src/components/monitoring/hooks/useMonitoringActions.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 9,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 88
+  },
+  {
+    "path": "src/hooks/integrations/useChatbotFlows.ts",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 152
+  },
+  {
+    "path": "src/components/inbox/stickers/StickerManager.tsx",
+    "bodies_without_containing_review_span": 28,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 191
+  },
+  {
+    "path": "src/components/inbox/MessageTemplates.tsx",
+    "bodies_without_containing_review_span": 20,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 138
+  },
+  {
+    "path": "src/lib/logger.ts",
+    "bodies_without_containing_review_span": 20,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 131
+  },
+  {
+    "path": "src/lib/webauthnUtils.ts",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 48
+  },
+  {
+    "path": "src/components/ai/churnRisk.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 86
+  },
+  {
+    "path": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+    "bodies_without_containing_review_span": 31,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 217
+  },
+  {
+    "path": "src/components/effects/EasterEggs.tsx",
+    "bodies_without_containing_review_span": 19,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 250
+  },
+  {
+    "path": "src/components/gmail/ThreadListItem.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 79
+  },
+  {
+    "path": "src/components/inbox/LinkPreview.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 104
+  },
+  {
+    "path": "src/components/inbox/SentimentIndicator.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 199
+  },
+  {
+    "path": "src/components/theme/HighContrastToggle.tsx",
+    "bodies_without_containing_review_span": 23,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 298
+  },
+  {
+    "path": "src/components/transitions/transitionVariants.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 93
+  },
+  {
+    "path": "src/components/ui/motion/components.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 9,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 127
+  },
+  {
+    "path": "src/components/settings/SkillBasedRoutingSettings.tsx",
+    "bodies_without_containing_review_span": 29,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 8,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 277
+  },
+  {
+    "path": "src/components/settings/AvatarUpload.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 7,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 152
+  },
+  {
+    "path": "src/hooks/integrations/useKnowledgeBase.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 7,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 91
+  },
+  {
+    "path": "src/services/evolution.service.ts",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 7,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 221
+  },
+  {
+    "path": "src/pages/AdminTelemetriaPage.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 151
+  },
+  {
+    "path": "src/components/inbox/RealtimeInboxView.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 376
+  },
+  {
+    "path": "src/components/knowledge/KnowledgeBaseView.tsx",
+    "bodies_without_containing_review_span": 24,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 133
+  },
+  {
+    "path": "src/components/reports/ConversationHeatmap.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 157
+  },
+  {
+    "path": "src/components/reports/DemandForecast.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 141
+  },
+  {
+    "path": "src/hooks/dashboard/useTodayHourlyVolume.ts",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 77
+  },
+  {
+    "path": "src/components/chatbot/ChatbotFlowsView.tsx",
+    "bodies_without_containing_review_span": 29,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 325
+  },
+  {
+    "path": "src/components/inbox/ContactTypeFilter.tsx",
+    "bodies_without_containing_review_span": 22,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 229
+  },
+  {
+    "path": "src/components/inbox/DeletedMessagePlaceholder.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 78
+  },
+  {
+    "path": "src/components/inbox/NewConversationModal.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 127
+  },
+  {
+    "path": "src/components/inbox/ai-tools/KeyPointsTab.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 75
+  },
+  {
+    "path": "src/components/inbox/chat/ChatSearchFilters.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 142
+  },
+  {
+    "path": "src/components/inbox/tabs/ContactStatsStrip.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 100
+  },
+  {
+    "path": "src/components/mobile/SwipeableMessage.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 91
+  },
+  {
+    "path": "src/components/monitoring/MonitoringHealthLogs.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 124
+  },
+  {
+    "path": "src/components/monitoring/MonitoringSLAPanel.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 148
+  },
+  {
+    "path": "src/components/ui/sidebar/sidebar-primitives.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 242
+  },
+  {
+    "path": "src/hooks/chat/useFilesContainerColumns.ts",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 86
+  },
+  {
+    "path": "src/lib/mapboxSession.ts",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 128
+  },
+  {
+    "path": "src/pages/Auth.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 8,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 277
+  },
+  {
+    "path": "src/hooks/integrations/useCustomEmojis.ts",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 9,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 154
+  },
+  {
+    "path": "src/hooks/chat/useMessageTemplates.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 8,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 92
+  },
+  {
+    "path": "src/components/omnichannel/ChannelRoutingRules.tsx",
+    "bodies_without_containing_review_span": 21,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 205
+  },
+  {
+    "path": "src/components/performance/Prefetcher.tsx",
+    "bodies_without_containing_review_span": 34,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 187
+  },
+  {
+    "path": "src/components/settings/AIAutoTagsConfig.tsx",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 166
+  },
+  {
+    "path": "src/components/inbox/WhisperMode.tsx",
+    "bodies_without_containing_review_span": 19,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 194
+  },
+  {
+    "path": "src/lib/deployment-update.ts",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 97
+  },
+  {
+    "path": "src/components/inbox/quick-replies/QuickReplyDialog.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 87
+  },
+  {
+    "path": "src/lib/mapboxCostGuard.ts",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 152
+  },
+  {
+    "path": "src/components/catalog/CatalogAdvancedFilters.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 162
+  },
+  {
+    "path": "src/components/errors/ErrorBoundary.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 254
+  },
+  {
+    "path": "src/components/gamification/AchievementsSystem.tsx",
+    "bodies_without_containing_review_span": 19,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 206
+  },
+  {
+    "path": "src/components/inbox/ai-tools/SentimentTab.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 140
+  },
+  {
+    "path": "src/components/inbox/stickers/PersonalStickers.tsx",
+    "bodies_without_containing_review_span": 16,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 103
+  },
+  {
+    "path": "src/components/inbox/tabs/FileDetailPanel.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 104
+  },
+  {
+    "path": "src/components/layout/SidebarNavGroup.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 137
+  },
+  {
+    "path": "src/components/queues/PeriodSelector.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 200
+  },
+  {
+    "path": "src/components/queues/QueuesComparisonDashboard.tsx",
+    "bodies_without_containing_review_span": 18,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 290
+  },
+  {
+    "path": "src/components/transcriptions/TranscriptionContactGroup.tsx",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 129
+  },
+  {
+    "path": "src/components/ui/command-palette-data.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 71
+  },
+  {
+    "path": "src/components/ui/emoji-picker.tsx",
+    "bodies_without_containing_review_span": 22,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 331
+  },
+  {
+    "path": "src/components/ui/micro-interactions/skeletons.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 106
+  },
+  {
+    "path": "src/components/ui/motion/effects.tsx",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 94
+  },
+  {
+    "path": "src/components/voice/usePhaseColors.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 84
+  },
+  {
+    "path": "src/lib/popupManager.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 7,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 70
+  },
+  {
+    "path": "src/components/voice/ElevenLabsVoiceDesign.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 159
+  },
+  {
+    "path": "src/hooks/business/useWarRoomAlerts.ts",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 132
+  },
+  {
+    "path": "src/components/inbox/collaboration/InternalNotesPanel.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 117
+  },
+  {
+    "path": "src/hooks/gamification/useAgentGamification.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 73
+  },
+  {
+    "path": "src/components/settings/SoundCustomizationPanel.tsx",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 123
+  },
+  {
+    "path": "src/pages/Install.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 149
+  },
+  {
+    "path": "src/components/inbox/CloseConversationDialog.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 207
+  },
+  {
+    "path": "src/components/inbox/ContactPurchasesPanel.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 134
+  },
+  {
+    "path": "src/hooks/performance/useDataOptimization.ts",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 116
+  },
+  {
+    "path": "src/components/BulkActionsBar.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 130
+  },
+  {
+    "path": "src/components/calls/ActiveCallBar.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 77
+  },
+  {
+    "path": "src/components/calls/Keypad.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 89
+  },
+  {
+    "path": "src/components/gamification/TrainingMiniGames.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 84
+  },
+  {
+    "path": "src/components/inbox/TypingIndicator.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 321
+  },
+  {
+    "path": "src/components/inbox/ai-tools/SummaryTab.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 106
+  },
+  {
+    "path": "src/components/inbox/chat/messageUtils.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 79
+  },
+  {
+    "path": "src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 24
+  },
+  {
+    "path": "src/components/inbox/search/GlobalSearchFilters.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 117
+  },
+  {
+    "path": "src/components/leaderboard/Leaderboard.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 71
+  },
+  {
+    "path": "src/components/mobile/MiniChatPiP.tsx",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 208
+  },
+  {
+    "path": "src/components/mobile/MobileFAB.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 117
+  },
+  {
+    "path": "src/components/settings/sla/SLARuleRow.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 108
+  },
+  {
+    "path": "src/components/settings/theme/useThemePreset.ts",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 96
+  },
+  {
+    "path": "src/components/sla/SLAHistoryDashboard.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 102
+  },
+  {
+    "path": "src/components/ui/accessible-toast.tsx",
+    "bodies_without_containing_review_span": 21,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 200
+  },
+  {
+    "path": "src/components/ui/button.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 113
+  },
+  {
+    "path": "src/components/ui/liquid-metal-button.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 130
+  },
+  {
+    "path": "src/components/ui/sidebar/sidebar-context.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 111
+  },
+  {
+    "path": "src/components/ui/skip-link.tsx",
+    "bodies_without_containing_review_span": 16,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 141
+  },
+  {
+    "path": "src/hooks/performance/useMonitoring.ts",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 105
+  },
+  {
+    "path": "src/hooks/realtime/useVisiblePolling.ts",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 50
+  },
+  {
+    "path": "src/pages/ChatPopup.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 300
+  },
+  {
+    "path": "src/pages/admin-telemetria/telemetryUtils.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 6,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 70
+  },
+  {
+    "path": "src/components/onboarding/checklistSteps.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 11,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 121
+  },
+  {
+    "path": "src/hooks/integrations/useBitrixApi.ts",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 5,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 250
+  },
+  {
+    "path": "src/components/settings/CSATAutoConfig.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 172
+  },
+  {
+    "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 47
+  },
+  {
+    "path": "src/components/calls/PostCallSummary.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 97
+  },
+  {
+    "path": "src/components/inbox/collaboration/ViewersIndicator.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 126
+  },
+  {
+    "path": "src/components/integrations/BitrixIntegrationView.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 148
+  },
+  {
+    "path": "src/components/queues/AddMemberDialog.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 132
+  },
+  {
+    "path": "supabase/functions/searchbox-budget-alert/index.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 64
+  },
+  {
+    "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 184
+  },
+  {
+    "path": "src/components/inbox/templates/TemplateEditorDialog.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 162
+  },
+  {
+    "path": "src/components/monitoring/hooks/useMonitoringNotifications.ts",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 70
+  },
+  {
+    "path": "src/components/notifications/PushNotificationCard.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 130
+  },
+  {
+    "path": "src/hooks/business/useDemandPrediction.ts",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 90
+  },
+  {
+    "path": "src/components/catalog/CatalogBulkBar.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 117
+  },
+  {
+    "path": "src/components/catalog/catalogCategoryRoute.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 51
+  },
+  {
+    "path": "src/components/cognitive/ProgressiveDisclosure.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 117
+  },
+  {
+    "path": "src/components/inbox/BusinessHoursBadge.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 35
+  },
+  {
+    "path": "src/components/inbox/chat/ChatSearchResultsList.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 65
+  },
+  {
+    "path": "src/components/inbox/chat/RichTextToolbar.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 119
+  },
+  {
+    "path": "src/components/inbox/quick-replies/QuickReplyCardList.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 115
+  },
+  {
+    "path": "src/components/inbox/tabs/CommercialSummaryStrip.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 38
+  },
+  {
+    "path": "src/components/inbox/tabs/fileDisplay.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 67
+  },
+  {
+    "path": "src/components/integrations/GmailIntegrationCard.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 66
+  },
+  {
+    "path": "src/components/integrations/IntegrationsHub.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 110
+  },
+  {
+    "path": "src/components/mobile/FloatingActionButtons.tsx",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 119
+  },
+  {
+    "path": "src/components/mobile/NotificationsPanel.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 176
+  },
+  {
+    "path": "src/components/performance/LazyRoutes.tsx",
+    "bodies_without_containing_review_span": 37,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 161
+  },
+  {
+    "path": "src/components/queues/QueueAlertsDisplay.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 94
+  },
+  {
+    "path": "src/components/queues/SLAAgentTable.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 91
+  },
+  {
+    "path": "src/components/settings/SLAConfigurationManager.tsx",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 149
+  },
+  {
+    "path": "src/components/ui/empty-states/ContextualEmptyState.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 86
+  },
+  {
+    "path": "src/components/ui/error-boundary-retry.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 140
+  },
+  {
+    "path": "src/components/ui/sidebar/sidebar-menu.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 192
+  },
+  {
+    "path": "src/components/ui/step-progress.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 79
+  },
+  {
+    "path": "src/hooks/dashboard/useQueueHealth.ts",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 46
+  },
+  {
+    "path": "src/hooks/inbox/useInboxUIState.ts",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 72
+  },
+  {
+    "path": "src/hooks/performance/useTimingHooks.ts",
+    "bodies_without_containing_review_span": 19,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 103
+  },
+  {
+    "path": "src/lib/debounce.ts",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 70
+  },
+  {
+    "path": "src/pages/queue-details/QueueContactsTable.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 5,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 77
+  },
+  {
+    "path": "src/components/alerts/EvolutionDisconnectBanner.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 115
+  },
+  {
+    "path": "src/components/inbox/QuickRepliesManager.tsx",
+    "bodies_without_containing_review_span": 19,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 127
+  },
+  {
+    "path": "src/components/performance/HotRoutePrefetcher.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 59
+  },
+  {
+    "path": "src/hooks/gamification/useLeaderboard.ts",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 119
+  },
+  {
+    "path": "src/components/inbox/collaboration/MentionInput.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 86
+  },
+  {
+    "path": "src/components/settings/FollowUpExecutionsHistory.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 90
+  },
+  {
+    "path": "src/hooks/chat/useConversationTabCounts.ts",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 60
+  },
+  {
+    "path": "src/hooks/integrations/useCatalogQuickSearch.ts",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 34
+  },
+  {
+    "path": "src/lib/loginAttempts.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 19
+  },
+  {
+    "path": "src/components/calls/CallDirectionCell.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 23
+  },
+  {
+    "path": "src/components/calls/CallHistoryTable.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 109
+  },
+  {
+    "path": "src/components/docs/SystemFeaturesView.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 106
+  },
+  {
+    "path": "src/components/effects/Confetti.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 296
+  },
+  {
+    "path": "src/components/effects/ScrollEffects.tsx",
+    "bodies_without_containing_review_span": 17,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 309
+  },
+  {
+    "path": "src/components/inbox/AnalysisBadges.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 83
+  },
+  {
+    "path": "src/components/inbox/chat/ConversationTabs.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 107
+  },
+  {
+    "path": "src/components/inbox/linkPreviewUtils.ts",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 61
+  },
+  {
+    "path": "src/components/inbox/summary/useSummaryTts.ts",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 62
+  },
+  {
+    "path": "src/components/inbox/tabs/FilesSelectionBar.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 108
+  },
+  {
+    "path": "src/components/layout/SidebarBackButton.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 46
+  },
+  {
+    "path": "src/components/layout/SidebarUserPill.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 80
+  },
+  {
+    "path": "src/components/layout/ViewContainer.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 55
+  },
+  {
+    "path": "src/components/meta-capi/MetaCAPIView.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 176
+  },
+  {
+    "path": "src/components/mobile/BottomSheet.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 76
+  },
+  {
+    "path": "src/components/mobile/MobileNavigation.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 69
+  },
+  {
+    "path": "src/components/mobile/MobilePullToRefresh.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 48
+  },
+  {
+    "path": "src/components/mobile/MobileShell.tsx",
+    "bodies_without_containing_review_span": 16,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 109
+  },
+  {
+    "path": "src/components/mobile/TouchRipple.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 72
+  },
+  {
+    "path": "src/components/monitoring/MonitoringMessageChart.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 83
+  },
+  {
+    "path": "src/components/notifications/PushNotificationToggle.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 77
+  },
+  {
+    "path": "src/components/notifications/SoundVolumeControl.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 129
+  },
+  {
+    "path": "src/components/onboarding/OnboardingTour.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 86
+  },
+  {
+    "path": "src/components/onboarding/WelcomeModal.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 177
+  },
+  {
+    "path": "src/components/performance/metricThresholds.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 19
+  },
+  {
+    "path": "src/components/queues/SLAMetricCards.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 97
+  },
+  {
+    "path": "src/components/settings/ThemeCustomizer.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 157
+  },
+  {
+    "path": "src/components/settings/theme/roving-focus.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 21
+  },
+  {
+    "path": "src/components/ui/form.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 129
+  },
+  {
+    "path": "src/components/ui/slider.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 56
+  },
+  {
+    "path": "src/components/voice/VoiceSuggestions.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 47
+  },
+  {
+    "path": "src/lib/forward-limits.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 50
+  },
+  {
+    "path": "src/lib/notificationDedupe.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 20
+  },
+  {
+    "path": "src/lib/tags.ts",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 22
+  },
+  {
+    "path": "src/pages/admin-telemetria/TelemetryTable.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 88
+  },
+  {
+    "path": "src/types/emailContactContext.ts",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 4,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 90
+  },
+  {
+    "path": "src/hooks/communication/useCalls.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 241
+  },
+  {
+    "path": "src/components/inbox/collaboration/HandoffDialog.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 94
+  },
+  {
+    "path": "src/hooks/gmail/gmailApi.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 30
+  },
+  {
+    "path": "src/hooks/integrations/useExternalEvolution.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 69
+  },
+  {
+    "path": "src/lib/retry.ts",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 98
+  },
+  {
+    "path": "src/components/compliance/LGPDComplianceView.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 185
+  },
+  {
+    "path": "src/components/queues/CreateQueueDialog.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 118
+  },
+  {
+    "path": "src/hooks/chat/useRecommendedProducts.ts",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 35
+  },
+  {
+    "path": "src/hooks/integrations/useKnowledgeBaseSearch.ts",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 60
+  },
+  {
+    "path": "src/lib/audit.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 52
+  },
+  {
+    "path": "src/lib/externalProxy.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 68
+  },
+  {
+    "path": "src/services/role.service.ts",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 45
+  },
+  {
+    "path": "src/components/ThemeInitializer.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 45
+  },
+  {
+    "path": "src/components/ai/AutoTicketClassifier.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 246
+  },
+  {
+    "path": "src/components/calls/CallContactCell.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 45
+  },
+  {
+    "path": "src/components/calls/CallHistoryStates.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 58
+  },
+  {
+    "path": "src/components/calls/CallsPagination.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 54
+  },
+  {
+    "path": "src/components/cognitive/FeatureSpotlight.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 101
+  },
+  {
+    "path": "src/components/effects/ParallaxContainer.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 268
+  },
+  {
+    "path": "src/components/gamification/DemoAchievements.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 209
+  },
+  {
+    "path": "src/components/inbox/AISuggestions.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 230
+  },
+  {
+    "path": "src/components/inbox/NextBestActionEngine.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 64
+  },
+  {
+    "path": "src/components/inbox/TemplatesWithVariables.tsx",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 120
+  },
+  {
+    "path": "src/components/inbox/chat/AIRewriteButton.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 135
+  },
+  {
+    "path": "src/components/inbox/chat/ChatHeaderToolbar.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 79
+  },
+  {
+    "path": "src/components/inbox/chat/InputExtraTools.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 121
+  },
+  {
+    "path": "src/components/inbox/summary/SummaryResult.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 96
+  },
+  {
+    "path": "src/components/inbox/tabs/FileCard.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 121
+  },
+  {
+    "path": "src/components/inbox/tabs/FilesListView.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 125
+  },
+  {
+    "path": "src/components/integrations/GoogleCalendarIntegration.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 169
+  },
+  {
+    "path": "src/components/settings/AutoCloseSettings.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 101
+  },
+  {
+    "path": "src/components/settings/SoundCategoryCard.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 58
+  },
+  {
+    "path": "src/components/tasks/shared/AgingDot.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 14
+  },
+  {
+    "path": "src/components/ui/VolumeSliderPopoverContent.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 88
+  },
+  {
+    "path": "src/components/ui/empty-state.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 143
+  },
+  {
+    "path": "src/components/ui/icon-button.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 151
+  },
+  {
+    "path": "src/components/ui/micro-interactions/feedback.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 83
+  },
+  {
+    "path": "src/components/ui/offline-indicator.tsx",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 131
+  },
+  {
+    "path": "src/components/ui/route-loading-bar.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 74
+  },
+  {
+    "path": "src/hooks/evolution/useEvolutionMessaging.ts",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 160
+  },
+  {
+    "path": "src/pages/ForgotPassword.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 207
+  },
+  {
+    "path": "src/pages/QueuesComparison.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 3,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 38
+  },
+  {
+    "path": "src/components/inbox/RealtimeCollaboration.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 47
+  },
+  {
+    "path": "src/components/inbox/QueuePositionNotifier.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 2,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 54
+  },
+  {
+    "path": "src/components/monitoring/hooks/useEvolutionMonitoring.ts",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 57
+  },
+  {
+    "path": "src/hooks/business/useBusinessHoursCheck.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 25
+  },
+  {
+    "path": "src/hooks/chat/useLatestAnalysis.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 42
+  },
+  {
+    "path": "src/hooks/integrations/useSyncToCRM.ts",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 71
+  },
+  {
+    "path": "src/hooks/integrations/useTalkXConnectionStatus.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 39
+  },
+  {
+    "path": "src/components/SearchInput.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 88
+  },
+  {
+    "path": "src/components/calls/CallChannelBadge.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 47
+  },
+  {
+    "path": "src/components/calls/CallHistoryToolbar.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 100
+  },
+  {
+    "path": "src/components/calls/CallResultCell.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 35
+  },
+  {
+    "path": "src/components/calls/CallStatusBadge.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 20
+  },
+  {
+    "path": "src/components/calls/CallsKpiGrid.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 61
+  },
+  {
+    "path": "src/components/inbox/AgentReassignmentPanel.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 62
+  },
+  {
+    "path": "src/components/inbox/ContactDetailsResponsive.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 33
+  },
+  {
+    "path": "src/components/inbox/chat/PinnedConversationsStack.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 104
+  },
+  {
+    "path": "src/components/inbox/conversation-list/StatusChips.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 87
+  },
+  {
+    "path": "src/components/inbox/resolveActiveTab.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 34
+  },
+  {
+    "path": "src/components/inbox/tabs/FilesToolbar.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 109
+  },
+  {
+    "path": "src/components/inbox/tabs/OpenDealsList.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 60
+  },
+  {
+    "path": "src/components/inbox/tabs/SectionCard.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 71
+  },
+  {
+    "path": "src/components/inbox/template-utils.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 58
+  },
+  {
+    "path": "src/components/layout/PageTemplate.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 133
+  },
+  {
+    "path": "src/components/mobile/InAppNotification.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 72
+  },
+  {
+    "path": "src/components/notifications/ReminderNotification.tsx",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 112
+  },
+  {
+    "path": "src/components/queues/QueuesComparisonCharts.tsx",
+    "bodies_without_containing_review_span": 13,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 104
+  },
+  {
+    "path": "src/components/settings/sla/sla-utils.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 31
+  },
+  {
+    "path": "src/components/sla/SLACharts.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 128
+  },
+  {
+    "path": "src/components/tasks/TasksEmptyState.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 47
+  },
+  {
+    "path": "src/components/tasks/shared/ModeSwitcher.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 53
+  },
+  {
+    "path": "src/components/tasks/shared/PriorityChip.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 29
+  },
+  {
+    "path": "src/components/tasks/shared/RemindChip.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 83
+  },
+  {
+    "path": "src/components/transitions/transitionConfig.ts",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 45
+  },
+  {
+    "path": "src/components/ui/SkeletonList.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 150
+  },
+  {
+    "path": "src/components/ui/avatar.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 201
+  },
+  {
+    "path": "src/components/ui/card.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 104
+  },
+  {
+    "path": "src/components/ui/pagination.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 81
+  },
+  {
+    "path": "src/components/ui/quick-peek.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 73
+  },
+  {
+    "path": "src/components/ui/section-error-boundary.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 71
+  },
+  {
+    "path": "src/components/ui/skeleton.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 139
+  },
+  {
+    "path": "src/components/voice/VoiceTranscriptArea.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 114
+  },
+  {
+    "path": "src/data/emojiDatabase.ts",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 636
+  },
+  {
+    "path": "src/hooks/calls/useTerminoRemoto.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 46
+  },
+  {
+    "path": "src/hooks/performance/useObservers.ts",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 72
+  },
+  {
+    "path": "src/i18n/team-chat.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 77
+  },
+  {
+    "path": "src/lib/a11y.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 31
+  },
+  {
+    "path": "src/lib/cfImages.ts",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 48
+  },
+  {
+    "path": "src/lib/speed-insights.ts",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 37
+  },
+  {
+    "path": "src/main.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 82
+  },
+  {
+    "path": "src/utils/fileExtensions.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 2,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 26
+  },
+  {
+    "path": "src/hooks/voice/logVoiceCommand.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 3,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 48
+  },
+  {
+    "path": "src/hooks/calls/useCallRecording.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 49
+  },
+  {
+    "path": "src/hooks/integrations/useMetaCAPIData.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 51
+  },
+  {
+    "path": "src/lib/supabaseHelpers.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 28
+  },
+  {
+    "path": "src/components/calls/CallHistoryCard.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 54
+  },
+  {
+    "path": "src/components/calls/CallKpiCard.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 36
+  },
+  {
+    "path": "src/components/calls/RecordingPlayer.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 33
+  },
+  {
+    "path": "src/components/calls/paginas.ts",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 26
+  },
+  {
+    "path": "src/components/chatbot/ChatbotNodeDialogs.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 99
+  },
+  {
+    "path": "src/components/gamification/AchievementDetailDialog.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 85
+  },
+  {
+    "path": "src/components/gamification/AchievementToast.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 286
+  },
+  {
+    "path": "src/components/gamification/AchievementsStats.tsx",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 85
+  },
+  {
+    "path": "src/components/inbox/InteractiveMessageBuilder.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 247
+  },
+  {
+    "path": "src/components/inbox/KnowledgeBaseSearchPanel.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 120
+  },
+  {
+    "path": "src/components/inbox/ScheduleMessageDialog.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 206
+  },
+  {
+    "path": "src/components/inbox/ai-tools/ToneSelector.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 52
+  },
+  {
+    "path": "src/components/inbox/chat/AIEnhanceButton.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 174
+  },
+  {
+    "path": "src/components/inbox/chat/MarkdownPreview.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 45
+  },
+  {
+    "path": "src/components/inbox/interactive-builder/MessagePreview.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 60
+  },
+  {
+    "path": "src/components/inbox/tabs/FilesLayoutPopover.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 102
+  },
+  {
+    "path": "src/components/inbox/tabs/KpiStrip.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 56
+  },
+  {
+    "path": "src/components/inbox/tabs/SalesViewTab.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 46
+  },
+  {
+    "path": "src/components/inbox/tabs/TabBanner.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 64
+  },
+  {
+    "path": "src/components/keyboard/KeyboardShortcutsDialog.tsx",
+    "bodies_without_containing_review_span": 14,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 255
+  },
+  {
+    "path": "src/components/layout/ViewLoadingFallback.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 44
+  },
+  {
+    "path": "src/components/mobile/MobileHeader.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 153
+  },
+  {
+    "path": "src/components/performance/hotRoutePrefetch.ts",
+    "bodies_without_containing_review_span": 10,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 40
+  },
+  {
+    "path": "src/components/settings/ScheduleSettings.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 90
+  },
+  {
+    "path": "src/components/settings/theme/BorderRadiusControl.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 154
+  },
+  {
+    "path": "src/components/tasks/shared/ContactChip.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 40
+  },
+  {
+    "path": "src/components/tasks/shared/pointerMedia.ts",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 41
+  },
+  {
+    "path": "src/components/transitions/RouteTransition.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 37
+  },
+  {
+    "path": "src/components/transitions/useTransitionPreferences.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 33
+  },
+  {
+    "path": "src/components/ui/EmptyState.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 197
+  },
+  {
+    "path": "src/components/ui/breadcrumb.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 90
+  },
+  {
+    "path": "src/components/ui/input.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 83
+  },
+  {
+    "path": "src/components/ui/scroll-to-top.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 57
+  },
+  {
+    "path": "src/components/ui/separator.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 20
+  },
+  {
+    "path": "src/components/ui/sparkline.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 53
+  },
+  {
+    "path": "src/components/ui/tooltip.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 139
+  },
+  {
+    "path": "src/components/voice/ElevenLabsDialogue.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 165
+  },
+  {
+    "path": "src/hooks/integrations/useQuarantineForMessage.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 17
+  },
+  {
+    "path": "src/lib/aiJobs/status.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 116
+  },
+  {
+    "path": "src/lib/avatar-colors.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 38
+  },
+  {
+    "path": "src/lib/lazyWithRetry.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 23
+  },
+  {
+    "path": "src/lib/mapboxLoader.ts",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 21
+  },
+  {
+    "path": "src/lib/urlSafety.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 14
+  },
+  {
+    "path": "src/pages/admin-telemetria/TelemetryTopOffenders.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 44
+  },
+  {
+    "path": "src/utils/normalizeMediaUrl.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 1,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 9
+  },
+  {
+    "path": "supabase/functions/ai-auto-tag/auth_test.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 4,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 44
+  },
+  {
+    "path": "src/hooks/inbox/useInboxFilterTags.ts",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 17
+  },
+  {
+    "path": "src/lib/edgeAuthHeaders.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 14
+  },
+  {
+    "path": "src/pages/lazyViews.ts",
+    "bodies_without_containing_review_span": 95,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 1,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 62
+  },
+  {
+    "path": "generate_audit_pdf.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 70
+  },
+  {
+    "path": "src/components/calls/CallHistoryTabs.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 37
+  },
+  {
+    "path": "src/components/calls/PeriodSelect.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 30
+  },
+  {
+    "path": "src/components/docs/featuresSectionsData.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 375
+  },
+  {
+    "path": "src/components/effects/AuroraBorealis.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 151
+  },
+  {
+    "path": "src/components/gamification/AchievementBadge.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 257
+  },
+  {
+    "path": "src/components/inbox/InboxEmptyChat.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 55
+  },
+  {
+    "path": "src/components/inbox/KeyboardShortcutsHelp.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 90
+  },
+  {
+    "path": "src/components/inbox/MessageContextMenu.tsx",
+    "bodies_without_containing_review_span": 19,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 239
+  },
+  {
+    "path": "src/components/inbox/MessageStatus.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 70
+  },
+  {
+    "path": "src/components/inbox/NewMessageIndicator.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 174
+  },
+  {
+    "path": "src/components/inbox/SpeedSelector.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 69
+  },
+  {
+    "path": "src/components/inbox/ai-tools/VisionIcon.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 36
+  },
+  {
+    "path": "src/components/inbox/chat/ChatDragOverlay.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 36
+  },
+  {
+    "path": "src/components/inbox/chat/ChatQuickRepliesPopover.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 70
+  },
+  {
+    "path": "src/components/inbox/chat/ChatWatermark.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 10
+  },
+  {
+    "path": "src/components/inbox/chat/InputPreviewBars.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 52
+  },
+  {
+    "path": "src/components/inbox/chat/QuickActionChips.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 99
+  },
+  {
+    "path": "src/components/inbox/conversation-list/ConversationGroupHeader.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 17
+  },
+  {
+    "path": "src/components/inbox/swipeActions.ts",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 48
+  },
+  {
+    "path": "src/components/inbox/tabs/FileActionsMenu.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 47
+  },
+  {
+    "path": "src/components/inbox/tabs/TasksTab.tsx",
+    "bodies_without_containing_review_span": 15,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+    "lines": 169
+  },
+  {
+    "path": "src/components/keyboard/CommandPaletteHost.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 30
+  },
+  {
+    "path": "src/components/layout/A11yBoilerplate.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 29
+  },
+  {
+    "path": "src/components/layout/MediaVolumeToggle.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 11
+  },
+  {
+    "path": "src/components/layout/RoleBadge.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 24
+  },
+  {
+    "path": "src/components/layout/VoiceCopilotFAB.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 25
+  },
+  {
+    "path": "src/components/mobile/InAppNotificationProvider.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 31
+  },
+  {
+    "path": "src/components/mobile/swipeUtils.ts",
+    "bodies_without_containing_review_span": 12,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 60
+  },
+  {
+    "path": "src/components/monitoring/MonitoringSkeletons.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 96
+  },
+  {
+    "path": "src/components/notifications/RealtimeSentimentAlertProvider.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 12
+  },
+  {
+    "path": "src/components/settings/AppearanceSettings.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 110
+  },
+  {
+    "path": "src/components/settings/AutomationSettings.tsx",
+    "bodies_without_containing_review_span": 5,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 102
+  },
+  {
+    "path": "src/components/settings/LanguageSelector.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 47
+  },
+  {
+    "path": "src/components/settings/MessagesSettings.tsx",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 69
+  },
+  {
+    "path": "src/components/settings/theme/ThemeResetDialog.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 46
+  },
+  {
+    "path": "src/components/tasks/shared/BoardColumnSkeleton.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 13
+  },
+  {
+    "path": "src/components/tasks/shared/WorkItemCardSkeleton.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 5
+  },
+  {
+    "path": "src/components/transitions/PageTransitionProvider.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 14
+  },
+  {
+    "path": "src/components/ui/GenericEmptyState.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 84
+  },
+  {
+    "path": "src/components/ui/VolumeTriggerButton.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 64
+  },
+  {
+    "path": "src/components/ui/accordion.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 52
+  },
+  {
+    "path": "src/components/ui/alert-dialog.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 104
+  },
+  {
+    "path": "src/components/ui/alert.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 43
+  },
+  {
+    "path": "src/components/ui/badge.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 35
+  },
+  {
+    "path": "src/components/ui/calendar.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 54
+  },
+  {
+    "path": "src/components/ui/checkbox.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 26
+  },
+  {
+    "path": "src/components/ui/command.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 135
+  },
+  {
+    "path": "src/components/ui/context-menu.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 178
+  },
+  {
+    "path": "src/components/ui/dialog.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 122
+  },
+  {
+    "path": "src/components/ui/drawer.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 107
+  },
+  {
+    "path": "src/components/ui/dropdown-menu.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 179
+  },
+  {
+    "path": "src/components/ui/empty-state-illustrations.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 176
+  },
+  {
+    "path": "src/components/ui/empty-states/ConvenienceExports.tsx",
+    "bodies_without_containing_review_span": 9,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 37
+  },
+  {
+    "path": "src/components/ui/hover-card.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 27
+  },
+  {
+    "path": "src/components/ui/label.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 17
+  },
+  {
+    "path": "src/components/ui/menubar.tsx",
+    "bodies_without_containing_review_span": 11,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 207
+  },
+  {
+    "path": "src/components/ui/motion/variants.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 83
+  },
+  {
+    "path": "src/components/ui/popover.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 31
+  },
+  {
+    "path": "src/components/ui/progress.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 23
+  },
+  {
+    "path": "src/components/ui/radio-group.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 36
+  },
+  {
+    "path": "src/components/ui/resizable.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 37
+  },
+  {
+    "path": "src/components/ui/scroll-area.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 38
+  },
+  {
+    "path": "src/components/ui/sheet.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 107
+  },
+  {
+    "path": "src/components/ui/sonner.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 38
+  },
+  {
+    "path": "src/components/ui/switch.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 27
+  },
+  {
+    "path": "src/components/ui/table.tsx",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 72
+  },
+  {
+    "path": "src/components/ui/tabs.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 53
+  },
+  {
+    "path": "src/components/ui/textarea.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 21
+  },
+  {
+    "path": "src/components/ui/toast.tsx",
+    "bodies_without_containing_review_span": 6,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 111
+  },
+  {
+    "path": "src/components/ui/toaster.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 24
+  },
+  {
+    "path": "src/components/ui/toggle-group.tsx",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 49
+  },
+  {
+    "path": "src/components/ui/toggle.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 37
+  },
+  {
+    "path": "src/components/ui/visually-hidden.tsx",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 77
+  },
+  {
+    "path": "src/contexts/LayoutContext.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 17
+  },
+  {
+    "path": "src/contexts/LayoutScrollContext.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 9
+  },
+  {
+    "path": "src/features/talk-me/types.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 43
+  },
+  {
+    "path": "src/hooks/evolution/useEvolutionGroups.ts",
+    "bodies_without_containing_review_span": 16,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 59
+  },
+  {
+    "path": "src/hooks/gamification/levelUtils.ts",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 17
+  },
+  {
+    "path": "src/hooks/integrations/useTalkXCommandItems.ts",
+    "bodies_without_containing_review_span": 8,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 63
+  },
+  {
+    "path": "src/i18n/index.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 320
+  },
+  {
+    "path": "src/integrations/supabase/externalClient.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 14
+  },
+  {
+    "path": "src/lib/chartColors.ts",
+    "bodies_without_containing_review_span": 7,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 200
+  },
+  {
+    "path": "src/lib/postgrestFilters.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 21
+  },
+  {
+    "path": "src/lib/realtimeTopic.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 16
+  },
+  {
+    "path": "src/lib/runGuard.ts",
+    "bodies_without_containing_review_span": 4,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 29
+  },
+  {
+    "path": "src/lib/utils.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 11
+  },
+  {
+    "path": "src/pages/NotFound.tsx",
+    "bodies_without_containing_review_span": 3,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 81
+  },
+  {
+    "path": "src/pages/SLAHistory.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 24
+  },
+  {
+    "path": "src/pages/admin-telemetria/TelemetryStatsCards.tsx",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 60
+  },
+  {
+    "path": "src/utils/securityAlertSound.ts",
+    "bodies_without_containing_review_span": 2,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 25
+  },
+  {
+    "path": "src/utils/soundConfigs.ts",
+    "bodies_without_containing_review_span": 1,
+    "branch_nodes_in_those_bodies": 0,
+    "await_nodes_in_those_bodies": 0,
+    "review_state": "STRUCTURAL_INVENTORY_ONLY",
+    "lines": 57
+  }
+]

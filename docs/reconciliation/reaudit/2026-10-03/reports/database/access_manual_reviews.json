@@ -1,0 +1,1722 @@
+{
+  "policies": {
+    "public.profiles.Admin supervisor can view all profiles": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Seis corpos integrais e composição revisados. SELECT só próprio/admin-supervisor; INSERT próprio com role agent/basic/permissões vazias; UPDATE permissivo próprio/staff AND policy restritiva de campos sensíveis. Subconsulta de comparação lê via policies SELECT, e trigger protege campos adicionais; can_download não é comparado e foi entregue como R2-AUTH-027. Nenhuma policy de colegas/departamento nem anon foi encontrada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.profiles.Admins can update any profile": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Seis corpos integrais e composição revisados. SELECT só próprio/admin-supervisor; INSERT próprio com role agent/basic/permissões vazias; UPDATE permissivo próprio/staff AND policy restritiva de campos sensíveis. Subconsulta de comparação lê via policies SELECT, e trigger protege campos adicionais; can_download não é comparado e foi entregue como R2-AUTH-027. Nenhuma policy de colegas/departamento nem anon foi encontrada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.profiles.Block sensitive field changes by non-admins": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Seis corpos integrais e composição revisados. SELECT só próprio/admin-supervisor; INSERT próprio com role agent/basic/permissões vazias; UPDATE permissivo próprio/staff AND policy restritiva de campos sensíveis. Subconsulta de comparação lê via policies SELECT, e trigger protege campos adicionais; can_download não é comparado e foi entregue como R2-AUTH-027. Nenhuma policy de colegas/departamento nem anon foi encontrada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.profiles.Users can insert their own profile safely": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Seis corpos integrais e composição revisados. SELECT só próprio/admin-supervisor; INSERT próprio com role agent/basic/permissões vazias; UPDATE permissivo próprio/staff AND policy restritiva de campos sensíveis. Subconsulta de comparação lê via policies SELECT, e trigger protege campos adicionais; can_download não é comparado e foi entregue como R2-AUTH-027. Nenhuma policy de colegas/departamento nem anon foi encontrada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.profiles.Users can update own profile": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Seis corpos integrais e composição revisados. SELECT só próprio/admin-supervisor; INSERT próprio com role agent/basic/permissões vazias; UPDATE permissivo próprio/staff AND policy restritiva de campos sensíveis. Subconsulta de comparação lê via policies SELECT, e trigger protege campos adicionais; can_download não é comparado e foi entregue como R2-AUTH-027. Nenhuma policy de colegas/departamento nem anon foi encontrada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.profiles.Users can view own profile": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Seis corpos integrais e composição revisados. SELECT só próprio/admin-supervisor; INSERT próprio com role agent/basic/permissões vazias; UPDATE permissivo próprio/staff AND policy restritiva de campos sensíveis. Subconsulta de comparação lê via policies SELECT, e trigger protege campos adicionais; can_download não é comparado e foi entregue como R2-AUTH-027. Nenhuma policy de colegas/departamento nem anon foi encontrada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_roles.Only admins can manage roles": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Duas policies integrais: ALL somente admin via has_role, SELECT próprio ou admin/supervisor. Supervisor poder ler não lhe concede mutação. Helpers SECURITY DEFINER de papel foram revistos na fase de funções, evitando presumir recursão pela chamada do helper.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_roles.Users view own roles, admins view all": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Duas policies integrais: ALL somente admin via has_role, SELECT próprio ou admin/supervisor. Supervisor poder ler não lhe concede mutação. Helpers SECURITY DEFINER de papel foram revistos na fase de funções, evitando presumir recursão pela chamada do helper.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.role_permissions.Admin supervisor can view role permissions": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Duas policies integrais: SELECT admin/supervisor, ALL admin com USING e CHECK. Agente consultando diretamente não recebe a matriz de permissões; consumidor foi entregue à área Auth. Não há grant de leitura por função user_has_permission que automaticamente abra a tabela.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.role_permissions.Admins can manage role permissions": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Duas policies integrais: SELECT admin/supervisor, ALL admin com USING e CHECK. Agente consultando diretamente não recebe a matriz de permissões; consumidor foi entregue à área Auth. Não há grant de leitura por função user_has_permission que automaticamente abra a tabela.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.permissions.Admin supervisor can view permissions": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Duas policies integrais: SELECT admin/supervisor e gestão ALL só admin. TO authenticated identifica role de API, não autoriza por si todo usuário.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.permissions.Admins can manage permissions": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Duas policies integrais: SELECT admin/supervisor e gestão ALL só admin. TO authenticated identifica role de API, não autoriza por si todo usuário.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_service_accounts.Admins can view all service accounts": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Cinco policies integrais: SELECT próprio e admin/supervisor; INSERT/UPDATE/DELETE somente admin/supervisor. UPDATE sem WITH CHECK explícito herda USING. Nenhum caminho de inserir outra conta por usuário comum.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_service_accounts.Only admins can delete service accounts": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Cinco policies integrais: SELECT próprio e admin/supervisor; INSERT/UPDATE/DELETE somente admin/supervisor. UPDATE sem WITH CHECK explícito herda USING. Nenhum caminho de inserir outra conta por usuário comum.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_service_accounts.Only admins can insert service accounts": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Cinco policies integrais: SELECT próprio e admin/supervisor; INSERT/UPDATE/DELETE somente admin/supervisor. UPDATE sem WITH CHECK explícito herda USING. Nenhum caminho de inserir outra conta por usuário comum.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_service_accounts.Only admins can update service accounts": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Cinco policies integrais: SELECT próprio e admin/supervisor; INSERT/UPDATE/DELETE somente admin/supervisor. UPDATE sem WITH CHECK explícito herda USING. Nenhum caminho de inserir outra conta por usuário comum.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_service_accounts.Users can view own service accounts": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Cinco policies integrais: SELECT próprio e admin/supervisor; INSERT/UPDATE/DELETE somente admin/supervisor. UPDATE sem WITH CHECK explícito herda USING. Nenhum caminho de inserir outra conta por usuário comum.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_sessions.Authenticated can insert own sessions": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro policies integrais limitam CRUD a user_id=auth.uid. Campos são sessão da aplicação, não auth.sessions; editar is_active não revoga JWT por si só. Sem SELECT global admin nesta tabela no conjunto nominal.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_sessions.Users can delete their own sessions": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro policies integrais limitam CRUD a user_id=auth.uid. Campos são sessão da aplicação, não auth.sessions; editar is_active não revoga JWT por si só. Sem SELECT global admin nesta tabela no conjunto nominal.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_sessions.Users can update their own sessions": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro policies integrais limitam CRUD a user_id=auth.uid. Campos são sessão da aplicação, não auth.sessions; editar is_active não revoga JWT por si só. Sem SELECT global admin nesta tabela no conjunto nominal.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_sessions.Users can view their own sessions": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro policies integrais limitam CRUD a user_id=auth.uid. Campos são sessão da aplicação, não auth.sessions; editar is_active não revoga JWT por si só. Sem SELECT global admin nesta tabela no conjunto nominal.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_devices.Admins can view all user devices": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Cinco policies integrais: CRUD próprio e SELECT adicional admin/supervisor. INSERT e UPDATE mantêm user_id do ator (CHECK implícito no UPDATE). Não há gestão global por supervisor derivada só do SELECT.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_devices.Users can delete their own devices": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Cinco policies integrais: CRUD próprio e SELECT adicional admin/supervisor. INSERT e UPDATE mantêm user_id do ator (CHECK implícito no UPDATE). Não há gestão global por supervisor derivada só do SELECT.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_devices.Users can insert their own devices": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Cinco policies integrais: CRUD próprio e SELECT adicional admin/supervisor. INSERT e UPDATE mantêm user_id do ator (CHECK implícito no UPDATE). Não há gestão global por supervisor derivada só do SELECT.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_devices.Users can update their own devices": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Cinco policies integrais: CRUD próprio e SELECT adicional admin/supervisor. INSERT e UPDATE mantêm user_id do ator (CHECK implícito no UPDATE). Não há gestão global por supervisor derivada só do SELECT.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.user_devices.Users can view their own devices": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Cinco policies integrais: CRUD próprio e SELECT adicional admin/supervisor. INSERT e UPDATE mantêm user_id do ator (CHECK implícito no UPDATE). Não há gestão global por supervisor derivada só do SELECT.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.mfa_sessions.Users can manage own MFA sessions": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "ALL com USING/CHECK próprio. Cliente pode gerenciar sua linha de aplicação, mas isso não substitui autenticação MFA do Supabase. Nenhuma exigência de claim aal foi encontrada nesse corpo.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.passkey_credentials.Users can delete own passkeys": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais de CRUD próprio. UPDATE herda USING; não há acesso de outro usuário. A validação criptográfica e a presença de sessão no fluxo Edge são revisadas por Auth, não garantidas por RLS de user_id.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.passkey_credentials.Users can insert own passkeys": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais de CRUD próprio. UPDATE herda USING; não há acesso de outro usuário. A validação criptográfica e a presença de sessão no fluxo Edge são revisadas por Auth, não garantidas por RLS de user_id.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.passkey_credentials.Users can update own passkeys": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais de CRUD próprio. UPDATE herda USING; não há acesso de outro usuário. A validação criptográfica e a presença de sessão no fluxo Edge são revisadas por Auth, não garantidas por RLS de user_id.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.passkey_credentials.Users can view own passkeys": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais de CRUD próprio. UPDATE herda USING; não há acesso de outro usuário. A validação criptográfica e a presença de sessão no fluxo Edge são revisadas por Auth, não garantidas por RLS de user_id.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.webauthn_challenges.Block anon access to webauthn challenges": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Dois corpos integrais: anon ALL false e authenticated ALL próprio. False é policy permissiva, mas não existe outro ramo anon nesta composição. Não comprova que desafio foi validado criptograficamente.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.webauthn_challenges.Users can manage own challenges": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Dois corpos integrais: anon ALL false e authenticated ALL próprio. False é policy permissiva, mas não existe outro ramo anon nesta composição. Não comprova que desafio foi validado criptograficamente.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.password_reset_requests.Admins can delete password reset requests": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT/UPDATE/DELETE admin estrito, INSERT somente authenticated com user_id próprio. Nenhum INSERT anon para o formulário deslogado; consumidor quebrado já é achado Auth. Nome de policy não prova sigilo de coluna token; grants de colunas são outra camada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.password_reset_requests.Admins can update reset requests without token access": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT/UPDATE/DELETE admin estrito, INSERT somente authenticated com user_id próprio. Nenhum INSERT anon para o formulário deslogado; consumidor quebrado já é achado Auth. Nome de policy não prova sigilo de coluna token; grants de colunas são outra camada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.password_reset_requests.Admins can view reset requests": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT/UPDATE/DELETE admin estrito, INSERT somente authenticated com user_id próprio. Nenhum INSERT anon para o formulário deslogado; consumidor quebrado já é achado Auth. Nome de policy não prova sigilo de coluna token; grants de colunas são outra camada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.password_reset_requests.Users can request own password reset": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT/UPDATE/DELETE admin estrito, INSERT somente authenticated com user_id próprio. Nenhum INSERT anon para o formulário deslogado; consumidor quebrado já é achado Auth. Nome de policy não prova sigilo de coluna token; grants de colunas são outra camada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.login_attempts.Admins and supervisors can view login attempts": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais mais DO-074: SELECT/DELETE admin-supervisor, INSERT/UPDATE authenticated false como únicas policies desses comandos. O DO troca PUBLIC por authenticated no SELECT antigo; não supor que WITH CHECK omitido abre UPDATE.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.login_attempts.Block authenticated inserts on login_attempts": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais mais DO-074: SELECT/DELETE admin-supervisor, INSERT/UPDATE authenticated false como únicas policies desses comandos. O DO troca PUBLIC por authenticated no SELECT antigo; não supor que WITH CHECK omitido abre UPDATE.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.login_attempts.Block authenticated updates on login_attempts": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais mais DO-074: SELECT/DELETE admin-supervisor, INSERT/UPDATE authenticated false como únicas policies desses comandos. O DO troca PUBLIC por authenticated no SELECT antigo; não supor que WITH CHECK omitido abre UPDATE.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.login_attempts.Only admins can delete login attempts": {
+      "review_batch": "policy-01-auth",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais mais DO-074: SELECT/DELETE admin-supervisor, INSERT/UPDATE authenticated false como únicas policies desses comandos. O DO troca PUBLIC por authenticated no SELECT antigo; não supor que WITH CHECK omitido abre UPDATE.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contacts.Users can insert contacts": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT staff ou assigned_to do próprio profile; SELECT e UPDATE compartilham can_edit_contact e contexto de agentes visíveis/perfil/admin. WITH CHECK omitido herda USING; não há DELETE direto vencedor. Guards de fila/atribuição e RPC de deleção foram revisados separadamente. Nenhum caso determinístico de SELECT permitido mas UPDATE filtrado foi inferido dessas policies idênticas.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contacts.Users can update their assigned contacts": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT staff ou assigned_to do próprio profile; SELECT e UPDATE compartilham can_edit_contact e contexto de agentes visíveis/perfil/admin. WITH CHECK omitido herda USING; não há DELETE direto vencedor. Guards de fila/atribuição e RPC de deleção foram revisados separadamente. Nenhum caso determinístico de SELECT permitido mas UPDATE filtrado foi inferido dessas policies idênticas.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contacts.contacts_select_policy": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT staff ou assigned_to do próprio profile; SELECT e UPDATE compartilham can_edit_contact e contexto de agentes visíveis/perfil/admin. WITH CHECK omitido herda USING; não há DELETE direto vencedor. Guards de fila/atribuição e RPC de deleção foram revisados separadamente. Nenhum caso determinístico de SELECT permitido mas UPDATE filtrado foi inferido dessas policies idênticas.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_notes.contact_notes_delete_policy": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro policies vencedoras integrais: SELECT por contato visível; INSERT/UPDATE/DELETE exigem autor próprio e visibilidade. Não existe exceção admin para editar nota alheia. As quatro policies extras antigas foram lidas e são removidas por DO-043; não se somam ao acesso atual. Guard posterior impede reparent e fundamenta DB-016.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_notes.contact_notes_insert_policy": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro policies vencedoras integrais: SELECT por contato visível; INSERT/UPDATE/DELETE exigem autor próprio e visibilidade. Não existe exceção admin para editar nota alheia. As quatro policies extras antigas foram lidas e são removidas por DO-043; não se somam ao acesso atual. Guard posterior impede reparent e fundamenta DB-016.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_notes.contact_notes_select_policy": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro policies vencedoras integrais: SELECT por contato visível; INSERT/UPDATE/DELETE exigem autor próprio e visibilidade. Não existe exceção admin para editar nota alheia. As quatro policies extras antigas foram lidas e são removidas por DO-043; não se somam ao acesso atual. Guard posterior impede reparent e fundamenta DB-016.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_notes.contact_notes_update_policy": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro policies vencedoras integrais: SELECT por contato visível; INSERT/UPDATE/DELETE exigem autor próprio e visibilidade. Não existe exceção admin para editar nota alheia. As quatro policies extras antigas foram lidas e são removidas por DO-043; não se somam ao acesso atual. Guard posterior impede reparent e fundamenta DB-016.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_notes.Authenticated users can insert notes": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro policies vencedoras integrais: SELECT por contato visível; INSERT/UPDATE/DELETE exigem autor próprio e visibilidade. Não existe exceção admin para editar nota alheia. As quatro policies extras antigas foram lidas e são removidas por DO-043; não se somam ao acesso atual. Guard posterior impede reparent e fundamenta DB-016.",
+      "runtime_tested": false,
+      "source_scope": "source_extra_requires_adjudication"
+    },
+    "public.contact_notes.Users can delete their own notes": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro policies vencedoras integrais: SELECT por contato visível; INSERT/UPDATE/DELETE exigem autor próprio e visibilidade. Não existe exceção admin para editar nota alheia. As quatro policies extras antigas foram lidas e são removidas por DO-043; não se somam ao acesso atual. Guard posterior impede reparent e fundamenta DB-016.",
+      "runtime_tested": false,
+      "source_scope": "source_extra_requires_adjudication"
+    },
+    "public.contact_notes.Users can update their own notes": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro policies vencedoras integrais: SELECT por contato visível; INSERT/UPDATE/DELETE exigem autor próprio e visibilidade. Não existe exceção admin para editar nota alheia. As quatro policies extras antigas foram lidas e são removidas por DO-043; não se somam ao acesso atual. Guard posterior impede reparent e fundamenta DB-016.",
+      "runtime_tested": false,
+      "source_scope": "source_extra_requires_adjudication"
+    },
+    "public.contact_notes.Users can view notes on accessible contacts": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro policies vencedoras integrais: SELECT por contato visível; INSERT/UPDATE/DELETE exigem autor próprio e visibilidade. Não existe exceção admin para editar nota alheia. As quatro policies extras antigas foram lidas e são removidas por DO-043; não se somam ao acesso atual. Guard posterior impede reparent e fundamenta DB-016.",
+      "runtime_tested": false,
+      "source_scope": "source_extra_requires_adjudication"
+    },
+    "public.contact_identity_map.supervisor_read": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "SELECT único admin/supervisor. Nenhuma escrita authenticated declarada por policy; reconciliação usa código privilegiado. A policy não revela automaticamente o mapa a agentes.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_custom_fields.Authenticated can delete own custom fields": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: CRUD somente contato atribuído ao próprio profile ou staff, com CHECK de INSERT e CHECK implícito no UPDATE. Escopo é mais estreito que contatos visíveis por fila; sem consumidor indevido confirmado nesta rodada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_custom_fields.Authenticated can update own custom fields": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: CRUD somente contato atribuído ao próprio profile ou staff, com CHECK de INSERT e CHECK implícito no UPDATE. Escopo é mais estreito que contatos visíveis por fila; sem consumidor indevido confirmado nesta rodada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_custom_fields.Authenticated can view custom fields": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: CRUD somente contato atribuído ao próprio profile ou staff, com CHECK de INSERT e CHECK implícito no UPDATE. Escopo é mais estreito que contatos visíveis por fila; sem consumidor indevido confirmado nesta rodada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_custom_fields.Users can insert custom fields for assigned contacts": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: CRUD somente contato atribuído ao próprio profile ou staff, com CHECK de INSERT e CHECK implícito no UPDATE. Escopo é mais estreito que contatos visíveis por fila; sem consumidor indevido confirmado nesta rodada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_purchases.Agents can delete purchases for assigned contacts": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais de CRUD por is_contact_visible_to_user ou staff; nome assigned não limita ao responsável quando helper inclui fila. UPDATE verifica também novo contato pelo USING herdado; não falta WITH CHECK por omissão.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_purchases.Agents can insert purchases for assigned contacts": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais de CRUD por is_contact_visible_to_user ou staff; nome assigned não limita ao responsável quando helper inclui fila. UPDATE verifica também novo contato pelo USING herdado; não falta WITH CHECK por omissão.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_purchases.Agents can update purchases for assigned contacts": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais de CRUD por is_contact_visible_to_user ou staff; nome assigned não limita ao responsável quando helper inclui fila. UPDATE verifica também novo contato pelo USING herdado; não falta WITH CHECK por omissão.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_purchases.Agents can view purchases for assigned contacts": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais de CRUD por is_contact_visible_to_user ou staff; nome assigned não limita ao responsável quando helper inclui fila. UPDATE verifica também novo contato pelo USING herdado; não falta WITH CHECK por omissão.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_deletion_audit.contact_deletion_audit_block_authenticated_delete": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT staff, INSERT/UPDATE/DELETE authenticated false. Nenhum ramo permissivo alternativo desses comandos no snapshot; trigger privilegiado grava auditoria sem abrir escrita cliente.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_deletion_audit.contact_deletion_audit_block_authenticated_insert": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT staff, INSERT/UPDATE/DELETE authenticated false. Nenhum ramo permissivo alternativo desses comandos no snapshot; trigger privilegiado grava auditoria sem abrir escrita cliente.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_deletion_audit.contact_deletion_audit_block_authenticated_update": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT staff, INSERT/UPDATE/DELETE authenticated false. Nenhum ramo permissivo alternativo desses comandos no snapshot; trigger privilegiado grava auditoria sem abrir escrita cliente.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.contact_deletion_audit.contact_deletion_audit_select_admin_supervisor": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT staff, INSERT/UPDATE/DELETE authenticated false. Nenhum ramo permissivo alternativo desses comandos no snapshot; trigger privilegiado grava auditoria sem abrir escrita cliente.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_events.Authorized users can insert events": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "INSERT exige performed_by nulo/próprio e contato atribuído ao ator ou staff. SELECT por visibilidade tem corpo herdado de nome antigo e ALTER RENAME explícito de setembro; o extra antigo é a mesma policy renomeada, não policy adicional. Guard de closure_id é camada separada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_events.conversation_events_select_policy": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "INSERT exige performed_by nulo/próprio e contato atribuído ao ator ou staff. SELECT por visibilidade tem corpo herdado de nome antigo e ALTER RENAME explícito de setembro; o extra antigo é a mesma policy renomeada, não policy adicional. Guard de closure_id é camada separada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_events.Agents or admins can view conversation events": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "INSERT exige performed_by nulo/próprio e contato atribuído ao ator ou staff. SELECT por visibilidade tem corpo herdado de nome antigo e ALTER RENAME explícito de setembro; o extra antigo é a mesma policy renomeada, não policy adicional. Guard de closure_id é camada separada.",
+      "runtime_tested": false,
+      "source_scope": "source_extra_requires_adjudication"
+    },
+    "public.conversation_closures.Agents can create closures for their contacts": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Duas policies integrais: INSERT só testa visibilidade de contact_id; SELECT visibilidade/staff. Campo agent_id não é vinculado ao ator por esta policy, mas triggers de gamificação/autorização precisam ser cruzados antes de alegar forja. Guard client_request_id não substitui check de autoria. DB-008 sobre unique de dia permanece separado.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_closures.Agents or admins can view closures": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Duas policies integrais: INSERT só testa visibilidade de contact_id; SELECT visibilidade/staff. Campo agent_id não é vinculado ao ator por esta policy, mas triggers de gamificação/autorização precisam ser cruzados antes de alegar forja. Guard client_request_id não substitui check de autoria. DB-008 sobre unique de dia permanece separado.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_sla.Admins can insert SLA": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT/UPDATE admin-supervisor; SELECT admin ou contatos atribuídos a agentes visíveis, sem caminho de fila explícito. Nenhum produtor normal de linhas pendentes foi localizado na fase de funções; runtime/import/admin permanecem precondições das métricas tratadas pelo root.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_sla.Admins can update SLA": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT/UPDATE admin-supervisor; SELECT admin ou contatos atribuídos a agentes visíveis, sem caminho de fila explícito. Nenhum produtor normal de linhas pendentes foi localizado na fase de funções; runtime/import/admin permanecem precondições das métricas tratadas pelo root.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_sla.conversation_sla_select_policy": {
+      "review_batch": "policy-02-contacts",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT/UPDATE admin-supervisor; SELECT admin ou contatos atribuídos a agentes visíveis, sem caminho de fila explícito. Nenhum produtor normal de linhas pendentes foi localizado na fase de funções; runtime/import/admin permanecem precondições das métricas tratadas pelo root.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.messages.Users can insert messages": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Três policies integrais, incluindo CREATE+ALTER vencedor de UPDATE. SELECT/UPDATE staff, agentes visíveis ou membro ativo de fila; INSERT exige agente nulo/próprio para não-staff e mesma visibilidade. Nenhuma DELETE direta presente. Guards internos revisados separadamente: não assumir que todos os edits sent são negados.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.messages.Users can update messages from their assigned contacts": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Três policies integrais, incluindo CREATE+ALTER vencedor de UPDATE. SELECT/UPDATE staff, agentes visíveis ou membro ativo de fila; INSERT exige agente nulo/próprio para não-staff e mesma visibilidade. Nenhuma DELETE direta presente. Guards internos revisados separadamente: não assumir que todos os edits sent são negados.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.messages.messages_select_policy": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Três policies integrais, incluindo CREATE+ALTER vencedor de UPDATE. SELECT/UPDATE staff, agentes visíveis ou membro ativo de fila; INSERT exige agente nulo/próprio para não-staff e mesma visibilidade. Nenhuma DELETE direta presente. Guards internos revisados separadamente: não assumir que todos os edits sent são negados.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.message_reactions.Users can delete their own reactions": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Sete corpos integrais: policies permissivas se combinam por OR; DELETE own não restringe a DELETE adicional baseada apenas na mensagem. INSERT/UPDATE adicionais não vinculam user_id ao ator. Nenhum trigger de identidade encontrado; candidato de autoria/vínculo em avaliação com consumidor Inbox, separado de team_message_reactions.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.message_reactions.Users can insert reactions for assigned contacts": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Sete corpos integrais: policies permissivas se combinam por OR; DELETE own não restringe a DELETE adicional baseada apenas na mensagem. INSERT/UPDATE adicionais não vinculam user_id ao ator. Nenhum trigger de identidade encontrado; candidato de autoria/vínculo em avaliação com consumidor Inbox, separado de team_message_reactions.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.message_reactions.Users can view reactions on accessible messages": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Sete corpos integrais: policies permissivas se combinam por OR; DELETE own não restringe a DELETE adicional baseada apenas na mensagem. INSERT/UPDATE adicionais não vinculam user_id ao ator. Nenhum trigger de identidade encontrado; candidato de autoria/vínculo em avaliação com consumidor Inbox, separado de team_message_reactions.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.message_reactions.message_reactions_delete_policy": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Sete corpos integrais: policies permissivas se combinam por OR; DELETE own não restringe a DELETE adicional baseada apenas na mensagem. INSERT/UPDATE adicionais não vinculam user_id ao ator. Nenhum trigger de identidade encontrado; candidato de autoria/vínculo em avaliação com consumidor Inbox, separado de team_message_reactions.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.message_reactions.message_reactions_insert_policy": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Sete corpos integrais: policies permissivas se combinam por OR; DELETE own não restringe a DELETE adicional baseada apenas na mensagem. INSERT/UPDATE adicionais não vinculam user_id ao ator. Nenhum trigger de identidade encontrado; candidato de autoria/vínculo em avaliação com consumidor Inbox, separado de team_message_reactions.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.message_reactions.message_reactions_select_policy": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Sete corpos integrais: policies permissivas se combinam por OR; DELETE own não restringe a DELETE adicional baseada apenas na mensagem. INSERT/UPDATE adicionais não vinculam user_id ao ator. Nenhum trigger de identidade encontrado; candidato de autoria/vínculo em avaliação com consumidor Inbox, separado de team_message_reactions.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.message_reactions.message_reactions_update_policy": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Sete corpos integrais: policies permissivas se combinam por OR; DELETE own não restringe a DELETE adicional baseada apenas na mensagem. INSERT/UPDATE adicionais não vinculam user_id ao ator. Nenhum trigger de identidade encontrado; candidato de autoria/vínculo em avaliação com consumidor Inbox, separado de team_message_reactions.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.scheduled_messages.Users can create scheduled messages": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais limitam CRUD ao criador ou staff. Não verificam contact_id; nenhum motor SQL/Edge versionado localizado na fase de funções. Assim não afirmar que inserir agendamento para contato alheio produz envio real sem motor; integração é limite compartilhado com providers.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.scheduled_messages.Users can delete their scheduled messages": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais limitam CRUD ao criador ou staff. Não verificam contact_id; nenhum motor SQL/Edge versionado localizado na fase de funções. Assim não afirmar que inserir agendamento para contato alheio produz envio real sem motor; integração é limite compartilhado com providers.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.scheduled_messages.Users can update their scheduled messages": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais limitam CRUD ao criador ou staff. Não verificam contact_id; nenhum motor SQL/Edge versionado localizado na fase de funções. Assim não afirmar que inserir agendamento para contato alheio produz envio real sem motor; integração é limite compartilhado com providers.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.scheduled_messages.Users can view their scheduled messages": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais limitam CRUD ao criador ou staff. Não verificam contact_id; nenhum motor SQL/Edge versionado localizado na fase de funções. Assim não afirmar que inserir agendamento para contato alheio produz envio real sem motor; integração é limite compartilhado com providers.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.whisper_messages.Users can delete own whisper messages": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT sender próprio ou staff; SELECT sender/target/staff; DELETE staff, apesar do nome own. Não há UPDATE. O contato não é check de INSERT aqui; acesso/fluxo consumidor revisto por Inbox antes de concluir exposição.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.whisper_messages.Users can insert own whisper messages": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT sender próprio ou staff; SELECT sender/target/staff; DELETE staff, apesar do nome own. Não há UPDATE. O contato não é check de INSERT aqui; acesso/fluxo consumidor revisto por Inbox antes de concluir exposição.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.whisper_messages.Users can view own whisper messages": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT sender próprio ou staff; SELECT sender/target/staff; DELETE staff, apesar do nome own. Não há UPDATE. O contato não é check de INSERT aqui; acesso/fluxo consumidor revisto por Inbox antes de concluir exposição.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.pinned_conversations.Users can create own pins": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais e DO-074. INSERT exige proprietário e EXISTS de contato sob RLS, então existência visível é autorizada. UPDATE mantém proprietário mas não repete EXISTS de contato; preservação/reparent do alvo é candidato de contrato, sem acesso ao conteúdo por esse ID sozinho.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.pinned_conversations.Users can delete own pins": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais e DO-074. INSERT exige proprietário e EXISTS de contato sob RLS, então existência visível é autorizada. UPDATE mantém proprietário mas não repete EXISTS de contato; preservação/reparent do alvo é candidato de contrato, sem acesso ao conteúdo por esse ID sozinho.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.pinned_conversations.Users can update own pins": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais e DO-074. INSERT exige proprietário e EXISTS de contato sob RLS, então existência visível é autorizada. UPDATE mantém proprietário mas não repete EXISTS de contato; preservação/reparent do alvo é candidato de contrato, sem acesso ao conteúdo por esse ID sozinho.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.pinned_conversations.Users can view own pins": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais e DO-074. INSERT exige proprietário e EXISTS de contato sob RLS, então existência visível é autorizada. UPDATE mantém proprietário mas não repete EXISTS de contato; preservação/reparent do alvo é candidato de contrato, sem acesso ao conteúdo por esse ID sozinho.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.favorite_contacts.Users can create own favorites": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais e DO-074: INSERT próprio mais contato visível pela subconsulta; SELECT/DELETE/UPDATE próprio. UPDATE não garante mesma validação de contact_id do INSERT, mas não revela contato oculto por si só; nenhum bypass de leitura de contacts alegado.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.favorite_contacts.Users can delete own favorites": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais e DO-074: INSERT próprio mais contato visível pela subconsulta; SELECT/DELETE/UPDATE próprio. UPDATE não garante mesma validação de contact_id do INSERT, mas não revela contato oculto por si só; nenhum bypass de leitura de contacts alegado.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.favorite_contacts.Users can update own favorites": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais e DO-074: INSERT próprio mais contato visível pela subconsulta; SELECT/DELETE/UPDATE próprio. UPDATE não garante mesma validação de contact_id do INSERT, mas não revela contato oculto por si só; nenhum bypass de leitura de contacts alegado.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.favorite_contacts.Users can view own favorites": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais e DO-074: INSERT próprio mais contato visível pela subconsulta; SELECT/DELETE/UPDATE próprio. UPDATE não garante mesma validação de contact_id do INSERT, mas não revela contato oculto por si só; nenhum bypass de leitura de contacts alegado.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_snoozes.Users can create own snoozes": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais e DO-074: INSERT próprio+contato visível, SELECT/DELETE próprio; não existe UPDATE de snooze na composição atual. Suposição de reprogramação via UPDATE requer consumidor, não inventada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_snoozes.Users can delete own snoozes": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais e DO-074: INSERT próprio+contato visível, SELECT/DELETE próprio; não existe UPDATE de snooze na composição atual. Suposição de reprogramação via UPDATE requer consumidor, não inventada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_snoozes.Users can view own snoozes": {
+      "review_batch": "policy-03-messages",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais e DO-074: INSERT próprio+contato visível, SELECT/DELETE próprio; não existe UPDATE de snooze na composição atual. Suposição de reprogramação via UPDATE requer consumidor, não inventada.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.departments.departments_admin_write": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Dois corpos integrais: SELECT autenticado global, ALL admin/supervisor. Gestão não é concedida a membro comum pela policy SELECT.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.departments.departments_select": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Dois corpos integrais: SELECT autenticado global, ALL admin/supervisor. Gestão não é concedida a membro comum pela policy SELECT.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.department_invites.dept_invites_delete_authenticated": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT/SELECT/DELETE authenticated true e grants desses comandos constam no snapshot. Permissões amplas e contrato legado já constam em TC-008; não duplicar como achado novo. Diferente da tabela department_invitations.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.department_invites.dept_invites_insert_authenticated": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT/SELECT/DELETE authenticated true e grants desses comandos constam no snapshot. Permissões amplas e contrato legado já constam em TC-008; não duplicar como achado novo. Diferente da tabela department_invitations.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.department_invites.dept_invites_select_authenticated": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: INSERT/SELECT/DELETE authenticated true e grants desses comandos constam no snapshot. Permissões amplas e contrato legado já constam em TC-008; não duplicar como achado novo. Diferente da tabela department_invitations.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.department_invitations.department_invitations_admin_all": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "ALL admin/supervisor com USING/CHECK explícitos. Tabela canônica prevista não torna o consumidor legado de department_invites seguro por associação de nome.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.department_audit_logs.dept_audit_select_own_dept": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "SELECT único exige profile atual admin/supervisor do mesmo department_id. Nenhuma escrita authenticated pela policy. Rótulo staff global não dispensa vínculo ao departamento aqui.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_conversations.Authenticated users can create conversations": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: INSERT criador próprio; SELECT membro ou criador; UPDATE criador próprio; DELETE criador ou staff. TC-003 já documenta grant UPDATE de tabela superando revogações de colunas; revisão não confunde coluna revogada com limite efetivo se grant amplo persiste.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_conversations.Conversation creator or admin can delete": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: INSERT criador próprio; SELECT membro ou criador; UPDATE criador próprio; DELETE criador ou staff. TC-003 já documenta grant UPDATE de tabela superando revogações de colunas; revisão não confunde coluna revogada com limite efetivo se grant amplo persiste.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_conversations.Members can view their conversations": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: INSERT criador próprio; SELECT membro ou criador; UPDATE criador próprio; DELETE criador ou staff. TC-003 já documenta grant UPDATE de tabela superando revogações de colunas; revisão não confunde coluna revogada com limite efetivo se grant amplo persiste.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_conversations.team_conversations_update_own": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: INSERT criador próprio; SELECT membro ou criador; UPDATE criador próprio; DELETE criador ou staff. TC-003 já documenta grant UPDATE de tabela superando revogações de colunas; revisão não confunde coluna revogada com limite efetivo se grant amplo persiste.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_conversation_members.tcm_delete_own_or_admin": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT usa helper SECURITY DEFINER para evitar recursão; INSERT exige membro existente ou staff, sem member_role=member; DELETE próprio/staff; UPDATE próprio limitado também por grants de colunas de preferência. Bootstrap, último owner e papel de INSERT já são TC-003, preservados sem novo ID.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_conversation_members.tcm_insert_member": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT usa helper SECURITY DEFINER para evitar recursão; INSERT exige membro existente ou staff, sem member_role=member; DELETE próprio/staff; UPDATE próprio limitado também por grants de colunas de preferência. Bootstrap, último owner e papel de INSERT já são TC-003, preservados sem novo ID.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_conversation_members.tcm_select_own": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT usa helper SECURITY DEFINER para evitar recursão; INSERT exige membro existente ou staff, sem member_role=member; DELETE próprio/staff; UPDATE próprio limitado também por grants de colunas de preferência. Bootstrap, último owner e papel de INSERT já são TC-003, preservados sem novo ID.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_conversation_members.tcm_update_own_prefs": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais: SELECT usa helper SECURITY DEFINER para evitar recursão; INSERT exige membro existente ou staff, sem member_role=member; DELETE próprio/staff; UPDATE próprio limitado também por grants de colunas de preferência. Bootstrap, último owner e papel de INSERT já são TC-003, preservados sem novo ID.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_messages.Members can send messages": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos vencedores integrais: SELECT/INSERT exigem membership, INSERT sender próprio; UPDATE/DELETE sender próprio. Grants UPDATE são apenas content/is_edited/updated_at, então não alegar reparent por ausência de membership no CHECK. Policy antiga extra deve ser adjudicada como substituída; trigger edit guard foi lido na fase de funções.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_messages.Members can view conversation messages": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos vencedores integrais: SELECT/INSERT exigem membership, INSERT sender próprio; UPDATE/DELETE sender próprio. Grants UPDATE são apenas content/is_edited/updated_at, então não alegar reparent por ausência de membership no CHECK. Policy antiga extra deve ser adjudicada como substituída; trigger edit guard foi lido na fase de funções.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_messages.Senders can delete own messages": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos vencedores integrais: SELECT/INSERT exigem membership, INSERT sender próprio; UPDATE/DELETE sender próprio. Grants UPDATE são apenas content/is_edited/updated_at, então não alegar reparent por ausência de membership no CHECK. Policy antiga extra deve ser adjudicada como substituída; trigger edit guard foi lido na fase de funções.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_messages.team_messages_update_own": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos vencedores integrais: SELECT/INSERT exigem membership, INSERT sender próprio; UPDATE/DELETE sender próprio. Grants UPDATE são apenas content/is_edited/updated_at, então não alegar reparent por ausência de membership no CHECK. Policy antiga extra deve ser adjudicada como substituída; trigger edit guard foi lido na fase de funções.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_messages.Senders can edit own messages": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Quatro corpos vencedores integrais: SELECT/INSERT exigem membership, INSERT sender próprio; UPDATE/DELETE sender próprio. Grants UPDATE são apenas content/is_edited/updated_at, então não alegar reparent por ausência de membership no CHECK. Policy antiga extra deve ser adjudicada como substituída; trigger edit guard foi lido na fase de funções.",
+      "runtime_tested": false,
+      "source_scope": "source_extra_requires_adjudication"
+    },
+    "public.team_message_reactions.reactions_delete": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Cinco corpos integrais: INSERT próprio e membership via mensagem; duas SELECT equivalentes por mensagem/membro; duas DELETE próprias. FKs conversation_id/message_id continuam separadas (TC-009); RPC corrigida não garante INSERT direto. Não existe UPDATE autenticado por policy no conjunto.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_message_reactions.reactions_select": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Cinco corpos integrais: INSERT próprio e membership via mensagem; duas SELECT equivalentes por mensagem/membro; duas DELETE próprias. FKs conversation_id/message_id continuam separadas (TC-009); RPC corrigida não garante INSERT direto. Não existe UPDATE autenticado por policy no conjunto.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_message_reactions.team_message_reactions_delete": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Cinco corpos integrais: INSERT próprio e membership via mensagem; duas SELECT equivalentes por mensagem/membro; duas DELETE próprias. FKs conversation_id/message_id continuam separadas (TC-009); RPC corrigida não garante INSERT direto. Não existe UPDATE autenticado por policy no conjunto.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_message_reactions.team_message_reactions_insert": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Cinco corpos integrais: INSERT próprio e membership via mensagem; duas SELECT equivalentes por mensagem/membro; duas DELETE próprias. FKs conversation_id/message_id continuam separadas (TC-009); RPC corrigida não garante INSERT direto. Não existe UPDATE autenticado por policy no conjunto.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_message_reactions.team_message_reactions_select": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Cinco corpos integrais: INSERT próprio e membership via mensagem; duas SELECT equivalentes por mensagem/membro; duas DELETE próprias. FKs conversation_id/message_id continuam separadas (TC-009); RPC corrigida não garante INSERT direto. Não existe UPDATE autenticado por policy no conjunto.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_message_receipts.Conversation members can read receipts": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: SELECT membership no conversation_id; INSERT próprio sem membership; UPDATE próprio+status read. A regressão INSERT já é DB-011; os vínculos não derivados integralmente já são TC-009. Não afirmar leitura do conteúdo de outra conversa.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_message_receipts.Members can insert own receipts": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: SELECT membership no conversation_id; INSERT próprio sem membership; UPDATE próprio+status read. A regressão INSERT já é DB-011; os vínculos não derivados integralmente já são TC-009. Não afirmar leitura do conteúdo de outra conversa.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.team_message_receipts.team_message_receipts_update_own": {
+      "review_batch": "policy-04-team",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: SELECT membership no conversation_id; INSERT próprio sem membership; UPDATE próprio+status read. A regressão INSERT já é DB-011; os vínculos não derivados integralmente já são TC-009. Não afirmar leitura do conteúdo de outra conversa.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_providers.Admins can delete AI providers": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais restringem SELECT e todas as mutações a has_role(admin), não supervisor. Nenhuma policy de leitura de chave para agente; os triggers só lidam com default/updated_at, sem fallback no DELETE (ponte providers).",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_providers.Admins can insert AI providers": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais restringem SELECT e todas as mutações a has_role(admin), não supervisor. Nenhuma policy de leitura de chave para agente; os triggers só lidam com default/updated_at, sem fallback no DELETE (ponte providers).",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_providers.Admins can update AI providers": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais restringem SELECT e todas as mutações a has_role(admin), não supervisor. Nenhuma policy de leitura de chave para agente; os triggers só lidam com default/updated_at, sem fallback no DELETE (ponte providers).",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_providers.Admins can view AI providers": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Quatro corpos integrais restringem SELECT e todas as mutações a has_role(admin), não supervisor. Nenhuma policy de leitura de chave para agente; os triggers só lidam com default/updated_at, sem fallback no DELETE (ponte providers).",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_usage_logs.Admins can view all AI usage logs": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: SELECT próprio e staff; INSERT apenas service_role. Nenhuma escrita direta authenticated liberada por policy. Métricas de custo seguem RLS do usuário em SECURITY INVOKER; janela NULL do consumidor foi entregue a Auth.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_usage_logs.Service role can insert AI usage logs": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: SELECT próprio e staff; INSERT apenas service_role. Nenhuma escrita direta authenticated liberada por policy. Métricas de custo seguem RLS do usuário em SECURITY INVOKER; janela NULL do consumidor foi entregue a Auth.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_usage_logs.Users can view own AI usage logs": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais: SELECT próprio e staff; INSERT apenas service_role. Nenhuma escrita direta authenticated liberada por policy. Métricas de custo seguem RLS do usuário em SECURITY INVOKER; janela NULL do consumidor foi entregue a Auth.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_model_prices.authenticated_read_ai_model_prices": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "SELECT authenticated true único; permite ver tarifas, sem INSERT/UPDATE/DELETE cliente. Não confundir preço público com segredo de provedor.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_conversation_tags.Admins can delete ai tags": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Cinco corpos integrais: SELECT por visibilidade, INSERT responsável ou staff, UPDATE staff, DELETE responsável/staff por OR entre duas policies. source=human/manual/ai não é limitado na policy; a corrupção de origem pelo RPC está em DB-012, sem afirmar novo bypass de conteúdo.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_conversation_tags.Admins can update ai tags": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Cinco corpos integrais: SELECT por visibilidade, INSERT responsável ou staff, UPDATE staff, DELETE responsável/staff por OR entre duas policies. source=human/manual/ai não é limitado na policy; a corrupção de origem pelo RPC está em DB-012, sem afirmar novo bypass de conteúdo.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_conversation_tags.Agents can delete tags on assigned contacts": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Cinco corpos integrais: SELECT por visibilidade, INSERT responsável ou staff, UPDATE staff, DELETE responsável/staff por OR entre duas policies. source=human/manual/ai não é limitado na policy; a corrupção de origem pelo RPC está em DB-012, sem afirmar novo bypass de conteúdo.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_conversation_tags.Authenticated can view ai tags": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Cinco corpos integrais: SELECT por visibilidade, INSERT responsável ou staff, UPDATE staff, DELETE responsável/staff por OR entre duas policies. source=human/manual/ai não é limitado na policy; a corrupção de origem pelo RPC está em DB-012, sem afirmar novo bypass de conteúdo.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.ai_conversation_tags.Users can insert ai tags for assigned contacts": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Cinco corpos integrais: SELECT por visibilidade, INSERT responsável ou staff, UPDATE staff, DELETE responsável/staff por OR entre duas policies. source=human/manual/ai não é limitado na policy; a corrupção de origem pelo RPC está em DB-012, sem afirmar novo bypass de conteúdo.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_analyses.Authenticated users can view analyses": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Dois corpos integrais: SELECT por visibilidade e INSERT com analyzed_by próprio+visibilidade. ACLs posteriores/RPC service-only são outra camada; timestamp de recência não é garantido por esses predicados.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_analyses.Users can insert own analyses": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Dois corpos integrais: SELECT por visibilidade e INSERT com analyzed_by próprio+visibilidade. ACLs posteriores/RPC service-only são outra camada; timestamp de recência não é garantido por esses predicados.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_memory.Agents can insert memory for their contacts": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais de SELECT/INSERT/UPDATE por visibilidade do contato. updated_by não é vinculado ao ator na policy; a atribuição de metadado não foi promovida sem consumidor específico. Não há DELETE direto no conjunto.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_memory.Agents can update memory for their contacts": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais de SELECT/INSERT/UPDATE por visibilidade do contato. updated_by não é vinculado ao ator na policy; a atribuição de metadado não foi promovida sem consumidor específico. Não há DELETE direto no conjunto.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.conversation_memory.Agents or admins can view memory": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Três corpos integrais de SELECT/INSERT/UPDATE por visibilidade do contato. updated_by não é vinculado ao ator na policy; a atribuição de metadado não foi promovida sem consumidor específico. Não há DELETE direto no conjunto.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.entity_versions.Admins can view entity versions": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "SELECT staff e INSERT authenticated false como únicas policies. Não assumir escrita cliente para gerar versões; helpers/serviço privilegiado precisam fazer essa tarefa.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.entity_versions.Block authenticated version inserts": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "SELECT staff e INSERT authenticated false como únicas policies. Não assumir escrita cliente para gerar versões; helpers/serviço privilegiado precisam fazer essa tarefa.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.knowledge_base_articles.Admins can manage knowledge base": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Dois corpos integrais: leitura de publicado ou staff, ALL staff com CHECK. Artigo não publicado não é visível a agente por política global.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.knowledge_base_articles.Authenticated can view knowledge base": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Dois corpos integrais: leitura de publicado ou staff, ALL staff com CHECK. Artigo não publicado não é visível a agente por política global.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.knowledge_base_files.Admins can manage kb files": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Dois corpos integrais: ALL staff e SELECT de arquivo cujo artigo está publicado (ou staff). Subconsulta respeita RLS de artigos; Storage é outra camada e será revisado em separado.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    },
+    "public.knowledge_base_files.Users can view knowledge base files": {
+      "review_batch": "policy-05-ai",
+      "body_read_in_full": true,
+      "note": "Dois corpos integrais: ALL staff e SELECT de arquivo cujo artigo está publicado (ou staff). Subconsulta respeita RLS de artigos; Storage é outra camada e será revisado em separado.",
+      "runtime_tested": false,
+      "source_scope": "snapshot_public"
+    }
+  },
+  "do_blocks": {
+    "DO-001": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: enumera todas as policies de public.whatsapp_groups e as remove com identificador quoted. Explica sobras antigas da projeção lexical; não executado.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-002": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: apenas se profiles_public for tabela comum ativa RLS e SELECT autenticado true; não altera uma view de mesmo nome. Esta condição não define a policy de sicoob_contact_mapping.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-003": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: cria SELECT admin/supervisor em sicoob_contact_mapping somente se for tabela comum. Fonte correta da identidade presente no snapshot, sem inferir rollout a partir do IF.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-004": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: remove dois nomes conhecidos de SELECT telemetry, procura outro qual=true e apenas nesse ramo cria SELECT próprio/admin. O comentário promete remover todas as SELECT, mas o ramo não o faz; conferir composição final ao revisar query_telemetry.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-005": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: remove condicionalmente o INSERT direto nomeado em login_attempts. O teste de existência omite schema; não se presume schema homônimo no ambiente.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-006": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: cria SELECT login_attempts somente para authenticated admin/supervisor se nome ausente. Predicado admin é explícito, sem alegar ampla leitura apenas por TO authenticated.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-007": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: criação condicional de INSERT blocked_ips; WITH CHECK admin/supervisor.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-008": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: criação condicional de UPDATE blocked_ips; USING admin/supervisor também rege WITH CHECK omitido na semântica PG.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-009": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: criação condicional de DELETE blocked_ips; exige admin/supervisor.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-010": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: DROP da antiga policy Anyone can create contacts, com exceção genérica ignorada. A autorização atual depende das políticas posteriores; não tratar esse cleanup isolado como garantia de sucesso.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-011": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: remove policies SELECT encontradas por nome de tabela talkx_blacklist, com alvo fixo public. Não remove ALL; composição final será conferida. Sem expansão real.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-012": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: agrega DROP SELECT de campaigns e executa string. SQL dinâmico depende de pelo menos uma policy encontrada; nenhum erro de replay foi provocado. Policies finais posteriores substituem esse estado.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-013": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: agrega DROP SELECT de sla_rules; identificadores quoted, mas lista e ausência de policy são condições de catálogo não executadas.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-014": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: agrega DROP SELECT de geo_blocking_settings. Não remove ALL; autorização final exige compor as políticas remanescentes.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-015": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: agrega DROP SELECT de client_wallet_rules; explica policy histórica que permanece no inventário lexical. Nenhum acesso real inferido de corpo substituído.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-016": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: agrega DROP SELECT de automations. Não equivale a executar ou validar o replay; futuras CREATEs determinam o acesso final.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-017": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: agrega DROP SELECT de queue_members. Policies ALL não estão nesse filtro; composição final revisada separadamente.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-018": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: cria condicionalmente SELECT contacts para has_role(admin), não supervisor. Migrações de autorização posteriores prevalecem; não usar esse estado antigo como autorização final.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-019": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: remove SELECT Anyone can read messages somente no schema public; não modifica policies de realtime.messages. Acesso à publicação e às tabelas são superfícies distintas.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-020": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: varre SECURITY DEFINER executáveis por anon fora de uma lista de pre-auth e revoga grant de anon. Isoladamente não remove privilégio herdado de PUBLIC; DO seguinte trata PUBLIC.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-021": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: para SECURITY DEFINER fora da lista pre-auth, revoga PUBLIC/anon e concede authenticated/service_role. Esse sweep não prova segurança de cada corpo nem alcança funções criadas depois; ACLs vencedoras foram cruzadas individualmente na fase de funções.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-022": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: adiciona queues à publicação supabase_realtime; captura somente duplicate_object. Publicação não dispensa RLS SELECT no consumo normal.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-023": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: adiciona queue_members à publicação e tolera duplicate_object; sem modificação de policies ou grants.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-024": {
+      "review_batch": "access-01",
+      "note": "Lido integralmente: adiciona messages à publicação e tolera duplicata. Não cria policy global de leitura nem configura acesso a canais privados.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-025": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: revoga mcp_exec(text,integer) de authenticated, anon e PUBLIC; tolera somente assinatura inexistente.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-026": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: mesma revogação para mcp_exec_many(text[],integer). Não invoca executor SQL.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-027": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: concede mcp_exec somente a service_role/postgres se existir. Contexto ACL restrita, não aprovação para usar o RPC.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-028": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: concede mcp_exec_many somente a service_role/postgres se existir. Nenhuma expansão ou consulta executada.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-029": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: adiciona comentários sobre funções ditas órfãs em agosto por nome. Comentários não revogam ACL nem provam ausência de consumidores na revisão atual; referências posteriores foram examinadas na fase de funções.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-030": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: comenta mcp_exec como infraestrutura privilegiada e tolera inexistência; não faz mutação de privilégios.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-031": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: comenta mcp_exec_many, sem execução nem mudanças de corpo ou ACL.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-032": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: se chave Gmail simbólica não existe, gera 32 bytes aleatórios e cria segredo no Vault. Apenas código foi lido; não houve leitura de valor, criação de segredo ou logging. Sem geração determinística de chave nesse corpo.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-033": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: remove SELECT contact_notes anterior por nome antes de nova CREATE externa ao bloco. Guard de existência não compara schema; estado final tem substituição posterior explícita.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-034": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: remove SELECT conversation_events anterior; histórico posterior renomeia outra policy vencedora. Evitada conclusão pelo nome antigo isoladamente.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-035": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: remove SELECT conversation_sla anterior para substituição logo após. Não altera INSERT/UPDATE nem escopo de políticas ALL.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-036": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: remove SELECT message_reactions anterior. Demais policies permissivas podem se somar; serão lidas na composição por tabela.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-037": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: valida existência por nome e SECURITY DEFINER de dois helpers de perfil. Isso não valida lógica, owner, search_path ou autorização. Nenhum resultado desse RAISE NOTICE foi tratado como teste executado.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-038": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: enumera ACLs explícitas de colunas webhook_failures, aceita somente quatro privilégios de coluna e revoga com CASCADE; PUBLIC tratado como OID0, nomes quoted. Objetivo cobre grants de coluna que um REVOKE de tabela isolado não elimina.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-039": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: somente NOTICE no-op por migração substituída; nenhuma definição search_contacts foi tratada como vinda desse bloco.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-040": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: cria FKs department_id de profiles/team_conversations se não houver FK por relação e attnums correspondentes. Reconhece equivalência por colunas, não só nome; sem backfill implícito nem validação de população executada.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-041": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: NOTICE de revogação revertida, explicitamente no-op no replay. A ACL vencedora precisa vir das migrações seguintes.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-042": {
+      "review_batch": "access-02",
+      "note": "Lido integralmente: verifica contagem de LIDs marcada entre400–700 e soma de flags. Um replay vazio encontra0 e falha; gate acoplado à população histórica enviado à revisão infra para evitar ID duplicado. Nenhum dado contado de verdade.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-043": {
+      "review_batch": "access-03",
+      "note": "Lido integralmente: remove todas as policies de public.contact_notes antes das quatro novas políticas. As permissões antigas de admin/autores não se somam à definição vencedora; fonte que explica extras lexicais obsoletos.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-044": {
+      "review_batch": "access-03",
+      "note": "Lido integralmente: preflight rejeita templates com campos centrais nulos, tamanhos, status, URL/tipo de mídia e variáveis inválidos/duplicados. Não normaliza silenciosamente dados incompatíveis; nenhuma linha real foi inspecionada.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-045": {
+      "review_batch": "access-03",
+      "note": "Lido integralmente: preflight de variantes e adição condicional de CHECKs de conteúdo e mídia NOT VALID. A existência é por nome da constraint; fases posteriores validam. Leitura não equivale a aprovação dos dados legados.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-046": {
+      "review_batch": "access-03",
+      "note": "Lido integralmente: preflight impede histórico com nulls em template_id/version_number/name/content/category. Não inventa conteúdo histórico para reparar nulos.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-047": {
+      "review_batch": "access-03",
+      "note": "Lido integralmente: garante PK, FKs, UNIQUE de versão e CHECKs por nomes. O saved_by_fkey inicialmente só confere nome, mas DO seguinte de20260909230000 reconcilia alvo/colunas/ação de exclusão; não reabrir esse drift como atual.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-048": {
+      "review_batch": "access-03",
+      "note": "Lido integralmente: lê attnums, rejeita colunas ausentes, remove FK saved_by com alvo/colunas/delete action divergente, recria profiles(id) ON DELETE SET NULL e valida. Correção explícita do problema de nome-only anterior.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-049": {
+      "review_batch": "access-03",
+      "note": "Lido integralmente: cria enum talkx_blacklist_reason com seis razões se typname ausente. Consulta omite namespace, mas nenhum homônimo conflitante foi demonstrado; sem claim de falha real por hipótese.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-050": {
+      "review_batch": "access-03",
+      "note": "Lido integralmente: preflight de external_id, mídia, timezone, janela e revision; não executado. A expressão de mídia com NOT pode produzir NULL em pares incompletos, portanto o bloco não é prova geral de ausência de mídia parcial. Consumidores/guards de runtime foram separados na revisão de funções.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-051": {
+      "review_batch": "access-03",
+      "note": "Lido integralmente: adiciona calls ao Realtime só se publicação existe e tabela ainda não consta. Sem exposição por si só, nem CREATE de policy SELECT.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-052": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: cria segredo legado Multiplix se ausente usando concatenação de md5(random()). Não houve leitura de segredo. A escolha não é gerador criptográfico explícito como Gmail; rotação/uso final é condicional e não foi promovido a exploração por mera presença do nome.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-053": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga PUBLIC de bump_conversation_updated_at, tolerando assinatura ausente. Trigger não deve ser chamado como RPC comum.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-054": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga grant direto anon da mesma bump_conversation_updated_at; complementa bloco anterior.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-055": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga PUBLIC de enforce_conversation_status_transition; ACL cliente restante depende de grants posteriores.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-056": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga PUBLIC de prevent_contact_assignee_hijack, sem desativar trigger.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-057": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga PUBLIC de prevent_contact_queue_hijack, sem alterar regras de fila.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-058": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga PUBLIC de prevent_conversation_task_field_forgery; execução automática do trigger continua.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-059": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga PUBLIC de seed_default_goals_for_profile; bloco não altera metas.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-060": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga PUBLIC de set_scheduled_report_config_owner; não torna seus campos cliente-editáveis.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-061": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga PUBLIC de trg_talkx_increment_replied_count; não muda contrato da atribuição de resposta.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-062": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga PUBLIC de trg_talkx_increment_template_use_count; não remove seu efeito por trigger.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-063": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: DROP INDEX CONCURRENTLY dinâmico dentro de DO se idx_audit_logs_user_created existe. Restrição transacional/execução em função é candidato de replay encaminhado à infra; a migração posterior de DROP normal não modifica este corpo histórico.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-064": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: mesma tentativa de DROP INDEX CONCURRENTLY em DO para idx_conversation_events_from_queue_id, condicionada à existência. Encaminhado junto à infra, sem executar SQL.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-065": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: mesma tentativa CONCURRENTLY em DO para idx_conversation_events_to_queue_id. Não se confunde aplicação histórica de catálogo com capacidade de replay.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-066": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: DROP INDEX normal condicional de idx_audit_logs_user_created, compatível com transação. Corrige operação subsequente, mas não edita DO anterior.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-067": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: DROP normal condicional de índice from_queue_id; sem efeito em dados ou RLS.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-068": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: DROP normal condicional de índice to_queue_id; não é garantia de que migração anterior passaria.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-069": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: adiciona conversation_tasks à publicação se não encontra nome da tabela. Não testa schema no catálogo, mas alvo public é explícito; sem hipótese de homônimo tratada como incidente.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-070": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente, inclusive todos os sub-blocos da linha: adiciona team_messages, team_conversations, team_conversation_members e team_message_receipts à publicação, cada um tolerando duplicate_object. Nenhuma policy de canal privado é criada.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-071": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: cria URL simbólica de multiplix-send no Vault se ausente; URL corresponde ao projeto ZAPP definido nas instruções locais. Não lê nem imprime valor do segredo.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-072": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: enumera família de funções de conversa/gamificação/triggers e revoga anon/PUBLIC; concede authenticated/service apenas a não-triggers. Grant de EXECUTE não substitui guard no corpo e não remove conflito de gamificação DB-009.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-073": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: revoga anon/PUBLIC em cinco nomes IA e concede authenticated/service aos não-triggers. Revogação posterior de família IA também foi inventariada; funções novas exigem checagem de identidade própria.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-074": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: altera TO authenticated somente policies de cinco tabelas públicas com polroles exatamente PUBLIC. Preserva USING/CHECK e não é sweep de todo schema. Anexado como contexto às políticas afetadas.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-075": {
+      "review_batch": "access-04",
+      "note": "Lido integralmente: guard de drift de contact_deletion_audit exige nomes de nove colunas, não valida tipos, constraints, owner ou RLS. Nenhum resultado de runtime reivindicado.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-076": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: cria dois segredos dedicados de health-check/avatar com gen_random_bytes(32) somente se ausentes. Apenas nomes simbólicos e código foram lidos; nenhuma configuração externa foi verificada.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-077": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: antes do sweep PUBLIC, aborta se uma função de negócio perderia único caminho para API sem grant explícito authenticated/service_role. Exclui extensão e enforce_bucket. Não valida o corpo dessas funções nem novas identidades futuras.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-078": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: varre funções públicas fora de extensões/enforce_bucket e revoga EXECUTE de PUBLIC usando regprocedure. Ato histórico não altera defaults do criador nem bloqueia PUBLIC em sobrecarga criada depois, como DB-001.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-079": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: normaliza família IA, revoga anon, concede helpers de CHECK a authenticated/service e escrita ao service. Este bloco não revoga authenticated do ramo de escrita por si; a revogação anterior e o gate service no corpo devem ser considerados em conjunto.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-080": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: asserção falha por PUBLIC restante em funções de negócio; extensões/anon fora da família geram NOTICE somente. Não converter esses avisos em garantia de zero privilégio anon.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-081": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: revoga EXECUTE dos quatro roles de API em todos os triggers de public. Não remove vínculo do trigger nem impede seu disparo automático; não classificar presença de trigger em ACL anterior como RPC ordinário.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-082": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: asserção de zero EXECUTE de API em funções trigger, baseada em ACL expandida. Checagem histórica não alcança criação posterior; não foi executada nesta auditoria.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-083": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: remove duas tabelas Multiplix da publicação antes da conversão de tipos; sem guard de existência. Requer publicação/membership presentes naquele ponto da cadeia, com reintrodução posterior a conferir no arquivo; não é política de dados.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-084": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: gera segredo TalkX por md5(random()) se ausente. Mesma ressalva criptográfica do legado Multiplix; nada foi consultado no Vault nem testada predição ou credencial.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-085": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: verifica existência de cinco assinaturas TalkX via to_regprocedure. Não valida owners, grants, resultados ou comportamento de lease.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-086": {
+      "review_batch": "access-05",
+      "note": "Lido integralmente: concede temporariamente CREATE no schema public a service_role somente se faltante e registra marcador de sessão. A restauração seguinte e a função temporária pertencem ao mesmo mecanismo; não afirmar grant permanente sem ler o bloco final.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-087": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: revoga CREATE de service_role somente se o próprio backfill o concedeu segundo marcador. Correção do backfill temporário tem restauração explícita; não registrar grant permanente por ler só DO anterior.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-088": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: semeia URL TalkX no Vault se disponível/ausente e transforma qualquer erro em WARNING. Existência da função não comprova que essa configuração foi gravada; nada foi lido do Vault.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-089": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: altera comando de job TalkX existente, se cron.job existe, e ignora falha como WARNING. Não cria job ausente, não valida entrega HTTP nem comprova agendamento atual.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-090": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: exige quatro assinaturas do engine por to_regprocedure. Não verifica job, URL, segredo ou execução; as configurações condicionais dos DO anteriores permanecem limite.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-091": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: semeia segredo AI-jobs usando md5(random()) e captura qualquer erro como WARNING. Nenhum valor acessado; existência de rotina não prova seed nem qualidade criptográfica de credencial em uso.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-092": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: cria job AI-jobs somente se cron.job existe e nome ausente; captura erro como WARNING. Sem confirmação da cadência/execução real.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-093": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: verifica sete nomes de funções AI-jobs no schema public, não assinaturas, ACL, job ou resultados. Não substituir validação de consumidor por esse guard estrutural.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-094": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: verifica quatro assinaturas e três nomes de policies de TalkX. A existência por nome não garante conteúdo da policy; os corpos serão ligados individualmente no roster.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-095": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: verifica duas assinaturas de audiência por to_regprocedure. Não executa audiência nem valida scope/retorno.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-096": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: verifica três nomes de índices de idempotência em pg_indexes. Não valida unicidade, predicado, colunas ou equivalência da chave; esses detalhes dependem do DDL que os cria.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-097": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: verifica três assinaturas e duas colunas de campaign. Asserção não prova tipo das colunas, conteúdo de snapshots nem atomicidade; revisão de funções e consumidor é separada.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-098": {
+      "review_batch": "access-06",
+      "note": "Lido integralmente: remove job de mesmo nome se existente e agenda1–59 por hora, omitindo minuto0. Operação é idempotente por nome e comando fixo; pressupõe extensão cron disponível e não é teste executado.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-099": {
+      "review_batch": "access-07",
+      "note": "Lido integralmente: exige assinaturas de opt-out/normalização/supressão, tabela/view e ausência da antiga sobrecarga de seis parâmetros. A checagem evita ambiguidade de resolução, sem executar supressão real.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-100": {
+      "review_batch": "access-07",
+      "note": "Lido integralmente: espera duas funções por proname, sem resolver assinatura; dois overloads de uma e zero de outra passariam a contagem, embora esse desvio não exista no inventário atual. Não contar asserção por quantidade como revisão semântica.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-101": {
+      "review_batch": "access-07",
+      "note": "Lido integralmente: exige assinatura nova de overview e helper de scope, e ausência da antiga de dois argumentos. Confirma intenção de substituir overload; nenhum consumidor frontend foi localizado para overview_stats.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-102": {
+      "review_batch": "access-07",
+      "note": "Lido integralmente: exige três assinaturas de lifecycle após substituições; não valida atomicidade, cancelamento em voo nem conteúdo de eventos. DB-014 tem prova própria do interleaving.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-103": {
+      "review_batch": "access-07",
+      "note": "Lido integralmente: revoga quatro roles e remove increment_talkx_template_use caso a assinatura exista. Efeito condicional foi lido, não expandido/executado; a ausência é também guardada no fim da migração.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-104": {
+      "review_batch": "access-07",
+      "note": "Lido integralmente: verifica seis assinaturas, coluna skipped_count, nome da policy de evento e ausência do incremento antigo. Não testa o comportamento de checklist, retries ou fencing.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-105": {
+      "review_batch": "access-07",
+      "note": "Lido integralmente: cria publicação se ausente e retira talkx_recipients condicionalmente para ajuste/republicação. Não publica automaticamente todas as tabelas e não dispensa policy de leitura.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-106": {
+      "review_batch": "access-07",
+      "note": "Lido integralmente: procura índice por fragmentos de indexdef e cria índice parcial não-único de resposta se não encontrado. Ajuda seletor, mas não deduplica reply_message_id; DB-002 permanece. Heurística não prova equivalência completa de índices.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    },
+    "DO-107": {
+      "review_batch": "access-07",
+      "note": "Lido integralmente: verifica cinco assinaturas, read_count e presença de read_at na publicação de recipients. Distingue metadado de coluna publicado de execução de subscription/receipt; nenhuma expansão nem evento real.",
+      "body_read_in_full": true,
+      "dynamic_expansion_executed": false
+    }
+  },
+  "projection_notes": [
+    "107 corpos DO lidos individualmente. Não houve expansão executada. Escopo de policies dentro de DO, rename e exclusões deve ser reconciliado manualmente com a lista nominal de446 do snapshot público; nenhum diff bruto é prova de drift vivo."
+  ]
+}

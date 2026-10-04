@@ -1,0 +1,708 @@
+{
+  "schema_version": 1,
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "root",
+  "findings": [
+    {
+      "id": "R2-GOV-001",
+      "severity": "P2",
+      "title": "Duas fontes com tarefas explícitas ficaram sem adjudicação no registro de planos",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Reconciliar todas as fontes de requisitos, inclusive prompts históricos versionados.",
+      "observed_behavior": "SOURCE_CATALOG inclui os dois prompts como SUPPORTING_DOCUMENT, mas PLAN_REGISTRY e os 62 arquivos tasks não os referenciam. Há seis tarefas no prompt CRM 360° e quatro no de Inteligência.",
+      "impact": "Dez cabeçalhos de tarefa ficam sem sucessão, cancelamento ou correspondência explícita; isso não significa dez funcionalidades ausentes nem autoriza ressuscitar requisitos antigos.",
+      "evidence": [
+        {
+          "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+          "line_start": 44,
+          "line_end": 120,
+          "git_blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md#L44-L120",
+          "purpose": ""
+        },
+        {
+          "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+          "line_start": 25,
+          "line_end": 61,
+          "git_blob_sha": "a81f50f87747f3f3ae302441de527abfa36c2835",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md#L25-L61",
+          "purpose": ""
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "recommendation": "Adicionar a adjudicação de origem e a correspondência com consumidores e decisões atuais; manter requisitos históricos separados de trabalho novo.",
+      "feature_catalog_ids": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-GOV-002",
+      "severity": "P2",
+      "title": "Catálogo histórico com 349 marcações de conclusão não comprova os fluxos ativos",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Usar docs/COMPLETE_SYSTEM_FEATURES.md como evidência de cobertura funcional atual.",
+      "observed_behavior": "As 349 linhas numeradas com coluna de status estão marcadas ✅; 72 linhas referenciam caminhos literais inexistentes ou renomeados, correspondentes a 69 caminhos únicos. Push/Service Worker aparecem concluídos, enquanto a configuração ativa os desabilita. Alguns componentes citados foram substituídos.",
+      "impact": "Checkmarks e existência de arquivo podem encobrir capacidades desativadas, consumidores substituídos e contratos quebrados. O índice físico anterior não omitiu este arquivo; faltava confrontar suas promessas com os caminhos ativos.",
+      "evidence": [
+        {
+          "path": "docs/COMPLETE_SYSTEM_FEATURES.md",
+          "line_start": 430,
+          "line_end": 460,
+          "git_blob_sha": "13d9b928a05e8e6757e303f03c6a26dad5a16487",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/COMPLETE_SYSTEM_FEATURES.md#L430-L460",
+          "purpose": ""
+        },
+        {
+          "path": "docs/COMPLETE_SYSTEM_FEATURES.md",
+          "line_start": 558,
+          "line_end": 570,
+          "git_blob_sha": "13d9b928a05e8e6757e303f03c6a26dad5a16487",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/docs/COMPLETE_SYSTEM_FEATURES.md#L558-L570",
+          "purpose": ""
+        },
+        {
+          "path": "src/config/service_worker.ts",
+          "line_start": 1,
+          "line_end": 8,
+          "git_blob_sha": "9ba5876187a170437c792a4d3d59bd33724ea5c9",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/config/service_worker.ts#L1-L8",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/system/useServiceWorker.ts",
+          "line_start": 7,
+          "line_end": 43,
+          "git_blob_sha": "3f048903dabf53bcf464d00dae56964a117483ee",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/system/useServiceWorker.ts#L7-L43",
+          "purpose": ""
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "recommendation": "Tratar o catálogo como declaração histórica, registrar sucessores e estados de produto, e exigir prova por fluxo; não reativar capacidades removidas por decisão.",
+      "feature_catalog_ids": [
+        "20.3",
+        "20.13",
+        "27.2"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-QUE-001",
+      "severity": "P1",
+      "title": "Analytics de filas apresentam estimativas fixas como resultados medidos",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Abrir os detalhes ou gráficos de uma fila com contatos atribuídos.",
+      "observed_behavior": "QueueDetails define Tempo Médio como ~3 min e Resolvidos Hoje como floor(assignedContacts*0.7). processStatusData assume 70% dos atribuídos resolvidos, e processDailyData conta atribuição como resolução na data de criação.",
+      "impact": "Uma fila com dez contatos no total, todos atribuídos e nenhuma resolução, exibe sete resolvidos e 70% de resolução; o gestor recebe um resultado sem eventos que o sustentem.",
+      "evidence": [
+        {
+          "path": "src/pages/QueueDetails.tsx",
+          "line_start": 48,
+          "line_end": 64,
+          "git_blob_sha": "ada4a637f6022648abf8f979b2967b5f7a8646cb",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/QueueDetails.tsx#L48-L64",
+          "purpose": ""
+        },
+        {
+          "path": "src/pages/queue-details/QueueMetricsCards.tsx",
+          "line_start": 12,
+          "line_end": 18,
+          "git_blob_sha": "5b9aed480a00a960ec0c9617c9011ae1bcd02972",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/queue-details/QueueMetricsCards.tsx#L12-L18",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/business/useQueueAnalytics.ts",
+          "line_start": 101,
+          "line_end": 119,
+          "git_blob_sha": "7a492b4b78f0bf6efcc8d4a30441d77083b79110",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useQueueAnalytics.ts#L101-L119",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/business/useQueueAnalytics.ts",
+          "line_start": 183,
+          "line_end": 210,
+          "git_blob_sha": "7a492b4b78f0bf6efcc8d4a30441d77083b79110",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useQueueAnalytics.ts#L183-L210",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/queues/QueueCharts.tsx",
+          "line_start": 55,
+          "line_end": 65,
+          "git_blob_sha": "fc5dc13627f2953aaa9a5f977aae7717d8b65031",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/queues/QueueCharts.tsx#L55-L65",
+          "purpose": ""
+        }
+      ],
+      "probes": [
+        "ROOT-P01",
+        "ROOT-P06"
+      ],
+      "runtime_observed": false,
+      "recommendation": "Derivar resoluções de eventos/status canônicos e tempos de timestamps válidos; representar ausência de amostra como sem dados. Provar atribuído aberto, resolvido antigo e resolvido hoje.",
+      "feature_catalog_ids": [
+        "7.8",
+        "7.10"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-QUE-002",
+      "severity": "P1",
+      "title": "Contagem de espera zerada impede os alertas configurados de filas",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Fila com contatos aguardando e metas/alertas habilitados.",
+      "observed_behavior": "useQueues sobrescreve waiting_count com 0. QueuesView usa esse valor nos únicos dois alertas implementados; calcula atribuição com número de membros, não contatos atribuídos. max_avg_wait_minutes e max_messages_pending são editados e persistidos, mas não são avaliados por esse consumidor.",
+      "impact": "A tela mostra zero aguardando e não dispara os alertas de espera/atribuição. Duas metas aparentam funcionar, embora não participem dessa avaliação.",
+      "evidence": [
+        {
+          "path": "src/hooks/business/useQueues.ts",
+          "line_start": 44,
+          "line_end": 63,
+          "git_blob_sha": "251695c217187bcdb23ba363d3b7e0159d026f64",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useQueues.ts#L44-L63",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/queues/QueuesView.tsx",
+          "line_start": 31,
+          "line_end": 48,
+          "git_blob_sha": "d6a0d70afa81595201159e8eb7bba6f04d9bf597",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/queues/QueuesView.tsx#L31-L48",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/queues/QueueCard.tsx",
+          "line_start": 53,
+          "line_end": 60,
+          "git_blob_sha": "b8a91692e8bd950e98de2937795c6cfe441a5ecd",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/queues/QueueCard.tsx#L53-L60",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/queues/QueueGoalsDialog.tsx",
+          "line_start": 127,
+          "line_end": 157,
+          "git_blob_sha": "f82d9ee4c2e1853581e0369ba3e55d9b3f44902a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/queues/QueueGoalsDialog.tsx#L127-L157",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/queues/QueueGoalsDialog.tsx",
+          "line_start": 195,
+          "line_end": 225,
+          "git_blob_sha": "f82d9ee4c2e1853581e0369ba3e55d9b3f44902a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/queues/QueueGoalsDialog.tsx#L195-L225",
+          "purpose": ""
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "recommendation": "Buscar contagens reais por fila, definir denominador de atribuição e conectar todos os limites exibidos. Testar transição do limiar e recuperação, sem inferir ausência de eventual monitor externo.",
+      "feature_catalog_ids": [
+        "7.6",
+        "7.7"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-QUE-003",
+      "severity": "P1",
+      "title": "Totais de filas são calculados sobre amostras truncadas",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Fila com mais de 50 contatos, ou consultas de analytics/comparação que excedam o limite de resposta do PostgREST.",
+      "observed_behavior": "QueueDetails aplica limit(50) e usa contactsWithDetails.length como Total de Contatos. Para cada contato faz count de mensagens, última mensagem e possível busca de agente. Analytics/comparação usam consultas de linhas sem continuação.",
+      "impact": "O total e a espera não representam a fila inteira; o caminho de 50 contatos faz de 103 a 153 consultas conforme atribuição, antes de somar os gráficos. Não foi medida latência real.",
+      "evidence": [
+        {
+          "path": "src/pages/QueueDetails.tsx",
+          "line_start": 41,
+          "line_end": 63,
+          "git_blob_sha": "ada4a637f6022648abf8f979b2967b5f7a8646cb",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/QueueDetails.tsx#L41-L63",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/business/useQueueAnalytics.ts",
+          "line_start": 217,
+          "line_end": 247,
+          "git_blob_sha": "7a492b4b78f0bf6efcc8d4a30441d77083b79110",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useQueueAnalytics.ts#L217-L247",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/business/useQueuesComparison.ts",
+          "line_start": 54,
+          "line_end": 84,
+          "git_blob_sha": "45d7b93db8f133abccd16247ccbb5bdfb95a8b3d",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useQueuesComparison.ts#L54-L84",
+          "purpose": ""
+        },
+        {
+          "path": "src/pages/queue-details/QueueMetricsCards.tsx",
+          "line_start": 12,
+          "line_end": 17,
+          "git_blob_sha": "5b9aed480a00a960ec0c9617c9011ae1bcd02972",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/queue-details/QueueMetricsCards.tsx#L12-L17",
+          "purpose": ""
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "recommendation": "Separar totais agregados da página visível e agregar mensagens/perfis em lote. Provar mais de 50 contatos e mais de uma página do servidor, preservando ACL e filtros.",
+      "feature_catalog_ids": [
+        "7.9",
+        "7.10"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-QUE-004",
+      "severity": "P2",
+      "title": "Agrupamento de 30 dias conta o último dia duas vezes",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Gráfico diário com intervalo cujo último índice não coincide com showEveryNth, por exemplo 30 dias.",
+      "observed_behavior": "processDailyData escolhe índices múltiplos do salto e também o último índice, depois atribui a ambos uma janela inteira. Em 30 dias, o bucket do dia 28 cobre 28–30 e o bucket do dia 30 inclui o mesmo dia novamente.",
+      "impact": "Uma única mensagem no dia 30 aparece em dois pontos; totais visuais de mensagens/novos/resolvidos ficam sobrepostos.",
+      "evidence": [
+        {
+          "path": "src/hooks/business/useQueueAnalytics.ts",
+          "line_start": 74,
+          "line_end": 121,
+          "git_blob_sha": "7a492b4b78f0bf6efcc8d4a30441d77083b79110",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useQueueAnalytics.ts#L74-L121",
+          "purpose": ""
+        }
+      ],
+      "probes": [
+        "ROOT-P02"
+      ],
+      "runtime_observed": false,
+      "recommendation": "Construir intervalos consecutivos, exclusivos e limitados ao término selecionado. Testar 15, 30 e 90 dias com eventos nos limites.",
+      "feature_catalog_ids": [
+        "7.8",
+        "7.11"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-QUE-005",
+      "severity": "P2",
+      "title": "Salvar metas fecha o formulário mesmo quando a gravação falha",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "UPDATE/INSERT de queue_goals retorna erro explícito, como 42501.",
+      "observed_behavior": "saveGoal mostra erro e resolve normalmente no catch; handleSave aguarda a função e fecha o diálogo incondicionalmente.",
+      "impact": "O rascunho sai de tela após uma gravação recusada, dificultando correção e repetição confiável.",
+      "evidence": [
+        {
+          "path": "src/hooks/business/useQueueGoals.ts",
+          "line_start": 68,
+          "line_end": 103,
+          "git_blob_sha": "2ffbbc81541d01bc31b23497659622e4b417dfdb",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useQueueGoals.ts#L68-L103",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/queues/QueueGoalsDialog.tsx",
+          "line_start": 53,
+          "line_end": 61,
+          "git_blob_sha": "f82d9ee4c2e1853581e0369ba3e55d9b3f44902a",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/queues/QueueGoalsDialog.tsx#L53-L61",
+          "purpose": ""
+        }
+      ],
+      "probes": [
+        "ROOT-P03"
+      ],
+      "runtime_observed": false,
+      "recommendation": "Propagar a falha ou retornar resultado discriminado; fechar apenas no sucesso confirmado e preservar o rascunho.",
+      "feature_catalog_ids": [
+        "7.6"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-QUE-006",
+      "severity": "P2",
+      "title": "Ações Editar e Configurar fila estão visíveis sem operação",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Usar Editar no card de fila ou Configurar na página de detalhes.",
+      "observed_behavior": "QueueCard renderiza o item Editar sem callback; QueueDetails renderiza Configurar sem callback. updateQueue existe, mas não é conectado a esses controles.",
+      "impact": "O CRUD anunciado não inclui um caminho funcional de edição nesses pontos de entrada.",
+      "evidence": [
+        {
+          "path": "src/components/queues/QueueCard.tsx",
+          "line_start": 39,
+          "line_end": 47,
+          "git_blob_sha": "b8a91692e8bd950e98de2937795c6cfe441a5ecd",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/queues/QueueCard.tsx#L39-L47",
+          "purpose": ""
+        },
+        {
+          "path": "src/pages/QueueDetails.tsx",
+          "line_start": 95,
+          "line_end": 99,
+          "git_blob_sha": "ada4a637f6022648abf8f979b2967b5f7a8646cb",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/pages/QueueDetails.tsx#L95-L99",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/business/useQueues.ts",
+          "line_start": 106,
+          "line_end": 126,
+          "git_blob_sha": "251695c217187bcdb23ba363d3b7e0159d026f64",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/business/useQueues.ts#L106-L126",
+          "purpose": ""
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "recommendation": "Conectar os controles a um formulário com confirmação de gravação, ou retirar a promessa até existir. Testar edição pelo ponto de entrada ativo.",
+      "feature_catalog_ids": [
+        "7.1"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-SLA-001",
+      "severity": "P2",
+      "title": "Métricas e histórico de SLA usam denominadores incompatíveis",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Mesmo conjunto contendo linhas pendentes legadas, importadas ou criadas por escrita administrativa, sem primeira resposta e ainda não marcadas como violadas. O escritor versionado atual insere linhas já respondidas; não se afirma que ele produza rotineiramente essa amostra, nem que ela exista em produção.",
+      "observed_behavior": "fetchSLAMetrics exclui pendentes do denominador de taxa; fetchSLAHistory os conta como sucesso. Dez registros, um com resposta válida tardia e nove pendentes, resultam em 0% no painel e 90% no histórico. Ausência de amostra também vira 100%.",
+      "impact": "O resumo, o histórico e os sparklines podem contradizer-se sem mudança no dado e apresentar desempenho perfeito sem respostas avaliadas.",
+      "evidence": [
+        {
+          "path": "src/hooks/sla/useSLAMetrics.ts",
+          "line_start": 41,
+          "line_end": 74,
+          "git_blob_sha": "1838a91f296f4db476bd1341909e41baaba003f4",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sla/useSLAMetrics.ts#L41-L74",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/sla/useSLAHistory.ts",
+          "line_start": 87,
+          "line_end": 116,
+          "git_blob_sha": "8a186811316ec3a3d51ed2edcab2ed6f00e12137",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sla/useSLAHistory.ts#L87-L116",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/queues/SLADashboard.tsx",
+          "line_start": 25,
+          "line_end": 33,
+          "git_blob_sha": "7fb86035427d04b1f513111af4a6f5ba9e8d6fca",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/queues/SLADashboard.tsx#L25-L33",
+          "purpose": ""
+        }
+      ],
+      "probes": [
+        "ROOT-P04"
+      ],
+      "runtime_observed": false,
+      "recommendation": "Definir elegibilidade e denominador únicos, distinguir pendente de atendido no prazo e sem amostra; provar ambos consumidores com a mesma fixture.",
+      "feature_catalog_ids": [
+        "8.4",
+        "8.5",
+        "8.6"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-SLA-002",
+      "severity": "P2",
+      "title": "Períodos de SLA não correspondem aos rótulos Todos e 7d",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Selecionar Todos, ou calcular histórico de sete dias.",
+      "observed_behavior": "Todos aplica limite inferior de 365 dias. Histórico subtrai sete dias e inclui os dois extremos, produzindo oito datas civis; vale também para 14/30/90.",
+      "impact": "Registros mais antigos desaparecem do total anunciado, e a janela histórica contém um dia extra.",
+      "evidence": [
+        {
+          "path": "src/hooks/sla/useSLAMetrics.ts",
+          "line_start": 31,
+          "line_end": 54,
+          "git_blob_sha": "1838a91f296f4db476bd1341909e41baaba003f4",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sla/useSLAMetrics.ts#L31-L54",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/queues/SLADashboard.tsx",
+          "line_start": 55,
+          "line_end": 60,
+          "git_blob_sha": "7fb86035427d04b1f513111af4a6f5ba9e8d6fca",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/queues/SLADashboard.tsx#L55-L60",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/sla/useSLAHistory.ts",
+          "line_start": 60,
+          "line_end": 83,
+          "git_blob_sha": "8a186811316ec3a3d51ed2edcab2ed6f00e12137",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sla/useSLAHistory.ts#L60-L83",
+          "purpose": ""
+        }
+      ],
+      "probes": [
+        "ROOT-P04",
+        "ROOT-P05"
+      ],
+      "runtime_observed": false,
+      "recommendation": "Remover o limite em Todos ou explicitar Últimos 365 dias; definir janelas inclusivas/exclusivas e testar virada do dia no fuso do produto.",
+      "feature_catalog_ids": [
+        "8.5",
+        "8.6"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-SLA-003",
+      "severity": "P1",
+      "title": "Configurações granulares de prazo não governam o SLA efetivo",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Salvar regra ativa com primeira resposta diferente de cinco minutos.",
+      "observed_behavior": "O manager promete precedência automática, e as mutations persistem os prazos. useApplicableSLA implementa resolução, mas não tem consumidor ativo localizado. Os dois indicadores ativos passam 5 e a última definição versionada localizada da função do banco também compara cinco minutos. A revisão cruzada de modules também localizou o formulário SLAConfigTable: ele promete editar o prazo, mas oferece somente nome, prioridade e padrão. Esse contraste de interface reforça a necessidade de adjudicar o contrato atual, sem criar outro ID para a mesma família.",
+      "impact": "Salvar uma regra não altera o indicador nem a classificação persistida no caminho examinado. A revisão não presume que restaurar um modelo antigo seja a decisão correta; a promessa atual precisa corresponder ao comportamento.",
+      "evidence": [
+        {
+          "path": "src/components/settings/SLARulesManager.tsx",
+          "line_start": 50,
+          "line_end": 61,
+          "git_blob_sha": "9efa78915b810ef317760fbdec035cd5d6fed5c3",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/settings/SLARulesManager.tsx#L50-L61",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/sla/useSLARules.ts",
+          "line_start": 67,
+          "line_end": 86,
+          "git_blob_sha": "2f80ff49fbea2056bfae33c127d3486687df0400",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sla/useSLARules.ts#L67-L86",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/sla/useApplicableSLA.ts",
+          "line_start": 97,
+          "line_end": 134,
+          "git_blob_sha": "f1dcb4a76435fa17635132c51398442544b16edf",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/sla/useApplicableSLA.ts#L97-L134",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+          "line_start": 128,
+          "line_end": 132,
+          "git_blob_sha": "85a91bc0d65773de1fb5e8db5d96a706cd6198f1",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/chat/ChatPanelHeader.tsx#L128-L132",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+          "line_start": 518,
+          "line_end": 524,
+          "git_blob_sha": "b3915f3134da36acc8bf2f84dc1a671416a1d6eb",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/inbox/VirtualizedRealtimeList.tsx#L518-L524",
+          "purpose": ""
+        },
+        {
+          "path": "supabase/migrations/20260903233000_sla_base_only_valid_messages.sql",
+          "line_start": 46,
+          "line_end": 55,
+          "git_blob_sha": "9167d9d7ee0a1f454425b532157ae32e703f146f",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260903233000_sla_base_only_valid_messages.sql#L46-L55",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/dashboard/sla/SLAConfigTable.tsx",
+          "line_start": 101,
+          "line_end": 130,
+          "git_blob_sha": "f6ea145c093e0d4cda003759890393f60cd9e5a3",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/dashboard/sla/SLAConfigTable.tsx#L101-L130",
+          "purpose": "Descrição de prazo versus campos realmente editáveis."
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "recommendation": "Adjudicar o contrato de cinco minutos versus configurável e fazê-lo único entre UI, persistência e documentação. Testar regra de dois minutos com resposta aos três.",
+      "feature_catalog_ids": [
+        "8.1",
+        "8.2",
+        "8.3"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    },
+    {
+      "id": "R2-SLA-004",
+      "severity": "P2",
+      "title": "Marco de medição do SLA omite o tempo entre criação e envio",
+      "classification": "CONFIRMED_BEHAVIOR_CONTRACT_GAP",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Mensagem do agente é criada antes de ser efetivamente enviada e muda para sent após atraso suficiente para ultrapassar o SLA.",
+      "observed_behavior": "O trigger roda ao confirmar sent, mas passa NEW.created_at para p_responded_at. A migração declara essa escolha deliberada para evitar drift de now(). O enqueue insere sending antes da entrega. Exemplo estático: criada aos quatro minutos e confirmada aos dez pode ser classificada como resposta aos quatro.",
+      "impact": "A medida representa criação de uma mensagem que acabou enviada; não mede todo o tempo em fila/retentativa até a entrega ao provedor. O comportamento é confirmado, mas a aceitação desse marco é uma lacuna de contrato, não um incidente comprovado nem autorização para trocar a regra.",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260903225000_sla_first_response_v2.sql",
+          "line_start": 1,
+          "line_end": 11,
+          "git_blob_sha": "d609c6de2265c8a88909ba7e15c8c2a0d807e83f",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260903225000_sla_first_response_v2.sql#L1-L11",
+          "purpose": ""
+        },
+        {
+          "path": "supabase/migrations/20260903225000_sla_first_response_v2.sql",
+          "line_start": 109,
+          "line_end": 135,
+          "git_blob_sha": "d609c6de2265c8a88909ba7e15c8c2a0d807e83f",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260903225000_sla_first_response_v2.sql#L109-L135",
+          "purpose": ""
+        },
+        {
+          "path": "supabase/migrations/20260903233000_sla_base_only_valid_messages.sql",
+          "line_start": 46,
+          "line_end": 55,
+          "git_blob_sha": "9167d9d7ee0a1f454425b532157ae32e703f146f",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260903233000_sla_base_only_valid_messages.sql#L46-L55",
+          "purpose": ""
+        },
+        {
+          "path": "supabase/migrations/20260909250000_allow_location_in_atomic_outbound_delivery.sql",
+          "line_start": 113,
+          "line_end": 120,
+          "git_blob_sha": "a0800f4e8b49cc88043ea34c03b15429f122e48d",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260909250000_allow_location_in_atomic_outbound_delivery.sql#L113-L120",
+          "purpose": ""
+        },
+        {
+          "path": "supabase/functions/message-delivery/index.ts",
+          "line_start": 327,
+          "line_end": 331,
+          "git_blob_sha": "3ea09632f199ef1399e434cea861fbd039c8b622",
+          "commit": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/message-delivery/index.ts#L327-L331",
+          "purpose": ""
+        }
+      ],
+      "probes": [],
+      "runtime_observed": false,
+      "recommendation": "Adjudicar o evento que materializa resposta e documentar seu timestamp; distinguir atraso de entrega de atraso do webhook sem presumir que now() seja correto. Provar envio pendente, confirmação posterior e retentativa.",
+      "feature_catalog_ids": [
+        "8.2"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY",
+      "prior_finding_ids": [],
+      "novelty_note": "Descoberta nesta revisão; não é afirmação de regressão introduzida nos dois commits novos."
+    }
+  ],
+  "rejected_or_limited": [
+    {
+      "candidate": "CRMSyncButton bloqueia outros contatos depois de contact_not_found",
+      "disposition": "DORMANT_COMPONENT_NOT_ACTIVE_OUTAGE",
+      "basis": "Componente exportado sem consumidor ativo localizado; o menu atual usa CrmSyncMenuItem."
+    },
+    {
+      "candidate": "Todas as72 referências ausentes do catálogo representam funcionalidades removidas",
+      "disposition": "REJECTED_INFERENCE",
+      "basis": "As72 linhas representam69 caminhos únicos; muitos hooks foram movidos para subpastas. Resolver caminho/sucessor antes de concluir ausência."
+    },
+    {
+      "candidate": "Ausência de linha citada prova que ninguém leu a função",
+      "disposition": "REJECTED_INFERENCE",
+      "basis": "Índice é de evidência estruturada localizada, não registro onisciente de leitura."
+    },
+    {
+      "candidate": "ADR de empty states gera automaticamente3tarefas novas",
+      "disposition": "REQUIRES_AUTHORITY_AND_LINEAGE_ADJUDICATION",
+      "basis": "Guia contém etapas, mas é regra/proposta; o estado de adoção e planos sucessores devem ser reconciliados antes de aumentar backlog."
+    },
+    {
+      "candidate": "OfflineCache nunca é limpo no logout",
+      "disposition": "REJECTED_BY_CURRENT_CONSUMER",
+      "basis": "useAuth chama clearOfflineCache e queryClient.clear no sign-out; não se inferiu vazamento do simples CACHE_KEY global."
+    },
+    {
+      "candidate": "Atividade por hora ignora o período sem aviso",
+      "disposition": "REJECTED_INFERENCE",
+      "basis": "QueueCharts rotula explicitamente Atividade por Hora (Hoje); outros problemas de amostra são separados."
+    }
+  ]
+}

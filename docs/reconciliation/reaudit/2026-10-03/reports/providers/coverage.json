@@ -1,0 +1,3793 @@
+{
+  "schema_version": 1,
+  "status": "second_pass_checkpoint",
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "source_root": "/workspace/scratch/f8f9b9cbce53/reaudit/source",
+  "role": "providers",
+  "levels": {
+    "semantic_full_file": "Texto integral lido e fluxo semântico revisado; não significa runtime/integração testados.",
+    "semantic_selected_ranges": "Somente faixas explícitas; não promove a função envolvente.",
+    "catalogued_only": "Arquivo identificado, importado por dependência ou encontrado por busca; não revisado semanticamente."
+  },
+  "files": [
+    {
+      "path": "supabase/functions/evolution-webhook/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "35675fb65e4645935a514f5aa5282c52b67e03914a6d555dc132f468652488df",
+      "line_count": 294,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 294,
+          "symbols": [
+            "request gate",
+            "GO translation dispatch",
+            "all event switch branches",
+            "response/error"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "da51efad6032e57a63405c7fd3026337437b3622bf400ff8aa65fc61ca24f694",
+      "line_count": 349,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 349,
+          "symbols": [
+            "handleSendMessage",
+            "handleMessagesUpdate",
+            "handleMessagesDelete",
+            "handleMessagesSet",
+            "handleMessagesEdited"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "232baff04c754c6407275bbdc89e0ca439c533cfb58ad0ec603c0afd3d727aec",
+      "line_count": 727,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 727,
+          "symbols": [
+            "normalizeOptOutText",
+            "loadOptOutKeywords",
+            "matchOptOutKeywordLocal",
+            "resolveOptOutKeyword",
+            "loadOptOutAutoreply",
+            "extractInteractiveResponseId",
+            "extractQuotedExternalId",
+            "persistIncomingMedia",
+            "enrichIncomingLinkPreview",
+            "handleOutgoingWhatsAppMessage",
+            "handleIncomingMessage",
+            "handleStickerMedia",
+            "handleAudioTranscription"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-helpers.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7a0ff6fb539f544abeb4a7b46e594d0ee027d5e674d8c398f640e6da7373c016",
+      "line_count": 384,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 384,
+          "symbols": [
+            "normalizePhone",
+            "resolveBestJid",
+            "resolveEventJid",
+            "normalizeEventName",
+            "toEventRecords",
+            "shouldUpdateStatus",
+            "getConnectionByInstance",
+            "getContactByPhone",
+            "fetchProfilePicFromApi",
+            "persistProfilePicture",
+            "handleReactionEvent"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-go-adapter.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4dea8247fc8919af4182b2aa9634761df0bd600846bd40c1a4147a6e86ec77c8",
+      "line_count": 318,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 318,
+          "symbols": [
+            "isGoPayload",
+            "translateGoPayload",
+            "message",
+            "receipt",
+            "historysync",
+            "presence",
+            "contact",
+            "label",
+            "call normalization"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-go-routes.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8da3c5c3c387949f5dc1143a1f1ca70412b9d4ff1d200754f09c0930f52f954d",
+      "line_count": 325,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 325,
+          "symbols": [
+            "translateV2ToGo",
+            "quotedToGo",
+            "media/presence",
+            "instance",
+            "groups",
+            "profile",
+            "webhook routes"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-send.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "02c4039199552dd1576b361fb8ecafa601a23f01f9c3609b8a3e36285aeb24d8",
+      "line_count": 127,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 127,
+          "symbols": [
+            "evoFetch",
+            "extractMessageId",
+            "extractConnectionState"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-media.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0c06496b37b3effcafcf75700c21301960a20cdca722c888ffc3d020ea80efd4",
+      "line_count": 267,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 267,
+          "symbols": [
+            "isValidMediaBytes",
+            "persistMediaToStorage",
+            "persistBase64Media",
+            "persistMediaViaApi",
+            "parseMessageContent"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-api-proxy.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a5c696eeebe4107ac547ce292da2b577620573e691aacdd2a08b3de3b3075816",
+      "line_count": 318,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 318,
+          "symbols": [
+            "normalizeGoSendResponse",
+            "normalizeGoResponse",
+            "circuit breaker",
+            "proxyToEvolution",
+            "private object parsing/signing"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/evolution-api/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "227d16c9e5431bfc0bae0cf833e1d0b0fcce5e822f98ffbc25be7f27865e0cdd",
+      "line_count": 874,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 874,
+          "symbols": [
+            "global auth",
+            "requireAdmin",
+            "stripInstanceToken",
+            "bootstrap",
+            "create compensation",
+            "connect/QR recovery",
+            "status/disconnect",
+            "all proxy action branches",
+            "update-privacy"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/message-delivery/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "1f777336f5628c1bb7303707bb49186b2b732a6492f09c9183fdc49aae7f0474",
+      "line_count": 370,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 370,
+          "symbols": [
+            "readMessageId",
+            "providerPayload",
+            "failClaim",
+            "enqueueDeliveryReconciliation",
+            "handleMessageDeliveryRequest"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/talkx-reply.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b9de05264b470b4a5576fc40fd1a874b063fd5b9934793c9d7044d91e2ed4f3d",
+      "line_count": 92,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 92,
+          "symbols": [
+            "attributeTalkXReply",
+            "attributeMultiplixReply"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/talkx-window.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "18833512cfb4500ff281be4c8d2ce61a82801c9bd66cecd514e929c52c3b6304",
+      "line_count": 119,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 119,
+          "symbols": [
+            "parseBusinessHours",
+            "localClockInTimezone",
+            "deliveryWindowStatus"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/talkx-resume-policy.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "043f7225977b1d726f362a76f263a356ff5751beea8821b95985daa5f44f45c4",
+      "line_count": 139,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 139,
+          "symbols": [
+            "pauseReasonForWindow",
+            "connectionStatusResolver",
+            "selectResumableCampaigns"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/talkx-scheduler/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c3f17fb176be463dda3332d617c710737da2ababef52ae721d721df1d7489843",
+      "line_count": 315,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 315,
+          "symbols": [
+            "cron authentication",
+            "due and paused selection",
+            "connection resolution",
+            "budgeted resume",
+            "worker trigger"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/talkx-send/process-recipient.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a4b5db6fc4eec0ae64e6e88f0516eddbcffb185c2e6accddf9a4ee2c5149e558",
+      "line_count": 575,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 575,
+          "symbols": [
+            "stableVariantHash",
+            "pickVariant",
+            "processRecipient: claim/snapshot/revalidation/media/send/quarantine/retry"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/multiplix-send/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c14c543d34b52761a77dccf371cbdb3a26d8952aa2e35d1e4c00fc4acebcadfc",
+      "line_count": 793,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 793,
+          "symbols": [
+            "authentication/ownership",
+            "connection/window",
+            "dailyRoom",
+            "list/claim item",
+            "snapshot",
+            "heartbeat",
+            "send",
+            "complete/quarantine/reschedule"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/gmail-webhook/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ce7b56638d35522933152ce280c3034336d43caee024a40eb46d386c7211ff1e",
+      "line_count": 304,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 304,
+          "symbols": [
+            "PubSub input",
+            "token helpers",
+            "body parser",
+            "history fetch",
+            "thread/message upsert",
+            "cursor/ACK"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/gmail-helpers.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5ce618f441d37a08a665bfb17fb5d97b51c5fa9123025dd025a012c082a82b60",
+      "line_count": 225,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 225,
+          "symbols": [
+            "tokens",
+            "gmailFetch",
+            "parseGmailAddressList",
+            "extractBody",
+            "extractAttachments",
+            "syncLabels",
+            "reconcileEmailThreads",
+            "syncMessageIds",
+            "syncMessages"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/gmail-sync/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "85ee9e4b525e6bf15e101ac1455ff08ccdf4d623ad98d05c831e62079cb0f18b",
+      "line_count": 204,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 204,
+          "symbols": [
+            "auth/account",
+            "sync-labels",
+            "sync-inbox",
+            "sync-incremental",
+            "get-thread",
+            "setup-watch",
+            "get-attachment"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/gmail-cron-sync/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7471d0a32274d655ddbbd92479acfd6daf220e5492fd856d85cbf9329c69211a",
+      "line_count": 68,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 68,
+          "symbols": [
+            "cron secret",
+            "parallel account batch",
+            "full and incremental sync",
+            "cursor updates"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/gmail-send/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "59a9f07dedbc95e2e0c3f2f18c67ff196a7eca95b588bd9c5fcf39ee0ed0c944",
+      "line_count": 342,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 342,
+          "symbols": [
+            "auth/account",
+            "send/reply",
+            "MIME",
+            "sent persistence",
+            "draft CRUD",
+            "label/read/star/trash mutations"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/crm-integration/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8dcb0b6fc2cc53046c90c86b868cddf7bc3297f56ba3f502f38993a49e53d402",
+      "line_count": 763,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 763,
+          "symbols": [
+            "canonical actor",
+            "permissions",
+            "stable identity lookup",
+            "requestSingu",
+            "processRows",
+            "contact lookup/intelligence/batch",
+            "email participant",
+            "enqueue"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/crm-integration-contract.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "fe7af6c83ab19c85de7e1581c4d32862fbfb35f63b8fbac6ec852ca958590e4c",
+      "line_count": 172,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 172,
+          "symbols": [
+            "action/schema allowlists",
+            "external sync args",
+            "response normalization"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/bitrix-api/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7f699943d5e2155e0deff5f93499e801ec6b16614e38d7d36ac235943f0b39dc",
+      "line_count": 241,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 241,
+          "symbols": [
+            "authentication/admin",
+            "schema",
+            "CRUD/call mapping",
+            "sync_contacts",
+            "push_contact",
+            "create_lead_from_conversation"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/whatsapp-webhook/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "efba6dc0d7878ebe2d1ba0e559b62a75d84c82853355596137c614b8a6f0b0d1",
+      "line_count": 141,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 141,
+          "symbols": [
+            "verification GET",
+            "shadow POST",
+            "schema",
+            "statuses",
+            "incoming messages"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/get-call-recording/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5ba90705954488851434e3e4787431d85a64ad907c8f8b63956fa18831aa156d",
+      "line_count": 113,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 113,
+          "symbols": [
+            "auth",
+            "RLS-visible call",
+            "recording download and response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/sync-call-records/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "638c8decef51d8f214bb3860dd95040aba4bdc6ae6be24e57107b4aaca30c4ae",
+      "line_count": 166,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 166,
+          "symbols": [
+            "janelaDoCasamento",
+            "escolherCandidata",
+            "dadosDaReconciliacao",
+            "service auth",
+            "provider loop/update"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/public-api/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "db0b93232b14432d92e609377e8536af241267450dbadd3c3ddb6c71f325555f",
+      "line_count": 12,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 12,
+          "symbols": [
+            "retirement kill switch and CORS"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/get-mapbox-token/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d91eb1de6543baac98e24ffa666770ad4d6fb7e17d925e4e138650a2c6211613",
+      "line_count": 25,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 25,
+          "symbols": [
+            "requireAuth",
+            "persistent per-user limit",
+            "public token response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/get-sip-password/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5daf73543f83c9db6b59ab68809d14e46fbbb62eb9abb01a83cc6f64f51cd6ed",
+      "line_count": 73,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 73,
+          "symbols": [
+            "JWT claims",
+            "own active profile",
+            "SIP configuration"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/send-email/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d5d01911fd0dbfe6c7c5f40f4b6e49832af7be76f8cadafe727ee55cc3955d83",
+      "line_count": 63,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 63,
+          "symbols": [
+            "IP throttle",
+            "payload schema",
+            "fixed sender",
+            "Resend status handling"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/send-scheduled-report/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ec4926821b789b093dfe3088c8e6e44ca52b3d72078fffbf3b43b69b0d6cc330",
+      "line_count": 161,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 161,
+          "symbols": [
+            "report lookup",
+            "all report variants",
+            "email loop",
+            "schedule update",
+            "calculateNextSend",
+            "buildReportEmail",
+            "formatKey"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/auto-close-conversations/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c1536c9e9c9b84543773ac854c601360dd518e5478ebab8ef4160bda9d7f5ec3",
+      "line_count": 87,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 87,
+          "symbols": [
+            "config",
+            "stale contact scan",
+            "message/closure insert",
+            "unassignment",
+            "counter response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/elevenlabs-webhook/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8a8aadf36362b34a5108e564b87c54a4e82865da296a803b71744130fe2dfb76",
+      "line_count": 95,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 95,
+          "symbols": [
+            "blocking signature gate",
+            "event normalization",
+            "audit insert",
+            "event branches"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/elevenlabs-scribe-token/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "fce296948a4010b3d97551474757a224f3e414087caf771c17d6f0e62029c254",
+      "line_count": 42,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 42,
+          "symbols": [
+            "requireAuth",
+            "persistent limit",
+            "single-use token request"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/elevenlabs-agent-token/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "66b1fcaedbe5d501bf6738e8ac543bb0f5b56f06bc45ba029a1e4ced47e05593",
+      "line_count": 45,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 45,
+          "symbols": [
+            "requireAuth",
+            "persistent limit",
+            "fixed agent token request"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/elevenlabs-tts/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "bb4d1b0ffb106398ddef8198b316b3b684da459fbb1bce1709c2efea67f8eac3",
+      "line_count": 72,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 72,
+          "symbols": [
+            "auth/quota",
+            "schema",
+            "voice/model request",
+            "audio response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/elevenlabs-tts-stream/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c11b1b1dd330d856ec781d1053e31b3616acb493383b00e2be8c351df8826bcd",
+      "line_count": 75,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 75,
+          "symbols": [
+            "auth/quota",
+            "schema",
+            "voice/model stream",
+            "Response stream forwarding"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/elevenlabs-sfx/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "71fffb25ec9eecf27bf751c18d09beb4c96ad896f6a655a7019daeb52f114146",
+      "line_count": 60,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 60,
+          "symbols": [
+            "auth/quota",
+            "music and SFX body mapping",
+            "provider status",
+            "base64 audio"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/elevenlabs-dialogue/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "af1cf96e2cbe9c37a2ec002fcb2c11ccd508cdaceb6daf7935f87995bc9f4778",
+      "line_count": 62,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 62,
+          "symbols": [
+            "auth/quota",
+            "script schema",
+            "provider payload",
+            "audio response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/elevenlabs-sts/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0e8af99138c2f9f873e47c849f0d9ae2b0383522a06e01331915220c52466e3f",
+      "line_count": 63,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 63,
+          "symbols": [
+            "auth/quota",
+            "multipart fields",
+            "speech-to-speech request",
+            "buffer response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/elevenlabs-voice-design/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "3fd91c69ada84609f87dfd4b34b5b9c183f514568ebf58ad59ae97966d4a17d6",
+      "line_count": 89,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 89,
+          "symbols": [
+            "auth/quota",
+            "preview",
+            "create",
+            "voice list fallback"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/ai-jobs-worker/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4f8e5a85285f11a80e571a1ce242b6948b3448ff731c0d67f7663504b516aa2d",
+      "line_count": 418,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 418,
+          "symbols": [
+            "isAiGenerateEnabled",
+            "handleReapExpired",
+            "handleAiGenerate",
+            "HANDLERS",
+            "loadJobRows",
+            "renewLease",
+            "runBatch",
+            "handleAiJobsWorker"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/cron-secret-auth.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "dd33ad23427bbea78803b40d0cf4523fffcca9140cf5b60d9778299bd3210053",
+      "line_count": 84,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 84,
+          "symbols": [
+            "timing-safe match",
+            "cron RPC",
+            "service/user gate",
+            "unauthorizedResponse"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-jobs.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9662bdbdf251d77ba79106b371f7d71a652b63569d221d2db948933976e11a78",
+      "line_count": 596,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 596,
+          "symbols": [
+            "state vocabulary",
+            "transition map",
+            "input/result parsers",
+            "service client",
+            "enqueueAiJob",
+            "claimAiJobs",
+            "heartbeatAiJob",
+            "finishAiJob",
+            "reapAiJobs",
+            "cancelAiJob"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/effect-reconcile.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2c6dad33cded8dd215ab0f9bf8e37c65238cf8c58f9d84b3e475ff6755e24ddf",
+      "line_count": 586,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 586,
+          "symbols": [
+            "payload validation",
+            "effect registry",
+            "stable enqueue",
+            "row state confirmation",
+            "provider history probe",
+            "applyConfirmed",
+            "markFailed",
+            "handleEffectReconcile"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/external-db-proxy/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0da95791a5abe24a8b64aec966979a363eb5fce11574c6a64a72fbffe1e7e556",
+      "line_count": 186,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 186,
+          "symbols": [
+            "canonical auth",
+            "external config",
+            "quarantine admin mutation",
+            "table/operator allowlists",
+            "select/filter/order/range",
+            "notConfigured mapping"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/external-db-bridge/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "cbdf44252730e22a338c5aef4976051851a6ce14e5d92650cd7c74ae5b69c128",
+      "line_count": 224,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 224,
+          "symbols": [
+            "isOperationAllowed",
+            "classifySeverity",
+            "emitTelemetry",
+            "auth",
+            "allowlist reachability",
+            "SELECT/RPC",
+            "unreachable mutation branches",
+            "query error response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/evolution-sync/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "97c837a277f68e00e0b7abf8dbaf2804a335aedd4550325ab6af94b72c0e8790",
+      "line_count": 106,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 106,
+          "symbols": [
+            "admin gate",
+            "instance requirement",
+            "all action dispatch",
+            "error response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/connection-health-check/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ff78177179f34d7c811094a6b0356b28fd199918ee648683c6d94926a7c2e840",
+      "line_count": 185,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 185,
+          "symbols": [
+            "cron/user gate",
+            "connection loop",
+            "provider state/CAS",
+            "alerts and Resend",
+            "health persistence",
+            "cleanup"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-sync-actions.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "504f3a84870170b63851f329b11ad26bc19cd86c3a04cbd896e2156f51ca1d1e",
+      "line_count": 341,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 341,
+          "symbols": [
+            "normalizeEvoContact",
+            "fetchEvolutionContacts",
+            "syncContacts",
+            "goHistoryNotSupported",
+            "syncMessages",
+            "syncAllMessages",
+            "setupWebhook",
+            "cleanupMock",
+            "fullSync",
+            "parseEvolutionMessage",
+            "jsonRes"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/edge-boot.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4395c71344555f0a34f1aeee1aa260407de6af4c82eaf629073e1ddc1536d591",
+      "line_count": 46,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 46,
+          "symbols": [
+            "bootEdge",
+            "lazy service client and preflight evaluation"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-auth.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "80ec690034f445416c1205b5863a4322fe6e260466d49ffaad45f89dc8633820",
+      "line_count": 107,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 107,
+          "symbols": [
+            "bearerToken",
+            "isServiceRoleRequest",
+            "requireAiIdentity",
+            "requireAiIdentityOrService"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-audio-authz.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4a8f377b2dc1b08c99916fcc060820cb55ea5b991a6a6c1514d307c2a33af24d",
+      "line_count": 82,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 82,
+          "symbols": [
+            "assertMessageVisibleToCaller"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-guards.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5a91a96072a0fdbca38957dd7a7908ee505badff1f548093593f5071987ce2a2",
+      "line_count": 238,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 238,
+          "symbols": [
+            "service client",
+            "windowStart",
+            "aiRateLimitScopeKey",
+            "sharedRateLimit",
+            "aiRateLimitTargets",
+            "checkSharedAiRateLimits",
+            "enforceAiGuards"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ssrf.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9330ea91548aeea4fb241e9eae651e258169c2a2b7bb0a59b6715c75bc42f097",
+      "line_count": 111,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 111,
+          "symbols": [
+            "ipv4Octets",
+            "isBlockedIpAddress",
+            "hasUnsafeRawStoragePathSegment",
+            "parseApprovedStorageUrl"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/ai-transcribe-audio/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c73272af51caee03c03852dc1731199934414d75aea2d61df6b8938641883ee7",
+      "line_count": 228,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 228,
+          "symbols": [
+            "downloadAudio",
+            "identity/user object gate",
+            "MIME",
+            "ElevenLabs multipart",
+            "fallback and response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/talkx-send/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "914f2027d6c64b19071c1ba03ac328ede5d2c9a267c32303fb3b979b300625ac",
+      "line_count": 1130,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 1130,
+          "symbols": [
+            "deriveTestSendKey",
+            "handleTalkxSend",
+            "cron/service/admin auth",
+            "test claim idempotency and retry",
+            "pause/cancel",
+            "readConnectionStatus",
+            "loadBusinessHoursAndDailyLimit",
+            "countSentTodayForConnection",
+            "loadConnectionBudget",
+            "loadTrackingLinks",
+            "loadLinkLabels",
+            "loadKnownCustomFieldNames",
+            "loadCampaignTemplateTexts",
+            "loadCustomFieldsByContact",
+            "isRecipientSuppressed",
+            "pauseCampaign",
+            "refreshBudget",
+            "runRecipient",
+            "buildEngineState",
+            "continue claim/budget loop/completion/finally release",
+            "start validation/transition/kick"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "55c5c8cb57051b57f08468bdca6486adb9c9404465214e89d3fdf5435fc88a90",
+      "line_count": 411,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 411,
+          "symbols": [
+            "handleConnectionUpdate",
+            "handleContactsUpsert",
+            "handlePresenceUpdate",
+            "handleChatsUpdate",
+            "handleLabelsEdit",
+            "handleLabelsAssociation",
+            "handleCallEvent",
+            "handleChatsDelete",
+            "handleApplicationStartup",
+            "handleContactsSet",
+            "handleChatsSet"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e58423e12d10ac7b66d7f10d4388cf7c0b3eff03a138ce961265ae9c586a18ea",
+      "line_count": 331,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 331,
+          "symbols": [
+            "draft.create",
+            "draft.get",
+            "draft.update",
+            "draft.discard",
+            "HANDLERS",
+            "DispatchError",
+            "handleMultiplixDispatchRequest",
+            "requireAuth and rate limit",
+            "service client"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/audience.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a7981ea3e6217c7ca0268cf237e60be06cf4e61cca63b0f42b6ca778c86f07c8",
+      "line_count": 643,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 643,
+          "symbols": [
+            "hasAnyFilter",
+            "idSet",
+            "unionCandidates",
+            "applyExclusions",
+            "isRowExcluded",
+            "hasPrimaryFlag",
+            "contactRoleOf",
+            "selectPrimaryPerCompany",
+            "userHasPermission",
+            "resolveAudienceScope",
+            "withTimeout",
+            "materializeFilteredCompanyIds",
+            "buildExternalAudienceSource",
+            "handleAudienceSelect"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/blocks.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0e7757772aababdf136a2d6fbd03deaa7188c970a85ffaa40a262980a798198d",
+      "line_count": 367,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 367,
+          "symbols": [
+            "asObject",
+            "stableStringify",
+            "mergeContent",
+            "assetInputsChanged",
+            "guardEditableDispatch",
+            "nextBlockOrder",
+            "handleBlocksUpsert",
+            "handleBlocksDelete",
+            "handleBlocksReorder"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6827c454b7fa4ccdee1d94ae609216f71bddea79f05fbca30ce441879479f5d4",
+      "line_count": 1109,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 1109,
+          "symbols": [
+            "schemas",
+            "resolveProfileId",
+            "loadOwnedDispatch",
+            "notFoundDispatch",
+            "loadBlocks",
+            "loadRecipients",
+            "loadRecipient",
+            "asString",
+            "asRecord",
+            "isBlockType",
+            "content/voice/media/block text helpers",
+            "isSharedAudio",
+            "isVoiceBlock",
+            "mediaKindFromUrl",
+            "variablesOf",
+            "timezoneOf",
+            "blocksForReview",
+            "renderForRecipient",
+            "buildAsset",
+            "buildPreviewBlocks",
+            "handlePreview",
+            "placeholderKeys",
+            "evaluatePlaceholder",
+            "validateBlock",
+            "handleValidate",
+            "storedClass",
+            "hasCompany",
+            "hasPerson",
+            "classOf",
+            "bucketForRecipient",
+            "inclusionReasonFor",
+            "buildQueryPhrase",
+            "summarize",
+            "handleEligibilitySummary",
+            "estimate",
+            "handleEstimate"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7de69af12fdc8be08099f2703f67ad731d5d501ff8b58949dd0b45bef343eeda",
+      "line_count": 452,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 452,
+          "symbols": [
+            "resolveScope",
+            "loadDispatch",
+            "fetchPaged",
+            "uuidOrNull",
+            "mapConfirmError",
+            "handleConfirm",
+            "emptyTally",
+            "tally",
+            "groupItems",
+            "handleStatus"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/actions/listing.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "1b32bd3b291b2a723e72dba52e6ceff8b78459a3a47861a64129b3c99da99e7e",
+      "line_count": 228,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 228,
+          "symbols": [
+            "resolveOwnerScope",
+            "handleDispatchList",
+            "handleRecipientsList",
+            "owner scope in WHERE",
+            "pagination/total/filters"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2cf3fb9e107aa3aab9516b59a8ed6daae4c5f47485ff09dad937e99d9420bd12",
+      "line_count": 49,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 49,
+          "symbols": [
+            "public exports"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/phone.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a30e475a7970df23debebed46be41cb4da1f2b1eebf68afdc52d53bc6e1e61bb",
+      "line_count": 39,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 39,
+          "symbols": [
+            "normalizePhone and generatePhoneVariants reexports",
+            "compile-time shape assignments"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/timing.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e19c6a213fbc4ab8500cf3b0dafbe213e37b66a3326a5bc9310668ad5da48bc5",
+      "line_count": 24,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 24,
+          "symbols": [
+            "randomBetween",
+            "sleep"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/validation.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "257890b6c2c20f463f6bb01b670306681b00bdc3685eda012c4296aad620d61e",
+      "line_count": 320,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 320,
+          "symbols": [
+            "Logger",
+            "CORS",
+            "jsonResponse",
+            "sanitized error response",
+            "memory/persistent limiter",
+            "getClientIP",
+            "requireEnv",
+            "requireAuth",
+            "createAuthedClient"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/media.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "912210b797d9a7e132d6e51c0ac6d050a72d7d4e5d24f0fd9928f0cd07c744ec",
+      "line_count": 690,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 690,
+          "symbols": [
+            "bytesAt",
+            "asciiAt",
+            "asciiLower",
+            "isLikelyAsciiText",
+            "detectMediaKind",
+            "fail",
+            "failFromStatus",
+            "describeError",
+            "parseContentLength",
+            "parseContentRangeTotal",
+            "resolveMaxBytes",
+            "resolveTtlSeconds",
+            "resolveProbeBytes",
+            "resolveTimeoutMs",
+            "isSafeMediaFileName",
+            "hasControlChars",
+            "stripControlChars",
+            "resolveFileName",
+            "decodeSignedUrlExpiryMs",
+            "normalizeSignedUrl",
+            "resolveFetchUrl",
+            "readBody",
+            "hexPreview",
+            "prepareMedia"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/eligibility.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5f12e7df5c86e87c31333eda162681223c5c732508e34530cb17a1e3d77bb4c7",
+      "line_count": 177,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 177,
+          "symbols": [
+            "digitsOnly",
+            "isBlacklisted",
+            "eligibility"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/errors.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "749ea0742264f25e50ab939c3544ae8d287344af8a77bd44c5f2b7f91aafca57",
+      "line_count": 280,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 280,
+          "symbols": [
+            "operatorMessageFor",
+            "bodyText",
+            "hasNumberNotExists",
+            "info",
+            "providerErrorInfo",
+            "classifyProviderError",
+            "operatorMessageForError",
+            "nextBackoff",
+            "planRetry"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/evolution-go.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "3af95dfe703c6666e5aa344936a1620564fe56e5b6627aaf3fe24fbe1a30b3a3",
+      "line_count": 279,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 279,
+          "symbols": [
+            "capabilities",
+            "presenceForKind",
+            "getMediaEndpoint",
+            "MessagingError",
+            "delayFields",
+            "sendMediaBody",
+            "planMessage",
+            "authHeaders",
+            "postPresence",
+            "send"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/personalize.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "04f9405526d62f1d9b42278697073b6d4451dfe4e51a6644d6cd51dd257fb33a",
+      "line_count": 213,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 213,
+          "symbols": [
+            "getGreeting",
+            "formatDateInTimezone",
+            "personalize",
+            "personalizeMultiplix"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/types.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "eda287311f27bc54aa4182e6e167b77d41290b7b32be207addc77128bce29fe0",
+      "line_count": 64,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 64,
+          "symbols": [
+            "CorrelationId and public type reexports"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/secure-random.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ddb132b9db8ab21e4e49bbe56f63b965c04a3eab7213db5cf846500e6e5055a2",
+      "line_count": 10,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 10,
+          "symbols": [
+            "secureRandomFloat"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/multiplix-eligibility.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4132b1b0e0748b19b698d7136ed782bd211fb78d9501df163d30fed7e78804a3",
+      "line_count": 127,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 127,
+          "symbols": [
+            "eligibility vocabularies",
+            "isSinguEligibility",
+            "fromSinguEligibility"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/ai-proxy/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "bf53a35219fda2e5e7459fbad5171d72d03bf5c780fdc7a428ad6b4622386a0f",
+      "line_count": 838,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 838,
+          "symbols": [
+            "schema",
+            "ProviderConfigError",
+            "requireProviderSecret",
+            "present",
+            "asPlainConfig",
+            "ownConfig",
+            "chatProviderConfig",
+            "webhookProviderConfig",
+            "partModality",
+            "nonTextModality",
+            "capabilityNeedFromBody",
+            "errorText",
+            "bodyText",
+            "firstMessageContent",
+            "routingStatus",
+            "routingErrorResponse",
+            "timeoutOptions",
+            "dispatchProvider",
+            "runProviderTest",
+            "classifyDispatchError",
+            "classifyHttpFailure",
+            "isTestRequest",
+            "Deno.serve handler",
+            "loadFallbackTarget",
+            "coveredFallbackTarget",
+            "stream and usage response paths"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-usage.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9056c49ae190dc60fd1fc34fee89fc3e4a21e14628fc9bf68d33a6576f3ab0d9",
+      "line_count": 707,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 707,
+          "symbols": [
+            "extractTokenUsage",
+            "normalizeCorrelationId",
+            "normalizeAttempt",
+            "textOrNull",
+            "normalizeModality",
+            "buildUsageMetadata",
+            "extractAiRequestId",
+            "extractUserIdFromRequest",
+            "resolveProfileId",
+            "logAiUsageDetached",
+            "logAiUsage",
+            "extrairUsageDoStream",
+            "medirStream",
+            "encerrar",
+            "pull/cancel",
+            "contaParaQuota",
+            "identidadeDaAcao",
+            "reconciliarConsumo",
+            "instante",
+            "tarifaAplicavel",
+            "calcularCusto"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/ai-auto-tag/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "be14e7d9260590014232ff861ea9d56233b1fa5ade96eff96255ed6a7fcd26ab",
+      "line_count": 310,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 310,
+          "symbols": [
+            "auth/quota",
+            "visible contact gate",
+            "message source",
+            "queue prompt",
+            "generation",
+            "output validation",
+            "tag payload/replacement",
+            "sentiment/priority update",
+            "queue membership authorization",
+            "urgent notification",
+            "envelope"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-response-contracts.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b7f4c6f6690e5c02dfbe8b4fea14a03e1ab16357629c823ff70a9542d7b0d38e",
+      "line_count": 247,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 247,
+          "symbols": [
+            "canonical domain schemas",
+            "AutoTagOutput",
+            "ChatbotL1Output",
+            "parseModelOutput",
+            "buildAiEnvelope"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/secure-egress.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4e99aa2064e3a5e25ed60f514cdebfeee318450ca5a1671529483c56a20f5688",
+      "line_count": 185,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 185,
+          "symbols": [
+            "isEgressPayload",
+            "toHex",
+            "nonce",
+            "sign",
+            "decodeBody",
+            "validProxyEndpoint",
+            "getSecureEgressConfig",
+            "fetchPreviewViaSecureEgress"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/postgrest-filters.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5570aa4f0459b218bd557d52d08ed7eb24b133ef65233c80589d5fffd725a4b8",
+      "line_count": 16,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 16,
+          "symbols": [
+            "escapeOrFilterValue"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/talkx-delivery-connection.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "3d569e1819ecba45d315777be69e4b6b8bb7408076773747b706e3260cd5d7dd",
+      "line_count": 16,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 16,
+          "symbols": [
+            "liveTalkXInstanceId"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-routing.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "290869327280e22fca642dc92ed063fd017e59c27e40448301cccc5dc1774c56",
+      "line_count": 336,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 336,
+          "symbols": [
+            "AiRoutingError",
+            "nonEmptyString",
+            "isPlainObject",
+            "resolveProvider",
+            "resolveModel",
+            "composeMessages",
+            "filterConfigBody",
+            "filterExtraBody",
+            "filterHeaders"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-capabilities.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4b844c226809a9042c1104f2f19dc437332a01df47d8179c19c31e70cfef9209",
+      "line_count": 280,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 280,
+          "symbols": [
+            "AiCapabilityError",
+            "isPlainObject",
+            "readOwn",
+            "asUnknownArray",
+            "isModality",
+            "isFeature",
+            "providerLabel",
+            "declaredCapabilities",
+            "assertCapabilities"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-providers.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6d110b3e93f9a8c3b4b04c45a618cbfb4588fba986cb57326744749eb640a626",
+      "line_count": 303,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 303,
+          "symbols": [
+            "callLovableAI",
+            "callOpenAICompatible",
+            "callCustomWebhook",
+            "isAbortError",
+            "isFetchTypeError",
+            "classifyFailure",
+            "backoffDelayMs",
+            "sleep",
+            "withRetry"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-generate.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0e6d14a303fb023f7c482f2374287c3089dc7bb155b7870c046d3ad79f8d1f35",
+      "line_count": 965,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 965,
+          "symbols": [
+            "resolveDefaultTimeoutMs",
+            "estimateAiTokens",
+            "serializeCanonico",
+            "compararCodeUnit",
+            "canonicalize",
+            "fnv1aHex",
+            "deriveAiIdempotencyKey",
+            "ProviderConfigError",
+            "errorText",
+            "errorName",
+            "isAbortOrTimeoutError",
+            "isPlainObject",
+            "asPlainObject",
+            "providerLabel",
+            "routingStatus",
+            "failureResponse",
+            "requireText",
+            "loadProviders",
+            "requireSecret",
+            "buildDispatch",
+            "resolveProviderByModalities",
+            "generateWithRouting: logUsage/finish/reserve/retry/release/settle"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-budget.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "21d0a56cebca25d572a0bc4756d032e8240e148f18c2dd1543a50b5e9a8ce8fd",
+      "line_count": 407,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 407,
+          "symbols": [
+            "errorText",
+            "logWarn",
+            "requireNonEmptyString",
+            "requireFiniteNumber",
+            "toSafeInt",
+            "firstRow",
+            "createServiceClient",
+            "fallbackOpen",
+            "reserveBudget",
+            "settleBudget",
+            "releaseBudget",
+            "reconcileBudget"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-values.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4f25e58a3104c465b5c52e489e6181d509a11289e943a6d8b87632e3b514c644",
+      "line_count": 111,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 111,
+          "symbols": [
+            "isAbsent",
+            "normalizeScore",
+            "aggregateScores"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-vocabulary.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "47877aa9e72f9d61ea847b15770bf8bc8783f1be01e0cb06f49cb78582d644ca",
+      "line_count": 156,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 156,
+          "symbols": [
+            "tokenOf",
+            "hasOwn",
+            "isSentiment",
+            "normalizeSentiment",
+            "isUrgency",
+            "normalizeUrgency",
+            "urgencyToOperationalPriority",
+            "isOperationalPriority",
+            "normalizeOperationalPriority"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/ai-json.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "915b960b7ac4b589022f4d8b960f59676add75324f4c637d283bf7ea51c00abb",
+      "line_count": 32,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 32,
+          "symbols": [
+            "extractJsonObject",
+            "parseJsonObject"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/notification-events.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "33cd00991605bab1c6634c330818cc10462965857c356d751c8cdb943e910c28",
+      "line_count": 134,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 134,
+          "symbols": [
+            "normalizeEvolutionCallStatus",
+            "shouldNotifyIncomingCall",
+            "direcaoDaChamada",
+            "instanteDaChamada",
+            "deveNotificarChamada",
+            "normalizeEvolutionCallVideo",
+            "buildIncomingCallNotification",
+            "buildSentimentNotification",
+            "sentimentSettingsOwnerId",
+            "escapeHtml",
+            "singleLineLabel"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/voice-copilot-authz.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c491b2431c16f9218cb116de8e9e076b8bafa72a11c71f04a80f0bcd868956e5",
+      "line_count": 53,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 53,
+          "symbols": [
+            "isReassignManager",
+            "decideReassignConversation"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/contracts.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6b3f5665803c7a63412df191b83c4e9d7ae52e8b6e329dd225bfd723b31cd7d7",
+      "line_count": 43,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 43,
+          "symbols": [
+            "getContractVersion",
+            "deprecationHeaders",
+            "parseVersioned"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/deno-types.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f64bd96676248afd26a268e9a978caea9d7f531da6dfa93a7cda7eae95215a2e",
+      "line_count": 10,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 10,
+          "symbols": [
+            "SupabaseClient",
+            "JsonRecord type-only declarations"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/email-font-stack.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "6dd04ff0ef9d49596e77a761d8a6ee05f5360dec1551ba5443ef9d6cae5a0990",
+      "line_count": 17,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 17,
+          "symbols": [
+            "EMAIL_FONT_STACK constant"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-types.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a6e87b87a72a6bcde9faa1928f3d64a740cefa4fc642faa7961504fcfbcd5407",
+      "line_count": 99,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 99,
+          "symbols": [
+            "PromiseLike builder declarations",
+            "query rows/single/storage/channel types"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/multiplix-audience/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "11b8720509ce9eff3020e998eafbea868f5cbf60d1541485c5bb7fbb1c6414f4",
+      "line_count": 662,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 662,
+          "symbols": [
+            "withTimeout",
+            "fetchAudienceList",
+            "MultiplixPolicyLimitError",
+            "planResolveBatches",
+            "compararCodeUnit",
+            "scopeSignaturePayload",
+            "signScope",
+            "resolveRecipientsInBatches",
+            "mapResolvedRecipients",
+            "handleMultiplixAudienceRequest",
+            "userHasPermission",
+            "routing/resolving/create_draft/error response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/multiplix-voices/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8a7783b6ce72ab6245371171fdb3351aa6bf0a2bb3e313904ab8eaefb2e7fc2f",
+      "line_count": 218,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 218,
+          "symbols": [
+            "grantReachesCaller",
+            "visibleGrants",
+            "canRecoverAsset",
+            "handleMultiplixVoicesRequest",
+            "list/sign owner and grant checks"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/batch-fetch-avatars/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d1695f0698b4a2ce1a4c4402d959b00f1342dd64e0e04b10d4d7a8b0949821a0",
+      "line_count": 144,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 144,
+          "symbols": [
+            "handleBatchFetchAvatars",
+            "cron/user gate",
+            "global batch",
+            "markAttempted",
+            "provider/storage/update/count"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/recover-corrupted-audios/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "dd6f1d50dfdbfa10d3385cbcc123af43904718d8372212c0d7b55f3e0383c1ac",
+      "line_count": 144,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 144,
+          "symbols": [
+            "isValidAudioBytes",
+            "getMediaBase64",
+            "handler",
+            "first connection selection",
+            "dry_run",
+            "global loop",
+            "storage and media_url update"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/migrate-media-storage/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b0cc79888645b4bced95ed5890d90ab04daf4282598a963b7e20a3ba38bd9644",
+      "line_count": 270,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 270,
+          "symbols": [
+            "admin gate",
+            "connection map",
+            "message selection",
+            "downloadAndUpload",
+            "getBase64Fallback",
+            "detectExtension",
+            "uploadToStorage",
+            "migrateSimple"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/talkx-report/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8b2c6399dd8749d1db15d6527e310b87a49191ec51169840723e6030a6f812e7",
+      "line_count": 186,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 186,
+          "symbols": [
+            "escHtml",
+            "jsonErr",
+            "handler caller/creator gate",
+            "recipient query",
+            "KPIs",
+            "fmtDate",
+            "email status handling"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/talkx-link/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a59b1b67a392b3e347f1ddc975f32de2d5a0b3bd5618d580eb665fca7d048c15",
+      "line_count": 255,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 255,
+          "symbols": [
+            "handleTalkxLink",
+            "GET click/redirect/UTM",
+            "POST conversion HMAC/timestamp/body/schema/RPC",
+            "hashIp",
+            "mergeUtm"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/gmail-mime.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f0e3e7802efd258c9e0a2ab31de462ad1f7bda394f11cdb3e05be71834ac4f2e",
+      "line_count": 85,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 85,
+          "symbols": [
+            "encodeUtf8Base64",
+            "encodeBase64Url",
+            "buildGmailMimeMessage",
+            "appendAlternativeBody",
+            "attachment and text/html alternatives"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/webhook-signature.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "422287aa88bb95acb42cbd7e80bc6b014bdd754e30244a289b4fbfa9a5a87350",
+      "line_count": 92,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 92,
+          "symbols": [
+            "parseElevenLabsSignature",
+            "verifyElevenLabsSignature"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/voice-agent/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7bcab539aed5f54a7e405e647744fc71d15ceb6739a2e77334527f4af396b5f5",
+      "line_count": 214,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 214,
+          "symbols": [
+            "TranscriptSchema",
+            "sanitizeResult",
+            "authenticated handler",
+            "tools/generation/result parsing",
+            "degraded answer"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/voice-changer/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4e9f6890fe21be06165ef77c8f79b72ead50c0511dd4264091a9e16bfc6d3827",
+      "line_count": 111,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 111,
+          "symbols": [
+            "VOICE_PRESETS",
+            "user rate gate",
+            "multipart input",
+            "provider speech-to-speech",
+            "audio response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/voice-copilot-action/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e5acc74c33bb3d33b93f10e85baedff4456b446fbf394daad7fa9fa0c51d964b",
+      "line_count": 238,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 238,
+          "symbols": [
+            "auth/caller client",
+            "search_contacts",
+            "get_conversation_summary",
+            "get_dashboard_metrics",
+            "assign_conversation",
+            "create_note",
+            "list_agents",
+            "get_queue_status",
+            "default/error"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/sentiment-alert/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "75e637b94ec99ac0ce5994b2b6e40ce697e58e418ebd69b5490a2d87d1987e7b",
+      "line_count": 216,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 216,
+          "symbols": [
+            "handleSentimentAlertRequest",
+            "analysis visibility",
+            "settings owner",
+            "latest/consecutive score guards",
+            "atomic persistence",
+            "duplicate path",
+            "email status and response"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/fetch-link-preview/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8f4823a35cb1cb3ec54d0d7b9941033bc952cef9032a2d12ab9b6de74a3402ef",
+      "line_count": 274,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 274,
+          "symbols": [
+            "dbCacheGet",
+            "dbCacheSet",
+            "hashUrl",
+            "cacheGet",
+            "cacheSet",
+            "decodeEntities",
+            "extractMeta",
+            "extractTitle",
+            "absolutize",
+            "fetchPreview",
+            "handler cache/proxy/error"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/webhook-diagnostic/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "df91c8ad62c862151ce56cb1282d0aef775dddf36055dd4573ffad41b5e4d9b6",
+      "line_count": 240,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 240,
+          "symbols": [
+            "normalizeWebhookEvents",
+            "handler",
+            "connection scan",
+            "status lookup/fallback",
+            "GO/v2 webhook diagnosis",
+            "global message counts",
+            "auto-fix",
+            "score aggregation/error"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/promogifts-catalog/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "534039a3352b661c5dbdd113024b338d0339abd5454796a05b4efc64e4a50418",
+      "line_count": 494,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 494,
+          "symbols": [
+            "stripDiacritics",
+            "sanitizeSearch",
+            "sanitizeFtsQuery",
+            "buildTagOrExpr",
+            "checkRateLimit",
+            "externalDatabaseErrorResponse",
+            "createExternalCatalogClient",
+            "promogiftsCatalogHandler",
+            "list_products/buildProductsQuery",
+            "get_product",
+            "list_categories",
+            "list_suppliers",
+            "bootstrap",
+            "catalog_stats"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/schemas.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7fb6f10bf93306c84c7a4a84b68cb6e53f855e4aa04045dd1e8b96fead3c6cc7",
+      "line_count": 627,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 627,
+          "symbols": [
+            "common/context/AI/ElevenLabs/Email/Gmail/WebAuthn/bridge/webhook/header schemas",
+            "measureConversationContext",
+            "withConversationBudget",
+            "toInstant",
+            "evaluateContextVersionSupersession",
+            "revalidateContextBeforeEffect",
+            "contextCancelledEnvelope",
+            "toFieldErrors",
+            "parseBody",
+            "validationErrorResponse"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/functions/_shared/hmac-validation.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f6a785a3da09e2b11a9d074ac8827295f8d32c0eec535547c5a6c08d367434da",
+      "line_count": 428,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 428,
+          "symbols": [
+            "verifyHmacSignature",
+            "timingSafeEqual",
+            "extractSignatureFromHeaders",
+            "WebhookSecurityService constructor/validateRequest/signPayload",
+            "createWebhookValidator",
+            "logWebhookAuthShadow",
+            "logElevenLabsAuthShadow",
+            "sanitizeClaimForLog",
+            "logGmailOidcAuthShadow",
+            "decodeJwtSegment"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "src/components/monitoring/hooks/useMonitoringActions.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f40ba54499837efec5bdcdeb3d43548978bde230eb820cf6906def1845b8be94",
+      "line_count": 88,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 60,
+          "line_end": 85,
+          "symbols": [
+            "reconfigureWebhook",
+            "runDiagnostic"
+          ]
+        }
+      ],
+      "note": "Somente chamada ao endpoint de controle; frontend integral pertence à frente responsável."
+    },
+    {
+      "path": "src/components/talkx/TalkXCampaignRunning.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "ed85bdec958622504c2f89cf0786d55dcb05d371aa7dc3a825bccf0b3d993724",
+      "line_count": 840,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 714,
+          "line_end": 726,
+          "symbols": [
+            "report email consumer"
+          ]
+        }
+      ],
+      "note": "Somente consumidor do relatório; frontend integral pertence à frente grill."
+    },
+    {
+      "path": "supabase/migrations/20261002691230_talkx_v4_x021_links_conversoes_investimento.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f596a472c0d68e9e8d3926d5107a205a3f08585988931113d45938c98042300c",
+      "line_count": 412,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 105,
+          "line_end": 125,
+          "symbols": [
+            "conversion NOT NULL/defaults",
+            "partial dedupe index",
+            "record_talkx_conversion"
+          ]
+        },
+        {
+          "line_start": 297,
+          "line_end": 363,
+          "symbols": [
+            "conversion NOT NULL/defaults",
+            "partial dedupe index",
+            "record_talkx_conversion"
+          ]
+        }
+      ],
+      "note": "Trechos lidos após confirmação da definição vencedora pela frente database; somente estas faixas foram auditadas aqui."
+    },
+    {
+      "path": "src/hooks/chat/useScheduledMessages.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "729dcadc6070c3d0ac62a6630c20652773b2a62fde0bc2edf438751a6ddef32d",
+      "line_count": 106,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 106,
+          "symbols": [
+            "useScheduledMessages",
+            "scheduleMutation",
+            "cancelMutation"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "src/hooks/integrations/useBitrixApi.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d3b0a5b13b12473c9f871c5085e84e3274f46b4f2702cffcb0c4fe4be3992684",
+      "line_count": 250,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 88,
+          "symbols": [
+            "callBitrixApi",
+            "syncContactsFromBitrix",
+            "pushContactToBitrix",
+            "createLeadFromConversation"
+          ]
+        },
+        {
+          "line_start": 175,
+          "line_end": 226,
+          "symbols": [
+            "callBitrixApi",
+            "syncContactsFromBitrix",
+            "pushContactToBitrix",
+            "createLeadFromConversation"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "src/components/voice/ElevenLabsDialogue.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "02939066ef9eab5e8db0305d8cec246a32981dd145e16e4ff905e10c1fcd6d4b",
+      "line_count": 165,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 52,
+          "line_end": 93,
+          "symbols": [
+            "generateDialogue"
+          ]
+        }
+      ],
+      "note": "Somente o consumidor do contrato backend; revisão completa de UI pertence à frente grill."
+    },
+    {
+      "path": "src/components/settings/media-library/AIGenerateDialog.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d54fb270daefe283513adc98216defdda36e428ecefc064c3c5d30b8a4068c7b",
+      "line_count": 89,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 88,
+          "symbols": [
+            "handleGenerate",
+            "handleSaveGenerated",
+            "duration controls"
+          ]
+        }
+      ],
+      "note": "Última linha de fechamento não usada para promover o arquivo; ciclo completo de UI pertence à frente grill."
+    },
+    {
+      "path": "src/components/settings/ai-providers/useAIProviders.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d28260300d35a0f8940875456cc85131c875b2b07b5868c2251bc4058b65b8d3",
+      "line_count": 234,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 234,
+          "symbols": [
+            "readInvokeErrorBody",
+            "useAIProviders",
+            "query",
+            "saveMutation",
+            "deleteMutation",
+            "handleTest",
+            "openEdit",
+            "openNew",
+            "closeDialog",
+            "toggleUseFor"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/inbox/useConnectionsManager.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8a4d3d0105d5585a12bba5e69760317b44fbd772c0d32820978c986108071a9f",
+      "line_count": 304,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 304,
+          "symbols": [
+            "connection/dialog types",
+            "useConnectionsManager",
+            "QR refs and effects",
+            "fetchConnections",
+            "generateInstanceName",
+            "handleAddConnection",
+            "startStatusPolling",
+            "handleShowQrCode",
+            "handleRefreshQrCode",
+            "copy/reconnect/disconnect/default/delete",
+            "closeQrDialog"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/groups/actions.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b6713ab51c47df06ef5f26a1669f8a9ebec75bb90250b75b6e960be0b7c8809e",
+      "line_count": 122,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 122,
+          "symbols": [
+            "useGroupActions",
+            "handleAutoSync",
+            "handleAddGroup",
+            "handleDeleteGroup",
+            "handleBroadcast",
+            "handleCategoryChange"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/groups/types.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2ea2a9174b418102b08995c4df02a044e9f295ed63a57e8372b4412a8dab02dc",
+      "line_count": 26,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 26,
+          "symbols": [
+            "WhatsAppGroup",
+            "WhatsAppConnection",
+            "GROUP_CATEGORIES"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/groups/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "19dd42c2067cfc5b7d1bd3fbdbfcb70e22b57de89f7541e17942b5c6214d9e92",
+      "line_count": 3,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 3,
+          "symbols": [
+            "group reexports"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/chat/useGroupsManager.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f8f32ebbf2196b6f278c44bc9839e43f39b762a755ac877882a10207390e6055",
+      "line_count": 73,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 73,
+          "symbols": [
+            "useGroupsManager",
+            "fetchGroups",
+            "fetchConnections",
+            "effects",
+            "actions consumer",
+            "filteredGroups",
+            "toggleGroupSelection",
+            "selectAllGroups",
+            "getConnectionName"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/connections/ConnectionsView.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "94fe1937bab7ae54f1141567533c51b0f014db963325c8f8e1d81349092ed4da",
+      "line_count": 193,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 193,
+          "symbols": [
+            "ConnectionsView",
+            "feature flag",
+            "history sync",
+            "connection actions",
+            "QR identity renderer",
+            "child dialog mounts"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/connections/ConnectionCard.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "f4674745872c064226f3937a1b2745bac6cfb8b0647791507fd16f2e37ced2b6",
+      "line_count": 167,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 167,
+          "symbols": [
+            "statusConfig",
+            "ConnectionCard",
+            "status and stats",
+            "action menu"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/connections/InstanceSettingsDialog.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "da9494d139ccbda39eca18956ebfb6725fb13d9fe6a3ac458b59f477e869cd7f",
+      "line_count": 121,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 121,
+          "symbols": [
+            "settings/privacy defaults",
+            "loadSettings",
+            "loadProfile",
+            "loadLabels",
+            "effects",
+            "settings/profile/privacy save callbacks"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/connections/InstanceSettingsTabContent.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "3101684b47b56da3954268e8cb4fdb6bc92d3dba351a6f292b4ea96922dd6388",
+      "line_count": 98,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 98,
+          "symbols": [
+            "SettingsTabContent",
+            "PrivacyTabContent",
+            "LabelsTabContent"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/connections/ConnectionQueuesDialog.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5ba46c00df6921e6b09c92aef5a0af532ece13bdb32821b686dc11437166bfd2",
+      "line_count": 107,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 107,
+          "symbols": [
+            "ConnectionQueuesDialog",
+            "handleToggle",
+            "linked IDs",
+            "queue checkbox"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/connections/IntegrationsPanel.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2ae265ac2153d7988474dc1ed88217231acd78676572afefe7c3ffab3b7d5531",
+      "line_count": 329,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 329,
+          "symbols": [
+            "IntegrationForm",
+            "local enabled switch",
+            "IntegrationsPanel",
+            "loadAll",
+            "load",
+            "all six config states",
+            "save/delete callbacks"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/connections/BusinessHoursDialog.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8d77909bb288ab18b873070d5211946d0548474e6f4a976c0bed104712af6814",
+      "line_count": 261,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 261,
+          "symbols": [
+            "defaults",
+            "state sync effects",
+            "handleSave",
+            "updateHour",
+            "copyToAllDays",
+            "applyWeekdayTemplate",
+            "hours and away-message controls"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/connections/BusinessHoursIndicator.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "33b921a67f111f26989a7f955c6fa4a0925efb0c500e1fe07a05fb0e9af150c8",
+      "line_count": 129,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 129,
+          "symbols": [
+            "fetchBusinessHoursStatus",
+            "local time/window logic",
+            "query and unknown/no-data rendering",
+            "BusinessHoursIndicator"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/connections/NumberReputationMonitor.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "05a2c82fc285c1deee8e70ebda85eafdbcd57691778334568c376597c342ee2d",
+      "line_count": 180,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 180,
+          "symbols": [
+            "loadData",
+            "startWarmup",
+            "getHealthColor",
+            "getHealthBg",
+            "warmup labels and limit rendering"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/settings/AIProvidersManager.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "5bf77bf47ba8fb7753eb3f072b64ad2447810c61a5462e1e3dbf966b393604ce",
+      "line_count": 96,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 96,
+          "symbols": [
+            "AIProvidersManager",
+            "provider cards",
+            "new/edit/save/delete wiring",
+            "health panel mount"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/settings/ai-providers/types.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "47158c2f0c6d7907718352ba4361cf02f6bcd78467e3b3017ac78d7836c44fd0",
+      "line_count": 51,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 51,
+          "symbols": [
+            "AIProvider",
+            "ProviderFormData",
+            "labels",
+            "purpose options",
+            "default form"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/settings/ai-providers/AIProviderCard.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8572ff83a89fca6cc67dfb2728f4374f838ea4caf1ab038f522d934e365655e3",
+      "line_count": 151,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 151,
+          "symbols": [
+            "AIProviderCard",
+            "test/edit callbacks",
+            "delete dialog and callback"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/settings/ai-providers/AIProviderFormDialog.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "1426c4c614b1cf1f11688f07a222e5adeb2ad8a9695e5960b7efe29c675311f8",
+      "line_count": 217,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 217,
+          "symbols": [
+            "FieldError",
+            "isValidUrl",
+            "form validation",
+            "provider config inputs",
+            "purpose/default/active controls",
+            "save state"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/components/settings/ai-providers/AIProviderHealthPanel.tsx",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "0606efd66fa6b37567d0e369a6b40d4a3b5916758278017ebbd1dd8e3f155233",
+      "line_count": 290,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 290,
+          "symbols": [
+            "percentil",
+            "query scope",
+            "success/error/fallback KPIs",
+            "durations",
+            "isLoading/no-observations/data rendering",
+            "sample labels"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/integrations/useEvolutionApi.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "79b9e2addf086e3b54044cc779fef9322d6aefab9de9ffed282e8bb65feaea97",
+      "line_count": 32,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 32,
+          "symbols": [
+            "useEvolutionApi",
+            "core/instance/messaging/groups/integrations composition"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/evolution/useEvolutionApiCore.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "346ad35e1d77c8cf75a186d1121a18681bd7f82e81f3b56852e6e69cbe8ef354",
+      "line_count": 74,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 74,
+          "symbols": [
+            "useEvolutionApiCore",
+            "callApi",
+            "dedupe",
+            "withToast",
+            "mounted and pending request effects"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/evolution/useEvolutionInstance.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a44fed36d3d14e5f576fade69b6a38012c975ad6ec23cad11d7a99a8502caf57",
+      "line_count": 58,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 58,
+          "symbols": [
+            "useEvolutionInstance",
+            "all instance control action mappings"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/evolution/useEvolutionIntegrations.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "8716ba0776fd4ac58376eaa0381410117bf4af9b6ff038384b1e824020fefc0a",
+      "line_count": 156,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 156,
+          "symbols": [
+            "useEvolutionIntegrations",
+            "profile/privacy methods",
+            "Typebot/Chatwoot/OpenAI/Dify/Flowise/Bot methods",
+            "WhatsApp Business methods",
+            "findMessages",
+            "Kafka/Nats/Pusher methods",
+            "return contract"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/business/useBusinessHours.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "c3df0aebaeff7ea5357bbfe1a55ee5f628cfa092ff88ea31200e9ce9220c8b9e",
+      "line_count": 152,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 152,
+          "symbols": [
+            "defaults",
+            "useBusinessHours",
+            "business-hours query",
+            "away-message query",
+            "saveMutation",
+            "saveSettings mutateAsync",
+            "stable state and refetch"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "src/hooks/inbox/useConnectionQueues.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4225c0f480654b1ecb5e47ac12b7f5c5ac32142bd08917bbdefdd838bba8b25b",
+      "line_count": 80,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 80,
+          "symbols": [
+            "useConnectionQueues",
+            "fetchQueues",
+            "mount guard",
+            "addQueue",
+            "removeQueue"
+          ]
+        }
+      ],
+      "note": "Lote frontend de provedores/conexões e dependências; texto integral lido, com contrato até o handler conhecido."
+    },
+    {
+      "path": "supabase/migrations/20260408194438_1ad57139-c089-4711-86e1-71d8f461e02d.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "7f5968e3f16d21d397d1744a20e19fbb359bead392d87c5cbc857b16f2708cb6",
+      "line_count": 93,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 49,
+          "line_end": 90,
+          "symbols": [
+            "delete policy",
+            "updated_at trigger",
+            "ensure_single_default_ai_provider",
+            "insert/update trigger",
+            "Lovable seed prefix"
+          ]
+        }
+      ],
+      "note": "Leitura pontual após confirmação da definição vigente pela frente database."
+    },
+    {
+      "path": "supabase/migrations/20260409014536_3a836b4b-1e37-411c-b8af-45d918304272.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "335578990b1841242e328f8586d78f389c847551580c58e8f15dd16f37fd63c3",
+      "line_count": 166,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 136,
+          "line_end": 166,
+          "symbols": [
+            "number_reputation DDL",
+            "reputation policies and generic update trigger"
+          ]
+        }
+      ],
+      "note": "Leitura pontual; chain review belongs to database."
+    },
+    {
+      "path": "supabase/migrations/20251220181300_aa931cb8-3812-4396-983e-123d19f73ad8.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "db73d151afdbf5f8b8cb85022560bbc82dbdd420fe2b433f9e88b5237386a650",
+      "line_count": 103,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 103,
+          "symbols": [
+            "business_hours/away_messages/message_reactions original DDL",
+            "original policies",
+            "updated_at triggers",
+            "indexes/publication"
+          ]
+        }
+      ],
+      "note": "Texto original completo lido; definições/políticas posteriores vigentes pertencem à frente database."
+    },
+    {
+      "path": "supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "181539dcb1ab6cae5df0571f2f91592e67e60b4bdb40f594d519eafa13f403d3",
+      "line_count": 613,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 198,
+          "line_end": 245,
+          "symbols": [
+            "claim/reap expiry",
+            "heartbeat conditions",
+            "finish token fencing"
+          ]
+        },
+        {
+          "line_start": 270,
+          "line_end": 303,
+          "symbols": [
+            "claim/reap expiry",
+            "heartbeat conditions",
+            "finish token fencing"
+          ]
+        },
+        {
+          "line_start": 330,
+          "line_end": 344,
+          "symbols": [
+            "claim/reap expiry",
+            "heartbeat conditions",
+            "finish token fencing"
+          ]
+        },
+        {
+          "line_start": 380,
+          "line_end": 430,
+          "symbols": [
+            "claim/reap expiry",
+            "heartbeat conditions",
+            "finish token fencing"
+          ]
+        }
+      ],
+      "note": "Faixas lidas após confirmação da definição vencedora pela frente database; não é revisão integral da migration."
+    },
+    {
+      "path": "supabase/config.toml",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af",
+      "line_count": 78,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 78,
+          "symbols": [
+            "webhook/auth gateway declarations",
+            "message-delivery",
+            "crm-integration",
+            "call functions"
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "path": "supabase/migrations/20251220182411_dd03d6a1-4f98-410e-a411-1f2486626de2.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "57d0566fa0036f3777b5b5d4e4a7426c8a3fc31a570825f40175034d9aec9600",
+      "line_count": 58,
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 58,
+          "symbols": [
+            "scheduled_messages DDL/RLS/updated_at/index"
+          ]
+        }
+      ],
+      "note": "Definição vencedora completa e demais migrations pertencem à frente database."
+    },
+    {
+      "path": "supabase/migrations/20260930410000_talkx_settings_replay_idempotent.sql",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "d22b85ac2b209d0c4f6764a9b2049e33a08680043799a3c2fc0a05fda9981c2c",
+      "line_count": 57,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 19,
+          "line_end": 42,
+          "symbols": [
+            "talkx_settings JSONB schema and seed"
+          ]
+        }
+      ],
+      "note": "Leitura pontual de contrato JSONB; não é revisão de todas as políticas SQL."
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-webhook-optout.test.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "21557ba3f577d6afd564fba322511179a969303a6d9ff0db86b11e02a28b877c",
+      "line_count": 335,
+      "level": "semantic_selected_ranges",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 335,
+          "symbols": [
+            "opt-out fixtures and success scenarios"
+          ]
+        }
+      ],
+      "note": "Teste lido, não executado pelo runner Deno; probes novos exercitam falhas omitidas pelas fixtures felizes."
+    },
+    {
+      "path": "supabase/functions/_shared/ai-conversation-pipeline.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "2aa5c9290cc859bed55c6271b3d4ba9f165e6d6ca845eadaab2dc59bf79dce0f",
+      "line_count": 506,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/_shared/ai-image-input.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a5ef80641783858fb58d8f79464cdab38afd35705bfcd8cbdfce1f7f954acc58",
+      "line_count": 399,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/ai-churn-analysis/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "de085f8f7ae029523d88e40b58cdb5bbc3a2209056521feeef429ad11e2e94f5",
+      "line_count": 131,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/ai-classify-tickets/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9c0e48f28189c0ccc197b70a20ecb8df4e8b389a89f161c6dda4377164b0b422",
+      "line_count": 103,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/ai-conversation-analysis/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "e4731a289d2c7129b40e2281248529e3ab0b26136173323fdf237d4a5347de92",
+      "line_count": 309,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/ai-conversation-summary/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "cded06fb6964859231886daab87aad3e0f91d85bba1645c3849888c37dcca969",
+      "line_count": 282,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/ai-enhance-message/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "9c39192d88a50698c083b644cb1db982e57dabe9158ca604da2ff1445914c1e4",
+      "line_count": 86,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/ai-suggest-reply/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "4c90f4ed62d870269d012d8ead3d77a2531fd03291579a8fd4678275925f8a9a",
+      "line_count": 198,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/chatbot-l1/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "00bde368aa253ce9ec44de1cf226d12603497fa5cfff568543b6f7fc1fe4f816",
+      "line_count": 266,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/classify-audio-meme/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "a3d89d46f978d644b752deae3f56d5460a7ddedf54a3bf17d066ba52f4ee88ee",
+      "line_count": 75,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/classify-emoji/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "17398afb5f1a1e4caf8c8e6ecbd3ef00dfb0230f260085a735978f5f60df0e88",
+      "line_count": 172,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/classify-sticker/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "62eedcddfd167537c4dbc7c9185f1dcaf3dcf09f58b356d8ab77a8530a5d162d",
+      "line_count": 165,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    },
+    {
+      "path": "supabase/functions/gmail-oauth/index.ts",
+      "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "sha256": "b5a3b0d4101fa00bb2f751b8340ebfe997b39dc1415a37dd1e6720fc3e30ab52",
+      "line_count": 214,
+      "level": "catalogued_only",
+      "reviewed_ranges": [],
+      "note": "Inventory/import/call search only; no claim of full semantic review."
+    }
+  ],
+  "counts": {
+    "semantic_full_file": 146,
+    "semantic_selected_ranges": 12,
+    "catalogued_only": 13
+  },
+  "offline_probes": 30,
+  "tests_and_helpers_excluded_from_production_catalogue": [
+    "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts",
+    "supabase/functions/_shared/__tests__/ai-audio-authz.test.ts",
+    "supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts",
+    "supabase/functions/_shared/__tests__/ai-auth.test.ts",
+    "supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts",
+    "supabase/functions/_shared/__tests__/ai-response-contracts.test.ts",
+    "supabase/functions/_shared/__tests__/ai-vocabulary.test.ts",
+    "supabase/functions/_shared/__tests__/avatar-storage-path.test.ts",
+    "supabase/functions/_shared/__tests__/chatbot-l1-output.test.ts",
+    "supabase/functions/_shared/__tests__/crm-integration-contract.test.ts",
+    "supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts",
+    "supabase/functions/_shared/__tests__/effect-reconcile.test.ts",
+    "supabase/functions/_shared/__tests__/evolution-call-events.test.ts",
+    "supabase/functions/_shared/__tests__/evolution-go-routes.test.ts",
+    "supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts",
+    "supabase/functions/_shared/__tests__/evolution-webhook-connection-risk.test.ts",
+    "supabase/functions/_shared/__tests__/f58-item-receipts.test.ts",
+    "supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts",
+    "supabase/functions/_shared/__tests__/gmail-helpers.test.ts",
+    "supabase/functions/_shared/__tests__/gmail-mime.test.ts",
+    "supabase/functions/_shared/__tests__/gmail-send-schema.test.ts",
+    "supabase/functions/_shared/__tests__/messaging-errors.test.ts",
+    "supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts",
+    "supabase/functions/_shared/__tests__/multiplix-eligibility.test.ts",
+    "supabase/functions/_shared/__tests__/postgrest-filters.test.ts",
+    "supabase/functions/_shared/__tests__/secure-egress.test.ts",
+    "supabase/functions/_shared/__tests__/ssrf.test.ts",
+    "supabase/functions/_shared/__tests__/talkx-delivery-connection.test.ts",
+    "supabase/functions/_shared/__tests__/talkx-reply-window.test.ts",
+    "supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts",
+    "supabase/functions/_shared/__tests__/talkx-v20-window-business-hours.test.ts",
+    "supabase/functions/_shared/__tests__/talkx-webhook-optout.test.ts",
+    "supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts",
+    "supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts",
+    "supabase/functions/_shared/__tests__/voice-copilot-authz.test.ts",
+    "supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts",
+    "supabase/functions/_shared/__tests__/webhook-signature-ambiguity.test.ts",
+    "supabase/functions/_shared/__tests__/webhook-signature.test.ts",
+    "supabase/functions/_shared/ai-generate.test.ts",
+    "supabase/functions/_shared/ai-usage.test.ts",
+    "supabase/functions/_shared/messaging/__tests__/eligibility.test.ts",
+    "supabase/functions/_shared/messaging/__tests__/index.test.ts",
+    "supabase/functions/_shared/messaging/__tests__/media.test.ts",
+    "supabase/functions/_shared/messaging/__tests__/personalize.test.ts",
+    "supabase/functions/_shared/messaging/__tests__/phone.test.ts",
+    "supabase/functions/ai-auto-tag/auth_test.ts",
+    "supabase/functions/ai-jobs-worker/index.test.ts",
+    "supabase/functions/crm-integration/index.test.ts",
+    "supabase/functions/get-call-recording/index.test.ts",
+    "supabase/functions/get-sip-password/index.test.ts",
+    "supabase/functions/message-delivery/index.test.ts",
+    "supabase/functions/multiplix-audience/index.test.ts",
+    "supabase/functions/multiplix-dispatch/__tests__/f53-rate-limit.test.ts",
+    "supabase/functions/multiplix-dispatch/actions/__tests__/audience.test.ts",
+    "supabase/functions/multiplix-dispatch/actions/__tests__/blocks.test.ts",
+    "supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts",
+    "supabase/functions/multiplix-dispatch/actions/__tests__/lifecycle.test.ts",
+    "supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts",
+    "supabase/functions/multiplix-send/index.test.ts",
+    "supabase/functions/multiplix-voices/index.test.ts",
+    "supabase/functions/promogifts-catalog/index.actions.test.ts",
+    "supabase/functions/promogifts-catalog/index.test.ts",
+    "supabase/functions/public-api/index.test.ts",
+    "supabase/functions/sentiment-alert/index.test.ts",
+    "supabase/functions/sync-call-records/index.test.ts",
+    "supabase/functions/talkx-link/index.test.ts",
+    "supabase/functions/talkx-report/index.test.ts",
+    "supabase/functions/talkx-scheduler/index.test.ts",
+    "supabase/functions/talkx-send/_test-utils.ts",
+    "supabase/functions/talkx-send/index.test.ts",
+    "supabase/functions/talkx-send/v20-daily-limit.test.ts",
+    "supabase/functions/talkx-send/x019-connection-budget.test.ts",
+    "supabase/functions/talkx-send/x020-variavel-precedencia.test.ts",
+    "supabase/functions/webhook-diagnostic/diagnostic.test.ts"
+  ],
+  "not_covered_live": [
+    "deployment and runtime configuration",
+    "real provider payload samples",
+    "RLS/live SQL execution",
+    "N8N/external schedulers",
+    "load/concurrency timing in actual Edge Runtime",
+    "secret state"
+  ],
+  "known_remaining_areas": [
+    "Os 13 arquivos ainda catalogados nesta frente têm responsável explícito: 12 arquivos IA com infra e gmail-oauth com root. A união global deve usar a cobertura desses responsáveis sem atribuir leitura a providers.",
+    "Geração/budget, kernels, Talk X, Multiplix, Evolution, rotinas de mídia, schemas/HMAC, utilitários de voz, catálogo e diagnósticos do lote providers foram percorridos integralmente na segunda passagem.",
+    "Lote connections, settings/ai-providers, useConnectionsManager e groups concluído; useWhatsAppStatus pertence à frente auth. Ampliação para lacunas de hooks/evolution, hooks/integrations, components/integrations e whatsapp-flows em andamento, registrada separadamente ao ler os arquivos.",
+    "Configuração implantada, payloads reais de cada versão Evolution, agendadores e efeitos/triggers de bancos externos permanecem sem evidência operacional."
+  ],
+  "parallel_ownership": [
+    "Database: 779 migrations/final definitions and receipt/reply attribution; relevant conclusions cross-referenced, not counted as this agent reading those migrations.",
+    "Inbox: ScheduleMessageDialog false success and frontend message workflows.",
+    "Grill primary: frontend TalkX/Multiplix/telephony/IA contracts where assigned.",
+    "Root: gmail-oauth and email/Gmail frontend; completed in reports/communication, COM009/COM010 for OAuth.",
+    "Infra: _shared/ai-conversation-pipeline.ts, _shared/ai-image-input.ts, ai-conversation-analysis, ai-conversation-summary, ai-churn-analysis, ai-classify-tickets, ai-enhance-message, ai-suggest-reply, chatbot-l1, classify-audio-meme, classify-emoji, classify-sticker.",
+    "Auth: login/MFA/passkeys/admin user functions and useWhatsAppStatus/contact profile; provider endpoint authorization stayed with this agent."
+  ],
+  "review_notes": [
+    "migrate-media-storage aplica requireAuth + gate administrativo, ao contrário de recover-corrupted-audios; não foi classificado como rotina sem autorização.",
+    "fetch-link-preview usa secure-egress e recebe Response construída a partir do corpo já consumido do proxy; limpar o timer antes da leitura desse Response local não reproduz por si só o bug de timeout de corpo de rede.",
+    "sentiment-alert reancora contato/analysis, derive configurações/score do servidor e usa RPC de persistência idempotente; falha de email é representada por emailSent=false. Nenhuma duplicação automática de e-mail foi inferida.",
+    "Gmail MIME insere cabeçalhos, mas os schemas de produção rejeitam CR/LF e aspas/separadores em nome de anexo; esse vetor não foi declarado vulnerabilidade.",
+    "voice-copilot-action usa RLS para leituras e visibilidade, resolve autoria no JWT e exige papel ao reatribuir a terceiro. Reivindicação para si é decisão explícita do helper; comparação com contrato canônico de claim segue como questão de escopo, sem novo achado automático.",
+    "Catálogo usa JWT, allowlist de ações/campos e rate limit por usuário/ação. Ordenação sem desempate e filtro de novidades já pertencem a OTH-004/OTH-007.",
+    "BusinessHoursDialog aguarda saveSettings; mutateAsync propaga erros e não fecha como sucesso após erro de gravação. A falta de consumidor de away_messages é um gap diferente.",
+    "AIProviderHealthPanel identifica explicitamente amostra de no máximo 50 e retorna percentil nulo para conjunto vazio; não se alegou taxa completa nem zero como medição ausente.",
+    "whatsapp_groups possui UNIQUE global(group_id), mas representar um grupo por uma única linha pode ser decisão de produto; a sobreposição entre conexões não foi automaticamente declarada corrupção.",
+    "findMessages recebe remoteJid no hook enquanto o backend usa where; a busca dirigida não encontrou consumidor de produção desse método no primeiro lote. Esse desencontro não foi promovido a falha de botão ativo sem alcance demonstrado."
+  ]
+}

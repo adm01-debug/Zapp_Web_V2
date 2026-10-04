@@ -1,0 +1,697 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "COMPLETED_REVIEW_PASS",
+  "findings": [
+    {
+      "id": "R2-COM-001",
+      "title": "Conversa de Email entra em ciclo de atualização ao repassar contexto ao painel",
+      "priority": "P1",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Conta ativa e uma thread selecionada no EmailChatInbox, inclusive quando embutido no Omnichannel.",
+      "consumer_chain": "EmailChatInbox → EmailChatThread → useEffect(onContextDataChange) → setThreadContext → novo render do pai.",
+      "observed_behavior": "O pai passa uma arrow inline que grava sempre um objeto novo. O efeito do filho depende dessa função e a chama. A identidade muda em cada render do pai, fechando o ciclo mesmo quando mensagens e anexos estão estáveis. A key é constante dentro da mesma thread e não corta o ciclo.",
+      "impact": "A atualização repetitiva pode impedir o uso normal da conversa e consumir processamento. A prova limitada executou seis ciclos dos callbacks exatos; não mede travamento de navegador nem confirma incidente em produção.",
+      "evidence": [
+        {
+          "path": "src/components/email/EmailChatInbox.tsx",
+          "line_start": 37,
+          "line_end": 45,
+          "git_blob_sha": "622fba3b046728a8c3aa64e7f24b79dc819b72ec",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatInbox.tsx#L37-L45",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatInbox.tsx",
+          "line_start": 147,
+          "line_end": 156,
+          "git_blob_sha": "622fba3b046728a8c3aa64e7f24b79dc819b72ec",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatInbox.tsx#L147-L156",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 130,
+          "line_end": 140,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L130-L140",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/__tests__/EmailChatInbox.test.tsx",
+          "line_start": 32,
+          "line_end": 37,
+          "git_blob_sha": "d09a31c25ac4965a2dde4514654491c814f73376",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/__tests__/EmailChatInbox.test.tsx#L32-L37",
+          "purpose": "O teste substitui o filho que participa do ciclo."
+        }
+      ],
+      "probes": [
+        "COM-P01"
+      ],
+      "acceptance_criteria": [
+        "Estabilizar o retorno de contexto e evitar setState quando a identidade/dados efetivos não mudaram.",
+        "Testar pai e filho reais em conjunto com a mesma thread, mensagens estáveis e chegada posterior de anexos; renders devem estabilizar."
+      ],
+      "limitations": "Confirmado por revisão cruzada de auth_users. O probe modela Object.is das dependências; não é um teste de integração React montado.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-COM-002",
+      "title": "Prévia de anexo recebe conteúdo de uma seleção anterior",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Abrir prévia A, fechá-la, abrir B e receber a resposta de A depois da resposta de B.",
+      "consumer_chain": "EmailChatBubble → openAttachmentPreview → getAttachmentContent → EmailAttachmentPreviewDialog.",
+      "observed_behavior": "A seleção e os bytes são estados separados; a continuação assíncrona grava previewContent sem conferir se o anexo ainda é o selecionado. Fechar o diálogo também não invalida a operação pendente.",
+      "impact": "O título/nome de B pode aparecer com os bytes de A. Ambos eram anexos legíveis; isso não demonstra acesso entre contas nem quebra da autorização de download.",
+      "evidence": [
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 194,
+          "line_end": 204,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L194-L204",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 338,
+          "line_end": 343,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L338-L343",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 391,
+          "line_end": 393,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L391-L393",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailAttachmentPreviewDialog.tsx",
+          "line_start": 39,
+          "line_end": 57,
+          "git_blob_sha": "c093f1a3253203c7ec725b52452019ccd4d04f12",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailAttachmentPreviewDialog.tsx#L39-L57",
+          "purpose": ""
+        }
+      ],
+      "probes": [
+        "COM-P02"
+      ],
+      "acceptance_criteria": [
+        "Vincular bytes e seleção à mesma chave/geração e invalidar a requisição ao fechar/trocar.",
+        "Com resoluções B→A, manter B com bytes B; erro tardio de A não deve fechar B."
+      ],
+      "limitations": "Revisão estática e, quando indicado, callbacks exatos com fronteiras sintéticas; sem execução de navegador, Gmail ou banco vivo.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-COM-003",
+      "title": "Descartar rascunho fecha e apaga a sessão local mesmo com rejeição remota",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Existe draft_id remoto e a exclusão Gmail falha por permissão, indisponibilidade ou outro erro.",
+      "consumer_chain": "Confirmação Descartar → discardDraft → deleteDraft.mutateAsync → limpeza local/onClose.",
+      "observed_behavior": "discardDraft absorve a rejeição do delete remoto com catch(() => undefined), remove a sessão local e fecha. A confirmação promete remover o rascunho remoto e os anexos dessa composição.",
+      "impact": "O operador perde o estado local de recuperação e recebe uma conclusão incompatível com o rascunho que permanece no Gmail. Não se afirma que o arquivo remoto tenha sido apagado.",
+      "evidence": [
+        {
+          "path": "src/components/gmail/EmailComposer.tsx",
+          "line_start": 283,
+          "line_end": 292,
+          "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailComposer.tsx#L283-L292",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/gmail/EmailComposer.tsx",
+          "line_start": 485,
+          "line_end": 491,
+          "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailComposer.tsx#L485-L491",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/integrations/useGmail.ts",
+          "line_start": 264,
+          "line_end": 270,
+          "git_blob_sha": "3a6d528b45533169bca6d4e6e229bac68e9e1c2a",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L264-L270",
+          "purpose": ""
+        }
+      ],
+      "probes": [
+        "COM-P03"
+      ],
+      "acceptance_criteria": [
+        "Manter a composição e informar a falha quando a exclusão remota não foi confirmada.",
+        "Separar descarte apenas local de exclusão remota se ambos forem oferecidos; provar rejeição e sucesso."
+      ],
+      "limitations": "Revisão estática e, quando indicado, callbacks exatos com fronteiras sintéticas; sem execução de navegador, Gmail ou banco vivo.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-COM-004",
+      "title": "Anexos originais que carregam depois da abertura não entram no encaminhamento",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Mensagens carregaram, mas metadados de anexos ainda estão pendentes; o usuário abre Encaminhar antes dessa segunda consulta terminar.",
+      "consumer_chain": "useGmail:threadMessages/threadAttachments → EmailChatThread.forwardedAttachments → EmailComposer.",
+      "observed_behavior": "selectedForwardAttachmentIds é inicializado uma única vez a partir de forwardAttachments. Quando a prop recebe os anexos posteriormente, o Set continua vazio; o seletor filtra todos os anexos recebidos e prepareAttachments não os inclui.",
+      "impact": "A composição do encaminhamento omite anexos originais por ordem de chegada dos dados. O caso não depende de alterar o contato, nem de atribuir dados de outro usuário.",
+      "evidence": [
+        {
+          "path": "src/hooks/integrations/useGmail.ts",
+          "line_start": 148,
+          "line_end": 176,
+          "git_blob_sha": "3a6d528b45533169bca6d4e6e229bac68e9e1c2a",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L148-L176",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 126,
+          "line_end": 128,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L126-L128",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 165,
+          "line_end": 171,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L165-L171",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 379,
+          "line_end": 389,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L379-L389",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/gmail/EmailComposer.tsx",
+          "line_start": 103,
+          "line_end": 105,
+          "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailComposer.tsx#L103-L105",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/gmail/EmailComposer.tsx",
+          "line_start": 146,
+          "line_end": 159,
+          "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailComposer.tsx#L146-L159",
+          "purpose": ""
+        }
+      ],
+      "probes": [
+        "COM-P04"
+      ],
+      "acceptance_criteria": [
+        "Definir estado de carregamento dos anexos e inicializar/conciliar a seleção quando o conjunto inicial estiver pronto.",
+        "Preservar remoções explícitas do usuário ao atualizar; testar mensagem pronta com anexos atrasados e forwarding com todos os anexos esperados."
+      ],
+      "limitations": "Revisão estática e, quando indicado, callbacks exatos com fronteiras sintéticas; sem execução de navegador, Gmail ou banco vivo.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-COM-005",
+      "title": "Conclusão da resposta rápida apaga texto novo digitado durante o envio",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Uma resposta está aguardando a mutation e o usuário digita outro texto no campo ainda editável.",
+      "consumer_chain": "EmailChatReplyBar.handleSend → replyEmail.mutateAsync → setBody vazio.",
+      "observed_behavior": "O handler envia o valor capturado antes do await. Ao terminar, limpa body/to/attachments incondicionalmente; o textarea e a seleção de arquivos continuam editáveis durante a espera.",
+      "impact": "Texto ou anexo acrescentado depois do início do envio pode ser descartado sem ter sido enviado. O bloqueio do botão impede envio duplicado, mas não protege a revisão de rascunho.",
+      "evidence": [
+        {
+          "path": "src/components/email/EmailChatReplyBar.tsx",
+          "line_start": 67,
+          "line_end": 139,
+          "git_blob_sha": "d704c3edda9a1bbfc558121376cd6a10ca22c902",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatReplyBar.tsx#L67-L139",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatReplyBar.tsx",
+          "line_start": 207,
+          "line_end": 239,
+          "git_blob_sha": "d704c3edda9a1bbfc558121376cd6a10ca22c902",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatReplyBar.tsx#L207-L239",
+          "purpose": ""
+        }
+      ],
+      "probes": [
+        "COM-P05"
+      ],
+      "acceptance_criteria": [
+        "Preservar edições posteriores ao snapshot enviado, ou bloquear explicitamente os campos durante a operação.",
+        "Simular demora no envio e editar o campo: a nova revisão deve permanecer após o sucesso da anterior."
+      ],
+      "limitations": "Revisão estática e, quando indicado, callbacks exatos com fronteiras sintéticas; sem execução de navegador, Gmail ou banco vivo.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-COM-006",
+      "title": "Rascunho da resposta rápida se perde ao trocar de conversa",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Digitar resposta ou selecionar anexo na barra inferior e abrir outra conversa antes de enviar.",
+      "consumer_chain": "EmailChatReplyBar state local → EmailChatInbox troca a key account:thread → unmount.",
+      "observed_behavior": "A barra guarda body, destinatário e anexos apenas em useState; não usa emailDraftSession nem saveDraft. A troca de thread desmonta o estado sem confirmação. O compositor completo tem persistência própria, mas não envolve essa barra.",
+      "impact": "A resposta em preparação desaparece ao voltar à conversa. A ajuda da tela afirma salvamento automático de rascunhos sem delimitar essa exceção.",
+      "evidence": [
+        {
+          "path": "src/components/email/EmailChatReplyBar.tsx",
+          "line_start": 43,
+          "line_end": 50,
+          "git_blob_sha": "d704c3edda9a1bbfc558121376cd6a10ca22c902",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatReplyBar.tsx#L43-L50",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatInbox.tsx",
+          "line_start": 152,
+          "line_end": 152,
+          "git_blob_sha": "622fba3b046728a8c3aa64e7f24b79dc819b72ec",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatInbox.tsx#L152-L152",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatInbox.tsx",
+          "line_start": 169,
+          "line_end": 175,
+          "git_blob_sha": "622fba3b046728a8c3aa64e7f24b79dc819b72ec",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatInbox.tsx#L169-L175",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 368,
+          "line_end": 377,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L368-L377",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/gmail/EmailComposer.tsx",
+          "line_start": 51,
+          "line_end": 59,
+          "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailComposer.tsx#L51-L59",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/gmail/EmailComposer.tsx",
+          "line_start": 119,
+          "line_end": 137,
+          "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailComposer.tsx#L119-L137",
+          "purpose": ""
+        }
+      ],
+      "probes": [],
+      "acceptance_criteria": [
+        "Persistir a resposta rápida por conta e thread, com isolamento por usuário e expiração, ou confirmar saída com conteúdo pendente.",
+        "Testar ida e volta entre duas threads com texto e anexos; distinguir texto restaurável de arquivo local que precisa ser novamente anexado."
+      ],
+      "limitations": "Revisão estática e, quando indicado, callbacks exatos com fronteiras sintéticas; sem execução de navegador, Gmail ou banco vivo.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-COM-007",
+      "title": "Histórico de mensagens de Email não continua além do limite de resposta",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Uma thread ou o conjunto consultado de anexos excede o limite de linhas da API. O limite real implantado não foi consultado.",
+      "consumer_chain": "useGmail.threadMessages query ascendente → lastMessage/replyTarget/markAsRead → EmailChatThread.",
+      "observed_behavior": "A lista de threads usa collectEmailPages, mas a consulta de mensagens e a consulta de anexos fazem uma única requisição sem range/cursor/continuação. As mensagens são ordenadas da mais antiga para a mais nova; lastMessage usa o último elemento da amostra recebida.",
+      "impact": "Sob truncamento, mensagens recentes e anexos podem ficar ausentes, e a resposta padrão pode referenciar uma mensagem antiga da amostra. Não se fixa 1000 como configuração observada do servidor.",
+      "evidence": [
+        {
+          "path": "src/hooks/integrations/useGmail.ts",
+          "line_start": 79,
+          "line_end": 99,
+          "git_blob_sha": "3a6d528b45533169bca6d4e6e229bac68e9e1c2a",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L79-L99",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/integrations/useGmail.ts",
+          "line_start": 148,
+          "line_end": 176,
+          "git_blob_sha": "3a6d528b45533169bca6d4e6e229bac68e9e1c2a",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L148-L176",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 87,
+          "line_end": 95,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L87-L95",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 121,
+          "line_end": 128,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L121-L128",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatThread.tsx",
+          "line_start": 368,
+          "line_end": 375,
+          "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L368-L375",
+          "purpose": ""
+        }
+      ],
+      "probes": [],
+      "acceptance_criteria": [
+        "Paginar o histórico com ordem estável e cursor/limite explícito; obter o alvo de resposta atual a partir de fonte completa.",
+        "Provar mais de uma página de mensagens/anexos e mensagens com timestamp igual, preservando a autorização por conta."
+      ],
+      "limitations": "OTH-005 tratava paginação/filtros da lista de threads. Este achado é o histórico interno e suas projeções; não reconta aquele contrato.",
+      "related_previous_findings": [
+        "OTH-005"
+      ],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-COM-008",
+      "title": "Atalho do compositor ignora a exigência de assunto aplicada ao botão",
+      "priority": "P3",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Destinatário válido e assunto vazio; usar Ctrl/Command+Enter no editor.",
+      "consumer_chain": "EmailRichTextEditor.handleKeyDown → onSubmit → EmailComposer.handleSend.",
+      "observed_behavior": "O botão está desabilitado sem subject.trim(), mas handleSend só valida o destinatário antes de seguir. O atalho chama o mesmo handler sem conferir assunto.",
+      "impact": "O requisito aparente de assunto depende do método de interação. Gmail pode aceitar mensagens sem assunto; a descoberta é a inconsistência do contrato local, não falha do provedor.",
+      "evidence": [
+        {
+          "path": "src/components/gmail/EmailComposer.tsx",
+          "line_start": 202,
+          "line_end": 216,
+          "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailComposer.tsx#L202-L216",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/gmail/EmailComposer.tsx",
+          "line_start": 399,
+          "line_end": 403,
+          "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailComposer.tsx#L399-L403",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/gmail/EmailComposer.tsx",
+          "line_start": 461,
+          "line_end": 468,
+          "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailComposer.tsx#L461-L468",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/gmail/EmailRichTextEditor.tsx",
+          "line_start": 45,
+          "line_end": 53,
+          "git_blob_sha": "7f8775b5877a7ed8fc6179c627656654b102e319",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailRichTextEditor.tsx#L45-L53",
+          "purpose": ""
+        }
+      ],
+      "probes": [],
+      "acceptance_criteria": [
+        "Decidir se assunto vazio é permitido e aplicar a mesma regra no botão, no handler e no atalho.",
+        "Provar teclado/clique com os mesmos campos, sem enviar email real."
+      ],
+      "limitations": "Revisão estática e, quando indicado, callbacks exatos com fronteiras sintéticas; sem execução de navegador, Gmail ou banco vivo.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-COM-009",
+      "title": "Retorno OAuth do Gmail prossegue apesar de state ausente ou inválido",
+      "priority": "P1",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Browser autenticado no Zapp recebe retorno com código de autorização, mas sem state válido vinculado à tentativa. Para vínculo real indevido seria necessário código Google válido, ainda não consumido e emitido para o cliente/redirect configurados; os probes usam somente código sintético.",
+      "consumer_chain": "createGmailOAuthState → parseGmailOAuthState → useGmailOAuth → exchange-code → gmail-oauth.",
+      "observed_behavior": "O parser retorna null quando o nonce não confere, mas o hook usa null apenas como fallback de navegação e continua a troca de code. Se não há nonce armazenado, o parser também não exige um. O handler autenticado recebe code sem state e não verifica uma tentativa vinculada.",
+      "impact": "A proteção CSRF criada pelo projeto não bloqueia o caminho que deveria proteger. Um retorno não vinculado pode iniciar conexão da conta Gmail representada pelo código ao usuário autenticado. A guarda de email já vinculado a outro usuário continua existente; não se afirma roubo de Gmail alheio ou aceitação de código inválido pelo Google.",
+      "evidence": [
+        {
+          "path": "src/lib/gmailOAuth.ts",
+          "line_start": 25,
+          "line_end": 55,
+          "git_blob_sha": "ea41addc5a01d106f6107ece76e2d7087c4f6f73",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/gmailOAuth.ts#L25-L55",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/integrations/useGmailOAuth.ts",
+          "line_start": 22,
+          "line_end": 42,
+          "git_blob_sha": "ac77a89ae987da95599be08fc1f708835b605362",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmailOAuth.ts#L22-L42",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/integrations/useGmailOAuth.ts",
+          "line_start": 61,
+          "line_end": 88,
+          "git_blob_sha": "ac77a89ae987da95599be08fc1f708835b605362",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmailOAuth.ts#L61-L88",
+          "purpose": ""
+        },
+        {
+          "path": "supabase/functions/gmail-oauth/index.ts",
+          "line_start": 92,
+          "line_end": 117,
+          "git_blob_sha": "423072ccc566dc0b05d8efa6c32ae7abbb42bd63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/gmail-oauth/index.ts#L92-L117",
+          "purpose": ""
+        },
+        {
+          "path": "supabase/functions/gmail-oauth/index.ts",
+          "line_start": 121,
+          "line_end": 153,
+          "git_blob_sha": "423072ccc566dc0b05d8efa6c32ae7abbb42bd63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/gmail-oauth/index.ts#L121-L153",
+          "purpose": ""
+        }
+      ],
+      "probes": [
+        "COM-P06",
+        "COM-P07"
+      ],
+      "acceptance_criteria": [
+        "Interromper a troca quando state/nonce não existe, não confere, expirou ou já foi consumido; vincular tentativa e sessão com consumo seguro.",
+        "Preservar allowlists de navegação e a guarda de proprietário da conta; provar retorno legítimo, ausência, divergência, replay e mudança de sessão."
+      ],
+      "limitations": "Parser e hook reais com fronteiras Auth/Edge simuladas. Google não foi chamado. Requisito fundamentado em RFC 6749 §10.12 e documentação oficial Google OAuth web-server, etapa 4.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false,
+      "external_references": [
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc6749#section-10.12",
+          "purpose": "Vincular o retorno à sessão e impedir CSRF no redirection URI."
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server#handlingresponse",
+          "purpose": "Conferir state antes de tratar a resposta OAuth."
+        }
+      ]
+    },
+    {
+      "id": "R2-COM-010",
+      "title": "OAuth do Gmail anuncia sucesso após falha de armazenamento ou desconexão",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Troca de código válida seguida de erro na RPC de tokens; ou conta própria existente cuja revogação Google e desativação local falham.",
+      "consumer_chain": "gmail-oauth exchange/refresh/disconnect → store_gmail_tokens ou update → resposta success → toast/invalidação no cliente.",
+      "observed_behavior": "storeTokens aguarda a RPC mas ignora o campo error. exchange-code responde success após esse helper. refresh também ignora armazenamento e update de expiração. disconnect não confere status HTTP da revogação nem error do update local antes de success.",
+      "impact": "A conta pode aparecer conectada sem os novos tokens persistidos ou desconectada com credenciais ainda ativas. Dois probes do handler real devolveram HTTP 200/success mesmo com armazenamento negado e, separadamente, revogação 503 mais update com erro.",
+      "evidence": [
+        {
+          "path": "supabase/functions/gmail-oauth/index.ts",
+          "line_start": 64,
+          "line_end": 77,
+          "git_blob_sha": "423072ccc566dc0b05d8efa6c32ae7abbb42bd63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/gmail-oauth/index.ts#L64-L77",
+          "purpose": ""
+        },
+        {
+          "path": "supabase/functions/gmail-oauth/index.ts",
+          "line_start": 132,
+          "line_end": 169,
+          "git_blob_sha": "423072ccc566dc0b05d8efa6c32ae7abbb42bd63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/gmail-oauth/index.ts#L132-L169",
+          "purpose": ""
+        },
+        {
+          "path": "supabase/functions/gmail-oauth/index.ts",
+          "line_start": 172,
+          "line_end": 203,
+          "git_blob_sha": "423072ccc566dc0b05d8efa6c32ae7abbb42bd63",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/gmail-oauth/index.ts#L172-L203",
+          "purpose": ""
+        },
+        {
+          "path": "src/hooks/integrations/useGmailOAuth.ts",
+          "line_start": 71,
+          "line_end": 85,
+          "git_blob_sha": "ac77a89ae987da95599be08fc1f708835b605362",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmailOAuth.ts#L71-L85",
+          "purpose": ""
+        },
+        {
+          "path": "supabase/migrations/20260827210100_gmail_token_rpcs.sql",
+          "line_start": 31,
+          "line_end": 59,
+          "git_blob_sha": "3913de5e717b101964e8c2393efd94b5decdbc14",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260827210100_gmail_token_rpcs.sql#L31-L59",
+          "purpose": "Função vencedora pode lançar erro e preserva refresh quando NULL/vazio; não foi inventado apagamento nesse ramo."
+        }
+      ],
+      "probes": [
+        "COM-P08",
+        "COM-P09"
+      ],
+      "acceptance_criteria": [
+        "Verificar todos os retornos de RPC/update e estado da revogação antes de anunciar o resultado.",
+        "Definir recuperação para gravação parcial de metadados/tokens e informar explicitamente desconexão parcial.",
+        "Provar erro persistente/transitório em cada efeito, sem perda silenciosa do estado anterior."
+      ],
+      "limitations": "Handler exato, schema/Auth/banco/Google simulados; as políticas reais não foram exercidas. O problema não é ausência de criptografia: a RPC cifra tokens e tem controle de execução.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false
+    },
+    {
+      "id": "R2-COM-011",
+      "title": "Bloqueio de imagens externas do Email deixa passar URL relativa ao protocolo",
+      "priority": "P2",
+      "classification": "CONFIRMED_STATIC_CONTRACT",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "preconditions": "Email contém img com src iniciado por // para host externo; o usuário visualiza esse conteúdo e a política externa do navegador/CSP permite o destino. Não foi observado carregamento em produção.",
+      "consumer_chain": "EmailChatBubble → sanitizeEmailHtml → DOMPurify → afterSanitizeAttributes → HTML renderizado.",
+      "observed_behavior": "A política declara bloqueio de imagens remotas para privacidade, mas o hook remove apenas src que começa com http:, https: ou cid:. A forma //host/caminho não corresponde. img e src permanecem nas allowlists e não existe ALLOWED_URI_REGEXP que retire essa forma; a documentação oficial do DOMPurify permite URLs relativas ao protocolo por padrão.",
+      "impact": "Uma imagem externa pode sobreviver à regra local de privacidade e permitir requisição ao host quando renderizada sob política permissiva. O probe preserva //tracker.example.invalid/pixel e remove a forma https: equivalente. Isso não demonstra XSS, retirada da sanitização ou rastreamento ocorrido.",
+      "evidence": [
+        {
+          "path": "src/lib/emailHtml.ts",
+          "line_start": 3,
+          "line_end": 29,
+          "git_blob_sha": "5cb7df784ad0c926a4e47a108b9ff5c21b62330c",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailHtml.ts#L3-L29",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/emailHtml.ts",
+          "line_start": 59,
+          "line_end": 83,
+          "git_blob_sha": "5cb7df784ad0c926a4e47a108b9ff5c21b62330c",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailHtml.ts#L59-L83",
+          "purpose": ""
+        },
+        {
+          "path": "src/lib/emailHtml.ts",
+          "line_start": 141,
+          "line_end": 148,
+          "git_blob_sha": "5cb7df784ad0c926a4e47a108b9ff5c21b62330c",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailHtml.ts#L141-L148",
+          "purpose": ""
+        },
+        {
+          "path": "src/components/email/EmailChatBubble.tsx",
+          "line_start": 45,
+          "line_end": 60,
+          "git_blob_sha": "3bca05232a5345f8da5dd21dfc1e692540595e1c",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatBubble.tsx#L45-L60",
+          "purpose": "Uso do pipeline comum; sanitização permanece ativa."
+        }
+      ],
+      "probes": [
+        "COM-P10"
+      ],
+      "acceptance_criteria": [
+        "Classificar a URL já normalizada contra a origem e permitir apenas esquemas/origens previstos para imagens.",
+        "Verificar formatos absolutos, relativos ao protocolo, escapes e imagens data permitidas com a biblioteca efetivamente instalada e CSP do ambiente."
+      ],
+      "limitations": "Probe do hook exato com substituto de Element, sem DOMPurify, DOM ou rede. Documentação primária fundamenta a permissividade padrão; não equivale a executar a versão instalada. Resultado está em ../platform/probe-results.json.",
+      "related_previous_findings": [],
+      "relation_to_prior_audit": "NEW_DISCOVERY_NOT_RECENT_REGRESSION",
+      "runtime_production_acceptance": false,
+      "external_references": [
+        {
+          "url": "https://github.com/cure53/DOMPurify#control-permitted-attribute-values",
+          "purpose": "Documentação primária: URLs relativas e relativas ao protocolo são permitidas por padrão."
+        }
+      ]
+    }
+  ],
+  "rejected": [
+    {
+      "candidate": "Todos os rascunhos de Email vazam entre usuários",
+      "decision": "REJECTED",
+      "basis": "emailDraftSessionKey inclui usuário/conta; existe clearEmailDraftSessions para logout. A barra sem persistência é um problema de perda, não essa alegação."
+    },
+    {
+      "candidate": "Nenhum histórico do Gmail tem paginação",
+      "decision": "REJECTED",
+      "basis": "A lista de threads usa collectEmailPages; o achado novo delimita as queries internas de mensagens/anexos."
+    },
+    {
+      "candidate": "Toda imagem/HTML de email executa código sem sandbox",
+      "decision": "REJECTED",
+      "basis": "Há sanitizeEmailHtml e previews que restringem formatos, com iframe sandbox. Não se deduz XSS apenas da presença de dangerouslySetInnerHTML."
+    },
+    {
+      "candidate": "Ausência de medição de memória é descoberta nova",
+      "decision": "ALREADY_RECORDED",
+      "basis": "OTH-014 já registrava a lacuna; não foi recontada."
+    },
+    {
+      "candidate": "Qualquer salvar de nota apaga texto novo",
+      "decision": "REJECTED",
+      "basis": "ContactNotes no painel de Email compara o texto atual ao enviado antes de limpar. COM005 é a barra de resposta, que não tem esse controle."
+    }
+  ]
+}

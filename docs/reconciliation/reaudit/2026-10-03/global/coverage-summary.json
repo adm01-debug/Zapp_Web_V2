@@ -1,0 +1,26 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "tracked_files": 4068,
+  "indexed_prior_artifacts": 64,
+  "unique_citation_records": 18647,
+  "files_with_any_prior_reference": 1111,
+  "files_with_prior_line_reference": 719,
+  "files_without_reference_in_selected_index": 2957,
+  "non_test_functions": 16654,
+  "non_test_functions_without_prior_line_overlap": 15774,
+  "non_test_functions_with_prior_line_overlap": 880,
+  "feature_catalog_rows": 349,
+  "feature_catalog_claimed_checkmark": 349,
+  "feature_catalog_path_states": {
+    "PATH_EXISTS_BEHAVIOR_NOT_CERTIFIED": 185,
+    "MISSING_OR_RENAMED_PATH_REFERENCE": 72,
+    "NON_FILE_REFERENCE_REQUIRES_CONTRACT_MAPPING": 92
+  },
+  "limitations": [
+    "Index scans structured path/line records in FINDINGS, PLAN_REGISTRY and 62 task files. Narrative-only citations and earlier chat reasoning can exist outside this index.",
+    "Missing a citation in this index is a traceability gap, not proof that nobody previously read the function or file.",
+    "Line overlap does not establish semantic review, and containing ranges can be very broad.",
+    "Function bodies include callbacks; they are not distinct business capabilities.",
+    "The feature catalog is historical source material; a checkmark is not current acceptance. Missing paths may be renamed or removed by a later decision."
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "candidates": [
+    {
+      "candidate_id": "R2-DB-017",
+      "disposition": "not_new_finding_known_deliberate_data_preflight",
+      "title": "Faixa histórica400–700 de LIDs impede replay sem os dados esperados",
+      "reason": "O cenário0/400–700 já está nomeado no relatório de replay, e E24 permanece PARCIAL. O runner reconstrói infraestrutura Supabase antes de aplicar os arquivos; não promete Postgres cru. É limitação conhecida de replay/fixture de dados, não nova vulnerabilidade ou incidente em produção.",
+      "previous_record": "P008/E24; docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260906000001_e31_contacts_is_lid_legacy.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260906000001_e31_contacts_is_lid_legacy.sql",
+          "line_start": 25,
+          "line_end": 47,
+          "sha256": "5bb99c9d16ba9822042627d7ee1824333d7792e6b8df18139a4c22903a627ddc",
+          "note": "Assertiva histórica no DO."
+        },
+        {
+          "path": "docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
+          "line_start": 56,
+          "line_end": 61,
+          "sha256": "4d53510614e9482759c22b6efc0410a68c23960d0cfbc74ce8ba60e62f12a328",
+          "note": "Relatório anterior já nomeia a ausência de dados e a faixa exigida."
+        },
+        {
+          "path": "scripts/db-audit/replay-local.sh",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/scripts/db-audit/replay-local.sh",
+          "line_start": 1,
+          "line_end": 15,
+          "sha256": "c81d0c5b1d3dd16ae9e4ae093121caf9d6242c8dac9c98deb66d17eded944270",
+          "note": "Contrato de replay com bootstrap de serviços e limitações documentadas."
+        },
+        {
+          "path": "docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md",
+          "line_start": 333,
+          "line_end": 335,
+          "sha256": "33aceebac803ed0b014405bec6da8f4c102dcd36e2cf5b535a585821ac5171be",
+          "note": "Aceite E24 já marcado parcial, sem alegação de replay verde."
+        }
+      ],
+      "runtime_tested": false
+    },
+    {
+      "candidate_id": "R2-DB-018",
+      "disposition": "known_syntax_defect_with_additional_latent_do_blocker_not_recounted",
+      "title": "Refinamento do bloqueio conhecido em20260927450000",
+      "reason": "NOT VAFIDD nas linhas31/47 já era defeito conhecido documentado; a execução integral para ali. Adicionalmente, cada DO56–78 executa DROP INDEX CONCURRENTLY, comando vedado em função/bloco, se o índice existir. O segundo mecanismo só é alcançável após resolver/pular o erro anterior ou executar trecho isolado. Essa evidência aprofunda o aceite parcial de replay, sem recontar sintaxe como achado novo.",
+      "previous_record": "P008/E24; relatório REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260927450000_fix_indexes_checks_cleanup.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260927450000_fix_indexes_checks_cleanup.sql",
+          "line_start": 27,
+          "line_end": 49,
+          "sha256": "716cc33e62472c88c59fe052a5e8cde56153cafd038f435fca5996f4a1144307",
+          "note": "Sintaxe inválida conhecida antecede os DOs."
+        },
+        {
+          "path": "supabase/migrations/20260927450000_fix_indexes_checks_cleanup.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260927450000_fix_indexes_checks_cleanup.sql",
+          "line_start": 56,
+          "line_end": 78,
+          "sha256": "716cc33e62472c88c59fe052a5e8cde56153cafd038f435fca5996f4a1144307",
+          "note": "Três DROP INDEX CONCURRENTLY dentro de DO, condicionados à existência."
+        },
+        {
+          "path": "supabase/migrations/20260511233446_8d6e4a17-a6df-4ae5-acaa-5d51c316f894.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260511233446_8d6e4a17-a6df-4ae5-acaa-5d51c316f894.sql",
+          "line_start": 13,
+          "line_end": 13,
+          "sha256": "cc720d92e4e752dad6fe5890a81e60215d8e6faac520b65eb4ac426ff3d0c031",
+          "note": "Criação anterior do índice de audit_logs."
+        },
+        {
+          "path": "supabase/migrations/20260827120000_fk_indexes_backfill.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260827120000_fk_indexes_backfill.sql",
+          "line_start": 59,
+          "line_end": 62,
+          "sha256": "4544b13f8c35b82206455bd7849c5d650984cb6a816a929a8908734bf5d878d8",
+          "note": "Criação anterior dos índices de fila de conversation_events."
+        },
+        {
+          "path": "supabase/migrations/20260927550000_perf_fk_indexes_domain_checks_drop_orphans.sql",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260927550000_perf_fk_indexes_domain_checks_drop_orphans.sql",
+          "line_start": 35,
+          "line_end": 54,
+          "sha256": "6782cdc3cf848f47495e1fb479b25b50484ee2f8205b1f2f5d1a1584f549b5e6",
+          "note": "DROP normal posterior não corrige o corpo histórico anterior."
+        },
+        {
+          "path": "docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
+          "line_start": 41,
+          "line_end": 50,
+          "sha256": "4d53510614e9482759c22b6efc0410a68c23960d0cfbc74ce8ba60e62f12a328",
+          "note": "Defeito de sintaxe e divergência nome/versão do ledger já documentados; observação histórica não foi reexecutada."
+        }
+      ],
+      "primary_sources": [
+        "https://www.postgresql.org/docs/17/sql-dropindex.html",
+        "https://www.postgresql.org/docs/17/sql-do.html",
+        "https://doxygen.postgresql.org/xact_8c_source.html",
+        "https://doxygen.postgresql.org/utility_8c_source.html"
+      ],
+      "primary_source_limit": "Doxygen é master; documentação de comportamento foi também conferida em PG17. Nenhuma versão de banco vivo foi consultada.",
+      "runtime_tested": false
+    }
+  ],
+  "new_findings_from_these_candidates": 0
+}

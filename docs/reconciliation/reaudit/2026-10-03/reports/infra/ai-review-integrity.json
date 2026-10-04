@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_hashes_checked": 557,
+  "finding_counts": {
+    "P1": 8,
+    "P2": 17
+  },
+  "finding_total": 25,
+  "ia_added_ids": [
+    "R2-INF-022",
+    "R2-INF-023",
+    "R2-INF-024",
+    "R2-INF-025"
+  ],
+  "evidence_refs": 101,
+  "coverage_counts": {
+    "total": 557,
+    "targeted": 35,
+    "semantic": 200,
+    "structural": 322
+  },
+  "preserved_prior_findings_sha256": "33dc0de56471b6d0c6da26452dfa33620838315c8e7824e2c3f303dc949d89c4",
+  "artifact_hashes": {
+    "findings.json": "c9e1635711df18251dc46e364020870b3f0474fbfb416d19ccd70dc3f43e13ea",
+    "coverage.json": "fda76986d8476c030f5f0074ceee80ad4951b1ccfb4549ea0878d3e1a1f34fdb",
+    "report.md": "757f6ccfbe290495ccda9cbf484ca159efaf1613f1254f3b495efa91f0a13640",
+    "ai-review-findings.json": "b4f9dc39d3f66a857df71898ea08d284a5a2424b94fe19a794cbb983ba63a166",
+    "ai-review-coverage.json": "44e68ef13165012acd7550eade33db63936b191d528e9b655c380a67e146f182",
+    "ai-review-report.md": "30633df4e15533de4ec187b9170b4e4f37da7138ff9352e25fe9a2859b041510",
+    "ai-review-probes.json": "ce45711c7297206fbc1db19f0ebecac15d40ec69f1f682b6f4de440322aa8fa3",
+    "probe-ai-review.mjs": "56abfbe7d35bcc470cfc653445e280ffc5df53e7cc4f79751330b86ff8b6a84b",
+    "ai-review-probe-pins.json": "4494e96f4c9400211ef53120b498b612db828b8209afcb37040e0002fb7cf6c2"
+  }
+}

@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "probe_source_sha256": "b3a3c2cedd20fe682b5a1d19d03293a4898e5a412035fe736cce3f9c8a9bb328",
+  "pins_sha256": "03dfe6f977f37d457a594db5dd83a17c48bafe081a58e29ab0d2d79e657bdde6",
+  "case_count": 6,
+  "finding_ids": [
+    "R2-INF-026",
+    "R2-INF-027",
+    "R2-INF-028",
+    "R2-INF-029",
+    "R2-INF-030",
+    "R2-INF-031"
+  ],
+  "cases": [
+    {
+      "id": "INF-OBS-P01",
+      "finding": "R2-INF-026",
+      "executed": "actual fetchSystemHealth callback",
+      "observed": {
+        "health": {
+          "database": "healthy",
+          "storage": "healthy",
+          "realtime": "healthy",
+          "edgeFunctions": "healthy",
+          "dbLatency": 1,
+          "storageLatency": 1,
+          "contactsCount": 0,
+          "messagesCount": 0,
+          "connectionsCount": 0
+        },
+        "calls": [
+          "read:contacts",
+          "storage:whatsapp-media",
+          "read:messages",
+          "read:whatsapp_connections",
+          "edge:connection-health-check"
+        ]
+      },
+      "control": {
+        "edge_error_status": "degraded"
+      },
+      "limitation": "SDK return envelopes and durations are synthetic; UI wording confirmed separately in source, no rendered browser or live health invocation."
+    },
+    {
+      "id": "INF-OBS-P02",
+      "finding": "R2-INF-027",
+      "executed": "actual fetchData and computeUptime",
+      "observed": {
+        "selection_1h": {
+          "percentage": 100,
+          "totalChecks": 1,
+          "healthyChecks": 1,
+          "lastDowntime": null
+        },
+        "selection_24h": {
+          "percentage": 50,
+          "totalChecks": 2,
+          "healthyChecks": 1,
+          "lastDowntime": "2026-10-04T04:30:00.000Z"
+        },
+        "empty": {
+          "percentage": 100,
+          "totalChecks": 0,
+          "healthyChecks": 0,
+          "lastDowntime": null
+        }
+      },
+      "queries": [
+        {
+          "table": "connection_health_logs",
+          "column": "checked_at",
+          "cutoff": "2026-10-04T11:30:00.000Z"
+        },
+        {
+          "table": "messages",
+          "column": "created_at",
+          "cutoff": "2026-10-04T11:30:00.000Z"
+        }
+      ],
+      "limitation": "Reference compares the same synthetic checks under1h/24h queries; it is not measured availability or real SLA."
+    },
+    {
+      "id": "INF-OBS-P03",
+      "finding": "R2-INF-028",
+      "executed": "actual fetchData bucket loop",
+      "observed": {
+        "total": 2,
+        "plotted": 1,
+        "buckets": [
+          {
+            "hour": "28/09 12h",
+            "incoming": 0,
+            "outgoing": 0
+          },
+          {
+            "hour": "29/09 12h",
+            "incoming": 0,
+            "outgoing": 0
+          },
+          {
+            "hour": "30/09 12h",
+            "incoming": 0,
+            "outgoing": 0
+          },
+          {
+            "hour": "01/10 12h",
+            "incoming": 0,
+            "outgoing": 0
+          },
+          {
+            "hour": "02/10 12h",
+            "incoming": 0,
+            "outgoing": 0
+          },
+          {
+            "hour": "03/10 12h",
+            "incoming": 1,
+            "outgoing": 0
+          },
+          {
+            "hour": "04/10 12h",
+            "incoming": 0,
+            "outgoing": 0
+          }
+        ],
+        "one_hour_unique_buckets": 2,
+        "configured_one_hour_buckets": 6
+      },
+      "control": "The row matching the daily anchor hour is plotted; a valid row one hour earlier is not.",
+      "limitation": "Complete successful synthetic query, no API row cap or timezone/DST assumption beyond explicit UTC fixture."
+    },
+    {
+      "id": "INF-OBS-P04",
+      "finding": "R2-INF-029",
+      "executed": "actual collectMetrics callback",
+      "observed": {
+        "snapshot": {
+          "fcp": 1400,
+          "page_load": 1200,
+          "dom_ready": 1000,
+          "ttfb": 100,
+          "memory_used": 0,
+          "memory_total": 256,
+          "dom_nodes": 800,
+          "network_type": "4g",
+          "rtt": 0,
+          "overall_score": 100
+        },
+        "metrics": [
+          {
+            "name": "FCP",
+            "value": 1400,
+            "unit": "ms",
+            "status": "good"
+          },
+          {
+            "name": "Page Load",
+            "value": 1200,
+            "unit": "ms",
+            "status": "good"
+          },
+          {
+            "name": "DOM Ready",
+            "value": 1000,
+            "unit": "ms",
+            "status": "good"
+          },
+          {
+            "name": "TTFB",
+            "value": 100,
+            "unit": "ms",
+            "status": "good"
+          },
+          {
+            "name": "Memória JS",
+            "value": 0,
+            "unit": "MB / 256MB",
+            "status": "good"
+          },
+          {
+            "name": "DOM Nodes",
+            "value": 800,
+            "unit": "nós",
+            "status": "good"
+          },
+          {
+            "name": "RTT",
+            "value": 0,
+            "unit": "ms",
+            "status": "good"
+          },
+          {
+            "name": "Conexão",
+            "value": 100,
+            "unit": "4g",
+            "status": "good"
+          }
+        ]
+      },
+      "control": {
+        "fcp": 1400,
+        "page_load": 1200,
+        "dom_ready": 1000,
+        "ttfb": 100,
+        "memory_used": 90,
+        "memory_total": 100,
+        "dom_nodes": 800,
+        "network_type": "2g",
+        "rtt": 500,
+        "overall_score": 63
+      },
+      "limitation": "Source-produced snapshot payload captured at fake saveSnapshot; no browser measurement, React rendering, or database write."
+    },
+    {
+      "id": "INF-OBS-P05",
+      "finding": "R2-INF-030",
+      "executed": "actual clearOldSnapshots callback",
+      "observed": {
+        "notices": [
+          {
+            "kind": "success",
+            "msg": "Dados antigos removidos"
+          }
+        ],
+        "reloads": 1
+      },
+      "control": {
+        "notices": [
+          {
+            "kind": "error",
+            "msg": "Erro ao limpar dados"
+          }
+        ],
+        "reloads": 0
+      },
+      "limitation": "No DELETE sent. Normal SDK error envelope and thrown-error control are injected at boundary; RLS/live privileges not evaluated."
+    },
+    {
+      "id": "INF-OBS-P06",
+      "finding": "R2-INF-031",
+      "executed": "entire web-vitals.ts with mocked observer/require boundaries",
+      "observed": [
+        {
+          "name": "CLS",
+          "value": 0.12,
+          "rating": "needs-improvement",
+          "delta": 0.12,
+          "id": "cls-1791117000000"
+        },
+        {
+          "name": "INP",
+          "value": 1000,
+          "rating": "poor",
+          "delta": 1000,
+          "id": "inp-1791117000000"
+        }
+      ],
+      "reference_for_fixture": {
+        "CLS": 0.06,
+        "INP": 160
+      },
+      "control": [
+        {
+          "name": "CLS",
+          "value": 0.06,
+          "rating": "good",
+          "delta": 0.06,
+          "id": "cls-1791117000000"
+        },
+        {
+          "name": "INP",
+          "value": 1000,
+          "rating": "poor",
+          "delta": 1000,
+          "id": "inp-1791117000000"
+        }
+      ],
+      "reference_basis": [
+        "https://web.dev/articles/cls: maximum session window; two shifts separated by2s are separate sessions.",
+        "https://web.dev/articles/inp: ignore one highest interaction per50 unique interactions."
+      ],
+      "limitation": "Synthetic observer entries, not certified browser RUM. Error belongs to local collector; no claim about independent Vercel Speed Insights."
+    }
+  ],
+  "controls": {
+    "all_source_pins_checked_before_compiler_import": true,
+    "compilation": "TypeScript transpileModule only; not typecheck/build/test-suite pass",
+    "production_imports": 0,
+    "real_product_network_calls": 0,
+    "network_claim_basis": "No networking module/import/capability supplied to VM; all SQL/storage/invoke labels are fake in-memory boundaries.",
+    "source_writes": 0,
+    "real_database_mutations": 0
+  },
+  "limitations": "Six finite cases are evidence for six findings, not six additional findings or a complete browser/backend test suite."
+}

@@ -1,0 +1,221 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "integrity": {
+    "head_verified": true,
+    "source_blobs_verified": 13,
+    "pins_sha256": "9512ca41d6a80a3dc9d4bc61f2fc210c5c45fefd29f1a4849dca8851e6a4b127",
+    "derived_from_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "runner_sha256": "bcab478fff29a9da6759545c6aed79b2dc7ef6ccdbe5eb3bb213413203d78917"
+  },
+  "engine": "v24.19.0",
+  "no_network": true,
+  "method": "Terceira passagem: oito hooks de communication e consumidores locais; código TypeScript real com fronteiras controladas, sem React DOM ou serviços.",
+  "source_blob_hashes": {
+    "src/lib/mediaVolumeElement.ts": "43d5aaa1d776c00b6cadc3277444150e3adf4aad",
+    "src/hooks/communication/useTextToSpeech.ts": "bae3f03b2dcbacc1333b64f30cecf536e16b4e22",
+    "src/components/inbox/TextToSpeechButton.tsx": "5953730298aa6a6133dac609c77d2d4395639d4d",
+    "src/hooks/communication/useAudioMemes.ts": "b0fabf284c8a368dec14b98a334f736ea0446f72",
+    "src/hooks/communication/useSpeechToText.ts": "a86fd5bcea1cd8dc78823545f0be475dbf00d858",
+    "src/hooks/communication/useTranscriptionNotifications.ts": "4e33fda3acd463bfe3c0796ee21289f5a18498d9",
+    "src/hooks/voice/useVoiceAgent.ts": "39c5b2fdb307aed04dd67e28b910fdb22ef8ae72",
+    "src/hooks/voice/playTtsAudio.ts": "e42cf6267529bfec124f6f89e3a80ae8edcef74a",
+    "src/hooks/communication/useVoiceAgent.ts": "b6a6e63f162fd1562774c2bfea968ea5b93a55fa",
+    "src/hooks/communication/useMicrophoneGuard.ts": "8d249a6553b94423301350c3a96f390e059acb57",
+    "src/lib/mediaVolumeStore.ts": "d4b77ab5b5b4f2dba63080c0b1d8c71535ceeb12",
+    "src/hooks/communication/useMediaVolume.ts": "eafd1492b837c65541ee5e9fa75141ea399a894d",
+    "src/hooks/communication/useMediaElementVolume.ts": "2cadfe5febb85a3a502c75f43f5bdf275abb9c44"
+  },
+  "results": [
+    {
+      "id": "tts_starts_after_unmount",
+      "description": "Resposta TTS atrasada cria e toca áudio depois do unmount",
+      "observed": {
+        "createdAfterUnmount": 1,
+        "playbackActive": true,
+        "urlRevoked": false,
+        "storeSubscriptions": 1
+      },
+      "limitations": "Hook e binding de volume reais; Audio/fetch/hooks simulados. Demonstra ausência de cancelamento, não audibilidade/autoplay real; ChatPanel é desmontado ao trocar de contato."
+    },
+    {
+      "id": "tts_stop_does_not_cancel_request",
+      "description": "stop durante fetch é seguido por áudio ativo sem currentMessageId",
+      "observed": {
+        "isPlaying": true,
+        "currentMessageId": null
+      },
+      "limitations": "stop e speak reais; fronteiras simuladas. A UI expõe stop apenas durante reprodução, mas iniciar outro speak também usa esse mesmo stop sem cancelar o pedido anterior."
+    },
+    {
+      "id": "tts_loading_button_starts_duplicate",
+      "description": "O botão da mensagem em loading aceita outro clique e as duas respostas tocam",
+      "observed": {
+        "parallelRequests": 2,
+        "simultaneousPlayers": 2,
+        "loadingButtonDisabled": false
+      },
+      "limitations": "Hook e handleClick reais; expressão disabled verificada no TSX fixado. Fronteiras simuladas, sem montagem DOM/autoplay real. Diferente de clicar outra mensagem, cujo botão está desabilitado durante loading."
+    },
+    {
+      "id": "imperative_audio_stops_keep_bindings",
+      "description": "Pausar/fechar memes e parar TTS conserva inscrições dos elementos antigos",
+      "observed": {
+        "memesRetainedAfterClose": 2,
+        "totalBindingsAfterTtsStop": 3
+      },
+      "limitations": "Código real de dois hooks e attachMediaVolume/bindMediaVolume; Set de subscribers e Audio simulados. A retenção é dos callbacks/elementos; não mede memória/bateria e não reconta o AudioContext sem GainNode do VOL-01."
+    },
+    {
+      "id": "audio_meme_writes_false_success",
+      "description": "Escritas de categoria/exclusão rejeitadas continuam com sucesso; exclusão de objeto já aconteceu",
+      "observed": {
+        "displayedCategory": "risada",
+        "persistedCategory": "outros",
+        "visibleRows": 0,
+        "persistedRows": 1,
+        "storageObjects": 0,
+        "operations": [
+          "update-row",
+          "remove-storage",
+          "delete-row"
+        ],
+        "toasts": [
+          [
+            "success",
+            "Categoria alterada"
+          ],
+          [
+            "success",
+            "Áudio meme removido"
+          ]
+        ]
+      },
+      "limitations": "Hook real; banco/Storage simulados com {error} resolvido. O cenário define falha da linha e sucesso de Storage; não afirma políticas RLS ou incidência real."
+    },
+    {
+      "id": "audio_meme_close_orphans_upload",
+      "description": "Fechar o picker descarta pendingUpload e conserva objeto; Cancelar explícito remove",
+      "observed": {
+        "objectsLeftByClose": 1,
+        "pendingCleared": true,
+        "explicitCancelRemovesOwnObject": true
+      },
+      "limitations": "Upload/conversão/IA simulados; callbacks reais. Não consulta objetos reais nem estima custo; o caminho visível onOpenChange chama cleanup, não handleCancelUpload."
+    },
+    {
+      "id": "dictation_old_end_resets_new_session",
+      "description": "onend atrasado da sessão anterior apaga isListening enquanto a nova continua ativa",
+      "observed": {
+        "isListening": false,
+        "newRecognitionActive": true,
+        "transcripts": [
+          "texto novo"
+        ]
+      },
+      "limitations": "Hook real e eventos SpeechRecognition controlados. Requer onend de A após início de B; não é teste de navegador físico. O teste de repositório chama onend sincronicamente dentro de stop."
+    },
+    {
+      "id": "transcription_notification_after_disable",
+      "description": "Callback pendente publica os três alertas depois de enabled=false remover o canal",
+      "observed": {
+        "events": [
+          "remove-channel",
+          "toast",
+          "sound",
+          "browser"
+        ],
+        "enabledAtDelivery": false
+      },
+      "limitations": "Hook real e query/canal/alertas simulados. Não alega entrega a usuário sem RLS; descreve aviso fora do ciclo ativo ou após desativação enquanto a consulta de nome estava pendente."
+    },
+    {
+      "id": "voice_actions_announce_without_applying",
+      "description": "Busca/filtro só mudam view e sort/clear só mostram toast",
+      "observed": {
+        "viewCalls": [
+          [
+            "contacts"
+          ],
+          [
+            "inbox"
+          ]
+        ],
+        "toasts": [
+          "Buscando: \"cliente específico\"",
+          "Filtros aplicados por comando de voz",
+          "Ordenação alterada: unread",
+          "Filtros limpos"
+        ],
+        "statePayloadCalls": 0
+      },
+      "limitations": "Corpo real do roteador consumidor de AppShell; onViewChange/toast simulados. Não infere inexistência de outro assistente separado: este é o LazyVoiceOverlay de desktop."
+    },
+    {
+      "id": "voice_stop_leaves_action_pending",
+      "description": "Interromper resposta pausa áudio mas deixa promise e onAction pendentes",
+      "observed": {
+        "phase": "listening",
+        "promiseSettled": false,
+        "actionCalls": 0,
+        "endedHandler": null,
+        "errorHandler": null,
+        "urlsRevoked": 1
+      },
+      "limitations": "playTtsAudio e useVoiceAgent reais; hooks/SDK/fetch/Audio simulados. O caminho já estava em playObjectUrl; não generaliza stop antes do fetch, que pode sair pelo sinal."
+    },
+    {
+      "id": "voice_old_tts_applies_old_action",
+      "description": "A finaliza sua fala depois de B e ainda aplica ação antiga apesar do abort",
+      "observed": {
+        "appliedRoutes": [
+          "rota-b",
+          "rota-a"
+        ]
+      },
+      "limitations": "Hook real; SDK/transcrição/TTS simulados com promessas independentes. Requer novo transcript durante fala anterior; onCommittedTranscript não possui guard de fase e o abort de A não é verificado depois do await TTS."
+    },
+    {
+      "id": "microphone_guard_contract_positive",
+      "description": "Sondagem interrompe tracks, reconsulta após negativa e reutiliza sucesso por três segundos",
+      "observed": {
+        "requests": 3,
+        "stoppedTracks": true,
+        "blockedFeedback": [
+          "mic_blocked"
+        ],
+        "deviceListenerRemoved": true
+      },
+      "limitations": "Controle positivo, sem achado novo. Hook real, tempo/getUserMedia/eventos simulados; não prova discagem SIP nem aparelho físico."
+    },
+    {
+      "id": "media_volume_contract_positive",
+      "description": "Store mantém clamp/curva/mute e hook troca binding quando o elemento muda",
+      "observed": {
+        "volume": 50,
+        "gain": 0.25,
+        "muted": true,
+        "bindings": [
+          [
+            "bind",
+            "a"
+          ],
+          [
+            "bind",
+            "b"
+          ]
+        ],
+        "detachments": [
+          [
+            "detach",
+            "a"
+          ],
+          [
+            "detach",
+            "b"
+          ]
+        ]
+      },
+      "limitations": "Controle positivo, sem achado novo. Store e dois hooks reais; useSyncExternalStore/layout effect, DOM e binding simulado neste caso. Não valida fallback WebAudio/Safari; VOL-01 permanece separado."
+    }
+  ]
+}

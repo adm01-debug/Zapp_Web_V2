@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_pins": "ai-review-probe-pins.json",
+  "source_pin_count": 12,
+  "transpiler_sha256": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675",
+  "probe_script_sha256": "56abfbe7d35bcc470cfc653445e280ffc5df53e7cc4f79751330b86ff8b6a84b",
+  "safety": {
+    "product_network": "No product network capability in evaluated VM; only injected fixtures.",
+    "global_fetch_denials": 0,
+    "synthetic_fetch_calls": 1,
+    "product_sql_executed": false,
+    "product_handlers_started": false,
+    "source_mutated": false,
+    "writes": [
+      "reports/infra/ai-review-probes.json"
+    ]
+  },
+  "results": [
+    {
+      "id": "INF-AI-P01",
+      "finding_id": "R2-INF-022",
+      "status": "REPRODUCED_OFFLINE",
+      "execution": "Actual toInlineImage and parseApprovedStorageUrl; fetchImpl synthetic; no handler, RLS or provider executed.",
+      "observed": {
+        "inline_bytes": 68,
+        "inline_bucket": "whatsapp-media",
+        "synthetic_request": {
+          "pathname": "/storage/v1/object/whatsapp-media/other-contact/private.png",
+          "method": "GET",
+          "authenticated_with_synthetic_service_key": true
+        },
+        "rejected_other_origin": true,
+        "rejected_other_bucket": true
+      },
+      "limits": "Shows privileged conversion of a known permitted-bucket locator with no user identity in helper contract. Authorization gates and private policy are established separately by static source. Does not prove real data disclosure or deployment."
+    },
+    {
+      "id": "INF-AI-P02",
+      "finding_id": "R2-INF-023",
+      "status": "REPRODUCED_HELPER_AND_PREDICATE_MODEL",
+      "execution": "Actual three schema functions extracted by AST; no remote Zod import. SQL effect modeled from pinned predicate, not executed.",
+      "observed": {
+        "old_snapshot_revalidation_current": true,
+        "newer_commit_between_snapshot_and_response": true,
+        "old_finish_timestamp_passes_pinned_sql_predicate": true,
+        "resulting_projection_in_model": "older-context",
+        "control_fresh_read_cancels": true
+      },
+      "limits": "Establishes an allowed interleaving of the current two-step protocol; no PostgreSQL, real handler concurrency, real timestamps or runtime incidence measured."
+    },
+    {
+      "id": "INF-AI-P03",
+      "finding_id": "R2-INF-024",
+      "status": "REPRODUCED_PRODUCER_WITH_CONSUMER_TYPE_CHECK",
+      "execution": "Actual AST-extracted parse/fallback statements; UI render precondition evaluated as a type contract, no React/browser.",
+      "observed": {
+        "valid_json_wrong_shape_retained": true,
+        "suggestions_type": "string",
+        "consumer_length_positive": true,
+        "consumer_map_is_function": false,
+        "malformed_json_fallback_count": 3,
+        "fallback_has_degraded_status": false,
+        "control_valid_three_suggestions_retained": true
+      },
+      "limits": "No model called; malformed provider fixtures are synthetic. Render crash is inferred from the actual .map consumer, not observed in a browser."
+    },
+    {
+      "id": "INF-AI-P04",
+      "finding_id": "R2-INF-025",
+      "status": "REPRODUCED_CALLBACKS_OFFLINE",
+      "execution": "Actual AST-extracted async callbacks; fake invoke and setters, no React mounting, DOM, network or message send.",
+      "observed": [
+        {
+          "pathname": "src/components/inbox/chat/AIRewriteButton.tsx",
+          "manual_edit_replaced": true,
+          "same_contact_and_mounted_component": true
+        },
+        {
+          "pathname": "src/components/inbox/chat/AIEnhanceButton.tsx",
+          "manual_edit_replaced": true,
+          "same_contact_and_mounted_component": true
+        }
+      ],
+      "limits": "Counterexample is limited to a still-mounted button on the same conversation while a newer draft is typed. No cross-contact effect or automatic send claimed."
+    }
+  ]
+}

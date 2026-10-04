@@ -1,0 +1,27 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "typescript_version": "5.9.3",
+  "tracked_files": 4068,
+  "parsed_files": 2397,
+  "parse_error_files": 0,
+  "functions_with_bodies": 36853,
+  "non_test_functions": 16654,
+  "test_or_fixture_functions": 20199,
+  "files_with_functions": 2283,
+  "call_sites": 2824,
+  "functions_by_layer": {
+    "tests": 1780,
+    "configuration_or_other": 216,
+    "scripts": 1886,
+    "frontend": 30257,
+    "edge": 2714
+  },
+  "empty_catch_sites": 127,
+  "limitations": [
+    "A function body catalog is structural evidence, not semantic review or a count of distinct business features.",
+    "Anonymous callbacks and nested functions are counted individually; overloads without bodies are excluded.",
+    "Statement counters describe syntax only; nested function statements belong to their own record.",
+    "Calls are bounded lexical candidates, not proof of backend reachability or authorization.",
+    "No source module is imported or executed by this scanner."
+  ]
+}

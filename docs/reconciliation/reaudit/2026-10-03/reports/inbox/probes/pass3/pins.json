@@ -1,0 +1,19 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "derived_from_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "files": {
+    "src/hooks/communication/useAudioMemes.ts": "b0fabf284c8a368dec14b98a334f736ea0446f72",
+    "src/hooks/communication/useMediaElementVolume.ts": "2cadfe5febb85a3a502c75f43f5bdf275abb9c44",
+    "src/hooks/communication/useMediaVolume.ts": "eafd1492b837c65541ee5e9fa75141ea399a894d",
+    "src/hooks/communication/useMicrophoneGuard.ts": "8d249a6553b94423301350c3a96f390e059acb57",
+    "src/hooks/communication/useSpeechToText.ts": "a86fd5bcea1cd8dc78823545f0be475dbf00d858",
+    "src/hooks/communication/useTextToSpeech.ts": "bae3f03b2dcbacc1333b64f30cecf536e16b4e22",
+    "src/hooks/communication/useTranscriptionNotifications.ts": "4e33fda3acd463bfe3c0796ee21289f5a18498d9",
+    "src/hooks/communication/useVoiceAgent.ts": "b6a6e63f162fd1562774c2bfea968ea5b93a55fa",
+    "src/lib/mediaVolumeElement.ts": "43d5aaa1d776c00b6cadc3277444150e3adf4aad",
+    "src/lib/mediaVolumeStore.ts": "d4b77ab5b5b4f2dba63080c0b1d8c71535ceeb12",
+    "src/hooks/voice/playTtsAudio.ts": "e42cf6267529bfec124f6f89e3a80ae8edcef74a",
+    "src/hooks/voice/useVoiceAgent.ts": "39c5b2fdb307aed04dd67e28b910fdb22ef8ae72",
+    "src/components/inbox/TextToSpeechButton.tsx": "5953730298aa6a6133dac609c77d2d4395639d4d"
+  }
+}

@@ -1,0 +1,83 @@
+[
+  {
+    "id": "MOD-OBS-001",
+    "classification": "PRIOR_FAMILY_RECONFIRMED",
+    "title": "Metas de atendimento continuam apoiadas em proxies e desafios fixos",
+    "prior_finding_ids": ["DASH-METRICS-001"],
+    "related_finding_ids": ["R2-MOD-063", "R2-MOD-064"],
+    "observation": "DailyGoalsCard usa totalConversations para o rótulo Responder 10 mensagens e não avalia a hora no desafio das 18h. DashboardWidgetRenderer repete proxies de desafios e exibe progresso fixo. Isso reforça a família anterior; os novos IDs 063 e 064 tratam causas distintas de notificação e persistência de configuração.",
+    "evidence": [["src/components/dashboard/overview/DailyGoalsCard.tsx", 16, 40], ["src/components/dashboard/DashboardWidgetRenderer.tsx", 155, 181]]
+  },
+  {
+    "id": "MOD-OBS-002",
+    "classification": "CROSS_AGENT_EXTENSION_NO_NEW_ID",
+    "title": "Formulário SLA não expõe o prazo e os históricos usam janelas diferentes",
+    "prior_finding_ids": [],
+    "related_finding_ids": ["R2-SLA-003"],
+    "observation": "SLAConfigTable oferece nome, prioridade e padrão, sem input para first_response_minutes. SLAMetricsDashboard usa o período selecionado no resumo e 30 dias no histórico. AgentPerformancePanel fixa SLA em week enquanto o ranking recebe outro período. A ausência do prazo foi incorporada por root em R2-SLA-003; as janelas são observações de apresentação, sem aumentar o total de achados.",
+    "evidence": [["src/components/dashboard/sla/SLAConfigTable.tsx", 101, 130], ["src/components/dashboard/SLAMetricsDashboard.tsx", 30, 56], ["src/components/dashboard/AgentPerformancePanel.tsx", 43, 56]]
+  },
+  {
+    "id": "MOD-OBS-003",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "TalkX.test inclui implementações locais que não exercitam a produção",
+    "prior_finding_ids": [],
+    "related_finding_ids": ["R2-MOD-062"],
+    "observation": "A primeira parte testa useTalkX real com backend simulado, inclusive rejeição lógica. Já os blocos de personalização, duração e filtro declaram funções locais e testam essas cópias. Alterar a função de produção não necessariamente faz esses testes falharem; isso não invalida os testes reais do hook nem os testes separados que importam os helpers de produção.",
+    "evidence": [["src/components/talkx/__tests__/TalkX.test.tsx", 1, 127], ["src/components/talkx/__tests__/TalkX.test.tsx", 131, 305]]
+  },
+  {
+    "id": "MOD-OBS-004",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Fixtures do editor não cobrem a audiência maior que a página nem a saída antes do debounce",
+    "prior_finding_ids": [],
+    "related_finding_ids": ["R2-MOD-024", "R2-MOD-025", "R2-MOD-027"],
+    "observation": "useCampaignEditor.test substitui useQuery pela lista persistida do fixture, portanto não exercita paginação real. A hidratação de público usa um contato; o roundtrip espera 3.100 ms antes de desmontar. Esses cenários não cobrem truncação do público nem saída antes do autosave. A serialização de saves e a reutilização de chave de criação de TalkX possuem testes úteis e não devem ser confundidas com o defeito distinto de Multiplix.",
+    "evidence": [["src/components/talkx/__tests__/useCampaignEditor.test.tsx", 65, 99], ["src/components/talkx/__tests__/useCampaignEditor.test.tsx", 240, 295], ["src/components/talkx/__tests__/useCampaignEditor.test.tsx", 441, 522]]
+  },
+  {
+    "id": "MOD-OBS-005",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Testes de rota não executam o ciclo do wizard",
+    "prior_finding_ids": [],
+    "related_finding_ids": ["R2-MOD-027"],
+    "observation": "TalkXView.route substitui TalkXCampaignWizard por um componente de teste. Ele valida navegação e callbacks da rota, mas não o salvamento automático, cancelamento ou recuperação de erro do wizard real.",
+    "evidence": [["src/components/talkx/__tests__/TalkXView.route.test.tsx", 23, 28], ["src/components/talkx/__tests__/TalkXView.route.test.tsx", 95, 114], ["src/components/talkx/__tests__/TalkXView.route.test.tsx", 152, 243]]
+  },
+  {
+    "id": "MOD-OBS-006",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Kit de estado e filtro testado isoladamente não comprova adoção pelos consumidores",
+    "prior_finding_ids": ["TX03"],
+    "related_finding_ids": ["R2-MOD-036", "R2-MOD-059", "R2-MOD-060"],
+    "observation": "A matriz do QueryBoundary e os testes de FilterBar/Table são úteis para seus componentes controlados. Eles não asseguram que cada tela entregue error/retry, onPeriodChange ou onPageSizeChange. Os defeitos registrados permanecem nos consumidores. TalkXAnalytics.hooks declara explicitamente que verifica ordem dos hooks e simula os dados, sem validar a correção das métricas.",
+    "evidence": [["src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx", 1, 40], ["src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx", 1, 35], ["src/components/talkx/__tests__/TalkXAnalytics.hooks.test.tsx", 1, 45]]
+  },
+  {
+    "id": "MOD-OBS-007",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Teste de fuso do Dashboard não cobre selecionar Personalizada",
+    "prior_finding_ids": ["DASH-CONTROLS-001"],
+    "related_finding_ids": ["R2-MOD-065"],
+    "observation": "DashboardFilters.fuso testa getDefaultFilters, sem interação no seletor custom. DashboardView.test simula filtros e painéis: valida permissões e roteamento para o consumidor, mas não o seletor real. Por isso não contradiz o caminho sem ação de Personalizada encontrado em 065.",
+    "evidence": [["src/components/dashboard/__tests__/DashboardFilters.fuso.test.ts", 1, 36], ["src/components/dashboard/__tests__/DashboardView.test.tsx", 11, 69]]
+  },
+  {
+    "id": "MOD-OBS-008",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Resumo de IA com 1.500 declarados é teste de contrato de consumo, não de completude da consulta",
+    "prior_finding_ids": ["DASH-METRICS-001"],
+    "related_finding_ids": [],
+    "observation": "useAIUsageDashboard.agregacao simula um resumo RPC com 1.500 análises e uma página de 50 linhas. Isso demonstra a separação correta entre resumo e página no hook, sem demonstrar que 1.500 registros reais atravessam o SQL, a política ou a janela temporal. useDashboardData.presence também usa respostas simuladas e não comprova a identidade profile_id versus auth.uid no banco.",
+    "evidence": [["src/hooks/analytics/__tests__/useAIUsageDashboard.agregacao.test.tsx", 32, 91], ["src/hooks/analytics/__tests__/useDashboardData.presence.test.tsx", 1, 42]]
+  },
+  {
+    "id": "MOD-OBS-009",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Teste offline da fila verifica texto, não todos os sinais visuais nomeados",
+    "prior_finding_ids": ["DASH-REALTIME-001"],
+    "related_finding_ids": [],
+    "observation": "O caso offline de QueueHealthTable verifica a presença de Tempo real. Apesar do nome mencionar tom e pulso, o trecho não faz asserções desses atributos. O limite é específico a esse teste; a revisão não realizou renderização visual nem conclui, por esse teste, defeito adicional de presença.",
+    "evidence": [["src/components/dashboard/__tests__/QueueHealthTable.test.tsx", 34, 44]]
+  }
+]

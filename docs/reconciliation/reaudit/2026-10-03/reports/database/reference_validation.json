@@ -1,0 +1,9 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "method": "Offline range/hash validation only; no SQL executed",
+  "ranges_checked": 9304,
+  "hash_references_checked": 10175,
+  "unique_source_files": 890,
+  "errors": [],
+  "finding_count": 15
+}

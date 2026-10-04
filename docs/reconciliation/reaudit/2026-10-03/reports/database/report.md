@@ -1,0 +1,889 @@
+# Reauditoria de banco — definições vencedoras, ACL, integridade e contratos
+
+**Fonte:** `da307ba5626dce892f0b37cb6762463f55d14a96`. **Data da revisão:** 2026-10-04. **Modo:** somente arquivos e snapshots locais.
+
+Esta rodada identificou **16 achados** com cenários confirmáveis no código. A revisão não consultou banco vivo, não iniciou PostgreSQL, não executou migrations, não carregou credenciais e não modificou a aplicação. O estado de produção depois dos snapshots continua desconhecido.
+
+A principal correção de método foi distinguir **quantidade de SQL**, **identidade da função**, **definição que prevalece** e **comportamento do consumidor**. A auditoria anterior dizia corretamente que o histórico de nove RPCs e o inventário das migrations não equivalem a revisar todas as funções. Esta rodada amplia a projeção para 311 assinaturas candidatas e publica o nível de revisão de cada uma, sem converter análise lexical em aceite semântico.
+
+## 1. Resultado e prioridade
+
+| ID | Prioridade | Achado |
+|---|---|---|
+| R2-DB-001 | P1 | Nova sobrecarga de registro de chamadas permite escrita privilegiada por PUBLIC |
+| R2-DB-002 | P2 | Atribuição de respostas perde identidade por telefone e não deduplica o evento recebido |
+| R2-DB-003 | P1 | Resolver Singu devolve metadados de empresas e contatos classificados fora do escopo |
+| R2-DB-004 | P1 | Reserva de orçamento de IA aceita chave já encerrada enquanto o consumidor chama o provedor novamente |
+| R2-DB-005 | P2 | Migração de lembretes associa tarefas pelo título, sem preservar a identidade da origem |
+| R2-DB-006 | P2 | Fila de blocos Multiplix deixa sucessores pending atrás de um item terminal |
+| R2-DB-007 | P1 | As duas rotinas de concluir dispatch ainda atribuem CASE text a coluna enum |
+| R2-DB-008 | P2 | Índice de um fechamento por dia impede encerrar novamente uma conversa reaberta |
+| R2-DB-009 | P1 | Conquista de mensagens bloqueia o envio do agente ao atingir um marco |
+| R2-DB-010 | P2 | Usuário pode zerar o contador de requisições do catálogo pela RPC pública autenticada |
+| R2-DB-011 | P2 | Policy de recibos permite registrar leitura própria em conversa da qual o usuário não participa |
+| R2-DB-012 | P2 | Reclassificação de IA converte etiqueta humana homônima em etiqueta removível pela IA |
+| R2-DB-013 | P2 | Segundo UPDATE do template pode ser rejeitado pela guarda de snapshot da própria RPC |
+| R2-DB-014 | P2 | Cancelamento em voo pode descartar a confirmação do provedor e impedir reconciliação |
+| R2-DB-015 | P2 | Retry terminal do TalkX pode voltar a pending sem se tornar elegível ao worker |
+| R2-DB-016 | P2 | Mesclagem autorizada de contato com nota é bloqueada pelo guard posterior de identidade |
+
+P1 indica fronteira de autorização, proteção de custo ou falha de fluxo essencial a corrigir antes de aceitar o respectivo contrato. P2 exige correção de integridade/atribuição/progresso com as pré-condições descritas. Severidade não é afirmação de incidente ocorrido no ambiente vivo.
+
+## 2. Cobertura e o que os snapshots demonstram
+
+| Superfície | Cobertura registrada | Limite |
+|---|---:|---|
+| SQL no repositório | 871 arquivos inventariados e hashados | Inclui suporte/testes/snapshots; não são 871 migrations ativas |
+| Cadeia ativa ZAPP | 779 migrations ordenadas | Ordem local de arquivo, sem replay nem leitura do ledger atual |
+| SQL arquivado | 22 arquivos | _foreign/_superseded excluídos da cadeia ativa |
+| Snapshots SQL | 28 arquivos | Históricos; não tratados como fonte de restore atual |
+| Funções finais candidatas | 311 assinaturas; 336 identidades com histórico | Projeção lexical, não catálogo de banco reconstruído |
+| Revisão de função | 311 semânticas; 0 dirigidas; 0 estruturais | A lista individual está em function_review.json |
+| Correspondência ao manifest | 303 de 303 assinaturas do snapshot local | Identidade equivalente, não prova de igualdade de corpo/ACL |
+| Policies | 499 candidatas, 446 no snapshot | DO, RENAME, DROP TABLE e schemas diferentes impedem diff ingênuo |
+| Views | 11 sequências CREATE/ALTER revisadas para security_invoker | Sem teste SELECT sob usuários reais |
+| Triggers | 123 candidatos, 119 no snapshot | Contagens têm escopos distintos; vínculos específicos foram revisados por achado |
+| Blocos DO | 107 sinalizados | Não expandidos automaticamente; efeitos de interesse foram examinados de forma dirigida |
+| Singu | 4 rotinas do último espelho local e consumidor Edge | Não houve consulta ao projeto externo |
+
+O manifest em `supabase/schema-manifest.json` foi gerado em **2026-10-03T17:11:29Z**, para public/PostgreSQL 17, e contém 164 tabelas com RLS, 1911 colunas, 303 funções, 446 policies, 119 triggers e 11 views. O catálogo é uma evidência datada. Os hashes das definições não contêm os corpos e não substituem leitura da fonte.
+
+Das oito assinaturas presentes na projeção e ausentes do manifest, uma é `supabase_migrations.reserve_migration_version`, fora do schema capturado. As outras sete são introduzidas pelas migrations `20261003172707`, `20261003202707` e `20261003212707`, posteriores à captura. **Essa diferença não demonstra que faltem funções no banco atual.**
+
+A contagem 499 versus 446 de policies também não é um achado de drift por si só: a projeção inclui storage/ops e mantém candidatos que dependem de DROP dinâmico ou da remoção da tabela. As três identidades do snapshot que exigiram seguir operações adicionais são o RENAME de conversation_events_select_policy e os CREATE POLICY dinâmicos de query_telemetry e sicoob_contact_mapping. O arquivo projection_vs_snapshot.json preserva essa distinção.
+
+O export em `supabase-export` tem manifest de maio e se declara legado. A informação da auditoria anterior sobre 779 arquivos versus 781 entradas de ledger é referente ao run de CI já capturado em 03/10; esta rodada não tornou aquela medição atual nem a reutilizou como prova de deploy.
+
+## 3. Achados com definições, consumidores e aceite
+
+### R2-DB-001 · P1 — Nova sobrecarga de registro de chamadas permite escrita privilegiada por PUBLIC
+
+A variante de sete argumentos de record_incoming_call_event é SECURITY DEFINER, não verifica o ator e nasceu sem revogar EXECUTE de PUBLIC. O snapshot de ACL registra esse grant, ao contrário da variante antiga de seis argumentos.
+
+**Condições e sequência de falha**
+
+- Versão de sete argumentos aplicada com a ACL registrada no snapshot local.
+- Um chamador anon ou authenticated consegue alcançar a API RPC do schema public.
+- O chamador conhece um contact_id válido e a whatsapp_connection_id correspondente; esta auditoria não demonstrou obtenção desses UUIDs por anon.
+
+Cenário: O chamador fornece contato/conexão válidos e status permitido à variante de sete argumentos. A função passa apenas pelas validações de formato e vínculo e executa INSERT/UPDATE de calls sob o proprietário. Com o cenário ringing/should_notify, também pode inserir notificação para o atendente vinculado ao contato.
+
+**Consequência:** Criação ou alteração de registros de chamada e notificações sem a autorização esperada de webhook/service_role. Trata-se de fronteira de escrita, não apenas divulgação de catálogo.
+
+**Proteções existentes e limites da conclusão**
+
+- A variante antiga mantém ACL de service_role.
+- O webhook usa autenticação própria e a função exige vínculo contato/conexão válido. Essas proteções não se aplicam ao acesso RPC direto permitido pela ACL da sobrecarga.
+- Não houve chamada RPC, exploração, consulta de dados nem confirmação do deploy atual.
+- O snapshot de ACL é datado de 2026-10-03; mudanças posteriores não são conhecidas.
+- A função de trigger multiplix_audiences_validate_shared_roles também aparece no baseline anon, mas não foi tratada como RPC diretamente invocável.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.record_incoming_call_event(uuid,uuid,text,boolean,text,boolean)`: 20260922220000:create_or_replace → 20260926800000:create_or_replace. Último corpo em `supabase/migrations/20260926800000_calls_telefonia_v2.sql:408–587`.
+- `public.record_incoming_call_event(uuid,uuid,text,boolean,text,boolean,text)`: 20261002531230:create_or_replace. Último corpo em `supabase/migrations/20261002531230_t26_record_incoming_call_event_direction.sql:21–201`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20261002531230_t26_record_incoming_call_event_direction.sql:21–34` — Nova identidade de sete argumentos, SECURITY DEFINER. SHA-256 `783a7e84c269b2e78c81b46ef619b069befcab1374ea25d2d662b6fd42f29796`.
+- `supabase/migrations/20261002531230_t26_record_incoming_call_event_direction.sql:50–144` — Valida status e vínculo contato/conexão, mas grava calls sem autorização do chamador. SHA-256 `783a7e84c269b2e78c81b46ef619b069befcab1374ea25d2d662b6fd42f29796`.
+- `supabase/migrations/20261002531230_t26_record_incoming_call_event_direction.sql:147–201` — Pode gerar notificação; fim do arquivo sem REVOKE/GRANT para a nova assinatura. SHA-256 `783a7e84c269b2e78c81b46ef619b069befcab1374ea25d2d662b6fd42f29796`.
+- `supabase/migrations/20260922220000_atomic_call_and_sentiment_notifications.sql:184–189` — ACL restrita da assinatura original não se transfere automaticamente para outra sobrecarga. SHA-256 `850c680cfbbaf47c8f14b9520e32efda4d6fc2b2ac79354c67c2f7d9da1753e5`.
+- `supabase/migrations/20260930113613_revoke_anon_default_privileges_and_gamification_rpcs.sql:11–26` — Comentário sobre recriação de ACL é impreciso; revoke de defaults remove anon, não PUBLIC. SHA-256 `681d0fdb6aa9aadcfed6448d8d836fe543af460d8a239a8492fe076c611acfa1`.
+- `supabase/schema-manifest.json:5893` — Snapshot registra EXECUTE para PUBLIC na variante nova. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `scripts/db-audit/grants-baseline.json:5` — Baseline de grants também lista a variante nova entre rotinas executáveis por anon. SHA-256 `c3612a9b15a44f2f1fa4573259581d5dc37a0f2d1b1f48dc2d1cc97b1a6a704f`.
+- `supabase/schema-manifest.json:5157` — Schema public permite USAGE a anon no mesmo snapshot. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `supabase/functions/_shared/evolution-webhook-handlers.ts:309–324` — Consumidor de produção usa exatamente a assinatura com p_direction. SHA-256 `55c5c8cb57051b57f08468bdca6486adb9c9404465214e89d3fdf5435fc88a90`.
+
+**Confronto com a auditoria anterior:** A auditoria anterior não examinou esta nova identidade/ACL. TEL-RUNTIME-001 sobre homologação de telefonia não cobre execução anônima de escrita.
+
+**Aceite necessário**
+
+- Reconciliar privilégios de todas as assinaturas e o padrão aplicável ao criador, incluindo PUBLIC.
+- Adicionar defesa coerente de autorização no corpo da rotina privilegiada.
+- Testes negativos de anon e authenticated devem negar escrita; service_role autorizado deve preservar o fluxo de chamada.
+- Regenerar o snapshot de grants após uma correção autorizada e comprovar ausência da variante na lista anon.
+
+Semântica primária: [PG-FUNCTION](https://www.postgresql.org/docs/17/sql-createfunction.html); [PG-DEFAULT-ACL](https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html).
+
+### R2-DB-002 · P2 — Atribuição de respostas perde identidade por telefone e não deduplica o evento recebido
+
+TalkX usa contact_id exato OU sufixo de oito dígitos no mesmo conjunto e escolhe o envio mais recente. Multiplix faz fallback pelo mesmo sufixo global. Nenhuma assinatura recebe a conexão, e o identificador de entrada não impede atribuições repetidas.
+
+**Condições e sequência de falha**
+
+- Dois destinatários de números diferentes compartilham os últimos oito dígitos e têm envios elegíveis na janela.
+- Ou existem duas campanhas/itens ainda sem resposta para o mesmo remetente e um evento é processado novamente.
+- O processamento ocorre pela Edge/service_role; as RPCs não estão abertas a chamadas authenticated diretas.
+
+Cenário: TalkX recebe contact_id A e telefone A. A campanha de A foi enviada antes de uma campanha para B, cujo DDD/país difere mas cujo sufixo coincide. O OR admite A e B; ORDER BY sent_at DESC escolhe B. O contact_id exato não tem prioridade. Multiplix, na ausência de quoted_id, admite a mesma colisão sem delimitar conexão. No reprocessamento do mesmo evento, o item já marcado é excluído por replied_at IS NULL e outro anterior pode ser escolhido. TalkX guarda a mesma reply_message_id de novo; Multiplix nem persiste esse identificador.
+
+**Consequência:** Respostas e taxas por campanha, item e destinatário podem ser atribuídas à pessoa ou ao disparo errado. Um retry pode aumentar a quantidade de campanhas/itens marcados como respondidos sem novo evento do contato.
+
+**Proteções existentes e limites da conclusão**
+
+- As funções exigem service_role, respeitam uma janela temporal e só alteram recipientes/itens sem replied_at.
+- Essas condições evitam certas repetições na mesma linha; não garantem unicidade do evento entre linhas nem identidade global do remetente.
+- A correção F62b da leitura do JSONB está presente; não se reabre o erro de cast já corrigido.
+- Não se mediu incidência real de colisões, retries nem métricas afetadas.
+- A deduplicação geral do webhook pode impedir alguns reprocessamentos, mas não corrige a escolha errada em uma primeira entrega válida.
+- A extração do quoted_id no produtor é de responsabilidade da revisão de providers; o ramo SQL também não vincula a citação ao remetente/conexão.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.attribute_talkx_reply(uuid,text,uuid)`: 20261003212707:create_or_replace. Último corpo em `supabase/migrations/20261003212707_talkx_receipts_replies.sql:335–421`.
+- `public.attribute_multiplix_item_reply(text,text,text)`: 20261003092707:create_or_replace. Último corpo em `supabase/migrations/20261003092707_f62b_leitura_janela_jsonb.sql:27–128`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20261003212707_talkx_receipts_replies.sql:335–421` — TalkX: combinação OR, comparação de sufixo, ordenação temporal e gravação da resposta. SHA-256 `b578dc45911099ea549bee07ede4ff1239b8fb4774eacc1d9dbc71ecfeb26de5`.
+- `supabase/migrations/20261003092707_f62b_leitura_janela_jsonb.sql:27–128` — Multiplix: quoted external_id ou sufixo; p_message_id só é validado, não usado como chave de deduplicação. SHA-256 `b2852e0f1921974b95bed8e50c5c989f903c5179b392427a2251e95aff58b0ce`.
+- `supabase/migrations/20260916180000_talkx_rpc_null_guards_and_reply_index.sql:1–7` — reply_message_id tem índice comum, sem unicidade de evento de resposta. SHA-256 `90ed42dfe8b8b77b5763447a2ed9ba8b40f16338ed14355e87b59ee84012263f`.
+- `supabase/functions/_shared/talkx-reply.ts:25–49` — Consumidor Multiplix passa telefone, evento e quoted_id, sem conexão. SHA-256 `b9de05264b470b4a5576fc40fd1a874b063fd5b9934793c9d7044d91e2ed4f3d`.
+- `supabase/functions/_shared/talkx-reply.ts:67–90` — Consumidor TalkX passa contato, telefone e message_id; não impõe prioridade de correspondência exata. SHA-256 `b9de05264b470b4a5576fc40fd1a874b063fd5b9934793c9d7044d91e2ed4f3d`.
+
+**Confronto com a auditoria anterior:** Os achados anteriores tratavam conciliação de chamadas e qualidade de métricas de IA, não as definições vencedoras de atribuição de respostas TalkX/Multiplix.
+
+**Aceite necessário**
+
+- Delimitar a identidade pelo remetente canônico e conexão/instância; não usar sufixo de oito dígitos como identidade única.
+- Aplicar precedência explícita da correspondência exata e tratar ambiguidade como não atribuída.
+- Persistir e restringir a chave do evento recebido com a cardinalidade de atribuição decidida pelo produto.
+- Validar números iguais no sufixo com DDD/país diferentes, múltiplas campanhas, retries e chamadas concorrentes.
+- Verificar que ausência de atualização concorrente não devolve attributed=true indevidamente.
+
+### R2-DB-003 · P1 — Resolver Singu devolve metadados de empresas e contatos classificados fora do escopo
+
+A última definição Singu espelhada calcula no_escopo, mas apenas oculta o telefone e sua origem. company_name, contact_id, empresa_papeis e last_interaction_at continuam na linha retornada. O endpoint resolve repassa esses campos ao usuário.
+
+**Condições e sequência de falha**
+
+- Projeto externo executa a definição de 20261001160000 espelhada em _foreign/singu; o deploy atual não foi consultado.
+- Usuário autenticado tem pelo menos uma permissão de audiência limitada, por exemplo customers.own, conforme matriz versionada.
+- Usuário conhece UUID de empresa ou contato fora desse escopo, por histórico, link ou outro caminho; não foi demonstrada enumeração cega.
+
+Cenário: Usuário envia action=resolve com um UUID conhecido de outra carteira/segmento. A Edge assina seu escopo legítimo e consulta a RPC externa. A RPC marca fora_do_escopo e zera destino_e164/destino_origem, mas devolve nome, identificadores, papéis e última interação. A Edge apenas traduz a enumeração de elegibilidade e entrega a linha inteira.
+
+**Consequência:** Divulgação de metadados comerciais e de relacionamento que o mesmo escopo deveria excluir da busca. O bloqueio de envio ao destinatário não equivale à proteção desses dados na consulta.
+
+**Proteções existentes e limites da conclusão**
+
+- JWT validado, escopo derivado no servidor e HMAC impedem o cliente de se promover a admin por parâmetros.
+- count/search filtram o escopo na definição examinada.
+- create_draft filtra elegibilidade e não inclui a linha rejeitada na audiência de envio.
+- Telefones de linha fora de escopo são ocultados; não se alega vazamento desses campos por este caminho.
+- Singu é fonte externa e os arquivos estão fora da cadeia de migrations do ZAPP; a evidência é o contrato local espelhado, não leitura do banco externo.
+- Permissões reais por usuário, valores existentes e funcionamento do deployment externo não foram medidos.
+
+**Ordem e definição efetiva na fonte**
+
+- Rotina externa: o arquivo `_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql` redefine `multiplix_resolve_recipients`, após o espelho nominal `multiplix_resolve_recipients.sql`. Esses arquivos não integram a aplicação das migrations do ZAPP.
+
+**Evidência verificável**
+
+- `supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql:28–86` — Validação HMAC do escopo; não é necessário forjar a assinatura para atingir a falha. SHA-256 `e48a3dc14da0bee40bc95f809141693dd2be6ac7da138a732c139db608b07c3f`.
+- `supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql:243–289` — Resolver aceita IDs solicitados e calcula no_escopo para cada empresa. SHA-256 `e48a3dc14da0bee40bc95f809141693dd2be6ac7da138a732c139db608b07c3f`.
+- `supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql:291–349` — Campos de identidade, papéis e última interação continuam na projeção quando no_escopo=false. SHA-256 `e48a3dc14da0bee40bc95f809141693dd2be6ac7da138a732c139db608b07c3f`.
+- `supabase/functions/multiplix-audience/index.ts:280–285` — Entrada resolve aceita UUIDs sem exigir proveniência de busca autorizada. SHA-256 `11b8720509ce9eff3020e998eafbea868f5cbf60d1541485c5bb7fbb1c6414f4`.
+- `supabase/functions/multiplix-audience/index.ts:363–365` — Endpoint exige usuário autenticado. SHA-256 `11b8720509ce9eff3020e998eafbea868f5cbf60d1541485c5bb7fbb1c6414f4`.
+- `supabase/functions/multiplix-audience/index.ts:390–425` — Escopo calculado no servidor; customers_own vinculado ao e-mail do ator. SHA-256 `11b8720509ce9eff3020e998eafbea868f5cbf60d1541485c5bb7fbb1c6414f4`.
+- `supabase/functions/multiplix-audience/index.ts:524–546` — Ramo resolve mantém os metadados com spread de cada row. SHA-256 `11b8720509ce9eff3020e998eafbea868f5cbf60d1541485c5bb7fbb1c6414f4`.
+- `supabase/functions/multiplix-audience/index.ts:621–624` — Dados são devolvidos na resposta do endpoint. SHA-256 `11b8720509ce9eff3020e998eafbea868f5cbf60d1541485c5bb7fbb1c6414f4`.
+- `supabase/functions/multiplix-audience/index.ts:329–338` — Filtro eligible protege create_draft, não o retorno resolve. SHA-256 `11b8720509ce9eff3020e998eafbea868f5cbf60d1541485c5bb7fbb1c6414f4`.
+- `supabase/migrations/20260930620000_multiplix_role_permissions_matrix.sql:74–84` — Matriz seed concede escopo próprio ao agente; a observação de admin-only no comentário Edge está desatualizada. SHA-256 `412a1c72adc1de7ba2dad6218e4e49ced1b1e7c8feb31a9b01c3ced13ac97ccc`.
+
+**Confronto com a auditoria anterior:** MX08 cobre criação/identidades do rascunho e TRA-001 premissas de migração. Nenhum deles protege o retorno de metadados de resolve.
+
+**Aceite necessário**
+
+- Escolher uma resposta de acesso negado que não exponha os atributos da entidade fora do escopo, ou omitir essa entidade.
+- Aplicar o contrato na RPC externa e validar novamente a projeção na Edge.
+- Testar customers.own contra empresa de outra carteira, suppliers contra customer-only e escopo vazio.
+- Confirmar o rollout coordenado dos dois projetos por evidência datada, mantendo _foreign fora da aplicação no ZAPP.
+
+### R2-DB-004 · P1 — Reserva de orçamento de IA aceita chave já encerrada enquanto o consumidor chama o provedor novamente
+
+ai_budget_reserve devolve allowed=true para qualquer chave existente, sem verificar status, validade ou dono da reserva. generateAi deriva a mesma chave para a mesma entrada, chama o provedor de novo e tenta liquidar uma reserva que pode estar settled/released/expired.
+
+**Condições e sequência de falha**
+
+- Consumidor generateAi com orçamento ativo e entrada que já criou uma reserva.
+- Mesma função, usuário, modelo, mensagens e limite de saída repetidos, ou chave explícita reutilizada.
+- Para a variante terminal: reserva anterior já settled, released ou expired. A variante concorrente pode reutilizar uma única reserva viva para mais de uma execução.
+
+Cenário: Primeira ação reserva X tokens, executa e liquida a reserva R. Nova ação com a mesma entrada deriva a mesma chave. SQL encontra R e devolve allowed=true sem criar capacidade reservada, inclusive se outra atividade já ocupou o teto. O provedor é invocado novamente. settle(R) afeta zero linhas porque R não está reserved. A reserva não representa o custo ou a capacidade da nova execução; repetições preservam o mesmo desvio.
+
+**Consequência:** A proteção de orçamento em voo pode ser contornada pela repetição normal ou intencional de uma entrada. O ledger de reservas também deixa de registrar a nova liquidação. Isso não prova perda de todos os logs de uso ou do faturamento do provedor.
+
+**Proteções existentes e limites da conclusão**
+
+- RPCs e tabela são restritas a service_role; não há acesso direto do cliente às reservas.
+- Advisory lock serializa reservas do mesmo dono, mas não corrige a semântica de reaproveitamento.
+- Um pedido com chave nova ainda passa pelo teste soma+estimativa; o defeito está no caminho de chave existente.
+- logUsage registra cada resposta separadamente; quota mensal e faturamento têm contratos adicionais.
+- Não foram feitos pedidos pagos, chamadas reais de IA, consultas de reservas ou medições de custo.
+- Não se afirma que toda chamada repetida tenha entrada idêntica; a pré-condição é explicitada.
+- A proteção global de concorrência por endpoint e a contagem de tentativas pertencem à revisão de providers/IA e podem limitar a taxa, sem restaurar a reserva.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.ai_budget_reserve(text,uuid,text,integer,integer,integer)`: 20261002361230:create_or_replace. Último corpo em `supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql:132–203`.
+- `public.ai_budget_settle(uuid,integer)`: 20261002361230:create_or_replace. Último corpo em `supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql:214–226`.
+- `public.ai_budget_release(uuid,text)`: 20261002361230:create_or_replace. Último corpo em `supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql:237–248`.
+- `public.ai_budget_reconcile()`: 20261002361230:create_or_replace. Último corpo em `supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql:258–273`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql:99–127` — Reserva única por idempotency_key e estados possíveis; acesso direto só service_role. SHA-256 `b9482028940ba1b6fb09c4c83d7efc41fb19ea9c9761a0650b8d7c767917b1bc`.
+- `supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql:165–201` — Ramo chave existente devolve allowed=true sem revalidar a reserva nem segurar capacidade nova. SHA-256 `b9482028940ba1b6fb09c4c83d7efc41fb19ea9c9761a0650b8d7c767917b1bc`.
+- `supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql:211–229` — settle só altera status reserved; reserva terminal permanece sem novo uso. SHA-256 `b9482028940ba1b6fb09c4c83d7efc41fb19ea9c9761a0650b8d7c767917b1bc`.
+- `supabase/migrations/20261002361230_ia043_ia044_rate_limit_e_orcamento.sql:237–273` — release e reconcile tornam a chave terminal, sem removê-la. SHA-256 `b9482028940ba1b6fb09c4c83d7efc41fb19ea9c9761a0650b8d7c767917b1bc`.
+- `supabase/functions/_shared/ai-generate.ts:244–276` — Chave determinística por função/dono/modelo/mensagens/maxTokens, sem identidade temporal de nova ação. SHA-256 `0e6d14a303fb023f7c482f2374287c3089dc7bb155b7870c046d3ad79f8d1f35`.
+- `supabase/functions/_shared/ai-generate.ts:831–885` — allowed=true continua para chamada do provedor, sem cache de resposta idempotente. SHA-256 `0e6d14a303fb023f7c482f2374287c3089dc7bb155b7870c046d3ad79f8d1f35`.
+- `supabase/functions/_shared/ai-generate.ts:942–962` — Tenta liquidar a reserva antiga; logUsage independente continua existindo. SHA-256 `0e6d14a303fb023f7c482f2374287c3089dc7bb155b7870c046d3ad79f8d1f35`.
+
+**Confronto com a auditoria anterior:** O achado anterior identificava a separação incompleta entre ação/tentativa/cobrança. Aqui há uma quebra concreta de estado entre a definição SQL vencedora e o consumidor, com precondição de repetição e guardas reais reconhecidas.
+
+**Aceite necessário**
+
+- Distinguir nova ação do usuário, tentativa e replay da mesma ação na chave de idempotência.
+- Quando for replay verdadeiro, reutilizar resultado já persistido ou garantir que não nasce nova chamada ao provedor.
+- Quando houver nova execução, reservar capacidade válida novamente e registrar sua liquidação.
+- Conferir dono, função e payload da chave existente; definir semântica explícita para settled/released/expired.
+- Validar repetição sequencial e concorrente contra um orçamento ocupado, com assert de número real de chamadas e reservas.
+
+### R2-DB-005 · P2 — Migração de lembretes associa tarefas pelo título, sem preservar a identidade da origem
+
+O INSERT retorna apenas id,title e o UPDATE de reminders liga a tarefa por igualdade de título. Títulos repetidos geram múltiplas correspondências e permitem vincular um lembrete à tarefa criada para outro lembrete/usuário.
+
+**Condições e sequência de falha**
+
+- Na execução dessa migração, há pelo menos dois reminders ainda não migrados com o mesmo title.
+- Os lembretes podem ter donos, contatos, descrições e horários diferentes. Não há unicidade de title na tabela.
+
+Cenário: Dois lembretes A e B compartilham título, mas têm owners/contatos distintos. O INSERT cria tarefas TA e TB preservando os campos de cada origem. O UPDATE FROM vê TA e TB como candidatas para A e para B; a escolha de correspondência não é determinada. migrated_task_id pode apontar para a tarefa errada ou para a mesma tarefa em vários lembretes. Uma consulta que conta NULL=0 continua verde.
+
+**Consequência:** Perda da rastreabilidade da migração, vínculo cruzado entre origens/donos e aceite enganoso por contagem. As tarefas inseridas não têm seus campos necessariamente trocados; a associação no lembrete é que está incorreta.
+
+**Proteções existentes e limites da conclusão**
+
+- Há transação de migração e FK migrated_task_id para uma tarefa existente.
+- A FK garante existência, sem garantir origem, dono ou bijeção.
+- A evidência histórica citada descreve apenas um lembrete; por isso não se declara que produção tenha sido corrompida.
+- Não houve execução/replay da migration nem consulta de lembretes.
+- O dano depende dos dados existentes na data da aplicação; é um defeito demonstrável do algoritmo de migração, com ocorrência histórica desconhecida.
+- A migração também não copia created_at para a coluna created_at da tarefa; esta revisão mantém a falha principal na identidade e exige conferir fidelidade temporal no aceite.
+
+**Ordem e definição efetiva na fonte**
+
+- DML de migração única em `20260928140000`; não foi localizada correção posterior de `migrated_task_id` na cadeia ativa.
+
+**Evidência verificável**
+
+- `supabase/migrations/20260928140000_tasks_unify_reminders_kanban.sql:165–192` — Migração usa title como chave de associação; nenhum reminder_id acompanha RETURNING. SHA-256 `7c0fcaf9b6b6cfbf8335efd825647614c8d6b59cfbe8dcbbf35de6cf4a564587`.
+- `docs/design/PLANO_TAREFAS_QUADRO_FUSAO_150_ETAPAS.md:339` — Plano já exigia ligação por chave/ctid para migração de lembretes. SHA-256 `26431e63d0a22f976e6ef9b097227047a0125a3b9656e771553878adef270483`.
+- `docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md:276` — Gate de quantidade de migrated_task_id NULL não prova correspondência correta. SHA-256 `2b8f0e61b6f95adf4b0c02290069b69e697f679fe7ab3304f1a0346515a790c2`.
+- `docs/design/TAREFAS_QUADRO_STATUS.md:25` — Registro histórico descreve conjunto pequeno; não comprova corrupção real com títulos duplicados. SHA-256 `03a235b24df73c7501e3ab214183100fa71357c36ca4de56d81eaa611b5587d8`.
+
+**Confronto com a auditoria anterior:** O plano detalhado já pedia uma chave de origem, mas o gate final verifica principalmente ausência de IDs nulos. Inventariar o arquivo como migration entregue não valida a correspondência dos dados.
+
+**Aceite necessário**
+
+- Validar a bijeção reminder→task com origem imutável, owner, contact_id, horários e demais campos relevantes.
+- Usar fixture com títulos iguais de usuários e contatos diferentes, além do caso de um lembrete.
+- Se houver dados afetados, preparar correção nova e auditável baseada em evidência; não reescrever uma migration aplicada.
+- O aceite precisa comparar pares corretos, não apenas total de linhas ou NULL=0.
+
+Semântica primária: [PG-UPDATE](https://www.postgresql.org/docs/17/sql-update.html).
+
+### R2-DB-006 · P2 — Fila de blocos Multiplix deixa sucessores pending atrás de um item terminal
+
+A seleção só libera o próximo bloco quando o anterior está sent/delivered/read. Complete e sweeper podem tornar o anterior skipped/failed/outcome_unknown sem resolver os sucessores. Esses itens permanecem pending, inelegíveis e impedem drenagem por itens.
+
+**Condições e sequência de falha**
+
+- Existe audiência materializada com pelo menos dois delivery_items ordenados para um mesmo destinatário.
+- Um bloco anterior chega a skipped/failed/outcome_unknown e não existe intervenção que cancele/reconcilie todos os sucessores.
+- Os contratos atuais de criação/confirmar item precisam ser atingidos; MX01 da auditoria anterior limita quais caminhos de UI materializam essa fila.
+
+Cenário: Worker reivindica bloco 1 e o marca skipped por opt-out. Bloco 2 continua pending. A consulta claimable o exclui porque bloco 1 não é sent/delivered/read. Novos ticks não mudam o estado: sweeper não seleciona pending e a rotina de drenagem por itens vê trabalho aberto para sempre.
+
+**Consequência:** Fila sem progresso e contagem pendente sem uma razão terminal explícita. A troca para o drain correto, necessária por MX03, continua insuficiente sem resolver esta transição de estado.
+
+**Proteções existentes e limites da conclusão**
+
+- A ordenação evita enviar bloco seguinte antes de confirmar o anterior.
+- Fencing de token e regra de não retomar POST iniciado reduzem duplicação; não se alega envio duplicado automático.
+- outcome_unknown pode exigir bloqueio intencional até reconciliação; nesse caso os sucessores devem ter estado e caminho explícitos de recuperação.
+- Não foi produzida fila real nem observado dispatch travado em produção.
+- O worker atual ainda chama o drain legado (MX03), que pode mascarar esta fila pendente; não se afirma que o único sintoma atual seja status sending eterno.
+- Este achado é independente da falha de cast do drain R2-DB-007: ambos os contratos precisam funcionar após as correções.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.list_multiplix_claimable_items(uuid,integer)`: 20261002621230:create_or_replace. Último corpo em `supabase/migrations/20261002621230_f55_claimable_items_por_bloco.sql:34–108`.
+- `public.complete_multiplix_item(uuid,uuid,text,text)`: 20261001231230:create_or_replace. Último corpo em `supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql:314–361`.
+- `public.sweep_multiplix_stuck_items(integer)`: 20261001231230:create_or_replace. Último corpo em `supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql:463–519`.
+- `public.complete_multiplix_dispatch_if_items_drained(uuid)`: 20261001231230:create_or_replace. Último corpo em `supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql:588–640`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20261002621230_f55_claimable_items_por_bloco.sql:75–108` — Filtro exclui sucessor cujo bloco imediatamente anterior não chegou a sent/delivered/read. SHA-256 `887d3fb8135658cf68c022534be92af85c182cf0a9e757e66099c3c9d2c1b604`.
+- `supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql:314–361` — Complete altera somente o item apontado, sem propagação aos sucessores. SHA-256 `b5c7ee913599cbbf641a753f59a8fa676cc294c69df321d6e6200a3082e9738c`.
+- `supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql:480–519` — Sweeper trata sending expirado após POST, não sucessores pending. SHA-256 `b5c7ee913599cbbf641a753f59a8fa676cc294c69df321d6e6200a3082e9738c`.
+- `supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql:616–625` — Drenagem por itens recusa qualquer pending/sending/failed_transient restante. SHA-256 `b5c7ee913599cbbf641a753f59a8fa676cc294c69df321d6e6200a3082e9738c`.
+- `supabase/functions/multiplix-send/index.ts:438–469` — Opt-out e falta de destino produzem skipped em caminho real do worker. SHA-256 `c14c543d34b52761a77dccf371cbdb3a26d8952aa2e35d1e4c00fc4acebcadfc`.
+- `supabase/functions/multiplix-send/index.ts:484–494` — Erro de personalização produz failed e avança o loop. SHA-256 `c14c543d34b52761a77dccf371cbdb3a26d8952aa2e35d1e4c00fc4acebcadfc`.
+
+**Confronto com a auditoria anterior:** Mesmo depois de materializar itens e adotar a drenagem por itens, um predecessor terminal deixa sucessores sem transição definida.
+
+**Aceite necessário**
+
+- Definir por estado terminal se os próximos blocos são cancelados, pulados, liberados ou retidos para reconciliação.
+- Aplicar a transição de forma atômica e preservar a ordenação em todos os claims.
+- Testar dois ou mais blocos com opt-out, destino inválido, falha permanente e resultado incerto.
+- Verificar que não restam itens pending inalcançáveis e que a conclusão usa a fila por itens.
+
+### R2-DB-007 · P1 — As duas rotinas de concluir dispatch ainda atribuem CASE text a coluna enum
+
+multiplix_dispatches.status passou de text para multiplix_dispatch_status. Os dois drains mantêm CASE com literais sem cast, cujo tipo é text pelo algoritmo do PostgreSQL. A correção F59 aplica cast apenas a transition_multiplix_dispatch.
+
+**Condições e sequência de falha**
+
+- Schema com status no enum definido pela F30 e corpos de funções presentes na cadeia local.
+- Não existe cast customizado de text para esse enum como assignment; nenhum CREATE CAST foi encontrado nos arquivos ativos.
+- Dispatch está sending e chega ao UPDATE de conclusão, depois dos retornos antecipados por fila aberta.
+
+Cenário: CASE escolhe entre os literais completed_with_failures e completed, ambos inicialmente unknown. Pela regra 3 da resolução de CASE, o resultado é text. Atribuição a multiplix_dispatch_status exige conversão explícita; a conversão automática de string para tipo do usuário é explicit-only. Ao executar esse statement, espera-se erro de incompatibilidade de tipo (42804), sem conclusão do dispatch. A conclusão é dedução estática sustentada pela documentação, não transcrição de erro observado nesta auditoria.
+
+**Consequência:** Falha na conclusão de disparos drenados no consumidor atual. Migrar para o drain por itens, isoladamente, mantém o mesmo problema de tipagem.
+
+**Proteções existentes e limites da conclusão**
+
+- Atribuições de um literal unknown direto podem ser contextualizadas pelo tipo alvo; aqui há um CASE que já resolve para text.
+- Funções retornam cedo quando o dispatch não está sending ou a fila ainda não drenou; esses caminhos não chegam ao statement defeituoso.
+- F59 corrige corretamente transition_multiplix_dispatch e não foi desconsiderada.
+- Não se iniciou PostgreSQL nem se executou este SQL.
+- O código e o snapshot local sustentam o tipo; casts customizados ou alteração posterior somente no ambiente vivo continuam desconhecidos.
+- A criação de função PL/pgSQL pode não acusar o erro da consulta até o caminho ser executado; existência da função e hash de catálogo não validam o comportamento.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.complete_multiplix_dispatch_if_drained(uuid)`: 20260926180000:create_or_replace → 20260929600000:create_or_replace. Último corpo em `supabase/migrations/20260929600000_multiplix_send_engine_fixes.sql:90–141`.
+- `public.complete_multiplix_dispatch_if_items_drained(uuid)`: 20261001231230:create_or_replace. Último corpo em `supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql:588–640`.
+- `public.transition_multiplix_dispatch(uuid,text,text)`: 20260926180000:create_or_replace → 20260927600000:create_or_replace → 20260929600000:create_or_replace → 20261002521230:create_or_replace. Último corpo em `supabase/migrations/20261002521230_f59_transition_dispatch_enum_cast.sql:34–144`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20261001201230_f30_multiplix_enums_modelo_v2.sql:76–85` — Declaração do enum de status. SHA-256 `46c919e652538c9ef95565ceb5845970f3da7dccc00eb7d5b68785b882bd1a1b`.
+- `supabase/migrations/20261001201230_f30_multiplix_enums_modelo_v2.sql:139–142` — Coluna status convertida para enum. SHA-256 `46c919e652538c9ef95565ceb5845970f3da7dccc00eb7d5b68785b882bd1a1b`.
+- `supabase/migrations/20260929600000_multiplix_send_engine_fixes.sql:90–141` — Última definição do drain legado: CASE de literais em SET status. SHA-256 `fb6abbf8b00ebaa0bc926ff2dd1388843cb2751c2138788d8a28fce155ecacef`.
+- `supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql:588–640` — Definição única do drain por itens repete o CASE sem cast. SHA-256 `b5c7ee913599cbbf641a753f59a8fa676cc294c69df321d6e6200a3082e9738c`.
+- `supabase/migrations/20261002521230_f59_transition_dispatch_enum_cast.sql:9–29` — F59 reconhece o problema text→enum na família, mas corrige outra função. SHA-256 `a5b80c021d4d984609e67ff22a9fc509ec2adc9e6a8a246421978e7528b83241`.
+- `supabase/migrations/20261002521230_f59_transition_dispatch_enum_cast.sql:132–142` — Cast explícito existe só no transition. SHA-256 `a5b80c021d4d984609e67ff22a9fc509ec2adc9e6a8a246421978e7528b83241`.
+- `supabase/schema-catalog.json:1155` — Snapshot confirma o tipo enum da coluna. SHA-256 `840f16399a589cf1f881bf62b331cb90b05c9cd151481581cfb9b311a8e6230e`.
+- `supabase/functions/multiplix-send/index.ts:765–768` — Consumidor atual chama o drain legado e converte erro RPC em falha do worker. SHA-256 `c14c543d34b52761a77dccf371cbdb3a26d8952aa2e35d1e4c00fc4acebcadfc`.
+
+**Confronto com a auditoria anterior:** MX03 identifica consumo do drain legado. R2-DB-007 mostra que tanto o legado quanto a alternativa indicada têm o CASE incompatível com o schema final; a troca de nome não encerra o aceite.
+
+**Aceite necessário**
+
+- Tipar explicitamente a expressão de status nos dois contratos que permanecerem disponíveis.
+- Executar testes de conclusão sem falhas e com falhas no schema com o enum real, não em fixture que define status text.
+- Validar retorno, status, completed_at e comportamento do worker depois de drenagem.
+- Fechar em conjunto com a adoção da fila por itens e o tratamento de sucessores bloqueados.
+
+Semântica primária: [PG-CASE](https://www.postgresql.org/docs/17/typeconv-union-case.html); [PG-CAST](https://www.postgresql.org/docs/17/sql-createcast.html).
+
+### R2-DB-008 · P2 — Índice de um fechamento por dia impede encerrar novamente uma conversa reaberta
+
+A RPC close_conversation_atomic cria um evento por nova solicitação de encerramento. Uma migration posterior impôs unicidade por contato e dia em São Paulo, sem reconciliar a RPC. Reabrir e encerrar o contato no mesmo dia com uma nova chave produz conflito de unicidade e rollback.
+
+**Condições e sequência de falha**
+
+- Contato já teve um closure no mesmo dia civil de America/Sao_Paulo.
+- Conversa foi reaberta via API/operação administrativa e está open/waiting; ator ativo tem visibilidade e pode usar o dialog. Não foi localizado produtor normal de reabertura no browser/Edge atual.
+- Trata-se de nova ação com client_request_id diferente, como o consumidor gera ao reabrir o formulário.
+
+Cenário: Primeiro encerramento insere closure do contato no dia D. Conversa é reaberta pela transição permitida. Novo encerramento não encontra a nova chave em conversation_closures e tenta INSERT. O índice contato/dia já tem uma linha e rejeita o INSERT (23505 esperado). A transação não conclui a conversa nem cria o novo evento. Repetir com a mesma chave nova continua falhando; o replay da chave original não representa a nova ação.
+
+**Consequência:** O contrato backend permite reabrir, mas o novo encerramento no mesmo dia fica bloqueado. O índice usado para deduplicar histórico/indicadores passou a limitar um evento operacional permitido pela FSM.
+
+**Proteções existentes e limites da conclusão**
+
+- O dialog verifica erro corretamente e não anuncia sucesso falso.
+- A RPC mantém atomicidade e impede alterações parciais; essa proteção conserva o contato aberto quando o INSERT conflita.
+- Replay da mesma tentativa original é tratado corretamente; o defeito surge em um novo encerramento.
+- A função legada set_conversation_status possui ON CONFLICT DO NOTHING, mas não é a chamada deste dialog e não corrige o contrato atômico.
+- Não foi encerrada nenhuma conversa nem consultado histórico real.
+- O cenário exige duas finalizações no mesmo dia SP; em dias diferentes a restrição diária não conflita.
+- A reabertura foi demonstrada como contrato RPC disponível, não como botão ou efeito automático de novo inbound. O ingest_inbound_message vigente não reabre conversation_status.
+- O snapshot confirma o índice, mas seu estado atual em produção permanece sem nova medição.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.close_conversation_atomic(uuid,uuid,text,text,text,text)`: 20260909220000:create_or_replace. Último corpo em `supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql:478–614`.
+- `public.set_conversation_status(uuid,text,text)`: 20260905080000:create_or_replace → 20260906090000:create_or_replace → 20260927000001:create_or_replace → 20260927330000:create_or_replace → 20260930090000:create_or_replace. Último corpo em `supabase/migrations/20260930090000_harden_status_and_wa_tag_rpc_authorization.sql:122–175`.
+- `public.conversation_closure_day(timestamptz)`: 20260927590000:create_or_replace. Último corpo em `supabase/migrations/20260927590000_conversation_closures_dedupe_and_unique_per_day.sql:1–6`.
+- `public.enforce_conversation_status_transition()`: 20260905090000:create_or_replace → 20260929560000:create_or_replace. Último corpo em `supabase/migrations/20260929560000_contacts_conversation_status_and_grants.sql:43–70`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql:552–579` — Replay trata a mesma chave; nova chave segue para INSERT quando status está open/waiting. SHA-256 `51aecdd2b1e21b7b391477c79e8a0d3448b1610e1d1e789dac75286c991548e3`.
+- `supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql:584–609` — INSERT de closure não tem ON CONFLICT e compartilha transação com FSM/evento. SHA-256 `51aecdd2b1e21b7b391477c79e8a0d3448b1610e1d1e789dac75286c991548e3`.
+- `supabase/migrations/20260927590000_conversation_closures_dedupe_and_unique_per_day.sql:1–8` — Migration posterior elimina duplicados por dia e cria UNIQUE por contato/data SP. SHA-256 `35b4f609a9bb06b2de5453996102121c0f7b738dcd553abd8c796312049e3dc0`.
+- `supabase/migrations/20260929560000_contacts_conversation_status_and_grants.sql:54–60` — FSM vigente permite resolved→open e open→resolved; repetição é caminho válido da conversa. SHA-256 `bf41293bc9b8e9ff23293212af082cc5676c84b6b8a068aa5df968a17cabb12d`.
+- `supabase/migrations/20260930090000_harden_status_and_wa_tag_rpc_authorization.sql:145–167` — RPC autenticada autoriza editar contato e permite reabertura; não foi localizado consumidor de reabrir na UI. SHA-256 `68f55860305cdd9c4e5b8c4110dbcfbbbbea37464d492dcabf4fd00f07057f07`.
+- `supabase/schema-manifest.json:2654` — Índice permanece no snapshot local. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `src/components/inbox/CloseConversationDialog.tsx:79–105` — Dialog zera chave ao abrir e gera crypto.randomUUID para nova ação. SHA-256 `83093ef0b7d765eb2846ed8eea3fce8d87bc07addf4bd1f50f6931793e82a9d7`.
+- `src/components/inbox/CloseConversationDialog.tsx:116–128` — Sucesso fecha/zera chave; conflito SQL aparece como falha de encerramento. SHA-256 `83093ef0b7d765eb2846ed8eea3fce8d87bc07addf4bd1f50f6931793e82a9d7`.
+
+**Confronto com a auditoria anterior:** Deduplicar fechamento diário para métricas é diferente de aceitar múltiplos ciclos da conversa. A definição vencedora da RPC e a chave real do consumidor demonstram conflito entre os contratos.
+
+**Aceite necessário**
+
+- Separar a unicidade da solicitação operacional de eventual deduplicação diária usada por indicadores.
+- Validar encerrar→reabrir→encerrar no mesmo dia e com usuários diferentes, sem perder nenhum evento legítimo.
+- Preservar idempotência de retry com a mesma client_request_id e rejeição de payload diferente.
+- Conferir status do contato, dois ciclos/eventos, métricas e RLS no schema com o índice real após a correção autorizada.
+
+### R2-DB-009 · P1 — Conquista de mensagens bloqueia o envio do agente ao atingir um marco
+
+O enqueue autenticado insere uma mensagem e aciona o trigger de gamificação. Nos totais 10/50/100/500/1000, o trigger chama grant_agent_achievement com message_milestone, mas a definição vigente exige JWT privilegiado ou admin/supervisor para esse tipo. O erro desfaz o enqueue inteiro.
+
+**Condições e sequência de falha**
+
+- Usuário authenticated, ativo, com permissão de envio e contato/conexão acessíveis, mas sem papel admin/supervisor.
+- Antes da nova mensagem, messages_sent+messages_received do perfil é 9, 49, 99, 499 ou 999.
+- A chamada é o enqueue do browser com seu JWT, e não um envio já executado com service_role.
+
+Cenário: A RPC autoriza o agente e tenta inserir a nova mensagem. O AFTER INSERT incrementa messages_sent e detecta o marco. grant_agent_achievement reconhece o próprio perfil, porém auth.role permanece authenticated e o tipo é reservado. O RAISE EXCEPTION não é tratado na cadeia. PostgreSQL desfaz tanto a mensagem quanto o incremento de estatísticas. O serviço browser recebe erro no enqueue e não invoca message-delivery. Retry na mesma condição reencontra o marco.
+
+**Consequência:** Uma função de gamificação impede uma operação essencial de atendimento para agentes comuns em marcos previsíveis. Como o incremento também é revertido, repetir o envio não ultrapassa o marco por si só.
+
+**Proteções existentes e limites da conclusão**
+
+- Autorização e idempotência do enqueue estão presentes; o problema ocorre depois dessas verificações, no trigger.
+- Envios com JWT service_role ou de admin/supervisor passam pela guarda do tipo.
+- Recebimento de outra mensagem pela infraestrutura privilegiada pode alterar o total e tirar o perfil da condição; o bloqueio não é descrito como permanente.
+- A correção do índice parcial/ON CONFLICT da migration20260928110000 está presente. Este achado trata a guarda de role preservada no corpo vencedor.
+- Sem execução SQL, envio de mensagem ou consulta de agent_stats em produção.
+- Não foi medido quantos perfis estão imediatamente antes de um marco.
+- A dedução usa a implementação primária de auth.role e a atomicidade de triggers do PostgreSQL; não usa current_user como substituto do JWT.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)`: 20260909250000:create_or_replace → 20260930190000:create_or_replace → 20260930200000:create_or_replace. Último corpo em `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:16–188`.
+- `public.handle_message_gamification()`: 20260925185436:create_or_replace → 20260927560000:create_or_replace. Último corpo em `supabase/migrations/20260927560000_fix_gamification_messages_received.sql:5–57`.
+- `public.grant_agent_achievement(uuid,text,text,text,integer)`: 20260925185436:create_or_replace → 20260926101212:create_or_replace → 20260927110000:drop → 20260927110000:create_or_replace → 20260927300000:create_or_replace → 20260927340000:create_or_replace → 20260927380000:create_or_replace → 20260927430000:create_or_replace → 20260927500000:create_or_replace → 20260927510000:create_or_replace → 20260927540000:create_or_replace → 20260927580000:create_or_replace → 20260927610000:create_or_replace → 20260928110000:drop → 20260928110000:create_or_replace. Último corpo em `supabase/migrations/20260928110000_fix_grant_agent_achievement_conflict_target.sql:16–104`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:155–166` — RPC de envio insere agent_id do próprio perfil, sender agent e status sending. SHA-256 `b032e0ccee70734e4dbfaee241e177bce6811561f362df12d3aeafcf8c309f55`.
+- `supabase/migrations/20260925185436_gamification_triggers_eventos_reais.sql:149–151` — Trigger AFTER INSERT por mensagem, sem WHEN que limite status ou identidade. SHA-256 `db380007a049f40c715dc4bd11e5909aa4e569dd2f6255be2c538ac73d8c66de`.
+- `supabase/migrations/20260927560000_fix_gamification_messages_received.sql:19–35` — Incrementa estatísticas e chama achievement message_milestone nos totais determinados. SHA-256 `8dce0c125033d3f4f77649f6f3257b0dab692bd3faebdf292de678d09d2e96a2`.
+- `supabase/migrations/20260928110000_fix_grant_agent_achievement_conflict_target.sql:34–55` — Guarda do próprio perfil passa, mas tipo message_milestone exige role privilegiada ou admin/supervisor. SHA-256 `5a1441cde1dff9c2e3090a43a97396a5d3401a0b799daa0ee9e297854254b65a`.
+- `supabase/schema-manifest.json:4079` — Trigger permanece no snapshot local. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `src/services/outbound-message.service.ts:102–128` — Consumidor browser enfileira sob usuário autenticado e aborta antes do dispatch ao receber enqueueError. SHA-256 `5dd3f526205086e33880468e15154d701c5590cb0914f84907b2938619a0387d`.
+
+**Confronto com a auditoria anterior:** A existência de um fix anterior de erro em marcos não comprova este caminho: a revisão cruzou o trigger vencedor, o guard vencedor e o contexto JWT do enqueue real.
+
+**Aceite necessário**
+
+- Reconciliar uma rotina interna autorizada a conceder conquistas com a fronteira da RPC diretamente invocável pelo cliente.
+- Validar envio de agente comum nos totais imediatamente anteriores a cada marco, com mensagem persistida, entrega acionada e uma conquista consistente.
+- Preservar a rejeição de concessão arbitrária de tipos reservados por RPC direta.
+- Validar retries, mensagens recebidas concorrentes e falhas de gamificação sem permitir que um mecanismo secundário bloqueie atendimento.
+
+Semântica primária: [PG-FUNCTION](https://www.postgresql.org/docs/17/sql-createfunction.html); [PG-TRIGGER](https://www.postgresql.org/docs/17/trigger-definition.html); [SUPABASE-AUTH-ROLE](https://github.com/supabase/auth/blob/master/migrations/20220224000811_update_auth_functions.up.sql).
+
+### R2-DB-010 · P2 — Usuário pode zerar o contador de requisições do catálogo pela RPC pública autenticada
+
+catalog_rate_limit_hit recebe a janela como argumento livre e apaga hits anteriores ao seu limite. A função SECURITY DEFINER é executável por authenticated. Uma chamada própria com p_window_ms=0 apaga inclusive o hit atual e reinicia a cota aplicada pela Edge.
+
+**Condições e sequência de falha**
+
+- Usuário autenticado pode chamar a RPC public.catalog_rate_limit_hit com o próprio UUID e o nome da ação, ambos conhecidos pelo cliente.
+- Definição e grant da migration20261003122707 estão aplicados.
+- Há hits anteriores na mesma chave user_id/action; nenhum acesso à cota de outra pessoa é necessário.
+
+Cenário: Depois de consumir sua cota, o usuário chama a RPC diretamente com o mesmo p_user/p_action, limite positivo e p_window_ms=0. v_janela torna-se zero; DELETE remove todos os hits anteriores e o hit inserido na mesma transação, cujo timestamp default é now(). A chamada seguinte ao endpoint, que usa a janela normal de60s, vê histórico reiniciado e é permitida. A sequência pode ser repetida sem alterar os parâmetros fixos do código Edge.
+
+**Consequência:** O limite compartilhado por usuário/ação pode ser contornado de forma sequencial, independentemente de cache do browser, reciclagem de isolate ou disputa de locks.
+
+**Proteções existentes e limites da conclusão**
+
+- A função impede um authenticated com auth.uid não nulo de passar UUID de terceiro.
+- A tabela não concede escrita direta ao cliente e a função limita o DELETE à própria chave.
+- JWT validado no endpoint protege acesso não autenticado, mas não impede a chamada direta à mesma RPC permitida ao usuário.
+- Não foi consumida nem reiniciada nenhuma cota real.
+- Este achado não depende de uma corrida de concorrência. A contagem append-only sob transações simultâneas é uma questão adicional não necessária à prova.
+- Não há alegação de cobrança financeira específica por requisição do catálogo.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.catalog_rate_limit_hit(uuid,text,integer,integer)`: 20261002681230:create_or_replace → 20261003122707:create_or_replace. Último corpo em `supabase/migrations/20261003122707_catalogo_rate_limit_hits_append_only.sql:36–69`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20261003122707_catalogo_rate_limit_hits_append_only.sql:17–34` — Tabela com hit_at default now(), RLS e privilégios diretos revogados. SHA-256 `791210acdb8681c6cfc7c6f7e8b542732eaed45e83721ce66cdfeabf52c38b3e`.
+- `supabase/migrations/20261003122707_catalogo_rate_limit_hits_append_only.sql:36–69` — Janela livre controla DELETE e contagem; guarda só impede escolher UUID de outro usuário. SHA-256 `791210acdb8681c6cfc7c6f7e8b542732eaed45e83721ce66cdfeabf52c38b3e`.
+- `supabase/migrations/20261003122707_catalogo_rate_limit_hits_append_only.sql:71–72` — EXECUTE explicitamente concedido a authenticated e service_role. SHA-256 `791210acdb8681c6cfc7c6f7e8b542732eaed45e83721ce66cdfeabf52c38b3e`.
+- `supabase/functions/promogifts-catalog/index.ts:144–181` — Cotas de120/60 por ação e janela60s usadas pelo consumidor normal. SHA-256 `534039a3352b661c5dbdd113024b338d0339abd5454796a05b4efc64e4a50418`.
+- `supabase/functions/promogifts-catalog/index.ts:244–255` — RPC é chamada com JWT do usuário, não com segredo exclusivo do servidor. SHA-256 `534039a3352b661c5dbdd113024b338d0339abd5454796a05b4efc64e4a50418`.
+- `supabase/functions/promogifts-catalog/index.ts:284–285` — Retorno booleano decide a resposta429 do endpoint. SHA-256 `534039a3352b661c5dbdd113024b338d0339abd5454796a05b4efc64e4a50418`.
+
+**Confronto com a auditoria anterior:** O contador foi alterado para append-only para evitar contenção; a nova definição conserva parâmetros administrativos livres em uma RPC autenticada. O teste do endpoint com parâmetros fixos não cobre esse acesso direto.
+
+**Aceite necessário**
+
+- Manter a política de janela/limite em configuração confiável ou impedir clientes de executar a primitiva que recebe esses parâmetros.
+- Não permitir que argumentos do usuário apaguem hits ainda pertencentes à janela efetiva.
+- Validar janela0, negativa, muito curta, muito longa e limites arbitrários por RPC direta, além do endpoint normal.
+- Preservar isolamento por usuário/ação e comportamento definido quando o armazenamento da cota falhar.
+
+### R2-DB-011 · P2 — Policy de recibos permite registrar leitura própria em conversa da qual o usuário não participa
+
+A correção de membership protege mark_team_conversation_read, mas a policy vencedora de INSERT em team_message_receipts exige só profile_id próprio. O trigger SECURITY DEFINER deriva conversation_id da mensagem sem verificar associação, permitindo recibos próprios para mensagens conhecidas de outra conversa.
+
+**Condições e sequência de falha**
+
+- Usuário autenticado tem perfil válido e conhece um UUID de mensagem de outra conversa; obtenção desse UUID não foi demonstrada.
+- Usuário não é remetente da mensagem e fornece seu próprio profile_id.
+- Policy/grants/triggers versionados estão aplicados; o acesso usa INSERT direto da API, não a RPC endurecida.
+
+Cenário: Chamador envia message_id conhecido, profile_id próprio, status read e timestamps exigidos, omitindo conversation_id. O trigger resolve a conversa pelo message_id sob o proprietário e satisfaz NOT NULL. O trigger de autor não rejeita, pois o usuário é terceiro; a policy só verifica que profile_id é próprio. A linha é persistida sem que o usuário tenha associação à conversa. Os membros legítimos dessa conversa podem passar a ver um recibo atribuído a quem não participa dela.
+
+**Consequência:** O controle de associação corrigido na RPC pode ser contornado pela escrita direta que o schema continua concedendo. Integridade de recibos e contagens de leitura fica sujeita a usuários fora da conversa.
+
+**Proteções existentes e limites da conclusão**
+
+- Não permite escolher profile_id de outra pessoa pela policy.
+- A RPC mark_team_conversation_read vigente verifica membership corretamente.
+- As policies de conteúdo das mensagens continuam sendo uma barreira separada; este achado não demonstra leitura de mensagem secreta.
+- UNIQUE(message_id, profile_id) impede duplicar a mesma linha própria, mas não substitui a exigência de membro.
+- Nenhum INSERT ou consulta de mensagens/recibos foi executado.
+- Não foi demonstrado um caminho para obter UUID de mensagem desconhecida.
+- O caso de conversation_id fornecido incorreto/UPDATE já consta de TC-009; não é apresentado como descoberta inteiramente nova.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.team_receipts_fill_conversation_id()`: 20260929440000:create_or_replace. Último corpo em `supabase/migrations/20260929440000_team_chat_e51_receipts_conversation_id_not_null_trigger.sql:8–8`.
+- `public.team_receipts_no_own_sender()`: 20260929230000:create_or_replace. Último corpo em `supabase/migrations/20260929230000_team_chat_e33_receipts_consistency_check.sql:10–10`.
+- `public.team_message_receipts_update_guard()`: 20260928490000:create_or_replace. Último corpo em `supabase/migrations/20260928490000_team_chat_e13_receipts_hardening.sql:8–8`.
+- `public.mark_team_conversation_read(uuid)`: 20260929280000:create_or_replace → 20260930470000:create_or_replace. Último corpo em `supabase/migrations/20260930470000_team_receipts_membership_guard.sql:58–96`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20260927270016_team_chat_e26_fix_receipt_insert_policy.sql:1–3` — Versão antiga exigia associação à conversa da própria mensagem. SHA-256 `4625e4a2a6e2e6a969ce0e724972f23bb33f368262933b59921f30c8894a0681`.
+- `supabase/migrations/20260928430000_team_chat_fix_policies_to_authenticated.sql:18–28` — Versão posterior remove a exigência de membership do INSERT e conserva apenas profile_id próprio. SHA-256 `61aafb230756a16c3f7fe7177e0c22676ecefa54b13e1123b55be67037d4e04c`.
+- `supabase/migrations/20260929440000_team_chat_e51_receipts_conversation_id_not_null_trigger.sql:6–12` — Trigger preenche conversation_id omitido sob SECURITY DEFINER, sem gate de membro. SHA-256 `00e10c1d16e405453df0a743ed1f8f004c61d4403f0b49712f91948857ff5ee7`.
+- `supabase/migrations/20260929230000_team_chat_e33_receipts_consistency_check.sql:6–18` — Checks exigem timestamps e trigger impede recibo do próprio autor, sem exigir vínculo à conversa. SHA-256 `5cf223b8d3bee3e9227a7310b662953e55543d2d8bbb19d41e4a76bbc897e8fb`.
+- `supabase/migrations/20260930470000_team_receipts_membership_guard.sql:54–90` — RPC posterior exige membro, mas não altera a policy de INSERT direto da tabela. SHA-256 `7bb37ba0f3f83548f9202d21901db3b9858e424dbd8b0253ab726ee4868ef942`.
+- `supabase/schema-manifest.json:10163` — Snapshot mantém permissão INSERT direta para authenticated. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+
+**Confronto com a auditoria anterior:** TC-009 registrava inconsistência de conversation_id e corrigia a hipótese de conteúdo acessível. A segunda passagem acrescenta que a policy efetiva perdeu até a checagem de membro existente em versão anterior, enquanto o fix posterior cobre somente a RPC.
+
+**Aceite necessário**
+
+- Exigir associação à conversa derivada da mensagem em todo caminho de INSERT/UPDATE, ou restringir a escrita direta a uma RPC que imponha o contrato.
+- Derivar/validar conversation_id contra message_id e impedir alteração inconsistente das chaves.
+- Validar tentativa autenticada de não membro por INSERT direto, membro legítimo, autor da mensagem e mudança posterior de IDs.
+- Preservar monotonicidade de delivered→read e compatibilidade do consumidor atual.
+
+Semântica primária: [PG-POLICY](https://www.postgresql.org/docs/17/sql-createpolicy.html).
+
+### R2-DB-012 · P2 — Reclassificação de IA converte etiqueta humana homônima em etiqueta removível pela IA
+
+replace_ai_conversation_tags preserva human/manual no DELETE inicial, mas o UPSERT posterior conflita por contato/nome e força source=ai. Uma etiqueta humana com nome igual à sugestão passa a ser de IA e pode ser apagada pela próxima reclassificação.
+
+**Condições e sequência de falha**
+
+- Existe em ai_conversation_tags uma linha source=human/manual para o contato e nome N.
+- Uma classificação válida da IA sugere exatamente o mesmo nome N.
+- Origem manual/human é suportada pelo schema, mas esta revisão não localizou UI ativa que crie essa origem; linhas legadas, importadas ou criadas por operação autorizada são pré-condição não medida.
+
+Cenário: A linha humana não é apagada no DELETE inicial, que restringe source=ai. O INSERT da sugestão encontra a chave existente do mesmo contato/nome. ON CONFLICT DO UPDATE mantém uma única linha e substitui source por ai, alterando a autoria/proveniência humana. Se outra classificação posterior traz etiquetas não vazias que omitem N, o DELETE inicial agora alcança a antiga etiqueta humana e a remove.
+
+**Consequência:** O contrato explícito de preservar etiquetas humanas falha quando a IA reutiliza o nome. A classificação perde proveniência e pode eliminar posteriormente uma decisão humana.
+
+**Proteções existentes e limites da conclusão**
+
+- Substituição de tags acontece em uma transação, evitando o antigo DELETE e INSERT separados.
+- Validação de saída do modelo e vocabulário de origem estão presentes.
+- Etiquetas humanas de nomes distintos das sugestões são preservadas; o cenário exige colisão de nome.
+- Não foram consultadas ou alteradas etiquetas reais, nem demonstrada a existência atual de linhas human/manual.
+- Não se atribui ao botão de configurações uma capacidade de criar etiqueta manual que não foi localizada.
+- O consumidor não chama a rotina quando a IA retorna lista vazia; esse desvio de contrato é uma revisão complementar de providers e não é necessário para a perda descrita.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.replace_ai_conversation_tags(uuid,jsonb)`: 20260930110000:create_or_replace. Último corpo em `supabase/migrations/20260930110000_ai_block03_analysis_persistence.sql:169–221`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20260930110000_ai_block03_analysis_persistence.sql:76–77` — Unicidade é por contact_id/tag_name e não distingue origem. SHA-256 `348e3d8006109e4e3839c991fd6c5283d82ab4236ecea0c9dafd967f405cea05`.
+- `supabase/migrations/20260930110000_ai_block03_analysis_persistence.sql:185–213` — DELETE promete preservar humano; ON CONFLICT atualiza confidence e muda source para ai. SHA-256 `348e3d8006109e4e3839c991fd6c5283d82ab4236ecea0c9dafd967f405cea05`.
+- `supabase/migrations/20260930150000_ai_block03_vocabulary_contract.sql:113–118` — Schema aceita explicitamente as origens ai, human e manual. SHA-256 `50ff717e3edc80c965490d90b2527681488cbaafcbc010534918c3c7e0976700`.
+- `supabase/functions/ai-auto-tag/index.ts:173–191` — Consumidor normaliza as sugestões e invoca a rotina com promessa explícita de preservar etiquetas humanas. SHA-256 `be14e7d9260590014232ff861ea9d56233b1fa5ade96eff96255ed6a7fcd26ab`.
+
+**Confronto com a auditoria anterior:** O fix de persistência atômica e preservação de origem foi revisto por sua definição vencedora. O DELETE protegido por source não basta quando o UPSERT seguinte reclassifica a mesma linha.
+
+**Aceite necessário**
+
+- Definir precedência explícita para nome humano/manual existente e preservar sua origem na colisão.
+- Validar sequência etiqueta humana N→IA sugere N→IA sugere apenas M, conservando N e sua proveniência.
+- Validar limpeza de etiquetas exclusivamente de IA, lista vazia e concorrência sem apagar decisões humanas.
+- Manter atomicidade da substituição e a distinção entre resultado ausente, inválido e lista vazia.
+
+### R2-DB-013 · P2 — Segundo UPDATE do template pode ser rejeitado pela guarda de snapshot da própria RPC
+
+A RPC atual arquiva o estado antigo com statement_timestamp, mas o primeiro UPDATE recebe transaction_timestamp pelo trigger de updated_at. O snapshot novo usa esse valor retornado. Ao atualizar current_version_id, a guarda exige um snapshot do conteúdo já novo com created_at igual a statement_timestamp; quando os dois tempos diferem, nenhum dos dois snapshots satisfaz a condição.
+
+**Condições e sequência de falha**
+
+- Template existente e ator owner/admin autorizado alteram pelo menos um campo que participa da comparação de conteúdo.
+- A RPC efetiva roda com proprietário diferente de service_role; a cadeia não altera essa RPC para service_role. Propriedade atual não foi consultada ao vivo.
+- O comando da RPC tem statement_timestamp distinto de transaction_timestamp. A sequência documentada de PostgREST inicia a transação e aplica configurações antes da consulta principal; tempos e versão da implantação não foram medidos.
+
+Cenário: Considere início de transação T, instrução S diferente de T e conteúdo antigo A alterado para B. A RPC insere (A,S); a primeira guarda aceita esse snapshot, mas o trigger de data persiste updated_at=T. A RPC insere (B,T) e tenta atualizar current_version_id. A guarda agora compara OLD=B e exige (B,S). O snapshot (A,S) falha por conteúdo; (B,T) falha por data. A exceção 42501 desfaz a edição e os snapshots.
+
+**Consequência:** O caminho autorizado de edição não conclui quando essa condição temporal ocorre. A UI apresenta erro e mantém o template anterior; não foi alegado falso sucesso do consumidor.
+
+**Proteções existentes e limites da conclusão**
+
+- Lock e expected_updated_at evitam concorrência de versões.
+- A primeira atualização é corretamente autorizada pelo snapshot antigo.
+- Se T=S, se o conteúdo comparado não mudar, ou se a RPC tiver owner service_role, esta falha específica não é produzida.
+- Previsão estática apoiada na semântica documentada, sem execução SQL/RPC.
+- O cabeçalho de 20261001381230 descreve uma falha antiga do backfill, corrigida no mesmo arquivo. Este achado trata o segundo UPDATE da RPC permanente, não reabre aquele backfill como falha atual.
+- O snapshot registra assinatura/ACL, não o proprietário em texto nem o tempo entre comandos.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.update_talkx_template_with_snapshot(uuid,timestamptz,text,text,text,text,text,text,text[],text,text[])`: 20260909210000:create_or_replace → 20261001381230:create_or_replace. Último corpo em `supabase/migrations/20261001381230_talkx_current_version_backfill_fix.sql:125–260`.
+- `public.guard_talkx_template_update()`: 20260909210000:create_or_replace. Último corpo em `supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql:649–707`.
+- `public.set_talkx_template_updated_at()`: 20260909210000:create_or_replace. Último corpo em `supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql:453–479`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20261001381230_talkx_current_version_backfill_fix.sql:125–175` — RPC efetiva: owner/admin, sessão authenticated, lock e versão esperada; relógio inicial da instrução. SHA-256 `35cc50a8db431853f08dd8c7949e5ba52a7da66ed91897a1136a33fc804e2913`.
+- `supabase/migrations/20261001381230_talkx_current_version_backfill_fix.sql:208–258` — Snapshot antigo; UPDATE que captura timestamp do trigger; snapshot novo; segundo UPDATE do ponteiro. SHA-256 `35cc50a8db431853f08dd8c7949e5ba52a7da66ed91897a1136a33fc804e2913`.
+- `supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql:453–485` — Trigger BEFORE UPDATE troca updated_at para transaction_timestamp, salvo incremento exclusivo de uso. SHA-256 `22e863f6e4e43510f1601633f68767297414b55a208c3e8a86db9816e938a05f`.
+- `supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql:649–713` — Guarda BEFORE UPDATE exige snapshot do OLD com created_at=statement_timestamp; bypass só para service_role ou incremento de uso. SHA-256 `22e863f6e4e43510f1601633f68767297414b55a208c3e8a86db9816e938a05f`.
+- `supabase/migrations/20261001381230_talkx_current_version_backfill_fix.sql:99–112` — OWNER service_role foi aplicado apenas à função temporária de backfill, posteriormente removida. SHA-256 `35cc50a8db431853f08dd8c7949e5ba52a7da66ed91897a1136a33fc804e2913`.
+- `src/hooks/integrations/useTalkXTemplates.ts:98–134` — Hook chama a RPC vigente e propaga o erro ao toast. SHA-256 `b8c03f584c2294d41d2de038d00fb5f2877b31389d8fda2b99e0b1ce0ac6885f`.
+- `src/components/talkx/TalkXTemplateEditor.tsx:82–106` — Editor atual usa updateTemplate.mutateAsync ao salvar um template existente. SHA-256 `15bda160eeb227242ec0ce9563203443978b187a0b24dfabe860201e843745ce`.
+
+**Confronto com a auditoria anterior:** A revisão anterior do backfill/ponteiro não acompanhou o trigger de data e a guarda durante as duas atualizações da RPC atual.
+
+**Aceite necessário**
+
+- Usar um contrato de autorização de snapshot compatível com ambos os UPDATEs sem abrir edição direta de cliente.
+- Em ambiente autorizado, validar alteração real de conteúdo dentro de transação com comando anterior, garantindo T diferente de S.
+- Garantir que a versão corrente corresponde ao conteúdo salvo, que updated_at retornado é o persistido e que chamadas diretas não autorizadas permanecem negadas.
+
+Semântica primária: [PG-FUNCTION](https://www.postgresql.org/docs/17/sql-createfunction.html); [PG-TRIGGER](https://www.postgresql.org/docs/17/trigger-definition.html); [PG-TIMESTAMP](https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT); [POSTGREST-TRANSACTION](https://docs.postgrest.org/en/stable/references/transactions.html).
+
+### R2-DB-014 · P2 — Cancelamento em voo pode descartar a confirmação do provedor e impedir reconciliação
+
+transition_talkx_campaign cancela todos os recipients pending/sending e limpa seus tokens, inclusive após marcar o início do POST. Se o provedor responde depois, record_talkx_recipient_sent falha no fencing; o catch tenta quarentena com o mesmo token removido e lança erro antes de enfileirar reconciliação.
+
+**Condições e sequência de falha**
+
+- Campanha sending com recipient que já passou mark_talkx_recipient_dispatch_started.
+- Cancelamento autorizado confirma no banco antes da chamada record_talkx_recipient_sent do worker.
+- O provedor aceita o envio ou deixa um resultado incerto; não se pressupõe que cancelar no banco interrompa uma requisição externa já iniciada.
+
+Cenário: Worker inicia POST e marca providerPostAttempted=true. Cancelamento muda sending para cancelled e remove delivery_claim_token. Uma resposta de sucesso com ID não passa no WHERE da confirmação e produz talkx_delivery_claim_conflict. O catch tenta complete_talkx_recipient(outcome_unknown), também negado pelo estado/token; o throw impede criar o trabalho de reconciliação.
+
+**Consequência:** Destinatário pode continuar marcado cancelled mesmo com mensagem aceita externamente, sem persistir o ID retornado nem gerar o trabalho de reconciliação desse caminho. Contadores e histórico podem não refletir o efeito real.
+
+**Proteções existentes e limites da conclusão**
+
+- Token fencing impede um worker obsoleto de reescrever arbitrariamente a linha.
+- Recipients já confirmados como sent antes do cancelamento não são alcançados pelo UPDATE.
+- O worker possui reconciliação para outros resultados incertos; o caminho aqui falha antes de chamá-la.
+- Não foi efetuado envio, cancelamento, chamada SQL ou reprodução com provedor.
+- A ocorrência depende da ordem entre duas operações concorrentes.
+- Não foi alegado reenvio automático ou duplicação de mensagem. Eventuais mecanismos externos não presentes nesta cadeia não foram medidos.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.transition_talkx_campaign(uuid,text,text,uuid)`: 20260930640000:create_or_replace → 20260930650000:create_or_replace → 20261001311230:create_or_replace → 20261002431230:create_or_replace → 20261003172707:create_or_replace. Último corpo em `supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql:33–148`.
+- `public.record_talkx_recipient_sent(uuid,uuid,text)`: 20260912110000:create_or_replace. Último corpo em `supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql:52–111`.
+- `public.complete_talkx_recipient(uuid,uuid,text,text)`: 20260911130000:create_or_replace → 20260911180000:create_or_replace → 20260911190000:create_or_replace → 20261003202707:create_or_replace. Último corpo em `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql:351–400`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql:99–116` — Cancelamento inclui sending sem distinguir provider_dispatch_started_at e limpa o token. SHA-256 `66cd25b7697b0360181c4e4971409d15655fb72697821f6756357dac114967d5`.
+- `supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql:135–146` — Também encerra worker e registra campanha cancelled. SHA-256 `66cd25b7697b0360181c4e4971409d15655fb72697821f6756357dac114967d5`.
+- `supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql:85–109` — Persistência da confirmação exige sending, token e início de POST. SHA-256 `d1e69f62feee44de9553d4c36348a58f0d8732bdcd9e3ff9f07ee34a8ba49ed2`.
+- `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql:373–398` — Quarentena exige o mesmo estado/token e lança conflito se a linha não mudou. SHA-256 `6034d56414585c7822cd4d7de9a88028dc25a888007ef3466bfbb127f3132c05`.
+- `supabase/functions/talkx-send/process-recipient.ts:442–475` — Worker marca o início e aguarda o POST externo fora da transação de cancelamento. SHA-256 `a4b5db6fc4eec0ae64e6e88f0516eddbcffb185c2e6accddf9a4ee2c5149e558`.
+- `supabase/functions/talkx-send/process-recipient.ts:492–500` — Recebe providerMessageId mas não consegue salvar quando o token foi limpo. SHA-256 `a4b5db6fc4eec0ae64e6e88f0516eddbcffb185c2e6accddf9a4ee2c5149e558`.
+- `supabase/functions/talkx-send/process-recipient.ts:536–564` — Falha na quarentena lança antes de enqueueRecipientReconciliation receber o ID conhecido. SHA-256 `a4b5db6fc4eec0ae64e6e88f0516eddbcffb185c2e6accddf9a4ee2c5149e558`.
+
+**Confronto com a auditoria anterior:** Validado em colaboração com o revisor do worker. A proteção contra retries de POST não compensa a remoção do token durante um POST em voo.
+
+**Aceite necessário**
+
+- Definir cancelamento separado de confirmação para tentativas cujo POST já começou.
+- Preservar trilha durável de tentativa e resposta mesmo que a campanha seja cancelada.
+- Reproduzir em ambiente autorizado cancelamento entre POST e confirmação, com sucesso, timeout e falha explícita do provedor; nenhum efeito incerto deve ficar sem reconciliação rastreável.
+
+### R2-DB-015 · P2 — Retry terminal do TalkX pode voltar a pending sem se tornar elegível ao worker
+
+retry_talkx_recipient retorna true após mover failed/outcome_unknown para pending, mas preserva provider_dispatch_started_at. talkx_next_recipients exige esse campo NULL para todas as linhas, incluindo pending, logo não seleciona a tentativa pós-POST que foi aceita como retry.
+
+**Condições e sequência de falha**
+
+- Recipient failed/outcome_unknown após POST, com provider_dispatch_started_at preenchido e attempt_count menor que três.
+- Admin/service autorizado chama action retry; contato passa na supressão.
+- Mesmo mantendo a campanha sending, o motor usa talkx_next_recipients, como o consumidor atual.
+
+Cenário: A RPC aceita o retry e devolve true. A linha agora é pending, mas conserva a marca de POST da tentativa anterior. A listagem do worker descarta a linha pelo filtro provider_dispatch_started_at IS NULL, antes de chegar ao claim que poderia atualizar esse campo.
+
+**Consequência:** O endpoint confirma a operação de retry, porém o destinatário permanece pendente sem ser trabalhado pelo motor normal. Um pending desse tipo também pode impedir a campanha de ser drenada.
+
+**Proteções existentes e limites da conclusão**
+
+- Há gate admin/service no endpoint e service_role no corpo da RPC.
+- Revalidação de supressão e limite de tentativas permanecem aplicados.
+- Não foi encontrado botão atual do frontend usando o retry; o endpoint administrativo é alcançável por action retry.
+- Nenhum retry foi executado nesta auditoria.
+- Claim direto de serviço aceita pending e limpa a marca depois de selecionar; por isso não se afirma impossibilidade absoluta de processamento por outros clientes.
+- Não se recomenda simplesmente limpar a marca sem reconciliar o resultado externo: isso poderia transformar uma falha de progresso em reenvio inseguro.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.retry_talkx_recipient(uuid)`: 20260930630000:create_or_replace. Último corpo em `supabase/migrations/20260930630000_talkx_v19_retry_recipient.sql:8–50`.
+- `public.talkx_next_recipients(uuid,integer)`: 20261001311230:create_or_replace. Último corpo em `supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql:385–448`.
+- `public.claim_talkx_recipient(uuid,uuid,text,integer)`: 20260911130000:create_or_replace → 20260912110000:create_or_replace → 20261003202707:create_or_replace. Último corpo em `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql:240–340`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20260930630000_talkx_v19_retry_recipient.sql:18–48` — Retry exige serviço e limite de tentativas, muda status/claim e retorna true sem limpar início de POST. SHA-256 `2cc8618633a92219dcb897b2ec057b6f1cac34aff14c65b0c60fca5d103a3b29`.
+- `supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql:427–446` — Seletor atual exige provider_dispatch_started_at NULL antes dos ramos pending/sending. SHA-256 `340fc3ba61dd17c2d2362cad78cc1b4c402ee53d1c933b8ecba90863717215bb`.
+- `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql:266–284` — Claim direto aceita pending; portanto o bloqueio observado pertence ao caminho normal de listagem, não a toda chamada privilegiada possível. SHA-256 `6034d56414585c7822cd4d7de9a88028dc25a888007ef3466bfbb127f3132c05`.
+- `supabase/functions/talkx-send/index.ts:236–270` — Endpoint atual action retry, após gates do endpoint, revalida supressão e anuncia sucesso a partir do booleano RPC. SHA-256 `914f2027d6c64b19071c1ba03ac328ede5d2c9a267c32303fb3b979b300625ac`.
+- `supabase/functions/talkx-send/index.ts:896–909` — Worker usa o seletor efetivo antes de processar destinatários. SHA-256 `914f2027d6c64b19071c1ba03ac328ede5d2c9a267c32303fb3b979b300625ac`.
+
+**Confronto com a auditoria anterior:** A autorização e o contador de tentativas foram separados da elegibilidade do worker. A hipótese inicial de duplicação automática foi descartada para este caminho de listagem.
+
+**Aceite necessário**
+
+- Definir reconciliação do resultado anterior antes de autorizar nova tentativa após POST.
+- Uma resposta de retry aceita deve produzir estado elegível ao processamento seguro ou informar explicitamente que aguarda reconciliação.
+- Cobrir falha pré-POST, falha pós-POST, outcome_unknown, campanha ativa e campanha terminal, sem reenviar efeitos já confirmados.
+
+### R2-DB-016 · P2 — Mesclagem autorizada de contato com nota é bloqueada pelo guard posterior de identidade
+
+merge_contacts_atomic move cada FK simples que referencia contacts, incluindo contact_notes.contact_id. Uma migração posterior torna contact_id e author_id imutáveis por trigger sem exceção para a mesclagem. Assim, um secundário com nota impede toda a operação, mesmo para admin/supervisor.
+
+**Condições e sequência de falha**
+
+- Admin/supervisor ou serviço autorizado solicita uma mesclagem válida de pelo menos dois contatos.
+- Ao menos um contato secundário possui uma linha em contact_notes.
+- Não há conflito anterior de CRM ou outro impedimento que encerre a operação antes do loop de FKs.
+
+Cenário: A RPC autoriza o ator, bloqueia os contatos e atualiza os campos do contato principal. O loop encontra contact_notes.contact_id e tenta substituir o ID secundário pelo principal. O BEFORE UPDATE guard_contact_note_identity detecta a diferença de contact_id e lança 23514. O erro aborta a transação inteira e o diálogo exibe falha; retirar ou repetir a mesma seleção não resolve a incompatibilidade.
+
+**Consequência:** A mesclagem de contatos duplicados com anotações não se conclui pelo fluxo oferecido. A operação falha de forma atômica; não se afirma perda parcial de mensagens ou notas.
+
+**Proteções existentes e limites da conclusão**
+
+- A autorização da RPC e o gate da UI estão presentes.
+- A imutabilidade protege a edição comum de notas contra mudança de dono ou contato.
+- A RPC não captura o erro, portanto a atomicidade preserva os registros anteriores; a UI não anuncia sucesso indevido.
+- Nenhuma mesclagem foi executada e a incidência de contatos secundários com notas não foi medida.
+- O conflito foi estabelecido pela cadeia estática de FK, loop, trigger e consumidor atual.
+- Outras dependências únicas ou imutáveis podem impor restrições adicionais, mas não são necessárias para este cenário.
+
+**Ordem e definição efetiva na fonte**
+
+- `public.merge_contacts_atomic(uuid,uuid[],jsonb)`: 20260909120000:create_or_replace. Último corpo em `supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql:93–213`.
+- `public.guard_contact_note_identity()`: 20260909200000:create_or_replace. Último corpo em `supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql:191–204`.
+
+**Evidência verificável**
+
+- `supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql:93–114` — RPC SECURITY DEFINER exige service_role ou admin/supervisor. SHA-256 `5ae521d55579a246022efb363aba7b6316289c2d9f5ec204c3270f4597edc0b8`.
+- `supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql:178–213` — Loop descobre todas as FKs simples públicas para contacts e executa UPDATE do identificador; erro não é tratado. SHA-256 `5ae521d55579a246022efb363aba7b6316289c2d9f5ec204c3270f4597edc0b8`.
+- `supabase/migrations/20251220181137_fdfc620a-2977-487f-b0a7-feaa897d14c6.sql:2–9` — contact_notes.contact_id é FK simples para contacts(id). SHA-256 `7fd469ab8679e92f9076f5f75d2d1df059e19d46463cf0b9dcf721819eeb98f0`.
+- `supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql:191–214` — Migração posterior instala trigger que rejeita qualquer mudança do par contact_id/author_id, sem bypass privilegiado. SHA-256 `c4a75d458a47d4ddb037b7b13772887e7fc3efde91be7e96fd4a12926995d295`.
+- `supabase/schema-manifest.json:4694` — Snapshot mantém a FK descoberta pelo loop. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `supabase/schema-manifest.json:4076` — Snapshot mantém o trigger que impede a transferência. SHA-256 `633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1`.
+- `src/components/contacts/ContactsView.tsx:90–98` — Gate de mesclagem vem do mesmo acesso administrativo do servidor. SHA-256 `6305b69c7488ebbb8880baa79b1868ed743b3abda6bcd9ce2274b37af83448c6`.
+- `src/components/contacts/ContactsView.tsx:127–135` — Componente de mesclagem está montado no fluxo de Contatos. SHA-256 `6305b69c7488ebbb8880baa79b1868ed743b3abda6bcd9ce2274b37af83448c6`.
+- `src/components/contacts/ContactMergeDialog.tsx:45–67` — Fluxo ativo escolhe principal, chama serviço e mostra erro quando a RPC falha. SHA-256 `c3513fcb78abfcabf7525a9fd79fc332a9d789d2a966cc7af55ee59274080b63`.
+- `src/services/contact-merge.service.ts:4–19` — Consumidor invoca merge_contacts_atomic e propaga o erro retornado. SHA-256 `162d565d3ce0aeb2bfc7982284a6d5648b720f82ce38dd03f0c41c9a9893ec00`.
+
+**Confronto com a auditoria anterior:** Não foi localizado achado equivalente no registro anterior consultado. A autorização de mesclagem foi corrigida na UI, mas não resolve a incompatibilidade do guard de notas criado depois da RPC.
+
+**Aceite necessário**
+
+- Definir um caminho interno estreito de transferência de notas durante a mesclagem, preservando autor, conteúdo e rastreabilidade.
+- Manter a proibição de alterar contact_id/author_id em uma edição comum de nota.
+- Validar mesclagem com zero, uma e várias notas, múltiplos secundários e conflito de CRM, verificando atomicidade e integridade dos vínculos.
+- Confirmar que o consumidor continua informando erros reais e só fecha o diálogo após a operação concluir.
+
+Semântica primária: [PG-TRIGGER](https://www.postgresql.org/docs/17/trigger-definition.html).
+
+## 4. Hipóteses rejeitadas e fronteiras verificadas
+
+- **UPDATE sem WITH CHECK não é automaticamente bypass.** Para UPDATE/ALL o PostgreSQL reaproveita USING quando WITH CHECK é omitido. A avaliação exige predicado, combinação permissiva/restritiva, grant e identidade de execução. A instrução genérica contrária encontrada no material de skill não foi usada como prova.
+- **CREATE OR REPLACE da mesma assinatura não reinicia ACL.** O risco R2-DB-001 vem da nova identidade de sete argumentos. Revogar apenas anon não remove um grant herdado de PUBLIC.
+- **Trigger executável não é automaticamente RPC comum.** `multiplix_audiences_validate_shared_roles()` retorna trigger; sua presença no baseline anon não foi convertida em exploit direto.
+- **View criada sem opção não permanece necessariamente definer.** As onze sequências finais têm security_invoker ativado na criação ou depois. Em particular whatsapp_connections_agent/channel_connections_safe e talkx_campaign_metrics têm ALTER/recriação posteriores relevantes.
+- **Parâmetro booleano de helper não concede escrita.** A variante can_edit_contact com contexto pré-calculado retorna um booleano; políticas fornecem seus próprios parâmetros. A possibilidade de pedir um resultado artificial isolado não foi chamada de escalada.
+- **Escopo Singu não é inteiramente ausente.** HMAC, identidade do vendedor, count/search e filtro de create_draft existem. O defeito confirmado está na projeção de metadados de resolve.
+- **Lease vencido não prova duplicação.** Claim troca token; mark/record_sent verificam token e status. Heartbeat ausente, analisado por providers, pode produzir conflito/resultado incerto; não foi tratado como duplicação inevitável.
+- **Mensagens sent não têm proibição geral de content/is_deleted pelo guard citado.** O corpo vigente é guard_message_delivery_internal_fields; a imutabilidade do payload é condicionada à mensagem ainda sending com client_message_id e sem external_id. O relatório Inbox mantém sua prova de erro ignorado separada desse trigger.
+
+Essas decisões são sustentadas pela leitura das definições vencedoras e pela documentação primária do PostgreSQL. Elas evitam ampliar o relatório com falsos positivos baseados apenas em padrões de texto.
+
+## 5. Pontes entregues aos outros módulos
+
+- **Auth/permissões:** SELECT de profiles segue próprio/admin-supervisor; a policy antiga de colegas ativos foi removida. SELECT direto de role_permissions exige admin/supervisor, embora user_has_permission tenha contrato próprio. Foram compartilhados os efeitos em reset de senha, permissões do agente e perfis no Team Chat.
+- **Sessões/MFA:** não foi localizado hook SQL que faça session_invalidated_at ou user_sessions revogar token, nem predicado AAL nas policies/RPCs do conjunto ativo. Isso não comprova configuração externa de Auth, gateway ou MFA; os consumidores do front foram tratados pelo agente de Auth.
+- **SLA:** register_first_response_internal vigente usa cinco minutos fixos. O trigger executa para NEW.status=sent e usa NEW.created_at como tempo da resposta. A discussão de regras configuráveis e métricas fica no módulo principal.
+- **Editor TalkX:** snapshot_talkx_campaign_audience lê contact_ids no ramo manual, intersecta esses IDs no motor e substitui todos os recipients na transação. O ramo segment ignora contact_ids. A revisão de paginação/hidratação recebeu essa distinção para não extrapolar o sintoma.
+- **Agendamento genérico:** scheduled_messages possui estrutura/policies/índices, mas nenhum consumidor SQL/cron foi encontrado no conjunto ativo por referência ao objeto. Um scheduler externo permanece desconhecido; não se declarou execução inexistente em todos os ambientes.
+- **CI/replay:** o alcance dos hashes de db-audit, a seleção dos contratos de runtime e segurança de dry-run foram encaminhados a Infra, que é a autoridade desta rodada sobre esses scripts.
+
+## 6. Cobertura restante e condição para encerrar o aceite de banco
+
+A segunda passagem concluiu a leitura manual dos 311 corpos candidatos efetivos do catálogo, com notas individuais e cruzamentos de consumidores; restam 0 corpos apenas dirigidos/estruturais. Essa cobertura não certifica todos os ramos nem todas as formas de chamada. As 446 policies do snapshot, cada associação de trigger e todos os efeitos dos 107 DO não receberam revisão semântica integral individual. Essas superfícies mantêm cobertura dirigida/estrutural explícita em coverage.json.
+
+O próximo aceite deve usar as definições efetivamente aplicadas em ambiente autorizado, conferir assinaturas e ACL de forma completa, executar os cenários negativos descritos e validar os fluxos com os consumidores reais. As correções propostas aqui são critérios, não migrations executadas. Alterações já aplicadas devem receber migração de correção nova e rastreável, com rollout coordenado do contrato externo quando houver Singu.
+
+Não há evidência nesta rodada para declarar restaurabilidade, migração do zero, performance sob carga, ausência de dados órfãos, identidade das permissões herdadas em runtime, ou liberação do sistema completo. Esses resultados exigem provas próprias; uma suíte que só confere presença de função, um hash ou contagem de arquivos não os encerra.
+
+## 7. Artefatos e fontes
+
+- `findings.json`: os 16 achados, pré-condições, proteção existente, cadeia por função, evidências com SHA-256 e critérios de aceite.
+- `coverage.json`: fronteiras de execução, contagens, níveis de leitura e lista nominal restante.
+- `function_review.json`: 311 identidades com histórico, definição candidata final, grants do snapshot, cobertura e achados associados.
+- `projection_vs_snapshot.json`: correspondência de assinaturas e diferenças de escopo/tempo; evita chamar todo delta de drift.
+- `sql_inventory.json`: inventário lexical dos 871 SQL e eventos das 779 migrations ativas.
+- `build_inventory.py` e `build_report.py`: scripts locais reproduzíveis; não executam SQL.
+
+### Auditoria anterior consultada
+
+- `DATABASE_TRUTH_STRUCTURAL_SWEEP_2026-10-03.md:7–26` — Contagens, CI datado, 33 migrations Team Chat e histórico de nove RPCs; limite semântico expresso. SHA-256 `572c1bad61d3a2aeb20f081a0a72e5ee0828ad97ff6698af54304c4b5fe0b2d9`.
+- `reports/modules/HISTORICAL_DATABASE.md:3–19` — Autoridade da fonte de banco e limites de evidência histórica. SHA-256 `be98ba3ce38484a415582cacd86fd68e43405174e4302a1d601bc3c75f37f849`.
+
+### Documentação primária consultada
+
+- [PG-POLICY](https://www.postgresql.org/docs/17/sql-createpolicy.html) — UPDATE/ALL sem WITH CHECK reaproveita USING; policies permissivas se combinam por OR e restritivas por AND.
+- [PG-FUNCTION](https://www.postgresql.org/docs/17/sql-createfunction.html) — Identidade de função inclui tipos de argumentos; CREATE OR REPLACE da mesma identidade preserva propriedade e permissões; função nova recebe privilégios padrão.
+- [PG-DEFAULT-ACL](https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html) — Privilégios padrão são por criador e escopo; REVOKE de anon não revoga o privilégio de PUBLIC.
+- [PG-UPDATE](https://www.postgresql.org/docs/17/sql-update.html) — UPDATE FROM com várias linhas de origem correspondentes usa uma delas sem escolha previsível.
+- [PG-CASE](https://www.postgresql.org/docs/17/typeconv-union-case.html) — CASE cujos resultados são todos unknown resolve o tipo de resultado para text.
+- [PG-CAST](https://www.postgresql.org/docs/17/sql-createcast.html) — Conversões automáticas de string para tipos definidos pelo usuário são somente explícitas; atribuição precisa de cast adequado.
+- [PG-TRIGGER](https://www.postgresql.org/docs/17/trigger-definition.html) — O trigger integra a transação da instrução que o aciona; erro não tratado desfaz os efeitos de ambos.
+- [SUPABASE-AUTH-ROLE](https://github.com/supabase/auth/blob/master/migrations/20220224000811_update_auth_functions.up.sql) — auth.role() consulta claims da requisição, não current_user; SECURITY DEFINER não transforma o JWT authenticated em service_role.
+- [PG-TIMESTAMP](https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT) — transaction_timestamp representa o início da transação; statement_timestamp representa o comando recebido e pode diferir após a primeira instrução.
+- [POSTGREST-TRANSACTION](https://docs.postgrest.org/en/stable/references/transactions.html) — A requisição passa por START TRANSACTION, configurações da transação e consulta principal; erro na função aborta a transação. A versão e os tempos da implantação não foram medidos.
+
+As fontes primárias foram consultadas para resolver semântica. Não foram usadas como substituto de prova sobre o estado do projeto.

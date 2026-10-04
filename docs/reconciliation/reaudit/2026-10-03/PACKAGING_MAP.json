@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "compressed_files": [
+    {
+      "original_path": "consolidated/file-review-matrix.json",
+      "original_bytes": 3982974,
+      "original_sha256": "eb3d94d09f40badf3d879532e57620e1d3dc6d38a5de9d6f784238ce2fcd7a28",
+      "packed_path": "consolidated/file-review-matrix.json.gz",
+      "packed_bytes": 329040,
+      "packed_sha256": "ed68254ca947c3c05a15fd04356cb23ab4eda0f70e4d1824b65835bf92c20626"
+    },
+    {
+      "original_path": "consolidated/function-review-matrix.json",
+      "original_bytes": 23893115,
+      "original_sha256": "fd9441a78ae56007bed23b973d480d87ef9eff726ab1b1613ca2041c68bed169",
+      "packed_path": "consolidated/function-review-matrix.json.gz",
+      "packed_bytes": 2288389,
+      "packed_sha256": "218f7456dc3a0ebb946a898e25bc4391b84e326f99dc66f623c713b9434d424d"
+    },
+    {
+      "original_path": "global/import-graph.json",
+      "original_bytes": 2261604,
+      "original_sha256": "6460dec62cd08b9c1fd07c60149bbf064c900ed1954da74fd29e514f38a4a2f7",
+      "packed_path": "global/import-graph.json.gz",
+      "packed_bytes": 111789,
+      "packed_sha256": "e84fd6a08636dc667dffd3969ba3bd00f7680e1e7058c406418af14eedf7e63c"
+    },
+    {
+      "original_path": "global/microfunction-evidence-coverage.json",
+      "original_bytes": 16982595,
+      "original_sha256": "333c3d966f3a2daa3c5e6362678ca87ff4b6f41787008443644b1a556325e550",
+      "packed_path": "global/microfunction-evidence-coverage.json.gz",
+      "packed_bytes": 766741,
+      "packed_sha256": "22dea0e52c4522a8d5516d007b0d8637db87a18fd9b18c28f4bfb229851dce78"
+    },
+    {
+      "original_path": "global/microfunctions.json",
+      "original_bytes": 25342007,
+      "original_sha256": "67ab3fe512c6e68f0db612091ce695438c1e283b397e06bc254c9a18b7cbd090",
+      "packed_path": "global/microfunctions.json.gz",
+      "packed_bytes": 2415538,
+      "packed_sha256": "8839f1533329cd5d168aee956641d17d8c0e85f0ded1e012f8dbc5b5c970e10d"
+    },
+    {
+      "original_path": "global/prior-citation-index.json",
+      "original_bytes": 6421395,
+      "original_sha256": "dab966360093cdd5d10e5f8f32b6f98207eb8bdce9ee82c66dd47cd27b446050",
+      "packed_path": "global/prior-citation-index.json.gz",
+      "packed_bytes": 159582,
+      "packed_sha256": "1242113af7f7e62511a36130042ac4bef2664d0fbe6c3883fcc5610724a8dbc0"
+    },
+    {
+      "original_path": "reports/database/policy_review.json",
+      "original_bytes": 2159104,
+      "original_sha256": "9757d97ee4dc06fd561537ab95c2a1a9881dcdd0ee2213955967221895dfc667",
+      "packed_path": "reports/database/policy_review.json.gz",
+      "packed_bytes": 139692,
+      "packed_sha256": "09750627b8811fb1431023325c1bb1f0e6c3f020df496991d3fc54f89ef9531d"
+    },
+    {
+      "original_path": "reports/database/sql_inventory.json",
+      "original_bytes": 4381907,
+      "original_sha256": "9e271fde1f66a2f3bd31fb749572a3bfe4e75da38bb425f224b4eb8cf466f8ba",
+      "packed_path": "reports/database/sql_inventory.json.gz",
+      "packed_bytes": 663673,
+      "packed_sha256": "b8383b8b002b842a1c56f8f651a8b37d36ddd12f559469a061e9ffcecaa8148f"
+    }
+  ],
+  "notes": "Only lossless transport compression. No evidence is omitted; hydrate_artifacts verifies exact original bytes."
+}

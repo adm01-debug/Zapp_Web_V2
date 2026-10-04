@@ -1,4 +1,12 @@
-# Encerramento e retomada futura
+# Estado e retomada da reauditoria
+
+<!-- BEGIN REAUDIT CHECKPOINT -->
+## Reauditoria atual
+
+**EM ANDAMENTO — checkpoint intermediário.** A solicitação posterior reabriu a análise no pin `da307ba5626dce892f0b37cb6762463f55d14a96`. Este checkpoint contém 282 registros R2; preserva os104 achados históricos e distingue leitura, estrutura, prova isolada e aceite. Consulte [REAUDIT_MICROFUNCTIONS_2026-10-03.md](REAUDIT_MICROFUNCTIONS_2026-10-03.md) para cobertura, precondições e saldo. A revisão continua; esta publicação é exclusivamente documental.
+<!-- END REAUDIT CHECKPOINT -->
+
+## Auditoria documental anterior e planejamento preservado
 
 **Missão concluída:** reconciliar documentalmente o ZAPP no baseline `2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6` e entregar o pacote na branch existente `docs/reconciliation-checkpoint-20261003`, draft PR#1869. O produto não foi declarado integralmente pronto.
 

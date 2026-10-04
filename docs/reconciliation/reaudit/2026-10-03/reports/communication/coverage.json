@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "files": [
+    {
+      "path": "src/components/email/EmailChatInbox.tsx",
+      "line_start": 1,
+      "line_end": 178,
+      "git_blob_sha": "622fba3b046728a8c3aa64e7f24b79dc819b72ec",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatInbox.tsx#L1-L178",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/email/EmailChatThread.tsx",
+      "line_start": 1,
+      "line_end": 395,
+      "git_blob_sha": "f00e4815c8090ba7aa2984e01ec3a7f24b4c9312",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatThread.tsx#L1-L395",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/gmail/EmailComposer.tsx",
+      "line_start": 1,
+      "line_end": 495,
+      "git_blob_sha": "e2b214e4ed29c41cdaa465d38803e8f1fa9740a8",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailComposer.tsx#L1-L495",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/email/EmailChatReplyBar.tsx",
+      "line_start": 1,
+      "line_end": 277,
+      "git_blob_sha": "d704c3edda9a1bbfc558121376cd6a10ca22c902",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatReplyBar.tsx#L1-L277",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/hooks/integrations/useGmail.ts",
+      "line_start": 1,
+      "line_end": 318,
+      "git_blob_sha": "3a6d528b45533169bca6d4e6e229bac68e9e1c2a",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmail.ts#L1-L318",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/email/EmailAttachmentPreviewDialog.tsx",
+      "line_start": 1,
+      "line_end": 63,
+      "git_blob_sha": "c093f1a3253203c7ec725b52452019ccd4d04f12",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailAttachmentPreviewDialog.tsx#L1-L63",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/email/EmailFullViewDialog.tsx",
+      "line_start": 1,
+      "line_end": 73,
+      "git_blob_sha": "4565207099ac15a81c25764d8950326a3d8776f9",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailFullViewDialog.tsx#L1-L73",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/gmail/EmailRichTextEditor.tsx",
+      "line_start": 1,
+      "line_end": 92,
+      "git_blob_sha": "7f8775b5877a7ed8fc6179c627656654b102e319",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/EmailRichTextEditor.tsx#L1-L92",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/gmail/GmailInboxView.tsx",
+      "line_start": 1,
+      "line_end": 96,
+      "git_blob_sha": "2bfaa8a9b64e44909468c4d0bc2683403f622f9c",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/gmail/GmailInboxView.tsx#L1-L96",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailDraftSession.ts",
+      "line_start": 1,
+      "line_end": 93,
+      "git_blob_sha": "1c93be89727a04e9f7146dec815c62297ca388f3",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailDraftSession.ts#L1-L93",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/email/EmailContactPanel.tsx",
+      "line_start": 1,
+      "line_end": 337,
+      "git_blob_sha": "e6654b221d11f9eec8975aef0bf28e3fa864caa4",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailContactPanel.tsx#L1-L337",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/email/EmailThreadList.tsx",
+      "line_start": 1,
+      "line_end": 327,
+      "git_blob_sha": "48a5ebc1f019f8c6b23e46d0a5f673baa50bdb1e",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailThreadList.tsx#L1-L327",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/email/EmailChatBubble.tsx",
+      "line_start": 1,
+      "line_end": 237,
+      "git_blob_sha": "3bca05232a5345f8da5dd21dfc1e692540595e1c",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/EmailChatBubble.tsx#L1-L237",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "supabase/functions/gmail-oauth/index.ts",
+      "line_start": 1,
+      "line_end": 214,
+      "git_blob_sha": "423072ccc566dc0b05d8efa6c32ae7abbb42bd63",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/functions/gmail-oauth/index.ts#L1-L214",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/hooks/integrations/useGmailOAuth.ts",
+      "line_start": 1,
+      "line_end": 91,
+      "git_blob_sha": "ac77a89ae987da95599be08fc1f708835b605362",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/useGmailOAuth.ts#L1-L91",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/gmailOAuth.ts",
+      "line_start": 1,
+      "line_end": 84,
+      "git_blob_sha": "ea41addc5a01d106f6107ece76e2d7087c4f6f73",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/gmailOAuth.ts#L1-L84",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailRecipients.ts",
+      "line_start": 1,
+      "line_end": 112,
+      "git_blob_sha": "9390c96d7e1f75d35d1511b6541f37ca888534ce",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailRecipients.ts#L1-L112",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailComposeFormat.ts",
+      "line_start": 1,
+      "line_end": 43,
+      "git_blob_sha": "a0f2f30216e5dac7677ca41f42ab0c48b0267264",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailComposeFormat.ts#L1-L43",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailContactIdentity.ts",
+      "line_start": 1,
+      "line_end": 42,
+      "git_blob_sha": "fa1b1ccaa3ce6cfafefa9da7b9bbac7f00ea1431",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailContactIdentity.ts#L1-L42",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailHtml.ts",
+      "line_start": 1,
+      "line_end": 170,
+      "git_blob_sha": "5cb7df784ad0c926a4e47a108b9ff5c21b62330c",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailHtml.ts#L1-L170",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailRichText.ts",
+      "line_start": 1,
+      "line_end": 12,
+      "git_blob_sha": "e9faaf240c3fe0b9b8574dddeff8c72d6979f3e8",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailRichText.ts#L1-L12",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailCompanyLinks.ts",
+      "line_start": 1,
+      "line_end": 31,
+      "git_blob_sha": "2f18a567f43ff38ab3e5c372126f30c44e9a96af",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailCompanyLinks.ts#L1-L31",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailAttachmentPreview.ts",
+      "line_start": 1,
+      "line_end": 10,
+      "git_blob_sha": "e3b23c27b9d3977656b76db64a0dd745a8abd222",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailAttachmentPreview.ts#L1-L10",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailAttachments.ts",
+      "line_start": 1,
+      "line_end": 48,
+      "git_blob_sha": "c575e1465a1d704a0c9bac7b4814d31181478c7a",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailAttachments.ts#L1-L48",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailPagination.ts",
+      "line_start": 1,
+      "line_end": 20,
+      "git_blob_sha": "08ba3cb30bd6d9d2489cdcfd961cd89049d9415a",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailPagination.ts#L1-L20",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/lib/emailErrorState.ts",
+      "line_start": 1,
+      "line_end": 55,
+      "git_blob_sha": "fe05f7f135a390f9dde02775f98acacd036cc95f",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/emailErrorState.ts#L1-L55",
+      "purpose": "",
+      "review_level": "SEMANTIC_FILE_REVIEW",
+      "scope": "Corpo e handlers lidos, consumidores examinados; não implica execução de todos os estados."
+    },
+    {
+      "path": "src/components/email/__tests__/EmailChatInbox.test.tsx",
+      "line_start": 32,
+      "line_end": 37,
+      "git_blob_sha": "d09a31c25ac4965a2dde4514654491c814f73376",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/email/__tests__/EmailChatInbox.test.tsx#L32-L37",
+      "purpose": "O teste substitui o filho que participa do ciclo.",
+      "review_level": "TARGETED_RANGE_REVIEW",
+      "scope": "R2-COM-001"
+    },
+    {
+      "path": "supabase/migrations/20260827210100_gmail_token_rpcs.sql",
+      "line_start": 31,
+      "line_end": 59,
+      "git_blob_sha": "3913de5e717b101964e8c2393efd94b5decdbc14",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/supabase/migrations/20260827210100_gmail_token_rpcs.sql#L31-L59",
+      "purpose": "Função vencedora pode lançar erro e preserva refresh quando NULL/vazio; não foi inventado apagamento nesse ramo.",
+      "review_level": "TARGETED_RANGE_REVIEW",
+      "scope": "R2-COM-010"
+    }
+  ],
+  "limits": [
+    "Faixas efetivamente revisadas; sem homologação de interface/provedor.",
+    "GmailInboxView legado foi lido, mas não se atribuiu seus comportamentos ao EmailChatInbox atual."
+  ]
+}
