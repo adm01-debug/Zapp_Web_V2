@@ -620,6 +620,15 @@ jobs:
           TALKX_RECEIPTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-receipts-replies.test.sh
 
+      # X031: reenvio manual em lote (failed/skipped, teto de 3, revalida supressão e
+      # elegibilidade) e resolução de outcome_unknown (mark_sent|mark_failed|retry) por
+      # RPC admin/supervisor com trilha; campanha completed reabre para sending.
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar reenvio manual e resolucao de outcome_unknown com trilha (X031)
+        env:
+          TALKX_X031_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-retry-resolve.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
