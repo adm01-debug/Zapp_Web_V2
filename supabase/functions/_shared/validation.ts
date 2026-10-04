@@ -124,7 +124,7 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
       'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version, x-request-id',
-    'Access-Control-Expose-Headers': 'x-request-id',
+    'Access-Control-Expose-Headers': 'x-request-id, x-degraded',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
     'X-Request-ID': requestId,
@@ -168,12 +168,48 @@ export function internalErrorResponse(err: unknown, req?: Request): Response {
   );
 }
 
+/**
+ * Contador de degradacao explicita (CT-19).
+ *
+ * Existe por um motivo concreto: o limitador da edge falha ABERTO de proposito (o
+ * catalogo nao pode cair porque o contador de rate limit esta indisponivel). Mas
+ * fail-open silencioso ja mascarou uma medicao inteira — o log registrava o erro e a
+ * resposta devolvia 200, entao a leitura ingenua dizia "esta tudo certo". Quem sabe
+ * que degradou marca aqui, e `jsonResponse` devolve o total no cabecalho `x-degraded`,
+ * para que a degradacao nao passe em silencio numa resposta 200.
+ *
+ * Aditivo por construcao: sem nenhuma marcacao, nenhum cabecalho novo aparece e nenhuma
+ * outra funcao que usa `jsonResponse` muda de comportamento.
+ */
+const degradacoes = new Map<string, number>();
+
+/** Marca uma degradacao nomeada (ex.: 'rate_limit_store_unavailable'). */
+export function markDegraded(motivo: string): void {
+  degradacoes.set(motivo, (degradacoes.get(motivo) ?? 0) + 1);
+}
+
+/** Total de degradacoes marcadas neste isolate, por motivo (para testes e diagnostico). */
+export function degradedCounters(): Record<string, number> {
+  return Object.fromEntries(degradacoes);
+}
+
+/** Zera o contador — usado pelos testes para isolar cenarios. */
+export function resetDegraded(): void {
+  degradacoes.clear();
+}
+
 /** Standard JSON success response (with origin-validated CORS) */
 export function jsonResponse(data: unknown, status = 200, req?: Request) {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
+  const degradado: Record<string, string> =
+    degradacoes.size > 0
+      ? {
+          'x-degraded': [...degradacoes.entries()].map(([motivo, total]) => `${motivo}=${total}`).join(';'),
+        }
+      : {};
   return new Response(
     JSON.stringify(data),
-    { status, headers: { ...headers, 'Content-Type': 'application/json' } }
+    { status, headers: { ...headers, 'Content-Type': 'application/json', ...degradado } }
   );
 }
 
