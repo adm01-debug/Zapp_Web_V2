@@ -302,6 +302,17 @@ jobs:
           NOTIFY_DUE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notify-due-tasks-authorization.test.sh
 
+      # DASH-ACCEPTANCE-001: as suítes supabase/tests/*.sql rodam como
+      # service_role (BYPASSRLS) — nunca provam enforcement. Aqui as RPCs do
+      # Dashboard rodam sob roles reais anon/authenticated (sem BYPASSRLS) com
+      # fixtures determinísticas: EXECUTE negado a anon, RLS de leitura direta,
+      # trava de p_agent em kpi/hourly, escopo RLS em counts, reconciliação
+      # acima do cap de 1000 linhas e edge cases da E44 contra o código real.
+      - name: Simular fronteira RLS das RPCs do Dashboard (DASH-091/092)
+        env:
+          DASH_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/dashboard-rls-authorization.test.sh
+
       # L5 da matriz IA-004: os jobs do pg_cron autenticavam com a ANON KEY do projeto
       # (credencial pública, no bundle do front). O fixture cria STUBS de Vault/pg_cron
       # no container, aplica as duas migrations e prova: segredos dedicados de 32 bytes
