@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AppRole } from '@/hooks/system/useUserRole';
@@ -50,6 +50,9 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  // Reentrância de desativação/reativação por usuário: evita que um duplo clique
+  // no Switch dispare duas gravações concorrentes do mesmo perfil.
+  const togglingRef = useRef<Set<string>>(new Set());
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -113,15 +116,33 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
   }, [fetchData]);
 
   const handleToggleActive = useCallback(async (user: UserWithRole) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_active: !user.is_active })
-      .eq('id', user.id);
-    if (error) {
-      toast.error('Erro ao atualizar status');
-    } else {
-      toast.success(user.is_active ? 'Usuário desativado' : 'Usuário ativado');
+    // R2-AUTH-004 (item 6): desativar deve depender da operação server-side
+    // atômica — o trigger `trg_revoke_sessions_on_profile_deactivate` revoga as
+    // sessões Auth do usuário quando `is_active` vira false. Aqui o frontend só
+    // grava o campo; a revogação real é do backend. Reativar só volta `is_active`
+    // para true e NÃO cria sessão (o trigger só dispara na transição para false).
+    if (togglingRef.current.has(user.id)) return;
+    togglingRef.current.add(user.id);
+    try {
+      const deactivating = user.is_active !== false;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: !deactivating })
+        .eq('id', user.id);
+      if (error) {
+        toast.error('Erro ao atualizar status');
+        return;
+      }
+      if (deactivating) {
+        toast.success(
+          'Usuário desativado. As sessões foram revogadas agora; um token de acesso já emitido pode continuar válido até expirar.'
+        );
+      } else {
+        toast.success('Usuário reativado. Nenhuma sessão foi criada.');
+      }
       fetchData();
+    } finally {
+      togglingRef.current.delete(user.id);
     }
   }, [fetchData]);
 

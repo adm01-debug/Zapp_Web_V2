@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,21 +22,31 @@ interface ForceLogoutButtonProps {
 
 export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) {
   const [loading, setLoading] = useState(false);
+  // Reentrância: um duplo clique no botão de confirmar dispara o handler duas
+  // vezes antes do estado `loading` refletir no DOM. O ref é síncrono e fecha a
+  // porta já na primeira entrada, garantindo uma única invocação da Edge Function.
+  const inFlight = useRef(false);
 
   const handleForceLogout = async () => {
-    if (loading) return;
+    if (inFlight.current) return;
+    inFlight.current = true;
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ session_invalidated_at: new Date().toISOString() })
-        .eq('user_id', userId);
-
+      // Contrato canônico (R2-AUTH-004 item 6): revogar sessões Auth reais via
+      // Edge Function server-side. `scope: "global"` + `target_user_id` revoga
+      // TODAS as sessões do usuário alvo. NUNCA atualizar apenas
+      // `profiles.session_invalidated_at` — isso não revoga nada no Auth.
+      const { error } = await supabase.functions.invoke('revoke-auth-sessions', {
+        body: { scope: 'global', target_user_id: userId },
+      });
       if (error) throw error;
-      toast.success(`Sessão de ${userName} invalidada`);
+      toast.success(
+        `Sessões de ${userName} revogadas. Um token de acesso já emitido pode continuar válido até expirar.`
+      );
     } catch {
-      toast.error('Erro ao invalidar sessão');
+      toast.error('Erro ao revogar sessões');
     } finally {
+      inFlight.current = false;
       setLoading(false);
     }
   };
@@ -58,7 +68,8 @@ export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) 
         <AlertDialogHeader>
           <AlertDialogTitle>Forçar logout de {userName}?</AlertDialogTitle>
           <AlertDialogDescription>
-            A sessão ativa de <strong>{userName}</strong> será invalidada imediatamente. O usuário precisará fazer login novamente.
+            As sessões e tokens de refresh de <strong>{userName}</strong> serão revogados agora.
+            Um token de acesso (JWT) já emitido pode continuar válido até expirar.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
