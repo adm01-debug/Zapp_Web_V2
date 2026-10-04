@@ -3,9 +3,45 @@
 
 ---
 
+> ## STATUS (reconciliação TRA-001, 04/10/2026): PROPOSTA DE ARQUITETURA COM **BASELINE DIVERGENTE** — **NÃO EXECUTÁVEL**
+>
+> Este documento presume origem "ZAPP Web V2 (self-hosted, VPS)" e destino "Singu
+> (`pgxfvjmuubtbowutlide`)". O baseline real, fixado pelo `CLAUDE.md` e pelo código
+> (`src/integrations/supabase/client.ts`), é outro:
+>
+> | Projeto | Banco Supabase | Papel atual |
+> |---|---|---|
+> | **Zapp_Web_V2** (este repo) | **Cloud** `tnnnlkbymytvtqngbbqh` | Banco oficial. `auth.users` **deste** projeto é o Auth atual do ZAPP — a identidade não está no Singu. |
+> | **Singu_V2** (Gestão de Clientes/CRM) | `pgxfvjmuubtbowutlide` | Banco **externo, somente leitura** para este repo — consumido hoje via `crm-integration`/`external-db-proxy`/`external-db-bridge` (integração **viva**, com consumidores atuais no front). |
+> | **Gestão de Produtos** (Catálogo) | `doufsxqlfjyuvxuezpln` | Banco **externo, somente leitura** para este repo. |
+> | VPS AtomicaBR (Supabase self-hosted) | — | Atende **outros sistemas**; o ZAPP não roda nele. |
+>
+> Consequências desta divergência:
+>
+> 1. As 200 etapas descrevem uma migração "self-hosted → Singu" que **não corresponde ao
+>    estado atual**. Nenhuma etapa deste documento é executável como está: gerar um plano
+>    executável exige antes reconciliar origem, destino e modelo de dados.
+> 2. Onde o texto diz "self-hosted/VPS" para o ZAPP, leia-se baseline incorreto: o banco do
+>    ZAPP é o Cloud `tnnnlkbymytvtqngbbqh`; os números da coluna "ZAPP" da tabela da seção 1
+>    medem um banco que não é o oficial e precisam de inventário novo.
+> 3. Escopo de dados: **`contacts.tags` (coluna `text[]`, modelo vivo) não é** as tabelas
+>    legadas `tags` e `contact_tags` — estas foram **removidas** pela migration
+>    `supabase/migrations/20260927410000_drop_legacy_tags_tables.sql` (commit `cc1bb5b18`,
+>    remoção do módulo Etiquetas). As etapas que mandam "fundir `tags`/`contact_tags` com o
+>    Singu" (ex.: 94, 107) tratam objetos que já não existem.
+> 4. As etapas que mandam remover a integração CRM (ex.: 148, 181) apagariam consumidores
+>    vivos: `crm-integration`, `external-db-proxy`, `external-db-bridge`,
+>    `src/integrations/supabase/externalClient.ts`, `src/services/crm/external-crm.service.ts`,
+>    `useExternalDB`, `useSyncToCRM`, `useCRMIntegrationEnabled` e as telas que os usam.
+> 5. **Toda "PR #N" citada neste documento pertence ao repositório `Singu_V2`** (evidência
+>    histórica de 24/09, não reverificada nesta reconciliação). Nenhuma é PR do
+>    Zapp_Web_V2 — número homônimo não valida entrega neste repo.
+
+---
+
 ## 1. O que existe hoje (medido, não estimado)
 
-| | ZAPP Web V2 (self-hosted, VPS) | Singu / Gestão de Clientes (Supabase Cloud) |
+| | ZAPP Web V2 — medido num self-hosted que **não é o banco canônico** (ver STATUS no topo) | Singu / Gestão de Clientes (Supabase Cloud) |
 |---|---|---|
 | Tabelas | 144 (todas com RLS) | 392 (1 sem RLS) |
 | Funções SQL | 135 | 1.283 (85 SECURITY DEFINER) |
@@ -32,15 +68,15 @@
 
 ## 3. Riscos críticos encontrados (corrigir antes de qualquer migração)
 
-1. **`exec_sql(query text)` é SECURITY DEFINER e executável pelo `anon`** — qualquer pessoa com a chave pública do projeto roda SQL arbitrário como dono do banco. Gravidade máxima. **[PARCIAL 24/09 — PR #44 fechou o caminho PostgREST (anon/authenticated), mas a função continua existindo e a edge function `mcp-query` (`verify_jwt=false`) a chama com `service_role`, autenticando só por header `x-mcp-secret`. O filtro de destrutivo é regex (`DROP|TRUNCATE|ALTER SYSTEM`) — `DELETE`/`UPDATE`/`GRANT` passam — e há um modo `admin` que proxia `auth/v1/` e `storage/v1/` com `service_role`. Em uso ativo em produção (dezenas de chamadas/hora em 24/09), por isso não foi desligada. É exatamente o gap que a etapa 8b existia para pegar.]**
-2. `execute_readonly_query` executável por qualquer logado. **[FEITO 24/09 — PR #44 mergeada]**
-3. `decrypt_connection_config` / `encrypt_connection_config` executáveis pelo `anon`. **[FEITO 24/09 — PR #44 mergeada]**
-4. 78 funções SECURITY DEFINER chamáveis pelo `anon`, 82 por logados — a maioria são trigger functions que nunca deveriam ser expostas. **[FEITO 24/09 — PR #45 aberta aguardando aprovação; anon 75→9, authenticated 80→10, restantes são fluxos públicos legítimos por token]**
-5. `abm_account_plans` sem RLS. **[FEITO 24/09 — PR #44 mergeada]**
+1. **`exec_sql(query text)` é SECURITY DEFINER e executável pelo `anon`** — qualquer pessoa com a chave pública do projeto roda SQL arbitrário como dono do banco. Gravidade máxima. **[PARCIAL 24/09 — PR #44 do Singu_V2 fechou o caminho PostgREST (anon/authenticated), mas a função continua existindo e a edge function `mcp-query` (`verify_jwt=false`) a chama com `service_role`, autenticando só por header `x-mcp-secret`. O filtro de destrutivo é regex (`DROP|TRUNCATE|ALTER SYSTEM`) — `DELETE`/`UPDATE`/`GRANT` passam — e há um modo `admin` que proxia `auth/v1/` e `storage/v1/` com `service_role`. Em uso ativo em produção (dezenas de chamadas/hora em 24/09), por isso não foi desligada. É exatamente o gap que a etapa 8b existia para pegar.]**
+2. `execute_readonly_query` executável por qualquer logado. **[FEITO 24/09 — PR #44 do Singu_V2 mergeada]**
+3. `decrypt_connection_config` / `encrypt_connection_config` executáveis pelo `anon`. **[FEITO 24/09 — PR #44 do Singu_V2 mergeada]**
+4. 78 funções SECURITY DEFINER chamáveis pelo `anon`, 82 por logados — a maioria são trigger functions que nunca deveriam ser expostas. **[FEITO 24/09 — PR #45 do Singu_V2 aberta aguardando aprovação; anon 75→9, authenticated 80→10, restantes são fluxos públicos legítimos por token]**
+5. `abm_account_plans` sem RLS. **[FEITO 24/09 — PR #44 do Singu_V2 mergeada]**
 6. ~~22~~ **25** edge functions sem verify_jwt (recontado em 24/09; entraram `external-data` e `mcp-query`).
-7. `users` (espelho Bitrix, com `bitrix_data` jsonb) legível por qualquer logado. **[FEITO 24/09 — PR #48: view `users_public` com colunas seguras para `authenticated`, tabela crua só `service_role`. Verificado: 26 linhas via view, 0 na tabela.]**
+7. `users` (espelho Bitrix, com `bitrix_data` jsonb) legível por qualquer logado. **[FEITO 24/09 — PR #48 do Singu_V2: view `users_public` com colunas seguras para `authenticated`, tabela crua só `service_role`. Verificado: 26 linhas via view, 0 na tabela.]**
 8. Leaked-password protection desligada no Auth. **[BLOQUEADO — é toggle do Auth, não SQL. Não existe tool de MCP para isso; precisa do dashboard: Authentication → Settings → Password Security.]**
-9. `pg_net` no schema public; `vw_singu_data_health` SECURITY DEFINER. **[vw_singu_data_health FEITO 24/09 — PR #44 mergeada; `pg_net` BLOQUEADO: a extensão não suporta `ALTER EXTENSION … SET SCHEMA` (erro 0A000), exigiria DROP/CREATE com risco no worker interno do Supabase. Fica como WARN.]**
+9. `pg_net` no schema public; `vw_singu_data_health` SECURITY DEFINER. **[vw_singu_data_health FEITO 24/09 — PR #44 do Singu_V2 mergeada; `pg_net` BLOQUEADO: a extensão não suporta `ALTER EXTENSION … SET SCHEMA` (erro 0A000), exigiria DROP/CREATE com risco no worker interno do Supabase. Fica como WARN.]**
 10. **[NOVO 24/09]** `csat_surveys` e `document_signatures` têm policy para `anon` com `qual = token IS NOT NULL` — não valida *qual* token. Hoje inócuo (as duas tabelas estão **vazias**), mas quando o módulo de assinatura entrar em uso, qualquer `anon` com a chave publishable lê `signer_email`, `signer_phone`, `ip_address`, `rendered_html` e `signature_image` de **todos** os documentos. Correção certa é o padrão que o projeto já usa em `get_deal_room_by_token` (RPC SECDEF com token), mas depende do contrato do front, que ainda não existe — por isso não foi aplicada.
 11. **[NOVO 24/09]** 4 tabelas do módulo rodízio (`customer_purchases`, `customer_rotation_state`, `rodizio_distribuicao_staging`, `rodizio_execucoes`) estão com RLS ligada e **zero policy** — fail-closed. Não vaza nada, mas o módulo não lê nada pelo app. Trabalho de outra sessão, mergeado em `main` em 24/09.
 12. **[NOVO 24/09]** A trilha de auditoria está **morta**: `audit_log` não recebe evento desde 31/07 (304k linhas paradas) e `query_telemetry` está vazia (0 linhas). A etapa 20 (varrer por chamadas anônimas suspeitas) não tem dado para varrer, e a etapa 194 (relatório de acessos fora de carteira) não tem fonte.
@@ -102,8 +138,8 @@ Nenhum desses gaps muda a arquitetura-alvo (seção 4) nem o número de fases �
 
 ## 9. Execução — Fase 1 (24/09)
 
-- **PR #44 (mergeada):** `exec_sql`, `execute_readonly_query`, `decrypt_connection_config`/`encrypt_connection_config` revogados de anon/authenticated; `abm_account_plans` com RLS ligada; `vw_singu_data_health` com `security_invoker=on`; `search_path` fixado em 3 funções utilitárias.
-- **PR #45 (aberta, aguardando aprovação):** etapas 12/13 — 31 trigger functions + 34 funções internas/IDOR-risco com EXECUTE revogado de anon/authenticated/public. Migration `t202` revogou de anon/authenticated mas não de `public`; gap fechado pela migration `t203` no mesmo PR (toda function ganha EXECUTE a PUBLIC por padrão na criação — revogar só de anon/authenticated não fecha o acesso se public ainda tem grant). Advisors: anon 75→9, authenticated 80→10 (restantes são fluxos públicos legítimos por token + `has_role`, usada em RLS).
+- **PR #44 do Singu_V2 (mergeada):** `exec_sql`, `execute_readonly_query`, `decrypt_connection_config`/`encrypt_connection_config` revogados de anon/authenticated; `abm_account_plans` com RLS ligada; `vw_singu_data_health` com `security_invoker=on`; `search_path` fixado em 3 funções utilitárias.
+- **PR #45 do Singu_V2 (aberta, aguardando aprovação):** etapas 12/13 — 31 trigger functions + 34 funções internas/IDOR-risco com EXECUTE revogado de anon/authenticated/public. Migration `t202` revogou de anon/authenticated mas não de `public`; gap fechado pela migration `t203` no mesmo PR (toda function ganha EXECUTE a PUBLIC por padrão na criação — revogar só de anon/authenticated não fecha o acesso se public ainda tem grant). Advisors: anon 75→9, authenticated 80→10 (restantes são fluxos públicos legítimos por token + `has_role`, usada em RLS).
 - **PR #7 (dependabot, Singu_V2):** conflito de merge — não resolvido, aguardando decisão sua (mesclar manualmente ou fechar).
 - Etapas 12a (checklist dos fluxos públicos pós-revoke) e 8b (inventário de chamadores via query_logs) ainda não feitas.
 - Etapas 17–26 (leaked-password, edge functions sem verify_jwt, rotação de chaves, pg_net, policies duplicadas, roles={public}→{authenticated}, view users_public) não iniciadas.
@@ -115,10 +151,10 @@ Auditoria do estado real do banco contra o que este documento marcava como `[FEI
 **Confirmado feito (bate com o banco):** etapas 9, 10, 11 (sem grant para anon/authenticated/public), 14 (RLS + 3 policies), 15 (`security_invoker=on`), 16 (`search_path` nas 3), 12 (advisors anon 9 / authenticated 10, exatamente os fluxos públicos por token + `has_role`).
 
 **Marcado feito mas não estava — corrigido neste turno:**
-- Etapa 13: 77 trigger functions ainda expostas. Fechado pelo t204 (PR #48).
+- Etapa 13: 77 trigger functions ainda expostas. Fechado pelo t204 (PR #48 do Singu_V2).
 - Risco 1 (`exec_sql`): fechado só pelo caminho PostgREST; `mcp-query` mantém o caminho aberto (ver risco 1 atualizado).
 
-**Drift banco × repo:** `t202` e `t203` estão aplicadas em produção e **não estão em `main`** — só no branch da PR #45, aberta. `t201` está em `main` (PR #44 mergeada). O arquivo do t201 é `20260924142900_…` mas o ledger registrou `20260924142818` — divergência de prefixo que quebra checagem de paridade.
+**Drift banco × repo (no Singu_V2):** `t202` e `t203` estão aplicadas na produção do Singu e **não estão em `main` do Singu_V2** — só no branch da PR #45 do Singu_V2, aberta. `t201` está em `main` do Singu_V2 (PR #44 do Singu_V2 mergeada). O arquivo do t201 é `20260924142900_…` mas o ledger registrou `20260924142818` — divergência de prefixo que quebra checagem de paridade.
 
 **Entregue neste turno:**
 - PR #48 (Singu_V2): etapas 13 e 24.
@@ -135,7 +171,7 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 
 ### Fase 0 — Congelamento e baseline (1–8)
 1. Backup lógico completo do Singu (pg_dump) + confirmar PITR ativo antes de qualquer DDL. [DB][aprovação]
-2. Backup do ZAPP self-hosted (pg_dump + objetos dos 7 buckets). [INFRA]
+2. ~~Backup do ZAPP self-hosted (pg_dump + objetos dos 7 buckets).~~ **[BASELINE DIVERGENTE — o ZAPP não é self-hosted; backup seria do Cloud `tnnnlkbymytvtqngbbqh`. Não executar. Ver STATUS.]** [INFRA]
 3. Congelar migrations que criam tabela no Zapp_Web_V2 durante o projeto; só fixes. [APP]
 4. Script Node no container `claude-code` que exporta tabelas/colunas/policies/funções dos dois bancos e versiona em `claude-cerebro` — baseline para comparar cada fase. [INFRA]
 5. Rebuild do grafo (`graphify update`) — report está em `af1d5b65`, main já é `64ab7e15`. [APP]
@@ -147,8 +183,8 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 9. `REVOKE EXECUTE` de `exec_sql` para anon/authenticated/public. Hoje. [SEC] **[FEITO]**
 10. Idem `execute_readonly_query`. [SEC] **[FEITO]**
 11. Idem `decrypt_connection_config` e `encrypt_connection_config`. [SEC] **[FEITO]**
-12. Classificar as 78 SECDEF expostas ao anon: (a) públicas legítimas — `submit_public_form`, `increment_form_view`, `track_magnet_download`, `buyer_*`, `get_deal_room_by_token`; (b) trigger functions; (c) internas. Revogar b e c. [SEC] **[FEITO — PR #45]**
-13. Revogar EXECUTE em bloco de toda função que retorna `trigger` (nunca deve ser chamável por API). [SEC] **[FEITO de verdade em 24/09 — PR #48 (t204). A PR #45 cobriu 31 de ~108; a auditoria encontrou 77 ainda com EXECUTE para `anon` e grant para `public`. Agora 0.]**
+12. Classificar as 78 SECDEF expostas ao anon: (a) públicas legítimas — `submit_public_form`, `increment_form_view`, `track_magnet_download`, `buyer_*`, `get_deal_room_by_token`; (b) trigger functions; (c) internas. Revogar b e c. [SEC] **[FEITO — PR #45 do Singu_V2]**
+13. Revogar EXECUTE em bloco de toda função que retorna `trigger` (nunca deve ser chamável por API). [SEC] **[FEITO de verdade em 24/09 — PR #48 do Singu_V2 (t204). A PR #45 do Singu_V2 cobriu 31 de ~108; a auditoria encontrou 77 ainda com EXECUTE para `anon` e grant para `public`. Agora 0.]**
 14. `ALTER TABLE abm_account_plans ENABLE ROW LEVEL SECURITY` (já tem 3 policies escritas). [SEC] **[FEITO]**
 15. `vw_singu_data_health` → `security_invoker = on` ou revogar de authenticated. [SEC] **[FEITO]**
 16. `SET search_path` em `normalizar_cnpj`, `title_case_pt`, `title_case_pt_aux`. [SEC] **[FEITO]**
@@ -242,7 +278,7 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 
 ### Fase 4 — Schema `zapp` no Singu (93–118)
 93. `CREATE SCHEMA zapp` + expor no PostgREST (`db-schemas`). [DB][aprovação]
-94. Classificar as 144 tabelas: (A) fundem com Singu — contacts, profiles, user_roles, permissions, role_permissions, departments, tags, contact_tags, contact_notes, products, feature_flags; (B) vão como estão para `zapp` — messages, conversation_*, whatsapp_*, talkx_*, queues*, team_*, email_*, stickers, audio_memes, calls, campaigns, chatbot_*, followup_*, sla_*; (C) morrem — crm_contact_links, crm_sync_outbox, sicoob_contact_mapping, contact_purchases, sales_deals, sales_pipeline_stages, external-db*. [DB]
+94. Classificar as 144 tabelas: (A) fundem com Singu — contacts, profiles, user_roles, permissions, role_permissions, departments, ~~tags, contact_tags~~ **(tabelas removidas por `20260927410000_drop_legacy_tags_tables.sql`; o modelo vivo é a coluna `contacts.tags text[]` — ver STATUS)**, contact_notes, products, feature_flags; (B) vão como estão para `zapp` — messages, conversation_*, whatsapp_*, talkx_*, queues*, team_*, email_*, stickers, audio_memes, calls, campaigns, chatbot_*, followup_*, sla_*; (C) morrem — crm_contact_links, crm_sync_outbox, sicoob_contact_mapping, contact_purchases, sales_deals, sales_pipeline_stages, external-db*. [DB]
 95. Criar `zapp.conversations(id, contact_id→public.contacts, whatsapp_connection_id, channel_type, kind person|group, assigned_to, queue_id, status, status_changed_at, ai_priority, ai_sentiment, last_message_at)` — separa pessoa de atendimento. [DB]
 96. `zapp.messages.conversation_id` (+ `contact_id` mantido durante a transição). [DB]
 97. DDL das tabelas B a partir de `pg_dump --schema-only` do self-hosted, com FKs reapontadas para `public.contacts`/`auth.users`. [DB]
@@ -255,7 +291,7 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 104. `public.contacts` recebe só campos de pessoa que o ZAPP tem e o CRM não (nickname, lead_origin, consent_status); campos de atendimento não entram. [DB]
 105. `contact_phones.numero_e164` + `is_whatsapp` = chave de dedupe com o jid do WhatsApp. [DB]
 106. `contact_identity_map` (LID↔JID) → `zapp.contact_identity_map` ligada a `contact_phones`. [DB]
-107. `tags`: fundir com as 10 do Singu usando `scope crm|atendimento`. [DB]
+107. ~~`tags`: fundir com as 10 do Singu usando `scope crm|atendimento`.~~ **[NÃO SE APLICA — `tags`/`contact_tags` foram dropadas; resta decidir o destino de `contacts.tags` (text[]). Ver STATUS.]** [DB]
 108. `contact_notes`: usar a do Singu (já comentada "ZAPP WEB"). [DB]
 109. `feature_flags`: usar a do Singu (vazia); migrar as 2 flags. [DB]
 110. `profiles` do ZAPP → `zapp.agent_settings` (etapa 33). [DB]
@@ -296,11 +332,11 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 
 ### Fase 6 — Zapp_Web_V2 para banco único (143–172)
 143. Branch `claude/feat-banco-unico-<AAMMDD-HHMM>`; uma PR por módulo. [APP]
-144. `src/integrations/supabase/client.ts`: URL/anon do Singu. [APP]
+144. ~~`src/integrations/supabase/client.ts`: URL/anon do Singu.~~ **[BASELINE DIVERGENTE — repontaria o app do Cloud canônico `tnnnlkbymytvtqngbbqh` para um banco externo hoje somente leitura. Não executar. Ver STATUS.]** [APP]
 145. Helper `zapp()` = `supabase.schema('zapp')`; codemod no container troca `.from('messages')` etc. (70 usos de messages, 89 de contacts, 72 de profiles). [APP]
 146. Inbox: `contacts.assigned_to/queue_id/conversation_status` → `zapp.conversations` (RealtimeInboxView, useRealtimeMessages, ConversationTabs, useConversationHistoryTimeline). Maior refactor. [APP]
 147. `useAuth`/`useUserRole` → profiles Singu + `user_roles` unificado + `agent_settings`. [APP]
-148. Remover `crm-integration`, `externalClient.ts`, `useExternalDB`, `useCRMIntegrationEnabled`, `crmIntegration.ts`, `external-crm.service.ts`, `useSyncToCRM`, outbox, `VITE_CRM_INTEGRATION_ENABLED`. [APP]
+148. Remover `crm-integration`, `externalClient.ts`, `useExternalDB`, `useCRMIntegrationEnabled`, `crmIntegration.ts`, `external-crm.service.ts`, `useSyncToCRM`, outbox, `VITE_CRM_INTEGRATION_ENABLED`. **[BLOQUEADA — a integração CRM está viva e tem consumidores atuais (CRM 360, busca global, TalkX, inbox); remover só depois de substituto existir. Ver STATUS.]** [APP]
 149. CRM 360° Explorer reescrito sobre `public.*` direto (34 abas); guarda por departamento, não admin-only; some o card "Não Configurado". [APP]
 150. Crm360Tab do Inbox lê `customers/deals/interactions/company_rfm_scores` reais (hoje lê `sales_deals`/`contact_purchases` vazias). [APP]
 151. Ficha do contato no Inbox: empresa, vendedor da carteira, segmento RFM, últimas compras, ticket médio. [APP]
@@ -335,7 +371,7 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 178. Workflows N8N que apontam para o self-hosted → Singu (inventário da etapa 7). [INFRA]
 179. Um só caminho WhatsApp → Bitrix. [INFRA][decisão 7]
 180. Sync Bitrix (`bitrix-extract-companies`, `sync_log` 1.545): `vendedor_id` continua vindo do Bitrix e reflete na carteira em minutos. [INFRA]
-181. Desligar `external-db-proxy`/`external-db-bridge`. [INFRA]
+181. Desligar `external-db-proxy`/`external-db-bridge`. **[BLOQUEADA — mesma razão da etapa 148: integração viva. Ver STATUS.]** [INFRA]
 182. Portar `edge_rate_limits` e `webhook_rate_limits`. [INFRA]
 183. Conexões realtime simultâneas (agentes × abas) dentro da cota do plano. [INFRA] **[decisão 5 resolvida: sem teto, dimensionar pelo necessário]**
 184. `health-monitor` do Singu passa a cobrir `zapp` (falhas de webhook, fila de envio). [INFRA]
@@ -355,7 +391,7 @@ Legenda: **[SEC]** segurança · **[DB]** banco · **[APP]** front Zapp_Web_V2 �
 ### Fase 9 — Cutover e descomissionamento (195–200)
 195. Janela: manutenção ON → delta → webhook → env prod → smoke → manutenção OFF. Checklist assinado. [INFRA][aprovação]
 196. Rollback: env antigo + webhook antigo em standby por 7 dias. [INFRA]
-197. 7 dias de self-hosted somente leitura; depois parar a stack Supabase do ZAPP no Swarm. [INFRA][aprovação]
+197. ~~7 dias de self-hosted somente leitura; depois parar a stack Supabase do ZAPP no Swarm.~~ **[BASELINE DIVERGENTE — a stack self-hosted da VPS atende outros sistemas; pará-la descomissionaria infra que não é do ZAPP. Não executar. Ver STATUS.]** [INFRA][aprovação]
 198. Remover MCP `SUPABASE - ZAPP WEB V2`, secrets antigos, rotas Traefik/DNS do self-hosted. [INFRA]
 199. PR de limpeza no repo: crm360 legado, external-db, migrations antigas arquivadas. [APP]
 200. ADR "banco único" + `repos-mapping.md` atualizado: Zapp_Web_V2 = front do Singu. [INFRA]
