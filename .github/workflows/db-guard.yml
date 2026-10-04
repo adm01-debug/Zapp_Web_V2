@@ -629,6 +629,17 @@ jobs:
           TALKX_X031_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-retry-resolve.test.sh
 
+      # X032: LGPD no motor — consentimento no lancamento (revoked fora da audiencia,
+      # require_granted_consent opcional, start/agendar recusam sem confirmacao, opt-out
+      # automatico marca consent_status=revoked) e expurgo por prazo 1x/dia via
+      # purge_talkx_expired_data (texto/midia de campanha terminal vencida, ua/ip_hash,
+      # linhas de teste e de IA) sem tocar blacklist, contadores ou eventos.
+      # Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar consentimento no lancamento e expurgo por prazo (X032)
+        env:
+          TALKX_X032_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-lgpd.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
