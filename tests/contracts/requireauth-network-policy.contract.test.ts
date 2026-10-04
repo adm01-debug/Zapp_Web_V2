@@ -45,7 +45,7 @@ const bearer = (headers: Record<string, string> = {}) => ({ authorization: 'Bear
 describe('canonicalEndpointFromUrl — endpoint canônico estável a partir da URL', () => {
   it('extrai o nome da função do gateway /functions/v1/<nome>', () => {
     expect(
-      canonicalEndpointFromUrl(req('https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/multiplix-dispatch')),
+      canonicalEndpointFromUrl(req('https://x.supabase.co/functions/v1/multiplix-dispatch')),
     ).toBe('multiplix-dispatch');
   });
 
