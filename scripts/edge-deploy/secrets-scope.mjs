@@ -14,6 +14,11 @@ import { appendFileSync, readFileSync } from 'node:fs';
 // Em rollback (`source_ref` preenchido) NUNCA reescrever: o objetivo e' voltar ao
 // estado anterior, nao mexer em configuracao.
 //
+// R2-INF-001 (auditoria R2, 2026-10-03): em ensaio (dry_run) NUNCA reescrever.
+// O workflow passa `--dry-run` e a decisao devolve reescrever=false com motivo
+// de ensaio -- o modo so' registra o que faria. E' a segunda trava: a primeira
+// e' o `if: inputs.dry_run != true` no passo "Configurar secrets nas edges".
+//
 // Limite assumido e declarado: a comparacao e' do CONJUNTO DE NOMES, nao do valor.
 // O `secrets list` do Supabase mostra NAME + DIGEST e nunca o valor, mas o
 // algoritmo do digest nao e' documentado -- reconstrui-lo a partir do que parece
@@ -50,7 +55,10 @@ export function nomesDeSecretsParaEscopo(fn) {
  * Decisao de reescrever. `nomesRemotos` pode ser `null` = leitura falhou.
  * Devolve `{ reescrever, motivo }` -- o motivo vai para o log, sempre.
  */
-export function decidirReescrita({ rotateSecrets = false, emRollback = false, nomesRemotos = null, nomesEsperados = [] } = {}) {
+export function decidirReescrita({ rotateSecrets = false, emRollback = false, emEnsaio = false, nomesRemotos = null, nomesEsperados = [] } = {}) {
+  if (emEnsaio) {
+    return { reescrever: false, motivo: 'ensaio (dry_run): decisao apenas registrada, nenhum secret sera reescrito' };
+  }
   if (emRollback) {
     return { reescrever: false, motivo: 'rollback (source_ref preenchido): secrets inalterados' };
   }
@@ -120,6 +128,7 @@ if (process.argv[1]?.endsWith('secrets-scope.mjs')) {
   const decisao = decidirReescrita({
     rotateSecrets: bandeira('--rotate'),
     emRollback: bandeira('--rollback'),
+    emEnsaio: bandeira('--dry-run'),
     nomesRemotos,
     nomesEsperados,
   });
