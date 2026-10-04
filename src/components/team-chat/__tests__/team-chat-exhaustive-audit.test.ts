@@ -16,6 +16,12 @@ const viewSrc = readSrc('components/team-chat/TeamChatView.tsx');
 const hookSrc = readSrc('hooks/team-chat/useTeamMessages.ts');
 const mutationHookSrc = readSrc('hooks/team-chat/useTeamChatMutations.ts');
 const panelHookSrc = readSrc('components/team-chat/useTeamChatPanel.ts');
+// TC-006: o Panel passou a COMPOR o TeamMessageItem (que já trazia reações,
+// ticks de leitura, reply, edição e mídia) e o markup de mídia/data separadora
+// vive em teamChatParts. As asserts de markup apontam para o arquivo que
+// realmente contém o código agora.
+const itemSrc = readSrc('components/team-chat/TeamMessageItem.tsx');
+const partsSrc = readSrc('components/team-chat/teamChatParts.tsx');
 
 // External chat reference files
 const inboxToolbarSrc = readSrc('components/inbox/chat/ChatToolbar.tsx');
@@ -93,31 +99,32 @@ describe('Team Chat — Exhaustive Audit', () => {
   // ═══════════════════════════════════════════
   describe('Media Handling', () => {
     it('should support all media types: image, video, audio, document, sticker, emoji, audio_meme', () => {
-      expect(panelSrc).toContain("case 'image':");
-      expect(panelSrc).toContain("case 'video':");
-      expect(panelSrc).toContain("case 'audio':");
-      expect(panelSrc).toContain("case 'document':");
-      expect(panelSrc).toContain("case 'sticker':");
-      expect(panelSrc).toContain("case 'emoji':");
-      expect(panelSrc).toContain("case 'audio_meme':");
+      expect(partsSrc).toContain("case 'image':");
+      expect(partsSrc).toContain("case 'video':");
+      expect(partsSrc).toContain("case 'audio':");
+      expect(partsSrc).toContain("case 'document':");
+      expect(partsSrc).toContain("case 'sticker':");
+      expect(partsSrc).toContain("case 'emoji':");
+      expect(partsSrc).toContain("case 'audio_meme':");
     });
 
     it('should render image with click-to-open', () => {
-      expect(panelSrc).toMatch(/onClick.*window\.open.*resolvedUrl/);
-      expect(panelSrc).toContain('useResolvedStorageUrl(source)');
+      expect(partsSrc).toMatch(/onClick.*window\.open.*resolvedUrl/);
+      expect(partsSrc).toContain('useResolvedStorageUrl(source)');
     });
 
     it('should render video with controls', () => {
-      expect(panelSrc).toContain('<video');
-      expect(panelSrc).toContain('controls');
+      expect(partsSrc).toContain('<video');
+      expect(partsSrc).toContain('controls');
     });
 
     it('should render audio with controls', () => {
-      expect(panelSrc).toContain('<audio');
+      expect(partsSrc).toContain('<audio');
     });
 
     it('should render document as downloadable link', () => {
-      expect(panelSrc).toMatch(/target="_blank".*rel="noopener noreferrer"/);
+      expect(partsSrc).toContain('target="_blank"');
+      expect(partsSrc).toContain('rel="noopener noreferrer"');
     });
 
     it('should enforce file size limit in uploader', () => {
@@ -175,8 +182,8 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
     it('should display replied message inline with sender name', () => {
-      expect(panelSrc).toContain('repliedMsg');
-      expect(panelSrc).toMatch(/repliedMsg\.sender\?\.name/);
+      expect(itemSrc).toContain('repliedMsg');
+      expect(itemSrc).toMatch(/repliedMsg\.sender\?\.name/);
     });
 
     it.todo('should handle reply to deleted message gage gracefully', () => {
@@ -185,7 +192,7 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
     it('should show media type icon in reply preview', () => {
-      expect(panelSrc).toContain('MediaTypeIcon');
+      expect(itemSrc).toContain('MediaTypeIcon');
     });
 
     it('should allow cancel of reply', () => {
@@ -198,13 +205,13 @@ describe('Team Chat — Exhaustive Audit', () => {
   // ═══════════════════════════════════════════
   describe('Text-to-Speech Integration', () => {
     it('should have TTS button on each message (hover)', () => {
-      expect(panelSrc).toMatch(/opacity-0\s+group-hover:opacity-100/);
-      expect(panelSrc).toContain('Volume2');
-      expect(panelSrc).toContain('VolumeX');
+      expect(itemSrc).toMatch(/opacity-0\s+group-hover\/msg:opacity-100/);
+      expect(itemSrc).toContain('Volume2');
+      expect(itemSrc).toContain('VolumeX');
     });
 
     it('should strip non-speech content before TTS', () => {
-      expect(panelSrc).toMatch(/replace\(\/\\\[.*?\\\]\/g/);
+      expect(itemSrc).toMatch(/replace\(\/\\\[.*?\\\]\/g/);
     });
 
     it.todo('should show TTS in context menu', () => {
@@ -279,7 +286,7 @@ describe('Team Chat — Exhaustive Audit', () => {
   // ═══════════════════════════════════════════
   describe('Context Menu', () => {
     it('should have Reply option', () => {
-      expect(panelSrc).toContain('Responder');
+      expect(itemSrc).toContain('Responder');
     });
 
     it.todo('should have Copy option', () => {
@@ -291,19 +298,19 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
     it('should have Edit option for own messages only', () => {
-      expect(panelSrc).toMatch(/isMine\s*&&.*Editar/s);
+      expect(itemSrc).toMatch(/isMine\s*&&.*Editar/s);
     });
 
     it('should have Delete option for own messages only', () => {
-      expect(panelSrc).toMatch(/isMine\s*&&.*Excluir/s);
+      expect(itemSrc).toMatch(/isMine\s*&&.*Excluir/s);
     });
 
     it('should not allow editing media messages', () => {
-      expect(panelSrc).toMatch(/!hasMedia\s*&&.*handleStartEdit/s);
+      expect(itemSrc).toMatch(/!hasMedia\s*&&[\s\S]*onEdit/);
     });
 
     it('should have destructive styling on delete', () => {
-      expect(panelSrc).toContain('text-destructive');
+      expect(itemSrc).toContain('text-destructive');
     });
   });
 
@@ -317,16 +324,16 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
     it('should support Enter to save edit', () => {
-      expect(panelSrc).toMatch(/onKeyDown.*Enter.*handleSaveEdit/);
+      expect(itemSrc).toMatch(/Enter'\) onSaveEdit\(\)/);
     });
 
     it('should support Escape to cancel edit', () => {
-      expect(panelSrc).toMatch(/Escape.*handleCancelEdit/);
+      expect(itemSrc).toMatch(/Escape'\) onCancelEdit\(\)/);
     });
 
     it('should show edited indicator on messages', () => {
-      expect(panelSrc).toContain('is_edited');
-      expect(panelSrc).toContain('editado');
+      expect(itemSrc).toContain('is_edited');
+      expect(itemSrc).toContain('editado');
     });
 
     it('should not save empty edits', () => {
@@ -433,7 +440,7 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
     it('should render markdown in messages', () => {
-      expect(panelSrc).toContain('MarkdownPreview');
+      expect(itemSrc).toContain('MarkdownPreview');
     });
 
     it('should show secondary tools on desktop only', () => {
@@ -477,15 +484,15 @@ describe('Team Chat — Exhaustive Audit', () => {
   // ═══════════════════════════════════════════
   describe('Date Separators', () => {
     it('should show "Hoje" for today messages', () => {
-      expect(panelSrc).toContain("'Hoje'");
+      expect(partsSrc).toContain("'Hoje'");
     });
 
     it('should show "Ontem" for yesterday messages', () => {
-      expect(panelSrc).toContain("'Ontem'");
+      expect(partsSrc).toContain("'Ontem'");
     });
 
     it('should use pt-BR locale for older dates', () => {
-      expect(panelSrc).toContain('ptBR');
+      expect(partsSrc).toContain('ptBR');
     });
 
     it('BUG: dateGroups uses mutable Set that persists across renders', () => {
@@ -507,11 +514,11 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
     it('should sanitize markdown (via MarkdownPreview)', () => {
-      expect(panelSrc).toContain('MarkdownPreview');
+      expect(itemSrc).toContain('MarkdownPreview');
     });
 
     it('should use noopener noreferrer on external links', () => {
-      expect(panelSrc).toContain('noopener noreferrer');
+      expect(partsSrc).toContain('noopener noreferrer');
     });
 
     it.todo('should handle localStorage errors gracefully (private mode)', () => {
@@ -592,7 +599,7 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
     it('should have proper alt text on media', () => {
-      expect(panelSrc).toContain('alt="media"');
+      expect(partsSrc).toContain('alt="Imagem enviada"');
     });
 
     it('should use semantic HTML roles', () => {
@@ -600,8 +607,8 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
     it('should have keyboard shortcuts for editing', () => {
-      expect(panelSrc).toMatch(/onKeyDown.*Enter.*handleSaveEdit/);
-      expect(panelSrc).toMatch(/Escape.*handleCancelEdit/);
+      expect(itemSrc).toMatch(/Enter'\) onSaveEdit\(\)/);
+      expect(itemSrc).toMatch(/Escape'\) onCancelEdit\(\)/);
     });
   });
 
@@ -660,8 +667,11 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(panelSrc).not.toMatch(/usePresence|onlineStatus/i);
     });
 
-    it('GAP: no message reactions (emoji)', () => {
-      expect(panelSrc).not.toMatch(/reaction.*emoji|addReaction/i);
+    it('FIXED: message reactions (emoji) are composed into the Panel', () => {
+      // TC-006: reações deixaram de existir "fora do Panel ativo".
+      expect(panelSrc).toContain('onToggleReaction');
+      expect(itemSrc).toContain('TeamReactionBar');
+      expect(itemSrc).toContain('TeamQuickReactionBarWrapper');
     });
 
     it('GAP: no read receipts / delivery status', () => {
