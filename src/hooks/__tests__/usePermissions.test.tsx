@@ -157,4 +157,66 @@ describe('usePermissions', () => {
     expect(result.current.hasAllPermissions(['view_dashboard', 'manage_users'])).toBe(true);
     expect(result.current.hasAllPermissions(['view_dashboard', 'nonexistent'])).toBe(false);
   });
+
+  it('removePermissionFromRole lança o erro quando o delete falha e não refaz o fetch', async () => {
+    const pgError = { message: 'new row violates row-level security policy', code: '42501' };
+    const rolePermSelect = vi.fn().mockReturnValue({
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+      in: vi.fn().mockResolvedValue({ data: [], error: null }),
+    });
+
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1' } });
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'role_permissions') {
+        return {
+          select: rolePermSelect,
+          insert: vi.fn().mockResolvedValue({ error: null }),
+          delete: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ error: pgError }),
+            }),
+          }),
+        };
+      }
+      return makeSelectChain();
+    });
+
+    const { result } = renderHook(() => usePermissions());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await expect(result.current.removePermissionFromRole('agent', 'p1')).rejects.toEqual(pgError);
+    expect(rolePermSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('addPermissionToRole lança o erro quando o insert falha e não refaz o fetch', async () => {
+    const pgError = { message: 'transient network failure', code: '08006' };
+    const rolePermSelect = vi.fn().mockReturnValue({
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+      in: vi.fn().mockResolvedValue({ data: [], error: null }),
+    });
+
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1' } });
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'role_permissions') {
+        return {
+          select: rolePermSelect,
+          insert: vi.fn().mockResolvedValue({ error: pgError }),
+          delete: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            }),
+          }),
+        };
+      }
+      return makeSelectChain();
+    });
+
+    const { result } = renderHook(() => usePermissions());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await expect(result.current.addPermissionToRole('agent', 'p1')).rejects.toEqual(pgError);
+    expect(rolePermSelect).toHaveBeenCalledTimes(1);
+  });
 });

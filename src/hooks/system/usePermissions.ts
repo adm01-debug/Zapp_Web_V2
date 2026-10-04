@@ -121,10 +121,11 @@ export function usePermissions() {
       .from('role_permissions')
       .insert({ role, permission_id: permissionId });
 
-    if (!error) {
-      await fetchRolePermissions();
+    if (error) {
+      throw error;
     }
-    return !error;
+    await fetchRolePermissions();
+    return true;
   }, [fetchRolePermissions]);
 
   const removePermissionFromRole = useCallback(async (role: 'admin' | 'supervisor' | 'agent' | 'special_agent', permissionId: string) => {
@@ -134,10 +135,11 @@ export function usePermissions() {
       .eq('role', role)
       .eq('permission_id', permissionId);
 
-    if (!error) {
-      await fetchRolePermissions();
+    if (error) {
+      throw error;
     }
-    return !error;
+    await fetchRolePermissions();
+    return true;
   }, [fetchRolePermissions]);
 
   useEffect(() => {
