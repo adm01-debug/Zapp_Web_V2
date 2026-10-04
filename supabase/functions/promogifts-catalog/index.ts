@@ -20,6 +20,25 @@ const jsonRes = (body: unknown, status = 200, req?: Request) => {
 const ALLOWED_ORDER_FIELDS = ["name", "sale_price", "stock_quantity", "brand", "created_at", "sku", "order_count"] as const;
 
 /**
+ * OTH-004 (#53) — ordenação determinística da listagem/exportação.
+ *
+ * A chave pedida (`order_by`/`ascending`) continua PRIMÁRIA; `id` ASC entra
+ * como desempate único no fim. Sem ele, vários produtos empatados na chave
+ * primária (nome repetido é o caso comum) não têm ordem garantida pelo
+ * Postgres: duas execuções podem devolvê-los em ordens diferentes e o
+ * `.range()` passa a OMITIR ids numa página e REPETIR em outra. Quando a
+ * própria chave primária já é `id`, a cláusula não é duplicada.
+ */
+export function buildProductOrderClauses(
+  order_by: string,
+  ascending: boolean,
+): Array<{ column: string; ascending: boolean }> {
+  const clausulas = [{ column: order_by, ascending }];
+  if (order_by !== "id") clausulas.push({ column: "id", ascending: true });
+  return clausulas;
+}
+
+/**
  * Equivalente em JS do unaccent() do Postgres, para casar com o gatilho
  * products_search_vector_update (que aplica unaccent() ANTES do
  * to_tsvector): sem isso, buscar "açucareiro" gera o léxico 'açucareir',
@@ -386,9 +405,14 @@ export async function promogiftsCatalogHandler(
       // NOTA: "relevance" (ordenar por ts_rank_cd) exigiria uma RPC dedicada
       // no banco externo — o PostgREST não ordena por rank num select comum.
       // Fora do escopo desta etapa; order_by continua nas colunas reais.
-      const query = buildProductsQuery((compact ? PRODUCT_FIELDS_COMPACT : PRODUCT_FIELDS) as string)
-        .order(order_by, { ascending })
-        .range(offset, offset + limit - 1);
+      // OTH-004 (#53): ordenação estável. A chave pedida continua primária e
+      // `id` ASC entra como desempate único (ver buildProductOrderClauses);
+      // sem ele o `.range()` omite/repite produtos empatados entre páginas.
+      let listQuery = buildProductsQuery((compact ? PRODUCT_FIELDS_COMPACT : PRODUCT_FIELDS) as string);
+      for (const clausula of buildProductOrderClauses(order_by, ascending)) {
+        listQuery = listQuery.order(clausula.column, { ascending: clausula.ascending });
+      }
+      const query = listQuery.range(offset, offset + limit - 1);
 
       const { data, error, count } = await query;
       if (error) {
