@@ -656,6 +656,15 @@ jobs:
           TALKX_X033_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-health.test.sh
 
+      # M-DB-01: o tick do motor nao aborta no expurgo LGPD (storage.protect_delete
+      # FOR EACH STATEMENT levanta 42501 em DELETE direto; a fixture recria o gatilho).
+      # Manifesto talkx_storage_purge_queue, alerta purge_failed com espera de 1 h,
+      # gate diario e outcome_unknown alinhado ao CHECK. Harness RED→GREEN em PostgreSQL 17.
+      - name: Provar que o tick nao aborta no expurgo (M-DB-01)
+        env:
+          TALKX_MDB01_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-tick-expurgo.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
