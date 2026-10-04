@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, errorResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { logWebhookAuthShadow } from "../_shared/hmac-validation.ts";
+import { verifyMetaWebhookSignature } from "../_shared/hmac-validation.ts";
 
 const WhatsAppStatusSchema = z.object({
   id: z.string().max(500),
@@ -37,7 +37,7 @@ const WhatsAppWebhookSchema = z.object({
   })),
 });
 
-serve(async (req) => {
+export async function handleWhatsappWebhook(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: getCorsHeaders(req) });
   }
@@ -72,18 +72,26 @@ serve(async (req) => {
   // Handle webhook events (POST request)
   if (req.method === 'POST') {
     try {
+      // R2-API-021: HMAC BLOQUEANTE antes de qualquer efeito. O HMAC cobre os
+      // bytes crus do corpo, então req.text() vem primeiro e o JSON sai dele —
+      // nada de banco/provedor antes do veredito. Sem WHATSAPP_APP_SECRET
+      // configurado a requisição é recusada (falha fechada).
+      const rawBodyText = await req.text();
+      const verdict = await verifyMetaWebhookSignature(
+        req.headers,
+        rawBodyText,
+        Deno.env.get('WHATSAPP_APP_SECRET'),
+      );
+      if (!verdict.ok) {
+        log.warn(`assinatura do webhook recusada (${verdict.reason})`);
+        return errorResponse('Unauthorized', 401, req);
+      }
+
       const supabaseUrl = requireEnv('SUPABASE_URL');
       const supabaseServiceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-      // [WEBHOOK_AUTH_SHADOW] Modo sombra: valida mas NUNCA bloqueia nesta etapa.
-      // Le o body via clone() para nao alterar o comportamento de req.json() abaixo.
-      // WHATSAPP_APP_SECRET ainda precisa ser confirmado/criado nos Secrets do
-      // Supabase (distinto de WHATSAPP_VERIFY_TOKEN, que so serve o handshake GET).
-      const rawBodyTextForAuthShadow = await req.clone().text();
-      await logWebhookAuthShadow('whatsapp-webhook', req.headers, rawBodyTextForAuthShadow, Deno.env.get('WHATSAPP_APP_SECRET'), 'x-hub-signature-256');
-
-      const rawPayload = await req.json();
+      const rawPayload = JSON.parse(rawBodyText);
       const parsed = WhatsAppWebhookSchema.safeParse(rawPayload);
 
       if (!parsed.success) {
@@ -138,4 +146,8 @@ serve(async (req) => {
   }
 
   return new Response('Method not allowed', { status: 405, headers: getCorsHeaders(req) });
-});
+}
+
+if (import.meta.main) {
+  serve(handleWhatsappWebhook);
+}
