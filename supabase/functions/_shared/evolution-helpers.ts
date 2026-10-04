@@ -1,5 +1,6 @@
 // Shared helpers for Evolution API webhook and sync functions
 import { evoFetch, extractAvatarUrl } from './evolution-send.ts';
+import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
 
 export interface WebhookPayload {
@@ -330,11 +331,13 @@ export function avatarObjectPath(phone: string): string {
 // deno-lint-ignore no-explicit-any
 export async function persistProfilePicture(supabase: EvolutionDbClient, phone: string, profilePicUrl: string): Promise<string | null> {
   try {
-    const response = await fetch(profilePicUrl, { signal: AbortSignal.timeout(5000) });
-    if (!response.ok) return null;
-    const blob = await response.arrayBuffer();
-    const bytes = new Uint8Array(blob);
-    if (bytes.length < 100) return null;
+    // R2-API-009: a URL do avatar vem da resposta da Evolution — mesmo
+    // tratamento de egress (destino validado + teto de bytes) do resto da mídia.
+    const download = await downloadMediaWithEgressPolicy(profilePicUrl, {
+      maxBytes: SMALL_MEDIA_DOWNLOAD_MAX_BYTES, timeoutMs: 5000, logTag: 'AVATAR',
+    });
+    const bytes = download?.bytes;
+    if (!bytes || bytes.length < 100) return null;
 
     const storagePath = avatarObjectPath(phone);
 

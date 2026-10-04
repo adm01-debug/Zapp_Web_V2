@@ -1,6 +1,7 @@
 // Shared media persistence helpers for Evolution API functions
 import { isRecord } from "./evolution-helpers.ts";
 import { evoFetch, extractBase64Media } from "./evolution-send.ts";
+import { downloadMediaWithEgressPolicy } from "./media-egress.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
 
 export function isValidMediaBytes(bytes: Uint8Array, messageType: string): boolean {
@@ -50,11 +51,13 @@ export async function persistMediaToStorage(
   contactId?: string,
 ): Promise<string | null> {
   try {
-    const resp = await fetch(cdnUrl, { signal: AbortSignal.timeout(15000) });
-    if (!resp.ok) { console.error(`[MEDIA] Download failed (${resp.status}) for ${messageType}`); return null; }
+    // R2-API-009: a URL vem do payload do webhook — só sai para destino da
+    // política de egress (CDN WhatsApp https + origens confiáveis), com
+    // redirect revalidado e teto de bytes em streaming.
+    const download = await downloadMediaWithEgressPolicy(cdnUrl, { timeoutMs: 15000, logTag: "MEDIA" });
+    if (!download) return null;
 
-    const arrayBuf = await resp.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuf);
+    const bytes = download.bytes;
     if (bytes.length < 100) { console.error(`[MEDIA] File too small (${bytes.length} bytes)`); return null; }
 
     if (!isValidMediaBytes(bytes, messageType)) {
@@ -64,7 +67,7 @@ export async function persistMediaToStorage(
 
     const extMap: Record<string, string> = { image: 'jpg', video: 'mp4', audio: 'ogg', document: 'bin' };
     const contentTypeMap: Record<string, string> = { image: 'image/jpeg', video: 'video/mp4', audio: 'audio/ogg', document: 'application/octet-stream' };
-    const respContentType = resp.headers.get('content-type') || contentTypeMap[messageType] || 'application/octet-stream';
+    const respContentType = download.contentType || contentTypeMap[messageType] || 'application/octet-stream';
     const ext = detectExtension(respContentType, extMap[messageType] || 'bin');
 
     // Nome deterministico por mensagem (sem carimbo de hora): a Evolution reentrega
