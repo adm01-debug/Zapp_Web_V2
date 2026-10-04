@@ -37,6 +37,31 @@ Ficam vivos por outro consumidor (não remover): `AnalysisBadges`
 `ExternalContact360Panel`/`ContactIntelligencePanel`/`Contact360Helpers`.
 Remoção dos 13 na PR F (D6), após PR D ≥ 1 dia útil em produção.
 
+### Estado na PR F
+
+Dos 13 listados, **11 ainda existiam** na `main` no momento da remoção:
+`ComercialSummaryWidget` e `ContactStatsSection` já tinham saído com o
+accordion antigo (os `CommercialSummaryStrip`/`ContactStatsStrip` em
+`inbox/tabs/` são componentes diferentes, com consumidores vivos em
+`JourneyTab`/`SalesViewTab` — não tocados).
+
+Removidos (inclui os órfãos em cascata, só consumidos pelos 11):
+- Componentes: `ContactInfoSection`, `WhatsAppStatusSection`,
+  `EvolutionContactProfileSection`, `SLAAndAITagsSection`,
+  `AIInsightsWidget`, `LastActivityWidget`, `AssignmentSection`
+  (em `contact-details/`); `ConversationMemoryPanel`,
+  `LeadRiskScorePanel`, `ConversationTimeline`,
+  `KnowledgeBaseSearchPanel` (em `inbox/`).
+- Cascata: `StoryViewer` (só `WhatsAppStatusSection` usava) e o hook
+  `useEvolutionContactProfile` (só `EvolutionContactProfileSection`
+  usava).
+- Testes dos mesmos. `useWhatsAppStatus`, `useKnowledgeBaseSearch`,
+  `useContactAssignment` e `useConversationHistoryTimeline` ficam —
+  são superfície pública de `hooks/` com outros consumidores.
+- Contrato `media-volume-surfaces`: a superfície `status/stories` saiu
+  com o `StoryViewer` (entrada removida do contrato; se stories voltar,
+  re-entra no mesmo commit).
+
 ## 06. Decisões adotadas (seção 6 do plano)
 
 - **D1**: flag `crm.integration` permanece **desligada** até a Fase 9.
