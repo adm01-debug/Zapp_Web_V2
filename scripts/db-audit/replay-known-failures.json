@@ -1,0 +1,84 @@
+{
+  "_comment": "Falhas ESPERADAS do replay local (scripts/db-audit/replay-local.sh). Cada entrada e uma migration que nao aplica em banco vazio por motivo JA investigado e medido no banco canonico. O replay fica VERDE quando nao ha falha fora desta lista - e isso o transforma em gate contra drift novo. NUNCA adicione entrada sem medir o objeto no canonico e/ou apontar a versao substituta: o valor deste arquivo e ser a fronteira entre 'esperado' e 'regressao'.",
+  "_metodo": "Medir o objeto real no canonico antes de aceitar: pg_proc (funcao ou coluna), pg_policies, information_schema. Receita em docs/MIGRATIONS.md secao 7.",
+  "_contexto": "docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
+  "_atualizado_em": "2026-10-04",
+  "esperadas": {
+    "20260906000001_e31_contacts_is_lid_legacy.sql": {
+      "categoria": "ambiente",
+      "motivo": "Assercao de dados reais: espera 400-700 LIDs marcados. Banco vazio tem 0. Nao e defeito do arquivo."
+    },
+    "20260902000200_fix_cron_avatars_refresh_key.sql": {
+      "categoria": "ambiente",
+      "motivo": "Opera sobre Job 8 pre-existente do pg_cron. Imagem efemera nao tem esse job criado pelo painel."
+    },
+    "20261002541230_pg_cron_escalonar_jobs.sql": {
+      "categoria": "ambiente",
+      "motivo": "Assercao de agendamento: exige o job vacuum-contacts-daily em cron.job, criado fora das migrations."
+    },
+    "20260916230000_talkx_e93_settings.sql": {
+      "categoria": "arquivo-superado",
+      "motivo": "CREATE POLICY IF NOT EXISTS nao existe no PostgreSQL. Superada por talkx_settings_policies_replay_safe e talkx_settings_replay_idempotent. Canonico: tabela existe, RLS on, 2 politicas."
+    },
+    "20260927450000_fix_indexes_checks_cleanup.sql": {
+      "categoria": "arquivo-superado",
+      "motivo": "NOT VAFIDD (typo de NOT VALID). O ledger atribui esta versao a gamification_guard_fix_xp_cap: o arquivo nunca aplicou. Canonico: as constraints existem e estao validated=true."
+    },
+    "20260929370000_contacts_soft_delete_and_search_filters.sql": {
+      "categoria": "arquivo-superado",
+      "motivo": "cannot change return type. O filtro deleted_at IS NULL que ela queria ja existia, de 20260929140000_search_contacts_returns_address; versao vigente e 20260930450000_contacts_include_legacy_filter. Canonico: filtro presente, sem queue_members (modelo de visibilidade substituido de proposito)."
+    },
+    "20260925170000_add_reminders_pending_to_tab_counts.sql": {
+      "categoria": "abandono-formalizado",
+      "motivo": "cannot change return type. reminders_pending nunca existiu no canonico; o campo foi abandonado (decisao 20261003-121143). Se a aba um dia precisar, entra por versao nova com DROP FUNCTION + CREATE."
+    },
+    "20260928140200_tab_counts_tasks_own.sql": {
+      "categoria": "abandono-formalizado",
+      "motivo": "Mesma funcao e mesmo motivo do anterior."
+    },
+    "20260927540000_security_gamification_guards_e2e_cleanup_avg_null.sql": {
+      "categoria": "reparada-por-versao-nova",
+      "motivo": "Referenciava public.conversations (inexistente) e conversation_closures.conversation_id (inexistente). O arquivo permanece intocado pela regra 7; a intencao foi cumprida por 20261003152707_cleanup_e2e_conversation_closures, ja aplicada no canonico."
+    },
+    "20260926410000_add_fk_support_indexes.sql": {
+      "categoria": "nao-idempotente-inerte",
+      "motivo": "relation 'idx_gmail_accounts_user_id' already exists. O indice ja existe no canonico; CREATE INDEX sem IF NOT EXISTS. Efeito real: nenhum."
+    },
+    "20261001351230_f51a_multiplix_confirm_dispatch_fn.sql": {
+      "categoria": "nao-idempotente-inerte",
+      "motivo": "function multiplix_confirm_dispatch already exists. Canonico: a funcao existe. CREATE sem OR REPLACE. Efeito real: nenhum."
+    },
+    "20260910100000_restrict_talkx_blacklist_update_policy.sql": {
+      "categoria": "ordem-idempotencia",
+      "motivo": "policy 'talkx_blacklist_update' does not exist NESTE PONTO do replay: o arquivo roda antes da migration que cria a politica. Canonico: a politica existe (junto de outras 3 em talkx_blacklist). Ordem, nao defeito."
+    },
+    "20260927570000_talkx_e27_realtime_campaign_events.sql": {
+      "categoria": "ordem-idempotencia",
+      "motivo": "relation 'talkx_campaign_events' is already member of publication. A imagem ja traz a publicacao supabase_realtime populada. Idempotencia, nao defeito."
+    },
+    "20260928200000_conversation_tasks_realtime_drift.sql": {
+      "categoria": "ordem-idempotencia",
+      "motivo": "relation 'conversation_tasks' is already member of publication. Mesmo caso do anterior."
+    },
+    "20260928210000_reconcile_conversation_tasks_realtime_publication.sql": {
+      "categoria": "ordem-idempotencia",
+      "motivo": "relation 'conversation_tasks' is already member of publication. Mesmo caso do anterior."
+    },
+    "20260925153000_revoke_anon_execute_notify_due_reminders.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "function public.notify_due_reminders() does not exist no replay. Canonico: a funcao existe. Ela e criada por migration que depende de objeto nao criado no banco vazio."
+    },
+    "20260925153100_add_idx_reminders_due_pending.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "column 'notified_at' does not exist no replay. Canonico: a coluna existe (2 tabelas). Cascata da anterior."
+    },
+    "20260927460000_revoke_sync_contact_status_closure_anon.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "function public.sync_contact_status_on_closure() does not exist no replay. Canonico: existe."
+    },
+    "20260928430000_team_chat_fix_policies_to_authenticated.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "column 'conversation_id' does not exist no replay. Canonico: existe (4 tabelas). A tabela que a define nao e criada no banco vazio."
+    }
+  }
+}
