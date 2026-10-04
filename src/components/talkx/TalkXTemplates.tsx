@@ -120,25 +120,30 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
           rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>}
         />
 
+        <TalkXQueryBoundary
+          query={{ isLoading, isError, error }}
+          entity="os templates"
+          onRetry={() => refetch()}
+          skeleton={<TalkXSkeletonRows rows={4} />}
+          isEmpty={templates.length === 0}
+          empty={<TalkXEmptyState icon={FileText} title="Nenhum template criado" description="Crie templates de mensagem para suas campanhas." actionLabel="Criar template" onAction={openNew} />}
+        >
         {galleryMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-3">
-            {isLoading ? (<div className="col-span-full"><TalkXSkeletonRows rows={3} /></div>)
-             : templates.length === 0 ? (<div className="col-span-full"><TalkXEmptyState icon={FileText} title="Nenhum template criado" description="Crie templates de mensagem para suas campanhas." actionLabel="Criar template" onAction={openNew} /></div>)
-             : paged.length === 0 ? (<div className="col-span-full"><TalkXEmptyState icon={Search} title="Nenhum template encontrado" /></div>)
+            {paged.length === 0 ? (<div className="col-span-full"><TalkXEmptyState icon={Search} title="Nenhum template encontrado" /></div>)
              : paged.map((t) => (
               <TemplateCard key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} />
             ))}
           </div>
         ) : (
           <div className="border border-border/70 rounded-2xl overflow-hidden divide-y divide-border/50">
-            {isLoading ? <TalkXSkeletonRows rows={4} />
-             : templates.length === 0 ? <TalkXEmptyState icon={FileText} title="Nenhum template criado" description="Crie templates de mensagem para suas campanhas." actionLabel="Criar template" onAction={openNew} />
-             : paged.length === 0 ? <TalkXEmptyState icon={Search} title="Nenhum template encontrado" />
+            {paged.length === 0 ? <TalkXEmptyState icon={Search} title="Nenhum template encontrado" />
              : paged.map((t) => (
               <TemplateListRow key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} />
             ))}
           </div>
         )}
+        </TalkXQueryBoundary>
         {filtered.length > 0 && <TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={() => {}} noun="templates" />}
       </div>
 
