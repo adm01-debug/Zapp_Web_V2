@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders } from "../_shared/validation.ts";
 import { WebAuthnActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { verifyAuthenticationAssertion, extractCredentialPublicKey, bytesToBase64url } from "./verify.ts";
 
 function base64URLEncode(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -114,8 +115,18 @@ Deno.serve(async (req) => {
         if (clientData.type !== 'webauthn.create') return errorResponse('Invalid client data type', 400, req);
         if (clientData.challenge !== challengeData.challenge) return errorResponse('Challenge mismatch', 400, req);
 
+        // R2-AUTH-001: guarda a chave pública COSE da credencial (extraída do
+        // attestationObject), não o attestationObject inteiro — sem a chave real a
+        // autenticação não teria o que verificar na assinatura.
+        let publicKeyB64: string;
+        try {
+          publicKeyB64 = bytesToBase64url(extractCredentialPublicKey(base64URLDecode(cr.attestationObject)));
+        } catch {
+          return errorResponse('Invalid attestation object', 400, req);
+        }
+
         const { error: insertError } = await supabaseAdmin.from('passkey_credentials').insert({
-          user_id: userId, credential_id: id, public_key: cr.attestationObject,
+          user_id: userId, credential_id: id, public_key: publicKeyB64,
           counter: 0, device_type: authenticatorAttachment || 'platform',
           backed_up: cr.publicKeyAlgorithm === '-7', transports: (credential as Record<string, unknown>).transports || ['internal'],
           friendly_name: friendlyName || 'Passkey',
@@ -158,22 +169,41 @@ Deno.serve(async (req) => {
 
         const cred = credential as Record<string, unknown>;
         const { id, response: credResponse } = cred;
+        if (!id || !credResponse) return errorResponse('invalid credential payload', 400, req);
 
         const { data: storedCred, error: credError } = await supabaseAdmin.from('passkey_credentials').select('*').eq('credential_id', id).single();
         if (credError || !storedCred) return errorResponse('Credential not found', 400, req);
 
         const { data: challengeData } = await supabaseAdmin.from('webauthn_challenges')
-          .select('challenge').eq('user_id', storedCred.user_id).eq('type', 'authentication')
+          .select('challenge, expires_at').eq('user_id', storedCred.user_id).eq('type', 'authentication')
           .order('created_at', { ascending: false }).limit(1).single();
 
         if (!challengeData) return errorResponse('Challenge not found or expired', 400, req);
+        if (challengeData.expires_at && new Date(challengeData.expires_at).getTime() < Date.now()) {
+          return errorResponse('Challenge expired', 400, req);
+        }
 
         const cr = credResponse as Record<string, string>;
-        const clientData = JSON.parse(new TextDecoder().decode(base64URLDecode(cr.clientDataJSON)));
-        if (clientData.type !== 'webauthn.get') return errorResponse('Invalid client data type', 400, req);
-        if (clientData.challenge !== challengeData.challenge) return errorResponse('Challenge mismatch', 400, req);
+        // R2-AUTH-001: verificação criptográfica completa (falha fechada). Só aceita
+        // quando signature, authenticatorData e clientDataJSON são válidos em conjunto,
+        // com challenge, origem, RP ID e assinatura conferidos contra a chave guardada.
+        const result = await verifyAuthenticationAssertion({
+          clientDataJSON: cr.clientDataJSON,
+          authenticatorData: cr.authenticatorData,
+          signature: cr.signature,
+          storedPublicKey: storedCred.public_key,
+          storedCounter: Number(storedCred.counter ?? 0),
+          challenge: challengeData.challenge,
+          rpId,
+          expectedOrigin: origin,
+        });
 
-        await supabaseAdmin.from('passkey_credentials').update({ last_used_at: new Date().toISOString(), counter: storedCred.counter + 1 }).eq('id', storedCred.id);
+        if (!result.ok) {
+          log.warn('WebAuthn authentication rejected', { reason: result.reason });
+          return errorResponse('WebAuthn authentication failed', 400, req);
+        }
+
+        await supabaseAdmin.from('passkey_credentials').update({ last_used_at: new Date().toISOString(), counter: result.newCounter }).eq('id', storedCred.id);
         await supabaseAdmin.from('webauthn_challenges').delete().eq('user_id', storedCred.user_id).eq('type', 'authentication');
 
         const { data: userData } = await supabaseAdmin.auth.admin.getUserById(storedCred.user_id);
