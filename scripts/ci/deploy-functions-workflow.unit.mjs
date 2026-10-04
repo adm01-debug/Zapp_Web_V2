@@ -82,6 +82,41 @@ test('timeout do job cobre a espera maxima do gate mais um deploy completo', asy
 });
 
 
+test('R2-INF-002: o artifact so sobe se a sanitizacao do log terminar com sucesso', () => {
+  // Re-pino R2-INF-002 (reauditoria 03/10/2026): redator e upload usavam
+  // always() de forma independente — se a redacao falhasse, o diretorio subia
+  // para o storage do GitHub com o log bruto (que carrega access_token).
+  const inicioRedacao = workflow.indexOf('- name: Limpar segredos do log de deploy');
+  const inicioUpload = workflow.indexOf('- name: Arquivar manifesto, atestado e smokes');
+  assert.ok(inicioRedacao > 0 && inicioUpload > inicioRedacao, 'a sanitizacao tem de vir antes do upload');
+  const redacao = workflow.slice(inicioRedacao, inicioUpload);
+  const upload = workflow.slice(inicioUpload);
+
+  // (1) o redator tem id e o upload exige que o processo dele tenha saido com sucesso
+  assert.match(redacao, /^        id: redigir_log$/m, 'o passo do redator precisa de id proprio');
+  assert.match(
+    upload,
+    /steps\.redigir_log\.outcome == 'success'/,
+    'o upload tem de exigir outcome success do redator (falha do redator = nenhum artifact)',
+  );
+
+  // (2) a versao publicada sai de um diretorio SEPARADO — o diretorio com o
+  // log bruto nunca pode ser o alvo do upload
+  assert.match(upload, /path: \$\{\{ runner\.temp \}\}\/edge-deployment-evidence-public\//);
+  assert.doesNotMatch(
+    upload,
+    /path: \$\{\{ runner\.temp \}\}\/edge-deployment-evidence\//,
+    'o diretorio com o log bruto nao pode ser publicado',
+  );
+
+  // (3) o log so entra no diretorio publicado depois de passar pelo redator:
+  // a copia em massa o exclui e ele so chega ao destino via staging redigido
+  assert.match(redacao, /! -name 'deploy-output\.log'/, 'a copia em massa tem de excluir o log bruto');
+  const posRedigir = redacao.indexOf('redigir-log.mjs');
+  const posDestino = redacao.indexOf('"$DESTINO/deploy-output.log"');
+  assert.ok(posRedigir > 0 && posDestino > posRedigir, 'o log tem de ser redigido antes de entrar no diretorio publicado');
+});
+
 test('E55: o passo de atestacao tem teto proprio de 10 min', () => {
   // O job tem 100 min, mas a atestacao nao pode consumir esse orcamento: se a
   // Management API nao estabilizar, o passo falha com lastReason e o run nao

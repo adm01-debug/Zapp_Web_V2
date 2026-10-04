@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { redigir } from './redigir-log.mjs';
 
@@ -32,6 +34,34 @@ test('E74: o CLI e fail-closed quando o log nao existe', () => {
     encoding: 'utf8',
   });
   assert.equal(r.status, 2, 'log ausente tem de sair com 2');
+});
+
+test('R2-INF-002: falha de gravacao derruba o processo — e disso que o gate do upload depende', () => {
+  // Injecao de erro de escrita: arquivo somente-leitura dentro da base. Se o
+  // processo saisse com 0 aqui, o passo do workflow terminaria "com sucesso" e
+  // o artifact subiria com o log bruto — exatamente o cenario do achado.
+  const base = mkdtempSync(join(tmpdir(), 'redigir-ro-'));
+  const dir = join(base, 'edge-deployment-evidence');
+  mkdirSync(dir);
+  const alvo = join(dir, 'deploy-output.log');
+  const bruto = 'curl https://x.functions.supabase.co/f?access_token=LEAK1234567890\n';
+  writeFileSync(alvo, bruto);
+  chmodSync(alvo, 0o444);
+  try {
+    const r = spawnSync(
+      process.execPath,
+      ['scripts/edge-deploy/redigir-log.mjs', alvo, '--segredo-env=SUPABASE_ACCESS_TOKEN'],
+      {
+        cwd: new URL('../../', import.meta.url).pathname,
+        encoding: 'utf8',
+        env: { ...process.env, REDIGIR_LOG_BASE: base, SUPABASE_ACCESS_TOKEN: 'LEAK1234567890' },
+      },
+    );
+    assert.notEqual(r.status, 0, 'falha de gravacao tem de sair com erro para o gate barrar o upload');
+    assert.equal(readFileSync(alvo, 'utf8'), bruto, 'o bruto nao pode sair "limpo" pela metade');
+  } finally {
+    chmodSync(alvo, 0o644);
+  }
 });
 
 test('E74: supabase-sync retem 7 dias e o log do deploy e redigido antes de subir', () => {

@@ -484,22 +484,50 @@ jobs:
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/register-deployment.mjs"
 
       - name: Limpar segredos do log de deploy
+        id: redigir_log
         # E74: o log carrega URL com `access_token` embutido e o artifact vai para o
         # storage do GitHub. A credencial precisa sair do ARQUIVO antes do upload --
         # `::add-mask::` esconde no log do run, nao no artefato. O valor vem do
         # ambiente pelo nome da variavel: nunca aparece no codigo nem na saida.
+        #
+        # R2-INF-002 (reauditoria de 03/10/2026): antes, este passo e o upload
+        # usavam always() de forma independente -- se a redacao falhasse, o
+        # diretorio subia mesmo assim, com o log bruto. Agora a versao
+        # publicavel e' montada num diretorio SEPARADO
+        # (edge-deployment-evidence-public): a copia em massa exclui o log
+        # bruto, que so' entra depois de redigido num staging e conferido. O
+        # passo de upload exige steps.redigir_log.outcome == 'success':
+        # qualquer falha aqui (leitura, gravacao, chave residual) e nada sobe.
         if: always() && inputs.dry_run != true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
-          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/redigir-log.mjs" "$RUNNER_TEMP/edge-deployment-evidence/deploy-output.log" --segredo-env=SUPABASE_ACCESS_TOKEN
+          ORIGEM="$RUNNER_TEMP/edge-deployment-evidence"
+          DESTINO="$RUNNER_TEMP/edge-deployment-evidence-public"
+          STAGING="$RUNNER_TEMP/deploy-output-staging.log"
+          mkdir -p "$DESTINO"
+          if [ -d "$ORIGEM" ]; then
+            find "$ORIGEM" -mindepth 1 -maxdepth 1 ! -name 'deploy-output.log' -exec cp -a {} "$DESTINO/" \;
+          fi
+          if [ -f "$ORIGEM/deploy-output.log" ]; then
+            cp "$ORIGEM/deploy-output.log" "$STAGING"
+            node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/redigir-log.mjs" "$STAGING" --segredo-env=SUPABASE_ACCESS_TOKEN
+            if grep -qiE 'access[_%-]?token' "$STAGING"; then
+              echo "::error::chave de token ainda presente no log sanitizado; artifact bloqueado."
+              exit 1
+            fi
+            mv "$STAGING" "$DESTINO/deploy-output.log"
+          fi
 
       - name: Arquivar manifesto, atestado e smokes
-        if: always() && inputs.dry_run != true
+        # R2-INF-002: continua sempre que o job rodou (always) para nao perder a
+        # evidencia de um deploy falho -- MAS so' quando a sanitizacao terminou
+        # com sucesso. Sem o gate, uma falha do redator publicava o log bruto.
+        if: always() && inputs.dry_run != true && steps.redigir_log.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: edge-deployment-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/edge-deployment-evidence/
+          path: ${{ runner.temp }}/edge-deployment-evidence-public/
           if-no-files-found: warn
           retention-days: 14
