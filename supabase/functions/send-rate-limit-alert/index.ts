@@ -1,24 +1,61 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { RateLimitAlertSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 
-Deno.serve(async (req) => {
+/**
+ * R2-API-022 (P1) — gate de autorização do send-rate-limit-alert.
+ *
+ * Defeito fechado: a rotina de alerta de rate limit é uma integração interna
+ * que escreve em `security_alerts`/`blocked_ips`/`notifications` com a service
+ * role. Antes desta correção o segredo `INTERNAL_ALERT_SECRET` era conferido
+ * SÓ quando configurado (`if (internalSecret)`), com comparação direta — ou
+ * seja, com o segredo ausente/vazio a chamada passava SEM gate (fail-open) e
+ * qualquer identidade admitida pelo gateway escrevia no banco.
+ *
+ * Regra agora (fixada na decomposição do achado):
+ *   - preflight CORS continua livre;
+ *   - exige `INTERNAL_ALERT_SECRET` configurado e NÃO vazio, enviado no header
+ *     dedicado `X-Internal-Secret`, comparado em tempo constante;
+ *   - ausente/vazio/incorreto → 401, ANTES de criar o cliente service-role e
+ *     ANTES de confiar em ip_address/request_count/blocked ou escrever;
+ *   - sem fallback permissivo.
+ */
+
+export interface RateLimitAlertDeps {
+  /**
+   * Cliente service-role usado SÓ depois da autorização (grava security_alerts,
+   * blocked_ips e notifications). Injetado nos testes.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase?: any;
+  /** Override do INTERNAL_ALERT_SECRET (facilita o teste sem tocar no env). */
+  internalSecret?: string;
+}
+
+export async function handleRateLimitAlert(
+  req: Request,
+  deps: RateLimitAlertDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("send-rate-limit-alert");
 
   try {
-    const internalSecret = Deno.env.get("INTERNAL_ALERT_SECRET");
-    if (internalSecret) {
-      const provided = req.headers.get("X-Internal-Secret");
-      if (provided !== internalSecret) {
-        log.warn("Unauthorized call to send-rate-limit-alert");
-        return errorResponse("Unauthorized", 401, req);
-      }
+    // ── Autorização (ANTES de cliente service-role e ANTES de confiar no corpo) ──
+    const internalSecret = deps.internalSecret !== undefined
+      ? deps.internalSecret
+      : (Deno.env.get("INTERNAL_ALERT_SECRET") ?? "");
+    const provided = req.headers.get("X-Internal-Secret") ?? "";
+    // Fail-closed: segredo ausente/vazio não autoriza nada; comparação em
+    // tempo constante para não vazar o prefixo comum pelo tempo de resposta.
+    if (!internalSecret || !provided || !timingSafeEqual(provided, internalSecret)) {
+      log.warn("Unauthorized call to send-rate-limit-alert");
+      return errorResponse("Unauthorized", 401, req);
     }
 
-    const supabaseClient = createClient(
+    const supabaseClient = deps.supabase ?? createClient(
       requireEnv("SUPABASE_URL"),
       requireEnv("SUPABASE_SERVICE_ROLE_KEY")
     );
@@ -89,4 +126,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: error instanceof Error ? error.message : String(error) });
     return errorResponse(error instanceof Error ? error.message : "Internal error", 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleRateLimitAlert(req));
+}
