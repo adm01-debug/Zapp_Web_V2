@@ -1,0 +1,26 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "completed",
+  "completed_previous_tail": [
+    "supabase/functions/csp-report/index.ts",
+    "supabase/functions/send-rate-limit-alert/index.ts",
+    "supabase/functions/cleanup-rate-limit-logs/index.ts",
+    "supabase/functions/searchbox-budget-alert/index.ts",
+    "src/adapters/evolutionAdapter.ts",
+    "src/services/evolution.service.ts",
+    "src/integrations/supabase/externalClient.ts",
+    "src/components/integrations/GmailIntegrationCard.tsx",
+    "src/components/admin/GmailWebhookMonitor.tsx",
+    "src/components/gmail/EmailThreadView.tsx",
+    "src/components/groups/GroupsView.tsx",
+    "src/providers/QuarantineMonitorProvider.tsx",
+    "src/components/alerts/EvolutionDisconnectBanner.tsx",
+    "src/components/omnichannel/OmnichannelManager.tsx",
+    "src/components/omnichannel/OmnichannelInbox.tsx",
+    "src/components/omnichannel/ChannelRoutingRules.tsx"
+  ],
+  "next_scope": null,
+  "providers_test_roster": "completed_76_of_76",
+  "database_peer_test_review": "completed_slice_32_52_20_files_1419_lines",
+  "shell_review": "completed_12_of_12_3558_lines"
+}

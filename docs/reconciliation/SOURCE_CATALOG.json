@@ -1,0 +1,2480 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "markdown_sources": [
+    {
+      "path": ".agents/skills/zapp-web-v2/SKILL.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "faf8048f4b6671af47e8c145a59ca23a1dba06a13773f7b625a82fd6125fd5eb",
+      "git_blob_sha": "3a47de779382f119a69d3836bc89470dd5497166"
+    },
+    {
+      "path": ".claude/skills/zapp-web-v2/SKILL.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "faf8048f4b6671af47e8c145a59ca23a1dba06a13773f7b625a82fd6125fd5eb",
+      "git_blob_sha": "3a47de779382f119a69d3836bc89470dd5497166"
+    },
+    {
+      "path": ".codex/AGENTS.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "fb3d0c263b7e1468f101ec154291797b47e9a112a5566ea5b199eecc2500b925",
+      "git_blob_sha": "6604413559ac4fed1e10224d65cf591fa97135cf"
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "4c28ec178b4957abe5963c4ffcf707ee961cb36f7b7fbb3bc30b0add64f18d2a",
+      "git_blob_sha": "eaa34b456397eaa8a9b9627cea6d25416e4de15a"
+    },
+    {
+      "path": ".lovable/plan.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "0e8609fb10f21209b3688a530703a304c477155bd98d13aacccd1fd8f87e6de5",
+      "git_blob_sha": "cccc24bc91370986d9d3a58360a973d07cc4c2e5"
+    },
+    {
+      "path": "AGENTS.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "71e9417913c65e101ff316d3bfba75eac95783e297086af3c159f01cfa2b9dc8",
+      "git_blob_sha": "e6f6f6f47c251d07862c033a3c74952cea5de6ef"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "262b5106a27bd11c17329479c95978ac39ff508c032b5481413f253576fcb6a0",
+      "git_blob_sha": "706748e9fcd57d71d382d4cdb5d4cede11ffdf96"
+    },
+    {
+      "path": "CLAUDE.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "33994f2f02cd865195a50921c9746006141c02e24c606cf0723c758bc60bcfc2",
+      "git_blob_sha": "cb80d80664795b48e1ce04787a93e3794072d51f"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "cd483847efb2c01bc195b77d54747d1b30fc0822762ce99c869ee7a9ae51271b",
+      "git_blob_sha": "3de2b7d92faef4ae56f7c6d9e4f2723430894357"
+    },
+    {
+      "path": "HANDOFF_MISSION_10-10.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "db7f3edf08204583e1734aecfeae4313d5794ba822a83db9d0a9bfea086614ff",
+      "git_blob_sha": "d251ce53846df1153aa70a842e8a935d72e7a238"
+    },
+    {
+      "path": "README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "53d92d348b5d8ec9c67cc756c47cb765e2f3b971b488ef686ab4f1f45cdaff89",
+      "git_blob_sha": "16cf45be059c6209407ff6ab77e8ee0b3966d693"
+    },
+    {
+      "path": "RLS_MIGRATION_INSTRUCTIONS.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "0c5e40c52bacc245000937e563aa2f9623575ba6962f0fb679307a9558924db4",
+      "git_blob_sha": "7a9c40789de2ebfcad788963b3a03041949fe98a"
+    },
+    {
+      "path": "SECURITY.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "b9daab4ef25cf931ba54ac63674e25f2e2dfbca64bf3386bfbe92c28da801b39",
+      "git_blob_sha": "a64385911a3d8859540604fb9dbb951575535c0a"
+    },
+    {
+      "path": "UX_AUDIT_REPORT.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "fce079e6592a359e2337cf71697a0bc81dcb51acba7a335dc49100a57c688f5b",
+      "git_blob_sha": "fd7d7db3509c51ce25a656f99a88d44bea3acc61"
+    },
+    {
+      "path": "docs/BACKUP-RECOVERY-STRATEGY.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "bf9cf9e67affc4d0427b1e2972cdaccff37a9d2d91278de8bc81875df0128449",
+      "git_blob_sha": "5e9a9364701b3e105c63108b24673680ae25e443"
+    },
+    {
+      "path": "docs/CAPACIDADES.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "e0b04195636cfdc8da67e467cdc6236a35dc4afaeadb4cec591fbb7305a08ae2",
+      "git_blob_sha": "4f14e8b26664486e086b4c84aaa428fa5b123d66"
+    },
+    {
+      "path": "docs/COMPLETE_SYSTEM_FEATURES.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "11d9ce78373773f51ae40a2d88c1f923ae4cfe133b107af5684904c1aac3d8f6",
+      "git_blob_sha": "13d9b928a05e8e6757e303f03c6a26dad5a16487"
+    },
+    {
+      "path": "docs/CRM360_TECHNICAL_DOCS.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "7787a60eaf5859e2e8e7c6d1fece96390761b01d54fb43f575ab55068bed8206",
+      "git_blob_sha": "064391190415bd49b51af425b4c8f96dcb0035e5"
+    },
+    {
+      "path": "docs/DB-SECURITY.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "49afcb307ef4e0bdf07d7cfc82abea4ddbd10ece9d01903ee2a09cdbee35ab6b",
+      "git_blob_sha": "bd1f4e8bcc6e98d933fa2aea487a3316efa52856"
+    },
+    {
+      "path": "docs/DEPLOYMENT.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "6dc3144293ffc08b21df5f0941169054dddd84f9cbaf20445355b169d85bdc4a",
+      "git_blob_sha": "3eccdce722960beca47cd9ca6f4d8dba662caeec"
+    },
+    {
+      "path": "docs/DISTRIBUTION-FALLBACKS.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "0d6ea918a5aa65f3360af438edc301ec48851eab50c3acff3865b5557061b6cd",
+      "git_blob_sha": "e24f8e0f9006a37a1954e49e69e92420fe959012"
+    },
+    {
+      "path": "docs/EVOLUTION_API_GAPS_ANALYSIS.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "91bcd99eb44321602b0af2e4ed213458650d908c02b8e3ff610c901c78c8a906",
+      "git_blob_sha": "f3777d9254cb60aba07aea29395c22d9674a8e2b"
+    },
+    {
+      "path": "docs/EVOLUTION_API_REFERENCE.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "c403b00c33d4a3bda6ed697aa5c1474446376238c2abbcb8eff21b852e7ca793",
+      "git_blob_sha": "aea791ca0ce7b22b74ab52b86994c576eccff4d4"
+    },
+    {
+      "path": "docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "2817738d92f8ed0acec5e8f12400a80ff503c2fdf6e24b823cb9826b49963cbd",
+      "git_blob_sha": "8f999a449668d29f71985e6694d4038e00756f8e"
+    },
+    {
+      "path": "docs/FORGOTTEN_FEATURES_REPORT.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "784cb5f1fa959bbdb3272e672d1ff64d9d4fef50391741bf433ae8b00a6c0430",
+      "git_blob_sha": "9ad9619f1638edb3af5b096a4eef9bda6f7bbc80"
+    },
+    {
+      "path": "docs/FUNCTIONALITIES_INVENTORY.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "a58f5e138c4cc24939fec6e1b4104266bcff6f3d92364e52fa9eb9d7e2b7df72",
+      "git_blob_sha": "0e19b40a8d7f9397d9de10f5998e4376d79de35a"
+    },
+    {
+      "path": "docs/HANDOFF_EVOLUTION_SECURITY_2026-04-12.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P061",
+      "sha256": "af54f682f1338d4088aa63a09e75fcaafdbfb50db0c7f8996c994de1fc71c4d6",
+      "git_blob_sha": "2cf52ae27f103b01853642bc4548d9b15c8d9ae3"
+    },
+    {
+      "path": "docs/IMPROVEMENT_PLAN.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P056",
+      "sha256": "e017a8e20adfefec4f9568d7bf6b21860728b151d29526faa2bccbedadd88170",
+      "git_blob_sha": "6644d90d4df0ec48bae53b88eed452220633aa5e"
+    },
+    {
+      "path": "docs/INCIDENT-RUNBOOK.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "278540ac31eee6db97f8aed8296c3ad2552a2da059c31b4cb6f063cb3c3d44f8",
+      "git_blob_sha": "2e930c067af9de4fb992cea19ebc2fc4b90f7f27"
+    },
+    {
+      "path": "docs/LGPD-RETENTION-POLICY.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "98675f38b206ca14f2006d17b603a519698da253cd253e7b6f6c7a7461429e12",
+      "git_blob_sha": "47fd7a56afa8ca6b6744003dbb054fe9ca83667e"
+    },
+    {
+      "path": "docs/MIGRATIONS.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "d63b3db115e258be41233c4d7b0e847b521ee7efd5f6fdffc13a70dcfdf34b1f",
+      "git_blob_sha": "6c1ff44c741becd09d8fcd1cb1cf719e630b5eff"
+    },
+    {
+      "path": "docs/POP-ATENDIMENTO-BASICO.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "aa2869cf63b30c6b9d4aa24f5cd85dde52a881eda300671337e81b61c18b68a9",
+      "git_blob_sha": "6bea7994f2126244abf71dbd59710cbee6cad873"
+    },
+    {
+      "path": "docs/PROJECT_TEMPLATE.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "5ed6aa7656cb8eeb97a79002652de5faeb430adb679baf5021c18948c8d86d65",
+      "git_blob_sha": "e342bcbc5bd5948e23fc22689ead97ccf85f8a2f"
+    },
+    {
+      "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "a9160fe5c2518e0f6cf65863656348dd7568e80c3694249b59d6dfaffb6fcd1d",
+      "git_blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0"
+    },
+    {
+      "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "c666da6491af556d1d31bd959ebd939492742df8a0effd0c959db63ed9f1323f",
+      "git_blob_sha": "a81f50f87747f3f3ae302441de527abfa36c2835"
+    },
+    {
+      "path": "docs/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "4cad7f93067c8fe47e90f9ffa673d74db71b8e7c17cff6bae63141a4f15fd619",
+      "git_blob_sha": "1e019650513b9b31407397fb74bdf2551c826448"
+    },
+    {
+      "path": "docs/REFACTORING_REPORT_2026-06-12.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "9bff3478af90e1e2a84aa1f24043b5d585ec148b7d5136baff5c85cdfb4fa530",
+      "git_blob_sha": "5e40b28e34e1eceac83ca7e0104eb56b076dd28f"
+    },
+    {
+      "path": "docs/RLS_MIGRATION_INSTRUCTIONS.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "128980475119c00a73bd71d50dc7d46d1bd164aa16cba16fab78a09cdc7fba42",
+      "git_blob_sha": "55fcb58844a9dc6dadf2325fd42378d5a8d65de4"
+    },
+    {
+      "path": "docs/SLA-ESCALATION-CRON.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "5e7e182091e6462b76ba6716c5b8f0ab07baed88da1e6ae9937433564fd8e144",
+      "git_blob_sha": "c13e4435aacd6742ee722ce25fdf0d26ace977d5"
+    },
+    {
+      "path": "docs/TECHNICAL_DOCUMENTATION.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "481bdca13aaaae20b6f0f92abfee83c0cdc0c97ff8a6f4f62c6adfa619283a5b",
+      "git_blob_sha": "2af3f732920a3bc4685c4b61a724793002ee6163"
+    },
+    {
+      "path": "docs/TROUBLESHOOTING.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "79cf1a59b2303898f6157372121e7beb6dd7656e400beef1956150b9d3213e0e",
+      "git_blob_sha": "a443d02e728b7646425594f8ca0a9c2ad9f3b255"
+    },
+    {
+      "path": "docs/WEBHOOK_EVENTS.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "b781a8d954094c981b9f8d8d9458d81b3e96e406938f4257c271e42871115fa5",
+      "git_blob_sha": "20d74ff2d441fb0da6e98ee2ec1009f32a2689cb"
+    },
+    {
+      "path": "docs/WEBHOOK_SECURITY.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "c337f6086c5fdfd7057e7b5128e4a072e09623e6c9d1887fdd5605cad3594355",
+      "git_blob_sha": "d3479bbd689d077db6479859029ff77b2d2f1536"
+    },
+    {
+      "path": "docs/adr/ADR-001-evolution-webhook-events-per-instance-tables.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "2cf291462a208d48ba7af0e9fbf7fc14492db6d3f54830cc170b197cb6dd735c",
+      "git_blob_sha": "be5c1062246bb5b666d974d9701493c1cb6f1bb6"
+    },
+    {
+      "path": "docs/adr/ADR-002-evolution-messages-data-rotation-strategy.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "e32009413b70cccbca5837374c68482a84ed202b48f6b1278646855bcf1f4c33",
+      "git_blob_sha": "8fba1cd6ee08b3a5a08951fb1189254a7fcffe0c"
+    },
+    {
+      "path": "docs/adr/ADR-003-june-2026-db-audit-and-performance.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "c2a9ebdcc2a1a96f77d5d301fb1dac92cbf9d32f2d31037390879f3ffa1c3736",
+      "git_blob_sha": "88e8bdfe4bbde051989c0706becc0bbe59fca1ea"
+    },
+    {
+      "path": "docs/adr/ADR-004-branch-protection-solo-maintainer.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "bc2cfef50ffee5a2cfa4db9ec6b3248d8271406a2daba66c81463404c36c09c4",
+      "git_blob_sha": "948704f23601c1684a228e2280f64603c8da74cb"
+    },
+    {
+      "path": "docs/adr/ADR-005-conversation-state-machine.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "79980f3eb80d9f853cc0815586cbdc3977e7826fa346ea57344cd4b4feb3e9cf",
+      "git_blob_sha": "75ca604f1b1b206b84ee4bfdbbd3df96fede921e"
+    },
+    {
+      "path": "docs/adr/ADR-006-login-lockout-server-side.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "3fc2470931caa58d0ab031e0bf9a6dd03d85429ba9b523c5eaee0345a7e0ccfc",
+      "git_blob_sha": "8e57df3373a358ef6a3ed81776fc277ec535b163"
+    },
+    {
+      "path": "docs/adr/ADR-007-multiplix-ponte-singu-canal-e-aptidao.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "9c2733fa1e684e38b62cd76ba4378a043f3faea29a5c1790dba1e7f53bd4b22d",
+      "git_blob_sha": "31acd62cdd18bfc0370dbdae5d9695fe71af825b"
+    },
+    {
+      "path": "docs/adr/ADR-007-multiplix-ponte-singu.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "90478a5550daac6951567b78b0c437a22d4db4129dda6394b0662ff65cf89e33",
+      "git_blob_sha": "855f8b3fc3a5057a4a29f52f15d5a71092c6ebb2"
+    },
+    {
+      "path": "docs/adr/README.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "793d73385c785e377e45d12deae08311d4bdcc978d930f4dd5ada14e4f09207b",
+      "git_blob_sha": "ef94726017541b5a0f87bea92e8a3ff2bd4db145"
+    },
+    {
+      "path": "docs/architecture/edge-functions.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "b918795b3f6d575e74d0be385db41e722b06f47dafcd6dd362b0afab1d72444c",
+      "git_blob_sha": "c977c3e63f8246a76265adb0f85ed39dc4708204"
+    },
+    {
+      "path": "docs/audit_report.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "83ca7ece5b01944ddcc99be0577dc2edab58bf8eb34105773c725dfc02b4bbfa",
+      "git_blob_sha": "19def9e73011aea25a6197b00e11d8a287dc799b"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_ACTIONS_2026-09-27.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "f32f783213e85cada749defccc780347b2a8fcb308684d840e7361fab5b50fc9",
+      "git_blob_sha": "c31f06969a79a89c61f582ecfb194046a282021e"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_ENTREGAS_HERMES_2026-09-30.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "c9c1a7aec0705d5542fb65008c791845a00e2fada7c941bf8ba84b541ea411b3",
+      "git_blob_sha": "f3700b4e80a2f313ae501a599de7d49dd5d283f4"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_ENTREGAS_HERMES_RODADA2_2026-09-30.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "5aff24c33a94df68086266696078ebb8d3d0ed10aae4280befae915ed9b6e999",
+      "git_blob_sha": "47a90f81e8983695a2d0d9d4892af345e46fb6fe"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_ENTREGAS_HERMES_RODADA3_2026-09-30.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "43cf4e2fe38bb0b0a1aa7a3a633df2f05494b5e870b8a3a70001499c50f28ea1",
+      "git_blob_sha": "63afac0249eb01446d6e12bed4d8d1f3121ff0e4"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_ESTRUTURA_LEGADA_TAGS_2026-09-27.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "39f23e8b32d641a360e4484cbef5a1908d59926b5dd3094a5b9a0bfba545a145",
+      "git_blob_sha": "c12408b924a92409e9ceb715208edcfb86299f08"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-27.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P058",
+      "sha256": "87620d57357ab844d2be0d7974337fa0c121308022360af9839bc8f9691555fb",
+      "git_blob_sha": "079a1d7ad1da31232bef4e531151728760a093eb"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-28.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P059",
+      "sha256": "2a029535c129228576704764a6d5cc529e20d4e94ead3af58fa5af234caf8686",
+      "git_blob_sha": "98cb341fd683a96c37d1062ed87013d8a0135626"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_MODULO_CONTATOS_2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "77830d46e9b31ececb11d06e63f4dc458009f8acee67c87f96119ec85b13535c",
+      "git_blob_sha": "10a54f834cc11df5550b51a943d8cfb6288ac330"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_PARIDADE_LOCAL_GITHUB_SUPABASE_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "3686952ec0a385669ee1cfc91932e8243472192240a8c6e50ee6ea2f3fe09218",
+      "git_blob_sha": "d0403cd979f6a3b0de80cb52a278b284de37853a"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_REFERENCIAS_DB_2026-08-28.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "0615f2d763c9a5fc83128131aff5dc2f1d24539cc60497bc46fcd68e57b42cff",
+      "git_blob_sha": "f5bdef70e05203d7f2ededede08973b76bc92502"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_TEAM_CHAT_ESTADO_REAL_2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "163a009f85da2bce08a49e3f8e4416b41f7fe126c3edb77086b08d1ae3a19cb0",
+      "git_blob_sha": "6c11ef0a031112427cf2f5ccada1e2a548794cfd"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_TEAM_CHAT_V3_PARITY_2026-09-28.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "1b0f532fa7e6e05204c27ccef81ece15e61df5c35062e9db554b07e79f796b26",
+      "git_blob_sha": "a717e05359f0381cf3bd7f159835955fd33fd947"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_TECNICA_22_DIMENSOES_2026-09-02.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "2ae6b45bcf834389d2977dae2de808db8d76bbb8b635f35f7584baaddd32e070",
+      "git_blob_sha": "9572094bd9f2eb90e56590ff477174588641956b"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_TECNICA_22_DIMENSOES_2026-09-02_v2.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "b4f59da6152f1f6aa6b62c935e90c6d71fb5a3f07ed2e84b57fd9ee363ed52fd",
+      "git_blob_sha": "be5dad6a5762c57d0b20e8bda9a4a693c150d6c6"
+    },
+    {
+      "path": "docs/audits/AUDITORIA_TECNICA_22_DIMENSOES_2026-09-05.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "6df79d43eae1646592bbdc2eef123762d57c83fe68c57dd743f49f9fcb100fde",
+      "git_blob_sha": "e922d541d7e1eb81cad7dad83c7967aa689b1339"
+    },
+    {
+      "path": "docs/audits/CORRECAO_REFRESH_PAINEIS_OPERACIONAIS_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "76c68e23bed9190378d127255570e9662337113e6f10d947210ba5334db824ab",
+      "git_blob_sha": "98b16001fbf663ff1fdb49ba3bbd1bb7fd6b2cf0"
+    },
+    {
+      "path": "docs/audits/CORRECAO_ROTEAMENTO_NOTIFICACOES_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "4563e16bd7c1841a2960c0841f6720bddffab69e3a11cc9f5195f826285cc449",
+      "git_blob_sha": "bafa347ee5e1329c84dbc96a2d5a9430e7b00f33"
+    },
+    {
+      "path": "docs/audits/CORRECAO_TRANSPORTE_LIBPQ_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "71fb60a9f5899abcd67ece4234fe709f54899570258c2ae90cd084ca4d59db18",
+      "git_blob_sha": "5240402a0fe6dacfbd6f1ce5d4ddac70ab15de99"
+    },
+    {
+      "path": "docs/audits/DIAGNOSTICO_GUARDAS_HERMES_E_DIVERGENCIAS_2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "c42f737df6ec57c7b8c142c3feb3f3d689c679880215ea2011f70332d9bd5105",
+      "git_blob_sha": "b0f3b80cba535242cf234cbd03c372d8b8ecda76"
+    },
+    {
+      "path": "docs/audits/DIVIDA_LINT_FATIAS_2026-09-29.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P057",
+      "sha256": "af841669d741d756f89f66f9ead32cf1bc9eddcea852ff7b6b9ae5696188fdbc",
+      "git_blob_sha": "37c7f479cd9bb189885dba138a68c51888dd07d0"
+    },
+    {
+      "path": "docs/audits/DOSSIE_EXECUCAO_PLANO_50_2026-09-20.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "69efa9e151964b98c94ff2d247fef66eb38f1084bda2e9a26d5c745050b081fc",
+      "git_blob_sha": "5d67da29de8dbe10bf2bd2698efd7aaec1285bdb"
+    },
+    {
+      "path": "docs/audits/EXECUCAO_MELHORIAS_2026-08-27.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "cfb0c1035c35777c5699b490c1901739504f8d470a691a382f28fb0b3ef79154",
+      "git_blob_sha": "d8fecb28c15201cf1447d2330415ef56cdf36466"
+    },
+    {
+      "path": "docs/audits/EXECUCAO_TRIAGEM_PARIDADE_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "ea58912fa8d676166b19cb18049af9f314ce058c47274f10840097614ead7f9d",
+      "git_blob_sha": "d92c4e19a7e2ef724fd10026ae4da52a26301c0c"
+    },
+    {
+      "path": "docs/audits/FECHAMENTO_PLANO_50_ETAPAS_2026-09-20.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "76c2ed392e8236fad648f6bb87aeddb369252080ee00f2940926977ac0abc9bc",
+      "git_blob_sha": "bd9dbbdb126f937f06f670e8c390e42c8d7b8f14"
+    },
+    {
+      "path": "docs/audits/FECHAMENTO_PLANO_CONTATOS_2026-10-01.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "443959a3593622da33ddc83665e734ebe116fbe5009b2db116c19d14468285fe",
+      "git_blob_sha": "e98f7af7bc96c9e6056ac2267a1e81aab087843b"
+    },
+    {
+      "path": "docs/audits/FECHAMENTO_PLANO_CONTATOS_2026-10-02.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "0678c843f700bac13a0f838be298e8bf068b806635b8b3df773779cc1a703dee",
+      "git_blob_sha": "d5301bb02eebdce70926eda9e90c7dd69ff3f413"
+    },
+    {
+      "path": "docs/audits/HANDOFF_CORRECOES_PENDENTES_2026-08-27.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "a92e0b8b4ae6043924fb5edfc7fc494ec2699488846fe3fe9f94c3a31bf48d92",
+      "git_blob_sha": "063b6681bbf37ff21d6c5be34aef5765073347d8"
+    },
+    {
+      "path": "docs/audits/IMPLEMENTACAO_ACHADOS_CINCO_ESPECIALISTAS_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "e8c67145eaae52d157c765c2ecef234d03f401d3ebb15c6f47868d12fff8a0d3",
+      "git_blob_sha": "50a1fc5e8a287cbf8d776f1a65bdc09145f0f5fb"
+    },
+    {
+      "path": "docs/audits/INVESTIGACAO_USAGE_GUARD_BASELINE_2026-10-02.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "e2229cc2f06289c3f465c59ff69ae14051c91e67c5f5d76bc73d5379342ae805",
+      "git_blob_sha": "e927e600f1caa97e4b08c8cb2ab320170acb8f46"
+    },
+    {
+      "path": "docs/audits/LEDGER_LIMITACOES_HISTORICAS_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "9f3021dfdf6a7c3c9414bcb654c64a999a9104fcb1fc8c7caceaa28a95cd0e0e",
+      "git_blob_sha": "b239f7ea241be6463a2ed01651f04d2755a343d0"
+    },
+    {
+      "path": "docs/audits/MAPA_COBERTURA_TESTES_2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "32813f6ac103fed8a9cf681975fb3c6194323b4f31cfae6e8dfb031c36b3b6ac",
+      "git_blob_sha": "9307ebc1b62002af3dc5c84e76996a5a8cf19bd3"
+    },
+    {
+      "path": "docs/audits/PLANO_BANCO_UNICO_200_ETAPAS_2026-09-24.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P001",
+      "sha256": "9aaf9d0d1cfc18586a162259f5a1c05c18b281e7fa21647901320b847cb6b8f2",
+      "git_blob_sha": "c745dd5fb678dcfd7567831a552be83a577635d1"
+    },
+    {
+      "path": "docs/audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P002",
+      "sha256": "d18601a8b7729cdcedc65df0e6a7fd2260649930e353b2066b42072417e99088",
+      "git_blob_sha": "090ba2593e6375882290a8a0c77897c305311df0"
+    },
+    {
+      "path": "docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P003",
+      "sha256": "3171b14ab42736cac4387bbf98a5edba56aa70e306d8ae73514530c601450099",
+      "git_blob_sha": "d7228433858992a1fb0b8ab9f11c9a56dd44d279"
+    },
+    {
+      "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P004",
+      "sha256": "b030d807b52cf781ea39b7d4ac19f5e0696538ddeb5e2fc77af32b04be76cd69",
+      "git_blob_sha": "4e14ffb980fdee856279665052804a38e84904e9"
+    },
+    {
+      "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-27.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P005",
+      "sha256": "aef9318c953e82357c70e10372423c19d014501c46b3bf5fd10f9e6e1b39e8de",
+      "git_blob_sha": "9646f1c4a8a60211029071326041a4ce61459fd0"
+    },
+    {
+      "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P006",
+      "sha256": "1496861d8060227c9aa0810a6914523d3a347733ff54eb7b428a07399b46e505",
+      "git_blob_sha": "cbf3e445ac446e00fcc0f407796173787dcaa426"
+    },
+    {
+      "path": "docs/audits/PLANO_IA_200_ETAPAS_2026-09-29.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P007",
+      "sha256": "aea0e90ae9827522169028a9475e1098a7f89324e513a154a3be382992c24d52",
+      "git_blob_sha": "9abccb50754c857839ea2b8b5c96c1490c707a30"
+    },
+    {
+      "path": "docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P008",
+      "sha256": "33aceebac803ed0b014405bec6da8f4c102dcd36e2cf5b535a585821ac5171be",
+      "git_blob_sha": "ee7839fcf605bfdec48781f3b395816bd933b4d4"
+    },
+    {
+      "path": "docs/audits/PLANO_MULTI_CONEXAO_EVOLUTION_GO_50_ETAPAS_2026-09-25.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P009",
+      "sha256": "b42d98387c1746305896a3ca88395ab9546f13cf222dba18beb5db77b1c5f5de",
+      "git_blob_sha": "2ab0a17e8a5e1cfa3a45e8014d84037cd1ca320b"
+    },
+    {
+      "path": "docs/audits/PLANO_REMOCAO_ETIQUETAS_100_ETAPAS_2026-09-27.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P010",
+      "sha256": "32b24155664e7800aed5d6c413dcaadc9975105878052bec2a71e903135151f0",
+      "git_blob_sha": "65845bfab92b9642b66386e31d6992524468f0b7"
+    },
+    {
+      "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P011",
+      "sha256": "d2a761b4724762e6998d50d18f174d1b4b8fa25f3a6d95424e978a46060f9b98",
+      "git_blob_sha": "5f85071d7361f3099bb56300cba35924701ee28d"
+    },
+    {
+      "path": "docs/audits/PLANO_TEAM_CHAT_REMEDIACAO_100_ETAPAS_2026-09-28.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P012",
+      "sha256": "1dff70e99c08ec4fdc2408d913f6fdbd6ca57e967d97d4cfcc23566f1598f698",
+      "git_blob_sha": "b662c3893b7543fc0ff5fcdc2e1ee8c14c6c3241"
+    },
+    {
+      "path": "docs/audits/PLANO_TEAM_CHAT_V3_PARITY_100_ETAPAS_2026-09-27.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P013",
+      "sha256": "675151f727dc062b0a407ac2034720c5fb577aace0f72df044e9372bb0a44b2e",
+      "git_blob_sha": "859175a8f42556d9981944e70513b90d80ce9c92"
+    },
+    {
+      "path": "docs/audits/PROJETO_IA058_ALERTAS_DE_CONSUMO_ANOMALO_2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "df497ba0c81f43cc11948c31ac4ae840a087435b4789fbfaa45573b7ffa3a02d",
+      "git_blob_sha": "756a6f1d547562328ef6dfbc3779ecff8141b116"
+    },
+    {
+      "path": "docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "4d53510614e9482759c22b6efc0410a68c23960d0cfbc74ce8ba60e62f12a328",
+      "git_blob_sha": "bec03ddf50138a41ff5aeeced29b817ea1a5ad07"
+    },
+    {
+      "path": "docs/audits/REVISAO_PLANO_100_ETAPAS_2026-09-10.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "74d74f63986310e3e810e848df9a18f19f002c07c06cecde1e46a1b51a66de73",
+      "git_blob_sha": "8a14a6aef668809c833032da58289cc49c548bf0"
+    },
+    {
+      "path": "docs/audits/REVISAO_PLANO_100_ETAPAS_2026-09-28.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "7bf65686ad3075ee56160169b2686d9f1e621575769e80baf8715968461d1053",
+      "git_blob_sha": "b0be8a79ae2608c6e7c6d73233493877271f7054"
+    },
+    {
+      "path": "docs/audits/TALKX_AUDIT_ARCHIVE_2026-09-11.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "50864df59ea978c704a09aaefec5d9c16f2e1832e768f1cd8406ac3ce8fb527d",
+      "git_blob_sha": "3d979a3d48203740b0d1075c57aee5cc3e590958"
+    },
+    {
+      "path": "docs/audits/TRIAGEM_CONTEUDO_LOCAL_DESTINO_GITHUB_BANCO_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "0beab7f1e8271f82e688379e53d57416b38afdf016da07dba7e36f778f4ff470",
+      "git_blob_sha": "5f4fbcbf6c0a9ff90aede177163679a8187c59a4"
+    },
+    {
+      "path": "docs/audits/VALIDACAO_CORRECOES_2026-08-28.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "67f8adcfebcea4cc3bc149599c290b24d7abf35a054338709773b33f7dffbc53",
+      "git_blob_sha": "873a9526e992d01af7018f4f128c6d05fd02d8ba"
+    },
+    {
+      "path": "docs/audits/VALIDACAO_EXAUSTIVA_2026-08-27.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "ac24b9c697179b9275c497639870879e73ae81e772c7043af6277423169e6896",
+      "git_blob_sha": "16a85ff46526faafa44375c1a4c421ca85ba3a2a"
+    },
+    {
+      "path": "docs/audits/VALIDACAO_EXAUSTIVA_CINCO_ESPECIALISTAS_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "80314b9f45d4730c90d86c65d1d6c3521e643382afd66e096bb77e58c8bc2680",
+      "git_blob_sha": "fc7182284514625db23552eac42687e04fc6bb98"
+    },
+    {
+      "path": "docs/audits/VALIDACAO_POS_MERGE_LIBPQ_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "70fe1cfc75c0de58535ffb9840f7b995f545225b2684f3c4bab68924c6af35ac",
+      "git_blob_sha": "07067748ba472b780ab3509f07f273acf9e94692"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-2026-09-29/01-dba-postgres.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "b14d5b7a1a2154e0719e2f442c6c404eb752b53db2a566ee2050c7c020fafb91",
+      "git_blob_sha": "1163257b8727693ac733cdf5c8778a1d14401730"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-2026-09-29/02-mutacao-forca-dos-testes.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "d026e8a4fbed787caf29bc316ea3f0c3fdb2c5db2137748ff9dc3cf3f12a8a4d",
+      "git_blob_sha": "50a5657a8bb39ee0e108f5d9dc3583178567062e"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-2026-09-29/03-tempo-corrida-flakiness.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "db476e9f14df17de9bb3911a355f34d25fbbe62b421f3785b9305abb97e13913",
+      "git_blob_sha": "bdafc5049fb0e5160a9034dcf4dbe2a185ea05c5"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-2026-09-29/04-consumidores-incompletude.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "d782aec422415a14749dd0f90f56496c1891f6750d7b54324d91de5fe64e2723",
+      "git_blob_sha": "97b05211db654f9199a4b5223d49e8de74563013"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-2026-09-29/05-ci-producao-ledger.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "65f4fb6876f476ff5ece0ea3e603c8b3e6d38cfcb5ac44c03cf31d7b31b4aaeb",
+      "git_blob_sha": "c51e1c2c6295350a048616b511160e712d73f8d4"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-2026-09-29/README.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "6b92989a8ee8580b20f6a46856a9f36d929ba029a05d6c59bccba6b472014108",
+      "git_blob_sha": "d142631e52191980cdbb98999af0fda0c292022a"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W1-META-AUDITORIA.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "0a5aabe50891aec279ca5a4a2d014a4c7fb75db79e472cd38e6a3dec19b7dd13",
+      "git_blob_sha": "4120aadc6d2c072b063d9ede2defb4bcd2c454d6"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W2-SEGURANCA-PG.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "5478272d138cda292731bd69bc9ecfbfe9351c4ddcb5b32c35d7ae11bec2846e",
+      "git_blob_sha": "e60dadc95455acaec76c2f447c018ea8c29f6e41"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W3-REPLAY.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "4a4a1ffb5ecdd06a862786e1af7900b14ba020eeefa063d991806d4d175a1da8",
+      "git_blob_sha": "a2095bb71ca6575fe91156a46d940279bddcc9c6"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W4-PERFORMANCE.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "65a7b833ecbe6233530c9ef1038c8ab4624336174c7f4669b0c34e2230fd1690",
+      "git_blob_sha": "8b6583059e24ed2186476973b4f1a948f5bac11a"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W5-PROD-BROWSER.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "80f6f3c67f8472a6a2d40278a81573adbdca5ce706edd10dbf2f26be1635df30",
+      "git_blob_sha": "e7ce945f5ad62d774f6899ef84daff4c7f1d5230"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/README.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "9afd02c9757fb12c295de9fa1a27d549cfe2974babd1dd7631943ee331b8eeaf",
+      "git_blob_sha": "cc12689e199ce376d0b7587d8207752ce7bdc262"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w4/descartado/LEIA-ME.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "80af769186d7735a80f65c0168c1a9c8a53bf6fc2f19df6d24848fb8fca781d5",
+      "git_blob_sha": "21b4846d7271095fd6f282f838ee8b3e8a5e129c"
+    },
+    {
+      "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/provas/w4/tabelas.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "0d7cce71662aabbb24be3450fc819962396732b78de2f09529a44e76ff741581",
+      "git_blob_sha": "eaea78939b38251dbb4e25b00cda4348ef8f1860"
+    },
+    {
+      "path": "docs/audits/e84-workflow-talkx-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "cce2b0e2b4eb8faf9cded38f40d8c5421cc2936325fae1327620ffc5c07feffe",
+      "git_blob_sha": "44999c83821ad154f4dee2b70de2aa27bd7d137f"
+    },
+    {
+      "path": "docs/audits/e91-branch-hygiene-issue-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "ee9025a5c6cb37802c9763089a7cf38c1bb3f3146163dc8e36e0c3d9a3e34402",
+      "git_blob_sha": "fbbba1cd29370ad3ea74e6d0281c11a21587c504"
+    },
+    {
+      "path": "docs/audits/e92-templates-issue-pr-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "b0af3882b1ef245a3b1935e8fee91a092c15447dce8ce0a8b0c7e2a5654f5093",
+      "git_blob_sha": "6f4234ff7e87da66a97cc9a4b6a8c52b6f0526a8"
+    },
+    {
+      "path": "docs/audits/e95-perimetro-github-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "94c3c5bcb3adecb0fbb010421b094a76f53227f35fabde35f3a8f52bb3a3b532",
+      "git_blob_sha": "b6a727b08822c37a43fccd388e482d32e8e5f6e4"
+    },
+    {
+      "path": "docs/audits/e96-workflow-docs-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "3523a351552cec09d1c7e20ba36e5accfde1d40e8bce9ea10a64290105c159f9",
+      "git_blob_sha": "e2bbad423a8739e4cdfddf6468835bb77d69ad57"
+    },
+    {
+      "path": "docs/audits/e97-pipefail-workflows-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "4e05e1da406ca91cb4b25d76a41f41add3e1b2e331763bb5bd3697e71a9acee2",
+      "git_blob_sha": "2fb2c456fb133d42ec8dd8bb7ae4655642a7d6da"
+    },
+    {
+      "path": "docs/audits/e98-workflow-contracts-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "d04f0b2c595628da37ed8b20742aa535df9ff808fa9f62827b10d43c6d7765c0",
+      "git_blob_sha": "e302eff10c992e870cec8bd038e4f846fd7dbd4b"
+    },
+    {
+      "path": "docs/audits/edges-pooler-2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "71bcb56bb6f370103e1b069ac9dfa67ca9d8c10b12b5441638085d55da3e5faa",
+      "git_blob_sha": "eeffdcb3ea1c4f1ae38ded65015d867862e0c967"
+    },
+    {
+      "path": "docs/audits/edges-reconciliacao-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "f03e4c0e9b4b16c30b69b385b7f777aadce8e5d58beb08b6659a559fdc208a68",
+      "git_blob_sha": "96f0a3a4ea8b29d75e6857ac696e9484651bf132"
+    },
+    {
+      "path": "docs/audits/edges-secrets-2026-09-26.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "be62f126d0540ea029882c8a97ef895c6321bfbb7aec779956397735ada63daa",
+      "git_blob_sha": "7e5cc31afc56537a77386830727053876c03de9d"
+    },
+    {
+      "path": "docs/audits/evidence/db-migrate-contratos-historicos.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "3fa1cc0e138d036abe71661d1f9858a2fd53b17a78c6224f7185a72295ac43da",
+      "git_blob_sha": "738c5e57a84cc895987a6bc9368ff47e4ec25ecf"
+    },
+    {
+      "path": "docs/audits/evolution-webhook-security-2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "5f70db4bf9cc596f4c91dab875ed4498c58c3dcf0bc5ec5a9c8a099c278e5e5b",
+      "git_blob_sha": "89ff3a87f11c8fa6567df8aa39e43507b4b70269"
+    },
+    {
+      "path": "docs/audits/incidente-testes-vazando-producao-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "bc5954bbd133c59cdbc31fb4b6f07e8d9ceec7c3b345088450a01c2add711017",
+      "git_blob_sha": "483b0514a9c1a6c1d6ed29b6c8570059b85d05a8"
+    },
+    {
+      "path": "docs/audits/mcps-status-2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "0d70b3f3002c6f413bbc1418d8a04bb30d49c38660327d240592a9d23cccb91c",
+      "git_blob_sha": "cf9ac418bc74f298158e3258be0d5ccbb7d5dc5d"
+    },
+    {
+      "path": "docs/audits/n8n-graph-sync-decision-2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "e6a55edca12432459202196014f35d6629b91005a00e275c1f2ab23f91344ec5",
+      "git_blob_sha": "a837f14e369b7377bfb95c4499f61fa2d3ec18d4"
+    },
+    {
+      "path": "docs/audits/onda3-260930/README.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "0842d218a194b4a0ddca4e80c091ac9a59ca82b9624378897d39975256848844",
+      "git_blob_sha": "810aca092efcc7ffbfc59ab51bc49d612085ac1a"
+    },
+    {
+      "path": "docs/audits/onda3-260930/VEREDICTO-CONSOLIDADO.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "7403af21df6c57219817f9e9ced7c955241d38b348f880658ce51a00d712d7d4",
+      "git_blob_sha": "db988857ea26b8e5ffeb1bc44418d753657ae5e1"
+    },
+    {
+      "path": "docs/audits/onda3-260930/a1-db/RELATORIO.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "73b8be5092f94e2b52c9219237db6a270fa10a920d6306c77bd8520d9158ecb1",
+      "git_blob_sha": "180c107cf3aae3e1a74a1f523d86fb9b6bea337c"
+    },
+    {
+      "path": "docs/audits/onda3-260930/a2-mut/RELATORIO.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "72af1a37735e4d8d38f69832cbf761d6f5d874877cda2ad1e3775b1f9972ed92",
+      "git_blob_sha": "5515004c8effe2fedb01396cf0dad6c7684a36b3"
+    },
+    {
+      "path": "docs/audits/onda3-260930/a3-brown/RELATORIO.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "7402aae387de69fe9d6b9418ccbf593653597b852af4b89d274129d378906ecf",
+      "git_blob_sha": "87d4889e0c08ba89d752367968d20407ec95bb06"
+    },
+    {
+      "path": "docs/audits/onda3-260930/a4-ci/RELATORIO.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "f47463b00c79e3efe904c5a107e1bfc5823988417922ab6d694a2d703dc8409e",
+      "git_blob_sha": "227c406d331e9ff7804424210cad6b16efaed631"
+    },
+    {
+      "path": "docs/audits/onda3-260930/a5-red/RELATORIO.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "6f398b588ba16ed54f5090c945d26048acce3617edc98cd9f92bb074462a6e54",
+      "git_blob_sha": "7abebed4bea7235456f23a375c5002548fe36722"
+    },
+    {
+      "path": "docs/audits/onda3-260930/poc/RELATORIO.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "182bb9846033c5c835fbe5e95794680b630a4a8ac0a1d8b5f8d339e55a4ac875",
+      "git_blob_sha": "620a0e82ed94894d7b0e97331a4182747752cdc4"
+    },
+    {
+      "path": "docs/audits/prefetch-views-quentes-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "927d61c5fc0000e0e9e87c0e329d7120744b4c1f230f3a785fe0bfa7779adea9",
+      "git_blob_sha": "1424160916c55521e7aad3fec09b64982e7be9f3"
+    },
+    {
+      "path": "docs/audits/react19-e38-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "782459f6f360225cafc45c78e70c369bf3436fe53a7940e9868678d6a80af2ea",
+      "git_blob_sha": "992ee9ade8968848be066b3955d93b316e923084"
+    },
+    {
+      "path": "docs/audits/referential-integrity-2026-09-26.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "16485d7b8b7d67b240ceb1c3e8036ac60ce6e14fec086a7ea6aa93ed0778f8ad",
+      "git_blob_sha": "49d56f1d40008e0a46a060fde7108f0cce2ee9b5"
+    },
+    {
+      "path": "docs/audits/rls-matrix-2026-09-16.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "8769587fd288dbd601deb122cda53aff615bdf6bfbc28f86b6994636e13991a9",
+      "git_blob_sha": "466595740c7b14d91f4e6178fc1834891a0057f9"
+    },
+    {
+      "path": "docs/audits/slow-queries-2026-09.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "7f7a845df4d33a237d5769ade7aba880de9d0b8ad098a30aafc62da665662be9",
+      "git_blob_sha": "c433498e9e5284df0abde889e41d57cb626088b7"
+    },
+    {
+      "path": "docs/audits/talkx-2026-09-11/DIAGNOSTICO_CAMPANHAS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "3103372544887034f921a2bf2e0d32004617061b3d6c4007461b5883165c2b11",
+      "git_blob_sha": "9b0f193490be217a7aa22df89fced9b4b8e1b262"
+    },
+    {
+      "path": "docs/audits/talkx-plan-review-2026-09-11/REVISAO_100_ETAPAS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "66b72aa0f26975666bf67d041674cf9fdca8da0dfaa7c3a0de2bdcd68d10c56d",
+      "git_blob_sha": "e9366f5765f5f8f07acd88a9eebc0ba0cefe1ff0"
+    },
+    {
+      "path": "docs/audits/talkx-revalidation-2026-09-11/REVISAO_100_ETAPAS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "8645cc82ac542616e7aa3feeed4992e7ef78f7a86885055082492eb765606f42",
+      "git_blob_sha": "9e64ce6d024b3d3720f95d3c4466eac8a70ee670"
+    },
+    {
+      "path": "docs/audits/vendor-ui-composicao-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "685732cef44dde28cd274d4703c418bea14abfedc713d66d7cc1794aa9825e3b",
+      "git_blob_sha": "b1bbcf48acfe204a8141c88c72280b1311e5b678"
+    },
+    {
+      "path": "docs/audits/web-vitals-e36-2026-10-03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "84a4ccda0b8e673506bf92522179c0c469dd78189677b1759a8308f1e8112098",
+      "git_blob_sha": "8a488eb93a28997f020801afc2c0c6bcded2d59c"
+    },
+    {
+      "path": "docs/catalogo/ARQUITETURA.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "965c4bea4064b9821aad6d72adb3dbdb23476f5e286ba81ee51b6812270b666b",
+      "git_blob_sha": "1739875d25129137d47352e4547ac28818d7176a"
+    },
+    {
+      "path": "docs/catalogo/AUDITORIA_CATALOGO_2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "fbfc854eeffad1d21111d09d35e783daa6b22b2a13c298716efe7e3616e84bd1",
+      "git_blob_sha": "7d5ade55c984bd20e2e61bdc484a02c40f2258dd"
+    },
+    {
+      "path": "docs/catalogo/CHANGELOG_CATALOGO.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "89acd0d21ff0ed1e0eba3b587bea179d9a3cfd74dd9b755d0e9bfafd1c828eb3",
+      "git_blob_sha": "38d07b868197fd1ce4a5d83475e880791bd8728b"
+    },
+    {
+      "path": "docs/catalogo/COMPONENTES.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "12ae1192554ea761d1846a30f140a1afcf9667da2497a8e73c4a27e1c9c65389",
+      "git_blob_sha": "6ccf126a455e3d445f49481c413b0f305722cf8e"
+    },
+    {
+      "path": "docs/catalogo/CONTRASTE.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "024e9b90f072e4b20af8183aa5395f306e67521b641ea3a84257d87c9ad922d4",
+      "git_blob_sha": "c00e8edef2912d5fbd4fa0394554c4ad3b6754cb"
+    },
+    {
+      "path": "docs/catalogo/ENVIO_E2E.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "860fd506c528756cef89d2f7fe1ff34e83a4244ddbe991066f9b04a91a472a4c",
+      "git_blob_sha": "c26589494b7f896c23e9f66d010bf5adc5742588"
+    },
+    {
+      "path": "docs/catalogo/ESTADO_INICIAL.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "a0baa72be4ba6d5c877a87a8c38a39f22fd9de02d995cb6e5d13609d87794c83",
+      "git_blob_sha": "23ed5650b2354b4a2c2ae00091196355b16964d7"
+    },
+    {
+      "path": "docs/catalogo/HANDOFF_v1.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "e23477acc3f85717db4dbb3eac5d29d06c556c6d20cf10e5e91f16a43ec04cc5",
+      "git_blob_sha": "90edcc1c894e10fa439ca5abc93498b83c29458e"
+    },
+    {
+      "path": "docs/catalogo/PARIDADE.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "56ad07cc449197cef1a598e869df5dad2d3ef744e93370d45f9df24bca547d3b",
+      "git_blob_sha": "4d58575fc6cf35d3e0c5d6456879d4c66293ec77"
+    },
+    {
+      "path": "docs/catalogo/PERF.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "32174ac4d9d197204894c2b34b6329470bf28675280ce592f17728d91d289479",
+      "git_blob_sha": "d5b9b2199c72b33be25042d7e9799eb671038f02"
+    },
+    {
+      "path": "docs/catalogo/PLANO_FINALIZACAO_CATALOGO_100.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P014",
+      "sha256": "7242b2fa242e2589e40932c6696baeda8ac141f747a1627c66d0c3a90b2ac25c",
+      "git_blob_sha": "3e6f4ef9105f94c74087b1e98afcc9e5821c8e46"
+    },
+    {
+      "path": "docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P015",
+      "sha256": "ebb9f036a3b4f6aea21d0ee5c8e292869b53a8889c10b8ad3e86e875e3f77d8e",
+      "git_blob_sha": "d1c43ac068739a406f461fbf75a7fe4e5999385f"
+    },
+    {
+      "path": "docs/catalogo/QA_E40_F3.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "a542e8fb9ded6249876343a366afb6228c450f91e04f7a8e2e17d36b338f8546",
+      "git_blob_sha": "c9c86fc3bd4e5448a2f3a23fa263cb6aaa17e9d2"
+    },
+    {
+      "path": "docs/catalogo/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "b5a066c81a5b300fd781e197d9a3572ef88d31b9cd6c8054cae47ad3199192e2",
+      "git_blob_sha": "1c2b6ad051daf18a1f34b64faf2c668638141c1d"
+    },
+    {
+      "path": "docs/catalogo/SECURITY.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "daeff48a807d8c8a018434f14965e8d4cd63dc82f0432ce38fd04371718e5376",
+      "git_blob_sha": "28985381319d6294b3136f355e6a7b941b452580"
+    },
+    {
+      "path": "docs/ci/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "9b05fbd5b28e8a4d862d8ba7a38249a2d46df8cfc35bfb118c73a3342ffe5667",
+      "git_blob_sha": "4abb0eda2af42dcbfec738646f624e0139d69974"
+    },
+    {
+      "path": "docs/contracts.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "ed96b45eee7ac730424a4249510782ddcb55955cdc49b91d23e43f9701fb63cd",
+      "git_blob_sha": "99076687dc548d7f7cdf1098bc169101640f1d0a"
+    },
+    {
+      "path": "docs/crm-external-grants.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "17d9f9d1d3a1082a05480c95ab173e7aa0c933946b0967f245d49502aa9fe8bd",
+      "git_blob_sha": "83f7583cda6cf96c1e03e1184e657b5444bd4f86"
+    },
+    {
+      "path": "docs/dashboard/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "16d29f1b9a466d65d2f6f1c214ebce97537ccf874e08560f5c64d5cf415faba9",
+      "git_blob_sha": "6020480496c0011f3664d967424b3a5a106ae39e"
+    },
+    {
+      "path": "docs/decisions/ADR-001-react-query-server-state.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "414ac5bae19244601ea1661d4ea2de3fa71c8d4ab0b64cb2e1b0f041fce88414",
+      "git_blob_sha": "8889490e7638cfbd1c40dcf9c24de95061b379eb"
+    },
+    {
+      "path": "docs/decisions/ADR-002-supabase-rls-security.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "c9a56583eb369a7c28148d1eb37f79e673ad657afd70b3fa2fae0d3cad3eec15",
+      "git_blob_sha": "7964402dcc04ca3229776cd042e03691f964c5ca"
+    },
+    {
+      "path": "docs/decisions/ADR-003-css-modularization.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "04e95be67dde7549e377274a0b9982a585aa7c9b89f514e57a8a54d86690817d",
+      "git_blob_sha": "50358802d0c516362511a76e49e73101b31f5513"
+    },
+    {
+      "path": "docs/decisions/ADR-003-lazy-loading-architecture.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "ac645ba6b574023d536d3477b15c78d3e61c88d8112b79c9d18a588b3e9bad4a",
+      "git_blob_sha": "e2ba10bb40772138728cf045f863ac1edac1effa"
+    },
+    {
+      "path": "docs/decisions/ADR-004-evolution-api-webhook-bridge.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "699b3653959a2cabb57359a941bf22360b95799bdac38276c830df5211770f28",
+      "git_blob_sha": "6fe0ba1bdb0afce47b2b1454abeb7063c0d4714d"
+    },
+    {
+      "path": "docs/decisions/ADR-005-empty-state-consolidation.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "cadac982d079175b3e62e8896143fa96da44ace92f4f65a24a18856195355945",
+      "git_blob_sha": "e4c4f490811b99f9b0ab886b054701e5f3a98029"
+    },
+    {
+      "path": "docs/decisions/ADR-006-whatsapp-connections-cache.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "7d34b8dec20531b083d9d093ebd2bf32eb0506a35902b6897f3ee850bffc8c3a",
+      "git_blob_sha": "b6440fc04fb71f1c22152fa8563985566cd57435"
+    },
+    {
+      "path": "docs/design-system/glows.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "67bc551be26c4b6b0d81cc6fc3fee078409855f3d6c040b2dd172ef9584d3b41",
+      "git_blob_sha": "5d3fde8db9e2aa0604bc13131b3ecf2dfdb62afc"
+    },
+    {
+      "path": "docs/design/AUDITORIA_TELEFONIA_ESTADO_REAL_2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "bc30f51ad5777a583f98f2f4d08bd12c5d61f9d5e7ee52ac102980a339d41fca",
+      "git_blob_sha": "d53f5f772ffbf5da7391abfe04c445a3f4df2439"
+    },
+    {
+      "path": "docs/design/DESIGN_SYSTEM_PROMO_GIFTS_STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "58582cbbb9314c32586c0fc3c87950d9d34ef087d1023c9fcac65ed5b2100f28",
+      "git_blob_sha": "b8bd375e23680958fceb3d23a2b42f025e636a43"
+    },
+    {
+      "path": "docs/design/EMAIL_NAVY_IMPLEMENTATION_EVIDENCE_2026-10-02.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "9c3bf90df54b12d7bd35bd20a21f07c9d1939b54be25e9da1ab7d080d0bd7062",
+      "git_blob_sha": "3da91a0dc9924441262a160d2fa55568c8d98ea6"
+    },
+    {
+      "path": "docs/design/INBOX_360_STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "b81e509307c07db91bb17255797da74d0749ad6fa16711208e01776f7c42feaf",
+      "git_blob_sha": "0ec776bcaa3169f70a8802a8f8a2436d0f6aded5"
+    },
+    {
+      "path": "docs/design/INBOX_FIDELIDADE_STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "a2621e400af92681c7835f9976ecc650323a796745af1c1a84699a45c16abe09",
+      "git_blob_sha": "c9e65970133679f742d6f213d560a8da0e3f51d9"
+    },
+    {
+      "path": "docs/design/PAINEL_STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "4fb9ec1c7cc849e2a053282a16bc5bc473b08070e502c20d079c0b256cf7a18e",
+      "git_blob_sha": "04b2e2efa991c4d467a7f9b294e41f1eaf941498"
+    },
+    {
+      "path": "docs/design/PLANO_COLUNA_HEADER.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P016",
+      "sha256": "b2fd52572ee0634e4bd84375626f52f903cbf3332300ac1ae9a1972d075d56b8",
+      "git_blob_sha": "21075775dda5f83a9f8626e695fcf5945636bcbe"
+    },
+    {
+      "path": "docs/design/PLANO_CORRECAO_LAYOUT_30_ETAPAS.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P017",
+      "sha256": "99818c9769bc795e1cf6b69e2222a984f24badb205507bfbaf000bbdb662b4c2",
+      "git_blob_sha": "5a06a8e302cc1d8f2880669f1141bf243980d139"
+    },
+    {
+      "path": "docs/design/PLANO_EMAIL_NAVY_100_ETAPAS_2026-10-02.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P018",
+      "sha256": "22b16c8ad83c80f4ad22265ddebf8b014969779dce90c09b4c8ddba5dcffd2fd",
+      "git_blob_sha": "7a9e41a63f44a974571dab1056a872a5b98efee1"
+    },
+    {
+      "path": "docs/design/PLANO_EMAIL_SIDEBAR_CONTATO_50_ETAPAS_2026-10-03.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P019",
+      "sha256": "fa04e80b2b0c1a1db5267fe0e178b71efc1cc5dd4eafe63ed02ae258f71280ef",
+      "git_blob_sha": "29cb355332911f6fcbbd2ec352cdf874479b4328"
+    },
+    {
+      "path": "docs/design/PLANO_INBOX_360_CONVERSA.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P020",
+      "sha256": "02fc379342fde37ee934e3876f7b3b7b6edc4168debba69fb21156e6f009903d",
+      "git_blob_sha": "e06b0ed1e0295cc99cecd1411cd1931d56fe98e9"
+    },
+    {
+      "path": "docs/design/PLANO_INBOX_FIDELIDADE_CARVAO.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P021",
+      "sha256": "aac4b785edc877ca1d6ef2a0d492f34bb830a6bef64137e4ec4b74377f9b24d7",
+      "git_blob_sha": "52ae610b4879a407fc481da1cf13187821a84f79"
+    },
+    {
+      "path": "docs/design/PLANO_MELHORIAS_CONTATOS_50_ETAPAS_2026-09-27.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P022",
+      "sha256": "a86482c157c8376260d138d534bc1a22529a8915adc575d7fcdf156e6a388055",
+      "git_blob_sha": "fcff1aafc87b099882f76d02f80b73308672276a"
+    },
+    {
+      "path": "docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P023",
+      "sha256": "6ad52f9d43accc202783b680a91441fee28bb7337aa6afa4cf198ad11914b0df",
+      "git_blob_sha": "9bd4b615dbb5329fe6f6279a5c935f6008fd2230"
+    },
+    {
+      "path": "docs/design/PLANO_PAINEL_DIREITO_TABBED.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P024",
+      "sha256": "7302b4e299096e4f59a841fe05ff26d3e409f7d4e61c16985306b23ddebd9d86",
+      "git_blob_sha": "27e8a38f5f2f47916c523a614c0df05470fc34e8"
+    },
+    {
+      "path": "docs/design/PLANO_REDESIGN_ARQUIVOS_CHAT_PANEL_50_ETAPAS_2026-10-01.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P025",
+      "sha256": "d898a5267fab63682030f1ab7368720215e8a3613eb6a3b0d5076c6f3dbbe5e2",
+      "git_blob_sha": "7719dbea3dabb53db18273f0db960c88e3cadcd6"
+    },
+    {
+      "path": "docs/design/PLANO_REDESIGN_CONTATOS_NAVY_100_ETAPAS.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P026",
+      "sha256": "1d9ee236b32aae895e3ca7f735adb2f96b494251560dced0234c918878dc84b1",
+      "git_blob_sha": "bf62ee021d668c1d460bef3e4ef8505e9bf16eef"
+    },
+    {
+      "path": "docs/design/PLANO_REDESIGN_DASHBOARD_ABAS.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P027",
+      "sha256": "a0c6ec28cc39f9f98ffd359657939b3688fae2b4168879fc05cc4760f357b763",
+      "git_blob_sha": "45744af0ee8f66e494a01510e102ad2b977e8285"
+    },
+    {
+      "path": "docs/design/PLANO_REDESIGN_DASHBOARD_NAVY_100_ETAPAS.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P028",
+      "sha256": "50382daff99865e7dc332ee495c2b02fe00effa4e3513af8679c2afc9b4f8689",
+      "git_blob_sha": "d5797f305dfe5220c230f771a1f883bfc0ed0d88"
+    },
+    {
+      "path": "docs/design/PLANO_REFINAMENTO_TALK_ME_50_ETAPAS_2026-09-30.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P029",
+      "sha256": "bdf886cdac6d1b4ae59400285686af101f6c030cf1233e611714c2d44517294d",
+      "git_blob_sha": "021c801ec52ab6eef0a6dadeee54d7733f0d4104"
+    },
+    {
+      "path": "docs/design/PLANO_SALESVIEW_JOURNEY_50_ETAPAS_2026-10-02.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P030",
+      "sha256": "2b9b9cc4e288b47f3a0b4f1478c82d913ae412da939b841c0225eff28a40f30e",
+      "git_blob_sha": "de06535442820ccb91bd33ef89cabd77104acb2f"
+    },
+    {
+      "path": "docs/design/PLANO_SKINS_OPERA_GX_100_ETAPAS.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P031",
+      "sha256": "e4e41e85f61831bed34897e37deb40b0ca85a75d096dcfe5e9dca838989274fb",
+      "git_blob_sha": "6bb9163104ace7555d04563ad66de78d1a1ad016"
+    },
+    {
+      "path": "docs/design/PLANO_TALK_ME_100_ETAPAS_2026-09-30.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P032",
+      "sha256": "41b5ddf480c628f84ece4d9c8731d1586b0c2ea9be4a9cb22be5e6d5926e7047",
+      "git_blob_sha": "0b23b20b9024313ae876cc2bc9516483f562675e"
+    },
+    {
+      "path": "docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P033",
+      "sha256": "2b8f0e61b6f95adf4b0c02290069b69e697f679fe7ab3304f1a0346515a790c2",
+      "git_blob_sha": "795dbfb9e7894e14fbb8809618e1c4e884338a7c"
+    },
+    {
+      "path": "docs/design/PLANO_TAREFAS_QUADRO_FUSAO_150_ETAPAS.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P034",
+      "sha256": "26431e63d0a22f976e6ef9b097227047a0125a3b9656e771553878adef270483",
+      "git_blob_sha": "ce2c32afa0c5e00eebb1539183eca089af8b7700"
+    },
+    {
+      "path": "docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P035",
+      "sha256": "b65cff2bc2e9fb33fa18ce364c847cf01f999791893dc10b5065c89ea758d066",
+      "git_blob_sha": "a9fd397db86fe6783ed5aa464a34f4f870020ebf"
+    },
+    {
+      "path": "docs/design/PROMPT_FASES_2_12.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P060",
+      "sha256": "803daec3e25822614a11255d6c3a8529e136955679da369eb0997ece4ace9cdb",
+      "git_blob_sha": "6caeb40081239574c31c3a3b9a72ecacf09e7f5b"
+    },
+    {
+      "path": "docs/design/REDESIGN_CONTATOS_STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "54db6de96ff71cfd80a52c036a0e642fcf1fad54ff39e765eedfcec4fe69ffbf",
+      "git_blob_sha": "a2e9c2df570f72397baccd3053e9a2d4c2f0d0d6"
+    },
+    {
+      "path": "docs/design/REDESIGN_DASHBOARD_ABAS_STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "03a945b88e5b2f42ff5a89a693f903e7af318f2d9783d6c17a7adcad055dde56",
+      "git_blob_sha": "1ecaed73738d41ec73997e7cb5d7f5673999ca3c"
+    },
+    {
+      "path": "docs/design/REDESIGN_DASHBOARD_STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "ad3e79903c031d7f60f984961d2ac358941f4a76d5437e780cfb3743af7794e2",
+      "git_blob_sha": "6f239e7d131834b52906a4008895c70c7f15c233"
+    },
+    {
+      "path": "docs/design/RELATORIO_AUDITORIA_TAREFAS_FUSAO.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "66978f3078670c4ae1521c0d2d535260146eed5ba8b7c8165f223a58889d2e98",
+      "git_blob_sha": "9a78f3448831082ad3014fe4ddb6009c1340dc85"
+    },
+    {
+      "path": "docs/design/RELATORIO_EXECUCAO_TALK_ME_2026-09-30.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "70d661d3f1020617392dd713e8eaca8d114c45b9adaa86ca408e4479ab28d2c4",
+      "git_blob_sha": "b4fb59ec8fc1d1fdc6fc232ea2fc150874247040"
+    },
+    {
+      "path": "docs/design/RELATORIO_REFINAMENTO_TALK_ME_50_ETAPAS_2026-10-01.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "f8724fc0eb9242cc23c07c77194557cba083b5cb3d2eb219eafb1b7dff37be35",
+      "git_blob_sha": "ded02255db7e12542f4ce2093fe1d6a4eb32b8cb"
+    },
+    {
+      "path": "docs/design/SKINS_OPERA_GX_STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "65d6e54138355c45bd1fcd5c73f7826d0e037d174f47c1fca6d26e166141390b",
+      "git_blob_sha": "ff3dd668474bdbfb1f820e3cf279b2bb389f8c90"
+    },
+    {
+      "path": "docs/design/TAREFAS_QUADRO_STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "03a235b24df73c7501e3ab214183100fa71357c36ca4de56d81eaa611b5587d8",
+      "git_blob_sha": "38d2550178c1fbc23d55ebd5c326038c3202460d"
+    },
+    {
+      "path": "docs/design/TELEFONIA_STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "2a2494f3c8da740e3aead1d7ef9f438710d7eabbf54d6a97485cb1a3547cba01",
+      "git_blob_sha": "250b584736b7e1ed43aa5342b4844dfe0559faf4"
+    },
+    {
+      "path": "docs/design/evidence/arquivos-chat-2026-10/diagnostico.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "939bbb4f0bb3035c5adb724c4e1a46c42f6b0f1a8285923aca5af45453a85eae",
+      "git_blob_sha": "7df4be4db7f847f41fa53b0d3ad96d5175f15786"
+    },
+    {
+      "path": "docs/design/evidence/arquivos-chat-2026-10/matriz-preservacao.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "9c02ce937cd4413fc527e21d3384251200a8934f7a3c8790fd6e3f0cc1a323c6",
+      "git_blob_sha": "bc6e515e32e10e859d6363cbc7e0475d2e9c24b3"
+    },
+    {
+      "path": "docs/design/salesview-journey/VERIFICACAO_S38_S41_S42_S43_2026-10-02.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "4b85adb08fc8bac4dd93d7ff1fc07a97c4804bff5776687c948b8a12b7e81002",
+      "git_blob_sha": "61bdcfc25c46463f896be3cd02927508dd2ea3a9"
+    },
+    {
+      "path": "docs/edge-functions-recovered/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "903c6d60f2852262edcd812faeb8e8dea663e376dbf4569a0b411bd223720a1d",
+      "git_blob_sha": "b9ba2d28c180d51c9215e7d656f5f0394a09ab20"
+    },
+    {
+      "path": "docs/evidencias/plano-volume-50/README.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "19f5e1af06e0e69df9d83348307b54f7595d6a85b3b5e93c8339826749ff1c2a",
+      "git_blob_sha": "690dd7e85024e17003a6630214efb14415ab8c2c"
+    },
+    {
+      "path": "docs/evidencias/plano-volume-50/e18-contraste.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "7ebbe742840960422e72cdb3e3e106daff4f05bdb70d99ed2a180ad26a272d8b",
+      "git_blob_sha": "9cb201aa8a8ddb032eab85fd8de5d5aea0a8f294"
+    },
+    {
+      "path": "docs/evidencias/plano-volume-50/e45-e48-e2e.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "5696c096a7c579b1de5ccdbb3bf877725ff61dd6c3bfdc1a1ba7f7baf0657877",
+      "git_blob_sha": "df1b61d069aab2fe9b9a78c262eef73a7c58187b"
+    },
+    {
+      "path": "docs/evidencias/plano-volume-50/e46-navegadores.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "93df52adb7e3b8979360d3a11c0809f1a05bb6a2b0196d471c8d45df4cc538af",
+      "git_blob_sha": "0131c793568fb132541dd70d94dffe51d983f64f"
+    },
+    {
+      "path": "docs/handoffs/HANDOFF_ZAPP_WEB_V2_2026-08-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "31b1e8699693cad8fed0abd2aac209da31de95f25cea77dd348f6ff16d08e7bd",
+      "git_blob_sha": "b36aaab01528c12c1e9c26feaece032168458c56"
+    },
+    {
+      "path": "docs/handoffs/auditoria_exaustiva_plano_100_etapas_2026_08_30.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "9a6df8b9324f04a5835cf35b59e182e9c41af8731a337937494276148a83e787",
+      "git_blob_sha": "acb3c723a1d1e477c2d45f83b5ca1d198ecb0bbc"
+    },
+    {
+      "path": "docs/handoffs/cline_execution_log_2026_08_30.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "284ec58c0df35b4bedc3c29e6a0bf93474a512bbe8e325db6de94f3061831c20",
+      "git_blob_sha": "2739641bfb36a5e962877b4fbb237576a57c7b8d"
+    },
+    {
+      "path": "docs/handoffs/handoff_cline_100_etapas_2026_08_30.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P055",
+      "sha256": "ceadfc075e0f67c9beceb1cafbefce4b31ce4501d123de85cd959226ac580d24",
+      "git_blob_sha": "4b15701f6aa6b1298fc0c10566b5a3008e342fe2"
+    },
+    {
+      "path": "docs/handoffs/handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "56c749e8dbd36a730fdc907150ec85a2bd6f0b24e0c4ad8775a3ce58c67f00ec",
+      "git_blob_sha": "a6cbf4cd27f2e0dacb6be875146f2d1b5f8ba180"
+    },
+    {
+      "path": "docs/hermes/FLUXO-HERMES.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "b2eb74fd76c551867ef3ea756f840a9018b16aeed0b04d2bae7a51357f97e235",
+      "git_blob_sha": "b6aca1d89344a5b0f4c85751c8bdfbe9053b4288"
+    },
+    {
+      "path": "docs/ia/IA-001-referencia-de-execucao.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "15cbeaacdaef24e4c23c9b6cd5a3763714118761d8c67f294e6db705a61e4860",
+      "git_blob_sha": "34b7aa6affda5e76336dd851e82101dced948785"
+    },
+    {
+      "path": "docs/ia/IA-002-inventario-fluxos.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "ac72d2c780cfc9c28405252f8423d602ddd6b7beed89916b02e983c2319a72bf",
+      "git_blob_sha": "469fa144c04daffd2ebd8216dd417a5e82ccc560"
+    },
+    {
+      "path": "docs/ia/IA-002-inventario-frontend-ia.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "a6dae89a911d824851278428ca09477d9bd39f94697cb761263a15192c37b088",
+      "git_blob_sha": "64b59e9efc19f3216f96403ee00d409057ef2e95"
+    },
+    {
+      "path": "docs/ia/IA-002-inventario-functions-ia.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "8405164723f34ab6ababef2f8d7bb954a301ed16125a184853c909645cbab745",
+      "git_blob_sha": "38eb0a8eca0861e575e0abfce9c97afa8e83ae1d"
+    },
+    {
+      "path": "docs/ia/IA-003-registro-achados.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "3fcf987bb95165efe75b725add44f6ccb9a6f7648fadb22e8472c3536ec2e57b",
+      "git_blob_sha": "3a5fbc74a856d11b74fa2bf3c4b089980b9c80d3"
+    },
+    {
+      "path": "docs/ia/IA-004-matriz-autorizacao.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "25981d079127219ba187c0c7d23bae98f3271ffc6e50e6cf607e76e4c4d62981",
+      "git_blob_sha": "b7a3f4de9dc5c219210d7ef37857f73d5c4cc8cd"
+    },
+    {
+      "path": "docs/ia/IA-005-metas-de-qualidade.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "bf059627c03c1de0540220698bad9376ae05e00ad563d48b7437252ec7c31480",
+      "git_blob_sha": "b1d84ac8f9bf999e2c25e96d516eaf18e529e352"
+    },
+    {
+      "path": "docs/ia/IA-006-natureza-e-verificacao-dos-achados.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "5c113b9ac028f623ae52e1e4b81f2db021941f6456b35d0b8d30a96c0cb9c137",
+      "git_blob_sha": "943c878c18532b656b52dbb3a51f746cda2d72f8"
+    },
+    {
+      "path": "docs/ia/IA-007-reuso-infraestrutura.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "c16cc0dd83b5042a5de945e3c3441a1ff9d7b4d31b06fadb49b56d21e885df96",
+      "git_blob_sha": "9881564589c5860d8972ad537a85d3461f97ee72"
+    },
+    {
+      "path": "docs/ia/IA-008-organizacao-das-entregas.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "db9d406300bb4256384b42bdf6c186bae5a46d846679d844648d8db5ec2d71fd",
+      "git_blob_sha": "a47264ce3f4175a116400e95caf63ff12767f427"
+    },
+    {
+      "path": "docs/ia/IA-009-desligamento-seguro.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "8ecb8f39a29fd234e19134c98ed3acca1177c7d98b8f8a0aafe84c1e7bee4e24",
+      "git_blob_sha": "388f2db26b23ee3604838b8c74034148190f878c"
+    },
+    {
+      "path": "docs/ia/IA-010-ambiente-de-ensaio.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "d70b26aca8efac1c3d71b75ca3556221101d9e47029d133e20b50e2efbd6e124",
+      "git_blob_sha": "c54f9edc992a60689e59169a7ae706c2fa853670"
+    },
+    {
+      "path": "docs/ia/IA-011-a-IA-020-contencao-P0.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "37cd14d087448aca33bc51c0b60b9c512fc8169d7e17be229be30e62c9ccc6c0",
+      "git_blob_sha": "facac4253535bba139437f0933b669a22a8c23f3"
+    },
+    {
+      "path": "docs/ia/IA-011-a-IA-020-verificacao-adversarial.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "5dbea482b8de22baf21ede28422cdbc5c54acea56512b5f2d6111384992f20f8",
+      "git_blob_sha": "eafdb73b791b80fdf218e0e6595b9cea679d7a0f"
+    },
+    {
+      "path": "docs/ia/IA-021-a-IA-030-contratos-integridade.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "62619e8b7ad476c0922727bba1b9fb6ed70411b46fc888fd041304d42c525bde",
+      "git_blob_sha": "d8f13ea2c8bddff23e3772f34e6d785077e8822f"
+    },
+    {
+      "path": "docs/ia/IA-031-a-IA-040-camada-de-provedores-e-capacidades.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "4f49cd06c14be89ba9794435044aa1dd781f9ceddde438db020c7977292ae233",
+      "git_blob_sha": "d0078cea77b21ede97dbac400e5f3b1e19530b34"
+    },
+    {
+      "path": "docs/ia/IA-041-a-IA-050-execucao-resiliente-filas-e-consumo.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "1ea6f1776404f202ad3aa074e2937b7acf38b33ed43a70043be5bace89176a26",
+      "git_blob_sha": "aa1bf7f6ec733fb9357ec867a5bf741779e2816b"
+    },
+    {
+      "path": "docs/ia/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "21594dab2080c0f905a80510f65dc8a26b54828a41ebdd373f7b00f3817b20a9",
+      "git_blob_sha": "2962ab9e6a45a34ee70dfac9532e87374679628d"
+    },
+    {
+      "path": "docs/mapa/ARQUITETURA_BUSCA.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "accd2591d97694a03ae54c752a53ff7bbd3b7c4fc64bb9a230108d178304f169",
+      "git_blob_sha": "5b09c1b5d5e80d4a4230a220426231a4e8b1b990"
+    },
+    {
+      "path": "docs/mapa/AUDITORIA_ADVERSARIAL_E98.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "7a0ab9d6dedc37ea947e4d19e0eb08233336ee8d4e1913d70d7729acce6a6bbf",
+      "git_blob_sha": "1815a910f7f1aec2f66d4388e3cda62083d9effd"
+    },
+    {
+      "path": "docs/mapa/AUDITORIA_PLANO_50_ETAPAS_2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "76f3aeb5da312b65793655502aa9c750af6e19c570c7a8c7bdfd9f2d29317ecd",
+      "git_blob_sha": "6c48b7a86ef826999aaffcd34b137dcedbf14dde"
+    },
+    {
+      "path": "docs/mapa/ENCERRAMENTO_FASE8_E100.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "760ddfa8b375e39de4f20d0e8b64d16471f72ed1805d3865bd4790c781486d17",
+      "git_blob_sha": "cb7986d704fa52c1de7819f0744972f43693a743"
+    },
+    {
+      "path": "docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P036",
+      "sha256": "1537e422b79ff1373309612709e9f48359686f93389d146a33b8617e82b5cb71",
+      "git_blob_sha": "8ce1256328907bd7a639c13c43ad3ceacbffa35a"
+    },
+    {
+      "path": "docs/mapa/PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P037",
+      "sha256": "5e86fdac5dbadaacf01678a1ad772c3a341b5ec3a0d3e318c0c8bbbb7d893f1a",
+      "git_blob_sha": "df3ea4c45d8b3f46ff7cc570c11ca8878e5dcbbb"
+    },
+    {
+      "path": "docs/mapa/USO_SEARCHBOX.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "52e2c8d07854e2bf24cd830c2ecd8f2e4f426769aaa28ae244be2ed380cfe227",
+      "git_blob_sha": "6310775343764616e4913bf31865d9dc7000fcb5"
+    },
+    {
+      "path": "docs/mapa/contraste-combobox.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "bfa27f00958a286a84e212ad7defa500765e92031dcf5cbf825eb14f14ed262e",
+      "git_blob_sha": "03c9e80e74050a84ead7aedc8e6136f920af85e5"
+    },
+    {
+      "path": "docs/mapa/mapeamento-fase7.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "aa7c3549a5ff10b15c3a9e3f95f28b9eb41f9492c71d09d16e86d80c8ba90a58",
+      "git_blob_sha": "b074e5333f68090fc355fb29283ad00313bc9172"
+    },
+    {
+      "path": "docs/mapa/prints/README.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "cba01e7756415f475177ff7edbaffc578f8cf4f60acdb8e74aa12504aa09d6be",
+      "git_blob_sha": "bada142b2e9b2bd717f39164a6bafbdcc180826d"
+    },
+    {
+      "path": "docs/migration/DECISIONS.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "f83bbdedb12da839256ae23aa39047491b6029dec2d39da71861d3d2b08b2373",
+      "git_blob_sha": "696a7ab9fad6412002ed8d30f41b0b6ae9e06690"
+    },
+    {
+      "path": "docs/migration/GO_GAPS.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "b1c0c4ea80f1f22f702ff461ab39b0c5f7b3337a64781ddf6160814c57309e9f",
+      "git_blob_sha": "ae33c0c614abbb8281e708376b57a14c79473b53"
+    },
+    {
+      "path": "docs/migration/HANDOFF.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "acea1ccb9fe473738b92e9f696b590a6f2ccf7b7857aa2681b0cfa827c41bbad",
+      "git_blob_sha": "48054e0209910ca45b5f0dc4715d950afa247936"
+    },
+    {
+      "path": "docs/migration/PARITY-REPORT.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "c84af91a53adb9316b13d596394f20c2fd443f6439a25f839203a6a659a255b5",
+      "git_blob_sha": "01eca3214ea9837747c566e3ff3ad5df2fb263a4"
+    },
+    {
+      "path": "docs/migration/PLANO.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P038",
+      "sha256": "d5ddfb225cc68084d5452f96f1b7ddb459251958032a613d3cd21a8f6d2fc61f",
+      "git_blob_sha": "d65797bc2b877bc51ce832b8ce15d0d6f37504d1"
+    },
+    {
+      "path": "docs/multiplix/AUDITORIA_IMPLEMENTACAO_MULTIPLIX_2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "d252f8c69c16d6ffb329ecd522ce6a613661a6499c3758c0bbe804b3b0609544",
+      "git_blob_sha": "e64e75262eea2a3c0ad07134f231c1fd835bcd76"
+    },
+    {
+      "path": "docs/multiplix/CANAL.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "147ad8f3b0494e2e97b91bd08d0784d9224d427f24fdad32f598e0781b91ff66",
+      "git_blob_sha": "f70e8cdd8ae644090c4405816b5366b533f6c5ef"
+    },
+    {
+      "path": "docs/multiplix/DESIGN_TOKENS_MAP.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "8c7c82f362737d0144017b43f4f59fdf15f4c51f3f7ba986a18696c3bb38a18e",
+      "git_blob_sha": "fc6158f6904ad3a1d26835cc7537f4a1d9b11bf2"
+    },
+    {
+      "path": "docs/multiplix/ESTADO_INICIAL.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "3845516693c6adcb8c91b723cfc84530ffb52e2f17b6075e5df5fdaaeb4e456f",
+      "git_blob_sha": "fb9806f9b69f1b673a5ed648af468086e0b8288c"
+    },
+    {
+      "path": "docs/multiplix/PERMISSOES.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "595ccbdf60070d7a8792a61b90e36778309d2226df7a088762bb61c29545514b",
+      "git_blob_sha": "74ecd9903feefec291e913554ca1685a5fac10ba"
+    },
+    {
+      "path": "docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P039",
+      "sha256": "bb7a86117bedf02d873c0ec5b6a0be8207806cbf85633fa5877906e8fe8fa601",
+      "git_blob_sha": "2dadb23492a9f6e385d981b1997645dfac801b09"
+    },
+    {
+      "path": "docs/multiplix/PLANO_IMPLEMENTACAO_MULTIPLIX_200_ETAPAS_2026-09-26.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P040",
+      "sha256": "299d8b82d435e2acd278877c4a2fb3a692355282170d48ae55cc2d27288b3755",
+      "git_blob_sha": "e6555f769cf0f12f32702453c7d813b9bdfd9c4b"
+    },
+    {
+      "path": "docs/multiplix/PONTE_SINGU.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "64f8b60761ca1a8b5834cabe7b887b98145e5e7693a9b3cd3ed28d06395b8b94",
+      "git_blob_sha": "8e845ec1c38cffde5f8f72d6e3921fe35281a96f"
+    },
+    {
+      "path": "docs/ops/runbook-pg-cron-capacidade.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "fe78b5540683601328bd1db2b313c9639fc792afab8380a3d8ed7fb2be0938a5",
+      "git_blob_sha": "d9ebb526ed07d2d35dd6789e97cc827abec4bfd8"
+    },
+    {
+      "path": "docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P041",
+      "sha256": "d78df9eec70e10c43a06133ac84e2bc966989171317034606e1119eb33001995",
+      "git_blob_sha": "4f9c0178bb1d9484652a5bf3707bb049d4798643"
+    },
+    {
+      "path": "docs/plans/PLANO_VOLUME_MIDIA_50_ETAPAS_2026-09-27.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P042",
+      "sha256": "a0d10de02e6393026414e38ec8f3166c0bbcbda2bf88d084f423951788c3557b",
+      "git_blob_sha": "a0bd73037f2e4a2016e6941c6999271520575de9"
+    },
+    {
+      "path": "docs/runbooks/CRM_INTEGRATION_ROLLOUT.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "ad2896ae84435432aa3feed14d7cc2331ec4055f3f9cd8702421d186cf001bd2",
+      "git_blob_sha": "0f733836248ab69f8933406e0715fd01dfa9dc78"
+    },
+    {
+      "path": "docs/runbooks/auth-pendurado-saturacao-postgres.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "1a00225972c61217fa88dd70fe90259036620ede35613fe1d9db6c8d606cb632",
+      "git_blob_sha": "5b6150657d4299f4bdac491442dea9419e11bee9"
+    },
+    {
+      "path": "docs/runbooks/bloqueio-meta.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "7b2c8e46f06e964e24cb634301afff061d5987c1c7d5a53f0abdd34c3d88b953",
+      "git_blob_sha": "546c0d2b845efd37ccd83df4188b51c53e903d33"
+    },
+    {
+      "path": "docs/runbooks/contatos-exclusao-e-legados.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "1a0b68ff04aa206be70956158212258108a1e0d97ac25d783be18564fd8b3f00",
+      "git_blob_sha": "b3b2bd8609e54b51bac0523c983c47e2d5c93f8f"
+    },
+    {
+      "path": "docs/runbooks/cron-secret-rotation.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "e72da0e76bd27677285f43008ab695a1870fb50338c9ee5c0473ca23b7e9afc9",
+      "git_blob_sha": "e3e8923bd838bd1c11fe57e7ec09642f0984aaa8"
+    },
+    {
+      "path": "docs/runbooks/deploy.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "508876751ab1457baebb6a317f39ee549e99b09b6ab4fbbe198b558d4385dfed",
+      "git_blob_sha": "02d3f8ad9d63aa617f79d90d6782be7a6d9a300e"
+    },
+    {
+      "path": "docs/runbooks/mapa-searchbox.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "4f42f213d929f61df16a395eada4086c90d2a256a5a354f680c450efd54b24c8",
+      "git_blob_sha": "11ed51ada7a4a68aa1aa757c677adccfb5aabedb"
+    },
+    {
+      "path": "docs/runbooks/preview-egress-proxy.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "8c15fcdc705e3ce4119b6aba3f7093f23e7bb99c5b96da851d75ef3dc2a964c0",
+      "git_blob_sha": "7e7a397f40491311c729830ebc6e964976d16bce"
+    },
+    {
+      "path": "docs/runbooks/secret-rotation.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "0a206a50b57253af10042f0890007abf374ba968aa763598fe2d6711203dc495",
+      "git_blob_sha": "b855d7fbdf76a0943bd548fff020c2d65136db37"
+    },
+    {
+      "path": "docs/runbooks/slo.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "17444d2e0146059bd5d192380c499f628f4abd730625aba27780d6cb30ac30a7",
+      "git_blob_sha": "4d11bebe0a1405b7dc1cc22d7bd7b21f345f58ca"
+    },
+    {
+      "path": "docs/security/secret-surface-inventory.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "773b1391815c8395131dd1acb789e0eef8bd9a5293b85d90b30f419062032bb0",
+      "git_blob_sha": "aa80279154146409d3767c1fb434cd01618e6c11"
+    },
+    {
+      "path": "docs/security/validation-report-2026-08-30.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "0ed90a5c782275d7a1396ce326e037788fa222f83cc8f850f5e36973e2b1b887",
+      "git_blob_sha": "e6053913021344ae5baa20dcaae862f9a1824175"
+    },
+    {
+      "path": "docs/talkx/ARQUITETURA.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "61814d03ed5ad344e656d13e1c597f087b1d65836a8e4c62fcf7d073e3f94f2a",
+      "git_blob_sha": "67cde33c7b6e0985b7ceb85beedca361952dd91b"
+    },
+    {
+      "path": "docs/talkx/AUDITORIA_PLANO_TALKX_2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "52803b4c3cd158db6b45bfc870ee02bd19263fc23d964e011c954a966e194df9",
+      "git_blob_sha": "f492a081c5849bafce6de63394dc819039744dc1"
+    },
+    {
+      "path": "docs/talkx/CHANGELOG_TALKX.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "03b85fb3c4ced7f994adc557e25415bf4e10e0f98fc67fcb59e5ec18c3e9fa84",
+      "git_blob_sha": "afa78b74b5daf77fca797944b389bc2a5dba5f04"
+    },
+    {
+      "path": "docs/talkx/CONVERSOES.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "77cbdc368fdb3bd52e5f52384fca9fa61ab8b95cff33666ae3c8b9ad22a43d0a",
+      "git_blob_sha": "f824bfc1f3cd16960028d57fb91f7062cc479dfd"
+    },
+    {
+      "path": "docs/talkx/HANDOFF_SESSAO_03.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "25a15cbf4a4691cfd8154cc7b4e1c71d3bfde07f5d83cca976c0f31b7d5a29c7",
+      "git_blob_sha": "be19ee5310b9d8c8aa009abc4936f0510b1128b5"
+    },
+    {
+      "path": "docs/talkx/OPERACAO.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "968cf6c2fd7095d13592c01297afe7c3f63fb3eefab17ef1fea97c4dad8039f9",
+      "git_blob_sha": "487ef9006419aeac8e01b0587b4890ca3e00fd7a"
+    },
+    {
+      "path": "docs/talkx/PARIDADE.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "424fd7c8dede43314dd03a0c82c5cac1b956b5c4c7cb8127d03b6ed3e4a53206",
+      "git_blob_sha": "1b7a43b8c5436576a8ae74dbbb965704fceb1b72"
+    },
+    {
+      "path": "docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P043",
+      "sha256": "6f6d47e2b5bc145a53d8773c812ebb6600a884f62f4bf27be0acb6a731cf3132",
+      "git_blob_sha": "b43b56a15b35bc6147325e06b1a7d46d6b33eb2b"
+    },
+    {
+      "path": "docs/talkx/PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P044",
+      "sha256": "355e240c0a25e204afdbc54d522d5faa8de01a574b755917a25c3bcf5d6efe2a",
+      "git_blob_sha": "12ccab1f4407440d77123532d25e966f28b2ced0"
+    },
+    {
+      "path": "docs/talkx/PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P045",
+      "sha256": "d27e57304afb200310ef7ab277971166200e7d2fc593f6597fffe2e37e6d679d",
+      "git_blob_sha": "ee6387dd16312e9b815e245fd4379a098caa2ae1"
+    },
+    {
+      "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P046",
+      "sha256": "0fa887f013aa92ed2e281a9c8e330c4699eb98be85c6a3ed08101894029257de",
+      "git_blob_sha": "62a84a216c6347dd5d2788f661908ebe43b1c5e5"
+    },
+    {
+      "path": "docs/talkx/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "727eaffbf6b033eae1d06d7ccb8197da2056388aedef3e2e86cda5aa4a3f4acd",
+      "git_blob_sha": "4b765b01b3c363f61ad3fecddf479b7ea849c0a3"
+    },
+    {
+      "path": "docs/talkx/references/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "33b1b941dd78d88ca9866ef630dd9d8e25eadc41c0753990712b140213d6e55c",
+      "git_blob_sha": "80376a198f4780ba12412190c76d1d9951f11946"
+    },
+    {
+      "path": "docs/talkx/v4/DECISOES.md",
+      "role": "DECISION_OR_OPERATING_RULE",
+      "plan_id": null,
+      "sha256": "a060820b86d68dd00689426dfb58af40879b713e550dcfdb2d66e81b6dcc03c4",
+      "git_blob_sha": "03a984ac379acda151d85a5c14f54897cbcb2444"
+    },
+    {
+      "path": "docs/talkx/v4/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "39ceaff7bc6ab3cf52c607e6929434d28f52a771afc35a3cef8e033313a6ee9c",
+      "git_blob_sha": "b60ca59129a5909548113a9dd9dbeb44f0790e6e"
+    },
+    {
+      "path": "docs/talkx/v4/STATUS.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "1523f67e8eea602df9dddb76e4a969c5a0c9a3882e143cf069e6dce057efbf2f",
+      "git_blob_sha": "1bf2f692d501d7ccfa608c16071ff3214343838b"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F00-regua-e-governanca.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "f089e325e8e2047d77c743ee0b00ed674260c16283baff4c20ce919a2dde3f7f",
+      "git_blob_sha": "c5fe73ee83f1974b9134835ed75c8f27717f0d8d"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F01-correcoes-imediatas.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "0e4b63b38bff6d37d4af28ce8fae551917e15b8124d7f30a6d10583b4619d5e6",
+      "git_blob_sha": "ec91ba0c041135c34399dbc5a8b0be5d28839f80"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F02-motor-seguro-para-o-primeiro-disparo.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "e7585fbf8c68f3a293795f48047f6ee7ac3a4cfaa06364b47c0635a903a2a6f0",
+      "git_blob_sha": "f76400b46ea1fded67dde0d0af4075b12d588ee1"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F03-integridade-observabilidade-e-ensaio-real.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "517cefc46f0970a4519139094b3bd9845098c312ea3a342687777856bf3e4db5",
+      "git_blob_sha": "2529a8543f90374d79443b3fd01ed9825b1782f0"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F04-dados-comerciais-e-vinculo-com-o-crm.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "84c96b98032285abbde132a80014de333f9d672ff34222227562d9ecaebce6f7",
+      "git_blob_sha": "16254e57add0c215209ea1b242d1c9442b58f2a8"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F05-kit-estados-modais-e-navegacao.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "468b06decb7e547823dbea246abd3728d14efd6fef13dbb3506450b309938efc",
+      "git_blob_sha": "2a89b4777066c28ebd5e630faacea25692a8a4b6"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F06-capacidades-novas-do-motor-e-agregacoes.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "f72e1d3d5e1ba8a0ef5c1598d30cef2023552498a5267bc6adfa8e6b20580cf1",
+      "git_blob_sha": "46df0f026495484e0c0b5aa7e98869ecbeadc5c1"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F07-visao-geral.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "c6d41424996122ce60cae96c3cf356836b944385a2892cb737fa12933f471b73",
+      "git_blob_sha": "3abaa0a0ed7b5941f508dfd38e694388d6a163a9"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F08-templates.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "280df0d018ace498d3fc74661f71a686c00a7c573bb16bf507ca154858fadd8a",
+      "git_blob_sha": "f28e7e1cd1434d0a156a489c30fd71c8e66b7046"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F09-segmentos.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "6d105901d7ace670b2c63ce0e94d53d248ae87a68d2164d285ef48530a16145d",
+      "git_blob_sha": "cf11f792d94dd709285b87b442cf3f3fb97ef56d"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F10-criar-revisar-e-agendar-campanha.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "4e2de12a7970063d673564bdd32f27e14ced39816a7f500d2acd62369e1aaec6",
+      "git_blob_sha": "688594143315af65b8c0f52dc29fd5866c604e41"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F11-acompanhar-campanha.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "8578e115d5bb1af0f81aa329d103a10271458bc4fa7a23bb4608d41905ae2899",
+      "git_blob_sha": "162321934a6a74ddd7137f992e6771243e7af864"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F12-relatorio.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "9ced5350f3a37115818a7ef124dc717e6f2daa230448a526c3651b196ffc697a",
+      "git_blob_sha": "dfe56fe8be56afde2aaa1813cfffa6ab151277cd"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F13-importacao-e-vinculo-com-o-crm.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "4b0cf1e23575361fe459c363c77d00d29712b7b5f06a6e87187db1c47188268c",
+      "git_blob_sha": "a1afd3e20d9c521e99bc1c1f66581f3c9d2fd99c"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F14-supressao-e-analytics.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "fde3b5d44d4b97d4e588113abd92a7feb2577e541f76e34403e948f8de2aba27",
+      "git_blob_sha": "4c04636b7deeba29a3cb59b56f4e3cd4a9e6de16"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F15-ajuda.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "2da690bfd8f4f6a654e8f91bfcf9dfaccae2e288dbb56374f6f8a12f9b185761",
+      "git_blob_sha": "5a8c88a2fe6358a640b15e790c47d6880581e176"
+    },
+    {
+      "path": "docs/talkx/v4/etapas/F16-qualidade-e-release.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "plan_id": null,
+      "sha256": "8e46f9991d936ebedadc278b84c3ed8b5b26e347cd8898bebe8be3003b918c10",
+      "git_blob_sha": "83c72f43d186a38934158b936fe0efb43571ea2d"
+    },
+    {
+      "path": "docs/talkx/v4/inventario/A_telas_01_17.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "3b5d971d793ea146dccc4e52130f916f00468a8167cde6284c17a5e32c209dc0",
+      "git_blob_sha": "d0cd8eedd0b7c8ac03ebc1fe33525a38d7002fa8"
+    },
+    {
+      "path": "docs/talkx/v4/inventario/B_telas_02_03.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "d7b53ec406c717e87450916fa614c0d4901526de61913affeff8c6bb05a0f539",
+      "git_blob_sha": "138922d0d231421a892bd1648a61b9bb049ab67c"
+    },
+    {
+      "path": "docs/talkx/v4/inventario/C_telas_04_05.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "63b6f6800ead04d3f7e4de4ad3e1d90d4ef110b1d0d09b37a263410428fa3efe",
+      "git_blob_sha": "b20848e626dfaed500881270f79971c591384881"
+    },
+    {
+      "path": "docs/talkx/v4/inventario/D_telas_06_07.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "e3bdedca85d9edd8c092733d67af7dbd9e335451fba201ce8fc98c64721ee158",
+      "git_blob_sha": "ace558ce95fe9d57777ecfd61956308f74e112d4"
+    },
+    {
+      "path": "docs/talkx/v4/inventario/E_telas_08_09_10.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "00c53336c0d23d7c488887131c5a36911889bcc4182700a8e59683910b776205",
+      "git_blob_sha": "fe39dc4383cfbe3181eeb8640545a620b5d940ab"
+    },
+    {
+      "path": "docs/talkx/v4/inventario/F_telas_11_12_13.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "3b83b0f7f131d3d6e528630369805903fcc704740595111a1a2f2e5de8d9c8dd",
+      "git_blob_sha": "5c79915421e2a2b646a451f8ac6992915a007369"
+    },
+    {
+      "path": "docs/talkx/v4/inventario/G_telas_14_15_16.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "06a0fbceac83f4c1c3c93567278f308e3906a6cae3e08492bba8abe474fd2231",
+      "git_blob_sha": "15145297fd2c1c4ca101c21ef504459311e60b4f"
+    },
+    {
+      "path": "docs/talkx/v4/inventario/H_motor_backend.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "dd03ae16b09d79f1f605c98c06ca7ba7c2adabe52663b6863dcbaedfd9fb65d6",
+      "git_blob_sha": "0ea4708244ecdfd593815d115f308ab335124704"
+    },
+    {
+      "path": "docs/talkx/v4/inventario/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "8695f5208ccdb7ec6937c01a41ec30fe341e81c5a8b84e1e145a788391473d59",
+      "git_blob_sha": "581988ef61a7ff35d0ec9212a8d3114602d8205f"
+    },
+    {
+      "path": "docs/tasks/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "7068196021b55ee68d36019d0668620d839e290f5e664f2e89697da1345a2c53",
+      "git_blob_sha": "c73ff2aefbe8cc2bf7da3d089c2e3b059844709b"
+    },
+    {
+      "path": "docs/team-chat/AUDITORIA_TEAM_CHAT_2026-09-29.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "ebb5f0e6fea78f853f3c40b2e245e6414cc774ca1115c599cd855b153a0312ea",
+      "git_blob_sha": "d591f9e8e029a4beb17897ba32b1dc44e4eff648"
+    },
+    {
+      "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P047",
+      "sha256": "dd9d7ed11561291baaa1c326f71d5e4f739c51cf045512b0c5eeed1cfdbc5166",
+      "git_blob_sha": "13f4b2a41910bd6e3be1038a0bcc3927fb30bb0f"
+    },
+    {
+      "path": "docs/telefonia/CAPACIDADES.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "2d8d13c4d4e3948f494e09be648e00683454240cef0dbbb652e49f989b7013d8",
+      "git_blob_sha": "bdfd60d50305e9d0ca63824b0547427957e20185"
+    },
+    {
+      "path": "docs/telefonia/CONTRATO.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "b924f83ce3602558553bc95172ee4513157c3af179b203d61d1fef3c64faae17",
+      "git_blob_sha": "40ebb2de7c3e24b63c4e098a34cbe8e5d604de4c"
+    },
+    {
+      "path": "docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P048",
+      "sha256": "69752bfed1ca6b5e98a7799318f04e09d7210f9193d8832d805cc14e085e6b23",
+      "git_blob_sha": "0385b90a20543f7e8cbe30ea2e38820fcc49c9e0"
+    },
+    {
+      "path": "docs/tipografia/PLANO_PARIDADE_TIPOGRAFICA_ZAPP_PROMO.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P049",
+      "sha256": "eb3def5171903e4dd090e82cf9dc4235e7a3cd44c41ae85e49260e4a50f7a779",
+      "git_blob_sha": "0b5a98a6a2e82d901829f0a5ee7c1991f3deda48"
+    },
+    {
+      "path": "docs/tipografia/PLANO_TIPOGRAFIA_PROMO_GIFTS_50.md",
+      "role": "REQUIREMENT_DEFINITION",
+      "plan_id": "P050",
+      "sha256": "4fed34bad3a903136178d69cd2f8b52339e856285c5cbea889a30023fc9596f2",
+      "git_blob_sha": "d2687945eb6f595466c63835c26dbabf031a65b6"
+    },
+    {
+      "path": "docs/tipografia/RELATORIO_PARIDADE_F0_F7_2026-09-22.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "3d0fdc9d6627793af11af8eb6ff6aaec964d34224c16830258145d6f9204d11b",
+      "git_blob_sha": "bd7133dd694a1847af74a412c5ddb76b0263a479"
+    },
+    {
+      "path": "docs/tipografia/REVISAO_PLANO_AUDITORIA_FONTES_2026-09-24.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "5def2679dca60925cf860696908552f49cd33e864e089e54a1e85d7bdd23c4b2",
+      "git_blob_sha": "97c42f73149b7b4c84139630cd9ab52c42d4864a"
+    },
+    {
+      "path": "e2e/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "004737c8b7b42c7f91663f60960f830351ba97c474e4c210bdc2bdeb6b2ed116",
+      "git_blob_sha": "a3ab6ad7d66aec164caf108a2830a076541721bc"
+    },
+    {
+      "path": "scripts/ci/DENO_REPRODUCIBILITY.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "49e62a026a44d9dd2891e0c4f998d996df440a642cb5a7f1a7436954572bee8e",
+      "git_blob_sha": "0a5f8561711d43dfab508f24d720d6ad57bd8373"
+    },
+    {
+      "path": "scripts/ci/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "28279e6d93605c98c8fdda5004be3c2ce9e298fe91e6fe8e09c3720355b792ca",
+      "git_blob_sha": "ff418cf40fe4927927ff5dd35727ccce6cf40247"
+    },
+    {
+      "path": "scripts/db-audit/README.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "d4ff482a93cafd62f8e0c1dc99a264f4bc891e7f62ce746d21b31a7d5bb9e0bb",
+      "git_blob_sha": "9fe83d11b4d0226abcde6f8a68d529a8b38ab4a2"
+    },
+    {
+      "path": "scripts/db-audit/RECONCILE-20260924203300-NOTES.md",
+      "role": "EVIDENCE_OR_HANDOFF_NOT_AN_ADDITIONAL_PLAN",
+      "plan_id": null,
+      "sha256": "2fe7169f279d7edf84dae905cd3af107a0cf960ba72186ede4bf382909d2b333",
+      "git_blob_sha": "0a4532d155c4b46fe9bae6215ef4cd99c8c8fffa"
+    },
+    {
+      "path": "scripts/edge-deploy/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "048be954bea3a8c681e2327e64c9f65e4a97793a7adeff4f21c970e8152b056a",
+      "git_blob_sha": "d6541ea3cd08af0b90ce9cd0232aa22c02b28245"
+    },
+    {
+      "path": "scripts/mutation/mapa-f2.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "e84f190142d97afbc0f160aa52db7a3ef0e75856a42fc4c6d77ed2ec1e5daaa6",
+      "git_blob_sha": "bdec325d33eed8e2ce740ed2a04750a7ba251fe6"
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "7d3a8787efe0089b1bf6c5328e2ac7d124baa22d59329c6d14ec197c96e9e714",
+      "git_blob_sha": "18e8518d45942642e930e703f82976a6675ae22b"
+    },
+    {
+      "path": "supabase-export/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "3d68bb59bae231d0980a915f6f8a92d4b406ff43c01776e7be113058db02698b",
+      "git_blob_sha": "3f00d4f4092354c7dd57a0ba1a4b43b86a647ed3"
+    },
+    {
+      "path": "supabase/migrations/_foreign/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "6366916c06d0c16bec0a53ab7bf99a0e6af037f5816ca6c8b4d95177c51ca6aa",
+      "git_blob_sha": "67b32b2dca4c76627e3c8325eda6a5eae40d873a"
+    },
+    {
+      "path": "supabase/migrations/_foreign/singu/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "3950c3f8995563c287329c9de8be1b4b41065ec88bd2c2e748d81d0e6f10ccaa",
+      "git_blob_sha": "82a851355ae94a863ae49008042a1db2545d6a44"
+    },
+    {
+      "path": "supabase/migrations/_superseded/README.md",
+      "role": "SUPPORTING_DOCUMENT",
+      "plan_id": null,
+      "sha256": "7064b316e0f6530200e05804cf704aa340a915f4ab14c28e81a97c5d0eced3c9",
+      "git_blob_sha": "22cb378471b2c39619cae1082d43e15a4842771e"
+    }
+  ],
+  "inclusion_rule": "Planos explícitos, programas numerados embutidos e fases nomeadas; não converter tabelas de inventário, regras de operação, protocolos de auditoria ou relatos de execução em novas tarefas.",
+  "important_exclusions": [
+    {
+      "path": "UX_AUDIT_REPORT.md",
+      "reason": "Relatório aplica protocolo100-step; não contém100definições de tarefa."
+    },
+    {
+      "path": "docs/handoffs/handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md",
+      "reason": "Preserva expressamente IDs001–100 do handoff original; evidência complementar, não segundo programa100."
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "rows": [
+    {
+      "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+      "function": "sha",
+      "lines": [
+        95,
+        96
+      ],
+      "our_level": "targeted",
+      "our_ranges": [
+        [
+          95,
+          154
+        ]
+      ],
+      "assessment": "Trechos de apoio da extensão INF-019 revisada integralmente pelo root: baseline, rodar e mutações com finally/SHA. Nonzero indiscriminado continua inadequado para provar assertion alvo; não se executou o script.",
+      "root_review": "Full file 1–158 independently read and recorded by root; infra support 95–154 only."
+    },
+    {
+      "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+      "function": "rodar",
+      "lines": [
+        99,
+        109
+      ],
+      "our_level": "targeted",
+      "our_ranges": [
+        [
+          95,
+          154
+        ]
+      ],
+      "assessment": "Trechos de apoio da extensão INF-019 revisada integralmente pelo root: baseline, rodar e mutações com finally/SHA. Nonzero indiscriminado continua inadequado para provar assertion alvo; não se executou o script.",
+      "root_review": "Full file 1–158 independently read and recorded by root; infra support 95–154 only."
+    },
+    {
+      "path": "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+      "function": "main",
+      "lines": [
+        112,
+        154
+      ],
+      "our_level": "targeted",
+      "our_ranges": [
+        [
+          95,
+          154
+        ]
+      ],
+      "assessment": "Trechos de apoio da extensão INF-019 revisada integralmente pelo root: baseline, rodar e mutações com finally/SHA. Nonzero indiscriminado continua inadequado para provar assertion alvo; não se executou o script.",
+      "root_review": "Full file 1–158 independently read and recorded by root; infra support 95–154 only."
+    },
+    {
+      "path": "scripts/db-audit/multiplix-send-mutation.py",
+      "function": "run_tests",
+      "lines": [
+        90,
+        92
+      ],
+      "our_level": "semantic",
+      "our_ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "assessment": "Runner exige baseline verde e diferencia morte por resumo de testes de erro de compilação. Edita WORKER original por write; restauração é só caminho normal, sem try/finally ou isolamento — interrupção/exceção pode deixar mutante. Não executado; risco de restauração registrado sem contar como nova vulnerabilidade de produto."
+    },
+    {
+      "path": "scripts/db-audit/multiplix-send-mutation.py",
+      "function": "classificar",
+      "lines": [
+        95,
+        106
+      ],
+      "our_level": "semantic",
+      "our_ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "assessment": "Runner exige baseline verde e diferencia morte por resumo de testes de erro de compilação. Edita WORKER original por write; restauração é só caminho normal, sem try/finally ou isolamento — interrupção/exceção pode deixar mutante. Não executado; risco de restauração registrado sem contar como nova vulnerabilidade de produto."
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.py",
+      "function": "resolver_caminho_permitido",
+      "lines": [
+        23,
+        38
+      ],
+      "our_level": "semantic",
+      "our_ranges": [
+        [
+          1,
+          85
+        ]
+      ],
+      "assessment": "Parser aceita lista/range/passo para hora/minuto, mas mês/dia são fixados em 9/2 e dow é ignorado. Saída é diagnóstico desse recorte histórico, não calendário ou medição dinâmica; falha em arquivo/slots vazio."
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.py",
+      "function": "expande",
+      "lines": [
+        41,
+        55
+      ],
+      "our_level": "semantic",
+      "our_ranges": [
+        [
+          1,
+          85
+        ]
+      ],
+      "assessment": "Parser aceita lista/range/passo para hora/minuto, mas mês/dia são fixados em 9/2 e dow é ignorado. Saída é diagnóstico desse recorte histórico, não calendário ou medição dinâmica; falha em arquivo/slots vazio."
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.py",
+      "function": "main",
+      "lines": [
+        57,
+        82
+      ],
+      "our_level": "semantic",
+      "our_ranges": [
+        [
+          1,
+          85
+        ]
+      ],
+      "assessment": "Parser aceita lista/range/passo para hora/minuto, mas mês/dia são fixados em 9/2 e dow é ignorado. Saída é diagnóstico desse recorte histórico, não calendário ou medição dinâmica; falha em arquivo/slots vazio."
+    },
+    {
+      "path": "scripts/db-audit/pg-cron-concorrencia.py",
+      "function": "lambda@78",
+      "lines": [
+        78,
+        78
+      ],
+      "our_level": "semantic",
+      "our_ranges": [
+        [
+          1,
+          85
+        ]
+      ],
+      "assessment": "Parser aceita lista/range/passo para hora/minuto, mas mês/dia são fixados em 9/2 e dow é ignorado. Saída é diagnóstico desse recorte histórico, não calendário ou medição dinâmica; falha em arquivo/slots vazio."
+    },
+    {
+      "path": "infrastructure/preview-egress-proxy/main.go",
+      "function": null,
+      "lines": null,
+      "our_level": "semantic",
+      "our_ranges": [
+        [
+          1,
+          355
+        ]
+      ],
+      "assessment": "Fluxo/condições/efeitos e consumidores relevantes lidos; não significa execução. telemetria e tratamento de erros: Releitura integral para explicitar a faixa antes implícita: HMAC corpo/timestamp/nonce, retenção até expiração da aceitação, mutex/capacidade, limites de body/time/redirect, validação de todas respostas DNS e dial de IP validado preservando SNI/Host. Erros externos genéricos. Nenhum Go/servidor/rede iniciado."
+    },
+    {
+      "path": "infrastructure/preview-egress-proxy/main_test.go",
+      "function": null,
+      "lines": null,
+      "our_level": "semantic",
+      "our_ranges": [
+        [
+          1,
+          182
+        ]
+      ],
+      "assessment": "Fluxo/condições/efeitos e consumidores relevantes lidos; não significa execução. telemetria e tratamento de erros: Releitura integral de assertions: IP/URL privados, autenticação/replay com clock à frente, pin de dial/SNI/Host e rejeição de DNS privado antes do dial. TLS insecure é fixture do httptest; teste inicia serviço local se executado, mas não foi executado nesta auditoria."
+    }
+  ]
+}

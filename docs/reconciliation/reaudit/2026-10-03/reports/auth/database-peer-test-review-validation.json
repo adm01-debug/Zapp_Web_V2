@@ -1,0 +1,15 @@
+{
+  "validated_at": "2026-10-04T06:22:10.588209+00:00",
+  "status": "PASS",
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "files": 52,
+  "lines": 4169,
+  "indices_zero_based": [
+    52,
+    103
+  ],
+  "review_json_sha256": "42d55051992aea00ec7ea4c5f9896224804fdac9d4a559aaa7b8edea82d3b138",
+  "source_clean": true,
+  "all_source_pins_validated_by_generator": true,
+  "suites_executed": false
+}

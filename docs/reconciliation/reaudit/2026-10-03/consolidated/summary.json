@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "previous_source_head": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "source_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "tracked_files_verified": 4068,
+  "source_hash_mismatches": 0,
+  "findings": 372,
+  "by_priority": {
+    "P1": 63,
+    "P2": 292,
+    "P3": 17
+  },
+  "by_review_state": {
+    "CONFIRMED_SOURCE_BEHAVIOR": 362,
+    "REFINEMENT_OF_PRIOR_FINDING": 2,
+    "GAP_OR_UNRESOLVED_CONTRACT": 7,
+    "HYPOTHESIS_REQUIRES_VALIDATION": 1
+  },
+  "by_area": {
+    "auth": 53,
+    "calls": 8,
+    "communication": 11,
+    "database": 21,
+    "inbox": 64,
+    "infra": 43,
+    "modules": 76,
+    "providers": 66,
+    "root": 18,
+    "platform": 12
+  },
+  "validated_source_evidence_references": 1903,
+  "validated_prior_artifact_references": 4,
+  "file_review_states": {
+    "STRUCTURAL_INVENTORY_ONLY": 805,
+    "WHOLE_FILE_SEMANTIC_REVIEW_DECLARED": 2552,
+    "REVIEWED_SOURCE_RANGES_LOCATED": 711
+  },
+  "all_js_ts_bodies": 36853,
+  "non_test_js_ts_bodies": 16652,
+  "function_span_states_all": {
+    "BODY_CONTAINED_IN_REVIEWED_RANGES": 36853
+  },
+  "function_span_states_non_test": {
+    "BODY_CONTAINED_IN_REVIEWED_RANGES": 16652
+  },
+  "sql_function_review": {
+    "semantic": 311,
+    "targeted": 0,
+    "structural": 0
+  },
+  "remaining_non_test_js_ts_files_with_uncontained_bodies": 0,
+  "previous_findings_preserved": 104,
+  "review_inputs": [
+    {
+      "path": "reports/auth/findings.json",
+      "sha256": "231080771b6aae6f614962786df0442c3da4c77f6771faf84999b18ec4c1b7a4",
+      "bytes": 269275
+    },
+    {
+      "path": "reports/auth/coverage.json",
+      "sha256": "d90c0e563143a174941e7df3788843d8758a1b051f6e9a8c51254780a71a3794",
+      "bytes": 426852
+    },
+    {
+      "path": "reports/calls/findings.json",
+      "sha256": "d9eec5488b323900157366c80dbda11fdf5a136c05745939bea74b884b6cf0a6",
+      "bytes": 34103
+    },
+    {
+      "path": "reports/calls/coverage.json",
+      "sha256": "f75b443ae29b9b0d91402b50e13710034618adee6854541e6f76d1eb09376605",
+      "bytes": 16679
+    },
+    {
+      "path": "reports/communication/findings.json",
+      "sha256": "a234a310a5eb33ed094480505c98a5f213ef63e9999ad45d2c7d31f5208e31d2",
+      "bytes": 41858
+    },
+    {
+      "path": "reports/communication/coverage.json",
+      "sha256": "007e98b9470d6b462e6b2835b191bba9843e7b9e084b1b482a36395bd24d0d15",
+      "bytes": 15980
+    },
+    {
+      "path": "reports/database/findings.json",
+      "sha256": "8c475a560b14770682767a004f64d64f76e91352d39af8f0d4bbcbffd6baad48",
+      "bytes": 375768
+    },
+    {
+      "path": "reports/database/coverage.json",
+      "sha256": "f6214eee183cfcaaf230ea7164c4b8cd82ddbbeabe05d45e3aab0d1f41043136",
+      "bytes": 3941439
+    },
+    {
+      "path": "reports/inbox/findings.json",
+      "sha256": "89c08f260637153b70d32d91ee90903b4da7b7746092ef3183b810e8a18ea600",
+      "bytes": 335279
+    },
+    {
+      "path": "reports/inbox/coverage.json",
+      "sha256": "1780232bb574dddb59a9ce3e87aea0b91e98f420035c580a72c3eebda6af6f62",
+      "bytes": 518912
+    },
+    {
+      "path": "reports/infra/findings.json",
+      "sha256": "87d4bf35dd37341d26bc99599acdc20c1caaac2d094d72c9f34563efd4664e1c",
+      "bytes": 225113
+    },
+    {
+      "path": "reports/infra/coverage.json",
+      "sha256": "9c57cd52cb9768f0bc3be8104748c794e76c14288eb3e44bd413d71638050f87",
+      "bytes": 755077
+    },
+    {
+      "path": "reports/modules/findings.json",
+      "sha256": "e656df85938c1e0a0027cc277c313cb9e7b7e75a734b2ce55bdea38d274f128c",
+      "bytes": 366684
+    },
+    {
+      "path": "reports/modules/coverage.json",
+      "sha256": "77a028590b6871a2f18141a99f5e60aa1fb8a40d94bf80de6a4584b60de3eb32",
+      "bytes": 1421052
+    },
+    {
+      "path": "reports/platform/findings.json",
+      "sha256": "1605a6659e79f7c28ac0701a008c9db000a2729fc07aaa6d1366fbeb82ed1fb3",
+      "bytes": 47984
+    },
+    {
+      "path": "reports/platform/coverage.json",
+      "sha256": "21a8757ce8e0d955321c7d3296e6932a1a106eec8b6c13761454f1ab5cbfc055",
+      "bytes": 51077
+    },
+    {
+      "path": "reports/providers/findings.json",
+      "sha256": "9e81ddafc86822d932de9ccc7ef38fc6bf9715825781f6c6e72b0acbf1871bf8",
+      "bytes": 281824
+    },
+    {
+      "path": "reports/providers/coverage.json",
+      "sha256": "faadf3923cf1d60a145b4a436bc33d2c6aaa79e55b9a9690c6863cf409036f65",
+      "bytes": 282551
+    },
+    {
+      "path": "reports/root/findings.json",
+      "sha256": "5dbe2745cc7c9de78c31ae3e422a3650263f6ca7eb8419ee724290641c1b8614",
+      "bytes": 71780
+    },
+    {
+      "path": "reports/root/coverage.json",
+      "sha256": "0b657ccffffe5f1f6b5dc8f84b63e603fe7ed05c3af99ff7628e063c23aa2262",
+      "bytes": 760342
+    }
+  ],
+  "validation_errors": 0,
+  "in_progress_artifacts_allowed": false,
+  "limits": [
+    "A file or body inside a reviewed source range is not a claim that every input, branch or microfeature was executed.",
+    "Review declarations preserve each reviewer’s own scope. A journal read or AST extraction alone does not promote a file to semantic review.",
+    "SQL definitions are lexical candidates reconciled with migration history; this is not an execution of migrations or a claim about live schema.",
+    "Static findings, unresolved contracts and hypotheses are counted separately. Related records across layers are not automatically distinct incidents.",
+    "No runtime production acceptance, provider operation, deployment, database write, message send or product fix was performed."
+  ]
+}

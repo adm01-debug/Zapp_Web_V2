@@ -1,0 +1,37 @@
+[
+  {
+    "roster_index": 64,
+    "adjudication": [
+      "Importa generateWithRouting real com banco/ambiente/fetch/log simulados. Verifica texto no default, visão sem exigir default, ausência/ambiguidade/inativo com nenhuma chamada, multipart preservado, propósito inválido e chamadas de log nos três desfechos enumerados.",
+      "O encadeamento de seleção e payload é real dentro do harness, com controles de ausência de envio. Não executa autenticação dos endpoints, imagem/Storage ou inserção do log; a fixture de modelos não é declaração de disponibilidade comercial atual."
+    ]
+  },
+  {
+    "roster_index": 65,
+    "adjudication": [
+      "Lê cinco consumidores pinados de vocabulário e verifica imports, ausência de comparações cruas e opções canônicas; os próprios detectores recebem regressões conhecidas e código correto como controles positivos/negativos. Também importa normalizadores reais para legado, canônico e desconhecido.",
+      "O escopo é a lista explícita de cinco caminhos, não todos os consumidores. As regex de import/comparação não provam renderização ou fluxo de dados completo; a revisão adversarial _adv_vocabulary-consumers-gaps enumera outros consumidores fora desse guard."
+    ]
+  },
+  {
+    "roster_index": 66,
+    "adjudication": [
+      "Importa portas front e canônica e exige identidade de referência para sete exports e igualdade do conjunto de símbolos, impedindo reintrodução de cópia local mesmo com comportamento igual. Arrays e quatro mapas são comparados a especificação literal independente extraída do source.",
+      "Comparar resultados das duas referências já idênticas é redundante para semântica, mas o objetivo de identidade está corretamente verificado. Os mapas e casos adicionais complementam a prova; não demonstram conformidade de todos os consumidores ou do esquema SQL."
+    ]
+  },
+  {
+    "roster_index": 67,
+    "adjudication": [
+      "Importa o vocabulário real por front e Edge e executa tabelas independentes de esperado/known para sentimento, urgência e prioridade, incluindo ausência, tipos inválidos, aliases e conversão de urgência em prioridade.",
+      "As duas entradas são o mesmo módulo por reexport, fato explicitado no teste. Os controles verificam semântica e rejeição de valores inventados; o título conjunto que está no banco compara constante local, sem consultar CHECKs ou o estado do banco."
+    ]
+  },
+  {
+    "roster_index": 68,
+    "adjudication": [
+      "Lê ContactCard.tsx e exige um bloco Checkbox e a construção aria-label={. O cabeçalho referencia uma varredura histórica de axe e lista contrastes ainda não corrigidos.",
+      "Este arquivo não executa axe nem calcula o nome acessível, não verificando o conteúdo interpolado do label ou contraste. É uma trava textual específica, sem demonstrar acessibilidade integral da tela."
+    ]
+  }
+]

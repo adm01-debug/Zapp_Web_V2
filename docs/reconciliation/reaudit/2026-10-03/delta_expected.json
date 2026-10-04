@@ -1,0 +1,42 @@
+[
+  {
+    "path": "docs/talkx/v4/STATUS.md",
+    "sha": "fc30374bae3ba094a7fd2016a65048f0a4d9f210"
+  },
+  {
+    "path": "supabase/deployment-manifest.json",
+    "sha": "45bbc4caba00b1cc284d66c9062fd9cc89e4d074"
+  },
+  {
+    "path": "supabase/functions/_shared/__tests__/talkx-reply-window.test.ts",
+    "sha": "003af675d225c7aaacf4efe435c52b18f1cc5664"
+  },
+  {
+    "path": "supabase/functions/_shared/__tests__/talkx-webhook-optout.test.ts",
+    "sha": "72f67422dea8887d43bb6c1bb674f4aed2ef6465"
+  },
+  {
+    "path": "supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts",
+    "sha": "6a98889637e41908e6d593d1e5f5f84f536df37c"
+  },
+  {
+    "path": "supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts",
+    "sha": "03eb64fa69b8a54dda15e11bf7d7ab8404709c12"
+  },
+  {
+    "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
+    "sha": "8dffb0359b8cf0c137b612b4c863840b34558930"
+  },
+  {
+    "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+    "sha": "f50d966cbffc0603eaff9283a634b1a5ffa6ee84"
+  },
+  {
+    "path": "supabase/functions/_shared/talkx-reply.ts",
+    "sha": "eea03dc5e41055c77bbaf1c4930eb90958097b33"
+  },
+  {
+    "path": "tests/contracts/_adv_edge_legacy_producers.test.ts",
+    "sha": "2204a619ab1d269dc65b69500ab3af5e5c03665c"
+  }
+]

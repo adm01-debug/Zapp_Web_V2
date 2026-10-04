@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "method": "Node 24 direct import of unchanged TypeScript; deterministic in-memory clients; all fetch calls intercepted before source import",
+  "source_hashes": {
+    "supabase/functions/_shared/evolution-webhook-msg-handlers.ts": "da51efad6032e57a63405c7fd3026337437b3622bf400ff8aa65fc61ca24f694",
+    "supabase/functions/_shared/evolution-webhook-messages.ts": "232baff04c754c6407275bbdc89e0ca439c533cfb58ad0ec603c0afd3d727aec",
+    "supabase/functions/_shared/evolution-helpers.ts": "7a0ff6fb539f544abeb4a7b46e594d0ee027d5e674d8c398f640e6da7373c016",
+    "supabase/functions/_shared/evolution-go-adapter.ts": "4dea8247fc8919af4182b2aa9634761df0bd600846bd40c1a4147a6e86ec77c8",
+    "supabase/functions/_shared/talkx-window.ts": "18833512cfb4500ff281be4c8d2ce61a82801c9bd66cecd514e929c52c3b6304",
+    "supabase/functions/_shared/talkx-resume-policy.ts": "043f7225977b1d726f362a76f263a356ff5751beea8821b95985daa5f44f45c4",
+    "supabase/functions/_shared/evolution-media.ts": "0c06496b37b3effcafcf75700c21301960a20cdca722c888ffc3d020ea80efd4"
+  },
+  "results": [
+    {
+      "id": "P01",
+      "receipt_fromMe": false,
+      "rpcNames": [
+        "record_talkx_recipient_receipt"
+      ],
+      "stub_sender": "contact",
+      "outcome": "GO outbound receipt omits Multiplix and creates inbound stub attempt"
+    },
+    {
+      "id": "P02",
+      "lookup_filters": [
+        [
+          "eq",
+          "external_id",
+          "colliding-external-id"
+        ]
+      ],
+      "update_filters": [
+        [
+          "eq",
+          "id",
+          "newest-message-on-other-connection"
+        ]
+      ],
+      "outcome": "edit has no connection or direction correlation"
+    },
+    {
+      "id": "P03",
+      "connectionReads": 1,
+      "update_filters": [
+        [
+          "eq",
+          "external_id",
+          "colliding-external-id"
+        ],
+        [
+          "eq",
+          "sender",
+          "contact"
+        ]
+      ],
+      "outcome": "database lookup error becomes cached null and unscoped message mutation"
+    },
+    {
+      "id": "P04",
+      "group_jid": "120363000000000000@g.us",
+      "ingested_phone": "5511000000000",
+      "outcome": "group message enters direct contact inbox"
+    },
+    {
+      "id": "P05",
+      "ingests": 2,
+      "suppressionCalls": 1,
+      "handler_threw": false,
+      "outcome": "failed suppression is swallowed; duplicate stops retry"
+    },
+    {
+      "id": "P06",
+      "fixture_http_status": 500,
+      "confirmation_logged_sent": true,
+      "transport": [
+        {
+          "url": "https://provider.invalid/send/text",
+          "method": "POST",
+          "signal": false
+        }
+      ],
+      "outcome": "unchecked Response.ok yields false confirmation"
+    },
+    {
+      "id": "P07",
+      "rpcNames": [
+        "ingest_inbound_message",
+        "talkx_match_optout",
+        "attribute_talkx_reply",
+        "attribute_multiplix_item_reply"
+      ],
+      "outcome": "PARE is attributed as engagement when both keyword lookups fail"
+    },
+    {
+      "id": "P08",
+      "input_status": 3,
+      "error": "TypeError: rawStatus.toLowerCase is not a function",
+      "classification": "conditional on provider sending numeric status"
+    },
+    {
+      "id": "P09",
+      "jsonb_object_parsed": null,
+      "configuredAllowed": true,
+      "scheduler_resume": false,
+      "malformedAllowed": true,
+      "outcome": "settings contract and scheduler window disagree"
+    },
+    {
+      "id": "P10",
+      "actual_network_requests": 0,
+      "mocked_fetch_called_with_loopback": true,
+      "outcome": "media URL is not passed through secure egress guard"
+    }
+  ]
+}

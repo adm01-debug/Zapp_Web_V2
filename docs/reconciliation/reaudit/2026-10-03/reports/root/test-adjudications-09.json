@@ -1,0 +1,37 @@
+[
+  {
+    "roster_index": 53,
+    "adjudication": [
+      "Lê o source de ai-conversation-analysis e exige ausência de defaults inventados, normalizadores, validação/envelope, RPC de persistência, campos, tratamento de persistError e ordem textual de revalidação/cancelamento/requestId.",
+      "É um contrato de origem com padrões concretos, sem importar o handler. Proximidade e ordem textual não provam atomicidade SQL, ausência de efeitos em todos os ramos ou recência sob concorrência; as conclusões operacionais dependem da revisão do handler/RPC."
+    ]
+  },
+  {
+    "roster_index": 54,
+    "adjudication": [
+      "Lê ai-conversation-summary e verifica defaults removidos, ordem dos normalizadores, shape/escala, envelope, conteúdo do payload da RPC e tratamento de erro/cancelamento. O cabeçalho declara que examina a forma do código e não executa o handler Deno.",
+      "Preserva valor dos ratchets e seu limite: slices/indexOf/regex não são prova de controle de fluxo nem transação executada. Alguns recortes usam delimitadores sem conferir existência individual, exigindo confronto com fonte vigente antes de interpretar resultado como aceite funcional."
+    ]
+  },
+  {
+    "roster_index": 55,
+    "adjudication": [
+      "Lê ai-proxy/ai-providers e ancora autorização de fallback na conjunção inteira sem disjunção, modo test antes do fallback, destino configurado, corpo de runProviderTest com um dispatch e sem retry, metadados e códigos/status.",
+      "Há controles textuais mais precisos que mera presença de símbolo. Ainda usa remoção de comentários, balanceamento e janelas por regex, inclusive proximidade de status; não executa pedidos nem comprova compatibilidade, credenciais ou disponibilidade do provedor testado."
+    ]
+  },
+  {
+    "roster_index": 56,
+    "adjudication": [
+      "Combina leitura textual de ai-generate para interface/imports/chamadas/guards/filtros/timeout/logs com import real de ai-routing e ai-capabilities no bloco final. Este último verifica resolução por finalidade, capacidade tools, filtros reservados, política system sem mutação e substituição de modelo.",
+      "A contagem logs>=retornos e as janelas estruturais não estabelecem cobertura de todos os caminhos de execução nem entrega de registros. O conjunto de quatro provedores é fixture histórica declarada; não é inventário atual do banco. Os testes puros são controles positivos reais, distintos desses limites de análise textual."
+    ]
+  },
+  {
+    "roster_index": 57,
+    "adjudication": [
+      "Importa toInlineImage real, injeta Deno.env/fetch e verifica data URL byte a byte, URL autenticada e headers de serviço, encoding de segmentos, MIME, limite por header/corpo/header mentiroso/data URL e maxBytes menor. Cobre 403/404, não imagem/vazio, origem e bucket recusados, travessia, ausência de credencial e erro serializado.",
+      "As assertivas de ausência de fetch e fronteiras são concretas. Os bytes de fixture não constituem imagem decodificada, e Storage/RLS/pertencimento ao contato ou usuário do chamador não são exercitados por esse helper isolado."
+    ]
+  }
+]

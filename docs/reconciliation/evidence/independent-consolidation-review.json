@@ -1,0 +1,539 @@
+{
+  "reviewer": "other_modules — revisão independente do consolidado",
+  "baseline_main_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "scope": "QA de integridade e preservação de significado dos artefatos em reconciliation/docs/reconciliation. Nenhuma edição do builder ou dos conjuntos congelados.",
+  "snapshot_reviewed": {
+    "generated_at": "2026-10-03T23:22:18.126618+00:00",
+    "baseline_main_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "master_sha256": "51c18056cb200c7f65b4399ff2f5b11404165b0d5fde37cf5711661b54327675",
+    "task_records": 5166,
+    "source_plans": 62,
+    "individual_assessments": 3062,
+    "lineage_only_records": 2104,
+    "findings": 104,
+    "resolved_finding_task_references": 571,
+    "note": "Dados e narrativas congelados pelo root antes desta revisão; manifesto de publicação será criado depois da cópia deste laudo."
+  },
+  "checks_passed": [
+    {
+      "check": "IDs e contagens",
+      "result": "5.166 IDs canônicos e chaves normalizadas únicos; master, arquivos por plano, ledger completo, distribuição de estados e profundidades concordam."
+    },
+    {
+      "check": "Fontes, hashes e linhas",
+      "result": "62 fontes lidas no definition_ref correto; 5.166 ranges de tarefas válidos; zero divergência de raw_line, hash ou ref. Inclui definição histórica Team Chat e fontes fora de main."
+    },
+    {
+      "check": "Dimensões e justificativas",
+      "result": "Todas as tarefas têm justificativa e cinco dimensões legíveis. Nenhuma perda de proof_type, runtime_verified_in_this_audit ou code_disposition na compactação."
+    },
+    {
+      "check": "PRs e manifest de inputs",
+      "result": "Metadados das PRs com repository/state/merged_at preservados, inclusive aliases prs e namespaces externos. Todos os assessment_files têm hash no manifest, incluindo as cinco emendas."
+    },
+    {
+      "check": "Achados e tarefas",
+      "result": "104 IDs de achado únicos; 571 referências canônicas resolvidas sem sufixo numérico global; zero referência ambígua ou associação a plano incorreto."
+    },
+    {
+      "check": "Evidências dos achados",
+      "result": "378 ranges Git válidos no ref ou URL imutável indicado. Probes locais e laudo adversarial têm destinos entregues. Nenhum path local não resolvido em FINDINGS."
+    },
+    {
+      "check": "Narrativas",
+      "result": "Contagens finais e tabela inteira de status conferem. Auditoria concluída não equivale a produto pronto; 2.104 registros de linhagem e profundidades das 3.062 avaliações estão explícitos."
+    },
+    {
+      "check": "Portabilidade dos probes",
+      "result": "Gerador Python e quatro conjuntos executados em cópias com outra profundidade; todos exit 0, sem alteração do clone fonte."
+    },
+    {
+      "check": "Delta posterior",
+      "result": "Nove fontes do cutoff 4e73c776 conferem em tamanho, SHA256 e Git blob. X028 implementado/deploy observado foi separado do aceite celular; baseline original preservado."
+    },
+    {
+      "check": "Exposição acidental",
+      "result": "Busca limitada nos 221 arquivos do pacote, incluindo JSON comprimido, não encontrou os padrões de IDs opacos, URIs internos ou credenciais descritos; sem certificação geral de segurança."
+    }
+  ],
+  "resolved_issues": [
+    {
+      "id": "CONSOL-001",
+      "severity": "P1",
+      "title": "Normalização decimal colidia F5 com F6.5",
+      "observed_in": "Primeiro snapshot, antes de generated_at 22:49:40",
+      "evidence": {
+        "plan_path": "docs/tipografia/PLANO_PARIDADE_TIPOGRAFICA_ZAPP_PROMO.md",
+        "task_ids": [
+          "F5",
+          "F6.5"
+        ],
+        "lines": [
+          99,
+          114
+        ]
+      },
+      "cause": "Regex pelo sufixo numérico convertia ambos para chave 5; o assert de canonical_id único não detectava essa colisão.",
+      "resolution": "Root preservou IDs com ponto e adicionou assert das chaves normalizadas. Reexecução independente encontrou zero colisões.",
+      "status": "RESOLVED_AND_RECHECKED"
+    },
+    {
+      "id": "CONSOL-002",
+      "severity": "P2",
+      "title": "134 justificativas vazias após perda dos aliases",
+      "cause": "O builder não consultava implementation.note/summary, classification_basis e acceptance.note.",
+      "resolution": "Root ampliou os fallbacks e adicionou assert; o snapshot posterior contém zero rationale vazio.",
+      "status": "RESOLVED_AND_RECHECKED"
+    },
+    {
+      "id": "CONSOL-003",
+      "severity": "P2",
+      "title": "68 tarefas perdem as PRs no arquivo compacto por diferença de schema",
+      "evidence": {
+        "builder_path": "audit/tools/consolidate.py",
+        "field": "compact.pr_numbers = a.get('pr_numbers', [])",
+        "affected_records": 68,
+        "examples": [
+          {
+            "plan_path": "docs/audits/PLANO_BANCO_UNICO_200_ETAPAS_2026-09-24.md",
+            "task_id": "94",
+            "input_field": "prs",
+            "input_pr": "adm01-debug/Zapp_Web_V2#999",
+            "compact_pr_numbers": []
+          },
+          {
+            "plan_path": "docs/audits/PLANO_BANCO_UNICO_200_ETAPAS_2026-09-24.md",
+            "task_id": "148",
+            "input_field": "prs",
+            "input_pr": "adm01-debug/Zapp_Web_V2#1636",
+            "compact_pr_numbers": []
+          }
+        ]
+      },
+      "impact": "O ledger completo comprimido preserva o objeto original, mas o arquivo legível por plano perde o vínculo de PR e seu estado, inclusive PR ainda aberta.",
+      "suggestion": "Normalizar prs/related_prs/pr_refs para pr_references com repository, number, state, merged_at, url e scope. Preencher pr_numbers somente para o repositório canônico; não misturar #80 do Singu com #80 do ZAPP.",
+      "acceptance": "Nenhuma referência de PR presente no input desaparece do compacto; namespaces externos continuam explícitos.",
+      "status": "RESOLVED_AND_RECHECKED",
+      "resolution": "Root passou a preservar prs sempre, inclusive quando pr_numbers já existe. Snapshot 23:00:15: zero associações de PR perdidas; repository/state/merged_at originais preservados."
+    },
+    {
+      "id": "CONSOL-004",
+      "severity": "P2",
+      "title": "Dimensões e tipo de prova de schemas alternativos não chegam ao compacto",
+      "evidence": {
+        "affected_inputs": [
+          {
+            "file": "modules/transversal/transversal-tasks.json",
+            "rows_without_normalized_dimensions": 451
+          },
+          {
+            "file": "code/team_chat_100_verification.json",
+            "rows_without_normalized_dimensions": 100
+          },
+          {
+            "file": "code/team_chat_tc_100_verification.json",
+            "rows_without_normalized_dimensions": 100
+          },
+          {
+            "file": "modules/transversal/banco-unico-amendments.json",
+            "rows_without_normalized_dimensions": 5
+          }
+        ],
+        "team_chat_fields_not_carried_into_compact": [
+          "proof_type",
+          "runtime_verified_in_this_audit",
+          "code_disposition",
+          "related_f_steps",
+          "scope_relation"
+        ]
+      },
+      "impact": "656 linhas exibem implementation/testing vazios ou defaults no arquivo por plano. Em 200 linhas Team Chat, o objeto completo sabe que a prova é STATIC e runtime_verified_in_this_audit=false, mas esses campos específicos somem do compacto. Não foi observado falso PASS gerado; há perda de clareza e rastreabilidade.",
+      "suggestion": "Criar um adaptador por schema com estados explícitos: código inspecionado, testes não executados, runtime não observado e aceite não certificado; carregar proof_type e code_disposition. Não converter REPOSITORY_STATIC em teste executado ou resultado verde.",
+      "acceptance": "Cada tarefa tem as cinco dimensões legíveis ou um motivo explícito de não aplicabilidade, e nenhum dado STATIC aparece como RUNTIME/PASS.",
+      "status": "RESOLVED_AND_RECHECKED",
+      "resolution": "Root acrescentou dimensões explícitas e preservou proof_type/runtime_verified_in_this_audit/code_disposition. Snapshot 23:00:15: zero dimensões vazias e zero perda desses campos. Defaults não certificam execução de teste."
+    },
+    {
+      "id": "CONSOL-005",
+      "severity": "P2",
+      "title": "Evidências locais de achados ainda apontam para caminhos não entregues",
+      "evidence": {
+        "references": [
+          {
+            "finding_ids": [
+              "MX02",
+              "MX05",
+              "MX06",
+              "MX07"
+            ],
+            "path": "audit/modules/talkx_multiplix/offline_probe_results.json"
+          },
+          {
+            "finding_ids": [
+              "TX01"
+            ],
+            "path": "audit/modules/talkx_multiplix/local_checks.json"
+          },
+          {
+            "finding_ids": [
+              "TEL-PERIOD-001",
+              "TEL-RECORDING-001"
+            ],
+            "path": "audit/adversarial/cross-module-probes.json"
+          }
+        ],
+        "independent_review_target": "reports/adversarial/INDEPENDENT_REVIEW_2026-10-03.md",
+        "all_sources_exist_in_workspace": true,
+        "targets_present_in_deliverable_at_review": false
+      },
+      "impact": "Quem abre o PR de documentação não consegue seguir essas sete referências nem o laudo independente. Remover só o prefixo absoluto do workspace não cria uma referência portátil.",
+      "suggestion": "Copiar os probes/laudo para evidence ou reports e reescrever referências com um mapa de destino. Preservar SHA256 dos arquivos copiados; deixar audit_source como proveniência, não como link de evidência do usuário.",
+      "acceptance": "Todos os caminhos de evidência não Git resolvem dentro do deliverable e hashes de cópia conferem. Validar depois da cópia final, que ainda estava pendente nesta rodada.",
+      "status": "RESOLVED_AND_RECHECKED",
+      "resolution": "Probes e laudo independente copiados; sete referências audit/... remapeadas para evidence/. Snapshot 23:00:15: zero caminho local não resolvido nos achados e laudo presente."
+    },
+    {
+      "id": "CONSOL-006",
+      "severity": "P2",
+      "title": "51 achados usam IDs de tarefa sem namespace do plano",
+      "evidence": {
+        "affected_task_shapes": {
+          "strings": 51,
+          "structured_plan_task_pairs": 19,
+          "none": 8
+        },
+        "example": {
+          "finding_id": "MX04",
+          "affected_tasks": [
+            "F17",
+            "F55",
+            "X018",
+            "X019"
+          ],
+          "module_field": null
+        }
+      },
+      "impact": "F17, E01 e outros IDs existem em múltiplos planos; não há chave canônica diretamente navegável nesses achados. A origem MX/TX/TC ajuda um leitor humano, mas não resolve o join do registro global.",
+      "suggestion": "Preservar a lista original e adicionar affected_task_keys com plan_path/task_id/canonical_id e relação (principal, sucessor, contexto). Quando o mapeamento não for inequívoco, marcar UNRESOLVED_REFERENCE em vez de escolher pelo sufixo numérico.",
+      "acceptance": "Cada vínculo de tarefa do FINDINGS resolve uma chave canônica específica, ou declara explicitamente a referência não resolvida/fora de plano.",
+      "status": "RESOLVED_AND_RECHECKED",
+      "resolution_in_progress": "audit/tools/link_findings.py validou em --check-only 487 referências de 89 achados: todas inequívocas no plano explícito ou audit_source; zero ambíguas. Inclui affected_steps de Layout/Fontes. Root executará após a geração final; o script preserva referências originais e registra UNRESOLVED_REFERENCE se surgir ambiguidade.",
+      "resolution": "Root executou o linker. Snapshot 23:09:00 contém 487 vínculos canônicos dos 89 achados; todos conferidos contra tarefa/plano/arquivo. Zero referências ambíguas. O auditor de Team Chat confirmou separadamente a origem dos aliases Fxx e TC-xx; os números dos dois planos não foram equiparados."
+    },
+    {
+      "id": "CONSOL-007",
+      "severity": "P2",
+      "title": "Documentos narrativos ainda são da primeira varredura",
+      "evidence": {
+        "file": "reconciliation/docs/reconciliation/FINAL_RECONCILIATION_REPORT_2026-10-03.md",
+        "observed_statement": "Não significa que cada uma das centenas de etapas já possui uma linha individual no ledger. Isso exigirá geração task-level.",
+        "conflicts_with": "O MASTER_LEDGER atual possui 5.166 registros e os arquivos por plano já foram gerados."
+      },
+      "impact": "O usuário pode ler o relatório e entender que o trabalho atual ainda não foi feito, ou tomar os números antigos como resultado final.",
+      "suggestion": "Atualizar README, relatório final, checkpoint e handoff com o manifest final; preservar a primeira varredura sob rótulo histórico. Explicar que task-level estrutural não significa aceite semântico completo.",
+      "acceptance": "Resumo, relatório, registry, ledger e arquivos por plano concordam na mesma geração. Revisor valida a redação nova antes do congelamento final.",
+      "status": "RESOLVED_AND_RECHECKED",
+      "resolution": "Narrativas vigentes atualizadas e revisadas no freeze 23:22:18: 5.166 registros, 3.062 avaliações individuais, 2.104 registros somente por linhagem e 104 achados. Tabela inteira de estados coincide com o MASTER; não há métricas antigas nas narrativas principais. Conclusão da auditoria foi distinguida de aceite do produto. Redação Banco Único, espaços e delimitação do adendo pós-baseline corrigidas."
+    },
+    {
+      "id": "CONSOL-008",
+      "severity": "P2",
+      "title": "Empacotamento de probes quebrava a regeneração JavaScript e o import transversal portátil",
+      "observed_failure": "Gerador Python substituía também seu template JavaScript por __import__(os), produzindo ReferenceError. Import estático ../../../Zapp_Web_V2 funcionava apenas na profundidade original da auditoria.",
+      "resolution": "Root corrigiu o template JavaScript e adotou import dinâmico com raiz configurável. Cópias isoladas em profundidade diferente passaram: gerador Python, Other, Transversal, Cross-module e Multiplix, todos exit 0; clone baseline permaneceu limpo.",
+      "evidence": "evidence/portable-probe-retest-results.json",
+      "status": "RESOLVED_AND_RECHECKED",
+      "limit": "Exit 0 certifica execução do probe sintético e a reprodução da regressão esperada, não sucesso do produto."
+    },
+    {
+      "id": "CONSOL-009",
+      "severity": "P3",
+      "title": "Cinco emendas carregadas fora do loop principal não aparecem no manifest de inputs",
+      "evidence": {
+        "file": "modules/transversal/banco-unico-amendments.json",
+        "task_ids": [
+          "8b",
+          "12a",
+          "121a",
+          "138a",
+          "197a"
+        ],
+        "manifest": "evidence/consolidation-inputs.json"
+      },
+      "suggestion": "Registrar o arquivo com SHA256 no mesmo manifest que os outros assessments.",
+      "status": "RESOLVED_AND_RECHECKED",
+      "resolution": "Arquivo das cinco emendas incluído no manifest. Snapshot 23:09:00: nenhum assessment_file sem registro e todos os hashes de input conferem."
+    }
+  ],
+  "issues_to_address": [],
+  "portability_observations": {
+    "uncompressed_workspace_absolute_mentions": 81,
+    "uncompressed_tmp_absolute_mentions": 3,
+    "uncompressed_home_relative_mentions": 11,
+    "compressed_workspace_absolute_mentions": 265,
+    "compressed_tmp_absolute_mentions": 20,
+    "assessment": "As ocorrências observadas são majoritariamente citações dos requisitos e de medições históricas, inclusive nomes de arquivos locais de outro executor. Não há indício de conteúdo de credencial nesses exemplos. Não apagar silenciosamente o requisito original para limpar caminhos; distinguir raw_requirement/historical_locator de evidência portátil e copiar artefatos necessários.",
+    "suggestion": "Manter uma explicação no relatório de que caminhos históricos preservados não são arquivos prometidos no PR; o índice de evidência deve conter somente destinos verificáveis."
+  },
+  "final_review_pending": [],
+  "review_state": "COMPLETE_FOR_FROZEN_DATA_BEFORE_PUBLICATION_MANIFEST",
+  "latest_recheck": {
+    "snapshot_generated_at": "2026-10-03T23:22:18.126618+00:00",
+    "source_plans": 62,
+    "task_records": 5166,
+    "findings": 104,
+    "source_line_ranges_checked": 5166,
+    "finding_git_ranges_checked": 378,
+    "canonical_finding_links_checked": 571,
+    "integrity_passed": true,
+    "integrity_errors": {}
+  },
+  "verification_scripts": [
+    {
+      "local_audit_script": "audit/tools/check_consolidation.py",
+      "role": "Verificador independente, resultado incorporado neste laudo."
+    },
+    {
+      "local_audit_script": "audit/tools/link_findings.py",
+      "role": "Vínculos incluídos em FINDINGS; --check-only confirma as 571 referências."
+    },
+    {
+      "delivered_script": "reproduce/validate_package.py",
+      "role": "Validação portátil da entrega, a executar após o manifesto."
+    }
+  ],
+  "check_results": "O resultado completo está incorporado em integrity_result; audit/consolidation-integrity.json é proveniência local, não um arquivo prometido no PR.",
+  "additional_checks": {
+    "active_local_markdown_links_examined": 881,
+    "active_local_links_resolved_now": 876,
+    "references_to_final_publication_artifacts_not_yet_created": [
+      {
+        "path": "FINAL_RECONCILIATION_REPORT_2026-10-03.md",
+        "target": "evidence/ARTIFACT_MANIFEST.json"
+      },
+      {
+        "path": "METHODOLOGY.md",
+        "target": "evidence/ARTIFACT_MANIFEST.json"
+      },
+      {
+        "path": "METHODOLOGY.md",
+        "target": "evidence/artifact-validation.json"
+      },
+      {
+        "path": "README.md",
+        "target": "evidence/ARTIFACT_MANIFEST.json"
+      },
+      {
+        "path": "reproduce/README.md",
+        "target": "../evidence/artifact-validation.json"
+      }
+    ],
+    "team_chat_alias_authority_confirmed_by_source_auditor": true,
+    "exposure_scan": {
+      "files_scanned_including_decompressed_json": 221,
+      "matches": 0,
+      "patterns": [
+        "opaque uploaded file ID",
+        "internal app/storage URI",
+        "GitHub token",
+        "Supabase secret key",
+        "private-key header",
+        "JWT-shaped literal"
+      ],
+      "scope_limit": "Busca literal por padrões no pacote; não é certificação geral de ausência de segredos."
+    }
+  },
+  "narrative_review": {
+    "status": "PASS",
+    "documents_read": [
+      "FINAL_RECONCILIATION_REPORT_2026-10-03.md",
+      "README.md",
+      "METHODOLOGY.md",
+      "SESSION_HANDOFF.md",
+      "RECONCILIATION_STATUS.md",
+      "RECONCILIATION_CHECKPOINT_2026-10-03.md",
+      "OPEN_RISKS.md",
+      "EXECUTION_WAVES.md",
+      "reproduce/README.md",
+      "CODE_TRUTH_STRUCTURAL_SWEEP_2026-10-03.md",
+      "DATABASE_TRUTH_STRUCTURAL_SWEEP_2026-10-03.md",
+      "RESIDUE_REGISTRY.md",
+      "SAFE_CLEANUP_PLAN.md"
+    ],
+    "meaning_checks": {
+      "audit_completion_is_not_product_acceptance": true,
+      "individual_assessment_depth_is_qualified": true,
+      "historical_lineage_only_records_explicit": true,
+      "historical_requirements_not_summed_as_backlog": true,
+      "ast_and_test_presence_not_called_semantic_proof": true,
+      "database_observations_are_dated_not_new_sql": true,
+      "harness_success_not_product_success": true,
+      "future_corrections_separated_from_authorized_audit": true
+    },
+    "test_claims_crosschecked": {
+      "ci_contract_tests": 150,
+      "ci_cli_guards": 5,
+      "talkx_preflight_tests": 31,
+      "typography_tests": 10,
+      "skins_and_volume_criteria": {
+        "total": 307,
+        "passed": 304,
+        "failed": 3,
+        "method": "299 critérios de Skins mais oito de Volume, com APIs simuladas. Resultados existentes conferidos; não reexecutados por este revisor final."
+      }
+    },
+    "requested_small_edits": [
+      {
+        "request": "Trocar 175 decisões de arquitetura por 175 requisitos do corpo original (178 incluindo emendas) condicionados à decisão de arquitetura.",
+        "status": "RESOLVED_AND_RECHECKED"
+      },
+      {
+        "request": "Corrigir palavras coladas nas tabelas OPEN_RISKS/EXECUTION_WAVES e no SESSION_HANDOFF.",
+        "status": "RESOLVED_AND_RECHECKED"
+      },
+      {
+        "request": "Regenerar métricas após secondary300 e incorporar o adendo do novo commit remoto sem trocar o baseline auditado.",
+        "status": "RESOLVED_AND_RECHECKED"
+      }
+    ],
+    "limitation": "A aprovação de significado não certifica semanticamente cada requisito nem todos os patches; os níveis de revisão e as pendências do produto estão explicitados.",
+    "post_baseline_delta": {
+      "cutoff": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+      "source_report": "audit/delta/FINAL_REMOTE_DELTA.md",
+      "meaning_review": "PASS",
+      "source_integrity": "9/9 preserved source files match byte length, SHA256 and expected Git blob from API evidence.",
+      "integrity_result": "audit/consolidation-delta-check.json",
+      "checks": [
+        "1 new main commit is distinguished from 2 PR branch commits.",
+        "Original PR/issue inventory remains fixed; +1 PR is additive.",
+        "X028 implementation is acknowledged with observed deployment; X035 cellphone acceptance remains unverified.",
+        "PR claim of 796 tests is not treated as output re-read or a local run.",
+        "New DB offline V06 failure is not assigned the older bootstrap cause without logs.",
+        "Existing TX01 scoreboard failure remains separate from the X028 implementation advance."
+      ],
+      "small_edit_requested": {
+        "request": "Especificar que a ausência de nova execução se refere ao adendo.",
+        "status": "RESOLVED_AND_RECHECKED"
+      }
+    },
+    "final_counts_and_status_table_match_master": true
+  },
+  "verdict": "PASS",
+  "open_issue_count": 0,
+  "resolved_issue_count": 9,
+  "integrity_result": {
+    "baseline_main_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "snapshot_generated_at": "2026-10-03T23:22:18.126618+00:00",
+    "master_sha256": "51c18056cb200c7f65b4399ff2f5b11404165b0d5fde37cf5711661b54327675",
+    "coverage": {
+      "tracked_files": 4065,
+      "bytes_hashed": 76818044,
+      "text_lines_structurally_scanned": 677490,
+      "blob_hash_mismatches": 0,
+      "ast_files": 2394,
+      "ast_parse_errors": 0,
+      "commits_catalogued": 9643,
+      "branches_compared": 58,
+      "exclusive_commits": 197,
+      "pull_requests": 1828,
+      "true_issues": 41,
+      "source_plans_resolved": 62,
+      "task_records": 5166,
+      "individual_assessment_records": 3062,
+      "lineage_only_records": 2104
+    },
+    "finding_count": 104,
+    "checks": {
+      "master_record_count": true,
+      "master_status_counts": true,
+      "master_review_counts": true,
+      "registry_plan_count": true,
+      "master_plan_count": true,
+      "assessment_partition": true,
+      "task_files_set": true,
+      "master_ids_set": true,
+      "master_ids_unique": true,
+      "finding_ids_unique": true,
+      "compact_ids_set": true,
+      "independent_review_present": true,
+      "stable_master_during_check": true,
+      "no_unmatched_assessments": true,
+      "no_input_overlap": true
+    },
+    "counts": {
+      "sources_read_at_definition_ref": 62,
+      "source_task_ranges_checked": 5166,
+      "finding_git_ranges_checked": 378,
+      "canonical_finding_links_checked": 571,
+      "artifact_manifest_present": 0
+    },
+    "errors": {},
+    "passed": true,
+    "limits": "Validates consolidation integrity and locators, not the truth of every acceptance clause. Static paths and hash/AST counts are never treated as executed tests or production certification."
+  },
+  "local_probes_portability_recheck": {
+    "method": "Portable package recheck after root packaging fixes; copies in a different directory depth, explicit repo via environment/argv, synthetic fixtures only.",
+    "results": [
+      {
+        "name": "other_generator",
+        "exit_code": 0,
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "other_generated_probe",
+        "exit_code": 0,
+        "output_sha256": "bbbf7a12c36e5773b57bb627656507a13043f74191ba9b565eccb94eb91cedec"
+      },
+      {
+        "name": "transversal_probe",
+        "exit_code": 0,
+        "output_sha256": "b2c8d48505b1ce918e7362de62b1d8284bf61d6d8ab77d69f88cb153de492f18"
+      },
+      {
+        "name": "cross_module_probe",
+        "exit_code": 0,
+        "output_sha256": "de3b3e30fea0f284ddb15e3c0ed67d3203549727a4ad3638800c13f7700f4fc1"
+      },
+      {
+        "name": "multiplix_probe",
+        "exit_code": 0,
+        "output_sha256": "a46f5657f81b5bda3ce35da69b2098d06db5dc13e1ae95747230003da102ce2f"
+      }
+    ],
+    "baseline_source_worktree_clean": true,
+    "packaged_evidence": "evidence/portable-probe-retest-results.json",
+    "meaning": "Sucesso do harness reproduz o comportamento esperado, inclusive falhas do produto. Não é homologação funcional nem execução SQL."
+  },
+  "delta_integrity_result": {
+    "source_files_checked": 9,
+    "errors": [],
+    "cutoff": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+    "method": "Recompute SHA256, byte length and Git blob hash of preserved cutoff sources against API-derived expected hashes; no additional remote request."
+  },
+  "publication_sequence": {
+    "owner": "root",
+    "status": "AUTHORIZED_FINALIZATION_AFTER_THIS_REVIEW",
+    "steps": [
+      "Copiar este laudo para evidence/independent-consolidation-review.json.",
+      "Produzir evidence/artifact-validation.json e evidence/ARTIFACT_MANIFEST.json sem reexecutar builders de dados.",
+      "Executar o validador portátil no conjunto completo para confirmar os hashes e os cinco links aos dois artefatos de fechamento."
+    ],
+    "scope_note": "O manifesto ainda não existia no instante desta revisão; este laudo não afirma tê-lo verificado. A criação e validação são a sequência explícita de publicação, não uma lacuna escondida nas evidências já revisadas."
+  },
+  "explicit_limits": [
+    "Revisão de integridade e significado não é revisão semântica completa dos 5.166 requisitos.",
+    "Os 2.104 registros históricos tratados somente por linhagem permanecem identificados; não foram certificados como implementados.",
+    "As 3.062 avaliações individuais incluem profundidades diferentes, inclusive documentação e resolução de caminhos, como declarado no ledger.",
+    "Testes presentes, AST, hashes, PRs e sucesso de harness sintético não substituem teste integrado, SQL/RLS ou aceite humano atual.",
+    "Os 104 achados incluem causas sobrepostas, limitações e decisões; não são 104 incidentes independentes em produção.",
+    "O cutoff remoto posterior é um adendo de nove arquivos e não uma reauditoria completa da main.",
+    "Padrões de credenciais ausentes não certificam ausência de todo segredo.",
+    "Manifesto e resultado de validação da publicação são criados depois deste laudo e precisam passar no validador final."
+  ],
+  "source_preservation": {
+    "head": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "worktree_clean": true,
+    "frozen_other_and_salesview_sets_modified": false,
+    "builder_modified_by_reviewer": false
+  }
+}

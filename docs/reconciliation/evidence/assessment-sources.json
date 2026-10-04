@@ -1,0 +1,52 @@
+[
+  {
+    "source": "modules/other/tasks.enriched.json",
+    "file": "evidence/assessment-other.json.gz",
+    "source_sha256": "0fed2b06228268b7d11aadb48944dbd8576d8a8ba0e529da886f32980deeeb10"
+  },
+  {
+    "source": "modules/talkx_multiplix/tasks.json",
+    "file": "evidence/assessment-talkx_multiplix.json.gz",
+    "source_sha256": "c2f94914c49931b2d1abe459286350f40c29d9b8b3c4b5d9b41dedbf370d7c67"
+  },
+  {
+    "source": "modules/telefonia_ia_dashboard/tasks.json",
+    "file": "evidence/assessment-telefonia_ia_dashboard.json.gz",
+    "source_sha256": "fe21f4d1e28304c6158eaee3e36c8e643d955a42624777a2437bda67191d9587"
+  },
+  {
+    "source": "modules/transversal/transversal-tasks.json",
+    "file": "evidence/assessment-transversal.json.gz",
+    "source_sha256": "0e65bf9210320cbff64ae8e938c459210d7ded59dfd319b9f9ab936a1241ff7d"
+  },
+  {
+    "source": "modules/secondary/tasks.json",
+    "file": "evidence/assessment-secondary.json.gz",
+    "source_sha256": "671e97bc2b14dd5fb865ab352953db2acd4a3305e88f4edd36db884d07eeb518"
+  },
+  {
+    "source": "modules/salesview/tasks.enriched.json",
+    "file": "evidence/assessment-salesview.json.gz",
+    "source_sha256": "98831499b2533fba3e6cccddea8263c49fc109bff335a1315681c822ac843385"
+  },
+  {
+    "source": "modules/layout_type/tasks.enriched.json",
+    "file": "evidence/assessment-layout_type.json.gz",
+    "source_sha256": "291a342253473c10782866551827cffee470563bac69ed3b54ab88d4a759e1ff"
+  },
+  {
+    "source": "modules/engineering_programs/tasks.enriched.json",
+    "file": "evidence/assessment-engineering_programs.json.gz",
+    "source_sha256": "ce709e8f262a02e3497168c0176a007c152f5400fb02185a1273cc5d4b281ac4"
+  },
+  {
+    "source": "modules/historical_database/tasks.enriched.json",
+    "file": "evidence/assessment-historical_database.json.gz",
+    "source_sha256": "f24fe91128b31f8b4f61c783531134e4d0ab791a68bf46834854e2fdb8d7dd79"
+  },
+  {
+    "source": "modules/remaining_current/tasks.enriched.json",
+    "file": "evidence/assessment-remaining_current.json.gz",
+    "source_sha256": "70fc0f0db5f7f3dc96f2508da007698bd033549882a84f5033cd69bdadb932b3"
+  }
+]

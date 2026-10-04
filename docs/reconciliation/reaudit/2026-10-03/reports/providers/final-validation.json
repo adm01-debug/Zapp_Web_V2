@@ -1,0 +1,35 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "PASS",
+  "tests_read": 76,
+  "test_lines_read": 19010,
+  "supporting_fixtures_read": 4,
+  "database_peer_tests_read": 20,
+  "database_peer_lines_read": 1419,
+  "shell_scripts_read": 12,
+  "shell_lines_read": 3558,
+  "tests_executed": 0,
+  "scripts_executed": 0,
+  "new_probe_executions": 0,
+  "previous_primary_probes": 44,
+  "findings": 66,
+  "paths_rechecked_against_HEAD_blobs": 360,
+  "source_tracked_changes": 0,
+  "coverage_counts": {
+    "semantic_full_file": 296,
+    "semantic_selected_ranges": 33,
+    "catalogued_only": 11
+  },
+  "checks": [
+    "HEAD match before and after validation",
+    "source blobs for all documented paths match pinned HEAD",
+    "source SHA256 and ranges match actual bytes",
+    "76 test, 12 shell and 20 peer-test journals complete with exact line totals",
+    "66 unique findings and 44 preserved offline probes",
+    "coverage counts and completion status consistent",
+    "tracked source clean"
+  ],
+  "limits": [
+    "This validates audit artifacts and provenance, not application behavior. No source scripts, test suites, Docker, database or external services executed."
+  ]
+}

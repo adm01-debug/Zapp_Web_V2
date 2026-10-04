@@ -1,0 +1,58 @@
+[
+  {
+    "roster_index": 30,
+    "adjudication": [
+      "Monta useConversationActions real; o fake de favoritos replica inserts/deletes para que o refetch pelo bus não mascare o estado. Verifica arquivamento e undo com assigned_to original, erro sem undo, transferência por agente/fila, rejeição por conexão, durações de snooze, estado de pin/favorite e filtros exatos contact_id+pinned_by no unpin.",
+      "Há observação de payloads, filtros e erros reais do hook sob banco simulado. Não reproduz transferência concorrente, autorização RLS, falhas de leitura do assigned_to nem todos os erros de pin/snooze; a assertiva de 9h usa fuso do runtime, sem certificar regra operacional de fuso."
+    ]
+  },
+  {
+    "roster_index": 31,
+    "adjudication": [
+      "Importa helpers e hook reais de colunas e verifica limites, tabela de larguras, capacidade 7 reduzida à opção 6, prioridade da preferência, primeira medida e redimensionamento.",
+      "O contêiner fornece getBoundingClientRect fixo e o ResizeObserver é falso, explicitamente declarado no teste. Portanto os cálculos e a reação do hook têm evidência; medidas e encaixe visual no navegador real não são demonstrados."
+    ]
+  },
+  {
+    "roster_index": 32,
+    "adjudication": [
+      "Monta useFilesViewState real, verifica JSON/versão/domínio inválidos, sanitização campo a campo, persistência de viewMode/columns sem tocar chaves do catálogo, sessão em memória para filtro/busca/ordem, remontagem e separação entre usuário/contato.",
+      "Há controles positivos de isolamento entre usuários, SIGNED_OUT e troca de contato com hook montado. O cenário de não persistência de sessão condiciona as assertivas ao storage existir, mas confere o estado em memória; nenhum desses testes demonstra a UI completa ou o servidor."
+    ]
+  },
+  {
+    "roster_index": 33,
+    "adjudication": [
+      "Importa forwardMediaMessages e createForwardRunState reais; observa quatro cópias/envios por dois arquivos e dois destinos, URLs derivadas de cada path copiado, bucket de áudio, recusa de origem externa/grupo, limpeza condicionada à reconciliação e conservação do objeto quando a consulta falha.",
+      "Os testes exercitam retry de sete pares com duas falhas e reaproveitamento do objeto existente, com controles de chamadas e progresso. Storage, outbound e reconciliação são simulados; não demonstram RLS, entrega externa ou idempotência durável entre processos."
+    ]
+  },
+  {
+    "roster_index": 34,
+    "adjudication": [
+      "Monta useNewConversation real e observa telefone normalizado na consulta e insert, payload de mensagem, invalidação dos dois agregados, callbacks e fechamento. O caso duplicado exige ausência de insert, invalidação e envio, com toast de erro específico.",
+      "A fronteira positiva/duplicidade é concreta. O mock resolve sendOutboundMessage com undefined e não simula erros/estados retornados, concorrência de criação ou troca de conexão; não certifica entrega pelo gateway."
+    ]
+  },
+  {
+    "roster_index": 35,
+    "adjudication": [
+      "Monta um host DOM mínimo com useVolumeRocker real. Testa enabled/wheelEnabled, defaultPrevented, passos ±5, mute, fronteira de 399/400ms, dedupe do click longo, cancelamento ao soltar, Enter e ausência de captura global.",
+      "Os eventos/timers são simulados mas atravessam os handlers reais do hook. Não demonstram persistência de volume, reprodução física nem toda a integração dos dois componentes consumidores."
+    ]
+  },
+  {
+    "roster_index": 36,
+    "adjudication": [
+      "Só importa Vitest; extractGroupData e normalizeApiResponse são cópias locais. Todos os casos, inclusive o bloco denominado Integration: Full Group Sync Flow, exercitam essas funções internas e fixtures Evolution/GO.",
+      "As assertivas documentam uma normalização pretendida, mas não importam actions.ts nem o sincronizador produtivo e não verificam seu vínculo textual. É um locus concreto da extensão da família TC-011, sem inferir defeito adicional de grupos a partir da cópia."
+    ]
+  },
+  {
+    "roster_index": 37,
+    "adjudication": [
+      "Importa as funções reais de mapboxGeocode e simula fetch. Verifica coordenadas/URL codificada, deduplicação/cache limitado, não cachear falha, timeout/abort, coordenada não finita, forward com fallback v5/relevância, sugestão por sessão, distinção entre vazio legítimo e shape inválido e retrieve lng/lat.",
+      "São controles de contrato HTTP e fronteiras úteis, incluindo sinais abortados e ausência de chamada. As fixtures não comprovam disponibilidade, cobrança ou resposta atual do Mapbox; o comentário de limit=1 em um título não supera a assertiva explícita de limit=5."
+    ]
+  }
+]

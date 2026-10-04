@@ -1,0 +1,5562 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_path": "public/vendor/lamejs-1.2.1.min.js",
+  "git_blob_sha": "8dc6b0726388ff75bec69ac55ac5a6cc49e61093",
+  "code_origin": "third_party_vendored",
+  "status": "SEMANTIC_BODY_READ_WITH_NUMERICAL_AND_RUNTIME_LIMITS",
+  "source_ranges_read_via_ast_copy": [
+    [
+      1,
+      307
+    ]
+  ],
+  "formatted_copy": "lamejs.readable.js",
+  "formatted_sha256": "3f732ff95a08111b2c1acf26dfcdb187cd30a42fb891d28e02777a894d70d3ef",
+  "formatted_ranges_read": [
+    [
+      1,
+      4683
+    ]
+  ],
+  "body_count": 208,
+  "functions": [
+    {
+      "id": "VENDOR-001",
+      "name": "lamejs",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "lamejs",
+        "kind": "FunctionDeclaration",
+        "start": 0,
+        "end": 156033,
+        "line_start": 1,
+        "line_end": 307
+      },
+      "formatted": {
+        "name": "lamejs",
+        "kind": "FunctionDeclaration",
+        "start": 0,
+        "end": 269297,
+        "line_start": 1,
+        "line_end": 4682
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain",
+        "Presets de VBR/ABR e parâmetros de quantização",
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors",
+        "Reservatório e distribuição de bits",
+        "Emissão de bitstream, headers, cópia de buffers e CRC",
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados",
+        "Estruturas de estado e laço CBR",
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules",
+        "Laço externo de quantização e ramos VBR/ABR",
+        "Banco polifásico, janelas, MDCT e anti-alias por subbanda",
+        "Encode de frame, estado, histogramas e buffers",
+        "FHT, FFT curta/longa e janelas",
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica",
+        "API LAME interna, parâmetros, reamostragem, buffering e flush",
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-002",
+      "name": "X",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "X",
+        "kind": "FunctionDeclaration",
+        "start": 18,
+        "end": 57,
+        "line_start": 1,
+        "line_end": 1
+      },
+      "formatted": {
+        "name": "X",
+        "kind": "FunctionDeclaration",
+        "start": 24,
+        "end": 67,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-003",
+      "name": "K",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "K",
+        "kind": "FunctionDeclaration",
+        "start": 57,
+        "end": 98,
+        "line_start": 1,
+        "line_end": 1
+      },
+      "formatted": {
+        "name": "K",
+        "kind": "FunctionDeclaration",
+        "start": 72,
+        "end": 117,
+        "line_start": 3,
+        "line_end": 3
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-004",
+      "name": "ca",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "ca",
+        "kind": "FunctionDeclaration",
+        "start": 98,
+        "end": 215,
+        "line_start": 1,
+        "line_end": 1
+      },
+      "formatted": {
+        "name": "ca",
+        "kind": "FunctionDeclaration",
+        "start": 122,
+        "end": 282,
+        "line_start": 4,
+        "line_end": 6
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-005",
+      "name": "Ia",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Ia",
+        "kind": "FunctionDeclaration",
+        "start": 215,
+        "end": 332,
+        "line_start": 1,
+        "line_end": 1
+      },
+      "formatted": {
+        "name": "Ia",
+        "kind": "FunctionDeclaration",
+        "start": 287,
+        "end": 447,
+        "line_start": 7,
+        "line_end": 9
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-006",
+      "name": "dc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "dc",
+        "kind": "FunctionDeclaration",
+        "start": 332,
+        "end": 462,
+        "line_start": 1,
+        "line_end": 1
+      },
+      "formatted": {
+        "name": "dc",
+        "kind": "FunctionDeclaration",
+        "start": 452,
+        "end": 625,
+        "line_start": 10,
+        "line_end": 12
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-007",
+      "name": "Ob",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Ob",
+        "kind": "FunctionDeclaration",
+        "start": 462,
+        "end": 584,
+        "line_start": 1,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "Ob",
+        "kind": "FunctionDeclaration",
+        "start": 630,
+        "end": 846,
+        "line_start": 13,
+        "line_end": 21
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-008",
+      "name": "ra",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "ra",
+        "kind": "FunctionDeclaration",
+        "start": 584,
+        "end": 614,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "ra",
+        "kind": "FunctionDeclaration",
+        "start": 851,
+        "end": 887,
+        "line_start": 22,
+        "line_end": 22
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-009",
+      "name": "G",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "G",
+        "kind": "FunctionDeclaration",
+        "start": 614,
+        "end": 643,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "G",
+        "kind": "FunctionDeclaration",
+        "start": 892,
+        "end": 927,
+        "line_start": 23,
+        "line_end": 23
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-010",
+      "name": "la",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "la",
+        "kind": "FunctionDeclaration",
+        "start": 643,
+        "end": 692,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "la",
+        "kind": "FunctionDeclaration",
+        "start": 932,
+        "end": 992,
+        "line_start": 24,
+        "line_end": 24
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-011",
+      "name": "this.ordinal",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.ordinal",
+        "kind": "FunctionExpression",
+        "start": 671,
+        "end": 691,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "this.ordinal",
+        "kind": "FunctionExpression",
+        "start": 964,
+        "end": 989,
+        "line_start": 24,
+        "line_end": 24
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-012",
+      "name": "mc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "mc",
+        "kind": "FunctionDeclaration",
+        "start": 692,
+        "end": 1016,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "mc",
+        "kind": "FunctionDeclaration",
+        "start": 997,
+        "end": 1378,
+        "line_start": 25,
+        "line_end": 25
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-013",
+      "name": "this.getLameVersion",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.getLameVersion",
+        "kind": "FunctionExpression",
+        "start": 726,
+        "end": 752,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "this.getLameVersion",
+        "kind": "FunctionExpression",
+        "start": 1035,
+        "end": 1067,
+        "line_start": 25,
+        "line_end": 25
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-014",
+      "name": "this.getLameShortVersion",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.getLameShortVersion",
+        "kind": "FunctionExpression",
+        "start": 778,
+        "end": 804,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "this.getLameShortVersion",
+        "kind": "FunctionExpression",
+        "start": 1096,
+        "end": 1128,
+        "line_start": 25,
+        "line_end": 25
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-015",
+      "name": "this.getLameVeryShortVersion",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.getLameVeryShortVersion",
+        "kind": "FunctionExpression",
+        "start": 834,
+        "end": 863,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "this.getLameVeryShortVersion",
+        "kind": "FunctionExpression",
+        "start": 1161,
+        "end": 1196,
+        "line_start": 25,
+        "line_end": 25
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-016",
+      "name": "this.getPsyVersion",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.getPsyVersion",
+        "kind": "FunctionExpression",
+        "start": 883,
+        "end": 907,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "this.getPsyVersion",
+        "kind": "FunctionExpression",
+        "start": 1219,
+        "end": 1249,
+        "line_start": 25,
+        "line_end": 25
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-017",
+      "name": "this.getLameUrl",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.getLameUrl",
+        "kind": "FunctionExpression",
+        "start": 924,
+        "end": 966,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "this.getLameUrl",
+        "kind": "FunctionExpression",
+        "start": 1269,
+        "end": 1317,
+        "line_start": 25,
+        "line_end": 25
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-018",
+      "name": "this.getLameOsBitness",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.getLameOsBitness",
+        "kind": "FunctionExpression",
+        "start": 989,
+        "end": 1015,
+        "line_start": 2,
+        "line_end": 2
+      },
+      "formatted": {
+        "name": "this.getLameOsBitness",
+        "kind": "FunctionExpression",
+        "start": 1343,
+        "end": 1375,
+        "line_start": 25,
+        "line_end": 25
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-019",
+      "name": "Y",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Y",
+        "kind": "FunctionDeclaration",
+        "start": 1017,
+        "end": 8644,
+        "line_start": 3,
+        "line_end": 17
+      },
+      "formatted": {
+        "name": "Y",
+        "kind": "FunctionDeclaration",
+        "start": 1383,
+        "end": 12189,
+        "line_start": 26,
+        "line_end": 153
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-020",
+      "name": "c",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "c",
+        "kind": "FunctionDeclaration",
+        "start": 1030,
+        "end": 1351,
+        "line_start": 3,
+        "line_end": 3
+      },
+      "formatted": {
+        "name": "c",
+        "kind": "FunctionDeclaration",
+        "start": 1406,
+        "end": 1883,
+        "line_start": 27,
+        "line_end": 28
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-021",
+      "name": "k",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 1351,
+        "end": 1461,
+        "line_start": 3,
+        "line_end": 3
+      },
+      "formatted": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 1892,
+        "end": 2060,
+        "line_start": 29,
+        "line_end": 30
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-022",
+      "name": "n",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 1461,
+        "end": 1486,
+        "line_start": 3,
+        "line_end": 3
+      },
+      "formatted": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 2069,
+        "end": 2100,
+        "line_start": 31,
+        "line_end": 31
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-023",
+      "name": "this.InitGainAnalysis",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.InitGainAnalysis",
+        "kind": "FunctionExpression",
+        "start": 5500,
+        "end": 6260,
+        "line_start": 11,
+        "line_end": 13
+      },
+      "formatted": {
+        "name": "this.InitGainAnalysis",
+        "kind": "FunctionExpression",
+        "start": 6481,
+        "end": 8403,
+        "line_start": 40,
+        "line_end": 94
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-024",
+      "name": "this.AnalyzeSamples",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.AnalyzeSamples",
+        "kind": "FunctionExpression",
+        "start": 6281,
+        "end": 8237,
+        "line_start": 13,
+        "line_end": 17
+      },
+      "formatted": {
+        "name": "this.AnalyzeSamples",
+        "kind": "FunctionExpression",
+        "start": 8435,
+        "end": 11539,
+        "line_start": 95,
+        "line_end": 141
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-025",
+      "name": "this.GetTitleGain",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.GetTitleGain",
+        "kind": "FunctionExpression",
+        "start": 8256,
+        "end": 8643,
+        "line_start": 17,
+        "line_end": 17
+      },
+      "formatted": {
+        "name": "this.GetTitleGain",
+        "kind": "FunctionExpression",
+        "start": 11569,
+        "end": 12182,
+        "line_start": 142,
+        "line_end": 152
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Arrays tipados, enums e análise ReplayGain"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-026",
+      "name": "wc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "wc",
+        "kind": "FunctionDeclaration",
+        "start": 8645,
+        "end": 15670,
+        "line_start": 18,
+        "line_end": 31
+      },
+      "formatted": {
+        "name": "wc",
+        "kind": "FunctionDeclaration",
+        "start": 12194,
+        "end": 22607,
+        "line_start": 154,
+        "line_end": 294
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Presets de VBR/ABR e parâmetros de quantização"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-027",
+      "name": "c",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "c",
+        "kind": "FunctionDeclaration",
+        "start": 8659,
+        "end": 8952,
+        "line_start": 18,
+        "line_end": 18
+      },
+      "formatted": {
+        "name": "c",
+        "kind": "FunctionDeclaration",
+        "start": 12218,
+        "end": 12573,
+        "line_start": 155,
+        "line_end": 155
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Presets de VBR/ABR e parâmetros de quantização"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-028",
+      "name": "k",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 8952,
+        "end": 9199,
+        "line_start": 18,
+        "line_end": 19
+      },
+      "formatted": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 12582,
+        "end": 13063,
+        "line_start": 156,
+        "line_end": 171
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Presets de VBR/ABR e parâmetros de quantização"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-029",
+      "name": "n",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 9199,
+        "end": 11047,
+        "line_start": 19,
+        "line_end": 22
+      },
+      "formatted": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 13072,
+        "end": 15680,
+        "line_start": 172,
+        "line_end": 207
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Presets de VBR/ABR e parâmetros de quantização"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-030",
+      "name": "V",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "V",
+        "kind": "FunctionDeclaration",
+        "start": 11047,
+        "end": 12857,
+        "line_start": 22,
+        "line_end": 26
+      },
+      "formatted": {
+        "name": "V",
+        "kind": "FunctionDeclaration",
+        "start": 15689,
+        "end": 18159,
+        "line_start": 208,
+        "line_end": 238
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Presets de VBR/ABR e parâmetros de quantização"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-031",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 12879,
+        "end": 12895,
+        "line_start": 26,
+        "line_end": 26
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 18201,
+        "end": 18224,
+        "line_start": 240,
+        "line_end": 240
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Presets de VBR/ABR e parâmetros de quantização"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-032",
+      "name": "this.apply_preset",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.apply_preset",
+        "kind": "FunctionExpression",
+        "start": 14902,
+        "end": 15669,
+        "line_start": 30,
+        "line_end": 31
+      },
+      "formatted": {
+        "name": "this.apply_preset",
+        "kind": "FunctionExpression",
+        "start": 20832,
+        "end": 22600,
+        "line_start": 243,
+        "line_end": 293
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Presets de VBR/ABR e parâmetros de quantização"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-033",
+      "name": "qb",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "qb",
+        "kind": "FunctionDeclaration",
+        "start": 15670,
+        "end": 24924,
+        "line_start": 31,
+        "line_end": 49
+      },
+      "formatted": {
+        "name": "qb",
+        "kind": "FunctionDeclaration",
+        "start": 22612,
+        "end": 41079,
+        "line_start": 295,
+        "line_end": 684
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-034",
+      "name": "u",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 15684,
+        "end": 15712,
+        "line_start": 31,
+        "line_end": 31
+      },
+      "formatted": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 22636,
+        "end": 22672,
+        "line_start": 296,
+        "line_end": 296
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-035",
+      "name": "k",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 15712,
+        "end": 15805,
+        "line_start": 31,
+        "line_end": 32
+      },
+      "formatted": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 22681,
+        "end": 22879,
+        "line_start": 297,
+        "line_end": 302
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-036",
+      "name": "n",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 15805,
+        "end": 16144,
+        "line_start": 32,
+        "line_end": 32
+      },
+      "formatted": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 22888,
+        "end": 23559,
+        "line_start": 303,
+        "line_end": 320
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-037",
+      "name": "V",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "V",
+        "kind": "FunctionDeclaration",
+        "start": 16144,
+        "end": 17191,
+        "line_start": 32,
+        "line_end": 34
+      },
+      "formatted": {
+        "name": "V",
+        "kind": "FunctionDeclaration",
+        "start": 23568,
+        "end": 26581,
+        "line_start": 321,
+        "line_end": 405
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-038",
+      "name": "E",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "E",
+        "kind": "FunctionDeclaration",
+        "start": 17191,
+        "end": 17570,
+        "line_start": 34,
+        "line_end": 35
+      },
+      "formatted": {
+        "name": "E",
+        "kind": "FunctionDeclaration",
+        "start": 26590,
+        "end": 27260,
+        "line_start": 406,
+        "line_end": 419
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-039",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 17613,
+        "end": 17640,
+        "line_start": 35,
+        "line_end": 35
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 27336,
+        "end": 27372,
+        "line_start": 422,
+        "line_end": 422
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-040",
+      "name": "this.noquant_count_bits",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.noquant_count_bits",
+        "kind": "FunctionExpression",
+        "start": 17857,
+        "end": 18993,
+        "line_start": 36,
+        "line_end": 38
+      },
+      "formatted": {
+        "name": "this.noquant_count_bits",
+        "kind": "FunctionExpression",
+        "start": 27684,
+        "end": 29549,
+        "line_start": 425,
+        "line_end": 457
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-041",
+      "name": "this.count_bits",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.count_bits",
+        "kind": "FunctionExpression",
+        "start": 19010,
+        "end": 20258,
+        "line_start": 38,
+        "line_end": 40
+      },
+      "formatted": {
+        "name": "this.count_bits",
+        "kind": "FunctionExpression",
+        "start": 29577,
+        "end": 31900,
+        "line_start": 458,
+        "line_end": 497
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-042",
+      "name": "this.best_huffman_divide",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.best_huffman_divide",
+        "kind": "FunctionExpression",
+        "start": 20284,
+        "end": 21367,
+        "line_start": 40,
+        "line_end": 42
+      },
+      "formatted": {
+        "name": "this.best_huffman_divide",
+        "kind": "FunctionExpression",
+        "start": 31937,
+        "end": 34163,
+        "line_start": 498,
+        "line_end": 537
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-043",
+      "name": "this.best_scalefac_store",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.best_scalefac_store",
+        "kind": "FunctionExpression",
+        "start": 21574,
+        "end": 22977,
+        "line_start": 43,
+        "line_end": 46
+      },
+      "formatted": {
+        "name": "this.best_scalefac_store",
+        "kind": "FunctionExpression",
+        "start": 34482,
+        "end": 37213,
+        "line_start": 541,
+        "line_end": 596
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-044",
+      "name": "this.scale_bitcount",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.scale_bitcount",
+        "kind": "FunctionExpression",
+        "start": 23161,
+        "end": 23657,
+        "line_start": 46,
+        "line_end": 47
+      },
+      "formatted": {
+        "name": "this.scale_bitcount",
+        "kind": "FunctionExpression",
+        "start": 37470,
+        "end": 38429,
+        "line_start": 598,
+        "line_end": 620
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-045",
+      "name": "this.scale_bitcount_lsf",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.scale_bitcount_lsf",
+        "kind": "FunctionExpression",
+        "start": 23757,
+        "end": 24613,
+        "line_start": 47,
+        "line_end": 49
+      },
+      "formatted": {
+        "name": "this.scale_bitcount_lsf",
+        "kind": "FunctionExpression",
+        "start": 38574,
+        "end": 40512,
+        "line_start": 622,
+        "line_end": 670
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-046",
+      "name": "this.huffman_init",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.huffman_init",
+        "kind": "FunctionExpression",
+        "start": 24672,
+        "end": 24923,
+        "line_start": 49,
+        "line_end": 49
+      },
+      "formatted": {
+        "name": "this.huffman_init",
+        "kind": "FunctionExpression",
+        "start": 40608,
+        "end": 41072,
+        "line_start": 672,
+        "line_end": 683
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-047",
+      "name": "xc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "xc",
+        "kind": "FunctionDeclaration",
+        "start": 24924,
+        "end": 26259,
+        "line_start": 49,
+        "line_end": 52
+      },
+      "formatted": {
+        "name": "xc",
+        "kind": "FunctionDeclaration",
+        "start": 41084,
+        "end": 43049,
+        "line_start": 685,
+        "line_end": 711
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Reservatório e distribuição de bits"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-048",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 24961,
+        "end": 24977,
+        "line_start": 50,
+        "line_end": 50
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 41141,
+        "end": 41164,
+        "line_start": 687,
+        "line_end": 687
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Reservatório e distribuição de bits"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-049",
+      "name": "this.ResvFrameBegin",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.ResvFrameBegin",
+        "kind": "FunctionExpression",
+        "start": 24998,
+        "end": 25519,
+        "line_start": 50,
+        "line_end": 51
+      },
+      "formatted": {
+        "name": "this.ResvFrameBegin",
+        "kind": "FunctionExpression",
+        "start": 41196,
+        "end": 42063,
+        "line_start": 688,
+        "line_end": 706
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Reservatório e distribuição de bits"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-050",
+      "name": "this.ResvMaxBits",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.ResvMaxBits",
+        "kind": "FunctionExpression",
+        "start": 25537,
+        "end": 25866,
+        "line_start": 51,
+        "line_end": 51
+      },
+      "formatted": {
+        "name": "this.ResvMaxBits",
+        "kind": "FunctionExpression",
+        "start": 42092,
+        "end": 42527,
+        "line_start": 707,
+        "line_end": 707
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Reservatório e distribuição de bits"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-051",
+      "name": "this.ResvAdjust",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.ResvAdjust",
+        "kind": "FunctionExpression",
+        "start": 25883,
+        "end": 25941,
+        "line_start": 51,
+        "line_end": 51
+      },
+      "formatted": {
+        "name": "this.ResvAdjust",
+        "kind": "FunctionExpression",
+        "start": 42555,
+        "end": 42623,
+        "line_start": 708,
+        "line_end": 708
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Reservatório e distribuição de bits"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-052",
+      "name": "this.ResvFrameEnd",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.ResvFrameEnd",
+        "kind": "FunctionExpression",
+        "start": 25961,
+        "end": 26258,
+        "line_start": 52,
+        "line_end": 52
+      },
+      "formatted": {
+        "name": "this.ResvFrameEnd",
+        "kind": "FunctionExpression",
+        "start": 42665,
+        "end": 43042,
+        "line_start": 710,
+        "line_end": 710
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Reservatório e distribuição de bits"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-053",
+      "name": "qa",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "qa",
+        "kind": "FunctionDeclaration",
+        "start": 26259,
+        "end": 35214,
+        "line_start": 52,
+        "line_end": 69
+      },
+      "formatted": {
+        "name": "qa",
+        "kind": "FunctionDeclaration",
+        "start": 43054,
+        "end": 57967,
+        "line_start": 712,
+        "line_end": 970
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-054",
+      "name": "u",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 26273,
+        "end": 26551,
+        "line_start": 52,
+        "line_end": 53
+      },
+      "formatted": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 43078,
+        "end": 43825,
+        "line_start": 713,
+        "line_end": 734
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-055",
+      "name": "k",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 26551,
+        "end": 26866,
+        "line_start": 53,
+        "line_end": 53
+      },
+      "formatted": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 43834,
+        "end": 44325,
+        "line_start": 735,
+        "line_end": 741
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-056",
+      "name": "n",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 26866,
+        "end": 27028,
+        "line_start": 53,
+        "line_end": 54
+      },
+      "formatted": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 44334,
+        "end": 44670,
+        "line_start": 742,
+        "line_end": 751
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-057",
+      "name": "V",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "V",
+        "kind": "FunctionDeclaration",
+        "start": 27028,
+        "end": 27120,
+        "line_start": 54,
+        "line_end": 54
+      },
+      "formatted": {
+        "name": "V",
+        "kind": "FunctionDeclaration",
+        "start": 44679,
+        "end": 44816,
+        "line_start": 752,
+        "line_end": 753
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-058",
+      "name": "E",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "E",
+        "kind": "FunctionDeclaration",
+        "start": 27120,
+        "end": 27524,
+        "line_start": 54,
+        "line_end": 55
+      },
+      "formatted": {
+        "name": "E",
+        "kind": "FunctionDeclaration",
+        "start": 44825,
+        "end": 45630,
+        "line_start": 754,
+        "line_end": 772
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-059",
+      "name": "B",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "B",
+        "kind": "FunctionDeclaration",
+        "start": 27524,
+        "end": 27868,
+        "line_start": 55,
+        "line_end": 55
+      },
+      "formatted": {
+        "name": "B",
+        "kind": "FunctionDeclaration",
+        "start": 45639,
+        "end": 46270,
+        "line_start": 773,
+        "line_end": 785
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-060",
+      "name": "K",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "K",
+        "kind": "FunctionDeclaration",
+        "start": 27868,
+        "end": 28032,
+        "line_start": 55,
+        "line_end": 56
+      },
+      "formatted": {
+        "name": "K",
+        "kind": "FunctionDeclaration",
+        "start": 46279,
+        "end": 46528,
+        "line_start": 786,
+        "line_end": 791
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-061",
+      "name": "f",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "f",
+        "kind": "FunctionDeclaration",
+        "start": 28032,
+        "end": 28290,
+        "line_start": 56,
+        "line_end": 56
+      },
+      "formatted": {
+        "name": "f",
+        "kind": "FunctionDeclaration",
+        "start": 46537,
+        "end": 46853,
+        "line_start": 792,
+        "line_end": 792
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-062",
+      "name": "b",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "b",
+        "kind": "FunctionDeclaration",
+        "start": 28290,
+        "end": 28316,
+        "line_start": 56,
+        "line_end": 56
+      },
+      "formatted": {
+        "name": "b",
+        "kind": "FunctionDeclaration",
+        "start": 46862,
+        "end": 46894,
+        "line_start": 793,
+        "line_end": 793
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-063",
+      "name": "v",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "v",
+        "kind": "FunctionDeclaration",
+        "start": 28316,
+        "end": 28696,
+        "line_start": 56,
+        "line_end": 57
+      },
+      "formatted": {
+        "name": "v",
+        "kind": "FunctionDeclaration",
+        "start": 46903,
+        "end": 47621,
+        "line_start": 794,
+        "line_end": 813
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-064",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 28751,
+        "end": 28785,
+        "line_start": 57,
+        "line_end": 57
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 47710,
+        "end": 47763,
+        "line_start": 815,
+        "line_end": 815
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-065",
+      "name": "this.getframebits",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.getframebits",
+        "kind": "FunctionExpression",
+        "start": 28827,
+        "end": 28994,
+        "line_start": 57,
+        "line_end": 57
+      },
+      "formatted": {
+        "name": "this.getframebits",
+        "kind": "FunctionExpression",
+        "start": 47836,
+        "end": 48031,
+        "line_start": 817,
+        "line_end": 817
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-066",
+      "name": "this.CRC_writeheader",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.CRC_writeheader",
+        "kind": "FunctionExpression",
+        "start": 29017,
+        "end": 29153,
+        "line_start": 58,
+        "line_end": 58
+      },
+      "formatted": {
+        "name": "this.CRC_writeheader",
+        "kind": "FunctionExpression",
+        "start": 48076,
+        "end": 48269,
+        "line_start": 819,
+        "line_end": 820
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-067",
+      "name": "this.flush_bitstream",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.flush_bitstream",
+        "kind": "FunctionExpression",
+        "start": 29175,
+        "end": 29594,
+        "line_start": 58,
+        "line_end": 59
+      },
+      "formatted": {
+        "name": "this.flush_bitstream",
+        "kind": "FunctionExpression",
+        "start": 48302,
+        "end": 48858,
+        "line_start": 821,
+        "line_end": 826
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-068",
+      "name": "this.add_dummy_byte",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.add_dummy_byte",
+        "kind": "FunctionExpression",
+        "start": 29615,
+        "end": 29823,
+        "line_start": 59,
+        "line_end": 59
+      },
+      "formatted": {
+        "name": "this.add_dummy_byte",
+        "kind": "FunctionExpression",
+        "start": 48890,
+        "end": 49337,
+        "line_start": 827,
+        "line_end": 839
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-069",
+      "name": "this.format_bitstream",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.format_bitstream",
+        "kind": "FunctionExpression",
+        "start": 29846,
+        "end": 34331,
+        "line_start": 59,
+        "line_end": 67
+      },
+      "formatted": {
+        "name": "this.format_bitstream",
+        "kind": "FunctionExpression",
+        "start": 49371,
+        "end": 56334,
+        "line_start": 840,
+        "line_end": 940
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-070",
+      "name": "this.copy_buffer",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.copy_buffer",
+        "kind": "FunctionExpression",
+        "start": 34350,
+        "end": 35078,
+        "line_start": 68,
+        "line_end": 69
+      },
+      "formatted": {
+        "name": "this.copy_buffer",
+        "kind": "FunctionExpression",
+        "start": 56363,
+        "end": 57791,
+        "line_start": 941,
+        "line_end": 968
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-071",
+      "name": "this.init_bit_stream_w",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.init_bit_stream_w",
+        "kind": "FunctionExpression",
+        "start": 35102,
+        "end": 35213,
+        "line_start": 69,
+        "line_end": 69
+      },
+      "formatted": {
+        "name": "this.init_bit_stream_w",
+        "kind": "FunctionExpression",
+        "start": 57826,
+        "end": 57960,
+        "line_start": 969,
+        "line_end": 969
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Emissão de bitstream, headers, cópia de buffers e CRC"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-072",
+      "name": "zb",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "zb",
+        "kind": "FunctionDeclaration",
+        "start": 35214,
+        "end": 42720,
+        "line_start": 69,
+        "line_end": 84
+      },
+      "formatted": {
+        "name": "zb",
+        "kind": "FunctionDeclaration",
+        "start": 57972,
+        "end": 70641,
+        "line_start": 971,
+        "line_end": 1221
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-073",
+      "name": "c",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "c",
+        "kind": "FunctionDeclaration",
+        "start": 35228,
+        "end": 35322,
+        "line_start": 69,
+        "line_end": 69
+      },
+      "formatted": {
+        "name": "c",
+        "kind": "FunctionDeclaration",
+        "start": 57996,
+        "end": 58134,
+        "line_start": 972,
+        "line_end": 972
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-074",
+      "name": "k",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 35322,
+        "end": 35404,
+        "line_start": 69,
+        "line_end": 70
+      },
+      "formatted": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 58143,
+        "end": 58335,
+        "line_start": 973,
+        "line_end": 979
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-075",
+      "name": "n",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 35404,
+        "end": 35451,
+        "line_start": 70,
+        "line_end": 70
+      },
+      "formatted": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 58344,
+        "end": 58412,
+        "line_start": 980,
+        "line_end": 980
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-076",
+      "name": "V",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "V",
+        "kind": "FunctionDeclaration",
+        "start": 35451,
+        "end": 35498,
+        "line_start": 70,
+        "line_end": 70
+      },
+      "formatted": {
+        "name": "V",
+        "kind": "FunctionDeclaration",
+        "start": 58421,
+        "end": 58484,
+        "line_start": 981,
+        "line_end": 981
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-077",
+      "name": "E",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "E",
+        "kind": "FunctionDeclaration",
+        "start": 35498,
+        "end": 36176,
+        "line_start": 70,
+        "line_end": 71
+      },
+      "formatted": {
+        "name": "E",
+        "kind": "FunctionDeclaration",
+        "start": 58493,
+        "end": 59630,
+        "line_start": 982,
+        "line_end": 1007
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-078",
+      "name": "B",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "B",
+        "kind": "FunctionDeclaration",
+        "start": 36176,
+        "end": 36219,
+        "line_start": 71,
+        "line_end": 71
+      },
+      "formatted": {
+        "name": "B",
+        "kind": "FunctionDeclaration",
+        "start": 59639,
+        "end": 59697,
+        "line_start": 1008,
+        "line_end": 1008
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-079",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 36245,
+        "end": 36273,
+        "line_start": 71,
+        "line_end": 71
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 59745,
+        "end": 59788,
+        "line_start": 1010,
+        "line_end": 1010
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-080",
+      "name": "this.addVbrFrame",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.addVbrFrame",
+        "kind": "FunctionExpression",
+        "start": 37867,
+        "end": 38159,
+        "line_start": 75,
+        "line_end": 75
+      },
+      "formatted": {
+        "name": "this.addVbrFrame",
+        "kind": "FunctionExpression",
+        "start": 61748,
+        "end": 62180,
+        "line_start": 1016,
+        "line_end": 1021
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-081",
+      "name": "this.getVbrTag",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.getVbrTag",
+        "kind": "FunctionExpression",
+        "start": 38175,
+        "end": 38913,
+        "line_start": 75,
+        "line_end": 77
+      },
+      "formatted": {
+        "name": "this.getVbrTag",
+        "kind": "FunctionExpression",
+        "start": 62207,
+        "end": 63693,
+        "line_start": 1022,
+        "line_end": 1059
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-082",
+      "name": "this.InitVbrTag",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.InitVbrTag",
+        "kind": "FunctionExpression",
+        "start": 38930,
+        "end": 39536,
+        "line_start": 77,
+        "line_end": 78
+      },
+      "formatted": {
+        "name": "this.InitVbrTag",
+        "kind": "FunctionExpression",
+        "start": 63721,
+        "end": 64610,
+        "line_start": 1060,
+        "line_end": 1073
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-083",
+      "name": "this.updateMusicCRC",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.updateMusicCRC",
+        "kind": "FunctionExpression",
+        "start": 39557,
+        "end": 39615,
+        "line_start": 78,
+        "line_end": 78
+      },
+      "formatted": {
+        "name": "this.updateMusicCRC",
+        "kind": "FunctionExpression",
+        "start": 64642,
+        "end": 64733,
+        "line_start": 1074,
+        "line_end": 1075
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-084",
+      "name": "this.getLameTagFrame",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.getLameTagFrame",
+        "kind": "FunctionExpression",
+        "start": 39637,
+        "end": 42313,
+        "line_start": 78,
+        "line_end": 83
+      },
+      "formatted": {
+        "name": "this.getLameTagFrame",
+        "kind": "FunctionExpression",
+        "start": 64766,
+        "end": 69902,
+        "line_start": 1076,
+        "line_end": 1200
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-085",
+      "name": "this.putVbrTag",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.putVbrTag",
+        "kind": "FunctionExpression",
+        "start": 42329,
+        "end": 42719,
+        "line_start": 83,
+        "line_end": 84
+      },
+      "formatted": {
+        "name": "this.putVbrTag",
+        "kind": "FunctionExpression",
+        "start": 69929,
+        "end": 70634,
+        "line_start": 1201,
+        "line_end": 1220
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-086",
+      "name": "U",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "U",
+        "kind": "FunctionDeclaration",
+        "start": 42720,
+        "end": 42791,
+        "line_start": 84,
+        "line_end": 84
+      },
+      "formatted": {
+        "name": "U",
+        "kind": "FunctionDeclaration",
+        "start": 70646,
+        "end": 70735,
+        "line_start": 1222,
+        "line_end": 1222
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-087",
+      "name": "xa",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "xa",
+        "kind": "FunctionDeclaration",
+        "start": 42791,
+        "end": 42818,
+        "line_start": 84,
+        "line_end": 84
+      },
+      "formatted": {
+        "name": "xa",
+        "kind": "FunctionDeclaration",
+        "start": 70740,
+        "end": 70773,
+        "line_start": 1223,
+        "line_end": 1223
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-088",
+      "name": "yc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "yc",
+        "kind": "FunctionDeclaration",
+        "start": 42818,
+        "end": 42864,
+        "line_start": 84,
+        "line_end": 84
+      },
+      "formatted": {
+        "name": "yc",
+        "kind": "FunctionDeclaration",
+        "start": 70778,
+        "end": 70834,
+        "line_start": 1224,
+        "line_end": 1224
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-089",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 42848,
+        "end": 42863,
+        "line_start": 84,
+        "line_end": 84
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 70812,
+        "end": 70831,
+        "line_start": 1224,
+        "line_end": 1224
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-090",
+      "name": "sb",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "sb",
+        "kind": "FunctionDeclaration",
+        "start": 42864,
+        "end": 42967,
+        "line_start": 84,
+        "line_end": 85
+      },
+      "formatted": {
+        "name": "sb",
+        "kind": "FunctionDeclaration",
+        "start": 70839,
+        "end": 70981,
+        "line_start": 1225,
+        "line_end": 1228
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-091",
+      "name": "zc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "zc",
+        "kind": "FunctionDeclaration",
+        "start": 42967,
+        "end": 44220,
+        "line_start": 85,
+        "line_end": 87
+      },
+      "formatted": {
+        "name": "zc",
+        "kind": "FunctionDeclaration",
+        "start": 70986,
+        "end": 72584,
+        "line_start": 1229,
+        "line_end": 1252
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-092",
+      "name": "Ac",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Ac",
+        "kind": "FunctionDeclaration",
+        "start": 44220,
+        "end": 44740,
+        "line_start": 87,
+        "line_end": 88
+      },
+      "formatted": {
+        "name": "Ac",
+        "kind": "FunctionDeclaration",
+        "start": 72589,
+        "end": 73301,
+        "line_start": 1253,
+        "line_end": 1268
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-093",
+      "name": "Bc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Bc",
+        "kind": "FunctionDeclaration",
+        "start": 44740,
+        "end": 45539,
+        "line_start": 88,
+        "line_end": 90
+      },
+      "formatted": {
+        "name": "Bc",
+        "kind": "FunctionDeclaration",
+        "start": 73306,
+        "end": 74662,
+        "line_start": 1269,
+        "line_end": 1296
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-094",
+      "name": "this.iteration_loop",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.iteration_loop",
+        "kind": "FunctionExpression",
+        "start": 44791,
+        "end": 45538,
+        "line_start": 88,
+        "line_end": 90
+      },
+      "formatted": {
+        "name": "this.iteration_loop",
+        "kind": "FunctionExpression",
+        "start": 73380,
+        "end": 74655,
+        "line_start": 1271,
+        "line_end": 1295
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-095",
+      "name": "Cc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Cc",
+        "kind": "FunctionDeclaration",
+        "start": 45539,
+        "end": 45799,
+        "line_start": 90,
+        "line_end": 90
+      },
+      "formatted": {
+        "name": "Cc",
+        "kind": "FunctionDeclaration",
+        "start": 74667,
+        "end": 74966,
+        "line_start": 1297,
+        "line_end": 1297
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-096",
+      "name": "za",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "za",
+        "kind": "FunctionDeclaration",
+        "start": 45799,
+        "end": 46370,
+        "line_start": 90,
+        "line_end": 91
+      },
+      "formatted": {
+        "name": "za",
+        "kind": "FunctionDeclaration",
+        "start": 74971,
+        "end": 75677,
+        "line_start": 1298,
+        "line_end": 1306
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Estruturas de estado e laço CBR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-097",
+      "name": "ia",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "ia",
+        "kind": "FunctionDeclaration",
+        "start": 46370,
+        "end": 55592,
+        "line_start": 91,
+        "line_end": 109
+      },
+      "formatted": {
+        "name": "ia",
+        "kind": "FunctionDeclaration",
+        "start": 75682,
+        "end": 92379,
+        "line_start": 1307,
+        "line_end": 1605
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-098",
+      "name": "u",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 46384,
+        "end": 46464,
+        "line_start": 91,
+        "line_end": 91
+      },
+      "formatted": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 75706,
+        "end": 75804,
+        "line_start": 1308,
+        "line_end": 1308
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-099",
+      "name": "k",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 46464,
+        "end": 46487,
+        "line_start": 91,
+        "line_end": 91
+      },
+      "formatted": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 75813,
+        "end": 75842,
+        "line_start": 1309,
+        "line_end": 1309
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-100",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 46528,
+        "end": 46557,
+        "line_start": 91,
+        "line_end": 92
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 75911,
+        "end": 76014,
+        "line_start": 1311,
+        "line_end": 1316
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-101",
+      "name": "this.IPOW20",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.IPOW20",
+        "kind": "FunctionExpression",
+        "start": 46570,
+        "end": 46594,
+        "line_start": 92,
+        "line_end": 92
+      },
+      "formatted": {
+        "name": "this.IPOW20",
+        "kind": "FunctionExpression",
+        "start": 76038,
+        "end": 76067,
+        "line_start": 1317,
+        "line_end": 1317
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-102",
+      "name": "this.iteration_init",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.iteration_init",
+        "kind": "FunctionExpression",
+        "start": 48515,
+        "end": 50305,
+        "line_start": 95,
+        "line_end": 99
+      },
+      "formatted": {
+        "name": "this.iteration_init",
+        "kind": "FunctionExpression",
+        "start": 78692,
+        "end": 82331,
+        "line_start": 1328,
+        "line_end": 1401
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-103",
+      "name": "this.on_pe",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.on_pe",
+        "kind": "FunctionExpression",
+        "start": 50317,
+        "end": 50978,
+        "line_start": 99,
+        "line_end": 100
+      },
+      "formatted": {
+        "name": "this.on_pe",
+        "kind": "FunctionExpression",
+        "start": 82354,
+        "end": 83478,
+        "line_start": 1402,
+        "line_end": 1423
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-104",
+      "name": "this.reduce_side",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.reduce_side",
+        "kind": "FunctionExpression",
+        "start": 50996,
+        "end": 51277,
+        "line_start": 100,
+        "line_end": 101
+      },
+      "formatted": {
+        "name": "this.reduce_side",
+        "kind": "FunctionExpression",
+        "start": 83507,
+        "end": 84030,
+        "line_start": 1424,
+        "line_end": 1435
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-105",
+      "name": "this.athAdjust",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.athAdjust",
+        "kind": "FunctionExpression",
+        "start": 51293,
+        "end": 51468,
+        "line_start": 101,
+        "line_end": 101
+      },
+      "formatted": {
+        "name": "this.athAdjust",
+        "kind": "FunctionExpression",
+        "start": 84057,
+        "end": 84282,
+        "line_start": 1436,
+        "line_end": 1436
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-106",
+      "name": "this.calc_xmin",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.calc_xmin",
+        "kind": "FunctionExpression",
+        "start": 51484,
+        "end": 52879,
+        "line_start": 101,
+        "line_end": 104
+      },
+      "formatted": {
+        "name": "this.calc_xmin",
+        "kind": "FunctionExpression",
+        "start": 84309,
+        "end": 87121,
+        "line_start": 1437,
+        "line_end": 1493
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-107",
+      "name": "this.calc_noise_core",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.calc_noise_core",
+        "kind": "FunctionExpression",
+        "start": 52901,
+        "end": 53273,
+        "line_start": 104,
+        "line_end": 105
+      },
+      "formatted": {
+        "name": "this.calc_noise_core",
+        "kind": "FunctionExpression",
+        "start": 87154,
+        "end": 88020,
+        "line_start": 1494,
+        "line_end": 1517
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-108",
+      "name": "this.calc_noise",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.calc_noise",
+        "kind": "FunctionExpression",
+        "start": 53290,
+        "end": 54057,
+        "line_start": 105,
+        "line_end": 106
+      },
+      "formatted": {
+        "name": "this.calc_noise",
+        "kind": "FunctionExpression",
+        "start": 88048,
+        "end": 89589,
+        "line_start": 1518,
+        "line_end": 1551
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-109",
+      "name": "this.set_pinfo",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.set_pinfo",
+        "kind": "FunctionExpression",
+        "start": 54073,
+        "end": 55591,
+        "line_start": 106,
+        "line_end": 109
+      },
+      "formatted": {
+        "name": "this.set_pinfo",
+        "kind": "FunctionExpression",
+        "start": 89616,
+        "end": 92372,
+        "line_start": 1552,
+        "line_end": 1604
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-110",
+      "name": "Dc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Dc",
+        "kind": "FunctionDeclaration",
+        "start": 55592,
+        "end": 55696,
+        "line_start": 109,
+        "line_end": 110
+      },
+      "formatted": {
+        "name": "Dc",
+        "kind": "FunctionDeclaration",
+        "start": 92384,
+        "end": 92552,
+        "line_start": 1606,
+        "line_end": 1612
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-111",
+      "name": "rb",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "rb",
+        "kind": "FunctionDeclaration",
+        "start": 55696,
+        "end": 57292,
+        "line_start": 110,
+        "line_end": 113
+      },
+      "formatted": {
+        "name": "rb",
+        "kind": "FunctionDeclaration",
+        "start": 92557,
+        "end": 94835,
+        "line_start": 1613,
+        "line_end": 1661
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-112",
+      "name": "this.assign",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.assign",
+        "kind": "FunctionExpression",
+        "start": 56318,
+        "end": 57291,
+        "line_start": 111,
+        "line_end": 113
+      },
+      "formatted": {
+        "name": "this.assign",
+        "kind": "FunctionExpression",
+        "start": 93380,
+        "end": 94828,
+        "line_start": 1628,
+        "line_end": 1660
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-113",
+      "name": "Ec",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Ec",
+        "kind": "FunctionDeclaration",
+        "start": 57292,
+        "end": 70323,
+        "line_start": 113,
+        "line_end": 138
+      },
+      "formatted": {
+        "name": "Ec",
+        "kind": "FunctionDeclaration",
+        "start": 94840,
+        "end": 121422,
+        "line_start": 1662,
+        "line_end": 2161
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-114",
+      "name": "u",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 57306,
+        "end": 57335,
+        "line_start": 113,
+        "line_end": 113
+      },
+      "formatted": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 94864,
+        "end": 94899,
+        "line_start": 1663,
+        "line_end": 1663
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-115",
+      "name": "k",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 57335,
+        "end": 57443,
+        "line_start": 113,
+        "line_end": 113
+      },
+      "formatted": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 94908,
+        "end": 95065,
+        "line_start": 1664,
+        "line_end": 1666
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-116",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 57518,
+        "end": 57591,
+        "line_start": 113,
+        "line_end": 113
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 95204,
+        "end": 95302,
+        "line_start": 1672,
+        "line_end": 1672
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-117",
+      "name": "this.ms_convert",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.ms_convert",
+        "kind": "FunctionExpression",
+        "start": 57608,
+        "end": 57759,
+        "line_start": 113,
+        "line_end": 114
+      },
+      "formatted": {
+        "name": "this.ms_convert",
+        "kind": "FunctionExpression",
+        "start": 95330,
+        "end": 95599,
+        "line_start": 1673,
+        "line_end": 1679
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-118",
+      "name": "this.init_xrpow",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.init_xrpow",
+        "kind": "FunctionExpression",
+        "start": 57776,
+        "end": 58109,
+        "line_start": 114,
+        "line_end": 114
+      },
+      "formatted": {
+        "name": "this.init_xrpow",
+        "kind": "FunctionExpression",
+        "start": 95627,
+        "end": 96176,
+        "line_start": 1680,
+        "line_end": 1691
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-119",
+      "name": "this.init_outer_loop",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.init_outer_loop",
+        "kind": "FunctionExpression",
+        "start": 58131,
+        "end": 60258,
+        "line_start": 114,
+        "line_end": 119
+      },
+      "formatted": {
+        "name": "this.init_outer_loop",
+        "kind": "FunctionExpression",
+        "start": 96209,
+        "end": 100047,
+        "line_start": 1692,
+        "line_end": 1771
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-120",
+      "name": "this.trancate_smallspectrums",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.trancate_smallspectrums",
+        "kind": "FunctionExpression",
+        "start": 60364,
+        "end": 61029,
+        "line_start": 119,
+        "line_end": 120
+      },
+      "formatted": {
+        "name": "this.trancate_smallspectrums",
+        "kind": "FunctionExpression",
+        "start": 100197,
+        "end": 101930,
+        "line_start": 1775,
+        "line_end": 1814
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-121",
+      "name": "this.outer_loop",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.outer_loop",
+        "kind": "FunctionExpression",
+        "start": 61046,
+        "end": 66279,
+        "line_start": 120,
+        "line_end": 130
+      },
+      "formatted": {
+        "name": "this.outer_loop",
+        "kind": "FunctionExpression",
+        "start": 101958,
+        "end": 114407,
+        "line_start": 1815,
+        "line_end": 2031
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-122",
+      "name": "this.iteration_finish_one",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.iteration_finish_one",
+        "kind": "FunctionExpression",
+        "start": 66306,
+        "end": 66453,
+        "line_start": 130,
+        "line_end": 131
+      },
+      "formatted": {
+        "name": "this.iteration_finish_one",
+        "kind": "FunctionExpression",
+        "start": 114445,
+        "end": 114687,
+        "line_start": 2032,
+        "line_end": 2038
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-123",
+      "name": "this.VBR_encode_granule",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.VBR_encode_granule",
+        "kind": "FunctionExpression",
+        "start": 66478,
+        "end": 66892,
+        "line_start": 131,
+        "line_end": 131
+      },
+      "formatted": {
+        "name": "this.VBR_encode_granule",
+        "kind": "FunctionExpression",
+        "start": 114723,
+        "end": 115319,
+        "line_start": 2039,
+        "line_end": 2043
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-124",
+      "name": "this.get_framebits",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.get_framebits",
+        "kind": "FunctionExpression",
+        "start": 66913,
+        "end": 67147,
+        "line_start": 132,
+        "line_end": 132
+      },
+      "formatted": {
+        "name": "this.get_framebits",
+        "kind": "FunctionExpression",
+        "start": 115350,
+        "end": 115635,
+        "line_start": 2044,
+        "line_end": 2045
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-125",
+      "name": "this.VBR_old_prepare",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.VBR_old_prepare",
+        "kind": "FunctionExpression",
+        "start": 67169,
+        "end": 68000,
+        "line_start": 132,
+        "line_end": 134
+      },
+      "formatted": {
+        "name": "this.VBR_old_prepare",
+        "kind": "FunctionExpression",
+        "start": 115668,
+        "end": 117195,
+        "line_start": 2046,
+        "line_end": 2076
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-126",
+      "name": "this.bitpressure_strategy",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.bitpressure_strategy",
+        "kind": "FunctionExpression",
+        "start": 68027,
+        "end": 68431,
+        "line_start": 134,
+        "line_end": 135
+      },
+      "formatted": {
+        "name": "this.bitpressure_strategy",
+        "kind": "FunctionExpression",
+        "start": 117233,
+        "end": 117938,
+        "line_start": 2077,
+        "line_end": 2087
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-127",
+      "name": "this.VBR_new_prepare",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.VBR_new_prepare",
+        "kind": "FunctionExpression",
+        "start": 68453,
+        "end": 69104,
+        "line_start": 135,
+        "line_end": 136
+      },
+      "formatted": {
+        "name": "this.VBR_new_prepare",
+        "kind": "FunctionExpression",
+        "start": 117971,
+        "end": 119163,
+        "line_start": 2088,
+        "line_end": 2114
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-128",
+      "name": "this.calc_target_bits",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.calc_target_bits",
+        "kind": "FunctionExpression",
+        "start": 69127,
+        "end": 70322,
+        "line_start": 136,
+        "line_end": 138
+      },
+      "formatted": {
+        "name": "this.calc_target_bits",
+        "kind": "FunctionExpression",
+        "start": 119197,
+        "end": 121415,
+        "line_start": 2115,
+        "line_end": 2160
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Laço externo de quantização e ramos VBR/ABR"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-129",
+      "name": "Fc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Fc",
+        "kind": "FunctionDeclaration",
+        "start": 70323,
+        "end": 85708,
+        "line_start": 138,
+        "line_end": 168
+      },
+      "formatted": {
+        "name": "Fc",
+        "kind": "FunctionDeclaration",
+        "start": 121427,
+        "end": 148527,
+        "line_start": 2162,
+        "line_end": 2652
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Banco polifásico, janelas, MDCT e anti-alias por subbanda"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-130",
+      "name": "u",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 70337,
+        "end": 74565,
+        "line_start": 138,
+        "line_end": 147
+      },
+      "formatted": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 121451,
+        "end": 131678,
+        "line_start": 2163,
+        "line_end": 2506
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Banco polifásico, janelas, MDCT e anti-alias por subbanda"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-131",
+      "name": "this.mdct_sub48",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.mdct_sub48",
+        "kind": "FunctionExpression",
+        "start": 83020,
+        "end": 85707,
+        "line_start": 163,
+        "line_end": 168
+      },
+      "formatted": {
+        "name": "this.mdct_sub48",
+        "kind": "FunctionExpression",
+        "start": 140863,
+        "end": 148520,
+        "line_start": 2524,
+        "line_end": 2651
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Banco polifásico, janelas, MDCT e anti-alias por subbanda"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-132",
+      "name": "Xa",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Xa",
+        "kind": "FunctionDeclaration",
+        "start": 85708,
+        "end": 85754,
+        "line_start": 168,
+        "line_end": 169
+      },
+      "formatted": {
+        "name": "Xa",
+        "kind": "FunctionDeclaration",
+        "start": 148532,
+        "end": 148618,
+        "line_start": 2653,
+        "line_end": 2657
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-133",
+      "name": "c",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "c",
+        "kind": "FunctionDeclaration",
+        "start": 85754,
+        "end": 89923,
+        "line_start": 169,
+        "line_end": 177
+      },
+      "formatted": {
+        "name": "c",
+        "kind": "FunctionDeclaration",
+        "start": 148623,
+        "end": 155468,
+        "line_start": 2658,
+        "line_end": 2771
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-134",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 85855,
+        "end": 85898,
+        "line_start": 169,
+        "line_end": 169
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 148764,
+        "end": 148828,
+        "line_start": 2660,
+        "line_end": 2660
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-135",
+      "name": "this.lame_encode_mp3_frame",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.lame_encode_mp3_frame",
+        "kind": "FunctionExpression",
+        "start": 85940,
+        "end": 89922,
+        "line_start": 169,
+        "line_end": 177
+      },
+      "formatted": {
+        "name": "this.lame_encode_mp3_frame",
+        "kind": "FunctionExpression",
+        "start": 148892,
+        "end": 155461,
+        "line_start": 2662,
+        "line_end": 2770
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-136",
+      "name": "Gc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Gc",
+        "kind": "FunctionDeclaration",
+        "start": 89923,
+        "end": 90061,
+        "line_start": 177,
+        "line_end": 177
+      },
+      "formatted": {
+        "name": "Gc",
+        "kind": "FunctionDeclaration",
+        "start": 155473,
+        "end": 155635,
+        "line_start": 2772,
+        "line_end": 2772
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-137",
+      "name": "Hc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Hc",
+        "kind": "FunctionDeclaration",
+        "start": 90061,
+        "end": 90273,
+        "line_start": 177,
+        "line_end": 177
+      },
+      "formatted": {
+        "name": "Hc",
+        "kind": "FunctionDeclaration",
+        "start": 155640,
+        "end": 155913,
+        "line_start": 2773,
+        "line_end": 2775
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-138",
+      "name": "Ic",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Ic",
+        "kind": "FunctionDeclaration",
+        "start": 90273,
+        "end": 90453,
+        "line_start": 177,
+        "line_end": 178
+      },
+      "formatted": {
+        "name": "Ic",
+        "kind": "FunctionDeclaration",
+        "start": 155918,
+        "end": 156185,
+        "line_start": 2776,
+        "line_end": 2784
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-139",
+      "name": "Xb",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Xb",
+        "kind": "FunctionDeclaration",
+        "start": 90453,
+        "end": 90651,
+        "line_start": 178,
+        "line_end": 178
+      },
+      "formatted": {
+        "name": "Xb",
+        "kind": "FunctionDeclaration",
+        "start": 156190,
+        "end": 156452,
+        "line_start": 2785,
+        "line_end": 2787
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-140",
+      "name": "this.assign",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.assign",
+        "kind": "FunctionExpression",
+        "start": 90535,
+        "end": 90650,
+        "line_start": 178,
+        "line_end": 178
+      },
+      "formatted": {
+        "name": "this.assign",
+        "kind": "FunctionExpression",
+        "start": 156286,
+        "end": 156449,
+        "line_start": 2785,
+        "line_end": 2787
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-141",
+      "name": "da",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "da",
+        "kind": "FunctionDeclaration",
+        "start": 90651,
+        "end": 93290,
+        "line_start": 178,
+        "line_end": 183
+      },
+      "formatted": {
+        "name": "da",
+        "kind": "FunctionDeclaration",
+        "start": 156457,
+        "end": 160105,
+        "line_start": 2788,
+        "line_end": 2867
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-142",
+      "name": "u",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 90665,
+        "end": 90734,
+        "line_start": 178,
+        "line_end": 178
+      },
+      "formatted": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 156481,
+        "end": 156561,
+        "line_start": 2789,
+        "line_end": 2789
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Encode de frame, estado, histogramas e buffers"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-143",
+      "name": "Jc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Jc",
+        "kind": "FunctionDeclaration",
+        "start": 93290,
+        "end": 96164,
+        "line_start": 183,
+        "line_end": 189
+      },
+      "formatted": {
+        "name": "Jc",
+        "kind": "FunctionDeclaration",
+        "start": 160110,
+        "end": 166902,
+        "line_start": 2868,
+        "line_end": 3019
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "FHT, FFT curta/longa e janelas"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-144",
+      "name": "u",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 93304,
+        "end": 94173,
+        "line_start": 183,
+        "line_end": 185
+      },
+      "formatted": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 160134,
+        "end": 163005,
+        "line_start": 2869,
+        "line_end": 2945
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "FHT, FFT curta/longa e janelas"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-145",
+      "name": "this.fft_short",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.fft_short",
+        "kind": "FunctionExpression",
+        "start": 94839,
+        "end": 95429,
+        "line_start": 186,
+        "line_end": 188
+      },
+      "formatted": {
+        "name": "this.fft_short",
+        "kind": "FunctionExpression",
+        "start": 163849,
+        "end": 165339,
+        "line_start": 2948,
+        "line_end": 2982
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "FHT, FFT curta/longa e janelas"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-146",
+      "name": "this.fft_long",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.fft_long",
+        "kind": "FunctionExpression",
+        "start": 95444,
+        "end": 95943,
+        "line_start": 188,
+        "line_end": 189
+      },
+      "formatted": {
+        "name": "this.fft_long",
+        "kind": "FunctionExpression",
+        "start": 165365,
+        "end": 166576,
+        "line_start": 2983,
+        "line_end": 3015
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "FHT, FFT curta/longa e janelas"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-147",
+      "name": "this.init_fft",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.init_fft",
+        "kind": "FunctionExpression",
+        "start": 95958,
+        "end": 96163,
+        "line_start": 189,
+        "line_end": 189
+      },
+      "formatted": {
+        "name": "this.init_fft",
+        "kind": "FunctionExpression",
+        "start": 166602,
+        "end": 166895,
+        "line_start": 3016,
+        "line_end": 3018
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "FHT, FFT curta/longa e janelas"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-148",
+      "name": "Pb",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Pb",
+        "kind": "FunctionDeclaration",
+        "start": 96164,
+        "end": 120992,
+        "line_start": 189,
+        "line_end": 238
+      },
+      "formatted": {
+        "name": "Pb",
+        "kind": "FunctionDeclaration",
+        "start": 166907,
+        "end": 215078,
+        "line_start": 3020,
+        "line_end": 3896
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-149",
+      "name": "u",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 96178,
+        "end": 96263,
+        "line_start": 189,
+        "line_end": 189
+      },
+      "formatted": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 166931,
+        "end": 167053,
+        "line_start": 3021,
+        "line_end": 3022
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-150",
+      "name": "k",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 96263,
+        "end": 96628,
+        "line_start": 189,
+        "line_end": 190
+      },
+      "formatted": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 167062,
+        "end": 167894,
+        "line_start": 3023,
+        "line_end": 3045
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-151",
+      "name": "n",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 96628,
+        "end": 96836,
+        "line_start": 190,
+        "line_end": 190
+      },
+      "formatted": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 167903,
+        "end": 168294,
+        "line_start": 3046,
+        "line_end": 3054
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-152",
+      "name": "w",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "w",
+        "kind": "FunctionDeclaration",
+        "start": 96836,
+        "end": 97190,
+        "line_start": 190,
+        "line_end": 191
+      },
+      "formatted": {
+        "name": "w",
+        "kind": "FunctionDeclaration",
+        "start": 168303,
+        "end": 169126,
+        "line_start": 3055,
+        "line_end": 3078
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-153",
+      "name": "E",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "E",
+        "kind": "FunctionDeclaration",
+        "start": 97190,
+        "end": 97524,
+        "line_start": 191,
+        "line_end": 192
+      },
+      "formatted": {
+        "name": "E",
+        "kind": "FunctionDeclaration",
+        "start": 169135,
+        "end": 169937,
+        "line_start": 3079,
+        "line_end": 3102
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-154",
+      "name": "B",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "B",
+        "kind": "FunctionDeclaration",
+        "start": 97524,
+        "end": 97587,
+        "line_start": 192,
+        "line_end": 192
+      },
+      "formatted": {
+        "name": "B",
+        "kind": "FunctionDeclaration",
+        "start": 169946,
+        "end": 170038,
+        "line_start": 3103,
+        "line_end": 3103
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-155",
+      "name": "W",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "W",
+        "kind": "FunctionDeclaration",
+        "start": 97587,
+        "end": 97794,
+        "line_start": 192,
+        "line_end": 192
+      },
+      "formatted": {
+        "name": "W",
+        "kind": "FunctionDeclaration",
+        "start": 170047,
+        "end": 170455,
+        "line_start": 3104,
+        "line_end": 3112
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-156",
+      "name": "f",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "f",
+        "kind": "FunctionDeclaration",
+        "start": 97794,
+        "end": 97978,
+        "line_start": 192,
+        "line_end": 193
+      },
+      "formatted": {
+        "name": "f",
+        "kind": "FunctionDeclaration",
+        "start": 170464,
+        "end": 170884,
+        "line_start": 3113,
+        "line_end": 3124
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-157",
+      "name": "b",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "b",
+        "kind": "FunctionDeclaration",
+        "start": 97978,
+        "end": 98150,
+        "line_start": 193,
+        "line_end": 193
+      },
+      "formatted": {
+        "name": "b",
+        "kind": "FunctionDeclaration",
+        "start": 170893,
+        "end": 171257,
+        "line_start": 3125,
+        "line_end": 3135
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-158",
+      "name": "v",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "v",
+        "kind": "FunctionDeclaration",
+        "start": 98150,
+        "end": 98670,
+        "line_start": 193,
+        "line_end": 194
+      },
+      "formatted": {
+        "name": "v",
+        "kind": "FunctionDeclaration",
+        "start": 171266,
+        "end": 172249,
+        "line_start": 3136,
+        "line_end": 3153
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-159",
+      "name": "a",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "a",
+        "kind": "FunctionDeclaration",
+        "start": 98670,
+        "end": 99123,
+        "line_start": 194,
+        "line_end": 195
+      },
+      "formatted": {
+        "name": "a",
+        "kind": "FunctionDeclaration",
+        "start": 172258,
+        "end": 173047,
+        "line_start": 3154,
+        "line_end": 3166
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-160",
+      "name": "m",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "m",
+        "kind": "FunctionDeclaration",
+        "start": 99123,
+        "end": 99195,
+        "line_start": 195,
+        "line_end": 195
+      },
+      "formatted": {
+        "name": "m",
+        "kind": "FunctionDeclaration",
+        "start": 173056,
+        "end": 173155,
+        "line_start": 3167,
+        "line_end": 3167
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-161",
+      "name": "z",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "z",
+        "kind": "FunctionDeclaration",
+        "start": 99195,
+        "end": 99280,
+        "line_start": 195,
+        "line_end": 195
+      },
+      "formatted": {
+        "name": "z",
+        "kind": "FunctionDeclaration",
+        "start": 173164,
+        "end": 173275,
+        "line_start": 3168,
+        "line_end": 3168
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-162",
+      "name": "e",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "e",
+        "kind": "FunctionDeclaration",
+        "start": 99280,
+        "end": 99965,
+        "line_start": 195,
+        "line_end": 196
+      },
+      "formatted": {
+        "name": "e",
+        "kind": "FunctionDeclaration",
+        "start": 173284,
+        "end": 174663,
+        "line_start": 3169,
+        "line_end": 3195
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-163",
+      "name": "l",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "l",
+        "kind": "FunctionDeclaration",
+        "start": 99966,
+        "end": 100858,
+        "line_start": 197,
+        "line_end": 198
+      },
+      "formatted": {
+        "name": "l",
+        "kind": "FunctionDeclaration",
+        "start": 174672,
+        "end": 177083,
+        "line_start": 3196,
+        "line_end": 3254
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-164",
+      "name": "d",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "d",
+        "kind": "FunctionDeclaration",
+        "start": 100858,
+        "end": 100956,
+        "line_start": 198,
+        "line_end": 198
+      },
+      "formatted": {
+        "name": "d",
+        "kind": "FunctionDeclaration",
+        "start": 177092,
+        "end": 177212,
+        "line_start": 3255,
+        "line_end": 3255
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-165",
+      "name": "g",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "g",
+        "kind": "FunctionDeclaration",
+        "start": 100956,
+        "end": 101139,
+        "line_start": 198,
+        "line_end": 199
+      },
+      "formatted": {
+        "name": "g",
+        "kind": "FunctionDeclaration",
+        "start": 177221,
+        "end": 177513,
+        "line_start": 3256,
+        "line_end": 3261
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-166",
+      "name": "this.L3psycho_anal_ns",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.L3psycho_anal_ns",
+        "kind": "FunctionExpression",
+        "start": 102391,
+        "end": 109825,
+        "line_start": 201,
+        "line_end": 216
+      },
+      "formatted": {
+        "name": "this.L3psycho_anal_ns",
+        "kind": "FunctionExpression",
+        "start": 179018,
+        "end": 192740,
+        "line_start": 3265,
+        "line_end": 3488
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-167",
+      "name": "this.L3psycho_anal_vbr",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.L3psycho_anal_vbr",
+        "kind": "FunctionExpression",
+        "start": 109972,
+        "end": 117836,
+        "line_start": 216,
+        "line_end": 232
+      },
+      "formatted": {
+        "name": "this.L3psycho_anal_vbr",
+        "kind": "FunctionExpression",
+        "start": 192918,
+        "end": 209235,
+        "line_start": 3490,
+        "line_end": 3771
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-168",
+      "name": "this.psymodel_init",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.psymodel_init",
+        "kind": "FunctionExpression",
+        "start": 117856,
+        "end": 120794,
+        "line_start": 232,
+        "line_end": 238
+      },
+      "formatted": {
+        "name": "this.psymodel_init",
+        "kind": "FunctionExpression",
+        "start": 209266,
+        "end": 214575,
+        "line_start": 3772,
+        "line_end": 3877
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-169",
+      "name": "this.ATHformula",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.ATHformula",
+        "kind": "FunctionExpression",
+        "start": 120811,
+        "end": 120991,
+        "line_start": 238,
+        "line_end": 238
+      },
+      "formatted": {
+        "name": "this.ATHformula",
+        "kind": "FunctionExpression",
+        "start": 214603,
+        "end": 215071,
+        "line_start": 3878,
+        "line_end": 3895
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-170",
+      "name": "W",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "W",
+        "kind": "FunctionDeclaration",
+        "start": 120992,
+        "end": 139523,
+        "line_start": 238,
+        "line_end": 274
+      },
+      "formatted": {
+        "name": "W",
+        "kind": "FunctionDeclaration",
+        "start": 215083,
+        "end": 247092,
+        "line_start": 3897,
+        "line_end": 4499
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-171",
+      "name": "u",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 121005,
+        "end": 121120,
+        "line_start": 238,
+        "line_end": 238
+      },
+      "formatted": {
+        "name": "u",
+        "kind": "FunctionDeclaration",
+        "start": 215106,
+        "end": 215235,
+        "line_start": 3898,
+        "line_end": 3898
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-172",
+      "name": "k",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 121120,
+        "end": 121151,
+        "line_start": 238,
+        "line_end": 238
+      },
+      "formatted": {
+        "name": "k",
+        "kind": "FunctionDeclaration",
+        "start": 215244,
+        "end": 215281,
+        "line_start": 3899,
+        "line_end": 3899
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-173",
+      "name": "n",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 121151,
+        "end": 121182,
+        "line_start": 238,
+        "line_end": 238
+      },
+      "formatted": {
+        "name": "n",
+        "kind": "FunctionDeclaration",
+        "start": 215290,
+        "end": 215328,
+        "line_start": 3900,
+        "line_end": 3900
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-174",
+      "name": "V",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "V",
+        "kind": "FunctionDeclaration",
+        "start": 121182,
+        "end": 121238,
+        "line_start": 238,
+        "line_end": 238
+      },
+      "formatted": {
+        "name": "V",
+        "kind": "FunctionDeclaration",
+        "start": 215337,
+        "end": 215413,
+        "line_start": 3901,
+        "line_end": 3901
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-175",
+      "name": "E",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "E",
+        "kind": "FunctionDeclaration",
+        "start": 121238,
+        "end": 121571,
+        "line_start": 238,
+        "line_end": 239
+      },
+      "formatted": {
+        "name": "E",
+        "kind": "FunctionDeclaration",
+        "start": 215422,
+        "end": 216021,
+        "line_start": 3902,
+        "line_end": 3916
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-176",
+      "name": "B",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "B",
+        "kind": "FunctionDeclaration",
+        "start": 121571,
+        "end": 121758,
+        "line_start": 239,
+        "line_end": 239
+      },
+      "formatted": {
+        "name": "B",
+        "kind": "FunctionDeclaration",
+        "start": 216030,
+        "end": 216268,
+        "line_start": 3917,
+        "line_end": 3918
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-177",
+      "name": "U",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "U",
+        "kind": "FunctionDeclaration",
+        "start": 121758,
+        "end": 121880,
+        "line_start": 239,
+        "line_end": 240
+      },
+      "formatted": {
+        "name": "U",
+        "kind": "FunctionDeclaration",
+        "start": 216277,
+        "end": 216525,
+        "line_start": 3919,
+        "line_end": 3926
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-178",
+      "name": "f",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "f",
+        "kind": "FunctionDeclaration",
+        "start": 121880,
+        "end": 122227,
+        "line_start": 240,
+        "line_end": 240
+      },
+      "formatted": {
+        "name": "f",
+        "kind": "FunctionDeclaration",
+        "start": 216534,
+        "end": 216927,
+        "line_start": 3927,
+        "line_end": 3927
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-179",
+      "name": "b",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "b",
+        "kind": "FunctionDeclaration",
+        "start": 122227,
+        "end": 122322,
+        "line_start": 240,
+        "line_end": 241
+      },
+      "formatted": {
+        "name": "b",
+        "kind": "FunctionDeclaration",
+        "start": 216936,
+        "end": 217080,
+        "line_start": 3928,
+        "line_end": 3931
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-180",
+      "name": "v",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "v",
+        "kind": "FunctionDeclaration",
+        "start": 122322,
+        "end": 125269,
+        "line_start": 241,
+        "line_end": 246
+      },
+      "formatted": {
+        "name": "v",
+        "kind": "FunctionDeclaration",
+        "start": 217089,
+        "end": 223694,
+        "line_start": 3932,
+        "line_end": 4062
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-181",
+      "name": "a",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "a",
+        "kind": "FunctionDeclaration",
+        "start": 125269,
+        "end": 125305,
+        "line_start": 246,
+        "line_end": 246
+      },
+      "formatted": {
+        "name": "a",
+        "kind": "FunctionDeclaration",
+        "start": 223703,
+        "end": 223747,
+        "line_start": 4063,
+        "line_end": 4063
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-182",
+      "name": "m",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "m",
+        "kind": "FunctionDeclaration",
+        "start": 125305,
+        "end": 125334,
+        "line_start": 246,
+        "line_end": 246
+      },
+      "formatted": {
+        "name": "m",
+        "kind": "FunctionDeclaration",
+        "start": 223756,
+        "end": 223791,
+        "line_start": 4064,
+        "line_end": 4064
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-183",
+      "name": "z",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "z",
+        "kind": "FunctionDeclaration",
+        "start": 125334,
+        "end": 125374,
+        "line_start": 246,
+        "line_end": 247
+      },
+      "formatted": {
+        "name": "z",
+        "kind": "FunctionDeclaration",
+        "start": 223800,
+        "end": 223873,
+        "line_start": 4065,
+        "line_end": 4067
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-184",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 125693,
+        "end": 125782,
+        "line_start": 247,
+        "line_end": 247
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 224453,
+        "end": 224582,
+        "line_start": 4090,
+        "line_end": 4090
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-185",
+      "name": "this.lame_init",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.lame_init",
+        "kind": "FunctionExpression",
+        "start": 125798,
+        "end": 126954,
+        "line_start": 247,
+        "line_end": 250
+      },
+      "formatted": {
+        "name": "this.lame_init",
+        "kind": "FunctionExpression",
+        "start": 224609,
+        "end": 226679,
+        "line_start": 4091,
+        "line_end": 4152
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-186",
+      "name": "this.nearestBitrateFullIndex",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.nearestBitrateFullIndex",
+        "kind": "FunctionExpression",
+        "start": 126984,
+        "end": 127201,
+        "line_start": 250,
+        "line_end": 250
+      },
+      "formatted": {
+        "name": "this.nearestBitrateFullIndex",
+        "kind": "FunctionExpression",
+        "start": 226720,
+        "end": 227122,
+        "line_start": 4153,
+        "line_end": 4160
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-187",
+      "name": "this.lame_init_params",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.lame_init_params",
+        "kind": "FunctionExpression",
+        "start": 127224,
+        "end": 138328,
+        "line_start": 250,
+        "line_end": 272
+      },
+      "formatted": {
+        "name": "this.lame_init_params",
+        "kind": "FunctionExpression",
+        "start": 227156,
+        "end": 244887,
+        "line_start": 4161,
+        "line_end": 4446
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-188",
+      "name": "this.lame_encode_flush",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.lame_encode_flush",
+        "kind": "FunctionExpression",
+        "start": 138352,
+        "end": 139143,
+        "line_start": 272,
+        "line_end": 274
+      },
+      "formatted": {
+        "name": "this.lame_encode_flush",
+        "kind": "FunctionExpression",
+        "start": 244922,
+        "end": 246571,
+        "line_start": 4447,
+        "line_end": 4493
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-189",
+      "name": "this.lame_encode_buffer",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.lame_encode_buffer",
+        "kind": "FunctionExpression",
+        "start": 139168,
+        "end": 139522,
+        "line_start": 274,
+        "line_end": 274
+      },
+      "formatted": {
+        "name": "this.lame_encode_buffer",
+        "kind": "FunctionExpression",
+        "start": 246607,
+        "end": 247085,
+        "line_start": 4494,
+        "line_end": 4498
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "API LAME interna, parâmetros, reamostragem, buffering e flush"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-190",
+      "name": "Kc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Kc",
+        "kind": "FunctionDeclaration",
+        "start": 139523,
+        "end": 139569,
+        "line_start": 274,
+        "line_end": 274
+      },
+      "formatted": {
+        "name": "Kc",
+        "kind": "FunctionDeclaration",
+        "start": 247097,
+        "end": 247153,
+        "line_start": 4500,
+        "line_end": 4500
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-191",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 139553,
+        "end": 139568,
+        "line_start": 274,
+        "line_end": 274
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 247131,
+        "end": 247150,
+        "line_start": 4500,
+        "line_end": 4500
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-192",
+      "name": "Lc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Lc",
+        "kind": "FunctionDeclaration",
+        "start": 139569,
+        "end": 139617,
+        "line_start": 274,
+        "line_end": 274
+      },
+      "formatted": {
+        "name": "Lc",
+        "kind": "FunctionDeclaration",
+        "start": 247158,
+        "end": 247217,
+        "line_start": 4501,
+        "line_end": 4501
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-193",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 139599,
+        "end": 139616,
+        "line_start": 274,
+        "line_end": 274
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 247192,
+        "end": 247214,
+        "line_start": 4501,
+        "line_end": 4501
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-194",
+      "name": "Mc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Mc",
+        "kind": "FunctionDeclaration",
+        "start": 139617,
+        "end": 139632,
+        "line_start": 274,
+        "line_end": 274
+      },
+      "formatted": {
+        "name": "Mc",
+        "kind": "FunctionDeclaration",
+        "start": 247222,
+        "end": 247239,
+        "line_start": 4502,
+        "line_end": 4502
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-195",
+      "name": "Nc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Nc",
+        "kind": "FunctionDeclaration",
+        "start": 139633,
+        "end": 139679,
+        "line_start": 275,
+        "line_end": 275
+      },
+      "formatted": {
+        "name": "Nc",
+        "kind": "FunctionDeclaration",
+        "start": 247244,
+        "end": 247300,
+        "line_start": 4503,
+        "line_end": 4503
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-196",
+      "name": "this.setModules",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 139663,
+        "end": 139678,
+        "line_start": 275,
+        "line_end": 275
+      },
+      "formatted": {
+        "name": "this.setModules",
+        "kind": "FunctionExpression",
+        "start": 247278,
+        "end": 247297,
+        "line_start": 4503,
+        "line_end": 4503
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-197",
+      "name": "Fa",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "Fa",
+        "kind": "FunctionDeclaration",
+        "start": 139679,
+        "end": 139754,
+        "line_start": 275,
+        "line_end": 275
+      },
+      "formatted": {
+        "name": "Fa",
+        "kind": "FunctionDeclaration",
+        "start": 247305,
+        "end": 247392,
+        "line_start": 4504,
+        "line_end": 4504
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-198",
+      "name": "cc",
+      "kind": "FunctionDeclaration",
+      "source": {
+        "name": "cc",
+        "kind": "FunctionDeclaration",
+        "start": 139754,
+        "end": 139851,
+        "line_start": 275,
+        "line_end": 275
+      },
+      "formatted": {
+        "name": "cc",
+        "kind": "FunctionDeclaration",
+        "start": 247397,
+        "end": 247510,
+        "line_start": 4505,
+        "line_end": 4505
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-199",
+      "name": "<anonymous>",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "<anonymous>",
+        "kind": "FunctionExpression",
+        "start": 139864,
+        "end": 139978,
+        "line_start": 275,
+        "line_end": 275
+      },
+      "formatted": {
+        "name": "<anonymous>",
+        "kind": "FunctionExpression",
+        "start": 247532,
+        "end": 247743,
+        "line_start": 4506,
+        "line_end": 4511
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-200",
+      "name": "<anonymous>",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "<anonymous>",
+        "kind": "FunctionExpression",
+        "start": 139993,
+        "end": 140042,
+        "line_start": 275,
+        "line_end": 275
+      },
+      "formatted": {
+        "name": "<anonymous>",
+        "kind": "FunctionExpression",
+        "start": 247764,
+        "end": 247845,
+        "line_start": 4511,
+        "line_end": 4512
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-201",
+      "name": "<anonymous>",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "<anonymous>",
+        "kind": "FunctionExpression",
+        "start": 140084,
+        "end": 140117,
+        "line_start": 275,
+        "line_end": 275
+      },
+      "formatted": {
+        "name": "<anonymous>",
+        "kind": "FunctionExpression",
+        "start": 247895,
+        "end": 247933,
+        "line_start": 4512,
+        "line_end": 4512
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-202",
+      "name": "<anonymous>",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "<anonymous>",
+        "kind": "FunctionExpression",
+        "start": 140131,
+        "end": 140169,
+        "line_start": 275,
+        "line_end": 276
+      },
+      "formatted": {
+        "name": "<anonymous>",
+        "kind": "FunctionExpression",
+        "start": 247949,
+        "end": 247994,
+        "line_start": 4512,
+        "line_end": 4512
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-203",
+      "name": "qa.EQ",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "qa.EQ",
+        "kind": "FunctionExpression",
+        "start": 140964,
+        "end": 141073,
+        "line_start": 277,
+        "line_end": 277
+      },
+      "formatted": {
+        "name": "qa.EQ",
+        "kind": "FunctionExpression",
+        "start": 249016,
+        "end": 249149,
+        "line_start": 4543,
+        "line_end": 4543
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-204",
+      "name": "qa.NEQ",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "qa.NEQ",
+        "kind": "FunctionExpression",
+        "start": 141081,
+        "end": 141113,
+        "line_start": 277,
+        "line_end": 277
+      },
+      "formatted": {
+        "name": "qa.NEQ",
+        "kind": "FunctionExpression",
+        "start": 249164,
+        "end": 249204,
+        "line_start": 4544,
+        "line_end": 4544
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-205",
+      "name": "Fa.readHeader",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "Fa.readHeader",
+        "kind": "FunctionExpression",
+        "start": 154514,
+        "end": 154965,
+        "line_start": 304,
+        "line_end": 305
+      },
+      "formatted": {
+        "name": "Fa.readHeader",
+        "kind": "FunctionExpression",
+        "start": 266823,
+        "end": 267740,
+        "line_start": 4620,
+        "line_end": 4646
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-206",
+      "name": "lamejs.Mp3Encoder",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "lamejs.Mp3Encoder",
+        "kind": "FunctionExpression",
+        "start": 155006,
+        "end": 156012,
+        "line_start": 305,
+        "line_end": 307
+      },
+      "formatted": {
+        "name": "lamejs.Mp3Encoder",
+        "kind": "FunctionExpression",
+        "start": 267797,
+        "end": 269267,
+        "line_start": 4648,
+        "line_end": 4680
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-207",
+      "name": "this.encodeBuffer",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.encodeBuffer",
+        "kind": "FunctionExpression",
+        "start": 155745,
+        "end": 155915,
+        "line_start": 306,
+        "line_end": 307
+      },
+      "formatted": {
+        "name": "this.encodeBuffer",
+        "kind": "FunctionExpression",
+        "start": 268874,
+        "end": 269141,
+        "line_start": 4673,
+        "line_end": 4678
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    },
+    {
+      "id": "VENDOR-208",
+      "name": "this.flush",
+      "kind": "FunctionExpression",
+      "source": {
+        "name": "this.flush",
+        "kind": "FunctionExpression",
+        "start": 155927,
+        "end": 156011,
+        "line_start": 307,
+        "line_end": 307
+      },
+      "formatted": {
+        "name": "this.flush",
+        "kind": "FunctionExpression",
+        "start": 269164,
+        "end": 269260,
+        "line_start": 4679,
+        "line_end": 4679
+      },
+      "review_status": "SEMANTIC_BODY_READ",
+      "phases": [
+        "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+      ],
+      "remaining_validation_gap": "Leitura de corpo não prova correção numérica/coeficientes, conformidade MP3 ou todos os caminhos executados."
+    }
+  ],
+  "phases": [
+    {
+      "formatted_range": [
+        1,
+        153
+      ],
+      "reviewed_contracts": "Arrays tipados, enums e análise ReplayGain"
+    },
+    {
+      "formatted_range": [
+        154,
+        294
+      ],
+      "reviewed_contracts": "Presets de VBR/ABR e parâmetros de quantização"
+    },
+    {
+      "formatted_range": [
+        295,
+        684
+      ],
+      "reviewed_contracts": "Quantização, contagem de bits, Huffman, regiões e scalefactors"
+    },
+    {
+      "formatted_range": [
+        685,
+        711
+      ],
+      "reviewed_contracts": "Reservatório e distribuição de bits"
+    },
+    {
+      "formatted_range": [
+        712,
+        970
+      ],
+      "reviewed_contracts": "Emissão de bitstream, headers, cópia de buffers e CRC"
+    },
+    {
+      "formatted_range": [
+        971,
+        1221
+      ],
+      "reviewed_contracts": "Tags VBR/LAME, seek table e leitura/escrita de metadados"
+    },
+    {
+      "formatted_range": [
+        1222,
+        1306
+      ],
+      "reviewed_contracts": "Estruturas de estado e laço CBR"
+    },
+    {
+      "formatted_range": [
+        1307,
+        1661
+      ],
+      "reviewed_contracts": "Tabelas de potência, ATH, energia/ruído e cópia de granules"
+    },
+    {
+      "formatted_range": [
+        1662,
+        2161
+      ],
+      "reviewed_contracts": "Laço externo de quantização e ramos VBR/ABR"
+    },
+    {
+      "formatted_range": [
+        2162,
+        2652
+      ],
+      "reviewed_contracts": "Banco polifásico, janelas, MDCT e anti-alias por subbanda"
+    },
+    {
+      "formatted_range": [
+        2653,
+        2867
+      ],
+      "reviewed_contracts": "Encode de frame, estado, histogramas e buffers"
+    },
+    {
+      "formatted_range": [
+        2868,
+        3019
+      ],
+      "reviewed_contracts": "FHT, FFT curta/longa e janelas"
+    },
+    {
+      "formatted_range": [
+        3020,
+        3896
+      ],
+      "reviewed_contracts": "Energia, mascaramento, ataques, decisão de blocos e inicialização psicoacústica"
+    },
+    {
+      "formatted_range": [
+        3897,
+        4499
+      ],
+      "reviewed_contracts": "API LAME interna, parâmetros, reamostragem, buffering e flush"
+    },
+    {
+      "formatted_range": [
+        4500,
+        4683
+      ],
+      "reviewed_contracts": "Stubs, tabelas Huffman, constantes e API pública Mp3Encoder/WavHeader"
+    }
+  ],
+  "probes": "proofs.json",
+  "limits": [
+    "Somente cópia formatada pelo AST foi usada para a leitura integral; original permanece inalterado e fixado por blob.",
+    "208 corpos são código de terceiro e não 208 microfuncionalidades autorais do produto.",
+    "Coeficientes/tabelas foram vistos e seu consumo percorrido; não comparados a uma especificação ou vetor oficial independente.",
+    "Dois fragmentos originais foram exercitados com vetores numéricos e a API pública com silêncio/seno sintético curto.",
+    "Nenhum MP3 foi decodificado, ouvido ou validado em navegador; não houve fuzzing, benchmark ou verificação de áudio longo.",
+    "Leitura não certifica suporte aos ramos VBR/ReplayGain/WAV dormentes nem configurações diferentes da integração atual."
+  ]
+}

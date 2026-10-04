@@ -1,0 +1,82 @@
+{
+  "created_at": "2026-10-04T01:39:42.967Z",
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "provenance": {
+    "pins_path": "/workspace/scratch/f8f9b9cbce53/reaudit/probes/auth/second-pass-pins.json",
+    "integrity_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "integrity_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_source_files": 7,
+    "verified_before_execution": true,
+    "source_kind": "git_checkout"
+  },
+  "network_calls": 0,
+  "database_calls": 0,
+  "source_modified": false,
+  "method": "Actual source declarations/closures, TypeScript transpilation, explicit synthetic React/SDK boundaries",
+  "results": [
+    {
+      "id": "P-AUTH-09",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "src/components/inbox/contact-details/ContactInfoSection.tsx",
+          "blob_sha": "ef545e34a0f5e4395bded6212635bf98064c0040"
+        },
+        {
+          "file": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+          "blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed"
+        },
+        {
+          "file": "src/components/inbox/contact-details/contactDetailSections.ts",
+          "blob_sha": "fb9d7000347808119e9c9a7b884885baef26c106"
+        },
+        {
+          "file": "src/hooks/crm/useContactEnrichedData.ts",
+          "blob_sha": "02f7398107d5debbf70bbda0ce3a85bbcd2a4b5b"
+        },
+        {
+          "file": "src/components/inbox/ContactDetails.tsx",
+          "blob_sha": "eeffb3e8f1a69c737171f4dfb107d2485beec79a"
+        },
+        {
+          "file": "src/components/inbox/RealtimeInboxView.tsx",
+          "blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b"
+        }
+      ],
+      "observed": {
+        "initial_prop": "",
+        "resolved_prop": "Empresa sintética existente",
+        "input_on_first_edit": "",
+        "update_id": "contact-synthetic",
+        "company_update": "",
+        "toast": [
+          "success",
+          "Campo atualizado!"
+        ],
+        "same_component_same_contact": true
+      },
+      "limitation": "Actual EditableField declaration and updateContact closure, transpiled unchanged. Minimal React hook/JSX scheduler models same-instance prop update; SDK is a recording stub. Parent info-open default and asynchronous query are source evidence. No browser, network, database or cross-contact claim."
+    },
+    {
+      "id": "P-AUTH-10",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "src/components/security/RateLimitConfigPanel.tsx",
+          "blob_sha": "d530018985f63fc004870100cbc0469e8112e215"
+        }
+      ],
+      "observed": {
+        "insert_error_after_delete_remaining_rows": 0,
+        "input_action": "alert",
+        "persisted_action_present": false,
+        "reloaded_action": "block",
+        "final_toast": [
+          "success",
+          "Regras de rate limit salvas!"
+        ]
+      },
+      "limitation": "Actual saveRules and fetchRules closures with sequential SDK-shaped responses. Demonstrates committed-delete loss and non-persistence of action, not live enforcement; R2-AUTH-022 separately addresses disconnected enforcement."
+    }
+  ]
+}

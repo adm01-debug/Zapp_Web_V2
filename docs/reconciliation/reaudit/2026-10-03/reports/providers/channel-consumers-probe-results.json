@@ -1,0 +1,148 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "additional_pins": [
+    {
+      "path": "src/components/groups/GroupsView.tsx",
+      "git_blob_sha": "42752cd8db138191646a3cdeefa6cccb3231f530",
+      "sha256": "b43110db8781696eb31ea512116c40a0b39e282e2c7030dec0b8b6e450be153e"
+    },
+    {
+      "path": "src/hooks/chat/useGroupsManager.ts",
+      "git_blob_sha": "7c3ba0c430f37b59b9fda9e3f4e64100be2cc066",
+      "sha256": "f8f32ebbf2196b6f278c44bc9839e43f39b762a755ac877882a10207390e6055"
+    },
+    {
+      "path": "src/hooks/groups/actions.ts",
+      "git_blob_sha": "0e9370360b53e363aa4f49d424d5fdfd5eee2820",
+      "sha256": "b6713ab51c47df06ef5f26a1669f8a9ebec75bb90250b75b6e960be0b7c8809e"
+    },
+    {
+      "path": "src/components/alerts/EvolutionDisconnectBanner.tsx",
+      "git_blob_sha": "7b70d807c03f265d1e57f38416e8a25258adfd38",
+      "sha256": "79d5aacdea9384712bc0af435e62f3bf3bed1c6774585506e802e1f0af7e9465"
+    },
+    {
+      "path": "src/components/omnichannel/OmnichannelManager.tsx",
+      "git_blob_sha": "21d714a7eacc3e97ae8fd3d1440d7a8997dff53b",
+      "sha256": "0e4b519a37f8eea0ea42c46fa0cbc745e5dd6555f3c4021d21b6623db60cdeaa"
+    },
+    {
+      "path": "src/components/omnichannel/OmnichannelInbox.tsx",
+      "git_blob_sha": "a96b2322e8ec7c5ac6df846c97dfc6faf0984e46",
+      "sha256": "fa4eefb0677bd4226b66f6bd04b9c7f445166099211d50c6ff1396cbf0928efe"
+    },
+    {
+      "path": "src/providers/QuarantineMonitorProvider.tsx",
+      "git_blob_sha": "0b51575c4ffa6ab83b6a8d75c2f3aa0707f5ecb6",
+      "sha256": "31d0b8fcf2e54f93bb660692a67d6c3d5e37f2e373c4caed946b8bf55630d482"
+    },
+    {
+      "path": "src/lib/quarantineStore.ts",
+      "git_blob_sha": "9e7dc1cd953016b0b6bc3145fe82ca91e01f161c",
+      "sha256": "c43d2a796900cc38e3a950e5caf8cec718e7d2176f562308b361658de16d0c04"
+    },
+    {
+      "path": "supabase/migrations/20260318135320_ed229dcb-ef66-45b6-b2b1-58ebf60d2273.sql",
+      "git_blob_sha": "acc60c9d2201d47ac2bdee0d82901e7443f5f788",
+      "sha256": "e7dff0c87e70ea763ebdc2caa12c75dbaf7ea898c6e206df646da36f7ae7fa9a"
+    }
+  ],
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "method": "P40/P41 execute complete hooks and exact source callback prefixes. P42 composes banner callback with full unchanged Evolution handler using authenticated DB and remote-import stubs. P43 runs create/inbox callbacks with SQL-default fixture. P44 runs full monitor after replacing only JSX passthrough return, with real store and controlled timers. No React DOM, live SQL, VPS or provider traffic.",
+  "results": [
+    {
+      "id": "P40",
+      "contextMenuGroup": "group-a",
+      "selectionBefore": [
+        "group-a",
+        "group-b"
+      ],
+      "selectionAfterMenu": [
+        "group-b"
+      ],
+      "confirmedBroadcastTarget": "fixture-b@g.us",
+      "outcome": "Exact per-group menu callback removes its already-selected group; after explicit simulated confirmation the real broadcast hook targets the remaining group. Dialog displays selection; no covert send or real delivery occurred."
+    },
+    {
+      "id": "P41",
+      "actualInvokedBoundaryError": true,
+      "remainingDraft": "",
+      "dialogOpen": false,
+      "remainingTargets": 0,
+      "toast": {
+        "kind": "warning",
+        "message": "Enviado para 0 grupo(s), 1 falha(s)"
+      },
+      "outcome": "Complete view callback and real broadcast hook discard draft and recipients even though the only send failed; this is an actual error-result branch, distinct from HTTP200 soft-error handling."
+    },
+    {
+      "id": "P42",
+      "backendHttpStatus": 200,
+      "backendError": true,
+      "providerCalls": 0,
+      "frontendToast": {
+        "kind": "success",
+        "message": "Reconectando fixture-instance... Escaneie o QR Code na tela de conexões."
+      },
+      "outcome": "Complete Evolution handler enforces maintenance before provider I/O, but exact banner callback ignores the error envelope and says reconnecting."
+    },
+    {
+      "id": "P43",
+      "locallyCreatedStatus": "pending_setup",
+      "displayedConnectedListLength": 1,
+      "contactWithoutMessageProducesInboxRow": 1,
+      "derivedUnread": false,
+      "derivedStatus": "open",
+      "queries": [
+        {
+          "table": "channel_connections_safe",
+          "columns": "*",
+          "filters": [
+            {
+              "key": "is_active",
+              "value": true
+            }
+          ],
+          "limit": null
+        },
+        {
+          "table": "contacts",
+          "columns": "id, name, phone, channel_type, updated_at, assigned_to",
+          "filters": [
+            {
+              "key": "is_lid_legacy",
+              "value": false
+            }
+          ],
+          "limit": 200
+        }
+      ],
+      "outcome": "Exact create/query callbacks plus pinned SQL default make a pending channel enter the connected list. Inbox row is synthesized from a contact without consulting messages. React JSX, RLS and external channel providers were not executed."
+    },
+    {
+      "id": "P44",
+      "authoritativeFixtureDecisionAfterReview": "allowed",
+      "cachedDecisionAfterSuccessfulPoll": "pending",
+      "totalQueries": 3,
+      "remainingPollTimersAfterOneThrownError": 0,
+      "outcome": "Complete monitor with real store preserves pending after filtered successful response omits an allowed record, then stops all future ticks after one transient exception. This concerns cached badge state, not authorization or actual file blocking."
+    }
+  ]
+}

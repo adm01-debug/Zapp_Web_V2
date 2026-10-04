@@ -1,0 +1,29 @@
+{
+  "tool": "graphifyy[sql]",
+  "version": "0.9.68",
+  "installation": "isolated audit/tools/graphify-venv; no hooks or global installation",
+  "command": "graphify extract REPO --code-only --no-cluster --max-workers 2 --out audit/code/graphify",
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "graph_path": "audit/code/graphify/graphify-out/graph.json",
+  "graph_sha256": "a81594a29ae1afe995bbd2422796b3d565788fcc5805bcb5046941b782fec4e7",
+  "raw_nodes": 19319,
+  "raw_edges": 49910,
+  "extracted_sources": 3452,
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "llm_calls": 0,
+  "query_loader_nodes": 19507,
+  "query_loader_note": "Loader reports synthetic/implicit nodes beyond the19319serialized raw nodes; use raw counts for graph artifact.",
+  "query_outputs": [
+    "audit/code/graphify-path-department.txt",
+    "audit/code/graphify-query-department-focused.txt",
+    "audit/code/graphify-query-panel.txt",
+    "audit/code/graphify-query-team-chat.txt"
+  ],
+  "known_path": "DepartmentWhatsAppView --calls[EXTRACTED]--> useSaveDepartmentWhatsApp",
+  "limitations": [
+    "AST extraction does not establish dynamic runtime reachability or dead code.",
+    "Broad queries hit budget; focused call/path query used for department dependency.",
+    "No graphify setup script, git hooks or versioned graph output was changed."
+  ]
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "roster_index": 12,
+    "adjudication": [
+      "Monta useChatSearch real com oito mensagens e relógio simulado: verifica debounce, exclusão lógica, normalização de acentos, filtros de mídia/link, combinação de filtros, navegação circular, destaque, callback, limpeza e ausência de resultados.",
+      "Esses controles positivos verificam o hook sobre a coleção recebida. Não consultam histórico paginado no banco nem montam a rolagem e os consumidores de navegação do chat."
+    ]
+  },
+  {
+    "roster_index": 13,
+    "adjudication": [
+      "Monta useGlobalKeyboardShortcuts real, verifica o registro de sete comandos escopados a tarefas e despacha eventos de teclado para tarefas/pipeline, outra view, foco em input, modificador Ctrl e ajuda.",
+      "Os controles negativos de escopo e foco são relevantes. A simulação não executa as ações de negócio do módulo de tarefas, nem navegação global Ctrl+2 ou persistência de preferências."
+    ]
+  },
+  {
+    "roster_index": 14,
+    "adjudication": [
+      "Monta useNotificationSettings real com QueryClient, usuário e Supabase simulados. Verifica carregamento, defaults, campos, seleção e gravação de sound_volume, limites, atualização otimista, erro de upsert com aviso, reset de volume, vocabulário de som, limitação de toasts e fronteiras de quiet hours inclusive intervalos noturnos.",
+      "Há assertivas substanciais sobre o hook real; elas não demonstram persistência dos três booleans de sons por categoria nem falha do upsert no reset. Não afastam PLAT003/PLAT004, e não constituem execução contra banco ou áudio real."
+    ]
+  },
+  {
+    "roster_index": 15,
+    "adjudication": [
+      "Monta useOfflineCache real com navigator e localStorage simulados: cobre identidade online, gravação e timestamp, limites de 50 conversas/20 mensagens, bloqueio durante loading, limpeza, expiração em 31 minutos e eventos online/offline.",
+      "O teste não monta logout ou alternância de usuário, nem trata quotas e JSON corrompido. A ausência desses cenários não é um novo vazamento: a integração de limpeza em Auth foi examinada separadamente."
+    ]
+  },
+  {
+    "roster_index": 16,
+    "adjudication": [
+      "Monta useOnboarding real e verifica usuário ausente, flag local por usuário, existência ou ausência de user_settings, erro de leitura que assume conclusão, API de conclusão e upsert com onConflict=user_id/ignoreDuplicates=true.",
+      "O caso final exige que a conclusão local sobreviva à rejeição da persistência remota, comportamento local explicitamente pretendido no teste. O arquivo não demonstra conclusão durável em outro navegador, foco/inert do modal nem presença dos alvos do tour."
+    ]
+  },
+  {
+    "roster_index": 17,
+    "adjudication": [
+      "Monta useOnboardingChecklist real com tabelas simuladas. Verifica nome de perfil suficiente/curto, funções e campos expostos, ausência de usuário sem exceção e progresso no intervalo 0–100.",
+      "Alguns títulos são mais fortes que a assertiva: all false somente exige status definido, e dismissal só verifica estado inicial e funções. O teste não monta OnboardingChecklistCard com tema indefinido e não afasta INF036; tampouco verifica operações de dismiss e erros de persistência."
+    ]
+  },
+  {
+    "roster_index": 18,
+    "adjudication": [
+      "Monta useQueues real e exige duas filas, vínculo de membro ao nome correto, estado inicial de loading e waiting_count igual a zero. O comentário registra que a contagem foi movida à camada de serviço; o teste não prova a contagem operacional de espera.",
+      "O mock oferece insert de fila e operações de membros, mas nenhum caso os aciona. Não cobre salvar/excluir fila, erro de inclusão de membro ou os componentes de comparação e período relacionados a QUE007–QUE010."
+    ]
+  },
+  {
+    "roster_index": 19,
+    "adjudication": [
+      "Importa e monta useQueuesComparison real, mas o cenário intitulado fetches and compares queues somente aguarda loading=false. O cenário de erro faz a mesma assertiva; apenas o cenário de filas vazias exige queuesPerformance=[].",
+      "O mock de mensagens encerra a cadeia em in() com uma Promise e não oferece gte/lte requeridos pela produção; o catch do hook termina loading mesmo assim. Nenhuma assertiva exige as métricas das fixtures, portanto o cenário não demonstra comparação correta, filtragem temporal ou proteção contra retorno fora de ordem de QUE010."
+    ]
+  },
+  {
+    "roster_index": 20,
+    "adjudication": [
+      "Monta useRateLimitLogs real com Promise que oferece abortSignal. Verifica três logs, soma 280, contagem de linhas bloqueadas, IPs únicos e identificação do IP bloqueado, vazio, refresh de 30 segundos, atualização conjunta de estatísticas, limpeza ao desmontar e ausência de consulta sem permissão.",
+      "Os controles de polling e autorização do hook são concretos. O cenário de erro só aguarda fim do loading; não verifica mensagem de erro do dashboard nem ações de bloqueio/desbloqueio. blockedRequests=1 é a contagem de linhas da fixture, não prova do volume de requisições bloqueadas no servidor."
+    ]
+  },
+  {
+    "roster_index": 21,
+    "adjudication": [
+      "Importa os hooks e helpers reais de prefetch. Além da API exposta, cobre cache, deduplicação, erro, líder/seguidor desmontados, rejeição compartilhada, cancelamento de rota no fallback, idle callback, interrupção de escrita ao desmontar e IntersectionObserver antes/depois da desmontagem.",
+      "Os controles positivos e negativos são preservados: existe observação de dados e chamadas reais do módulo sob fetchers simulados. ImagePrefetch só tem verificações de funções expostas; nenhum cenário demonstra download HTTP de imagens ou benefício de desempenho em navegação real."
+    ]
+  },
+  {
+    "roster_index": 22,
+    "adjudication": [
+      "O único import é Vitest. calculateStatus, formatTimeRemaining e deriveWorstStatus são definidos dentro do próprio teste e todas as assertivas exercitam essas cópias, incluindo fronteiras de warning/deadline, conclusão e formatação.",
+      "As expectativas documentam intenção, mas uma alteração divergente no hook de produção não é observada por esse arquivo. É outro locus da família de testes sem vínculo com o código produtivo, relacionado a TC-011; não equivale a defeito adicional no cálculo de SLA."
+    ]
+  },
+  {
+    "roster_index": 23,
+    "adjudication": [
+      "Monta useSLAHistory real com React Query e verifica loading, períodos, estrutura de dias/trends, vazio e duas violações de primeira resposta, preservando a regra comentada de ignorar resolução. O caso de erro retornado exige data=null.",
+      "Os testes de 30/90 dias apenas aguardam loading; não conferem datas enviadas ou conteúdo dos buckets. A estrutura e a regra de primeira resposta têm controles positivos, mas fuso horário, navegação do dashboard e ordenação assíncrona não são demonstrados por este arquivo."
+    ]
+  }
+]

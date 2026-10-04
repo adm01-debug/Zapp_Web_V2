@@ -1,0 +1,9 @@
+{
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "sources": {
+    "scripts/edge-deploy/stable-inventory.mjs": "8e4a354414e096a64ef0ebfd45deae6182f40131c1967dda7893bbad3606968d",
+    "scripts/edge-deploy/manifest-lib.mjs": "713598c1aad1e33019a8dd08dc79857e09d7f68ec8dddecedc7b05dbb36d94a1",
+    "supabase/deployment-manifest.json": "7e1d1b4e47db1c4e598171ca9f3b60769c8f1d555ca8609071191c5b86409c93",
+    ".github/workflows/deploy-functions.yml": "e863384f47250579a99fe17e880a533b0811ed2683497680f1ecde1b01e36686"
+  }
+}

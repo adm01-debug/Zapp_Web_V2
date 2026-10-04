@@ -1,0 +1,298 @@
+[
+  {
+    "path": "package.json",
+    "line_start": 1,
+    "line_end": 139,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/package.json#L1-L139",
+    "excerpt": "1: {\n2:   \"name\": \"zapp-web-v2\",\n3:   \"private\": true,\n4:   \"version\": \"0.2.0\",\n5:   \"type\": \"module\",\n6:   \"overrides\": {\n7:     \"postcss\": \"^8.5.28\",\n8:     \"ws\": \"^8.21.3\",\n9:     \"postcss-selector-parser\": \"^6.1.4\"\n10:   },\n11:   \"scripts\": {\n12:     \"dev\": \"vite\",\n13:     \"build\": \"vite build\",\n14:     \"build:dev\": \"vite build --mode development\",\n15:     \"lint\": \"eslint .\",\n16:     \"lint:fix\": \"eslint . --fix\",\n17:     \"test\": \"vitest run\",\n18:     \"test:watch\": \"vitest\",\n19:     \"test:coverage\": \"vitest run --coverage\",\n20:     \"test:e2e\": \"playwright test\",\n21:     \"test:e2e:report\": \"playwright show-report\",\n22:     \"typecheck\": \"tsc -b --force\",\n23:     \"db:guard\": \"node scripts/db-audit/supabase-usage-guard.mjs && node scripts/db-audit/check-migration-drift.mjs\",\n24:     \"implicit-any-check\": \"node scripts/ci/implicit-any-ratchet.mjs\",\n25:     \"preview\": \"vite preview\",\n26:     \"test:contracts\": \"vitest run --config vitest.contracts.config.ts\",\n27:     \"mutation:mapa\": \"node scripts/mutation/run-mapa.mjs\",\n28:     \"graph:setup\": \"bash scripts/graphify/setup.sh\",\n29:     \"graph:update\": \"graphify update .\",\n30:     \"prepare\": \"husky || true\"\n31:   },\n32:   \"dependencies\": {\n33:     \"@axe-core/react\": \"^4.13.0\",\n34:     \"@elevenlabs/react\": \"^1.15.2\",\n35:     \"@hello-pangea/dnd\": \"^18.0.1\",\n36:     \"@hookform/resolvers\": \"^3.10.0\",\n37:     \"@paper-design/shaders\": \"0.0.81\",\n38:     \"@radix-ui/react-accordion\": \"^1.2.20\",\n39:     \"@radix-ui/react-alert-dialog\": \"^1.1.23\",\n40:     \"@radix-ui/react-aspect-ratio\": \"^1.1.15\",\n41:     \"@radix-ui/react-avatar\": \"^1.2.6\",\n42:     \"@radix-ui/react-checkbox\": \"^1.3.11\",\n43:     \"@radix-ui/react-collapsible\": \"^1.1.20\",\n44:     \"@radix-ui/react-context-menu\": \"^2.3.7\",\n45:     \"@radix-ui/react-dialog\": \"^1.1.23\",\n46:     \"@radix-ui/react-dropdown-menu\": \"^2.1.24\",\n47:     \"@radix-ui/react-hover-card\": \"^1.1.23\",\n48:     \"@radix-ui/react-label\": \"^2.1.15\",\n49:     \"@radix-ui/react-menubar\": \"^1.1.24\",\n50:     \"@radix-ui/react-navigation-menu\": \"^1.2.22\",\n51:     \"@radix-ui/react-popover\": \"^1.1.23\",\n52:     \"@radix-ui/react-progress\": \"^1.1.16\",\n53:     \"@radix-ui/react-radio-group\": \"^1.4.7\",\n54:     \"@radix-ui/react-scroll-area\": \"^1.2.18\",\n55:     \"@radix-ui/react-select\": \"^2.3.7\",\n56:     \"@radix-ui/react-separator\": \"^1.1.15\",\n57:     \"@radix-ui/react-slider\": \"^1.4.7\",\n58:     \"@radix-ui/react-slot\": \"^1.3.3\",\n59:     \"@radix-ui/react-switch\": \"^1.3.7\",\n60:     \"@radix-ui/react-tabs\": \"^1.1.21\",\n61:     \"@radix-ui/react-toast\": \"^1.2.23\",\n62:     \"@radix-ui/react-toggle\": \"^1.1.18\",\n63:     \"@radix-ui/react-toggle-group\": \"^1.1.19\",\n64:     \"@radix-ui/react-tooltip\": \"^1.2.16\",\n65:     \"@radix-ui/react-visually-hidden\": \"^1.2.11\",\n66:     \"@supabase/supabase-js\": \"^2.117.2\",\n67:     \"@tanstack/react-query\": \"^5.103.2\",\n68:     \"@tanstack/react-virtual\": \"^3.14.11\",\n69:     \"@tiptap/extension-link\": \"^3.19.0\",\n70:     \"@tiptap/react\": \"^3.19.0\",\n71:     \"@tiptap/starter-kit\": \"^3.19.0\",\n72:     \"@vercel/speed-insights\": \"^2.0.0\",\n73:     \"class-variance-authority\": \"^0.7.1\",\n74:     \"clsx\": \"^2.1.1\",\n75:     \"cmdk\": \"^1.1.1\",\n76:     \"date-fns\": \"^3.6.0\",\n77:     \"dompurify\": \"^3.4.16\",\n78:     \"embla-carousel-react\": \"^8.6.0\",\n79:     \"framer-motion\": \"^12.43.0\",\n80:     \"i18next\": \"^26.4.2\",\n81:     \"input-otp\": \"^1.5.0\",\n82:     \"jspdf\": \"^4.2.1\",\n83:     \"jspdf-autotable\": \"^5.0.8\",\n84:     \"lucide-react\": \"^0.577.0\",\n85:     \"mapbox-gl\": \"^3.31.0\",\n86:     \"next-themes\": \"^0.4.6\",\n87:     \"react\": \"^19.3.0\",\n88:     \"react-day-picker\": \"^8.10.2\",\n89:     \"react-dom\": \"^19.3.0\",\n90:     \"react-hook-form\": \"^7.88.0\",\n91:     \"react-i18next\": \"^17.0.15\",\n92:     \"react-resizable-panels\": \"^2.1.9\",\n93:     \"react-router-dom\": \"^7\",\n94:     \"recharts\": \"^3.10.1\",\n95:     \"sip.js\": \"0.21.2\",\n96:     \"sonner\": \"^2.0.8\",\n97:     \"tailwind-merge\": \"^3.7.0\",\n98:     \"tailwindcss-animate\": \"^1.0.7\",\n99:     \"vaul\": \"^1.1.2\",\n100:     \"zod\": \"^4.6.5\"\n101:   },\n102:   \"devDependencies\": {\n103:     \"@eslint/js\": \"^9.39.5\",\n104:     \"@playwright/test\": \"^1.56.1\",\n105:     \"@tailwindcss/typography\": \"^0.5.20\",\n106:     \"@testing-library/dom\": \"^10.4.2\",\n107:     \"@testing-library/jest-dom\": \"^6.9.1\",\n108:     \"@testing-library/react\": \"^16.3.3\",\n109:     \"@types/dompurify\": \"^3.2.0\",\n110:     \"@types/node\": \"^25.9.8\",\n111:     \"@types/react\": \"^19.3.0\",\n112:     \"@types/react-dom\": \"^19.3.0\",\n113:     \"@vitejs/plugin-react\": \"^6\",\n114:     \"@vitejs/plugin-react-swc\": \"^3.11.0\",\n115:     \"@vitest/coverage-v8\": \"4.1.11\",\n116:     \"autoprefixer\": \"^10.6.1\",\n117:     \"eslint\": \"^9.32.0\",\n118:     \"eslint-plugin-react-hooks\": \"^7.1.1\",\n119:     \"eslint-plugin-react-refresh\": \"^0.5.6\",\n120:     \"globals\": \"^17.12.0\",\n121:     \"husky\": \"^9.1.7\",\n122:     \"jsdom\": \"^29.1.1\",\n123:     \"postcss\": \"^8.5.28\",\n124:     \"prettier\": \"^3.9.9\",\n125:     \"prettier-plugin-tailwindcss\": \"^0.8.1\",\n126:     \"tailwindcss\": \"^3.4.19\",\n127:     \"tsx\": \"^4.23.15\",\n128:     \"typescript\": \"^5.9.3\",\n129:     \"typescript-eslint\": \"^8.70.1\",\n130:     \"vite\": \"^8.3.1\",\n131:     \"vitest\": \"^4.1.11\",\n132:     \"vitest-axe\": \"0.1.0\",\n133:     \"zod3\": \"npm:zod@3.23.8\"\n134:   },\n135:   \"engines\": {\n136:     \"node\": \">=24\",\n137:     \"bun\": \">=1.3\"\n138:   }\n139: }"
+  },
+  {
+    "path": "src/lib/speed-insights.ts",
+    "line_start": 1,
+    "line_end": 37,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/speed-insights.ts#L1-L37",
+    "excerpt": "1: /**\n2:  * Envio dos Web Vitals ao Speed Insights da Vercel — E36.\n3:  *\n4:  * Módulo separado de propósito: fica FORA do bundle inicial (é importado\n5:  * dinamicamente pelo `main.tsx`). Manter isto inline em `web-vitals.ts` custava\n6:  * +0,8 KB no entry, e a folga do orçamento era de apenas 3,2 KB.\n7:  *\n8:  * Por que existe: o Speed Insights estava habilitado no painel mas **sem nada\n9:  * instrumentando** — `vercel metrics vercel.speed_insights.*` respondeu zero\n10:  * datapoints em 90 dias, em todos os projetos do time.\n11:  */\n12: \n13: import { getLogger } from '@/lib/logger';\n14: \n15: const log = getLogger('SpeedInsights');\n16: \n17: let _initialized = false;\n18: \n19: /**\n20:  * Injeta o coletor do Speed Insights em tempo ocioso. Chamado a partir de um\n21:  * import dinâmico; falha em silêncio (é telemetria, não requisito da tela).\n22:  */\n23: export function initSpeedInsights() {\n24:   if (typeof window === 'undefined') return;\n25:   if (_initialized) return;\n26:   _initialized = true;\n27: \n28:   const idle =\n29:     window.requestIdleCallback?.bind(window) ??\n30:     ((cb: IdleRequestCallback) => setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 0 } as IdleDeadline), 1));\n31: \n32:   idle(() => {\n33:     void import('@vercel/speed-insights')\n34:       .then((m) => m.injectSpeedInsights())\n35:       .catch((err) => log.debug('[speed-insights] indisponível', err));\n36:   });\n37: }"
+  },
+  {
+    "path": ".husky/pre-commit",
+    "line_start": 1,
+    "line_end": 5,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.husky/pre-commit#L1-L5",
+    "excerpt": "1: #!/bin/sh\n2: # Ratchet de lint (baseline em scripts/ci/eslint-baseline.json): falha so com divida NOVA.\n3: # Aqui roda so nos arquivos do commit (segundos). O ratchet do repositorio inteiro continua no\n4: # pre-push e no job \"Lint & TypeCheck\" do CI; rodar tudo a cada commit levava 10-17 min sob carga.\n5: node scripts/ci/lint-ratchet.mjs --staged"
+  },
+  {
+    "path": ".husky/pre-push",
+    "line_start": 1,
+    "line_end": 10,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.husky/pre-push#L1-L10",
+    "excerpt": "1: #!/bin/sh\n2: # Mesmos gates do job \"Lint & TypeCheck\" do CI, antes de sair da maquina.\n3: set -e\n4: node scripts/ci/typecheck-ratchet.mjs\n5: node scripts/ci/lint-ratchet.mjs\n6: # E50 (auditoria de GitHub Actions, 2026-09-26): pega localmente o mesmo que\n7: # \"Contrato DB offline\" (db-guard.yml) pegaria remotamente — versao duplicada,\n8: # nome invalido, SQL malformado — sem esperar o CI. Sem DESTINO_URL: nao\n9: # consulta o banco, so valida o que esta em supabase/migrations/.\n10: node scripts/db-audit/check-migration-drift.mjs"
+  },
+  {
+    "path": ".github/CODEOWNERS",
+    "line_start": 11,
+    "line_end": 49,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/CODEOWNERS#L11-L49",
+    "excerpt": "11: # Todas as mudanças requerem aprovação do admin\n12: * @adm01-debug\n13: \n14: # ===================\n15: # ÁREAS CRÍTICAS\n16: # ===================\n17: \n18: # Supabase (Database, Edge Functions, Migrations)\n19: /supabase/ @adm01-debug\n20: \n21: # Segurança\n22: /src/components/security/ @adm01-debug\n23: /src/hooks/useSecurity* @adm01-debug\n24: /supabase/functions/webauthn/ @adm01-debug\n25: \n26: # Configuração e Build\n27: /*.json @adm01-debug\n28: /*.ts @adm01-debug\n29: /.github/ @adm01-debug\n30: \n31: # ===================\n32: # COMPONENTES\n33: # ===================\n34: \n35: # Inbox e Chat (core do sistema)\n36: /src/components/inbox/ @adm01-debug\n37: /src/components/chat/ @adm01-debug\n38: \n39: # Dashboard e Relatórios\n40: /src/components/dashboard/ @adm01-debug\n41: /src/components/reports/ @adm01-debug\n42: \n43: # ===================\n44: # DOCUMENTAÇÃO\n45: # ===================\n46: /docs/ @adm01-debug\n47: /README.md @adm01-debug\n48: /CONTRIBUTING.md @adm01-debug\n49: /SECURITY.md @adm01-debug"
+  },
+  {
+    "path": "src/config/service_worker.ts",
+    "line_start": 1,
+    "line_end": 8,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/config/service_worker.ts#L1-L8",
+    "excerpt": "1: /**\n2:  * Single source of truth for capabilities that require an active Service Worker.\n3:  *\n4:  * Keep these disabled while VitePWA is intentionally absent from vite.config.ts\n5:  * and useServiceWorker removes legacy registrations.\n6:  */\n7: export const SERVICE_WORKER_ENABLED = false;\n8: export const PUSH_NOTIFICATIONS_ENABLED = SERVICE_WORKER_ENABLED;"
+  },
+  {
+    "path": "src/lib/web-vitals.ts",
+    "line_start": 23,
+    "line_end": 24,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/web-vitals.ts#L23-L24",
+    "excerpt": "23: type VitalName = 'LCP' | 'FID' | 'CLS' | 'INP' | 'TTFB';\n24: "
+  },
+  {
+    "path": "src/lib/web-vitals.ts",
+    "line_start": 50,
+    "line_end": 64,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/web-vitals.ts#L50-L64",
+    "excerpt": "50: // One slot per metric name — at most 5 entries, no unbounded growth.\n51: const metricsBuffer = new Map<string, WebVitalMetric>();\n52: \n53: let _initialized = false;\n54: \n55: function onMetric(metric: WebVitalMetric) {\n56:   metricsBuffer.set(metric.name, metric);\n57:   const emoji = metric.rating === 'good' ? '🟢' : metric.rating === 'needs-improvement' ? '🟡' : '🔴';\n58:   // CLS is dimensionless (0–1), not milliseconds.\n59:   const unit = metric.name === 'CLS' ? '' : 'ms';\n60:   const alvo = targets[metric.name as VitalName];\n61:   const contraAlvo = alvo ? ` (alvo ${alvo.target}${alvo.unit === 'score' ? '' : alvo.unit})` : '';\n62:   log.info(\n63:     `${emoji} ${metric.name}: ${metric.value.toFixed(metric.name === 'CLS' ? 3 : 0)}${unit}${contraAlvo} — ${metric.rating}`,\n64:   );"
+  },
+  {
+    "path": "src/lib/web-vitals.ts",
+    "line_start": 92,
+    "line_end": 107,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/web-vitals.ts#L92-L107",
+    "excerpt": "92:   // FID - First Input Delay\n93:   try {\n94:     if (PerformanceObserver.supportedEntryTypes.includes('first-input')) {\n95:       const fidObserver = new PerformanceObserver((list) => {\n96:         for (const entry of list.getEntries()) {\n97:           const fid = (entry as PerformanceEventTiming).processingStart - entry.startTime;\n98:           onMetric({\n99:             name: 'FID',\n100:             value: fid,\n101:             rating: getRating('FID', fid),\n102:             delta: fid,\n103:             id: `fid-${Date.now()}`,\n104:           });\n105:         }\n106:       });\n107:       fidObserver.observe({ type: 'first-input', buffered: true });"
+  },
+  {
+    "path": "src/lib/web-vitals.ts",
+    "line_start": 185,
+    "line_end": 187,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/web-vitals.ts#L185-L187",
+    "excerpt": "185: export function getWebVitalsReport(): WebVitalMetric[] {\n186:   return [...metricsBuffer.values()];\n187: }"
+  },
+  {
+    "path": "src/lib/errorReporter.ts",
+    "line_start": 1,
+    "line_end": 15,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/errorReporter.ts#L1-L15",
+    "excerpt": "1: // Error reporting de produção sem serviço externo: erros de runtime viram\n2: // linhas em audit_logs (action 'client_error') via a RPC log_audit_event já\n3: // existente — INSERT direto é bloqueado por RLS, leitura é admin-only, e o\n4: // logAudit é silent-fail por design (reportar erro nunca pode gerar erro).\n5: // Anônimo (tela de Auth) não reporta: a RPC exige auth.uid().\n6: import { logAudit } from '@/lib/audit';\n7: import { getSessionId } from '@/lib/logger';\n8: \n9: // Global injetado pelo define do Vite; ausente em jsdom/vitest — o typeof\n10: // guard evita ReferenceError em qualquer teste que importe os boundaries.\n11: declare const __ZAPP_BUILD_ID__: string | undefined;\n12: const BUILD_ID = typeof __ZAPP_BUILD_ID__ === 'string' ? __ZAPP_BUILD_ID__ : 'unknown';\n13: \n14: const MAX_REPORTS_PER_SESSION = 10;\n15: const MIN_INTERVAL_MS = 5_000;"
+  },
+  {
+    "path": "src/lib/errorReporter.ts",
+    "line_start": 50,
+    "line_end": 82,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/errorReporter.ts#L50-L82",
+    "excerpt": "50: export function reportClientError(\n51:   error: unknown,\n52:   context: Record<string, unknown> = {},\n53:   opts?: ReportOptions\n54: ): void {\n55:   if (import.meta.env.DEV && !opts?.force) return;\n56:   let errMsg: string;\n57:   if (error instanceof Error) {\n58:     errMsg = error.message || 'unknown';\n59:   } else if (typeof error === 'string') {\n60:     errMsg = error || 'unknown';\n61:   } else if (error !== null && error !== undefined && typeof (error as Record<string, unknown>)['message'] === 'string') {\n62:     errMsg = (error as Record<string, unknown>)['message'] as string;\n63:   } else {\n64:     try { errMsg = JSON.stringify(error) ?? 'unknown'; } catch { errMsg = 'unknown'; }\n65:   }\n66:   const stack = error instanceof Error ? (error.stack ?? '') : '';\n67:   const err = { message: errMsg, stack };\n68:   const message = errMsg;\n69:   const source = typeof context.source === 'string' ? context.source : undefined;\n70:   if (!shouldReport(message, source)) return;\n71:   void logAudit({\n72:     action: 'client_error',\n73:     details: {\n74:       ...context,                                      // campos extras primeiro\n75:       message: errMsg.slice(0, MAX_FIELD_LEN),         // campos canônicos sobrescrevem\n76:       stack: stack.slice(0, MAX_FIELD_LEN),\n77:       path: window.location.pathname,\n78:       buildId: BUILD_ID.slice(0, 12),\n79:       sessionId: getSessionId(),\n80:     },\n81:   });\n82: }"
+  },
+  {
+    "path": "src/components/integrations/SentryIntegrationView.tsx",
+    "line_start": 30,
+    "line_end": 56,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/integrations/SentryIntegrationView.tsx#L30-L56",
+    "excerpt": "30: const mockErrors: MockError[] = [\n31:   { id: '1', title: 'TypeError: Cannot read properties of undefined', level: 'error', count: 23, lastSeen: '2 min atrás', isResolved: false },\n32:   { id: '2', title: 'NetworkError: Failed to fetch', level: 'error', count: 8, lastSeen: '15 min atrás', isResolved: false },\n33:   { id: '3', title: 'Warning: Each child should have a unique key', level: 'warning', count: 45, lastSeen: '1h atrás', isResolved: false },\n34:   { id: '4', title: 'RangeError: Maximum call stack exceeded', level: 'error', count: 2, lastSeen: '3h atrás', isResolved: true },\n35: ];\n36: \n37: export function SentryIntegrationView() {\n38:   const [isConnected, setIsConnected] = useState(false);\n39:   const [config, setConfig] = useState<SentryConfig>({\n40:     dsn: '',\n41:     environment: 'production',\n42:     tracesSampleRate: 0.1,\n43:     replaysSampleRate: 0.1,\n44:     enablePerformance: true,\n45:     enableReplays: false,\n46:   });\n47:   const [errors, setErrors] = useState<MockError[]>(mockErrors);\n48: \n49:   const handleConnect = () => {\n50:     if (!config.dsn.trim()) {\n51:       toast.error('Informe o DSN do Sentry');\n52:       return;\n53:     }\n54:     setIsConnected(true);\n55:     toast.success('Sentry conectado com sucesso!');\n56:   };"
+  },
+  {
+    "path": "supabase/functions/gmail-webhook/index.ts",
+    "line_start": 106,
+    "line_end": 145,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/gmail-webhook/index.ts#L106-L145",
+    "excerpt": "106: serve(async (req) => {\n107:   if (req.method === \"OPTIONS\") {\n108:     return new Response(null, { headers: getCorsHeaders(req) });\n109:   }\n110: \n111:   const log = new Logger(\"gmail-webhook\");\n112: \n113:   try {\n114:     const SUPABASE_URL = requireEnv(\"SUPABASE_URL\");\n115:     const SUPABASE_SERVICE_ROLE_KEY = requireEnv(\"SUPABASE_SERVICE_ROLE_KEY\");\n116:     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);\n117: \n118:     // [WEBHOOK_AUTH_SHADOW] Modo sombra: apenas loga presenca/aud/iss do token\n119:     // OIDC do Google Pub/Sub — NUNCA bloqueia. Verificacao completa (assinatura\n120:     // contra JWKS do Google, audience/issuer) fica para iteracao futura.\n121:     logGmailOidcAuthShadow(req.headers);\n122: \n123:     const rawBody = await req.json();\n124:     const parsed = PubSubSchema.safeParse(rawBody);\n125:     if (!parsed.success) {\n126:       log.warn(\"Invalid PubSub payload\", { errors: parsed.error.message });\n127:       return jsonResponse({ acknowledged: true, error: \"Invalid payload\" }, 200, req);\n128:     }\n129: \n130:     const decodedData = JSON.parse(atob(parsed.data.message.data));\n131:     const { emailAddress, historyId: newHistoryId } = decodedData;\n132: \n133:     log.info(\"Notification received\", { email: emailAddress, historyId: newHistoryId });\n134: \n135:     // Find the gmail account (without token columns)\n136:     const { data: account, error: accountError } = await supabase\n137:       .from(\"gmail_accounts\")\n138:       .select(\"id, email_address, is_active, token_expires_at, history_id, user_id\")\n139:       .eq(\"email_address\", emailAddress)\n140:       .eq(\"is_active\", true)\n141:       .single();\n142: \n143:     if (accountError || !account) {\n144:       log.info(\"No active Gmail account found\", { email: emailAddress });\n145:       return jsonResponse({ acknowledged: true }, 200, req);"
+  },
+  {
+    "path": "supabase/functions/gmail-cron-sync/index.ts",
+    "line_start": 7,
+    "line_end": 24,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/gmail-cron-sync/index.ts#L7-L24",
+    "excerpt": "7: Deno.serve(async (req) => {\n8:   const corsResponse = handleCors(req);\n9:   if (corsResponse) return corsResponse;\n10:   const corsHeaders = getCorsHeaders(req);\n11:   const secret = req.headers.get(\"x-cron-secret\");\n12:   const expected = Deno.env.get(\"CRON_SECRET\");\n13:   if (!expected) {\n14:     return new Response(\"Forbidden\", { status: 403, headers: corsHeaders });\n15:   }\n16:   const enc = new TextEncoder();\n17:   const a = enc.encode(secret ?? \"\");\n18:   const b = enc.encode(expected);\n19:   let diff = a.length ^ b.length;\n20:   const len = Math.max(a.length, b.length);\n21:   for (let i = 0; i < len; i++) diff |= (a[i] ?? 0) ^ (b[i] ?? 0);\n22:   if (diff !== 0) {\n23:     return new Response(\"Forbidden\", { status: 403, headers: corsHeaders });\n24:   }"
+  },
+  {
+    "path": "supabase/functions/public-api/index.ts",
+    "line_start": 1,
+    "line_end": 12,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/public-api/index.ts#L1-L12",
+    "excerpt": "1: import { errorResponse, handleCors } from '../_shared/validation.ts';\n2: \n3: export function handlePublicApiRequest(req: Request): Response {\n4:   const cors = handleCors(req);\n5:   if (cors) return cors;\n6: \n7:   return errorResponse('Public API is disabled', 410, req);\n8: }\n9: \n10: if (import.meta.main) {\n11:   Deno.serve(handlePublicApiRequest);\n12: }"
+  },
+  {
+    "path": "supabase/config.toml",
+    "line_start": 8,
+    "line_end": 18,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/config.toml#L8-L18",
+    "excerpt": "8: [functions.evolution-webhook]\n9: verify_jwt = false\n10: \n11: [functions.whatsapp-webhook]\n12: verify_jwt = false\n13: \n14: [functions.gmail-webhook]\n15: verify_jwt = false\n16: \n17: [functions.gmail-cron-sync]\n18: verify_jwt = false"
+  },
+  {
+    "path": "supabase/config.toml",
+    "line_start": 29,
+    "line_end": 40,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/config.toml#L29-L40",
+    "excerpt": "29: [functions.elevenlabs-webhook]\n30: verify_jwt = false\n31: \n32: # Kill switch: endpoint legado preservado somente para responder 410 sem tocar\n33: # em banco, Evolution ou credenciais. Nao reativar sem ADR, credenciais hashadas,\n34: # escopo por tenant e rate limit distribuido.\n35: [functions.public-api]\n36: verify_jwt = false\n37: \n38: # Login server-side (ADR-006): decide lockout antes/depois do GoTrue; nao existe sessao ainda.\n39: [functions.auth-login]\n40: verify_jwt = false"
+  },
+  {
+    "path": "supabase/functions/evolution-webhook/index.ts",
+    "line_start": 30,
+    "line_end": 48,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/evolution-webhook/index.ts#L30-L48",
+    "excerpt": "30: //   - Requests SEM header de assinatura: aceitos (backwards-compatible).\n31: //   - Requests COM header de assinatura INVÁLIDA: rejeitados com 401.\n32: //\n33: // A Evolution GO NÃO assina webhooks nem aceita headers customizados\n34: // (webhook_producer.go envia só Content-Type; ConnectStruct não tem campo de\n35: // secret/headers) — strictMode=true rejeitaria 100% do tráfego GO e NÃO deve\n36: // ser ligado enquanto ela for a emissora. O fechamento real do endpoint é o\n37: // gate por instanceToken abaixo.\n38: //\n39: // EVOLUTION_WEBHOOK_SECRET é o nome usado em todo o resto do projeto (docs,\n40: // _shared/hmac-validation.ts em modo sombra, auditoria) — WEBHOOK_SECRET é\n41: // mantido como fallback só por compatibilidade com o nome genérico do exemplo\n42: // em hmac-validation.ts, para não silenciar a validação se só um dos dois\n43: // estiver configurado no Supabase Dashboard → Edge Functions → Secrets.\n44: // `||` (não `??`): uma env var configurada como string vazia precisa cair\n45: // pro fallback também, senão o guard `!webhookSecret` abaixo trataria ''\n46: // como \"secret configurado\" e nunca rejeitaria assinatura inválida.\n47: const webhookSecret = Deno.env.get('EVOLUTION_WEBHOOK_SECRET') || Deno.env.get('WEBHOOK_SECRET') || '';\n48: const hmacSecurity = new WebhookSecurityService(webhookSecret, /* strictMode */ false);"
+  },
+  {
+    "path": "supabase/functions/evolution-webhook/index.ts",
+    "line_start": 130,
+    "line_end": 149,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/evolution-webhook/index.ts#L130-L149",
+    "excerpt": "130:     // Sem assinatura HMAC válida (a GO nunca envia uma), o gate é o\n131:     // instanceToken do corpo. Em 'shadow' apenas observa via logs.\n132:     if (!validation.signatureValid) {\n133:       const bodyRec = rawBody as Record<string, unknown>;\n134:       if (!goTokenMatches(bodyRec)) {\n135:         // C11: v2-shaped payloads (with 'instance' field, no 'instanceName') also\n136:         // reach this branch because isGoPayload() returns false — but the token check\n137:         // runs here on the raw body regardless of shape. In shadow mode all payloads\n138:         // are accepted; in token mode both GO and v2-shaped payloads are rejected.\n139:         const payloadShape = typeof (bodyRec as Record<string, unknown>).instanceName === 'string' ? 'go' : 'v2';\n140:         console.warn(`[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken ${bodyRec.instanceToken === undefined ? 'ausente' : 'divergente'} (enforce=${enforceMode}, tokenConfigurado=${instanceToken !== ''}, shape=${payloadShape})`);\n141:         if (enforceMode === 'token') {\n142:           return new Response(JSON.stringify({ error: 'Unauthorized' }), {\n143:             status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },\n144:           });\n145:         }\n146:       } else if (!tokenOkLogged) {\n147:         tokenOkLogged = true;\n148:         console.warn('[WEBHOOK_AUTH_SHADOW] evolution-webhook: instanceToken valido (1o match desta instancia)');\n149:       }"
+  },
+  {
+    "path": "supabase/functions/_shared/validation.ts",
+    "line_start": 187,
+    "line_end": 219,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/validation.ts#L187-L219",
+    "excerpt": "187: /** In-memory rate limiter (per-isolate, resets on cold start) with auto-cleanup */\n188: const rateLimitMap = new Map<string, { count: number; resetAt: number }>();\n189: let lastCleanup = Date.now();\n190: \n191: function cleanupRateLimitMap() {\n192:   const now = Date.now();\n193:   if (now - lastCleanup < 60_000) return;\n194:   lastCleanup = now;\n195:   for (const [key, entry] of rateLimitMap) {\n196:     if (now > entry.resetAt) rateLimitMap.delete(key);\n197:   }\n198: }\n199: \n200: export function checkRateLimit(\n201:   key: string,\n202:   maxRequests = 30,\n203:   windowMs = 60_000\n204: ): { allowed: boolean; remaining: number } {\n205:   cleanupRateLimitMap();\n206:   const now = Date.now();\n207:   const entry = rateLimitMap.get(key);\n208: \n209:   if (!entry || now > entry.resetAt) {\n210:     rateLimitMap.set(key, { count: 1, resetAt: now + windowMs });\n211:     return { allowed: true, remaining: maxRequests - 1 };\n212:   }\n213: \n214:   entry.count++;\n215:   const remaining = Math.max(0, maxRequests - entry.count);\n216:   return { allowed: entry.count <= maxRequests, remaining };\n217: }\n218: \n219: interface RateLimitRpcClient {"
+  },
+  {
+    "path": "supabase/functions/_shared/validation.ts",
+    "line_start": 240,
+    "line_end": 264,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/validation.ts#L240-L264",
+    "excerpt": "240: export async function enforceRateLimit(\n241:   key: string,\n242:   maxRequests = 30,\n243:   windowMs = 60_000\n244: ): Promise<{ allowed: boolean; remaining: number; persistent: boolean }> {\n245:   const local = checkRateLimit(key, maxRequests, windowMs);\n246:   if (!local.allowed) return { ...local, persistent: false };\n247:   try {\n248:     const client = await getServiceClient();\n249:     const { data, error } = await client.rpc(\"consume_rate_limit\", {\n250:       p_key: key,\n251:       p_max: maxRequests,\n252:       p_window_seconds: Math.max(1, Math.ceil(windowMs / 1000)),\n253:     });\n254:     if (error) throw error;\n255:     const row = (Array.isArray(data) ? data[0] : data) as { allowed?: unknown; remaining?: unknown } | null;\n256:     if (!row || typeof row.allowed !== \"boolean\") return { ...local, persistent: false };\n257:     return {\n258:       allowed: row.allowed,\n259:       remaining: typeof row.remaining === \"number\" ? row.remaining : 0,\n260:       persistent: true,\n261:     };\n262:   } catch (err) {\n263:     console.warn(\"[rate-limit] limiter persistente indisponivel; usando contador local:\", String(err));\n264:     return { ...local, persistent: false };"
+  },
+  {
+    "path": "src/services/chat.service.ts",
+    "line_start": 57,
+    "line_end": 75,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/services/chat.service.ts#L57-L75",
+    "excerpt": "57:    */\n58:   static async fetchMessagesBefore(\n59:     contactId: string,\n60:     before: { createdAt: string; id: string },\n61:     pageSize = 1000,\n62:   ) {\n63:     const result = await supabase\n64:       .from('messages')\n65:       .select('*')\n66:       .eq('contact_id', contactId)\n67:       .or(`created_at.lt.${before.createdAt},and(created_at.eq.${before.createdAt},id.lt.${before.id})`)\n68:       .order('created_at', { ascending: false })\n69:       .order('id', { ascending: false })\n70:       .limit(pageSize);\n71: \n72:     return {\n73:       ...result,\n74:       data: result.data ? [...result.data].reverse() : result.data,\n75:     };"
+  },
+  {
+    "path": "src/services/chat.service.ts",
+    "line_start": 78,
+    "line_end": 97,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/services/chat.service.ts#L78-L97",
+    "excerpt": "78:   static async sendMessage(payload: MessageInsert) {\n79:     if (payload.sender !== 'agent' || !payload.contact_id || !payload.content) {\n80:       throw new Error('ChatService.sendMessage aceita apenas mensagens de agente com contato e conteúdo.');\n81:     }\n82:     const messageType = payload.message_type as OutboundMessageType;\n83:     if (!['text', 'image', 'audio', 'video', 'document', 'sticker', 'location'].includes(messageType)) {\n84:       throw new Error(`Tipo de mensagem não suportado pelo envio seguro: ${payload.message_type}`);\n85:     }\n86:     const result = await sendOutboundMessage({\n87:       contactId: payload.contact_id,\n88:       content: payload.content,\n89:       messageType,\n90:       mediaUrl: payload.media_url,\n91:       replyToId: payload.reply_to_id,\n92:       whatsappConnectionId: payload.whatsapp_connection_id,\n93:     });\n94:     if (messageType === 'text' && payload.content.length > 0 && !payload.link_preview) {\n95:       void enrichLinkPreview(result.id, payload.content);\n96:     }\n97:     return result;"
+  },
+  {
+    "path": "src/hooks/system/useFeatureFlag.ts",
+    "line_start": 5,
+    "line_end": 32,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/system/useFeatureFlag.ts#L5-L32",
+    "excerpt": "5: export interface FeatureFlag {\n6:   key: string;\n7:   enabled: boolean;\n8:   description: string | null;\n9:   updated_at: string;\n10: }\n11: \n12: export const FEATURE_FLAGS_QUERY_KEY = ['feature-flags'] as const;\n13: \n14: // Uma unica query compartilhada por todos os consumidores (mesmo padrao de useUserRole):\n15: // N chamadas a useFeatureFlag() custam 1 fetch, revalidado a cada 5 min.\n16: export function useFeatureFlags() {\n17:   const { user } = useAuth();\n18:   return useQuery({\n19:     queryKey: FEATURE_FLAGS_QUERY_KEY,\n20:     queryFn: async (): Promise<FeatureFlag[]> => {\n21:       const { data, error } = await supabase\n22:         .from('feature_flags')\n23:         .select('key, enabled, description, updated_at')\n24:         .order('key');\n25:       if (error) throw error;\n26:       return (data ?? []) as FeatureFlag[];\n27:     },\n28:     enabled: !!user,\n29:     staleTime: 5 * 60 * 1000,\n30:     // Sessao longa recebe mudanca de flag sem reload.\n31:     refetchInterval: 5 * 60 * 1000,\n32:   });"
+  },
+  {
+    "path": "vitest.config.ts",
+    "line_start": 7,
+    "line_end": 37,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/vitest.config.ts#L7-L37",
+    "excerpt": "7:   test: {\n8:     environment: \"jsdom\",\n9:     globals: true,\n10:     setupFiles: [\"./src/test/setup.ts\"],\n11:     include: [\"src/**/*.{test,spec}.{ts,tsx}\"],\n12:     testTimeout: 15000,\n13:     coverage: {\n14:       provider: \"v8\",\n15:       reporter: [\"text-summary\", \"lcov\"],\n16:       reportsDirectory: \"coverage\",\n17:       include: [\n18:         \"src/lib/**/*.{ts,tsx}\",\n19:         \"src/services/**/*.{ts,tsx}\",\n20:         // E79: escopo do módulo do mapa passa a entrar na cobertura (antes ficava de fora).\n21:         \"src/components/inbox/location-picker/**/*.{ts,tsx}\",\n22:         \"src/components/contacts/ContactForm.tsx\",\n23:       ],\n24:       exclude: [\"**/*.{test,spec}.{ts,tsx}\", \"**/__tests__/**\", \"**/*.d.ts\"],\n25:       // Piso global medido em 2026-09-05 (src/lib + src/services): lines 37.7, stmts 36.1,\n26:       // funcs 44.9, branches 32.7. Ratchet: so sobe, nunca desce.\n27:       thresholds: {\n28:         lines: 36,\n29:         statements: 35,\n30:         functions: 43,\n31:         branches: 31,\n32:         // E79: piso do módulo do mapa (medido 2026-10-02, agregado do escopo abaixo):\n33:         // lines 91.97 / branches 79.13. Mesmo glob de coverage.include acima.\n34:         \"{src/lib/mapbox*.{ts,tsx},src/components/inbox/location-picker/**/*.{ts,tsx},src/components/contacts/ContactForm.tsx}\":\n35:           { lines: 85, branches: 75 },\n36:       },\n37:     },"
+  },
+  {
+    "path": "tsconfig.strict.json",
+    "line_start": 1,
+    "line_end": 7,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/tsconfig.strict.json#L1-L7",
+    "excerpt": "1: {\n2:   \"extends\": \"./tsconfig.app.json\",\n3:   \"compilerOptions\": {\n4:     \"strict\": true,\n5:     \"noImplicitAny\": true\n6:   }\n7: }"
+  },
+  {
+    "path": "vite.config.ts",
+    "line_start": 42,
+    "line_end": 49,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/vite.config.ts#L42-L49",
+    "excerpt": "42:     build: {\n43:       target: \"esnext\",\n44:       cssMinify: true,\n45:       chunkSizeWarningLimit: 1200,\n46:       // sourcemap: 'hidden' → source maps are generated but NOT linked in the\n47:       // output HTML/JS. This allows Sentry to process them without exposing\n48:       // the original source to end users. Use 'false' if Sentry is not set up.\n49:       sourcemap: isProd ? \"hidden\" : true,"
+  },
+  {
+    "path": "vercel.json",
+    "line_start": 18,
+    "line_end": 42,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/vercel.json#L18-L42",
+    "excerpt": "18:       \"source\": \"/(.*)\",\n19:       \"headers\": [\n20:         { \"key\": \"X-Content-Type-Options\", \"value\": \"nosniff\" },\n21:         { \"key\": \"X-Frame-Options\", \"value\": \"DENY\" },\n22:         { \"key\": \"Referrer-Policy\", \"value\": \"strict-origin-when-cross-origin\" },\n23:         {\n24:           \"key\": \"Permissions-Policy\",\n25:           \"value\": \"camera=(), microphone=(self), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), fullscreen=(self)\"\n26:         },\n27:         {\n28:           \"key\": \"Content-Security-Policy-Report-Only\",\n29:           \"value\": \"default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; connect-src 'self' https://tnnnlkbymytvtqngbbqh.supabase.co wss://tnnnlkbymytvtqngbbqh.supabase.co https://pgxfvjmuubtbowutlide.supabase.co https://api.mapbox.com https://events.mapbox.com https://api.pwnedpasswords.com https://vercel.live wss://vercel.live wss:; worker-src 'self' blob:; frame-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; report-uri https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/csp-report\"\n30:         }\n31:       ]\n32:     }\n33:   ],\n34:   \"rewrites\": [\n35:     {\n36:       \"source\": \"/l/:slug\",\n37:       \"destination\": \"https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/talkx-link?s=:slug\"\n38:     },\n39:     {\n40:       \"source\": \"/((?!assets/|version\\\\.json$).*)\",\n41:       \"destination\": \"/index.html\"\n42:     }"
+  },
+  {
+    "path": "scripts/ci/bundle-budget.mjs",
+    "line_start": 52,
+    "line_end": 101,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/bundle-budget.mjs#L52-L101",
+    "excerpt": "52: export function measure(distDir, html) {\n53:   const assets = extractInitialAssets(html);\n54:   const resolve = (href) => path.join(distDir, href.replace(/^\\//u, \"\"));\n55:   const size = (list) => list.map((href) => {\n56:     const file = resolve(href);\n57:     if (!existsSync(file)) throw new Error(`asset referenciado no index.html nao existe: ${href}`);\n58:     return { href, kb: gzipKB(readFileSync(file)) };\n59:   });\n60:   const js = size(assets.js);\n61:   const css = size(assets.css);\n62:   const sum = (items) => items.reduce((total, item) => total + item.kb, 0);\n63:   const allAssets = allAssetFiles(distDir).map(({ file, href }) => ({\n64:     href,\n65:     gzipKB: gzipKB(readFileSync(file)),\n66:   }));\n67:   // Diferentemente de initial-js, este limite tambem cobre chunks lazy. Eles\n68:   // afetam diretamente a latencia percebida na primeira navegacao daquela rota.\n69:   const largestChunkKB = allAssets\n70:     .filter(({ href }) => href.endsWith(\".js\"))\n71:     .reduce((largest, item) => Math.max(largest, item.gzipKB), 0);\n72:   const totalAssetsKB = allAssets.reduce((total, item) => total + item.gzipKB, 0);\n73:   return {\n74:     js,\n75:     css,\n76:     jsKB: sum(js),\n77:     cssKB: sum(css),\n78:     largestChunkKB,\n79:     totalAssetsKB,\n80:   };\n81: }\n82: \n83: export function evaluate(result, budgets) {\n84:   const failures = [];\n85:   const jsMax = budgets[\"initial-js\"]?.maxKB;\n86:   const cssMax = budgets[\"initial-css\"]?.maxKB;\n87:   if (typeof jsMax === \"number\" && result.jsKB > jsMax) {\n88:     failures.push(`initial-js: ${result.jsKB.toFixed(1)} KB gzip > budget ${jsMax} KB`);\n89:   }\n90:   if (typeof cssMax === \"number\" && result.cssKB > cssMax) {\n91:     failures.push(`initial-css: ${result.cssKB.toFixed(1)} KB gzip > budget ${cssMax} KB`);\n92:   }\n93:   const largestChunkMax = budgets[\"largest-chunk\"]?.maxKB;\n94:   if (typeof largestChunkMax === \"number\" && result.largestChunkKB > largestChunkMax) {\n95:     failures.push(`largest-chunk: ${result.largestChunkKB.toFixed(1)} KB gzip > budget ${largestChunkMax} KB`);\n96:   }\n97:   const totalAssetsMax = budgets[\"total-assets\"]?.maxKB;\n98:   if (typeof totalAssetsMax === \"number\" && result.totalAssetsKB > totalAssetsMax) {\n99:     failures.push(`total-assets: ${result.totalAssetsKB.toFixed(1)} KB gzip > budget ${totalAssetsMax} KB`);\n100:   }\n101:   return failures;"
+  },
+  {
+    "path": ".github/workflows/ci.yml",
+    "line_start": 167,
+    "line_end": 179,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/ci.yml#L167-L179",
+    "excerpt": "167:       # ratchet roda \"tsc -b --force\" de verdade e falha so se surgir erro novo.\n168:       - name: 🔎 Run TypeScript debt ratchet\n169:         run: node scripts/ci/typecheck-ratchet.mjs\n170: \n171:       - name: 🚫 Run implicit-any ratchet\n172:         run: node scripts/ci/implicit-any-ratchet.mjs\n173: \n174:       - name: 🔤 Run typography parity guard\n175:         run: node scripts/qa/medir-tipografia.cjs --check\n176: \n177:       - name: 🛡️ Run Supabase usage guard\n178:         run: node scripts/db-audit/supabase-usage-guard.mjs\n179: "
+  },
+  {
+    "path": ".github/workflows/ci.yml",
+    "line_start": 221,
+    "line_end": 242,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/ci.yml#L221-L242",
+    "excerpt": "221: \n222:       - name: 🧪 Run Vitest (cobertura com piso em src/lib + src/services)\n223:         run: bun run test:coverage\n224:         env:\n225:           CI: true\n226: \n227:       # Config dedicado (vitest.contracts.config.ts): reescreve o import Deno\n228:       # \"https://esm.sh/zod@3.23.8\" de schemas.ts para o alias npm \"zod3\"\n229:       # (zod@3.23.8, ja no bun.lock). O vitest.config.ts principal nao tem\n230:       # esse rewrite e quebra em 3 dos 6 arquivos (Node nao resolve URL https\n231:       # no loader ESM padrao) — por isso a suite roda num config separado.\n232:       - name: 🧪 Run Edge Function contract tests (tests/contracts)\n233:         run: bun run test:contracts\n234:         env:\n235:           CI: true\n236: \n237:       - name: 📊 Upload coverage report\n238:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1\n239:         if: always()\n240:         with:\n241:           name: coverage-report\n242:           path: coverage/"
+  },
+  {
+    "path": ".github/workflows/ci.yml",
+    "line_start": 275,
+    "line_end": 286,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/ci.yml#L275-L286",
+    "excerpt": "275:       # Artifact de dist/ so em PR — em push para main o deploy e feito pela\n276:       # Vercel, e o upload custava 41.6k GigabyteHours de storage em agosto.\n277:       - name: 📦 Upload build artifacts\n278:         if: github.event_name == 'pull_request'\n279:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1\n280:         with:\n281:           name: dist\n282:           path: dist/\n283:           retention-days: 3\n284: \n285:       - name: 📏 Enforce initial bundle budget (performance-budget.json)\n286:         run: node scripts/ci/bundle-budget.mjs"
+  },
+  {
+    "path": ".github/workflows/ci.yml",
+    "line_start": 323,
+    "line_end": 337,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/ci.yml#L323-L337",
+    "excerpt": "323:       # Um unico \"bun audit\": o relatorio completo (inclui devDependencies) sai sempre,\n324:       # e o gate bloqueante le o mesmo arquivo em vez de consultar o registry de novo.\n325:       - name: 🔎 Audit completo (informativo, inclui devDependencies)\n326:         run: bun audit --audit-level=low 2>&1 | tee audit-report.txt || true\n327: \n328:       - name: 🔒 Audit bloqueante (HIGH/CRITICAL em dependencias de producao)\n329:         run: node scripts/ci/audit-prod.mjs --level high --input audit-report.txt\n330: \n331:       - name: 🔍 Detect secrets introduced in commits\n332:         # v3 roda em Node 24. O action calcula o intervalo do evento e falha\n333:         # fechado para segredos novos, sem reabrir findings históricos já\n334:         # inventariados. Não recebe secrets privilegiados em pull_request.\n335:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0\n336:         env:\n337:           GITHUB_TOKEN: ${{ github.token }}"
+  },
+  {
+    "path": "docs/handoffs/cline_execution_log_2026_08_30.md",
+    "line_start": 58,
+    "line_end": 76,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/handoffs/cline_execution_log_2026_08_30.md#L58-L76",
+    "excerpt": "58: ## 4. Tabela de estados das 100 etapas\n59: \n60: | ID | Título | Estado | Evidência | Commit | Notas |\n61: |---|---|---|---|---|---|\n62: | 001 | Ler as regras e declarar entendimento | VERIFIED | log §5.1 + auditoria Codex | 1a47bb44 + correção Codex | Classes A–D reconciliadas com o handoff |\n63: | 002 | Sincronizar a base de trabalho sem destruir alterações | VERIFIED | log §5.2 + Git | 1a47bb44 | HEAD-base == origin/main 19b0f644; nenhuma mudança descartada |\n64: | 003 | Fixar e registrar o ambiente de ferramentas | VERIFIED | log §5.3 | 1a47bb44 | install frozen OK; bun.lock intacto; `.nvmrc` pendente na 014 |\n65: | 004 | Criar o diário de execução e a matriz de decisões | VERIFIED | log §5.4.1 + auditoria Codex | correção Codex | 100 IDs/títulos canônicos reconciliados |\n66: | 005 | Verificar identidades de todos os alvos sem mutação | BLOCKED | log §5.5 + §5.5.1 + auditoria Codex | 1a47bb44 + correção Codex | Supabase MATCH relatado pelo Cline, mas não reproduzido pelo Codex; Vercel/Evolution ainda parciais |\n67: | 006 | Tratar o URL autenticado do MCP como credencial exposta | IN_PROGRESS | log §5.6 + auditoria Codex | 6cab178a | MCP: ACCEPTED_TEMPORARY_RISK (adm01, até 2026-09-06); credencial Vercel: decisão independente pendente |\n68: | 007 | Inventariar superfícies de segredo e dados sensíveis | IN_PROGRESS | log §5.7 + `docs/security/secret-surface-inventory.md` | este commit | gitleaks 8.30.1 (dir + histórico); 8 GitHub secrets + 23 envs edge + VITE_* mapeados; F-01/F-02 (Evolution) e F-03/F-04 aguardam decisão do proprietário; F-06 resolvido na validação (§5.8) |\n69: | 008 | Capturar o baseline completo da revisão atual | NOT_STARTED | — | — |  |\n70: | 009 | Capturar baseline de UX, bundle e rede | NOT_STARTED | — | — |  |\n71: | 010 | Reconciliar migrations do repositório e do banco em modo leitura | NOT_STARTED | — | — | leitura remota liberada (§5.5.1); drift preliminar: 16 versões remotas sem arquivo local |\n72: | 011 | Transformar o audit de dependências em backlog verificável | NOT_STARTED | — | — |  |\n73: | 012 | Corrigir vulnerabilidades diretas em lotes pequenos | NOT_STARTED | — | — |  |\n74: | 013 | Isolar ou substituir a cadeia de planilhas vulnerável | NOT_STARTED | — | — |  |\n75: | 014 | Fixar a toolchain de forma explícita | NOT_STARTED | — | — | inclui reconciliar `.nvmrc` 20 vs CI 24 |\n76: | 015 | Habilitar coverage de fato | NOT_STARTED | — | — |  |"
+  },
+  {
+    "path": "docs/handoffs/cline_execution_log_2026_08_30.md",
+    "line_start": 235,
+    "line_end": 235,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/handoffs/cline_execution_log_2026_08_30.md#L235-L235",
+    "excerpt": "235: - **Estado:** IN_PROGRESS. URL do MCP: ausência comprovada e decisão **`ACCEPTED_TEMPORARY_RISK`** registrada abaixo (proprietário adm01, prazo 2026-09-06). Escopo ampliado pela auditoria Codex: uma credencial Vercel também foi publicada em conversa e **permanece pendente** de decisão independente (rotação/revogação ou aceite formal), sem ser copiada para este arquivo."
+  },
+  {
+    "path": "docs/handoffs/cline_execution_log_2026_08_30.md",
+    "line_start": 246,
+    "line_end": 246,
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/handoffs/cline_execution_log_2026_08_30.md#L246-L246",
+    "excerpt": "246: - **Decisão registrada:** **`ACCEPTED_TEMPORARY_RISK`** — proprietário: usuário (adm01), 2026-08-30. **Prazo:** até **2026-09-06** ou imediatamente antes de qualquer ação Classe C/D em banco — o que ocorrer primeiro. O procedimento de rotação acima permanece preparado; ao expirar o prazo ou antes de escrita em banco, a rotação (Classe D) será requisitada ao proprietário. O Cline **para antes de executar** qualquer rotação."
+  }
+]

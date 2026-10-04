@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "owner": "infra",
+  "state": "ALLOCATION_ONLY_NOT_REVIEW",
+  "files": [
+    {
+      "path": "scripts/db-audit/calls-telefonia-contract.test.sh",
+      "line_start": 1,
+      "line_end": 373,
+      "source_sha256": "c9a6e49def217142809123698aa5ccc77a1641312a1af1a299dbc31d8afee650",
+      "git_blob_sha": "a1982fa70f7d983fed7c5a04edb6baa0629100a2"
+    },
+    {
+      "path": "scripts/db-audit/mapa-f1-address-contract.test.sh",
+      "line_start": 1,
+      "line_end": 126,
+      "source_sha256": "f02c1c695cf4e5701714c5381f9258100e10205c090cc278dc2579bbe986b801",
+      "git_blob_sha": "980a69a0bbc8bcbd66aed4e680ed8514a20913f8"
+    },
+    {
+      "path": "scripts/db-audit/multiplix-delivery-leases.test.sh",
+      "line_start": 1,
+      "line_end": 743,
+      "source_sha256": "ac3707ca66fdbf97753f7ecb8d79fe4933fac733a93f0eec3e27e74eb8883f06",
+      "git_blob_sha": "461817346b9bfe24dc79d113e6c213e357406dc7"
+    },
+    {
+      "path": "scripts/db-audit/talkx-campaign-worker-lease.test.sh",
+      "line_start": 1,
+      "line_end": 330,
+      "source_sha256": "26945f6a3f2a8579c884dda47ac58bf4636787ba3e76c59001f44dd21bec5c19",
+      "git_blob_sha": "28d2c91d85445b0a12e7221a2f1f4e7506f47b65"
+    },
+    {
+      "path": "scripts/db-audit/talkx-lifecycle-events.test.sh",
+      "line_start": 1,
+      "line_end": 195,
+      "source_sha256": "5faa79d910550bc5aeaa7224647b48e935cfcd2f19e346f9e4febfcf99b315f5",
+      "git_blob_sha": "88c1a10e71ddd3e274b0ecf460e04aafe936c30d"
+    },
+    {
+      "path": "scripts/db-audit/talkx-overview-stats.test.sh",
+      "line_start": 1,
+      "line_end": 423,
+      "source_sha256": "6caf4c7aa6a36966353139e115b4e2b16b848b9f9cac55655ad65e4ad11ebb67",
+      "git_blob_sha": "c8887e8e6db4f97d24a6bb993b9d22485c8dcc36"
+    },
+    {
+      "path": "scripts/db-audit/talkx-send-budget.test.sh",
+      "line_start": 1,
+      "line_end": 253,
+      "source_sha256": "ed3bf0fb60ec92b30d9161c42f4dd0c03372ba68adc237a4ee50af2782fce1fe",
+      "git_blob_sha": "c96249c591a955feb158e823b42f2eabd5b3cce9"
+    },
+    {
+      "path": "scripts/db-audit/talkx-suppress-phone-axis.test.sh",
+      "line_start": 1,
+      "line_end": 206,
+      "source_sha256": "6b22e13ddeebb34e43d81a73caf5c551a25164923666aab80c11b18d614d04c8",
+      "git_blob_sha": "a7223aa7d0fce61dc434c74fac2ccff6dc132236"
+    },
+    {
+      "path": "scripts/db-audit/talkx-transition-overload-postgrest.test.sh",
+      "line_start": 1,
+      "line_end": 294,
+      "source_sha256": "bfda297740566b20db21a02b727ec6ae685e08ad5f30c7c417977847fe6b7518",
+      "git_blob_sha": "d0e345dc07d1bce4a9bd6e10922698e682f5eb1b"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v16-time-series.test.sh",
+      "line_start": 1,
+      "line_end": 119,
+      "source_sha256": "aa659a60f2f2b60c3de48f7fe6e065accb00302c4e3fdfacce0a0da49efdd399",
+      "git_blob_sha": "3305ac8f65e62653051e5fc698a3ad96dc493527"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v21-launch-flags.test.sh",
+      "line_start": 1,
+      "line_end": 156,
+      "source_sha256": "fd7df0f245f6a36ffe25525fec713b3fa5cb1e3f2d08f600d4cadf0e04637f69",
+      "git_blob_sha": "305f5713485f5a1233dbb5709ddcb19399cb2e2a"
+    },
+    {
+      "path": "scripts/db-audit/team-reaction-membership.test.sh",
+      "line_start": 1,
+      "line_end": 336,
+      "source_sha256": "1fe8efb02f1610e99db5d2f69893a2b7d1f20721c0e00350958f1e1c89a94457",
+      "git_blob_sha": "b631998b263c5fcf87508427add1e3596436ade4"
+    }
+  ]
+}
