@@ -41,6 +41,17 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
 
+  // Rascunho e resposta são da conversa: o painel não remonta ao trocar de
+  // conversa, então o reset acontece no render (mesmo padrão de
+  // useFilesViewState). Sem isso o texto de uma conversa aparece na outra e o
+  // autosave do rascunho grava na chave errada — idem para o reply_to.
+  const [conversationScopeId, setConversationScopeId] = useState(conversation.id);
+  if (conversationScopeId !== conversation.id) {
+    setConversationScopeId(conversation.id);
+    setText('');
+    setReplyTo(null);
+  }
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isNearBottomRef = useRef(true);
