@@ -1,5 +1,8 @@
 import { requireAiIdentityOrService } from "../_shared/ai-auth.ts";
-import { assertMessageVisibleToCaller } from "../_shared/ai-audio-authz.ts";
+import {
+  assertMessageVisibleToCaller,
+  resolveAuthorizedAudioUrl,
+} from "../_shared/ai-audio-authz.ts";
 import {
   checkRateLimit,
   errorResponse,
@@ -106,9 +109,14 @@ Deno.serve(async (req) => {
       if (!objectAuthz.ok) {
         return errorResponse(objectAuthz.error, objectAuthz.status, req);
       }
-      // A `media_url` do registro é a fonte da verdade do objeto: a URL enviada
-      // pelo cliente deixa de decidir o que é baixado.
-      if (objectAuthz.mediaUrl) audioUrl = objectAuthz.mediaUrl;
+      // R2-API-027: a `media_url` do registro é a ÚNICA fonte autorizada do objeto
+      // no caminho de usuário. Mensagem visível sem mídia não tem objeto para
+      // transcrever: recusar em vez de baixar a URL escolhida pelo cliente.
+      const authorized = resolveAuthorizedAudioUrl(objectAuthz.mediaUrl);
+      if (!authorized.ok) {
+        return errorResponse(authorized.error, authorized.status, req);
+      }
+      audioUrl = authorized.url;
     }
 
     log.info("Starting transcription", { messageId, languageCode });

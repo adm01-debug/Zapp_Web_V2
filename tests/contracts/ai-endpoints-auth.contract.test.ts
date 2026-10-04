@@ -135,13 +135,14 @@ describe('ai-transcribe-audio — autorização por objeto (IA-014)', () => {
     expect(visibilidade, 'baixa o objeto antes de autorizar').toBeLessThan(download);
   });
 
-  it('usa a media_url do registro como fonte do objeto, antes do download', () => {
-    const override = source.indexOf('audioUrl = objectAuthz.mediaUrl');
+  it('recusa mensagem visível sem media_url antes de baixar (R2-API-027)', () => {
+    const rejeicao = source.indexOf('if (!authorized.ok)');
     const download = source.indexOf('await downloadAudio(');
-    expect(override, 'a media_url do registro não é a fonte do objeto').toBeGreaterThan(-1);
-    expect(override, 'a media_url do registro é aplicada depois do download').toBeLessThan(
-      download,
-    );
+    expect(rejeicao, 'não rejeita media_url ausente').toBeGreaterThan(-1);
+    expect(rejeicao, 'baixa o path do cliente antes de rejeitar').toBeLessThan(download);
+    // A única fonte autorizada é a media_url do registro — nunca a URL do cliente.
+    expect(source).toContain('resolveAuthorizedAudioUrl(objectAuthz.mediaUrl)');
+    expect(source).toContain('audioUrl = authorized.url');
   });
 
   it('só aplica a autorização por objeto no caminho de usuário', () => {

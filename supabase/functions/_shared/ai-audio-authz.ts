@@ -80,3 +80,27 @@ export async function assertMessageVisibleToCaller(
     return { ok: false, status: 500, error: 'Falha ao verificar a mensagem' };
   }
 }
+
+export type AuthorizedAudioUrlResult =
+  | { ok: true; url: string }
+  | { ok: false; status: number; error: string };
+
+/**
+ * R2-API-027 — resolve o objeto autorizado a baixar no caminho de usuário.
+ *
+ * A URL enviada pelo cliente NUNCA decide o que é baixado com service role no
+ * caminho de usuário: só a `media_url` do registro (mensagem já provada visível
+ * via RLS pelo JWT do próprio chamador) autoriza o download. Uma mensagem visível
+ * sem mídia (`mediaUrl` nulo) não tem objeto para transcrever e é recusada. Antes,
+ * o handler caía de volta na URL do cliente quando a `media_url` faltava — o id de
+ * uma mensagem de texto própria virava autorização substituta para transcrever
+ * áudio privado de outro contato.
+ */
+export function resolveAuthorizedAudioUrl(
+  mediaUrl: string | null,
+): AuthorizedAudioUrlResult {
+  if (mediaUrl && mediaUrl.length > 0) {
+    return { ok: true, url: mediaUrl };
+  }
+  return { ok: false, status: 404, error: "Áudio não encontrado ou sem permissão" };
+}

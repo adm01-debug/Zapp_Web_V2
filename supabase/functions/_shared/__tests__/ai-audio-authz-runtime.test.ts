@@ -11,7 +11,10 @@
 // CHAMADOR, que é o que faz a RLS de `messages` responder como ele.
 
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { assertMessageVisibleToCaller } from "../ai-audio-authz.ts";
+import {
+  assertMessageVisibleToCaller,
+  resolveAuthorizedAudioUrl,
+} from "../ai-audio-authz.ts";
 
 const MSG_ID = "11111111-2222-3333-4444-555555555555";
 const CALLER_JWT = "jwt-do-chamador-de-teste";
@@ -132,4 +135,24 @@ Deno.test("IA-014: sem messageId e sem Bearer nem chega ao banco", async () => {
     restaurar();
   }
   assertEquals(capturas.length, 0, "nada deveria ter ido ao banco");
+});
+
+// ─── R2-API-027 — a media_url do registro é a ÚNICA fonte autorizada ───────
+
+Deno.test("R2-API-027: media_url presente autoriza o objeto (fonte do download)", () => {
+  const r = resolveAuthorizedAudioUrl(MEDIA_URL);
+  assertEquals(r.ok, true);
+  if (r.ok) assertEquals(r.url, MEDIA_URL);
+});
+
+Deno.test("R2-API-027: media_url nula não autoriza o download do path escolhido pelo cliente", () => {
+  const r = resolveAuthorizedAudioUrl(null);
+  assertEquals(r.ok, false);
+  if (!r.ok) assertEquals(r.status, 404);
+});
+
+Deno.test("R2-API-027: media_url vazia é tratada como ausente (sem objeto autorizado)", () => {
+  const r = resolveAuthorizedAudioUrl("");
+  assertEquals(r.ok, false);
+  if (!r.ok) assertEquals(r.status, 404);
 });
