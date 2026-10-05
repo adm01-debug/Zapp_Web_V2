@@ -23,6 +23,7 @@ import {
   extractCountryCode,
   normalizeCountryCode,
   isValidEndpoint,
+  networkPolicyDenialResponse,
   type NetworkPolicyDecision,
   type NetworkPolicyRpcClient,
 } from "../request-policy.ts";
@@ -53,10 +54,8 @@ function fakeRpc(
   return client;
 }
 
-function rpcThrowing(): NetworkPolicyRpcClient & { calls: unknown[] } {
-  const calls: unknown[] = [];
+function rpcThrowing(): NetworkPolicyRpcClient {
   return {
-    calls,
     rpc: (_fn, _args) => Promise.reject(new Error("rpc down")),
   };
 }
@@ -214,12 +213,35 @@ Deno.test("resolveNetworkPolicy: resposta sem booleano allowed -> 503 (indecidí
 });
 
 // a resposta de negação não revela listas/regras: o corpo é genérico
-Deno.test("networkPolicyDenialResponse não vaza razão/regras no corpo", () => {
+Deno.test("networkPolicyDenialResponse não vaza razão/regras no corpo", async () => {
   // A decisão de negação carrega a categoria só para log server-side; o corpo
-  // enviado ao cliente é genérico e idêntico para qualquer negação.
-  const decision: NetworkPolicyDecision = { allowed: false, status: 403, reason: "country_blocked" };
-  // Sanity: o campo de razão existe para log, mas quem serializa o corpo é o
-  // módulo, via uma resposta genérica — validado por construção (errorResponse).
-  assert(decision.status === 403);
-  assertEquals(decision.reason, "country_blocked");
+  // enviado ao cliente é genérico e idêntico para qualquer negação 403.
+  const decisions: Array<Extract<NetworkPolicyDecision, { allowed: false }>> = [
+    { allowed: false, status: 403, reason: "ip_blocked" },
+    { allowed: false, status: 403, reason: "country_blocked" },
+    { allowed: false, status: 503 },
+  ];
+  const responses = decisions.map((d) => networkPolicyDenialResponse(d));
+
+  assertEquals(responses[0].status, 403);
+  assertEquals(responses[1].status, 403);
+  assertEquals(responses[2].status, 503);
+
+  const bodies = await Promise.all(responses.map((r) => r.text()));
+
+  // as duas negações 403 são byte a byte idênticas: o corpo não distingue
+  // bloqueio de IP de bloqueio de país
+  assertEquals(bodies[0], bodies[1]);
+
+  // nenhum corpo carrega a categoria da negação, um IP ou um código de país
+  for (const body of bodies) {
+    assert(!body.includes("ip_blocked"), `corpo vazou razão: ${body}`);
+    assert(!body.includes("country_blocked"), `corpo vazou razão: ${body}`);
+    assert(!/\d{1,3}(?:\.\d{1,3}){3}/.test(body), `corpo vazou IP: ${body}`);
+    assert(!/\b[A-Z]{2}\b/.test(body), `corpo vazou código de país: ${body}`);
+  }
+
+  // o corpo é exatamente o genérico de errorResponse
+  assertEquals(bodies[0], '{"error":"Access denied"}');
+  assertEquals(bodies[2], '{"error":"Internal server error"}');
 });

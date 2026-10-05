@@ -71,8 +71,9 @@ export function extractCountryCode(req: Request): string | null {
 
 /**
  * Identificador canônico de endpoint é explícito no chamador e validado aqui —
- * nunca derivado de body controlado pelo cliente. Aceita apenas strings curtas
- * de caracteres seguros (letras, dígitos e `._:/ -`), sem espaços ou controle.
+ * nunca derivado de body controlado pelo cliente. Aceita apenas strings de
+ * 1..128 caracteres ASCII imprimíveis (`!` a `~`), sem espaço, sem controle e
+ * sem quebra de linha.
  */
 export function isValidEndpoint(endpoint: unknown): endpoint is string {
   return typeof endpoint === "string" && ENDPOINT_RE.test(endpoint);
