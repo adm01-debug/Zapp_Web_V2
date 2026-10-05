@@ -157,4 +157,62 @@ grep -q 'node scripts/db-audit/run-runtime-contract\.mjs' "$workflow" \
 passed=$((passed + 1))
 printf '[PASS] guardas do workflow intactos (runner + flag, braco generico, confirmacao de sha)\n'
 
+# ── e) O passo real do workflow, executado, completa para o alvo do lote ─────
+# O cenario (b) prova a decisao de contrato; aqui executa-se o passo do workflow
+# como o runner do GitHub faria. O banco e' dublado ($tmp/stub-psql) porque um
+# runner de CI nao pode apontar para producao, e o SQL do contrato generico tem
+# teste proprio contra Postgres descartavel
+# (scripts/db-audit/generic-migration-runtime.test.sh, no db-guard.yml). O que
+# se prende aqui e' o que a recusa apontou: para uma version do lote SEM
+# contrato dedicado, o passo "Provar estado runtime antes do push" ia a exit 2
+# com o runner do E62 e agora chega ao fim.
+node --input-type=module -e "
+import { readFileSync, writeFileSync } from 'node:fs';
+import { parse } from 'yaml';
+const doc = parse(readFileSync('$workflow', 'utf8'));
+const passo = doc.jobs.migrate.steps.find((s) => s.id === 'runtime');
+writeFileSync('$tmp/runtime-step.sh', passo.run);
+"
+[ -s "$tmp/runtime-step.sh" ] || fail 'nao consegui extrair o passo id=runtime do workflow'
+
+cat > "$tmp/stub-psql" <<'STUB'
+#!/usr/bin/env bash
+# psql dublado: devolve o payload do contrato runtime generico, sem banco.
+cat <<'JSON'
+{"server_major": 17, "database": "postgres", "contract": "generic", "table_count": 42, "function_count": 118, "policy_count": 55, "ledger_count": 781, "structure_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "runtime_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+JSON
+exit 0
+STUB
+chmod +x "$tmp/stub-psql"
+
+# run_passo_runtime <arquivo-do-passo>: repete o ambiente que o passo declara.
+run_passo_runtime() {
+  DESTINO_URL='postgresql://dublado:dublado@127.0.0.1:1/dublado'   PSQL_BIN="$tmp/stub-psql"   TARGET_VERSION="$ALVO" APPLY=false NEEDS_APPLY=true APPLY_BUNDLE=true   CONFIRM_RUNTIME_SHA256='' GITHUB_SHA="$(git rev-parse HEAD)"   GITHUB_OUTPUT="$tmp/gh-out.txt" GITHUB_ENV="$tmp/gh-env.txt"   bash "$1"
+}
+
+set +e
+out_e="$(run_passo_runtime "$tmp/runtime-step.sh" 2>&1)"
+st_e=$?
+set -e
+if [ "$st_e" != "0" ]; then
+  printf '%s
+' "$out_e" >&2
+  fail "o passo de runtime do workflow tinha de completar para o alvo do lote (saiu $st_e)"
+fi
+printf '%s' "$out_e" | grep -q 'Contrato generico'   || fail "o passo nao registrou o contrato generico; saida: $out_e"
+passed=$((passed + 1))
+printf '[PASS] passo real do workflow completa para o alvo do lote (contrato generico)
+'
+
+sed 's/ --generico-se-ausente//' "$tmp/runtime-step.sh" > "$tmp/runtime-step-sem-flag.sh"
+set +e
+out_f="$(run_passo_runtime "$tmp/runtime-step-sem-flag.sh" 2>&1)"
+st_f=$?
+set -e
+[ "$st_f" != "0" ] || fail "sem o flag o passo de runtime nao podia completar (defeito do E62 nao reproduzido)"
+printf '%s' "$out_f" | grep -q 'contrato de runtime ausente'   || fail "sem o flag a falha tinha de ser 'contrato de runtime ausente'; saida: $out_f"
+passed=$((passed + 1))
+printf '[PASS] sem o flag o passo real do workflow aborta (defeito do E62 reproduzido)
+'
+
 printf 'db-migrate-lote-fim-a-fim: %s cenarios aprovados.\n' "$passed"
