@@ -14,6 +14,15 @@ import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../
  *
  * O aceite da etapa admite exatamente isso: "1 chamada real reconciliada (ids) ou 0 registros".
  *
+ * TEL-RECONCILIATION-001 (item 61 do BACKLOG_VERIFICADO) endurece a reconciliacao:
+ *   - **Identidade com DDD**, nao apenas os ultimos 9 digitos: um numero de outro DDD nao
+ *     recebe vinculo arbitrario.
+ *   - **Ambiguidade e ignorada**: duas linhas casando o mesmo numero devolvem `null` (melhor
+ *     nao reconciliar do que reconciliar a chamada errada).
+ *   - **`CALL_FAILED_CODE` e traduzido** para o `end_reason` canonico (o codigo cru viola o
+ *     CHECK de `calls.end_reason` e perde a semantica de encerramento).
+ *   - **Reexecucao nao apaga dado bom**: campo sem valor novo na origem nao e sobrescrito.
+ *
  * Agendamento: N8N a cada 5 min (etapa de infraestrutura do Joaquim, nao desta funcao).
  */
 const JANELA_SEGUNDOS = 90;
@@ -27,33 +36,96 @@ export function janelaDoCasamento(inicio: Date, segundos = JANELA_SEGUNDOS) {
 }
 
 /**
- * Escolhe a chamada que o registro do Bitrix reconcilia. Casa pelos **ultimos 9 digitos**
- * (o mesmo numero aparece com e sem DDI/9 extra nos dois lados). Devolve `null` quando nao
- * ha correspondente - e `null` significa **ignorar**, nunca criar.
+ * Identidade normalizada do numero: so digitos, sem o DDI 55 quando o que sobra e um numero
+ * nacional plausivel (10 ou 11 digitos). Mantem o **DDD** — casar apenas pelos ultimos digitos
+ * vinculava a chamada um numero de outro DDD.
+ */
+export function identidadeDoNumero(numero: string | null | undefined): string | null {
+  const digitos = (numero ?? "").replace(/\D/g, "");
+  if (!digitos) return null;
+  // 55 + DDD(2) + 8..9 digitos = 12..13; sem DDI, DDD+numero = 10..11.
+  if (digitos.startsWith("55") && (digitos.length === 12 || digitos.length === 13)) {
+    return digitos.slice(2);
+  }
+  return digitos;
+}
+
+/**
+ * Mesmo numero? Compara **DDD + assinante**, tolerando o nono digito do celular (o mesmo
+ * numero aparece com e sem o 9 nos dois lados). DDD diferente nunca casa.
+ */
+export function mesmoNumero(a: string | null | undefined, b: string | null | undefined): boolean {
+  const x = identidadeDoNumero(a);
+  const y = identidadeDoNumero(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  if (x.slice(0, 2) !== y.slice(0, 2)) return false; // DDD diferente nao casa
+  const semNono = (assinante: string) => (assinante.length === 9 && assinante.startsWith("9") ? assinante.slice(1) : assinante);
+  return semNono(x.slice(2)) === semNono(y.slice(2));
+}
+
+/**
+ * Escolhe a chamada que o registro do Bitrix reconcilia. Exige **exatamente uma** linha
+ * casando por identidade com DDD; zero ou mais de uma devolve `null` - e `null` significa
+ * **ignorar**, nunca criar.
  */
 export function escolherCandidata<T extends { id: string; peer_number?: string | null }>(
   candidatas: T[] | null | undefined,
   numero: string,
 ): T | null {
-  const sufixo = numero.replace(/\D/g, "").slice(-9);
-  if (!sufixo) return null;
-  return (candidatas ?? []).find((c) => (c.peer_number ?? "").replace(/\D/g, "").endsWith(sufixo)) ?? null;
+  if (!identidadeDoNumero(numero)) return null;
+  const casam = (candidatas ?? []).filter((c) => mesmoNumero(c.peer_number, numero));
+  // Ambiguidade (duas linhas casando o mesmo numero) e ignorada: associar gravacao/identificador
+  // a chamada errada e pior do que nao reconciliar.
+  return casam.length === 1 ? casam[0] : null;
 }
 
-/** Os campos que a reconciliacao pode escrever. `talk_seconds` so entra se vier positivo. */
+/**
+ * `CALL_FAILED_CODE` do Bitrix e um codigo SIP/VRU. Gravar o codigo cru em `end_reason` perde a
+ * semantica **e** viola o CHECK de `calls.end_reason` (que so aceita o vocabulario canonico).
+ * A traducao segue o mesmo contrato de `sipCodeToEndReason` (src/lib/calls/callStatus.ts):
+ * 200 → concluida · 408/480 → nao atendida · 486 → ocupado · 487 → cancelada · 603 → recusada ·
+ * 5xx e desconhecidos → falhou. Codigo ausente/nao numerico devolve `null` (sem valor novo).
+ */
+export function endReasonDoCodigo(codigo: string | null | undefined): string | null {
+  const bruto = (codigo ?? "").trim();
+  if (!bruto) return null;
+  const n = Number.parseInt(bruto, 10);
+  if (!Number.isFinite(n)) return null;
+  switch (n) {
+    case 200:
+      return "completed";
+    case 408:
+    case 480:
+      return "no_answer";
+    case 486:
+      return "busy";
+    case 487:
+      return "cancelled";
+    case 603:
+      return "declined";
+    default:
+      return "failed";
+  }
+}
+
+/** Os campos que a reconciliacao pode escrever. Campo sem valor novo na origem nao entra. */
 export function dadosDaReconciliacao(registro: {
   CALL_ID?: string;
   CALL_RECORD_URL?: string;
   CALL_FAILED_CODE?: string;
   CALL_DURATION?: string;
 }): Record<string, unknown> {
-  const duracao = Number.parseInt(registro.CALL_DURATION ?? "", 10);
+  // `recording_status` e um flag derivado (nunca null): diz se ha audio para tocar.
   const dados: Record<string, unknown> = {
-    provider_call_id: registro.CALL_ID ?? null,
     recording_status: registro.CALL_RECORD_URL ? "available" : "none",
-    recording_url: registro.CALL_RECORD_URL ?? null,
-    end_reason: registro.CALL_FAILED_CODE || null,
   };
+  // Campos de origem so entram quando ha valor novo: reexecucao nao apaga o que ja existe com null.
+  if (registro.CALL_ID) dados.provider_call_id = registro.CALL_ID;
+  if (registro.CALL_RECORD_URL) dados.recording_url = registro.CALL_RECORD_URL;
+  const endReason = endReasonDoCodigo(registro.CALL_FAILED_CODE);
+  if (endReason) dados.end_reason = endReason;
+  const duracao = Number.parseInt(registro.CALL_DURATION ?? "", 10);
   if (Number.isFinite(duracao) && duracao > 0) dados.talk_seconds = duracao;
   return dados;
 }
@@ -137,7 +209,7 @@ export async function handleSyncCallRecords(req: Request) {
 
       const alvo = escolherCandidata(candidatas, numero);
       if (!alvo) {
-        ignorados++; // nao cria: so reconcilia o que o motor ja registrou
+        ignorados++; // nao cria: so reconcilia o que o motor ja registrou (ou ha ambiguidade)
         continue;
       }
 
@@ -163,4 +235,3 @@ export async function handleSyncCallRecords(req: Request) {
 if (import.meta.main) {
   Deno.serve(handleSyncCallRecords);
 }
-
