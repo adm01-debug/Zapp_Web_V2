@@ -1,1 +1,79 @@
-{}
+{
+  "talkx_templates": [
+    {
+      "id": "tpl-001",
+      "name": "Boas-vindas VIP",
+      "description": "Recepção de novos clientes",
+      "category": "marketing",
+      "content": "Olá {{nome}}, preparamos uma seleção especial para você.",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "vip",
+        "boas-vindas"
+      ],
+      "status": "approved",
+      "use_count": 18,
+      "created_by": "creator-1",
+      "custom_variables": [
+        "nome"
+      ],
+      "created_at": "2026-10-01T10:00:00.000Z",
+      "updated_at": "2026-10-01T10:00:00.000Z",
+      "current_version_id": "tplv-001",
+      "creator": {
+        "name": "Visual Talk X"
+      }
+    },
+    {
+      "id": "tpl-002",
+      "name": "Oferta Black Friday",
+      "description": "Oferta sazonal para clientes ativos",
+      "category": "marketing",
+      "content": "Olá {{nome}}, sua oferta exclusiva chegou!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "black-friday"
+      ],
+      "status": "approved",
+      "use_count": 12,
+      "created_by": "creator-1",
+      "custom_variables": [
+        "nome"
+      ],
+      "created_at": "2026-10-01T10:00:00.000Z",
+      "updated_at": "2026-10-01T10:00:00.000Z",
+      "current_version_id": "tplv-002",
+      "creator": {
+        "name": "Visual Talk X"
+      }
+    },
+    {
+      "id": "tpl-003",
+      "name": "Pesquisa pós-venda",
+      "description": "Coleta de satisfação",
+      "category": "utility",
+      "content": "Olá {{nome}}, como foi sua experiência?",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "pesquisa"
+      ],
+      "status": "draft",
+      "use_count": 4,
+      "created_by": "creator-1",
+      "custom_variables": [
+        "nome"
+      ],
+      "created_at": "2026-10-01T10:00:00.000Z",
+      "updated_at": "2026-10-01T10:00:00.000Z",
+      "current_version_id": "tplv-003",
+      "creator": {
+        "name": "Visual Talk X"
+      }
+    }
+  ],
+  "talkx_template_versions": [],
+  "talkx_template_variants": []
+}

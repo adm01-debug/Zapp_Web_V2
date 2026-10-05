@@ -1,1 +1,118 @@
-{}
+{
+  "talkx_campaigns": [
+    {
+      "id": "camp-005",
+      "name": "Black Friday - VIP",
+      "message_template": "Olá {{nome}}, Black Friday - VIP!",
+      "description": null,
+      "objective": "vendas",
+      "status": "scheduled",
+      "total_recipients": 480,
+      "sent_count": 0,
+      "failed_count": 0,
+      "delivered_count": 0,
+      "read_count": 0,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "whatsapp_connection_id": "conn-001",
+      "created_by": "creator-1",
+      "started_at": null,
+      "completed_at": null,
+      "created_at": "2026-10-01T04:00:00.000Z",
+      "updated_at": "2026-10-01T04:00:00.000Z",
+      "media_url": null,
+      "media_type": null,
+      "scheduled_at": "2026-10-02T06:00:00.000Z",
+      "schedule_timezone": null,
+      "segment_id": "seg-vip",
+      "audience_source": "segment",
+      "template_id": null,
+      "send_window_start": null,
+      "send_window_end": null,
+      "business_hours_only": false,
+      "speed_profile": "moderate",
+      "paused_at": null,
+      "respect_suppression": true,
+      "confirm_consent": true,
+      "launched_by": "creator-1",
+      "launched_at": null,
+      "revision": 1
+    }
+  ],
+  "talkx_segments": [
+    {
+      "id": "seg-vip",
+      "name": "VIP",
+      "description": null,
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": []
+      },
+      "estimated_count": 0,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-01T00:00:00Z",
+      "updated_at": "2026-09-01T00:00:00Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    }
+  ],
+  "talkx_templates": [
+    {
+      "id": "tpl-001",
+      "name": "Boas-vindas VIP",
+      "description": "Recepção de novos clientes",
+      "category": "marketing",
+      "content": "Olá {{nome}}, preparamos uma seleção especial para você.",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "vip",
+        "boas-vindas"
+      ],
+      "status": "approved",
+      "use_count": 18,
+      "created_by": "creator-1",
+      "custom_variables": [
+        "nome"
+      ],
+      "created_at": "2026-10-01T10:00:00.000Z",
+      "updated_at": "2026-10-01T10:00:00.000Z",
+      "current_version_id": "tplv-001",
+      "creator": {
+        "name": "Visual Talk X"
+      }
+    }
+  ],
+  "whatsapp_connections": [
+    {
+      "id": "conn-001",
+      "name": "WhatsApp Comercial",
+      "status": "connected",
+      "instance_name": "talkx-demo"
+    }
+  ],
+  "contacts": [
+    {
+      "id": "contact-001",
+      "name": "Ana Souza",
+      "phone": "551199980001",
+      "company": "Empresa Demo"
+    },
+    {
+      "id": "contact-002",
+      "name": "Bruno Lima",
+      "phone": "551199980002",
+      "company": "Empresa Demo"
+    },
+    {
+      "id": "contact-003",
+      "name": "Carla Mendes",
+      "phone": "551199980003",
+      "company": "Empresa Demo"
+    }
+  ]
+}

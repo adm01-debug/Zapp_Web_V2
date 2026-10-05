@@ -1,1 +1,14 @@
-{}
+{
+  "talkx_settings": [
+    {
+      "key": "default_speed_profile",
+      "value": "moderate",
+      "description": "Velocidade padrão de envio"
+    },
+    {
+      "key": "business_hours_only",
+      "value": true,
+      "description": "Restringir envios ao horário comercial"
+    }
+  ]
+}
