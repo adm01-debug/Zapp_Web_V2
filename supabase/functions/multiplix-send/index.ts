@@ -304,6 +304,26 @@ export async function handleMultiplixSend(
       return data;
     };
 
+    // MX07: token DA instancia que vai enviar (rotas auth=instance do Evolution GO).
+    // Mesmo padrao do talkx-send: get_instance_token no banco; vazio so cai no
+    // EVOLUTION_INSTANCE_TOKEN quando a instancia e a padrao (transicao). Qualquer
+    // outra sem token = ausencia: o chamador pausa — NUNCA a key global nem o token
+    // de outra instancia. O token nunca vai para log. Cache por instancia: uma RPC
+    // por instancia por passada, nao por destinatario.
+    const instanceTokens = new Map<string, string | null>();
+    const resolveInstanceToken = async (instanceId: string): Promise<string | null> => {
+      const cached = instanceTokens.get(instanceId);
+      if (cached !== undefined) return cached;
+      const { data, error } = await supabase.rpc("get_instance_token", { p_instance_id: instanceId });
+      if (error) throw new Error(`multiplix_instance_token_failed: ${error.message}`);
+      let token = typeof data === "string" && data.length > 0 ? data : null;
+      if (!token && instanceId === Deno.env.get("EVOLUTION_INSTANCE_NAME")) {
+        token = Deno.env.get("EVOLUTION_INSTANCE_TOKEN") ?? null;
+      }
+      instanceTokens.set(instanceId, token);
+      return token;
+    };
+
     // F17: cota diaria da conexao (talkx + multiplix somados no dia). A conta e
     // local, decrementada a cada envio bem sucedido — uma RPC por destinatario
     // seria custo a toa. null = sem cota a respeitar (dispatch sem conexao fixa).
@@ -528,7 +548,21 @@ export async function handleMultiplixSend(
           const typingDelay = randomBetween(dispatch.typing_delay_min, dispatch.typing_delay_max);
 
           try {
-            await evoFetch(evolutionUrl, evolutionKey, `/chat/updatePresence/${initialInstanceId}`, { number: phone, presence: "composing" });
+            // MX07: a presenca tem de sair com a identidade da MESMA instancia que vai enviar
+            // (o adaptador faz o mesmo dentro do send). Antes ia so a key global e o evoFetch
+            // caia no EVOLUTION_INSTANCE_TOKEN — token da instancia PADRAO — para uma instancia
+            // qualquer; sem fallback, a presenca morria calada com 400.
+            const presenceToken = await resolveInstanceToken(initialInstanceId);
+            await evoFetch(
+              evolutionUrl,
+              evolutionKey,
+              `/chat/updatePresence/${initialInstanceId}`,
+              { number: phone, presence: "composing" },
+              undefined,
+              "POST",
+              undefined,
+              presenceToken ?? undefined,
+            );
           } catch { /* Presence e best-effort */ }
 
           await sleep(typingDelay);
@@ -545,11 +579,18 @@ export async function handleMultiplixSend(
           const { data: beforeSendConnection, error: beforeSendConnectionError } = await beforeSendConnectionQuery;
           if (beforeSendConnectionError) throw new Error(`multiplix_connection_state_lookup_failed: ${beforeSendConnectionError.message}`);
           const beforeSendInstanceId = liveTalkXInstanceId(beforeSendConnection);
-          if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed || !beforeSendInstanceId) {
+          // MX07: o token tem de ser DA instancia que vai enviar (a conexao pode
+          // ter trocado no meio do disparo). Sem token, pausa como connection_lost
+          // — enviar sem ele faria o adaptador cair na key global, que e o defeito.
+          const beforeSendInstanceToken = beforeSendInstanceId
+            ? await resolveInstanceToken(beforeSendInstanceId)
+            : null;
+          if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed || !beforeSendInstanceId || !beforeSendInstanceToken) {
             if (beforeSend?.status === "sending") {
               // F10c: janela fechada no meio do disparo -> 'outside_window' (o cron
-              // retoma); conexao caiu -> 'connection_lost' (exige operador).
-              await pauseDispatch(beforeSendInstanceId ? "outside_window" : "connection_lost");
+              // retoma); conexao ou token da instancia caiu -> 'connection_lost'
+              // (exige operador).
+              await pauseDispatch(beforeSendInstanceId && beforeSendInstanceToken ? "outside_window" : "connection_lost");
             }
             const { data: released, error: releaseError } = await supabase.rpc("release_multiplix_item_claim", {
               p_item_id: item.item_id,
@@ -627,6 +668,9 @@ export async function handleMultiplixSend(
               fetch: (u, o) => fetch(u, o),
               evolutionUrl,
               evolutionKey,
+              // MX07: token DA instancia selecionada — rotas auth=instance (envio e
+              // presenca) saem com a identidade dela, nunca com a key global.
+              instanceToken: beforeSendInstanceToken,
               // O adaptador nao le env (roda tambem fora do Deno); a edge resolve e passa.
               flavor: (Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") === "v2" ? "v2" : "go",
               signal: abortCtrl.signal,

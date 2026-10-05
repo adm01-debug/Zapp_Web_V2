@@ -192,6 +192,56 @@ Deno.test("F41 send recusa texto acima do limite sem tocar a rede", async () => 
   assertEquals(touched, false);
 });
 
+// ── MX07: credencial da rota — instância exige o token DELA, nunca a key global ──
+
+Deno.test("MX07 send sem instanceToken em rota auth=instance rejeita fechado (sem rede, sem key global)", async () => {
+  let touched = false;
+  const fetcher: Fetcher = () => {
+    touched = true;
+    return Promise.resolve(okResponse());
+  };
+  const err = await assertRejects(
+    () =>
+      send(
+        { kind: "text", to: "5511999999999", instanceId: "inst-a", text: "oi" },
+        { fetch: fetcher, evolutionUrl: "https://go.exemplo.com", evolutionKey: "admin-key", flavor: "go" },
+      ),
+    MessagingError,
+  );
+  assertEquals(err.code, "missing_instance_token");
+  assertEquals(touched, false, "nenhum POST (nem presença) pode sair sem a credencial da instância");
+});
+
+Deno.test("MX07 send usa o token da instância escolhida em TODA chamada (duas instâncias, sem fallback)", async () => {
+  const { calls, fetcher } = recordingFetcher();
+  const base = {
+    fetch: fetcher,
+    evolutionUrl: "https://go.exemplo.com",
+    evolutionKey: "admin-key",
+    flavor: "go" as const,
+  };
+
+  await send(
+    { kind: "text", to: "5511999999999", instanceId: "inst-a", text: "oi" },
+    { ...base, instanceToken: "token-inst-a" },
+  );
+  await send(
+    { kind: "text", to: "5511888888888", instanceId: "inst-b", text: "oi" },
+    { ...base, instanceToken: "token-inst-b" },
+  );
+
+  assertEquals(calls.length, 4, "2 envios = 2 presenças + 2 mensagens");
+  // Presença e envio usam a MESMA identidade: o token da instância daquele envio.
+  assertEquals(
+    calls.map((c) => c.apikey),
+    ["token-inst-a", "token-inst-a", "token-inst-b", "token-inst-b"],
+  );
+  assert(
+    calls.every((c) => c.apikey !== "admin-key"),
+    "a key global nunca pode sair no header apikey de uma rota de instância",
+  );
+});
+
 Deno.test("F41 send propaga erro do provedor (ok=false, status e corpo preservados)", async () => {
   const { fetcher } = recordingFetcher(() =>
     new Response(JSON.stringify({ error: "number is not registered on WhatsApp" }), { status: 400 })
