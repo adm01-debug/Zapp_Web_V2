@@ -132,6 +132,11 @@
  *    `webhook-diagnostic/diagnostic-authz.test.ts`. Nenhum produz vocabulário legado: o mapa
  *    INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido sobe, medido
  *    pela varredura depois do merge (é o critério deste arquivo: o valor certo é o que a árvore mede).
+ *  - 243: IA-QUOTA-001 (05/10/2026) — `_shared/__tests__/ai-quota-acao-calculada.test.ts`
+ *    (prova Deno de que ação calculada admitida pela guarda grava linha em ai_usage_logs e
+ *    reconcilia como tentativa sem cobrança de tokens). É arquivo de teste, não produz token
+ *    legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
+ *    varrido sobe, medido pela varredura depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -206,8 +211,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('242 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(242);
+  it('243 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(243);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

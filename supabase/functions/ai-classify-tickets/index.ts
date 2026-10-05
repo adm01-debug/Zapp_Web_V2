@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
+import { registrarAcaoCalculada } from "../_shared/ai-usage.ts";
 import { AiClassifyTicketsSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
@@ -27,75 +28,101 @@ Deno.serve(async (req) => {
     const __guard = await enforceAiGuards({ functionName: "ai-classify-tickets", userId: user.id, req });
     if (__guard) return __guard;
 
-    const parsed = parseBody(AiClassifyTicketsSchema, await req.json());
-    if (!parsed.success) return validationErrorResponse(parsed, req);
+    // IA-054/IA-QUOTA-001 — ação admitida pela guarda tem de virar linha em
+    // ai_usage_logs: é essa contagem por (usuário, função) que a quota diária lê
+    // (passo 3 de _shared/ai-guards.ts). Sem a linha, a ação passava pela guarda
+    // e era invisível para a quota — o defeito do cartão. O handler é calculado
+    // (nenhum modelo é chamado), então a linha grava tokens NULL ("não medido"):
+    // conta como ação/tentativa na quota, nunca como cobrança de tokens. Toda
+    // saída de `responder` — sucesso, entrada inválida ou erro interno — gera
+    // exatamente uma linha.
+    const responder = async (): Promise<Response> => {
+      try {
+        const parsed = parseBody(AiClassifyTicketsSchema, await req.json());
+        if (!parsed.success) return validationErrorResponse(parsed, req);
 
-    const { limit } = parsed.data;
+        const { limit } = parsed.data;
 
-    const { data: tags } = await callerClient
-      .from("ai_conversation_tags")
-      .select("id, contact_id, tag_name, confidence, source")
-      .order("created_at", { ascending: false })
-      .limit(limit ?? 50);
+        const { data: tags } = await callerClient
+          .from("ai_conversation_tags")
+          .select("id, contact_id, tag_name, confidence, source")
+          .order("created_at", { ascending: false })
+          .limit(limit ?? 50);
 
-    if (!tags || tags.length === 0) {
-      return jsonResponse({ classified: 0, results: [], message: "Nenhuma tag para classificar" }, 200, req);
-    }
-
-    const CATEGORY_RULES: Record<string, string[]> = {
-      "Suporte Técnico": ["suporte", "bug", "erro", "problema", "travou", "não funciona", "defeito"],
-      "Vendas": ["preço", "compra", "venda", "orçamento", "proposta", "desconto", "produto"],
-      "Financeiro": ["pagamento", "boleto", "fatura", "cobrança", "nota fiscal", "pix", "transferência"],
-      "Reclamação": ["reclamação", "insatisfeito", "péssimo", "horrível", "demora", "atraso"],
-      "Agendamento": ["agenda", "horário", "marcar", "agendar", "visita", "reunião"],
-      "Informação": ["informação", "dúvida", "pergunta", "como", "onde", "quando"],
-    };
-
-    const PRIORITY_RULES: Record<string, string> = {
-      "Reclamação": "urgent",
-      "Suporte Técnico": "high",
-      "Financeiro": "high",
-      "Vendas": "medium",
-      "Agendamento": "medium",
-      "Informação": "low",
-    };
-
-    const results = [];
-
-    for (const tag of tags) {
-      const tagLower = tag.tag_name.toLowerCase();
-      let category = "Informação";
-
-      for (const [cat, keywords] of Object.entries(CATEGORY_RULES)) {
-        if (keywords.some(kw => tagLower.includes(kw))) {
-          category = cat;
-          break;
+        if (!tags || tags.length === 0) {
+          return jsonResponse({ classified: 0, results: [], message: "Nenhuma tag para classificar" }, 200, req);
         }
+
+        const CATEGORY_RULES: Record<string, string[]> = {
+          "Suporte Técnico": ["suporte", "bug", "erro", "problema", "travou", "não funciona", "defeito"],
+          "Vendas": ["preço", "compra", "venda", "orçamento", "proposta", "desconto", "produto"],
+          "Financeiro": ["pagamento", "boleto", "fatura", "cobrança", "nota fiscal", "pix", "transferência"],
+          "Reclamação": ["reclamação", "insatisfeito", "péssimo", "horrível", "demora", "atraso"],
+          "Agendamento": ["agenda", "horário", "marcar", "agendar", "visita", "reunião"],
+          "Informação": ["informação", "dúvida", "pergunta", "como", "onde", "quando"],
+        };
+
+        const PRIORITY_RULES: Record<string, string> = {
+          "Reclamação": "urgent",
+          "Suporte Técnico": "high",
+          "Financeiro": "high",
+          "Vendas": "medium",
+          "Agendamento": "medium",
+          "Informação": "low",
+        };
+
+        const results = [];
+
+        for (const tag of tags) {
+          const tagLower = tag.tag_name.toLowerCase();
+          let category = "Informação";
+
+          for (const [cat, keywords] of Object.entries(CATEGORY_RULES)) {
+            if (keywords.some(kw => tagLower.includes(kw))) {
+              category = cat;
+              break;
+            }
+          }
+
+          const priority = PRIORITY_RULES[category] || "low";
+          const confidence = tag.confidence || 0.5;
+
+          let finalPriority = priority;
+          if (confidence < 0.3) finalPriority = "low";
+
+          results.push({
+            tagId: tag.id,
+            contactId: tag.contact_id,
+            tagName: tag.tag_name,
+            category,
+            priority: finalPriority,
+            confidence,
+          });
+        }
+
+        const summary: Record<string, number> = {};
+        for (const r of results) {
+          summary[r.category] = (summary[r.category] || 0) + 1;
+        }
+
+        log.done(200, { classified: results.length });
+        return jsonResponse({ classified: results.length, results, summary }, 200, req);
+      } catch (err: unknown) {
+        log.error("Error", { error: err instanceof Error ? err.message : String(err) });
+        return internalErrorResponse(err, req);
       }
+    };
 
-      const priority = PRIORITY_RULES[category] || "low";
-      const confidence = tag.confidence || 0.5;
-
-      let finalPriority = priority;
-      if (confidence < 0.3) finalPriority = "low";
-
-      results.push({
-        tagId: tag.id,
-        contactId: tag.contact_id,
-        tagName: tag.tag_name,
-        category,
-        priority: finalPriority,
-        confidence,
-      });
-    }
-
-    const summary: Record<string, number> = {};
-    for (const r of results) {
-      summary[r.category] = (summary[r.category] || 0) + 1;
-    }
-
-    log.done(200, { classified: results.length });
-    return jsonResponse({ classified: results.length, results, summary }, 200, req);
+    const __inicio = Date.now();
+    const resposta = await responder();
+    await registrarAcaoCalculada({
+      functionName: "ai-classify-tickets",
+      userId: user.id,
+      req,
+      resposta,
+      inicio: __inicio,
+    });
+    return resposta;
   } catch (err: unknown) {
     log.error("Error", { error: err instanceof Error ? err.message : String(err) });
     return internalErrorResponse(err, req);
