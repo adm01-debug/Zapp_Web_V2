@@ -384,9 +384,10 @@ Estas 4 etapas ficaram pendentes no #1628 por exigirem login real em produção 
 Nesta rodada os dois existem e a medição foi feita contra a produção — resultado cru em
 `docs/design/salesview-journey/VERIFICACAO_S38_S41_S42_S43_2026-10-02.md`.
 
-- **S38 / S42** — [x] 9 prints em `docs/design/salesview-journey/` (1280x900, o maior com 342 KB).
-  Ressalvas declaradas: `03-salesview-cheio.png` é o estado vazio (a conta QA não tem contato com
-  compras) e o par no tema escuro não foi produzido (o tema padrão da conta é claro).
+- **S38 / S42** — [x] matriz central com 9 prints referenciados em `docs/design/salesview-journey/`,
+  todos 1280×900 e abaixo de 400 KB. Em 05/10 foram adicionadas as duas referências históricas
+  ausentes e `03-salesview-cheio.png` foi recapturado com fixture visual determinística, sem escrita no
+  banco; o estado cheio agora é distinto do vazio.
 - **S41** — [~] itens **1, 2, 3 e 5 fecham** com evidência (abas, faixa de resumo, `created_by` gravado
   e conferido no banco, sidebar sem os 3 blocos); item **4 bloqueado** (aba Journey não carrega em
   produção: chunk `JourneyTab-B1r1ugA1.js` = **404**); item **6 não confirmado** (o reload não restaura
