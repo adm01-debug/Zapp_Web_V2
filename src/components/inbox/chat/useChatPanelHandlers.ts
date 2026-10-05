@@ -7,9 +7,43 @@ import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from 
 import { SlashCommand } from '../SlashCommands';
 import { toast } from '@/hooks/ui/use-toast';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
+import {
+  createForwardRunState,
+  forwardMediaMessages,
+  type ForwardMediaItem,
+  type ForwardNonForwardable,
+  type ForwardPairOutcome,
+  type ForwardResult,
+  type ForwardRunState,
+} from '@/hooks/chat/useForwardMedia';
+import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+
+/** Tipos de mensagem do chat com representação textual direta no transporte. */
+const TEXTUAL_FORWARD_TYPES: ReadonlySet<Message['type']> = new Set(['text', 'interactive']);
+
+/** Tipo do chat → tipo de mídia do encaminhamento; `null` = forma sem representação segura. */
+function forwardMediaKind(type: Message['type']): ForwardMediaItem['type'] | null {
+  if (type === 'file') return 'document';
+  if (type === 'image' || type === 'video' || type === 'audio' || type === 'document') return type;
+  return null;
+}
+
+function summarizeForward(
+  pairOutcomes: ForwardPairOutcome[],
+  nonForwardable: ForwardNonForwardable[],
+): ForwardResult {
+  const sent = pairOutcomes.filter((outcome) => outcome.ok).length;
+  return {
+    pairOutcomes,
+    nonForwardable,
+    attempted: pairOutcomes.length,
+    sent,
+    failed: pairOutcomes.length - sent,
+  };
+}
 
 interface UseChatPanelHandlersOptions {
   conversationId: string;
@@ -152,8 +186,84 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
 
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
   const handleCopyMessage = useCallback((content: string) => { void navigator.clipboard.writeText(content); toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' }); }, []);
-  const handleForwardMessage = useCallback((message: Message) => { setForwardMessage(message); openDialog('forwardDialog'); }, [openDialog]);
-  const handleForwardToTargets = useCallback((targetIds: string[], targetType: 'contact' | 'group') => { log.debug('Forwarding to:', { targetIds, targetType, message: forwardMessageRef.current }); }, [forwardMessageRef]);
+
+  // R2-INB-002: um novo encaminhamento começa com estado limpo — o retry dentro do
+  // diálogo reusa o MESMO estado (pares concluídos), mas um encaminhamento novo não herda.
+  const forwardRunStateRef = useRef<ForwardRunState | null>(null);
+
+  const handleForwardMessage = useCallback((message: Message) => {
+    forwardRunStateRef.current = null;
+    setForwardMessage(message);
+    openDialog('forwardDialog');
+  }, [openDialog]);
+
+  /**
+   * R2-INB-002: transporta o encaminhamento do CHAT pelo caminho canônico e devolve o
+   * resultado real por destino. Antes só existia `log.debug` e o hook anunciava sucesso
+   * sem transporte. Grupo e formas sem representação segura falham explicitamente —
+   * nada de sucesso fictício nem bypass.
+   */
+  const handleForwardToTargets = useCallback<ForwardCallback>(async (targetIds, targetType, onProgress) => {
+    const message = forwardMessageRef.current;
+    const pairOutcomes: ForwardPairOutcome[] = [];
+    const nonForwardable: ForwardNonForwardable[] = [];
+
+    const failEveryTarget = (reason: string) => {
+      const itemId = message?.id ?? 'chat-forward';
+      for (const targetId of targetIds) pairOutcomes.push({ itemId, targetId, targetType, ok: false, error: reason });
+      return summarizeForward(pairOutcomes, nonForwardable);
+    };
+
+    if (!message) return failEveryTarget('Mensagem de origem indisponível para encaminhar.');
+
+    // `enqueue_outbound_message` valida `contacts.id`: grupo não tem destino seguro.
+    if (targetType === 'group') return failEveryTarget('Encaminhamento para grupos ainda não é suportado.');
+
+    const mediaKind = forwardMediaKind(message.type);
+    if (mediaKind) {
+      if (!message.mediaUrl) return failEveryTarget('Mensagem sem arquivo de origem para encaminhar.');
+      const state = forwardRunStateRef.current ?? createForwardRunState();
+      forwardRunStateRef.current = state;
+      const item: ForwardMediaItem = {
+        id: message.id,
+        url: message.mediaUrl,
+        type: mediaKind,
+        filename: message.media_filename || 'arquivo',
+        caption: message.caption ?? null,
+      };
+      return forwardMediaMessages(
+        [item],
+        targetIds.map((id) => ({ id, type: 'contact' as const })),
+        { state, onProgress },
+      );
+    }
+
+    if (!TEXTUAL_FORWARD_TYPES.has(message.type)) {
+      return failEveryTarget(`Mensagens do tipo "${message.type}" não podem ser encaminhadas.`);
+    }
+
+    // Texto/interactive textual: um envio canônico por contato, com o conteúdo original.
+    const total = targetIds.length;
+    onProgress?.(0, total);
+    let done = 0;
+    for (const targetId of targetIds) {
+      try {
+        await sendOutboundMessage({ contactId: targetId, content: message.content, messageType: 'text' });
+        pairOutcomes.push({ itemId: message.id, targetId, targetType: 'contact', ok: true });
+      } catch (error) {
+        pairOutcomes.push({
+          itemId: message.id,
+          targetId,
+          targetType: 'contact',
+          ok: false,
+          error: error instanceof Error && error.message ? error.message : 'Não foi possível encaminhar a mensagem.',
+        });
+      }
+      done += 1;
+      onProgress?.(done, total);
+    }
+    return summarizeForward(pairOutcomes, nonForwardable);
+  }, [forwardMessageRef]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
