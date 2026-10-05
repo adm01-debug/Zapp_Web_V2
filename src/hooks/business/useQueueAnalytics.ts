@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllRows, type PageResult } from '@/lib/fetchAllRows';
 import { log } from '@/lib/logger';
 import { startOfDay, subDays, format, startOfHour, eachDayOfInterval, eachHourOfInterval, startOfToday, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -43,6 +44,28 @@ interface AnalyticsContact {
   conversation_status_changed_at: string | null;
 }
 
+interface AnalyticsMessage {
+  id: string;
+  contact_id: string | null;
+  created_at: string;
+  sender: string;
+  agent_id: string | null;
+}
+
+/** Página explícita: um select sem range fica sujeito ao teto do PostgREST. */
+const ANALYTICS_PAGE_SIZE = 1000;
+
+async function fetchCompleteAnalyticsRows<T>(
+  source: 'contacts' | 'messages',
+  fetchPage: (from: number, to: number) => PromiseLike<PageResult<T>>,
+): Promise<T[]> {
+  const result = await fetchAllRows(fetchPage, { pageSize: ANALYTICS_PAGE_SIZE });
+  if (result.incomplete) {
+    throw result.error ?? new Error(`Paginação de ${source} excedeu o limite de segurança`);
+  }
+  return result.rows;
+}
+
 interface QueueAnalytics {
   dailyData: DailyData[];
   hourlyData: HourlyData[];
@@ -81,7 +104,7 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
   };
 
   const processDailyData = (
-    messages: Array<{ id: string; contact_id: string; created_at: string; sender: string }>,
+    messages: Array<{ id: string; contact_id: string | null; created_at: string; sender: string }>,
     contacts: AnalyticsContact[],
     range: DateRange
   ): DailyData[] => {
@@ -224,17 +247,19 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
     try {
       setLoading(true);
 
-      // Get contacts in this queue
-      const { data: contacts, error: contactsError } = await supabase
-        .from('contacts')
-        .select('id, assigned_to, created_at, conversation_status, conversation_status_changed_at')
-        .eq('queue_id', queueId);
+      // `range` explícito percorre a fila inteira; sem ele o PostgREST corta silenciosamente a
+      // consulta no teto configurado e os gráficos passam a representar só a primeira página.
+      const contacts = await fetchCompleteAnalyticsRows<AnalyticsContact>(
+        'contacts',
+        (from, to) => supabase
+          .from('contacts')
+          .select('id, assigned_to, created_at, conversation_status, conversation_status_changed_at')
+          .eq('queue_id', queueId)
+          .order('id', { ascending: true })
+          .range(from, to),
+      );
 
-      if (contactsError) throw contactsError;
-
-      const contactIds = contacts?.map(c => c.id) || [];
-
-      if (contactIds.length === 0) {
+      if (contacts.length === 0) {
         setDailyData(generateEmptyDailyData(dateRange));
         setHourlyData(generateEmptyHourlyData());
         setAgentPerformance([]);
@@ -247,31 +272,34 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
         return;
       }
 
-      // Fetch messages for these contacts in the date range
-      const { data: messages, error: messagesError } = await supabase
-        .from('messages')
-        .select('id, contact_id, created_at, sender, agent_id')
-        .in('contact_id', contactIds)
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString())
-        .order('created_at', { ascending: true });
-
-      if (messagesError) throw messagesError;
+      // A relação filtra a fila no servidor sem formar um `.in(...)` gigante com todos os IDs.
+      // A ordem por chave única torna estável a leitura paginada de todas as mensagens do período.
+      const messages = await fetchCompleteAnalyticsRows<AnalyticsMessage>(
+        'messages',
+        (from, to) => supabase
+          .from('messages')
+          .select('id, contact_id, created_at, sender, agent_id, contacts!inner(queue_id)')
+          .eq('contacts.queue_id', queueId)
+          .gte('created_at', dateRange.from.toISOString())
+          .lte('created_at', dateRange.to.toISOString())
+          .order('id', { ascending: true })
+          .range(from, to),
+      );
 
       // Process daily data
-      const dailyAggregation = processDailyData((messages || []) as Array<{ id: string; contact_id: string; created_at: string; sender: string }>, (contacts || []) as AnalyticsContact[], dateRange);
+      const dailyAggregation = processDailyData(messages, contacts, dateRange);
       setDailyData(dailyAggregation);
 
       // Process hourly data (today only)
-      const hourlyAggregation = processHourlyData(messages || []);
+      const hourlyAggregation = processHourlyData(messages);
       setHourlyData(hourlyAggregation);
 
       // Process agent performance
-      const agentAggregation = await processAgentPerformance(messages || []);
+      const agentAggregation = await processAgentPerformance(messages);
       setAgentPerformance(agentAggregation);
 
       // Process status distribution
-      const statusAggregation = processStatusData((contacts || []) as Array<{ id: string; assigned_to: string | null; conversation_status: string | null }>);
+      const statusAggregation = processStatusData(contacts);
       setStatusData(statusAggregation);
 
     } catch (error) {
