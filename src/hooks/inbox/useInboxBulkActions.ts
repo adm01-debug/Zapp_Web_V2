@@ -68,7 +68,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     }
   }, [selectedIds, clearSelection, refetch]);
 
-  const bulkTransfer = useCallback(async (type: 'agent' | 'queue', targetId: string, _message?: string) => {
+  const bulkTransfer = useCallback(async (type: 'agent' | 'queue', targetId: string, message?: string) => {
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
     try {
@@ -79,6 +79,19 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       } else {
         updateData.queue_id = targetId;
       }
+      // O evento vai ANTES do update: a policy de INSERT de conversation_events exige que o
+      // contato ainda esteja atribuido ao operador (is_admin_or_supervisor OU contact_id IN
+      // (contacts WHERE assigned_to = <meu perfil>)). Depois do update o contato ja pertence ao
+      // destino e o INSERT seria recusado para quem nao e admin/supervisor.
+      const { error: eventsError } = await supabase
+        .from('conversation_events')
+        .insert(contactIds.map(contactId => ({
+          contact_id: contactId,
+          event_type: 'transfer',
+          ...(type === 'agent' ? { to_agent_id: targetId } : { to_queue_id: targetId }),
+          ...(message ? { metadata: { note: message } } : {}),
+        })));
+      if (eventsError) throw eventsError;
       const { error } = await supabase
         .from('contacts')
         .update(updateData)
@@ -87,8 +100,9 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       toast.success(`${contactIds.length} contato(s) transferido(s)`);
       clearSelection();
       refetch();
-    } catch {
+    } catch (err) {
       toast.error('Erro ao transferir contatos');
+      throw err;
     } finally {
       setBulkLoading(false);
     }
