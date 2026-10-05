@@ -9,11 +9,22 @@
 //      sem nenhum fetch Resend.
 //   6. Caminho feliz: admin/supervisor + payload de convite → template do servidor + 1 fetch Resend.
 //
-// Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read supabase/functions/send-email/index.test.ts
+// Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/send-email/index.test.ts
 import { buildInvitePayload, handleSendEmailRequest } from "./index.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
+}
+
+// Hostname EXATO, nunca substring: "https://api.resend.com.evil.tld" e
+// "https://evil.tld/api.resend.com" não podem contar como o provedor.
+function hostnameDaUrl(entrada: string): string | null {
+  const url = entrada.startsWith("SEM_STUB ") ? entrada.slice("SEM_STUB ".length) : entrada;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
 }
 
 // ── template do servidor ────────────────────────────────────────────────────
@@ -49,7 +60,10 @@ function withFetch(routes: Route[]) {
       : input instanceof URL
       ? input.toString()
       : (input as Request).url;
-    const route = routes.find((r) => url.includes(r.match));
+    // Casa rota por host+path exatos, não por substring do URL inteiro.
+    const alvo = new URL(url);
+    const hostComPath = `${alvo.hostname}${alvo.pathname}`;
+    const route = routes.find((r) => r.match === hostComPath || r.match === alvo.pathname);
     if (!route) {
       seen.push(`SEM_STUB ${url}`);
       return Promise.resolve(new Response("nao stubado", { status: 599 }));
@@ -102,7 +116,17 @@ function makeRequest(body: unknown, withAuth = true): Request {
   });
 }
 
-const semResend = (seen: string[]) => seen.filter((u) => u.includes("api.resend.com"));
+const semResend = (seen: string[]) => seen.filter((u) => hostnameDaUrl(u) === "api.resend.com");
+
+Deno.test("R2-API-022: host parecido nunca conta como Resend (comparação por hostname exato)", () => {
+  const falsos = [
+    "https://api.resend.com.evil.tld/emails",
+    "https://evil.tld/api.resend.com/emails",
+    "https://api.resend.com@evil.tld/emails",
+  ];
+  assert(semResend(falsos).length === 0, `lookalikes não podem contar como Resend: ${semResend(falsos).join(",")}`);
+  assert(semResend(["https://api.resend.com/emails"]).length === 1, "o host real continua contando");
+});
 
 Deno.test("R2-API-022: CORS preflight continua livre (OPTIONS sem auth)", async () => {
   const res = await handleSendEmailRequest(new Request("https://stub.supabase.co/functions/v1/send-email", {
