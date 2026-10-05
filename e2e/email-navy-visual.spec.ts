@@ -3,6 +3,14 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { mockEmailNavy } from './fixtures/email-navy';
 
+// O boot deste spec depende de um dev server Vite servindo um grafo de modulos grande. Sob carga
+// concorrente (varios workers/projects e outras suites no mesmo host) o React 19 ja' levou >8s para
+// montar — motivo pelo qual o `beforeEach` eleva `__BOOT_DEADLINE_MS` para 60s aqui. O timeout de
+// teste padrao (30s) nao cabe nesse orcamento: um boot lento consome todo o tempo e derruba o teste
+// com "Test timeout", sem relacao com o produto. 120s da' espaco ao boot lento sem afrouxar
+// nenhuma assercao.
+test.setTimeout(120_000);
+
 const output = join(import.meta.dirname, 'email-navy-visual');
 
 async function clearTransientToasts(page: import('@playwright/test').Page) {
@@ -18,6 +26,37 @@ async function freezeVisualTransitions(page: import('@playwright/test').Page) {
   await page.addStyleTag({
     content: '*, *::before, *::after { animation: none !important; transition: none !important; }',
   });
+}
+
+/**
+ * Boot deterministico do workspace do Email. O heading 'Email' so' aparece depois que a lista de
+ * contas resolve (antes disso o modulo mostra "Carregando Email"). Com o dev server frio ou sob
+ * carga concorrente, o React 19 pode levar mais que os 5s do timeout padrao de visibilidade ate'
+ * montar — o watchdog de boot do index.html so' dispara em 60s no
+ * E2E, entao o teste falhava com "element(s) not found" sem relacao com o produto. Esperar o
+ * `.email-workspace` existir torna o estado deterministico ANTES de qualquer medicao, sem afrouxar
+ * nenhuma assercao (o heading continua tendo de estar visivel).
+ */
+async function gotoEmailWorkspace(page: import('@playwright/test').Page) {
+  await page.goto('/?view=email-chat');
+  await page.waitForFunction(() => Boolean(document.querySelector('.email-workspace')), undefined, { timeout: 60_000 });
+}
+
+/**
+ * A lista de conversas entra com framer-motion animando `opacity` por estilo INLINE (JS/rAF), o
+ * que `animations: none`/`transition: none` NAO congela — ao contrario das transicoes de tema.
+ * Se o axe mede no meio do fade, a cor do texto aparece misturada com o fundo (ex.: branco a
+ * opacity 0,27 sobre preto = #444444) e ele acusa um contraste que nao existe no estado final.
+ * Mesma causa ja documentada em inbox-contraste.spec.ts. Esperar a opacidade inline assentar
+ * torna a medicao deterministica, sem afrouxar assercao nenhuma.
+ */
+async function waitForWorkspaceAnimations(page: import('@playwright/test').Page) {
+  await page.waitForFunction(
+    () => Array.from(document.querySelectorAll('.email-workspace [style*="opacity"]'))
+      .every(element => getComputedStyle(element).opacity === '1'),
+    undefined,
+    { timeout: 20_000 },
+  );
 }
 
 interface AxeViolationResult {
@@ -40,7 +79,7 @@ test.beforeEach(async ({ page }, testInfo) => {
 
 test('rota real renderiza lista, conversa e compositor com o tema do sistema sem chamadas externas mutáveis', async ({ page }) => {
   mkdirSync(output, { recursive: true });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.getByText('Preview deployment failed for departamento-pessoal-v3').first()).toBeVisible();
   await page.waitForTimeout(400);
@@ -69,15 +108,17 @@ test('rota real renderiza lista, conversa e compositor com o tema do sistema sem
 });
 
 test('workspace do Email não introduz violações axe', async ({ page }) => {
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await freezeVisualTransitions(page);
+  await waitForWorkspaceAnimations(page);
   await page.waitForTimeout(400);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
     const axe = (window as unknown as Window & {
-      axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> };
+      axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult>; _running?: boolean };
     }).axe;
+    while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
     const result = await axe.run('.email-workspace', {
       rules: {
         'color-contrast': { enabled: true },
@@ -94,9 +135,10 @@ test('workspace do Email não introduz violações axe', async ({ page }) => {
 
 test('superfícies do Email herdam os mesmos tokens do sistema em claro e escuro', async ({ page }) => {
   mkdirSync(output, { recursive: true });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await expect(page.getByTestId('email-workspace')).toBeVisible();
   await freezeVisualTransitions(page);
+  await waitForWorkspaceAnimations(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
 
   for (const mode of ['light', 'dark'] as const) {
@@ -135,8 +177,13 @@ test('superfícies do Email herdam os mesmos tokens do sistema em claro e escuro
 
     const contrastViolations = await page.evaluate(async () => {
       const axe = (window as unknown as Window & {
-        axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> };
+        axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult>; _running?: boolean };
       }).axe;
+      // O app audita acessibilidade a cada commit do React (@axe-core/react, em DEV) sobre a
+      // MESMA instancia global `window.axe`. Disparar a nossa auditoria enquanto a dele roda
+      // falha com "Axe is already running" (visto no Firefox). Esperamos ele ficar ocioso no
+      // mesmo frame sincrono que dispara a nossa, sem corrida entre a espera e o run.
+      while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
       const result = await axe.run('.email-workspace', { rules: { 'color-contrast': { enabled: true } } });
       return result.violations.filter(violation => violation.id === 'color-contrast').map(violation => ({
         id: violation.id,
@@ -150,7 +197,7 @@ test('superfícies do Email herdam os mesmos tokens do sistema em claro e escuro
 });
 
 test('busca, ajuda e foco do diálogo funcionam por teclado', async ({ page }) => {
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   const search = page.getByRole('textbox', { name: 'Busca global do Email' });
   await search.fill('Sentry');
   await expect(page.getByText('SENTRY-GREEN-BASKET-VQ — 2 new alerts')).toBeVisible();
@@ -167,7 +214,7 @@ test('busca, ajuda e foco do diálogo funcionam por teclado', async ({ page }) =
 
 test('ações históricas permanecem visíveis e acionáveis no touch', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
   await expect(page.getByRole('button', { name: 'Responder' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Encaminhar' }).first()).toBeVisible();
@@ -179,7 +226,7 @@ test('ações históricas permanecem visíveis e acionáveis no touch', async ({
 test('sidebar expandida e recolhida preservam a composição do sistema', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('zapp-sidebar-collapsed', 'false'));
   await page.setViewportSize({ width: 1672, height: 941 });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await expect(page.getByRole('button', { name: 'Recolher menu' })).toBeVisible();
   await expect(page.getByText('Comunicação profissional, organizada como uma conversa.')).toBeVisible();
   await clearTransientToasts(page);
@@ -191,7 +238,7 @@ test('sidebar expandida e recolhida preservam a composição do sistema', async 
 
 test('painel contextual vira drawer intermediário e expõe dados reais', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 768 });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
   await expect(page.getByRole('button', { name: 'Detalhes' })).toBeVisible();
   await page.getByRole('button', { name: 'Detalhes' }).click();
@@ -206,7 +253,7 @@ test('painel contextual vira drawer intermediário e expõe dados reais', async 
 
 test('painel CRM completo preserva ações, acessibilidade e fechamento em 320 px', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
   await page.getByRole('button', { name: 'Detalhes' }).click();
   const drawer = page.getByRole('dialog');
@@ -216,17 +263,26 @@ test('painel CRM completo preserva ações, acessibilidade e fechamento em 320 p
   await expect(drawer.getByRole('link', { name: /abrir site da empresa/i })).toHaveAttribute('href', 'https://empresa.example.test/catalogo?origem=email#sobre');
   await expect(drawer.getByRole('link', { name: /abrir linkedin da empresa/i })).toBeVisible();
   await expect(drawer.getByRole('link', { name: /abrir instagram da empresa/i })).toBeVisible();
+  // A gaveta entra deslizando (data-[state=open]:slide-in-from-right). Medir o botao antes do
+  // fim/freeze da animacao lia uma posicao intermediaria (x + largura > 320) e derrubava o
+  // teste de forma intermitente em Chromium/WebKit. Congelar as transicoes ANTES da medicao
+  // fixa a posicao final da gaveta; o congelamento segue valendo para a afericao do axe.
+  await freezeVisualTransitions(page);
+  await waitForWorkspaceAnimations(page);
   const close = await drawer.getByRole('button', { name: 'Fechar detalhes' }).boundingBox();
   expect(close && close.x >= 0 && close.x + close.width <= 320).toBeTruthy();
-  await freezeVisualTransitions(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
-  const violations = await page.evaluate(async () => (await (window as unknown as Window & { axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> } }).axe.run('[role="dialog"]', {})).violations.map(violation => violation.id));
+  const violations = await page.evaluate(async () => {
+    const axe = (window as unknown as Window & { axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult>; _running?: boolean } }).axe;
+    while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
+    return (await axe.run('[role="dialog"]', {})).violations.map(violation => violation.id);
+  });
   expect(violations).toEqual([]);
 });
 
 test('escolha explícita CRM não vincula automaticamente e resolve a empresa selecionada', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
   await expect(page.getByRole('region', { name: 'Escolher empresa CRM' })).toBeVisible();
   await page.getByRole('button', { name: 'Empresa Exemplo' }).click();
@@ -236,7 +292,7 @@ test('escolha explícita CRM não vincula automaticamente e resolve a empresa se
 
 test('escolha explícita CRM envia o vínculo somente após confirmação e reflete a persistência', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
   await page.getByRole('button', { name: 'Outra Empresa' }).click();
   await expect(page.getByText('Outra Empresa', { exact: true })).toBeVisible();
@@ -252,7 +308,7 @@ test('escolha explícita CRM envia o vínculo somente após confirmação e refl
 
 test('escolha explícita CRM funciona para conversa sem contato local e não oferece vínculo persistente', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByText('Alerta sobre término da cotação').click();
   await expect(page.getByRole('region', { name: 'Escolher empresa CRM' })).toBeVisible();
   await page.getByRole('button', { name: 'Outra Empresa' }).click();
@@ -261,13 +317,13 @@ test('escolha explícita CRM funciona para conversa sem contato local e não ofe
 });
 
 test('CRM desativado não simula empresa ausente', async ({ page }) => {
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
   await expect(page.getByText(/integração crm desativada/i)).toBeVisible();
 });
 
 test('CRM sem permissão informa a restrição sem expor dados da empresa', async ({ page }) => {
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
   await expect(page.getByText(/não tem permissão para consultar os dados empresariais/i)).toBeVisible();
   await expect(page.getByText('Empresa Exemplo', { exact: true })).toHaveCount(0);
@@ -275,7 +331,7 @@ test('CRM sem permissão informa a restrição sem expor dados da empresa', asyn
 
 test('marcadores Gmail reais podem ser gerenciados sem envio externo real', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByText('Preview deployment failed for departamento-pessoal-v3').first().click();
   await page.getByRole('button', { name: 'Gerenciar marcadores' }).click();
   const label = page.getByRole('menuitemcheckbox', { name: 'Clientes importantes' });
@@ -284,7 +340,7 @@ test('marcadores Gmail reais podem ser gerenciados sem envio externo real', asyn
 });
 
 test('editor WYSIWYG aplica formatação, link e histórico de desfazer sem execCommand', async ({ page }) => {
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByRole('button', { name: 'Nova mensagem' }).first().click();
   const editor = page.getByRole('textbox', { name: 'Mensagem' });
   await editor.fill('Texto rico');
@@ -305,7 +361,7 @@ test('editor WYSIWYG aplica formatação, link e histórico de desfazer sem exec
 
 test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis', async ({ page }) => {
   await page.setViewportSize({ width: 640, height: 720 });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nova mensagem' }).first()).toBeVisible();
@@ -318,7 +374,7 @@ test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis',
 });
 
 test('rascunho e referência de anexo permanecem isolados no ciclo conta A → B → A', async ({ page }) => {
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByRole('button', { name: 'Nova mensagem' }).first().click();
   await page.getByPlaceholder('destinatario@email.com').fill('cliente@example.com');
   await page.getByPlaceholder('Assunto do email').fill('Rascunho exclusivo da conta A');
@@ -346,7 +402,7 @@ test('rascunho e referência de anexo permanecem isolados no ciclo conta A → B
 });
 
 test('corpus extremo com texto sem quebra e muitos anexos não cria overflow global', async ({ page }) => {
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await page.getByRole('textbox', { name: 'Busca global do Email' }).fill('Corpus extremo');
   await page.getByText('Corpus extremo', { exact: false }).first().click();
   const extremeMessage = page.getByRole('article', { name: /Mensagem de REMETENTESEMQUEBRA/ });
@@ -361,14 +417,16 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
     localStorage.setItem('highContrast', 'true');
     localStorage.setItem('reducedMotion', 'true');
   });
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.locator('html')).toHaveClass(/high-contrast/);
   await expect(page.locator('html')).toHaveClass(/reduced-motion/);
   await freezeVisualTransitions(page);
+  await waitForWorkspaceAnimations(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
-    const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult> } }).axe;
+    const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult>; _running?: boolean } }).axe;
+    while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
     return (await axe.run('.email-workspace')).violations.map(item => ({
       id: item.id,
       impact: item.impact,
@@ -379,7 +437,7 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
 });
 
 test('workspace do Email é desmontado ao alternar entre módulos', async ({ page }) => {
-  await page.goto('/?view=email-chat');
+  await gotoEmailWorkspace(page);
   await expect(page.locator('.email-workspace')).toHaveCount(1);
   await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
   await expect(page).toHaveURL(/view=dashboard/);
@@ -410,7 +468,7 @@ for (const viewport of [
 ]) {
   test(`matriz responsiva ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
-    await page.goto('/?view=email-chat');
+    await gotoEmailWorkspace(page);
     await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
     await expect(page.getByText('Preview deployment failed for departamento-pessoal-v3').first()).toBeVisible();
     await page.waitForTimeout(400);
