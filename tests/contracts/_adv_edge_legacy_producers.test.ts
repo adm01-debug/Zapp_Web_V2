@@ -123,6 +123,13 @@
  *    media-egress.ts, revoke-auth-sessions/ e os index.test.ts correspondentes, nenhum com token
  *    legado): o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
  *    varrido sobe, medido pela varredura depois do merge.
+ *  - 243: MX08 (05/10/2026) — `multiplix-dispatch/__tests__/draft.test.ts` (prova Deno
+ *    do conserto do MX08: auth.uid -> profiles.id, colunas reais e destinatários
+ *    resolvidos no servidor). É arquivo de teste, não produz token legado: o mapa
+ *    INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
+ *    varrido sobe (242 na árvore do dia + 1 deste cartão = 243), medido pela
+ *    varredura depois do merge. O pino vive num arquivo compartilhado por todo
+ *    cartão que cria `.test.ts` de edge: o número aqui é o da árvore medida.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -197,8 +204,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('232 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(232);
+  it('243 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(243);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

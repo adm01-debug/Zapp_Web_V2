@@ -43,7 +43,7 @@
 
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { errorResponse, jsonResponse } from '../../_shared/validation.ts';
-import { DispatchError, type ActionContext } from '../index.ts';
+import { DispatchError, type ActionContext, resolveProfileId } from '../index.ts';
 import { DEFAULT_SCHEDULE_TIMEZONE } from '../../_shared/talkx-window.ts';
 import { MULTIPLIX_ELIGIBILITY_VALUES, type MultiplixEligibility } from '../../_shared/multiplix-eligibility.ts';
 import { eligibility, getGreeting, personalize } from '../../_shared/messaging/index.ts';
@@ -136,23 +136,8 @@ type MediaKind = (typeof MEDIA_KINDS)[number];
 
 type Result<T> = { data: T; error: { message?: string } | null };
 
-/**
- * Resolve o `profiles.id` do usuario autenticado.
- *
- * `multiplix_dispatches.created_by` guarda o `profiles.id` (F31), e o RLS do
- * modulo compara com o profile do JWT — comparar com o `auth.uid()` direto
- * daria 404 para o proprio dono. Mesma resolucao que `multiplix-send` faz em
- * `authProfile()`.
- */
-async function resolveProfileId(ctx: ActionContext): Promise<string | null> {
-  const { data, error } = await ctx.supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', ctx.userId)
-    .maybeSingle() as Result<{ id?: string } | null>;
-  if (error) throw new DispatchError('MULTIPLIX_PROFILE_LOOKUP', error.message ?? 'profile lookup failed', 502);
-  return typeof data?.id === 'string' ? data.id : null;
-}
+// MX08: `resolveProfileId` (importado do index.ts) e a resolucao canonica da
+// edge — `created_by` guarda `profiles.id` (F31), nunca o `auth.uid` do JWT.
 
 /** Carrega o disparo SO se for do dono; qualquer outro caso e 404 (nao vaza existencia). */
 async function loadOwnedDispatch(ctx: ActionContext, dispatchId: string): Promise<DispatchRow> {

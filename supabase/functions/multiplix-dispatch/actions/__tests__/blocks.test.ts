@@ -52,6 +52,12 @@ function createFakeSupabase(opts: {
   const tables: Record<string, Doc[]> = {
     multiplix_dispatches: opts.dispatches,
     multiplix_blocks: opts.blocks ?? [],
+    // MX08: a guarda resolve profiles.user_id -> profiles.id (id = auth.uid aqui,
+    // o caso em que coincidem; a divergencia e coberta pelo draft.test.ts).
+    profiles: [
+      { id: USER, user_id: USER },
+      { id: OTHER, user_id: OTHER },
+    ],
   };
   const mutations: Mutation[] = [];
   const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
