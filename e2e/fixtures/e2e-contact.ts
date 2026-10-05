@@ -157,8 +157,16 @@ async function getCurrentProfileId(page: Page): Promise<string | null> {
   return Array.isArray(rows) ? (rows[0]?.id ?? null) : null;
 }
 
-// Remove as reacoes do usuario LOGADO (em qualquer mensagem).
+// Remove as reacoes do usuario LOGADO **no contato de teste** (item 96 / R2-INF-006).
 // Chamar em beforeEach E afterAll de reactions.spec.ts.
+//
+// ESCOPO OBRIGATORIO: a policy de DELETE ('Users can delete their own reactions')
+// so conhece `user_id = profile do caller`, sem olhar contato/mensagem. Um filtro
+// apenas por `user_id` apagava TODAS as reacoes do usuario logado — em qualquer
+// conversa, nao so as escritas por este E2E (numa conta de QA real isso e perda de
+// dado). `contact_id` e o mesmo vinculo gravado pelo app no upsert
+// (useReactionMutations.addMutation), entao escopar por ele cobre exatamente o que
+// esta suite escreve e nada mais.
 // Sem limpeza: hasReacted de emoji retorna true em runs seguintes → clique REMOVE
 // em vez de ADICIONAR → badge desaparece → toBeVisible falha (root cause das falhas :41 :65).
 // RLS: policy 'Users can delete their own reactions' cobre user_id = profile.id do caller.
@@ -181,7 +189,7 @@ export async function cleanupE2EReactions(page: Page): Promise<void> {
     return;
   }
   const resp = await page.request.delete(
-    `${SUPABASE_URL}/rest/v1/message_reactions?user_id=eq.${profileId}`,
+    `${SUPABASE_URL}/rest/v1/message_reactions?user_id=eq.${profileId}&contact_id=eq.${E2E_FIXTURE_CONTACT_ID}`,
     { headers }
   );
   if (!resp.ok() && resp.status() !== 404) {
