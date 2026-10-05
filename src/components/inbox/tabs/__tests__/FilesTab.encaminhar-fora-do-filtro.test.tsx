@@ -148,11 +148,17 @@ describe('FilesTab — encaminhar N com arquivos fora do filtro (#51 / OTH-001)'
 
     // Abre o encaminhamento e dispara de verdade para um destino.
     fireEvent.click(screen.getByRole('button', { name: 'Encaminhar 3' }));
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(await within(dialog).findByText('Bob Destino'));
+    // O dialogo de encaminhamento vem de `React.lazy` (chunk proprio): sob carga
+    // o import pode levar mais de 1s, e o timeout padrao do `findBy*` transformava
+    // isso em falha intermitente da suite inteira (medido na verificacao de
+    // integracao). O timeout explicito cobre o import preguicoso sem afrouxar a
+    // assercao: o dialogo continua tendo de aparecer.
+    const dialog = await screen.findByRole('dialog', {}, { timeout: 5000 });
+    fireEvent.click(await within(dialog).findByText('Bob Destino', {}, { timeout: 5000 }));
+
     fireEvent.click(within(dialog).getByRole('button', { name: 'Encaminhar' }));
 
-    await waitFor(() => expect(h.forwardMediaMessages).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(h.forwardMediaMessages).toHaveBeenCalledTimes(1), { timeout: 5000 });
     const payloadIds = h.forwardMediaMessages.mock.calls[0][0].map((item: { id: string }) => item.id);
     // Inclusão (o ponto do defeito), não a ordem: os 3 selecionados chegam ao envio.
     expect([...payloadIds].sort()).toEqual(['m1', 'm2', 'm3']);
@@ -163,7 +169,7 @@ describe('FilesTab — encaminhar N com arquivos fora do filtro (#51 / OTH-001)'
     selectAcrossFilters();
 
     fireEvent.click(screen.getByRole('button', { name: 'Encaminhar 3' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('dialog', {}, { timeout: 5000 });
 
     expect(within(dialog).getByText('3 arquivos selecionados')).toBeInTheDocument();
     expect(within(dialog).getByText(/foto-a\.jpg/)).toBeInTheDocument();
