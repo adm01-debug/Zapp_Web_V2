@@ -108,13 +108,19 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
         if (instanceName && externalId && contactJid) {
           await editMessageApi(instanceName, { number: contactJid, messageId: externalId, text: currentInput.trim() });
         }
-        await supabase.from('messages').update({ content: currentInput.trim(), updated_at: new Date().toISOString() }).eq('id', currentEditing.id);
+        // R2-INB-014: o PostgREST não lança exceção — o builder resolve em `{ error }`. Sucesso
+        // só existe quando a atualização local volta sem erro; sem esta checagem a UI anunciava
+        // "Mensagem editada", limpava o editor e encerrava o fluxo como êxito com a gravação
+        // recusada (RLS/permission denied).
+        const { error } = await supabase.from('messages').update({ content: currentInput.trim(), updated_at: new Date().toISOString() }).eq('id', currentEditing.id);
+        if (error) throw error;
         toast({ title: '✏️ Mensagem editada', description: 'A mensagem foi atualizada com sucesso.' });
+        // Só o sucesso sai do modo de edição — na falha o texto permanece no editor para retry.
+        setEditingMessage(null); setInputValue('');
       } catch (err) {
         log.error('Failed to edit message:', err);
         toast({ title: 'Erro ao editar', description: 'Não foi possível editar a mensagem.', variant: 'destructive' });
       } finally { setIsSending(false); }
-      setEditingMessage(null); setInputValue('');
       return;
     }
 
