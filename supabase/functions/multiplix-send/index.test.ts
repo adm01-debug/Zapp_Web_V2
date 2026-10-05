@@ -1,4 +1,5 @@
 import { handleMultiplixSend, personalize } from './index.ts';
+import { resolveBlockContent } from '../_shared/multiplix-content.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -108,6 +109,7 @@ function recipientRow(index: number, phone: string | null) {
     attempt_count: 0,
     retry_after: null,
     personalized_message: null,
+    variables_snapshot: null,
     created_at: new Date(Date.now() + index).toISOString(),
   };
 }
@@ -137,6 +139,12 @@ interface MockOpts {
    * tem de seguir fail-closed (mata o fail-open do mutante M25). */
   suppressionRpcError?: boolean;
   blockContent?: Record<string, unknown>;
+  /** MX02: `block_type` do bloco devolvido no detalhe do item (default "text") */
+  blockType?: string;
+  /** MX02: `variables_snapshot` do destinatario (variaveis congeladas do item) */
+  variablesSnapshot?: Record<string, string>;
+  /** MX02: `multiplix_delivery_items.personalized_message` — snapshot DO ITEM */
+  itemPersonalizedMessage?: string | null;
   /** cota diaria restante da conexao (F17); null desliga a checagem */
   dailyRemaining?: number | null;
   /** F11a: reivindicacao que nao devolve token (lease de outro worker) */
@@ -152,6 +160,8 @@ interface MockCtx {
   limits: number[];
   completions: Array<Record<string, unknown>>;
   events: Array<Record<string, unknown>>;
+  /** MX02/F69: itens devolvidos a fila no backoff pre-dispatch */
+  reschedules: Array<Record<string, unknown>>;
   dispatch: DispatchRow | null;
   remaining: Array<ReturnType<typeof recipientRow>>;
   recipientSelects: number;
@@ -200,8 +210,21 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
           block_id: "block-1",
           attempt_count: alvo.attempt_count ?? 0,
           status: "sending",
-          recipient: alvo,
-          block: { id: "block-1", block_order: 0, content: opts.blockContent ?? {} },
+          // MX02: o snapshot da mensagem e do ITEM (um destinatario tem N itens),
+          // nao do recipient — ler o do recipient perderia os blocos 2..N.
+          personalized_message: opts.itemPersonalizedMessage ?? null,
+          recipient: { ...alvo, variables_snapshot: opts.variablesSnapshot ?? alvo.variables_snapshot ?? null },
+          // MX02: o conteudo do envio vem do BLOCO do item. O default espelha o
+          // template do disparo do mock, para o cenario legado "bloco == template".
+          block: {
+            id: "block-1",
+            block_order: 0,
+            block_type: opts.blockType ?? "text",
+            content: opts.blockContent ?? { text: "Ola {{empresa}}" },
+            personalization_mode: null,
+            content_version: 1,
+            asset_id: null,
+          },
         },
         error: null,
       };
@@ -319,6 +342,15 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
               data: opts.instanceToken === undefined ? "tok-instancia-teste" : opts.instanceToken,
               error: null,
             });
+          case "reschedule_multiplix_item": {
+            // Fiel ao banco: o item volta para a fila com `next_attempt_at` no futuro,
+            // e `list_multiplix_claimable_items` so o devolve quando a hora chega —
+            // nesta passada ele SAI (sem isso o stub giraria o laco contra a fila).
+            ctx.reschedules.push(args);
+            const itemId = String(args.p_item_id).replace(/^item-/, "");
+            ctx.remaining = ctx.remaining.filter((r) => r.id !== itemId);
+            return Promise.resolve({ data: { action: "rescheduled" }, error: null });
+          }
           case "multiplix_connection_daily_usage": {
             const remaining = opts.dailyRemaining ?? 500;
             return Promise.resolve({ data: { limit: 500, sent: 500 - remaining, remaining }, error: null });
@@ -355,6 +387,7 @@ function newCtx(opts: MockOpts): MockCtx {
     events: [],
     limits: [],
     completions: [],
+    reschedules: [],
     dispatch,
     remaining: [...(opts.recipients ?? [])],
     recipientSelects: 0,
@@ -1098,20 +1131,25 @@ Deno.test("gap M25: erro na RPC de supressao nao libera envio (fail-closed)", as
   }
 });
 
-Deno.test("gap M32: dispatch com midia usa o endpoint de midia (nao sendText)", async () => {
+Deno.test("gap M32/MX02: item com midia no BLOCO usa o endpoint de midia (nao sendText)", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   // Sem flavor explicito o evoFetch traduz para EVOLUTION GO e, sem token de
   // instancia, devolve 400 sem chamar o provedor — o POST so e observavel em v2.
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
+    // MX02: o disparo global aponta para OUTRO arquivo — prova que o endpoint (e a
+    // midia) vem do bloco do item, nao de `dispatch.media_url/media_type`.
     dispatch: dispatchRow({
       status: "sending",
-      media_type: "image",
-      media_url: "https://exemplo.test/foto.png",
+      media_type: "document",
+      media_url: "https://exemplo.test/global.pdf",
       total_recipients: 1,
     }),
     recipients: [recipientRow(1, "5511955550004")],
+    // O ativo vive no bloco de ARQUIVO (`file`) — o mesmo contrato da previa.
+    blockType: "file",
+    blockContent: { media: { url: "https://exemplo.test/foto.png" } },
   };
   const ctx = newCtx(opts);
   // F56: o envio de midia passa pelo prepareMedia, que BUSCA o arquivo para detectar o
@@ -1128,7 +1166,12 @@ Deno.test("gap M32: dispatch com midia usa o endpoint de midia (nao sendText)", 
     );
     assert(
       posts.every((url) => !url.includes("sendText")),
-      `dispatch com midia nao pode usar sendText, veio: ${JSON.stringify(posts)}`,
+      `item com midia nao pode usar sendText, veio: ${JSON.stringify(posts)}`,
+    );
+    const corpoMidia = provider.posts.find((p) => p.url.includes("sendMedia"));
+    assert(
+      String(corpoMidia?.body.media).includes("foto.png"),
+      `a midia tem de ser a do bloco, saiu: ${String(corpoMidia?.body.media)}`,
     );
   } finally {
     provider.restore();
@@ -1224,21 +1267,28 @@ Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 en
   }
 });
 
-Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", async () => {
+Deno.test("F56/MX02: documento sai com o fileName, a url e a legenda do BLOCO (o PDF chega com nome)", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
+    // MX02: o disparo aponta para OUTRO arquivo (imagem sem nome). Se o worker
+    // ainda olhasse `dispatch.media_url/media_type`, sairia a imagem global — as
+    // asserções abaixo separam os dois caminhos.
     dispatch: dispatchRow({
       status: "sending",
-      media_type: "document",
-      media_url: "https://exemplo.test/contrato.pdf",
+      media_type: "image",
+      media_url: "https://exemplo.test/global.png",
       total_recipients: 1,
     }),
     recipients: [recipientRow(1, "5511955550008")],
-    // F33: o nome do arquivo vive no content do bloco, e e a unica fonte dele —
-    // a URL assinada do bucket nao preserva o nome.
-    blockContent: { media: { url: "https://exemplo.test/contrato.pdf", fileName: "Contrato Assinado.pdf" } },
+    // F33: url/caption/nome do arquivo vivem no content do bloco, e sao a unica
+    // fonte deles — a URL assinada do bucket nao preserva o nome.
+    blockType: "file",
+    blockContent: {
+      text: "Segue o contrato da {{empresa}}",
+      media: { url: "https://exemplo.test/contrato.pdf", caption: "Segue o contrato da {{empresa}}", file_name: "Contrato Assinado.pdf" },
+    },
   };
   const ctx = newCtx(opts);
   const provider = stubProviderComMidia();
@@ -1254,6 +1304,14 @@ Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", a
       midia[0].body.mediatype === "document",
       `tipo real (detectado nos bytes) esperado document, veio ${String(midia[0].body.mediatype)}`,
     );
+    assert(
+      String(midia[0].body.media).includes("contrato.pdf"),
+      `a midia tem de ser a do bloco, saiu: ${String(midia[0].body.media)}`,
+    );
+    assert(
+      midia[0].body.caption === "Segue o contrato da Empresa 1",
+      `a legenda tem de ser o texto do bloco personalizado, saiu: ${String(midia[0].body.caption)}`,
+    );
   } finally {
     provider.restore();
     if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
@@ -1261,18 +1319,16 @@ Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", a
   }
 });
 
-Deno.test("F56: audio do dispatch sai como PTT e avisa presenca 'recording'", async () => {
+Deno.test("F56/MX02: audio do BLOCO sai como PTT e avisa presenca 'recording'", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
-    dispatch: dispatchRow({
-      status: "sending",
-      media_type: "audio",
-      media_url: "https://exemplo.test/nota.ogg",
-      total_recipients: 1,
-    }),
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
     recipients: [recipientRow(1, "5511955550009")],
+    // MX02: o audio e do BLOCO (`audio_recorded`), nao mais do disparo global.
+    blockType: "audio_recorded",
+    blockContent: { media: { url: "https://exemplo.test/nota.ogg" } },
   };
   const ctx = newCtx(opts);
   const provider = stubProviderComMidia();
@@ -1410,4 +1466,164 @@ Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por
   } finally {
     provider.restore();
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MX02 (item 46/P1) — o worker envia o conteudo do BLOCO do item, e nao mais o
+// template/midia GLOBAIS do disparo. A previa (F48) e o worker compartilham o
+// resolvedor `_shared/multiplix-content.ts`; estes testes provam a paridade.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Provedor de sucesso que registra os corpos enviados (texto e midia). */
+async function runComClienteV2(opts: MockOpts) {
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    return { ctx, provider };
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+}
+
+Deno.test("MX02: o texto enviado e o do BLOCO do item, nao o template global do disparo", async () => {
+  // Caso medido na auditoria: template global "GLOBAL {{empresa}}" x bloco
+  // "BLOCO CORRETO {{empresa}}" — o worker mandava "GLOBAL Empresa 1".
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550010")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+  };
+  const { provider } = await runComClienteV2(opts);
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    envios[0].body.text === "BLOCO CORRETO Empresa 1",
+    `o texto tem de sair do bloco; saiu: ${String(envios[0].body.text)}`,
+  );
+});
+
+Deno.test("MX02: o `variables_snapshot` do item entra na personalizacao (previa == envio)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550011")],
+    blockContent: { text: "Ola {{empresa}} — falar com {{cargo}}" },
+    variablesSnapshot: { cargo: "Diretor" },
+  };
+  const { provider } = await runComClienteV2(opts);
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    envios[0].body.text === "Ola Empresa 1 — falar com Diretor",
+    `variavel do item nao entrou no texto; saiu: ${String(envios[0].body.text)}`,
+  );
+});
+
+Deno.test("MX02: o snapshot do ITEM prevalece e nao e regravado", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550012")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+    itemPersonalizedMessage: "Mensagem congelada do item (bloco 2)",
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    envios[0].body.text === "Mensagem congelada do item (bloco 2)",
+    `o snapshot do item tem de prevalecer; saiu: ${String(envios[0].body.text)}`,
+  );
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "snapshot ja gravado nao pode ser regravado",
+  );
+});
+
+Deno.test("MX02/F69: bloco de voz sem ativo renderizado SEGURA o item (nao manda o template global)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550013")],
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}" } },
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(
+    provider.posts.length === 0,
+    `bloco de voz pendente nao pode gerar POST, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`,
+  );
+  const reschedules = ctx.reschedules;
+  assert(reschedules.length === 1, `esperava 1 devolucao a fila, houve ${reschedules.length}`);
+  assert(
+    String(reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+    `codigo nomeado esperado, veio: ${String(reschedules[0].p_error_message)}`,
+  );
+  assert(rpcs(ctx, "record_multiplix_item_sent").length === 0, "nada pode ser marcado como enviado");
+});
+
+Deno.test("MX02: bloco sem texto e sem midia nao vira POST (devolve o item com codigo nomeado)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550014")],
+    blockContent: {},
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(provider.posts.length === 0, `bloco vazio nao pode gerar POST, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  const reschedules = ctx.reschedules;
+  assert(reschedules.length === 1, `esperava 1 devolucao a fila, houve ${reschedules.length}`);
+  assert(
+    String(reschedules[0].p_error_message).includes("multiplix_block_empty_content"),
+    `codigo nomeado esperado, veio: ${String(reschedules[0].p_error_message)}`,
+  );
+});
+
+Deno.test("MX02: payload do worker == resolucao da previa para o MESMO bloco e destinatario", async () => {
+  const recipient = recipientRow(1, "5511955550015");
+  const content = {
+    text: "Segue o contrato da {{empresa}}",
+    media: { url: "https://exemplo.test/contrato.pdf", caption: "Segue o contrato da {{empresa}}", file_name: "Contrato Assinado.pdf" },
+  };
+  const block = {
+    id: "block-1",
+    block_order: 0,
+    block_type: "file",
+    content,
+    personalization_mode: null,
+    content_version: 1,
+    asset_id: null,
+  };
+  // A MESMA funcao que `handlePreview` chama para montar a previa (F48).
+  const previa = resolveBlockContent(block, recipient, "America/Sao_Paulo");
+
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipient],
+    blockType: "file",
+    blockContent: content,
+  };
+  const { provider } = await runComClienteV2(opts);
+  const midia = provider.posts.filter((p) => p.url.includes("sendMedia"));
+  assert(midia.length === 1, `esperava 1 POST de midia, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    midia[0].body.fileName === previa.asset?.file_name,
+    `nome do arquivo divergente da previa: envio=${String(midia[0].body.fileName)} previa=${String(previa.asset?.file_name)}`,
+  );
+  assert(
+    String(midia[0].body.media).includes(String(previa.asset?.url)),
+    `midia divergente da previa: envio=${String(midia[0].body.media)} previa=${String(previa.asset?.url)}`,
+  );
+  assert(
+    midia[0].body.caption === previa.text,
+    `texto divergente da previa: envio=${String(midia[0].body.caption)} previa=${previa.text}`,
+  );
 });

@@ -25,6 +25,11 @@ import {
   send,
   sleep,
 } from "../_shared/messaging/index.ts";
+// MX02 (item 46/P1): texto e midia do ITEM saem do SEU bloco, resolvidos pelo
+// MESMO modulo que a previa usa. Antes o worker usava `dispatch.message_template`
+// e `dispatch.media_url/media_type` (globais) e so o fileName vinha do bloco — o
+// operador revisava uma mensagem e saia outra.
+import { resolveBlockContent, type ContentBlockRow } from "../_shared/multiplix-content.ts";
 
 // F37/F43: as duplicatas locais (`getGreeting`, `personalizeMultiplix`,
 // `randomBetween`, `sleep`, `prepareMedia`, `send`) foram removidas — todas vêm do
@@ -62,14 +67,6 @@ function kindForMedia(kind: MediaKind): MessageKind {
     default:
       return "document";
   }
-}
-
-/** F56: nome do arquivo do documento vem do bloco (F33: content.media.fileName). */
-function mediaFileNameFromBlock(content: Record<string, unknown> | null | undefined): string | undefined {
-  const media = content?.media;
-  if (!media || typeof media !== "object") return undefined;
-  const nome = (media as Record<string, unknown>).fileName;
-  return typeof nome === "string" && nome.trim() !== "" ? nome : undefined;
 }
 
 type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
@@ -408,18 +405,42 @@ export async function handleMultiplixSend(
         // material do envio.
         const { data: itemDetail, error: itemDetailError } = await supabase
           .from("multiplix_delivery_items")
-          .select("id, recipient_id, block_id, attempt_count, status, " +
-            "recipient:multiplix_recipients!inner(id, destino_e164, company_name_snapshot, personalized_message), " +
-            "block:multiplix_blocks!inner(id, block_order, content)")
+          .select("id, recipient_id, block_id, attempt_count, status, personalized_message, " +
+            "recipient:multiplix_recipients!inner(id, destino_e164, company_name_snapshot, variables_snapshot), " +
+            "block:multiplix_blocks!inner(id, block_order, block_type, content, personalization_mode, content_version, asset_id)")
           .eq("id", item.item_id)
           .single();
         if (itemDetailError) throw new Error(`multiplix_item_detail_failed: ${itemDetailError.message}`);
-        const recipient = (itemDetail as unknown as {
-          recipient: { id: string; destino_e164: string | null; company_name_snapshot: string | null; personalized_message: string | null };
-        }).recipient;
-        const block = (itemDetail as unknown as {
-          block: { id: string; block_order: number; content: Record<string, unknown> };
-        }).block;
+        const itemDetailRow = itemDetail as unknown as {
+          personalized_message: string | null;
+          recipient: {
+            id: string;
+            destino_e164: string | null;
+            company_name_snapshot: string | null;
+            variables_snapshot: unknown;
+          };
+          block: ContentBlockRow;
+        };
+        const recipient = itemDetailRow.recipient;
+        const block = itemDetailRow.block;
+        // MX02: o conteudo do bloco e resolvido AQUI, com o `variables_snapshot` do
+        // item e o nome da empresa — o mesmo resolvedor que a previa (F48) usa.
+        const resolvedBlock = resolveBlockContent(
+          block,
+          recipient,
+          typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
+        );
+        // O ativo so conta como midia quando tem URL endereçavel (documento/audio/
+        // imagem/video); o bloco de voz (F64/F65) nasce com `url: null`.
+        const mediaAssetUrl = resolvedBlock.asset?.url;
+        const mediaAsset = resolvedBlock.asset && typeof mediaAssetUrl === "string" && mediaAssetUrl !== ""
+          ? { ...resolvedBlock.asset, url: mediaAssetUrl }
+          : null;
+        // F69: bloco de voz sem ativo renderizado (F65 pendente) SEGURA o item —
+        // nunca vira texto solto nem cai no template global.
+        const voicePending = resolvedBlock.asset?.kind === "voice" && mediaAsset === null;
+        // Bloco sem texto e sem midia: nao existe mensagem a enviar.
+        const blockHasNothing = resolvedBlock.text === "" && mediaAsset === null && !voicePending;
 
         const { data: currentDispatch, error: currentDispatchError } = await supabase
           .from("multiplix_dispatches")
@@ -489,40 +510,25 @@ export async function handleMultiplixSend(
           continue;
         }
 
-        let personalizedMsg: string = recipient.personalized_message ?? "";
-        if (!personalizedMsg) {
-          let calculatedMessage: string;
-          try {
-            // F37: dialeto unificado do kernel — o nome da empresa entra por
-            // contact.company, que e o campo consumido por {{empresa}}.
-            calculatedMessage = personalize(
-              dispatch.message_template,
-              { company: recipient.company_name_snapshot },
-              {},
-              typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-            ).text;
-          } catch (e) {
-            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+        // MX02: o snapshot e do ITEM (`multiplix_delivery_items.personalized_message`).
+        // Um destinatario tem N itens (um por bloco) — guardar a mensagem no
+        // recipient (como o worker fazia) apagaria a dos blocos 2..N.
+        let personalizedMsg: string = itemDetailRow.personalized_message ?? "";
+        if (!personalizedMsg && !voicePending && !blockHasNothing) {
+          // O texto do bloco ja vem renderizado pelo kernel (`personalize`), com o
+          // nome da empresa e o `variables_snapshot` do item — a MESMA saida da
+          // previa. Nada e remontado a partir do template global do disparo.
+          personalizedMsg = resolvedBlock.text;
+          if (personalizedMsg !== "") {
+            const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_item_message_snapshot", {
               p_item_id: item.item_id,
               p_claim_token: claim.claim_token,
-              p_status: "failed",
-              p_error_message: e instanceof Error ? e.message : "Erro ao montar mensagem",
+              p_personalized_message: personalizedMsg,
             });
-            if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
-            failedCount++;
-            processedCount++;
-            continue;
+            if (snapshotError) throw new Error(`multiplix_message_snapshot_failed: ${snapshotError.message}`);
+            personalizedMsg = snapshotMessage as string;
           }
-          const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_item_message_snapshot", {
-            p_item_id: item.item_id,
-            p_claim_token: claim.claim_token,
-            p_personalized_message: calculatedMessage,
-          });
-          if (snapshotError) throw new Error(`multiplix_message_snapshot_failed: ${snapshotError.message}`);
-          personalizedMsg = snapshotMessage as string;
         }
-
-        const recipientHasMedia = typeof dispatch.media_url === "string" && typeof dispatch.media_type === "string";
 
         let providerPostAttempted = false;
         let sendTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -545,6 +551,15 @@ export async function handleMultiplixSend(
           });
         }, 30_000);
         try {
+          // MX02/F69: item sem conteudo utilizavel volta a fila no backoff
+          // pre-dispatch (nunca um POST com mensagem inventada pelo dispatch global).
+          if (voicePending) {
+            throw new Error("multiplix_block_pending_media: bloco de voz sem ativo renderizado");
+          }
+          if (blockHasNothing) {
+            throw new Error("multiplix_block_empty_content: bloco sem texto e sem midia");
+          }
+
           const typingDelay = randomBetween(dispatch.typing_delay_min, dispatch.typing_delay_max);
 
           try {
@@ -634,12 +649,15 @@ export async function handleMultiplixSend(
           // F56: o envio passa pelo adaptador (send) em vez de um POST montado a mao. Ele
           // acrescenta duas coisas que o POST cru nao fazia: PRESENCA (composing; recording
           // para nota de voz) e o fileName do documento — sem ele o PDF chega sem nome.
-          // prepareMedia (F40) e quem decide o tipo REAL do arquivo: "document" no dispatch
-          // podia esconder um JPEG, e o nome do arquivo so existe no bloco (F33).
+          // prepareMedia (F40) e quem decide o tipo REAL do arquivo: o `kind` do bloco e
+          // so a expectativa da extensao, e o nome do arquivo so existe no bloco (F33).
           let prepared: PreparedForSend | null = null;
-          if (recipientHasMedia) {
-            const pronto = await prepareMedia(await mediaForSend(dispatch.media_url), {
-              fileName: mediaFileNameFromBlock(block.content),
+          if (mediaAsset) {
+            // F40/F56: prepareMedia segue sendo a autoridade do tipo REAL do arquivo
+            // (magic bytes) — o `kind` do bloco e so a expectativa. O nome do arquivo
+            // vem do bloco (`content.media.file_name` ou `fileName`), unica fonte dele.
+            const pronto = await prepareMedia(await mediaForSend(mediaAsset.url), {
+              fileName: mediaAsset.file_name ?? undefined,
             });
             if (!pronto.ok) {
               throw new Error(`multiplix_media_rejected: ${pronto.reason}: ${pronto.detail}`);
