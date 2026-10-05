@@ -3,7 +3,8 @@ import {
   enforceRateLimit, errorResponse, getClientIP, handleCors, isValidUUID, jsonResponse, requireAuth, requireEnv,
 } from '../_shared/validation.ts';
 import {
-  CRM_TABLE_ALLOWLIST, extractContact360Id, extractSidebarContactId, FILTER_OPERATORS, isExpectedExternalServerKey, isExpectedExternalUrl,
+  CRM_TABLE_ALLOWLIST, extractContact360Id, extractIntelligenceContactId, extractSidebarContactId, FILTER_OPERATORS,
+  isExpectedExternalServerKey, isExpectedExternalUrl,
   normalizePhone, parseSyncResult, validateMutation, validateRpc, validIdentifier,
 } from '../_shared/crm-integration-contract.ts';
 import { normalizeSentiment, type Sentiment } from '../_shared/ai-vocabulary.ts';
@@ -193,6 +194,16 @@ export async function resolveContactLookup(
     return { ok: false, status: 409, error: 'Contact CRM identity mismatch' };
   }
 
+  if (stableLink && lookup === 'intelligence') {
+    const intelligenceId = extractIntelligenceContactId(result.data);
+    if (intelligenceId === null) {
+      return { ok: false, status: 409, error: 'Contact CRM identity requires reverification' };
+    }
+    if (intelligenceId !== stableLink.external_contact_id) {
+      return { ok: false, status: 409, error: 'Contact CRM identity mismatch' };
+    }
+  }
+
   const serialized = JSON.stringify(result.data);
   if (new TextEncoder().encode(serialized).byteLength > MAX_RESPONSE_BYTES) {
     throw new Error('CRM_RESPONSE_TOO_LARGE');
@@ -208,6 +219,104 @@ export async function resolveContactLookup(
     });
   }
   return { ok: true, data: result.data };
+}
+
+interface ContactLookupBatchDependencies {
+  listContacts: (contactIds: string[]) => PromiseLike<{
+    data: Array<{ id: string; phone: string | null }> | null;
+    error: { code?: string } | null;
+  }>;
+  listStableLinks: (contactIds: string[]) => PromiseLike<{
+    data: Array<{ zapp_contact_id: string; normalized_phone: string | null; external_contact_id: string | null }> | null;
+    error: { code?: string } | null;
+  }>;
+  listExternalPhones: (phones: string[]) => PromiseLike<{
+    data: Array<{ contact_id: string | null; numero_e164: string | null }> | null;
+    error: { code?: string } | null;
+  }>;
+  callCompaniesBatch: (phones: string[]) => PromiseLike<{
+    data: unknown;
+    error: { code?: string } | null;
+  }>;
+}
+
+/**
+ * Núcleo testável do lookup em lote. O vínculo estável é a autoridade de
+ * identidade: o telefone de um contato vinculado só é projetado quando o CRM
+ * externo prova que ele ainda pertence ao contato vinculado — exatamente uma
+ * linha em `contact_phones` e o mesmo `contact_id`. Telefone ausente,
+ * divergente, ambíguo ou com leitura indisponível fica fora da lista
+ * (fail closed); contato sem vínculo continua resolvendo por telefone,
+ * desde que o telefone não apareça em nenhuma linha de vínculo — qualquer
+ * presença em `crm_contact_links` exige vínculo válido e prova externa.
+ * Linha de vínculo inválida (`normalized_phone` divergente ou
+ * `external_contact_id` nulo/vazio) bloqueia o telefone inteiro, mesmo
+ * quando outro vínculo do lote prova o mesmo número: sem isso, o contato
+ * de vínculo inválido receberia os dados da pessoa provada.
+ */
+export async function resolveContactLookupBatch(
+  contactIds: string[],
+  deps: ContactLookupBatchDependencies,
+): Promise<Record<string, unknown>> {
+  const { data: contacts, error: contactsError } = await deps.listContacts(contactIds);
+  if (contactsError) throw new Error(`CRM_CONTACTS:${contactsError.code || 'unknown'}`);
+  const { data: links, error: linksError } = await deps.listStableLinks(contactIds);
+  if (linksError) throw new Error(`CRM_LINK_READ:${linksError.code || 'unknown'}`);
+  const linkedByContact = new Map((links || []).map((link) => [link.zapp_contact_id, link]));
+  const linkedPhones = new Set<string>();
+  const invalidLinkPhones = new Set<string>();
+  const unlinkedPhones = new Set<string>();
+  const expectedByPhone = new Map<string, Set<string>>();
+  for (const contact of contacts || []) {
+    const phone = normalizePhone(contact.phone);
+    if (!phone) continue;
+    const link = linkedByContact.get(contact.id);
+    if (!link) {
+      unlinkedPhones.add(phone);
+      continue;
+    }
+    linkedPhones.add(phone);
+    const divergent = Boolean(link.normalized_phone && link.normalized_phone !== phone);
+    if (divergent || !link.external_contact_id?.trim()) {
+      invalidLinkPhones.add(phone);
+      continue;
+    }
+    const expected = expectedByPhone.get(phone) ?? new Set<string>();
+    expected.add(link.external_contact_id);
+    expectedByPhone.set(phone, expected);
+  }
+  for (const phone of linkedPhones) unlinkedPhones.delete(phone);
+  const phones = [...unlinkedPhones].filter((phone) => !invalidLinkPhones.has(phone));
+  if (expectedByPhone.size > 0) {
+    const proof = await withTimeout(deps.listExternalPhones([...expectedByPhone.keys()]));
+    if (proof.error) {
+      console.error(JSON.stringify({ event: 'crm_batch_identity_proof', code: proof.error.code || 'unknown', ok: false }));
+    } else {
+      const ownersByPhone = new Map<string, string[]>();
+      for (const row of proof.data || []) {
+        const phone = normalizePhone(row.numero_e164);
+        if (!phone || typeof row.contact_id !== 'string' || !expectedByPhone.has(phone)) continue;
+        const owners = ownersByPhone.get(phone) ?? [];
+        owners.push(row.contact_id);
+        ownersByPhone.set(phone, owners);
+      }
+      for (const [phone, expected] of expectedByPhone) {
+        const owners = ownersByPhone.get(phone) || [];
+        if (owners.length === 1 && expected.size === 1 && expected.has(owners[0]) && !invalidLinkPhones.has(phone)) {
+          phones.push(phone);
+        }
+      }
+    }
+  }
+  if (phones.length === 0) return {};
+  const result = await withTimeout(deps.callCompaniesBatch(phones));
+  if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
+  if (!result.data || typeof result.data !== 'object' || Array.isArray(result.data) || JSON.stringify(result.data).length > 512_000) {
+    throw new Error('CRM_INVALID_RESPONSE');
+  }
+  const allowedPhones = new Set(phones);
+  return Object.fromEntries(Object.entries(result.data as Record<string, unknown>)
+    .filter(([phone]) => { const normalized = normalizePhone(phone); return normalized && allowedPhones.has(normalized); }));
 }
 
 interface OutboxRow {
@@ -670,29 +779,16 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
         return errorResponse('Contact batch is invalid', 400, req);
       }
       const contactIds = [...new Set(body.contactIds as string[])];
-      const { data: contacts, error: contactsError } = await canonicalUser.from('contacts')
-        .select('id,phone').in('id', contactIds);
-      if (contactsError) throw new Error(`CRM_CONTACTS:${contactsError.code || 'unknown'}`);
-      const { data: links, error: linksError } = await canonical.from('crm_contact_links')
-        .select('zapp_contact_id,normalized_phone').in('zapp_contact_id', contactIds);
-      if (linksError) throw new Error(`CRM_LINK_READ:${linksError.code || 'unknown'}`);
-      const linkedPhone = new Map((links || []).map((link) => [link.zapp_contact_id, link.normalized_phone]));
-      const phones = [...new Set((contacts || []).flatMap((contact) => {
-        const phone = normalizePhone(contact.phone);
-        const stablePhone = linkedPhone.get(contact.id);
-        return phone && (!stablePhone || stablePhone === phone) ? [phone] : [];
-      }))];
-      if (phones.length === 0) { data = {}; }
-      else {
-        const result = await withTimeout(externalClient.rpc('get_companies_by_phones_batch', { p_phones: phones }));
-        if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
-        if (!result.data || typeof result.data !== 'object' || Array.isArray(result.data) || JSON.stringify(result.data).length > 512_000) {
-          throw new Error('CRM_INVALID_RESPONSE');
-        }
-        const allowedPhones = new Set(phones);
-        data = Object.fromEntries(Object.entries(result.data as Record<string, unknown>)
-          .filter(([phone]) => { const normalized = normalizePhone(phone); return normalized && allowedPhones.has(normalized); }));
-      }
+      data = await resolveContactLookupBatch(contactIds, {
+        listContacts: (ids) => canonicalUser.from('contacts').select('id,phone').in('id', ids),
+        listStableLinks: (ids) => canonical.from('crm_contact_links')
+          .select('zapp_contact_id,normalized_phone,external_contact_id').in('zapp_contact_id', ids),
+        // numero_e164 é gravado em E.164 (com '+'): as duas variantes cobrem
+        // bases antigas que possam ter ficado sem o prefixo.
+        listExternalPhones: (phones) => externalClient.from('contact_phones')
+          .select('contact_id,numero_e164').in('numero_e164', phones.flatMap((phone) => [phone, `+${phone}`])),
+        callCompaniesBatch: (phones) => externalClient.rpc('get_companies_by_phones_batch', { p_phones: phones }),
+      });
     } else if (action === 'rpc') {
       const { data: isAdmin, error: adminError } = await canonical.rpc('is_admin_or_supervisor', { _user_id: userId });
       if (adminError || !isAdmin) return errorResponse('Forbidden', 403, req);

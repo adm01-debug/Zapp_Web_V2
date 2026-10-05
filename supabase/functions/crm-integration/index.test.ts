@@ -1,4 +1,4 @@
-import { emailCompanySocials, escapeIlikeExact, externalParticipantEmail, handleCRMIntegrationRequest, resolveContactLookup } from './index.ts';
+import { emailCompanySocials, escapeIlikeExact, externalParticipantEmail, handleCRMIntegrationRequest, resolveContactLookup, resolveContactLookupBatch } from './index.ts';
 
 function assertStatus(actual: number, expected: number) {
   if (actual !== expected) throw new Error(`expected HTTP ${expected}, got ${actual}`);
@@ -62,6 +62,74 @@ Deno.test('sidebar lookup returns 409 when the stable identity differs', async (
   }
 });
 
+Deno.test('intelligence lookup returns 409 when the stable identity differs', async () => {
+  const resolution = await resolveContactLookup(
+    { contactId: CONTACT_ID, lookup: 'intelligence' },
+    lookupDeps({
+      callRpc: () => Promise.resolve({
+        data: { contact_id: 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff', briefing: 'outra pessoa' }, error: null,
+      }),
+    }),
+  );
+  if (resolution.ok || resolution.status !== 409 || resolution.error !== 'Contact CRM identity mismatch') {
+    throw new Error('intelligence identity mismatch did not fail closed');
+  }
+});
+
+Deno.test('intelligence lookup resolves when the external identity matches the stable link', async () => {
+  let calledRpc = '';
+  const resolution = await resolveContactLookup(
+    { contactId: CONTACT_ID, lookup: 'intelligence' },
+    lookupDeps({
+      callRpc: (rpc: string) => {
+        calledRpc = rpc;
+        return Promise.resolve({ data: { contact_id: EXTERNAL_ID, briefing: 'dados' }, error: null });
+      },
+    }),
+  );
+  if (!resolution.ok) throw new Error(`intelligence lookup failed: ${resolution.error}`);
+  if (calledRpc !== 'get_contact_intelligence_by_phone') {
+    throw new Error(`intelligence lookup called the wrong RPC: ${calledRpc}`);
+  }
+});
+
+Deno.test('intelligence lookup without a stable link still resolves by phone', async () => {
+  const resolution = await resolveContactLookup(
+    { contactId: CONTACT_ID, lookup: 'intelligence' },
+    lookupDeps({
+      getStableLink: () => Promise.resolve({ data: null, error: null }),
+      callRpc: () => Promise.resolve({ data: { briefing: 'sem identidade exposta' }, error: null }),
+    }),
+  );
+  if (!resolution.ok) throw new Error(`unlinked intelligence lookup failed: ${resolution.error}`);
+});
+
+Deno.test('intelligence lookup requires reverification when the payload has no verifiable identity', async () => {
+  const resolution = await resolveContactLookup(
+    { contactId: CONTACT_ID, lookup: 'intelligence' },
+    lookupDeps({
+      callRpc: () => Promise.resolve({ data: { briefing: 'sem contact_id' }, error: null }),
+    }),
+  );
+  if (resolution.ok || resolution.status !== 409 || resolution.error !== 'Contact CRM identity requires reverification') {
+    throw new Error('intelligence without verifiable identity did not fail closed');
+  }
+});
+
+Deno.test('360 lookup returns 409 when the stable identity differs', async () => {
+  const resolution = await resolveContactLookup(
+    { contactId: CONTACT_ID, lookup: '360' },
+    lookupDeps({
+      callRpc: () => Promise.resolve({
+        data: { contact: { id: 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff' } }, error: null,
+      }),
+    }),
+  );
+  if (resolution.ok || resolution.status !== 409 || resolution.error !== 'Contact CRM identity mismatch') {
+    throw new Error('360 identity mismatch did not fail closed');
+  }
+});
+
 Deno.test('contact lookup rejects an invalid lookup before reading data', async () => {
   let touched = false;
   const resolution = await resolveContactLookup(
@@ -86,6 +154,205 @@ Deno.test('contact lookup rejects a UTF-8 response larger than 512 KB', async ()
   } catch (error) {
     if (!(error instanceof Error) || error.message !== 'CRM_RESPONSE_TOO_LARGE') throw error;
   }
+});
+
+const LINKED_CONTACT_ID = '33333333-4444-4555-8666-777777777777';
+const FREE_CONTACT_ID = '55555555-6666-4777-8888-999999999999';
+const OTHER_EXTERNAL_ID = 'cccccccc-dddd-4eee-8fff-000000000000';
+const LINKED_PHONE = '5511988881111';
+const FREE_PHONE = '5511977772222';
+
+function batchDeps(overrides: Record<string, unknown> = {}) {
+  return {
+    listContacts: () => Promise.resolve({
+      data: [
+        { id: LINKED_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+        { id: FREE_CONTACT_ID, phone: '+55 (11) 97777-2222' },
+      ],
+      error: null,
+    }),
+    listStableLinks: () => Promise.resolve({
+      data: [
+        { zapp_contact_id: LINKED_CONTACT_ID, normalized_phone: LINKED_PHONE, external_contact_id: EXTERNAL_ID },
+      ],
+      error: null,
+    }),
+    listExternalPhones: () => Promise.resolve({
+      data: [{ contact_id: EXTERNAL_ID, numero_e164: `+${LINKED_PHONE}` }],
+      error: null,
+    }),
+    callCompaniesBatch: (phones: string[]) => Promise.resolve({
+      data: Object.fromEntries(phones.map((phone) => [phone, { company: { name: `Empresa ${phone}` } }])),
+      error: null,
+    }),
+    ...overrides,
+  };
+}
+
+Deno.test('batch projects a linked phone only after the external CRM proves the link identity', async () => {
+  let proofPhones: string[] = [];
+  let sentPhones: string[] = [];
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listExternalPhones: (phones: string[]) => {
+      proofPhones = phones;
+      return Promise.resolve({ data: [{ contact_id: EXTERNAL_ID, numero_e164: `+${LINKED_PHONE}` }], error: null });
+    },
+    callCompaniesBatch: (phones: string[]) => {
+      sentPhones = phones;
+      return Promise.resolve({
+        data: Object.fromEntries(phones.map((phone) => [phone, { company: { name: `Empresa ${phone}` } }])),
+        error: null,
+      });
+    },
+  }));
+  if (!proofPhones.includes(LINKED_PHONE)) throw new Error('linked phone was not sent to the identity proof');
+  if (!sentPhones.includes(LINKED_PHONE) || !sentPhones.includes(FREE_PHONE)) {
+    throw new Error('proven linked phone or unlinked phone missing from the batch RPC');
+  }
+  if (!(LINKED_PHONE in data) || !(FREE_PHONE in data)) {
+    throw new Error('proven linked phone or unlinked phone missing from the projection');
+  }
+});
+
+Deno.test('batch drops a linked phone when contact_phones points to another external contact', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listExternalPhones: () => Promise.resolve({
+      data: [{ contact_id: OTHER_EXTERNAL_ID, numero_e164: LINKED_PHONE }],
+      error: null,
+    }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('divergent linked phone received another person data');
+  if (!(FREE_PHONE in data)) throw new Error('unlinked phone lost its projection');
+});
+
+Deno.test('batch drops a linked phone absent from contact_phones', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listExternalPhones: () => Promise.resolve({ data: [], error: null }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('recycled linked phone received data without proof');
+  if (!(FREE_PHONE in data)) throw new Error('unlinked phone lost its projection');
+});
+
+Deno.test('batch drops a linked phone with ambiguous external ownership', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listExternalPhones: () => Promise.resolve({
+      data: [
+        { contact_id: EXTERNAL_ID, numero_e164: LINKED_PHONE },
+        { contact_id: OTHER_EXTERNAL_ID, numero_e164: LINKED_PHONE },
+      ],
+      error: null,
+    }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('ambiguous linked phone received data');
+  if (!(FREE_PHONE in data)) throw new Error('unlinked phone lost its projection');
+});
+
+Deno.test('batch drops a linked phone when the external identity proof cannot be read', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listExternalPhones: () => Promise.resolve({ data: null, error: { code: 'PGRST500' } }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('linked phone received data after a proof read error');
+  if (!(FREE_PHONE in data)) throw new Error('unlinked phone lost its projection');
+});
+
+Deno.test('batch drops a contact whose phone no longer matches the stable link', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listStableLinks: () => Promise.resolve({
+      data: [{ zapp_contact_id: LINKED_CONTACT_ID, normalized_phone: '5511900000000', external_contact_id: EXTERNAL_ID }],
+      error: null,
+    }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('phone divergent from the stable link received data');
+  if (!(FREE_PHONE in data)) throw new Error('unlinked phone lost its projection');
+});
+
+Deno.test('batch drops a shared phone that also belongs to a linked contact', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listContacts: () => Promise.resolve({
+      data: [
+        { id: LINKED_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+        { id: FREE_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+      ],
+      error: null,
+    }),
+    listExternalPhones: () => Promise.resolve({
+      data: [{ contact_id: OTHER_EXTERNAL_ID, numero_e164: LINKED_PHONE }],
+      error: null,
+    }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('shared phone was released through the unlinked path despite a divergent link');
+});
+
+Deno.test('batch drops a phone whose link row has a null external_contact_id', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listStableLinks: () => Promise.resolve({
+      data: [{ zapp_contact_id: LINKED_CONTACT_ID, normalized_phone: LINKED_PHONE, external_contact_id: null }],
+      error: null,
+    }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('phone bound to a null external_contact_id link received data');
+  if (!(FREE_PHONE in data)) throw new Error('unlinked phone lost its projection');
+});
+
+Deno.test('batch releases a shared phone only when the link identity is proven', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listContacts: () => Promise.resolve({
+      data: [
+        { id: LINKED_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+        { id: FREE_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+      ],
+      error: null,
+    }),
+  }));
+  if (!(LINKED_PHONE in data)) throw new Error('proven shared phone lost its projection');
+});
+
+Deno.test('batch keeps a phone out when another link row for it is divergent', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listContacts: () => Promise.resolve({
+      data: [
+        { id: LINKED_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+        { id: FREE_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+      ],
+      error: null,
+    }),
+    listStableLinks: () => Promise.resolve({
+      data: [
+        { zapp_contact_id: LINKED_CONTACT_ID, normalized_phone: '5511900000000', external_contact_id: EXTERNAL_ID },
+        { zapp_contact_id: FREE_CONTACT_ID, normalized_phone: LINKED_PHONE, external_contact_id: OTHER_EXTERNAL_ID },
+      ],
+      error: null,
+    }),
+    listExternalPhones: () => Promise.resolve({
+      data: [{ contact_id: OTHER_EXTERNAL_ID, numero_e164: LINKED_PHONE }],
+      error: null,
+    }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('phone proven for one link was released despite a divergent link row');
+});
+
+Deno.test('batch keeps a phone out when another link row for it has a null external_contact_id', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listContacts: () => Promise.resolve({
+      data: [
+        { id: LINKED_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+        { id: FREE_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+      ],
+      error: null,
+    }),
+    listStableLinks: () => Promise.resolve({
+      data: [
+        { zapp_contact_id: LINKED_CONTACT_ID, normalized_phone: LINKED_PHONE, external_contact_id: null },
+        { zapp_contact_id: FREE_CONTACT_ID, normalized_phone: LINKED_PHONE, external_contact_id: OTHER_EXTERNAL_ID },
+      ],
+      error: null,
+    }),
+    listExternalPhones: () => Promise.resolve({
+      data: [{ contact_id: OTHER_EXTERNAL_ID, numero_e164: LINKED_PHONE }],
+      error: null,
+    }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('phone proven for one link was released despite a null external_contact_id link row');
 });
 
 Deno.test('derives the external participant without treating the active Gmail account as the contact', () => {
