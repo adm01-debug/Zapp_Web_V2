@@ -720,6 +720,20 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node scripts/db-audit/psql-environment.integration.mjs
 
+      # R2-INF-005 (reauditoria de 03/10/2026): tres linhas de comentario de BASH
+      # ('#') ficaram DENTRO do heredoc do passo "Validar registro no ledger" do
+      # db-migrate.yml. Heredoc e' texto literal: para o psql aquilo e' SQL, nao
+      # comentario -- a consulta abortava e o contrato E65 nao via, porque
+      # conferia PRESENCA DE TEXTO no YAML. Aqui o heredoc EXATO e' extraido do
+      # workflow e executado em PostgreSQL 17 descartavel.
+      - name: Executar o SQL do ledger pos-apply no PostgreSQL 17 (R2-INF-005)
+        env:
+          # E47: SKIP_DOCKER_SHIM=1 -- o teste sobe um container proprio e usa
+          # `docker exec ... psql`; o shim roteia exec para o servico compartilhado.
+          SKIP_DOCKER_SHIM: "1"
+          LEDGER_POSTAPPLY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh node --test scripts/db-audit/ledger-postapply-query.integration.mjs
+
       - name: Simular ambiguidade da RPC e recursao da policy do team chat (#1266)
         env:
           TEAM_CHAT_RPC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}

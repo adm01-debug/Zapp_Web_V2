@@ -9,12 +9,19 @@
 // O segundo bloco pina o SQL do passo: a contagem tem de exigir as duas
 // condicoes, senao a comparacao de igualdade roda sobre uma linha que nem
 // deveria ter passado.
+//
+// R2-INF-005 (reauditoria de 03/10/2026): o bloco que pinava o SQL procurava
+// TEXTO dentro do YAML -- e por isso nao viu que a consulta nao executava. As
+// assercoes `R2-INF-005` abaixo extraem o heredoc exato do passo e o tokenizam
+// com o lexer SQL do repositorio: presenca de texto nao e' prova de SQL valido.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { avaliarStatementsDoLedger, SQL_STATEMENTS_DO_LEDGER } from '../db-audit/verify-ledger-statements.mjs';
 import { parseMigrationFile } from '../db-audit/register-migration.mjs';
+import { sqlTokens } from '../db-audit/sql-lexer.mjs';
+import { extrairConsultaDoLedger } from '../db-audit/extrair-consulta-ledger.mjs';
 
 const ARQUIVO = JSON.stringify(['create table a();', 'select 1;']);
 
@@ -85,4 +92,28 @@ test('o passo do db-migrate exige NOT NULL e array_length antes de comparar', as
   assert.match(passo, /AND statements IS NOT NULL/);
   assert.match(passo, /AND array_length\(statements, 1\) > 0/);
   assert.match(passo, /verify-ledger-statements\.mjs/);
+});
+
+// R2-INF-005: "# E65 (auditoria ...)" ficou tres linhas DENTRO do heredoc
+// entregue ao psql. Comentario de BASH nao e' comentario de SQL: o parser do
+// PostgreSQL aborta no '#' e a consulta nunca conta nada ("A consulta nao
+// consegue verificar count/statements" -- reauditoria de 03/10/2026). O teste
+// acima nao pegava isso porque so' procurava texto no YAML.
+test('R2-INF-005: o heredoc do ledger e SQL valido, sem comentario de Bash', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/db-migrate.yml', import.meta.url), 'utf8');
+  const consulta = extrairConsultaDoLedger(workflow);
+  assert.doesNotMatch(consulta, /^\s*#/m,
+    'dentro do heredoc o "#" e texto enviado ao psql: o comentario tem de ser SQL (--)');
+  assert.ok(!sqlTokens(consulta).includes('#'),
+    'o lexer SQL do repositorio nao reconhece "#" como comentario -- e token que o parser recusa');
+});
+
+test('R2-INF-005: o comentario da consulta e SQL e a regressao para "#" e detectavel', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/db-migrate.yml', import.meta.url), 'utf8');
+  const consulta = extrairConsultaDoLedger(workflow);
+  // Contraprova: o mesmo lexer que aprova o heredoc tem de ACUSAR a versao
+  // pre-fix. Sem isso, a assercao acima poderia estar passando por vacuo.
+  const comBash = consulta.replace(/^(\s*)--/m, '$1#');
+  assert.notEqual(comBash, consulta, 'a consulta precisa ter comentario SQL (--) para a contraprova');
+  assert.ok(sqlTokens(comBash).includes('#'), 'a volta do comentario de Bash tem de ser detectada');
 });
