@@ -33,34 +33,35 @@ const log = getLogger('MessageBubble');
 // COPIADO para o bucket `stickers` — a biblioteca não pode compartilhar o
 // objeto da mensagem em `whatsapp-media` (vida útil distinta; apagar a
 // mensagem/arquivo não pode quebrar o catálogo).
-const STICKER_EXT_BY_MIME: Record<string, string> = {
-  'image/webp': 'webp',
-  'image/png': 'png',
-  'image/jpeg': 'jpg',
-  'image/gif': 'gif',
-};
+
+/**
+ * O destino é derivado do id estável da mensagem. Assim a URL da cópia também
+ * é estável e pode ser usada para detectar um segundo salvamento antes do
+ * download/upload, sem persistir a URL temporária da mídia recebida.
+ */
+function getReceivedStickerDestination(messageId: string): { url: string; storagePath: string } {
+  const storagePath = `recebida_${encodeURIComponent(messageId)}.webp`;
+  const { data } = supabase.storage.from('stickers').getPublicUrl(storagePath);
+  if (!data?.publicUrl) throw new Error('Falha ao definir o destino da cópia da figurinha');
+  return { url: data.publicUrl, storagePath };
+}
 
 /**
  * Baixa a mídia recebida e publica uma cópia própria no bucket `stickers`.
- * Devolve a URL pública da cópia e o caminho criado (para compensação).
- * Se nada puder ser publicado, remove o objeto recém-criado antes de lançar.
  */
-async function copyReceivedStickerToLibrary(receivedUrl: string): Promise<{ url: string; storagePath: string }> {
+async function copyReceivedStickerToLibrary(
+  receivedUrl: string,
+  destination: { url: string; storagePath: string }
+): Promise<{ url: string; storagePath: string }> {
   const response = await fetch(receivedUrl);
   if (!response.ok) throw new Error(`Falha ao baixar figurinha (HTTP ${response.status})`);
   const blob = await response.blob();
   const contentType = blob.type || 'image/webp';
-  const storagePath = `recebida_${Date.now()}_${crypto.randomUUID()}.${STICKER_EXT_BY_MIME[contentType] ?? 'webp'}`;
   const { error: uploadError } = await supabase.storage
     .from('stickers')
-    .upload(storagePath, blob, { contentType, cacheControl: '31536000' });
+    .upload(destination.storagePath, blob, { contentType, cacheControl: '31536000' });
   if (uploadError) throw uploadError;
-  const { data } = supabase.storage.from('stickers').getPublicUrl(storagePath);
-  if (!data?.publicUrl) {
-    await supabase.storage.from('stickers').remove([storagePath]);
-    throw new Error('Falha ao publicar a cópia da figurinha');
-  }
-  return { url: data.publicUrl, storagePath };
+  return destination;
 }
 
 interface MessageBubbleProps {
@@ -240,7 +241,13 @@ export const MessageBubble = memo(function MessageBubble({
                         onClick={async (e) => {
                           e.stopPropagation();
                           try {
-                            const { data: existing } = await supabase.from('stickers').select('id').eq('image_url', message.mediaUrl!).maybeSingle();
+                            const destination = getReceivedStickerDestination(message.id);
+                            const { data: existing, error: duplicateCheckError } = await supabase
+                              .from('stickers')
+                              .select('id')
+                              .eq('image_url', destination.url)
+                              .maybeSingle();
+                            if (duplicateCheckError) throw duplicateCheckError;
                             if (existing) { toast({ title: 'Figurinha já está na biblioteca!' }); return; }
                             toast({ title: '🔍 Classificando figurinha com IA...' });
                             let category = 'recebidas';
@@ -250,7 +257,7 @@ export const MessageBubble = memo(function MessageBubble({
                             } catch (err) { log.error('Unexpected error in MessageBubble:', err); }
                             // #92A: copia a mídia recebida para o bucket `stickers`
                             // e insere SÓ a URL da cópia na biblioteca.
-                            const copy = await copyReceivedStickerToLibrary(message.mediaUrl!);
+                            const copy = await copyReceivedStickerToLibrary(message.mediaUrl!, destination);
                             const { error: insertError } = await supabase.from('stickers').insert({ name: `Recebida ${new Date().toLocaleDateString('pt-BR')}`, image_url: copy.url, category, is_favorite: false, use_count: 0 });
                             if (insertError) {
                               // compensa o objeto recém-publicado: sem INSERT ele ficaria órfão

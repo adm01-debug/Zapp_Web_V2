@@ -16,6 +16,7 @@ const COPIED_URL =
 
 const mocks = vi.hoisted(() => ({
   // tabela `stickers`
+  selectEq: vi.fn(),
   selectMaybeSingle: vi.fn(),
   insert: vi.fn(),
   // storage `stickers`
@@ -34,7 +35,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: (table: string) => {
       if (table !== 'stickers') throw new Error(`tabela inesperada no teste: ${table}`);
       return {
-        select: () => ({ eq: () => ({ maybeSingle: mocks.selectMaybeSingle }) }),
+        select: () => ({ eq: mocks.selectEq }),
         insert: mocks.insert,
       };
     },
@@ -144,6 +145,9 @@ const saveButton = () => screen.getByTitle('Salvar na biblioteca');
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.selectEq.mockImplementation((_column: string, value: string) => ({
+    maybeSingle: () => mocks.selectMaybeSingle(value),
+  }));
   mocks.selectMaybeSingle.mockResolvedValue({ data: null, error: null });
   mocks.invoke.mockResolvedValue({ data: { category: 'recebidas' }, error: null });
   mocks.insert.mockResolvedValue({ error: null });
@@ -193,6 +197,49 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
 
     // 5. a mensagem original permanece intacta
     expect(message.mediaUrl).toBe(RECEIVED_URL);
+  });
+
+  it('salvar a mesma mensagem duas vezes não repete upload nem INSERT', async () => {
+    mocks.selectMaybeSingle.mockImplementation((imageUrl: string) =>
+      Promise.resolve({
+        data: imageUrl === COPIED_URL && mocks.insert.mock.calls.length === 1 ? { id: 'sticker-92a' } : null,
+        error: null,
+      })
+    );
+    renderBubble(makeMessage());
+
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(mocks.insert).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(saveButton());
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith({ title: 'Figurinha já está na biblioteca!' })
+    );
+
+    expect(mocks.selectEq).toHaveBeenCalledTimes(2);
+    expect(mocks.selectEq).toHaveBeenNthCalledWith(1, 'image_url', COPIED_URL);
+    expect(mocks.selectEq).toHaveBeenNthCalledWith(2, 'image_url', COPIED_URL);
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+    expect(mocks.upload).toHaveBeenCalledTimes(1);
+    expect(mocks.insert).toHaveBeenCalledTimes(1);
+  });
+
+  it('falha na checagem de duplicidade sem copiar nem inserir', async () => {
+    mocks.selectMaybeSingle.mockResolvedValue({ data: null, error: { message: 'consulta indisponível' } });
+    renderBubble(makeMessage());
+
+    fireEvent.click(saveButton());
+
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith({
+        title: 'Erro ao salvar figurinha',
+        variant: 'destructive',
+      })
+    );
+    expect(mocks.invoke).not.toHaveBeenCalled();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.upload).not.toHaveBeenCalled();
+    expect(mocks.insert).not.toHaveBeenCalled();
   });
 
   it('falha no upload: sem toast de sucesso, sem INSERT', async () => {
