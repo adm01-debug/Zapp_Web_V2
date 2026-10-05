@@ -50,7 +50,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(editing?.id ?? null);
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | null>(editing?.updated_at ?? null);
   const [versions, setVersions] = useState<Array<{
-    id: string; version_number: number; name: string; description: string | null; content: string;
+    id: string; template_id: string; version_number: number; name: string; description: string | null; content: string;
     category: string; status: string; media_url: string|null; media_type: string|null;
     tags: string[]; custom_variables: string[]; created_at: string;
   }>>([]);
@@ -59,6 +59,13 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
   const [showVariants, setShowVariants] = useState(false);
   const [savingVariant, setSavingVariant] = useState(false);
+  // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
+  // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
+  // render que criou o handler assíncrono); `versionsTemplateIdRef` diz de qual
+  // template é o histórico exibido. Toda resposta ou mutação só vale se a origem
+  // bater com o template ativo.
+  const activeTemplateIdRef = useRef<string | null>(editing?.id ?? null);
+  const versionsTemplateIdRef = useRef<string | null>(null);
   const [libSearch, setLibSearch] = useState('');
   const [libCat, setLibCat] = useState('all');
 
@@ -109,6 +116,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const loadTemplate = (t: TalkXTemplate) => {
     setVersions([]); setShowVersions(false);
     if (isDirty && !window.confirm('Tem alterações não salvas. Descartar?')) return;
+    // R2-MOD-024: a partir daqui o template ativo é este; qualquer resposta em
+    // voo do template anterior passa a ser obsoleta.
+    activeTemplateIdRef.current = t.id;
+    versionsTemplateIdRef.current = null;
     setVariants([]); setShowVariants(false);
     setActiveTemplateId(t.id);
     setExpectedUpdatedAt(t.updated_at);
@@ -145,16 +156,31 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   };
 
 
-  /** E46: usa hook para buscar historico de versoes */
+  /** R2-MOD-024: a origem (template) da resposta ainda é o template ativo? */
+  const isActiveOrigin = (templateId: string | null | undefined) =>
+    !!templateId && templateId === activeTemplateIdRef.current;
+
+  /** E46: usa hook para buscar historico de versoes; descarta resposta atrasada de outro template */
   const fetchVersions = async (templateId: string) => {
     setLoadingVersions(true);
     const data = await fetchVersionHistory(templateId);
+    if (!isActiveOrigin(templateId)) return;
+    versionsTemplateIdRef.current = templateId;
     setVersions(data);
     setLoadingVersions(false);
   };
 
+  /** R2-MOD-024: carrega variantes do template dado, ignorando resposta que chegue depois da troca. */
+  const loadVariants = async (templateId: string) => {
+    const vs = await fetchVariants(templateId);
+    if (!isActiveOrigin(templateId)) return;
+    setVariants(vs);
+  };
+
   /** E46: restaura campos de uma versao anterior */
   const restoreVersion = (v: typeof versions[0]) => {
+    // R2-MOD-024: recusa restaurar histórico que não pertence ao template ativo.
+    if (!isActiveOrigin(v.template_id)) return;
     if (!confirm('Restaurar esta versão? Os campos atuais serão substituídos.')) return;
     setEName(v.name); setEDesc(v.description ?? ''); setECat(v.category); setEContent(v.content);
     setEStatus(v.status as 'draft'|'review'|'approved');
@@ -418,7 +444,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           <div className="flex items-center gap-2 mb-2">
             <p className="text-xs font-semibold text-foreground">Variações A/B</p>
             <button type="button"
-              onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { const vs = await fetchVariants(activeTemplateId); setVariants(vs); } }}
+              onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { await loadVariants(activeTemplateId); } }}
               className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50"
             >{showVariants ? 'Ocultar' : variants.length > 0 ? variants.length + ' variante(s)' : 'Adicionar variante'}</button>
           </div>
@@ -430,23 +456,23 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                     <span className="text-2xs font-bold text-primary flex items-center gap-1">
                       Variante {v.label} {'·'} <input type="number" min={1} max={100} value={v.weight}
                         onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))}
-                        onBlur={async (e) => { const w = Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1)); setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }}
+                        onBlur={async (e) => { const w = Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1)); if (!isActiveOrigin(v.template_id)) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }}
                         className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%
                     </span>
                     <button type="button"
-                      onClick={async () => { const rc = await countVariantRecipients(v.id); if (rc > 0 && !window.confirm('Variante usada em ' + rc + ' envio(s). Excluir apaga atribuição A/B. Continuar?')) return; await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }}
+                      onClick={async () => { if (!isActiveOrigin(v.template_id)) return; const rc = await countVariantRecipients(v.id); if (rc > 0 && !window.confirm('Variante usada em ' + rc + ' envio(s). Excluir apaga atribuição A/B. Continuar?')) return; await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }}
                       className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">x</button>
                   </div>
                   <textarea value={v.content}
                     onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))}
-                    onBlur={async () => { if (!v.content.trim()) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, v); } finally { setSavingVariant(false); } }}
+                    onBlur={async () => { if (!v.content.trim() || !isActiveOrigin(v.template_id)) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, v); } finally { setSavingVariant(false); } }}
                     className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground"
                     placeholder="Conteúdo da variante..." />
                 </div>
               ))}
               {variants.length < 3 && (
                 <button type="button" disabled={savingVariant || !activeTemplateId}
-                  onClick={async () => { const nextLabel = (['A', 'B', 'C'] as const).find(l => !variants.find(v => v.label === l))!; const n = variants.length + 1; const base = Math.floor(100 / n); const extra = 100 - base * n; setSavingVariant(true); try { for (let _i = 0; _i < variants.length; _i++) { await saveVariant(activeTemplateId!, { ...variants[_i], weight: base + (_i < extra ? 1 : 0) }); } await saveVariant(activeTemplateId!, { template_id: activeTemplateId!, label: nextLabel, content: eContent, media_url: null, media_type: null, weight: base + (variants.length < extra ? 1 : 0) }); const vs = await fetchVariants(activeTemplateId!); setVariants(vs); } catch { if (activeTemplateId) { const vs = await fetchVariants(activeTemplateId).catch(() => variants); setVariants(vs); } } finally { setSavingVariant(false); } }}
+                  onClick={async () => { const nextLabel = (['A', 'B', 'C'] as const).find(l => !variants.find(v => v.label === l))!; const n = variants.length + 1; const base = Math.floor(100 / n); const extra = 100 - base * n; setSavingVariant(true); try { for (let _i = 0; _i < variants.length; _i++) { await saveVariant(activeTemplateId!, { ...variants[_i], weight: base + (_i < extra ? 1 : 0) }); } await saveVariant(activeTemplateId!, { template_id: activeTemplateId!, label: nextLabel, content: eContent, media_url: null, media_type: null, weight: base + (variants.length < extra ? 1 : 0) }); await loadVariants(activeTemplateId!); } catch { if (activeTemplateId) { await loadVariants(activeTemplateId).catch(() => undefined); } } finally { setSavingVariant(false); } }}
                   className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">
                   + Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}
                 </button>
@@ -476,21 +502,21 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
               <History className="w-3.5 h-3.5 text-foreground-secondary" />
               <p className="text-xs font-semibold text-foreground">Variações A/B</p>
             </div>
-            <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { const vs = await fetchVariants(activeTemplateId); setVariants(vs); } }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
+            <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { await loadVariants(activeTemplateId); } }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
           </div>
           {showVariants && (
             <div className="space-y-2 mt-1 mb-3">
               {variants.map((v) => (
                 <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))} onBlur={async (e) => { const w = Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1)); setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
-                    <button type="button" onClick={async () => { const rc = await countVariantRecipients(v.id); if (rc > 0 && !window.confirm(`Variante usada em ${rc} envio(s). Excluir apaga atribuição A/B. Continuar?`)) return; await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">×</button>
+                    <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))} onBlur={async (e) => { const w = Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1)); if (!isActiveOrigin(v.template_id)) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, {...v, weight: w}); } finally { setSavingVariant(false); } }} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
+                    <button type="button" onClick={async () => { if (!isActiveOrigin(v.template_id)) return; const rc = await countVariantRecipients(v.id); if (rc > 0 && !window.confirm(`Variante usada em ${rc} envio(s). Excluir apaga atribuição A/B. Continuar?`)) return; await deleteVariant(v.id); setVariants(vs => vs.filter(x => x.id !== v.id)); }} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">×</button>
                   </div>
-                  <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={async () => { if (!v.content.trim()) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, v); } finally { setSavingVariant(false); } }} className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
+                  <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={async () => { if (!v.content.trim() || !isActiveOrigin(v.template_id)) return; setSavingVariant(true); try { await saveVariant(activeTemplateId!, v); } finally { setSavingVariant(false); } }} className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
                 </div>
               ))}
               {variants.length < 3 && (
-                <button type="button" disabled={savingVariant || !activeTemplateId} onClick={async () => { const nextLabel = (['A', 'B', 'C'] as const).find(l => !variants.find(v => v.label === l))!; const n = variants.length + 1; const base = Math.floor(100 / n); const extra = 100 - base * n; setSavingVariant(true); try { for (let _i = 0; _i < variants.length; _i++) { await saveVariant(activeTemplateId!, { ...variants[_i], weight: base + (_i < extra ? 1 : 0) }); } await saveVariant(activeTemplateId!, { template_id: activeTemplateId!, label: nextLabel, content: eContent, media_url: null, media_type: null, weight: base + (variants.length < extra ? 1 : 0) }); const vs = await fetchVariants(activeTemplateId!); setVariants(vs); } catch { if (activeTemplateId) { const vs = await fetchVariants(activeTemplateId).catch(() => variants); setVariants(vs); } } finally { setSavingVariant(false); } }} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
+                <button type="button" disabled={savingVariant || !activeTemplateId} onClick={async () => { const nextLabel = (['A', 'B', 'C'] as const).find(l => !variants.find(v => v.label === l))!; const n = variants.length + 1; const base = Math.floor(100 / n); const extra = 100 - base * n; setSavingVariant(true); try { for (let _i = 0; _i < variants.length; _i++) { await saveVariant(activeTemplateId!, { ...variants[_i], weight: base + (_i < extra ? 1 : 0) }); } await saveVariant(activeTemplateId!, { template_id: activeTemplateId!, label: nextLabel, content: eContent, media_url: null, media_type: null, weight: base + (variants.length < extra ? 1 : 0) }); await loadVariants(activeTemplateId!); } catch { if (activeTemplateId) { await loadVariants(activeTemplateId).catch(() => undefined); } } finally { setSavingVariant(false); } }} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
               )}
               {variants.length > 0 && (
                 <p className={`text-3xs ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
