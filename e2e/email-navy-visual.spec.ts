@@ -216,9 +216,16 @@ test('painel CRM completo preserva ações, acessibilidade e fechamento em 320 p
   await expect(drawer.getByRole('link', { name: /abrir site da empresa/i })).toHaveAttribute('href', 'https://empresa.example.test/catalogo?origem=email#sobre');
   await expect(drawer.getByRole('link', { name: /abrir linkedin da empresa/i })).toBeVisible();
   await expect(drawer.getByRole('link', { name: /abrir instagram da empresa/i })).toBeVisible();
-  const close = await drawer.getByRole('button', { name: 'Fechar detalhes' }).boundingBox();
-  expect(close && close.x >= 0 && close.x + close.width <= 320).toBeTruthy();
+  // A gaveta desliza da direita ao abrir: medir o botão durante a animação o pega fora dos 320 px (falhava no runner do CI,
+  // mais lento). Desliga as animações ANTES de medir e espera a posição assentar; a asserção em si é a mesma.
   await freezeVisualTransitions(page);
+  const closeButton = drawer.getByRole('button', { name: 'Fechar detalhes' });
+  await expect
+    .poll(async () => {
+      const close = await closeButton.boundingBox();
+      return Boolean(close && close.x >= 0 && close.x + close.width <= 320);
+    }, { message: 'o botão Fechar detalhes precisa caber nos 320 px', timeout: 5000 })
+    .toBe(true);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => (await (window as unknown as Window & { axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> } }).axe.run('[role="dialog"]', {})).violations.map(violation => violation.id));
   expect(violations).toEqual([]);
