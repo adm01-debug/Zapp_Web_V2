@@ -213,4 +213,50 @@ describe('AutomationEditorDialog (R2-MOD-002)', () => {
     expect(onSave).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
+
+  it('#99: renomear e salvar uma automação send_notification preserva config.message intacto', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const automation = buildAutomation({
+      name: 'Avisar equipe',
+      trigger_config: { channel: 'internal' },
+      // send_notification também exige `message`; antes ele era apagado no save
+      // e a validação bloqueava salvar/renomear esse tipo.
+      actions: [{ type: 'send_notification', config: { message: 'Novo lead chegou', priority: 'high' } }],
+    });
+
+    renderDialog(automation, onSave);
+
+    fireEvent.change(screen.getByPlaceholderText(NOTE_NAME), { target: { value: 'Avisar equipe v2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
+
+    expect(payload.name).toBe('Avisar equipe v2');
+    expect(payload.actions).toEqual([
+      { type: 'send_notification', config: { message: 'Novo lead chegou', priority: 'high' } },
+    ]);
+    expect(mockToast.error).not.toHaveBeenCalled();
+  });
+
+  it('#99: troca add_tag → assign_agent descarta tag_id obsoleto e mantém só a configuração válida do novo tipo', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    // Configuração persistida com chave do tipo anterior (`tag_id`) e a chave
+    // válida do novo tipo (`agent_id`): ao trocar, só `agent_id` sobrevive.
+    const automation = buildAutomation({
+      actions: [{ type: 'add_tag', config: { tag_id: 'tag-1', agent_id: 'agent-9' } }],
+    });
+
+    renderDialog(automation, onSave);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Atribuir Agente' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
+
+    expect(payload.actions).toEqual([{ type: 'assign_agent', config: { agent_id: 'agent-9' } }]);
+    expect(JSON.stringify(payload.actions)).not.toContain('tag_id');
+    expect(mockToast.error).not.toHaveBeenCalled();
+  });
 });
