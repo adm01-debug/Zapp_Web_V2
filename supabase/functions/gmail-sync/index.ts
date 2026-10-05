@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, gmailFetch, reconcileEmailThreads, syncLabels, syncMessageIds, syncMessages } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, gmailFetch, runGmailIncrementalSync, syncLabels, syncMessages } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_RESOURCE_ID_RE = /^[0-9A-Za-z_-]{1,200}$/;
 
@@ -19,18 +19,16 @@ const GmailSyncActionSchema = z.object({
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
-interface GmailHistoryPage {
-  history?: Array<{
-    messagesAdded?: Array<{ message: { id: string } }>;
-    messagesDeleted?: Array<{ message: { id: string } }>;
-    labelsAdded?: Array<{ message: { id: string } }>;
-    labelsRemoved?: Array<{ message: { id: string } }>;
-  }>;
-  historyId?: string;
-  nextPageToken?: string;
+// O handler exportado aceita o client service_role e o resolvedor de usuário
+// injetados para o teste offline exercitar o fluxo real sem Supabase.
+export interface GmailSyncDeps {
+  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase?: any;
+  getUser?: () => Promise<{ user: { id: string } | null; error?: unknown }>;
 }
 
-serve(async (req) => {
+export async function handleGmailSync(req: Request, deps: GmailSyncDeps = {}): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -40,14 +38,17 @@ serve(async (req) => {
     const authHeader = req.headers.get("authorization");
     if (!authHeader) { log.done(401); return errorResponse("Unauthorized", 401, req); }
 
-    const SUPABASE_URL = requireEnv("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
+    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase: any = deps.supabase ?? createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
+    const getUser = deps.getUser ?? (async () => {
+      const userClient = createClient(requireEnv("SUPABASE_URL"), Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await userClient.auth.getUser();
+      return { user };
     });
-    const { data: { user } } = await userClient.auth.getUser();
+    const { user } = await getUser();
     if (!user) throw new Error("Unauthorized");
 
     const rawBody = await req.json();
@@ -104,55 +105,27 @@ serve(async (req) => {
 
       case "sync-incremental": {
         if (!account.history_id) { log.done(400); return errorResponse("No history_id. Run full sync first.", 400, req); }
-        const changedMessageIds = new Set<string>();
-        const deletedMessageIds = new Set<string>();
-        let pageToken: string | undefined;
-        let latestHistoryId = account.history_id;
-        let pages = 0;
-        do {
-          const params = new URLSearchParams({ startHistoryId: account.history_id });
-          for (const historyType of ["messageAdded", "messageDeleted", "labelAdded", "labelRemoved"]) params.append("historyTypes", historyType);
-          if (pageToken) params.set("pageToken", pageToken);
-          const historyData = await gmailFetch<GmailHistoryPage>(accessToken, `/history?${params.toString()}`);
-          for (const record of historyData.history || []) {
-            for (const added of record.messagesAdded || []) changedMessageIds.add(added.message.id);
-            for (const labeled of record.labelsAdded || []) changedMessageIds.add(labeled.message.id);
-            for (const unlabeled of record.labelsRemoved || []) changedMessageIds.add(unlabeled.message.id);
-            for (const deleted of record.messagesDeleted || []) deletedMessageIds.add(deleted.message.id);
-          }
-          latestHistoryId = historyData.historyId || latestHistoryId;
-          pageToken = historyData.nextPageToken;
-          pages += 1;
-          if (pages >= 100 && pageToken) throw new Error("Gmail history exceeded the safe pagination limit");
-        } while (pageToken);
-
-        for (const deletedId of deletedMessageIds) changedMessageIds.delete(deletedId);
-        const changedResult = await syncMessageIds(supabase, account.id, accessToken, log, [...changedMessageIds]);
-        if (changedResult.failed > 0) {
-          await supabase.from("gmail_accounts").update({ sync_status: "error", last_sync_at: new Date().toISOString(), last_error: `${changedResult.failed} eventos incrementais falharam; cursor preservado` }).eq("id", account.id);
-          log.done(207, { changed: changedMessageIds.size, failed: changedResult.failed });
-          return jsonResponse({ success: false, cursor_advanced: false, changed_messages: changedMessageIds.size, ...changedResult }, 207, req);
+        // R2-API-011: o MESMO pipeline incremental canônico do webhook e do cron.
+        const result = await runGmailIncrementalSync(supabase, account, accessToken, log);
+        if (result.status === "history_expired") {
+          log.done(200, { resync: true });
+          return jsonResponse({ success: true, cursor_advanced: false, resync_needed: true, synced: 0, failed: 0 }, 200, req);
         }
-
-        const affectedDeletedThreadIds: string[] = [];
-        if (deletedMessageIds.size > 0) {
-          const ownedDeleted = await supabase.from("email_messages").select("id,thread_id,gmail_message_id").eq("gmail_account_id", account.id).in("gmail_message_id", [...deletedMessageIds]);
-          if (ownedDeleted.error) throw new Error("Failed to resolve deleted Gmail messages locally");
-          affectedDeletedThreadIds.push(...(ownedDeleted.data || []).map(message => message.thread_id).filter(Boolean));
-          if (ownedDeleted.data?.length) {
-            const deletion = await supabase.from("email_messages").delete().eq("gmail_account_id", account.id).in("id", ownedDeleted.data.map(message => message.id));
-            if (deletion.error) throw new Error("Failed to delete Gmail messages locally");
-          }
-          await reconcileEmailThreads(supabase, account.id, affectedDeletedThreadIds);
+        if (!result.cursor_advanced) {
+          log.done(207, { changed: result.changed_messages, failed: result.failed, status: result.status });
+          return jsonResponse({
+            success: false,
+            cursor_advanced: false,
+            changed_messages: result.changed_messages,
+            deleted_messages: result.deleted_messages,
+            synced: result.synced,
+            failed: result.failed,
+            failures: result.failures,
+            messages: result.messages,
+          }, 207, req);
         }
-        await supabase.from("gmail_accounts").update({
-          history_id: latestHistoryId,
-          sync_status: "synced",
-          last_sync_at: new Date().toISOString(),
-          last_error: null,
-        }).eq("id", account.id);
-        log.done(200, { changedMessages: changedMessageIds.size, deletedMessages: deletedMessageIds.size, synced: changedResult.synced, pages });
-        return jsonResponse({ success: true, cursor_advanced: true, changed_messages: changedMessageIds.size, deleted_messages: deletedMessageIds.size, synced: changedResult.synced, history_pages: pages }, 200, req);
+        log.done(200, { changedMessages: result.changed_messages, deletedMessages: result.deleted_messages, synced: result.synced, pages: result.history_pages });
+        return jsonResponse({ success: true, cursor_advanced: true, changed_messages: result.changed_messages, deleted_messages: result.deleted_messages, synced: result.synced, history_pages: result.history_pages }, 200, req);
       }
 
       case "get-thread": {
@@ -201,4 +174,8 @@ serve(async (req) => {
     log.done(500);
     return errorResponse(error instanceof Error ? error.message : "Internal server error", 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  serve((req) => handleGmailSync(req));
+}
