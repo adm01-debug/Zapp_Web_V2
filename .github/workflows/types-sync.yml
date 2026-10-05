@@ -39,11 +39,6 @@ on:
     # nao ser lido no meio da geracao dos artefatos.
     - cron: '49 5 * * 1'
   workflow_dispatch:
-    inputs:
-      force_gate3:
-        description: 'Ignorar Gate 3 (remocoes destrutivas) — aprovacao humana confirmada'
-        type: boolean
-        default: false
 
 defaults:
   run:
@@ -374,22 +369,29 @@ jobs:
             echo "::warning::Gate 2 falhou: violacoes no usage-guard."
           fi
 
+      # E19 (auditoria de GitHub Actions, 2026-10-01 — achado TRA-008): o Gate 3
+      # deixou de contar linhas removidas de types.ts. Linha removida nao diz nada
+      # sobre o banco — renomear um campo gerava dezenas de linhas e derrubava o gate
+      # a toa, enquanto `DROP TABLE public.x` de uma tabela consumida cabia em 2 linhas
+      # e passava — e era por isso que o dispatch manual vivia forcando o Gate 3.
+      # Agora compara os OBJETOS do catalogo antigo x novo e bloqueia so a remocao de
+      # tabela/view/funcao/enum AINDA consumida pelo src/ (mesma deteccao de call-site
+      # de supabase-usage-guard.mjs). Troca de assinatura (DROP+CREATE / CREATE OR
+      # REPLACE do mesmo nome) mantem o nome no catalogo e passa. Sem atalho manual:
+      # o gate bloqueia por objeto, nao por tamanho — e os candidatos seguem publicados
+      # como artifact para aplicacao manual com revisao humana.
       - name: Gate 3 — remocoes destrutivas
         id: gate3
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate2.outputs.passed == 'true'
-        env:
-          FORCE_GATE3: ${{ github.event.inputs.force_gate3 }}
         run: |
-          REMOVED=$(diff /tmp/types.old.stripped /tmp/types.new.stripped | grep -c '^<' || true)
-          echo "Linhas removidas do types.ts: ${REMOVED}"
-          if [ "$REMOVED" -gt 10 ] && [ "$FORCE_GATE3" != "true" ]; then
-            echo "passed=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Gate 3 requer revisao humana: ${REMOVED} linhas removidas."
-          else
-            if [ "$REMOVED" -gt 10 ]; then
-              echo "::notice::Gate 3 ignorado por force_gate3=true: ${REMOVED} linhas removidas."
-            fi
+          # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o
+          # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.
+          set -o pipefail
+          if node scripts/db-audit/check-remocoes-destrutivas.mjs supabase/schema-catalog.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Gate 3 bloqueou: objeto removido pelo sync ainda tem consumidor no codigo."
           fi
 
       - name: Garantir label types-sync
@@ -428,7 +430,12 @@ jobs:
               ? fs.readFileSync('/tmp/tsc.log', 'utf8').slice(0, 2000)
               : gate2 === 'false' && fs.existsSync('/tmp/guard.log')
                 ? fs.readFileSync('/tmp/guard.log', 'utf8').slice(0, 2000)
-                : '';
+                // E19: sem o log do Gate 3 a issue dizia so "remocoes destrutivas",
+                // sem o objeto e o call-site que bloquearam. A issue e o que a pessoa
+                // le para decidir — contexto incompleto era parte do TRA-008.
+                : gate3 === 'false' && fs.existsSync('/tmp/gate3.log')
+                  ? fs.readFileSync('/tmp/gate3.log', 'utf8').slice(0, 2000)
+                  : '';
             const title = '[types-sync] Falha ao propor sincronizacao';
             const body = [
               `**Gate:** ${failed}`,

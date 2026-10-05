@@ -18,6 +18,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { stripSqlComments } from './sql-lexer.mjs';
 
 const ROOT = process.cwd();
@@ -41,7 +42,11 @@ const SCHEMA_RE = new RegExp(
   String.raw`\.schema\(\s*${COMENTARIO}?\s*['"\`]([a-zA-Z0-9_]+)['"\`]\s*\)\s*(?:${COMENTARIO}\s*)*$`,
 );
 
-function walk(dir, acc = []) {
+// Exportado para o Gate 3 do types-sync (scripts/db-audit/check-remocoes-destrutivas.mjs):
+// e a mesma deteccao de consumidor (.from()/.rpc() no cliente principal) que decide
+// se um objeto removido do catalogo ainda tem call-site. O `main()` abaixo continua
+// rodando quando o arquivo e executado direto (`node supabase-usage-guard.mjs`).
+export function walk(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
@@ -51,7 +56,7 @@ function walk(dir, acc = []) {
   return acc;
 }
 
-function scan() {
+export function scan() {
   const found = [];
   for (const dir of SCAN_DIRS) {
     for (const file of walk(dir)) {
@@ -343,4 +348,8 @@ function main() {
   console.log('OK: nenhuma violacao nova.');
 }
 
-main();
+// `main()` so quando o modulo e o ponto de entrada: o Gate 3 importa `scan()` e
+// `walk()` sem disparar a varredura completa do guard.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+}
