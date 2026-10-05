@@ -164,12 +164,16 @@ export function useRemoveConversationMember() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ conversationId, profileId }: { conversationId: string; profileId: string }) => {
-      const { error } = await supabase
+      // A policy tcm_delete_own_or_admin filtra a linha do ultimo owner sem erro:
+      // sem o .select() o DELETE volta 0 linhas e a tela mostrava sucesso (QA5-10).
+      const { data, error } = await supabase
         .from('team_conversation_members')
         .delete()
         .eq('conversation_id', conversationId)
-        .eq('profile_id', profileId);
+        .eq('profile_id', profileId)
+        .select('id');
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error('membership_delete_blocked');
       return { conversationId };
     },
     onSuccess: () => {
@@ -186,12 +190,16 @@ export function useLeaveConversation() {
   return useMutation({
     mutationFn: async ({ conversationId }: { conversationId: string }) => {
       if (!profile) throw new Error('Not authenticated');
-      const { error } = await supabase
+      // Mesmo motivo do useRemoveConversationMember: o ultimo owner so sai depois
+      // de transferir a propriedade; a RLS barra o DELETE em silencio (QA5-10).
+      const { data, error } = await supabase
         .from('team_conversation_members')
         .delete()
         .eq('conversation_id', conversationId)
-        .eq('profile_id', profile.id);
+        .eq('profile_id', profile.id)
+        .select('id');
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error('membership_delete_blocked');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-conversations'] });

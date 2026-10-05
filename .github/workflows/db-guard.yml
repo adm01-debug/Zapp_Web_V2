@@ -772,6 +772,16 @@ jobs:
           TEAM_MEMBERSHIP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-membership-bootstrap-owner.test.sh
 
+      # QA5-10 (P1, cartao t_ab98c520): frestas de 20261004185228 — qualquer autenticado
+      # criava conversa de departamento alheio como owner, e ex-membro (created_by sem
+      # membership) seguia transferindo a propriedade. Bloco A prova o defeito no mesmo
+      # container, aplica a migration nova e o bloco B prova a correcao, com a guarda de
+      # ultimo owner de pé (so sai depois de transferir).
+      - name: Simular guarda de departamento e transferencia no team chat (QA5-10)
+        env:
+          TEAM_DEPT_GUARD_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-department-transfer-guards.test.sh
+
       # E76 (plano MAPA Fase 7), ajuste (b) da decisao 20261002-063721: o contrato da
       # RPC `search_contacts` (8 campos de endereco, ACL sem anon/PUBLIC e trigger de
       # auditoria) vive aqui porque este workflow tem gatilho `pull_request` (linha 17) —
