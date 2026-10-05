@@ -505,11 +505,16 @@ export async function handleMultiplixSend(
         // de um try/catch proprio: excecao aqui (kernel de personalizacao, bloco
         // malformado) conclui SOMENTE este item como 'failed', com a mensagem do erro,
         // e o lote segue para os proximos itens em vez de derrubar a invocacao (500).
+        // Aqui so entra o que e DETERMINISTICO: resolver o bloco e montar o texto. A
+        // gravacao do snapshot (RPC, I/O) fica FORA — ver logo abaixo.
         let resolvedBlock: ResolvedBlock;
         let mediaAsset: (BlockAsset & { url: string }) | null;
         let voicePending: boolean;
         let blockHasNothing: boolean;
         let personalizedMsg: string;
+        // Sinaliza que o texto veio do BLOCO (e nao de um snapshot ja gravado) e
+        // precisa ser persistido no item.
+        let persistSnapshot = false;
         try {
           // MX02: o conteudo do bloco e resolvido AQUI, com o `variables_snapshot` do
           // item e o nome da empresa — o mesmo resolvedor que a previa (F48) usa.
@@ -539,15 +544,7 @@ export async function handleMultiplixSend(
             // nome da empresa e o `variables_snapshot` do item — a MESMA saida da
             // previa. Nada e remontado a partir do template global do disparo.
             personalizedMsg = resolvedBlock.text;
-            if (personalizedMsg !== "") {
-              const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_item_message_snapshot", {
-                p_item_id: item.item_id,
-                p_claim_token: claim.claim_token,
-                p_personalized_message: personalizedMsg,
-              });
-              if (snapshotError) throw new Error(`multiplix_message_snapshot_failed: ${snapshotError.message}`);
-              personalizedMsg = snapshotMessage as string;
-            }
+            persistSnapshot = personalizedMsg !== "";
           }
         } catch (err) {
           // Falha DETERMINISTICA deste item (o proximo item pode ter bloco bom): conclui
@@ -566,6 +563,20 @@ export async function handleMultiplixSend(
           const interval = randomBetween(dispatch.send_interval_min, dispatch.send_interval_max);
           await sleep(interval);
           continue;
+        }
+
+        // MX02/F70: a gravacao do snapshot fica FORA do try/catch determinista. O RPC
+        // escreve no banco e pode falhar por motivo TRANSITORIO: nesse caso o erro sobe
+        // como `multiplix_message_snapshot_failed` (o comportamento anterior) e o item
+        // NAO e concluido como 'failed' — o lease vence e a retomada continua possivel.
+        if (persistSnapshot) {
+          const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_item_message_snapshot", {
+            p_item_id: item.item_id,
+            p_claim_token: claim.claim_token,
+            p_personalized_message: personalizedMsg,
+          });
+          if (snapshotError) throw new Error(`multiplix_message_snapshot_failed: ${snapshotError.message}`);
+          personalizedMsg = snapshotMessage as string;
         }
 
         let providerPostAttempted = false;

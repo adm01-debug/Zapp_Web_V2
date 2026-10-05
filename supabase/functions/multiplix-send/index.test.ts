@@ -150,6 +150,8 @@ interface MockOpts {
   variablesSnapshot?: Record<string, string>;
   /** MX02: `multiplix_delivery_items.personalized_message` — snapshot DO ITEM */
   itemPersonalizedMessage?: string | null;
+  /** MX02/F70: a RPC que grava o snapshot falha (erro transitorio do banco) */
+  snapshotRpcError?: boolean;
   /** cota diaria restante da conexao (F17); null desliga a checagem */
   dailyRemaining?: number | null;
   /** F11a: reivindicacao que nao devolve token (lease de outro worker) */
@@ -321,6 +323,9 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             // Fiel ao banco: a RPC grava o texto e devolve a string personalizada. O stub
             // nao a implementava, entao devolvia undefined e o texto enviado era undefined
             // — invisivel enquanto o POST nao validava; o adaptador (F56) valida.
+            // MX02/F70: erro TRANSITORIO do RPC injetavel — prova que ele nao e engolido
+            // pelo catch da resolucao (que encerraria o item como 'failed').
+            if (opts.snapshotRpcError) return Promise.resolve({ data: null, error: new Error("snapshot write failed") });
             return Promise.resolve({ data: String(args.p_personalized_message ?? ""), error: null });
           case "complete_multiplix_item": {
             ctx.completions.push(args);
@@ -2124,6 +2129,73 @@ Deno.test("MX02/F70: excecao na resolucao do bloco conclui SO o item como 'faile
   assert(envios.length === 1, `esperava 1 POST de texto (so o item 2), veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
   assert(envios[0].body.number === "5511955550021", `o POST tinha de ser do item 2; foi para ${String(envios[0].body.number)}`);
   assert(envios[0].body.text === "BLOCO CORRETO Empresa 2", `texto do item 2 divergente: ${String(envios[0].body.text)}`);
+});
+
+Deno.test("MX02/F70: falha do RPC de snapshot NAO conclui o item como 'failed' (erro transitorio, retomavel)", async () => {
+  // A gravacao do snapshot e I/O (RPC), nao resolucao deterministica: uma falha
+  // TRANSITORIA ali tem de preservar o comportamento anterior a F70 — o erro sobe com
+  // o codigo proprio `multiplix_message_snapshot_failed` (o handler devolve 500 e o
+  // lease vence, permitindo retomada), NUNCA encerrar o item como 'failed' com o
+  // codigo enganoso do catch de resolucao (`multiplix_block_resolution_failed`).
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550024")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+    snapshotRpcError: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  // O codigo do erro nao aparece no corpo da resposta (o handler devolve 500 generico),
+  // entao a prova vem do log estruturado do proprio modulo.
+  const erros: string[] = [];
+  const consoleErrorOriginal = console.error;
+  console.error = (...args: unknown[]) => { erros.push(args.map((a) => String(a)).join(" ")); };
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  let status = 0;
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    status = res.status;
+  } finally {
+    console.error = consoleErrorOriginal;
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+
+  // 1) O item NAO pode ser encerrado: para o banco ele continua reivindicado e o lease
+  // vence (retomavel). Este e o assert que o codigo com a regressao viola.
+  const concluidos = ctx.completions.filter((c) => String(c.p_item_id) === "item-recipient-1");
+  assert(
+    concluidos.length === 0,
+    `item NAO pode ser concluido por falha transitoria do snapshot: ${JSON.stringify(concluidos)}`,
+  );
+  assert(
+    !ctx.completions.some((c) => String(c.p_status) === "failed"),
+    `nenhum item pode virar 'failed' aqui: ${JSON.stringify(ctx.completions)}`,
+  );
+  // 2) Comportamento anterior preservado: o erro derruba a invocacao (500) em vez de
+  // encerrar o item — o lease vence e o item volta para a fila.
+  assert(status === 500, `esperado 500 (retomavel), recebido ${status}`);
+  // 3) O codigo de erro e o proprio do snapshot, nunca o do catch de resolucao.
+  const log = erros.join("\n");
+  assert(
+    log.includes("multiplix_message_snapshot_failed"),
+    `o erro do snapshot tinha de subir com o codigo proprio; log: ${log}`,
+  );
+  assert(
+    !log.includes("multiplix_block_resolution_failed"),
+    `o catch da resolucao engoliu a falha do snapshot; log: ${log}`,
+  );
+  const tentativas = rpcs(ctx, "persist_multiplix_item_message_snapshot");
+  assert(tentativas.length === 1, `o snapshot tinha de ser tentado 1 vez, houve ${tentativas.length}`);
+  assert(
+    provider.posts.filter((p) => p.url.includes("/message/")).length === 0,
+    "nenhum POST de mensagem pode sair sem o snapshot gravado",
+  );
+  // Vermelho medido: com o index.ts do cherry-pick (RPC dentro do try), o log traz
+  // `multiplix_block_resolution_failed`, o item e concluido 'failed' e a resposta e 200.
 });
 
 Deno.test("MX02: o snapshot da mensagem e gravado NO ITEM, uma vez, antes do POST", async () => {
