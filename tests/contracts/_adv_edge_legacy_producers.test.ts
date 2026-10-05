@@ -123,6 +123,15 @@
  *    media-egress.ts, revoke-auth-sessions/ e os index.test.ts correspondentes, nenhum com token
  *    legado): o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
  *    varrido sobe, medido pela varredura depois do merge.
+ *  - 242: drift acumulado no dia 05/10/2026 (varredura real do momento, NÃO do cartão que
+ *    introduziu o produtor): +3 já faltavam no próprio commit do pino 232 (a árvore media 235, não
+ *    232) e +7 entraram depois, todos de teste/infra sem token legado —
+ *    `_shared/evolution-control-authz.ts` e `_shared/__tests__/evolution-control-authz.test.ts`,
+ *    `_shared/__tests__/webhook-auth-gates.test.ts`, `detect-new-device/index.test.ts`,
+ *    `evolution-api/index.test.ts`, `send-email/index.test.ts` e
+ *    `webhook-diagnostic/diagnostic-authz.test.ts`. Nenhum produz vocabulário legado: o mapa
+ *    INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido sobe, medido
+ *    pela varredura depois do merge (é o critério deste arquivo: o valor certo é o que a árvore mede).
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -197,8 +206,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('232 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(232);
+  it('242 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(242);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
