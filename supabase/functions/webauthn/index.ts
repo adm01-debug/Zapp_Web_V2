@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type User } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders } from "../_shared/validation.ts";
 import { WebAuthnActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { verifyAuthenticationAssertion, extractCredentialPublicKey, bytesToBase64url } from "./verify.ts";
@@ -145,8 +145,19 @@ Deno.serve(async (req) => {
         let authUserId: string | null = null;
 
         if (userEmail) {
-          const { data: userData } = await supabaseAdmin.auth.admin.listUsers();
-          const user = userData?.users?.find(u => u.email === userEmail);
+          // admin.listUsers() pagina (50 por página por padrão): conta fora da
+          // 1ª página não era achada, authUserId ficava null e allowCredentials
+          // saía vazio. Percorre as páginas até achar o e-mail ou esgotar a
+          // lista (página curta/vazia encerra; o teto de 100 páginas é só
+          // proteção contra resposta patológica da API).
+          const perPage = 200;
+          let user: User | null = null;
+          for (let page = 1; page <= 100 && !user; page++) {
+            const { data: userData, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+            if (listError || !userData?.users?.length) break;
+            user = userData.users.find(u => u.email === userEmail) ?? null;
+            if (userData.users.length < perPage) break;
+          }
           if (user) {
             authUserId = user.id;
             const { data: credentials } = await supabaseAdmin.from('passkey_credentials').select('credential_id, transports').eq('user_id', user.id);
@@ -174,9 +185,21 @@ Deno.serve(async (req) => {
         const { data: storedCred, error: credError } = await supabaseAdmin.from('passkey_credentials').select('*').eq('credential_id', id).single();
         if (credError || !storedCred) return errorResponse('Credential not found', 400, req);
 
-        const { data: challengeData } = await supabaseAdmin.from('webauthn_challenges')
-          .select('challenge, expires_at').eq('user_id', storedCred.user_id).eq('type', 'authentication')
-          .order('created_at', { ascending: false }).limit(1).single();
+        // O challenge emitido em authentication-options fica com user_id quando
+        // o e-mail foi informado e com user_id NULL no login discoverable (sem
+        // e-mail). Procura primeiro o challenge do dono da credencial; se não
+        // houver, consome o anônimo mais recente — é o único que uma assertion
+        // sem e-mail pode ter recebido.
+        let { data: challengeData } = await supabaseAdmin.from('webauthn_challenges')
+          .select('id, challenge, expires_at').eq('user_id', storedCred.user_id).eq('type', 'authentication')
+          .order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+        if (!challengeData) {
+          const { data: anonChallenge } = await supabaseAdmin.from('webauthn_challenges')
+            .select('id, challenge, expires_at').is('user_id', null).eq('type', 'authentication')
+            .order('created_at', { ascending: false }).limit(1).maybeSingle();
+          challengeData = anonChallenge;
+        }
 
         if (!challengeData) return errorResponse('Challenge not found or expired', 400, req);
         if (challengeData.expires_at && new Date(challengeData.expires_at).getTime() < Date.now()) {
@@ -204,7 +227,11 @@ Deno.serve(async (req) => {
         }
 
         await supabaseAdmin.from('passkey_credentials').update({ last_used_at: new Date().toISOString(), counter: result.newCounter }).eq('id', storedCred.id);
-        await supabaseAdmin.from('webauthn_challenges').delete().eq('user_id', storedCred.user_id).eq('type', 'authentication');
+        // Consome o challenge usado (por id, cobre o caso anônimo) e limpa os
+        // demais challenges de autenticação do usuário, como antes.
+        await supabaseAdmin.from('webauthn_challenges').delete()
+          .eq('type', 'authentication')
+          .or(`user_id.eq.${storedCred.user_id},id.eq.${challengeData.id}`);
 
         const { data: userData } = await supabaseAdmin.auth.admin.getUserById(storedCred.user_id);
         log.done(200, { action });
