@@ -51,8 +51,8 @@
     },
     {
       "path": "supabase/functions/_shared/ai-image-input.ts",
-      "bytes": 14831,
-      "sha256": "a5ef80641783858fb58d8f79464cdab38afd35705bfcd8cbdfce1f7f954acc58"
+      "bytes": 18021,
+      "sha256": "df1952bd32d68ab826d088dd555307f9decf3a1ddbdba37cbe34436be75c63c5"
     },
     {
       "path": "supabase/functions/_shared/ai-jobs.ts",
@@ -411,13 +411,13 @@
     },
     {
       "path": "supabase/functions/classify-emoji/index.ts",
-      "bytes": 7389,
-      "sha256": "17398afb5f1a1e4caf8c8e6ecbd3ef00dfb0230f260085a735978f5f60df0e88"
+      "bytes": 8122,
+      "sha256": "4c785b2548fcc132d33c44c1f26f3753ec6601bba3d53b9a92b13b8066d69932"
     },
     {
       "path": "supabase/functions/classify-sticker/index.ts",
-      "bytes": 7050,
-      "sha256": "62eedcddfd167537c4dbc7c9185f1dcaf3dcf09f58b356d8ab77a8530a5d162d"
+      "bytes": 7944,
+      "sha256": "f4d97761b8611a8fe5d7618c08e40d9dad2660fccb508e4ef1db4098d15763c3"
     },
     {
       "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
@@ -1042,7 +1042,7 @@
       "name": "classify-emoji",
       "entrypoint": "supabase/functions/classify-emoji/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2b8a0896cab3669b6b077572e67201368cbb75fed56c59690781e94c8dafe3de",
+      "source_sha256": "85e54750a852904d709160b009e8d799e332ff15e82b0b392895c4c2b70f6551",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -1065,7 +1065,7 @@
       "name": "classify-sticker",
       "entrypoint": "supabase/functions/classify-sticker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d1dbdfa15b7616ac2e0b2e29406ab45ffb6e068cedc317a137a34f8606ed1a4a",
+      "source_sha256": "e391bf3d00f327e9e77ff1ec2eda6e91daf9b3075b04368b43f92dc43b1a96f1",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -1850,5 +1850,5 @@
       ]
     }
   ],
-  "manifest_sha256": "31d81546446a75ea570635993c8e3356e9105a22a5d76edd23b312e20806c781"
+  "manifest_sha256": "8ae91834540f7126c074cb7bfa20634a57e357ae92e0b67e8ace8ac3d41664e7"
 }
