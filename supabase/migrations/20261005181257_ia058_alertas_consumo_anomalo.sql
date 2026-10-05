@@ -37,7 +37,7 @@
 --    concurrency = maior hits num balde de edge_rate_limits do alvo na janela
 --                  (chaves 'ai:<escopo>:<fn>:<identidade>:<ISO>' do guard IA-043).
 --
---  Canal operacional: public.notifications para user_roles admin/supervisor,
+--  Canal operacional: public.notifications para usuários distintos com papel admin,
 --  escrito no mesmo fluxo do incidente, com metadata.incident_id. Sem
 --  e-mail/WhatsApp/Slack e sem HTTP externo no job.
 --
@@ -418,7 +418,7 @@ begin
            set notification_count = notification_count + 1
          where id = v_id;
         insert into public.notifications (user_id, title, message, type, metadata)
-          select ur.user_id,
+          select distinct ur.user_id,
                  'Consumo anômalo de IA: ' || cfg.signal || ' em ' || cfg.scope || ' ' || cand.target_id,
                  'Incidente ' || v_id || ': escopo ' || cfg.scope || ', sinal ' || cfg.signal
                    || ', alvo ' || cand.target_id || ', medido ' || round(cand.measured, 4)
@@ -436,7 +436,7 @@ begin
                    'window_start', v_ws,
                    'window_seconds', cfg.window_seconds)
             from public.user_roles ur
-           where ur.role in ('admin', 'supervisor');
+           where ur.role = 'admin';
       end if;
     end loop;
   end loop;
