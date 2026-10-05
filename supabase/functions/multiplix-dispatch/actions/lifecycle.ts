@@ -47,7 +47,7 @@
 
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { errorResponse, jsonResponse } from '../../_shared/validation.ts';
-import { DispatchError, MANAGE_ALL_PERMISSION, type ActionContext } from '../index.ts';
+import { DispatchError, type ActionContext, resolveOwnerScope } from '../index.ts';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
@@ -114,37 +114,9 @@ const StatusSchema = z.object({
 // Escopo e leitura comum.
 // ---------------------------------------------------------------------------
 
-interface Scope {
-  profileId: string | null;
-  isOwner: boolean;
-  manageAll: boolean;
-}
-
-/**
- * Resolve o escopo no SERVIDOR a partir do JWT ja validado (ADR-007 D1): o front
- * nunca manda "pode gerenciar tudo". Dono = `profiles.id` igual a `created_by`;
- * sem isso, so a permissao nomeada abre a acao (mesma regra do `multiplix-send`/F06).
- */
-async function resolveScope(ctx: ActionContext, createdBy: unknown): Promise<Scope> {
-  const { data, error } = await ctx.supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', ctx.userId)
-    .maybeSingle();
-  if (error) throw new DispatchError('MULTIPLIX_PROFILE_LOOKUP', error.message, 502);
-
-  const profileId = (data as { id?: string } | null)?.id ?? null;
-  if (profileId !== null && profileId === createdBy) {
-    return { profileId, isOwner: true, manageAll: false };
-  }
-
-  const { data: permission, error: permissionError } = await ctx.supabase.rpc('user_has_permission', {
-    _user_id: ctx.userId,
-    _permission_name: MANAGE_ALL_PERMISSION,
-  });
-  if (permissionError) throw new DispatchError('MULTIPLIX_PERMISSION_LOOKUP', permissionError.message, 502);
-  return { profileId, isOwner: false, manageAll: permission === true };
-}
+// MX08: o escopo (dono por `profiles.id` OU `multiplix.dispatch.manage_all`) e
+// resolvido pelo `resolveOwnerScope` canonico do index.ts — UMA resolucao para
+// toda a edge, para draft/blocks/lifecycle/listing nao divergirem.
 
 async function loadDispatch(ctx: ActionContext, dispatchId: string): Promise<Row | null> {
   const { data, error } = await ctx.supabase
@@ -231,7 +203,7 @@ export async function handleConfirm(ctx: ActionContext): Promise<Response> {
   const dispatch = await loadDispatch(ctx, p.dispatch_id);
   if (!dispatch) return errorResponse('multiplix_dispatch_not_found', 404, ctx.req);
 
-  const scope = await resolveScope(ctx, dispatch.created_by);
+  const scope = await resolveOwnerScope(ctx, dispatch.created_by);
   // Sem escopo: 404 (nao revela a existencia de disparo de outro usuario).
   if (!scope.isOwner && !scope.manageAll) {
     return errorResponse('multiplix_dispatch_not_found', 404, ctx.req);
@@ -344,7 +316,7 @@ export async function handleStatus(ctx: ActionContext): Promise<Response> {
   const dispatch = await loadDispatch(ctx, p.dispatch_id);
   if (!dispatch) return errorResponse('multiplix_dispatch_not_found', 404, ctx.req);
 
-  const scope = await resolveScope(ctx, dispatch.created_by);
+  const scope = await resolveOwnerScope(ctx, dispatch.created_by);
   if (!scope.isOwner && !scope.manageAll) {
     return errorResponse('multiplix_dispatch_not_found', 404, ctx.req);
   }

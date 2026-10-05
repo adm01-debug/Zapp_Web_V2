@@ -6,8 +6,9 @@
  * entao muta. Este contrato prova a fronteira:
  *   (a) NENHUM arquivo em `src/` insere/atualiza/apaga `multiplix_dispatches`,
  *       `multiplix_blocks` ou `multiplix_delivery_items` — a escrita passa pela edge;
- *   (b) as acoes de ESCRITA da edge conferem dono (`created_by = ctx.userId`, ou
- *       `manage_all`) ANTES de mutar;
+ *   (b) as acoes de ESCRITA da edge conferem dono (`created_by = profiles.id`
+ *       resolvido do JWT, ou `manage_all`) ANTES de mutar — MX08: nunca o
+ *       `auth.uid` cru, que nao e o que `created_by` guarda;
  *   (c) `confirm` e o UNICO caminho que muda o status do dispatch para
  *       `scheduled`/`sending` — e quem faz isso e a RPC transacional, nao um UPDATE solto.
  *
@@ -139,19 +140,32 @@ registrar('(a) o front NAO escreve direto em multiplix_dispatches/blocks/deliver
 // (b) escopo: dono conferido antes de mutar.
 // ---------------------------------------------------------------------------
 
-registrar('(b) as acoes de escrita da edge conferem dono (created_by = ctx.userId) antes de mutar', () => {
+registrar('(b) as acoes de escrita da edge conferem dono (created_by = profiles.id) antes de mutar', () => {
   const index = stripComments(read(INDEX));
-  const ownerInWhere = [...index.matchAll(/\.eq\('created_by',\s*ctx\.userId\)/g)].length;
+  // MX08: o escopo vai no WHERE com o profiles.id RESOLVIDO (`.in('created_by',
+  // [owner, profileId])`), nunca com o auth.uid cru — auth.uid != profiles.id.
+  const ownerInWhere = [...index.matchAll(/\.in\('created_by',/g)].length;
   assert(
     ownerInWhere >= 2,
-    `draft.update e draft.discard devem escopar por created_by no WHERE (achei ${ownerInWhere})`,
+    `draft.update e draft.discard devem escopar por created_by (profiles.id) no WHERE (achei ${ownerInWhere})`,
   );
-  assert(/p_created_by:\s*ctx\.userId/.test(index), 'draft.create deve gravar p_created_by = ctx.userId');
+  assert(
+    /p_created_by:\s*profileId/.test(index),
+    'draft.create deve gravar p_created_by = profiles.id resolvido do JWT',
+  );
+  assert(
+    !/p_created_by:\s*ctx\.userId/.test(index) && !/created_by',\s*ctx\.userId/.test(index),
+    'nenhuma acao pode comparar/gravar created_by com o auth.uid cru (MX08)',
+  );
 
   const blocks = stripComments(read(`${EDGE}/actions/blocks.ts`));
   assert(
-    /function guardEditableDispatch[\s\S]*?row\.created_by !== ctx\.userId/.test(blocks),
-    'blocks: guardEditableDispatch deve comparar row.created_by com ctx.userId',
+    /function guardEditableDispatch[\s\S]*?resolveOwnerScope\(ctx,/.test(blocks),
+    'blocks: guardEditableDispatch deve resolver o dono via profiles.id (resolveOwnerScope)',
+  );
+  assert(
+    !/created_by\s*!==\s*ctx\.userId/.test(blocks),
+    'blocks: a guarda nao pode comparar created_by com o auth.uid cru (MX08)',
   );
   const guardCalls = [...blocks.matchAll(/guardEditableDispatch\(ctx,/g)].length;
   assert(guardCalls === 3, `blocks: cada mutacao deve chamar guardEditableDispatch (achei ${guardCalls})`);
@@ -167,7 +181,7 @@ registrar('(b) as acoes de escrita da edge conferem dono (created_by = ctx.userI
 
   const lifecycle = stripComments(read(`${EDGE}/actions/lifecycle.ts`));
   assert(
-    lifecycle.includes('resolveScope(ctx, dispatch.created_by)'),
+    lifecycle.includes('resolveOwnerScope(ctx, dispatch.created_by)'),
     'confirm/status devem resolver o escopo a partir do created_by do dispatch',
   );
   assert(

@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 74,
-    "source_file_count": 141,
+    "source_file_count": 142,
     "verify_jwt_true": 60,
     "verify_jwt_false": 14
   },
@@ -16,8 +16,8 @@
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
-      "bytes": 2978,
-      "sha256": "4a8f377b2dc1b08c99916fcc060820cb55ea5b991a6a6c1514d307c2a33af24d"
+      "bytes": 4007,
+      "sha256": "fff95328e31cf40c6b0776344a9432b78b4bfc8df16145835456d92e9cd5565a"
     },
     {
       "path": "supabase/functions/_shared/ai-auth.ts",
@@ -366,8 +366,8 @@
     },
     {
       "path": "supabase/functions/ai-transcribe-audio/index.ts",
-      "bytes": 7566,
-      "sha256": "c73272af51caee03c03852dc1731199934414d75aea2d61df6b8938641883ee7"
+      "bytes": 7855,
+      "sha256": "6698f254e1db0f81564eb7a126396256bb53c9050254fe19b55eb086070aab61"
     },
     {
       "path": "supabase/functions/approve-password-reset/index.ts",
@@ -541,8 +541,8 @@
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
-      "bytes": 11792,
-      "sha256": "d7483e31517cd39c53091b6d61b56576d38f2a4aa47c26f6b60ec8d61115062d"
+      "bytes": 11855,
+      "sha256": "b5d7c2d967fe5a1a09270643b5af13ee7b249a9f1f7437653b2b6598351763ca"
     },
     {
       "path": "supabase/functions/gmail-send/index.ts",
@@ -581,28 +581,28 @@
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/blocks.ts",
-      "bytes": 14186,
-      "sha256": "0e7757772aababdf136a2d6fbd03deaa7188c970a85ffaa40a262980a798198d"
+      "bytes": 14437,
+      "sha256": "1fd0497486f0e0d8833cb9261d586f6013e532a84b46d28493d41ef597afa952"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
-      "bytes": 40359,
-      "sha256": "6827c454b7fa4ccdee1d94ae609216f71bddea79f05fbca30ce441879479f5d4"
+      "bytes": 39800,
+      "sha256": "78bd02854889605f74b48295b6a004cac3f65eb1b324b5926034d4cbd123b9d6"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
-      "bytes": 18485,
-      "sha256": "7de69af12fdc8be08099f2703f67ad731d5d501ff8b58949dd0b45bef343eeda"
+      "bytes": 17515,
+      "sha256": "f4ae9474f12e34b14f57f0aa8fc7d60b9559fb2da12f7f06d98747714cfc07c6"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/listing.ts",
-      "bytes": 10320,
-      "sha256": "1b32bd3b291b2a723e72dba52e6ceff8b78459a3a47861a64129b3c99da99e7e"
+      "bytes": 9245,
+      "sha256": "68432ae6740f80582c5d3ab5426fb577d977184943e7570e56a10c696855bf1d"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/index.ts",
-      "bytes": 13239,
-      "sha256": "e58423e12d10ac7b66d7f10d4388cf7c0b3eff03a138ce961265ae9c586a18ea"
+      "bytes": 21656,
+      "sha256": "80905c2f57aaf459a2c4a01972613a47d669c0ce3541e01ab870b18b01b465c7"
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
@@ -616,8 +616,8 @@
     },
     {
       "path": "supabase/functions/promogifts-catalog/index.ts",
-      "bytes": 25188,
-      "sha256": "dedd93404f7299074269666bcc45099acad97dc9dc56f69109a721ba29c431ad"
+      "bytes": 26413,
+      "sha256": "3b56bb9f28b4edd7c6f3f62b65a3c5e98de99da52a641acc9a23802a7c05dfc5"
     },
     {
       "path": "supabase/functions/public-api/index.ts",
@@ -706,8 +706,13 @@
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
-      "bytes": 9628,
-      "sha256": "137b5e52a2a3f9340cb37b757ec7e3f94d9ac847f4ad932ea15ae77ef21f5f66"
+      "bytes": 11048,
+      "sha256": "8c31019dd1707d906b962ded1aa4228cb14a463cd4a7c557d581541efcd1ab51"
+    },
+    {
+      "path": "supabase/functions/webauthn/verify.ts",
+      "bytes": 13155,
+      "sha256": "d393aa74b12e0caa5ba9742912a61bfb3304166eae9ed505c38ec24889899c14"
     },
     {
       "path": "supabase/functions/webhook-diagnostic/index.ts",
@@ -907,7 +912,7 @@
       "name": "ai-transcribe-audio",
       "entrypoint": "supabase/functions/ai-transcribe-audio/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7d1c7ec6c958fd696c6a05e7aa006f0d2fe3599c1ebeb59de8da7ddf5b2c0f79",
+      "source_sha256": "ab98ecce01201206f48ef93f8a2adaf9b390de2ca15afac2d424e5afd9d14af5",
       "source_files": [
         "supabase/functions/_shared/ai-audio-authz.ts",
         "supabase/functions/_shared/ai-auth.ts",
@@ -1398,7 +1403,7 @@
       "name": "gmail-oauth",
       "entrypoint": "supabase/functions/gmail-oauth/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b5b949279cc5adfcfea5fa1555ac8fa1f54fe819ae0709a54e964513c490bacc",
+      "source_sha256": "b2f705c6d1466e8f00df791bde86fc43b43b68a90e3efa924aa7369b23d07e13",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1488,7 +1493,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "9e5e144d1e8e40b6f11121e4b147c6be1eea8ac2d88eb62452f2b0668c45affe",
+      "source_sha256": "0e20c6643ba45b1819af38c9e2e2ff194286387b7badef3c418b5df31add920c",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1568,7 +1573,7 @@
       "name": "promogifts-catalog",
       "entrypoint": "supabase/functions/promogifts-catalog/index.ts",
       "verify_jwt": true,
-      "source_sha256": "1754e03df8f44cd8aaefa798269c889abb4d3086ddea081349fe452dd1685a88",
+      "source_sha256": "2f044041cb078075780db0ad4c32962c4fb456d11c8a3461476ae8ba64b30ad3",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1804,12 +1809,13 @@
       "name": "webauthn",
       "entrypoint": "supabase/functions/webauthn/index.ts",
       "verify_jwt": true,
-      "source_sha256": "574fa01ae62d095900931cc6b348d8ca8ef0d985ed11024180e269ad43678fe4",
+      "source_sha256": "c9b2364d7cda3abfb13ec16d1c6befc45558697a2056edde579a1c3271f1acd6",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
-        "supabase/functions/webauthn/index.ts"
+        "supabase/functions/webauthn/index.ts",
+        "supabase/functions/webauthn/verify.ts"
       ]
     },
     {
@@ -1837,5 +1843,5 @@
       ]
     }
   ],
-  "manifest_sha256": "f43b47617b02bf20e31161ee731a161bf0b3ccf1536d5a1797c8b9b268aeb81a"
+  "manifest_sha256": "057396d54417218a5d1209d84859445692d78f259c4045788d6e7ef5ff40e48a"
 }

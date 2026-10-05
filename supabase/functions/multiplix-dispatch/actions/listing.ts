@@ -31,7 +31,7 @@
 
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { errorResponse, jsonResponse } from '../../_shared/validation.ts';
-import { DispatchError, MANAGE_ALL_PERMISSION, type ActionContext } from '../index.ts';
+import { DispatchError, type ActionContext, resolveOwnerScope } from '../index.ts';
 
 // ---------------------------------------------------------------------------
 // Contratos de entrada.
@@ -73,36 +73,9 @@ const RECIPIENT_LIST_COLUMNS =
 
 type Result<T> = { data: T; error: { message?: string } | null };
 
-interface OwnerScope {
-  /** `profiles.id` do JWT (o que a `created_by` guarda), ou null se nao houver. */
-  profileId: string | null;
-  /** `multiplix.dispatch.manage_all`: ve os disparos de qualquer dono. */
-  manageAll: boolean;
-}
-
-/**
- * Resolve o escopo de leitura no SERVIDOR a partir do JWT ja validado: o
- * `profiles.id` do usuario e a permissao ampla. Mesma resolucao do `multiplix-send`
- * (`authProfile` + `canManageDispatch`) e do `lifecycle.resolveScope`.
- */
-async function resolveOwnerScope(ctx: ActionContext): Promise<OwnerScope> {
-  const { data, error } = await ctx.supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', ctx.userId)
-    .maybeSingle() as Result<{ id?: string } | null>;
-  if (error) throw new DispatchError('MULTIPLIX_PROFILE_LOOKUP', error.message ?? 'profile lookup failed', 502);
-  const profileId = typeof data?.id === 'string' ? data.id : null;
-
-  const { data: permission, error: permissionError } = await ctx.supabase.rpc('user_has_permission', {
-    _user_id: ctx.userId,
-    _permission_name: MANAGE_ALL_PERMISSION,
-  }) as Result<unknown>;
-  if (permissionError) {
-    throw new DispatchError('MULTIPLIX_PERMISSION_LOOKUP', permissionError.message ?? 'permission lookup failed', 502);
-  }
-  return { profileId, manageAll: permission === true };
-}
+// MX08: `resolveOwnerScope` (importado do index.ts) e a resolucao canonica da
+// edge — o `profiles.id` do JWT (o MESMO id que `created_by` guarda) + a
+// permissao ampla `multiplix.dispatch.manage_all`, UMA vez para todas as acoes.
 
 // ---------------------------------------------------------------------------
 // dispatch.list
