@@ -120,6 +120,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     // voo do template anterior passa a ser obsoleta.
     activeTemplateIdRef.current = t.id;
     versionsTemplateIdRef.current = null;
+    // R2-MOD-024: trocar de template zera o loading do historico. Sem isto, uma
+    // resposta pendente de A descartada na troca para B prendia `loadingVersions`.
+    setLoadingVersions(false);
     setVariants([]); setShowVariants(false);
     setActiveTemplateId(t.id);
     setExpectedUpdatedAt(t.updated_at);
@@ -163,11 +166,17 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   /** E46: usa hook para buscar historico de versoes; descarta resposta atrasada de outro template */
   const fetchVersions = async (templateId: string) => {
     setLoadingVersions(true);
-    const data = await fetchVersionHistory(templateId);
-    if (!isActiveOrigin(templateId)) return;
-    versionsTemplateIdRef.current = templateId;
-    setVersions(data);
-    setLoadingVersions(false);
+    try {
+      const data = await fetchVersionHistory(templateId);
+      if (!isActiveOrigin(templateId)) return;
+      versionsTemplateIdRef.current = templateId;
+      setVersions(data);
+    } finally {
+      // R2-MOD-024: so o request do template ATIVO pode zerar o loading. A resposta
+      // descartada de A (que chega depois da troca para B) nao pode alterar o painel
+      // atual nem deixar `loadingVersions` preso; a propria troca ja zera o flag.
+      if (isActiveOrigin(templateId)) setLoadingVersions(false);
+    }
   };
 
   /** R2-MOD-024: carrega variantes do template dado, ignorando resposta que chegue depois da troca. */
