@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, Paperclip, Send } from 'lucide-react';
+import { Calendar, Clock, Loader2, Paperclip } from 'lucide-react';
 import { format, addDays, addHours, setHours, setMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { localInstantFromDayAndTime } from '@/lib/localDay';
@@ -19,7 +19,9 @@ import { toast } from '@/hooks/ui/use-toast';
 interface ScheduleMessageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSchedule: (message: string, scheduledAt: Date, attachment?: File) => void;
+  // R2-INB-010: o agendamento é assíncrono. O diálogo só pode fechar e limpar o
+  // rascunho DEPOIS que a persistência confirmar; por isso o retorno é aguardável.
+  onSchedule: (message: string, scheduledAt: Date, attachment?: File) => Promise<void> | void;
 }
 
 export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: ScheduleMessageDialogProps) {
@@ -27,6 +29,7 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
   const [date, setDate] = useState(format(addDays(new Date(), 1), 'yyyy-MM-dd'));
   const [time, setTime] = useState('09:00');
   const [attachment, setAttachment] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const quickSchedules = [
     { label: 'Amanhã 9h', getDate: () => setMinutes(setHours(addDays(new Date(), 1), 9), 0) },
@@ -35,7 +38,7 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
     { label: 'Em 1 semana', getDate: () => setMinutes(setHours(addDays(new Date(), 7), 9), 0) },
   ];
 
-  const handleSchedule = () => {
+  const handleSchedule = async () => {
     if (!message.trim()) {
       toast({ title: 'Mensagem vazia', description: 'Digite uma mensagem para agendar', variant: 'destructive' });
       return;
@@ -46,16 +49,33 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
       toast({ title: 'Data inválida', description: 'A data de agendamento deve ser no futuro', variant: 'destructive' });
       return;
     }
-    
-    onSchedule(message, scheduledDate, attachment || undefined);
-    toast({
-      title: 'Mensagem agendada!',
-      description: `Será enviada em ${format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
-    });
-    
-    onOpenChange(false);
-    setMessage('');
-    setAttachment(null);
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      // Só anuncia sucesso, fecha e apaga o rascunho depois que a persistência confirmar.
+      await onSchedule(message, scheduledDate, attachment || undefined);
+      toast({
+        title: 'Mensagem agendada!',
+        description: `Será enviada em ${format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
+      });
+
+      onOpenChange(false);
+      setMessage('');
+      setAttachment(null);
+    } catch (err) {
+      // Falha ao persistir: mantém o diálogo aberto e o rascunho intacto para nova
+      // tentativa (o produtor já reporta a causa; aqui garantimos que nada é apagado).
+      toast({
+        title: 'Não foi possível agendar',
+        description: 'A mensagem não foi salva. Revise os dados e tente novamente.',
+        variant: 'destructive',
+      });
+      void err;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleQuickSchedule = (getDate: () => Date) => {
@@ -185,16 +205,20 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
 
           {/* Actions */}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               Cancelar
             </Button>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
                 onClick={handleSchedule}
-                disabled={!message.trim()}
+                disabled={!message.trim() || isSubmitting}
                 className="bg-whatsapp hover:bg-whatsapp-dark"
               >
-                <Clock className="w-4 h-4 mr-2" />
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Clock className="w-4 h-4 mr-2" />
+                )}
                 Agendar
               </Button>
             </motion.div>
