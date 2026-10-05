@@ -266,6 +266,11 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   const lastCardFocusRef = useRef<{ contactId: string; surface: 'main' | 'queue' } | null>(null);
   const selectedContactId = selection?.scopeKey === scopeKey ? selection.contactId : null;
   const notifiedMissingRef = useRef<string | null>(null);
+  // TM-01 (#170): leitura integral da última mensagem sem assumir o atendimento.
+  // As mensagens anteriores não são expostas porque talk_me_list_waiting devolve apenas a
+  // última mensagem e não existe caminho autorizado de histórico antes do aceite; o
+  // subrequisito fica registrado como recorte de escopo no relato do cartão.
+  const [fullMessageContactId, setFullMessageContactId] = useState<string | null>(null);
 
   const activeIndex = useMemo(
     () => items.findIndex((item) => item.contactId === selectedContactId),
@@ -273,6 +278,8 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   );
   const safeIndex = activeIndex >= 0 ? activeIndex : 0;
   const activeItem = items[safeIndex] ?? null;
+  const isFullMessageOpen = !!activeItem && fullMessageContactId === activeItem.contactId;
+  const fullMessagePanelId = activeItem ? `talk-me-full-message-${activeItem.contactId}` : undefined;
 
   useEffect(() => {
     if (!open || items.length === 0 || itemsLoading || reconciling) return;
@@ -394,6 +401,11 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
       toast.error('Atendimento assumido, mas a conversa não abriu. Atualize o Inbox.');
     }
   }, [activeItem, claim, onAccepted, onOpenChange, refresh]);
+
+  const toggleFullMessage = useCallback(() => {
+    if (!activeItem) return;
+    setFullMessageContactId((current) => (current === activeItem.contactId ? null : activeItem.contactId));
+  }, [activeItem]);
 
   const isClaiming = !!activeItem && claimingContactId === activeItem.contactId;
   const showInitialLoading = queuesLoading || searchPending || (itemsLoading && items.length === 0);
@@ -554,6 +566,38 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                     <Button variant="outline" size="icon" onClick={() => move(1)} disabled={(safeIndex >= items.length - 1 && !hasMore) || !!claimingContactId || reconciling} className="absolute right-1 top-[42%] z-30 h-11 w-11 rounded-full border-white/15 bg-black/90 text-white hover:bg-zinc-900 sm:right-8" aria-label="Próximo atendimento">
                       {loadingMore ? <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" /> : <ChevronRight className="h-5 w-5" />}
                     </Button>
+                  </div>
+
+                  <div className="mx-auto mt-2 flex w-full max-w-[560px] flex-col items-center gap-2 px-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleFullMessage}
+                      disabled={!activeItem}
+                      aria-expanded={isFullMessageOpen}
+                      aria-controls={fullMessagePanelId}
+                      data-testid="talk-me-read-more"
+                      className="h-8 rounded-full border-white/15 bg-black/80 px-4 text-xs font-semibold text-white hover:bg-zinc-900"
+                    >
+                      {isFullMessageOpen ? 'Recolher mensagem' : 'Ler mensagem completa'}
+                    </Button>
+                    {isFullMessageOpen && activeItem && (
+                      <div
+                        id={fullMessagePanelId}
+                        data-testid="talk-me-full-message"
+                        role="region"
+                        aria-label={`Mensagem completa de ${activeItem.name || 'contato sem nome'}`}
+                        className="w-full rounded-2xl border border-white/15 bg-black/70 px-4 py-3 text-left"
+                      >
+                        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-white">{messagePreview(activeItem)}</p>
+                        {activeItem.pendingMessageCount > 1 && (
+                          <p className="mt-2 text-xs text-zinc-400">
+                            {activeItem.pendingMessageCount} mensagens aguardando resposta neste atendimento.
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="mx-auto mt-1.5 flex w-full max-w-[360px] justify-center px-3">
