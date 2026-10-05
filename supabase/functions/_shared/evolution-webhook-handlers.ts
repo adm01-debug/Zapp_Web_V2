@@ -225,19 +225,25 @@ export async function handleChatsUpdate(supabase: EvolutionDbClient, instance: s
   }
 }
 
-export async function handleLabelsEdit(supabase: EvolutionDbClient, _instance: string, data: unknown) {
+export async function handleLabelsEdit(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const labelData = isRecord(data) ? data : {};
   const labelId = labelData.id as string;
   const labelName = labelData.name as string;
   const deleted = labelData.deleted as boolean;
   if (!labelId) return;
 
+  // O id de label é por instância (cada conta renumera de 0..N). Sem escopo, o
+  // prefixo wa:<id>: renomearia/apagaria o label homônimo de OUTRAS conexões.
+  // Resolve a conexão pela instância; sem conexão, não há contatos para tocar.
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
   const prefix = `wa:${labelId}:`;
   if (deleted) {
-    await supabase.rpc('remove_wa_label_from_all_contacts', { p_label_prefix: prefix });
+    await supabase.rpc('remove_wa_label_from_all_contacts', { p_connection_id: connection.id, p_label_prefix: prefix });
   } else {
     const tagName = `wa:${labelId}:${labelName || `Label ${labelId}`}`;
-    await supabase.rpc('rename_wa_label_on_all_contacts', { p_label_prefix: prefix, p_new_tag: tagName });
+    await supabase.rpc('rename_wa_label_on_all_contacts', { p_connection_id: connection.id, p_label_prefix: prefix, p_new_tag: tagName });
   }
 }
 
