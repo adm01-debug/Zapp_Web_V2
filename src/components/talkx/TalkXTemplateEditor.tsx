@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   X, Check, Copy, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
@@ -69,6 +69,16 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [libSearch, setLibSearch] = useState('');
   const [libCat, setLibCat] = useState('all');
 
+  // R2-MOD-024 (refazer 2/2): fonte ÚNICA que mantém `activeTemplateIdRef` alinhado
+  // ao template ativo em TODOS os caminhos que chamam `setActiveTemplateId(...)` — não
+  // apenas o valor inicial e o `loadTemplate`, mas também qualquer troca por criação,
+  // duplicação ou reativação de template. Sem isto, um caminho que troque o ativo sem
+  // atualizar o ref faz `isActiveOrigin` recusar variantes/histórico legítimos e as
+  // ações `saveVariant`/`deleteVariant` do template recém-ativado.
+  useEffect(() => {
+    activeTemplateIdRef.current = activeTemplateId;
+  }, [activeTemplateId]);
+
   // Template ativo derivado de activeTemplateId (pode diferir de editing apos carga da biblioteca)
   const activeTemplate = templates.find((t) => t.id === activeTemplateId) ?? editing;
 
@@ -116,9 +126,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const loadTemplate = (t: TalkXTemplate) => {
     setVersions([]); setShowVersions(false);
     if (isDirty && !window.confirm('Tem alterações não salvas. Descartar?')) return;
-    // R2-MOD-024: a partir daqui o template ativo é este; qualquer resposta em
-    // voo do template anterior passa a ser obsoleta.
-    activeTemplateIdRef.current = t.id;
+    // R2-MOD-024 (refazer 2/2): a partir daqui o template ativo é este; o
+    // `activeTemplateIdRef` é sincronizado pelo efeito único dependente de
+    // `activeTemplateId` (fonte única de sincronização, declarado acima).
     versionsTemplateIdRef.current = null;
     // R2-MOD-024: trocar de template zera o loading do historico. Sem isto, uma
     // resposta pendente de A descartada na troca para B prendia `loadingVersions`.
