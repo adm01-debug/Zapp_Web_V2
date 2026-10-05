@@ -152,12 +152,14 @@ Migration `supabase/migrations/20261002411230_ia047_idempotencia_de_efeitos.sql`
   circuito** (suspender provedores com falhas repetidas, limitar concorrência) **não foi entregue na série**:
   verificado por medição em 02/10/2026 — nenhum PR cita `IA-050` (`gh pr list --search IA-050` devolve lista
   vazia) e não existe contagem de falhas nem suspensão por provedor em `supabase/functions/**`.
-  **Retificação (05/10/2026, cartão `t_ab463e39`):** a abertura de circuito foi implementada depois, em
+  **Retificação (05/10/2026, cartão `t_4e3bf2dc`):** a abertura de circuito foi implementada depois, em
   `supabase/functions/_shared/ai-circuit.ts` + gate `admitAiProviderCall` no despacho de `ai-generate.ts`.
   O estado é derivado do ledger `ai_usage_logs` (`metadata.provider_id`, falhas consecutivas na janela),
   a meia-abertura admite uma sonda atômica por `edge_rate_limits`/`ai_rate_limit_hit` e o bloqueio devolve
   `503/CIRCUIT_OPEN` explícito — provado por `supabase/functions/_shared/ai-circuit.test.ts`
-  (vermelho antes da correção, verde depois).
+  (vermelho antes da correção, verde depois). **Limite conhecido:** nesta entrega, qualquer desfecho
+  `error` conta para o limiar, inclusive erro 4xx da requisição; a classificação mais restrita pertence ao
+  cartão seguinte e não é implementada aqui.
 
 ### Auditoria — PRs #1609 e #1627
 

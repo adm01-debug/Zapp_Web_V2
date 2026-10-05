@@ -49,8 +49,9 @@ válidos. Este bloco **não altera código, banco nem configuração** — entre
 ## Próximos blocos
 
 Os blocos **01 a 05 estão entregues** (etapas IA-001..IA-050 — a última pendência, IA-050,
-foi fechada no cartão `t_ab463e39`: circuito por provedor derivado do ledger `ai_usage_logs`,
-com sonda única de recuperação via `edge_rate_limits`):
+foi fechada no cartão `t_4e3bf2dc`: circuito por provedor derivado do ledger `ai_usage_logs`,
+com sonda única de recuperação via `edge_rate_limits`. Limite conhecido: até o cartão seguinte,
+todo desfecho `error`, inclusive erro 4xx da requisição, conta para abrir o circuito):
 
 - **Bloco 04 — Camada única de provedores e modelos (IA-031..IA-040, P1)**:
   [`IA-031-a-IA-040-camada-de-provedores-e-capacidades.md`](./IA-031-a-IA-040-camada-de-provedores-e-capacidades.md).
