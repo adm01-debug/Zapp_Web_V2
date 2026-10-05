@@ -8,7 +8,7 @@ import { ChatbotL1Output, parseModelOutput } from "../_shared/ai-response-contra
 import { normalizeSentiment, normalizeOperationalPriority } from "../_shared/ai-vocabulary.ts";
 import { parseJsonObject } from "../_shared/ai-json.ts";
 
-Deno.serve(async (req) => {
+export async function handleChatbotL1Request(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -66,13 +66,16 @@ Deno.serve(async (req) => {
     }
 
     // Check if chatbot is active for this connection
-    const { data: flow } = await supabase
+    // IA-CHATBOT-001: o flow é escolhido PELA CONEXÃO em que a mensagem chegou.
+    // Sem o filtro, qualquer flow ativo respondia por qualquer número — o
+    // chamador mandava `connectionId` e ele era descartado.
+    let flowQuery = supabase
       .from('chatbot_flows')
       .select('*')
       .eq('is_active', true)
-      .eq('trigger_type', 'ai_l1')
-      .limit(1)
-      .maybeSingle();
+      .eq('trigger_type', 'ai_l1');
+    if (connectionId) flowQuery = flowQuery.eq('whatsapp_connection_id', connectionId);
+    const { data: flow } = await flowQuery.limit(1).maybeSingle();
 
     if (!flow) {
       return jsonResponse({ handled: false, reason: 'no_active_flow' }, 200, req);
@@ -104,10 +107,15 @@ Deno.serve(async (req) => {
     }
 
     // Fetch conversation history
-    const { data: history } = await supabase
+    // IA-CHATBOT-001: o histórico é da CONEXÃO da mensagem. O mesmo contato pode
+    // falar por números diferentes; misturar as conversas colocaria no prompt
+    // (e na resposta) mensagens de outro canal.
+    let historyQuery = supabase
       .from('messages')
       .select('content, sender, message_type')
-      .eq('contact_id', contactId)
+      .eq('contact_id', contactId);
+    if (connectionId) historyQuery = historyQuery.eq('whatsapp_connection_id', connectionId);
+    const { data: history } = await historyQuery
       .order('created_at', { ascending: false })
       .limit(15);
 
@@ -263,4 +271,8 @@ Responda em JSON:
     // (js/stack-trace-exposure).
     return errorResponse(error instanceof Error ? error.message : "Unknown error", 500, req);
   }
-});
+}
+
+// `Deno.serve` só quando este módulo é o principal (deploy). O guard deixa o
+// handler ser exercitado direto pelos testes de contrato, sem abrir porta.
+if (import.meta.main) Deno.serve(handleChatbotL1Request);
