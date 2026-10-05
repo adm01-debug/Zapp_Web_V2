@@ -15,12 +15,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, AlertCircle, Settings } from 'lucide-react';
 import { QueueCharts } from '@/components/queues/QueueCharts';
 import { QueueMetricsCards } from './queue-details/QueueMetricsCards';
+import { computeQueueMetrics, type QueueMetrics } from './queue-details/queueMetrics';
 import { QueueContactsTable } from './queue-details/QueueContactsTable';
 
 interface QueueDetailsData { id: string; name: string; description: string | null; color: string; max_wait_time_minutes: number | null; created_at: string; }
 interface QueueMember { id: string; profile_id: string; profile: { name: string; avatar_url: string | null; is_active: boolean }; }
 interface QueueContact { id: string; name: string; phone: string; avatar_url: string | null; assigned_to: string | null; created_at: string; assigned_agent?: { name: string | null; avatar_url: string | null } | null; messages_count: number; last_message_at: string | null; }
-interface QueueMetrics { totalContacts: number; assignedContacts: number; waitingContacts: number; avgResponseTime: string; resolvedToday: number; }
 
 export default function QueueDetails() {
   const { id } = useParams<{ id: string }>();
@@ -45,7 +45,7 @@ export default function QueueDetails() {
       const { data: membersData } = await supabase.from('queue_members').select('id, profile_id, profile:profiles(name, avatar_url, is_active)').eq('queue_id', id);
       setMembers(membersData as unknown as QueueMember[]);
 
-      const { data: contactsData } = await supabase.from('contacts').select('id, name, phone, avatar_url, assigned_to, created_at').eq('queue_id', id).order('created_at', { ascending: false }).limit(50);
+      const { data: contactsData } = await supabase.from('contacts').select('id, name, phone, avatar_url, assigned_to, created_at, conversation_status, conversation_status_changed_at').eq('queue_id', id).order('created_at', { ascending: false }).limit(50);
 
       const contactsWithDetails = await Promise.all(
         (contactsData || []).map(async (contact) => {
@@ -58,9 +58,23 @@ export default function QueueDetails() {
       );
       setContacts(contactsWithDetails);
 
-      const totalContacts = contactsWithDetails.length;
-      const assignedContacts = contactsWithDetails.filter(c => c.assigned_to).length;
-      setMetrics({ totalContacts, assignedContacts, waitingContacts: totalContacts - assignedContacts, avgResponseTime: '~3 min', resolvedToday: Math.floor(assignedContacts * 0.7) });
+      // R2-QUE-001: Tempo Médio e Resolvidos Hoje saem de dados medidos. A amostra de tempo de
+      // primeira resposta vem de conversation_sla (first_message_at → first_response_at); sem
+      // amostra válida o cartão mostra "Sem dados" em vez de um valor fixo.
+      const contactIds = (contactsData || []).map(c => c.id);
+      const { data: slaRows } = contactIds.length
+        ? await supabase.from('conversation_sla').select('contact_id, first_message_at, first_response_at').in('contact_id', contactIds)
+        : { data: [] as Array<{ contact_id: string | null; first_message_at: string | null; first_response_at: string | null }> };
+
+      setMetrics(computeQueueMetrics(
+        (contactsData || []).map(c => ({
+          assigned_to: c.assigned_to,
+          conversation_status: c.conversation_status,
+          conversation_status_changed_at: c.conversation_status_changed_at,
+        })),
+        slaRows || [],
+        new Date(),
+      ));
     } catch (error) { log.error('Error fetching queue data:', error); }
     finally { setLoading(false); }
   }, [id]);

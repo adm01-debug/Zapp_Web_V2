@@ -1,13 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Users, Clock, CheckCircle, TrendingUp } from 'lucide-react';
-
-interface QueueMetrics {
-  totalContacts: number;
-  assignedContacts: number;
-  waitingContacts: number;
-  avgResponseTime: string;
-  resolvedToday: number;
-}
+import { type QueueMetrics } from './queueMetrics';
 
 export function QueueMetricsCards({ metrics }: { metrics: QueueMetrics }) {
   const cards = [
