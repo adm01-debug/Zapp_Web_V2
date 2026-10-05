@@ -244,7 +244,187 @@ export async function logAiUsageDetached(entry: AiUsageEntry): Promise<void> {
   await promise;
 }
 
-/** Log AI usage to database (fire-and-forget, non-blocking) */
+// ---------------------------------------------------------------------------
+// IA-TIMEOUT-001 — log essencial durável: retenta o transitório, confere a
+// existência antes de reenviar e nunca perde em silêncio
+// ---------------------------------------------------------------------------
+// O defeito medido: `logAiUsage` fazia UM insert e engolia a falha com
+// `console.warn`. Consumo PAGO virava registro perdido — e uma resposta
+// perdida DEPOIS da escrita era indistinguível de falha real, então reenviar
+// às cegas poderia duplicar a cobrança. A política aqui resolve os dois lados:
+//  - `metadata.log_key` = SHA-256 dos campos estáveis da linha: a mesma
+//    execução sempre produz a mesma chave, o que torna a checagem de
+//    existência possível;
+//  - retenta até MAX_TENTATIVAS_LOG, conferindo a existência por log_key antes
+//    de cada reenvio — a linha que já gravou NÃO é inserida de novo;
+//  - só retenta transitório (sem resposta, 429, 5xx); permanente (4xx) para na
+//    hora, porque repetir só repete o erro;
+//  - esgotado o teto, emite `console.error` com o marcador estável
+//    `[ai-usage][LOG-ESSENCIAL-PERDIDO]` e a linha inteira em JSON —
+//    observável no log e reenviável por `reprocessarLogEssencial`.
+
+/** Teto de tentativas do insert do log essencial (1 + reenvios). */
+const MAX_TENTATIVAS_LOG = 3;
+
+/**
+ * Chave de idempotência da linha de log: SHA-256 hex dos campos ESTÁVEIS.
+ *
+ * Dois reenvios do mesmo consumo calculam a mesma `log_key` — é o que permite
+ * conferir `metadata->>log_key` antes de inserir de novo, e o que torna
+ * `reprocessarLogEssencial` seguro contra cobrança dupla. O próprio
+ * `metadata.log_key` não entra na conta (ele é derivado, não é dado).
+ */
+export async function chaveDeLog(linha: Record<string, unknown>): Promise<string> {
+  const metadata = (linha.metadata ?? {}) as Record<string, unknown>;
+  const provider: Record<string, unknown> = {};
+  for (const chave of Object.keys(metadata).filter((k) => k.startsWith("provider_")).sort()) {
+    provider[chave] = metadata[chave];
+  }
+  const estavel = {
+    function_name: linha.function_name ?? null,
+    user_id: linha.user_id ?? null,
+    model: linha.model ?? null,
+    input_tokens: linha.input_tokens ?? null,
+    output_tokens: linha.output_tokens ?? null,
+    duration_ms: linha.duration_ms ?? null,
+    status: linha.status ?? null,
+    error_message: linha.error_message ?? null,
+    request_id: linha.request_id ?? null,
+    job_id: linha.job_id ?? null,
+    attempt: linha.attempt ?? null,
+    provider,
+  };
+  const resumo = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(JSON.stringify(estavel)),
+  );
+  return [...new Uint8Array(resumo)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Escrita/leitura do log essencial via PostgREST direto, não pelo cliente
+ * supabase-js: a política de retentativa precisa do STATUS HTTP da resposta
+ * (429/5xx retenta, 4xx não) e o `PostgrestError` do cliente não garante esse
+ * campo — sem ele, transitório e permanente seriam indistinguíveis.
+ */
+function cabecalhosRest(serviceRoleKey: string): Record<string, string> {
+  return {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+    "Content-Type": "application/json",
+  };
+}
+
+async function inserirLinhaDeLog(
+  url: string,
+  chave: string,
+  linha: Record<string, unknown>,
+): Promise<Response> {
+  const resposta = await fetch(`${url}/rest/v1/ai_usage_logs`, {
+    method: "POST",
+    headers: { ...cabecalhosRest(chave), Prefer: "return=minimal" },
+    body: JSON.stringify(linha),
+  });
+  // Esvazia o corpo para não segurar a conexão antes de classificar o status.
+  try { await resposta.text(); } catch { /* corpo de erro pode nem existir */ }
+  return resposta;
+}
+
+/** Há linha com esta `log_key`? Lança quando a própria checagem falha. */
+async function existeLinhaDeLog(url: string, chave: string, logKey: string): Promise<boolean> {
+  const resposta = await fetch(
+    `${url}/rest/v1/ai_usage_logs?select=id&metadata-%3E%3Elog_key=eq.${encodeURIComponent(logKey)}&limit=1`,
+    { headers: cabecalhosRest(chave) },
+  );
+  const corpo = await resposta.text();
+  if (!resposta.ok) throw new Error(`checagem de log_key falhou: HTTP ${resposta.status}`);
+  const linhas = JSON.parse(corpo) as unknown;
+  return Array.isArray(linhas) && linhas.length > 0;
+}
+
+/** 429/5xx valem retentativa; 4xx é pedido inválido — repetir só repete o erro. */
+function statusTransitorioDeLog(status: number): boolean {
+  return status === 429 || (status >= 500 && status <= 599);
+}
+
+/**
+ * Grava a linha com retentativa transitória + checagem de existência.
+ *
+ * Da segunda volta em diante, confere `metadata->>log_key` ANTES de reenviar:
+ * se a linha já está lá, a resposta anterior se perdeu depois da escrita e
+ * reenviar duplicaria a cobrança. Se a própria CHECAGEM falha, a volta não
+ * insere às cegas — sem confirmar a ausência não dá para garantir a
+ * idempotência (a linha segue recuperável pelo marcador de perdido).
+ */
+async function gravarLogEssencial(
+  url: string,
+  chave: string,
+  linha: Record<string, unknown>,
+  logKey: string,
+): Promise<"gravado" | "falhou"> {
+  for (let tentativa = 0; tentativa < MAX_TENTATIVAS_LOG; tentativa++) {
+    if (tentativa > 0) {
+      try {
+        if (await existeLinhaDeLog(url, chave, logKey)) return "gravado";
+      } catch {
+        continue;
+      }
+    }
+    try {
+      const resposta = await inserirLinhaDeLog(url, chave, linha);
+      if (resposta.ok) return "gravado";
+      if (!statusTransitorioDeLog(resposta.status)) return "falhou";
+    } catch {
+      // fetch lançou = sem resposta: transitório, a próxima volta checa antes.
+    }
+  }
+  return "falhou";
+}
+
+/**
+ * Reenvia um log essencial perdido (o JSON do marcador
+ * `[ai-usage][LOG-ESSENCIAL-PERDIDO]`).
+ *
+ * Idempotente por construção: recalcula a `log_key` dos campos estáveis e
+ * confere a existência ANTES de inserir — reenviar o mesmo registro nunca
+ * cobra duas vezes. Aceita o objeto ou a string JSON do marcador.
+ */
+export async function reprocessarLogEssencial(
+  registro: unknown,
+): Promise<"gravado" | "ja-existia" | "falhou"> {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !serviceRoleKey) return "falhou";
+
+    let bruto: unknown = registro;
+    if (typeof bruto === "string") {
+      try { bruto = JSON.parse(bruto); } catch { return "falhou"; }
+    }
+    if (typeof bruto !== "object" || bruto === null || Array.isArray(bruto)) return "falhou";
+    const linha = bruto as Record<string, unknown>;
+    // A linha precisa ao menos dizer de qual função é o consumo.
+    if (typeof linha.function_name !== "string" || linha.function_name === "") return "falhou";
+
+    // A chave é RECALCULADA dos campos estáveis, não herdada do payload —
+    // confiar no log_key recebido deixaria um payload adulterado burlar a
+    // idempotência.
+    const logKey = await chaveDeLog(linha);
+    const linhaFinal = {
+      ...linha,
+      metadata: { ...((linha.metadata ?? {}) as Record<string, unknown>), log_key: logKey },
+    };
+
+    if (await existeLinhaDeLog(supabaseUrl, serviceRoleKey, logKey)) return "ja-existia";
+
+    const resposta = await inserirLinhaDeLog(supabaseUrl, serviceRoleKey, linhaFinal);
+    return resposta.ok ? "gravado" : "falhou";
+  } catch {
+    return "falhou";
+  }
+}
+
+/** Log AI usage to database (essencial: nunca lança, nunca perde em silêncio) */
 export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -256,7 +436,7 @@ export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
     // Auto-resolve profile_id if not provided
     const profileId = entry.profileId || await resolveProfileId(supabase, entry.userId);
 
-    await supabase.from('ai_usage_logs').insert({
+    const linha: Record<string, unknown> = {
       user_id: entry.userId || null,
       profile_id: profileId,
       function_name: entry.functionName,
@@ -277,7 +457,20 @@ export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
       request_id: normalizeCorrelationId(entry.requestId),
       job_id: normalizeCorrelationId(entry.jobId),
       attempt: normalizeAttempt(entry.attempt),
-    });
+    };
+
+    // IA-TIMEOUT-001 — a chave vai no metadata e é o que torna o reenvio
+    // idempotente: a checagem de existência antes de cada retentativa impede
+    // que resposta perdida depois da escrita duplique a cobrança.
+    const logKey = await chaveDeLog(linha);
+    linha.metadata = { ...(linha.metadata as Record<string, unknown>), log_key: logKey };
+
+    if (await gravarLogEssencial(supabaseUrl, serviceRoleKey, linha, logKey) === "falhou") {
+      // O consumo NÃO foi gravado e NÃO pode sumir: o marcador leva a linha
+      // inteira em JSON — observável no log e reenviável por
+      // `reprocessarLogEssencial` sem risco de cobrança dupla.
+      console.error(`[ai-usage][LOG-ESSENCIAL-PERDIDO] ${JSON.stringify(linha)}`);
+    }
   } catch (e) {
     // Never throw — logging failures must not break the main flow
     console.warn(`[ai-usage] Failed to log: ${e instanceof Error ? e.message : String(e)}`);
