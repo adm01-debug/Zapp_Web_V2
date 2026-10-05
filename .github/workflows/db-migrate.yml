@@ -7,8 +7,10 @@
 # ZAPP-WEB · Migration controlada do banco oficial
 # ==================================================================
 # Executa somente por workflow_dispatch na main. O dry-run e obrigatorio
-# antes de uma aplicacao: ele comprova o destino, exige uma migration local
-# ou um bundle explicitamente autorizado e publica apenas hashes estruturais.
+# antes de uma aplicacao: ele comprova o destino, exige uma migration local,
+# um bundle explicitamente autorizado ou um lote declarado via lote_versions
+# (conjunto identico ao das versions ausentes no ledger, terminando na
+# migration_version) e publica apenas hashes estruturais.
 # Desde o PR #695 (2026-09-25), migrations sem contrato dedicado caem no
 # contrato generico (scripts/db-audit/generic-migration-runtime.sql), que
 # prova apenas que o schema public nao mudou entre dry-run e apply. Para
@@ -36,6 +38,11 @@ on:
       migration_version:
         description: 'Versao exata, com 14 digitos (ex: 20260830170000).'
         required: true
+        type: string
+      lote_versions:
+        description: 'Opcional: lote de versions de 14 digitos em ordem crescente (virgula ou espaco). O conjunto precisa ser exatamente o das ausentes no ledger e a ultima precisa ser a migration_version.'
+        required: false
+        default: ''
         type: string
       confirm_project_ref:
         description: 'Digite o project-ref oficial para confirmar o destino.'
@@ -119,6 +126,7 @@ jobs:
         env:
           DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
+          LOTE_VERSIONS: ${{ inputs.lote_versions }}
           CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
           CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
           APPLY: ${{ inputs.apply }}
@@ -134,6 +142,14 @@ jobs:
           if ! printf '%s' "$TARGET_VERSION" | grep -Eq '^[0-9]{14}$'; then
             echo "::error::migration_version precisa ter exatamente 14 digitos."
             exit 1
+          fi
+          if [ -n "$LOTE_VERSIONS" ]; then
+            for v in $(printf '%s' "$LOTE_VERSIONS" | tr ',' ' '); do
+              if ! printf '%s' "$v" | grep -Eq '^[0-9]{14}$'; then
+                echo "::error::lote_versions aceita apenas versions de 14 digitos (item invalido: '$v')."
+                exit 1
+              fi
+            done
           fi
           if [ "$APPLY" = "true" ] && ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
             echo "::error::Apply exige confirm_runtime_sha256 completo e lowercase."
@@ -160,7 +176,7 @@ jobs:
           console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
           NODE
 
-      - name: Exigir alvo unico ou bundle atomico conhecido
+      - name: Exigir alvo unico, bundle conhecido ou lote exato
         id: preflight
         # E66: repeticao SO de falha de conexao, e SO aqui -- este passo e somente
         # leitura (SELECT do ledger). O apply nunca define a variavel: repetir o
@@ -169,6 +185,7 @@ jobs:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
           PSQL_CONNECT_RETRIES: '2'
           TARGET_VERSION: ${{ inputs.migration_version }}
+          LOTE_VERSIONS: ${{ inputs.lote_versions }}
           APPLY: ${{ inputs.apply }}
         run: |
           umask 077
@@ -177,39 +194,16 @@ jobs:
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -c "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version" \
             > /tmp/remote-versions
-          comm -13 /tmp/local-versions /tmp/remote-versions > /tmp/remote-only-versions
-          REMOTE_ONLY_COUNT=$(wc -l < /tmp/remote-only-versions | tr -d ' ')
-          if [ "$REMOTE_ONLY_COUNT" != "0" ]; then
-            echo "::error::O ledger remoto possui versions sem arquivo local; db push foi bloqueado antes do CLI."
-            echo "remote_only_count=$REMOTE_ONLY_COUNT"
-            exit 1
-          fi
-          comm -23 /tmp/local-versions /tmp/remote-versions > /tmp/missing-versions
-          MISSING_COUNT=$(wc -l < /tmp/missing-versions | tr -d ' ')
-          MISSING_VERSION=$(sed -n '1p' /tmp/missing-versions)
-          ATOMIC_DELIVERY_BUNDLE=$'20260909250000\n20260909260000\n20260909270000'
-          TALKX_RECOVERY_BUNDLE=$'20260911130000\n20260911140000\n20260911150000\n20260911160000\n20260911170000\n20260911180000\n20260911190000\n20260911200000\n20260912110000\n20260912120000\n20260912130000'
-          if [ "$MISSING_COUNT" = "1" ] && [ "$MISSING_VERSION" = "$TARGET_VERSION" ]; then
-            NEEDS_APPLY=true
-            APPLY_BUNDLE=false
-          elif [ "$TARGET_VERSION" = "20260909270000" ] \
-            && [ "$MISSING_COUNT" = "3" ] \
-            && diff -u <(printf '%s\n' "$ATOMIC_DELIVERY_BUNDLE") /tmp/missing-versions; then
-            NEEDS_APPLY=true
-            APPLY_BUNDLE=true
-          elif [ "$TARGET_VERSION" = "20260912130000" ] \
-            && [ "$MISSING_COUNT" = "11" ] \
-            && diff -u <(printf '%s\n' "$TALKX_RECOVERY_BUNDLE") /tmp/missing-versions; then
-            NEEDS_APPLY=true
-            APPLY_BUNDLE=true
-          elif [ "$MISSING_COUNT" = "0" ] && grep -Fxq "$TARGET_VERSION" /tmp/remote-versions; then
-            NEEDS_APPLY=false
-            APPLY_BUNDLE=false
-          else
-            echo "::error::O conjunto de versions ausentes nao corresponde exatamente ao alvo informado."
-            echo "missing_count=$MISSING_COUNT"
-            exit 1
-          fi
+          # A decisao de escopo (alvo unico, bundles historicos de setembro ou
+          # lote explicito via lote_versions) vive em script proprio para poder
+          # ser exercitada por teste com ledger simulado — ver
+          # scripts/ci/db-migrate-preflight-scope.test.sh. O stdout sao os pares
+          # needs_apply=/apply_bundle=, que seguem direto para o GITHUB_OUTPUT.
+          DECISAO=$(bash scripts/ci/db-migrate-preflight-scope.sh \
+            --local /tmp/local-versions --remote /tmp/remote-versions \
+            --alvo "$TARGET_VERSION" --lote "$LOTE_VERSIONS")
+          NEEDS_APPLY=$(printf '%s\n' "$DECISAO" | sed -n 's/^needs_apply=//p')
+          APPLY_BUNDLE=$(printf '%s\n' "$DECISAO" | sed -n 's/^apply_bundle=//p')
           FILE_COUNT=$(find supabase/migrations -maxdepth 1 -type f \
             -name "${TARGET_VERSION}_*.sql" | wc -l | tr -d ' ')
           if [ "$FILE_COUNT" != "1" ]; then
@@ -224,8 +218,7 @@ jobs:
             echo "::error::A migration alvo ja esta registrada; apply repetido foi bloqueado."
             exit 1
           fi
-          echo "needs_apply=$NEEDS_APPLY" >> "$GITHUB_OUTPUT"
-          echo "apply_bundle=$APPLY_BUNDLE" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$DECISAO" >> "$GITHUB_OUTPUT"
           echo "target_name=$TARGET_NAME" >> "$GITHUB_OUTPUT"
           echo "OK: estado da migration alvo confirmado: version=$TARGET_VERSION needs_apply=$NEEDS_APPLY"
 
