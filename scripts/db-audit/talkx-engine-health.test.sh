@@ -18,8 +18,23 @@
 #     8. RLS: agente NAO le o log; admin le; anon/authenticated NAO executam talkx_engine_alerts;
 #     9. idempotencia: reaplicar a migration nao quebra.
 #
-# A migration e encontrada pelo marcador interno 'talkx_x033_objetos_ausentes'
-# (sobrevive ao rename do hermes-db-migrar --nova); fallback para .tmp/x033.sql.
+# Estendido pelo cartao P2 #119 (detector de cron: timeouts e >=5 falhas
+# seguidas). Depois do GREEN de X033, aplica M-DB-01 (corpo vivo de
+# talkx_engine_alerts) e prova:
+#   RED (estado vivo): 1 execucao 'job startup timeout' NAO abre cron_degraded
+#     (a regra antiga exige 3 falhas seguidas e nao le return_message);
+#   GREEN (migration do detector):
+#     10. 1 timeout na execucao mais recente -> cron_degraded reason='timeout';
+#     11. 5 falhas genericas seguidas -> reason='consecutive_failures',
+#         consecutive_failures=5, sem duplicar o alerta (ON CONFLICT DO UPDATE);
+#     12. 2 falhas seguidas -> nenhum cron_degraded (limiar e >=5);
+#     13. sucesso na mais recente -> resolved_at preenchido;
+#     14. idempotencia: reaplicar a migration do detector nao quebra.
+#
+# As migrations sao encontradas pelos marcadores internos
+# 'talkx_x033_objetos_ausentes' (X033), 'talkx_mdb01_objetos_ausentes' (M-DB-01) e
+# 'talkx_pgcron_detector_objetos_ausentes' (esta) — sobrevivem ao rename do
+# hermes-db-migrar --nova. Fallback de X033: .tmp/x033.sql.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -29,6 +44,14 @@ if [[ -z "$migration" ]]; then
   migration="$repo_root/.tmp/x033.sql"
 fi
 [[ -f "$migration" ]] || { printf '[FALHA] migration X033 nao encontrada (marcador talkx_x033_objetos_ausentes)\n' >&2; exit 1; }
+
+find_migration() {
+  grep -rlF "$1" "$repo_root/supabase/migrations" 2>/dev/null | grep -v '/_superseded/' | sort | tail -1 || true
+}
+migration_mdb01="${TALKX_MDB01_MIGRATION:-$(find_migration 'talkx_mdb01_objetos_ausentes')}"
+migration_detector="${TALKX_PGCRON_DETECTOR_MIGRATION:-$(find_migration 'talkx_pgcron_detector_objetos_ausentes')}"
+[[ -n "$migration_mdb01" && -f "$migration_mdb01" ]] || { printf '[FALHA] migration M-DB-01 nao encontrada (marcador talkx_mdb01_objetos_ausentes)\n' >&2; exit 1; }
+[[ -n "$migration_detector" && -f "$migration_detector" ]] || { printf '[FALHA] migration do detector pg_cron nao encontrada (marcador talkx_pgcron_detector_objetos_ausentes)\n' >&2; exit 1; }
 
 fail() { printf '[FALHA] %s\n' "$1" >&2; exit 1; }
 pass() { printf '[PASS] %s\n' "$1"; }
@@ -318,4 +341,74 @@ done
 psql_exec < "$migration" >/dev/null || fail 'migration X033 nao reaplicou (idempotencia)'
 pass 'migration X033 reaplicada sem erro (idempotencia)'
 
-echo '[OK] Talk X X033: log por destinatario (sem telefone/texto, expurgo 30d), view de saude security_invoker, alertas com deduplicacao por tipo/campanha e fechamento automatico (stalled_campaign, cron_degraded).'
+# ═════════════════════════════════════════════════════════════════════════════
+# P2 #119 — detector de cron: timeouts e >=5 falhas seguidas
+# ═════════════════════════════════════════════════════════════════════════════
+# Estado vivo: M-DB-01 e o corpo vigente de talkx_engine_alerts (regra antiga de
+# cron_degraded: as ultimas 3 execucoes todas falhas, sem ler return_message).
+psql_exec < "$migration_mdb01" >/dev/null || fail 'migration M-DB-01 nao aplicou (estado vivo)'
+pass "migration M-DB-01 aplicada ($(basename "$migration_mdb01"))"
+
+# RED — 1 'job startup timeout' NAO abre cron_degraded na regra antiga (exige 3).
+psql_val "TRUNCATE cron.job_run_details" >/dev/null
+psql_val "DELETE FROM public.talkx_alerts WHERE kind='cron_degraded'" >/dev/null
+psql_val "INSERT INTO cron.job_run_details (jobid, status, return_message, start_time) SELECT jobid, 'failed', 'job startup timeout', now() FROM cron.job WHERE jobname='talkx-scheduler-1min'" >/dev/null
+psql_val "$service_session SELECT public.talkx_engine_alerts()" >/dev/null
+red_cron="$(psql_val "SELECT count(*) FROM public.talkx_alerts WHERE kind='cron_degraded'")"
+assert_eq 'RED: 1 timeout sozinho NAO abre cron_degraded na regra antiga' '0' "$red_cron"
+
+# GREEN — aplica a migration do detector
+psql_exec < "$migration_detector" >/dev/null || fail 'migration do detector pg_cron nao aplicou (GREEN)'
+pass "migration do detector aplicada ($(basename "$migration_detector"))"
+
+# ── 10) 1 timeout na execucao mais recente -> cron_degraded reason='timeout' ──
+psql_val "$service_session SELECT public.talkx_engine_alerts()" >/dev/null
+cron_open="$(psql_val "SELECT count(*) FROM public.talkx_alerts WHERE kind='cron_degraded' AND resolved_at IS NULL")"
+assert_eq '10. 1 timeout na mais recente abre cron_degraded' '1' "$cron_open"
+cron_reason="$(psql_val "SELECT payload->>'reason' FROM public.talkx_alerts WHERE kind='cron_degraded' AND resolved_at IS NULL")"
+assert_eq "10. reason='timeout'" 'timeout' "$cron_reason"
+cron_to="$(psql_val "SELECT payload->>'timeouts' FROM public.talkx_alerts WHERE kind='cron_degraded' AND resolved_at IS NULL")"
+assert_eq '10. timeouts=1 no payload' '1' "$cron_to"
+cron_msg="$(psql_val "SELECT payload->>'last_return_message' FROM public.talkx_alerts WHERE kind='cron_degraded' AND resolved_at IS NULL")"
+assert_eq '10. last_return_message traz a assinatura do evento' 'job startup timeout' "$cron_msg"
+
+# ── 11) 5 falhas genericas seguidas -> reason='consecutive_failures' ──────────
+psql_val "TRUNCATE cron.job_run_details" >/dev/null
+for m in 5 4 3 2 1; do
+  psql_val "INSERT INTO cron.job_run_details (jobid, status, return_message, start_time) SELECT jobid, 'failed', 'connection refused', now() - interval '$m minutes' FROM cron.job WHERE jobname='talkx-scheduler-1min'" >/dev/null
+done
+psql_val "$service_session SELECT public.talkx_engine_alerts()" >/dev/null
+cron_open="$(psql_val "SELECT count(*) FROM public.talkx_alerts WHERE kind='cron_degraded' AND resolved_at IS NULL")"
+assert_eq '11. segue 1 alerta cron_degraded (upsert atualiza, nao duplica)' '1' "$cron_open"
+cron_reason="$(psql_val "SELECT payload->>'reason' FROM public.talkx_alerts WHERE kind='cron_degraded' AND resolved_at IS NULL")"
+assert_eq "11. reason='consecutive_failures'" 'consecutive_failures' "$cron_reason"
+cron_cf="$(psql_val "SELECT payload->>'consecutive_failures' FROM public.talkx_alerts WHERE kind='cron_degraded' AND resolved_at IS NULL")"
+assert_eq '11. consecutive_failures=5 no payload' '5' "$cron_cf"
+
+# ── 12) 2 falhas seguidas -> nao dispara (limiar e >=5) ──────────────────────
+psql_val "DELETE FROM public.talkx_alerts WHERE kind='cron_degraded'" >/dev/null
+psql_val "TRUNCATE cron.job_run_details" >/dev/null
+for m in 2 1; do
+  psql_val "INSERT INTO cron.job_run_details (jobid, status, return_message, start_time) SELECT jobid, 'failed', 'connection refused', now() - interval '$m minutes' FROM cron.job WHERE jobname='talkx-scheduler-1min'" >/dev/null
+done
+psql_val "$service_session SELECT public.talkx_engine_alerts()" >/dev/null
+cron_any="$(psql_val "SELECT count(*) FROM public.talkx_alerts WHERE kind='cron_degraded'")"
+assert_eq '12. 2 falhas seguidas NAO abrem cron_degraded' '0' "$cron_any"
+
+# ── 13) execucoes voltam a ter sucesso -> resolved_at preenchido ─────────────
+psql_val "INSERT INTO cron.job_run_details (jobid, status, return_message, start_time) SELECT jobid, 'failed', 'job startup timeout', now() FROM cron.job WHERE jobname='talkx-scheduler-1min'" >/dev/null
+psql_val "$service_session SELECT public.talkx_engine_alerts()" >/dev/null
+cron_open="$(psql_val "SELECT count(*) FROM public.talkx_alerts WHERE kind='cron_degraded' AND resolved_at IS NULL")"
+assert_eq '13. timeout reabre cron_degraded' '1' "$cron_open"
+psql_val "INSERT INTO cron.job_run_details (jobid, status, return_message, start_time) SELECT jobid, 'succeeded', NULL, now() + interval '1 minute' FROM cron.job WHERE jobname='talkx-scheduler-1min'" >/dev/null
+psql_val "$service_session SELECT public.talkx_engine_alerts()" >/dev/null
+cron_open="$(psql_val "SELECT count(*) FROM public.talkx_alerts WHERE kind='cron_degraded' AND resolved_at IS NULL")"
+assert_eq '13. sucesso na mais recente fecha o alerta (auto-resolucao)' '0' "$cron_open"
+cron_res="$(psql_val "SELECT (resolved_at IS NOT NULL)::text FROM public.talkx_alerts WHERE kind='cron_degraded' ORDER BY opened_at DESC LIMIT 1")"
+assert_eq '13. resolved_at preenchido' 'true' "$cron_res"
+
+# ── 14) idempotencia: reaplicar a migration do detector nao quebra ────────────
+psql_exec < "$migration_detector" >/dev/null || fail 'migration do detector pg_cron nao reaplicou (idempotencia)'
+pass 'migration do detector reaplicada sem erro (idempotencia)'
+
+echo '[OK] Talk X X033 + P2 #119: log por destinatario (sem telefone/texto, expurgo 30d), view de saude security_invoker, alertas com deduplicacao por tipo/campanha e fechamento automatico; cron_degraded abre com 1 job startup timeout na execucao mais recente ou >=5 falhas seguidas (payload com reason/consecutive_failures/timeouts) e fecha sozinho.'
