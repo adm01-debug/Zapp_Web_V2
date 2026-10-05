@@ -286,14 +286,51 @@ Deno.test("persistProfilePicture: URL loopback do provedor não chega à rede", 
 });
 
 Deno.test("handleStickerMedia: mediaUrl arbitrária do payload não chega à rede", async () => {
-  const { calls } = await withFetchSpy(() =>
+  // Depois de recusar a URL do payload pela política de egress, o handler cai
+  // no fallback LEGÍTIMO: pedir a mídia ao provedor configurado
+  // (EVOLUTION_API_URL/KEY). A garantia de segurança é que o endereço
+  // arbitrário do payload nunca é buscado — não que nenhuma rede é chamada.
+  // O teste fixa o ambiente porque os arquivos .test.ts rodam no mesmo
+  // processo do `deno test` e outros arquivos setam EVOLUTION_API_* em nível
+  // de módulo sem restaurar (foi o que quebrou este teste no CI).
+  const ENV_KEYS = [
+    "EVOLUTION_API_URL",
+    "EVOLUTION_API_KEY",
+    "EVOLUTION_API_FLAVOR",
+    "EVOLUTION_INSTANCE_TOKEN",
+  ] as const;
+  const prev = new Map(ENV_KEYS.map((k) => [k, Deno.env.get(k)]));
+  const payloadUrl = "http://192.168.1.50:8080/sticker.webp";
+  const run = () =>
     handleStickerMedia(
       supabaseStub,
       "inst",
-      { mediaUrl: "http://192.168.1.50:8080/sticker.webp", key: { id: "K1" } },
+      { mediaUrl: payloadUrl, key: { id: "K1" } },
       { stickerMessage: {} },
       { id: "K1" },
-    )
-  );
-  assertEquals(calls, []);
+    );
+  try {
+    // Sem provedor configurado: nenhuma chamada de rede.
+    for (const k of ENV_KEYS) Deno.env.delete(k);
+    const { calls: semProvedor } = await withFetchSpy(run);
+    assertEquals(semProvedor, []);
+
+    // Com provedor configurado (flavor v2 → rota sem tradução GO): só o
+    // endpoint sintético do provedor pode aparecer — nunca a URL do payload.
+    Deno.env.set("EVOLUTION_API_URL", "https://evolution.test");
+    Deno.env.set("EVOLUTION_API_KEY", "test-evolution-key");
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    Deno.env.delete("EVOLUTION_INSTANCE_TOKEN");
+    const { calls: comProvedor } = await withFetchSpy(run);
+    assertEquals(comProvedor, [
+      "https://evolution.test/chat/getBase64FromMediaMessage/inst",
+    ]);
+    assert(!comProvedor.includes(payloadUrl), "a URL arbitrária do payload não pode ser buscada");
+  } finally {
+    for (const k of ENV_KEYS) {
+      const v = prev.get(k);
+      if (v === undefined) Deno.env.delete(k);
+      else Deno.env.set(k, v);
+    }
+  }
 });
