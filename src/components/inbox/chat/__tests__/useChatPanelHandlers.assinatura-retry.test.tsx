@@ -57,7 +57,7 @@ import { useChatPanelHandlers } from '../useChatPanelHandlers';
 const ASSINATURA = '*Ana:';
 const applySignature = (text: string) => `${ASSINATURA}*\n${text}`;
 
-function montarHook(onSendMessage: ReturnType<typeof vi.fn>) {
+function montarHook(onSendMessage: (content: string) => Promise<void> | void) {
   return renderHook(() =>
     useChatPanelHandlers({
       conversationId: 'conv-1',
