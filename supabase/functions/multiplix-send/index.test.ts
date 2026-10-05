@@ -1506,9 +1506,11 @@ Deno.test("MX05/guarda: erro PERMANENTE continua indo para dead letter (nao vira
   };
   const ctx = newCtx(opts);
   const provider = stubProviderRejecting({ status: 400, error: { code: "400", message: "number not exists" } }, 400);
+  let corpo: { failed?: number } = {};
   try {
     const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
     assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    corpo = await res.json();
   } finally {
     provider.restore();
   }
@@ -1519,6 +1521,9 @@ Deno.test("MX05/guarda: erro PERMANENTE continua indo para dead letter (nao vira
   const completions = rpcs(ctx, "complete_multiplix_item");
   assert(completions.length === 1, `esperava 1 conclusao, houve ${completions.length}`);
   assert(completions[0].args.p_status === "failed", `status esperado 'failed', veio ${String(completions[0].args.p_status)}`);
+  // O item concluido como 'failed' tem de contar na resposta do worker —
+  // antes do conserto a conclusao acontecia mas failed saia 0.
+  assert(corpo.failed === 1, `a falha permanente tem de contar na resposta: ${JSON.stringify(corpo)}`);
   assert(
     rpcs(ctx, "register_multiplix_connection_failure").length === 1,
     "erro permanente continua marcando o risco da conexao (F60)",
@@ -1572,4 +1577,77 @@ Deno.test("MX05: transitorio que esgota as tentativas vira dead letter pela RPC 
   }
   assert(rpcs(ctx, "reschedule_multiplix_item").length === 1, "a RPC de reagendamento continua sendo a autoridade do teto");
   assert(corpo.failed === 1, `o dead letter da RPC conta como falha: ${JSON.stringify(corpo)}`);
+});
+
+Deno.test("MX05: dead_lettered da RPC vira item_failed na trilha (nao mero reagendamento)", async () => {
+  // Quando a RPC esgota as tentativas ela devolve action='dead_lettered' e o
+  // item ja esta 'failed' no banco. Registrar 'item_rescheduled' esconderia a
+  // morte do item numa trilha que so deveria mostrar fila — a auditoria tem de
+  // enxergar a falha.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550705")],
+  };
+  opts.recipients![0].attempt_count = 3;
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+  }
+
+  const reagendamentos = ctx.events.filter(
+    (e: Record<string, unknown>) => e.kind === "item_rescheduled" && e.item_id === "item-recipient-1",
+  );
+  assert(
+    reagendamentos.length === 0,
+    "dead_lettered NAO pode ser auditado como item_rescheduled (o item morreu, nao voltou a fila)",
+  );
+  const falha = ctx.events.find(
+    (e: Record<string, unknown>) => e.kind === "item_failed" && e.item_id === "item-recipient-1",
+  );
+  assert(falha !== undefined, "esperava um evento item_failed para o dead_lettered da RPC");
+  const payload = falha.payload as Record<string, unknown>;
+  assert(
+    payload.action === "dead_lettered",
+    `payload.action esperado 'dead_lettered', veio ${String(payload.action)}`,
+  );
+  assert(payload.error_class === "transient", `error_class inesperado: ${String(payload.error_class)}`);
+  assert(payload.provider_status === 429, `provider_status inesperado: ${String(payload.provider_status)}`);
+});
+
+Deno.test("MX05: decisao dead_letter (sem retryAfter do kernel) nao agenda retry imediato", async () => {
+  // attempt_count = 3 -> a tentativa que falha e a 4a: planRetry devolve
+  // dead_letter SEM retryAfter. O fallback do worker tem de ser o 1o degrau do
+  // backoff (30 s) — `new Date()` agendaria o retry para AGORA, o que e
+  // proibido; quem aposenta o item continua sendo a RPC.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550706")],
+  };
+  opts.recipients![0].attempt_count = 3;
+  const ctx = newCtx(opts);
+  const antes = Date.now();
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+  }
+
+  const reagendamentos = rpcs(ctx, "reschedule_multiplix_item");
+  assert(reagendamentos.length === 1, `esperava 1 chamada a reschedule_multiplix_item, houve ${reagendamentos.length}`);
+  const retryAfter = Date.parse(String(reagendamentos[0].args.p_retry_after));
+  assert(Number.isFinite(retryAfter), `p_retry_after invalido: ${String(reagendamentos[0].args.p_retry_after)}`);
+  const esperaMs = retryAfter - antes;
+  assert(esperaMs > 1_000, `retry quase imediato (${esperaMs}ms) — o fallback nao pode ser 'agora'`);
+  assert(
+    esperaMs >= 29_000 && esperaMs <= 31_000,
+    `p_retry_after fora do 1o degrau de 30 s: ${String(reagendamentos[0].args.p_retry_after)} (${esperaMs}ms)`,
+  );
 });

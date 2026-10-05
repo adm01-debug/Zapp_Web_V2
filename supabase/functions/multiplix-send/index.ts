@@ -75,6 +75,12 @@ function mediaFileNameFromBlock(content: Record<string, unknown> | null | undefi
 
 type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
 
+// MX05: UMA tabela de backoff para o worker inteiro — a mesma do kernel
+// (errors.ts): 30 s, 2 min, 10 min. O primeiro degrau e o piso deterministico
+// quando o planRetry nao devolve retryAfter (decisao dead_letter): retry
+// imediato e proibido; quem decide o teto continua sendo a RPC.
+const RETRY_BACKOFF_MS: readonly number[] = [30_000, 120_000, 600_000];
+
 export async function handleMultiplixSend(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -718,7 +724,11 @@ export async function handleMultiplixSend(
               // anterior).
               const attempt = (typeof item.attempt_count === "number" ? item.attempt_count : 0) + 1;
               const decision = planRetry(providerError, attempt);
-              const retryAfter = decision.retryAfter ?? new Date().toISOString();
+              // Sem retryAfter o kernel ja decidiu dead_letter (attempt >= MAX_ATTEMPTS).
+              // `new Date()` agendaria o retry para AGORA — proibido. O piso e o
+              // primeiro degrau deterministico do backoff; quem transforma em
+              // falha definitiva e a RPC, nao o relogio do worker.
+              const retryAfter = decision.retryAfter ?? new Date(Date.now() + RETRY_BACKOFF_MS[0]).toISOString();
               const { data: schedResult, error: rescheduleError } = await supabase.rpc("reschedule_multiplix_item", {
                 p_item_id: item.item_id,
                 p_claim_token: claim.claim_token,
@@ -728,20 +738,24 @@ export async function handleMultiplixSend(
               if (rescheduleError) throw new Error(`multiplix_recipient_reschedule_failed: ${rescheduleError.message}`);
               // Quem decide o TETO e a funcao SQL (attempt_count >= 3 -> failed); o worker so
               // informa quando tentar de novo — nunca reenvia sem fim.
-              if (schedResult?.action === "dead_lettered") failedCount++;
+              const schedAction = schedResult?.action;
+              if (schedAction === "dead_lettered") failedCount++;
               // Mesma trilha de eventos do F61: classe + codigo estavel + status. O texto do
-              // provedor nao entra (pode carregar dado de cliente).
+              // provedor nao entra (pode carregar dado de cliente). dead_lettered NAO e
+              // reagendamento — a RPC ja marcou o item 'failed' no banco e a trilha registra
+              // item_failed; payload.action guarda o veredicto da RPC para a auditoria.
               await supabase.from("multiplix_events").insert({
                 dispatch_id: dispatchId,
                 item_id: item.item_id,
                 recipient_id: item.recipient_id ?? null,
-                kind: "item_rescheduled",
+                kind: schedAction === "dead_lettered" ? "item_failed" : "item_rescheduled",
                 payload: {
                   error_class: providerError.class,
                   error_code: providerError.code,
                   provider_status: envio.status,
                   attempt,
                   retry_after: retryAfter,
+                  action: schedAction,
                 },
               });
             } else {
@@ -752,6 +766,7 @@ export async function handleMultiplixSend(
                 p_error_message: providerError.operatorMessage,
               });
               if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+              failedCount++;
               // F61 (segunda metade): o codigo CRU (classe + codigo estavel + status HTTP)
               // vai para `multiplix_events`, que e onde quem depura olha. NAO grava o corpo
               // do provedor: ele pode carregar telefone/conteudo de cliente, e diagnostico
@@ -789,9 +804,8 @@ export async function handleMultiplixSend(
           clearTimeout(sendTimeout);
           stopHeartbeat();
           if (!providerPostAttempted) {
-            const backoffMs = [30_000, 120_000, 600_000];
             const attemptSoFar = typeof item.attempt_count === "number" ? item.attempt_count : 0;
-            const delayMs = backoffMs[Math.min(attemptSoFar, backoffMs.length - 1)];
+            const delayMs = RETRY_BACKOFF_MS[Math.min(attemptSoFar, RETRY_BACKOFF_MS.length - 1)];
             const retryAfter = new Date(Date.now() + delayMs).toISOString();
             const reason = err instanceof Error ? err.message : "pre_dispatch_error";
             const { data: schedResult } = await supabase.rpc("reschedule_multiplix_item", {
