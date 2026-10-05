@@ -179,7 +179,35 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
       return callGmailFunction('gmail-sync', { action: 'sync-inbox', account_id: activeAccount.id, ...options });
     },
     retry: 1,
-    onSuccess: (data) => { invalidateThreadData(); queryClient.invalidateQueries({ queryKey: ['gmail-labels'] }); toast.success(`${data.synced} emails sincronizados`); },
+    onSuccess: (data) => {
+      // O gmail-sync responde HTTP 207 (`success: false`, `failed > 0`) quando a
+      // sincronização é parcial. O FunctionsClient trata todo 2xx — inclusive 207 —
+      // como sucesso e devolve `error: null`; o payload de domínio é a única fonte
+      // da verdade. Interpretar pelo `error` do transporte fazia a tela anunciar
+      // caixa completa para uma sincronização parcial (achado OTH-003 / EN-081).
+      const synced = Number(data?.synced ?? 0);
+      const failed = Number(data?.failed ?? 0);
+      const isPartial = data?.success === false || failed > 0;
+
+      invalidateThreadData();
+      queryClient.invalidateQueries({ queryKey: ['gmail-labels'] });
+      // O backend já grava sync_status/last_error na conta; sem invalidar aqui, o
+      // estado de erro salvo continua escondido pelo cache do React Query.
+      queryClient.invalidateQueries({ queryKey: ['gmail-accounts'] });
+
+      if (!isPartial) { toast.success(`${synced} emails sincronizados`); return; }
+
+      // Recuperação explícita: a retomada é do operador e só refaz o trabalho
+      // pendente (o backend não avança o cursor em 207), sem toast de sucesso
+      // integral e sem reenvio de e-mail. Diagnóstico sanitizado: só contagens.
+      const retry = { label: 'Tentar de novo', onClick: () => syncInbox.mutate({}) };
+      const description = `${synced} e-mail(s) sincronizado(s), ${failed} falharam. A retomada não reenvia e-mails.`;
+      if (synced > 0) {
+        toast.warning('Sincronização parcial', { description, action: retry });
+      } else {
+        toast.error('Falha na sincronização', { description, action: retry });
+      }
+    },
     onError: (error: Error) => { toast.error(`Erro ao sincronizar: ${error.message}`); },
   });
 
