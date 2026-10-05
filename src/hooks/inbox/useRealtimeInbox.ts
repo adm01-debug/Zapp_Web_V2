@@ -168,14 +168,18 @@ export function useRealtimeInbox() {
     }
   }, [selectedContactId, sendMessage, refreshActiveConversation]);
 
-   const handleSendAudio = useCallback(async (blob: Blob) => {
-     if (!selectedContactId) { toast.error('Selecione uma conversa primeiro'); return; }
+   // R2-INB-022: devolve `false` quando o upload/envio falha. Antes engolia o erro, então o popup
+   // não sabia da falha e fechava o gravador — descartando a gravação que poderia ser reenviada.
+   const handleSendAudio = useCallback(async (blob: Blob): Promise<boolean> => {
+     if (!selectedContactId) { toast.error('Selecione uma conversa primeiro'); return false; }
      try {
        const audioObjectUrl = await ChatService.uploadAudio(selectedContactId, blob);
        await sendMessage(selectedContactId, '[Áudio]', 'audio', audioObjectUrl);
+       return true;
      } catch (err) {
        log.error('Error in handleSendAudio:', err);
        toast.error('Erro ao enviar áudio. Tente novamente.');
+       return false;
      } finally {
        await refreshActiveConversation();
      }
