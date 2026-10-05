@@ -3,6 +3,7 @@ import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
 import { Conversation, Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
 import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
+import type { TransferDialogProps } from '../TransferDialog';
 
 const TransferDialog = lazy(() => import('../TransferDialog').then(m => ({ default: m.TransferDialog })));
 const ScheduleMessageDialog = lazy(() => import('../ScheduleMessageDialog').then(m => ({ default: m.ScheduleMessageDialog })));
@@ -27,7 +28,7 @@ interface ChatDialogsProps {
   conversation: Conversation;
   forwardMessage: Message | null;
   contactId: string;
-  onTransfer: (type: 'agent' | 'queue', targetId: string, message?: string) => void;
+  onTransfer: TransferDialogProps['onTransfer'];
   onScheduleMessage: (message: string, scheduledAt: Date, attachment?: File) => Promise<void>;
   onSendInteractiveMessage: (interactive: InteractiveMessage) => void;
   onForwardToTargets: (targetIds: string[], targetType: 'contact' | 'group') => void;
@@ -50,7 +51,7 @@ export function ChatDialogs({
   return (
     <>
       <Suspense fallback={null}>
-        {dialogs.transferDialog && <TransferDialog open={dialogs.transferDialog} onOpenChange={(v) => v ? openDialog('transferDialog') : closeDialog('transferDialog')} onTransfer={onTransfer as (type: "agent" | "connection" | "queue", targetId: string, message?: string) => void} />}
+        {dialogs.transferDialog && <TransferDialog open={dialogs.transferDialog} onOpenChange={(v) => v ? openDialog('transferDialog') : closeDialog('transferDialog')} onTransfer={onTransfer} queueId={conversation.contact.queue_id} />}
         {dialogs.scheduleDialog && <ScheduleMessageDialog open={dialogs.scheduleDialog} onOpenChange={(v) => v ? openDialog('scheduleDialog') : closeDialog('scheduleDialog')} onSchedule={onScheduleMessage} />}
         {dialogs.globalSearch && <GlobalSearch open={dialogs.globalSearch} onOpenChange={(v) => v ? openDialog('globalSearch') : closeDialog('globalSearch')} onSelectResult={(result) => { log.debug('Selected:', result); toast({ title: 'Resultado selecionado', description: result.title }); }} />}
         {dialogs.interactiveBuilder && <InteractiveMessageBuilder open={dialogs.interactiveBuilder} onOpenChange={(v) => v ? openDialog('interactiveBuilder') : closeDialog('interactiveBuilder')} onSend={onSendInteractiveMessage} />}
