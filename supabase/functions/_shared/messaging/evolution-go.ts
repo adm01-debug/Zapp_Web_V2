@@ -93,7 +93,8 @@ export interface SendDeps {
   fetch: Fetcher;
   evolutionUrl: string;
   evolutionKey: string;
-  /** Token da instância (rotas auth=instance). Sem ele, usa a key informada. */
+  /** Token da instância — obrigatório nas rotas auth=instance: sem ele o envio
+   * falha fechado (missing_instance_token), nunca cai na key global. */
   instanceToken?: string;
   /**
    * "go" | "v2". Ausente = le EVOLUTION_API_FLAVOR (default "go", igual ao resto do projeto).
@@ -189,11 +190,19 @@ function planMessage(item: SendItem): { v2Path: string; v2Body: Record<string, u
   }
 }
 
-function authHeaders(go: { contentType?: string }, deps: SendDeps): Record<string, string> {
-  return {
-    "Content-Type": go.contentType ?? "application/json",
-    apikey: deps.instanceToken ?? deps.evolutionKey,
-  };
+function authHeaders(go: GoRoute, deps: SendDeps): Record<string, string> {
+  // MX07: a credencial e a da ROTA, nao "o que estiver a mao". Rota admin usa a
+  // key global; rota de instancia exige o token DELA — sem ele a chamada morre
+  // aqui (fail-closed) em vez de sair com a key global, que a GO trataria como
+  // credencial da instancia errada. postPresence engole este throw (best-effort);
+  // o envio nao: MessagingError propaga para o chamador.
+  if (go.auth === "admin") {
+    return { "Content-Type": go.contentType ?? "application/json", apikey: deps.evolutionKey };
+  }
+  if (!deps.instanceToken) {
+    throw new MessagingError("missing_instance_token", "rota de instância sem token da instância");
+  }
+  return { "Content-Type": go.contentType ?? "application/json", apikey: deps.instanceToken };
 }
 
 /** Presença best-effort: nunca derruba o envio (mesmo contrato das edges atuais). */
