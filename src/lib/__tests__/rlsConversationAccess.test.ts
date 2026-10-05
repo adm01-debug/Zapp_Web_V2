@@ -1,184 +1,136 @@
 import { describe, it, expect } from 'vitest';
+import {
+  normSql,
+  paridadeDeNomes,
+  policiesOn,
+  resolveEffectivePolicies,
+} from './helpers/rlsSchema';
 
-// ─── RLS logic mirror for contacts (conversations) & messages ───
-// Mirrors the database policies so regressions in the access model surface
-// here before they reach production. Keep aligned with migrations on:
-//   - public.contacts  (assigned_to scoping + admin/supervisor override)
-//   - public.messages  (visibility via contact ownership)
+// ─── RLS REAL: contacts e messages ───
+// Sem funcoes-espelho: o estado efetivo das policies sai de
+// supabase/migrations/*.sql (ordem cronologica, CREATE/DROP/ALTER/drop
+// dinamico resolvidos). O acesso de conversas no schema real NAO e "dono ou
+// fila vazia" como o espelho antigo modelava — e o predicado unico
+// can_edit_contact (admin/supervisor OU assigned_to visivel OU membro
+// ativo da fila). Qualquer migration que enfraquecer isso fica vermelha.
 
-type AppRole = 'admin' | 'supervisor' | 'agent' | 'special_agent';
+const ESTADO = resolveEffectivePolicies();
 
-interface User {
-  id: string;
-  role: AppRole;
-  authenticated: boolean;
-}
-
-interface Contact {
-  id: string;
-  assigned_to: string | null;
-}
-
-interface Message {
-  id: string;
-  contact_id: string;
-  sender: 'agent' | 'contact';
-  agent_id?: string | null;
-}
-
-const isAdminOrSupervisor = (role: AppRole) =>
-  role === 'admin' || role === 'supervisor';
-
-// public.contacts SELECT: assigned_to = profile(user) OR admin/supervisor OR unassigned
-function canSelectContact(user: User, contact: Contact): boolean {
-  if (!user.authenticated) return false;
-  if (isAdminOrSupervisor(user.role)) return true;
-  if (contact.assigned_to === null) return true; // queue pool
-  return contact.assigned_to === user.id;
-}
-
-// public.contacts UPDATE: same as select but unassigned pool is writeable too
-function canUpdateContact(user: User, contact: Contact): boolean {
-  return canSelectContact(user, contact);
-}
-
-// public.messages SELECT: piggybacks on contact visibility
-function canSelectMessage(user: User, contact: Contact | undefined): boolean {
-  if (!user.authenticated || !contact) return false;
-  return canSelectContact(user, contact);
-}
-
-// public.messages INSERT: must own the contact AND sender=agent must match self
-function canInsertMessage(user: User, contact: Contact | undefined, msg: Message): boolean {
-  if (!canSelectMessage(user, contact)) return false;
-  if (msg.sender === 'agent' && msg.agent_id && msg.agent_id !== user.id) {
-    return isAdminOrSupervisor(user.role);
+/**
+ * Paridade de nomes com o manifest do banco real. Tolerante quando existe
+ * migration de policy POSTERIOR ao snapshot (o artefato e sincronizado pelo
+ * `types-sync` depois do push): nesse caso exige que nada tenha sumido.
+ */
+function checaManifest(policies: ReturnType<typeof policiesOn>, tabela: string): void {
+  const { estrito, manifest, resolvido } = paridadeDeNomes(policies, tabela);
+  if (estrito) {
+    expect(resolvido).toEqual(manifest);
+    return;
   }
-  return true;
+  for (const nome of manifest) {
+    expect(resolvido, `policy do banco real ausente: ${nome}`).toContain(nome);
+  }
 }
 
-const admin: User = { id: 'u-admin', role: 'admin', authenticated: true };
-const supervisor: User = { id: 'u-sup', role: 'supervisor', authenticated: true };
-const agentA: User = { id: 'u-agent-a', role: 'agent', authenticated: true };
-const agentB: User = { id: 'u-agent-b', role: 'agent', authenticated: true };
-const anon: User = { id: '', role: 'agent', authenticated: false };
+const ADMIN_OU_SUPERVISOR = /is_admin_or_supervisor\(\s*auth\.uid\(\)\s*\)/;
+const AGENTES_VISIVEIS = /get_visible_agent_ids\(\s*auth\.uid\(\)\s*\)/;
+const MEMBRO_DE_FILA = /queue_members[\s\S]*?is_active\s*=\s*true/;
+const PERFIL_DO_CHAMADOR = /profiles[\s\S]*?user_id\s*=\s*auth\.uid\(\)/;
 
-const contactOfA: Contact = { id: 'c-1', assigned_to: agentA.id };
-const contactOfB: Contact = { id: 'c-2', assigned_to: agentB.id };
-const unassigned: Contact = { id: 'c-3', assigned_to: null };
+function usingDe(policies: ReturnType<typeof policiesOn>, comando: string): string[] {
+  return policies.filter((p) => p.command === comando).map((p) => p.using ?? '');
+}
 
-describe('RLS: contacts (conversations) — read access', () => {
-  it('agent reads conversations assigned to them', () => {
-    expect(canSelectContact(agentA, contactOfA)).toBe(true);
+describe('RLS real: contacts (schema resolvido das migrations)', () => {
+  const policies = policiesOn(ESTADO, 'contacts');
+
+  it('o conjunto de policies bate com o manifest do schema real', () => {
+    checaManifest(policies, 'contacts');
   });
 
-  it('agent CANNOT read conversations assigned to another agent', () => {
-    expect(canSelectContact(agentA, contactOfB)).toBe(false);
-    expect(canSelectContact(agentB, contactOfA)).toBe(false);
-  });
-
-  it('agent can read unassigned (queue pool) conversations', () => {
-    expect(canSelectContact(agentA, unassigned)).toBe(true);
-  });
-
-  it('admin and supervisor read every conversation', () => {
-    for (const c of [contactOfA, contactOfB, unassigned]) {
-      expect(canSelectContact(admin, c)).toBe(true);
-      expect(canSelectContact(supervisor, c)).toBe(true);
+  it('SELECT delega ao predicado canonico can_edit_contact (dono, fila ou admin)', () => {
+    const select = policies.filter((p) => p.command === 'SELECT');
+    expect(select.length).toBeGreaterThan(0);
+    for (const p of select) {
+      expect(p.roles).toContain('authenticated');
+      // O predicado unico cobre admin/supervisor + assigned_to visivel +
+      // membro ativo de fila — tudo via can_edit_contact, ponto unico da regra.
+      expect(p.using ?? '', p.name).toMatch(/can_edit_contact\(/);
+      expect(normSql(p.using), `${p.name} abriu SELECT para todos`).not.toBe('true');
     }
   });
 
-  it('unauthenticated users read nothing', () => {
-    for (const c of [contactOfA, contactOfB, unassigned]) {
-      expect(canSelectContact(anon, c)).toBe(false);
+  it('INSERT exige admin/supervisor OU auto-atribuicao (assigned_to = proprio perfil)', () => {
+    const insert = policies.filter((p) => p.command === 'INSERT');
+    expect(insert.length).toBeGreaterThan(0);
+    for (const p of insert) {
+      const check = p.check ?? '';
+      expect(check, p.name).toMatch(ADMIN_OU_SUPERVISOR);
+      expect(check, p.name).toMatch(/assigned_to/);
+      expect(check, p.name).toMatch(PERFIL_DO_CHAMADOR);
     }
   });
-});
 
-describe('RLS: contacts (conversations) — write access', () => {
-  it('agent updates own conversation', () => {
-    expect(canUpdateContact(agentA, contactOfA)).toBe(true);
-  });
-
-  it('agent CANNOT update conversation owned by another agent', () => {
-    expect(canUpdateContact(agentA, contactOfB)).toBe(false);
-  });
-
-  it('admin/supervisor update any conversation', () => {
-    expect(canUpdateContact(admin, contactOfB)).toBe(true);
-    expect(canUpdateContact(supervisor, contactOfA)).toBe(true);
-  });
-});
-
-describe('RLS: messages — read access via contact ownership', () => {
-  const msgOnA: Message = { id: 'm-1', contact_id: contactOfA.id, sender: 'contact' };
-  const msgOnB: Message = { id: 'm-2', contact_id: contactOfB.id, sender: 'contact' };
-
-  it('agent reads messages of their conversations', () => {
-    expect(canSelectMessage(agentA, contactOfA)).toBe(true);
-  });
-
-  it('agent CANNOT read messages from other agents conversations', () => {
-    expect(canSelectMessage(agentA, contactOfB)).toBe(false);
-    expect(canSelectMessage(agentB, contactOfA)).toBe(false);
-  });
-
-  it('admin/supervisor read every message', () => {
-    expect(canSelectMessage(admin, contactOfB)).toBe(true);
-    expect(canSelectMessage(supervisor, contactOfA)).toBe(true);
-  });
-
-  it('orphan messages (no contact loaded) are denied', () => {
-    expect(canSelectMessage(agentA, undefined)).toBe(false);
-  });
-
-  it('unauthenticated reads nothing', () => {
-    expect(canSelectMessage(anon, contactOfA)).toBe(false);
-    expect(canSelectMessage(anon, unassigned)).toBe(false);
-    void msgOnA; void msgOnB;
-  });
-});
-
-describe('RLS: messages — write access', () => {
-  it('agent sends message in their own conversation as themselves', () => {
-    const msg: Message = { id: 'new', contact_id: contactOfA.id, sender: 'agent', agent_id: agentA.id };
-    expect(canInsertMessage(agentA, contactOfA, msg)).toBe(true);
-  });
-
-  it('agent CANNOT impersonate another agent', () => {
-    const msg: Message = { id: 'new', contact_id: contactOfA.id, sender: 'agent', agent_id: agentB.id };
-    expect(canInsertMessage(agentA, contactOfA, msg)).toBe(false);
-  });
-
-  it('agent CANNOT write into another agent conversation', () => {
-    const msg: Message = { id: 'new', contact_id: contactOfB.id, sender: 'agent', agent_id: agentA.id };
-    expect(canInsertMessage(agentA, contactOfB, msg)).toBe(false);
-  });
-
-  it('admin/supervisor can write on behalf of any agent', () => {
-    const msg: Message = { id: 'new', contact_id: contactOfB.id, sender: 'agent', agent_id: agentA.id };
-    expect(canInsertMessage(admin, contactOfB, msg)).toBe(true);
-    expect(canInsertMessage(supervisor, contactOfB, msg)).toBe(true);
-  });
-
-  it('unauthenticated writes nothing', () => {
-    const msg: Message = { id: 'new', contact_id: contactOfA.id, sender: 'agent', agent_id: anon.id };
-    expect(canInsertMessage(anon, contactOfA, msg)).toBe(false);
-  });
-});
-
-describe('RLS: cross-agent isolation matrix', () => {
-  const agents = [agentA, agentB];
-  const contacts = [contactOfA, contactOfB];
-
-  for (const user of agents) {
-    for (const c of contacts) {
-      const owned = c.assigned_to === user.id;
-      it(`${user.id} ${owned ? 'CAN' : 'CANNOT'} access ${c.id}`, () => {
-        expect(canSelectContact(user, c)).toBe(owned);
-        expect(canUpdateContact(user, c)).toBe(owned);
-        expect(canSelectMessage(user, c)).toBe(owned);
-      });
+  it('UPDATE usa o mesmo predicado canonico do SELECT', () => {
+    const update = usingDe(policies, 'UPDATE');
+    expect(update.length).toBeGreaterThan(0);
+    for (const using of update) {
+      expect(using).toMatch(/can_edit_contact\(/);
     }
-  }
+  });
+
+  it('nao existe policy de DELETE — exclusao e soft-delete via RPC can_edit_contact', () => {
+    // O schema real nao tem DELETE policy em contacts: delete_contact() faz
+    // UPDATE deleted_at com a mesma regra can_edit_contact. Se surgir uma
+    // policy de DELETE, este teste forca revisao consciente.
+    expect(usingDe(policies, 'DELETE')).toEqual([]);
+  });
+});
+
+describe('RLS real: messages (schema resolvido das migrations)', () => {
+  const policies = policiesOn(ESTADO, 'messages');
+
+  it('o conjunto de policies bate com o manifest do schema real', () => {
+    checaManifest(policies, 'messages');
+  });
+
+  it('SELECT ve so mensagens de contatos visiveis (admin OU dono OU fila)', () => {
+    const select = policies.filter((p) => p.command === 'SELECT');
+    expect(select.length).toBeGreaterThan(0);
+    for (const p of select) {
+      expect(p.roles).toContain('authenticated');
+      const using = p.using ?? '';
+      // Os 3 ramos reais da visibilidade — remover qualquer um fica vermelho.
+      expect(using, p.name).toMatch(ADMIN_OU_SUPERVISOR);
+      expect(using, p.name).toMatch(AGENTES_VISIVEIS);
+      expect(using, p.name).toMatch(MEMBRO_DE_FILA);
+      expect(normSql(using), `${p.name} abriu SELECT para todos`).not.toBe('true');
+    }
+  });
+
+  it('INSERT exige contato visivel E agent_id do proprio perfil (ou admin)', () => {
+    const insert = policies.filter((p) => p.command === 'INSERT');
+    expect(insert.length).toBeGreaterThan(0);
+    for (const p of insert) {
+      const check = p.check ?? '';
+      // A brecha fechada pela migration 20260925120000: inserir mensagem em
+      // contato que o agente nao ve. Sem o ramo de visibilidade, volta o IDOR.
+      expect(check, p.name).toMatch(ADMIN_OU_SUPERVISOR);
+      expect(check, p.name).toMatch(/agent_id/);
+      expect(check, p.name).toMatch(PERFIL_DO_CHAMADOR);
+      expect(check, p.name).toMatch(AGENTES_VISIVEIS);
+      expect(check, p.name).toMatch(MEMBRO_DE_FILA);
+      expect(normSql(check), `${p.name} permite INSERT irrestrito`).not.toBe('true');
+    }
+  });
+
+  it('UPDATE tem paridade com SELECT (dono, fila ou admin)', () => {
+    const update = usingDe(policies, 'UPDATE');
+    expect(update.length).toBeGreaterThan(0);
+    for (const using of update) {
+      expect(using).toMatch(AGENTES_VISIVEIS);
+      expect(using).toMatch(MEMBRO_DE_FILA);
+      expect(using).toMatch(ADMIN_OU_SUPERVISOR);
+    }
+  });
 });
