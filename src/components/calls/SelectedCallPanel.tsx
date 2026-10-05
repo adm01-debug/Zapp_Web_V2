@@ -24,6 +24,12 @@ interface SelectedCallPanelProps {
   onClose: () => void;
 }
 
+/** Rascunho da anotacao amarrado ao id do registro a que pertence. */
+interface Rascunho {
+  callId: string;
+  texto: string;
+}
+
 /**
  * Detalhe da ligacao selecionada (T65) e a anotacao do agente (T66).
  *
@@ -36,7 +42,14 @@ export function SelectedCallPanel({ call, onClose }: SelectedCallPanelProps) {
   const { hasRole } = useUserRole();
   const { profile } = useAuth();
   const queryClient = useQueryClient();
-  const [rascunho, setRascunho] = useState<string | null>(null);
+  // R2-MOD-013: o rascunho pertence a UMA chamada. Antes era um estado solto
+  // (`useState<string | null>`): ao trocar a chamada selecionada com o painel ainda
+  // MONTADO (o pai nao da `key` por chamada), o texto digitado na chamada anterior
+  // continuava valendo e `salvar` gravava o texto de A no id de B. Guardando o id
+  // junto do texto, cada chamada so enxerga o proprio rascunho - o de A fica
+  // preservado (e reaparece se A voltar a ser selecionada) e B mostra as notas reais
+  // de B. O rascunho nunca e derivado do estado de outra chamada.
+  const [rascunho, setRascunho] = useState<Rascunho | null>(null);
   const [salvando, setSalvando] = useState(false);
 
   // T66: anota quem supervisiona E o dono da chamada. "Dono" aqui e o dono DO REGISTRO
@@ -46,7 +59,8 @@ export function SelectedCallPanel({ call, onClose }: SelectedCallPanelProps) {
   // `user.id` deixaria o proprio dono da chamada sem poder anotar (bug que o teste pegou).
   const souODono = Boolean(call?.agent_id && profile?.id && call.agent_id === profile.id);
   const podeAnotar = PAPEIS_QUE_ANOTAM.some((papel) => hasRole(papel)) || souODono;
-  const valor = rascunho ?? call?.agent_notes ?? '';
+  const rascunhoDaChamada = rascunho && call && rascunho.callId === call.id ? rascunho.texto : null;
+  const valor = rascunhoDaChamada ?? call?.agent_notes ?? '';
 
   const salvar = useCallback(async () => {
     if (!call) return;
@@ -121,7 +135,7 @@ export function SelectedCallPanel({ call, onClose }: SelectedCallPanelProps) {
         <p className="text-xs font-medium text-foreground">Anotações</p>
         <Textarea
           value={valor}
-          onChange={(e) => setRascunho(e.target.value)}
+          onChange={(e) => setRascunho({ callId: call.id, texto: e.target.value })}
           placeholder={podeAnotar ? 'Adicionar anotação sobre esta chamada...' : 'Somente supervisores podem anotar'}
           disabled={!podeAnotar}
           className="min-h-20 text-sm"
