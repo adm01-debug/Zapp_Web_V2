@@ -65,6 +65,7 @@ vi.mock('@/components/ui/select', async () => {
 });
 
 import { AutomationEditorDialog } from '../AutomationEditorDialog';
+import { filterActionConfig } from '../automationConstants';
 import type { AutomationRow } from '../useAutomations';
 
 const NOTE_NAME = 'Ex: Boas-vindas Automáticas';
@@ -239,24 +240,31 @@ describe('AutomationEditorDialog (R2-MOD-002)', () => {
     expect(mockToast.error).not.toHaveBeenCalled();
   });
 
-  it('#99: troca add_tag → assign_agent descarta tag_id obsoleto e mantém só a configuração válida do novo tipo', async () => {
+  it('#99: troca add_tag válido → assign_agent descarta tag_id e preserva só configuração permitida', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
-    // Configuração persistida com chave do tipo anterior (`tag_id`) e a chave
-    // válida do novo tipo (`agent_id`): ao trocar, só `agent_id` sobrevive.
     const automation = buildAutomation({
-      actions: [{ type: 'add_tag', config: { tag_id: 'tag-1', agent_id: 'agent-9' } }],
+      // Estado inicial válido para add_tag: tag_id obrigatório e atraso opcional.
+      // Não há agent_id escondido no tipo antigo para maquiar a transição.
+      actions: [{ type: 'add_tag', config: { tag_id: 'tag-1', delay_seconds: 5 } }],
     });
 
-    renderDialog(automation, onSave);
+    const [firstAction] = automation.actions as Array<{ type: string; config: Record<string, unknown> }>;
+    const transitionConfig = filterActionConfig('assign_agent', firstAction.config);
+    expect(transitionConfig).toEqual({ delay_seconds: 5 });
+    expect(transitionConfig).not.toHaveProperty('tag_id');
+
+    const onOpenChange = vi.fn();
+    render(
+      <AutomationEditorDialog open onOpenChange={onOpenChange} automation={automation} onSave={onSave} />
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Atribuir Agente' }));
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
-    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
-    const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
-
-    expect(payload.actions).toEqual([{ type: 'assign_agent', config: { agent_id: 'agent-9' } }]);
-    expect(JSON.stringify(payload.actions)).not.toContain('tag_id');
-    expect(mockToast.error).not.toHaveBeenCalled();
+    await waitFor(() => expect(mockToast.error).toHaveBeenCalledWith(
+      'Ação "Atribuir Agente" está sem configuração obrigatória: agent_id'
+    ));
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 });

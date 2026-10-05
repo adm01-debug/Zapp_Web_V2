@@ -26,3 +26,19 @@ export const REQUIRED_ACTION_CONFIG: Record<string, string[]> = {
   send_notification: ['message'],
   close_conversation: [],
 };
+
+// Chaves aceitas por tipo, incluindo parâmetros opcionais. Esta lista é usada
+// somente ao trocar o tipo para remover configuração que pertence à ação antiga;
+// a validação de presença continua usando REQUIRED_ACTION_CONFIG.
+export const ALLOWED_ACTION_CONFIG: Record<string, string[]> = {
+  send_message: ['message', 'delay_seconds'],
+  assign_agent: ['agent_id', 'delay_seconds'],
+  add_tag: ['tag_id', 'delay_seconds'],
+  send_notification: ['message', 'priority', 'delay_seconds'],
+  close_conversation: ['delay_seconds'],
+};
+
+export function filterActionConfig(actionType: string, config: Record<string, unknown>): Record<string, unknown> {
+  const allowed = ALLOWED_ACTION_CONFIG[actionType] ?? [];
+  return Object.fromEntries(Object.entries(config).filter(([configKey]) => allowed.includes(configKey)));
+}

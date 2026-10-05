@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { TRIGGER_TYPES, ACTION_TYPES, REQUIRED_ACTION_CONFIG } from './automationConstants';
+import { TRIGGER_TYPES, ACTION_TYPES, REQUIRED_ACTION_CONFIG, filterActionConfig } from './automationConstants';
 import type { AutomationRow } from './useAutomations';
 
 interface AutomationEditorDialogProps {
@@ -30,6 +30,23 @@ function readConfig(action?: ActionRecord): ActionRecord {
 
 function readString(value: unknown): string {
   return typeof value === 'string' ? value : '';
+}
+
+function buildFirstAction(
+  automation: AutomationRow | null | undefined,
+  actionType: string,
+  messageContent: string
+): { action: ActionRecord; config: ActionRecord } {
+  const [firstAction] = readActions(automation);
+  const previousType = readString(firstAction?.type);
+  let config: ActionRecord = { ...readConfig(firstAction) };
+  if (actionType === 'send_message') {
+    config.message = messageContent;
+  }
+  if (previousType !== actionType) {
+    config = filterActionConfig(actionType, config);
+  }
+  return { action: { ...(firstAction ?? {}), type: actionType, config }, config };
 }
 
 // R2-MOD-001: o `AutomationsManager` mantém este diálogo SEMPRE montado e troca
@@ -63,26 +80,10 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
   // #99: `message` só é sobrescrito para `send_message` — `send_notification`
   // TAMBÉM exige `message`, e apagá-lo impedia salvar/renomear esse tipo. Ao
   // TROCAR de tipo, removemos apenas as chaves que não pertencem ao novo tipo
-  // segundo REQUIRED_ACTION_CONFIG, para não arrastar configuração obsoleta
+  // segundo ALLOWED_ACTION_CONFIG, para não arrastar configuração obsoleta
   // (ex.: `tag_id` ao virar `assign_agent`); dentro do mesmo tipo, preserva-se
   // tudo o que já existia.
-  const buildFirstAction = (): { action: ActionRecord; config: ActionRecord } => {
-    const [firstAction] = readActions(automation);
-    const previousType = readString(firstAction?.type);
-    const config: ActionRecord = { ...readConfig(firstAction) };
-    if (actionType === 'send_message') {
-      config.message = messageContent;
-    }
-    if (previousType !== actionType) {
-      const allowed = REQUIRED_ACTION_CONFIG[actionType] ?? [];
-      for (const configKey of Object.keys(config)) {
-        if (!allowed.includes(configKey)) delete config[configKey];
-      }
-    }
-    return { action: { ...(firstAction ?? {}), type: actionType, config }, config };
-  };
-
-  const { config: draftConfig } = buildFirstAction();
+  const { config: draftConfig } = buildFirstAction(automation, actionType, messageContent);
   const requiredConfig = REQUIRED_ACTION_CONFIG[actionType] ?? [];
   const missingConfig = requiredConfig.filter((configKey) => readString(draftConfig[configKey]).trim() === '');
 
@@ -94,7 +95,7 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
       return;
     }
     const existing = readActions(automation);
-    const { action: firstAction } = buildFirstAction();
+    const { action: firstAction } = buildFirstAction(automation, actionType, messageContent);
     const actions = existing.length > 0 ? [firstAction, ...existing.slice(1)] : [firstAction];
     setIsSaving(true);
     try {
