@@ -41,3 +41,24 @@ export class TalkMeConflictError extends Error {
     this.name = 'TalkMeConflictError';
   }
 }
+
+/**
+ * O aceite não voltou (rede/proxy) ou voltou sem corpo utilizável: o commit pode
+ * ter acontecido no servidor mesmo assim. É um estado recuperável, não uma falha
+ * definitiva — a confirmação reusa `talk_me_claim`, que é idempotente para o
+ * vencedor e não duplica auditoria.
+ */
+export class TalkMeOutcomeUnknownError extends Error {
+  constructor() {
+    super('Não foi possível confirmar o aceite do atendimento.');
+    this.name = 'TalkMeOutcomeUnknownError';
+  }
+}
+
+/** Sem conexão: o aceite nem chega a sair do navegador. */
+export class TalkMeOfflineError extends Error {
+  constructor() {
+    super('Sem conexão para assumir o atendimento.');
+    this.name = 'TalkMeOfflineError';
+  }
+}
