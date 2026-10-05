@@ -142,6 +142,58 @@ describe('R2-MOD-024 — resposta atrasada não contamina o template seguinte', 
     expect(screen.queryAllByText((_, el) => el?.tagName === 'P' && el.textContent === 'v2 · Versao A')).toHaveLength(0);
     expect(screen.getAllByText((_, el) => el?.tagName === 'P' && el.textContent === 'v2 · Versao B').length).toBeGreaterThan(0);
   });
+
+  it('loading: trocar A→B com o histórico de A pendente não deixa B em estado de carregamento', async () => {
+    const slowA = deferred<ReturnType<typeof version>[]>();
+    fetchVersionHistory.mockImplementation((id: string) =>
+      id === 'tpl-A' ? slowA.promise : Promise.resolve([version('ver-B', 'tpl-B', 'Versao B')]));
+
+    renderEditor();
+
+    // abre o histórico de A enquanto ele ainda está pendente ("Carregando...")
+    fireEvent.click(screen.getByRole('button', { name: 'Ver versões' }));
+    expect(fetchVersionHistory).toHaveBeenCalledWith('tpl-A');
+    expect(screen.getAllByText('Carregando...').length).toBeGreaterThan(0);
+
+    // troca A→B e abre o histórico de B (resposta imediata)
+    switchToB();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver versões' }));
+    await flush();
+    expect(screen.getAllByText((_, el) => el?.tagName === 'P' && el.textContent === 'v2 · Versao B').length).toBeGreaterThan(0);
+
+    // a resposta atrasada de A chega DEPOIS: é descartada e não pode prender o loading de B
+    await act(async () => { slowA.resolve([version('ver-A', 'tpl-A', 'Versao A')]); await slowA.promise; });
+    await flush();
+
+    expect(screen.queryAllByText('Carregando...')).toHaveLength(0);
+    expect(screen.getAllByText((_, el) => el?.tagName === 'P' && el.textContent === 'v2 · Versao B').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText((_, el) => el?.tagName === 'P' && el.textContent === 'v2 · Versao A')).toHaveLength(0);
+  });
+
+  it('loading: resposta atrasada de A não mexe no loading do histórico de B em andamento', async () => {
+    const slowA = deferred<ReturnType<typeof version>[]>();
+    const slowB = deferred<ReturnType<typeof version>[]>();
+    fetchVersionHistory.mockImplementation((id: string) => (id === 'tpl-A' ? slowA.promise : slowB.promise));
+
+    renderEditor();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver versões' })); // A pendente
+    switchToB();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver versões' })); // B pendente
+    await flush();
+    expect(screen.getAllByText('Carregando...').length).toBeGreaterThan(0);
+
+    // A chega atrasada: não aplica dados e não pode zerar o loading de B (ainda pendente)
+    await act(async () => { slowA.resolve([version('ver-A', 'tpl-A', 'Versao A')]); await slowA.promise; });
+    await flush();
+    expect(screen.getAllByText('Carregando...').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText((_, el) => el?.tagName === 'P' && el.textContent === 'v2 · Versao A')).toHaveLength(0);
+
+    // B resolve: agora sim o painel mostra o histórico de B e sai do loading
+    await act(async () => { slowB.resolve([version('ver-B', 'tpl-B', 'Versao B')]); await slowB.promise; });
+    await flush();
+    expect(screen.queryAllByText('Carregando...')).toHaveLength(0);
+    expect(screen.getAllByText((_, el) => el?.tagName === 'P' && el.textContent === 'v2 · Versao B').length).toBeGreaterThan(0);
+  });
 });
 
 describe('R2-MOD-024 — mutação de origem estranha ao template ativo é recusada', () => {
@@ -185,9 +237,6 @@ describe('R2-MOD-024 — mutação de origem estranha ao template ativo é recus
     fireEvent.click(screen.getByRole('button', { name: 'Ver versões' }));
     await flush();
 
-    const nameField = screen.getAllByDisplayValue('Template B')[0];
-    void nameField;
-
     // O botão de restaurar é o único botão dentro da linha da versão.
     const versionLabel = screen
       .getAllByText((_, el) => el?.tagName === 'P' && el.textContent === 'v2 · Versao Estranha')[0];
@@ -196,5 +245,33 @@ describe('R2-MOD-024 — mutação de origem estranha ao template ativo é recus
     await flush();
 
     expect(screen.getAllByDisplayValue('Template B').length).toBeGreaterThan(0);
+  });
+});
+
+describe('R2-MOD-024 — variante do template ativo continua salvando e excluindo', () => {
+  it('onBlur chama saveVariant e o clique em x chama deleteVariant', async () => {
+    fetchVariants.mockResolvedValue([variant('var-A', 'tpl-A', 'variante do ativo')]);
+    countVariantRecipients.mockResolvedValue(0);
+
+    renderEditor(); // editing = tpl-A, logo o template ativo é o A
+
+    fireEvent.click(variantsToggle());
+    await flush();
+
+    const textarea = screen.getAllByDisplayValue('variante do ativo')[0];
+
+    // salvar: onBlur da variante que pertence ao template ativo
+    fireEvent.blur(textarea);
+    await flush();
+    expect(saveVariant).toHaveBeenCalledTimes(1);
+    expect(saveVariant.mock.calls[0][0]).toBe('tpl-A');
+    expect(saveVariant.mock.calls[0][1]).toMatchObject({ id: 'var-A', template_id: 'tpl-A' });
+
+    // excluir: o clique em "x" da linha da variante
+    const row = textarea.closest('div[class*="rounded-xl"]') as HTMLElement;
+    fireEvent.click(row.querySelector('button') as HTMLElement);
+    await flush();
+    expect(countVariantRecipients).toHaveBeenCalledWith('var-A');
+    expect(deleteVariant).toHaveBeenCalledWith('var-A');
   });
 });
