@@ -808,3 +808,24 @@ jobs:
           F64_VOZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/f64-voz-assets-e-grants.test.sh
+
+      # t_138a15f0 (PR 1890): os dois testes abaixo existiam no disco sem passo
+      # no CI e o check-test-inventory os reprovava como orfaos. Ambos iniciam
+      # containers Docker proprios incompativeis com o docker-shim do E47 —
+      # SKIP_DOCKER_SHIM="1" nos dois, como no bloco E50 acima:
+      #   * network-policy-rpc: sobe DOIS containers simultaneos (contrato e
+      #     mutacao) e cada um roda CREATE ROLE anon/authenticated/service_role;
+      #     roles sao globais ao cluster, entao no shim o segundo CREATE ROLE
+      #     colidiria com o primeiro.
+      #   * revoke-auth-sessions: o readiness usa `docker exec <c> pg_isready`
+      #     e o shim so intercepta `exec` de psql — sai 1 nos demais comandos.
+      - name: Provar a RPC canônica de política de rede (R2-AUTH-022)
+        env:
+          NETWORK_POLICY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/network-policy-rpc.test.sh
+
+      - name: Provar revogação de sessões Auth por migration (R2-AUTH-004)
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh
