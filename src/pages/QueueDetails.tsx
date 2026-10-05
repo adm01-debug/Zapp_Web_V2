@@ -15,12 +15,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, AlertCircle, Settings } from 'lucide-react';
 import { QueueCharts } from '@/components/queues/QueueCharts';
 import { QueueMetricsCards } from './queue-details/QueueMetricsCards';
+import { computeQueueMetrics, type QueueMetrics } from './queue-details/queueMetrics';
 import { QueueContactsTable } from './queue-details/QueueContactsTable';
 
 interface QueueDetailsData { id: string; name: string; description: string | null; color: string; max_wait_time_minutes: number | null; created_at: string; }
 interface QueueMember { id: string; profile_id: string; profile: { name: string; avatar_url: string | null; is_active: boolean }; }
 interface QueueContact { id: string; name: string; phone: string; avatar_url: string | null; assigned_to: string | null; created_at: string; assigned_agent?: { name: string | null; avatar_url: string | null } | null; messages_count: number; last_message_at: string | null; }
-interface QueueMetrics { totalContacts: number; assignedContacts: number; waitingContacts: number; avgResponseTime: string; resolvedToday: number; }
 
 export default function QueueDetails() {
   const { id } = useParams<{ id: string }>();
@@ -45,7 +45,7 @@ export default function QueueDetails() {
       const { data: membersData } = await supabase.from('queue_members').select('id, profile_id, profile:profiles(name, avatar_url, is_active)').eq('queue_id', id);
       setMembers(membersData as unknown as QueueMember[]);
 
-      const { data: contactsData } = await supabase.from('contacts').select('id, name, phone, avatar_url, assigned_to, created_at').eq('queue_id', id).order('created_at', { ascending: false }).limit(50);
+      const { data: contactsData } = await supabase.from('contacts').select('id, name, phone, avatar_url, assigned_to, created_at, conversation_status, conversation_status_changed_at').eq('queue_id', id).order('created_at', { ascending: false }).limit(50);
 
       const contactsWithDetails = await Promise.all(
         (contactsData || []).map(async (contact) => {

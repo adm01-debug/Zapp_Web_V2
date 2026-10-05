@@ -34,6 +34,15 @@ interface DateRange {
   to: Date;
 }
 
+/** Campos de `contacts` usados para derivar resolução canônica (R2-QUE-001). */
+interface AnalyticsContact {
+  id: string;
+  assigned_to: string | null;
+  created_at: string;
+  conversation_status: string | null;
+  conversation_status_changed_at: string | null;
+}
+
 interface QueueAnalytics {
   dailyData: DailyData[];
   hourlyData: HourlyData[];
@@ -73,7 +82,7 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
 
   const processDailyData = (
     messages: Array<{ id: string; contact_id: string; created_at: string; sender: string }>,
-    contacts: Array<{ id: string; assigned_to: string | null; created_at: string }>,
+    contacts: AnalyticsContact[],
     range: DateRange
   ): DailyData[] => {
     const days = eachDayOfInterval({
@@ -104,11 +113,12 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
           return contactDate >= dayStart && contactDate < dayEnd;
         });
 
-        // Count resolved (assigned) contacts for this period
+        // Resolvidos do período vêm do status canônico `resolved` e do timestamp de mudança de
+        // status — atribuição (assigned_to) não é resolução, nem a data de criação é a de resolução.
         const resolvedContacts = contacts.filter(c => {
-          if (!c.assigned_to) return false;
-          const contactDate = new Date(c.created_at);
-          return contactDate >= dayStart && contactDate < dayEnd;
+          if (c.conversation_status !== 'resolved' || !c.conversation_status_changed_at) return false;
+          const resolvedAt = new Date(c.conversation_status_changed_at);
+          return resolvedAt >= dayStart && resolvedAt < dayEnd;
         });
 
         return {
@@ -181,7 +191,7 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
   };
 
   const processStatusData = (
-    contacts: Array<{ id: string; assigned_to: string | null }>
+    contacts: Array<{ id: string; assigned_to: string | null; conversation_status: string | null }>
   ): StatusData[] => {
     const total = contacts.length;
     if (total === 0) {
@@ -192,12 +202,12 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
       ];
     }
 
-    const assigned = contacts.filter(c => c.assigned_to).length;
-    const waiting = total - assigned;
-
-    // Estimate resolved as 70% of assigned (since we don't have resolved status)
-    const resolved = Math.floor(assigned * 0.7);
-    const inProgress = assigned - resolved;
+    // R2-QUE-001: Resolvidos e Em Atendimento saem do status canônico, não de uma proporção fixa
+    // dos atribuídos. Atendimento em curso é o episódio `open` com dono; Resolvidos é o status
+    // `resolved`; o restante fica Aguardando (não resolvido e fora de atendimento ativo).
+    const resolved = contacts.filter(c => c.conversation_status === 'resolved').length;
+    const inProgress = contacts.filter(c => c.conversation_status === 'open' && !!c.assigned_to).length;
+    const waiting = total - resolved - inProgress;
 
     const resolvedPercent = Math.round((resolved / total) * 100);
     const inProgressPercent = Math.round((inProgress / total) * 100);
@@ -217,7 +227,7 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
       // Get contacts in this queue
       const { data: contacts, error: contactsError } = await supabase
         .from('contacts')
-        .select('id, assigned_to, created_at')
+        .select('id, assigned_to, created_at, conversation_status, conversation_status_changed_at')
         .eq('queue_id', queueId);
 
       if (contactsError) throw contactsError;
@@ -249,7 +259,7 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
       if (messagesError) throw messagesError;
 
       // Process daily data
-      const dailyAggregation = processDailyData((messages || []) as Array<{ id: string; contact_id: string; created_at: string; sender: string }>, contacts || [], dateRange);
+      const dailyAggregation = processDailyData((messages || []) as Array<{ id: string; contact_id: string; created_at: string; sender: string }>, (contacts || []) as AnalyticsContact[], dateRange);
       setDailyData(dailyAggregation);
 
       // Process hourly data (today only)
@@ -261,7 +271,7 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
       setAgentPerformance(agentAggregation);
 
       // Process status distribution
-      const statusAggregation = processStatusData(contacts || []);
+      const statusAggregation = processStatusData((contacts || []) as Array<{ id: string; assigned_to: string | null; conversation_status: string | null }>);
       setStatusData(statusAggregation);
 
     } catch (error) {
