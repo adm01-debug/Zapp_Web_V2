@@ -121,6 +121,31 @@ Deno.test("gmail-cron-sync: falha parcial preserva o cursor e reporta erro por c
   });
 });
 
+Deno.test("gmail-cron-sync: full sync com falha parcial NÃO ancora o cursor (ponto recuperável)", async () => {
+  const { db, client } = makeFakeSupabase({ gmail_accounts: [{ ...ACCOUNT, history_id: null }] });
+  const fetcher = makeGmailFetch({
+    list: { status: 200, body: { messages: [{ id: "m-ruim" }] } },
+    messages: { "m-ruim": { status: 500, body: { error: "boom" } } },
+    profile: { status: 200, body: { historyId: "999" } },
+  });
+
+  await withEnv({ CRON_SECRET: SECRET }, async () => {
+    await withFetch(fetcher, async () => {
+      const res = await handleGmailCronSync(cronRequest(SECRET), { supabase: client });
+      const body = await res.json();
+
+      assertEquals(res.status, 200);
+      assertEquals(body.success, true);
+      assertEquals(body.results[0].cursor_advanced, false);
+      assertEquals(body.results[0].status, "partial_failure");
+      // history_id continua null: a conta repete o full sync em vez de ancorar
+      // o cursor com eventos que falharam atrás dele.
+      assertEquals(db.tables.gmail_accounts[0].history_id, null);
+      assertEquals(db.tables.gmail_accounts[0].sync_status, "error");
+    });
+  });
+});
+
 Deno.test("gmail-cron-sync: conta sem history_id continua no full sync (ancora o cursor no profile)", async () => {
   const { db, client } = makeFakeSupabase({ gmail_accounts: [{ ...ACCOUNT, history_id: null }] });
   const fetcher = makeGmailFetch({
