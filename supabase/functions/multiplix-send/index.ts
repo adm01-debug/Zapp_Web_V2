@@ -31,7 +31,7 @@ import {
 // MESMO modulo que a previa usa. Antes o worker usava `dispatch.message_template`
 // e `dispatch.media_url/media_type` (globais) e so o fileName vinha do bloco — o
 // operador revisava uma mensagem e saia outra.
-import { resolveBlockContent, type ContentBlockRow } from "../_shared/multiplix-content.ts";
+import { resolveBlockContent, type BlockAsset, type ContentBlockRow, type ResolvedBlock } from "../_shared/multiplix-content.ts";
 
 // F37/F43: as duplicatas locais (`getGreeting`, `personalizeMultiplix`,
 // `randomBetween`, `sleep`, `prepareMedia`, `send`) foram removidas — todas vêm do
@@ -431,24 +431,6 @@ export async function handleMultiplixSend(
         };
         const recipient = itemDetailRow.recipient;
         const block = itemDetailRow.block;
-        // MX02: o conteudo do bloco e resolvido AQUI, com o `variables_snapshot` do
-        // item e o nome da empresa — o mesmo resolvedor que a previa (F48) usa.
-        const resolvedBlock = resolveBlockContent(
-          block,
-          recipient,
-          typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-        );
-        // O ativo so conta como midia quando tem URL endereçavel (documento/audio/
-        // imagem/video); o bloco de voz (F64/F65) nasce com `url: null`.
-        const mediaAssetUrl = resolvedBlock.asset?.url;
-        const mediaAsset = resolvedBlock.asset && typeof mediaAssetUrl === "string" && mediaAssetUrl !== ""
-          ? { ...resolvedBlock.asset, url: mediaAssetUrl }
-          : null;
-        // F69: bloco de voz sem ativo renderizado (F65 pendente) SEGURA o item —
-        // nunca vira texto solto nem cai no template global.
-        const voicePending = resolvedBlock.asset?.kind === "voice" && mediaAsset === null;
-        // Bloco sem texto e sem midia: nao existe mensagem a enviar.
-        const blockHasNothing = resolvedBlock.text === "" && mediaAsset === null && !voicePending;
 
         const { data: currentDispatch, error: currentDispatchError } = await supabase
           .from("multiplix_dispatches")
@@ -518,24 +500,72 @@ export async function handleMultiplixSend(
           continue;
         }
 
-        // MX02: o snapshot e do ITEM (`multiplix_delivery_items.personalized_message`).
-        // Um destinatario tem N itens (um por bloco) — guardar a mensagem no
-        // recipient (como o worker fazia) apagaria a dos blocos 2..N.
-        let personalizedMsg: string = itemDetailRow.personalized_message ?? "";
-        if (!personalizedMsg && !voicePending && !blockHasNothing) {
-          // O texto do bloco ja vem renderizado pelo kernel (`personalize`), com o
-          // nome da empresa e o `variables_snapshot` do item — a MESMA saida da
-          // previa. Nada e remontado a partir do template global do disparo.
-          personalizedMsg = resolvedBlock.text;
-          if (personalizedMsg !== "") {
-            const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_item_message_snapshot", {
-              p_item_id: item.item_id,
-              p_claim_token: claim.claim_token,
-              p_personalized_message: personalizedMsg,
-            });
-            if (snapshotError) throw new Error(`multiplix_message_snapshot_failed: ${snapshotError.message}`);
-            personalizedMsg = snapshotMessage as string;
+        // MX02/F70: a resolucao do conteudo do bloco e a montagem do texto rodam
+        // DEPOIS do claim (o item so pode ser concluido com o lease em maos) e DENTRO
+        // de um try/catch proprio: excecao aqui (kernel de personalizacao, bloco
+        // malformado) conclui SOMENTE este item como 'failed', com a mensagem do erro,
+        // e o lote segue para os proximos itens em vez de derrubar a invocacao (500).
+        let resolvedBlock: ResolvedBlock;
+        let mediaAsset: (BlockAsset & { url: string }) | null;
+        let voicePending: boolean;
+        let blockHasNothing: boolean;
+        let personalizedMsg: string;
+        try {
+          // MX02: o conteudo do bloco e resolvido AQUI, com o `variables_snapshot` do
+          // item e o nome da empresa — o mesmo resolvedor que a previa (F48) usa.
+          resolvedBlock = resolveBlockContent(
+            block,
+            recipient,
+            typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
+          );
+          // O ativo so conta como midia quando tem URL endereçavel (documento/audio/
+          // imagem/video); o bloco de voz (F64/F65) nasce com `url: null`.
+          const mediaAssetUrl = resolvedBlock.asset?.url;
+          mediaAsset = resolvedBlock.asset && typeof mediaAssetUrl === "string" && mediaAssetUrl !== ""
+            ? { ...resolvedBlock.asset, url: mediaAssetUrl }
+            : null;
+          // F69: bloco de voz sem ativo renderizado (F65 pendente) SEGURA o item —
+          // nunca vira texto solto nem cai no template global.
+          voicePending = resolvedBlock.asset?.kind === "voice" && mediaAsset === null;
+          // Bloco sem texto e sem midia: nao existe mensagem a enviar.
+          blockHasNothing = resolvedBlock.text === "" && mediaAsset === null && !voicePending;
+
+          // MX02: o snapshot e do ITEM (`multiplix_delivery_items.personalized_message`).
+          // Um destinatario tem N itens (um por bloco) — guardar a mensagem no
+          // recipient (como o worker fazia) apagaria a dos blocos 2..N.
+          personalizedMsg = itemDetailRow.personalized_message ?? "";
+          if (!personalizedMsg && !voicePending && !blockHasNothing) {
+            // O texto do bloco ja vem renderizado pelo kernel (`personalize`), com o
+            // nome da empresa e o `variables_snapshot` do item — a MESMA saida da
+            // previa. Nada e remontado a partir do template global do disparo.
+            personalizedMsg = resolvedBlock.text;
+            if (personalizedMsg !== "") {
+              const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_item_message_snapshot", {
+                p_item_id: item.item_id,
+                p_claim_token: claim.claim_token,
+                p_personalized_message: personalizedMsg,
+              });
+              if (snapshotError) throw new Error(`multiplix_message_snapshot_failed: ${snapshotError.message}`);
+              personalizedMsg = snapshotMessage as string;
+            }
           }
+        } catch (err) {
+          // Falha DETERMINISTICA deste item (o proximo item pode ter bloco bom): conclui
+          // SO ele como 'failed' e segue o lote. Nunca um 500 que derruba a invocacao.
+          const reason = err instanceof Error ? err.message : "multiplix_block_resolution_failed";
+          const message = `multiplix_block_resolution_failed: ${reason}`.slice(0, 1000);
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
+            p_claim_token: claim.claim_token,
+            p_status: "failed",
+            p_error_message: message,
+          });
+          if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+          failedCount++;
+          processedCount++;
+          const interval = randomBetween(dispatch.send_interval_min, dispatch.send_interval_max);
+          await sleep(interval);
+          continue;
         }
 
         let providerPostAttempted = false;

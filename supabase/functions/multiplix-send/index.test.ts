@@ -167,6 +167,8 @@ interface MockCtx {
   events: Array<Record<string, unknown>>;
   /** MX02/F69: itens devolvidos a fila no backoff pre-dispatch */
   reschedules: Array<Record<string, unknown>>;
+  /** MX02/F69: itens que estouraram o teto de tentativas (dead-letter do reschedule) */
+  deadLettered: Array<Record<string, unknown>>;
   dispatch: DispatchRow | null;
   remaining: Array<ReturnType<typeof recipientRow>>;
   recipientSelects: number;
@@ -307,6 +309,13 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             });
           case "claim_multiplix_item":
             if (opts.claimReturnsNothing) return Promise.resolve({ data: [], error: null });
+            // Fiel ao banco (f32b §2): o claim INCREMENTA attempt_count do item —
+            // e o valor que o reschedule le para decidir o dead-letter em >= 3.
+            {
+              const claimedId = String(args.p_item_id).replace(/^item-/, "");
+              const row = ctx.remaining.find((r) => r.id === claimedId);
+              if (row) row.attempt_count = (row.attempt_count ?? 0) + 1;
+            }
             return Promise.resolve({ data: [{ claim_token: `claim-${String(args.p_item_id)}` }], error: null });
           case "persist_multiplix_item_message_snapshot":
             // Fiel ao banco: a RPC grava o texto e devolve a string personalizada. O stub
@@ -348,13 +357,22 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
               error: null,
             });
           case "reschedule_multiplix_item": {
-            // Fiel ao banco: o item volta para a fila com `next_attempt_at` no futuro,
-            // e `list_multiplix_claimable_items` so o devolve quando a hora chega —
-            // nesta passada ele SAI (sem isso o stub giraria o laco contra a fila).
+            // Fiel ao banco (f32b §7): o reschedule NAO incrementa attempt_count
+            // (o claim ja subiu esta tentativa) e devolve dead_lettered em
+            // `attempt_count >= 3` — o item vira 'failed' e NUNCA volta a fila.
+            // Abaixo do teto ele volta com `next_attempt_at` no futuro; nas duas
+            // saidas ele sai da fila DESTA passada (sem isso o stub giraria o
+            // laco contra a fila).
             ctx.reschedules.push(args);
             const itemId = String(args.p_item_id).replace(/^item-/, "");
+            const row = ctx.remaining.find((r) => r.id === itemId);
+            const attempt = row?.attempt_count ?? 0;
             ctx.remaining = ctx.remaining.filter((r) => r.id !== itemId);
-            return Promise.resolve({ data: { action: "rescheduled" }, error: null });
+            if (attempt >= 3) {
+              ctx.deadLettered.push(args);
+              return Promise.resolve({ data: { action: "dead_lettered", attempt }, error: null });
+            }
+            return Promise.resolve({ data: { action: "rescheduled", attempt }, error: null });
           }
           case "multiplix_connection_daily_usage": {
             const remaining = opts.dailyRemaining ?? 500;
@@ -410,6 +428,7 @@ function newCtx(opts: MockOpts): MockCtx {
     limits: [],
     completions: [],
     reschedules: [],
+    deadLettered: [],
     dispatch,
     remaining: [...(opts.recipients ?? [])],
     recipientSelects: 0,
@@ -1924,7 +1943,9 @@ async function runComClienteV2(opts: MockOpts) {
   try {
     const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
     assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-    return { ctx, provider };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const body = (await res.json()) as any;
+    return { ctx, provider, body };
   } finally {
     provider.restore();
     if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
@@ -2067,4 +2088,145 @@ Deno.test("MX02: payload do worker == resolucao da previa para o MESMO bloco e d
     midia[0].body.caption === previa.text,
     `texto divergente da previa: envio=${String(midia[0].body.caption)} previa=${previa.text}`,
   );
+});
+
+Deno.test("MX02/F70: excecao na resolucao do bloco conclui SO o item como 'failed' e o lote continua", async () => {
+  // Prova do defeito corrigido: a resolucao do bloco rodava FORA de try/catch —
+  // uma excecao ali subia ao catch do handler, devolvia 500 e o item nem virava
+  // 'failed'. Aqui o `variables_snapshot` do item 1 lanca ao ser percorrido pelo
+  // resolvedor; o item 2 e normal e TEM de ser enviado na mesma passada.
+  const quebrado = recipientRow(1, "5511955550020");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (quebrado as any).variables_snapshot = new Proxy({}, {
+    ownKeys() {
+      throw new Error("variables_snapshot quebrado");
+    },
+  });
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 2 }),
+    recipients: [quebrado, recipientRow(2, "5511955550021")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+  };
+  const { ctx, provider } = await runComClienteV2(opts); // ja afirma resposta 200
+  const falhas = ctx.completions.filter((c) => String(c.p_item_id) === "item-recipient-1");
+  assert(falhas.length === 1, `esperava 1 conclusao do item 1, houve ${falhas.length}`);
+  assert(falhas[0].p_status === "failed", `item 1 tinha de virar 'failed', veio ${String(falhas[0].p_status)}`);
+  assert(
+    String(falhas[0].p_error_message).includes("multiplix_block_resolution_failed"),
+    `mensagem sem o codigo nomeado: ${String(falhas[0].p_error_message)}`,
+  );
+  assert(
+    String(falhas[0].p_error_message).includes("variables_snapshot quebrado"),
+    `mensagem sem o texto do erro original: ${String(falhas[0].p_error_message)}`,
+  );
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto (so o item 2), veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(envios[0].body.number === "5511955550021", `o POST tinha de ser do item 2; foi para ${String(envios[0].body.number)}`);
+  assert(envios[0].body.text === "BLOCO CORRETO Empresa 2", `texto do item 2 divergente: ${String(envios[0].body.text)}`);
+});
+
+Deno.test("MX02: o snapshot da mensagem e gravado NO ITEM, uma vez, antes do POST", async () => {
+  // A mensagem enviada ao provedor tem de ser a MESMA gravada em
+  // `multiplix_delivery_items.personalized_message` — o texto do BLOCO ja
+  // personalizado, nunca o template global.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550022")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  const snapshots = rpcs(ctx, "persist_multiplix_item_message_snapshot");
+  assert(snapshots.length === 1, `esperava 1 gravacao de snapshot, houve ${snapshots.length}`);
+  assert(snapshots[0].args.p_item_id === "item-recipient-1", `snapshot no item errado: ${String(snapshots[0].args.p_item_id)}`);
+  assert(
+    typeof snapshots[0].args.p_claim_token === "string" && (snapshots[0].args.p_claim_token as string).length > 0,
+    "snapshot tem de levar o claim_token do lease em maos",
+  );
+  assert(
+    snapshots[0].args.p_personalized_message === "BLOCO CORRETO Empresa 1",
+    `snapshot gravou texto divergente do bloco: ${String(snapshots[0].args.p_personalized_message)}`,
+  );
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(envios[0].body.text === snapshots[0].args.p_personalized_message, "o POST tem de levar o MESMO texto gravado no item");
+});
+
+Deno.test("MX02/F69: o reschedule de `multiplix_block_pending_media` respeita o teto de tentativas", async () => {
+  // attempt_count 2 + claim (que incrementa, f32b §2) = 3a tentativa: o
+  // reschedule responde dead_lettered (f32b §7) e o item vira 'failed' — nunca
+  // volta a fila nem gira de novo nesta passada.
+  const item = recipientRow(1, "5511955550023");
+  item.attempt_count = 2;
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [item],
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}" } },
+  };
+  const { ctx, provider, body } = await runComClienteV2(opts);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  assert(ctx.deadLettered.length === 1, `3a tentativa tinha de dead-letter, deadLettered=${ctx.deadLettered.length}`);
+  assert(rpcs(ctx, "claim_multiplix_item").length === 1, "o item foi reivindicado uma unica vez (sem giro)");
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(body.failed === 1, `body.failed esperado 1, veio ${JSON.stringify(body)}`);
+});
+
+Deno.test("MX02: o reschedule de `multiplix_block_empty_content` respeita o teto de tentativas", async () => {
+  // Mesmo desenho do teste de voz pendente, com bloco sem texto e sem midia:
+  // attempt_count 2 + claim = 3a tentativa -> dead_lettered, sem reenvio a fila.
+  const item = recipientRow(1, "5511955550024");
+  item.attempt_count = 2;
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [item],
+    blockContent: {},
+  };
+  const { ctx, provider, body } = await runComClienteV2(opts);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_empty_content"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  assert(ctx.deadLettered.length === 1, `3a tentativa tinha de dead-letter, deadLettered=${ctx.deadLettered.length}`);
+  assert(rpcs(ctx, "claim_multiplix_item").length === 1, "o item foi reivindicado uma unica vez (sem giro)");
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(body.failed === 1, `body.failed esperado 1, veio ${JSON.stringify(body)}`);
+});
+
+Deno.test("MX02/F69: abaixo do teto o item volta a fila com o backoff da tentativa", async () => {
+  // attempt_count 1 + claim = 2a tentativa (< 3): reschedule devolve
+  // `rescheduled` e o item sai da fila desta passada com next_attempt_at ~120s
+  // a frente (backoff da 2a tentativa: [30s, 120s, 600s]).
+  const item = recipientRow(1, "5511955550025");
+  item.attempt_count = 1;
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [item],
+    blockContent: {},
+  };
+  const antes = Date.now();
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(ctx.deadLettered.length === 0, `abaixo do teto nao pode dead-letter, deadLettered=${ctx.deadLettered.length}`);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_empty_content"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  const retryAfter = Date.parse(String(ctx.reschedules[0].p_retry_after));
+  assert(Number.isFinite(retryAfter), `p_retry_after invalido: ${String(ctx.reschedules[0].p_retry_after)}`);
+  const delta = retryAfter - antes;
+  assert(
+    delta >= 110_000 && delta <= 130_000,
+    `backoff da 2a tentativa tinha de ser ~120s, veio ${delta}ms`,
+  );
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
 });

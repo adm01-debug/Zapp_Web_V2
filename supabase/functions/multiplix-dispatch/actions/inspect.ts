@@ -45,7 +45,7 @@ import { z } from 'https://esm.sh/zod@3.23.8';
 import { errorResponse, jsonResponse } from '../../_shared/validation.ts';
 import { DispatchError, type ActionContext } from '../index.ts';
 import { MULTIPLIX_ELIGIBILITY_VALUES, type MultiplixEligibility } from '../../_shared/multiplix-eligibility.ts';
-import { eligibility, getGreeting, personalize } from '../../_shared/messaging/index.ts';
+import { eligibility, getGreeting } from '../../_shared/messaging/index.ts';
 // MX02 (item 46/P1): a resolucao de conteudo do bloco (texto + ativo) mora em
 // `_shared/multiplix-content.ts` e e a MESMA que o motor de envio usa. Este modulo
 // tinha a propria copia e o worker resolvia pelos campos GLOBAIS do disparo —
@@ -64,25 +64,6 @@ import {
   voiceScriptOf,
 } from '../../_shared/multiplix-content.ts';
 import type { BlockType } from '../../_shared/multiplix-content.ts';
-
-// Contrato publico do modulo: os helpers reexportados continuam disponiveis para
-// quem os citava daqui (relatorios de cobertura e leitura dos contratos da API).
-export {
-  asString,
-  blockTextOf,
-  blocksForReview,
-  buildPreviewBlocks,
-  isBlockType,
-  isSharedAudio,
-  mediaCaptionOf,
-  renderForRecipient,
-  timezoneOf,
-  variablesOf,
-  voiceScriptOf,
-};
-export { asRecord, buildAsset, contentOf, isVoiceBlock, mediaKindFromUrl, mediaUrlOf } from '../../_shared/multiplix-content.ts';
-export type { BlockAsset, BlockType, MediaKind, ResolvedBlock as PreviewBlock } from '../../_shared/multiplix-content.ts';
-
 
 // ---------------------------------------------------------------------------
 // Contratos de entrada
@@ -159,8 +140,6 @@ export interface RecipientRow {
   status?: unknown;
   variables_snapshot?: unknown;
 }
-
-
 
 // ---------------------------------------------------------------------------
 // Leitura do banco + escopo (dono do disparo)
@@ -245,31 +224,6 @@ async function loadRecipientForDispatch(
   if (!data) throw new DispatchError('multiplix_recipient_not_found', 'Destinatario nao encontrado', 404);
   return data;
 }
-
-// ---------------------------------------------------------------------------
-// Helpers de forma (jsonb `content`, tipos de bloco)
-// ---------------------------------------------------------------------------
-
-
-/**
- * Blocos que participam da revisao. Sem blocos persistidos, cai no
- * `message_template` do disparo — o MESMO insumo que o worker atual
- * (`multiplix-send/index.ts`) usa, para o preview continuar fiel durante a
- * migracao para o modelo de blocos.
- */
-
-// ---------------------------------------------------------------------------
-// F48 — personalizacao: a MESMA chamada do worker
-// ---------------------------------------------------------------------------
-
-/**
- * Renderiza um texto para um destinatario com a MESMA funcao e a MESMA ordem de
- * argumentos que o worker usa (`multiplix-send/index.ts`: `personalize(template,
- * { company }, customValues, timezone)`). O nome da empresa entra por
- * `contact.company` — o campo consumido por `{{empresa}}`.
- */
-
-
 
 /**
  * F48 `preview(recipient_id)`: texto final e ativo exato por bloco.
@@ -384,7 +338,7 @@ function evaluatePlaceholder(
 ): PlaceholderReport {
   const key = rawKey.toLowerCase();
   // O que o kernel realmente produz para esta chave — a fonte da verdade.
-  const rendersTo = personalize(`{{${rawKey}}}`, { company: companyName }, variables, timezone).text;
+  const rendersTo = renderForRecipient(`{{${rawKey}}}`, companyName, variables, timezone);
 
   if (sharedAudio) {
     return {
