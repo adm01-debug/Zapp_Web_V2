@@ -1,9 +1,9 @@
- import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
- import { useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
- import { User, Session } from '@supabase/supabase-js';
- import { AuthService, type SignInResult } from '@/services/auth.service';
- import { Profile } from '@/types';
+import { User, Session } from '@supabase/supabase-js';
+import { AuthService, type SignInResult } from '@/services/auth.service';
+import { Profile } from '@/types';
 import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 
@@ -12,6 +12,12 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  /**
+   * R2-AUTH-004: estado de erro explícito quando o perfil não pôde ser
+   * confirmado (consulta falhou) ou está inativo — o conteúdo protegido fica
+   * fechado (fail-closed) e a sessão local é encerrada.
+   */
+  error: string | null;
   signIn: (email: string, password: string) => Promise<SignInResult>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -20,100 +26,175 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
- export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const fetchingRef = useRef(false);
+  const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   /**
-   * BUG-6 FIX: wrap fetchProfile in try/catch so errors don't leave
-   * fetchingRef.current stuck at `true` (causing all subsequent fetches to
-   * silently no-op, leaving profile as null indefinitely).
+   * Sequência monotônica para descartar respostas atrasadas de perfil.
+   * Quando o usuário troca (signIn/signOut) ou uma sessão nova assume, o
+   * resultado de um fetch anterior não pode repor o perfil de outro usuário.
    */
-   const fetchProfile = useCallback(async (userId: string) => {
-     if (fetchingRef.current) return;
-     fetchingRef.current = true;
-     try {
-       const data = await AuthService.fetchProfile(userId);
-       if (data) setProfile(data);
-     } catch (err) {
-       log.error('[AuthProvider] Failed to fetch profile:', err);
-     } finally {
-       fetchingRef.current = false;
-     }
-   }, []);
+  const requestSeqRef = useRef(0);
+  const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearAuthState = useCallback((options?: { preserveError?: boolean }) => {
+    // Invalida qualquer consulta de perfil em voo e zera o estado publicado.
+    requestSeqRef.current += 1;
+    setProfile(null);
+    setSession(null);
+    setUser(null);
+    // O SIGNED_OUT emitido pelo signOut do próprio fail-closed não pode apagar
+    // a mensagem ('Sua conta está inativa.') que explica a saída na tela.
+    if (!options?.preserveError) setError(null);
+  }, []);
+
+  const clearCaches = useCallback(() => {
+    // O QueryClient é singleton e o app roda com refetchOnMount desligado:
+    // sem limpar, o próximo login na mesma aba lê dados em cache do usuário
+    // anterior (contatos, mensagens, galeria) antes de qualquer consulta nova.
+    queryClient.clear();
+    clearOfflineCache();
+    clearEmailDraftSessions();
+  }, [queryClient]);
+
+  /**
+   * Libera o loading do boot e desarma o timeout de segurança. Só o caminho
+   * que "venceu" a disputa pode chamar: o applySession mais recente quando
+   * ele termina, ou um encerramento de sessão. Um applySession descartado
+   * por resposta atrasada (ex.: o disparado pelo INITIAL_SESSION ou por um
+   * SIGNED_IN em pleno boot) nunca libera o loading — senão a tela veria um
+   * frame com loading=false e user=null e mandaria usuário ativo ao login.
+   */
+  const finishLoading = useCallback(() => {
+    if (safetyTimeoutRef.current) {
+      clearTimeout(safetyTimeoutRef.current);
+      safetyTimeoutRef.current = null;
+    }
+    setLoading(false);
+  }, []);
+
+  /**
+   * R2-AUTH-004 (item 6): o estado autenticado só é publicado depois de
+   * carregar o perfil atual e confirmar `is_active === true`. Perfil inativo,
+   * ausente ou consulta que falhou encerram a sessão local (fail-closed) e
+   * limpam os caches — defesa durante a janela do JWT stateless até `exp`,
+   * sem substituir a revogação Auth do cartão backend.
+   */
+  const applySession = useCallback(async (next: Session | null) => {
+    if (!next?.user) {
+      clearAuthState();
+      finishLoading();
+      return;
+    }
+
+    const userId = next.user.id;
+    const token = ++requestSeqRef.current;
+
+    let fetched: Profile | null = null;
+    try {
+      fetched = await AuthService.fetchProfile(userId);
+    } catch (err) {
+      log.error('[AuthProvider] Failed to fetch profile:', err);
+      fetched = null;
+    }
+
+    // Resposta atrasada de outra sessão/usuário: descarta sem efeitos e sem
+    // liberar o loading — quem libera é a aplicação mais recente ao terminar.
+    if (token !== requestSeqRef.current) return;
+
+    if (fetched && fetched.is_active === true) {
+      setProfile(fetched);
+      setSession(next);
+      setUser(next.user);
+      setError(null);
+      finishLoading();
+      return;
+    }
+
+    // Perfil inativo, ausente ou consulta que falhou → fail-closed.
+    clearAuthState();
+    setError(
+      fetched === null
+        ? 'Não foi possível carregar seu perfil. Entre novamente.'
+        : 'Sua conta está inativa.',
+    );
+    finishLoading();
+    clearCaches();
+    // Best-effort: revoga a sessão no servidor. A limpeza local já ocorreu;
+    // se o signOut falhar, o listener de Auth reconcilia quando possível.
+    try {
+      await AuthService.signOut();
+    } catch (err) {
+      log.error('[AuthProvider] signOut after inactive profile failed:', err);
+    }
+  }, [clearAuthState, clearCaches, finishLoading]);
 
   useEffect(() => {
     let mounted = true;
     log.info('[BOOT] AuthProvider initialized, starting session check');
 
     // Safety timeout to prevent infinite loading if Supabase doesn't respond
-    const safetyTimeout = setTimeout(() => {
+    safetyTimeoutRef.current = setTimeout(() => {
       if (mounted) {
         log.warn('[BOOT] Auth session check timed out, forcing loading to false');
-        setLoading(false);
+        finishLoading();
       }
     }, 10000);
 
     // Initial fetch
     const initSession = async () => {
       try {
-        const session = await AuthService.getSession();
+        const current = await AuthService.getSession();
         if (!mounted) return;
 
-        log.info('[BOOT] Initial session retrieved:', session ? 'User Found' : 'No User');
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          void fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-        }
+        log.info('[BOOT] Initial session retrieved:', current ? 'User Found' : 'No User');
+        await applySession(current);
       } catch (err) {
         log.error('[BOOT] Error fetching session:', err);
+        clearAuthState();
+        setError('Não foi possível carregar sua sessão.');
+        finishLoading();
       } finally {
-        if (mounted) {
-          setLoading(false);
-          clearTimeout(safetyTimeout);
-          log.info('[BOOT] Auth initial load finished');
-        }
+        if (mounted) log.info('[BOOT] Auth initial load finished');
       }
     };
 
     void initSession();
 
-    const subscription = AuthService.onAuthStateChange(async (event, session) => {
+    // O callback precisa ser síncrono: o supabase-js segura o lock de auth
+    // enquanto ele executa, e um await em applySession (fetchProfile/signOut)
+    // aqui dentro pode deadlockar. O trabalho async vai para o próximo tick.
+    const subscription = AuthService.onAuthStateChange((event, session) => {
       if (!mounted) return;
       log.info('[BOOT] Auth state change:', event, session ? 'Authenticated' : 'Unauthenticated');
 
-      setSession(session);
-      setUser(session?.user ?? null);
+      // O supabase-js emite INITIAL_SESSION com a sessão já recuperada do
+      // storage para cada subscriber novo — em pleno boot, antes do
+      // initSession terminar. O getSession acima cobre o mesmo caminho, então
+      // o evento é ignorado: tratá-lo disparava um segundo applySession
+      // concorrente que descartava o do boot e abria uma janela com
+      // loading=false e user=null a cada recarga (além do fetchProfile extra).
+      if (event === 'INITIAL_SESSION') return;
 
-      if (session?.user) {
-        /**
-         * BUG-7 FIX: Reset the guard when auth state changes so a new user
-         * session always triggers a fresh profile fetch.
-         */
-        fetchingRef.current = false;
-        void fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
+      if (event === 'SIGNED_OUT') {
+        clearAuthState({ preserveError: true });
+        clearCaches();
+        finishLoading();
+        return;
       }
 
-      if (event === 'SIGNED_IN') {
-        log.info('[AUTH] User signed in');
-      } else if (event === 'SIGNED_OUT') {
-        log.info('[AUTH] User signed out');
-        // O QueryClient e singleton e o app roda com refetchOnMount desligado:
-        // sem limpar, o proximo login na mesma aba le dados em cache do usuario
-        // anterior (contatos, mensagens, galeria) antes de qualquer consulta nova.
-        queryClient.clear();
-        clearOfflineCache();
-        clearEmailDraftSessions();
+      if (session?.user) {
+        setTimeout(() => {
+          if (mounted) void applySession(session);
+        }, 0);
+      } else {
+        clearAuthState();
+        finishLoading();
       }
     });
 
@@ -138,51 +219,51 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
     return () => {
       mounted = false;
-      clearTimeout(safetyTimeout);
+      if (safetyTimeoutRef.current) clearTimeout(safetyTimeoutRef.current);
       subscription.unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('online', handleOnline);
     };
-  }, [fetchProfile, queryClient]);
+  }, [applySession, clearAuthState, clearCaches, finishLoading]);
 
   const refreshProfile = useCallback(async () => {
-    if (user) {
-      fetchingRef.current = false; // Reset guard to allow re-fetch
-      await fetchProfile(user.id);
+    try {
+      const current = await AuthService.getSession();
+      if (current?.user) {
+        await applySession(current);
+      }
+    } catch (err) {
+      log.error('[AuthProvider] refreshProfile failed:', err);
     }
-  }, [user, fetchProfile]);
+  }, [applySession]);
 
-   const signIn = async (email: string, password: string) => AuthService.signIn(email, password);
+  const signIn = async (email: string, password: string) => AuthService.signIn(email, password);
 
-   const signUp = async (email: string, password: string, name: string) => {
-     const { error } = await AuthService.signUp(email, password, name);
-     return { error };
-   };
+  const signUp = async (email: string, password: string, name: string) => {
+    const { error } = await AuthService.signUp(email, password, name);
+    return { error };
+  };
 
-   const signOut = async () => {
-     try {
-       await AuthService.signOut();
-     } catch (err) {
-       // BUG-F1 FIX: log but do not rethrow — ensure local state is always
-       // cleared so the UI never shows a stale profile after a sign-out
-       // attempt (e.g. network failure). The next onAuthStateChange will
-       // reconcile if the server-side sign-out actually succeeded.
-       log.error('[AuthProvider] signOut failed, clearing local state anyway:', err);
-     } finally {
-       setProfile(null);
-       setSession(null);
-       setUser(null);
-       // Quando o sign-out do Supabase falha ele nao emite SIGNED_OUT, entao a
-       // limpeza do listener nunca roda — repetida aqui para que nenhum caminho
-       // deixe dados do usuario anterior para tras.
-       queryClient.clear();
-       clearOfflineCache();
-       clearEmailDraftSessions();
-     }
-   };
+  const signOut = async () => {
+    // Invalida qualquer perfil em voo antes do signOut para que uma resposta
+    // atrasada não reponha o usuário que acabou de sair.
+    clearAuthState();
+    try {
+      await AuthService.signOut();
+    } catch (err) {
+      // BUG-F1 FIX: log but do not rethrow — ensure local state is always
+      // cleared so the UI never shows a stale profile after a sign-out
+      // attempt (e.g. network failure). The next onAuthStateChange will
+      // reconcile if the server-side sign-out actually succeeded.
+      log.error('[AuthProvider] signOut failed, clearing local state anyway:', err);
+    } finally {
+      clearCaches();
+      finishLoading();
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, error, signIn, signUp, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
