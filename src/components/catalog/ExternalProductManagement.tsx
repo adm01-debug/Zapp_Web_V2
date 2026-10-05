@@ -611,7 +611,11 @@ export const ExternalProductManagement: React.FC = () => {
     onlyInStock ? 'in_stock' : isFeatured ? 'featured' : isNew ? 'new_30d' : null;
 
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
-  const handleSendProduct = (product: ExternalProduct) => { setSendProduct(product); };
+  const [sendVariantColor, setSendVariantColor] = useState<string | undefined>(undefined);
+  const handleSendProduct = (product: ExternalProduct, variantColor?: string) => {
+    setSendVariantColor(variantColor);
+    setSendProduct(product);
+  };
 
   /** E56 — reabrir envio a partir do rail. catalog_send_events guarda só
    * o id do produto, então busca o produto completo antes de abrir o
@@ -620,7 +624,10 @@ export const ExternalProductManagement: React.FC = () => {
   const handleOpenProductFromRail = useCallback(async (productId: string) => {
     lastRequestedProductIdRef.current = productId;
     const product = await fetchProduct(productId);
-    if (product && lastRequestedProductIdRef.current === productId) setSendProduct(product);
+    if (product && lastRequestedProductIdRef.current === productId) {
+      setSendVariantColor(undefined);
+      setSendProduct(product);
+    }
   }, [fetchProduct]);
 
   // E78 — deep link ?product=<id>&send=1[&variant=<cor>][&contact=<id>] abre o
@@ -1110,8 +1117,8 @@ export const ExternalProductManagement: React.FC = () => {
             key={sendProduct.id}
             product={sendProduct}
             open={!!sendProduct}
-            onOpenChange={(open) => { if (!open) { setSendProduct(null); setDeepLinkVariant(undefined); setDeepLinkContact(null); } }}
-            initialVariantColor={deepLinkVariant}
+            onOpenChange={(open) => { if (!open) { setSendProduct(null); setSendVariantColor(undefined); setDeepLinkVariant(undefined); setDeepLinkContact(null); } }}
+            initialVariantColor={sendVariantColor ?? deepLinkVariant}
             /* CT-55 — contato pré-selecionado vindo de `?contact=<id>`. */
             presetContact={deepLinkContact}
           />
