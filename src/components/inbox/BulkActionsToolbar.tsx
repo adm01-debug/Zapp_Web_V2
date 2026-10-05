@@ -9,7 +9,7 @@ import { TransferDialog } from './TransferDialog';
 interface BulkActionsToolbarProps {
   selectedCount: number;
   onMarkAsRead: () => void;
-  onTransfer: (type: 'agent' | 'queue', targetId: string, message?: string) => void;
+  onTransfer: (type: 'agent' | 'queue', targetId: string, message?: string) => void | Promise<void>;
   onArchive: () => void;
   onClearSelection: () => void;
   isLoading?: boolean;
@@ -27,9 +27,13 @@ export function BulkActionsToolbar({
 
   if (selectedCount === 0) return null;
 
-  const handleTransfer = (type: 'agent' | 'queue', targetId: string, message?: string) => {
-    onTransfer(type, targetId, message);
-    setShowTransferDialog(false);
+  const handleTransfer = async (type: 'agent' | 'queue' | 'connection', targetId: string, message?: string) => {
+    // Em lote o contrato é só agent|queue; o diálogo só fecha no sucesso e
+    // permanece aberto se a Promise rejeitar.
+    if (type === 'connection') {
+      throw new Error('Transferência em lote aceita apenas agente ou fila');
+    }
+    await onTransfer(type, targetId, message);
   };
 
   return (
@@ -127,7 +131,7 @@ export function BulkActionsToolbar({
       <TransferDialog
         open={showTransferDialog}
         onOpenChange={setShowTransferDialog}
-        onTransfer={handleTransfer as (type: "agent" | "connection" | "queue", targetId: string, message?: string) => void}
+        onTransfer={handleTransfer}
       />
     </>
   );
