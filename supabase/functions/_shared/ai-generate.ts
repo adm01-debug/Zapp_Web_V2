@@ -26,7 +26,7 @@
  *     `withRetry` e teto de tempo POR CAPACIDADE (IA-041): 30s para texto puro,
  *     mais para visão/áudio (ver `DEFAULT_TIMEOUT_MS_BY_CAPABILITY`);
  *  8. chama `logAiUsage` em TODOS os desfechos (sucesso, erro HTTP, exceção, erro de
- *     roteamento/capacidade): nenhuma chamada paga fica invisível;
+ *     roteamento/capacidade, bloqueio de circuito): nenhuma chamada paga fica invisível;
  *  9. devolve `data` = JSON do provedor (`choices[0].message.content` continua
  *     funcionando nos consumidores) e `data:null` quando a resposta não é JSON;
  * 10. NÃO lança por falha de provedor — devolve `ok:false`. Só lança erro de
@@ -48,6 +48,12 @@
  * estouro aciona o `AbortController` DENTRO do provedor (IA-040, via `options.timeoutMs`)
  * e volta do `catch` como `AbortError`/`TimeoutError`, classificado como `TIMEOUT` (504)
  * — distinguível de uma falha 502 qualquer, e auditado em `ai_usage_logs` como sempre.
+ *
+ * IA-050 (circuito do provedor): antes de despachar, `admitAiProviderCall`
+ * (`_shared/ai-circuit.ts`) deriva o estado do circuito do ledger
+ * (`ai_usage_logs.metadata.provider_id`) — limiar/janela/cooldown. Circuito
+ * ABERTO bloqueia sem fetch com `503/CIRCUIT_OPEN`; MEIA-ABERTURA admite uma
+ * sonda atômica (`edge_rate_limits`); falha de observabilidade é aberta.
  *
  * Limites do desenho congelado (não são bugs, são contrato):
  *  - `callLovableAI` não aceita `config`: para `lovable_ai` só viajam os campos que o
@@ -90,6 +96,7 @@ import {
 } from "./ai-providers.ts";
 import { extractTokenUsage, logAiUsage } from "./ai-usage.ts";
 import { releaseBudget, reserveBudget, settleBudget } from "./ai-budget.ts";
+import { admitAiProviderCall } from "./ai-circuit.ts";
 
 /**
  * Teto de tempo padrão do TEXTO PURO (mesmo valor do gateway antigo — IA-032).
@@ -164,12 +171,30 @@ export const AI_TIMEOUT_ERROR_CODE = "TIMEOUT";
  */
 export const AI_BUDGET_ERROR_CODE = "BUDGET_EXCEEDED";
 
+/**
+ * Código estável do bloqueio por CIRCUITO ABERTO (IA-050). O provedor acumulou
+ * falhas consecutivas dentro da janela do circuito (`_shared/ai-circuit.ts`):
+ * a tentativa é bloqueada SEM fetch e sai como HTTP 503 com ESTE código —
+ * falha FECHADA e explícita, nunca uma resposta vazia apresentada como análise.
+ */
+export const AI_CIRCUIT_OPEN_ERROR_CODE = "CIRCUIT_OPEN";
+
+/**
+ * `status` do ledger para tentativa BLOQUEADA pelo circuito (IA-050). Não é
+ * desfecho do provedor (o provedor nem foi chamado): não pode entrar como
+ * 'error' — senão o próprio bloqueio alimentaria o limiar e manteria o
+ * circuito aberto para sempre — nem como consumo pago (`ai-usage.ts` trata
+ * como "sem chamada ao provedor").
+ */
+export const AI_CIRCUIT_OPEN_STATUS = "circuit_open";
+
 /** Todo código de erro que um desfecho do despacho pode carregar. */
 export type AiGenerateErrorCode =
   | AiRoutingErrorCode
   | AiCapabilityErrorCode
   | typeof AI_TIMEOUT_ERROR_CODE
-  | typeof AI_BUDGET_ERROR_CODE;
+  | typeof AI_BUDGET_ERROR_CODE
+  | typeof AI_CIRCUIT_OPEN_ERROR_CODE;
 
 /** Tentativas extras do `withRetry` e base do backoff (igual ao ai-proxy). */
 const RETRY_MAX = 2;
@@ -797,6 +822,40 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
       }
       throw err;
     }
+  }
+
+  // --- IA-050: circuito do provedor ------------------------------------------
+  // Falhas consecutivas do provedor na janela do ledger abrem o circuito: a
+  // tentativa é bloqueada SEM fetch e devolve erro explícito 503/CIRCUIT_OPEN.
+  // Passado o cooldown, a meia-abertura admite UMA sonda atômica; sucesso fecha,
+  // fracasso reabre. O circuito NÃO toca `ai_providers.is_active` (desligar a
+  // capacidade é decisão humana) e não impede o atendimento: `ok:false` explícito
+  // deixa o chamador seguir o fluxo humano. Falha de observabilidade é ABERTA
+  // (a IA segue) — o veredito que bloqueia só vem do ledger (`source: "ledger"`).
+  const admissao = await admitAiProviderCall(providerId);
+  if (!admissao.allowed) {
+    const motivo =
+      `Circuito aberto para o provedor ${providerLabel(provider)}: ` +
+      `${admissao.consecutiveFailures} falhas consecutivas na janela ` +
+      `(estado ${admissao.state}). Tente novamente apos a janela de recuperacao.`;
+    await logUsage({
+      model,
+      // 'circuit_open' NÃO é falha do provedor: não alimenta o limiar nem vira consumo.
+      status: AI_CIRCUIT_OPEN_STATUS,
+      errorMessage: motivo,
+      providerId,
+      providerName,
+      modelSubstituted,
+    });
+    return finish(
+      false,
+      failureResponse(503, AI_CIRCUIT_OPEN_ERROR_CODE, motivo),
+      null,
+      providerId,
+      providerName,
+      model,
+      AI_CIRCUIT_OPEN_ERROR_CODE,
+    );
   }
 
   // --- (5)(6)(7) mensagens compostas + dispatch por tipo ----------------------
