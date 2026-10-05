@@ -1,13 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
 vi.mock('@/lib/supabaseHelpers', () => ({ fromTable: vi.fn() }));
 
+import { supabase } from '@/integrations/supabase/client';
+import { fromTable } from '@/lib/supabaseHelpers';
 import {
   pickBestHour,
   pickBestTemplate,
   countLowClickCampaigns,
   buildInsights,
+  fetchInsightData,
+  CLICK_SAMPLE_LIMIT,
   HOUR_MIN_SAMPLE,
   type InsightRaw,
 } from '@/hooks/integrations/useTalkXInsights';
@@ -85,6 +89,7 @@ describe('buildInsights (rótulos correspondem ao cálculo)', () => {
   const base: InsightRaw = {
     bestHour: null, bestTemplate: null, inactiveContactPct: null,
     lowClickCampaigns: 0, finishedCampaigns: 0, avgClickRate: 0,
+    clicksTruncated: false, clickError: false,
   };
 
   it('insight de template expõe a amostra (replied de sent)', () => {
@@ -105,5 +110,108 @@ describe('buildInsights (rótulos correspondem ao cálculo)', () => {
     const t = out.find((i) => i.id === 'low-clicks');
     expect(t?.description).toContain('Nas 7 campanhas concluídas');
     expect(t?.description).toContain('3 ficaram abaixo');
+  });
+
+  it('conjunto de cliques truncado no teto NÃO gera conclusão de baixo clique', () => {
+    const out = buildInsights({ ...base, avgClickRate: 0.01, lowClickCampaigns: 9, finishedCampaigns: 12, clicksTruncated: true });
+    expect(out.find((i) => i.id === 'low-clicks')).toBeUndefined();
+  });
+
+  it('falha na consulta de cliques NÃO gera conclusão de baixo clique', () => {
+    const out = buildInsights({ ...base, avgClickRate: 0.01, lowClickCampaigns: 9, finishedCampaigns: 12, clickError: true });
+    expect(out.find((i) => i.id === 'low-clicks')).toBeUndefined();
+  });
+});
+
+// ─── Recusa do item #135: erro, truncagem e caminhos de fetchInsightData ──────
+// Sem prova, as consultas novas podiam falhar e virar "nenhum insight" (zero
+// silencioso), e o teto de cliques podia ser lido como total. Aqui cada caminho
+// tem teste com uma consulta simulada.
+type Res = { data?: unknown; count?: number | null; error?: unknown };
+
+/** Builder encadeável e "thenable": simula o PostgREST sem rede. */
+function chain(res: Res) {
+  const b: Record<string, unknown> = {};
+  for (const m of ['select', 'not', 'gte', 'order', 'limit', 'lt', 'eq', 'in']) b[m] = () => b;
+  b.then = (onOk: (v: Res) => unknown, onErr?: (e: unknown) => unknown) => Promise.resolve(res).then(onOk, onErr);
+  return b;
+}
+
+const fromMock = supabase.from as unknown as ReturnType<typeof vi.fn>;
+const fromTableMock = fromTable as unknown as ReturnType<typeof vi.fn>;
+
+/** Filas de resposta por tabela; o join de cliques (fromTable) usa sufixo `_join`. */
+function mockQueries(overrides: Record<string, Res[]> = {}) {
+  const idx: Record<string, number> = {};
+  const take = (key: string): Res => {
+    const fila = overrides[key] ?? [{ data: [], error: null }];
+    const i = idx[key] ?? 0;
+    idx[key] = i + 1;
+    return fila[Math.min(i, fila.length - 1)];
+  };
+  fromMock.mockImplementation((t: string) => chain(take(t)));
+  fromTableMock.mockImplementation((t: string) => chain(take(`${t}_join`)));
+}
+
+const CONCLUIDAS = [
+  { id: 'c1', sent_count: 100 },
+  { id: 'c2', sent_count: 100 },
+  { id: 'c3', sent_count: 100 },
+];
+
+const baseOk: Record<string, Res[]> = {
+  talkx_recipients: [{ data: [], error: null }, { count: 200, error: null }],
+  talkx_campaign_metrics: [{ data: [{ id: 'c1', campaign_name: 'A', replied_count: 9, sent_count: 20 }], error: null }],
+  contacts: [{ count: 100, error: null }, { count: 50, error: null }],
+  talkx_link_clicks: [{ count: 3, error: null }],
+  talkx_campaigns: [{ data: CONCLUIDAS, error: null }],
+  talkx_link_clicks_join: [{
+    data: [
+      { link_id: 'l1', talkx_links: { campaign_id: 'c1' } },
+      { link_id: 'l1', talkx_links: { campaign_id: 'c1' } },
+      { link_id: 'l2', talkx_links: { campaign_id: 'c2' } },
+    ],
+    error: null,
+  }],
+};
+
+describe('fetchInsightData — robustez das consultas (recusa #135)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('1) erro da consulta principal sobe como erro em vez de virar insight zerado', async () => {
+    mockQueries({ ...baseOk, talkx_recipients: [{ data: null, error: { message: 'boom' } }] });
+    await expect(fetchInsightData()).rejects.toThrow(/falha ao consultar/);
+  });
+
+  it('2) erro no join de cliques marca clickError e suprime o baixo clique', async () => {
+    mockQueries({ ...baseOk, talkx_link_clicks_join: [{ data: null, error: { message: 'rls negou' } }] });
+    const raw = await fetchInsightData();
+    expect(raw.clickError).toBe(true);
+    expect(raw.clicksTruncated).toBe(false);
+    expect(raw.lowClickCampaigns).toBe(0);
+    const out = buildInsights({ ...raw, avgClickRate: 0.01, lowClickCampaigns: 5 });
+    expect(out.find((i) => i.id === 'low-clicks')).toBeUndefined();
+  });
+
+  it('3) teto de cliques atingido é truncagem: suprime a conclusão de baixo clique', async () => {
+    const rows = Array.from({ length: CLICK_SAMPLE_LIMIT }, (_, i) => ({ link_id: `l${i}`, talkx_links: { campaign_id: 'c1' } }));
+    mockQueries({ ...baseOk, talkx_link_clicks_join: [{ data: rows, error: null }] });
+    const raw = await fetchInsightData();
+    expect(raw.clicksTruncated).toBe(true);
+    const out = buildInsights({ ...raw, avgClickRate: 0.01, lowClickCampaigns: 5 });
+    expect(out.find((i) => i.id === 'low-clicks')).toBeUndefined();
+  });
+
+  it('4) conjunto íntegro alimenta o insight, com contagens coerentes', async () => {
+    mockQueries(baseOk);
+    const raw = await fetchInsightData();
+    expect(raw.clickError).toBe(false);
+    expect(raw.clicksTruncated).toBe(false);
+    expect(raw.bestTemplate?.campaignId).toBe('c1');
+    expect(raw.inactiveContactPct).toBeCloseTo(0.5, 5);
+    expect(raw.finishedCampaigns).toBe(3); // campanhas concluídas (status='completed')
+    expect(raw.lowClickCampaigns).toBe(3); // c1 2/100, c2 1/100, c3 0/100 — todos < 5%
+    expect(buildInsights(raw).find((i) => i.id === 'low-clicks')).toBeDefined();
+    expect(fromMock.mock.calls.some(([t]) => t === 'talkx_campaigns')).toBe(true);
   });
 });
