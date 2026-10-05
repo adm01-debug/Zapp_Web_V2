@@ -1285,6 +1285,13 @@ Deno.test("MX06: builtin presente envia byte a byte o texto do kernel ({{empresa
     const esperado = personalize("Ola {{empresa}}", { company: "Acme Ltda" }, {}, "America/Sao_Paulo").text;
     const textos = provider.posts.filter((p) => p.url.includes("sendText"));
     assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    // MX06/juiz: alem do oraculo do kernel (criterio 2 pede igualdade byte a
+    // byte com o kernel), o payload tem de casar com o literal esperado — assim
+    // o teste nao depende de recalcular o mesmo codigo que esta sob teste.
+    assert(
+      textos[0].body.text === "Ola Acme Ltda",
+      `payload literal divergente: '${String(textos[0].body.text)}' !== 'Ola Acme Ltda'`,
+    );
     assert(
       textos[0].body.text === esperado,
       `payload diverge do kernel: '${String(textos[0].body.text)}' !== '${esperado}'`,
@@ -1315,6 +1322,11 @@ Deno.test("MX06: campo customizado do variables_snapshot resolve e envia byte a 
     const esperado = personalize("Ola {{cargo}}", { company: "Empresa 1" }, { cargo: "Diretor" }, "America/Sao_Paulo").text;
     const textos = provider.posts.filter((p) => p.url.includes("sendText"));
     assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    // MX06/juiz: oraculo do kernel + literal, para o teste nao ser tautologico.
+    assert(
+      textos[0].body.text === "Ola Diretor",
+      `payload literal divergente: '${String(textos[0].body.text)}' !== 'Ola Diretor'`,
+    );
     assert(
       textos[0].body.text === esperado,
       `payload diverge do kernel: '${String(textos[0].body.text)}' !== '${esperado}'`,
