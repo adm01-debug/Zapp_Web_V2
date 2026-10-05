@@ -69,12 +69,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [libSearch, setLibSearch] = useState('');
   const [libCat, setLibCat] = useState('all');
 
-  // R2-MOD-024 (refazer 2/2): fonte ÚNICA que mantém `activeTemplateIdRef` alinhado
-  // ao template ativo em TODOS os caminhos que chamam `setActiveTemplateId(...)` — não
-  // apenas o valor inicial e o `loadTemplate`, mas também qualquer troca por criação,
-  // duplicação ou reativação de template. Sem isto, um caminho que troque o ativo sem
-  // atualizar o ref faz `isActiveOrigin` recusar variantes/histórico legítimos e as
-  // ações `saveVariant`/`deleteVariant` do template recém-ativado.
+  // R2-MOD-024 (refazer 2/2): fonte única que mantém `activeTemplateIdRef` alinhado
+  // após toda alteração de `activeTemplateId`. O único setter em tempo de execução
+  // deste componente fica em `loadTemplate`; criação e duplicação fecham o editor e
+  // uma montagem futura inicializa estado e ref pelo novo `editing`.
   useEffect(() => {
     activeTemplateIdRef.current = activeTemplateId;
   }, [activeTemplateId]);
