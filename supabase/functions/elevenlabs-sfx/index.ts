@@ -1,5 +1,6 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsSFXSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { buildElevenLabsRequest } from "./request.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 Deno.serve(async (req) => {
@@ -23,23 +24,17 @@ Deno.serve(async (req) => {
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
 
     const isMusic = mode === "music";
-    const url = isMusic
-      ? "https://api.elevenlabs.io/v1/music"
-      : "https://api.elevenlabs.io/v1/sound-generation";
-
-    const body = isMusic
-      ? { prompt, duration_seconds: duration || 15 }
-      : { text: prompt, duration_seconds: duration || 5, prompt_influence: 0.3 };
+    const spec = buildElevenLabsRequest({ prompt, duration, mode });
 
     log.info(`Generating ${isMusic ? "music" : "sfx"}: "${prompt}" (${duration || (isMusic ? 15 : 5)}s)`);
 
-    const response = await fetch(url, {
+    const response = await fetch(spec.url, {
       method: "POST",
       headers: {
         "xi-api-key": ELEVENLABS_API_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(spec.body),
     });
 
     if (!response.ok) {

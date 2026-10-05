@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 74,
-    "source_file_count": 143,
+    "source_file_count": 144,
     "verify_jwt_true": 60,
     "verify_jwt_false": 14
   },
@@ -466,8 +466,13 @@
     },
     {
       "path": "supabase/functions/elevenlabs-sfx/index.ts",
-      "bytes": 2449,
-      "sha256": "71fffb25ec9eecf27bf751c18d09beb4c96ad896f6a655a7019daeb52f114146"
+      "bytes": 2296,
+      "sha256": "834df0d54f94ee0ddc41bc40bc783e95ef0b6448ab7141e51172251c51a31235"
+    },
+    {
+      "path": "supabase/functions/elevenlabs-sfx/request.ts",
+      "bytes": 892,
+      "sha256": "7a58a5571acd0ac50f9e5351d4fdefa6e769a30b28d91e6bcc233af531035486"
     },
     {
       "path": "supabase/functions/elevenlabs-sts/index.ts",
@@ -1204,12 +1209,13 @@
       "name": "elevenlabs-sfx",
       "entrypoint": "supabase/functions/elevenlabs-sfx/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2f113a0fb1c1fdf5817099e5c32e2a39a2a31e29063e97c202c44fdcca711840",
+      "source_sha256": "80c454b17ac6c851e33da63860676283d8758e578b6c7ffe10d3135ad9e65956",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
-        "supabase/functions/elevenlabs-sfx/index.ts"
+        "supabase/functions/elevenlabs-sfx/index.ts",
+        "supabase/functions/elevenlabs-sfx/request.ts"
       ]
     },
     {
@@ -1856,5 +1862,5 @@
       ]
     }
   ],
-  "manifest_sha256": "fd254e11b2fe8c0b4b0828ec0fb8732e77c1c3239051e0548d669b64374e6fac"
+  "manifest_sha256": "c14f22e609ac9966b79a5975519961f2ad634df6cc64aa175ac15a81fad140e4"
 }
