@@ -7,6 +7,7 @@
  *   tempo do balão enviado (`text-primary-foreground/70` sobre `bg-primary-foreground/10`) ... 2,94:1
  *   ícone de arquivo (`/50`) ............................................................... 2,21:1
  *   faixa do slider (`--primary`) sobre a trilha (`--secondary`) no alto contraste ........ 1,30:1
+ *   controle de volume no overlay (`--secondary-foreground` sobre `--secondary`) ........... 3,30:1
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -99,15 +100,25 @@ function token(tokens: Record<string, Rgb>, nome: string): Rgb {
 
 /** Classes reais do sent-bubble (pinadas por varredura do componente). */
 const COMPONENTE = readFileSync('src/components/inbox/AudioMessagePlayer.tsx', 'utf8');
+const CONTROLE_VOLUME = readFileSync('src/components/inbox/MediaVolumeControl.tsx', 'utf8');
 const SLIDER = readFileSync('src/components/ui/slider.tsx', 'utf8');
 
-describe('contraste AA — balão de áudio e slider (só classes do componente)', () => {
+describe('contraste AA — balão de áudio, overlay e slider (só classes do componente)', () => {
   it('o componente não voltou a usar alfa no texto do balão enviado', () => {
     expect(COMPONENTE).not.toMatch(/text-primary-foreground\/\d/);
   });
 
   it('a superfície interna do balão é o tom do --primary-foreground (chip invertido)', () => {
     expect(COMPONENTE).toContain("isSent ? 'bg-primary-foreground'");
+  });
+
+  it('o controle de volume no overlay usa o par neutro foreground/background', () => {
+    expect(CONTROLE_VOLUME).toContain(
+      "variant === 'overlay' && 'h-9 w-9 rounded-md bg-background text-foreground hover:bg-muted'",
+    );
+    expect(CONTROLE_VOLUME).toContain(
+      "variant === 'overlay' && 'h-6 w-6 bg-background text-foreground hover:bg-muted'",
+    );
   });
 
   it('a trilha do slider não é mais --secondary (que em alto contraste ficava 1,30:1)', () => {
@@ -139,6 +150,10 @@ describe('contraste AA — balão de áudio e slider (só classes do componente)
 
     it(`${estado}: faixa do slider fecha 3:1 contra a trilha`, () => {
       expect(razao(token(tokens, 'primary'), token(tokens, 'background'))).toBeGreaterThanOrEqual(LIMIAR_UI);
+    });
+
+    it(`${estado}: controle de volume do overlay fecha 4,5:1`, () => {
+      expect(razao(token(tokens, 'foreground'), token(tokens, 'background'))).toBeGreaterThanOrEqual(LIMIAR_TEXTO);
     });
   }
 });

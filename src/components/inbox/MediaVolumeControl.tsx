@@ -100,7 +100,7 @@ export function MediaVolumeControl({
       icon={<Icon className={isSidebar ? 'h-[16px] w-[16px]' : 'h-[14px] w-[14px]'} />}
       className={cn(
         variant === 'bubble' && 'h-6 w-6 rounded-md hover:bg-foreground/10',
-        variant === 'overlay' && 'h-9 w-9 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        variant === 'overlay' && 'h-9 w-9 rounded-md bg-background text-foreground hover:bg-muted',
         variant === 'sidebar' && 'h-9 w-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground',
         disabled && 'cursor-not-allowed opacity-50',
         !disabled && isSidebar && !muted && 'text-primary',
@@ -150,7 +150,7 @@ export function MediaVolumeControl({
               className={cn(
                 'inline-flex items-center justify-center rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
                 variant === 'bubble' && 'h-4 w-4 hover:bg-foreground/10',
-                variant === 'overlay' && 'h-6 w-6 bg-secondary text-secondary-foreground hover:bg-secondary/80',
+                variant === 'overlay' && 'h-6 w-6 bg-background text-foreground hover:bg-muted',
               )}
             >
               <ChevronUp className="h-3 w-3" />
