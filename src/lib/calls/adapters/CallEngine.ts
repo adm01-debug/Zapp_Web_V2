@@ -163,6 +163,14 @@ export class CallEngine {
 
   /** Transição de estado do sip.js (Establishing/Established/Terminated). */
   handleStateChange(state: string, session: Session, number: string, direction: AdapterDirection): void {
+    // R2-CALL-001: só evento da sessão ATUAL pode mover o motor. Depois que a
+    // chamada acaba os listeners seguem vivos no adapter; sem esta cerca, o
+    // `Terminated` tardio da chamada anterior consumia o `callIdPromise` da
+    // chamada nova e o `Established` tardio a marcava como atendida e anexava o
+    // áudio da sessão velha. Compara o objeto da sessão (que carrega o
+    // Call-ID) com a sessão e o convite correntes.
+    if (session !== this.session && session !== this.invitation) return;
+
     if (state === 'Establishing') {
       this.setStatus('ringing');
       return;
@@ -360,7 +368,15 @@ export class CallEngine {
     this.clearWatchdog();
     this.watchdogTimer = setTimeout(() => {
       this.watchdogTimer = null;
+      // R2-CALL-001: o watchdog precisa ENCERRAR o transporte, não só limpar o
+      // estado local — a sessão deixada viva era a fonte do evento tardio que
+      // acertava a chamada seguinte. `encerrar` vem antes: um `Terminated`
+      // síncrono do `cancel()` já não acha a sessão corrente e não troca o
+      // desfecho `timeout` por `hangup_remote`.
+      const session = this.session;
+      const direction = this.direction ?? 'outbound';
       this.encerrar({ endedBy: 'timeout', sipCode: null });
+      if (session) this.adapter.hangup(session, direction);
     }, RESPOSTA_FINAL_TIMEOUT_MS);
   }
 

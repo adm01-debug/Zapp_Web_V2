@@ -683,3 +683,145 @@ describe('CallEngine — linha ocupada (busy here)', () => {
     expect(vi.mocked(sink.create).mock.calls.length).toBe(criarAntes);
   });
 });
+
+// ─── R2-CALL-001: evento tardio da sessão anterior não altera a próxima ─────
+
+/**
+ * O defeito da auditoria (item 75): a sessão A morre para o motor (watchdog do
+ * INVITE), mas o adapter segue com o listener vivo. Quando o evento de A chega
+ * DEPOIS de B começar, `handleStateChange` não confere de quem é o evento:
+ * `Terminated` de A encerra B, `Established` de A marca B como atendida e anexa
+ * o áudio de A. Aqui os eventos são disparados pelo **listener de verdade**
+ * (`stateChange.addListener`) — o caminho de produção, não uma chamada direta.
+ */
+describe('CallEngine — cerca de sessão (R2-CALL-001)', () => {
+  async function escoar(voltas = 8): Promise<void> {
+    for (let i = 0; i < voltas; i += 1) await Promise.resolve();
+  }
+
+  type Listener = (state: string) => void;
+
+  /** Sessão dublê que GUARDA o listener — é por ele que o evento tardio chega. */
+  function sessaoObservavel(id: string) {
+    const listeners: Listener[] = [];
+    const session = {
+      id,
+      state: 'Initial',
+      stateChange: { addListener: (fn: Listener) => { listeners.push(fn); } },
+      remoteIdentity: { uri: { user: '5511988887777' }, displayName: '' },
+      cancel: vi.fn(),
+      bye: vi.fn(),
+    };
+    return { session, disparar: (state: string) => { listeners.forEach((fn) => fn(state)); } };
+  }
+
+  /** Adapter real com o áudio contabilizado (o `Established` tardio o acionava). */
+  class AdapterCerca extends TestAdapter {
+    readonly audioRemoto = vi.fn((): null => null);
+    override attachRemoteAudio(): null { return this.audioRemoto(); }
+  }
+
+  it('Established/Terminated tardios de A não atendem, não anexam áudio nem encerram B', async () => {
+    vi.useFakeTimers();
+    try {
+      const adapter = new AdapterCerca();
+      const a = sessaoObservavel('sip-A');
+      adapter.inviter = a.session;
+      const sink = fakeSink({
+        create: vi.fn()
+          .mockResolvedValueOnce('call-A')
+          .mockResolvedValueOnce('call-B'),
+      });
+      const engine = new CallEngine(adapter, sink);
+
+      // A disca e NUNCA recebe resposta final: o watchdog encerra como timeout.
+      await engine.makeCall('111', fakeUa(), true, 'sessao-A');
+      vi.advanceTimersByTime(40000);
+      await escoar();
+      expect(sink.onFinished).toHaveBeenLastCalledWith('call-A', null, { endedBy: 'timeout', sipCode: null });
+
+      // A linha volta a `idle` e B começa — a sessão de A segue com listener vivo.
+      vi.advanceTimersByTime(2000);
+      await escoar();
+      const b = sessaoObservavel('sip-B');
+      adapter.inviter = b.session;
+      await engine.makeCall('222', fakeUa(), true, 'sessao-B');
+      expect(engine.isBusy).toBe(true);
+
+      const terminadosAntes = vi.mocked(sink.onTerminated).mock.calls.length;
+      const finalizadosAntes = vi.mocked(sink.onFinished).mock.calls.length;
+      const audioAntes = adapter.audioRemoto.mock.calls.length;
+
+      // Eventos TARDIOS de A, agora com B no ar (inclusive repetidos).
+      a.disparar('Established');
+      a.disparar('Terminated');
+      a.disparar('Terminated');
+      await escoar();
+
+      expect(sink.onEstablished).not.toHaveBeenCalled();
+      expect(adapter.audioRemoto.mock.calls.length).toBe(audioAntes);
+      expect(vi.mocked(sink.onTerminated).mock.calls.length).toBe(terminadosAntes);
+      expect(vi.mocked(sink.onFinished).mock.calls.length).toBe(finalizadosAntes);
+      expect(engine.isBusy).toBe(true);
+
+      // A cerca não é um mudo: a sessão CORRENTE continua respondendo normalmente.
+      b.disparar('Terminated');
+      await escoar();
+      expect(sink.onFinished).toHaveBeenLastCalledWith('call-B', null, { endedBy: 'hangup_remote', sipCode: null });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('evento tardio de A com o motor ocioso é ignorado (não ressuscita a chamada)', async () => {
+    vi.useFakeTimers();
+    try {
+      const adapter = new AdapterCerca();
+      const a = sessaoObservavel('sip-A');
+      adapter.inviter = a.session;
+      const sink = fakeSink();
+      const engine = new CallEngine(adapter, sink);
+
+      await engine.makeCall('111', fakeUa(), true, 'sessao-A');
+      vi.advanceTimersByTime(40000);
+      await escoar();
+      vi.advanceTimersByTime(2000);
+      await escoar();
+      expect(engine.isBusy).toBe(false);
+
+      const statusAntes = vi.mocked(sink.onStatus).mock.calls.length;
+      a.disparar('Established');
+      a.disparar('Terminated');
+      await escoar();
+
+      expect(engine.isBusy).toBe(false);
+      expect(vi.mocked(sink.onStatus).mock.calls.length).toBe(statusAntes);
+      expect(sink.onEstablished).not.toHaveBeenCalled();
+      expect(vi.mocked(sink.onFinished).mock.calls.length).toBe(1); // só o timeout de A
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('o watchdog encerra o transporte no adapter (a sessão órfã viva era a fonte do evento tardio)', async () => {
+    vi.useFakeTimers();
+    try {
+      const adapter = new AdapterCerca();
+      const a = sessaoObservavel('sip-A');
+      adapter.inviter = a.session;
+      const sink = fakeSink({ create: vi.fn(async () => 'call-A') });
+      const engine = new CallEngine(adapter, sink);
+
+      await engine.makeCall('111', fakeUa(), true, 'sessao-A');
+      expect(a.session.cancel).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(40000);
+      await escoar();
+
+      expect(a.session.cancel).toHaveBeenCalledTimes(1);
+      expect(sink.onFinished).toHaveBeenLastCalledWith('call-A', null, { endedBy: 'timeout', sipCode: null });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
