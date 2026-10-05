@@ -143,9 +143,10 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
     // isGoPayload/translate, para as duas formas.
     if (!validation.signatureValid) {
       const bodyRec = rawBody as Record<string, unknown>;
+      // cacheMiss:false — input pré-autenticação não grava miss no cache.
       // getDb() preguiçoso: sem token no corpo, goTokenMatches sai cedo e o
       // request NÃO abre client nem toca o banco (o gate é pré-autenticação).
-      if (!await goTokenMatches(bodyRec, (name) => resolveInstanceToken(getDb() as unknown as InstanceTokenClient, name))) {
+      if (!await goTokenMatches(bodyRec, (name) => resolveInstanceToken(getDb() as unknown as InstanceTokenClient, name, { cacheMiss: false }))) {
         const presented = typeof bodyRec.instanceToken === 'string' ? bodyRec.instanceToken : '';
         const instanceName = typeof bodyRec.instanceName === 'string' ? bodyRec.instanceName
           : typeof bodyRec.instance === 'string' ? bodyRec.instance : '';
