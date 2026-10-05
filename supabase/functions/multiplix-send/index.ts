@@ -265,10 +265,18 @@ export async function handleMultiplixSend(
       return new Response(JSON.stringify({ ok: false, reason: windowStatus.reason, next_window: windowStatus.next_window }), { headers });
     }
 
+    // MX01 (rodada 2): a transicao e soberana. Erro de start — inclusive
+    // `multiplix_dispatch_message_required` de rascunho sem texto — encerra aqui,
+    // ANTES de qualquer materializacao: nao existe caminho que enfileire item de
+    // um rascunho que o banco recusou iniciar.
+    const previousStatus = dispatch.status as string;
     const { error: transitionError } = await supabase.rpc("transition_multiplix_dispatch", {
       p_dispatch_id: dispatchId,
       p_action: "start",
     });
+    if (transitionError) {
+      return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
+    }
 
     // MX01 (BACKLOG_VERIFICADO item 45): NUNCA disparar antes de materializar a
     // fila por itens. O composer cria o disparo por `multiplix_create_draft`
@@ -277,22 +285,25 @@ export async function handleMultiplixSend(
     // disparo entrava em 'sending' com destinatarios pendentes e ZERO itens
     // processaveis — nada saia e nenhum erro aparecia ("sucesso" silencioso).
     //
-    // A conversao roda no SERVIDOR, e idempotente (no-op quando ja ha itens ou o
-    // disparo nao esta em 'sending') e acontece ANTES do loop de envio. Ela cobre
-    // qualquer disparo legado — inclusive um ja em 'sending' sem fila, que e
-    // auto-curado na passada seguinte do cron.
-    const { error: materializeError } = await supabase.rpc("multiplix_materialize_legacy_queue", {
-      p_dispatch_id: dispatchId,
-      p_correlation_id: uuidOrNull(correlationId),
-    });
-    if (materializeError) {
-      // Fail-closed: sem saber o estado da fila nao se envia nada. O cron
-      // reinvoca em ate 2 min e a proxima passada tenta de novo.
-      throw new Error(`multiplix_legacy_queue_materialize_failed: ${materializeError.message}`);
-    }
-
-    if (transitionError) {
-      return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
+    // A conversao roda no SERVIDOR, e idempotente e acontece ANTES do loop de
+    // envio — MAS so quando o disparo NAO estava em 'sending' antes do start. Um
+    // disparo ja em 'sending' SEM fila e legado/abandonado, e materializar ali
+    // mandaria mensagem real para contatos reais sem ninguem decidir — a
+    // auto-cura silenciosa foi removida na rodada 2 do cartao. O reparo desse
+    // caso e explicito do operador: `pause` e depois `start` (previousStatus
+    // 'paused' materializa aqui) ou `cancel`. Na passada normal do cron (ja
+    // 'sending' COM a fila existente) pular a materializacao nao muda nada:
+    // ela seria no-op de qualquer forma.
+    if (previousStatus !== "sending") {
+      const { error: materializeError } = await supabase.rpc("multiplix_materialize_legacy_queue", {
+        p_dispatch_id: dispatchId,
+        p_correlation_id: uuidOrNull(correlationId),
+      });
+      if (materializeError) {
+        // Fail-closed: sem saber o estado da fila nao se envia nada. O cron
+        // reinvoca em ate 2 min e a proxima passada tenta de novo.
+        throw new Error(`multiplix_legacy_queue_materialize_failed: ${materializeError.message}`);
+      }
     }
 
     // F11a: cada passada reivindica no maximo MULTIPLIX_BATCH_SIZE (default 20)

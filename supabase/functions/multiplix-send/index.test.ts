@@ -149,6 +149,12 @@ interface MockOpts {
    * NENHUM item de fila ate `multiplix_materialize_legacy_queue` ser chamada. Era o
    * estado real de `create_draft` + `start` (dispatches/recipients, sem itens). */
   legacyQueue?: boolean;
+  /** MX01 (rodada 2): a transicao 'start' devolve ERRO (ex.: rascunho sem texto ->
+   * multiplix_dispatch_message_required) — sem mudar o status do ctx. */
+  startTransitionError?: string;
+  /** MX01 (rodada 2): a materializacao devolve ERRO (ex.:
+   * multiplix_legacy_empty_template) e a fila NAO nasce. */
+  materializeError?: string;
 }
 
 interface MockCtx {
@@ -247,6 +253,11 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
           case "user_has_permission":
             return Promise.resolve({ data: opts.manageAll === true, error: null });
           case "transition_multiplix_dispatch": {
+            // MX01: o 'start' pode ser RECUSADO pelo banco (ex.: rascunho sem
+            // texto -> multiplix_dispatch_message_required). Erro nao muda status.
+            if (args.p_action === "start" && opts.startTransitionError) {
+              return Promise.resolve({ data: null, error: { message: opts.startTransitionError } });
+            }
             // Espelha o efeito no estado do mock para o motor enxergar a
             // transicao seguinte (ex.: pause -> 'paused').
             if (ctx.dispatch && args.p_action === "pause") ctx.dispatch = { ...ctx.dispatch, status: "paused" };
@@ -329,6 +340,10 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
               error: null,
             });
           case "multiplix_materialize_legacy_queue":
+            // MX01: erro da materializacao NAO cria fila (fail-closed no worker).
+            if (opts.materializeError) {
+              return Promise.resolve({ data: null, error: { message: opts.materializeError } });
+            }
             // MX01: a conversao do rascunho legado e quem cria a fila por itens.
             ctx.legacyMaterialized = true;
             return Promise.resolve({
@@ -714,6 +729,96 @@ Deno.test("MX01: start de rascunho legado materializa a fila por itens antes de 
     body.skipped === phones.length,
     `esperava ${phones.length} itens drenados; veio ${body.skipped} (fila nao materializada)`,
   );
+});
+
+Deno.test("MX01: rascunho legado SEM TEXTO nao materializa nada e nao envia (409 na transicao)", async () => {
+  // O banco recusa o start de um rascunho sem texto
+  // (multiplix_dispatch_message_required). A materializacao NAO pode rodar nesse
+  // caminho: se rodasse, o rascunho virava bloco vazio + itens enviaveis —
+  // mensagem em branco para contatos reais (foi o motivo da recusa da rodada 1).
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "draft", message_template: "", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511900009001")],
+    startTransitionError: "multiplix_dispatch_message_required",
+    legacyQueue: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 409, `esperado 409 (start recusado), recebido ${res.status}`);
+    assert(
+      rpcs(ctx, "multiplix_materialize_legacy_queue").length === 0,
+      "com o start recusado a materializacao NAO pode rodar — enfileiraria item de rascunho sem texto",
+    );
+    assert(
+      rpcs(ctx, "list_multiplix_claimable_items").length === 0,
+      "a fila nem pode ser consultada depois do 409",
+    );
+    assert(rpcs(ctx, "claim_multiplix_item").length === 0, "nenhum item pode ser reivindicado");
+    assert(provider.messagePosts() === 0, "nenhum POST ao provedor pode sair");
+  } finally {
+    provider.restore();
+  }
+});
+
+Deno.test("MX01: falha na materializacao e fail-closed (nada sai)", async () => {
+  // A RPC recusou a conversao (ex.: multiplix_legacy_empty_template): sem saber o
+  // estado da fila, o worker aborta com 500 — nunca segue para o loop de envio.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "draft", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511900009002")],
+    materializeError: "multiplix_legacy_empty_template",
+    legacyQueue: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 500, `esperado 500 (fail-closed), recebido ${res.status}`);
+    assert(
+      rpcs(ctx, "claim_multiplix_item").length === 0,
+      "nada pode ser reivindicado sem a fila materializada",
+    );
+    assert(provider.messagePosts() === 0, "falha de materializacao nao pode gerar POST ao provedor");
+  } finally {
+    provider.restore();
+  }
+});
+
+Deno.test("MX01: disparo ja em 'sending' sem fila NAO e auto-curado", async () => {
+  // Um disparo legado/abandonado ja em 'sending' SEM itens: materializar aqui
+  // faria mensagem real sair para contatos reais sem ninguem decidir — foi o
+  // segundo motivo da recusa. O reparo e explicito do operador (pause + start,
+  // que materializa com previousStatus 'paused', ou cancel). Na passada do cron
+  // o disparo simplesmente nao envia nada — e nao sai sozinho apos o deploy.
+  const phones = ["5511900009003", "5511900009004"];
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: phones.length }),
+    recipients: phones.map((phone, i) => recipientRow(i + 1, phone)),
+    legacyQueue: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const body = await res.json();
+    assert(res.status === 200, `esperado 200 (passada normal, fila vazia), recebido ${res.status}`);
+    assert(
+      rpcs(ctx, "multiplix_materialize_legacy_queue").length === 0,
+      "disparo ja em 'sending' NAO pode ser materializado pelo worker (auto-cura silenciosa)",
+    );
+    assert(
+      body.sent === 0 && body.skipped === 0,
+      `disparo abandonado nao pode sair sozinho: veio ${JSON.stringify(body)}`,
+    );
+    assert(provider.messagePosts() === 0, "nenhum POST ao provedor pode sair");
+  } finally {
+    provider.restore();
+  }
 });
 
 // ------------------------------------------------------------------- F09 (opt-out)

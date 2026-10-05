@@ -25,6 +25,13 @@
 -- (F51): um item por (destinatario elegivel x bloco), com a idempotencia vinda do
 -- `idempotency_key` gerado (UNIQUE), entao repetir a chamada nao duplica item.
 --
+-- Guard de conteudo (rodada 2 do cartao): um rascunho legado com
+-- `message_template` vazio ou so espacos NAO vira fila — a funcao lanca
+-- 'multiplix_legacy_empty_template' (SQLSTATE 22023) ANTES de inserir bloco ou
+-- item, entao nao sobra nem bloco parcial. Sem o guard, o COALESCE antigo
+-- gravava um bloco com texto '' e a fila mandaria mensagem em branco a
+-- contatos reais.
+--
 -- Por que nao reusar o `multiplix_confirm_dispatch`: ele exige status
 -- draft/scheduled, bloco ja criado e conexao escolhida — nada disso existe no
 -- rascunho legado do composer. E materializar com o dispatch ainda em 'draft'
@@ -89,15 +96,22 @@ BEGIN
    WHERE b.dispatch_id = p_dispatch_id;
 
   IF v_blocks = 0 THEN
+    -- Rascunho legado SEM TEXTO nao pode virar fila: um bloco vazio geraria
+    -- itens enviaveis de mensagem em branco para contatos reais. Recusa ANTES
+    -- de qualquer INSERT — o RAISE desfaz a funcao inteira, sem bloco parcial.
+    IF btrim(COALESCE(v_dispatch.message_template, '')) = '' THEN
+      RAISE EXCEPTION 'multiplix_legacy_empty_template' USING ERRCODE = '22023';
+    END IF;
     -- Rascunho legado nao tem bloco: o `message_template` do disparo vira o
     -- bloco unico (block_order 1) — `multiplix_delivery_items.block_id` e NOT
-    -- NULL e a fila e (destinatario x bloco).
+    -- NULL e a fila e (destinatario x bloco). O guard acima garante nao-vazio,
+    -- entao nao ha COALESCE aqui.
     INSERT INTO public.multiplix_blocks (dispatch_id, block_order, block_type, content)
     VALUES (
       p_dispatch_id,
       1,
       'text',
-      jsonb_build_object('text', COALESCE(v_dispatch.message_template, ''))
+      jsonb_build_object('text', v_dispatch.message_template)
     );
     v_blocks := 1;
   END IF;
@@ -148,4 +162,5 @@ GRANT EXECUTE ON FUNCTION public.multiplix_materialize_legacy_queue(uuid, uuid) 
 COMMENT ON FUNCTION public.multiplix_materialize_legacy_queue(uuid, uuid) IS
   'MX01: materializa a fila por itens de um rascunho LEGADO (dispatch + recipients, sem bloco/item) '
   'com o worker ja em ''sending''. Cria o bloco texto do message_template quando faltar e insere '
-  'destinatario elegivel x bloco de forma idempotente (idempotency_key). service_role apenas.';
+  'destinatario elegivel x bloco de forma idempotente (idempotency_key). Template vazio/so espacos '
+  'e recusado: multiplix_legacy_empty_template (22023). service_role apenas.';
