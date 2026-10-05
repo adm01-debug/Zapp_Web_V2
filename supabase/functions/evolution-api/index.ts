@@ -89,6 +89,70 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       });
     }
 
+    // ─── R2-API-001 (P1): matriz de autorização por ação, aplicada ANTES de
+    // qualquer fetch/RPC privilegiado (inclusive a consulta de manutenção com o
+    // client service-role). Ação de CONTROLE — e toda ação DESCONHECIDA, que o
+    // classificador trata como controle por padrão — exige papel
+    // admin/supervisor (que, no modelo single-tenant, é também o escopo de
+    // conexão global — IA-004 §5/§6.5). ENVIO direto e mutação de conversa
+    // exigem esse papel OU visibilidade do contato alvo
+    // (is_contact_visible_to_user). LEITURA segue exigindo só JWT válido (gate
+    // global acima) — somente as ações de READ_ACTIONS.
+    const callerUserId = _callerUser.id;
+    const isCallerAdminOrSupervisor = async (): Promise<boolean> => {
+      const { data: isAdmin } = await callerClient.rpc('is_admin_or_supervisor', { _user_id: callerUserId });
+      return !!isAdmin;
+    };
+    // Ações de conversa podem apontar o alvo por JID (send-reaction usa
+    // key.remoteJid, archive-chat usa chat, mark-read usa key) em vez de
+    // `number`. JID → dígitos locais para bater em contacts.phone; algo sem
+    // dígitos (status@broadcast, @g.us sem contato) resolve '' e nega.
+    const jidToDigits = (value: unknown): string => {
+      const raw = String(value ?? '');
+      return (raw.includes('@') ? raw.split('@')[0] : raw).replace(/\D/g, '');
+    };
+    const resolveSendTarget = (): string =>
+      jidToDigits(body.number) || jidToDigits(body.remoteJid) || jidToDigits(body.chat) ||
+      jidToDigits((body.key as Record<string, unknown> | undefined)?.remoteJid);
+    const resolveSendAccess = async (): Promise<EvolutionAuthzDecision> => {
+      if (await isCallerAdminOrSupervisor()) return { allowed: true };
+      // Falha de modo seguro: sem vínculo com a conexão, sem número ou sem
+      // contato local visível, o envio direto é negado (grupo/número fora da
+      // carteira do agente exige admin/supervisor).
+      const { data: conn, error: connErr } = await supabase
+        .from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
+      if (connErr || !conn) {
+        return { allowed: false, status: 403, message: 'Sem permissão para enviar por esta conexão.' };
+      }
+      const number = resolveSendTarget();
+      if (!number) {
+        return { allowed: false, status: 403, message: 'Destinatário (number) é obrigatório para envio.' };
+      }
+      const { data: contact } = await supabase
+        .from('contacts').select('id').eq('phone', number).eq('whatsapp_connection_id', conn.id).maybeSingle();
+      if (!contact) {
+        return { allowed: false, status: 403, message: 'Sem permissão para enviar para este contato/conexão.' };
+      }
+      const { data: visible } = await callerClient.rpc('is_contact_visible_to_user', { _contact_id: contact.id, _user_id: callerUserId });
+      if (!visible) {
+        return { allowed: false, status: 403, message: 'Sem permissão para enviar para este contato/conexão.' };
+      }
+      return { allowed: true };
+    };
+    const actionKind = classifyEvolutionAction(action);
+    if (actionKind === 'control') {
+      const decision = decideControlAuthz(await isCallerAdminOrSupervisor());
+      if (!decision.allowed) {
+        return new Response(JSON.stringify({ error: true, message: decision.message }), { status: decision.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+    if (actionKind === 'send') {
+      const decision = await resolveSendAccess();
+      if (!decision.allowed) {
+        return new Response(JSON.stringify({ error: true, message: decision.message }), { status: decision.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     // E22: chave do circuit breaker por instância — '__admin' para list-instances.
     const proxy = (path: string, method = 'POST', body?: unknown) =>
       proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin');
@@ -146,56 +210,6 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return null;
     };
-
-    // ─── R2-API-001 (P1): matriz de autorização por ação, aplicada ANTES de
-    // qualquer fetch/RPC privilegiado. Ação de CONTROLE exige papel
-    // admin/supervisor (que, no modelo single-tenant, é também o escopo de
-    // conexão global — IA-004 §5/§6.5). ENVIO direto exige esse papel OU
-    // visibilidade do contato alvo (is_contact_visible_to_user). LEITURA segue
-    // exigindo só JWT válido (gate global acima).
-    const callerUserId = _callerUser.id;
-    const isCallerAdminOrSupervisor = async (): Promise<boolean> => {
-      const { data: isAdmin } = await callerClient.rpc('is_admin_or_supervisor', { _user_id: callerUserId });
-      return !!isAdmin;
-    };
-    const resolveSendAccess = async (): Promise<EvolutionAuthzDecision> => {
-      if (await isCallerAdminOrSupervisor()) return { allowed: true };
-      // Falha de modo seguro: sem vínculo com a conexão, sem número ou sem
-      // contato local visível, o envio direto é negado (grupo/número fora da
-      // carteira do agente exige admin/supervisor).
-      const { data: conn, error: connErr } = await supabase
-        .from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
-      if (connErr || !conn) {
-        return { allowed: false, status: 403, message: 'Sem permissão para enviar por esta conexão.' };
-      }
-      const number = String(body.number || '');
-      if (!number) {
-        return { allowed: false, status: 403, message: 'Destinatário (number) é obrigatório para envio.' };
-      }
-      const { data: contact } = await supabase
-        .from('contacts').select('id').eq('phone', number).eq('whatsapp_connection_id', conn.id).maybeSingle();
-      if (!contact) {
-        return { allowed: false, status: 403, message: 'Sem permissão para enviar para este contato/conexão.' };
-      }
-      const { data: visible } = await callerClient.rpc('is_contact_visible_to_user', { _contact_id: contact.id, _user_id: callerUserId });
-      if (!visible) {
-        return { allowed: false, status: 403, message: 'Sem permissão para enviar para este contato/conexão.' };
-      }
-      return { allowed: true };
-    };
-    const actionKind = classifyEvolutionAction(action);
-    if (actionKind === 'control') {
-      const decision = decideControlAuthz(await isCallerAdminOrSupervisor());
-      if (!decision.allowed) {
-        return new Response(JSON.stringify({ error: true, message: decision.message }), { status: decision.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-    }
-    if (actionKind === 'send') {
-      const decision = await resolveSendAccess();
-      if (!decision.allowed) {
-        return new Response(JSON.stringify({ error: true, message: decision.message }), { status: decision.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-    }
 
     // Definido aqui (escopo de módulo) para que connect/status/disconnect/delete-instance
     // possam usar sem depender de criar-connection ter rodado antes.

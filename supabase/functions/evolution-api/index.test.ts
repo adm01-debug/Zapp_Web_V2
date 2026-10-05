@@ -120,6 +120,83 @@ Deno.test("R2-API-001: admin conserva a operação (set-webhook chega ao provedo
   }
 });
 
+// Refazer t_3ee4be59: deny-by-default — 'connect' (emite QR / pode parear
+// outro aparelho e recria a instância na sessão órfã) e qualquer ação
+// desconhecida são 'control': agente recebe 403 antes de qualquer fetch.
+for (const action of ["connect", "acao-desconhecida-nao-listada"]) {
+  Deno.test(`R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor`, async () => {
+    const fake = createFakeEvolution();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    try {
+      const res = await handleEvolutionApi(
+        controlRequest(action, { instanceName: "PRINCIPAL" }),
+        {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+          supabase: makeServiceClient(),
+        },
+      );
+      assertEquals(res.status, 403, `${action} deve ser 403 para agente`);
+      const json = await res.json();
+      assert(json?.error === true, "resposta deve ser { error: true }");
+      assertEquals(fake.posts.length, 0, `${action} não pode chegar ao provedor`);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+Deno.test("R2-API-001: ação desconhecida com admin passa o gate e cai no 404 do handler", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("acao-desconhecida-nao-listada", { instanceName: "PRINCIPAL" }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeServiceClient(),
+      },
+    );
+    assertEquals(res.status, 404, "admin em ação desconhecida deve cair no 'Unknown action'");
+    assertEquals(fake.posts.length, 0);
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2-API-001: mutação de conversa (mark-read via JID) passa para agente com contato visível", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    // mark-read não manda `number` — o alvo vem de key.remoteJid. Agente com o
+    // contato na carteira (visível) conserva a operação; sem visibilidade, 403.
+    const supabase: any = {
+      from: (table: string) => {
+        if (table === "whatsapp_connections") return makeQuery({ id: "conn-1" });
+        if (table === "contacts") return makeQuery({ id: "contact-1" });
+        return makeQuery(null);
+      },
+      rpc: () => Promise.resolve({ data: null, error: null }),
+    };
+    const body = {
+      instanceName: "PRINCIPAL",
+      key: { remoteJid: "5511999999999@s.whatsapp.net", fromMe: false, id: "M1" },
+    };
+    const denied = await handleEvolutionApi(controlRequest("mark-read", body), {
+      callerClient: makeCallerClient({ isAdminOrSupervisor: false, contactVisible: false }),
+      supabase,
+    });
+    assertEquals(denied.status, 403, "agente sem contato visível deve ser negado");
+
+    const allowed = await handleEvolutionApi(controlRequest("mark-read", body), {
+      callerClient: makeCallerClient({ isAdminOrSupervisor: false, contactVisible: true }),
+      supabase,
+    });
+    assert(allowed.status !== 403, "agente com contato visível deve passar");
+  } finally {
+    await fake.stop();
+  }
+});
+
 Deno.test("R2-API-001: envio direto de agente sem contato visível é negado (fail-safe)", async () => {
   const fake = createFakeEvolution();
   Deno.env.set("EVOLUTION_API_URL", fake.url);
