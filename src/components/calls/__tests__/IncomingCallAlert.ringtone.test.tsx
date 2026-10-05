@@ -1,3 +1,7 @@
+// Primeiro import do arquivo: instala o espião global de `WebSocket` ANTES de o
+// componente carregar `@/integrations/supabase/client` (o transporte do realtime
+// resolve o construtor na criação do cliente).
+import { construcoesWebSocket } from './websocketSpy';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 
@@ -127,6 +131,10 @@ vi.mock('@/lib/logger', () => ({
 // de `zapp-verify full .` mesmo com 0 testes falhando. Aqui o transporte do realtime é
 // dublado: nenhum byte sai para a rede. Mesmo padrão de
 // `src/components/inbox/__tests__/MediaVolume.test.tsx`.
+//
+// A asserção de regressão mora no teste "não abre WebSocket real ao tocar o
+// alerta": `websocketSpy` conta as construções do construtor global. Se ESTE mock
+// sair, o socket real volta e a contagem deixa de ser zero — o teste fica vermelho.
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
@@ -177,5 +185,18 @@ describe('IncomingCallAlert — toque da chamada', () => {
     fireEvent.keyDown(document, { key: 'a' });
 
     expect(ctx.resume.mock.calls.length).toBe(aposMontar);
+  });
+
+  // REGRESSÃO (recusa da rodada 1): o reparo do socket vazado só valia enquanto o
+  // dublê do cliente Supabase estivesse aqui. Prova determinística e versionada:
+  // intercepta o construtor global de `WebSocket` e exige zero construções ao
+  // montar o alerta (a chamada deste arquivo tem `callId: 'k1'`, que é o gatilho
+  // do `useTerminoRemoto`). Remover o
+  // `vi.mock('@/integrations/supabase/client')` acima faz o socket real voltar e a
+  // lista deixar de ser vazia.
+  it('não abre WebSocket real ao tocar o alerta', () => {
+    render(<IncomingCallAlert />);
+
+    expect(construcoesWebSocket).toEqual([]);
   });
 });

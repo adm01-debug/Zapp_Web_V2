@@ -1,3 +1,7 @@
+// Primeiro import do arquivo: instala o espião global de `WebSocket` ANTES de o
+// componente carregar `@/integrations/supabase/client` (o transporte do realtime
+// resolve o construtor na criação do cliente).
+import { construcoesWebSocket } from './websocketSpy';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -96,6 +100,10 @@ vi.mock('@/components/catalog/useSendProduct', () => ({
 // de `zapp-verify full .` mesmo com 0 testes falhando. Aqui o transporte do realtime é
 // dublado: nenhum byte sai para a rede. Mesmo padrão de
 // `src/components/inbox/__tests__/MediaVolume.test.tsx`.
+//
+// A asserção de regressão mora no teste "nenhum cenário abre WebSocket real":
+// `websocketSpy` conta as construções do construtor global. Se ESTE mock sair, o
+// socket real volta e a contagem deixa de ser zero — o teste fica vermelho.
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
@@ -189,5 +197,20 @@ describe('IncomingCallAlert — fiação ao provider da sessão', () => {
     expect(fonte).not.toContain('setTimeout');
     // A âncora de separação alerta/mídia continua pinada.
     expect(fonte).toContain('ÂNCORA (não unificar)');
+  });
+
+  // REGRESSÃO (recusa da rodada 1): o reparo do socket vazado só valia enquanto o
+  // dublê do cliente Supabase estivesse aqui. Prova determinística e versionada:
+  // intercepta o construtor global de `WebSocket` e exige zero construções
+  // ACUMULADAS no arquivo — todo cenário acima (VoIP e WhatsApp) monta o alerta
+  // com `callId: 'k1'`, que é o gatilho do `useTerminoRemoto`. Remover o
+  // `vi.mock('@/integrations/supabase/client')` acima faz o socket real voltar e a
+  // lista deixar de ser vazia.
+  it('nenhum cenário abre WebSocket real: o realtime do alerta está dublado', () => {
+    // Este mount também concorre para a contagem: o socket nasce do
+    // `useTerminoRemoto` no efeito de montagem, antes de qualquer clique.
+    render(<IncomingCallAlert />);
+
+    expect(construcoesWebSocket).toEqual([]);
   });
 });
