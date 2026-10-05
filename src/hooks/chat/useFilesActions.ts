@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { contactMediaKey, type ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 
 /**
@@ -17,6 +18,11 @@ import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts'
  * Ordem do sucesso (etapa 35): `update` -> `onRemoved(item.id)` (tira da selecao) ->
  * invalidar `contactMediaKey` e `conversationTabCountsKey`. No erro NAO se remove da
  * selecao: o operador precisa tentar de novo com a mesma escolha (etapa 34).
+ *
+ * #144/OTH-002: a exclusao tambem muda o universo de midia contado pelos chips da etapa 42,
+ * entao as TRES chaves precisam ser invalidadas — sem `contactMediaCountsKey`, o chip
+ * "Todos"/"Docs" mantem o numero antigo (a `staleTime` nao reagenda e os defaults desligam
+ * refetch ao montar/focar).
  */
 
 export interface FilesActionsParams {
@@ -52,6 +58,8 @@ export function useFilesActions({ contactId, onRemoved }: FilesActionsParams): F
         onRemoved(item.id);
         queryClient.invalidateQueries({ queryKey: contactMediaKey(contactId) });
         queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
+        // #144/OTH-002: chips por tipo (etapa 42) contam do banco; sem invalidar, o numero antigo fica.
+        queryClient.invalidateQueries({ queryKey: contactMediaCountsKey(contactId) });
         toast.success('Mensagem removida');
         return true;
       } finally {

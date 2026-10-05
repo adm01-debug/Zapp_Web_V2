@@ -1,14 +1,14 @@
- import { useState, useEffect, useCallback, useRef } from 'react';
- import { useQueryClient } from '@tanstack/react-query';
- import { mapMessageRowToMessage } from '@/adapters/inboxAdapter';
- import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
- import { contactMediaKey } from '@/hooks/chat/useContactMedia';
- import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
- import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
- import { ChatService, Message } from '@/services/chat.service';
- import type { MessageRow } from '@/types/chat';
- import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
- import { log } from '@/lib/logger';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { mapMessageRowToMessage } from '@/adapters/inboxAdapter';
+import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
+import { contactMediaKey } from '@/hooks/chat/useContactMedia';
+import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
+import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
+import { ChatService, Message } from '@/services/chat.service';
+import type { MessageRow } from '@/types/chat';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { log } from '@/lib/logger';
 
 interface UseMessagesOptions {
   contactId: string | null;
@@ -37,6 +37,18 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
+
+  // Etapa 45 / #144: galeria, badge da aba e chips por tipo (etapa 42) compartilham o universo
+  // de mídia. Qualquer mudança nele (INSERT, UPDATE de `is_deleted`/`media_url`, DELETE) precisa
+  // invalidar as TRÊS chaves, senão chip e badge divergem sem reload.
+  const invalidateMediaAggregates = useCallback(
+    (targetContactId: string) => {
+      queryClient.invalidateQueries({ queryKey: contactMediaKey(targetContactId) });
+      queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(targetContactId) });
+      queryClient.invalidateQueries({ queryKey: contactMediaCountsKey(targetContactId) });
+    },
+    [queryClient],
+  );
 
   // Fetch messages for contact
   const fetchMessages = useCallback(async () => {
@@ -167,33 +179,46 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
         });
 
         // Etapa 45: mensagem nova COM midia muda a galeria da aba Arquivos e as contagens dela.
-        // Invalidamos as TRES chaves envolvidas: a lista (`contactMediaKey`), o badge da aba
-        // (`conversationTabCountsKey`, `staleTime` de 30 s) e os chips por tipo
-        // (`contactMediaCountsKey`, etapa 42). Sem invalidar as tres, chip e badge divergem
-        // logo apos a midia chegar — exatamente o G11 que a etapa 42 corrige.
+        // Sem invalidar as tres, chip e badge divergem logo apos a midia chegar (o G11 da etapa 42).
         if (row.media_url) {
-          queryClient.invalidateQueries({ queryKey: contactMediaKey(contactId) });
-          queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId as string) });
-          queryClient.invalidateQueries({ queryKey: contactMediaCountsKey(contactId) });
+          invalidateMediaAggregates(contactId as string);
         }
       }
     },
-    [contactId, queryClient]
+    [contactId, invalidateMediaAggregates]
   );
 
   // Handle message update from realtime
   const handleMessageUpdate = useCallback(
     (payload: RealtimePostgresChangesPayload<MessageRow>) => {
-      const updatedMessage = mapMessageRowToMessage(payload.new as MessageRow);
+      const newRow = payload.new as MessageRow;
+      const updatedMessage = mapMessageRowToMessage(newRow);
 
       if (updatedMessage.contact_id === contactId) {
         realtimeOverlayRef.current.set(updatedMessage.id, updatedMessage);
         setMessages((prev) =>
           prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m))
         );
+
+        // #144/OTH-002: so invalida quando o universo de midia muda DE FATO — compara os DOIS
+        // lados (`old` x `new`) de `is_deleted` e `media_url`. Um UPDATE de status/ack numa
+        // mensagem COM midia mantem os dois iguais e NAO dispara refetch em rajada.
+        // Fallback: sem REPLICA IDENTITY FULL o Realtime entrega em `old` so a PK (sem as
+        // colunas), entao nao ha como comparar — invalida conservadoramente se a linha nova
+        // tem midia, para nao perder a atualizacao dos agregados.
+        const oldRow = (payload.old ?? {}) as Partial<MessageRow>;
+        const oldHasMediaColumns = 'media_url' in oldRow || 'is_deleted' in oldRow;
+        const mediaUniverseChanged = oldHasMediaColumns
+          ? (oldRow.is_deleted ?? false) !== (newRow.is_deleted ?? false) ||
+            (oldRow.media_url ?? null) !== (newRow.media_url ?? null)
+          : !!newRow.media_url;
+
+        if (mediaUniverseChanged) {
+          invalidateMediaAggregates(contactId as string);
+        }
       }
     },
-    [contactId]
+    [contactId, invalidateMediaAggregates]
   );
 
   // Handle message delete from realtime
@@ -204,9 +229,14 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       if (deletedMessage.contact_id === contactId) {
         realtimeOverlayRef.current.set(deletedMessage.id, null);
         setMessages((prev) => prev.filter((m) => m.id !== deletedMessage.id));
+
+        // #144/OTH-002: um DELETE remoto de midia tambem muda chips/badge/galeria.
+        if (deletedMessage.media_url) {
+          invalidateMediaAggregates(contactId as string);
+        }
       }
     },
-    [contactId]
+    [contactId, invalidateMediaAggregates]
   );
 
   // Fetch on contact change

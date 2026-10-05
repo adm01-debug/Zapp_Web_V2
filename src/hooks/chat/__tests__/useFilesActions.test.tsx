@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useFilesActions } from '@/hooks/chat/useFilesActions';
 import { contactMediaKey, type ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 import { toast } from 'sonner';
 
@@ -51,7 +52,7 @@ beforeEach(() => {
 });
 
 describe('useFilesActions.deleteMessage (etapa 35)', () => {
-  it('sucesso: update fiel, sai da seleção e invalida as duas chaves', async () => {
+  it('sucesso: update fiel, sai da seleção e invalida as três chaves', async () => {
     h.eq.mockResolvedValue({ error: null });
     const { result, invalidateSpy, onRemoved } = renderActions();
 
@@ -65,6 +66,7 @@ describe('useFilesActions.deleteMessage (etapa 35)', () => {
     expect(onRemoved).toHaveBeenCalledWith('m2');
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey('contact-1') });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey('contact-1') });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey('contact-1') });
     expect(toast.success).toHaveBeenCalled();
     expect(toast.error).not.toHaveBeenCalled();
   });
@@ -81,5 +83,16 @@ describe('useFilesActions.deleteMessage (etapa 35)', () => {
     expect(onRemoved).not.toHaveBeenCalled();
     expect(invalidateSpy).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  // #144 / OTH-002: a exclusão muda o universo de mídia contada pelos chips (etapa 42). Sem
+  // invalidar `contactMediaCountsKey`, o chip "Todos"/"Docs" mantém o número antigo após apagar.
+  it('#144/OTH-002: excluir mídia invalida os chips por tipo (contactMediaCountsKey)', async () => {
+    h.eq.mockResolvedValue({ error: null });
+    const { result, invalidateSpy } = renderActions();
+
+    await act(async () => { await result.current.deleteMessage(ITEM); });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey('contact-1') });
   });
 });
