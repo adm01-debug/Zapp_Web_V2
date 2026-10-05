@@ -49,6 +49,8 @@ class FakeAudioContext {
 }
 
 const h = vi.hoisted(() => ({
+  profile: { id: 'eu' } as { id: string } | null,
+  channelCalls: 0,
   membership: [] as Array<{ id: string; is_muted: boolean }>,
   settings: { soundEnabled: true, soundVolume: 60, browserNotifications: false },
   quiet: false,
@@ -69,7 +71,10 @@ vi.mock('@/integrations/supabase/client', () => {
   consulta.limit = () => Promise.resolve({ data: h.membership, error: null });
   return {
     supabase: {
-      channel: () => canal,
+      channel: () => {
+        h.channelCalls += 1;
+        return canal;
+      },
       removeChannel: vi.fn(),
       from: () => consulta,
     },
@@ -77,7 +82,7 @@ vi.mock('@/integrations/supabase/client', () => {
 });
 
 vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ profile: { id: 'eu' } }),
+  useAuth: () => ({ profile: h.profile }),
 }));
 
 vi.mock('@/hooks/system/useNotificationSettings', () => ({
@@ -111,6 +116,8 @@ describe('TC-007 — listener global de notificações do Team Chat', () => {
     vi.useFakeTimers();
     vi.stubGlobal('AudioContext', FakeAudioContext);
     grafo.rampas = [];
+    h.profile = { id: 'eu' };
+    h.channelCalls = 0;
     h.handler = null;
     h.membership = [{ id: 'm1', is_muted: false }];
     h.settings.soundEnabled = true;
@@ -133,6 +140,15 @@ describe('TC-007 — listener global de notificações do Team Chat', () => {
     await h.handler!(mensagem('outro', 'c1'));
 
     expect(grafo.rampas.length).toBeGreaterThan(0);
+  });
+
+  it('não abre canal sem usuário autenticado', () => {
+    h.profile = null;
+
+    render(<TeamChatNotificationsListener />);
+
+    expect(h.channelCalls).toBe(0);
+    expect(h.handler).toBeNull();
   });
 
   it('não alerta a conversa em foco publicada pela view, mas alerta as demais', async () => {
