@@ -23,6 +23,54 @@ const {
   estado: { incomingCall: null as null | Record<string, unknown> },
 }));
 
+// Duble do construtor de WebSocket. O alerta assina `public.calls` pelo realtime
+// (`useTerminoRemoto` -> `supabase.channel(...).on(...).subscribe()`). A guarda de rede de
+// `src/test/setup.ts` so troca o `fetch`: o WebSocket passa direto. Sem o mock do cliente, o
+// `subscribe()` abre um WebSocket REAL (undici); ele conecta depois do teardown e o
+// `dispatchEvent(new Event(...))` estoura "The \"event\" argument must be an instance of Event"
+// (o `Event` do jsdom nao e o interno do node) -> "Uncaught Exception" -> o passo `testes` de
+// `zapp-verify full .` fecha VERMELHO com 0 testes falhando.
+//
+// `vi.hoisted` e obrigatorio: o transporte do realtime e capturado quando
+// `@/integrations/supabase/client` e AVALIADO (import), entao o duble precisa existir antes disso.
+const { webSocketsAbertos } = vi.hoisted(() => {
+  const abertos: string[] = [];
+
+  class WebSocketDublado {
+    static readonly CONNECTING = 0;
+    static readonly OPEN = 1;
+    static readonly CLOSING = 2;
+    static readonly CLOSED = 3;
+    binaryType = 'blob';
+    timeout = 0;
+    readyState = 0;
+    url: string;
+    onopen: unknown = null;
+    onerror: unknown = null;
+    onmessage: unknown = null;
+    onclose: unknown = null;
+    constructor(url: string) {
+      this.url = String(url);
+      abertos.push(this.url);
+    }
+    close(): void {}
+    send(): void {}
+    addEventListener(): void {}
+    removeEventListener(): void {}
+    dispatchEvent(): boolean {
+      return true;
+    }
+  }
+
+  Object.defineProperty(globalThis, 'WebSocket', {
+    value: WebSocketDublado,
+    writable: true,
+    configurable: true,
+  });
+
+  return { webSocketsAbertos: abertos };
+});
+
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
@@ -123,12 +171,22 @@ const NOTIFICACAO_WHATSAPP = { ...CHAMADA_VOIP, whatsapp_connection_id: 'w1' };
 describe('IncomingCallAlert — fiação ao provider da sessão', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    webSocketsAbertos.length = 0;
     estado.incomingCall = CHAMADA_VOIP;
     mockPersistir.mockResolvedValue({ ok: true });
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    expect(webSocketsAbertos, 'o alerta abriu um WebSocket REAL: o realtime esta sem duble e o passo `testes` de `zapp-verify full .` cai com "Uncaught Exception" (ERR_INVALID_ARG_TYPE do undici). O mock de @/integrations/supabase/client tem de permanecer.').toEqual([]);
+  });
+
+  it('nao abre WebSocket real: o realtime e dublado e nenhum socket e criado', () => {
+    render(<IncomingCallAlert />);
+
+    // Sem o mock de `@/integrations/supabase/client` o `useTerminoRemoto` (real) assinaria
+    // `public.calls` e o `subscribe()` criaria um socket de verdade -> este assert falha.
+    expect(webSocketsAbertos).toEqual([]);
   });
 
   it('VoIP: Atender chama accept() da máquina da sessão e NÃO chama mais o legado answerCall', () => {
