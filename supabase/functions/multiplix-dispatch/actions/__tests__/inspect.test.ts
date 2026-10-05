@@ -88,10 +88,19 @@ class FakeQuery implements PromiseLike<{ data: unknown; error: unknown }> {
   private filters: Array<[string, unknown]> = [];
   private orderCol: string | null = null;
   private singleRow = false;
+  private columns: string[] | null = null;
 
   constructor(private readonly tables: Record<string, Row[]>, private readonly table: string) {}
 
-  select(_columns?: string): this { return this; }
+  // O supabase-js PROJETA as colunas pedidas: coluna fora do select nao volta
+  // na linha — fiel ao PostgREST. Ignorar `columns` aqui foi o furo que deixou
+  // a guarda de preview morrer sem o teste ver (`dispatch_id` nao era lido).
+  select(columns?: string): this {
+    this.columns = typeof columns === 'string'
+      ? columns.split(',').map((column) => column.trim()).filter((column) => column.length > 0)
+      : null;
+    return this;
+  }
   eq(column: string, value: unknown): this { this.filters.push([column, value]); return this; }
   order(column: string): this { this.orderCol = column; return this; }
   limit(_count: number): this { return this; }
@@ -104,6 +113,16 @@ class FakeQuery implements PromiseLike<{ data: unknown; error: unknown }> {
     if (this.orderCol) {
       const column = this.orderCol;
       rows.sort((a, b) => Number(a[column] ?? 0) - Number(b[column] ?? 0));
+    }
+    if (this.columns) {
+      const columns = this.columns;
+      rows = rows.map((row) => {
+        const projected: Row = {};
+        for (const column of columns) {
+          if (column in row) projected[column] = row[column];
+        }
+        return projected;
+      });
     }
     return this.singleRow ? { data: rows[0] ?? null, error: null } : { data: rows, error: null };
   }
@@ -157,6 +176,10 @@ const R = {
 } as const;
 /** Uuid valido que NAO existe na fixture. */
 const R_AUSENTE = '99999999-9999-4999-8999-999999999999';
+/** Uuid valido de destinatario que pertence a OUTRO disparo. */
+const R_OUTRO_DISPARO = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+/** Disparo alheio ao qual `R_OUTRO_DISPARO` pertence. */
+const OUTRO_DISPATCH_ID = 'd0000000-0000-4000-8000-000000000002';
 
 const B2_SCRIPT = 'Bom dia {{empresa}}, falamos de {{assunto}} hoje';
 const B3_SCRIPT = 'Audio padrao da campanha';
@@ -207,6 +230,9 @@ function baseTables(): Record<string, Row[]> {
       { id: R.r7, dispatch_id: DISPATCH_ID, company_id: 'c7', company_name_snapshot: 'Delta', destino_e164: '5511955554444', singu_contact_id: 'p7', eligibility: 'media_pending', eligibility_reason: 'media_pending', inclusion_reason: null, status: 'pending', variables_snapshot: {} },
       { id: R.r8, dispatch_id: DISPATCH_ID, company_id: 'c8', company_name_snapshot: 'Epsilon', destino_e164: '5511944443333', singu_contact_id: 'p8', eligibility: 'connection_unavailable', eligibility_reason: 'connection_unavailable', inclusion_reason: null, status: 'pending', variables_snapshot: {} },
       { id: R.r9, dispatch_id: DISPATCH_ID, company_id: 'c9', company_name_snapshot: 'Zeta', destino_e164: '5511933332222', singu_contact_id: 'p9', eligibility: 'requires_template', eligibility_reason: 'requires_template', inclusion_reason: null, status: 'pending', variables_snapshot: {} },
+      // Destinatario de OUTRO disparo: preview/validate nao podem enxerga-lo
+      // (R2-API-029: aceitar este id sob o DISPATCH_ID era a falha).
+      { id: R_OUTRO_DISPARO, dispatch_id: OUTRO_DISPATCH_ID, company_id: 'cX', company_name_snapshot: 'Alheia', destino_e164: '5511900001111', singu_contact_id: 'pX', eligibility: 'eligible', eligibility_reason: 'eligible', inclusion_reason: null, status: 'pending', variables_snapshot: {} },
     ],
   };
 }
@@ -295,6 +321,20 @@ Deno.test('F48 preview: destinatario de outro dono/inexistente responde 404 nome
   const tables = baseTables();
   await expectNamedError(
     ctxFor({ dispatch_id: DISPATCH_ID, recipient_id: R_AUSENTE }, tables),
+    handlePreview,
+    'multiplix_recipient_not_found',
+    404,
+    'preview',
+  );
+});
+
+Deno.test('F48 preview: destinatario de OUTRO disparo responde 404 nomeado (R2-API-029)', async () => {
+  // R_OUTRO_DISPARO existe no banco, mas pertence a outro dispatch_id. Antes da
+  // correcao a guarda estava morta (o select nao lia dispatch_id) e a previa
+  // devolvia 200 com o destinatario alheio.
+  const tables = baseTables();
+  await expectNamedError(
+    ctxFor({ dispatch_id: DISPATCH_ID, recipient_id: R_OUTRO_DISPARO }, tables),
     handlePreview,
     'multiplix_recipient_not_found',
     404,
@@ -441,6 +481,19 @@ Deno.test('F48 validate: qualquer raw_value nao-nulo é dado real da fonte (inva
   assert(!!cargo && cargo.raw_value === null, 'campo desconhecido nao pode carregar valor');
 });
 
+Deno.test('F48 validate: recipient_id de OUTRO disparo responde 404 nomeado (R2-API-029)', async () => {
+  // O validate carregava a amostra sem checar o disparo: devolvia 200 e
+  // entregava o `sample_recipient_id` alheio.
+  const tables = baseTables();
+  await expectNamedError(
+    ctxFor({ dispatch_id: DISPATCH_ID, recipient_id: R_OUTRO_DISPARO }, tables),
+    handleValidate,
+    'multiplix_recipient_not_found',
+    404,
+    'validate',
+  );
+});
+
 // ---------------------------------------------------------------------------
 // F49 — os baldes somam count(*)
 // ---------------------------------------------------------------------------
@@ -455,8 +508,10 @@ Deno.test('F49 summary: os cinco baldes somam EXATAMENTE o total de linhas', asy
   const soma = Number(data.eligible) + Number(data.no_destination) + Number(data.suppressed) +
     Number(data.out_of_scope) + Number(data.company_without_person);
 
-  // count(*) no "banco" = numero de linhas da fixture.
-  const countStar = (tables.multiplix_recipients as Row[]).length;
+  // count(*) no "banco" = linhas DO DISPARO na fixture (a consulta filtra por
+  // dispatch_id; a fixture tambem guarda um destinatario de outro disparo).
+  const countStar = (tables.multiplix_recipients as Row[])
+    .filter((r) => r.dispatch_id === DISPATCH_ID).length;
   assert(total === countStar, `total (${total}) deveria ser count(*) (${countStar})`);
   assert(soma === total, `soma dos baldes (${soma}) deveria ser o total (${total})`);
   assertEquals(
@@ -537,7 +592,9 @@ Deno.test('F49 summary: frase legivel da consulta descreve os filtros reais', as
 Deno.test('F50 estimate: mensagens, versoes de roteiro e consumo de voz sao do dado real', async () => {
   const tables = baseTables();
   const recipients = tables.multiplix_recipients as Row[];
+  // Mesmo escopo do handler: so os destinatarios DO DISPARO entram na conta.
   const eligible = recipients.filter((r) =>
+    r.dispatch_id === DISPATCH_ID &&
     ['eligible', 'media_pending', 'connection_unavailable', 'requires_template'].includes(String(r.eligibility))
   );
   const blocks = tables.multiplix_blocks as Row[];

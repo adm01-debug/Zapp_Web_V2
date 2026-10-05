@@ -192,11 +192,22 @@ async function loadRecipients(ctx: ActionContext, dispatchId: string): Promise<R
   return Array.isArray(data) ? data : [];
 }
 
-async function loadRecipient(ctx: ActionContext, recipientId: string): Promise<RecipientRow> {
+/**
+ * Carrega UM destinatario SO se pertencer ao disparo informado (R2-API-029):
+ * o filtro por `dispatch_id` faz destinatario de outro disparo cair no mesmo
+ * 404 de inexistente — nao vaza existencia. `dispatch_id` vai no select para a
+ * guarda de `handlePreview` continuar valendo como defesa em profundidade.
+ */
+async function loadRecipientForDispatch(
+  ctx: ActionContext,
+  dispatchId: string,
+  recipientId: string,
+): Promise<RecipientRow> {
   const { data, error } = await ctx.supabase
     .from('multiplix_recipients')
-    .select('id, company_id, company_name_snapshot, destino_e164, singu_contact_id, eligibility, eligibility_reason, inclusion_reason, status, variables_snapshot')
+    .select('id, dispatch_id, company_id, company_name_snapshot, destino_e164, singu_contact_id, eligibility, eligibility_reason, inclusion_reason, status, variables_snapshot')
     .eq('id', recipientId)
+    .eq('dispatch_id', dispatchId)
     .maybeSingle() as Result<RecipientRow | null>;
   if (error) throw new DispatchError('MULTIPLIX_RECIPIENT_LOOKUP', error.message ?? 'recipient lookup failed', 502);
   if (!data) throw new DispatchError('multiplix_recipient_not_found', 'Destinatario nao encontrado', 404);
@@ -469,7 +480,7 @@ export async function handlePreview(ctx: ActionContext): Promise<Response> {
   const { dispatch_id, recipient_id } = parsed.data;
 
   const dispatch = await loadOwnedDispatch(ctx, dispatch_id);
-  const recipient = await loadRecipient(ctx, recipient_id);
+  const recipient = await loadRecipientForDispatch(ctx, dispatch_id, recipient_id);
   const recipientDispatch = asString(recipient.dispatch_id);
   if (recipientDispatch !== null && recipientDispatch !== dispatch_id) {
     throw new DispatchError('multiplix_recipient_not_found', 'Destinatario nao pertence ao disparo', 404);
@@ -728,7 +739,7 @@ export async function handleValidate(ctx: ActionContext): Promise<Response> {
   const dispatch = await loadOwnedDispatch(ctx, dispatch_id);
   const recipients = await loadRecipients(ctx, dispatch_id);
   const sample = recipient_id
-    ? await loadRecipient(ctx, recipient_id)
+    ? await loadRecipientForDispatch(ctx, dispatch_id, recipient_id)
     : (recipients[0] ?? null);
 
   const blocks = blocksForReview(await loadBlocks(ctx, dispatch_id), dispatch);
