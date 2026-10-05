@@ -247,6 +247,10 @@ function breachProbe(label, contactId) {
   return `SELECT '${label}', first_response_breached FROM public.conversation_sla WHERE contact_id = '${contactId}';`;
 }
 
+function resolverProbe(label, contactId) {
+  return `SELECT '${label}', public.${RESOLVER_FN}('${contactId}');`;
+}
+
 test('regra ATIVA de 2 min (nivel contact) classifica resposta aos 3 min como breach', () => {
   const contact = '11111111-1111-1111-1111-111111111111';
   const rows = runScenario(`
@@ -325,6 +329,98 @@ ${breachProbe('company_vence', cCompany)}
   // company (30 min) vence queue (45 min): 3 min fica dentro do prazo
   assert.equal(rows.get('company_vence'), 'f',
     'regra company de 30 min deveria vencer queue; 3 min nao e breach');
+});
+
+test('nivel job_title vence contact_type, queue e agent como no resolveHierarchy da UI', () => {
+  const contact = '99999999-9999-9999-9999-999999999999';
+  const queue = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+  const agent = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+  const rows = runScenario(`
+INSERT INTO public.contacts (id, job_title, contact_type, queue_id, assigned_to)
+  VALUES ('${contact}', 'Engenheiro', 'Cliente', '${queue}', '${agent}');
+INSERT INTO public.sla_rules
+  (name, first_response_minutes, job_title, contact_type, queue_id, agent_id, priority) VALUES
+  ('job-2min', 2, 'Engenheiro', NULL, NULL, NULL, 10),
+  ('tipo-30min', 30, NULL, 'Cliente', NULL, NULL, 20),
+  ('queue-45min', 45, NULL, NULL, '${queue}', NULL, 30),
+  ('agent-60min', 60, NULL, NULL, NULL, '${agent}', 40);
+INSERT INTO public.messages (contact_id, sender, status, created_at)
+  VALUES ('${contact}', 'contact', 'delivered', '${T}'::timestamptz);
+${resolverProbe('job_title_prazo', contact)}
+${registerCall(contact, `'${T}'::timestamptz + interval '3 minutes'`)}
+${breachProbe('job_title_breach', contact)}
+  `);
+  assert.equal(rows.get('job_title_prazo'), '2',
+    'job_title de 2 min deveria vencer contact_type, queue e agent');
+  assert.equal(rows.get('job_title_breach'), 't',
+    'resposta aos 3 min deveria violar o prazo de 2 min do job_title');
+});
+
+test('nivel contact_type vence queue e agent como no resolveHierarchy da UI', () => {
+  const contact = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+  const queue = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+  const agent = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
+  const rows = runScenario(`
+INSERT INTO public.contacts (id, contact_type, queue_id, assigned_to)
+  VALUES ('${contact}', 'Prospect', '${queue}', '${agent}');
+INSERT INTO public.sla_rules
+  (name, first_response_minutes, contact_type, queue_id, agent_id, priority) VALUES
+  ('tipo-30min', 30, 'Prospect', NULL, NULL, 10),
+  ('queue-45min', 45, NULL, '${queue}', NULL, 20),
+  ('agent-60min', 60, NULL, NULL, '${agent}', 30);
+INSERT INTO public.messages (contact_id, sender, status, created_at)
+  VALUES ('${contact}', 'contact', 'delivered', '${T}'::timestamptz);
+${resolverProbe('contact_type_prazo', contact)}
+${registerCall(contact, `'${T}'::timestamptz + interval '35 minutes'`)}
+${breachProbe('contact_type_breach', contact)}
+  `);
+  assert.equal(rows.get('contact_type_prazo'), '30',
+    'contact_type de 30 min deveria vencer queue e agent');
+  assert.equal(rows.get('contact_type_breach'), 't',
+    'resposta aos 35 min deveria violar o prazo de 30 min do contact_type');
+});
+
+test('nivel agent aplica quando nenhum nivel superior casa', () => {
+  const contact = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+  const agent = '12121212-1212-1212-1212-121212121212';
+  const rows = runScenario(`
+INSERT INTO public.contacts (id, assigned_to) VALUES ('${contact}', '${agent}');
+INSERT INTO public.sla_rules (name, first_response_minutes, agent_id, priority)
+  VALUES ('agent-60min', 60, '${agent}', 10);
+INSERT INTO public.messages (contact_id, sender, status, created_at)
+  VALUES ('${contact}', 'contact', 'delivered', '${T}'::timestamptz);
+${resolverProbe('agent_prazo', contact)}
+${registerCall(contact, `'${T}'::timestamptz + interval '30 minutes'`)}
+${breachProbe('agent_breach', contact)}
+  `);
+  assert.equal(rows.get('agent_prazo'), '60',
+    'agent deveria fornecer o prazo quando nenhum nivel superior casa');
+  assert.equal(rows.get('agent_breach'), 'f',
+    'resposta aos 30 min deveria ficar dentro do prazo de 60 min do agent');
+});
+
+test('regra company+queue com company divergente casa no nivel queue, igual a UI', () => {
+  const contact = '13131313-1313-1313-1313-131313131313';
+  const queue = '14141414-1414-1414-1414-141414141414';
+  const agent = '15151515-1515-1515-1515-151515151515';
+  const rows = runScenario(`
+INSERT INTO public.contacts (id, company, queue_id, assigned_to)
+  VALUES ('${contact}', 'Empresa Real', '${queue}', '${agent}');
+INSERT INTO public.sla_rules
+  (name, first_response_minutes, company, queue_id, agent_id, priority) VALUES
+  ('outra-company-mesma-queue-2min', 2, 'Empresa Divergente', '${queue}', NULL, 10),
+  ('agent-30min', 30, NULL, NULL, '${agent}', 20);
+INSERT INTO public.messages (contact_id, sender, status, created_at)
+  VALUES ('${contact}', 'contact', 'delivered', '${T}'::timestamptz);
+${resolverProbe('company_queue_divergente_prazo', contact)}
+${registerCall(contact, `'${T}'::timestamptz + interval '3 minutes'`)}
+${breachProbe('company_queue_divergente_breach', contact)}
+  `);
+  // A UI exige apenas !contact_id no nivel queue; ela nao exige company nula.
+  assert.equal(rows.get('company_queue_divergente_prazo'), '2',
+    'queue deveria casar mesmo quando a mesma regra tem company divergente');
+  assert.equal(rows.get('company_queue_divergente_breach'), 't',
+    'resposta aos 3 min deveria violar o prazo de 2 min resolvido pela queue');
 });
 
 test('migration que define o registro conserva o contrato (estatico)', () => {
