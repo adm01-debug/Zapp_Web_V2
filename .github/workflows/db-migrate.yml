@@ -242,8 +242,12 @@ jobs:
           # scripts/db-audit/contracts/<versao>.sql, executados pelo runner generico abaixo.
           # A equivalencia e textual: o arquivo e o braco de origem tem o mesmo sha256
           # (docs/audits/evidence/db-migrate-contratos-historicos.md).
-          # Fail-closed: versao sem contrato aborta com exit 2 -- nunca vira "nada a verificar".
-          RUNTIME=$(node scripts/db-audit/run-runtime-contract.mjs "$TARGET_VERSION")
+          # Precedencia: contrato dedicado primeiro; sem dedicado, o flag
+          # --generico-se-ausente faz o runner usar o contrato generico
+          # (generic-migration-runtime.sql), que prova a paridade estrutural do
+          # schema public entre dry-run e apply; sem nenhum dos dois, exit 2 --
+          # fail-closed, nunca vira "nada a verificar".
+          RUNTIME=$(node scripts/db-audit/run-runtime-contract.mjs "$TARGET_VERSION" --generico-se-ausente)
           printf '%s\n' "$RUNTIME"
           RUNTIME_JSON="$RUNTIME" node --input-type=module <<'NODE'
           const proof = JSON.parse(process.env.RUNTIME_JSON);

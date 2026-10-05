@@ -38,11 +38,43 @@ export function lerContrato(versao, dir = CONTRATOS) {
   return sql;
 }
 
+const GENERICO = join(AQUI, 'generic-migration-runtime.sql');
+
+// Resolucao explicita do contrato de uma versao: dedicado tem precedencia
+// absoluta; sem dedicado, so cai no generico quando permitirGenerico e'
+// verdadeiro -- e so se o arquivo generico existir com conteudo. Um dedicado
+// que existe mas esta vazio e defeito, nao ausencia: falha fechada igual ao
+// lerContrato, nunca downgrade silencioso para o generico.
+export function resolverContrato(versao, { permitirGenerico = false, dir = CONTRATOS, generico = GENERICO } = {}) {
+  const dedicado = caminhoDoContrato(versao, dir);
+  if (existsSync(dedicado)) {
+    if (!readFileSync(dedicado, 'utf8').trim()) {
+      throw new Error(`contrato vazio para a versao ${versao}: ${dedicado}`);
+    }
+    return { caminho: dedicado, origem: 'dedicado' };
+  }
+  if (permitirGenerico) {
+    if (existsSync(generico) && readFileSync(generico, 'utf8').trim()) {
+      return { caminho: generico, origem: 'generico' };
+    }
+    throw new Error(
+      `contrato de runtime ausente para a versao ${versao}: ${dedicado}; `
+      + `e o contrato generico esta ausente ou vazio: ${generico}`,
+    );
+  }
+  throw new Error(`contrato de runtime ausente para a versao ${versao}: ${dedicado}`);
+}
+
 function principal(argv) {
   const versao = argv[2];
+  const permitirGenerico = argv.slice(3).includes('--generico-se-ausente');
   let sql;
   try {
-    sql = lerContrato(versao);
+    const resolvido = resolverContrato(versao, { permitirGenerico });
+    if (resolvido.origem === 'generico') {
+      console.error(`sem contrato dedicado para ${versao}; usando o contrato runtime generico.`);
+    }
+    sql = readFileSync(resolvido.caminho, 'utf8');
   } catch (e) {
     console.error(`::error::${e.message}`);
     process.exit(2);
