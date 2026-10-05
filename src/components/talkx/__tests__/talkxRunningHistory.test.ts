@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { recentMinuteSeries, averageRatePerMinute } from '@/components/talkx/talkxRunningHistory';
+import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish } from '@/components/talkx/talkxRunningHistory';
+
+const now = new Date('2026-10-05T12:00:30.000Z');
+const at = (minAgo: number) => new Date(now.getTime() - minAgo * 60_000).toISOString();
 
 // R2-MOD-033: a série agrupava só minutos com evento (buckets esparsos) e o ritmo
 // ignorava pausas. Agora os buckets são consecutivos (zeros incluídos) e o ritmo é a
 // média dos últimos 10 minutos reais.
 describe('recentMinuteSeries (R2-MOD-033)', () => {
-  const now = new Date('2026-10-05T12:00:30.000Z');
-  const at = (minAgo: number) => new Date(now.getTime() - minAgo * 60_000).toISOString();
-
   it('devolve buckets consecutivos incluindo minutos sem envio', () => {
     const series = recentMinuteSeries(
       [
@@ -33,7 +33,6 @@ describe('recentMinuteSeries (R2-MOD-033)', () => {
 
 describe('averageRatePerMinute (R2-MOD-033)', () => {
   it('usa os últimos 10 buckets reais no denominador (zeros incluídos)', () => {
-    const now = new Date('2026-10-05T12:00:30.000Z');
     const series = recentMinuteSeries(
       Array.from({ length: 20 }, () => ({ sent_at: now.toISOString(), delivered_at: null })),
       { minutes: 10, now },
@@ -44,5 +43,34 @@ describe('averageRatePerMinute (R2-MOD-033)', () => {
 
   it('série vazia → null', () => {
     expect(averageRatePerMinute([], 10)).toBeNull();
+  });
+});
+
+// Recusa do item #135: o ETA podia receber ritmo 0 (dez minutos sem envio) e a
+// previsão virava Infinity. Ritmo zero é "indisponível", nunca divisão por zero.
+describe('estimateMinutesToFinish (recusa #135)', () => {
+  it('ritmo zero deixa a previsão indisponível, sem Infinity', () => {
+    expect(estimateMinutesToFinish(500, 0)).toBeNull();
+    expect(estimateMinutesToFinish(500, 0)).not.toBe(Infinity);
+  });
+
+  it('ritmo ausente (null) deixa a previsão indisponível', () => {
+    expect(estimateMinutesToFinish(500, null)).toBeNull();
+  });
+
+  it('ritmo medido em zero (10 min sem envio) resulta em previsão indisponível', () => {
+    const series = recentMinuteSeries([{ sent_at: at(45), delivered_at: null }], { minutes: 20, now });
+    const rate = averageRatePerMinute(series, 10);
+    expect(rate).toBe(0);
+    expect(estimateMinutesToFinish(500, rate)).toBeNull();
+  });
+
+  it('ritmo positivo arredonda para cima em minutos inteiros', () => {
+    expect(estimateMinutesToFinish(100, 4)).toBe(25);
+    expect(estimateMinutesToFinish(101, 4)).toBe(26);
+  });
+
+  it('nada pendente → indisponível', () => {
+    expect(estimateMinutesToFinish(0, 4)).toBeNull();
   });
 });
