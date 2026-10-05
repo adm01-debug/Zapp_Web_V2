@@ -22,6 +22,14 @@ export interface InsightRaw {
   lowClickCampaigns: number;
   finishedCampaigns: number;
   avgClickRate: number;
+  /**
+   * A leitura de cliques por campanha bateu no teto defensivo (`CLICK_SAMPLE_LIMIT`):
+   * o conjunto é uma AMOSTRA dos cliques mais recentes, não o total. Enquanto for
+   * `true`, `buildInsights` abstém-se de concluir "baixo clique".
+   */
+  clicksTruncated: boolean;
+  /** A consulta de cliques por campanha falhou (erro/RLS): o conjunto não é confiável. */
+  clickError: boolean;
 }
 
 // Janela e pisos de amostra dos insights heurísticos (E92 / IA-TALKX-001).
@@ -36,6 +44,12 @@ export const METRIC_MIN_SENT = 10;
 export const LOW_CLICK_MAX_RATE = 0.05;
 /** Mínimo de campanhas concluídas com baixo clique para exibir o insight. */
 export const LOW_CLICK_MIN_CAMPAIGNS = 3;
+/**
+ * Teto defensivo de cliques lidos para o insight por campanha. Quando a leitura
+ * devolve exatamente este número, o conjunto está truncado e NÃO pode ser tratado
+ * como total (o insight de baixo clique abstém-se).
+ */
+export const CLICK_SAMPLE_LIMIT = 5000;
 
 /**
  * Melhor hora por TAXA de resposta, com amostra mínima por hora.
@@ -117,7 +131,21 @@ export function countLowClickCampaigns(
   return low;
 }
 
-async function fetchInsightData(): Promise<InsightRaw> {
+/**
+ * Erros de leitura NÃO podem virar "sem dados": um insight ausente por falha da
+ * consulta é indistinguível de um insight ausente por falta de base. As consultas
+ * obrigatórias passam por aqui — o erro sobe (o hook expõe o estado de erro) em vez
+ * de virar zero silencioso.
+ */
+function must<T>(res: { data: T | null; error: unknown }, label: string): T {
+  if (res.error) throw new Error(`talkx-insights: falha ao consultar ${label}`);
+  return res.data as T;
+}
+
+/** Linha do join de cliques → campanha. */
+type ClickRow = { link_id?: string | null; talkx_links?: { campaign_id?: string | null } | null };
+
+export async function fetchInsightData(): Promise<InsightRaw> {
   const now = new Date();
   const since90 = new Date(now.getTime() - INSIGHTS_WINDOW_DAYS * 86_400_000).toISOString();
   const since180 = new Date(now.getTime() - 180 * 86_400_000).toISOString();
@@ -126,61 +154,94 @@ async function fetchInsightData(): Promise<InsightRaw> {
   // Amostra = HOUR_SAMPLE_LIMIT envios MAIS RECENTES (ordem decrescente): com ordem
   // crescente o teto congelava a série numa fase antiga da campanha, e a hora era
   // lida no fuso do dispositivo.
-  const { data: hourRows } = await supabase
-    .from('talkx_recipients')
-    .select('sent_at, replied_at')
-    .not('sent_at', 'is', null)
-    .gte('sent_at', since90)
-    .order('sent_at', { ascending: false })
-    .limit(HOUR_SAMPLE_LIMIT);
-  const bestHour = pickBestHour(hourRows ?? []);
+  const hourRows = must<Array<{ sent_at?: string | null; replied_at?: string | null }>>(
+    await supabase
+      .from('talkx_recipients')
+      .select('sent_at, replied_at')
+      .not('sent_at', 'is', null)
+      .gte('sent_at', since90)
+      .order('sent_at', { ascending: false })
+      .limit(HOUR_SAMPLE_LIMIT),
+    'envios recentes (janela de horário)',
+  );
+  const bestHour = pickBestHour(hourRows);
 
   // 2. Template campeão por TAXA de resposta (com denominador mínimo), não por
   // número absoluto de respostas.
-  const { data: metricRows } = await supabase
-    .from('talkx_campaign_metrics')
-    .select('id, campaign_name, replied_count, sent_count')
-    .gte('sent_count', METRIC_MIN_SENT)
-    .order('reply_rate_pct', { ascending: false, nullsFirst: false })
-    .limit(500);
-  const bestTemplate = pickBestTemplate(metricRows ?? []);
+  // A coluna `reply_rate_pct` é comprovada: migration
+  // `20260922130000_fix_talkx_campaign_metrics_view_and_link_clicks_rls.sql` e o type
+  // gerado `Views.talkx_campaign_metrics.Row.reply_rate_pct`
+  // (src/integrations/supabase/types.ts). Ordenar por ela garante que o teto de 500
+  // preserve as MAIORES taxas; a decisão final continua em `pickBestTemplate`
+  // (replied_count/sent_count, sem arredondar).
+  const metricRows = must<Array<{ id?: string | null; campaign_name?: string | null; replied_count?: number | null; sent_count?: number | null }>>(
+    await supabase
+      .from('talkx_campaign_metrics')
+      .select('id, campaign_name, replied_count, sent_count')
+      .gte('sent_count', METRIC_MIN_SENT)
+      .order('reply_rate_pct', { ascending: false, nullsFirst: false })
+      .limit(500),
+    'métricas de campanha',
+  );
+  const bestTemplate = pickBestTemplate(metricRows);
 
   // 3. Contatos inativos (> 180 dias sem atualização)
+  const totalContactsRes = await supabase.from('contacts').select('id', { count: 'exact', head: true });
+  if (totalContactsRes.error) throw new Error('talkx-insights: falha ao contar contatos');
+  const inactiveContactsRes = await supabase.from('contacts').select('id', { count: 'exact', head: true }).lt('updated_at', since180);
+  if (inactiveContactsRes.error) throw new Error('talkx-insights: falha ao contar contatos inativos');
+  const totalContacts = totalContactsRes.count;
+  const inactiveContacts = inactiveContactsRes.count;
   let inactiveContactPct: number | null = null;
-  const { count: totalContacts } = await supabase.from('contacts').select('id', { count: 'exact', head: true });
-  const { count: inactiveContacts } = await supabase.from('contacts').select('id', { count: 'exact', head: true }).lt('updated_at', since180);
   if (totalContacts && inactiveContacts && totalContacts > 0) {
     inactiveContactPct = inactiveContacts / totalContacts;
   }
 
   // 4. Taxa de cliques canônica: cliques / envios no período.
-  const { count: clickCount } = await supabase
+  const clickCountRes = await supabase
     .from('talkx_link_clicks').select('id', { count: 'exact', head: true }).gte('clicked_at', since90);
-  const { count: sentCount } = await supabase
+  if (clickCountRes.error) throw new Error('talkx-insights: falha ao contar cliques');
+  const sentCountRes = await supabase
     .from('talkx_recipients').select('id', { count: 'exact', head: true }).not('sent_at', 'is', null).gte('sent_at', since90);
+  if (sentCountRes.error) throw new Error('talkx-insights: falha ao contar envios');
+  const clickCount = clickCountRes.count;
+  const sentCount = sentCountRes.count;
   const avgClickRate = sentCount ? (clickCount ?? 0) / sentCount : 0;
 
   // 5. Baixo clique POR CAMPANHA: cliques do link → campanha, divididos pelos envios
   // daquela campanha. Sem isso o rótulo "baixo clique" não media clique nenhum.
-  const { data: clickRows, error: clickError } = await fromTable('talkx_link_clicks')
+  // `talkx_links.campaign_id` é comprovado pelo type gerado
+  // (Tables.talkx_links.Row.campaign_id em src/integrations/supabase/types.ts) e pela
+  // migration `20260916200000_talkx_e90_links.sql`, cujo join reaparece na policy de
+  // leitura de `20260922130000_...`. Ordenado por `clicked_at` desc: sob o teto ficam
+  // os cliques MAIS RECENTES. Bater exatamente em CLICK_SAMPLE_LIMIT significa conjunto
+  // TRUNCADO — não o total —, então a conclusão de baixo clique é abandonada.
+  const clickRes: { data: ClickRow[] | null; error: unknown } = await fromTable('talkx_link_clicks')
     .select('link_id, talkx_links!inner(campaign_id)')
     .gte('clicked_at', since90)
-    .limit(5000);
+    .order('clicked_at', { ascending: false })
+    .limit(CLICK_SAMPLE_LIMIT);
+  const clickError = Boolean(clickRes.error);
+  const clickRows = clickRes.data ?? [];
+  const clicksTruncated = clickRows.length >= CLICK_SAMPLE_LIMIT;
   const clicksByCampaign = new Map<string, number>();
   if (!clickError) {
-    for (const row of (clickRows ?? []) as Array<{ talkx_links?: { campaign_id?: string | null } | null }>) {
+    for (const row of clickRows) {
       const cid = row.talkx_links?.campaign_id;
       if (cid) clicksByCampaign.set(cid, (clicksByCampaign.get(cid) ?? 0) + 1);
     }
   }
   // "Concluída" no contrato da tabela é status='completed' — 'finished' não existe no
   // CHECK de talkx_campaigns, então a contagem anterior era sempre zero.
-  const { data: finishedRows } = await supabase
-    .from('talkx_campaigns').select('id, sent_count').eq('status', 'completed').gte('created_at', since90).limit(500);
-  const finishedCampaigns = (finishedRows ?? []).length;
-  const lowClickCampaigns = clickError ? 0 : countLowClickCampaigns(finishedRows ?? [], clicksByCampaign);
+  const finishedRows = must<Array<{ id?: string | null; sent_count?: number | null }>>(
+    await supabase
+      .from('talkx_campaigns').select('id, sent_count').eq('status', 'completed').gte('created_at', since90).limit(500),
+    'campanhas concluídas',
+  );
+  const finishedCampaigns = finishedRows.length;
+  const lowClickCampaigns = clickError ? 0 : countLowClickCampaigns(finishedRows, clicksByCampaign);
 
-  return { bestHour, bestTemplate, inactiveContactPct, lowClickCampaigns, finishedCampaigns, avgClickRate };
+  return { bestHour, bestTemplate, inactiveContactPct, lowClickCampaigns, finishedCampaigns, avgClickRate, clicksTruncated, clickError };
 }
 
 export function buildInsights(raw: InsightRaw): TalkXInsight[] {
@@ -223,7 +284,9 @@ export function buildInsights(raw: InsightRaw): TalkXInsight[] {
     });
   }
 
-  if (raw.avgClickRate < LOW_CLICK_MAX_RATE && raw.lowClickCampaigns >= LOW_CLICK_MIN_CAMPAIGNS) {
+  // Conjunto de cliques truncado (teto) ou indisponível (erro) NÃO é o total: sem
+  // conjunto íntegro, a conclusão de "baixo clique" não sai (recusa #135).
+  if (!raw.clickError && !raw.clicksTruncated && raw.avgClickRate < LOW_CLICK_MAX_RATE && raw.lowClickCampaigns >= LOW_CLICK_MIN_CAMPAIGNS) {
     out.push({
       id: 'low-clicks', type: 'links', priority: 'low',
       title: 'Taxa de cliques abaixo do esperado',
