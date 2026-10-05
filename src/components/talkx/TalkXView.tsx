@@ -220,10 +220,10 @@ export default function TalkXView() {
       && localDraftRouteId !== wizardRoute.campaignId
       && isLoading;
     if (awaitingRoutedCampaign) {
-      return <div className="min-h-full bg-background p-6 text-sm text-muted-foreground" role="status">Carregando campanha…</div>;
+      return <div className="min-h-full w-full min-w-0 bg-background text-sm text-muted-foreground" role="status">Carregando campanha…</div>;
     }
     return (
-      <div className="min-h-full bg-background p-3 md:p-4 lg:p-6">
+      <div className="min-h-full w-full min-w-0 bg-background">
         <TalkXCampaignWizard
           key={`talkx-wizard:${wizardCampaign?.id || 'new'}`}
           campaign={wizardCampaign}
@@ -249,7 +249,7 @@ export default function TalkXView() {
 
   if (topView === 'monitor' && monitorId) {
     return (
-      <div className="min-h-full bg-background p-3 md:p-4 lg:p-6">
+      <div className="min-h-full w-full min-w-0 bg-background">
         <div className="flex items-center gap-3 mb-4">
           <button type="button" onClick={backToList} className="h9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bv-muted/50">
             <ArrowLeft className="w-4 h-4" />Voltar à campanhas
@@ -261,7 +261,7 @@ export default function TalkXView() {
   }
 
   return (
-    <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-5">
+    <div className="min-h-full w-full min-w-0 bg-background space-y-5">
       <ModuleHeader
         icon={Zap}
         title="Campanhas"

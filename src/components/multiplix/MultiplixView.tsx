@@ -154,14 +154,14 @@ export default function MultiplixView() {
 
   if (monitorId) {
     return (
-      <div className="p-6">
+      <div className="min-h-full w-full min-w-0">
         <MultiplixMonitor dispatchId={monitorId} onBack={() => setMonitorId(null)} />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex min-h-full w-full min-w-0 flex-col gap-6">
       <ModuleHeader
         icon={Send}
         color="blue"
