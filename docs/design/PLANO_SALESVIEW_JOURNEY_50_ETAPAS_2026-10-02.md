@@ -296,7 +296,8 @@ Fazer: com usuário real, abrir uma conversa: (1) barra mostra SalesView/Journey
 Aceite: os 7 itens com evidência (print ou query) no corpo do PR 5.
 
 **S42 · Prints antes/depois no repo**
-Fazer: `docs/design/salesview-journey/` com `00-antes-barra.png`, `00-antes-sidebar.png` (os prints do Joaquim desta sessão servem de "antes"), `01-barra.png`, `02-salesview-vazio.png`, `03-salesview-cheio.png`, `04-journey.png`, `05-sidebar.png`. Resolução 1280 px de largura, tema escuro (o que o Joaquim usa) **e** um par claro (`01-barra-claro.png`, `04-journey-claro.png`) — lição de 25/09 (`bg-black` fixo quebrou o light mode).
+Fazer: `docs/design/salesview-journey/` com `00-antes-barra.png`, `00-antes-sidebar.png` (reconstruções sintéticas do estado anterior; os prints originais do Joaquim nunca foram versionados), `01-barra.png`, `02-salesview-vazio.png`, `03-salesview-cheio.png`, `04-journey.png`, `05-sidebar.png`. Resolução 1280 px de largura, tema escuro (o que o Joaquim usa) **e** um par claro (`01-barra-claro.png`, `04-journey-claro.png`) — lição de 25/09 (`bg-black` fixo quebrou o light mode).
+Reconstruções históricas restauradas: [barra anterior com Pedidos](./salesview-journey/00-antes-barra.png) e [sidebar anterior com Resumo Comercial](./salesview-journey/00-antes-sidebar.png). Os arquivos foram introduzidos no commit `914c92a0e`, renderizados a partir do código anterior `95edd0329` com conteúdo sintético (`[E2E]`, `Dado sintético` e `E2ETeste (C)`); não são capturas originais do dono.
 Aceite: 9 arquivos, cada um < 400 KB.
 
 **S43 · Contraste no tema claro e alto-contraste**
