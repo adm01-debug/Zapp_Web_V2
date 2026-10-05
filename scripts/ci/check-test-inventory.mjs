@@ -35,6 +35,9 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // t_bbb7e130 (R2-INB-003): prova do transporte interativo buttons/list em
+  // container descartável; registrar em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/interactive-buttons-list-behavior.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.

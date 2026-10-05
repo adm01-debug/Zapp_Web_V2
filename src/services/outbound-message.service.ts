@@ -27,7 +27,7 @@ export interface OutboundMessageDeliveryResult {
 export interface RichOutboundMessageInput {
   contactId: string;
   displayContent: string;
-  messageType: 'poll' | 'contact';
+  messageType: 'poll' | 'contact' | 'buttons' | 'list';
   deliveryPayload: Record<string, unknown>;
   replyToId?: string | null;
   whatsappConnectionId?: string | null;
@@ -153,7 +153,7 @@ async function dispatchQueuedMessage(
   };
 }
 
-/** Queue an outbound poll or contact card with an immutable transport payload. */
+/** Queue an outbound poll, contact card or interactive message (buttons/list) with an immutable transport payload. */
 export async function sendRichOutboundMessage(
   input: RichOutboundMessageInput,
 ): Promise<OutboundMessageDeliveryResult> {

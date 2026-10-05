@@ -6,7 +6,7 @@ import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
 import { SlashCommand } from '../SlashCommands';
 import { toast } from '@/hooks/ui/use-toast';
-import { sendOutboundMessage } from '@/services/outbound-message.service';
+import { sendOutboundMessage, sendRichOutboundMessage } from '@/services/outbound-message.service';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -28,17 +28,12 @@ interface UseChatPanelHandlersOptions {
 
 /**
  * R2-INB-003 (item 82) — o construtor de mensagens interativas confirmava o envio
- * sem transporte. O transporte canônico de saída não aceita este tipo hoje:
- * `enqueue_outbound_message` (text/image/audio/video/document/sticker/location) e
- * `enqueue_rich_outbound_message` (poll/contact) rejeitam o tipo e a
- * `message-delivery` responde `unsupported_message_type`. Enquanto não existir
- * enqueue/entrega para botões e listas, o envio é declarado indisponível — a
- * composição fica preservada no formulário e nada é descartado em silêncio.
- * Fonte única: guarda no handler + apresentação no builder, via o retorno do hook.
+ * sem transporte. O transporte canônico agora existe: `enqueue_rich_outbound_message`
+ * aceita 'buttons'/'list' e a edge `message-delivery` monta sendButtons/sendList a
+ * partir do payload imutável em media_meta->outbound_delivery_payload. O contrato
+ * continua explícito: o handler resolve SÓ com o aceite do transporte e rejeita em
+ * falha, então o builder só fecha/limpa depois do aceite.
  */
-export const ENVIO_INTERATIVO_INDISPONIVEL =
-  'Envio de mensagens interativas indisponível: o transporte de botões e listas ainda não está publicado. Sua composição foi mantida.';
-
 function useLatest<T>(value: T) {
   const ref = useRef(value);
   useEffect(() => {
@@ -253,12 +248,60 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation, criarTarefaRef]);
 
   // Contrato explícito (R2-INB-003): resolve só quando o transporte aceitou a
-  // composição; rejeita quando o envio não foi confirmado. Sem transporte para
-  // botões/lista, rejeita com o motivo — o builder mantém a composição.
+  // composição; rejeita quando o envio não foi confirmado — o builder mantém a
+  // composição. O payload vai para a fila atômica no shape canônico
+  // (media_meta->outbound_delivery_payload); "CTA URL" é botão type='url',
+  // não um tipo novo.
   const handleSendInteractiveMessage = useCallback(async (interactive: InteractiveMessage) => {
-    log.warn('Interactive message transport unavailable', { type: interactive.type });
-    throw new Error(ENVIO_INTERATIVO_INDISPONIVEL);
-  }, []);
+    const title = interactive.header?.type === 'text' ? interactive.header.text : undefined;
+    try {
+      if (interactive.type === 'list') {
+        const sections = (interactive.sections ?? []).map((section) => ({
+          title: section.title,
+          rows: section.rows.map((row) => ({
+            id: row.id,
+            title: row.title,
+            ...(row.description ? { description: row.description } : {}),
+          })),
+        }));
+        await sendRichOutboundMessage({
+          contactId,
+          displayContent: `📋 *Lista:* ${interactive.body}\n${sections.flatMap((section) => section.rows.map((row) => `• ${row.title}`)).join('\n')}`,
+          messageType: 'list',
+          deliveryPayload: {
+            ...(title ? { title } : {}),
+            body: interactive.body,
+            ...(interactive.footer ? { footer: interactive.footer } : {}),
+            buttonText: interactive.listButtonText ?? '',
+            sections,
+          },
+        });
+      } else {
+        const buttons = (interactive.buttons ?? []).map((button) => ({
+          type: button.type ?? 'reply',
+          displayText: button.title ?? button.text ?? '',
+          ...(button.id ? { id: button.id } : {}),
+          ...(button.url ? { url: button.url } : {}),
+          ...(button.phoneNumber ? { phoneNumber: button.phoneNumber } : {}),
+        }));
+        await sendRichOutboundMessage({
+          contactId,
+          displayContent: `🔘 *Botões:* ${interactive.body}\n${buttons.map((button) => `• ${button.displayText}`).join('\n')}`,
+          messageType: 'buttons',
+          deliveryPayload: {
+            ...(title ? { title } : {}),
+            body: interactive.body,
+            ...(interactive.footer ? { footer: interactive.footer } : {}),
+            buttons,
+          },
+        });
+      }
+      toast({ title: 'Mensagem interativa enviada!' });
+    } catch (error) {
+      log.error('Failed to send interactive message:', error);
+      throw error;
+    }
+  }, [contactId]);
 
   const handleInteractiveButtonClick = useCallback((button: InteractiveButton) => {
     toast({ title: 'Botão clicado', description: `Resposta: ${button.title}` });
@@ -298,7 +341,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     handleEditStart, handleCancelEdit, handleSend,
     handleReplyToMessage, handleCopyMessage, handleForwardMessage, handleForwardToTargets,
     handleInputChange, handleKeyDown, handleSlashCommand,
-    handleSendInteractiveMessage, interactiveSendUnavailableReason: ENVIO_INTERATIVO_INDISPONIVEL,
+    handleSendInteractiveMessage, interactiveSendUnavailableReason: null,
     handleInteractiveButtonClick,
     handleSendLocation, handleAudioSend,
   };

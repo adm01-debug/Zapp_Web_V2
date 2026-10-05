@@ -25,7 +25,7 @@ type Claim = {
   contact_id: string;
   agent_id: string;
   content: string;
-  message_type: 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location' | 'poll' | 'contact';
+  message_type: 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location' | 'poll' | 'contact' | 'buttons' | 'list';
   media_url: string | null;
   caption: string | null;
   media_filename: string | null;
@@ -162,6 +162,97 @@ export function providerPayload(
         body: { ...base, contact: [contact], ...quoted },
       };
     }
+    case 'buttons': {
+      const body = richPayload?.body;
+      const title = richPayload?.title;
+      const footer = richPayload?.footer;
+      const buttons = richPayload?.buttons;
+      if (typeof body !== 'string' || body.trim().length < 1 || body.trim().length > 1024 ||
+          (title !== undefined && (typeof title !== 'string' || title.length > 60)) ||
+          (footer !== undefined && (typeof footer !== 'string' || footer.length > 60)) ||
+          !Array.isArray(buttons) || buttons.length < 1 || buttons.length > 3 ||
+          !buttons.every((button) => {
+            const b = asRecord(button);
+            if (!b) return false;
+            if (typeof b.type !== 'string' || !['reply', 'url', 'call', 'phone'].includes(b.type)) return false;
+            if (typeof b.displayText !== 'string' || b.displayText.trim().length < 1 || b.displayText.trim().length > 20) return false;
+            if (b.id !== undefined && (typeof b.id !== 'string' || b.id.length > 256)) return false;
+            if (b.type === 'url' && (typeof b.url !== 'string' || b.url.length > 2048 || !/^https?:\/\//.test(b.url))) return false;
+            if (b.type === 'phone' && (typeof b.phoneNumber !== 'string' || !/^\d{8,15}$/.test(b.phoneNumber.replace(/\D/g, '')))) return false;
+            return true;
+          })) {
+        throw new Error('invalid_buttons_payload');
+      }
+      return {
+        path: `/message/sendButtons/${claim.whatsapp_instance_name}`,
+        body: {
+          ...base,
+          ...(typeof title === 'string' && title.length > 0 ? { title } : {}),
+          description: body,
+          footer: typeof footer === 'string' && footer.length > 0 ? footer : ' ',
+          buttons: buttons.map((button) => {
+            const b = button as Record<string, unknown>;
+            return {
+              type: b.type,
+              displayText: b.displayText,
+              ...(typeof b.id === 'string' ? { id: b.id } : {}),
+              ...(typeof b.url === 'string' ? { url: b.url } : {}),
+              ...(typeof b.phoneNumber === 'string' ? { phoneNumber: b.phoneNumber.replace(/\D/g, '') } : {}),
+            };
+          }),
+          ...quoted,
+        },
+      };
+    }
+    case 'list': {
+      const body = richPayload?.body;
+      const title = richPayload?.title;
+      const footer = richPayload?.footer;
+      const buttonText = richPayload?.buttonText;
+      const sections = richPayload?.sections;
+      if (typeof body !== 'string' || body.trim().length < 1 || body.trim().length > 1024 ||
+          (title !== undefined && (typeof title !== 'string' || title.length > 60)) ||
+          (footer !== undefined && (typeof footer !== 'string' || footer.length > 60)) ||
+          typeof buttonText !== 'string' || buttonText.trim().length < 1 || buttonText.trim().length > 20 ||
+          !Array.isArray(sections) || sections.length < 1 || sections.length > 10 ||
+          !sections.every((section) => {
+            const s = asRecord(section);
+            if (!s) return false;
+            if (typeof s.title !== 'string' || s.title.trim().length < 1 || s.title.trim().length > 24) return false;
+            if (!Array.isArray(s.rows) || s.rows.length < 1 || s.rows.length > 10) return false;
+            return s.rows.every((row) => {
+              const r = asRecord(row);
+              if (!r) return false;
+              if (typeof r.title !== 'string' || r.title.trim().length < 1 || r.title.trim().length > 24) return false;
+              if (r.description !== undefined && (typeof r.description !== 'string' || r.description.length > 72)) return false;
+              return typeof r.id === 'string' && r.id.length >= 1 && r.id.length <= 256;
+            });
+          })) {
+        throw new Error('invalid_list_payload');
+      }
+      return {
+        path: `/message/sendList/${claim.whatsapp_instance_name}`,
+        body: {
+          ...base,
+          ...(typeof title === 'string' && title.length > 0 ? { title } : {}),
+          description: body,
+          footer: typeof footer === 'string' && footer.length > 0 ? footer : ' ',
+          buttonText,
+          sections: sections.map((section) => {
+            const s = section as Record<string, unknown>;
+            return {
+              title: s.title,
+              rows: (s.rows as Record<string, unknown>[]).map((row) => ({
+                title: row.title,
+                ...(typeof row.description === 'string' && row.description.length > 0 ? { description: row.description } : {}),
+                rowId: row.id,
+              })),
+            };
+          }),
+          ...quoted,
+        },
+      };
+    }
     default:
       throw new Error('unsupported_message_type');
   }
@@ -287,7 +378,8 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)
       : null;
     let richPayload: Record<string, unknown> | null = null;
-    if (claim.message_type === 'poll' || claim.message_type === 'contact') {
+    if (claim.message_type === 'poll' || claim.message_type === 'contact'
+        || claim.message_type === 'buttons' || claim.message_type === 'list') {
       const { data: messageMetadata, error: metadataError } = await service
         .from('messages')
         .select('media_meta')
