@@ -903,7 +903,8 @@ jobs:
           APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
         run: |
           set -euo pipefail
-          supabase db push --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
+          # O CLI 2.116 ignora SUPABASE_DB_URL e cai no projeto "linkado" ("Cannot find project ref"): --db-url explicito.
+          supabase db push --db-url "$SUPABASE_DB_URL" --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
           if [ "$APPLY_BUNDLE" = "true" ]; then
             node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --esperado "$TARGET_VERSION" --bundle
           else
@@ -915,7 +916,7 @@ jobs:
         env:
           SUPABASE_DB_URL: ${{ env.DESTINO_URL }}
         run: >-
-          supabase db push --include-all
+          supabase db push --db-url "$SUPABASE_DB_URL" --include-all
           --skip-vault --yes
 
       - name: Validar registro no ledger
