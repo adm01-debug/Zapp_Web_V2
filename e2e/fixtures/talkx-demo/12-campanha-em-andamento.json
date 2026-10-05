@@ -1,1 +1,163 @@
-{}
+{
+  "talkx_campaigns": [
+    {
+      "id": "camp-001",
+      "name": "Lançamento Linha Office",
+      "message_template": "Olá {{nome}}, Lançamento Linha Office!",
+      "description": null,
+      "objective": "engajamento",
+      "status": "sending",
+      "total_recipients": 1420,
+      "sent_count": 1364,
+      "failed_count": 56,
+      "delivered_count": 1364,
+      "read_count": 0,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "whatsapp_connection_id": "conn-001",
+      "created_by": "creator-1",
+      "started_at": "2026-10-01T09:00:00.000Z",
+      "completed_at": null,
+      "created_at": "2026-10-01T08:00:00.000Z",
+      "updated_at": "2026-10-01T08:00:00.000Z",
+      "media_url": null,
+      "media_type": null,
+      "scheduled_at": null,
+      "schedule_timezone": null,
+      "segment_id": "seg-vip",
+      "audience_source": "segment",
+      "template_id": null,
+      "send_window_start": null,
+      "send_window_end": null,
+      "business_hours_only": false,
+      "speed_profile": "moderate",
+      "paused_at": null,
+      "respect_suppression": true,
+      "confirm_consent": true,
+      "launched_by": "creator-1",
+      "launched_at": "2026-10-01T09:00:00.000Z",
+      "revision": 1
+    }
+  ],
+  "talkx_recipients": [
+    {
+      "id": "rec-001",
+      "campaign_id": "camp-001",
+      "contact_id": "contact-001",
+      "status": "replied",
+      "sent_at": "2026-10-01T09:01:00.000Z",
+      "delivered_at": "2026-10-01T09:02:00.000Z",
+      "read_at": "2026-10-01T09:03:00.000Z",
+      "replied_at": "2026-10-01T09:04:00.000Z",
+      "failed_at": null,
+      "error_message": null,
+      "created_at": "2026-10-01T10:00:00.000Z",
+      "updated_at": "2026-10-01T10:00:00.000Z",
+      "contacts": {
+        "name": "Ana Souza",
+        "nickname": null,
+        "phone": "551199980001",
+        "company": "Empresa Demo",
+        "avatar_url": null
+      }
+    },
+    {
+      "id": "rec-002",
+      "campaign_id": "camp-001",
+      "contact_id": "contact-002",
+      "status": "read",
+      "sent_at": "2026-10-01T09:02:00.000Z",
+      "delivered_at": "2026-10-01T09:03:00.000Z",
+      "read_at": "2026-10-01T09:04:00.000Z",
+      "replied_at": null,
+      "failed_at": null,
+      "error_message": null,
+      "created_at": "2026-10-01T10:00:00.000Z",
+      "updated_at": "2026-10-01T10:00:00.000Z",
+      "contacts": {
+        "name": "Bruno Lima",
+        "nickname": null,
+        "phone": "551199980002",
+        "company": "Empresa Demo",
+        "avatar_url": null
+      }
+    },
+    {
+      "id": "rec-003",
+      "campaign_id": "camp-001",
+      "contact_id": "contact-003",
+      "status": "delivered",
+      "sent_at": "2026-10-01T09:03:00.000Z",
+      "delivered_at": "2026-10-01T09:04:00.000Z",
+      "read_at": null,
+      "replied_at": null,
+      "failed_at": null,
+      "error_message": null,
+      "created_at": "2026-10-01T10:00:00.000Z",
+      "updated_at": "2026-10-01T10:00:00.000Z",
+      "contacts": {
+        "name": "Carla Mendes",
+        "nickname": null,
+        "phone": "551199980003",
+        "company": "Empresa Demo",
+        "avatar_url": null
+      }
+    },
+    {
+      "id": "rec-004",
+      "campaign_id": "camp-001",
+      "contact_id": "contact-004",
+      "status": "sent",
+      "sent_at": "2026-10-01T09:04:00.000Z",
+      "delivered_at": null,
+      "read_at": null,
+      "replied_at": null,
+      "failed_at": null,
+      "error_message": null,
+      "created_at": "2026-10-01T10:00:00.000Z",
+      "updated_at": "2026-10-01T10:00:00.000Z",
+      "contacts": {
+        "name": "Diego Alves",
+        "nickname": null,
+        "phone": "551199980004",
+        "company": "Empresa Demo",
+        "avatar_url": null
+      }
+    },
+    {
+      "id": "rec-005",
+      "campaign_id": "camp-001",
+      "contact_id": "contact-005",
+      "status": "failed",
+      "sent_at": "2026-10-01T09:05:00.000Z",
+      "delivered_at": null,
+      "read_at": null,
+      "replied_at": null,
+      "failed_at": "2026-10-01T09:06:00.000Z",
+      "error_message": "Número inválido",
+      "created_at": "2026-10-01T10:00:00.000Z",
+      "updated_at": "2026-10-01T10:00:00.000Z",
+      "contacts": {
+        "name": "Elisa Rocha",
+        "nickname": null,
+        "phone": "551199980005",
+        "company": "Empresa Demo",
+        "avatar_url": null
+      }
+    }
+  ],
+  "talkx_campaign_events": [
+    {
+      "id": "event-001",
+      "campaign_id": "camp-001",
+      "event_type": "started",
+      "created_at": "2026-10-01T09:00:00.000Z"
+    },
+    {
+      "id": "event-002",
+      "campaign_id": "camp-001",
+      "event_type": "progress",
+      "created_at": "2026-10-01T09:15:00.000Z"
+    }
+  ]
+}

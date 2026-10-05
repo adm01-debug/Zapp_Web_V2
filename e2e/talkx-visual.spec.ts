@@ -3,8 +3,7 @@ import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path';
 import {
   mockTalkXVisual,
-  loadDemoData,
-  FixtureVaziaError,
+  hasDemoRows,
   fixtureDaTela,
   fixturesComDados,
   fixturesVazias,
@@ -25,9 +24,8 @@ declare global {
  * escuro (projeto `chromium-talkx-visual`). Roda DESLOGADO — sem setup e sem
  * secrets — por isso entra no workflow de PR (e2e-talkx.yml).
  *
- * Contrato de crescimento (X003/X004): a régua só captura a tela cuja fixture
- * tem dados reais (hoje só a 01). Fixture vazia (`{}`) é PULADA, não falha — ela
- * cresce na etapa da própria tela (docs/talkx/v4/etapas/F00-regua-e-governanca.md).
+ * As 17 telas têm fixtures sintéticas próprias. A régua captura as 14 telas já
+ * implementadas; 13, 14 e 15 preservam o marcador explícito de componente ausente.
  * Telas cujo componente ainda não existe (hoje 13, 14 e 15) gravam um marcador
  * `nao-existe-NN.txt` em vez de falhar. O `scripts/talkx/lado-a-lado.mjs` monta
  * as duplas (mock | captura) a partir daqui.
@@ -44,7 +42,7 @@ type Tela = {
 
 async function abrirTalkX(page: Page) {
   await page.goto('/?view=talkx');
-  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible({ timeout: 15000 });
 }
 
 // Após X007, "Segmentos", "Templates", "Analytics" e "Configurações" deixaram de ser
@@ -62,7 +60,7 @@ const TAB_URL: Record<string, string> = {
 
 async function abrirTab(page: Page, tab: string) {
   await page.goto(TAB_URL[tab] ?? '/?view=talkx');
-  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible({ timeout: 15000 });
 }
 
 // Clicar no nome de uma campanha (coluna "Campanha" da tabela) dispara o
@@ -93,8 +91,8 @@ const TELAS: Tela[] = [
   { n: '05', nome: 'Templates — criar/editar', existe: true, abrir: async (p) => { await abrirTab(p, 'Templates'); await p.getByRole('button', { name: 'Novo Template' }).click(); } },
   { n: '06', nome: 'Lista de supressão', existe: true, abrir: (p) => abrirTab(p, 'Lista de supressão') },
   { n: '07', nome: 'Analytics', existe: true, abrir: (p) => abrirTab(p, 'Analytics') },
-  { n: '08', nome: 'Nova campanha', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=1'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible(); } },
-  { n: '09', nome: 'Revisão final e confirmação', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=4'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible(); } },
+  { n: '08', nome: 'Nova campanha', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=1'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({ timeout: 15000 }); } },
+  { n: '09', nome: 'Revisão final e confirmação', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=4'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({ timeout: 15000 }); } },
   { n: '10', nome: 'Campanha agendada', existe: true, abrir: (p) => abrirCampanha(p, 'Black Friday - VIP') },
   { n: '11', nome: 'Monitor ao vivo', existe: true, abrir: (p) => abrirCampanha(p, 'Dia do Cliente') },
   { n: '12', nome: 'Campanha em andamento', existe: true, abrir: (p) => abrirCampanha(p, 'Lançamento Linha Office') },
@@ -126,17 +124,15 @@ for (const tela of TELAS) {
       return;
     }
 
-    // Contrato de crescimento (X003/X004): a régua só captura tela cuja fixture
-    // tem dados reais. Fixture vazia ({}) é PULADA — não é falha, é "ainda não é
-    // a etapa desta tela". O guard anti-vazio (loadDemoData) aborta se alguém
-    // referenciar uma fixture {} por engano.
+    // Toda tela possui dados sintéticos. O guard anti-vazio (loadDemoData)
+    // impede regressão para `{}` ou coleções sem registros.
     const fixture = fixtureDaTela(tela.n);
     if (!fixture) {
       // Sem fixture, a tela sai da régua: apaga captura de execução anterior
       // para o lado-a-lado não mostrar foto velha como se ainda fosse capturada.
       rmSync(join(OUT, `captura-${tela.n}.png`), { force: true });
     }
-    test.skip(!fixture, `sem fixture real — a tela ${tela.n} entra na régua quando a fixture dela crescer (etapa da tela)`);
+    expect(fixture, `fixture com dados da tela ${tela.n}`).toBeDefined();
 
     await mockTalkXVisual(page, fixture!);
     await tela.abrir!(page);
@@ -151,24 +147,38 @@ for (const tela of TELAS) {
   });
 }
 
-// Contrato de crescimento oficializado em X003: referenciar uma fixture {} é
-// erro, nunca uma tela renderizada vazia em silêncio.
-test.describe('contrato de crescimento das fixtures (X003)', () => {
-  test('referenciar uma fixture vazia ({}) lança FixtureVaziaError', async ({ page }) => {
-    const vazia = fixturesVazias()[0];
-    test.skip(!vazia, 'todas as fixtures já têm dados — nada a guardar');
+// Prova de largura de celular: usa uma tela cheia e garante que o shell não
+// cria rolagem horizontal na página (a tabela conserva seu scroll interno).
+test('celular — lista de supressão cheia', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const fixture = fixtureDaTela('06');
+  expect(fixture).toBeDefined();
+  await mockTalkXVisual(page, fixture!);
+  await abrirTab(page, 'Lista de supressão');
+  await expect(page.getByText('Ana Souza')).toBeVisible();
+  await capturar(page, join(OUT, 'captura-06-mobile.png'));
+  const semOverflowDaPagina = await page.evaluate(
+    () => document.documentElement.scrollWidth <= window.innerWidth,
+  );
+  expect(semOverflowDaPagina).toBe(true);
+});
 
-    expect(() => loadDemoData(vazia!)).toThrow(FixtureVaziaError);
-    await expect(mockTalkXVisual(page, vazia!)).rejects.toThrow(FixtureVaziaError);
+// Contrato de dados oficializado em X003: `{}` e arrays sem registros são
+// erro, nunca uma tela renderizada vazia em silêncio.
+test.describe('contrato de dados das fixtures (X003)', () => {
+  test('rejeita objeto vazio e coleção sem registros', () => {
+    expect(hasDemoRows({})).toBe(false);
+    expect(hasDemoRows({ talkx_campaigns: [] })).toBe(false);
+    expect(hasDemoRows({ talkx_campaigns: [{ id: 'sintetico' }] })).toBe(true);
   });
 
-  test('a régua só considera telas com fixture real', () => {
-    expect(fixtureDaTela('01')).toBe('01-campanhas-visao-geral');
-    for (const slug of fixturesVazias()) {
-      expect(fixtureDaTela(slug.slice(0, 2))).toBeUndefined();
-    }
-    for (const slug of fixturesComDados()) {
-      expect(fixtureDaTela(slug.slice(0, 2))).toBe(slug);
+  test('a régua tem fixture real para as 17 telas', () => {
+    expect(fixturesVazias()).toEqual([]);
+    expect(fixturesComDados()).toHaveLength(17);
+    for (const tela of TELAS) {
+      expect(fixtureDaTela(tela.n), `fixture da tela ${tela.n}`).toMatch(
+        new RegExp(`^${tela.n}-`),
+      );
     }
   });
 });

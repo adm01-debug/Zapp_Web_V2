@@ -1,1 +1,107 @@
-{}
+{
+  "talkx_settings": [
+    {
+      "key": "default_speed_profile",
+      "value": "moderate",
+      "description": "Velocidade padrão de envio"
+    },
+    {
+      "key": "business_hours_only",
+      "value": true,
+      "description": "Restringir envios ao horário comercial"
+    }
+  ],
+  "talkx_campaigns": [
+    {
+      "id": "camp-010",
+      "name": "Campanha Pausada",
+      "message_template": "Olá {{nome}}, novidade da semana!",
+      "description": null,
+      "objective": "relacionamento",
+      "status": "paused",
+      "total_recipients": 520,
+      "sent_count": 210,
+      "failed_count": 6,
+      "delivered_count": 210,
+      "read_count": 0,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "whatsapp_connection_id": "conn-001",
+      "created_by": "creator-1",
+      "started_at": "2026-10-01T00:00:00.000Z",
+      "completed_at": null,
+      "created_at": "2026-09-30T23:00:00.000Z",
+      "updated_at": "2026-09-30T23:00:00.000Z",
+      "media_url": null,
+      "media_type": null,
+      "scheduled_at": null,
+      "schedule_timezone": null,
+      "segment_id": "seg-office",
+      "audience_source": "segment",
+      "template_id": null,
+      "send_window_start": null,
+      "send_window_end": null,
+      "business_hours_only": false,
+      "speed_profile": "moderate",
+      "paused_at": "2026-09-30T23:00:00.000Z",
+      "respect_suppression": true,
+      "confirm_consent": true,
+      "launched_by": "creator-1",
+      "launched_at": "2026-10-01T00:00:00.000Z",
+      "revision": 1
+    }
+  ],
+  "talkx_blacklist": [
+    {
+      "id": "block-001",
+      "contact_id": "contact-001",
+      "reason": "Opt-out solicitado",
+      "blocked_by": "creator-1",
+      "created_at": "2026-09-21T12:00:00.000Z",
+      "origin": "optout",
+      "campaign_id": null,
+      "removed_by": null,
+      "removed_at": null,
+      "contacts": {
+        "name": "Ana Souza",
+        "phone": "551199990001",
+        "company": "Acme Brindes",
+        "avatar_url": null
+      }
+    },
+    {
+      "id": "block-002",
+      "contact_id": "contact-002",
+      "reason": "Bloqueio manual",
+      "blocked_by": "creator-1",
+      "created_at": "2026-09-22T12:00:00.000Z",
+      "origin": "manual",
+      "campaign_id": null,
+      "removed_by": null,
+      "removed_at": null,
+      "contacts": {
+        "name": "Bruno Lima",
+        "phone": "551199990002",
+        "company": "Lumina Eventos",
+        "avatar_url": null
+      }
+    },
+    {
+      "id": "block-003",
+      "contact_id": "contact-003",
+      "reason": "LGPD / revogação de consentimento",
+      "blocked_by": "creator-1",
+      "created_at": "2026-09-23T12:00:00.000Z",
+      "origin": "lgpd",
+      "campaign_id": null,
+      "removed_by": null,
+      "removed_at": null,
+      "contacts": {
+        "name": "Carla Mendes",
+        "phone": "551199990003",
+        "company": "Norte Marketing",
+        "avatar_url": null
+      }
+    }
+  ]
+}

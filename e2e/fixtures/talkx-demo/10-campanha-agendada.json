@@ -1,1 +1,42 @@
-{}
+{
+  "talkx_campaigns": [
+    {
+      "id": "camp-005",
+      "name": "Black Friday - VIP",
+      "message_template": "Olá {{nome}}, Black Friday - VIP!",
+      "description": null,
+      "objective": "vendas",
+      "status": "scheduled",
+      "total_recipients": 480,
+      "sent_count": 0,
+      "failed_count": 0,
+      "delivered_count": 0,
+      "read_count": 0,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "whatsapp_connection_id": "conn-001",
+      "created_by": "creator-1",
+      "started_at": null,
+      "completed_at": null,
+      "created_at": "2026-10-01T04:00:00.000Z",
+      "updated_at": "2026-10-01T04:00:00.000Z",
+      "media_url": null,
+      "media_type": null,
+      "scheduled_at": "2026-10-02T06:00:00.000Z",
+      "schedule_timezone": null,
+      "segment_id": "seg-vip",
+      "audience_source": "segment",
+      "template_id": null,
+      "send_window_start": null,
+      "send_window_end": null,
+      "business_hours_only": false,
+      "speed_profile": "moderate",
+      "paused_at": null,
+      "respect_suppression": true,
+      "confirm_consent": true,
+      "launched_by": "creator-1",
+      "launched_at": null,
+      "revision": 1
+    }
+  ]
+}

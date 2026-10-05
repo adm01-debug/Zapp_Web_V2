@@ -16,10 +16,10 @@ import type { Page, Route } from '@playwright/test';
  * e contatos (insights) respondem vazios para o demo não ler produção.
  *
  * Contrato de crescimento (X003/X004): a fixture cresce junto com cada etapa de
- * tela — a etapa que cria uma tabela/RPC Talk X acrescenta a resposta dela no
- * JSON da tela correspondente. Enquanto a tela não tem fixture, o arquivo é `{}`
- * e a régua a PULA (não captura, não falha). Referenciar uma fixture `{}` lança
- * `FixtureVaziaError` em vez de renderizar uma tela vazia em silêncio
+ * tela. Cada um dos 17 JSONs contém ao menos uma coleção não vazia, própria da
+ * tela; `{}` ou apenas coleções vazias são rejeitados. Referenciar uma fixture
+ * sem registros lança `FixtureVaziaError` em vez de renderizar uma tela vazia
+ * em silêncio
  * (ver e2e/README.md e docs/talkx/v4/etapas/F00-regua-e-governanca.md).
  *
  * `mockTalkXVisual(page, tela)` (etapa X004) soma ao backend fake uma sessão
@@ -38,28 +38,35 @@ const cache = new Map<string, TalkXDemoData>();
 
 /**
  * Erro do contrato de crescimento (plano V4, X003/X004): uma fixture de tela só
- * existe quando tem dados. Referenciar uma fixture vazia (`{}`) é erro — nunca
+ * existe quando tem registros. Referenciar `{}` ou apenas arrays vazios é erro — nunca
  * uma tela renderizada em branco "sem aviso".
  */
 export class FixtureVaziaError extends Error {
   constructor(tela: string) {
     super(
-      `fixture vazia para a tela "${tela}" ({}): nenhuma tabela/RPC Talk X foi mockada. ` +
-        'O contrato de crescimento exige que a fixture da tela nasça na etapa daquela tela — ' +
-        `popule e2e/fixtures/talkx-demo/${tela}.json antes de referenciá-la. ` +
+      `fixture sem dados para a tela "${tela}": nenhuma coleção possui registros. ` +
+      'O contrato exige dados sintéticos visíveis em cada tela — ' +
+      `popule e2e/fixtures/talkx-demo/${tela}.json antes de referenciá-la. ` +
         'A régua só cobre telas com fixture real (docs/talkx/v4/etapas/F00-regua-e-governanca.md).',
     );
     this.name = 'FixtureVaziaError';
   }
 }
 
+/** Uma fixture só conta como cheia quando ao menos uma coleção tem registros. */
+export function hasDemoRows(data: TalkXDemoData): boolean {
+  return Object.values(data).some((rows) => Array.isArray(rows) && rows.length > 0);
+}
+
 export function loadDemoData(tela: string): TalkXDemoData {
   if (!cache.has(tela)) {
     const file = join(demoDir, `${tela}.json`);
     const data = JSON.parse(readFileSync(file, 'utf8')) as TalkXDemoData;
-    // Guard anti-vazio (X003): sem isto, `data[table] ?? []` faria a tela
-    // renderizar vazia sem erro. Uma fixture {} aborta o teste em vez de passar.
-    if (Object.keys(data).length === 0) throw new FixtureVaziaError(tela);
+    // Guard anti-vazio (X003): uma chave com `[]` também não produz estado
+    // cheio. Exigimos ao menos uma coleção com registros sintéticos visíveis.
+    if (!hasDemoRows(data)) {
+      throw new FixtureVaziaError(tela);
+    }
     cache.set(tela, data);
   }
   return cache.get(tela)!;
@@ -72,18 +79,19 @@ function fixtures(): { slug: string; dados: boolean }[] {
     .sort()
     .map((slug) => {
       const data = JSON.parse(readFileSync(join(demoDir, `${slug}.json`), 'utf8')) as TalkXDemoData;
-      return { slug, dados: Object.keys(data).length > 0 };
+      const dados = hasDemoRows(data);
+      return { slug, dados };
     });
 }
 
-/** Slugs (`NN-nome`) das fixtures que têm dados reais — hoje só a tela 01. */
+/** Slugs (`NN-nome`) das fixtures que têm ao menos uma coleção com registros. */
 export function fixturesComDados(): string[] {
   return fixtures()
     .filter((f) => f.dados)
     .map((f) => f.slug);
 }
 
-/** Slugs (`NN-nome`) das fixtures ainda vazias (`{}`), não populadas. */
+/** Slugs (`NN-nome`) sem nenhuma coleção populada. */
 export function fixturesVazias(): string[] {
   return fixtures()
     .filter((f) => !f.dados)
@@ -91,9 +99,7 @@ export function fixturesVazias(): string[] {
 }
 
 /**
- * Slug da fixture real da tela `nn`, ou `undefined` quando ela ainda é `{}`
- * (não populada). A régua usa isto para PULAR telas sem fixture — a ausência
- * não é falha, é "ainda não é a etapa desta tela".
+ * Slug da fixture com registros da tela `nn`, ou `undefined` se estiver vazia.
  */
 export function fixtureDaTela(nn: string): string | undefined {
   return fixturesComDados().find((slug) => slug.startsWith(`${nn}-`));

@@ -1,1 +1,87 @@
-{}
+{
+  "talkx_blacklist": [
+    {
+      "id": "block-001",
+      "contact_id": "contact-001",
+      "reason": "Opt-out solicitado",
+      "blocked_by": "creator-1",
+      "created_at": "2026-09-21T12:00:00.000Z",
+      "origin": "optout",
+      "campaign_id": null,
+      "removed_by": null,
+      "removed_at": null,
+      "contacts": {
+        "name": "Ana Souza",
+        "phone": "551199990001",
+        "company": "Acme Brindes",
+        "avatar_url": null
+      }
+    },
+    {
+      "id": "block-002",
+      "contact_id": "contact-002",
+      "reason": "Bloqueio manual",
+      "blocked_by": "creator-1",
+      "created_at": "2026-09-22T12:00:00.000Z",
+      "origin": "manual",
+      "campaign_id": null,
+      "removed_by": null,
+      "removed_at": null,
+      "contacts": {
+        "name": "Bruno Lima",
+        "phone": "551199990002",
+        "company": "Lumina Eventos",
+        "avatar_url": null
+      }
+    },
+    {
+      "id": "block-003",
+      "contact_id": "contact-003",
+      "reason": "LGPD / revogação de consentimento",
+      "blocked_by": "creator-1",
+      "created_at": "2026-09-23T12:00:00.000Z",
+      "origin": "lgpd",
+      "campaign_id": null,
+      "removed_by": null,
+      "removed_at": null,
+      "contacts": {
+        "name": "Carla Mendes",
+        "phone": "551199990003",
+        "company": "Norte Marketing",
+        "avatar_url": null
+      }
+    }
+  ],
+  "contacts": [
+    {
+      "id": "contact-001",
+      "name": "Ana Souza",
+      "phone": "551199980001",
+      "company": "Empresa Demo"
+    },
+    {
+      "id": "contact-002",
+      "name": "Bruno Lima",
+      "phone": "551199980002",
+      "company": "Empresa Demo"
+    },
+    {
+      "id": "contact-003",
+      "name": "Carla Mendes",
+      "phone": "551199980003",
+      "company": "Empresa Demo"
+    },
+    {
+      "id": "contact-004",
+      "name": "Diego Alves",
+      "phone": "551199980004",
+      "company": "Empresa Demo"
+    },
+    {
+      "id": "contact-005",
+      "name": "Elisa Rocha",
+      "phone": "551199980005",
+      "company": "Empresa Demo"
+    }
+  ]
+}
