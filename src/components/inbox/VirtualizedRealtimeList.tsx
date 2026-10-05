@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
 import { SLAIndicator } from './SLAIndicator';
+import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
@@ -284,6 +285,41 @@ interface ConversationRowProps {
   density: DensityMode;
 }
 
+// R2-SLA-003: a linha enviava o prazo FIXO de 5 min ao badge compacto,
+// mesmo quando uma regra granular (por contato/empresa/cargo/tipo/fila/
+// agente) determinava outro valor. O hook fica encapsulado neste filho
+// estavel -- e nao dentro de ConversationRow -- para que cada linha tenha a
+// propria assinatura de cache do react-query sem violar as regras de hooks
+// nem a virtualizacao: o filho so monta quando ha SLA aberto e, quando
+// monta, a chamada do hook e incondicional. A hierarquia do resolver NAO e
+// duplicada aqui: passamos os atributos crus e useApplicableSLA decide.
+const FALLBACK_FIRST_RESPONSE_MINUTES = 5;
+
+interface ConversationSLABadgeProps {
+  contact: ConversationWithMessages['contact'];
+  firstMessageAt: Date;
+}
+
+const ConversationSLABadge = memo(({ contact, firstMessageAt }: ConversationSLABadgeProps) => {
+  const { data } = useApplicableSLA({
+    contactId: contact.id,
+    company: contact.company,
+    jobTitle: contact.job_title,
+    contactType: contact.contact_type,
+    queueId: contact.queue_id,
+    agentId: contact.assigned_to,
+  });
+
+  return (
+    <SLAIndicator
+      firstMessageAt={firstMessageAt}
+      firstResponseAt={null}
+      firstResponseMinutes={data?.firstResponseMinutes ?? FALLBACK_FIRST_RESPONSE_MINUTES}
+      compact
+    />
+  );
+});
+
 const ConversationRow = memo(({
   conversation,
   virtualRow,
@@ -515,11 +551,9 @@ const ConversationRow = memo(({
                   <Badge variant="outline" className="text-2xs px-1.5 py-0 h-4 bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>
                 )}
                 {firstMessageAt && (
-                  <SLAIndicator
+                  <ConversationSLABadge
+                    contact={conversation.contact}
                     firstMessageAt={new Date(firstMessageAt)}
-                    firstResponseAt={null}
-                    firstResponseMinutes={5}
-                    compact
                   />
                 )}
                 {tags.slice(0, 2).map((tag) => (
