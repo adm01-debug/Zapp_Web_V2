@@ -12,7 +12,8 @@ import {
   getUniqueMessageContactIds, 
   chunkArray,
   dedupeContacts,
-  buildConversation
+  buildConversation,
+  ContactConversationSummary
 } from '@/hooks/realtime/realtimeUtils';
 import { getLogger } from '@/lib/logger';
 
@@ -20,6 +21,24 @@ const log = getLogger('RealtimeService');
 const SEEDED_CONTACT_LIMIT = 500;
 const RECENT_MESSAGES_LIMIT = 1000;
 const CONTACT_FETCH_CHUNK_SIZE = 200;
+// Mesmo tamanho de bloco dos contatos: a RPC responde 1 linha por contato, então
+// o lote anda em paralelo com CONTACT_FETCH_CHUNK_SIZE sem inflar a resposta.
+const CONTACT_SUMMARY_CHUNK_SIZE = 200;
+
+/** Linha da RPC get_inbox_contact_summaries (última mensagem + não lidas por contato). */
+interface InboxContactSummaryRow {
+  contact_id: string;
+  unread_count: number | null;
+  last_message_id: string | null;
+  last_message_sender: string | null;
+  last_message_content: string | null;
+  last_message_type: string | null;
+  last_message_created_at: string | null;
+  last_message_is_read: boolean | null;
+  last_message_external_id: string | null;
+  last_message_media_url: string | null;
+  last_message_status: string | null;
+}
 
 export class RealtimeService {
   static async fetchContactsByIds(contactIds: string[]): Promise<ConversationContact[]> {
@@ -40,6 +59,72 @@ export class RealtimeService {
       fetchedContacts.push(...((data ?? []) as ConversationContact[]));
     }
     return dedupeContacts(fetchedContacts);
+  }
+
+  /**
+   * Última mensagem + contagem de não lidas POR CONTATO, direto do banco.
+   *
+   * A carga inicial recebe uma amostra GLOBAL de RECENT_MESSAGES_LIMIT mensagens;
+   * quando ela é consumida por outros contatos, um contato ativo ficava sem
+   * nenhuma mensagem na amostra e a conversa aparecia vazia, com zero não lidas
+   * (R2-INB-005). Este agregado é a fonte de verdade do banco e só é consultado
+   * para os contatos que a amostra não alcançou.
+   *
+   * Erro na RPC não derruba a inbox: registra e segue sem o agregado (mesmo
+   * comportamento de antes desta mudança).
+   */
+  static async fetchContactSummaries(
+    contactIds: string[],
+  ): Promise<Map<string, ContactConversationSummary>> {
+    const summaryByContact = new Map<string, ContactConversationSummary>();
+    const uniqueIds = Array.from(new Set(contactIds.filter(Boolean)));
+    if (uniqueIds.length === 0) return summaryByContact;
+
+    for (const idsChunk of chunkArray(uniqueIds, CONTACT_SUMMARY_CHUNK_SIZE)) {
+      try {
+        const { data, error } = await supabase.rpc('get_inbox_contact_summaries', {
+          p_contact_ids: idsChunk,
+        });
+
+        if (error) {
+          log.error('Error fetching inbox contact summaries:', error);
+          continue;
+        }
+
+        for (const row of (data ?? []) as InboxContactSummaryRow[]) {
+          if (!row.contact_id || !row.last_message_id || !row.last_message_created_at) continue;
+          summaryByContact.set(row.contact_id, {
+            unreadCount: row.unread_count ?? 0,
+            // A RPC devolve as colunas da última mensagem; o resto do contrato de
+            // RealtimeMessage não é lido pela lista (preview e ordenação usam
+            // content/created_at) nem pelos caminhos ao vivo, que trazem a linha
+            // completa em hydrateConversationForMessage.
+            lastMessage: {
+              id: row.last_message_id,
+              contact_id: row.contact_id,
+              sender: row.last_message_sender ?? 'contact',
+              content: row.last_message_content ?? '',
+              message_type: row.last_message_type ?? 'text',
+              created_at: row.last_message_created_at,
+              is_read: row.last_message_is_read ?? false,
+              external_id: row.last_message_external_id,
+              media_url: row.last_message_media_url,
+              status: row.last_message_status ?? 'sent',
+              status_updated_at: null,
+            } as unknown as RealtimeMessage,
+          });
+        }
+      } catch (err) {
+        // Inclui o caso em que a RPC ainda não existe no ambiente (a migration
+        // não chegou lá): a inbox carrega sem o agregado, como antes desta
+        // mudança, em vez de ficar vazia. Não insiste nos blocos seguintes —
+        // a falha é da função, não do bloco de ids.
+        log.error('Error fetching inbox contact summaries:', err);
+        break;
+      }
+    }
+
+    return summaryByContact;
   }
 
   static async fetchInitialConversations(): Promise<ConversationWithMessages[]> {
@@ -85,8 +170,18 @@ export class RealtimeService {
       .filter((id) => !seededContactIds.has(id));
       
     const messageContacts = await this.fetchContactsByIds(missingContactIds);
-    
-    return buildConversations([...seededContactRows, ...messageContacts], normalizedMessages);
+
+    // Contatos sem NENHUMA mensagem na amostra global: pergunta o agregado por
+    // contato (última mensagem + não lidas) em vez de assumir que o histórico
+    // deles está vazio (R2-INB-005). Quando a amostra não é truncada, todo contato
+    // com histórico aparece nela e esta consulta nem sai.
+    const contactIdsWithSampleMessages = new Set(getUniqueMessageContactIds(normalizedMessages));
+    const contactIdsMissingSample = seededContactRows
+      .map((contact) => contact.id)
+      .filter((id) => !contactIdsWithSampleMessages.has(id));
+    const summaries = await this.fetchContactSummaries(contactIdsMissingSample);
+
+    return buildConversations([...seededContactRows, ...messageContacts], normalizedMessages, summaries);
   }
 
   static subscribeToReactions(messageId: string, onChange: (payload: any) => void) {
