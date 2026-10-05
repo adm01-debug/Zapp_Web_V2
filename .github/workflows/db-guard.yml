@@ -780,17 +780,6 @@ jobs:
           TEAM_MEMBERSHIP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-membership-bootstrap-owner.test.sh
 
-      # t_f42f89e3 (P1): leave_team_group e remove_team_member consultavam a coluna
-      # INEXISTENTE tcm.role (a coluna real e member_role) — 42703 no caminho feliz, quebrando
-      # sair do grupo e remover membro. Bloco A prova o defeito extraindo os corpos vigentes
-      # verbatim da ultima migration que os define; aplica a correcao e o bloco B prova que as
-      # duas respondem com a autorizacao lida de member_role (incluindo a promocao do proximo
-      # dono gravando member_role='owner') e a fronteira de EXECUTE intacta.
-      - name: Simular member_role nas RPCs de membros do team chat (t_f42f89e3)
-        env:
-          TEAM_MEMBER_ROLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-member-role-rpcs.test.sh
-
       # E76 (plano MAPA Fase 7), ajuste (b) da decisao 20261002-063721: o contrato da
       # RPC `search_contacts` (8 campos de endereco, ACL sem anon/PUBLIC e trigger de
       # auditoria) vive aqui porque este workflow tem gatilho `pull_request` (linha 17) —

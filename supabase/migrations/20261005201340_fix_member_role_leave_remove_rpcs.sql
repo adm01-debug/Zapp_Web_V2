@@ -13,10 +13,6 @@
 -- gravar `member_role = 'owner'` (antes gravava a coluna inexistente `role`).
 -- Corpos copiados verbatim de supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql
 -- (leave: linhas 996-1049; remove: linhas 1292-1344) — unica diferenca: o nome da coluna.
--- Rollback: CREATE OR REPLACE das duas funcoes com o corpo anterior (tcm.role / SET role = 'owner'),
---   copiado verbatim de 20261003272707_reconcile_local_replay_with_canonical.sql (linhas 996-1049 e
---   1292-1344); nao ha DDL destrutivo nesta migration, entao voltar e so recriar as duas funcoes.
-
 CREATE OR REPLACE FUNCTION public.leave_team_group(p_conversation_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
