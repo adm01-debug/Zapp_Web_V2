@@ -269,14 +269,19 @@ describe('useConversationActions', () => {
       expect(toast.success).not.toHaveBeenCalled();
     });
 
-    it('erro no insert do evento não rejeita: transferência já feita, avisa com mensagem distinta', async () => {
-      eventsInsertResult = { error: { message: 'falhou evento' } };
+    it('erro no insert do evento rejeita com o eventError: falha da transferência, nunca sucesso', async () => {
+      const eventError = { message: 'falhou evento' };
+      eventsInsertResult = { error: eventError };
       const { result } = await withProfileReady();
 
       await act(async () => {
-        await result.current.transferContact('contact-1', 'agent', 'agent-2', 'nota');
+        await expect(
+          result.current.transferContact('contact-1', 'agent', 'agent-2', 'nota')
+        ).rejects.toBe(eventError);
       });
 
+      // O update é idempotente e já rodou; o evento é o que falhou — a
+      // transferência precisa ser reportada como falha, não como sucesso.
       expect(contactsUpdateCalls).toEqual([{ assigned_to: 'agent-2' }]);
       expect(toast.error).toHaveBeenCalledWith('Conversa transferida, mas o registro do evento falhou');
       expect(toast.success).not.toHaveBeenCalled();

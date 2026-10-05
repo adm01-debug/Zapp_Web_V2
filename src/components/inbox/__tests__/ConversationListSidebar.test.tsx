@@ -165,8 +165,11 @@ describe('ConversationListSidebar — diálogo de Resolver/Transferir some com a
     expect(screen.queryByTestId('transfer-dialog')).not.toBeInTheDocument();
   });
 
-  it('falha na transferência mantém alvo e diálogo abertos; sucesso fecha', async () => {
-    const transferContact = vi.fn().mockRejectedValue(new Error('falhou'));
+  it('falha ao gravar o evento rejeita a promise e mantém alvo e diálogo abertos; sucesso fecha', async () => {
+    // Rejeição idêntica à que transferContact agora lança quando o insert em
+    // conversation_events falha (#88): falha da transferência, nunca sucesso.
+    const eventError = { message: 'Conversa transferida, mas o registro do evento falhou' };
+    const transferContact = vi.fn().mockRejectedValue(eventError);
     const props = baseProps([{ contact: { id: 'c1' } }]);
     props.conversationActions = {
       pinnedIds: new Set(),
@@ -187,16 +190,20 @@ describe('ConversationListSidebar — diálogo de Resolver/Transferir some com a
     fireEvent.click(screen.getByText('abrir-transferir-c1'));
     expect(screen.getByTestId('transfer-dialog')).toBeInTheDocument();
 
-    // Falha: transferContact rejeita → alvo e diálogo devem continuar abertos.
-    fireEvent.click(screen.getByText('confirmar-transferencia'));
-    await waitFor(() =>
-      expect(transferContact).toHaveBeenCalledWith('c1', 'queue', 'q1', 'nota de teste')
-    );
+    // A promise que o TransferDialog aguarda precisa REJEITAR com o eventError —
+    // se a sidebar engolisse a falha, o diálogo fecharia como se a transferência
+    // tivesse dado certo.
+    const onTransfer = transferDialogOnTransfer.current;
+    expect(onTransfer).toBeTypeOf('function');
+    await expect(onTransfer?.('queue', 'q1', 'nota de teste')).rejects.toBe(eventError);
+    expect(transferContact).toHaveBeenCalledWith('c1', 'queue', 'q1', 'nota de teste');
+
+    // Alvo e diálogo continuam abertos; nada de refetch.
     rerender(<ConversationListSidebar {...props} />);
     expect(screen.getByTestId('transfer-dialog')).toBeInTheDocument();
     expect(props.inbox.refetch).not.toHaveBeenCalled();
 
-    // Sucesso: aí sim o diálogo fecha.
+    // Sucesso: aí sim o diálogo fecha e o refetch acontece.
     transferContact.mockResolvedValue(undefined);
     fireEvent.click(screen.getByText('confirmar-transferencia'));
     await waitFor(() =>

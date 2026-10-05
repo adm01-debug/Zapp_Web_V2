@@ -193,7 +193,12 @@ export function useConversationActions() {
       ...(type === 'agent' ? { to_agent_id: targetId } : { to_queue_id: targetId }),
       ...(trimmedNote ? { metadata: { note: trimmedNote } } : {}),
     });
-    if (eventError) { toast.error('Conversa transferida, mas o registro do evento falhou'); return; }
+    if (eventError) {
+      // Falha ao gravar o evento é falha da transferência: rejeita (não resolve)
+      // para a sidebar manter diálogo/alvo abertos, e não sinaliza sucesso.
+      toast.error('Conversa transferida, mas o registro do evento falhou');
+      throw eventError;
+    }
     toast.success(type === 'agent' ? 'Chat transferido para outro atendente' : 'Chat transferido para outra fila');
   }, []);
 
