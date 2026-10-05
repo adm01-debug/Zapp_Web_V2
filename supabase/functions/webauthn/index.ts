@@ -29,24 +29,85 @@ function getRpId(origin: string): string {
   try { return new URL(origin).hostname; } catch { return 'localhost'; }
 }
 
-Deno.serve(async (req) => {
+// ── Seams de injeção (item 71 / R2-AUTH-002) ──────────────────────────────
+// O handler é exportado e recebe o client admin e os valores de env como
+// dependências: o teste exerce a lógica inteira (paginação do listUsers e a
+// localização do challenge por VALOR no verify-authentication) sem subir
+// servidor, sem banco e sem rede. Tipos estruturais mínimos — o client real do
+// supabase-js é convertido uma única vez na borda (import.meta.main).
+
+export interface QueryOutcome {
+  data: unknown;
+  error: unknown;
+}
+
+export interface PostgrestBuilderLike extends PromiseLike<QueryOutcome> {
+  select(columns?: string): PostgrestBuilderLike;
+  insert(values: unknown): PostgrestBuilderLike;
+  update(values: unknown): PostgrestBuilderLike;
+  delete(): PostgrestBuilderLike;
+  eq(column: string, value: unknown): PostgrestBuilderLike;
+  is(column: string, value: unknown): PostgrestBuilderLike;
+  or(filters: string): PostgrestBuilderLike;
+  order(column: string, opts?: { ascending?: boolean }): PostgrestBuilderLike;
+  limit(count: number): PostgrestBuilderLike;
+  single(): PromiseLike<QueryOutcome>;
+  maybeSingle(): PromiseLike<QueryOutcome>;
+}
+
+export interface AdminUserLike {
+  id: string;
+  email?: string | null;
+}
+
+export interface SupabaseAdminLike {
+  from(table: string): PostgrestBuilderLike;
+  rpc(fn: string, args?: Record<string, unknown>): PromiseLike<QueryOutcome>;
+  auth: {
+    admin: {
+      listUsers(opts: { page: number; perPage: number }): PromiseLike<{ data: { users: AdminUserLike[] }; error: unknown }>;
+      getUserById(id: string): PromiseLike<{ data: { user: AdminUserLike | null }; error: unknown }>;
+    };
+  };
+}
+
+export interface WebAuthnDeps {
+  supabaseAdmin: SupabaseAdminLike;
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+  /** Override do origin (testes); por padrão vem do header `origin` da Request. */
+  origin?: string;
+}
+
+interface ChallengeRow {
+  id: string;
+  challenge: string;
+  user_id: string | null;
+  expires_at: string | null;
+}
+
+interface StoredCredentialRow {
+  id: string;
+  user_id: string;
+  public_key: string;
+  counter: number | null;
+}
+
+export async function handleWebAuthn(req: Request, deps: WebAuthnDeps): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("webauthn");
 
   try {
-    const supabaseUrl = requireEnv('SUPABASE_URL');
-    const supabaseAnonKey = requireEnv('SUPABASE_ANON_KEY');
-    const supabaseServiceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = deps.supabaseAdmin;
 
     const rawBody = await req.json();
     const parsed = parseBody(WebAuthnActionSchema, rawBody);
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { action, userId, userEmail, userName, credential, friendlyName } = parsed.data;
-    const origin = req.headers.get('origin') || 'https://localhost';
+    const origin = deps.origin ?? req.headers.get('origin') ?? 'https://localhost';
     const rpId = getRpId(origin);
     const rpName = 'ZAPP Web';
 
@@ -55,7 +116,7 @@ Deno.serve(async (req) => {
     let authenticatedUserId: string | null = null;
 
     if (authHeader?.startsWith('Bearer ')) {
-      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      const supabaseAuth = createClient(deps.supabaseUrl, deps.supabaseAnonKey, {
         global: { headers: { Authorization: authHeader } },
       });
       const token = authHeader.replace('Bearer ', '');
@@ -75,7 +136,7 @@ Deno.serve(async (req) => {
         }
 
         const { data: existingCredentials } = await supabaseAdmin.from('passkey_credentials').select('credential_id').eq('user_id', userId);
-        const excludeCredentials = (existingCredentials || []).map(cred => ({
+        const excludeCredentials = ((existingCredentials ?? []) as Array<{ credential_id: string }>).map(cred => ({
           id: cred.credential_id, type: 'public-key', transports: ['internal', 'hybrid', 'usb', 'ble', 'nfc'],
         }));
 
@@ -101,9 +162,10 @@ Deno.serve(async (req) => {
           return errorResponse('Unauthorized: you can only verify passkeys for your own account', 403, req);
         }
 
-        const { data: challengeData, error: challengeError } = await supabaseAdmin
+        const { data: challengeRow, error: challengeError } = await supabaseAdmin
           .from('webauthn_challenges').select('challenge').eq('user_id', userId).eq('type', 'registration')
           .order('created_at', { ascending: false }).limit(1).single();
+        const challengeData = challengeRow as { challenge: string } | null;
 
         if (challengeError || !challengeData) return errorResponse('Challenge not found or expired', 400, req);
 
@@ -145,12 +207,23 @@ Deno.serve(async (req) => {
         let authUserId: string | null = null;
 
         if (userEmail) {
-          const { data: userData } = await supabaseAdmin.auth.admin.listUsers();
-          const user = userData?.users?.find(u => u.email === userEmail);
+          // admin.listUsers() pagina (50 por página por padrão): conta fora da
+          // 1ª página não era achada, authUserId ficava null e allowCredentials
+          // saía vazio. Percorre as páginas até achar o e-mail ou esgotar a
+          // lista (página curta/vazia encerra; o teto de 100 páginas é só
+          // proteção contra resposta patológica da API).
+          const perPage = 200;
+          let user: AdminUserLike | null = null;
+          for (let page = 1; page <= 100 && !user; page++) {
+            const { data: userData, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+            if (listError || !userData?.users?.length) break;
+            user = userData.users.find(u => u.email === userEmail) ?? null;
+            if (userData.users.length < perPage) break;
+          }
           if (user) {
             authUserId = user.id;
             const { data: credentials } = await supabaseAdmin.from('passkey_credentials').select('credential_id, transports').eq('user_id', user.id);
-            allowCredentials = (credentials || []).map(cred => ({
+            allowCredentials = ((credentials ?? []) as Array<{ credential_id: string; transports: string[] | null }>).map(cred => ({
               id: cred.credential_id, type: 'public-key', transports: cred.transports || ['internal', 'hybrid'],
             }));
           }
@@ -171,19 +244,41 @@ Deno.serve(async (req) => {
         const { id, response: credResponse } = cred;
         if (!id || !credResponse) return errorResponse('invalid credential payload', 400, req);
 
-        const { data: storedCred, error: credError } = await supabaseAdmin.from('passkey_credentials').select('*').eq('credential_id', id).single();
+        const { data: storedCredData, error: credError } = await supabaseAdmin.from('passkey_credentials').select('*').eq('credential_id', id).single();
+        const storedCred = storedCredData as StoredCredentialRow | null;
         if (credError || !storedCred) return errorResponse('Credential not found', 400, req);
 
-        const { data: challengeData } = await supabaseAdmin.from('webauthn_challenges')
-          .select('challenge, expires_at').eq('user_id', storedCred.user_id).eq('type', 'authentication')
-          .order('created_at', { ascending: false }).limit(1).single();
+        const cr = credResponse as Record<string, string>;
+
+        // O challenge vem do clientDataJSON assinado — não da linha "mais
+        // recente". Buscar por recência deixava um challenge antigo do próprio
+        // usuário (fluxo com e-mail abandonado) encobrir o anônimo e fazia
+        // logins simultâneos disputarem a mesma linha. A linha exata é a que
+        // guarda o valor que o autenticador assinou, do dono da credencial ou
+        // anônima (login discoverable grava com user_id NULL).
+        let clientChallenge: unknown;
+        try {
+          clientChallenge = (JSON.parse(new TextDecoder().decode(base64URLDecode(cr.clientDataJSON))) as { challenge?: unknown }).challenge;
+        } catch {
+          clientChallenge = undefined;
+        }
+        if (typeof clientChallenge !== 'string' || clientChallenge.length === 0) {
+          return errorResponse('Challenge not found or expired', 400, req);
+        }
+
+        const { data: challengeRow } = await supabaseAdmin.from('webauthn_challenges')
+          .select('id, challenge, user_id, expires_at')
+          .eq('type', 'authentication')
+          .eq('challenge', clientChallenge)
+          .or(`user_id.eq.${storedCred.user_id},user_id.is.null`)
+          .maybeSingle();
+        const challengeData = challengeRow as ChallengeRow | null;
 
         if (!challengeData) return errorResponse('Challenge not found or expired', 400, req);
         if (challengeData.expires_at && new Date(challengeData.expires_at).getTime() < Date.now()) {
           return errorResponse('Challenge expired', 400, req);
         }
 
-        const cr = credResponse as Record<string, string>;
         // R2-AUTH-001: verificação criptográfica completa (falha fechada). Só aceita
         // quando signature, authenticatorData e clientDataJSON são válidos em conjunto,
         // com challenge, origem, RP ID e assinatura conferidos contra a chave guardada.
@@ -204,7 +299,8 @@ Deno.serve(async (req) => {
         }
 
         await supabaseAdmin.from('passkey_credentials').update({ last_used_at: new Date().toISOString(), counter: result.newCounter }).eq('id', storedCred.id);
-        await supabaseAdmin.from('webauthn_challenges').delete().eq('user_id', storedCred.user_id).eq('type', 'authentication');
+        // Consome somente a linha localizada pelo challenge assinado.
+        await supabaseAdmin.from('webauthn_challenges').delete().eq('id', challengeData.id);
 
         const { data: userData } = await supabaseAdmin.auth.admin.getUserById(storedCred.user_id);
         log.done(200, { action });
@@ -219,4 +315,16 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: errorMessage });
     return errorResponse(errorMessage, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(async (req) => {
+    const supabaseUrl = requireEnv('SUPABASE_URL');
+    const supabaseAdmin = createClient(supabaseUrl, requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+    return handleWebAuthn(req, {
+      supabaseAdmin: supabaseAdmin as unknown as SupabaseAdminLike,
+      supabaseUrl,
+      supabaseAnonKey: requireEnv('SUPABASE_ANON_KEY'),
+    });
+  });
+}
