@@ -548,7 +548,21 @@ export async function handleMultiplixSend(
           const typingDelay = randomBetween(dispatch.typing_delay_min, dispatch.typing_delay_max);
 
           try {
-            await evoFetch(evolutionUrl, evolutionKey, `/chat/updatePresence/${initialInstanceId}`, { number: phone, presence: "composing" });
+            // MX07: a presenca tem de sair com a identidade da MESMA instancia que vai enviar
+            // (o adaptador faz o mesmo dentro do send). Antes ia so a key global e o evoFetch
+            // caia no EVOLUTION_INSTANCE_TOKEN — token da instancia PADRAO — para uma instancia
+            // qualquer; sem fallback, a presenca morria calada com 400.
+            const presenceToken = await resolveInstanceToken(initialInstanceId);
+            await evoFetch(
+              evolutionUrl,
+              evolutionKey,
+              `/chat/updatePresence/${initialInstanceId}`,
+              { number: phone, presence: "composing" },
+              undefined,
+              "POST",
+              undefined,
+              presenceToken ?? undefined,
+            );
           } catch { /* Presence e best-effort */ }
 
           await sleep(typingDelay);

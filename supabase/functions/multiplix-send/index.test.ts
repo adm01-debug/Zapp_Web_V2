@@ -849,6 +849,18 @@ Deno.test("MX07: o worker resolve o token da instância selecionada e envia com 
     chamadasGo.every((c) => c.apikey === "tok-instancia-xyz"),
     `todas as chamadas ao GO tem de levar o token da instancia: ${JSON.stringify(chamadasGo)}`,
   );
+  // Sao 2 presencas: a pre-envio do worker (acima) e a do proprio adaptador no
+  // send — antes da correcao so a do adaptador saia (a do worker morria no 400
+  // do evoFetch por falta de instanceToken).
+  const presencas = chamadasGo.filter((c) => c.url.endsWith("/message/presence"));
+  assert(
+    presencas.length === 2,
+    `a presenca pre-envio tem de sair com a identidade da instancia: ${JSON.stringify(chamadasGo.map((c) => c.url))}`,
+  );
+  assert(
+    presencas.every((c) => c.apikey === "tok-instancia-xyz"),
+    `presenca com credencial errada: ${JSON.stringify(presencas)}`,
+  );
 });
 
 Deno.test("MX07: instância sem token pausa com 'connection_lost' e nenhum POST sai (fail-closed)", async () => {
