@@ -14,7 +14,7 @@
  * `inbox.loadOlderMessages` — e que `hasOlderMessages=false` não oferece ação de
  * carga. Só o hook de dados é substituído; o caminho de componentes é o de produção.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -142,6 +142,19 @@ vi.mock('@/services/chat.service', () => ({
 
 import { RealtimeInboxView } from '../RealtimeInboxView';
 
+// O ChatPanel monta por lazy()+Suspense (RealtimeInboxView.tsx:28/271): sob carga
+// da suite completa o chunk pode resolver DEPOIS do timeout padrao de 1s do
+// findBy*, e a importacao tardia ainda vaza modulos reais (sem os vi.mock) para
+// fora do teste. Resolver o modulo aqui — com os mocks do arquivo ja ativos —
+// tira o timing do caminho e mantem o lazy de producao intacto.
+beforeAll(async () => {
+  await import('../ChatPanel');
+});
+
+// Espera folgada para o boundary lazy/Suspense mesmo em maquina lenta (o padrao
+// do Testing Library, 1000ms, estourou no integrador ~4x mais lento).
+const ESPERA_LAZY = { timeout: 10000, interval: 50 };
+
 const CONTACT_ID = 'contato-1';
 
 const conversation = {
@@ -225,7 +238,7 @@ describe('RealtimeInboxView — contrato de paginação da Inbox ativa (R2-INB-0
   it('leva o clique visível ao inbox.loadOlderMessages exatamente uma vez e reflete o loading', async () => {
     const { rerender } = renderInbox();
 
-    const botao = await screen.findByRole('button', { name: CARREGAR });
+    const botao = await screen.findByRole('button', { name: CARREGAR }, ESPERA_LAZY);
 
     fireEvent.click(botao);
     expect(mocks.loadOlderMessages).toHaveBeenCalledTimes(1);
@@ -234,7 +247,7 @@ describe('RealtimeInboxView — contrato de paginação da Inbox ativa (R2-INB-0
     mocks.inbox = { ...mocks.inbox, loadingOlderMessages: true };
     rerender();
 
-    const emCarga = await screen.findByRole('button', { name: CARREGAR });
+    const emCarga = await screen.findByRole('button', { name: CARREGAR }, ESPERA_LAZY);
     expect(emCarga).toBeDisabled();
     expect(emCarga).toHaveAttribute('aria-busy', 'true');
     expect(mocks.loadOlderMessages).toHaveBeenCalledTimes(1);
@@ -246,7 +259,7 @@ describe('RealtimeInboxView — contrato de paginação da Inbox ativa (R2-INB-0
 
     // Prova que a Inbox ativa montou (o painel da conversa está na árvore) e só então
     // que o controle de carga NÃO existe.
-    await screen.findByRole('log', { name: /mensagens da conversa/i });
+    await screen.findByRole('log', { name: /mensagens da conversa/i }, ESPERA_LAZY);
     expect(screen.queryByRole('button', { name: CARREGAR })).toBeNull();
     expect(mocks.loadOlderMessages).not.toHaveBeenCalled();
   });
