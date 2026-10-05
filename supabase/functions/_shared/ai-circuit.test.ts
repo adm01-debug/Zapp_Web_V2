@@ -27,7 +27,10 @@ import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asse
 import { generateWithRouting } from "./ai-generate.ts";
 
 const SUPABASE_URL = "https://projeto-teste.supabase.co";
-const PROVIDER_ID = "11111111-2222-4333-8444-555555555555";
+// A rota devolve letras maiúsculas de propósito: circuito e logger precisam
+// convergir para a mesma chave UUID canônica em minúsculas.
+const PROVIDER_ID = "A1111111-B222-4333-8444-55555555555F";
+const PROVIDER_KEY = PROVIDER_ID.toLowerCase();
 const PROVIDER_ENDPOINT = "https://provedor-teste.invalid/v1/chat/completions";
 const PROVEDOR = {
   id: PROVIDER_ID,
@@ -77,11 +80,18 @@ interface Contadores {
   provedor: number;
   sonda: number;
   leiturasLedger: number;
+  consultasLedger: string[];
   insertsLog: Array<Record<string, unknown>>;
 }
 
 function stubFetch(estado: EstadoStub): { contadores: Contadores; restaurar: () => void } {
-  const contadores: Contadores = { provedor: 0, sonda: 0, leiturasLedger: 0, insertsLog: [] };
+  const contadores: Contadores = {
+    provedor: 0,
+    sonda: 0,
+    leiturasLedger: 0,
+    consultasLedger: [],
+    insertsLog: [],
+  };
   const original = globalThis.fetch;
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
@@ -106,6 +116,7 @@ function stubFetch(estado: EstadoStub): { contadores: Contadores; restaurar: () 
     if (url.includes("/rest/v1/ai_usage_logs")) {
       if (metodo === "GET") {
         contadores.leiturasLedger++;
+        contadores.consultasLedger.push(url);
         return Promise.resolve(json(estado.ledger));
       }
       const corpo = init?.body ? JSON.parse(String(init.body)) : null;
@@ -115,6 +126,34 @@ function stubFetch(estado: EstadoStub): { contadores: Contadores; restaurar: () 
     return Promise.reject(new Error(`fetch nao esperado no teste: ${metodo} ${url}`));
   }) as typeof fetch;
   return { contadores, restaurar: () => { globalThis.fetch = original; } };
+}
+
+/** Prova o elo do circuito com o ledger real: mesma chave e só desfechos reais. */
+function assertConsultaLedger(contadores: Contadores): void {
+  assert(contadores.consultasLedger.length > 0, "o circuito tinha de consultar ai_usage_logs");
+  const consulta = new URL(contadores.consultasLedger.at(-1)!);
+  assertEquals(
+    consulta.searchParams.get("metadata->>provider_id"),
+    `eq.${PROVIDER_KEY}`,
+    "o GET precisa filtrar metadata.provider_id pela chave canônica do provedor",
+  );
+  assertEquals(
+    consulta.searchParams.get("status"),
+    "in.(success,error)",
+    "o GET precisa considerar somente os desfechos success/error do provedor",
+  );
+}
+
+/** Prova que todos os desfechos gravam a mesma chave que o circuito consulta. */
+function assertLogComProvider(contadores: Contadores, status: string): void {
+  const linha = contadores.insertsLog.find((item) => item?.status === status);
+  assert(linha, `faltou insert de ai_usage_logs com status ${status}`);
+  const metadata = linha.metadata as Record<string, unknown> | undefined;
+  assertEquals(
+    metadata?.provider_id,
+    PROVIDER_KEY,
+    `o log ${status} precisa gravar a mesma chave minúscula consultada pelo circuito`,
+  );
 }
 
 /** N linhas de erro consecutivas, a mais recente com `idadeMs` (ordem desc, como o select). */
@@ -169,6 +208,7 @@ Deno.test("IA-050: falhas repetidas na janela abrem o circuito — bloqueio sem 
       "com o circuito aberto NENHUMA chamada pode chegar ao provedor (sem fetch)",
     );
     assertEquals(contadores.sonda, 0, "circuito aberto não consome sonda — sonda é da meia-abertura");
+    assertConsultaLedger(contadores);
 
     // O bloqueio fica registrado como 'circuit_open' — não é falha do provedor.
     assertEquals(contadores.insertsLog.length, 1, "o bloqueio tinha de ser auditado no ledger");
@@ -177,6 +217,7 @@ Deno.test("IA-050: falhas repetidas na janela abrem o circuito — bloqueio sem 
       "circuit_open",
       "bloqueio de circuito não pode entrar como 'error' (senão alimenta o próprio limiar)",
     );
+    assertLogComProvider(contadores, "circuit_open");
   } finally {
     restaurar();
     restaurarEnv();
@@ -197,6 +238,8 @@ Deno.test("IA-050: poucas falhas NÃO abrem o circuito — o provedor é chamado
     assertEquals(resultado.ok, true, "provedor saudável tinha de responder normalmente");
     assertEquals(contadores.provedor, 1, "a chamada tinha de chegar ao provedor");
     assertEquals(contadores.sonda, 0, "circuito fechado não usa sonda");
+    assertConsultaLedger(contadores);
+    assertLogComProvider(contadores, "success");
   } finally {
     restaurar();
     restaurarEnv();
@@ -277,6 +320,8 @@ Deno.test("IA-050: sonda que FALHA reabre o circuito — a admissão seguinte j�
     assertEquals(sonda.ok, false, "a sonda falhou no provedor");
     assertEquals(sonda.response.status, 400, "o erro real do provedor atravessa para o chamador");
     assertEquals(contadores.provedor, 1, "a sonda foi tentada uma única vez");
+    assertConsultaLedger(contadores);
+    assertLogComProvider(contadores, "error");
 
     // O fracasso da sonda virou linha 'error' nova (mais recente): o circuito
     // volta a ABERTO e a admissão seguinte bloqueia sem fetch nem sonda.
