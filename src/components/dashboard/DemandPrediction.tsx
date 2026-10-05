@@ -13,46 +13,51 @@ import {
   ReferenceLine, Tooltip as RechartsTooltip,
 } from 'recharts';
 import { CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
-import { useDemandPrediction, PredictionPoint } from '@/hooks/business/useDemandPrediction';
+import { useDemandPrediction, useConfiguredDemandCapacity, PredictionPoint } from '@/hooks/business/useDemandPrediction';
 
 interface DemandPredictionProps {
   data?: PredictionPoint[];
+  /** Sobrescreve a capacidade configurada (global_settings.demand_capacity_per_hour). */
   currentCapacity?: number;
   className?: string;
 }
 
-export function DemandPrediction({ data: externalData, currentCapacity = 35, className }: DemandPredictionProps) {
-  const { data, insights } = useDemandPrediction(externalData, currentCapacity);
-  const [hoveredPoint, setHoveredPoint] = useState<PredictionPoint | null>(null);
+interface TooltipPayload { payload: PredictionPoint; }
 
-  interface TooltipPayload { payload: PredictionPoint; }
-
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipPayload[] }) => {
-    if (!active || !payload?.length) return null;
-    const point = payload[0].payload;
-    return (
-      <div className="bg-popover/95 backdrop-blur-sm border rounded-lg p-3 shadow-lg">
-        <div className="font-medium mb-1">{point.time}</div>
-        {point.actual !== undefined && (
+function DemandTooltip({ active, payload }: { active?: boolean; payload?: TooltipPayload[] }) {
+  if (!active || !payload?.length) return null;
+  const point = payload[0].payload;
+  return (
+    <div className="bg-popover/95 backdrop-blur-sm border rounded-lg p-3 shadow-lg">
+      <div className="font-medium mb-1">{point.time}</div>
+      {point.actual !== undefined && (
+        <div className="text-sm flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-primary" />
+          <span>Atual: {point.actual}</span>
+        </div>
+      )}
+      {point.isPrediction && (
+        <>
           <div className="text-sm flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-primary" />
-            <span>Atual: {point.actual}</span>
+            <span className="w-2 h-2 rounded-full bg-secondary" />
+            <span>Previsto: {point.predicted}</span>
           </div>
-        )}
-        {point.isPrediction && (
-          <>
-            <div className="text-sm flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-secondary" />
-              <span>Previsto: {point.predicted}</span>
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Intervalo: {point.lower} - {point.upper}
-            </div>
-          </>
-        )}
-      </div>
-    );
-  };
+          <div className="text-xs text-muted-foreground mt-1">
+            Faixa estimada: {point.lower} - {point.upper}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function DemandPrediction({ data: externalData, currentCapacity, className }: DemandPredictionProps) {
+  // Capacidade: prop > global_settings > nenhuma. Sem fonte configurada o
+  // componente não inventa número (o 35 fixo foi removido — DASH-CONTROLS-001).
+  const { data: configuredCapacity } = useConfiguredDemandCapacity();
+  const capacity = currentCapacity ?? configuredCapacity ?? undefined;
+  const { data, insights } = useDemandPrediction(externalData, capacity);
+  const [hoveredPoint, setHoveredPoint] = useState<PredictionPoint | null>(null);
 
   return (
     <Card className={className}>
@@ -71,8 +76,9 @@ export function DemandPrediction({ data: externalData, currentCapacity = 35, cla
               <Info className="w-4 h-4 text-muted-foreground" />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
-              Previsão baseada em padrões históricos e tendências sazonais. 
-              A área sombreada indica o intervalo de confiança de 95%.
+              Previsão baseada na média dos últimos 7 dias por horário.
+              A área sombreada é uma faixa estimada em torno da previsão
+              (heurística, sem calibração estatística).
             </TooltipContent>
           </Tooltip>
         </div>
@@ -86,9 +92,11 @@ export function DemandPrediction({ data: externalData, currentCapacity = 35, cla
           <InsightCard label="Pico Previsto" value={`${insights.maxPredicted} msgs`}
             subValue={`às ${insights.peakTime}`} icon={Clock} />
           <InsightCard label="Média Prevista" value={`${Math.round(insights.avgPredicted)} msgs`} icon={Minus} />
-          <InsightCard label="Capacidade" value={insights.capacityRisk ? 'Em Risco' : 'OK'}
-            icon={insights.capacityRisk ? AlertTriangle : TrendingUp}
-            color={insights.capacityRisk ? 'text-destructive' : 'text-success'}
+          <InsightCard label="Capacidade"
+            value={!insights.capacityConfigured ? 'Não configurada' : insights.capacityRisk ? 'Em Risco' : 'OK'}
+            subValue={insights.capacityConfigured ? `${capacity} msgs/h` : 'defina demand_capacity_per_hour'}
+            icon={!insights.capacityConfigured ? Minus : insights.capacityRisk ? AlertTriangle : TrendingUp}
+            color={!insights.capacityConfigured ? 'text-muted-foreground' : insights.capacityRisk ? 'text-destructive' : 'text-success'}
             alert={insights.capacityRisk} />
         </div>
 
@@ -112,9 +120,11 @@ export function DemandPrediction({ data: externalData, currentCapacity = 35, cla
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
               <XAxis dataKey="time" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
               <YAxis className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-              <RechartsTooltip content={<CustomTooltip />} />
-              <ReferenceLine y={currentCapacity} stroke="hsl(var(--destructive))" strokeDasharray="5 5"
-                label={{ value: 'Capacidade', position: 'right', fill: 'hsl(var(--destructive))', fontSize: CHART_LABEL_FONT_SIZE }} />
+              <RechartsTooltip content={<DemandTooltip />} />
+              {capacity !== undefined && (
+                <ReferenceLine y={capacity} stroke="hsl(var(--destructive))" strokeDasharray="5 5"
+                  label={{ value: 'Capacidade', position: 'right', fill: 'hsl(var(--destructive))', fontSize: CHART_LABEL_FONT_SIZE }} />
+              )}
               <Area type="monotone" dataKey="upper" stroke="transparent" fill="url(#confidenceGradient)" fillOpacity={1} />
               <Area type="monotone" dataKey="lower" stroke="transparent" fill="hsl(var(--background))" fillOpacity={1} />
               <Area type="monotone" dataKey="actual" stroke="hsl(var(--primary))" strokeWidth={2}
@@ -129,8 +139,10 @@ export function DemandPrediction({ data: externalData, currentCapacity = 35, cla
         <div className="flex items-center justify-center gap-6 mt-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2"><div className="w-3 h-0.5 bg-primary" /><span>Dados Reais</span></div>
           <div className="flex items-center gap-2"><div className="w-3 h-0.5 bg-secondary border-dashed border-t-2 border-secondary" /><span>Média 7 dias</span></div>
-          <div className="flex items-center gap-2"><div className="w-3 h-3 bg-secondary/20 rounded" /><span>Intervalo de Confiança</span></div>
-          <div className="flex items-center gap-2"><div className="w-3 h-0.5 bg-destructive border-dashed border-t-2 border-destructive" /><span>Capacidade Máxima</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 bg-secondary/20 rounded" /><span>Faixa estimada (heurística)</span></div>
+          {capacity !== undefined && (
+            <div className="flex items-center gap-2"><div className="w-3 h-0.5 bg-destructive border-dashed border-t-2 border-destructive" /><span>Capacidade Máxima</span></div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -17,21 +16,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Calendar, Activity, TrendingUp, Flame } from 'lucide-react';
-import { format, subDays, startOfWeek, eachDayOfInterval, isSameDay, getDay } from 'date-fns';
+import { format, subDays, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
-
-interface ActivityData {
-  date: Date;
-  count: number;
-  level: 0 | 1 | 2 | 3 | 4;
-}
+import { useActivityHeatmapData, type ActivityData, type ActivityMetric, type ActivityPeriod } from '@/hooks/analytics/useActivityHeatmapData';
 
 interface ActivityHeatmapProps {
   title?: string;
   data?: ActivityData[];
-  metric?: 'messages' | 'conversations' | 'resolutions';
+  metric?: ActivityMetric;
 }
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -49,47 +41,12 @@ export const ActivityHeatmap = ({
   data: propData,
   metric = 'messages',
 }: ActivityHeatmapProps) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<'3m' | '6m' | '1y'>('3m');
+  const [selectedPeriod, setSelectedPeriod] = useState<ActivityPeriod>('3m');
   const [hoveredDay, setHoveredDay] = useState<ActivityData | null>(null);
 
-  // Fetch real activity data from messages table
-  const { data: realData } = useQuery({
-    queryKey: ['activity-heatmap', selectedPeriod, metric],
-    queryFn: async () => {
-      const days = selectedPeriod === '3m' ? 90 : selectedPeriod === '6m' ? 180 : 365;
-      const startDate = subDays(new Date(), days);
-      
-      const { data: messages, error } = await supabase
-        .from('messages')
-        .select('created_at')
-        .gte('created_at', startDate.toISOString());
-      
-      if (error) throw error;
-      
-      // Group by day
-      const dayCounts = new Map<string, number>();
-      (messages || []).forEach(m => {
-        const dateKey = format(new Date(m.created_at), 'yyyy-MM-dd');
-        dayCounts.set(dateKey, (dayCounts.get(dateKey) || 0) + 1);
-      });
-      
-      const endDate = new Date();
-      return eachDayOfInterval({ start: startDate, end: endDate }).map(date => {
-        const dateKey = format(date, 'yyyy-MM-dd');
-        const count = dayCounts.get(dateKey) || 0;
-        
-        let level: 0 | 1 | 2 | 3 | 4 = 0;
-        if (count > 0) level = 1;
-        if (count > 20) level = 2;
-        if (count > 50) level = 3;
-        if (count > 80) level = 4;
-
-        return { date, count, level };
-      });
-    },
-    staleTime: 5 * 60 * 1000,
-    enabled: !propData,
-  });
+  // A métrica decide a fonte de verdade (messages/conversations/resolutions) —
+  // antes o queryFn ignorava `metric` e sempre contava mensagens.
+  const { data: realData } = useActivityHeatmapData(selectedPeriod, metric, !propData);
 
   // Use provided data, real data, or empty array
   const data = useMemo(() => {
@@ -181,7 +138,7 @@ export const ActivityHeatmap = ({
             <Activity className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">{title}</CardTitle>
           </div>
-          <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as '3m' | '6m' | '1y')}>
+          <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as ActivityPeriod)}>
             <SelectTrigger className="w-[100px]">
               <SelectValue />
             </SelectTrigger>

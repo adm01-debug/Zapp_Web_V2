@@ -4,6 +4,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { cn } from '@/lib/utils';
 import { useSatisfactionBreakdown } from '@/hooks/business/useCSAT';
 import { useNPSSurveys } from '@/hooks/business/useNPSSurveys';
+import { npsTimelineByDay, buildEvolutionSeries } from '@/lib/satisfaction-series';
 import { DashboardCard, SectionHeader, CardSelect, PrimaryButton, InitialsAvatar } from './overview/DashboardCard';
 import { DashboardKpiCard } from './overview/DashboardKpiCard';
 import { CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
@@ -66,10 +67,11 @@ export function SatisfactionMetrics() {
 
   // `t.date` já vem formatado ('dd/MM') de useSatisfactionBreakdown — não é ISO,
   // reformatar com date-fns aqui lança RangeError (Invalid time value).
-  const timelineData = (breakdown?.timeline ?? []).map(t => ({
-    date: t.date,
-    CSAT: t.csatPercent != null ? Math.round(t.csatPercent) : null,
-  }));
+  const npsByDay = useMemo(
+    () => npsTimelineByDay(npsSurveys ?? [], periodDays, now),
+    [npsSurveys, periodDays, now],
+  );
+  const timelineData = buildEvolutionSeries(breakdown?.timeline ?? [], npsByDay);
 
   const distributionData = (breakdown?.distribution ?? []).map(d => ({
     nota: `Nota ${d.rating}`, count: d.count,
@@ -161,9 +163,17 @@ export function SatisfactionMetrics() {
                   <LineChart data={timelineData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.4)" vertical={false} />
                     <XAxis dataKey="date" tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} />
+                    {/* Com NPS junto o eixo precisa cobrir −100..100 (NPS real vai
+                        abaixo de zero); só CSAT fica 0..100. Sem isso a série
+                        negativa clipava fora da área de plotagem. */}
+                    <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false}
+                      domain={chartMode === 'both' ? [-100, 100] : [0, 100]}
+                      ticks={chartMode === 'both' ? [-100, -50, 0, 50, 100] : [0, 25, 50, 75, 100]} />
                     <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
                     <Line type="monotone" dataKey="CSAT" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: 'hsl(var(--primary))' }} connectNulls />
+                    {chartMode === 'both' && (
+                      <Line type="monotone" dataKey="NPS" stroke="hsl(var(--dash-green))" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: 'hsl(var(--dash-green))' }} connectNulls />
+                    )}
                   </LineChart>
                 </ResponsiveContainer>
               )}
