@@ -106,3 +106,16 @@ node scripts/ci/bundle-budget.mjs
 # ou com caminhos customizados:
 node scripts/ci/bundle-budget.mjs --dist dist --budget performance-budget.json
 ```
+
+## Drift do mapa do Dashboard
+
+`dashboard-readme-drift.unit.mjs` e uma guarda de documentacao: falha se
+`docs/dashboard/README.md` apontar para arquivo que nao existe (ex.: plano de 50 etapas
+que nunca esteve no repositorio) ou voltar a descrever o codigo como ele ja nao e
+(ranking sem recorte de periodo, relatorios agendados nao owner-only, leitura direta de
+`audit_logs` negada). Cada assercao tem uma ancora no codigo/migration correspondente,
+entao a guarda tambem acusa quando o codigo muda e o README fica para tras.
+
+```sh
+node --test scripts/ci/dashboard-readme-drift.unit.mjs
+```
