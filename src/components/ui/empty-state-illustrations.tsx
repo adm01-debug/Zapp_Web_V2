@@ -118,25 +118,6 @@ export const illustrations: Record<string, React.ReactNode> = {
       <motion.text x="152" y="88" className="fill-muted-foreground/20 text-xl font-bold" animate={{ opacity: [0.2, 0.6, 0.2], y: [88, 82, 88] }} transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}>?</motion.text>
     </svg>
   ),
-  tags: (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
-      <motion.g animate={{ y: [0, -10, 0], rotate: [-5, 5, -5] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ transformOrigin: '80px 74px' }}>
-        <rect x="48" y="58" width="64" height="32" rx="16" className="fill-primary/30" />
-        <circle cx="66" cy="74" r="6" className="fill-primary/50" />
-        <rect x="78" y="70" width="28" height="5" rx="2.5" className="fill-primary/40" />
-      </motion.g>
-      <motion.g animate={{ y: [0, -8, 0], rotate: [3, -3, 3] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }} style={{ transformOrigin: '118px 108px' }}>
-        <rect x="88" y="94" width="60" height="28" rx="14" className="fill-secondary/30" />
-        <circle cx="104" cy="108" r="5" className="fill-secondary/50" />
-        <rect x="114" y="104" width="24" height="5" rx="2.5" className="fill-secondary/40" />
-      </motion.g>
-      <motion.g animate={{ y: [0, -6, 0], rotate: [-2, 4, -2] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }} style={{ transformOrigin: '95px 40px' }}>
-        <rect x="68" y="28" width="54" height="24" rx="12" className="fill-muted/50" />
-        <circle cx="82" cy="40" r="5" className="fill-muted-foreground/30" />
-        <rect x="92" y="36" width="22" height="4" rx="2" className="fill-muted-foreground/20" />
-      </motion.g>
-    </svg>
-  ),
   transcriptions: (
     <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
       <motion.rect x="48" y="28" width="104" height="104" rx="10" className="fill-muted stroke-border" strokeWidth="2" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.4 }} />

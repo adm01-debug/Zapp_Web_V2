@@ -6,7 +6,7 @@ import { ArrowRight, ExternalLink, HelpCircle, Inbox } from 'lucide-react';
 import { contextConfigs } from './contextConfigs';
 
 interface ContextualEmptyStateProps {
-  context: 'inbox' | 'contacts' | 'queues' | 'agents' | 'tags' | 'transcriptions' | 'dashboard' | 'search' | 'notifications' | 'calls' | 'wallet' | 'messages';
+  context: 'inbox' | 'contacts' | 'queues' | 'agents' | 'transcriptions' | 'dashboard' | 'search' | 'notifications' | 'calls' | 'wallet' | 'messages';
   title?: string;
   description?: string;
   onPrimaryAction?: () => void;

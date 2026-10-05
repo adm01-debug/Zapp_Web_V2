@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {
-  MessageSquare, Users, BarChart3, Phone, Tag, Inbox,
+  MessageSquare, Users, BarChart3, Phone, Inbox,
   FileText, Bell, Search, Plus, Upload, Link2, UserPlus,
   Settings, Wand2, RefreshCw, Filter, Zap, HelpCircle,
 } from 'lucide-react';
@@ -53,14 +53,6 @@ export const contextConfigs: Record<string, ContextConfig> = {
     primaryAction: { label: 'Convidar agente', icon: <UserPlus className="w-4 h-4 mr-2" /> },
     secondaryAction: { label: 'Configurar permissões', icon: <Settings className="w-4 h-4 mr-2" /> },
     helpText: 'Agentes podem atender conversas nas filas que você atribuir.',
-  },
-  tags: {
-    icon: Tag,
-    title: 'Nenhuma etiqueta criada',
-    description: 'Etiquetas ajudam a organizar e filtrar conversas rapidamente.',
-    primaryAction: { label: 'Criar etiqueta', icon: <Plus className="w-4 h-4 mr-2" /> },
-    secondaryAction: { label: 'Importar etiquetas', icon: <Upload className="w-4 h-4 mr-2" /> },
-    helpText: 'Use cores diferentes para identificar categorias visualmente.',
   },
   transcriptions: {
     icon: FileText,

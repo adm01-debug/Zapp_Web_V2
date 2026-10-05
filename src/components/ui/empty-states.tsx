@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
 import { 
-  MessageSquare, Users, BarChart3, Phone, Tag, Inbox,
+  MessageSquare, Users, BarChart3, Phone, Inbox,
   FileText, Bell, Search, Plus, ArrowRight, Sparkles
 } from 'lucide-react';
 import { illustrations } from './empty-state-illustrations';
@@ -14,7 +14,6 @@ const contextIcons = {
   contacts: Users,
   dashboard: BarChart3,
   calls: Phone,
-  tags: Tag,
   search: Search,
   notifications: Bell,
   generic: Inbox,
@@ -171,15 +170,6 @@ export function SearchEmptyState({ query }: { query?: string }) {
 
 export function NotificationsEmptyState() {
   return <EmptyState context="notifications" title="Você está em dia!" description="Nenhuma notificação no momento. Novas atualizações aparecerão aqui." compact />;
-}
-
-export function TagsEmptyState({ onCreateTag }: { onCreateTag?: () => void }) {
-  return (
-    <EmptyState context="tags" title="Nenhuma etiqueta criada"
-      description="Crie etiquetas para organizar e categorizar suas conversas e contatos."
-      action={onCreateTag ? { label: 'Criar etiqueta', onClick: onCreateTag, icon: <Tag className="w-4 h-4 mr-2" /> } : undefined}
-    />
-  );
 }
 
 export function CallsEmptyState() {
