@@ -4,9 +4,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { type StickerItem, type PendingUpload, CATEGORY_LABELS } from '@/components/inbox/stickers/StickerTypes';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
+import { SUPABASE_URL } from '@/config/supabase';
+import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 
 const log = getLogger('StickerPicker');
 const RECENT_LIMIT = 8;
+
+const STICKER_BUCKET = 'stickers';
+const STORAGE_ORIGINS = [new URL(SUPABASE_URL).origin] as const;
+
+/**
+ * Só um objeto reconhecidamente do bucket próprio `stickers` pode ser removido
+ * fisicamente. Objeto de `whatsapp-media` (mídia do balão), de outro bucket, de
+ * origem externa ou URL malformada é preservado — a linha do catálogo sai de
+ * qualquer forma. Item #92: excluir figurinha nunca pode apagar a mídia original.
+ */
+export function resolveOwnStickerObjectPath(imageUrl: string): string | null {
+  const reference = parseSupabaseStorageObjectUrl(imageUrl, [STICKER_BUCKET], STORAGE_ORIGINS);
+  return reference ? reference.path : null;
+}
 
 export function useStickerPicker(onSendSticker: (url: string) => void) {
   const [open, setOpen] = useState(false);
@@ -96,8 +112,8 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
 
   const handleDelete = async (e: React.MouseEvent, sticker: StickerItem) => {
     e.stopPropagation(); setStickers(prev => prev.filter(s => s.id !== sticker.id));
-    if (sticker.image_url.includes('/whatsapp-media/')) { const path = sticker.image_url.split('/whatsapp-media/')[1]; if (path) await supabase.storage.from('whatsapp-media').remove([path]); }
-    else { const path = sticker.image_url.split('/stickers/')[1]; if (path) await supabase.storage.from('stickers').remove([path]); }
+    const ownObjectPath = resolveOwnStickerObjectPath(sticker.image_url);
+    if (ownObjectPath) await supabase.storage.from(STICKER_BUCKET).remove([ownObjectPath]);
     await supabase.from('stickers').delete().eq('id', sticker.id); toast.success('Figurinha removida');
   };
 
