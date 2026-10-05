@@ -348,9 +348,9 @@ describe('TalkMeView', () => {
     const ctrl = controller();
     renderView(ctrl);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ver as 2 mensagens do cliente' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver histórico (2 mensagens pendentes)' }));
 
-    const dialog = await screen.findByRole('dialog', { name: 'Mensagens aguardando resposta' });
+    const dialog = await screen.findByRole('dialog', { name: 'Histórico antes do aceite' });
     await waitFor(() => expect(within(dialog).getByText('Bom dia, ainda estou aguardando retorno')).toBeInTheDocument());
     expect(ctrl.fetchPendingMessages).toHaveBeenCalledWith('contact-1');
     expect(ctrl.claim).not.toHaveBeenCalled();
@@ -361,21 +361,26 @@ describe('TalkMeView', () => {
     expect(within(items[1]).getByText('Preciso de cem caixas')).toBeInTheDocument();
   });
 
-  it('distingue a origem de cada mensagem do histórico', async () => {
+  it('distingue campanha de saída, mensagens do cliente e nota interna no histórico', async () => {
     const mixed: TalkMePendingMessage[] = [
-      { ...pendingMessages[0], sender: 'agent', content: 'Campanha de reativação enviada' },
+      { ...pendingMessages[0], messageId: 'campaign-1', sender: 'agent', content: 'Campanha de reativação enviada' },
+      pendingMessages[0],
+      { ...pendingMessages[0], messageId: 'note-1', sender: 'system', content: 'Nota interna durante a espera' },
       pendingMessages[1],
     ];
     const ctrl = controller({ fetchPendingMessages: vi.fn(async () => mixed) });
     renderView(ctrl);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ver as 2 mensagens do cliente' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver histórico (2 mensagens pendentes)' }));
 
-    const dialog = await screen.findByRole('dialog', { name: 'Mensagens aguardando resposta' });
+    const dialog = await screen.findByRole('dialog', { name: 'Histórico antes do aceite' });
     const items = await within(dialog).findAllByRole('listitem');
     expect(within(items[0]).getByText('Saída')).toBeInTheDocument();
     expect(within(items[0]).getByText('Campanha de reativação enviada')).toBeInTheDocument();
     expect(within(items[1]).getByText('Cliente')).toBeInTheDocument();
+    expect(within(items[2]).getByText('Sistema')).toBeInTheDocument();
+    expect(within(items[2]).getByText('Nota interna durante a espera')).toBeInTheDocument();
+    expect(within(items[3]).getByText('Cliente')).toBeInTheDocument();
   });
 
   it('oferece nova tentativa quando o histórico falha', async () => {
@@ -385,9 +390,9 @@ describe('TalkMeView', () => {
     const ctrl = controller({ fetchPendingMessages });
     renderView(ctrl);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ver as 2 mensagens do cliente' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver histórico (2 mensagens pendentes)' }));
 
-    const dialog = await screen.findByRole('dialog', { name: 'Mensagens aguardando resposta' });
+    const dialog = await screen.findByRole('dialog', { name: 'Histórico antes do aceite' });
     await waitFor(() => expect(within(dialog).getByRole('alert')).toHaveTextContent('Não foi possível carregar as mensagens.'));
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Tentar novamente' }));
@@ -399,7 +404,7 @@ describe('TalkMeView', () => {
   it('não oferece histórico quando só a última mensagem está pendente', () => {
     renderView(controller({ items: [second], totalCount: 1 }));
 
-    expect(screen.queryByRole('button', { name: /Ver as \d+ mensagens do cliente/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Ver histórico \(\d+ mensagens pendentes\)/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Aceitar e conversar' })).toBeInTheDocument();
   });
 

@@ -646,7 +646,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                         className="h-9 w-full rounded-full border-white/15 bg-black/60 px-5 text-xs font-semibold text-zinc-100 hover:bg-zinc-900"
                       >
                         <History className="mr-2 h-4 w-4" />
-                        Ver as {activeItem.pendingMessageCount} mensagens do cliente
+                        Ver histórico ({activeItem.pendingMessageCount} mensagens pendentes)
                       </Button>
                     )}
                   </div>
@@ -780,9 +780,9 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
           aria-describedby="talk-me-history-description"
           className="flex max-h-[80dvh] w-[calc(100vw-32px)] max-w-lg flex-col gap-3 overflow-hidden rounded-2xl"
         >
-          <DialogTitle className="text-lg font-black tracking-tight">Mensagens aguardando resposta</DialogTitle>
+          <DialogTitle className="text-lg font-black tracking-tight">Histórico antes do aceite</DialogTitle>
           <DialogDescription id="talk-me-history-description" className="text-xs">
-            Histórico do cliente antes do aceite. A leitura não assume o atendimento nem marca as mensagens como lidas.
+            Saídas, mensagens do cliente e notas internas do bloco pendente. A leitura não assume o atendimento nem marca mensagens como lidas.
           </DialogDescription>
 
           {pendingHistory?.status === 'loading' && (
@@ -806,7 +806,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                 Não há mensagens pendentes para este atendimento.
               </p>
             ) : (
-              <ol aria-label="Mensagens do cliente aguardando resposta" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+              <ol aria-label="Histórico do bloco pendente" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
                 {pendingHistory.messages.map((message) => (
                   <li key={message.messageId} className="rounded-xl border border-border/60 bg-muted/35 p-3">
                     <div className="mb-1 flex items-center justify-between gap-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground">
