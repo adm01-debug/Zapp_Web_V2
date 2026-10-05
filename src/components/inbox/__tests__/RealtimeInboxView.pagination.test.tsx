@@ -142,6 +142,16 @@ vi.mock('@/services/chat.service', () => ({
 
 import { RealtimeInboxView } from '../RealtimeInboxView';
 
+// Pré-carrega o MESMO módulo que o `React.lazy` de RealtimeInboxView importa
+// (RealtimeInboxView.tsx:28). Sem isto o import dinâmico transforma o ChatPanel
+// DURANTE a renderização: sob a suíte completa essa transformação estoura o
+// timeout padrão (1s) do `findByRole`, a árvore fica presa no <ChatFallback/> e
+// o teste falha por timing, não por contrato. Pré-carregar tira a transformação
+// da janela do findBy — sem aumentar timeout global e sem afrouxar assert: o
+// caminho de componentes segue o de produção (RealtimeInboxView -> ChatPanel ->
+// ChatMessagesArea), só o carregamento do módulo deixa de ser assíncrono.
+import '../ChatPanel';
+
 const CONTACT_ID = 'contato-1';
 
 const conversation = {
