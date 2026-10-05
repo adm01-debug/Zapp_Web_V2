@@ -18,11 +18,19 @@ import {
 // Login server-side (ADR-006): o lockout e decidido aqui, para qualquer cliente.
 // 1. politica de rede (R2-AUTH-022) antes de qualquer efeito;
 // 2. conta travada -> 423 sem tocar no GoTrue;
-// 3. GoTrue recusa -> a falha e registrada (comprovada pelo proprio GoTrue) -> 401;
-// 4. GoTrue aceita -> tentativas zeradas -> 200 com a sessao; o front faz setSession.
+// 3. perfil inativo/ausente (R2-AUTH-004) -> 401 generico sem tocar no GoTrue;
+// 4. GoTrue recusa -> a falha e registrada (comprovada pelo proprio GoTrue) -> 401;
+// 5. GoTrue aceita -> tentativas zeradas -> 200 com a sessao; o front faz setSession.
 // verify_jwt = false: ainda nao existe sessao. Rate limit por IP e por e-mail.
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@.]{2,63}$/;
+
+// profiles.email nao tem UNIQUE nem normalizacao garantida no banco, entao o
+// lookup e ilike (case-insensitive) com curingas escapados: match EXATO, sem
+// `%`/`_`/`\` do e-mail virarem pattern.
+function escapeIlikeExact(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
 
 type LockRow = { is_locked: boolean; locked_until: string | null; attempts: number };
 
@@ -63,8 +71,24 @@ export interface LoginAnonClient {
   };
 }
 
+/**
+ * Consulta estreita de perfil (R2-AUTH-004): só a cadeia necessária para checar
+ * `is_active` pelo e-mail — `from → select → ilike → limit` resolvendo em
+ * `{ data, error }`. Tipo estrutural de propósito: o client service_role real e
+ * o fake do teste satisfazem a mesma forma, sem `any`.
+ */
+export interface ProfileLookupClient {
+  from: (table: string) => {
+    select: (columns: string) => {
+      ilike: (column: string, pattern: string) => {
+        limit: (count: number) => PromiseLike<{ data: unknown; error: unknown }>;
+      };
+    };
+  };
+}
+
 export interface AuthLoginDeps {
-  admin: NetworkPolicyRpcClient;
+  admin: NetworkPolicyRpcClient & ProfileLookupClient;
   anon: LoginAnonClient;
   enforceRateLimit: (
     key: string,
@@ -146,6 +170,42 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     if (lockRow?.is_locked) {
       log.done(423, { attempts: lockRow.attempts });
       return jsonResponse({ error: "Account locked", ...lockPayload(lockRow) }, 423, req);
+    }
+
+    // R2-AUTH-004: perfil inativo nao autentica, mesmo com senha correta. A
+    // consulta (service_role, RLS nao se aplica) resolve pelo e-mail ja
+    // normalizado — ilike escapado cobre valor gravado em outra caixa — e o
+    // array e tratado explicitamente (maybeSingle estouraria em duplicata):
+    //   erro na consulta      -> 500 fail-closed, sem tocar no GoTrue;
+    //   0 linhas / inativo    -> 401 identico a credencial invalida;
+    //   mais de 1 linha       -> integridade violada: 500 fail-closed.
+    // Em nenhum dos ramos ha tokens na resposta nem sinal que diferencie conta
+    // existente-inativa de conta inexistente.
+    const { data: profileData, error: profileError } = await deps.admin
+      .from("profiles")
+      .select("id, is_active")
+      .ilike("email", escapeIlikeExact(email))
+      .limit(2);
+    if (profileError) {
+      log.error("profile lookup failed", { code: rpcErrorCode(profileError) });
+      return errorResponse("Internal error", 500, req);
+    }
+    const profileRows = (Array.isArray(profileData) ? profileData : []) as Array<{
+      id: string;
+      is_active: boolean | null;
+    }>;
+    if (profileRows.length > 1) {
+      log.error("profile lookup ambiguous", { count: profileRows.length });
+      return errorResponse("Internal error", 500, req);
+    }
+    const profile = profileRows[0];
+    if (!profile || profile.is_active !== true) {
+      log.done(401, { profile: "missing_or_inactive" });
+      return jsonResponse(
+        { error: "Invalid login credentials", ...lockPayload(null) },
+        401,
+        req,
+      );
     }
 
     const { data: signIn, error: signInError } = await deps.anon.auth.signInWithPassword({ email, password });

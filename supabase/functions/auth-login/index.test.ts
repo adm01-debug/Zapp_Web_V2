@@ -40,16 +40,42 @@ function get(): Request {
   return new Request(URL, { method: "GET" });
 }
 
-/** Fake do client service_role: registra cada RPC e devolve o resultado scriptado. */
-function fakeAdmin(policy: { data: unknown; error: unknown }, extra: Record<string, { data: unknown; error: unknown }> = {}) {
+/** Fake do client service_role: registra cada RPC e devolve o resultado scriptado.
+ *  Também responde a chain `.from("profiles").select(...).ilike(...).limit(...)`
+ *  do R2-AUTH-004 (registrada em `fromCalls`, separada de `calls` porque `from`
+ *  não é `rpc`). DEFAULT do profile = um perfil ATIVO, para que os testes que
+ *  chegam ao signIn sigam passando sem edição de asserção. */
+function fakeAdmin(
+  policy: { data: unknown; error: unknown },
+  extra: Record<string, { data: unknown; error: unknown }> = {},
+  profile: { data: unknown; error: unknown } = { data: [{ id: "p1", is_active: true }], error: null },
+) {
   const calls: Array<{ fn: string; args: Record<string, unknown> }> = [];
+  const fromCalls: Array<{ table: string; columns: string; ilike: { column: string; pattern: string }; limit: number }> = [];
   return {
     calls,
+    fromCalls,
     rpc(fn: string, args: Record<string, unknown>) {
       calls.push({ fn, args });
       if (fn === "resolve_network_policy") return Promise.resolve(policy);
       if (fn in extra) return Promise.resolve(extra[fn]);
       return Promise.resolve({ data: null, error: { message: `unexpected rpc ${fn}` } });
+    },
+    from(table: string) {
+      return {
+        select(columns: string) {
+          return {
+            ilike(column: string, pattern: string) {
+              return {
+                limit(count: number) {
+                  fromCalls.push({ table, columns, ilike: { column, pattern }, limit: count });
+                  return Promise.resolve(profile);
+                },
+              };
+            },
+          };
+        },
+      };
     },
   };
 }
@@ -86,6 +112,8 @@ function fakeRateLimit(allowed = true) {
 const POLICY_DENY_IP = { data: [{ allowed: false, reason: "ip_blocked", rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null };
 const POLICY_DENY_COUNTRY = { data: [{ allowed: false, reason: "country_blocked", rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null };
 const POLICY_ERROR = { data: null, error: { message: "connection reset" } };
+const POLICY_ALLOW = { data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null };
+const UNLOCKED = { is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null } };
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -255,4 +283,170 @@ Deno.test("falha no signIn registra tentativa e devolve 401", async () => {
   assertEquals((await res.json()).error, "Invalid login credentials");
   assertEquals(anon.calls.length, 1);
   assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), true);
+});
+
+// ── R2-AUTH-004 — bloqueio de login de perfil inativo ─────────────────────────
+// A checagem de `profiles.is_active` acontece DEPOIS do lockout e ANTES do
+// signInWithPassword: perfil ausente/inativo devolve o MESMO 401 genérico de
+// credencial inválida (sem tokens, sem revelar existência/status da conta) e
+// nunca toca o GoTrue; falha ou e-mail duplicado na consulta falha fechado (500).
+
+Deno.test("perfil inativo com senha correta não emite sessão (401 genérico)", async () => {
+  const admin = fakeAdmin(POLICY_ALLOW, UNLOCKED, {
+    data: [{ id: "p1", is_active: false }],
+    error: null,
+  });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 401);
+  const body = await res.json();
+  assertEquals(body.error, "Invalid login credentials"); // indistinguível de senha errada
+  assertEquals(body.access_token, undefined);
+  assertEquals(body.refresh_token, undefined);
+
+  // O perfil foi consultado por e-mail, mas o GoTrue NUNCA foi chamado e
+  // nenhuma tentativa foi registrada/zerada.
+  assertEquals(admin.fromCalls.length, 1);
+  assertEquals(admin.fromCalls[0].table, "profiles");
+  assertEquals(admin.fromCalls[0].ilike.column, "email");
+  assertEquals(anon.calls.length, 0);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+  assertEquals(admin.calls.some((c) => c.fn === "clear_login_attempts"), false);
+});
+
+Deno.test("perfil com is_active null também é negado (fail-closed)", async () => {
+  const admin = fakeAdmin(POLICY_ALLOW, UNLOCKED, {
+    data: [{ id: "p1", is_active: null }],
+    error: null,
+  });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 401);
+  assertEquals((await res.json()).error, "Invalid login credentials");
+  assertEquals(anon.calls.length, 0);
+});
+
+Deno.test("conta sem perfil (0 linhas) não emite sessão (401 genérico)", async () => {
+  const admin = fakeAdmin(POLICY_ALLOW, UNLOCKED, { data: [], error: null });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "ghost@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 401);
+  const body = await res.json();
+  assertEquals(body.error, "Invalid login credentials");
+  assertEquals(body.access_token, undefined);
+  assertEquals(anon.calls.length, 0);
+});
+
+Deno.test("e-mail em caixa mista autentica: match de perfil é case-insensitive", async () => {
+  // profiles.email gravado como "JOAO@example.com"; request vem "Joao@Example.com"
+  // (já lowercased pelo handler). O ilike escapado casa os dois.
+  const admin = fakeAdmin(POLICY_ALLOW, { ...UNLOCKED, clear_login_attempts: { data: null, error: null } }, {
+    data: [{ id: "p1", is_active: true }],
+    error: null,
+  });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "Joao@Example.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 200);
+  assertEquals((await res.json()).access_token, "tok");
+  assertEquals(anon.calls.length, 1);
+  assertEquals(anon.calls[0].email, "joao@example.com");
+  // O lookup do perfil usou o e-mail normalizado como padrão ilike.
+  assertEquals(admin.fromCalls[0].ilike, { column: "email", pattern: "joao@example.com" });
+});
+
+Deno.test("padrão ilike escapa curingas do e-mail (match exato)", async () => {
+  const admin = fakeAdmin(POLICY_ALLOW, { ...UNLOCKED, clear_login_attempts: { data: null, error: null } });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "joao_silva@example.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 200);
+  // `_` vira `\_`: sem escape, ilike casaria "joaoXsilva@..." (e-mail diferente).
+  assertEquals(admin.fromCalls[0].ilike, { column: "email", pattern: "joao\\_silva@example.com" });
+});
+
+Deno.test("e-mail duplicado em profiles falha fechado (500, sem signIn)", async () => {
+  const admin = fakeAdmin(POLICY_ALLOW, UNLOCKED, {
+    data: [
+      { id: "p1", is_active: true },
+      { id: "p2", is_active: true },
+    ],
+    error: null,
+  });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 500);
+  // errorResponse reescreve corpos 5xx: nada de detalhe de integridade ao cliente.
+  assertEquals((await res.json()).error, "Internal server error");
+  assertEquals(anon.calls.length, 0);
+});
+
+Deno.test("erro na consulta de perfil falha fechado (500, sem signIn)", async () => {
+  const admin = fakeAdmin(POLICY_ALLOW, UNLOCKED, {
+    data: null,
+    error: { message: "connection reset" },
+  });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 500);
+  assertEquals((await res.json()).error, "Internal server error");
+  assertEquals(anon.calls.length, 0);
+});
+
+Deno.test("perfil ativo segue autenticando e a checagem ocorre entre lock e signIn", async () => {
+  const admin = fakeAdmin(POLICY_ALLOW, { ...UNLOCKED, clear_login_attempts: { data: null, error: null } });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 200);
+  assertEquals((await res.json()).access_token, "tok");
+  // Ordem dos efeitos: política -> lock -> lookup de perfil -> signIn -> clear.
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "is_account_locked", "clear_login_attempts"]);
+  assertEquals(admin.fromCalls.length, 1);
+  assertEquals(anon.calls.length, 1);
 });
