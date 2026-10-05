@@ -173,6 +173,39 @@ describe('useMessages — exclusão remota atualiza os agregados (OTH-002)', () 
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
+  // #144/OTH-002 (recusa): um UPDATE que só muda status/ack de uma mensagem COM mídia NÃO altera
+  // o universo contado. Antes o handler invalidava só por `old || new` ter mídia, gerando refetch
+  // em rajada a cada ack; agora compara os DOIS lados de `is_deleted`/`media_url`.
+  it('UPDATE só de status/ack numa mensagem COM mídia NAO invalida os agregados', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => {
+      onUpdate(
+        row({ media_url: 'https://x/a.jpg', is_deleted: false, status: 'sent' }),
+        row({ media_url: 'https://x/a.jpg', is_deleted: false, status: 'read' }),
+      );
+    });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  // Fallback sem REPLICA IDENTITY FULL: `old` traz só a PK (sem as colunas), então não há como
+  // comparar — invalida conservadoramente quando a linha nova tem mídia, para não perder o agregado.
+  it('UPDATE sem as colunas em old (sem REPLICA IDENTITY FULL) invalida se a linha nova tem mídia', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => {
+      onUpdate(
+        { id: 'msg-1' } as MessageRow,
+        row({ media_url: 'https://x/a.jpg', is_deleted: false }),
+      );
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey(CONTACT) });
+  });
+
   it('DELETE remoto de mídia invalida galeria, badge e chips', async () => {
     const { invalidateSpy } = await renderReady();
 

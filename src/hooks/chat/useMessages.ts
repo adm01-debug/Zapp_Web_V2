@@ -191,7 +191,8 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   // Handle message update from realtime
   const handleMessageUpdate = useCallback(
     (payload: RealtimePostgresChangesPayload<MessageRow>) => {
-      const updatedMessage = mapMessageRowToMessage(payload.new as MessageRow);
+      const newRow = payload.new as MessageRow;
+      const updatedMessage = mapMessageRowToMessage(newRow);
 
       if (updatedMessage.contact_id === contactId) {
         realtimeOverlayRef.current.set(updatedMessage.id, updatedMessage);
@@ -199,12 +200,20 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
           prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m))
         );
 
-        // #144/OTH-002: o UPDATE pode mudar o universo de midia contado — `is_deleted` (a
-        // exclusao local chega aqui como UPDATE) ou `media_url`. Sem invalidar, chips e total
-        // mantem o numero antigo. Compara os DOIS lados porque o `old` traz a linha completa
-        // (REPLICA IDENTITY FULL em `messages`).
-        const oldRow = payload.old as MessageRow;
-        if (oldRow.media_url || updatedMessage.media_url) {
+        // #144/OTH-002: so invalida quando o universo de midia muda DE FATO — compara os DOIS
+        // lados (`old` x `new`) de `is_deleted` e `media_url`. Um UPDATE de status/ack numa
+        // mensagem COM midia mantem os dois iguais e NAO dispara refetch em rajada.
+        // Fallback: sem REPLICA IDENTITY FULL o Realtime entrega em `old` so a PK (sem as
+        // colunas), entao nao ha como comparar — invalida conservadoramente se a linha nova
+        // tem midia, para nao perder a atualizacao dos agregados.
+        const oldRow = (payload.old ?? {}) as Partial<MessageRow>;
+        const oldHasMediaColumns = 'media_url' in oldRow || 'is_deleted' in oldRow;
+        const mediaUniverseChanged = oldHasMediaColumns
+          ? (oldRow.is_deleted ?? false) !== (newRow.is_deleted ?? false) ||
+            (oldRow.media_url ?? null) !== (newRow.media_url ?? null)
+          : !!newRow.media_url;
+
+        if (mediaUniverseChanged) {
           invalidateMediaAggregates(contactId as string);
         }
       }
