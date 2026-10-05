@@ -212,7 +212,10 @@ export async function syncMessageIds(supabase: SupabaseClient, accountId: string
   }
 
   await reconcileEmailThreads(supabase, accountId, [...affectedLocalThreadIds]);
-  if (failed.length > 0) await supabase.from("gmail_accounts").update({ last_error: `${failed.length} mensagens falharam na sincronização` }).eq("id", accountId);
+  if (failed.length > 0) {
+    const { error } = await supabase.from("gmail_accounts").update({ last_error: `${failed.length} mensagens falharam na sincronização` }).eq("id", accountId);
+    if (error) log.error("Failed to record Gmail sync failure", { error: error.message });
+  }
   return { synced: results.length, failed: failed.length, failures: failed, messages: results };
 }
 
@@ -222,4 +225,182 @@ export async function syncMessages(supabase: SupabaseClient, accountId: string, 
   const listData = await gmailFetch<GmailMessageList>(accessToken, `/messages?${params.toString()}`);
   const result = await syncMessageIds(supabase, accountId, accessToken, log, (listData.messages || []).map(message => message.id));
   return { ...result, nextPageToken: listData.nextPageToken };
+}
+
+// ---------------------------------------------------------------------------
+// Pipeline incremental canônico (R2-API-011) — UM só, por conta, consumido por
+// gmail-webhook, gmail-cron-sync e gmail-sync (action=sync-incremental).
+// Percorre TODAS as páginas do users.history.list e TODOS os tipos de evento,
+// aplica os efeitos nos IDs realmente alterados e só então avança o cursor com
+// compare-and-swap. Qualquer falha conserva o history_id lido no início (ponto
+// recuperável) e o 404 do Gmail marca a conta para resync completo.
+// ---------------------------------------------------------------------------
+
+export const GMAIL_HISTORY_TYPES = ["messageAdded", "messageDeleted", "labelAdded", "labelRemoved"] as const;
+const GMAIL_HISTORY_MAX_PAGES = 100;
+
+export type GmailIncrementalStatus =
+  | "synced"
+  | "partial_failure"
+  | "history_expired"
+  | "cursor_conflict"
+  | "needs_full_sync";
+
+export interface GmailIncrementalSyncResult {
+  status: GmailIncrementalStatus;
+  cursor_advanced: boolean;
+  changed_messages: number;
+  deleted_messages: number;
+  synced: number;
+  failed: number;
+  failures: Array<{ id: string; error: string }>;
+  messages: Array<{ id: string; threadId: string; subject: string }>;
+  history_pages: number;
+  history_id: string | null;
+}
+
+interface GmailHistoryRecord {
+  messagesAdded?: Array<{ message: { id: string } }>;
+  messagesDeleted?: Array<{ message: { id: string } }>;
+  labelsAdded?: Array<{ message: { id: string } }>;
+  labelsRemoved?: Array<{ message: { id: string } }>;
+}
+
+interface GmailHistoryPage {
+  history?: GmailHistoryRecord[];
+  historyId?: string;
+  nextPageToken?: string;
+}
+
+export async function runGmailIncrementalSync(
+  supabase: SupabaseClient,
+  account: { id: string; history_id: string | null },
+  accessToken: string,
+  log: Logger,
+): Promise<GmailIncrementalSyncResult> {
+  const base = {
+    cursor_advanced: false,
+    changed_messages: 0,
+    deleted_messages: 0,
+    synced: 0,
+    failed: 0,
+    failures: [] as Array<{ id: string; error: string }>,
+    messages: [] as Array<{ id: string; threadId: string; subject: string }>,
+    history_pages: 0,
+    history_id: account.history_id,
+  };
+  if (!account.history_id) return { status: "needs_full_sync", ...base };
+
+  const changedMessageIds = new Set<string>();
+  const deletedMessageIds = new Set<string>();
+  let pageToken: string | undefined;
+  let latestHistoryId = account.history_id;
+  let pages = 0;
+
+  // O fetch é direto (não gmailFetch) porque o 404 tem tratamento próprio:
+  // startHistoryId expirado = conta marcada para resync, nunca cursor inválido.
+  do {
+    const params = new URLSearchParams({ startHistoryId: account.history_id });
+    for (const historyType of GMAIL_HISTORY_TYPES) params.append("historyTypes", historyType);
+    if (pageToken) params.set("pageToken", pageToken);
+    const response = await fetch(`${GMAIL_API}/history?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (response.status === 404) {
+      log.warn("Gmail history_id expirado; marcando conta para resync completo", { account: account.id });
+      const { error } = await supabase.from("gmail_accounts").update({
+        sync_status: "pending",
+        history_id: null,
+        last_error: "History ID expired - full resync needed",
+      }).eq("id", account.id);
+      if (error) throw new Error("Failed to flag Gmail account for full resync");
+      return { status: "history_expired", ...base };
+    }
+    if (!response.ok) throw new Error(`Gmail API error (${response.status}): ${await response.text()}`);
+    const historyData = await response.json() as GmailHistoryPage;
+    for (const record of historyData.history || []) {
+      for (const added of record.messagesAdded || []) changedMessageIds.add(added.message.id);
+      for (const labeled of record.labelsAdded || []) changedMessageIds.add(labeled.message.id);
+      for (const unlabeled of record.labelsRemoved || []) changedMessageIds.add(unlabeled.message.id);
+      for (const deleted of record.messagesDeleted || []) deletedMessageIds.add(deleted.message.id);
+    }
+    latestHistoryId = historyData.historyId || latestHistoryId;
+    pageToken = historyData.nextPageToken;
+    pages += 1;
+    if (pages >= GMAIL_HISTORY_MAX_PAGES && pageToken) throw new Error("Gmail history exceeded the safe pagination limit");
+  } while (pageToken);
+
+  // Removida vence reetiquetada/reenviada: GET numa mensagem apagada seria
+  // falha artificial que bloquearia o cursor.
+  for (const deletedId of deletedMessageIds) changedMessageIds.delete(deletedId);
+
+  const changedResult = await syncMessageIds(supabase, account.id, accessToken, log, [...changedMessageIds]);
+  if (changedResult.failed > 0) {
+    const { error } = await supabase.from("gmail_accounts").update({
+      sync_status: "error",
+      last_sync_at: new Date().toISOString(),
+      last_error: `${changedResult.failed} eventos incrementais falharam; cursor preservado`,
+    }).eq("id", account.id);
+    if (error) throw new Error("Failed to record incremental sync failure");
+    return {
+      status: "partial_failure",
+      ...base,
+      changed_messages: changedMessageIds.size,
+      deleted_messages: deletedMessageIds.size,
+      synced: changedResult.synced,
+      failed: changedResult.failed,
+      failures: changedResult.failures,
+      messages: changedResult.messages,
+      history_pages: pages,
+    };
+  }
+
+  const affectedDeletedThreadIds: string[] = [];
+  if (deletedMessageIds.size > 0) {
+    const ownedDeleted = await supabase.from("email_messages").select("id,thread_id,gmail_message_id").eq("gmail_account_id", account.id).in("gmail_message_id", [...deletedMessageIds]);
+    if (ownedDeleted.error) throw new Error("Failed to resolve deleted Gmail messages locally");
+    affectedDeletedThreadIds.push(...(ownedDeleted.data || []).map(message => message.thread_id).filter(Boolean));
+    if (ownedDeleted.data?.length) {
+      const deletion = await supabase.from("email_messages").delete().eq("gmail_account_id", account.id).in("id", ownedDeleted.data.map(message => message.id));
+      if (deletion.error) throw new Error("Failed to delete Gmail messages locally");
+    }
+    await reconcileEmailThreads(supabase, account.id, affectedDeletedThreadIds);
+  }
+
+  // Compare-and-swap: o update só encontra a linha se o cursor ainda for o
+  // lido no início desta invocação. 0 linhas = outro processo (webhook, cron
+  // ou outro incremental) já avançou — NÃO reescreve, porque essa invocação
+  // antiga poderia regredir o cursor compartilhado.
+  const { data: advanced, error: cursorError } = await supabase.from("gmail_accounts").update({
+    history_id: latestHistoryId,
+    sync_status: "synced",
+    last_sync_at: new Date().toISOString(),
+    last_error: null,
+  }).eq("id", account.id).eq("history_id", account.history_id).select("id");
+  if (cursorError) throw new Error("Failed to advance Gmail history cursor");
+  if (!advanced?.length) {
+    log.warn("Conflito de cursor do Gmail: outro processo já avançou o history_id", { account: account.id });
+    return {
+      status: "cursor_conflict",
+      ...base,
+      changed_messages: changedMessageIds.size,
+      deleted_messages: deletedMessageIds.size,
+      synced: changedResult.synced,
+      messages: changedResult.messages,
+      history_pages: pages,
+    };
+  }
+
+  return {
+    status: "synced",
+    cursor_advanced: true,
+    changed_messages: changedMessageIds.size,
+    deleted_messages: deletedMessageIds.size,
+    synced: changedResult.synced,
+    failed: 0,
+    failures: [],
+    messages: changedResult.messages,
+    history_pages: pages,
+    history_id: latestHistoryId,
+  };
 }
