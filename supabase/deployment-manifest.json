@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 74,
-    "source_file_count": 143,
+    "source_file_count": 142,
     "verify_jwt_true": 60,
     "verify_jwt_false": 14
   },
@@ -176,8 +176,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 34637,
-      "sha256": "f0cbacc237f748ad8120f39b51b7086880d4433058395a478291d8e69604cf3c"
+      "bytes": 34978,
+      "sha256": "5d17ed2411a774a5876e3591e49b13235b351fa90d77679492a43f4b2d12081a"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -293,11 +293,6 @@
       "path": "supabase/functions/_shared/talkx-delivery-connection.ts",
       "bytes": 593,
       "sha256": "3d569e1819ecba45d315777be69e4b6b8bb7408076773747b706e3260cd5d7dd"
-    },
-    {
-      "path": "supabase/functions/_shared/talkx-reply.ts",
-      "bytes": 3766,
-      "sha256": "b9de05264b470b4a5576fc40fd1a874b063fd5b9934793c9d7044d91e2ed4f3d"
     },
     {
       "path": "supabase/functions/_shared/talkx-resume-policy.ts",
@@ -1309,7 +1304,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "af868854606fec7ac1ebba371f8d426236e1e94bfb69fc7ad24b3a741bc37b3b",
+      "source_sha256": "10051f8ecf29bc4ba3ad48956f67bcdeae9570d93a5865fc1332c1965b1991be",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1326,7 +1321,6 @@
         "supabase/functions/_shared/notification-events.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/ssrf.ts",
-        "supabase/functions/_shared/talkx-reply.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/evolution-webhook/index.ts"
       ]
@@ -1856,5 +1850,5 @@
       ]
     }
   ],
-  "manifest_sha256": "fd254e11b2fe8c0b4b0828ec0fb8732e77c1c3239051e0548d669b64374e6fac"
+  "manifest_sha256": "def2ebb7cef783658ae78bc7dcbff959f7305050500919c3e6719cb5e1b10af7"
 }

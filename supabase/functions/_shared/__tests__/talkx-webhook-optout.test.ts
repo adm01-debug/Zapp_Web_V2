@@ -1,19 +1,28 @@
 /**
  * X030 — contrato executável do OPT-OUT no webhook de mensagens.
  *
- * O que fica travado:
- *   1. "PARE" casa em `talkx_optout_keywords` (mesma normalização da RPC),
- *      chama `talkx_suppress_contact` UMA vez e envia a autoresposta com o
- *      texto de `talkx_settings.optout_autoreply`;
- *   2. a autoresposta sai pelo token da instância (`get_instance_token`) e a
- *      campanha NÃO é resolvida na edge (sem `p_campaign_id`);
- *   3. repetição (supressão idempotente, RPC devolve NULL) NÃO reenvia a
+ * R2-API-006 (#69): os efeitos deixaram de ser chamadas soltas depois do
+ * ingest — a palavra casada entra na MESMA chamada de `ingest_inbound_message`
+ * (que registra a pendência na outbox na mesma transação) e
+ * `drain_inbound_message_effects` aplica a supressão. Travado no contrato novo:
+ *
+ *   1. "PARE" casa em `talkx_optout_keywords` (mesma normalização da RPC) e a
+ *      palavra chega ao ingest como `p_opt_out_keyword` (a campanha NÃO é
+ *      resolvida na edge — sem `p_campaign_id` em lugar nenhum);
+ *   2. a autoresposta sai UMA vez, pelo token da instância (`get_instance_token`)
+ *      e com o texto de `talkx_settings.optout_autoreply`, só quando a drenagem
+ *      devolve `suppression_id` novo;
+ *   3. repetição (`already_suppressed`) NÃO reenvia a autoresposta;
+ *   4. `no_recent_send` (gate de campanha em 30 dias, dentro da RPC) não gera
  *      autoresposta;
- *   4. contato sem envio Talk X nos últimos 30 dias não gera nada;
- *   5. a mensagem de opt-out NÃO chama `attribute_talkx_reply`;
+ *   5. opt-out NÃO vira resposta (a RPC só enfileira a supressão — a exclusão
+ *      mútua é provada no SQL);
  *   6. resposta de botão/lista com id `talkx_optout` (X064) também é opt-out;
  *   7. as palavras ativas são lidas com cache (uma leitura serve vários eventos).
  *
+ * O SQL (pendência escrita com a mensagem, supressão aplicada e baixada numa
+ * transação, idempotência) é provado na migration real em Postgres descartável:
+ *   scripts/db-audit/inbound-effects-replay.test.sh
  * Payloads GO anonimizados em fixture (sem telefone/CPF reais).
  */
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
@@ -28,9 +37,8 @@ type Chamada = { nome: string; args: Record<string, unknown> };
 
 interface FakeConfig {
   keywords?: Array<{ keyword: string; match_mode: string }>;
-  recentSend?: Array<{ id: string }>;
-  /** Retorno de `talkx_suppress_contact` por chamada (id ou null na repetição). */
-  suppressions?: Array<unknown>;
+  /** Retorno do drain por chamada (suppression_id ou status por reentrega). */
+  drainResults?: Array<Record<string, unknown>>;
   autoreply?: unknown;
   instanceToken?: unknown;
   leituras?: string[];
@@ -41,6 +49,10 @@ const SEED = [
   "sair", "parar", "pare", "stop", "cancelar",
   "remover", "descadastrar", "unsubscribe", "optout", "nao quero",
 ].map((keyword) => ({ keyword, match_mode: "exact" }));
+
+const drainOk = (parcial: Record<string, unknown> = {}) => ({
+  suppression_id: null, optout_status: null, talkx_reply: null, multiplix_reply: null, pending_failed: 0, ...parcial,
+});
 
 function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
   let tabela = "";
@@ -58,11 +70,11 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
   chain.then = (resolve: (value: unknown) => unknown) => {
     cfg.leituras?.push(tabela);
     if (tabela === "talkx_optout_keywords") return resolve({ data: cfg.keywords ?? SEED, error: null });
-    if (tabela === "talkx_recipients") return resolve({ data: cfg.recentSend ?? [], error: null });
+    if (tabela === "talkx_recipients") return resolve({ data: [], error: null });
     return resolve({ data: [], error: null });
   };
-  let suppressionIndex = 0;
   let ingestIndex = 0;
+  let drainIndex = 0;
   return {
     from: (t: string) => {
       tabela = t;
@@ -85,15 +97,13 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
           error: null,
         };
       }
-      if (nome === "talkx_suppress_contact") {
-        const seq = cfg.suppressions ?? ["supp-1"];
-        const valor = seq[Math.min(suppressionIndex, seq.length - 1)];
-        suppressionIndex += 1;
+      if (nome === "drain_inbound_message_effects") {
+        const seq = cfg.drainResults ?? [drainOk()];
+        const valor = seq[Math.min(drainIndex, seq.length - 1)];
+        drainIndex += 1;
         return { data: valor, error: null };
       }
       if (nome === "get_instance_token") return { data: cfg.instanceToken ?? null, error: null };
-      if (nome === "attribute_talkx_reply") return { data: { attributed: true }, error: null };
-      if (nome === "attribute_multiplix_item_reply") return { data: { attributed: false }, error: null };
       return { data: null, error: null };
     },
   } as unknown as EvolutionDbClient;
@@ -169,8 +179,7 @@ Deno.test("X030: 'PARE' suprime 1x, responde com o setting e não atribui respos
     const chamadas: Chamada[] = [];
     const supabase = fakeSupabase(chamadas, {
       keywords: SEED,
-      recentSend: [{ id: "recip-1" }],
-      suppressions: ["supp-1"],
+      drainResults: [drainOk({ suppression_id: "supp-1", optout_status: "suppressed" })],
       autoreply: "MENSAGEM DO SETTING (fixture)",
       instanceToken: "token-inst-1",
       leituras,
@@ -179,12 +188,22 @@ Deno.test("X030: 'PARE' suprime 1x, responde com o setting e não atribui respos
     const { data, key } = traduzir(goIncoming("PARE", "3EB0PARE"));
     await handleIncomingMessage(supabase, "inst-go-x030-a", data, key, "http://localhost:54321", "svc");
 
-    const supressoes = chamadas.filter((c) => c.nome === "talkx_suppress_contact");
-    assertEquals(supressoes.length, 1, "talkx_suppress_contact deve ser chamada 1 vez");
-    assertEquals(supressoes[0].args.p_reason, "Opt-out via mensagem: pare");
-    assertEquals(supressoes[0].args.p_reason_code, "opt_out");
-    assertEquals(supressoes[0].args.p_origin, "auto_optout");
-    assertEquals("p_campaign_id" in supressoes[0].args, false, "a campanha é resolvida NA RPC, não na edge");
+    const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
+    assertEquals(ingests.length, 1, "o ingest acontece uma vez");
+    assertEquals(
+      ingests[0].args.p_opt_out_keyword,
+      "pare",
+      "a palavra casada entra na MESMA chamada do ingest (efeito na mesma transação)",
+    );
+    assertEquals(
+      "p_campaign_id" in ingests[0].args,
+      false,
+      "a campanha é resolvida NA RPC (talkx_suppress_contact herda do envio), não na edge",
+    );
+
+    const drenagens = chamadas.filter((c) => c.nome === "drain_inbound_message_effects");
+    assertEquals(drenagens.length, 1, "a drenagem aplica o efeito pendente");
+    assertEquals(drenagens[0].args.p_external_id, "3EB0PARE");
 
     const tokens = chamadas.filter((c) => c.nome === "get_instance_token");
     assertEquals(tokens.length, 1, "resolve o token da instância que recebeu a mensagem");
@@ -218,8 +237,10 @@ Deno.test("X030: repetição (supressão idempotente) não reenvia a autorespost
     const chamadas: Chamada[] = [];
     const supabase = fakeSupabase(chamadas, {
       keywords: SEED,
-      recentSend: [{ id: "recip-1" }],
-      suppressions: ["supp-1", null],
+      drainResults: [
+        drainOk({ suppression_id: "supp-1", optout_status: "suppressed" }),
+        drainOk({ optout_status: "already_suppressed" }),
+      ],
       autoreply: "MENSAGEM DO SETTING (fixture)",
       instanceToken: "token-inst-1",
       leituras,
@@ -230,7 +251,7 @@ Deno.test("X030: repetição (supressão idempotente) não reenvia a autorespost
     const b = traduzir(goIncoming("PARE", "3EB0REP2"));
     await handleIncomingMessage(supabase, "inst-go-x030-b", b.data, b.key, "http://localhost:54321", "svc");
 
-    assertEquals(chamadas.filter((c) => c.nome === "talkx_suppress_contact").length, 2);
+    assertEquals(chamadas.filter((c) => c.nome === "drain_inbound_message_effects").length, 2);
     assertEquals(fetchCalls.length, 1, "a segunda mensagem (já suprimida) não reenvia a confirmação");
     assertEquals(
       leituras.filter((t) => t === "talkx_optout_keywords").length,
@@ -251,8 +272,9 @@ Deno.test("X030: contato sem envio em 30 dias não gera supressão nem autorespo
     const chamadas: Chamada[] = [];
     const supabase = fakeSupabase(chamadas, {
       keywords: SEED,
-      recentSend: [],
-      suppressions: ["supp-1"],
+      // O gate de 30 dias é avaliado DENTRO de drain_inbound_message_effects;
+      // aqui o fixture reflete a decisão da RPC.
+      drainResults: [drainOk({ optout_status: "no_recent_send" })],
       autoreply: "MENSAGEM DO SETTING (fixture)",
       instanceToken: "token-inst-1",
     });
@@ -260,8 +282,9 @@ Deno.test("X030: contato sem envio em 30 dias não gera supressão nem autorespo
     const { data, key } = traduzir(goIncoming("PARE", "3EB0NOGATE"));
     await handleIncomingMessage(supabase, "inst-go-x030-c", data, key, "http://localhost:54321", "svc");
 
-    assertEquals(chamadas.some((c) => c.nome === "talkx_suppress_contact"), false, "sem envio em 30 dias não suprime");
-    assertEquals(fetchCalls.length, 0, "sem supressão não há autoresposta");
+    const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
+    assertEquals(ingests[0].args.p_opt_out_keyword, "pare", "a palavra continua entrando no ingest");
+    assertEquals(fetchCalls.length, 0, "sem supressão aplicada não há autoresposta");
     assertEquals(
       chamadas.some((c) => c.nome === "attribute_talkx_reply"),
       false,
@@ -281,8 +304,7 @@ Deno.test("X030: resposta de botão com id 'talkx_optout' (X064) aciona o opt-ou
     const chamadas: Chamada[] = [];
     const supabase = fakeSupabase(chamadas, {
       keywords: SEED,
-      recentSend: [{ id: "recip-1" }],
-      suppressions: ["supp-btn"],
+      drainResults: [drainOk({ suppression_id: "supp-btn", optout_status: "suppressed" })],
       autoreply: "MENSAGEM DO SETTING (fixture)",
       instanceToken: "token-inst-1",
     });
@@ -290,10 +312,10 @@ Deno.test("X030: resposta de botão com id 'talkx_optout' (X064) aciona o opt-ou
     const { data, key } = traduzir(goButton("talkx_optout", "3EB0BTN1"));
     await handleIncomingMessage(supabase, "inst-go-x030-d", data, key, "http://localhost:54321", "svc");
 
-    const supressoes = chamadas.filter((c) => c.nome === "talkx_suppress_contact");
-    assertEquals(supressoes.length, 1, "botão talkx_optout suprime como uma palavra");
-    assertEquals(supressoes[0].args.p_reason, "Opt-out via mensagem: talkx_optout");
-    assertEquals("p_campaign_id" in supressoes[0].args, false);
+    const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
+    assertEquals(ingests.length, 1);
+    assertEquals(ingests[0].args.p_opt_out_keyword, "talkx_optout", "botão talkx_optout suprime como uma palavra");
+    assertEquals("p_campaign_id" in ingests[0].args, false);
     assertEquals(fetchCalls.length, 1, "botão de opt-out também envia a confirmação");
     assertEquals(
       chamadas.some((c) => c.nome === "attribute_talkx_reply"),
@@ -314,8 +336,9 @@ Deno.test("X030: resposta que NÃO é opt-out continua sendo atribuída ao Talk 
     const chamadas: Chamada[] = [];
     const supabase = fakeSupabase(chamadas, {
       keywords: SEED,
-      recentSend: [],
-      suppressions: [],
+      drainResults: [drainOk({
+        talkx_reply: { attributed: true, attribution: "contact", recipient_id: "r1", campaign_id: "c1" },
+      })],
       autoreply: "MENSAGEM DO SETTING (fixture)",
       instanceToken: "token-inst-1",
     });
@@ -323,11 +346,15 @@ Deno.test("X030: resposta que NÃO é opt-out continua sendo atribuída ao Talk 
     const { data, key } = traduzir(goIncoming("Ainda tenho interesse", "3EB0RESP"));
     await handleIncomingMessage(supabase, "inst-go-x030-e", data, key, "http://localhost:54321", "svc");
 
-    assertEquals(chamadas.some((c) => c.nome === "talkx_suppress_contact"), false);
-    const atribuicoes = chamadas.filter((c) => c.nome === "attribute_talkx_reply");
-    assertEquals(atribuicoes.length, 1, "resposta normal é atribuída à campanha");
-    assertEquals(atribuicoes[0].args.p_contact_id, "contact-1");
-    assertEquals(atribuicoes[0].args.p_phone, "5511000000000");
+    const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
+    assertEquals(ingests[0].args.p_opt_out_keyword, null, "sem palavra de opt-out a RPC enfileira as respostas");
+    assertEquals(ingests[0].args.p_phone, "5511000000000", "o telefone resolvido alimenta a atribuição por telefone");
+    assertEquals(
+      chamadas.filter((c) => c.nome === "drain_inbound_message_effects").length,
+      1,
+      "a drenagem aplica a atribuição pendente",
+    );
+    assertEquals(fetchCalls.length, 0, "sem supressão não há autoresposta");
   } finally {
     restaurarFetch();
     resetOptOutKeywordCache();
