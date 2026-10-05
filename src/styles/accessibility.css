@@ -166,6 +166,11 @@
   --density-row-height: 1.75rem; --density-text-size: var(--text-xs);
 }
 
+/* Tamanho-base herdável: componentes com escala tipográfica própria continuam soberanos. */
+[data-density] #root {
+  font-size: var(--density-text-size);
+}
+
 /* ===== AMBIENT SENTIMENT COLORS ===== */
 .ambient-positive { background-color: hsl(var(--success) / 0.03); border-color: hsl(var(--success) / 0.12); }
 .ambient-negative { background-color: hsl(var(--destructive) / 0.02); border-color: hsl(var(--destructive) / 0.10); }
