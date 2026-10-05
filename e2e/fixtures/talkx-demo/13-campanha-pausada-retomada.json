@@ -39,10 +39,31 @@
       "revision": 1
     }
   ],
+  "talkx_segments": [
+    {
+      "id": "seg-office",
+      "name": "Office",
+      "description": null,
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": []
+      },
+      "estimated_count": 520,
+      "last_used_at": "2026-10-01T00:00:00.000Z",
+      "created_by": "creator-1",
+      "created_at": "2026-09-01T00:00:00.000Z",
+      "updated_at": "2026-10-01T00:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    }
+  ],
   "talkx_recipients": [
     {
       "id": "rec-001",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-010",
       "contact_id": "contact-001",
       "status": "replied",
       "sent_at": "2026-10-01T09:01:00.000Z",
@@ -63,7 +84,7 @@
     },
     {
       "id": "rec-002",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-010",
       "contact_id": "contact-002",
       "status": "read",
       "sent_at": "2026-10-01T09:02:00.000Z",
@@ -84,7 +105,7 @@
     },
     {
       "id": "rec-003",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-010",
       "contact_id": "contact-003",
       "status": "delivered",
       "sent_at": "2026-10-01T09:03:00.000Z",
@@ -105,7 +126,7 @@
     },
     {
       "id": "rec-004",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-010",
       "contact_id": "contact-004",
       "status": "sent",
       "sent_at": "2026-10-01T09:04:00.000Z",
@@ -126,7 +147,7 @@
     },
     {
       "id": "rec-005",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-010",
       "contact_id": "contact-005",
       "status": "failed",
       "sent_at": "2026-10-01T09:05:00.000Z",
@@ -149,13 +170,13 @@
   "talkx_campaign_events": [
     {
       "id": "event-001",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-010",
       "event_type": "started",
       "created_at": "2026-10-01T09:00:00.000Z"
     },
     {
       "id": "event-002",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-010",
       "event_type": "progress",
       "created_at": "2026-10-01T09:15:00.000Z"
     }
