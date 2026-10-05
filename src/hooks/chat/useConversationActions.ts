@@ -174,18 +174,18 @@ export function useConversationActions() {
     });
   }, []);
 
-  const transferContact = useCallback(async (contactId: string, type: 'agent' | 'queue' | 'connection', targetId: string) => {
-    if (type === 'connection') {
-      // TransferDialog oferece "Conexão" na UI, mas nunca existiu update real
-      // pra esse caso (era um UPDATE vazio disfarçado de sucesso). Recusa
-      // explicitamente em vez de fingir que funcionou.
-      toast.error('Transferência por conexão ainda não é suportada');
-      return;
+  const transferContact = useCallback(async (contactId: string, type: 'agent' | 'queue', targetId: string, note?: string) => {
+    const trimmedNote = note?.trim();
+    const { error } = await supabase.rpc('transfer_contact', {
+      p_contact_id: contactId,
+      p_target_type: type,
+      p_target_id: targetId,
+      p_note: trimmedNote ? trimmedNote : null,
+    });
+    if (error) {
+      toast.error('Erro ao transferir conversa');
+      throw new Error(error.message);
     }
-    const updateData: { assigned_to?: string; queue_id?: string } =
-      type === 'agent' ? { assigned_to: targetId } : { queue_id: targetId };
-    const { error } = await supabase.from('contacts').update(updateData).eq('id', contactId);
-    if (error) { toast.error('Erro ao transferir conversa'); return; }
     toast.success(type === 'agent' ? 'Chat transferido para outro atendente' : 'Chat transferido para outra fila');
   }, []);
 

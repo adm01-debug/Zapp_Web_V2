@@ -26,6 +26,15 @@ let favoriteDeleteResult: Record<string, unknown> = { error: null };
 let snoozeInsertResult: Record<string, unknown> = { error: null };
 const snoozeInsertCalls: unknown[] = [];
 
+// transferContact virou UMA chamada de RPC atômica (transfer_contact): sem
+// UPDATE em contacts nem INSERT em conversation_events pelo cliente. O mock
+// captura nome e args de cada chamada para assertar o payload exato.
+let rpcResult: Record<string, unknown> = { error: null };
+const rpcCalls: Array<{ name: string; args: unknown }> = [];
+// Tabelas passadas a supabase.from — usado para provar que a transferência
+// não tem nenhum caminho de escrita direta.
+const fromTables: string[] = [];
+
 // favoriteContact/unfavoriteContact disparam _favBus, que aciona um
 // loadFavorites() assíncrono em segundo plano (sincroniza outras instâncias
 // do hook). Sem refletir o estado real aqui, esse refetch sempre lia []
@@ -36,7 +45,12 @@ let fakeFavoriteRows: Array<{ contact_id: string }> = [];
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
+    rpc: vi.fn((name: string, args: unknown) => {
+      rpcCalls.push({ name, args });
+      return Promise.resolve(rpcResult);
+    }),
     from: vi.fn((table: string) => {
+      fromTables.push(table);
       if (table === 'profiles') {
         return { select: vi.fn(() => resultChain({ data: { id: PROFILE_ID }, error: null })) };
       }
@@ -141,6 +155,9 @@ describe('useConversationActions', () => {
     fakeFavoriteRows = [];
     snoozeInsertResult = { error: null };
     snoozeInsertCalls.length = 0;
+    rpcResult = { error: null };
+    rpcCalls.length = 0;
+    fromTables.length = 0;
   });
 
   afterEach(() => {
@@ -186,48 +203,111 @@ describe('useConversationActions', () => {
   });
 
   describe('transferContact', () => {
-    it('recusa transferência por conexão sem tocar o banco', async () => {
-      const { result } = await withProfileReady();
-
-      await act(async () => {
-        await result.current.transferContact('contact-1', 'connection', 'conn-1');
-      });
-
-      expect(contactsUpdateCalls).toEqual([]);
-      expect(toast.error).toHaveBeenCalledWith('Transferência por conexão ainda não é suportada');
-    });
-
-    it('transfere para outro atendente atualizando assigned_to', async () => {
+    it('transfere para outro atendente via RPC atômica com p_target_type agent', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
         await result.current.transferContact('contact-1', 'agent', 'agent-2');
       });
 
-      expect(contactsUpdateCalls).toEqual([{ assigned_to: 'agent-2' }]);
+      expect(rpcCalls).toEqual([
+        {
+          name: 'transfer_contact',
+          args: {
+            p_contact_id: 'contact-1',
+            p_target_type: 'agent',
+            p_target_id: 'agent-2',
+            p_note: null,
+          },
+        },
+      ]);
       expect(toast.success).toHaveBeenCalledWith('Chat transferido para outro atendente');
     });
 
-    it('transfere para outra fila atualizando queue_id', async () => {
+    it('transfere para outra fila via RPC atômica com p_target_type queue', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
         await result.current.transferContact('contact-1', 'queue', 'queue-2');
       });
 
-      expect(contactsUpdateCalls).toEqual([{ queue_id: 'queue-2' }]);
+      expect(rpcCalls).toEqual([
+        {
+          name: 'transfer_contact',
+          args: {
+            p_contact_id: 'contact-1',
+            p_target_type: 'queue',
+            p_target_id: 'queue-2',
+            p_note: null,
+          },
+        },
+      ]);
       expect(toast.success).toHaveBeenCalledWith('Chat transferido para outra fila');
     });
 
-    it('em erro no update, mostra toast de erro', async () => {
-      contactsUpdateResult = { error: { message: 'falhou' } };
+    it('envia a nota opcional em p_note (persistida em conversation_events.metadata.note pela RPC)', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
-        await result.current.transferContact('contact-1', 'agent', 'agent-2');
+        await result.current.transferContact('contact-1', 'agent', 'agent-2', 'cliente pediu retorno às 14h');
+      });
+
+      expect(rpcCalls).toEqual([
+        {
+          name: 'transfer_contact',
+          args: {
+            p_contact_id: 'contact-1',
+            p_target_type: 'agent',
+            p_target_id: 'agent-2',
+            p_note: 'cliente pediu retorno às 14h',
+          },
+        },
+      ]);
+    });
+
+    it('nota em branco vai como p_note null (não grava metadata vazia)', async () => {
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.transferContact('contact-1', 'queue', 'queue-2', '   ');
+      });
+
+      expect(rpcCalls).toEqual([
+        {
+          name: 'transfer_contact',
+          args: {
+            p_contact_id: 'contact-1',
+            p_target_type: 'queue',
+            p_target_id: 'queue-2',
+            p_note: null,
+          },
+        },
+      ]);
+    });
+
+    it('em erro da RPC, rejeita, mostra toast de erro e não sinaliza sucesso', async () => {
+      rpcResult = { error: { message: 'falhou' } };
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await expect(result.current.transferContact('contact-1', 'agent', 'agent-2')).rejects.toThrow('falhou');
       });
 
       expect(toast.error).toHaveBeenCalledWith('Erro ao transferir conversa');
+      expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('não faz nenhuma escrita direta: a única escrita da transferência é a RPC', async () => {
+      const { result } = await withProfileReady();
+      fromTables.length = 0;
+
+      await act(async () => {
+        await result.current.transferContact('contact-1', 'queue', 'queue-2', 'com nota');
+      });
+
+      expect(rpcCalls.map((c) => c.name)).toEqual(['transfer_contact']);
+      expect(fromTables).not.toContain('contacts');
+      expect(fromTables).not.toContain('conversation_events');
     });
   });
 
