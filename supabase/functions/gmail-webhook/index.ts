@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { logGmailOidcAuthShadow } from "../_shared/hmac-validation.ts";
+import { verifyGmailOidcRequest } from "../_shared/hmac-validation.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -103,7 +103,7 @@ function extractBody(payload: any): { text: string; html: string } {
   return { text, html };
 }
 
-serve(async (req) => {
+export async function handleGmailWebhook(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: getCorsHeaders(req) });
   }
@@ -111,14 +111,28 @@ serve(async (req) => {
   const log = new Logger("gmail-webhook");
 
   try {
+    // R2-API-021: verificação OIDC BLOQUEANTE antes de qualquer efeito — o
+    // Bearer do Pub/Sub é validado de verdade (assinatura RS256 contra o JWKS
+    // do Google + iss/aud/exp/email) ANTES de criar o client com service role
+    // ou ler o corpo. GMAIL_OIDC_AUDIENCE e GMAIL_OIDC_EMAIL são OBRIGATÓRIOS:
+    // sem qualquer um deles a requisição é recusada (falha fechada). O e-mail
+    // exato é o que prova a origem — qualquer service account de outro projeto
+    // GCP emite JWT válido com aud arbitrária (a URL pública é conhecida).
+    // GMAIL_OIDC_JWKS_URL só existe para teste/diagnóstico — em produção usa
+    // o endpoint oficial do Google.
+    const oidc = await verifyGmailOidcRequest(req.headers, {
+      audience: Deno.env.get("GMAIL_OIDC_AUDIENCE"),
+      expectedEmail: Deno.env.get("GMAIL_OIDC_EMAIL"),
+      jwksUrl: Deno.env.get("GMAIL_OIDC_JWKS_URL") || undefined,
+    });
+    if (!oidc.ok) {
+      log.warn(`token OIDC recusado (${oidc.reason})`);
+      return jsonResponse({ error: "Unauthorized" }, 401, req);
+    }
+
     const SUPABASE_URL = requireEnv("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // [WEBHOOK_AUTH_SHADOW] Modo sombra: apenas loga presenca/aud/iss do token
-    // OIDC do Google Pub/Sub — NUNCA bloqueia. Verificacao completa (assinatura
-    // contra JWKS do Google, audience/issuer) fica para iteracao futura.
-    logGmailOidcAuthShadow(req.headers);
 
     const rawBody = await req.json();
     const parsed = PubSubSchema.safeParse(rawBody);
@@ -301,4 +315,8 @@ serve(async (req) => {
     log.done(200);
     return jsonResponse({ acknowledged: true, error: error instanceof Error ? error.message : "Unknown error" }, 200, req);
   }
-});
+}
+
+if (import.meta.main) {
+  serve(handleGmailWebhook);
+}
