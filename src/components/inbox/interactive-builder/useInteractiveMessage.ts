@@ -33,7 +33,7 @@ export function useInteractiveMessage() {
       id: `btn_${Date.now()}`,
       title: '',
       ...(type === 'url' && { url: '' }),
-      ...(type === 'phone' && { phoneNumber: '' }),
+      ...(type === 'call' && { phoneNumber: '' }),
     };
     setButtons(prev => [...prev, newButton]);
   }, [buttons.length]);
@@ -127,12 +127,16 @@ export function useInteractiveMessage() {
           toast({ title: 'Título muito longo', description: 'O título do botão deve ter no máximo 20 caracteres', variant: 'destructive' });
           return false;
         }
+        if (button.type === 'reply' && !button.id?.trim()) {
+          toast({ title: 'ID obrigatório', description: 'Botões de resposta precisam ter um identificador', variant: 'destructive' });
+          return false;
+        }
         if (button.type === 'url' && !button.url) {
           toast({ title: 'URL obrigatória', description: 'Botões de URL precisam ter um link', variant: 'destructive' });
           return false;
         }
-        if (button.type === 'phone' && !button.phoneNumber) {
-          toast({ title: 'Telefone obrigatório', description: 'Botões de telefone precisam ter um número', variant: 'destructive' });
+        if (button.type === 'call' && !/^\d{8,15}$/.test((button.phoneNumber ?? '').replace(/\D/g, ''))) {
+          toast({ title: 'Telefone obrigatório', description: 'Botões de ligação precisam ter um número com 8 a 15 dígitos', variant: 'destructive' });
           return false;
         }
       }

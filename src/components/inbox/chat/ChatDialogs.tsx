@@ -30,8 +30,6 @@ interface ChatDialogsProps {
   onTransfer: (type: 'agent' | 'queue', targetId: string, message?: string) => void;
   onScheduleMessage: (message: string, scheduledAt: Date, attachment?: File) => Promise<void>;
   onSendInteractiveMessage: (interactive: InteractiveMessage) => Promise<void>;
-  /** Motivo pelo qual o envio interativo está indisponível hoje (null/undefined = disponível). */
-  interactiveSendUnavailableReason?: string | null;
   onForwardToTargets: (targetIds: string[], targetType: 'contact' | 'group') => void;
   onSendLocation: (location: LocationMessage) => Promise<void> | void;
   onSetInputValue: (value: string | ((prev: string) => string)) => void;
@@ -40,7 +38,7 @@ interface ChatDialogsProps {
 export function ChatDialogs({
   dialogs, openDialog, closeDialog, conversation, forwardMessage,
   contactId, onTransfer, onScheduleMessage, onSendInteractiveMessage,
-  onForwardToTargets, onSendLocation, onSetInputValue, interactiveSendUnavailableReason,
+  onForwardToTargets, onSendLocation, onSetInputValue,
 }: ChatDialogsProps) {
   // CT-14 — mesmo caminho de envio do catálogo, com o contato da conversa aberta.
   const presetContact = {
@@ -55,7 +53,7 @@ export function ChatDialogs({
         {dialogs.transferDialog && <TransferDialog open={dialogs.transferDialog} onOpenChange={(v) => v ? openDialog('transferDialog') : closeDialog('transferDialog')} onTransfer={onTransfer as (type: "agent" | "connection" | "queue", targetId: string, message?: string) => void} />}
         {dialogs.scheduleDialog && <ScheduleMessageDialog open={dialogs.scheduleDialog} onOpenChange={(v) => v ? openDialog('scheduleDialog') : closeDialog('scheduleDialog')} onSchedule={onScheduleMessage} />}
         {dialogs.globalSearch && <GlobalSearch open={dialogs.globalSearch} onOpenChange={(v) => v ? openDialog('globalSearch') : closeDialog('globalSearch')} onSelectResult={(result) => { log.debug('Selected:', result); toast({ title: 'Resultado selecionado', description: result.title }); }} />}
-        {dialogs.interactiveBuilder && <InteractiveMessageBuilder open={dialogs.interactiveBuilder} onOpenChange={(v) => v ? openDialog('interactiveBuilder') : closeDialog('interactiveBuilder')} onSend={onSendInteractiveMessage} sendUnavailableReason={interactiveSendUnavailableReason} />}
+        {dialogs.interactiveBuilder && <InteractiveMessageBuilder open={dialogs.interactiveBuilder} onOpenChange={(v) => v ? openDialog('interactiveBuilder') : closeDialog('interactiveBuilder')} onSend={onSendInteractiveMessage} />}
         {dialogs.forwardDialog && <ForwardMessageDialog open={dialogs.forwardDialog} onOpenChange={(v) => v ? openDialog('forwardDialog') : closeDialog('forwardDialog')} message={forwardMessage} onForward={onForwardToTargets} />}
         {dialogs.locationPicker && <LocationPicker open={dialogs.locationPicker} onOpenChange={(v) => v ? openDialog('locationPicker') : closeDialog('locationPicker')} onSend={onSendLocation} />}
         {dialogs.closeDialog && <CloseConversationDialog open={dialogs.closeDialog} onOpenChange={(v) => v ? openDialog('closeDialog') : closeDialog('closeDialog')} contactId={contactId} />}

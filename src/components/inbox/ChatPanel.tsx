@@ -316,7 +316,6 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           conversation={conversation} forwardMessage={handlers.forwardMessage}
           contactId={conversation.contact.id} onTransfer={handleTransfer}
           onScheduleMessage={handleScheduleMessage} onSendInteractiveMessage={handlers.handleSendInteractiveMessage}
-          interactiveSendUnavailableReason={handlers.interactiveSendUnavailableReason}
           onForwardToTargets={handlers.handleForwardToTargets} onSendLocation={handlers.handleSendLocation}
           onSetInputValue={handlers.setInputValue}
         />
