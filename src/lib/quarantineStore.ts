@@ -46,6 +46,47 @@ export const quarantineStore = {
     }
     if (changed) refreshSnapshot();
   },
+  /**
+   * Reconcilia o cache contra uma janela autoritativa de consulta (o poll do
+   * monitor). Diferente de `upsertMany`, que só acrescenta/atualiza o que
+   * chega, aqui o resultado é tratado como retrato do estado atual:
+   *
+   *  - todo registro devolvido é gravado por ID, com a decisão e a versão
+   *    (`reviewed_at`) atuais — é o que faz uma liberação
+   *    (`pending`→`allowed`/`whitelisted`) sobrescrever a decisão antiga;
+   *  - quando a janela NÃO foi truncada (`truncated: false`), um registro do
+   *    cache que não voltou foi removido na origem e é descartado;
+   *  - quando a janela FOI truncada pelo limite de linhas, a ausência é
+   *    ambígua (o registro pode só ter saído da janela), então NADA é removido
+   *    apenas por ausência — nunca inferimos liberação desse jeito.
+   */
+  reconcile(records: QuarantineRecord[], opts: { truncated: boolean }) {
+    const seen = new Set<string>();
+    let changed = false;
+    for (const r of records) {
+      if (!r.message_id) continue;
+      seen.add(r.message_id);
+      const prev = byMessageId.get(r.message_id);
+      if (
+        !prev ||
+        prev.id !== r.id ||
+        prev.decision !== r.decision ||
+        prev.reviewed_at !== r.reviewed_at
+      ) {
+        byMessageId.set(r.message_id, r);
+        changed = true;
+      }
+    }
+    if (!opts.truncated) {
+      for (const messageId of [...byMessageId.keys()]) {
+        if (!seen.has(messageId)) {
+          byMessageId.delete(messageId);
+          changed = true;
+        }
+      }
+    }
+    if (changed) refreshSnapshot();
+  },
   remove(messageId: string) {
     if (byMessageId.delete(messageId)) refreshSnapshot();
   },
