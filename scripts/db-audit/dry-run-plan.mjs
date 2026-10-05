@@ -19,6 +19,11 @@ import { readFileSync } from 'node:fs';
 export const CABECALHO_DRY_RUN = /^DRY RUN: migrations will \*not\* be pushed to the database\.\s*$/;
 const LINHA_UNITARIA = /^Would push migration (\S+)\.\.\.\s*$/;
 const LINHA_LISTA = /^Would push these migrations:\s*(.+)$/;
+// CLI 2.116 (medido no run 37353692019 do db-migrate.yml, 05/10/2026): o cabecalho vem SOZINHO e cada migration em uma
+// linha propria com marcador:  "Would push these migrations:" / " • 2026...sql". Mesmo contrato: so' entra o que estiver
+// sob o cabecalho e terminar em .sql; qualquer outra linha encerra a lista, e saida fora destes formatos continua recusada.
+const CABECALHO_LISTA = /^Would push these migrations:\s*$/;
+const LINHA_ITEM = /^[\u2022*-]\s+(\S+\.sql)\s*$/;
 
 /**
  * Le a saida do dry-run. Devolve as migrations anunciadas em ordem, com version
@@ -28,8 +33,15 @@ export function parseDryRunPlan(texto) {
   const linhas = String(texto ?? '').split(/\r?\n/);
   const cabecalhoReconhecido = linhas.some((l) => CABECALHO_DRY_RUN.test(l.trim()));
   const arquivos = [];
+  let emLista = false;
   for (const linha of linhas) {
     const l = linha.trim();
+    if (CABECALHO_LISTA.test(l)) { emLista = true; continue; }
+    if (emLista) {
+      const item = LINHA_ITEM.exec(l);
+      if (item) { arquivos.push(item[1]); continue; }
+      emLista = false;        // qualquer outra linha (inclusive vazia) encerra a lista
+    }
     const unitaria = LINHA_UNITARIA.exec(l);
     if (unitaria) {
       arquivos.push(unitaria[1]);
