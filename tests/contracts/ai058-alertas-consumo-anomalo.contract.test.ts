@@ -32,7 +32,7 @@
  * `@supabase/supabase-js`, e a RPC `ai_capability_active_block` é respondida
  * pelo BANCO LOCAL real — a recusa sai do código de produção contra dado real.
  * Sob vitest esse bloco é pulado (o spec https://esm.sh não resolve em Node);
- * as asserções estáticas de ordem dentro de enforceAiGuards rodam nos dois.
+ * a prova do guard é o caso Bun abaixo, que chama `enforceAiGuards` real.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -41,23 +41,15 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 const WS = resolve(__dirname, '..', '..');
 const MIG_NAME = readdirSync(resolve(WS, 'supabase/migrations')).find((f) =>
-  /_ia058_alertas_consumo_anomalo\.sql$/.test(f),
+  /_ia058_alertas_consumo_anomalo\.sql$/.test(f)
 );
-const MIG_SQL = MIG_NAME
-  ? readFileSync(resolve(WS, 'supabase/migrations', MIG_NAME), 'utf8')
-  : '';
-const GUARDS_TS = readFileSync(
-  resolve(WS, 'supabase/functions/_shared/ai-guards.ts'),
-  'utf8',
-);
+const MIG_SQL = MIG_NAME ? readFileSync(resolve(WS, 'supabase/migrations', MIG_NAME), 'utf8') : '';
 
 const DB_NAME =
   process.env.IA058_DB_LOCAL ??
   (() => {
     try {
-      return readFileSync(resolve(WS, '.hermes-tarefa'), 'utf8').match(
-        /^DB_LOCAL=(\S+)$/m,
-      )?.[1];
+      return readFileSync(resolve(WS, '.hermes-tarefa'), 'utf8').match(/^DB_LOCAL=(\S+)$/m)?.[1];
     } catch {
       return undefined;
     }
@@ -123,52 +115,19 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const notifCount = (incidentId: string): number =>
   Number(
     q(`select count(*) from public.notifications
-        where type = 'ai_anomaly_alert' and metadata->>'incident_id' = '${incidentId}'`),
+        where type = 'ai_anomaly_alert' and metadata->>'incident_id' = '${incidentId}'`)
   );
 
 const incident = (target: string, scope = 'capability'): Record<string, string> | null => {
   const out = q(
     `select id||'|'||status||'|'||detections||'|'||notification_count||'|'||coalesce(measured_value::text,'')||'|'||coalesce(max_value::text,'')
        from public.ai_anomaly_incidents
-      where scope='${scope}' and target_id='${target}'`,
+      where scope='${scope}' and target_id='${target}'`
   );
   if (!out) return null;
   const [id, status, detections, notification_count, measured_value, max_value] = out.split('|');
   return { id, status, detections, notification_count, measured_value, max_value };
 };
-
-/* ------------------------------------------------------------------------- */
-/* Parte estática: roda nos dois runners, mesmo sem banco                     */
-/* ------------------------------------------------------------------------- */
-
-describe('IA-058 — contrato estático da migration e do guard', () => {
-  it('a migration existe, declara Rollback no topo e o nome é o do cartão', () => {
-    expect(MIG_NAME).toBeDefined();
-    expect(MIG_SQL.split('\n').slice(0, 5).join('\n')).toMatch(/--\s*Rollback:\s*\S/);
-  });
-
-  it('o guard consulta o bloqueio ANTES do contador compartilhado', () => {
-    const corpo = GUARDS_TS.slice(GUARDS_TS.indexOf('export async function enforceAiGuards'));
-    const posBloco = corpo.indexOf('ai_capability_active_block');
-    const posContador = corpo.indexOf('checkSharedAiRateLimits');
-    const posQuota = corpo.indexOf('ai_usage_logs');
-    expect(posBloco).toBeGreaterThan(-1);
-    expect(posContador).toBeGreaterThan(posBloco);
-    expect(posQuota).toBeGreaterThan(posBloco);
-    // recusa explícita com incidente e motivo; falha de infra é fail-open
-    expect(corpo).toMatch(/incident_id/);
-    expect(corpo).toMatch(/fail-open/);
-    expect(corpo.slice(0, posContador)).toMatch(/503|429|403/);
-  });
-
-  it('o job do avaliador é SQL puro (sem HTTP externo)', () => {
-    const m = MIG_SQL.match(/cron\.schedule\(\s*'([^']+)'[^)]*\)/s);
-    expect(m).not.toBeNull();
-    const comando = MIG_SQL.slice(m!.index!);
-    expect(comando).toContain('ai_anomaly_evaluate');
-    expect(comando).not.toMatch(/net\.http|http_post|https?:\/\//);
-  });
-});
 
 /* ------------------------------------------------------------------------- */
 /* Parte viva: banco local da tarefa                                          */
@@ -181,6 +140,8 @@ const itDb = (name: string, fn: () => unknown) => it(name, fn, 120_000);
 
 suiteDb('IA-058 — runtime no banco local', () => {
   let ADMINS = 0;
+  let SEEDED_ENABLED_CONFIGS = 0;
+  let SEEDED_CONFIG_CONTRACT = '';
 
   beforeAll(() => {
     // Limpeza namespace ia058t (ordem respeita FKs)
@@ -194,6 +155,20 @@ suiteDb('IA-058 — runtime no banco local', () => {
       delete from public.profiles where user_id in ('${U1}','${U2}','${U_ADMIN_DUAL}');
       delete from public.departments where id = '${DEPT}';
       delete from auth.users where id in ('${U1}','${U2}','${U_ADMIN_DUAL}');
+      delete from public.ai_anomaly_configs;
+    `);
+    // Executa a migration real sobre as tabelas já existentes: prova a semente,
+    // não uma regex no arquivo, e mantém o teste repetível após execuções anteriores.
+    const seeded = psql(`BEGIN;\n${MIG_SQL}\nCOMMIT;`, ['-v', 'ON_ERROR_STOP=1', '-q'], 120_000);
+    expect(seeded.status, seeded.stderr).toBe(0);
+    SEEDED_ENABLED_CONFIGS = Number(
+      q(`select count(*) from public.ai_anomaly_configs where enabled`)
+    );
+    SEEDED_CONFIG_CONTRACT = q(
+      `select scope||'|'||signal||'|'||window_seconds||'|'||threshold||'|'||min_sample||'|'||enabled::text
+         from public.ai_anomaly_configs order by scope, signal`
+    );
+    q(`
       -- cada caso liga só a combinação que prova (configs são persistidas:
       -- sem isto, o ajuste de um teste contamina a avaliação do seguinte)
       update public.ai_anomaly_configs set enabled = false;
@@ -214,11 +189,9 @@ suiteDb('IA-058 — runtime no banco local', () => {
       insert into public.ai_model_prices (model, unit, unit_price, valid_from)
         values ('${MODELO}', 'token', 0.01, '2026-01-01');
     `);
-    expect(
-      q(`select count(*) from public.user_roles where user_id='${U_ADMIN_DUAL}'`),
-    ).toBe('2');
+    expect(q(`select count(*) from public.user_roles where user_id='${U_ADMIN_DUAL}'`)).toBe('2');
     ADMINS = Number(
-      q(`select count(distinct user_id) from public.user_roles where role = 'admin'`),
+      q(`select count(distinct user_id) from public.user_roles where role = 'admin'`)
     );
     expect(ADMINS).toBeGreaterThan(0);
   }, 120_000); // cada psql passa por docker exec: sob carga, o padrão de 5 s do hook estoura
@@ -231,47 +204,72 @@ suiteDb('IA-058 — runtime no banco local', () => {
       q(`select count(*) from pg_indexes
           where schemaname='public' and tablename='ai_anomaly_incidents'
             and indexdef ilike '%unique%'
-            and indexdef ilike '%scope%target_id%signal%window_start%'`),
+            and indexdef ilike '%scope%target_id%signal%window_start%'`)
     ).toBe('1');
     expect(q(`select to_regproc('public.ai_anomaly_evaluate') is not null`)).toBe('t');
     expect(q(`select to_regproc('public.ai_capability_active_block') is not null`)).toBe('t');
     expect(q(`select to_regproc('public.ai_capability_resume') is not null`)).toBe('t');
     // as 9 combinações configuráveis existem (3 escopos x 3 sinais)
+    expect(q(`select count(*) from public.ai_anomaly_configs`)).toBe('9');
+    expect(SEEDED_ENABLED_CONFIGS).toBe(9);
+  });
+
+  itDb('semeia as 9 configurações habilitadas com os limiares IA-058', () => {
+    expect(SEEDED_CONFIG_CONTRACT.split('\n')).toEqual([
+      'capability|concurrency|3600|150|5|true',
+      'capability|cost|3600|20|20|true',
+      'capability|errors|3600|0.3|20|true',
+      'department|concurrency|3600|200|10|true',
+      'department|cost|3600|50|30|true',
+      'department|errors|3600|0.4|30|true',
+      'user|concurrency|3600|100|5|true',
+      'user|cost|3600|10|10|true',
+      'user|errors|3600|0.5|10|true',
+    ]);
+  });
+
+  itDb('dependências reais do avaliador existem no schema local', () => {
+    expect(q(`select to_regprocedure('public.is_admin_or_supervisor(uuid)') is not null`)).toBe(
+      't'
+    );
     expect(
-      q(`select count(*) from public.ai_anomaly_configs`),
-    ).toBe('9');
+      q(`select exists (
+           select 1 from information_schema.columns
+            where table_schema='public' and table_name='user_roles' and column_name='role'
+         )`)
+    ).toBe('t');
     expect(
-      q(`select count(*) from public.ai_anomaly_configs
-          where scope in ('user','department','capability')
-            and signal in ('cost','errors','concurrency')`),
-    ).toBe('9');
+      q(`select exists (
+           select 1 from public.user_roles where user_id='${U_ADMIN_DUAL}' and role='admin'
+         )`)
+    ).toBe('t');
+    expect(
+      q(`select exists (
+           select 1 from information_schema.columns
+            where table_schema='public' and table_name='ai_usage_logs' and column_name='total_tokens'
+         )`)
+    ).toBe('t');
   });
 
   itDb('migration é idempotente: reaplicar não dá erro nem duplica o job', () => {
-    const r = psql(
-      `BEGIN;\n${MIG_SQL}\nCOMMIT;`,
-      ['-v', 'ON_ERROR_STOP=1', '-q'],
-      120_000,
-    );
+    const r = psql(`BEGIN;\n${MIG_SQL}\nCOMMIT;`, ['-v', 'ON_ERROR_STOP=1', '-q'], 120_000);
     expect(r.status, r.stderr).toBe(0);
-    expect(
-      q(`select count(*) from cron.job where jobname='ia058-avaliador-anomalias'`),
-    ).toBe('1');
+    expect(q(`select count(*) from cron.job where jobname='ia058-avaliador-anomalias'`)).toBe('1');
   });
 
   itDb('job pg_cron definido: nome, agenda e comando que chama o avaliador', () => {
     const out = q(
-      `select jobname||'|'||schedule||'|'||command from cron.job where jobname='ia058-avaliador-anomalias'`,
+      `select jobname||'|'||schedule||'|'||command from cron.job where jobname='ia058-avaliador-anomalias'`
     );
     const [jobname, schedule, command] = out.split('|');
     expect(jobname).toBe('ia058-avaliador-anomalias');
-    expect(schedule).toMatch(/\S+/);
+    expect(schedule).toBe('2-59/5 * * * *');
     expect(command).toContain('ai_anomaly_evaluate');
     expect(command).not.toMatch(/net\.http|http_post|https?:\/\//);
     // sem nenhum segundo job chamando o avaliador
-    expect(
-      q(`select count(*) from cron.job where command ilike '%ai_anomaly_evaluate%'`),
-    ).toBe('1');
+    expect(q(`select count(*) from cron.job where command ilike '%ai_anomaly_evaluate%'`)).toBe(
+      '1'
+    );
   });
 
   itDb('abaixo de min_sample => 0 incidente e 0 notificação', () => {
@@ -287,7 +285,7 @@ suiteDb('IA-058 — runtime no banco local', () => {
       q(`select count(*) from public.notifications
           where type='ai_anomaly_alert'
             and (metadata->>'target_id' like 'ia058t-%'
-                 or metadata->>'target_id' in ('${U1}','${U2}','${DEPT}'))`),
+                 or metadata->>'target_id' in ('${U1}','${U2}','${DEPT}'))`)
     ).toBe('0');
   });
 
@@ -318,14 +316,18 @@ suiteDb('IA-058 — runtime no banco local', () => {
       q(`select count(*) from public.notifications
           where type='ai_anomaly_alert'
             and metadata->>'incident_id'='${inc1.id}'
-            and user_id='${U_ADMIN_DUAL}'`),
+            and user_id='${U_ADMIN_DUAL}'`)
     ).toBe('1'); // mesmo com dois papéis, o usuário recebe uma única linha
-    expect(q(`select count(*) from public.ai_anomaly_incidents where target_id='${FN_CUSTO}'`)).toBe('1');
+    expect(
+      q(`select count(*) from public.ai_anomaly_incidents where target_id='${FN_CUSTO}'`)
+    ).toBe('1');
   });
 
   itDb('reconhecer e piorar => reabre e totaliza 2 rodadas de notificação', () => {
     const inc = incident(FN_CUSTO)!;
-    q(`update public.ai_anomaly_incidents set status='acknowledged', acknowledged_at=now() where id='${inc.id}'`);
+    q(
+      `update public.ai_anomaly_incidents set status='acknowledged', acknowledged_at=now() where id='${inc.id}'`
+    );
     // sem piora: avaliação com o mesmo dado NÃO reabre
     q(`select public.ai_anomaly_evaluate('${P_NOW}')`);
     expect(incident(FN_CUSTO)!.status).toBe('acknowledged');
@@ -341,7 +343,9 @@ suiteDb('IA-058 — runtime no banco local', () => {
     expect(Number(aberto.max_value)).toBe(80);
     expect(notifCount(inc.id)).toBe(2 * ADMINS);
     // reconhecer de novo sem piora: fica reconhecido e calado
-    q(`update public.ai_anomaly_incidents set status='acknowledged', acknowledged_at=now() where id='${inc.id}'`);
+    q(
+      `update public.ai_anomaly_incidents set status='acknowledged', acknowledged_at=now() where id='${inc.id}'`
+    );
     q(`select public.ai_anomaly_evaluate('${P_NOW}')`);
     expect(incident(FN_CUSTO)!.status).toBe('acknowledged');
     expect(incident(FN_CUSTO)!.notification_count).toBe('2');
@@ -415,7 +419,7 @@ suiteDb('IA-058 — runtime no banco local', () => {
     // e ficou exatamente uma linha
     expect(
       q(`select count(*) from public.ai_anomaly_incidents
-          where target_id='ia058t-fn-conc2'`),
+          where target_id='ia058t-fn-conc2'`)
     ).toBe('1');
   });
 
@@ -424,13 +428,13 @@ suiteDb('IA-058 — runtime no banco local', () => {
     // sem incidente: NOT NULL
     const semInc = psql(
       `insert into public.ai_capability_blocks (function_name, reason) values ('${FN_A}','x')`,
-      ['-v', 'ON_ERROR_STOP=1', '-q'],
+      ['-v', 'ON_ERROR_STOP=1', '-q']
     );
     expect(semInc.status).not.toBe(0);
     // incidente inexistente: FK
     const incFalso = psql(
       `insert into public.ai_capability_blocks (function_name, incident_id, reason) values ('${FN_A}','00000000-0000-4000-8000-000000999999','x')`,
-      ['-v', 'ON_ERROR_STOP=1', '-q'],
+      ['-v', 'ON_ERROR_STOP=1', '-q']
     );
     expect(incFalso.status).not.toBe(0);
     // bloqueio válido
@@ -441,7 +445,7 @@ suiteDb('IA-058 — runtime no banco local', () => {
     // segundo bloqueio ATIVO na mesma capacidade: índice parcial rejeita
     const dup = psql(
       `insert into public.ai_capability_blocks (function_name, incident_id, reason) values ('${FN_A}','${inc.id}','y')`,
-      ['-v', 'ON_ERROR_STOP=1', '-q'],
+      ['-v', 'ON_ERROR_STOP=1', '-q']
     );
     expect(dup.status).not.toBe(0);
   });
@@ -454,72 +458,77 @@ suiteDb('IA-058 — runtime no banco local', () => {
     expect(q(`select public.ai_capability_resume('${FN_A}','ia058t-operador')`)).toBe('1');
     expect(q(`select count(*) from public.ai_capability_active_block('${FN_A}')`)).toBe('0');
     // a linha fica como histórico com o incidente e quem retomou
-    const hist = q(`select incident_id::text, resumed_by from public.ai_capability_blocks where function_name='${FN_A}'`);
+    const hist = q(
+      `select incident_id::text, resumed_by from public.ai_capability_blocks where function_name='${FN_A}'`
+    );
     expect(hist).toContain(inc.id);
     expect(hist).toContain('ia058t-operador');
     // retomar de novo é no-op (0)
     expect(q(`select public.ai_capability_resume('${FN_A}','ia058t-operador')`)).toBe('0');
   });
 
-  itDb('duas avaliações CONCORRENTES de incidente reconhecido e agravado: 1 reabertura, sem notificação dupla', async () => {
-    const alvo = 'ia058t-race';
-    // balde PRÓPRIO (14:00-15:00 de 04/10), fora dos demais casos: só o alvo sintético
-    // entra como candidato, então os dois avaliadores disputam apenas a linha deste incidente
-    const pRace = '2026-10-04 15:00:00+00';
-    q(`update public.ai_anomaly_configs set enabled = false`);
-    q(`update public.ai_anomaly_configs
+  itDb(
+    'duas avaliações CONCORRENTES de incidente reconhecido e agravado: 1 reabertura, sem notificação dupla',
+    async () => {
+      const alvo = 'ia058t-race';
+      // balde PRÓPRIO (14:00-15:00 de 04/10), fora dos demais casos: só o alvo sintético
+      // entra como candidato, então os dois avaliadores disputam apenas a linha deste incidente
+      const pRace = '2026-10-04 15:00:00+00';
+      q(`update public.ai_anomaly_configs set enabled = false`);
+      q(`update public.ai_anomaly_configs
           set enabled=true, window_seconds=3600, threshold=1, min_sample=1
         where scope='capability' and signal='cost'`);
-    q(`
+      q(`
       delete from public.notifications where type='ai_anomaly_alert';
       delete from public.ai_anomaly_incidents where target_id='${alvo}';
       delete from public.ai_usage_logs where function_name='${alvo}';
       insert into public.ai_usage_logs (user_id, function_name, model, input_tokens, output_tokens, status, created_at)
         values ('${U1}','${alvo}','${MODELO}',600,400,'success','2026-10-04 14:05:00+00');
     `);
-    q(`select public.ai_anomaly_evaluate('${pRace}')`);
-    const inc = incident(alvo)!;
-    expect(inc.status).toBe('open');
-    expect(inc.notification_count).toBe('1');
-    expect(notifCount(inc.id)).toBe(ADMINS);
-    // reconhece e AGRAVA (custo medido 10 -> 60)
-    q(`
+      q(`select public.ai_anomaly_evaluate('${pRace}')`);
+      const inc = incident(alvo)!;
+      expect(inc.status).toBe('open');
+      expect(inc.notification_count).toBe('1');
+      expect(notifCount(inc.id)).toBe(ADMINS);
+      // reconhece e AGRAVA (custo medido 10 -> 60)
+      q(`
       update public.ai_anomaly_incidents set status='acknowledged', acknowledged_at=now()
         where target_id='${alvo}';
       insert into public.ai_usage_logs (user_id, function_name, model, input_tokens, output_tokens, status, created_at)
         select '${U1}','${alvo}','${MODELO}',600,400,'success',('2026-10-04 14:1'||i||':00+00')::timestamptz
           from generate_series(1,5) i;
     `);
-    // dois avaliadores REAIS em paralelo sobre o MESMO incidente reconhecido: A segura a linha
-    // (select ... for update do avaliador) e dorme; B tenta entrar no meio e só segue depois do
-    // commit de A. Sem serialização, os dois notificariam o mesmo agravamento.
-    const abre = () => {
-      const proc = DB_NAME
-        ? spawn('zapp-db-local', ['psql', '.', DB_NAME], { cwd: WS })
-        : spawn('psql', [process.env.DATABASE_URL!]);
-      proc.stdin.write(`begin;\nselect public.ai_anomaly_evaluate('${pRace}');\n`);
-      return proc;
-    };
-    // 'exit' já emitido não volta: esperar um processo que já saiu travaria o caso
-    const saiu = (proc: ReturnType<typeof spawn>) =>
-      proc.exitCode !== null || proc.signalCode !== null
-        ? Promise.resolve()
-        : new Promise((res) => proc.on('exit', res));
-    const a = abre();
-    a.stdin.write('select pg_sleep(3);\ncommit;\n');
-    a.stdin.end();
-    await sleep(1200);
-    const b = abre();
-    b.stdin.write('commit;\n');
-    b.stdin.end();
-    await saiu(a);
-    await saiu(b);
-    const depois = incident(alvo)!;
-    expect(depois.status).toBe('open'); // reabriu: piora mensurável (60 > 10)
-    expect(Number(depois.max_value)).toBe(60);
-    expect(depois.notification_count).toBe('2'); // 1 rodada inicial + 1 da reabertura, nunca 3
-    expect(notifCount(inc.id)).toBe(2 * ADMINS); // nenhuma rodada duplicada
-  });
+      // dois avaliadores REAIS em paralelo sobre o MESMO incidente reconhecido: A segura a linha
+      // (select ... for update do avaliador) e dorme; B tenta entrar no meio e só segue depois do
+      // commit de A. Sem serialização, os dois notificariam o mesmo agravamento.
+      const abre = () => {
+        const proc = DB_NAME
+          ? spawn('zapp-db-local', ['psql', '.', DB_NAME], { cwd: WS })
+          : spawn('psql', [process.env.DATABASE_URL!]);
+        proc.stdin.write(`begin;\nselect public.ai_anomaly_evaluate('${pRace}');\n`);
+        return proc;
+      };
+      // 'exit' já emitido não volta: esperar um processo que já saiu travaria o caso
+      const saiu = (proc: ReturnType<typeof spawn>) =>
+        proc.exitCode !== null || proc.signalCode !== null
+          ? Promise.resolve()
+          : new Promise((res) => proc.on('exit', res));
+      const a = abre();
+      a.stdin.write('select pg_sleep(3);\ncommit;\n');
+      a.stdin.end();
+      await sleep(1200);
+      const b = abre();
+      b.stdin.write('commit;\n');
+      b.stdin.end();
+      await saiu(a);
+      await saiu(b);
+      const depois = incident(alvo)!;
+      expect(depois.status).toBe('open'); // reabriu: piora mensurável (60 > 10)
+      expect(Number(depois.max_value)).toBe(60);
+      expect(depois.notification_count).toBe('2'); // 1 rodada inicial + 1 da reabertura, nunca 3
+      expect(notifCount(inc.id)).toBe(2 * ADMINS); // nenhuma rodada duplicada
+    }
+  );
 
   itDb('grants/RLS fail-closed: mutação negada a anon e authenticated', () => {
     for (const role of ['anon', 'authenticated']) {
@@ -527,23 +536,26 @@ suiteDb('IA-058 — runtime no banco local', () => {
         `set role ${role};
          insert into public.ai_anomaly_incidents (scope,target_id,signal,window_start,window_seconds,measured_value,max_value,threshold,sample_size)
          values ('capability','x','errors','${WS_INI}',3600,1,1,1,1)`,
-        ['-v', 'ON_ERROR_STOP=1', '-q'],
+        ['-v', 'ON_ERROR_STOP=1', '-q']
       );
       expect(ins.status, `insert como ${role}`).not.toBe(0);
-      const upd = psql(
-        `set role ${role}; update public.ai_anomaly_configs set enabled=false`,
-        ['-v', 'ON_ERROR_STOP=1', '-q'],
-      );
+      const upd = psql(`set role ${role}; update public.ai_anomaly_configs set enabled=false`, [
+        '-v',
+        'ON_ERROR_STOP=1',
+        '-q',
+      ]);
       expect(upd.status, `update como ${role}`).not.toBe(0);
-      const del = psql(
-        `set role ${role}; delete from public.ai_capability_blocks`,
-        ['-v', 'ON_ERROR_STOP=1', '-q'],
-      );
+      const del = psql(`set role ${role}; delete from public.ai_capability_blocks`, [
+        '-v',
+        'ON_ERROR_STOP=1',
+        '-q',
+      ]);
       expect(del.status, `delete como ${role}`).not.toBe(0);
-      const fn = psql(
-        `set role ${role}; select public.ai_anomaly_evaluate()`,
-        ['-v', 'ON_ERROR_STOP=1', '-q'],
-      );
+      const fn = psql(`set role ${role}; select public.ai_anomaly_evaluate()`, [
+        '-v',
+        'ON_ERROR_STOP=1',
+        '-q',
+      ]);
       expect(fn.status, `avaliador como ${role}`).not.toBe(0);
     }
     // leitura operacional só para admin/supervisor: authenticated comum lê 0 linhas
@@ -551,7 +563,7 @@ suiteDb('IA-058 — runtime no banco local', () => {
       `set role authenticated;
        set request.jwt.claim.sub = '${U2}';
        select count(*) from public.ai_anomaly_incidents where target_id='${FN_CUSTO}'`,
-      ['-v', 'ON_ERROR_STOP=1', '-At'],
+      ['-v', 'ON_ERROR_STOP=1', '-At']
     );
     expect(leitura.status).toBe(0);
     expect(leitura.stdout.trim().split('\n').pop()).toBe('0');
@@ -562,51 +574,62 @@ suiteDb('IA-058 — runtime no banco local', () => {
 /* Guard de verdade: enforceAiGuards contra o banco local (só sob Bun)        */
 /* ------------------------------------------------------------------------- */
 
-const itBun = DB_OK && IS_BUN
-  ? (name: string, fn: () => unknown) => it(name, fn, 120_000)
-  : it.skip;
+const itBun =
+  DB_OK && IS_BUN ? (name: string, fn: () => unknown) => it(name, fn, 120_000) : it.skip;
 
 itBun(
-  'enforceAiGuards recusa function_a bloqueada (403 + incidente) e permite function_b',
+  'enforceAiGuards recusa function_a (403 + incidente), permite function_b e falha aberto só em erro de infra',
   async () => {
     const inc = incident(FN_CUSTO)!;
     q(`insert into public.ai_capability_blocks (function_name, incident_id, reason, blocked_by)
         values ('${FN_A}','${inc.id}','custo anômalo IA-058','ia058t-teste')
         on conflict do nothing`);
     const { mock } = await import('bun:test');
+    let createClientCalls = 0;
+    let blockQueryFails = false;
+    const rpcCalls: string[] = [];
     mock.module('https://esm.sh/@supabase/supabase-js@2.87.1', () => ({
-      createClient: () => ({
-        rpc: async (fn: string, args: Record<string, unknown>) => {
-          if (fn === 'ai_capability_active_block') {
-            const name = String(args.p_function_name).replaceAll("'", "''");
-            const out = psql(
-              `select incident_id||'|'||reason||'|'||blocked_at from public.ai_capability_active_block('${name}')`,
-              ['-At'],
-            );
-            const rows = out.stdout.trim()
-              ? out.stdout.trim().split('\n').map((l) => {
-                  const [incident_id, reason, blocked_at] = l.split('|');
-                  return { incident_id, reason, blocked_at };
-                })
-              : [];
-            return { data: rows, error: null };
-          }
-          if (fn === 'ai_rate_limit_hit') return { data: 1, error: null };
-          return { data: null, error: null };
-        },
-        from: () => {
-          const chain: Record<string, unknown> = {
-            select: () => chain,
-            eq: () => chain,
-            limit: () => chain,
-            gte: async () => ({ count: 0, error: null }),
-            maybeSingle: async () => ({ data: null, error: null }),
-            then: (resolve: (v: unknown) => unknown) =>
-              resolve({ data: null, error: null }),
-          };
-          return chain;
-        },
-      }),
+      createClient: () => {
+        createClientCalls += 1;
+        return {
+          rpc: async (fn: string, args: Record<string, unknown>) => {
+            rpcCalls.push(fn);
+            if (fn === 'ai_capability_active_block') {
+              if (blockQueryFails) {
+                return { data: null, error: { message: 'falha sintética do banco local' } };
+              }
+              const name = String(args.p_function_name).replaceAll("'", "''");
+              const out = psql(
+                `select incident_id||'|'||reason||'|'||blocked_at from public.ai_capability_active_block('${name}')`,
+                ['-At']
+              );
+              const rows = out.stdout.trim()
+                ? out.stdout
+                    .trim()
+                    .split('\n')
+                    .map((l) => {
+                      const [incident_id, reason, blocked_at] = l.split('|');
+                      return { incident_id, reason, blocked_at };
+                    })
+                : [];
+              return { data: rows, error: null };
+            }
+            if (fn === 'ai_rate_limit_hit') return { data: 1, error: null };
+            return { data: null, error: null };
+          },
+          from: () => {
+            const chain: Record<string, unknown> = {
+              select: () => chain,
+              eq: () => chain,
+              limit: () => chain,
+              gte: async () => ({ count: 0, error: null }),
+              maybeSingle: async () => ({ data: null, error: null }),
+              then: (resolve: (v: unknown) => unknown) => resolve({ data: null, error: null }),
+            };
+            return chain;
+          },
+        };
+      },
     }));
     (globalThis as Record<string, unknown>).Deno = {
       env: {
@@ -617,9 +640,7 @@ itBun(
           })[k],
       },
     };
-    const { enforceAiGuards } = await import(
-      '../../supabase/functions/_shared/ai-guards.ts'
-    );
+    const { enforceAiGuards } = await import('../../supabase/functions/_shared/ai-guards.ts');
     const req = new Request('https://local.test/functions/v1/ai', {
       method: 'POST',
       headers: { origin: 'http://localhost:5173' },
@@ -630,6 +651,13 @@ itBun(
       perUserPerMinute: 10_000,
       req,
     });
+    expect(
+      createClientCalls,
+      'getServiceClient usa o createClient mockado pelo specifier exato'
+    ).toBe(1);
+    expect(rpcCalls[0], 'bloqueio é consultado antes de contador/cota').toBe(
+      'ai_capability_active_block'
+    );
     expect(resA, 'capacidade bloqueada tem de ser recusada').not.toBeNull();
     expect(resA!.status).toBe(403);
     const body = await resA!.text();
@@ -651,5 +679,19 @@ itBun(
       req,
     });
     expect(resA2, 'após retomada manual a capacidade volta').toBeNull();
-  },
+    // Falha de infraestrutura não inventa bloqueio: segue para rate limit/cota.
+    blockQueryFails = true;
+    const callsBeforeInfraFailure = rpcCalls.length;
+    const resInfraFailure = await enforceAiGuards({
+      functionName: FN_A,
+      userId: U2,
+      perUserPerMinute: 10_000,
+      req,
+    });
+    expect(resInfraFailure, 'falha ao consultar bloqueio deve seguir fail-open').toBeNull();
+    expect(rpcCalls.slice(callsBeforeInfraFailure, callsBeforeInfraFailure + 2)).toEqual([
+      'ai_capability_active_block',
+      'ai_rate_limit_hit',
+    ]);
+  }
 );
