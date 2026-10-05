@@ -1,6 +1,5 @@
 // Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
 import { evoFetch, extractBase64Media } from './evolution-send.ts';
-import { attributeMultiplixReply, attributeTalkXReply } from "./talkx-reply.ts";
 
 import {
   isRecord, normalizePhone, resolveEventJid,
@@ -452,11 +451,26 @@ export async function handleIncomingMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  // Uma transacao (migration 20260905050000): find-or-create do contato com
-  // variantes do 9o digito e relink de conexao + upsert idempotente da mensagem
-  // (ux_messages_dedup, preservando status/conteudo de mensagem apagada).
-  // Antes eram 3-5 round-trips sem atomicidade; falha no meio deixava contato
-  // sem mensagem ou relink parcial.
+  // R2-API-006: a palavra de opt-out e a citação viajam NA MESMA chamada do
+  // ingest — a RPC grava mensagem + efeitos pendentes (inbound_message_effects)
+  // numa transação só. Resolvido aqui porque a reentrega também precisa
+  // registrar o que faltou (mensagens pré-outbox recuperam o efeito no replay).
+  //
+  // X030: opt-out por palavra configurada (talkx_optout_keywords, casada com a
+  // MESMA normalização da RPC) OU por resposta de botão/lista com id
+  // `talkx_optout` (X064). Avaliado só para mensagem recebida (nunca a nossa).
+  const optOutKeyword = key.fromMe
+    ? null
+    : interactiveResponseId === TALKX_OPTOUT_BUTTON_ID
+    ? TALKX_OPTOUT_BUTTON_ID
+    : messageType === 'text' && content
+    ? await resolveOptOutKeyword(supabase, content)
+    : null;
+  const quotedExternalId = extractQuotedExternalId(data);
+
+  // Uma transacao (migration 20260905050000 + outbox R2-API-006): contato
+  // find-or-create (variantes do 9o digito, relink) + upsert idempotente da
+  // mensagem + efeitos pendentes (opt-out OU respostas — nunca os dois).
   const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', {
     p_connection_id: connection.id,
     p_phone: phone,
@@ -466,10 +480,14 @@ export async function handleIncomingMessage(
     p_media_url: mediaUrl,
     p_external_id: key.id,
     p_created_at: messageCreatedAt,
+    p_opt_out_keyword: optOutKeyword,
+    p_quoted_external_id: quotedExternalId,
   });
   if (txError) {
     console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone, messageType });
-    return;
+    // R2-API-006: engolir o erro transformaria a falha em "mensagem perdida" —
+    // a exceção vira 500 no webhook e a Evolution reentrega a operação inteira.
+    throw new Error(`ingest_inbound_message falhou (${txError.code ?? 'sem_codigo'}): ${txError.message}`);
   }
   const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
     contact_id: string; contact_name: string | null; assigned_to: string | null; avatar_url: string | null;
@@ -489,108 +507,83 @@ export async function handleIncomingMessage(
     }
   }
 
-  if (tx.outcome === 'duplicate' || !tx.message_id) {
-    console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
-    return;
+  // R2-API-006: a drenagem roda em TODA entrega — inclusive 'duplicate', que
+  // antes saía aqui sem retomar nada. A RPC aplica e baixa cada pendência na
+  // mesma transação; falha fica pendente (last_error) e a próxima retenta.
+  // Erro e pendência são lançados: o 500 faz a Evolution reentregar.
+  const { data: drainData, error: drainErr } = await supabase.rpc('drain_inbound_message_effects', {
+    p_connection_id: connection.id,
+    p_external_id: key.id,
+  });
+  if (drainErr) {
+    console.error('[INCOMING] drain_inbound_message_effects failed:', { code: drainErr.code, message: drainErr.message, externalId: key.id });
+    throw new Error(`drain_inbound_message_effects falhou (${drainErr.code ?? 'sem_codigo'}): ${drainErr.message}`);
   }
-  if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, tx.contact_id, tx.message_id, mediaUrl, supabaseUrl, supabaseServiceKey);
-  if (tx.outcome === 'inserted' && messageType === 'text' && content) {
-    void enrichIncomingLinkPreview(supabase, tx.message_id, content, supabaseUrl, supabaseServiceKey);
+  const drain = (drainData ?? null) as {
+    suppression_id: string | null;
+    optout_status: 'suppressed' | 'already_suppressed' | 'no_recent_send' | 'invalid_phone' | null;
+    talkx_reply: { attributed?: boolean; attribution?: string | null; recipient_id?: string; campaign_id?: string } | null;
+    multiplix_reply: { attributed?: boolean; attribution?: string | null; item_id?: string; dispatch_id?: string } | null;
+    pending_failed: number;
+  } | null;
+  if (drain && drain.pending_failed > 0) {
+    console.error('[INCOMING] drain_inbound_message_effects deixou efeito pendente:', { externalId: key.id, pending_failed: drain.pending_failed });
+    throw new Error(`drain_inbound_message_effects: ${drain.pending_failed} efeito(s) pendente(s) apos erro`);
   }
-  // X030: opt-out por palavra configurada (talkx_optout_keywords, casada com a
-  // MESMA normalização da RPC) OU por resposta de botão/lista com id
-  // `talkx_optout` (X064). Avaliado só para mensagem recebida (nunca a nossa).
-  const optOutKeyword = key.fromMe
-    ? null
-    : interactiveResponseId === TALKX_OPTOUT_BUTTON_ID
-    ? TALKX_OPTOUT_BUTTON_ID
-    : messageType === 'text' && content
-    ? await resolveOptOutKeyword(supabase, content)
-    : null;
 
-  // E57: opt-out automatico por palavra-chave (gateado por campanha recente 30 dias)
-  if (optOutKeyword && (tx.outcome === 'inserted' || tx.outcome === 'updated') && tx.contact_id) {
-    // Fix P1: usar phone resolvido via bestJid/normalizePhone (ja disponivel no escopo da funcao pai)
+  if (tx.outcome === 'duplicate') {
+    console.warn(`[INCOMING] Duplicate delivery — efeitos drenados pela outbox: ${key.id}`);
+  }
+  if (tx.outcome !== 'duplicate' && tx.message_id) {
+    if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, tx.contact_id, tx.message_id, mediaUrl, supabaseUrl, supabaseServiceKey);
+    if (tx.outcome === 'inserted' && messageType === 'text' && content) {
+      void enrichIncomingLinkPreview(supabase, tx.message_id, content, supabaseUrl, supabaseServiceKey);
+    }
+  }
+
+  // E57/E59: a confirmação só sai quando a drenagem criou uma supressão NOVA
+  // (suppression_id não-nulo). Já suprimido (reentrega ou opt-out anterior) e
+  // gate de 30 dias não reenviam — a autoresposta nunca sai duas vezes.
+  if (drain?.suppression_id) {
     const resolvedPhone = phone ?? ((key.remoteJid ?? '').split('@')[0].replace(/\D/g, ''));
-    if (resolvedPhone && resolvedPhone.length >= 8) {
-      // Gate: verificar se ha campanha recente (30 dias) para o contato
-      const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: recentSend } = await supabase.from('talkx_recipients')
-        .select('id').eq('contact_id', tx.contact_id)
-        .not('sent_at', 'is', null).gte('sent_at', cutoff).limit(1);
-      if (recentSend && recentSend.length > 0) {
-        // X030: a palavra casada vai em `reason`; a campanha NÃO é resolvida na
-        // edge — a RPC talkx_suppress_contact (origem auto_optout) herda a
-        // campanha do envio mais recente quando p_campaign_id é omitido.
-        const { data: newId, error: suppErr } = await supabase.rpc('talkx_suppress_contact', {
-          p_contact_id: tx.contact_id,
-          p_phone: resolvedPhone,
-          p_reason: 'Opt-out via mensagem: ' + optOutKeyword,
-          p_reason_code: 'opt_out',
-          p_origin: 'auto_optout',
-          p_source_message_id: tx.message_id ?? null,
-        });
-        if (newId) {
-          console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist (' + optOutKeyword + ')');
-          // E59: mensagem de confirmacao. O texto vem de
-          // talkx_settings.optout_autoreply e sai pelo token da INSTANCIA que
-          // recebeu a mensagem (resolvido no Vault via get_instance_token).
-          try {
-            const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\/+$/, '');
-            const evolutionKey = Deno.env.get('EVOLUTION_API_KEY') ?? '';
-            const autoReply = await loadOptOutAutoreply(supabase);
-            if (evolutionUrl && autoReply) {
-              const { data: tokenData } = await supabase.rpc('get_instance_token', { p_instance_id: instance });
-              const instanceToken = typeof tokenData === 'string' && tokenData.length > 0 ? tokenData : null;
-              if (!instanceToken) {
-                console.warn('[OPT-OUT] Token da instancia ausente — confirmacao nao enviada (' + instance + ')');
-              } else {
-                await evoFetch(evolutionUrl, evolutionKey, '/message/sendText/' + instance, {
-                  number: resolvedPhone,
-                  text: autoReply,
-                  delay: 500,
-                }, undefined, undefined, undefined, instanceToken);
-                console.warn('[OPT-OUT] Confirmacao enviada para', resolvedPhone);
-              }
-            }
-          } catch (notifErr) {
-            console.warn('[OPT-OUT] Falha ao enviar confirmacao:', notifErr instanceof Error ? notifErr.message : String(notifErr));
-          }
-        } else if (!suppErr) {
-          console.warn('[OPT-OUT] ' + resolvedPhone + ' ja suprimido (idempotente): confirmacao nao reenviada');
+    console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist (' + optOutKeyword + ')');
+    // E59: mensagem de confirmacao. O texto vem de
+    // talkx_settings.optout_autoreply e sai pelo token da INSTANCIA que
+    // recebeu a mensagem (resolvido no Vault via get_instance_token).
+    try {
+      const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\/+$/, '');
+      const evolutionKey = Deno.env.get('EVOLUTION_API_KEY') ?? '';
+      const autoReply = await loadOptOutAutoreply(supabase);
+      if (evolutionUrl && autoReply) {
+        const { data: tokenData } = await supabase.rpc('get_instance_token', { p_instance_id: instance });
+        const instanceToken = typeof tokenData === 'string' && tokenData.length > 0 ? tokenData : null;
+        if (!instanceToken) {
+          console.warn('[OPT-OUT] Token da instancia ausente — confirmacao nao enviada (' + instance + ')');
         } else {
-          console.warn('[OPT-OUT] Falha:', suppErr?.message);
+          await evoFetch(evolutionUrl, evolutionKey, '/message/sendText/' + instance, {
+            number: resolvedPhone,
+            text: autoReply,
+            delay: 500,
+          }, undefined, undefined, undefined, instanceToken);
+          console.warn('[OPT-OUT] Confirmacao enviada para', resolvedPhone);
         }
-      } else {
-        console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
       }
+    } catch (notifErr) {
+      console.warn('[OPT-OUT] Falha ao enviar confirmacao:', notifErr instanceof Error ? notifErr.message : String(notifErr));
     }
+  } else if (optOutKeyword && drain?.optout_status === 'already_suppressed') {
+    console.warn('[OPT-OUT] ' + phone + ' ja suprimido (idempotente): confirmacao nao reenviada');
+  } else if (optOutKeyword && drain?.optout_status === 'no_recent_send') {
+    console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', phone);
   }
 
-  // E88/X028: atribuir resposta TalkX, exceto opt-out. O handler AGUARDA a RPC
-  // (attribute_talkx_reply) — não é mais fire-and-forget: o efeito no banco precisa
-  // estar garantido antes de o webhook responder, senão uma resposta podia ser
-  // perdida se a função fosse congelada logo após o retorno. O telefone resolvido
-  // (bestJid/normalizePhone) cobre o contato que chegou por outro contact_id (LID).
-  // X030: a MESMA mensagem de opt-out (palavra OU botão) não conta como resposta.
-  if (tx.outcome === 'inserted' && !key.fromMe && tx.contact_id && tx.message_id) {
-    if (!optOutKeyword) {
-      await attributeTalkXReply(supabase, tx.contact_id, phone ?? null, tx.message_id);
-      // F62: a MESMA resposta tambem fecha o item do Multiplix. A citacao (quando existe)
-      // e o unico jeito de saber QUAL envio gerou a resposta — sem ela a atribuicao e por
-      // janela + numero e a funcao grava `inferred` em vez de `linked`. Por isso a citacao
-      // e extraida aqui e passada adiante: a diferenca entre as duas e o que o operador ve.
-      // O vinculo e por TELEFONE: `multiplix_recipients` nao tem contact_id (guarda
-      // `destino_e164`). `phone` ja vem normalizado no escopo desta funcao (bestJid).
-      if (phone) {
-        void attributeMultiplixReply(
-          supabase,
-          phone,
-          tx.message_id,
-          extractQuotedExternalId(data),
-        );
-      }
-    }
+  // E88/F62: resultados das atribuições aplicadas pela drenagem (log de
+  // observabilidade — o efeito no banco já está garantido na transação da RPC).
+  if (drain?.talkx_reply?.attributed === true) {
+    console.warn(`[E88] Resposta atribuida (${drain.talkx_reply.attribution}): recipient=${drain.talkx_reply.recipient_id} campaign=${drain.talkx_reply.campaign_id}`);
+  }
+  if (drain?.multiplix_reply?.attributed === true) {
+    console.warn(`[F62] Resposta atribuida (${drain.multiplix_reply.attribution}): phone=***${(phone ?? '').slice(-4)} item=${drain.multiplix_reply.item_id}`);
   }
 }
 
