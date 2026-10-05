@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
   getPublicUrl: vi.fn(),
   remove: vi.fn(),
+  tableFrom: vi.fn(),
   sendOutboundMessage: vi.fn(),
   toastInfo: vi.fn(),
   toastSuccess: vi.fn(),
@@ -17,6 +18,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     storage: { from: mocks.storageFrom },
+    from: mocks.tableFrom,
   },
 }));
 
@@ -44,6 +46,16 @@ function createFile(name = 'Relatório final (cliente #1).pdf') {
   return new File(['conteúdo'], name, { type: 'application/pdf' });
 }
 
+/** Cadeia minima da reconciliacao por (contact_id, client_message_id). */
+function reconcileChain(result: { data: unknown; error: unknown }) {
+  const chain = {
+    select: () => chain,
+    eq: () => chain,
+    limit: () => Promise.resolve(result),
+  };
+  return chain;
+}
+
 function renderUpload(onFileSent = vi.fn()) {
   return {
     onFileSent,
@@ -53,6 +65,12 @@ function renderUpload(onFileSent = vi.fn()) {
       onFileSent,
     })),
   };
+}
+
+async function send(hook: { result: { current: ReturnType<typeof useFileUploadLogic> } }) {
+  await act(async () => {
+    await hook.result.current.handleSendFile();
+  });
 }
 
 beforeEach(() => {
@@ -66,6 +84,8 @@ beforeEach(() => {
   mocks.getPublicUrl.mockReturnValue({ data: { publicUrl: LOCATOR_URL } });
   mocks.remove.mockResolvedValue({ error: null });
   mocks.sendOutboundMessage.mockResolvedValue({ id: 'msg-1', status: 'sent', externalId: 'ext-1', idempotent: false });
+  // Padrao conservador: nenhuma linha encontrada so quando o teste provar isso.
+  mocks.tableFrom.mockReturnValue(reconcileChain({ data: [{ id: 'msg-1' }], error: null }));
 });
 
 describe('useFileUploadLogic — storage path', () => {
@@ -74,9 +94,7 @@ describe('useFileUploadLogic — storage path', () => {
     act(() => {
       hook.result.current.handleExternalFile(createFile());
     });
-    await act(async () => {
-      await hook.result.current.handleSendFile();
-    });
+    await send(hook);
 
     await waitFor(() => expect(mocks.upload).toHaveBeenCalledTimes(1));
     const [storagePath] = mocks.upload.mock.calls[0];
@@ -92,28 +110,9 @@ describe('useFileUploadLogic — storage path', () => {
     act(() => {
       hook.result.current.handleExternalFile(createFile());
     });
-    await act(async () => {
-      await hook.result.current.handleSendFile();
-    });
+    await send(hook);
     expect(mocks.upload).not.toHaveBeenCalled();
     expect(onFileSelect).toHaveBeenCalledTimes(1);
-  });
-
-  it('remove o objeto órfão do storage quando o envio falha após o upload', async () => {
-    mocks.sendOutboundMessage.mockRejectedValueOnce(new Error('fila cheia'));
-    const hook = renderUpload();
-    act(() => {
-      hook.result.current.handleExternalFile(createFile());
-    });
-    await act(async () => {
-      await hook.result.current.handleSendFile();
-    });
-
-    await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
-    const [[removedPaths]] = mocks.remove.mock.calls;
-    const [uploadedPath] = mocks.upload.mock.calls[0];
-    expect(removedPaths).toEqual([uploadedPath]);
-    expect(mocks.toastError).toHaveBeenCalled();
   });
 
   it('repete a mesma sanitização em envio de fila (múltiplos arquivos)', async () => {
@@ -133,5 +132,85 @@ describe('useFileUploadLogic — storage path', () => {
       expect(storagePath.startsWith(`${CONTACT_ID}/`)).toBe(true);
       expect(storagePath).not.toMatch(/[áàâãéêíóôõúü() #!]/i);
     }
+  });
+});
+
+describe('useFileUploadLogic — R2-INB-006: falha após enqueue e retry', () => {
+  it('remove o objeto órfão quando o envio falha e a fila prova que NÃO há linha', async () => {
+    mocks.sendOutboundMessage.mockRejectedValueOnce(new Error('fila cheia'));
+    mocks.tableFrom.mockReturnValue(reconcileChain({ data: [], error: null }));
+
+    const hook = renderUpload();
+    act(() => {
+      hook.result.current.handleExternalFile(createFile());
+    });
+    await send(hook);
+
+    await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
+    const [[removedPaths]] = mocks.remove.mock.calls;
+    const [uploadedPath] = mocks.upload.mock.calls[0];
+    expect(removedPaths).toEqual([uploadedPath]);
+    expect(mocks.tableFrom).toHaveBeenCalledWith('messages');
+    expect(mocks.toastError).toHaveBeenCalled();
+  });
+
+  it('NÃO remove o objeto quando a falha vem depois do enqueue (linha persistida)', async () => {
+    mocks.sendOutboundMessage.mockRejectedValueOnce(new Error('entrega indisponível'));
+    mocks.tableFrom.mockReturnValue(reconcileChain({ data: [{ id: 'msg-1' }], error: null }));
+
+    const hook = renderUpload();
+    act(() => {
+      hook.result.current.handleExternalFile(createFile());
+    });
+    await send(hook);
+
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(mocks.remove).not.toHaveBeenCalled();
+    expect(mocks.toastError).toHaveBeenCalled();
+  });
+
+  it('mantém o objeto quando a reconciliação falha (estado indeterminado)', async () => {
+    mocks.sendOutboundMessage.mockRejectedValueOnce(new Error('entrega indisponível'));
+    mocks.tableFrom.mockReturnValue(reconcileChain({ data: null, error: { message: 'rls' } }));
+
+    const hook = renderUpload();
+    act(() => {
+      hook.result.current.handleExternalFile(createFile());
+    });
+    await send(hook);
+
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
+  it('retry reaproveita o objeto e o mesmo id lógico (sem novo upload nem outra ação)', async () => {
+    const file = createFile('contrato.pdf');
+    mocks.sendOutboundMessage
+      .mockRejectedValueOnce(new Error('entrega indisponível'))
+      .mockResolvedValueOnce({ id: 'msg-1', status: 'sent', externalId: 'ext-1', idempotent: true });
+    mocks.tableFrom.mockReturnValue(reconcileChain({ data: [{ id: 'msg-1' }], error: null }));
+
+    const hook = renderUpload();
+    act(() => {
+      hook.result.current.handleExternalFile(file);
+    });
+    await send(hook);
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1));
+
+    // Reenvio do mesmo arquivo depois da falha de entrega.
+    act(() => {
+      hook.result.current.handleExternalFile(file);
+    });
+    await send(hook);
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(2));
+
+    expect(mocks.upload).toHaveBeenCalledTimes(1);
+    expect(mocks.remove).not.toHaveBeenCalled();
+
+    const [firstInput] = mocks.sendOutboundMessage.mock.calls[0];
+    const [secondInput] = mocks.sendOutboundMessage.mock.calls[1];
+    expect(secondInput.clientMessageId).toBe(firstInput.clientMessageId);
+    expect(secondInput.mediaUrl).toBe(firstInput.mediaUrl);
+    expect(secondInput.clientMessageId).toBeTruthy();
   });
 });
