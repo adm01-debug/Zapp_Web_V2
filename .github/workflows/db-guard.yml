@@ -828,4 +828,4 @@ jobs:
       - name: Provar revogação de sessões Auth por migration (R2-AUTH-004)
         env:
           SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash -x scripts/db-audit/revoke-auth-sessions.test.sh   # diagnóstico: exit 2 silencioso no CI
