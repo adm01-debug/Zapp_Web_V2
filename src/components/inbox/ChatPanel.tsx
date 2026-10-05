@@ -27,6 +27,7 @@ import { ChatDragOverlay } from './chat/ChatDragOverlay';
 import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
 import { ChatSearchBar } from './chat/ChatSearchBar';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
+import type { TransferTargetType } from './TransferDialog';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
 const NextBestActionEngine = lazy(() => import('./NextBestActionEngine').then(m => ({ default: m.NextBestActionEngine })));
@@ -194,13 +195,30 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     handlers.setInputValue(reply.content); closeDialog('quickReplies'); incrementUseCount(reply.id);
   };
 
-  const handleTransfer = async (type: 'agent' | 'queue', targetId: string, message?: string) => {
+  // Contrato do TransferDialog (item 88 / R2-INB-009): só agent|queue; a nota
+  // opcional vai para conversation_events.metadata.note; qualquer escrita que
+  // falhe rejeita a Promise para o diálogo exibir erro e permanecer aberto.
+  const handleTransfer = async (type: TransferTargetType, targetId: string, message?: string) => {
     const updateData: { assigned_to?: string; queue_id?: string } = type === 'agent' ? { assigned_to: targetId } : { queue_id: targetId };
-    const { error } = await supabase.from('contacts').update(updateData).eq('id', conversation.contact.id);
-    if (error) {
-      log.error('Failed to transfer conversation:', error);
+    const { error: updateError } = await supabase.from('contacts').update(updateData).eq('id', conversation.contact.id);
+    if (updateError) {
+      log.error('Failed to transfer conversation:', updateError);
       toast({ title: 'Erro ao transferir', description: 'Não foi possível transferir a conversa.', variant: 'destructive' });
-      return;
+      throw updateError;
+    }
+    const { error: eventError } = await supabase.from('conversation_events').insert({
+      contact_id: conversation.contact.id,
+      event_type: 'transfer',
+      from_agent_id: conversation.contact.assigned_to ?? null,
+      from_queue_id: conversation.contact.queue_id ?? null,
+      to_agent_id: type === 'agent' ? targetId : null,
+      to_queue_id: type === 'queue' ? targetId : null,
+      metadata: { note: message ?? null },
+    });
+    if (eventError) {
+      log.error('Failed to record transfer event:', eventError);
+      toast({ title: 'Erro ao transferir', description: 'Não foi possível registrar a transferência.', variant: 'destructive' });
+      throw eventError;
     }
     toast({ title: 'Chat transferido!', description: type === 'agent' ? 'O chat foi transferido para outro atendente.' : 'O chat foi transferido para outra fila.' });
   };
