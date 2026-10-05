@@ -329,6 +329,18 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
       return next;
     });
   const clearSelection = () => setSelectedIds(new Set());
+  /**
+   * R2-MOD-007 — encerra o envio em lote removendo da seleção só os produtos
+   * concluídos; falhados/parciais continuam marcados para reenvio.
+   */
+  const removeFromSelection = (ids: string[]) => {
+    if (ids.length === 0) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+  };
   const toggleSelectAll = () =>
     setSelectedIds((prev) => {
       const ids = displayedProducts.map((p) => p.id);
@@ -716,7 +728,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
             products={selectedProducts}
             open
             onOpenChange={setBulkSendOpen}
-            onSent={clearSelection}
+            onSent={removeFromSelection}
           />
         </Suspense>
       )}

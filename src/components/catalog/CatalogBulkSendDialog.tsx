@@ -6,6 +6,10 @@
  * Não reutiliza sendProductToContact (que mostra toast por produto);
  * usa sendOutboundMessage diretamente para controle total do fluxo e
  * exibe um único toast de resume ao final.
+ *
+ * R2-MOD-007 — a classificação do envio olha para as TENTATIVAS efetivas, e o
+ * encerramento devolve ao pai só os ids concluídos: falha integral vira `fail`
+ * (não sucesso parcial) e o item que precisa de retry continua selecionado.
  */
 import React, { useState } from 'react';
 import {
@@ -31,13 +35,24 @@ interface CatalogBulkSendDialogProps {
   products: ExternalProduct[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Chamado após envio bem-sucedido (limpa seleção no componente pai) */
-  onSent?: () => void;
+  /**
+   * Chamado ao concluir o lote com os ids dos produtos EFETIVAMENTE enviados,
+   * para o pai removê-los da seleção. Itens falhados ou parciais são omitidos
+   * e seguem selecionados para reenvio (R2-MOD-007).
+   */
+  onSent?: (sentProductIds: string[]) => void;
 }
 
 const TEMPLATE_LABELS = { formal: 'Formal', informal: 'Informal', promo: 'Promoção' } as const;
 
-/** Envia um produto para um contato sem exibir toast individual. */
+/**
+ * Envia um produto para um contato sem exibir toast individual.
+ *
+ * A classificação parte das partes realmente tentadas: quando o produto não
+ * tem imagem, só o texto é tentado — e a rejeição dele é falha integral
+ * (`fail`), não `partial`. `partial` só existe quando ao menos uma parte foi
+ * confirmada e outra falhou.
+ */
 async function sendSingleProduct(
   contact: ContactResult,
   product: ExternalProduct,
@@ -46,21 +61,24 @@ async function sendSingleProduct(
   const message = buildMessage(product, 'informal', null, contact);
   const imgUrl = product.primary_image_url;
   const messageIds: string[] = [];
-  let imageOk = true;
-  let textOk = true;
+  /** Cada parte tentada empilha aqui se foi confirmada (true) ou rejeitada (false). */
+  const attempts: boolean[] = [];
 
   if (imgUrl) {
     try {
       const r = await sendOutboundMessage({ contactId: contact.id, content: '', messageType: 'image', mediaUrl: imgUrl });
       messageIds.push(r.id);
-    } catch { imageOk = false; }
+      attempts.push(true);
+    } catch { attempts.push(false); }
   }
   try {
     const r = await sendOutboundMessage({ contactId: contact.id, content: message, messageType: 'text' });
     messageIds.push(r.id);
-  } catch { textOk = false; }
+    attempts.push(true);
+  } catch { attempts.push(false); }
 
-  const status = imageOk && textOk ? 'sent' : (!imageOk && !textOk) ? 'failed' : 'partial';
+  const okParts = attempts.filter(Boolean).length;
+  const status = okParts === attempts.length ? 'sent' : okParts > 0 ? 'partial' : 'failed';
 
   void logCatalogSendEvent({
     productId: product.id,
@@ -77,6 +95,9 @@ async function sendSingleProduct(
 
   return status === 'sent' ? 'ok' : status === 'partial' ? 'partial' : 'fail';
 }
+
+/** "1 enviado" / "3 enviados" — plural simples para o toast de resumo. */
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: CatalogBulkSendDialogProps) {
   const [step, setStep] = useState<'review' | 'selectContact' | 'sending' | 'done'>('review');
@@ -111,22 +132,27 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
     setSentCount(0);
     setFailCount(0);
     let ok = 0;
+    let partial = 0;
     let fail = 0;
+    const sentIds: string[] = [];
     for (const product of products) {
       const result = await sendSingleProduct(selectedContact, product, profile?.id);
-      if (result !== 'fail') { ok++; } else { fail++; }
+      if (result === 'ok') { ok++; sentIds.push(product.id); }
+      else if (result === 'partial') { partial++; }
+      else { fail++; }
       setSentCount((c) => c + 1);
     }
     setFailCount(fail);
     setIsSendingFlag(false);
-    if (fail === 0) {
+    if (partial === 0 && fail === 0) {
       toast.success(`✅ ${ok} produto${ok !== 1 ? 's' : ''} enviado${ok !== 1 ? 's' : ''}!`, { description: `Para ${selectedContact.name}` });
     } else {
       toast.warning('Envio concluído com falhas', {
-        description: `${ok} ok, ${fail} falha${fail !== 1 ? 's' : ''} — para ${selectedContact.name}`,
+        description: `${plural(ok, 'enviado', 'enviados')}, ${plural(partial, 'parcial', 'parciais')}, ${plural(fail, 'falha', 'falhas')} — para ${selectedContact.name}. Itens não concluídos seguem selecionados para reenvio.`,
       });
     }
-    onSent?.();
+    // R2-MOD-007 — só os concluídos saem da seleção; falhados/parciais ficam para retry.
+    onSent?.(sentIds);
     handleClose(false);
   };
 

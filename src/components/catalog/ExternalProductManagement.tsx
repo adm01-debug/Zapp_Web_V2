@@ -397,6 +397,16 @@ export const ExternalProductManagement: React.FC = () => {
     });
   }, []);
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+  // R2-MOD-007 — o envio em lote devolve só os ids concluídos; falhados e
+  // parciais seguem selecionados para reenvio.
+  const removeFromSelection = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+  }, []);
   const toggleSelectAll = useCallback(() => {
     const pageIds = visibleProducts.map((p) => p.id);
     const allSelected = pageIds.every((id) => selectedIds.has(id));
@@ -1113,7 +1123,7 @@ export const ExternalProductManagement: React.FC = () => {
           products={[...selectedIds].map((id) => products.find((p) => p.id === id)).filter((p): p is ExternalProduct => p !== undefined)}
           open={bulkSendOpen}
           onOpenChange={setBulkSendOpen}
-          onSent={clearSelection}
+          onSent={removeFromSelection}
         />
       </Suspense>
     </div>
