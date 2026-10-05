@@ -157,10 +157,11 @@ qualquer escrita é bloqueada com 403 `"escrita não prevista"`. Criadores
 ler produção. O relógio é fixado com `page.clock`.
 
 **Contrato de dados (oficializado em X003/X004).** Cada tela mantém seu próprio
-JSON sintético e cresce junto com as tabelas/RPCs consumidas pelo componente.
-`loadDemoData(tela)` exige ao menos uma coleção com registros: tanto `{}` quanto
-`{ "tabela": [] }` lançam `FixtureVaziaError`, impedindo que a régua volte a
-mostrar um estado vazio como se fosse a prova visual da tela cheia.
+JSON sintético. `loadDemoData(tela)` exige ao menos uma coleção `talkx_*` com
+registros, porque são essas as tabelas servidas por `mockTalkXBackend`: tanto
+`{}`, `{ "talkx_campaigns": [] }` quanto um JSON preenchido apenas com
+`contacts`/`whatsapp_connections` lançam `FixtureVaziaError`. Assim, dados de um
+endpoint que o mock devolve vazio não fazem a régua contar uma tela como cheia.
 
 As 17 fixtures têm dados sintéticos próprios da tela. A tela 01 mantém as 24
 campanhas do mock (KPI "Total de campanhas" = 24), e as demais cobrem segmentos,

@@ -3,11 +3,13 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } f
 import { join } from 'node:path';
 import {
   FixtureVaziaError,
-  mockTalkXVisual,
   fixtureDaTela,
   fixturesComDados,
   fixturesVazias,
+  hasDemoRows,
   loadDemoData,
+  mockTalkXBackend,
+  mockTalkXVisual,
 } from './fixtures/talkx-demo';
 
 declare global {
@@ -38,7 +40,7 @@ type Tela = {
   n: string;
   nome: string;
   existe: boolean;
-  conteudoVisivel?: string;
+  verificarDados?: (page: Page) => Promise<void>;
   abrir?: (page: Page) => Promise<void>;
 };
 
@@ -72,12 +74,13 @@ async function abrirTab(page: Page, tab: string) {
 // status da campanha. Nomes vêm da fixture 01.
 async function abrirCampanha(page: Page, nome: string) {
   await abrirTalkX(page);
-  await page.getByText(nome, { exact: false }).first().click();
+  await page.locator('tbody button').filter({ hasText: nome }).first().click();
   await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeHidden();
 }
 
 async function abrirAjuda(page: Page) {
-  await abrirTalkX(page);
+  await abrirTab(page, 'Configurações');
+  await expect(page.getByText('default_speed_profile')).toBeVisible();
   await page.getByRole('button', { name: 'Ajuda' }).click();
 }
 
@@ -92,100 +95,99 @@ const TELAS: Tela[] = [
     n: '01',
     nome: 'Campanhas — Visão geral',
     existe: true,
-    conteudoVisivel: 'Lançamento Linha Office',
+    verificarDados: async (p) => expect(p.getByText('Lançamento Linha Office').first()).toBeVisible(),
     abrir: (p) => abrirTalkX(p),
   },
   {
     n: '02',
     nome: 'Segmentos — biblioteca e detalhes',
     existe: true,
-    conteudoVisivel: 'Leads Quentes',
+    verificarDados: async (p) => expect(p.getByText('Leads Quentes', { exact: true }).first()).toBeVisible(),
     abrir: (p) => abrirTab(p, 'Segmentos'),
   },
   {
     n: '03',
     nome: 'Segmentos — criar/editar',
     existe: true,
-    conteudoVisivel: 'Regras do segmento',
+    verificarDados: async (p) => expect(p.getByPlaceholder('Nome do segmento…')).toHaveValue('Leads Quentes'),
     abrir: async (p) => {
       await abrirTab(p, 'Segmentos');
-      await p.getByRole('button', { name: 'Novo segmento' }).click();
+      await p.getByText('Leads Quentes', { exact: true }).first().click();
+      await p.getByRole('button', { name: 'Editar segmento' }).click();
     },
   },
   {
     n: '04',
     nome: 'Templates — biblioteca',
     existe: true,
-    conteudoVisivel: 'Boas-vindas VIP',
+    verificarDados: async (p) => expect(p.getByText('Boas-vindas VIP', { exact: true }).first()).toBeVisible(),
     abrir: (p) => abrirTab(p, 'Templates'),
   },
   {
     n: '05',
     nome: 'Templates — criar/editar',
     existe: true,
-    conteudoVisivel: 'Novo template',
+    verificarDados: async (p) => expect(p.getByPlaceholder('Boas-vindas')).toHaveValue('Boas-vindas VIP'),
     abrir: async (p) => {
       await abrirTab(p, 'Templates');
-      await p.getByRole('button', { name: 'Novo Template' }).click();
+      await p.getByText('Boas-vindas VIP', { exact: true }).first().click();
+      await p.getByRole('button', { name: 'Editar', exact: true }).first().click();
     },
   },
   {
     n: '06',
     nome: 'Lista de supressão',
     existe: true,
-    conteudoVisivel: 'Ana Souza',
+    verificarDados: async (p) => expect(p.getByText('Ana Souza')).toBeVisible(),
     abrir: (p) => abrirTab(p, 'Lista de supressão'),
   },
   {
     n: '07',
     nome: 'Analytics',
     existe: true,
-    conteudoVisivel: 'Dia do Cliente',
+    verificarDados: async (p) => expect(p.getByText('Lançamento Linha Office').first()).toBeVisible(),
     abrir: (p) => abrirTab(p, 'Analytics'),
   },
   {
     n: '08',
     nome: 'Nova campanha',
     existe: true,
-    conteudoVisivel: 'Nova campanha',
+    verificarDados: async (p) => expect(p.getByText('Leads Quentes', { exact: true })).toBeVisible(),
     abrir: async (p) => {
       await p.goto('/?view=talkx&wizard=new&step=1');
-      await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({
-        timeout: 15000,
-      });
+      await expect(p.getByRole('heading', { name: 'Nova campanha' })).toBeVisible({ timeout: 15000 });
+      await p.getByRole('button', { name: /Segmento salvo/ }).click();
     },
   },
   {
     n: '09',
     nome: 'Revisão final e confirmação',
     existe: true,
-    conteudoVisivel: 'Revisão Final',
+    verificarDados: async (p) => expect(p.getByText('Black Friday - VIP').first()).toBeVisible(),
     abrir: async (p) => {
-      await p.goto('/?view=talkx&wizard=new&step=4');
-      await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({
-        timeout: 15000,
-      });
+      await p.goto('/?view=talkx&wizard=camp-005&step=4');
+      await expect(p.getByRole('heading', { name: 'Revisão Final' })).toBeVisible({ timeout: 15000 });
     },
   },
   {
     n: '10',
     nome: 'Campanha agendada',
     existe: true,
-    conteudoVisivel: 'Black Friday - VIP',
+    verificarDados: async (p) => expect(p.getByText('Black Friday - VIP').first()).toBeVisible(),
     abrir: (p) => abrirCampanha(p, 'Black Friday - VIP'),
   },
   {
     n: '11',
     nome: 'Monitor ao vivo',
     existe: true,
-    conteudoVisivel: 'Dia do Cliente',
+    verificarDados: async (p) => expect(p.getByText('100% concluído · 890 de 890', { exact: true })).toBeVisible(),
     abrir: (p) => abrirCampanha(p, 'Dia do Cliente'),
   },
   {
     n: '12',
     nome: 'Campanha em andamento',
     existe: true,
-    conteudoVisivel: 'Campanha em Andamento',
+    verificarDados: async (p) => expect(p.getByRole('combobox', { name: 'Selecionar campanha' })).toHaveValue('camp-001'),
     abrir: (p) => abrirCampanha(p, 'Lançamento Linha Office'),
   },
   { n: '13', nome: 'Campanha pausada e retomada', existe: false },
@@ -195,14 +197,14 @@ const TELAS: Tela[] = [
     n: '16',
     nome: 'Ajuda Talk X',
     existe: true,
-    conteudoVisivel: 'Ajuda — Campanhas (Talk X)',
+    verificarDados: async (p) => expect(p.getByText('default_speed_profile')).toBeVisible(),
     abrir: (p) => abrirAjuda(p),
   },
   {
     n: '17',
     nome: 'Estados do sistema e modais',
     existe: true,
-    conteudoVisivel: 'Configurações Talk X',
+    verificarDados: async (p) => expect(p.getByText('default_speed_profile')).toBeVisible(),
     abrir: (p) => abrirTab(p, 'Configurações'),
   },
 ];
@@ -235,10 +237,8 @@ for (const tela of TELAS) {
 
     await mockTalkXVisual(page, fixture!);
     await tela.abrir!(page);
-    await expect(
-      page.getByText(tela.conteudoVisivel!, { exact: false }).first(),
-      `conteúdo característico visível antes da captura da tela ${tela.n}`
-    ).toBeVisible({ timeout: 15000 });
+    expect(tela.verificarDados, `asserção de dados da fixture na tela ${tela.n}`).toBeDefined();
+    await tela.verificarDados!(page);
     const arquivo = join(OUT, `captura-${tela.n}.png`);
     await capturar(page, arquivo);
 
@@ -285,6 +285,73 @@ test.describe('contrato de dados das fixtures (X003)', () => {
       );
     } finally {
       rmSync(fixtureDir, { recursive: true, force: true });
+    }
+  });
+
+  test('hasDemoRows ignora coleções que o mock não serve', () => {
+    expect(hasDemoRows({ contacts: [{ id: 'contact-001' }] })).toBe(false);
+    expect(hasDemoRows({ whatsapp_connections: [{ id: 'conn-001' }] })).toBe(false);
+    expect(hasDemoRows({ talkx_segments: [{ id: 'seg-001' }] })).toBe(true);
+  });
+
+  test('mock aplica id=eq e devolve objeto no formato single do PostgREST', async ({ page }) => {
+    await mockTalkXBackend(page, '11-monitor-ao-vivo');
+
+    const resposta = await page.evaluate(async () => {
+      const response = await fetch(
+        'https://fixture.test/rest/v1/talkx_campaigns?id=eq.camp-002',
+        { headers: { Accept: 'application/vnd.pgrst.object+json' } }
+      );
+      return response.json();
+    });
+
+    expect(resposta).toMatchObject({ id: 'camp-002', name: 'Dia do Cliente' });
+    expect(Array.isArray(resposta)).toBe(false);
+  });
+
+  test('métricas e contadores das campanhas permanecem coerentes', () => {
+    const casos = [
+      { slug: '07-analytics', campaignId: 'camp-001' },
+      { slug: '11-monitor-ao-vivo', campaignId: 'camp-002' },
+      { slug: '12-campanha-em-andamento', campaignId: 'camp-001' },
+      { slug: '13-campanha-pausada-retomada', campaignId: 'camp-010' },
+      { slug: '14-relatorio-campanha-concluida', campaignId: 'camp-002' },
+    ];
+
+    for (const { slug, campaignId } of casos) {
+      const data = loadDemoData(slug);
+      const campaign = (data.talkx_campaigns as Array<Record<string, unknown>>).find(
+        (row) => row.id === campaignId
+      );
+      const metrics = (data.talkx_campaign_metrics as Array<Record<string, unknown>> | undefined)?.find(
+        (row) => row.campaign_id === campaignId
+      );
+
+      expect(campaign, `${slug}: campanha`).toBeDefined();
+      expect(metrics, `${slug}: métricas`).toBeDefined();
+      for (const field of ['sent_count', 'delivered_count', 'read_count', 'replied_count']) {
+        expect(campaign?.[field], `${slug}: ${field}`).toBe(metrics?.[field]);
+      }
+      expect(Number(campaign?.delivered_count)).toBeLessThanOrEqual(Number(campaign?.sent_count));
+      expect(Number(campaign?.read_count)).toBeLessThanOrEqual(Number(campaign?.delivered_count));
+      expect(Number(campaign?.replied_count)).toBeLessThanOrEqual(Number(campaign?.read_count));
+    }
+  });
+
+  test('o mesmo contato conserva o telefone na supressão das telas 06 e 17', () => {
+    const tela06 = loadDemoData('06-lista-de-supressao');
+    const telefones = new Map(
+      (tela06.contacts as Array<Record<string, unknown>>).map((contact) => [contact.id, contact.phone])
+    );
+
+    for (const slug of ['06-lista-de-supressao', '17-estados-sistema-modais']) {
+      const data = loadDemoData(slug);
+      for (const blocked of data.talkx_blacklist as Array<Record<string, unknown>>) {
+        const nested = blocked.contacts as Record<string, unknown>;
+        expect(nested.phone, `${slug}: ${String(blocked.contact_id)}`).toBe(
+          telefones.get(blocked.contact_id)
+        );
+      }
     }
   });
 

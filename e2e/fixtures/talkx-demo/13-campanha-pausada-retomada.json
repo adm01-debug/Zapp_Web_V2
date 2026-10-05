@@ -10,9 +10,9 @@
       "total_recipients": 520,
       "sent_count": 210,
       "failed_count": 6,
-      "delivered_count": 210,
-      "read_count": 0,
-      "replied_count": 0,
+      "delivered_count": 198,
+      "read_count": 154,
+      "replied_count": 42,
       "outcome_unknown_count": 0,
       "whatsapp_connection_id": "conn-001",
       "created_by": "creator-1",
@@ -37,6 +37,19 @@
       "launched_by": "creator-1",
       "launched_at": "2026-10-01T00:00:00.000Z",
       "revision": 1
+    }
+  ],
+  "talkx_campaign_metrics": [
+    {
+      "id": "metric-010-paused",
+      "campaign_id": "camp-010",
+      "campaign_name": "Campanha Pausada",
+      "sent_count": 210,
+      "delivered_count": 198,
+      "read_count": 154,
+      "replied_count": 42,
+      "failed_count": 6,
+      "created_at": "2026-10-01T10:00:00.000Z"
     }
   ],
   "talkx_segments": [

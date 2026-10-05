@@ -64,7 +64,7 @@
       "removed_at": null,
       "contacts": {
         "name": "Ana Souza",
-        "phone": "551199990001",
+        "phone": "551199980001",
         "company": "Acme Brindes",
         "avatar_url": null
       }
@@ -81,7 +81,7 @@
       "removed_at": null,
       "contacts": {
         "name": "Bruno Lima",
-        "phone": "551199990002",
+        "phone": "551199980002",
         "company": "Lumina Eventos",
         "avatar_url": null
       }
@@ -98,7 +98,7 @@
       "removed_at": null,
       "contacts": {
         "name": "Carla Mendes",
-        "phone": "551199990003",
+        "phone": "551199980003",
         "company": "Norte Marketing",
         "avatar_url": null
       }

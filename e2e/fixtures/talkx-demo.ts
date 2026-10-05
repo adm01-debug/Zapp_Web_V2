@@ -15,11 +15,11 @@ import type { Page, Route } from '@playwright/test';
  * — o demo nunca grava nem envia nada em produção. Criadores (`get_team_profiles`)
  * e contatos (insights) respondem vazios para o demo não ler produção.
  *
- * Contrato de crescimento (X003/X004): a fixture cresce junto com cada etapa de
- * tela. Cada um dos 17 JSONs contém ao menos uma coleção não vazia, própria da
- * tela; `{}` ou apenas coleções vazias são rejeitados. Referenciar uma fixture
- * sem registros lança `FixtureVaziaError` em vez de renderizar uma tela vazia
- * em silêncio
+ * Contrato de dados (X003/X004): cada um dos 17 JSONs contém ao menos uma
+ * coleção `talkx_*` não vazia, consumida pelo mock da tela. `{}`, apenas
+ * coleções vazias ou apenas tabelas externas ao Talk X são rejeitados.
+ * Referenciar uma fixture sem registros servidos lança `FixtureVaziaError` em
+ * vez de renderizar uma tela vazia em silêncio
  * (ver e2e/README.md e docs/talkx/v4/etapas/F00-regua-e-governanca.md).
  *
  * `mockTalkXVisual(page, tela)` (etapa X004) soma ao backend fake uma sessão
@@ -37,15 +37,14 @@ const demoDir = join(here, 'talkx-demo');
 const cache = new Map<string, TalkXDemoData>();
 
 /**
- * Erro do contrato de crescimento (plano V4, X003/X004): uma fixture de tela só
- * existe quando tem registros. Referenciar `{}` ou apenas arrays vazios é erro — nunca
- * uma tela renderizada em branco "sem aviso".
+ * Erro do contrato de dados (plano V4, X003/X004): uma fixture de tela só
+ * existe quando tem registros `talkx_*` que o mock realmente serve.
  */
 export class FixtureVaziaError extends Error {
   constructor(tela: string) {
     super(
-      `fixture sem dados para a tela "${tela}": nenhuma coleção possui registros. ` +
-        'O contrato exige dados sintéticos visíveis em cada tela — ' +
+      `fixture sem dados para a tela "${tela}": nenhuma coleção talkx_* possui registros. ` +
+        'O contrato exige dados sintéticos servidos e visíveis em cada tela — ' +
         `popule e2e/fixtures/talkx-demo/${tela}.json antes de referenciá-la. ` +
         'A régua só cobre telas com fixture real (docs/talkx/v4/etapas/F00-regua-e-governanca.md).'
     );
@@ -53,17 +52,19 @@ export class FixtureVaziaError extends Error {
   }
 }
 
-/** Uma fixture só conta como cheia quando ao menos uma coleção tem registros. */
+/** Só tabelas `talkx_*`, efetivamente servidas pelo mock, tornam a fixture cheia. */
 export function hasDemoRows(data: TalkXDemoData): boolean {
-  return Object.values(data).some((rows) => Array.isArray(rows) && rows.length > 0);
+  return Object.entries(data).some(
+    ([table, rows]) => table.startsWith('talkx_') && Array.isArray(rows) && rows.length > 0
+  );
 }
 
 export function loadDemoData(tela: string, fixtureDir = demoDir): TalkXDemoData {
   const file = join(fixtureDir, `${tela}.json`);
   if (!cache.has(file)) {
     const data = JSON.parse(readFileSync(file, 'utf8')) as TalkXDemoData;
-    // Guard anti-vazio (X003): uma chave com `[]` também não produz estado
-    // cheio. Exigimos ao menos uma coleção com registros sintéticos visíveis.
+    // Guard anti-vazio (X003): dados de endpoints que o backend fake não serve
+    // (`contacts`, `whatsapp_connections`) não podem liberar a régua sozinhos.
     if (!hasDemoRows(data)) {
       throw new FixtureVaziaError(tela);
     }

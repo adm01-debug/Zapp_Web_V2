@@ -10,9 +10,9 @@
       "total_recipients": 890,
       "sent_count": 890,
       "failed_count": 0,
-      "delivered_count": 890,
-      "read_count": 0,
-      "replied_count": 0,
+      "delivered_count": 870,
+      "read_count": 712,
+      "replied_count": 196,
       "outcome_unknown_count": 0,
       "whatsapp_connection_id": "conn-001",
       "created_by": "creator-1",
@@ -37,6 +37,19 @@
       "launched_by": "creator-1",
       "launched_at": "2026-10-01T08:00:00.000Z",
       "revision": 1
+    }
+  ],
+  "talkx_campaign_metrics": [
+    {
+      "id": "metric-002-monitor",
+      "campaign_id": "camp-002",
+      "campaign_name": "Dia do Cliente",
+      "sent_count": 890,
+      "delivered_count": 870,
+      "read_count": 712,
+      "replied_count": 196,
+      "failed_count": 0,
+      "created_at": "2026-10-01T10:00:00.000Z"
     }
   ],
   "talkx_recipients": [

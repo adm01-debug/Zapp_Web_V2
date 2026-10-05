@@ -9,10 +9,10 @@
       "status": "sending",
       "total_recipients": 1420,
       "sent_count": 1364,
-      "failed_count": 56,
-      "delivered_count": 1364,
-      "read_count": 0,
-      "replied_count": 0,
+      "failed_count": 54,
+      "delivered_count": 1310,
+      "read_count": 1042,
+      "replied_count": 286,
       "outcome_unknown_count": 0,
       "whatsapp_connection_id": "conn-001",
       "created_by": "creator-1",
@@ -37,6 +37,19 @@
       "launched_by": "creator-1",
       "launched_at": "2026-10-01T09:00:00.000Z",
       "revision": 1
+    }
+  ],
+  "talkx_campaign_metrics": [
+    {
+      "id": "metric-001-running",
+      "campaign_id": "camp-001",
+      "campaign_name": "Lançamento Linha Office",
+      "sent_count": 1364,
+      "delivered_count": 1310,
+      "read_count": 1042,
+      "replied_count": 286,
+      "failed_count": 54,
+      "created_at": "2026-10-01T10:00:00.000Z"
     }
   ],
   "talkx_recipients": [
