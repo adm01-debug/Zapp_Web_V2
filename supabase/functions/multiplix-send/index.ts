@@ -269,7 +269,6 @@ export async function handleMultiplixSend(
     // `multiplix_dispatch_message_required` de rascunho sem texto — encerra aqui,
     // ANTES de qualquer materializacao: nao existe caminho que enfileire item de
     // um rascunho que o banco recusou iniciar.
-    const previousStatus = dispatch.status as string;
     const { error: transitionError } = await supabase.rpc("transition_multiplix_dispatch", {
       p_dispatch_id: dispatchId,
       p_action: "start",
@@ -285,25 +284,29 @@ export async function handleMultiplixSend(
     // disparo entrava em 'sending' com destinatarios pendentes e ZERO itens
     // processaveis — nada saia e nenhum erro aparecia ("sucesso" silencioso).
     //
-    // A conversao roda no SERVIDOR, e idempotente e acontece ANTES do loop de
-    // envio — MAS so quando o disparo NAO estava em 'sending' antes do start. Um
-    // disparo ja em 'sending' SEM fila e legado/abandonado, e materializar ali
-    // mandaria mensagem real para contatos reais sem ninguem decidir — a
-    // auto-cura silenciosa foi removida na rodada 2 do cartao. O reparo desse
-    // caso e explicito do operador: `pause` e depois `start` (previousStatus
-    // 'paused' materializa aqui) ou `cancel`. Na passada normal do cron (ja
-    // 'sending' COM a fila existente) pular a materializacao nao muda nada:
-    // ela seria no-op de qualquer forma.
-    if (previousStatus !== "sending") {
-      const { error: materializeError } = await supabase.rpc("multiplix_materialize_legacy_queue", {
-        p_dispatch_id: dispatchId,
-        p_correlation_id: uuidOrNull(correlationId),
-      });
-      if (materializeError) {
-        // Fail-closed: sem saber o estado da fila nao se envia nada. O cron
-        // reinvoca em ate 2 min e a proxima passada tenta de novo.
-        throw new Error(`multiplix_legacy_queue_materialize_failed: ${materializeError.message}`);
-      }
+    // CAMINHO DE REPARO (auto-cura) — documentado e testado, como pediu o revisor
+    // da rodada 1. A conversao roda SEMPRE, inclusive quando o disparo JA estava
+    // em 'sending' sem fila, por dois motivos:
+    //   1. o disparo AGENDADO do composer tambem nasce sem bloco/item e quem liga
+    //      o start e o cron (`trigger_pending_multiplix_dispatches`, que transiciona
+    //      'scheduled' -> 'sending' e so entao chama este worker): aqui o disparo
+    //      chega em 'sending' e, sem a conversao, ele morreria em 'sending' com
+    //      zero itens — o MESMO defeito do item 45, agora no agendamento;
+    //   2. a conversao e idempotente e no-op quando ja ha item, entao a passada
+    //      normal do cron nao muda nada.
+    // EFEITO NO LOTE (pendencia registrada no cartao t_fd402dab para o dono):
+    // disparos legados/abandonados que ja estavam em 'sending' sem fila passam a
+    // enviar de fato na primeira passada do cron depois do deploy. Nao e envio sem
+    // decisao: destinatarios e texto vieram do proprio disparo (e a RPC recusa
+    // rascunho sem texto — `multiplix_legacy_empty_template`).
+    const { error: materializeError } = await supabase.rpc("multiplix_materialize_legacy_queue", {
+      p_dispatch_id: dispatchId,
+      p_correlation_id: uuidOrNull(correlationId),
+    });
+    if (materializeError) {
+      // Fail-closed: sem saber o estado da fila nao se envia nada. O cron
+      // reinvoca em ate 2 min e a proxima passada tenta de novo.
+      throw new Error(`multiplix_legacy_queue_materialize_failed: ${materializeError.message}`);
     }
 
     // F11a: cada passada reivindica no maximo MULTIPLIX_BATCH_SIZE (default 20)
