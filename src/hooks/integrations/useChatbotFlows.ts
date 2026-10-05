@@ -47,6 +47,36 @@ export interface ChatbotFlow {
   updated_at: string;
 }
 
+/**
+ * R2-MOD-068 (item 104, P1): `nodes`, `edges` e `variables` de `chatbot_flows`
+ * são colunas JSONB. Gravadas com `JSON.stringify`, o PostgREST persistia uma
+ * STRING dentro do jsonb e o roundtrip reabria o grafo vazio (`Array.isArray`
+ * era false). Aqui o valor cru é normalizado: se vier string (linhas legadas
+ * gravadas pelo defeito) é desserializado; se já vier array/objeto (gravado
+ * corretamente) é usado como está.
+ */
+function normalizeJsonField<T>(value: unknown, fallback: T): T {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      return (parsed === null || parsed === undefined ? fallback : parsed) as T;
+    } catch {
+      return fallback;
+    }
+  }
+  return value as T;
+}
+
+function normalizeFlow(row: Record<string, unknown>): ChatbotFlow {
+  return {
+    ...(row as unknown as ChatbotFlow),
+    nodes: normalizeJsonField<ChatbotNode[]>(row.nodes, []),
+    edges: normalizeJsonField<ChatbotEdge[]>(row.edges, []),
+    variables: normalizeJsonField<Record<string, unknown>>(row.variables, {}),
+  };
+}
+
 export function useChatbotFlows() {
   const queryClient = useQueryClient();
 
@@ -58,19 +88,21 @@ export function useChatbotFlows() {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []) as unknown as ChatbotFlow[];
+      return (data || []).map(row => normalizeFlow(row as Record<string, unknown>));
     },
   });
 
   const createFlow = useMutation({
     mutationFn: async (flow: Partial<ChatbotFlow>) => {
+      // JSONB: envia o array/objeto cru — `JSON.stringify` gravava uma string
+      // dentro do jsonb e fazia o grafo reabrir vazio (R2-MOD-068).
       const insertData = {
           ...flow,
-          nodes: JSON.stringify(flow.nodes ?? [
+          nodes: flow.nodes ?? [
             { id: 'start-1', type: 'start', data: { label: 'Início' }, position: { x: 250, y: 50 } },
-          ]),
-          edges: JSON.stringify(flow.edges ?? []),
-          variables: JSON.stringify(flow.variables ?? {}),
+          ],
+          edges: flow.edges ?? [],
+          variables: flow.variables ?? {},
         };
       const { data, error } = await supabase
         .from('chatbot_flows')
@@ -89,10 +121,8 @@ export function useChatbotFlows() {
 
   const updateFlow = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<ChatbotFlow> & { id: string }) => {
+      // JSONB: array/objeto cru (ver createFlow) — sem stringify.
       const payload: Record<string, unknown> = { ...updates };
-      if (updates.nodes) payload.nodes = JSON.stringify(updates.nodes);
-      if (updates.edges) payload.edges = JSON.stringify(updates.edges);
-      if (updates.variables) payload.variables = JSON.stringify(updates.variables);
 
       const { data, error } = await supabase
         .from('chatbot_flows')
