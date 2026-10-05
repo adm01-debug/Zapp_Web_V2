@@ -35,7 +35,11 @@
  *      termina sem registro de uso/erro — o fallback silencioso acabou;
  *   5. erro HTTP do provedor de visão também degrada para `outros` (200) e é
  *      registrado; se nenhum provedor declarar visão, a resolução falha FECHADA
- *      (NO_PROVIDER) e NADA é enviado ao provedor de texto padrão.
+ *      (NO_PROVIDER) e NADA é enviado ao provedor de texto padrão;
+ *   6. identidade do download (R2-INF-022): no fluxo de USUÁRIO o GET do Storage
+ *      leva `apikey` = anon key e `Authorization` = Bearer <JWT do chamador> —
+ *      NUNCA a service role; no fluxo de SERVIÇO (webhook) a service role é
+ *      usada de forma EXPLÍCITA.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -59,6 +63,14 @@ const IMAGEM_STICKER = `${SUPABASE_BASE}/storage/v1/object/public/${BUCKET}/stic
 /** Endpoint AUTENTICADO de leitura do objeto (o download NUNCA usa `/object/public/`). */
 const DOWNLOAD_EMOJI = `${SUPABASE_BASE}/storage/v1/object/${BUCKET}/emoji/feliz.png`;
 const DOWNLOAD_STICKER = `${SUPABASE_BASE}/storage/v1/object/${BUCKET}/stickers/figurinha.webp`;
+
+/**
+ * Credenciais fictícias do cenário (R2-INF-022): o que distingue o caminho de
+ * USUÁRIO do de SERVIÇO no GET do Storage é exatamente este trio.
+ */
+const JWT_USUARIO_TESTE = 'jwt-usuario-teste';
+const ANON_KEY_FICTICIA = 'anon-key-ficticia';
+const SERVICE_ROLE_FICTICIA = 'service-role-ficticia';
 
 /** Teto de imagem embutida (a decisão do Joaquim): 4 MiB. */
 const MAX_INLINE_IMAGE_BYTES = 4 * 1024 * 1024;
@@ -90,6 +102,8 @@ interface CapturedCall {
   url: string;
   method: string;
   body: Record<string, unknown> | null;
+  /** Headers do `init`, com as chaves em minúsculas (apikey, authorization, ...). */
+  headers: Record<string, string>;
 }
 
 /** Estado compartilhado entre o teste e as fábricas de mock (hoisted). */
@@ -97,7 +111,12 @@ const H = vi.hoisted(() => ({
   /** Linhas de `ai_providers` que o client mockado devolve (FIXTURE de cada caso). */
   rows: [] as Array<Record<string, unknown>>,
   /** Chamadas capturadas do `fetch` espião (download GET e provedor POST). */
-  fetchCalls: [] as Array<{ url: string; method: string; body: Record<string, unknown> | null }>,
+  fetchCalls: [] as Array<{
+    url: string;
+    method: string;
+    body: Record<string, unknown> | null;
+    headers: Record<string, string>;
+  }>,
   /** Handlers registrados via `Deno.serve` (ordem: emoji, depois sticker). */
   servers: [] as Array<(req: Request) => Promise<Response>>,
   /** Desfecho simulado do provedor no caso corrente. */
@@ -106,6 +125,11 @@ const H = vi.hoisted(() => ({
   imageMode: 'ok' as ImageMode,
   /** Conteúdo que o provedor devolve (categoria); `null` usa o 200 padrão. */
   providerContent: 'riso' as string | null,
+  /**
+   * Identidade que `requireAiIdentityOrService` devolve (R2-INF-022): 'user' é
+   * o fluxo de usuário; 'service' é o fluxo interno do webhook do WhatsApp.
+   */
+  identityKind: 'user' as 'user' | 'service',
 }));
 
 type LogEntry = {
@@ -151,10 +175,15 @@ vi.mock('../../supabase/functions/_shared/ai-usage.ts', async (importOriginal) =
   return { ...real, logAiUsage: logSpy };
 });
 
-// A identidade de IA é dublada: o foco é a rota de visão, não a autenticação.
+// A identidade de IA é dublada, mas CONFIGURÁVEL (R2-INF-022): o caminho de
+// serviço do classify-sticker precisa poder devolver kind:'service' para provar
+// que a service role no download é explícita, não fallback.
 vi.mock('../../supabase/functions/_shared/ai-auth.ts', () => ({
   requireAiIdentity: async () => ({ kind: 'user', userId: 'usuario-teste' }),
-  requireAiIdentityOrService: async () => ({ kind: 'user', userId: 'usuario-teste' }),
+  requireAiIdentityOrService: async () =>
+    H.identityKind === 'service'
+      ? { kind: 'service', userId: null }
+      : { kind: 'user', userId: 'usuario-teste' },
 }));
 
 // `Deno.serve` captura o handler do consumidor; `Deno.env.get` resolve segredos fictícios.
@@ -162,7 +191,8 @@ vi.stubGlobal('Deno', {
   env: {
     get: (key: string): string | undefined => {
       if (key === 'SUPABASE_URL') return SUPABASE_BASE;
-      if (key === 'SUPABASE_SERVICE_ROLE_KEY') return 'service-role-ficticia';
+      if (key === 'SUPABASE_SERVICE_ROLE_KEY') return SERVICE_ROLE_FICTICIA;
+      if (key === 'SUPABASE_ANON_KEY') return ANON_KEY_FICTICIA;
       return 'segredo-ficticio';
     },
   },
@@ -197,23 +227,47 @@ function respostaDeImagem(): Response {
   }
 }
 
+/**
+ * Headers de `init` normalizados em registro com chaves minúsculas — o espião
+ * aceita `Headers`, pares e objeto simples (o helper de imagem usa objeto).
+ */
+function extrairHeaders(init: unknown): Record<string, string> {
+  const fonte = (init as { headers?: unknown } | undefined)?.headers;
+  const out: Record<string, string> = {};
+  if (!fonte) return out;
+  if (fonte instanceof Headers) {
+    fonte.forEach((valor, chave) => {
+      out[chave.toLowerCase()] = valor;
+    });
+  } else if (Array.isArray(fonte)) {
+    for (const [chave, valor] of fonte) out[String(chave).toLowerCase()] = String(valor);
+  } else {
+    for (const [chave, valor] of Object.entries(fonte as Record<string, unknown>)) {
+      out[chave.toLowerCase()] = String(valor);
+    }
+  }
+  return out;
+}
+
 beforeEach(() => {
   H.rows = [];
   H.fetchCalls = [];
   H.fetchMode = 'ok';
   H.imageMode = 'ok';
   H.providerContent = 'riso';
+  H.identityKind = 'user';
   logSpy.mockClear();
 
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (url: unknown, init?: { method?: string; body?: string }) => {
+    vi.fn(async (url: unknown, init?: { method?: string; body?: string; headers?: unknown }) => {
       const alvo = String(url);
       const method = String(init?.method ?? 'GET').toUpperCase();
       H.fetchCalls.push({
         url: alvo,
         method,
         body: init?.body === undefined ? null : (JSON.parse(String(init.body)) as Record<string, unknown>),
+        headers: extrairHeaders(init),
       });
 
       // Download AUTENTICADO do Storage: qualquer URL do projeto que não seja o provedor.
@@ -299,10 +353,19 @@ async function handlers(): Promise<{
   return { emoji: H.servers[0], sticker: H.servers[1] };
 }
 
+/**
+ * Headers de um pedido de USUÁRIO: o JWT do chamador é o que a função repassa
+ * ao helper de imagem (R2-INF-022) — sem ele o download privado falha fechado.
+ */
+const HEADERS_USUARIO = {
+  'content-type': 'application/json',
+  authorization: `Bearer ${JWT_USUARIO_TESTE}`,
+};
+
 function pedidoEmoji(): Request {
   return new Request('https://funcao.teste/classify-emoji', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: HEADERS_USUARIO,
     body: JSON.stringify({ image_url: IMAGEM_EMOJI, file_name: 'feliz.png' }),
   });
 }
@@ -310,7 +373,7 @@ function pedidoEmoji(): Request {
 function pedidoEmojiSemEntrada(): Request {
   return new Request('https://funcao.teste/classify-emoji', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: HEADERS_USUARIO,
     body: JSON.stringify({}),
   });
 }
@@ -318,7 +381,19 @@ function pedidoEmojiSemEntrada(): Request {
 function pedidoSticker(): Request {
   return new Request('https://funcao.teste/classify-sticker', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: HEADERS_USUARIO,
+    body: JSON.stringify({ image_url: IMAGEM_STICKER }),
+  });
+}
+
+/** Pedido do fluxo INTERNO: o webhook chama a função com a service role key. */
+function pedidoStickerDeServico(): Request {
+  return new Request('https://funcao.teste/classify-sticker', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${SERVICE_ROLE_FICTICIA}`,
+    },
     body: JSON.stringify({ image_url: IMAGEM_STICKER }),
   });
 }
@@ -326,7 +401,7 @@ function pedidoSticker(): Request {
 function pedidoStickerSemImagem(): Request {
   return new Request('https://funcao.teste/classify-sticker', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: HEADERS_USUARIO,
     body: JSON.stringify({}),
   });
 }
@@ -810,5 +885,63 @@ describe('(8) controle: texto puro continua no provedor padrão (DeepSeek)', () 
     expect(chamadasDeProvedor()[0].url).toBe(ENDPOINT_TEXTO_PADRAO);
     expect(chamadasDeProvedor()[0].body?.model).toBe(MODELO_TEXTO_PADRAO);
     expect(chamadasDeProvedor().every((call) => call.url !== ENDPOINT_VISAO)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// (9) Identidade do download do Storage (R2-INF-022): usuário nunca vaza service role
+// ---------------------------------------------------------------------------
+
+describe('(9) identidade do download: usuário → anon key + JWT; serviço → service role explícita', () => {
+  it('classify-emoji (usuário): GET do Storage usa anon key + JWT do chamador — NUNCA service role', async () => {
+    H.rows = [deepseekTexto(), geminiVisao()];
+    const { emoji } = await handlers();
+
+    const res = await emoji(pedidoEmoji());
+
+    expect(res.status).toBe(200);
+    const downloads = chamadasDeImagem();
+    expect(downloads).toHaveLength(1);
+    const headers = downloads[0].headers;
+    // A identidade do CHAMADOR desce ao Storage: a policy de storage.objects decide.
+    expect(headers['apikey']).toBe(ANON_KEY_FICTICIA);
+    expect(headers['authorization']).toBe(`Bearer ${JWT_USUARIO_TESTE}`);
+    // A service role NUNCA aparece no caminho de usuário.
+    expect(headers['apikey']).not.toBe(SERVICE_ROLE_FICTICIA);
+    expect(headers['authorization']).not.toBe(`Bearer ${SERVICE_ROLE_FICTICIA}`);
+  });
+
+  it('classify-sticker (usuário): idem — anon key + JWT, nunca service role', async () => {
+    H.rows = [deepseekTexto(), geminiVisao()];
+    const { sticker } = await handlers();
+
+    const res = await sticker(pedidoSticker());
+
+    expect(res.status).toBe(200);
+    const downloads = chamadasDeImagem();
+    expect(downloads).toHaveLength(1);
+    const headers = downloads[0].headers;
+    expect(headers['apikey']).toBe(ANON_KEY_FICTICIA);
+    expect(headers['authorization']).toBe(`Bearer ${JWT_USUARIO_TESTE}`);
+    expect(headers['apikey']).not.toBe(SERVICE_ROLE_FICTICIA);
+    expect(headers['authorization']).not.toBe(`Bearer ${SERVICE_ROLE_FICTICIA}`);
+  });
+
+  it('classify-sticker (serviço, webhook): GET usa service role EXPLÍCITA — não fallback', async () => {
+    H.identityKind = 'service';
+    H.rows = [deepseekTexto(), geminiVisao()];
+    const { sticker } = await handlers();
+
+    const res = await sticker(pedidoStickerDeServico());
+
+    expect(res.status).toBe(200);
+    const downloads = chamadasDeImagem();
+    expect(downloads).toHaveLength(1);
+    const headers = downloads[0].headers;
+    // O fluxo interno do webhook baixa com a service role do AMBIENTE — se o
+    // chamador tivesse repassado o bearer do pedido como token de usuário, o
+    // apikey seria a anon key e esta asserção falharia.
+    expect(headers['apikey']).toBe(SERVICE_ROLE_FICTICIA);
+    expect(headers['authorization']).toBe(`Bearer ${SERVICE_ROLE_FICTICIA}`);
   });
 });
