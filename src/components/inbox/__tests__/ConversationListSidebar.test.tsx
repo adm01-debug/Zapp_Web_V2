@@ -50,8 +50,23 @@ vi.mock('@/components/inbox/CloseConversationDialog', () => ({
 }));
 
 vi.mock('@/components/inbox/TransferDialog', () => ({
-  TransferDialog: (props: { open: boolean }) =>
-    props.open ? <div data-testid="transfer-dialog" /> : null,
+  TransferDialog: (props: {
+    open: boolean;
+    onTransfer?: (type: 'agent' | 'queue', targetId: string, message?: string) => void | Promise<void>;
+  }) =>
+    props.open ? (
+      <div data-testid="transfer-dialog">
+        {/* Replica o catch do handleTransfer real: o diálogo engole a rejeição
+            e permanece aberto; quem decide fechar é o estado transferTarget. */}
+        <button
+          onClick={() => {
+            void Promise.resolve(props.onTransfer?.('queue', 'q1', 'nota de teste')).catch(() => {});
+          }}
+        >
+          confirmar-transferencia
+        </button>
+      </div>
+    ) : null,
 }));
 
 import { ConversationListSidebar } from '@/components/inbox/ConversationListSidebar';
@@ -137,6 +152,46 @@ describe('ConversationListSidebar — diálogo de Resolver/Transferir some com a
     rerender(<ConversationListSidebar {...baseProps([{ contact: { id: 'outro-contato' } }])} />);
 
     expect(screen.queryByTestId('transfer-dialog')).not.toBeInTheDocument();
+  });
+
+  it('falha na transferência mantém alvo e diálogo abertos; sucesso fecha', async () => {
+    const transferContact = vi.fn().mockRejectedValue(new Error('falhou'));
+    const props = baseProps([{ contact: { id: 'c1' } }]);
+    props.conversationActions = {
+      pinnedIds: new Set(),
+      favoriteIds: new Set(),
+      isPinned: vi.fn(() => false),
+      isFavorite: vi.fn(() => false),
+      pinConversation: vi.fn(),
+      unpinConversation: vi.fn(),
+      favoriteContact: vi.fn(),
+      unfavoriteContact: vi.fn(),
+      snoozeConversation: vi.fn(),
+      archiveContact: vi.fn(),
+      transferContact,
+      profileId: 'me',
+    } as unknown as typeof props.conversationActions;
+    const { rerender } = render(<ConversationListSidebar {...props} />);
+
+    fireEvent.click(screen.getByText('abrir-transferir-c1'));
+    expect(screen.getByTestId('transfer-dialog')).toBeInTheDocument();
+
+    // Falha: transferContact rejeita → alvo e diálogo devem continuar abertos.
+    fireEvent.click(screen.getByText('confirmar-transferencia'));
+    await waitFor(() =>
+      expect(transferContact).toHaveBeenCalledWith('c1', 'queue', 'q1', 'nota de teste')
+    );
+    rerender(<ConversationListSidebar {...props} />);
+    expect(screen.getByTestId('transfer-dialog')).toBeInTheDocument();
+    expect(props.inbox.refetch).not.toHaveBeenCalled();
+
+    // Sucesso: aí sim o diálogo fecha.
+    transferContact.mockResolvedValue(undefined);
+    fireEvent.click(screen.getByText('confirmar-transferencia'));
+    await waitFor(() =>
+      expect(screen.queryByTestId('transfer-dialog')).not.toBeInTheDocument()
+    );
+    expect(props.inbox.refetch).toHaveBeenCalled();
   });
 
   it('conversa continua na lista filtrada: diálogo permanece aberto entre re-renders', () => {

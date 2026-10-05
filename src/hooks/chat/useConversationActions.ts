@@ -174,18 +174,26 @@ export function useConversationActions() {
     });
   }, []);
 
-  const transferContact = useCallback(async (contactId: string, type: 'agent' | 'queue' | 'connection', targetId: string) => {
-    if (type === 'connection') {
-      // TransferDialog oferece "Conexão" na UI, mas nunca existiu update real
-      // pra esse caso (era um UPDATE vazio disfarçado de sucesso). Recusa
-      // explicitamente em vez de fingir que funcionou.
-      toast.error('Transferência por conexão ainda não é suportada');
-      return;
-    }
+  const transferContact = useCallback(async (
+    contactId: string,
+    type: 'agent' | 'queue',
+    targetId: string,
+    note?: string,
+  ) => {
     const updateData: { assigned_to?: string; queue_id?: string } =
       type === 'agent' ? { assigned_to: targetId } : { queue_id: targetId };
     const { error } = await supabase.from('contacts').update(updateData).eq('id', contactId);
-    if (error) { toast.error('Erro ao transferir conversa'); return; }
+    // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
+    // usa a rejeição pra manter o diálogo/alvo abertos.
+    if (error) { toast.error('Erro ao transferir conversa'); throw error; }
+    const trimmedNote = note?.trim();
+    const { error: eventError } = await supabase.from('conversation_events').insert({
+      event_type: 'transfer',
+      contact_id: contactId,
+      ...(type === 'agent' ? { to_agent_id: targetId } : { to_queue_id: targetId }),
+      ...(trimmedNote ? { metadata: { note: trimmedNote } } : {}),
+    });
+    if (eventError) { toast.error('Conversa transferida, mas o registro do evento falhou'); return; }
     toast.success(type === 'agent' ? 'Chat transferido para outro atendente' : 'Chat transferido para outra fila');
   }, []);
 
