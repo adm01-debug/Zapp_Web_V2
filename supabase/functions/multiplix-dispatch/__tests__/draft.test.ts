@@ -510,6 +510,11 @@ Deno.test('MX08 draft.update: com manage_all o rascunho alheio e editavel', asyn
     state.dispatches.find((d) => d.id === D2)?.name === 'editado por admin',
     'manage_all deve conseguir editar o rascunho alheio',
   );
+  // O operador edita SEM tomar a posse: o dono continua o original.
+  assert(
+    state.dispatches.find((d) => d.id === D2)?.created_by === PROFILE_OTHER,
+    `created_by de D2 deve continuar ${PROFILE_OTHER} apos update por manage_all`,
+  );
 });
 
 Deno.test('MX08 draft.discard: dono descarta; outro dono -> 404 sem mutacao; manage_all descarta', async () => {

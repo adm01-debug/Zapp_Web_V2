@@ -321,17 +321,15 @@ export async function handleDraftUpdate(ctx: ActionContext): Promise<Response> {
   // Escopo em duas fases: primeiro le created_by para decidir dono/manage_all
   // contra `profiles.id`; depois o UPDATE repete o escopo no proprio WHERE,
   // com anti-downgrade atomico (mesma forma do lifecycle.confirm).
-  const { data: ownerRow } = await ctx.supabase
+  const { data: ownerRow, error: ownerError } = await ctx.supabase
     .from('multiplix_dispatches')
     .select('created_by')
     .eq('id', dispatch_id)
     .maybeSingle();
+  if (ownerError) throw new DispatchError('MULTIPLIX_DRAFT_UPDATE', ownerError.message, 502);
   const scope = await resolveOwnerScope(ctx, ownerRow?.created_by);
   if (!(scope.isOwner || scope.manageAll)) {
     return errorResponse('multiplix_draft_not_found', 404, ctx.req);
-  }
-  if (scope.manageAll && scope.profileId) {
-    patch.created_by = scope.profileId; // operador assume a posse (auditavel)
   }
 
   const { data, error } = await ctx.supabase
@@ -361,11 +359,12 @@ export async function handleDraftDiscard(ctx: ActionContext): Promise<Response> 
   if (!parsed.success) return errorResponse('draft.discard: dispatch_id obrigatorio (uuid)', 400, ctx.req);
 
   // Mesma resolucao de escopo do update: created_by e profiles.id.
-  const { data: ownerRow } = await ctx.supabase
+  const { data: ownerRow, error: ownerError } = await ctx.supabase
     .from('multiplix_dispatches')
     .select('created_by')
     .eq('id', parsed.data.dispatch_id)
     .maybeSingle();
+  if (ownerError) throw new DispatchError('MULTIPLIX_DRAFT_DISCARD', ownerError.message, 502);
   const scope = await resolveOwnerScope(ctx, ownerRow?.created_by);
   if (!(scope.isOwner || scope.manageAll)) {
     return errorResponse('multiplix_draft_not_found', 404, ctx.req);
