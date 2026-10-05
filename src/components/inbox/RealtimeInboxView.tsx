@@ -325,6 +325,9 @@ export function RealtimeInboxView() {
                       }}
                       pinnedConversations={pinnedConversations}
                       onSelectPinned={inbox.handleSelectConversation}
+                      hasOlderMessages={inbox.hasOlderMessages}
+                      loadingOlderMessages={inbox.loadingOlderMessages}
+                      onLoadOlderMessages={inbox.loadOlderMessages}
                     />
                   </SectionErrorBoundary>
                   </ConversationTabContent>
