@@ -80,6 +80,14 @@ html[data-preset-id="diversity"] [class*="ring-1"] {
   --tw-ring-offset-shadow: 0 0 #0000 !important;
 }
 
+/* O reset neutro acima não pode apagar o indicador de foco por teclado. */
+html[data-preset-id="diversity"] button:focus-visible,
+html[data-preset-id="diversity"] [role="button"]:focus-visible {
+  box-shadow:
+    0 0 0 2px hsl(var(--background)),
+    0 0 0 4px hsl(var(--primary)) !important;
+}
+
 html[data-preset-id="diversity"] [class*="border-primary"] {
   border-color: hsl(var(--border)) !important;
 }
