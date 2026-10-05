@@ -6,6 +6,7 @@ import {
   MULTIPLIX_RESOLVE_TRUNCATED,
   MultiplixPolicyLimitError,
   planResolveBatches,
+  redactResolvedRecipient,
   RESOLVE_POLICY_MAX_IDS,
   RESOLVE_RPC_MAX_ROWS,
   resolveRecipientsInBatches,
@@ -477,4 +478,135 @@ Deno.test('F22: escopo diferente assina diferente (nao da para subir de agent pa
   const agent = await signScope(['customers_own'], null, SEGREDO_DE_TESTE, NOW_PARA_EXP_FIXO);
   const admin = await signScope(['admin'], null, SEGREDO_DE_TESTE, NOW_PARA_EXP_FIXO);
   assert(agent.hmac !== admin.hmac, 'escopos diferentes geraram o mesmo hmac');
+});
+
+// ---------------------------------------------------------------------------
+// R2-DB-003 (cartao t_891763fa): fora do escopo nao pode carregar metadados.
+//
+// multiplix_resolve_recipients ja calcula `no_escopo` por empresa, mas so
+// ocultava destino_e164/destino_origem — company_name, contact_id,
+// empresa_papeis e last_interaction_at seguiam na linha ate o cliente mesmo
+// com elegibilidade='fora_do_escopo'. A correcao e em duas camadas: a RPC
+// redige na fonte (espelho versionado em _foreign/singu) e a edge redige de
+// novo na fronteira PT->EN, para o periodo em que o Singu ainda roda a versao
+// antiga (ordem de deploy — mesmo motivo do cabecalho HMAC do F22).
+// ---------------------------------------------------------------------------
+
+Deno.test('R2-DB-003: o espelho da RPC redige os metadados fora do escopo', async () => {
+  // Contrato com o SQL versionado (fonte de revisao do Singu): fora do escopo
+  // ou empresa inativa -> NULL em contact_id, company_name, destino_e164,
+  // destino_origem, empresa_papeis e last_interaction_at. company_id (eco do
+  // id que o proprio chamador enviou) e elegibilidade seguem na linha.
+  const espelho = await Deno.readTextFile(
+    new URL('../../migrations/_foreign/singu/multiplix_resolve_recipients.sql', import.meta.url),
+  );
+  for (const coluna of ['contact_id', 'company_name', 'destino_e164', 'destino_origem', 'last_interaction_at']) {
+    assert(
+      new RegExp(`CASE WHEN d\\.no_escopo AND d\\.ativa THEN d\\.${coluna} ELSE NULL END`).test(espelho),
+      `espelho sem redacao de ${coluna} no ramo fora do escopo/inativo`,
+    );
+  }
+  assert(
+    /CASE WHEN d\.no_escopo AND d\.ativa THEN\s*ARRAY\(/.test(espelho)
+      && /ELSE NULL END AS empresa_papeis/.test(espelho),
+    'espelho sem redacao de empresa_papeis no ramo fora do escopo/inativo',
+  );
+  assert(
+    /d\.company_id/.test(espelho),
+    'company_id precisa continuar na projecao (eco do id que o chamador enviou)',
+  );
+  assert(
+    /WHEN NOT d\.no_escopo THEN 'fora_do_escopo'/.test(espelho),
+    'elegibilidade fora_do_escopo precisa continuar na projecao',
+  );
+});
+
+Deno.test('R2-DB-003: fora_do_escopo sai so com company_id e elegibilidade', () => {
+  // Linha como a RPC ANTIGA ainda devolve (ate o Singu aplicar o arquivo novo):
+  // metadados preenchidos mesmo com elegibilidade='fora_do_escopo'. A edge tem
+  // de derrubar tudo, mesmo que a RPC ainda vaze.
+  const out = redactResolvedRecipient({
+    company_id: 'c-fora',
+    contact_id: 'ct-999',
+    company_name: 'Empresa de Outra Carteira',
+    destino_e164: '5511900000003',
+    destino_origem: 'contato_pessoa',
+    elegibilidade: 'fora_do_escopo',
+    empresa_papeis: ['customer'],
+    last_interaction_at: '2026-04-12T10:00:00.000Z',
+  });
+  const keys = Object.keys(out).sort();
+  assert(
+    keys.join(',') === 'company_id,elegibilidade',
+    `linha fora do escopo vazou campos: ${keys.join(',')}`,
+  );
+  assert(out.company_id === 'c-fora', `company_id e o eco do id enviado: ${out.company_id}`);
+  assert(
+    out.elegibilidade === 'out_of_scope',
+    `elegibilidade deveria sair traduzida para o enum EN: ${out.elegibilidade}`,
+  );
+  const serial = JSON.stringify(out);
+  for (const vazado of ['ct-999', 'Empresa de Outra Carteira', '5511900000003', 'customer', '2026-04-12']) {
+    assert(!serial.includes(vazado), `valor vazou na linha redigida: ${vazado}`);
+  }
+});
+
+Deno.test('R2-DB-003: destino_invalido tambem sai redigido (no_destination)', () => {
+  const out = redactResolvedRecipient({
+    company_id: 'c-inv',
+    contact_id: 'ct-1',
+    company_name: 'Inativa Ltda',
+    elegibilidade: 'destino_invalido',
+    empresa_papeis: ['supplier'],
+    last_interaction_at: '2026-01-01T00:00:00.000Z',
+  });
+  assert(out.elegibilidade === 'no_destination', `esperava no_destination, veio ${out.elegibilidade}`);
+  assert(
+    Object.keys(out).sort().join(',') === 'company_id,elegibilidade',
+    `linha invalida vazou campos: ${Object.keys(out).sort().join(',')}`,
+  );
+});
+
+Deno.test('R2-DB-003: elegibilidade desconhecida cai no fallback e sai redigida', () => {
+  const out = redactResolvedRecipient({
+    company_id: 'c-x',
+    company_name: 'X',
+    elegibilidade: 'valor_que_o_singu_nunca_mandou',
+  });
+  assert(out.elegibilidade === 'out_of_scope', `esperava out_of_scope, veio ${out.elegibilidade}`);
+  assert(
+    Object.keys(out).sort().join(',') === 'company_id,elegibilidade',
+    'linha com elegibilidade desconhecida vazou campos',
+  );
+});
+
+Deno.test('R2-DB-003: linha apta sai inteira — o composer precisa dos campos', () => {
+  const out = redactResolvedRecipient({
+    company_id: 'c-ok',
+    contact_id: 'ct-1',
+    company_name: 'Acme',
+    destino_e164: '5511900000001',
+    destino_origem: 'contato_pessoa',
+    elegibilidade: 'apto',
+    empresa_papeis: ['customer'],
+    last_interaction_at: '2026-04-12T10:00:00.000Z',
+  });
+  assert(out.elegibilidade === 'eligible', `esperava eligible, veio ${out.elegibilidade}`);
+  assert(out.company_name === 'Acme', `company_name sumiu: ${out.company_name}`);
+  assert(out.contact_id === 'ct-1', `contact_id sumiu: ${out.contact_id}`);
+  assert(out.destino_e164 === '5511900000001', `destino sumiu: ${out.destino_e164}`);
+  assert(
+    JSON.stringify(out.empresa_papeis) === JSON.stringify(['customer']),
+    `papeis sumiram: ${JSON.stringify(out.empresa_papeis)}`,
+  );
+  assert(out.last_interaction_at === '2026-04-12T10:00:00.000Z', 'last_interaction_at sumiu');
+});
+
+Deno.test('R2-DB-003: elegibilidade ausente segue o contrato antigo (eligible, sem redigir)', () => {
+  // O resolvedor antigo nao devolvia a coluna; a fronteira normaliza a ausencia
+  // para 'eligible' (mesma leitura do COALESCE(...,'apto') da RPC) e a linha
+  // passa inteira — redigir aqui quebraria o composer contra a versao antiga.
+  const out = redactResolvedRecipient({ company_id: 'c-1', company_name: 'Sem classificação' });
+  assert(out.elegibilidade === 'eligible', `esperava eligible, veio ${out.elegibilidade}`);
+  assert(out.company_name === 'Sem classificação', 'campo de linha elegivel sumiu');
 });
