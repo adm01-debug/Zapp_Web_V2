@@ -156,6 +156,12 @@ jobs:
           if (erros.length) process.exit(1);
           console.log(`::add-mask::${tls.connectionString}`);
           appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\n`);
+          // R2-INF-003: o CLI do Supabase le SUPABASE_DB_URL, que nao entra na
+          // lista de PG* tratada pelo withPsqlEnvironment. O `env:` dos passos
+          // redeclarava DESTINO_URL a partir do secret bruto e sobrescrevia o
+          // DSN endurecido do GITHUB_ENV; agora o mesmo DSN endurecido (ja
+          // mascarado) sai no GITHUB_ENV tambem como SUPABASE_DB_URL.
+          appendFileSync(process.env.GITHUB_ENV, `SUPABASE_DB_URL=${tls.connectionString}\n`);
           appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
           console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
           NODE
@@ -166,7 +172,6 @@ jobs:
         # leitura (SELECT do ledger). O apply nunca define a variavel: repetir o
         # push seria reaplicar DDL.
         env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
           PSQL_CONNECT_RETRIES: '2'
           TARGET_VERSION: ${{ inputs.migration_version }}
           APPLY: ${{ inputs.apply }}
@@ -231,14 +236,11 @@ jobs:
 
       - name: Provar paridade integral quando a versao ja existe
         if: steps.preflight.outputs.needs_apply == 'false'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: node scripts/db-audit/check-migration-drift.mjs
 
       - name: Provar estado runtime antes do push
         id: runtime
         env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
           CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
           APPLY: ${{ inputs.apply }}
           TARGET_VERSION: ${{ inputs.migration_version }}
@@ -891,7 +893,6 @@ jobs:
       - name: Dry-run oficial do Supabase CLI
         if: steps.preflight.outputs.needs_apply == 'true'
         env:
-          SUPABASE_DB_URL: ${{ env.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
           APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
         run: |
@@ -905,8 +906,6 @@ jobs:
 
       - name: Aplicar alvo unico ou bundle ordenado autorizado
         if: inputs.apply == true && steps.preflight.outputs.needs_apply == 'true'
-        env:
-          SUPABASE_DB_URL: ${{ env.DESTINO_URL }}
         run: >-
           supabase db push --include-all
           --skip-vault --yes
@@ -914,7 +913,6 @@ jobs:
       - name: Validar registro no ledger
         if: inputs.apply == true || steps.preflight.outputs.needs_apply == 'false'
         env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
           TARGET_NAME: ${{ steps.preflight.outputs.target_name }}
         run: |
@@ -942,8 +940,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260909270000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT count(*)
@@ -958,8 +954,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && (inputs.migration_version == '20260912130000' || inputs.migration_version == '20260912140000')
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT count(*)
@@ -979,8 +973,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260922220000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/notification-delivery-atomicity-runtime.sql)
@@ -1014,8 +1006,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && (inputs.migration_version == '20260912130000' || inputs.migration_version == '20260912140000')
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/talkx-recovery-runtime.sql)
@@ -1054,8 +1044,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260910100000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/talkx-blacklist-policy-runtime.sql)
@@ -1079,8 +1067,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260830170000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "
             SELECT json_build_object(
@@ -1104,8 +1090,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260831120000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: >-
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1
           -f scripts/db-audit/check-webhook-failures-acl.sql
@@ -1114,8 +1098,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260831150000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           LEGACY_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT sum(legacy_count)
@@ -1137,8 +1119,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260908180000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT jsonb_build_object(
@@ -1175,8 +1155,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260908220000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT jsonb_build_object(
@@ -1216,8 +1194,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260909120000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             WITH expected_functions AS (
@@ -1303,8 +1279,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260909180000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT jsonb_build_object(
@@ -1331,8 +1305,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260909200000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/inbox-contact-authorization-runtime.sql)
@@ -1368,8 +1340,6 @@ jobs:
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && (inputs.migration_version == '20260909220000'
           || inputs.migration_version == '20260909240000')
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/message-delivery-phase1-runtime.sql)
@@ -1421,8 +1391,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20260909270000'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/message-delivery-phase1-runtime.sql)
@@ -1450,8 +1418,6 @@ jobs:
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && (inputs.migration_version == '20260909210000'
           || inputs.migration_version == '20260909230000')
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/talkx-template-history-runtime.sql)
@@ -1510,6 +1476,4 @@ jobs:
 
       - name: Provar paridade integral apos aplicacao
         if: inputs.apply == true
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: node scripts/db-audit/check-migration-drift.mjs
