@@ -170,12 +170,13 @@ linha no ramo `resolve` → (3) aplicar este arquivo no Singu → (4) `md5` de v
 o passo (2) — se o Singu ainda estiver na versão antiga, nada vaza.
 
 **Aplicação no Singu é passo manual do dono** (este diretório não é aplicado por gate — ver a seção
-seguinte). Rollback: reaplicar a definição de `20261001160000_singu_guard_hmac_escopo.sql`.
+seguinte). Rollback: reaplicar a definição de `20261001160000_singu_guard_hmac_escopo.sql`, linhas 243–351
+(a `resolve` inteira; extrair com `sed -n '243,351p'`, md5 do arquivo `e826bc7a055b71d09f94d134cae37abb`).
 
 ## Por que não há migration aplicável por gate aqui
 
 Estas funções pertencem ao Singu. O ciclo de DDL deste repositório (`arquivo → PR → merge → deploy →
 apply`) não as alcança: o `hermes-db-migrar` aponta para o banco canônico do Zapp
-(`tnnnlkbymytvtqngbbqh`), não para `pgxfvjmuubtbowutlide`. Os arquivos aqui são portanto **fonte de
+(o projeto deste repositório), não para `pgxfvjmuubtbowutlide`. Os arquivos aqui são portanto **fonte de
 revisão**, não de aplicação. Quem for alterar uma delas precisa aplicar no Singu por fora e **atualizar o
 `md5` desta tabela** no mesmo PR, senão o espelho vira mentira silenciosa.

@@ -29,10 +29,19 @@
 -- owner e ACL ({postgres=X/postgres, service_role=X/postgres},
 -- anon/authenticated sem EXECUTE). RETURNS TABLE identico ao vigente.
 --
--- Rollback (rodar para desfazer):
---   reaplicar a definicao de multiplix_resolve_recipients de
---   20261001160000_singu_guard_hmac_escopo.sql (o espelho
---   multiplix_resolve_recipients.sql do commit anterior a este).
+-- Rollback:
+--   Reaplicar, no Singu, a definicao ANTERIOR de public.multiplix_resolve_recipients
+--   (unica funcao tocada por esta migration). O SQL real esta em
+--   supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql,
+--   do bloco que reabre a resolve ate o `$function$;` que o fecha:
+--     linhas 243 a 351 desse arquivo (109 linhas, a definicao inteira).
+--   Reexecutar esse trecho inteiro no Singu devolve o comportamento anterior.
+--   Extrair o trecho exato:
+--     sed -n '243,351p' supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql
+--   Conferencia do arquivo: md5 e826bc7a055b71d09f94d134cae37abb.
+--   Nada aqui muda ACL/owner (CREATE OR REPLACE puro), entao o rollback nao
+--   precisa de REVOKE/GRANT. Equivalente: reverter este arquivo pelo git e
+--   reaplicar o espelho anterior.
 
 BEGIN;
 

@@ -15,6 +15,7 @@ import {
   scopeSignaturePayload,
   signScope,
 } from './index.ts';
+import { EXPECTED_EXTERNAL_PROJECT_REF } from '../_shared/crm-integration-contract.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -491,36 +492,12 @@ Deno.test('F22: escopo diferente assina diferente (nao da para subir de agent pa
 // redige na fonte (espelho versionado em _foreign/singu) e a edge redige de
 // novo na fronteira PT->EN, para o periodo em que o Singu ainda roda a versao
 // antiga (ordem de deploy — mesmo motivo do cabecalho HMAC do F22).
+//
+// A prova de execucao real da funcao (banco descartavel, espelho extraido
+// verbatim e redacao conferida campo a campo com psql) fica em
+// scripts/db-audit/multiplix-resolve-escopo.test.sh — aqui nao se le o .sql
+// como texto.
 // ---------------------------------------------------------------------------
-
-Deno.test('R2-DB-003: o espelho da RPC redige os metadados fora do escopo', async () => {
-  // Contrato com o SQL versionado (fonte de revisao do Singu): fora do escopo
-  // ou empresa inativa -> NULL em contact_id, company_name, destino_e164,
-  // destino_origem, empresa_papeis e last_interaction_at. company_id (eco do
-  // id que o proprio chamador enviou) e elegibilidade seguem na linha.
-  const espelho = await Deno.readTextFile(
-    new URL('../../migrations/_foreign/singu/multiplix_resolve_recipients.sql', import.meta.url),
-  );
-  for (const coluna of ['contact_id', 'company_name', 'destino_e164', 'destino_origem', 'last_interaction_at']) {
-    assert(
-      new RegExp(`CASE WHEN d\\.no_escopo AND d\\.ativa THEN d\\.${coluna} ELSE NULL END`).test(espelho),
-      `espelho sem redacao de ${coluna} no ramo fora do escopo/inativo`,
-    );
-  }
-  assert(
-    /CASE WHEN d\.no_escopo AND d\.ativa THEN\s*ARRAY\(/.test(espelho)
-      && /ELSE NULL END AS empresa_papeis/.test(espelho),
-    'espelho sem redacao de empresa_papeis no ramo fora do escopo/inativo',
-  );
-  assert(
-    /d\.company_id/.test(espelho),
-    'company_id precisa continuar na projecao (eco do id que o chamador enviou)',
-  );
-  assert(
-    /WHEN NOT d\.no_escopo THEN 'fora_do_escopo'/.test(espelho),
-    'elegibilidade fora_do_escopo precisa continuar na projecao',
-  );
-});
 
 Deno.test('R2-DB-003: fora_do_escopo sai so com company_id e elegibilidade', () => {
   // Linha como a RPC ANTIGA ainda devolve (ate o Singu aplicar o arquivo novo):
@@ -624,8 +601,8 @@ Deno.test('R2-DB-003: elegibilidade ausente segue o contrato antigo (eligible, s
 // ao cliente nao pode carregar nada alem de company_id + elegibilidade.
 // ---------------------------------------------------------------------------
 
-const SINGU_URL = 'https://pgxfvjmuubtbowutlide.supabase.co';
-const ZAPP_URL = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
+const SINGU_URL = `https://${EXPECTED_EXTERNAL_PROJECT_REF}.supabase.co`;
+const ZAPP_URL = 'https://zapp-test.supabase.co';
 const RESOLVE_USER_ID = 'user-resolve-handler-1';
 const RESOLVE_EMPRESA_APTA = '11111111-1111-4111-8111-111111111111';
 const RESOLVE_EMPRESA_FORA = '33333333-3333-4333-8333-333333333333';
@@ -645,7 +622,7 @@ Deno.test('R2-DB-003 handler: resolve redige a linha fora do escopo na resposta 
   Deno.env.set('EXTERNAL_SUPABASE_URL', SINGU_URL);
   // JWT no formato que isExpectedExternalServerKey exige (ref + service_role),
   // mesmo padrao de crm-integration/index.test.ts.
-  const payloadExterno = btoa(JSON.stringify({ ref: 'pgxfvjmuubtbowutlide', role: 'service_role' }))
+  const payloadExterno = btoa(JSON.stringify({ ref: EXPECTED_EXTERNAL_PROJECT_REF, role: 'service_role' }))
     .replace(/=/g, '');
   Deno.env.set('EXTERNAL_SUPABASE_SERVICE_ROLE_KEY', `header.${payloadExterno}.signature`);
   Deno.env.set('MULTIPLIX_SCOPE_HMAC_SECRET', 'test-scope-secret');
