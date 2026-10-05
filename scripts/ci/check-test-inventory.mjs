@@ -39,6 +39,9 @@ const ALLOWLIST = new Set([
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
   'scripts/db-audit/replay-classify.test.sh',
+  // R2-AUTH-007 (item 73): prova da migration password_reset_delivery_status em
+  // Postgres descartavel (docker); passo de CI a promover pelo dono do workflow.
+  'scripts/db-audit/password-reset-delivery.test.sh',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────

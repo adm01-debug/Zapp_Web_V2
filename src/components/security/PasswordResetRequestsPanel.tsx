@@ -18,6 +18,7 @@ interface ResetRequest {
   status: 'pending' | 'approved' | 'rejected'; reviewed_by: string | null;
   reviewed_at: string | null; rejection_reason: string | null;
   ip_address: string | null; user_agent: string | null; created_at: string;
+  delivery_status: 'queued' | 'sent' | 'failed' | null; delivered_at: string | null;
 }
 
 export function PasswordResetRequestsPanel() {
@@ -48,16 +49,23 @@ export function PasswordResetRequestsPanel() {
     return () => { clearTimeout(timer); clearInterval(interval); };
   }, [fetchRequests]);
 
-  const handleApprove = async (request: ResetRequest) => {
+  const handleDeliveryAction = async (request: ResetRequest, action: 'approve' | 'resend') => {
     setProcessing(true);
     try {
-      const { error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: request.id, action: 'approve' } });
+      const { data, error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: request.id, action } });
       if (error) throw error;
-      toast.success('Solicitação aprovada! Email de reset enviado.');
+      if (data?.success && data?.delivery === 'sent') {
+        toast.success(action === 'resend' ? 'E-mail de recuperação reenviado.' : 'Solicitação aprovada! E-mail de recuperação enviado.');
+      } else {
+        toast.error(data?.message || 'O e-mail de recuperação não foi enviado.');
+      }
       fetchRequests();
     } catch (error) { log.error('Error approving:', error); toast.error(error instanceof Error ? error.message : 'Erro ao aprovar'); }
     finally { setProcessing(false); setSelectedRequest(null); }
   };
+
+  const handleApprove = (request: ResetRequest) => handleDeliveryAction(request, 'approve');
+  const handleResend = (request: ResetRequest) => handleDeliveryAction(request, 'resend');
 
   const handleReject = async (reason: string) => {
     if (!selectedRequest) return;
@@ -78,6 +86,13 @@ export function PasswordResetRequestsPanel() {
     if (status === 'pending') return <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Pendente</Badge>;
     if (status === 'approved') return <Badge variant="default" className="gap-1 bg-success"><CheckCircle className="w-3 h-3" /> Aprovado</Badge>;
     if (status === 'rejected') return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> Rejeitado</Badge>;
+    return null;
+  };
+
+  const deliveryBadge = (req: ResetRequest) => {
+    if (req.delivery_status === 'queued') return <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Enviando...</Badge>;
+    if (req.delivery_status === 'sent') return <Badge variant="outline" className="gap-1"><CheckCircle className="w-3 h-3" /> E-mail enviado</Badge>;
+    if (req.delivery_status === 'failed') return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> Falha no envio</Badge>;
     return null;
   };
 
@@ -115,7 +130,7 @@ export function PasswordResetRequestsPanel() {
                     <div className="flex items-start gap-3 flex-1">
                       <div className="p-2 rounded-lg bg-muted"><User className="w-4 h-4 text-muted-foreground" /></div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap"><span className="font-medium">{req.email}</span>{statusBadge(req.status)}</div>
+                        <div className="flex items-center gap-2 flex-wrap"><span className="font-medium">{req.email}</span>{statusBadge(req.status)}{deliveryBadge(req)}</div>
                         <div className="text-sm text-muted-foreground mt-1">Solicitado {formatDistanceToNow(new Date(req.created_at), { addSuffix: true, locale: ptBR })}</div>
                         {req.reason && <p className="text-sm mt-2 p-2 rounded bg-muted"><strong>Motivo:</strong> {req.reason}</p>}
                         {req.ip_address && <p className="text-xs text-muted-foreground mt-1">IP: {req.ip_address}</p>}
@@ -127,6 +142,11 @@ export function PasswordResetRequestsPanel() {
                       <div className="flex gap-2 shrink-0">
                         <Button size="sm" variant="outline" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { setSelectedRequest(req); setRejectDialogOpen(true); }}><XCircle className="w-4 h-4 mr-1" />Rejeitar</Button>
                         <Button size="sm" onClick={() => { setSelectedRequest(req); void handleApprove(req); }} disabled={processing}><CheckCircle className="w-4 h-4 mr-1" />Aprovar</Button>
+                      </div>
+                    )}
+                    {req.status === 'approved' && req.delivery_status === 'failed' && (
+                      <div className="flex gap-2 shrink-0">
+                        <Button size="sm" variant="outline" onClick={() => { setSelectedRequest(req); void handleResend(req); }} disabled={processing}><RefreshCw className="w-4 h-4 mr-1" />Reenviar e-mail</Button>
                       </div>
                     )}
                   </div>

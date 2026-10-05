@@ -248,7 +248,7 @@ export const RateLimitAlertSchema = z.object({
 // ─── Password Reset ──────────────────────────────────────────
 export const ApprovePasswordResetSchema = z.object({
   requestId: z.string().uuid("requestId must be a valid UUID"),
-  action: z.enum(["approve", "reject"]),
+  action: z.enum(["approve", "reject", "resend"]),
   rejectionReason: z.string().max(500).optional(),
 });
 
