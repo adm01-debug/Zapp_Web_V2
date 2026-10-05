@@ -68,7 +68,27 @@ test.describe('E98 - a11y: contraste e nome acessível na tela de contatos', () 
 
     expect(
       filtrarViolacoesBloqueantes(v),
-      'nenhuma violação SERIOUS ou CRITICAL',
+      `nenhuma violação SERIOUS ou CRITICAL\n${JSON.stringify(v, null, 2)}`,
     ).toHaveLength(0);
+  });
+
+  // O header movel (avatar com iniciais) e a barra inferior so existem abaixo de
+  // 640px; no desktop o span "Colunas" tambem fica visivel e da nome ao gatilho
+  // Radix. Sem este viewport o gate acima nao enxerga as 3 violacoes medidas em
+  // 390x844 no achado do cartao t_d4e4ec53.
+  test.describe('viewport movel 390x844', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('mede color-contrast e button-name no mobile', async ({ page }) => {
+      await gotoContacts(page);
+      await expect(page.getByRole('main', { name: 'Conteúdo principal' })).toBeVisible({ timeout: 20_000 });
+
+      const v = await violacoes(page, 'body', ['color-contrast', 'button-name']);
+
+      expect(
+        filtrarViolacoesBloqueantes(v),
+        `nenhuma violação SERIOUS ou CRITICAL\n${JSON.stringify(v, null, 2)}`,
+      ).toHaveLength(0);
+    });
   });
 });

@@ -81,7 +81,7 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
             <div className="relative">
               <Avatar className="w-7 h-7">
                 <AvatarImage src={agentAvatar} alt={agentName} />
-                <AvatarFallback className="bg-primary/15 text-primary text-[9px] font-bold">
+                <AvatarFallback className="bg-primary/15 text-[hsl(var(--primary-text))] text-[9px] font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
