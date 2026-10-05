@@ -196,29 +196,21 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   };
 
   // Contrato do TransferDialog (item 88 / R2-INB-009): só agent|queue; a nota
-  // opcional vai para conversation_events.metadata.note; qualquer escrita que
-  // falhe rejeita a Promise para o diálogo exibir erro e permanecer aberto.
+  // opcional vai para conversation_events.metadata.note. A escrita é ATÔMICA na
+  // RPC transfer_conversation (UPDATE contacts + INSERT do evento numa mesma
+  // transação): se a RPC falha, NADA persiste — o callback rejeita, o diálogo
+  // exibe erro e permanece aberto. Não há estado otimista nem escrita solta.
   const handleTransfer = async (type: TransferTargetType, targetId: string, message?: string) => {
-    const updateData: { assigned_to?: string; queue_id?: string } = type === 'agent' ? { assigned_to: targetId } : { queue_id: targetId };
-    const { error: updateError } = await supabase.from('contacts').update(updateData).eq('id', conversation.contact.id);
-    if (updateError) {
-      log.error('Failed to transfer conversation:', updateError);
-      toast({ title: 'Erro ao transferir', description: 'Não foi possível transferir a conversa.', variant: 'destructive' });
-      throw updateError;
-    }
-    const { error: eventError } = await supabase.from('conversation_events').insert({
-      contact_id: conversation.contact.id,
-      event_type: 'transfer',
-      from_agent_id: conversation.contact.assigned_to ?? null,
-      from_queue_id: conversation.contact.queue_id ?? null,
-      to_agent_id: type === 'agent' ? targetId : null,
-      to_queue_id: type === 'queue' ? targetId : null,
-      metadata: { note: message ?? null },
+    const { error } = await supabase.rpc('transfer_conversation', {
+      p_contact_id: conversation.contact.id,
+      p_to_agent_id: type === 'agent' ? targetId : null,
+      p_to_queue_id: type === 'queue' ? targetId : null,
+      p_note: message ?? null,
     });
-    if (eventError) {
-      log.error('Failed to record transfer event:', eventError);
-      toast({ title: 'Erro ao transferir', description: 'Não foi possível registrar a transferência.', variant: 'destructive' });
-      throw eventError;
+    if (error) {
+      log.error('Failed to transfer conversation:', error);
+      toast({ title: 'Erro ao transferir', description: 'Não foi possível transferir a conversa.', variant: 'destructive' });
+      throw error;
     }
     toast({ title: 'Chat transferido!', description: type === 'agent' ? 'O chat foi transferido para outro atendente.' : 'O chat foi transferido para outra fila.' });
   };

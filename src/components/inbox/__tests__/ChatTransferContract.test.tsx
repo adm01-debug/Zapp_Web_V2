@@ -1,24 +1,23 @@
 /**
  * t_ad66478a / R2-INB-009 item 88 — contrato de transferência do header do chat.
+ * Refazer 2 (t_ff895f31): as duas escritas viraram UMA RPC atômica
+ * (`transfer_conversation`, migration 20261005185729) — update do contato e
+ * insert do evento acontecem na mesma transação do Postgres.
  *
  * O TransferDialog (cartão pai t_d48c98d1) já expõe só `agent | queue` via
- * `TransferTargetType` e só fecha quando o `onTransfer` resolve. O consumidor
- * (ChatPanel → ChatDialogs → TransferDialog) estava quebrado em quatro pontos:
+ * `TransferTargetType` e só fecha quando o `onTransfer` resolve. Este teste
+ * monta o ChatPanel real com ChatDialogs e TransferDialog reais (apenas hooks
+ * e componentes visuais periféricos mockados), abre o diálogo pelo mesmo
+ * evento que o painel lateral dispara (`open-transfer-dialog`) e observa o
+ * Supabase mockado:
  *
- *   1. `queueId` nunca era passado ao diálogo → `isQueueless` sempre verdadeiro
- *      → o picker filtrava todos os colegas indevidamente;
- *   2. `ChatDialogs` fazia cast do callback para um tipo com `connection`,
- *      escondendo a incompatibilidade de contrato;
- *   3. a nota digitada no diálogo era descartada — nada ia para
- *      `conversation_events.metadata.note`;
- *   4. `handleTransfer` engolia o erro do update (`return` após o toast), então
- *      a Promise resolvia e o diálogo fechava como se tivesse dado certo.
- *
- * Este teste monta o ChatPanel real com ChatDialogs e TransferDialog reais
- * (apenas hooks e componentes visuais periféricos mockados), abre o diálogo pelo
- * mesmo evento que o painel lateral dispara (`open-transfer-dialog`) e observa
- * as duas escritas no Supabase mockado: o update em `contacts` e o insert em
- * `conversation_events` com `event_type='transfer'`.
+ *   - o único caminho de escrita é `supabase.rpc('transfer_conversation', …)` —
+ *     NENHUM `from('contacts').update`/`from('conversation_events').insert`
+ *     pode persistir estado parcial (prova estrutural do lado do cliente);
+ *   - erro da RPC rejeita o callback → diálogo aberto + toast de erro;
+ *   - comportamento de rollback no banco (evento falha ⇒ contato intacto) é
+ *     provado contra a função real em
+ *     `supabase/tests/transfer_conversation_atomicidade.sql`.
  */
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -34,15 +33,16 @@ Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? (() => {}
 
 const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
+  rpc: vi.fn(),
   from: vi.fn(),
-  updates: [] as { data: Record<string, unknown>; eqCol: string; eqVal: unknown }[],
-  inserts: [] as Record<string, unknown>[],
-  updateError: null as { message: string } | null,
-  insertError: null as { message: string } | null,
+  rpcCalls: [] as { name: string; args: Record<string, unknown> }[],
+  fromCalls: [] as string[],
+  rpcError: null as { message: string } | null,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    rpc: mocks.rpc,
     from: mocks.from,
     storage: { from: vi.fn() },
   },
@@ -222,29 +222,15 @@ function clickTransferir() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.updates.length = 0;
-  mocks.inserts.length = 0;
-  mocks.updateError = null;
-  mocks.insertError = null;
+  mocks.rpcCalls.length = 0;
+  mocks.fromCalls.length = 0;
+  mocks.rpcError = null;
+  mocks.rpc.mockImplementation((name: string, args: Record<string, unknown>) => {
+    mocks.rpcCalls.push({ name, args });
+    return Promise.resolve({ data: 'evt-mock-id', error: mocks.rpcError });
+  });
   mocks.from.mockImplementation((table: string) => {
-    if (table === 'contacts') {
-      return {
-        update: (data: Record<string, unknown>) => ({
-          eq: (col: string, val: unknown) => {
-            mocks.updates.push({ data, eqCol: col, eqVal: val });
-            return Promise.resolve({ error: mocks.updateError });
-          },
-        }),
-      };
-    }
-    if (table === 'conversation_events') {
-      return {
-        insert: (payload: Record<string, unknown>) => {
-          mocks.inserts.push(payload);
-          return Promise.resolve({ error: mocks.insertError });
-        },
-      };
-    }
+    mocks.fromCalls.push(table);
     throw new Error(`tabela inesperada no teste: ${table}`);
   });
 });
@@ -259,7 +245,7 @@ describe('ChatPanel → TransferDialog — contrato de transferência (#88)', ()
     expect(screen.queryByText(/só é possível assumir para você mesmo/i)).not.toBeInTheDocument();
   });
 
-  it('transferência para AGENTE atualiza assigned_to e grava to_agent_id + nota', async () => {
+  it('transferência para AGENTE chama a RPC atômica com to_agent_id e a nota', async () => {
     await openTransferDialog();
     fireEvent.click(screen.getByText('Colega Um'));
     fireEvent.change(screen.getByPlaceholderText(/Deixe uma mensagem/i), {
@@ -267,25 +253,24 @@ describe('ChatPanel → TransferDialog — contrato de transferência (#88)', ()
     });
     clickTransferir();
 
-    await waitFor(() => expect(mocks.updates).toHaveLength(1));
-    expect(mocks.updates[0].data).toEqual({ assigned_to: 'colega-profile' });
-    expect(mocks.updates[0].eqCol).toBe('id');
-    expect(mocks.updates[0].eqVal).toBe(CONTACT_ID);
-
-    await waitFor(() => expect(mocks.inserts).toHaveLength(1));
-    const evt = mocks.inserts[0];
-    expect(evt.contact_id).toBe(CONTACT_ID);
-    expect(evt.event_type).toBe('transfer');
-    expect(evt.to_agent_id).toBe('colega-profile');
-    expect(evt.to_queue_id ?? null).toBeNull();
-    expect(evt.metadata).toMatchObject({ note: 'Cliente pediu urgência' });
+    await waitFor(() => expect(mocks.rpcCalls).toHaveLength(1));
+    const call = mocks.rpcCalls[0];
+    expect(call.name).toBe('transfer_conversation');
+    expect(call.args).toEqual({
+      p_contact_id: CONTACT_ID,
+      p_to_agent_id: 'colega-profile',
+      p_to_queue_id: null,
+      p_note: 'Cliente pediu urgência',
+    });
+    // Nenhuma escrita solta: update+evento vivem dentro da transação da função.
+    expect(mocks.from).not.toHaveBeenCalled();
 
     await waitFor(() =>
       expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Chat transferido!' }))
     );
   });
 
-  it('transferência para FILA atualiza queue_id e grava to_queue_id', async () => {
+  it('transferência para FILA chama a RPC atômica com to_queue_id', async () => {
     await openTransferDialog();
     fireEvent.click(screen.getByRole('radio', { name: /departamento/i }));
     fireEvent.click(screen.getByRole('combobox'));
@@ -295,20 +280,27 @@ describe('ChatPanel → TransferDialog — contrato de transferência (#88)', ()
     });
     clickTransferir();
 
-    await waitFor(() => expect(mocks.updates).toHaveLength(1));
-    expect(mocks.updates[0].data).toEqual({ queue_id: 'queue-2' });
+    await waitFor(() => expect(mocks.rpcCalls).toHaveLength(1));
+    const call = mocks.rpcCalls[0];
+    expect(call.name).toBe('transfer_conversation');
+    expect(call.args).toEqual({
+      p_contact_id: CONTACT_ID,
+      p_to_agent_id: null,
+      p_to_queue_id: 'queue-2',
+      p_note: 'Fila com contexto',
+    });
+    expect(mocks.from).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(mocks.inserts).toHaveLength(1));
-    const evt = mocks.inserts[0];
-    expect(evt.contact_id).toBe(CONTACT_ID);
-    expect(evt.event_type).toBe('transfer');
-    expect(evt.to_queue_id).toBe('queue-2');
-    expect(evt.to_agent_id ?? null).toBeNull();
-    expect(evt.metadata).toMatchObject({ note: 'Fila com contexto' });
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Chat transferido!' }))
+    );
   });
 
-  it('falha no update da conversa rejeita o callback e mantém o diálogo aberto', async () => {
-    mocks.updateError = { message: 'rls negou' };
+  it('falha na RPC rejeita o callback, mantém o diálogo aberto e NÃO grava nada solto', async () => {
+    // A RPC falha = a transação da função abortou inteira: nem o UPDATE do
+    // contato nem o INSERT do evento persistem (o rollback em si é provado
+    // contra a função real em supabase/tests/transfer_conversation_atomicidade.sql).
+    mocks.rpcError = { message: 'insert do evento negado' };
     await openTransferDialog();
     fireEvent.click(screen.getByText('Colega Um'));
     clickTransferir();
@@ -319,21 +311,11 @@ describe('ChatPanel → TransferDialog — contrato de transferência (#88)', ()
     // Rejeição observável: o diálogo real só fecha quando onTransfer resolve.
     expect(screen.getByText('Transferir Chat')).toBeInTheDocument();
     expect(mocks.toast).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Chat transferido!' }));
-    // Não pode gravar evento órfão de uma transferência que não aconteceu.
-    expect(mocks.inserts).toHaveLength(0);
-  });
 
-  it('falha no insert do evento rejeita o callback e mantém o diálogo aberto', async () => {
-    mocks.insertError = { message: 'insert negado' };
-    await openTransferDialog();
-    fireEvent.click(screen.getByText('Colega Um'));
-    clickTransferir();
-
-    await waitFor(() =>
-      expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Erro ao transferir' }))
-    );
-    expect(screen.getByText('Transferir Chat')).toBeInTheDocument();
-    expect(mocks.toast).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Chat transferido!' }));
-    expect(mocks.inserts).toHaveLength(1);
+    // Atomicidade observável no cliente: a transferência só pode existir como a
+    // ÚNICA chamada da RPC transacional — nenhum update/insert avulso saiu.
+    expect(mocks.rpcCalls).toHaveLength(1);
+    expect(mocks.rpcCalls[0].name).toBe('transfer_conversation');
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 });

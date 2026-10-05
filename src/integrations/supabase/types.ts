@@ -12316,6 +12316,15 @@ export type Database = {
         Args: { p_emoji: string; p_message_id: string }
         Returns: Json
       }
+      transfer_conversation: {
+        Args: {
+          p_contact_id: string
+          p_note?: string | null
+          p_to_agent_id?: string | null
+          p_to_queue_id?: string | null
+        }
+        Returns: string
+      }
       transfer_team_conversation_department: {
         Args: { p_conversation_id: string; p_to_department_id: string }
         Returns: Json
