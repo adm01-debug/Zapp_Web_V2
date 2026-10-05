@@ -39,6 +39,12 @@ const InAppNotificationProvider = lazy(() =>
   import("@/components/mobile/InAppNotificationProvider")
     .then(m => ({ default: m.InAppNotificationProvider }))
 );
+// TC-007: listener ÚNICO de notificações do Team Chat, montado no nível do app. É um
+// provedor de efeito (renderiza null) e fica no chunk lazy para não pesar o bundle inicial.
+const TeamChatNotificationsListener = lazy(() =>
+  import("@/components/team-chat/TeamChatNotificationsListener")
+    .then(m => ({ default: m.TeamChatNotificationsListener }))
+);
 
 /**
  * Side-effect overlay providers — no children needed here.
@@ -56,6 +62,7 @@ function DeferredProviders() {
     <Suspense fallback={null}>
       <RealtimeSentimentAlertProvider />
       <IncomingCallAlert />
+      <TeamChatNotificationsListener />
       <InAppNotificationProvider>
         {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
         <EasterEggsProvider>{null}</EasterEggsProvider>
