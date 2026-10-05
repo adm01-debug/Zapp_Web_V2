@@ -458,7 +458,14 @@ export interface LinhaDeConsumo {
 }
 
 /** Estados que significam "não houve chamada paga ao provedor". */
-const STATUS_SEM_CHAMADA = new Set(["denied", "skipped", "rate_limited", "budget_denied"]);
+const STATUS_SEM_CHAMADA = new Set([
+  "denied",
+  "skipped",
+  "rate_limited",
+  "budget_denied",
+  // IA-050: tentativa bloqueada pelo circuito aberto — o provedor nem foi chamado.
+  "circuit_open",
+]);
 
 /** A linha representa consumo REAL que deve entrar na conta? */
 export function contaParaQuota(linha: LinhaDeConsumo): { cobra: boolean; motivo: string } {
