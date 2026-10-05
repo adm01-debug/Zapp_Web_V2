@@ -7,18 +7,22 @@
  *    para terceiros — o modelo NÃO consegue buscar a imagem;
  *  - tornar o bucket público foi DESCARTADO (exporia mídia de clientes).
  *
- * Então a imagem é **baixada no servidor** com a service role e embutida na mensagem
- * como data URL base64 (`data:<mime>;base64,<...>`) — o valor de
+ * Então a imagem é **baixada no servidor** sob a identidade explícita do chamador
+ * (R2-INF-022: usuário → anon key + JWT do chamador; fluxo interno do webhook →
+ * service role) e embutida na mensagem como data URL base64
+ * (`data:<mime>;base64,<...>`) — o valor de
  * `content: [{ type:'image_url', image_url:{ url } }]` enviado ao provedor.
  *
  * Contrato (fail-closed, nunca improvisar):
  *  1. URL `data:` pronta volta COMO ESTÁ, sem nenhuma chamada de rede;
  *  2. URL de Storage do PRÓPRIO projeto (`/object/public/<bucket>/<path>` ou
  *     `/object/sign/<bucket>/<path>`) vira leitura AUTENTICADA
- *     (`/storage/v1/object/<bucket>/<path>`), sob a identidade informada em
+ *     (`/storage/v1/object/<bucket>/<path>`), sob a identidade EXIGIDA em
  *     `storageIdentity` — usuário: anon key + JWT do chamador (a policy de
- *     `storage.objects` decide); serviço: service role (o padrão histórico).
- *     A URL pública crua NUNCA é usada para o download;
+ *     `storage.objects` decide); serviço: service role (fluxo interno do
+ *     webhook). Sem `storageIdentity` o download falha FECHADO
+ *     (IMAGE_STORAGE_UNAVAILABLE) antes de qualquer rede: não existe padrão
+ *     implícito privilegiado. A URL pública crua NUNCA é usada para o download;
  *  3. origem de outro projeto, bucket fora da allowlist, travessia de caminho
  *     (`..`, `\`, NUL) ou URL que não é do Storage → `AiImageInputError`;
  *  4. LIMITE de `MAX_INLINE_IMAGE_BYTES` (4 MiB): conferido no `content-length` ANTES
@@ -158,9 +162,11 @@ export interface InlineImageOptions {
   maxBytes?: number;
   timeoutMs?: number;
   /**
-   * Identidade de download do Storage privado. Quando ausente, o comportamento
-   * histórico é preservado: service role (fluxo interno). `kind:'user'` exige
-   * `bearerToken` (JWT do chamador) e `anonKey` (opção ou `SUPABASE_ANON_KEY`).
+   * Identidade de download do Storage privado — OBRIGATÓRIA para qualquer URL
+   * de Storage: sem ela o download falha fechado (IMAGE_STORAGE_UNAVAILABLE)
+   * antes de qualquer rede; não existe credencial implícita. `kind:'user'`
+   * exige `bearerToken` (JWT do chamador) e `anonKey` (opção ou
+   * `SUPABASE_ANON_KEY`). URL `data:` pronta não exige identidade.
    */
   storageIdentity?: StorageIdentity;
   /** Injeção para teste; o padrão é o `fetch` global resolvido na hora da chamada. */
@@ -294,8 +300,9 @@ function inlineFromDataUrl(url: string, maxBytes: number): InlineImage {
 
 /**
  * Converte a URL que o app manda hoje numa imagem EMBUTIDA (data URL base64),
- * baixando o objeto no servidor sob a identidade informada em `storageIdentity`
- * (padrão: service role, o fluxo interno). Lança SEMPRE `AiImageInputError` em
+ * baixando o objeto no servidor sob a identidade EXPLÍCITA de `storageIdentity`
+ * (`'user'` → anon key + JWT do chamador; `'service'` → service role; ausente →
+ * falha fechada, sem credencial implícita). Lança SEMPRE `AiImageInputError` em
  * falha — nunca string solta, nunca resposta pela metade.
  */
 export async function toInlineImage(
@@ -315,8 +322,9 @@ export async function toInlineImage(
   // (1) data URL pronta: devolvida como está, sem rede.
   if (/^data:/i.test(rawUrl)) return inlineFromDataUrl(rawUrl, maxBytes);
 
-  // (2) identidade de download do Storage privado. Sem `storageIdentity`, o
-  // comportamento histórico é preservado: service role (fluxo interno do webhook).
+  // (2) identidade de download do Storage privado — EXIGIDA, fail-closed. Sem
+  // `storageIdentity` não há credencial implícita: o fallback silencioso para
+  // service role foi removido (R2-INF-022).
   const supabaseUrl = options.supabaseUrl ?? readEnv("SUPABASE_URL");
   if (!supabaseUrl) {
     throw new AiImageInputError(
@@ -325,7 +333,13 @@ export async function toInlineImage(
     );
   }
 
-  const identity: StorageIdentity = options.storageIdentity ?? { kind: "service" };
+  const identity = options.storageIdentity;
+  if (!identity) {
+    throw new AiImageInputError(
+      "IMAGE_STORAGE_UNAVAILABLE",
+      "storageIdentity ausente: o download privado exige identidade explicita ('user' ou 'service').",
+    );
+  }
 
   // Credencial do GET: usuário → anon key + JWT do chamador (a policy de
   // storage.objects decide); serviço → service role. Ausência/inconsistência

@@ -92,7 +92,7 @@ describe('toInlineImage — caminho autenticado do Storage', () => {
       const url = `${ORIGIN}/storage/v1/object/${access}/${BUCKET}/${PATH}` +
         (access === 'sign' ? '?token=assinatura-expirada' : '');
 
-      const result = await toInlineImage(url);
+      const result = await toInlineImage(url, { storageIdentity: { kind: 'service' } });
 
       expect(result.dataUrl).toBe(`data:image/webp;base64,${IMAGE_BASE64}`);
       expect(result.mime).toBe('image/webp');
@@ -118,7 +118,7 @@ describe('toInlineImage — caminho autenticado do Storage', () => {
       storageResponse(IMAGE_BYTES, { contentType: 'IMAGE/PNG; charset=binary' }),
     );
 
-    const result = await toInlineImage(PUBLIC_URL);
+    const result = await toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } });
 
     expect(result.mime).toBe('image/png');
     expect(result.dataUrl.startsWith('data:image/png;base64,')).toBe(true);
@@ -129,7 +129,7 @@ describe('toInlineImage — caminho autenticado do Storage', () => {
     const trickyPath = 'stickers/foto com espaço.webp';
     const url = `${ORIGIN}/storage/v1/object/public/${BUCKET}/stickers/foto%20com%20espa%C3%A7o.webp`;
 
-    const result = await toInlineImage(url);
+    const result = await toInlineImage(url, { storageIdentity: { kind: 'service' } });
 
     expect(result.path).toBe(trickyPath);
     expect(fetchMock.mock.calls[0][0]).toBe(
@@ -140,7 +140,9 @@ describe('toInlineImage — caminho autenticado do Storage', () => {
   it('traduz falha de socket em erro tipado (nunca vaza a exceção crua)', async () => {
     fetchMock.mockRejectedValue(new Error('ECONNRESET'));
 
-    const error = await errorFrom(toInlineImage(PUBLIC_URL));
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } }),
+    );
 
     expect(error.code).toBe('IMAGE_DOWNLOAD_FAILED');
     expect(error.message).toContain('ECONNRESET');
@@ -164,7 +166,9 @@ describe('toInlineImage — limite de 4 MiB (obrigatório pela decisão)', () =>
       body: null,
     } as unknown as Response);
 
-    const error = await errorFrom(toInlineImage(PUBLIC_URL));
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } }),
+    );
 
     expect(error).toBeInstanceOf(AiImageInputError);
     expect(error.code).toBe('IMAGE_TOO_LARGE');
@@ -180,7 +184,9 @@ describe('toInlineImage — limite de 4 MiB (obrigatório pela decisão)', () =>
       storageResponse(new Uint8Array(HUGE_BYTES), { contentType: 'image/webp' }),
     );
 
-    const error = await errorFrom(toInlineImage(PUBLIC_URL));
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } }),
+    );
 
     expect(error.code).toBe('IMAGE_TOO_LARGE');
     expect(error.bytes).toBe(HUGE_BYTES);
@@ -195,7 +201,9 @@ describe('toInlineImage — limite de 4 MiB (obrigatório pela decisão)', () =>
       }),
     );
 
-    const error = await errorFrom(toInlineImage(PUBLIC_URL));
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } }),
+    );
 
     expect(error.code).toBe('IMAGE_TOO_LARGE');
     expect(error.bytes).toBe(HUGE_BYTES);
@@ -218,7 +226,7 @@ describe('toInlineImage — limite de 4 MiB (obrigatório pela decisão)', () =>
       storageResponse(new Uint8Array(MAX_INLINE_IMAGE_BYTES), { contentType: 'image/webp' }),
     );
 
-    const result = await toInlineImage(PUBLIC_URL);
+    const result = await toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } });
 
     expect(result.bytes).toBe(MAX_INLINE_IMAGE_BYTES);
     expect(result.dataUrl.startsWith('data:image/webp;base64,')).toBe(true);
@@ -227,7 +235,9 @@ describe('toInlineImage — limite de 4 MiB (obrigatório pela decisão)', () =>
   it('respeita um maxBytes menor passado pelo chamador', async () => {
     fetchMock.mockResolvedValue(storageResponse(IMAGE_BYTES, { contentType: 'image/webp' }));
 
-    const error = await errorFrom(toInlineImage(PUBLIC_URL, { maxBytes: 4 }));
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, { maxBytes: 4, storageIdentity: { kind: 'service' } }),
+    );
 
     expect(error.code).toBe('IMAGE_TOO_LARGE');
     expect(error.bytes).toBe(IMAGE_BYTES.byteLength);
@@ -239,7 +249,9 @@ describe('toInlineImage — erros tipados do Storage', () => {
   it.each([404, 403])('HTTP %i vira IMAGE_DOWNLOAD_FAILED com o status', async (status) => {
     fetchMock.mockResolvedValue(storageResponse(null, { status }));
 
-    const error = await errorFrom(toInlineImage(PUBLIC_URL));
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } }),
+    );
 
     expect(error).toBeInstanceOf(AiImageInputError);
     expect(error.code).toBe('IMAGE_DOWNLOAD_FAILED');
@@ -253,7 +265,9 @@ describe('toInlineImage — erros tipados do Storage', () => {
     async (contentType) => {
       fetchMock.mockResolvedValue(storageResponse('<html>nao e imagem</html>', { contentType }));
 
-      const error = await errorFrom(toInlineImage(PUBLIC_URL));
+      const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } }),
+    );
 
       expect(error.code).toBe('IMAGE_TYPE_INVALID');
       expect(error.contentType).toBe(contentType);
@@ -263,7 +277,9 @@ describe('toInlineImage — erros tipados do Storage', () => {
   it('content-type ausente é erro tipado', async () => {
     fetchMock.mockResolvedValue(storageResponse(IMAGE_BYTES));
 
-    const error = await errorFrom(toInlineImage(PUBLIC_URL));
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } }),
+    );
 
     expect(error.code).toBe('IMAGE_TYPE_INVALID');
     expect(error.contentType).toBeNull();
@@ -272,7 +288,9 @@ describe('toInlineImage — erros tipados do Storage', () => {
   it('objeto vazio é erro tipado (não vira data URL vazia)', async () => {
     fetchMock.mockResolvedValue(storageResponse(new Uint8Array(0), { contentType: 'image/webp' }));
 
-    const error = await errorFrom(toInlineImage(PUBLIC_URL));
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } }),
+    );
 
     expect(error.code).toBe('IMAGE_DOWNLOAD_FAILED');
     expect(error.bytes).toBe(0);
@@ -280,7 +298,10 @@ describe('toInlineImage — erros tipados do Storage', () => {
 
   it('origem de OUTRO projeto não é baixada com service role', async () => {
     const error = await errorFrom(
-      toInlineImage('https://attacker.example/storage/v1/object/public/whatsapp-media/x.webp'),
+      toInlineImage(
+        'https://attacker.example/storage/v1/object/public/whatsapp-media/x.webp',
+        { storageIdentity: { kind: 'service' } },
+      ),
     );
 
     expect(error.code).toBe('IMAGE_URL_INVALID');
@@ -289,7 +310,10 @@ describe('toInlineImage — erros tipados do Storage', () => {
 
   it('bucket fora da allowlist não é baixado com service role', async () => {
     const error = await errorFrom(
-      toInlineImage(`${ORIGIN}/storage/v1/object/public/private-documents/contrato.pdf`),
+      toInlineImage(
+        `${ORIGIN}/storage/v1/object/public/private-documents/contrato.pdf`,
+        { storageIdentity: { kind: 'service' } },
+      ),
     );
 
     expect(error.code).toBe('IMAGE_URL_INVALID');
@@ -298,7 +322,10 @@ describe('toInlineImage — erros tipados do Storage', () => {
 
   it('travessia de caminho é recusada antes de qualquer fetch', async () => {
     const error = await errorFrom(
-      toInlineImage(`${ORIGIN}/storage/v1/object/public/${BUCKET}/stickers/../segredo.webp`),
+      toInlineImage(
+        `${ORIGIN}/storage/v1/object/public/${BUCKET}/stickers/../segredo.webp`,
+        { storageIdentity: { kind: 'service' } },
+      ),
     );
 
     expect(error.code).toBe('IMAGE_URL_INVALID');
@@ -315,7 +342,9 @@ describe('toInlineImage — erros tipados do Storage', () => {
   it('sem credencial de serviço no ambiente: IMAGE_STORAGE_UNAVAILABLE', async () => {
     delete env.SUPABASE_SERVICE_ROLE_KEY;
 
-    const error = await errorFrom(toInlineImage(PUBLIC_URL));
+    const error = await errorFrom(
+      toInlineImage(PUBLIC_URL, { storageIdentity: { kind: 'service' } }),
+    );
 
     expect(error.code).toBe('IMAGE_STORAGE_UNAVAILABLE');
     expect(fetchMock).not.toHaveBeenCalled();
@@ -374,6 +403,14 @@ describe('toInlineImage — data URL já pronta (sem rede)', () => {
 });
 
 describe('toInlineImage — storageIdentity (R2-INF-022: download privado sob a identidade certa)', () => {
+  it('sem storageIdentity falha FECHADA: não existe fallback silencioso para service role', async () => {
+    const error = await errorFrom(toInlineImage(PUBLIC_URL));
+
+    expect(error).toBeInstanceOf(AiImageInputError);
+    expect(error.code).toBe('IMAGE_STORAGE_UNAVAILABLE');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('kind:"user" baixa com anon key + JWT do chamador (nunca service role)', async () => {
     fetchMock.mockResolvedValue(storageResponse(IMAGE_BYTES, { contentType: 'image/webp' }));
 
