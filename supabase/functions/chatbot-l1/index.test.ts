@@ -8,10 +8,11 @@
 //
 // Estes testes exercitam o handler de verdade (importado, sem abrir porta) contra
 // um PostgREST e um provedor de IA falsos, servidos em 127.0.0.1. O que se mede:
-//   1. flow de OUTRA conexão não atende esta conexão (e nada é respondido);
-//   2. o histórico do prompt carrega só as mensagens da conexão da mensagem;
-//   3. as consultas emitidas carregam o filtro `whatsapp_connection_id`;
-//   4. chamador legado (sem `connectionId`) continua atendido, sem filtro novo.
+//   1. requisição SEM `connectionId` (ausente, nulo ou inválido) é REJEITADA na
+//      entrada, sem consultar flow, histórico nem chamar a IA;
+//   2. flow de OUTRA conexão não atende esta conexão (e nada é respondido);
+//   3. o histórico do prompt carrega só as mensagens da conexão da mensagem;
+//   4. as consultas emitidas SEMPRE carregam o filtro `whatsapp_connection_id`.
 //
 // Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
 
@@ -246,13 +247,8 @@ async function abrirCenario(cenario: Cenario): Promise<CenarioVivo> {
   };
 }
 
-/** Chama o handler como o webhook real: assinatura HMAC do corpo cru. */
-async function chamarChatbot(conexao: string | null, mensagemTexto = "Qual e o prazo de entrega?") {
-  const corpo = JSON.stringify({
-    contactId: CONTATO,
-    message: mensagemTexto,
-    ...(conexao === null ? {} : { connectionId: conexao }),
-  });
+/** Envia um corpo CRU (assinado como o webhook real) e devolve status + JSON. */
+async function enviarCorpo(corpo: string) {
   const requisicao = new Request("http://localhost/functions/v1/chatbot-l1", {
     method: "POST",
     headers: {
@@ -263,6 +259,15 @@ async function chamarChatbot(conexao: string | null, mensagemTexto = "Qual e o p
   });
   const resposta = await handleChatbotL1Request(requisicao);
   return { status: resposta.status, corpo: await resposta.json() as Record<string, unknown> };
+}
+
+/** Chama o handler como o webhook real. `null` OMITE o campo `connectionId`. */
+async function chamarChatbot(conexao: string | null, mensagemTexto = "Qual e o prazo de entrega?") {
+  return enviarCorpo(JSON.stringify({
+    contactId: CONTATO,
+    message: mensagemTexto,
+    ...(conexao === null ? {} : { connectionId: conexao }),
+  }));
 }
 
 /** Roda um cenário com o logger silenciado e o ambiente restaurado ao final. */
@@ -327,6 +332,7 @@ Deno.test("IA-CHATBOT-001: histórico do prompt traz só as mensagens da conexã
       const queryHistorico = consulta(vivo, "messages")[0];
       afirma(queryHistorico, "o handler precisa consultar messages");
       igual(queryHistorico.conexao, CONEXAO_A, "a consulta de histórico precisa filtrar a conexão da mensagem");
+      igual(queryHistorico.filtraConexao, true, "sem o filtro de conexão o histórico de outro canal vazaria para o prompt");
     },
   );
 });
@@ -350,21 +356,58 @@ Deno.test("IA-CHATBOT-001: com dois flows ativos, o escolhido é o da conexão d
   );
 });
 
-Deno.test("IA-CHATBOT-001: chamador legado (sem connectionId) continua atendido", async () => {
+Deno.test("IA-CHATBOT-001: requisição SEM connectionId é rejeitada sem tocar flow, histórico nem IA", async () => {
   await comCenario(
     {
       fluxos: [flow("flow-b", CONEXAO_B), flow("flow-a", CONEXAO_A)],
       mensagens: [mensagem("HISTORICO-A", CONEXAO_A, "2026-01-01T00:00:20Z")],
     },
     async (vivo) => {
-      const { status, corpo } = await chamarChatbot(null);
+      // Corpo do chamador legado: sem o campo `connectionId`.
+      const { status, corpo } = await enviarCorpo(JSON.stringify({
+        contactId: CONTATO,
+        message: "Qual e o prazo de entrega?",
+      }));
 
-      igual(status, 200, "resposta do handler");
-      igual(corpo.handled, true, "sem connectionId o comportamento anterior é preservado");
-      const queryFlow = consulta(vivo, "chatbot_flows")[0];
-      igual(queryFlow.filtraConexao, false, "sem conexão a informar, não existe filtro a aplicar");
-      const queryHistorico = consulta(vivo, "messages")[0];
-      igual(queryHistorico.filtraConexao, false, "histórico do chamador legado segue por contato");
+      afirma(status >= 400, "sem connectionId a requisição precisa ser rejeitada");
+      igual(corpo.handled, undefined, "não pode atender sem a conexão da mensagem");
+      igual(vivo.chamadas.length, 0, "nenhuma consulta ao banco pode acontecer sem a conexão");
+      igual(vivo.prompts.length, 0, "nenhuma chamada à IA pode acontecer sem a conexão");
+    },
+  );
+});
+
+Deno.test("IA-CHATBOT-001: connectionId NULO é rejeitado como ausente", async () => {
+  await comCenario(
+    { fluxos: [flow("flow-a", CONEXAO_A)], mensagens: [] },
+    async (vivo) => {
+      const { status, corpo } = await enviarCorpo(JSON.stringify({
+        contactId: CONTATO,
+        message: "qualquer",
+        connectionId: null,
+      }));
+
+      afirma(status >= 400, "connectionId nulo precisa ser rejeitado");
+      igual(corpo.handled, undefined, "não pode atender sem a conexão da mensagem");
+      igual(vivo.chamadas.length, 0, "nenhuma consulta ao banco pode acontecer sem a conexão");
+      igual(vivo.prompts.length, 0, "nenhuma chamada à IA pode acontecer sem a conexão");
+    },
+  );
+});
+
+Deno.test("IA-CHATBOT-001: connectionId INVÁLIDO (não-UUID) é rejeitado na entrada", async () => {
+  await comCenario(
+    { fluxos: [flow("flow-a", CONEXAO_A)], mensagens: [] },
+    async (vivo) => {
+      const { status } = await enviarCorpo(JSON.stringify({
+        contactId: CONTATO,
+        message: "qualquer",
+        connectionId: "nao-e-um-uuid",
+      }));
+
+      afirma(status >= 400, "connectionId com formato inválido precisa ser rejeitado");
+      igual(vivo.chamadas.length, 0, "nenhuma consulta ao banco pode acontecer com conexão inválida");
+      igual(vivo.prompts.length, 0, "nenhuma chamada à IA pode acontecer com conexão inválida");
     },
   );
 });
