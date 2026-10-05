@@ -2,7 +2,7 @@
  * Shared AI Usage Logger for Edge Functions.
  * Logs token consumption per user to ai_usage_logs table.
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { MODALITIES, type AiModality } from "./ai-capabilities.ts";
 
 interface AiUsageEntry {
@@ -60,6 +60,16 @@ interface AiUsageEntry {
    * `metadata.usage_estimate` sem se passar por medição.
    */
   usageUnknown?: boolean;
+  /**
+   * IA-TIMEOUT-001 — o registro é ESSENCIAL por padrão (`!== false`): é a linha
+   * de consumo/cobrança, e uma falha na persistência é falha de negócio — vira
+   * `console.error` observável e pendência recuperável com reenvio idempotente.
+   *
+   * `essential: false` marca TELEMETRIA (diagnóstico dispensável): a falha sai
+   * como `warn` e NÃO ocupa a fila de recuperação — telemetria perdida não é
+   * dinheiro perdido e não pode disputar a fila com cobrança.
+   */
+  essential?: boolean;
 }
 
 /** Extract token counts from OpenAI-compatible response */
@@ -244,8 +254,165 @@ export async function logAiUsageDetached(entry: AiUsageEntry): Promise<void> {
   await promise;
 }
 
-/** Log AI usage to database (fire-and-forget, non-blocking) */
+// ---------------------------------------------------------------------------
+// IA-TIMEOUT-001 — log essencial: observável e recuperável, sem duplicar
+// ---------------------------------------------------------------------------
+// O defeito: `logAiUsage` ignorava o `{ error }` do supabase-js (um 500 do
+// PostgREST nem é exceção) e o `catch` de fora engolia o resto num `warn` — a
+// linha de consumo PAGO desaparecia em silêncio e ninguém podia reenviá-la.
+//
+// A política agora:
+//  1. Toda linha sai com `id` gerado AQUI (uuid), e toda escrita é
+//     `upsert(on_conflict=id, ignoreDuplicates)` → reenviar a MESMA linha é um
+//     DO NOTHING, nunca uma segunda cobrança (idempotência por identidade).
+//  2. Falha do ESSENCIAL é observável (`console.error`) e a linha fica num
+//     buffer de pendências que `drainPendingUsageLogs` reenvia — chamado no
+//     próprio runtime via `EdgeRuntime.waitUntil` e exportado para dreno por
+//     qualquer chamador posterior (o buffer é da isolate: se ela morrer antes,
+//     o `console.error` é o rastro que permite repor a linha — o `id` estável é
+//     o que torna essa reposição segura).
+//  3. TELEMETRIA (`essential:false`) falhou → `warn` e nada de fila: falha de
+//     telemetria não é falha de negócio.
+
+/** Uma linha essencial que ainda não se confirmou gravada. */
+interface PendenciaDeLog {
+  row: Record<string, unknown>;
+  tentativas: number;
+  ultimoErro: string;
+  enfileiradoEm: string;
+}
+
+/**
+ * Teto do buffer: a memória da isolate não é infinita. Estourando, a pendência
+ * MAIS ANTIGA sai — já com `console.error` no rastro dela — para abrir lugar à
+ * mais recente. 100 linhas de log são ~100 KB: folga de sobra sem risco.
+ */
+const PENDENCIAS_MAX = 100;
+const pendenciasDeLog: PendenciaDeLog[] = [];
+
+/** Quantas linhas essenciais aguardam reenvio (observabilidade e testes). */
+export function pendingUsageLogsCount(): number {
+  return pendenciasDeLog.length;
+}
+
+/**
+ * Reenvia as linhas essenciais pendentes — idempotente por construção.
+ *
+ * Devolve `{ reenviadas, pendentes }`. O chamador típico é o
+ * `EdgeRuntime.waitUntil` agendado ao enfileirar; também pode ser chamado por
+ * qualquer código que queira forçar o dreno (worker, próxima requisição).
+ */
+export async function drainPendingUsageLogs(): Promise<{ reenviadas: number; pendentes: number }> {
+  if (pendenciasDeLog.length === 0) return { reenviadas: 0, pendentes: 0 };
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) {
+    return { reenviadas: 0, pendentes: pendenciasDeLog.length };
+  }
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  let reenviadas = 0;
+  for (let i = pendenciasDeLog.length - 1; i >= 0; i--) {
+    const pendencia = pendenciasDeLog[i];
+    const erro = await gravarLinhaDeUso(supabase, pendencia.row);
+    if (erro === null) {
+      pendenciasDeLog.splice(i, 1);
+      reenviadas += 1;
+    } else {
+      pendencia.tentativas += 1;
+      pendencia.ultimoErro = erro;
+    }
+  }
+  return { reenviadas, pendentes: pendenciasDeLog.length };
+}
+
+/**
+ * A ÚNICA forma de escrita em `ai_usage_logs`: `upsert` com `on_conflict=id` e
+ * `resolution=ignore-duplicates`. Devolve `null` no sucesso ou a mensagem do
+ * erro — trata tanto o `{ error }` que o supabase-js resolve sem lançar (HTTP
+ * 4xx/5xx do PostgREST) quanto a exceção de rede.
+ */
+async function gravarLinhaDeUso(
+  supabase: SupabaseClient,
+  row: Record<string, unknown>,
+): Promise<string | null> {
+  try {
+    const { error } = await supabase
+      .from("ai_usage_logs")
+      .upsert(row, { onConflict: "id", ignoreDuplicates: true });
+    return error ? error.message ?? "insert em ai_usage_logs recusado" : null;
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+}
+
+/** Monta a linha persistível — já com o `id` que a torna reenviável. */
+function montarLinhaDeUso(
+  entry: AiUsageEntry,
+  profileId: string | null,
+): Record<string, unknown> {
+  return {
+    // IA-TIMEOUT-001 — `id` gerado AQUI, não no DEFAULT do banco: é ele que
+    // torna o reenvio idempotente (mesmo id → conflito → DO NOTHING). O
+    // default `gen_random_uuid()` continuaria gerando um id NOVO por tentativa
+    // e cada reenvio duplicaria a linha de cobrança.
+    id: crypto.randomUUID(),
+    user_id: entry.userId || null,
+    profile_id: profileId,
+    function_name: entry.functionName,
+    model: entry.model || null,
+    // IA-053 — TRI-ESTADO dos tokens: número medido (inclusive 0) ou NULL
+    // quando não houve medição. Antes, `|| 0` fazia "não medido" virar zero e
+    // o caminho de streaming entrava nos relatórios com custo zero.
+    input_tokens: entry.usageUnknown === true ? null : (entry.inputTokens ?? 0),
+    output_tokens: entry.usageUnknown === true ? null : (entry.outputTokens ?? 0),
+    duration_ms: entry.durationMs || null,
+    status: entry.status || 'success',
+    error_message: entry.errorMessage || null,
+    // IA-052 — rota efetiva anexada aqui, num lugar só: nenhum chamador
+    // precisa lembrar do formato, e o que o servidor mediu não se perde.
+    metadata: buildUsageMetadata(entry),
+    // IA-051 — correlação ponta a ponta. Passa pelo normalizador para que
+    // nenhum dado pessoal atravesse este caminho, mesmo por engano.
+    request_id: normalizeCorrelationId(entry.requestId),
+    job_id: normalizeCorrelationId(entry.jobId),
+    attempt: normalizeAttempt(entry.attempt),
+  };
+}
+
+/** Falha do essencial: ERRO observável + linha na fila de reenvio idempotente. */
+function registrarFalhaEssencial(
+  entry: AiUsageEntry,
+  row: Record<string, unknown>,
+  motivo: string,
+): void {
+  console.error(
+    `[ai-usage] FALHA do log essencial (${entry.functionName}, id ${row.id}): ${motivo}. ` +
+      `Registro guardado para reenvio idempotente — pendencias: ${pendenciasDeLog.length + 1}.`,
+  );
+  if (pendenciasDeLog.length >= PENDENCIAS_MAX) {
+    const descartada = pendenciasDeLog.shift();
+    console.error(
+      `[ai-usage] buffer de pendencias cheio (${PENDENCIAS_MAX}): a linha mais antiga ` +
+        `(id ${descartada?.row.id}) foi descartada para abrir espaco — repor a partir deste rastro.`,
+    );
+  }
+  pendenciasDeLog.push({
+    row,
+    tentativas: 0,
+    ultimoErro: motivo,
+    enfileiradoEm: new Date().toISOString(),
+  });
+  // Reenvio em segundo plano quando o runtime oferece waitUntil (produção).
+  // Sem ele (Deno local/teste) o dreno é explícito — determinístico.
+  if (typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function") {
+    EdgeRuntime.waitUntil(drainPendingUsageLogs());
+  }
+}
+
+/** Log AI usage to database (nunca lança — log não derruba o fluxo principal) */
 export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
+  const essencial = entry.essential !== false;
+  let row: Record<string, unknown> | null = null;
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -256,31 +423,25 @@ export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
     // Auto-resolve profile_id if not provided
     const profileId = entry.profileId || await resolveProfileId(supabase, entry.userId);
 
-    await supabase.from('ai_usage_logs').insert({
-      user_id: entry.userId || null,
-      profile_id: profileId,
-      function_name: entry.functionName,
-      model: entry.model || null,
-      // IA-053 — TRI-ESTADO dos tokens: número medido (inclusive 0) ou NULL
-      // quando não houve medição. Antes, `|| 0` fazia "não medido" virar zero e
-      // o caminho de streaming entrava nos relatórios com custo zero.
-      input_tokens: entry.usageUnknown === true ? null : (entry.inputTokens ?? 0),
-      output_tokens: entry.usageUnknown === true ? null : (entry.outputTokens ?? 0),
-      duration_ms: entry.durationMs || null,
-      status: entry.status || 'success',
-      error_message: entry.errorMessage || null,
-      // IA-052 — rota efetiva anexada aqui, num lugar só: nenhum chamador
-      // precisa lembrar do formato, e o que o servidor mediu não se perde.
-      metadata: buildUsageMetadata(entry),
-      // IA-051 — correlação ponta a ponta. Passa pelo normalizador para que
-      // nenhum dado pessoal atravesse este caminho, mesmo por engano.
-      request_id: normalizeCorrelationId(entry.requestId),
-      job_id: normalizeCorrelationId(entry.jobId),
-      attempt: normalizeAttempt(entry.attempt),
-    });
+    row = montarLinhaDeUso(entry, profileId);
+    const erro = await gravarLinhaDeUso(supabase, row);
+    if (erro === null) return;
+
+    if (essencial) {
+      registrarFalhaEssencial(entry, row, erro);
+    } else {
+      console.warn(`[ai-usage] telemetria nao persistida (${entry.functionName}): ${erro}`);
+    }
   } catch (e) {
-    // Never throw — logging failures must not break the main flow
-    console.warn(`[ai-usage] Failed to log: ${e instanceof Error ? e.message : String(e)}`);
+    // Exceção de montagem/rede: ainda é observável. Se a linha já estava
+    // montada, reusa o MESMO `id` — um POST que tenha gravado de fato antes da
+    // exceção não vira duplicata no reenvio.
+    const motivo = e instanceof Error ? e.message : String(e);
+    if (essencial) {
+      registrarFalhaEssencial(entry, row ?? montarLinhaDeUso(entry, entry.profileId ?? null), motivo);
+    } else {
+      console.warn(`[ai-usage] telemetria nao persistida (${entry.functionName}): ${motivo}`);
+    }
   }
 }
 

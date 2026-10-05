@@ -30,6 +30,7 @@
 //   supabase/functions/_shared/ai-usage.test.ts
 
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
+import * as aiUsage from "./ai-usage.ts";
 import {
   calcularCusto,
   contaParaQuota,
@@ -994,4 +995,214 @@ Deno.test("IA-055 zero medido ≠ preço ausente, e valor inválido não passa",
   });
   assertEquals(tarifaRuim.custo, null);
   assertEquals(tarifaRuim.motivo, "tarifa_invalida");
+});
+
+// ---------------------------------------------------------------------------
+// (i) IA-TIMEOUT-001 — log essencial: falha observável e recuperável, sem
+//     duplicar a linha de cobrança
+// ---------------------------------------------------------------------------
+// Defeito original: `logAiUsage` ignorava o `{ error }` do supabase-js (um 500
+// do PostgREST não gerava nem exceção) e o `catch` externo engolia o resto num
+// `console.warn` — o registro obrigatório de consumo desaparecia em silêncio,
+// apesar do rótulo "garantido".
+//
+// Critério de aceite: "Falha de log essencial é observável e recuperável sem
+// duplicar cobrança/efeito." Os testes fixam:
+//   (1) insert que falha vira ERRO observável + pendência recuperável, nunca
+//       silêncio;
+//   (2) o reenvio é IDEMPOTENTE (mesmo `id` + `on_conflict=id` +
+//       `resolution=ignore-duplicates`): se a primeira tentativa tiver gravado
+//       de fato, o reenvio vira DO NOTHING — nunca uma segunda linha de
+//       cobrança;
+//   (3) telemetria (`essential:false`) NÃO entra na fila de recuperação —
+//       falha de telemetria não é falha de negócio.
+
+const modDuravel = aiUsage as unknown as {
+  pendingUsageLogsCount?: () => number;
+  drainPendingUsageLogs?: () => Promise<unknown>;
+};
+
+/** Stub de fetch em que o insert em ai_usage_logs responde com `statusFalha`. */
+function stubFetchComStatus(statusLogs: () => number): { capturas: Captura[]; restaurar: () => void } {
+  const capturas: Captura[] = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    let corpo: unknown = null;
+    try {
+      corpo = init?.body ? JSON.parse(String(init.body)) : null;
+    } catch {
+      corpo = init?.body ?? null;
+    }
+    capturas.push({ metodo: init?.method ?? "GET", url, corpo });
+    if (url.includes("/rest/v1/ai_usage_logs")) {
+      const status = statusLogs();
+      const body = status >= 400 ? JSON.stringify({ message: "banco indisponivel" }) : "[]";
+      return Promise.resolve(new Response(body, { status, headers: { "content-type": "application/json" } }));
+    }
+    return Promise.resolve(new Response("[]", { status: 200, headers: { "content-type": "application/json" } }));
+  }) as typeof fetch;
+  return { capturas, restaurar: () => { globalThis.fetch = original; } };
+}
+
+/** Espia console.error/console.warn e devolve restaurador. */
+function espiarConsole(): { erros: string[]; warns: string[]; restaurar: () => void } {
+  const erros: string[] = [];
+  const warns: string[] = [];
+  const errOrig = console.error;
+  const warnOrig = console.warn;
+  console.error = (...args: unknown[]) => { erros.push(args.map(String).join(" ")); };
+  console.warn = (...args: unknown[]) => { warns.push(args.map(String).join(" ")); };
+  return {
+    erros,
+    warns,
+    restaurar: () => { console.error = errOrig; console.warn = warnOrig; },
+  };
+}
+
+const postsDeLog = (capturas: Captura[]) =>
+  capturas.filter((c) => c.metodo === "POST" && c.url.includes("/rest/v1/ai_usage_logs"));
+
+Deno.test("IA-TIMEOUT-001 log essencial: falha do insert é observável e vira pendência recuperável", async () => {
+  assert(
+    typeof modDuravel.pendingUsageLogsCount === "function" &&
+      typeof modDuravel.drainPendingUsageLogs === "function",
+    "sem política durável: não há buffer de pendências nem dreno para o log essencial",
+  );
+
+  const restaurarEnv = stubEnv();
+  const { restaurar } = stubFetchComStatus(() => 500);
+  const console_ = espiarConsole();
+
+  try {
+    // O insert falha no banco: a chamada NÃO pode lançar (log não derruba o
+    // fluxo), mas a falha TEM de ser observável e o registro recuperável.
+    await logAiUsageDetached(ENTRADA);
+
+    assert(
+      console_.erros.length >= 1,
+      "falha do log essencial foi engolida: esperava console.error observável, não silêncio/warn",
+    );
+    assertEquals(
+      modDuravel.pendingUsageLogsCount!(),
+      1,
+      "o registro essencial perdido não virou pendência recuperável",
+    );
+
+    // Banco volta: o dreno reenvia e a pendência zera.
+    const { capturas: capturas2, restaurar: restaurar2 } = stubFetchComStatus(() => 201);
+    try {
+      await modDuravel.drainPendingUsageLogs!();
+      assertEquals(
+        modDuravel.pendingUsageLogsCount!(),
+        0,
+        "o dreno não limpou a pendência depois do reenvio bem-sucedido",
+      );
+      const reenvios = postsDeLog(capturas2);
+      assert(reenvios.length >= 1, "o dreno não reenviou o registro pendente");
+    } finally {
+      restaurar2();
+    }
+  } finally {
+    console_.restaurar();
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 log essencial: reenvio é idempotente — a linha de cobrança nunca duplica", async () => {
+  assert(
+    typeof modDuravel.pendingUsageLogsCount === "function" &&
+      typeof modDuravel.drainPendingUsageLogs === "function",
+    "sem política durável de reenvio",
+  );
+
+  const restaurarEnv = stubEnv();
+  const console_ = espiarConsole();
+
+  // Fase 1: banco fora → a entrada fica pendente (falha ambígua: pode ter
+  // gravado ou não — é exatamente o caso em que reenviar às cegas duplicaria).
+  const fase1 = stubFetchComStatus(() => 500);
+  try {
+    await logAiUsageDetached(ENTRADA);
+    assertEquals(modDuravel.pendingUsageLogsCount!(), 1, "a falha não virou pendência");
+  } finally {
+    fase1.restaurar();
+  }
+
+  // Fase 2: banco de pé → dreno reenvia.
+  const fase2 = stubFetchComStatus(() => 201);
+  try {
+    await modDuravel.drainPendingUsageLogs!();
+    assertEquals(modDuravel.pendingUsageLogsCount!(), 0, "a pendência não foi drenada");
+
+    // Idempotência: TODA escrita em ai_usage_logs carrega um `id` de linha
+    // determinístico e usa `on_conflict=id` (DO NOTHING em conflito).
+    const posts = postsDeLog(fase2.capturas);
+    assert(posts.length >= 1, "o dreno não reenviou o registro");
+    for (const post of posts) {
+      assert(
+        post.url.includes("on_conflict=id"),
+        `reenvio sem proteção de conflito na URL (${post.url}): uma tentativa que gravou de fato duplicaria a cobrança`,
+      );
+      const linha = Array.isArray(post.corpo) ? post.corpo[0] : post.corpo;
+      assert(
+        typeof (linha as Record<string, unknown>)?.id === "string" &&
+          ((linha as Record<string, unknown>).id as string).length > 0,
+        "a linha reenviada não carrega `id` estável: não há como o banco deduplicar",
+      );
+    }
+
+    // O id da primeira tentativa é o MESMO do reenvio: se a primeira gravou,
+    // o reenvio é conflito → DO NOTHING → a cobrança fica em UMA linha.
+    const idPrimeira = ((posts[0].corpo as Record<string, unknown>[])[0] ??
+      posts[0].corpo) as Record<string, unknown>;
+    const idsPrimeira = postsDeLog(fase1.capturas).map((p) => {
+      const l = (Array.isArray(p.corpo) ? p.corpo[0] : p.corpo) as Record<string, unknown>;
+      return l?.id;
+    });
+    assert(
+      idsPrimeira.length >= 1 && idsPrimeira.every((id) => id === idPrimeira.id),
+      "o reenvio gerou id novo: a mesma execução viraria duas linhas de cobrança",
+    );
+
+    // Segundo dreno: nada pendente → NENHUM POST novo (reenvio não é cego).
+    const antes = postsDeLog(fase2.capturas).length;
+    await modDuravel.drainPendingUsageLogs!();
+    assertEquals(
+      postsDeLog(fase2.capturas).length,
+      antes,
+      "o dreno reenviou de novo sem pendência: reenvio duplicaria a linha",
+    );
+  } finally {
+    fase2.restaurar();
+    console_.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 log essencial: telemetria NÃO vira pendência nem erro — falha de telemetria não é de negócio", async () => {
+  const restaurarEnv = stubEnv();
+  const { restaurar } = stubFetchComStatus(() => 500);
+  const console_ = espiarConsole();
+
+  try {
+    await logAiUsageDetached({ ...ENTRADA, essential: false } as Parameters<typeof logAiUsageDetached>[0]);
+
+    assertEquals(
+      modDuravel.pendingUsageLogsCount?.() ?? 0,
+      0,
+      "falha de TELEMETRIA virou pendência de recuperação: telemetria não pode ocupar a fila do essencial",
+    );
+    assertEquals(
+      console_.erros.length,
+      0,
+      "falha de telemetria foi tratada como falha de negócio (console.error)",
+    );
+    assert(console_.warns.length >= 1, "a telemetria falhou sem nem um warn — apagou a observabilidade dela");
+  } finally {
+    console_.restaurar();
+    restaurar();
+    restaurarEnv();
+  }
 });

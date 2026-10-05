@@ -14,7 +14,8 @@
 // `_`/dígito, ordena diferente — o mesmo payload geraria hash diferente em
 // ambientes diferentes. Aqui se prova que a ordem é de code-unit e NÃO de locale.
 
-import { deriveAiIdempotencyKey } from "./ai-generate.ts";
+import { deriveAiIdempotencyKey, generateWithRouting } from "./ai-generate.ts";
+import { assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -181,4 +182,126 @@ Deno.test("canonicalize: primitivos e null voltam iguais (passam intactos)", () 
     payloadCanonico(null, null, CMP_CODE_UNIT) === '{"maxTokens":null,"messages":null}',
     "null foi transformado",
   );
+});
+
+// ---------------------------------------------------------------------------
+// IA-TIMEOUT-001 — o prazo tem de cobrir o CONSUMO DO CORPO, não só os headers
+// ---------------------------------------------------------------------------
+// Cenário do aceite: "Mock com headers imediatos e corpo que não termina é
+// abortado no orçamento." O fetch do provedor resolve na hora (headers 200) e o
+// corpo nunca entrega um byte: antes da correção, `response.json()` era chamado
+// FORA de qualquer prazo (o AbortController era desarmado no `finally` do fetch)
+// e `generateWithRouting` pendurava para sempre.
+//
+// O teste sobe o roteador inteiro com `fetch` espião — provedor do banco, chamada
+// e log de uso — sem rede real e sem credencial.
+
+const PROVEDOR_TRAVADO_URL = "https://provedor-travado.test/v1/chat";
+
+const PROVEDOR_TRAVADO_ROW = {
+  id: "9f4c1e2a-1b3d-4c5e-8a7b-0d1e2f3a4b5c",
+  name: "Provedor Travado",
+  provider_type: "openai_compatible",
+  api_endpoint: PROVEDOR_TRAVADO_URL,
+  api_key_secret_name: "TEST_PROVIDER_KEY",
+  model: "modelo-travado",
+  system_prompt: null,
+  config: {},
+  is_active: true,
+  is_default: true,
+  use_for: ["tagging"],
+};
+
+function stubEnvPrazo(): () => void {
+  const anteriores = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "TEST_PROVIDER_KEY"].map((k) => [
+    k,
+    Deno.env.get(k),
+  ] as const);
+  Deno.env.set("SUPABASE_URL", "https://projeto-teste.supabase.co");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "service-role-key-de-teste");
+  Deno.env.set("TEST_PROVIDER_KEY", "segredo-do-provedor-de-teste");
+  return () => {
+    for (const [k, v] of anteriores) {
+      if (v === undefined) Deno.env.delete(k);
+      else Deno.env.set(k, v);
+    }
+  };
+}
+
+Deno.test("IA-TIMEOUT-001 generateWithRouting: headers imediatos + corpo infinito aborta dentro do orçamento", async () => {
+  const restaurarEnv = stubEnvPrazo();
+  const alvo: { ctrl?: ReadableStreamDefaultController<Uint8Array> } = {};
+  const original = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (url.includes("/rest/v1/ai_providers")) {
+      return Promise.resolve(
+        new Response(JSON.stringify([PROVEDOR_TRAVADO_ROW]), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    }
+    if (url === PROVEDOR_TRAVADO_URL) {
+      // Headers 200 na hora; corpo que NUNCA entrega um byte nem encerra.
+      return Promise.resolve(
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(c) {
+              alvo.ctrl = c;
+            },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      );
+    }
+    if (url.includes("/rest/v1/ai_usage_logs")) {
+      return Promise.resolve(new Response("[]", { status: 201, headers: { "content-type": "application/json" } }));
+    }
+    return Promise.resolve(new Response("{}", { status: 404, headers: { "content-type": "application/json" } }));
+  }) as typeof fetch;
+
+  const TIMEOUT_MS = 300;
+  try {
+    const chamada = generateWithRouting({
+      purpose: "tagging",
+      functionName: "ai-teste-corpo-travado",
+      userId: null,
+      messages: [{ role: "user", content: "oi" }],
+      timeoutMs: TIMEOUT_MS,
+      // Reserva desligada (budgetTokens <= 0): o teste isola o prazo do
+      // provedor, sem depender da RPC de orçamento.
+      budgetTokens: 0,
+    });
+
+    const inicio = Date.now();
+    const resultado = await Promise.race([
+      chamada,
+      new Promise<"EXCEDEU">((resolve) => setTimeout(() => resolve("EXCEDEU"), 4 * TIMEOUT_MS)),
+    ]);
+
+    assert(
+      resultado !== "EXCEDEU",
+      `o corpo travado pendurou além do orçamento (${Date.now() - inicio}ms com prazo de ${TIMEOUT_MS}ms)`,
+    );
+    assertEquals(resultado.ok, false, "corpo travado tinha de falhar, não resolver");
+    assertEquals(
+      resultado.errorCode,
+      "TIMEOUT",
+      "o estouro no consumo do corpo tem de sair como TIMEOUT, não como erro genérico",
+    );
+    assertEquals(
+      resultado.response.status,
+      504,
+      "o desfecho de prazo esgotado é 504, como no timeout do fetch",
+    );
+  } finally {
+    globalThis.fetch = original;
+    restaurarEnv();
+    try {
+      alvo.ctrl?.error(new Error("fim do teste"));
+    } catch {
+      // já cancelado pelo código sob teste
+    }
+  }
 });

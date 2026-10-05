@@ -18,6 +18,13 @@
  * AbortError/TypeError de fetch) com backoff exponencial de **jitter completo**
  * e um teto global de tentativas (`MAX_TOTAL_ATTEMPTS`) além do `maxRetries` por
  * chamada. Queda de rede não vira tempestade de requisições nem reenvio cego.
+ *
+ * IA-TIMEOUT-001: o prazo é um DEADLINE ÚNICO e absoluto (`deadlineAtMs`), não
+ * um teto por fase. `withinDeadline`/`readJsonWithinDeadline` fazem o consumo
+ * do corpo/stream/parsing correr sob o MESMO limite do fetch — antes, o timer
+ * era desarmado quando os headers chegavam e um corpo travado pendurava para
+ * sempre. O estouro levanta `AiDeadlineExceededError` (`name: "TimeoutError"`),
+ * classificável pelo roteador como o timeout do fetch (504/TIMEOUT).
  */
 
 import { filterConfigBody, filterExtraBody, filterHeaders } from "./ai-routing.ts";
@@ -176,6 +183,131 @@ export type AiFailureClass = 'transient' | 'permanent' | 'state_unknown';
 /** Teto GLOBAL de tentativas por chamada (1 tentativa + retries). Constante do módulo. */
 export const MAX_TOTAL_ATTEMPTS = 4;
 
+/**
+ * Estouro do deadline ÚNICO da chamada (IA-TIMEOUT-001).
+ *
+ * `name: "TimeoutError"` de propósito: é o nome que `isAbortOrTimeoutError` do
+ * roteador (`_shared/ai-generate.ts`) já classifica como estouro de prazo, então
+ * um corpo travado sai como TIMEOUT/504 — e não como `state_unknown` retentável
+ * nem como erro de rede genérico.
+ */
+export class AiDeadlineExceededError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TimeoutError";
+  }
+}
+
+/**
+ * Lê o corpo inteiro de `response` sob o deadline absoluto compartilhado.
+ *
+ * A leitura é feita com um READER PRÓPRIO (`body.getReader()`), não com
+ * `response.text()`/`json()`: no estouro, `reader.cancel()` cancela o stream de
+ * fato — enquanto `body.cancel()` falharia em silêncio num corpo já travado
+ * pelo consumo interno do `text()`/`json()` (corpo locked não se cancela por
+ * fora). Estourado, rejeita com `AiDeadlineExceededError`.
+ */
+async function lerCorpoComDeadline(
+  response: Response,
+  deadlineAt: number,
+  rotulo: string,
+): Promise<Uint8Array> {
+  const body = response.body;
+  if (body === null) return new Uint8Array(0);
+  const reader = body.getReader();
+  const leitura = (async () => {
+    const partes: Uint8Array[] = [];
+    let total = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value && value.byteLength > 0) {
+        partes.push(value);
+        total += value.byteLength;
+      }
+    }
+    const bytes = new Uint8Array(total);
+    let pos = 0;
+    for (const parte of partes) {
+      bytes.set(parte, pos);
+      pos += parte.byteLength;
+    }
+    return bytes;
+  })();
+  return withinDeadline(
+    leitura,
+    deadlineAt,
+    () => {
+      void reader.cancel().catch(() => {});
+    },
+    rotulo,
+  );
+}
+
+/**
+ * Corre `work` contra um deadline ABSOLUTO compartilhado (`deadlineAt`, epoch ms).
+ *
+ * Estourando, `onTimeout` é chamado (o chamador cancela o corpo do fetch) e a
+ * promessa rejeita com `AiDeadlineExceededError`. A promessa perdedora fica com
+ * um `.catch` registrado: quando o prazo vence a corrida, a rejeição tardia dela
+ * não vira unhandled rejection.
+ */
+async function withinDeadline<T>(
+  work: Promise<T>,
+  deadlineAt: number,
+  onTimeout: () => void,
+  rotulo: string,
+): Promise<T> {
+  // O `.catch` é registrado ANTES de qualquer estouro: quando o prazo vence a
+  // corrida (ou já venceu), a rejeição tardia do trabalho não vira unhandled.
+  work.catch(() => {});
+  const restante = deadlineAt - Date.now();
+  if (!(restante > 0)) {
+    onTimeout();
+    throw new AiDeadlineExceededError(`${rotulo}: prazo da chamada ja estava esgotado`);
+  }
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => {
+          onTimeout();
+          reject(new AiDeadlineExceededError(`${rotulo}: prazo da chamada esgotado`));
+        }, Math.ceil(restante));
+      }),
+    ]);
+  } finally {
+    if (timer !== null) clearTimeout(timer);
+  }
+}
+
+/**
+ * `response.json()` sob o MESMO deadline do resto da chamada (IA-TIMEOUT-001).
+ *
+ * É o ponto do achado: o AbortController do provedor desarma quando os HEADERS
+ * chegam; um corpo que nunca termina pendurava o parse para sempre. Aqui o
+ * relógio é o mesmo do fetch — estourou, o corpo é CANCELADO (o stream não fica
+ * aberto pendurado na isolate) e o erro sai como `TimeoutError`.
+ */
+export function readJsonWithinDeadline(
+  response: Response,
+  deadlineAt: number,
+): Promise<Record<string, unknown>> {
+  if (response.body === null) {
+    // Sem stream não há o que travar nem o que cancelar.
+    return withinDeadline(
+      response.json() as Promise<Record<string, unknown>>,
+      deadlineAt,
+      () => {},
+      "leitura do corpo da resposta",
+    );
+  }
+  return lerCorpoComDeadline(response, deadlineAt, "leitura do corpo da resposta").then(
+    (bytes) => JSON.parse(new TextDecoder().decode(bytes)) as Record<string, unknown>,
+  );
+}
+
 /** Status HTTP que valem retentativa mesmo fora da faixa 5xx. */
 const TRANSIENT_STATUSES: readonly number[] = [408, 429];
 
@@ -253,6 +385,14 @@ export interface WithRetryOptions {
    * Sem `budgetMs`, o comportamento é exatamente o de antes.
    */
   budgetMs?: number;
+  /**
+   * DEADLINE ABSOLUTO compartilhado (epoch ms — IA-TIMEOUT-001). Quando
+   * presente, substitui a âncora de `budgetMs`: o consumo do corpo das
+   * respostas transitórias também corre sob este limite, e não só a espera
+   * entre tentativas. É o mesmo relógio que o chamador usa para o parse do
+   * corpo — um deadline único para o trabalho todo.
+   */
+  deadlineAtMs?: number;
 }
 
 export async function withRetry(
@@ -266,10 +406,16 @@ export async function withRetry(
   const totalAttempts = retries + 1;
   const budgetMs = options?.budgetMs;
   const startedAt = Date.now();
+  // IA-TIMEOUT-001: um deadline absoluto único. `deadlineAtMs` vence a âncora
+  // relativa de `budgetMs` quando vem do chamador — é o mesmo relógio que limita
+  // o parse do corpo depois do fetch.
+  const limite = typeof options?.deadlineAtMs === 'number' && Number.isFinite(options.deadlineAtMs)
+    ? options.deadlineAtMs
+    : typeof budgetMs === 'number' && Number.isFinite(budgetMs) && budgetMs > 0
+      ? startedAt + budgetMs
+      : null;
   const semOrcamentoPara = (delayMs: number): boolean =>
-    typeof budgetMs === 'number' && Number.isFinite(budgetMs) && budgetMs > 0
-      ? Date.now() - startedAt + delayMs >= budgetMs
-      : false;
+    limite !== null ? Date.now() + delayMs >= limite : false;
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < totalAttempts; attempt++) {
@@ -292,8 +438,17 @@ export async function withRetry(
     if (classifyFailure(response.status) !== 'transient') return response;
     if (attempt === totalAttempts - 1) return response;
 
-    // Consume body to prevent resource leak before retrying
-    try { await response.text(); } catch { /* ignore */ }
+    // Consume body to prevent resource leak before retrying — sob o MESMO
+    // deadline do resto da chamada: um corpo que não termina não pode estourar
+    // o prazo por fora (IA-TIMEOUT-001). Estourado, o corpo é cancelado e o
+    // orçamento esgotado devolve a resposta como chegou.
+    try {
+      if (limite !== null) {
+        await lerCorpoComDeadline(response, limite, "consumo do corpo da resposta transitoria");
+      } else {
+        await response.text();
+      }
+    } catch { /* ignore */ }
     const delay = backoffDelayMs(baseDelayMs, attempt);
     if (semOrcamentoPara(delay)) return response;
     await sleep(delay);

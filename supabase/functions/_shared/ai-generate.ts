@@ -83,9 +83,11 @@ import {
   type AiModality,
 } from "./ai-capabilities.ts";
 import {
+  AiDeadlineExceededError,
   callCustomWebhook,
   callLovableAI,
   callOpenAICompatible,
+  readJsonWithinDeadline,
   withRetry,
 } from "./ai-providers.ts";
 import { extractTokenUsage, logAiUsage } from "./ai-usage.ts";
@@ -462,6 +464,28 @@ interface DispatchArgs {
   extraBody: Record<string, unknown> | null;
   temperature: number | null;
   timeoutMs: number;
+  /**
+   * DEADLINE ÚNICO e absoluto da chamada (epoch ms — IA-TIMEOUT-001): cobre
+   * reserva, TODAS as tentativas de fetch e o consumo do corpo/parsing — não é
+   * um teto renovado por fase.
+   */
+  deadlineAt: number;
+}
+
+/**
+ * Prazo efetivo da PRÓXIMA tentativa: o que sobra do deadline único (nunca o
+ * teto inteiro de novo). Esgotado, lança `AiDeadlineExceededError` dentro do
+ * thunk — `withRetry` classifica como `state_unknown` e para na hora, e o
+ * roteador devolve TIMEOUT/504 em vez de gastar uma tentativa num prazo morto.
+ */
+function attemptTimeoutMs(args: DispatchArgs): number {
+  const restante = args.deadlineAt - Date.now();
+  if (!(restante > 0)) {
+    throw new AiDeadlineExceededError(
+      `Prazo total da chamada de IA (${args.timeoutMs}ms) esgotado antes da tentativa.`,
+    );
+  }
+  return Math.min(args.timeoutMs, Math.ceil(restante));
 }
 
 /**
@@ -486,7 +510,7 @@ function buildDispatch(args: DispatchArgs): () => Promise<Response> {
           model: args.model ?? undefined,
           tools,
           toolChoice,
-          options: { timeoutMs: args.timeoutMs },
+          options: { timeoutMs: attemptTimeoutMs(args) },
         });
     }
     case "openai_compatible":
@@ -514,7 +538,7 @@ function buildDispatch(args: DispatchArgs): () => Promise<Response> {
           tools,
           toolChoice,
           config,
-          options: { timeoutMs: args.timeoutMs },
+          options: { timeoutMs: attemptTimeoutMs(args) },
         });
     }
     case "custom_webhook": {
@@ -536,7 +560,7 @@ function buildDispatch(args: DispatchArgs): () => Promise<Response> {
       // IA-041: o webhook recebe o MESMO prazo por capacidade dos demais ramos
       // (interface congelada `options?: { timeoutMs?: number }`), fechando o teto
       // que antes não existia neste ramo.
-      return () => callCustomWebhook({ endpoint, apiKey, messages: args.messages, config, options: { timeoutMs: args.timeoutMs } });
+      return () => callCustomWebhook({ endpoint, apiKey, messages: args.messages, config, options: { timeoutMs: attemptTimeoutMs(args) } });
     }
     case "custom_agent":
       // Tipo sem caminho de chamada neste módulo: falha explícita, nunca um chute.
@@ -800,6 +824,11 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
   }
 
   // --- (5)(6)(7) mensagens compostas + dispatch por tipo ----------------------
+  // IA-TIMEOUT-001 — DEADLINE ÚNICO: um só relógio cobre a reserva de orçamento,
+  // TODAS as tentativas de fetch E o consumo do corpo/parsing. Antes, o
+  // AbortController era desarmado assim que os headers chegavam e o
+  // `response.json()` corria sem prazo nenhum.
+  const providerDeadlineAt = Date.now() + timeoutMs;
   let callFn: () => Promise<Response>;
   try {
     callFn = buildDispatch({
@@ -812,6 +841,7 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
       extraBody,
       temperature,
       timeoutMs,
+      deadlineAt: providerDeadlineAt,
     });
   } catch (err) {
     if (err instanceof ProviderConfigError) {
@@ -882,7 +912,13 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
   try {
     // IA-041: `budgetMs` é o prazo TOTAL da capacidade, somando todas as tentativas —
     // sem ele, um estouro de 60s (visão) poderia virar 3 estouros em fila.
-    response = await withRetry(callFn, RETRY_MAX, RETRY_BASE_DELAY_MS, { budgetMs: timeoutMs });
+    // IA-TIMEOUT-001: `deadlineAtMs` ancora esse orçamento no MESMO relógio
+    // absoluto que limita o parse do corpo — e o consumo do corpo das respostas
+    // transitórias também corre dentro dele.
+    response = await withRetry(callFn, RETRY_MAX, RETRY_BASE_DELAY_MS, {
+      budgetMs: timeoutMs,
+      deadlineAtMs: providerDeadlineAt,
+    });
   } catch (err) {
     // Exceção/aborto (rede, timeout): desfecho auditado, sem lançar para o chamador.
     const message = errorText(err);
@@ -932,10 +968,39 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
   }
 
   // (9) resposta não-JSON → data null (o consumidor decide o fallback dele, como hoje).
+  // IA-TIMEOUT-001: o parse do corpo corre sob o MESMO deadline do fetch —
+  // headers rápidos com corpo travado estouram o prazo como TIMEOUT (e o corpo
+  // é cancelado), não penduram a execução.
   let data: Record<string, unknown> | null = null;
   try {
-    data = (await response.json()) as Record<string, unknown>;
-  } catch {
+    data = await readJsonWithinDeadline(response, providerDeadlineAt);
+  } catch (err) {
+    if (isAbortOrTimeoutError(err)) {
+      const message = errorText(err);
+      await logUsage({
+        model,
+        status: "error",
+        errorMessage: `Timeout apos ${timeoutMs}ms ao consumir a resposta do provedor: ${message}`,
+        providerId,
+        providerName,
+        modelSubstituted,
+      });
+      // IA-044: o estouro matou a execução antes do uso medido → reserva volta.
+      if (reserva.id) await releaseBudget(reserva.id, "timeout");
+      return finish(
+        false,
+        failureResponse(
+          504,
+          AI_TIMEOUT_ERROR_CODE,
+          `Tempo esgotado ao consumir a resposta do provedor (prazo total ${timeoutMs}ms): ${message}`,
+        ),
+        null,
+        providerId,
+        providerName,
+        model,
+        AI_TIMEOUT_ERROR_CODE,
+      );
+    }
     data = null;
   }
 
