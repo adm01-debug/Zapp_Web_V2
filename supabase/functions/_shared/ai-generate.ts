@@ -90,6 +90,7 @@ import {
 } from "./ai-providers.ts";
 import { extractTokenUsage, logAiUsage } from "./ai-usage.ts";
 import { releaseBudget, reserveBudget, settleBudget } from "./ai-budget.ts";
+import { validateAiProviderSecretName } from "./ai-provider-egress.ts";
 
 /**
  * Teto de tempo padrão do TEXTO PURO (mesmo valor do gateway antigo — IA-032).
@@ -445,9 +446,17 @@ function requireSecret(secretName: string | null, label: string): string {
   if (!secretName) {
     throw new ProviderConfigError(`api_key_secret_name nao configurado para o provedor ${label}.`);
   }
-  const value = Deno.env.get(secretName);
+  // IA-EGRESS-001: o nome vem do banco (configurável). Só passa nome que esteja
+  // na ALLOWLIST explícita de credenciais de provedor — `SUPABASE_SERVICE_ROLE_KEY`
+  // e qualquer outro secret (de infraestrutura ou não enumerado) não podem virar
+  // credencial de provedor e sair pelo endpoint.
+  const secretValidation = validateAiProviderSecretName(secretName);
+  if (!secretValidation.ok) {
+    throw new ProviderConfigError(`Nome de secret inválido para o provedor ${label}: ${secretValidation.reason}.`);
+  }
+  const value = Deno.env.get(secretValidation.value);
   if (!value) {
-    throw new ProviderConfigError(`Segredo ${secretName} nao encontrado nos secrets (Deno.env) para o provedor ${label}.`);
+    throw new ProviderConfigError(`Segredo ${secretValidation.value} nao encontrado nos secrets (Deno.env) para o provedor ${label}.`);
   }
   return value;
 }
@@ -523,7 +532,17 @@ function buildDispatch(args: DispatchArgs): () => Promise<Response> {
       }
       const endpoint = provider.api_endpoint;
       const secretName = provider.api_key_secret_name;
-      const apiKey = secretName ? Deno.env.get(secretName) ?? undefined : undefined;
+      // IA-EGRESS-001: o webhook também recebe a chave por cabeçalho. O NOME vem do
+      // banco (configurável) e só passa se estiver na allowlist de credenciais de
+      // provedor — sem isso, um nome de secret de infraestrutura sairia daqui.
+      let apiKey: string | undefined;
+      if (secretName) {
+        const secretValidation = validateAiProviderSecretName(secretName);
+        if (!secretValidation.ok) {
+          throw new ProviderConfigError(`Nome de secret inválido para o provedor ${label}: ${secretValidation.reason}.`);
+        }
+        apiKey = Deno.env.get(secretValidation.value) ?? undefined;
+      }
       const raw = asPlainObject(provider.config);
       const config: Record<string, unknown> = {
         ...filterExtraBody(raw),
