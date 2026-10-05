@@ -164,7 +164,7 @@ export function useTalkXTemplates() {
   const fetchVersionHistory = async (templateId: string) => {
     const { data } = await supabase
       .from('talkx_template_versions')
-      .select('id,version_number,name,description,content,category,status,media_url,media_type,tags,custom_variables,created_at')
+      .select('id,template_id,version_number,name,description,content,category,status,media_url,media_type,tags,custom_variables,created_at')
       .eq('template_id', templateId)
       .order('version_number', { ascending: false })
       .limit(10);
