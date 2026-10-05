@@ -9,7 +9,7 @@
  *
  *   - abaixo de min_sample => 0 incidente/0 notificação;
  *   - duas avaliações anômalas da mesma chave/janela => 1 incidente, 1 rodada de
- *     notificação (notification_count=1 e uma linha por admin/supervisor);
+ *     notificação (notification_count=1 e uma linha por usuário admin);
  *   - reconhecer e piorar => reabre e totaliza 2 rodadas; reconhecer sem piora
  *     NÃO reabre;
  *   - os três sinais (cost|errors|concurrency) e os três escopos
@@ -106,6 +106,7 @@ const IS_BUN =
 /* ---- identidades sintéticas do teste (prefixo ia058t) --------------------- */
 const U1 = '00000000-0000-4000-8000-000000580001'; // usuário com dept
 const U2 = '00000000-0000-4000-8000-000000580002'; // usuário sem dept
+const U_ADMIN_DUAL = '00000000-0000-4000-8000-000000580003'; // admin + supervisor
 const DEPT = '00000000-0000-4000-8000-000000580020';
 const MODELO = 'ia058t-modelo';
 const FN_CUSTO = 'ia058t-fn-custo';
@@ -182,10 +183,6 @@ suiteDb('IA-058 — runtime no banco local', () => {
   let ADMINS = 0;
 
   beforeAll(() => {
-    ADMINS = Number(
-      q(`select count(*) from public.user_roles where role in ('admin','supervisor')`),
-    );
-    expect(ADMINS).toBeGreaterThan(0);
     // Limpeza namespace ia058t (ordem respeita FKs)
     q(`
       delete from public.notifications where type = 'ai_anomaly_alert';
@@ -194,9 +191,9 @@ suiteDb('IA-058 — runtime no banco local', () => {
       delete from public.ai_usage_logs where function_name like 'ia058t-%' or user_id in ('${U1}','${U2}');
       delete from public.edge_rate_limits where key like '%ia058t%';
       delete from public.ai_model_prices where model like 'ia058t-%';
-      delete from public.profiles where user_id in ('${U1}','${U2}');
+      delete from public.profiles where user_id in ('${U1}','${U2}','${U_ADMIN_DUAL}');
       delete from public.departments where id = '${DEPT}';
-      delete from auth.users where id in ('${U1}','${U2}');
+      delete from auth.users where id in ('${U1}','${U2}','${U_ADMIN_DUAL}');
       -- cada caso liga só a combinação que prova (configs são persistidas:
       -- sem isto, o ajuste de um teste contamina a avaliação do seguinte)
       update public.ai_anomaly_configs set enabled = false;
@@ -204,7 +201,11 @@ suiteDb('IA-058 — runtime no banco local', () => {
     q(`
       insert into auth.users (id, email) values
         ('${U1}', 'ia058t-u1@local.test'),
-        ('${U2}', 'ia058t-u2@local.test');
+        ('${U2}', 'ia058t-u2@local.test'),
+        ('${U_ADMIN_DUAL}', 'ia058t-admin-dual@local.test');
+      insert into public.user_roles (user_id, role) values
+        ('${U_ADMIN_DUAL}', 'admin'),
+        ('${U_ADMIN_DUAL}', 'supervisor');
       insert into public.departments (id, name, is_active, whatsapp_mode)
         values ('${DEPT}', 'ia058t-depto', true, 'none');
       -- o trigger de auth.users já cria o profile; só penduramos o depto
@@ -213,6 +214,13 @@ suiteDb('IA-058 — runtime no banco local', () => {
       insert into public.ai_model_prices (model, unit, unit_price, valid_from)
         values ('${MODELO}', 'token', 0.01, '2026-01-01');
     `);
+    expect(
+      q(`select count(*) from public.user_roles where user_id='${U_ADMIN_DUAL}'`),
+    ).toBe('2');
+    ADMINS = Number(
+      q(`select count(distinct user_id) from public.user_roles where role = 'admin'`),
+    );
+    expect(ADMINS).toBeGreaterThan(0);
   }, 120_000); // cada psql passa por docker exec: sob carga, o padrão de 5 s do hook estoura
 
   itDb('estrutura aplicada: tabelas, índice de dedup e funções existem', () => {
@@ -306,6 +314,12 @@ suiteDb('IA-058 — runtime no banco local', () => {
     expect(inc2.detections).toBe('2');
     expect(inc2.notification_count).toBe('1');
     expect(notifCount(inc1.id)).toBe(ADMINS); // 1 rodada, uma linha por admin
+    expect(
+      q(`select count(*) from public.notifications
+          where type='ai_anomaly_alert'
+            and metadata->>'incident_id'='${inc1.id}'
+            and user_id='${U_ADMIN_DUAL}'`),
+    ).toBe('1'); // mesmo com dois papéis, o usuário recebe uma única linha
     expect(q(`select count(*) from public.ai_anomaly_incidents where target_id='${FN_CUSTO}'`)).toBe('1');
   });
 
@@ -553,7 +567,7 @@ const itBun = DB_OK && IS_BUN
   : it.skip;
 
 itBun(
-  'enforceAiGuards recusa function_a bloqueada (503 + incidente) e permite function_b',
+  'enforceAiGuards recusa function_a bloqueada (403 + incidente) e permite function_b',
   async () => {
     const inc = incident(FN_CUSTO)!;
     q(`insert into public.ai_capability_blocks (function_name, incident_id, reason, blocked_by)
