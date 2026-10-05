@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -58,10 +58,26 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
   const chunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const mountedRef = useRef(true);
+  const openRef = useRef(false);
+
+  const releaseCapture = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder) {
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      if (recorder.state !== 'inactive') recorder.stop();
+      mediaRecorderRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+  }, []);
 
   const cleanup = useCallback(() => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+    releaseCapture();
     if (transformedUrl) URL.revokeObjectURL(transformedUrl);
     setRecordedBlob(null);
     setTransformedUrl(null);
@@ -70,21 +86,42 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
     setIsTransforming(false);
     setIsSending(false);
     chunksRef.current = [];
-  }, [transformedUrl]);
+  }, [transformedUrl, releaseCapture]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      releaseCapture();
+    };
+  }, [releaseCapture]);
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
 
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // getUserMedia é assíncrono: o popover pode ter fechado (ou o componente
+      // desmontado) enquanto a permissão estava pendente. Nesse caso o stream
+      // concedido é devolvido imediatamente e a captura não inicia.
+      if (!mountedRef.current || !openRef.current) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
       streamRef.current = stream;
       const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       chunksRef.current = [];
 
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
+        if (mediaRecorderRef.current !== recorder) return;
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         setRecordedBlob(blob);
         stream.getTracks().forEach(t => t.stop());
         streamRef.current = null;
+        mediaRecorderRef.current = null;
       };
 
       recorder.start();
@@ -185,7 +222,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
 
   return (
     <Tooltip>
-      <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v) cleanup(); }}>
+      <Popover open={open} onOpenChange={(v) => { openRef.current = v; setOpen(v); if (!v) cleanup(); }}>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0" disabled={disabled} aria-label="Voice Changer">
