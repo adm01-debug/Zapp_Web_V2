@@ -95,6 +95,12 @@ describe('JourneyTab', () => {
     expect(mockUseContactStats).toHaveBeenCalledWith('c1');
   });
 
+  it('não rotula a faixa de estatísticas como histórico completo (SV-002/S24)', () => {
+    renderTab();
+    expect(screen.queryByText('Desde o início do relacionamento')).not.toBeInTheDocument();
+    expect(screen.getByText('Independe do período abaixo')).toBeInTheDocument();
+  });
+
   it('trocar o período não refaz a busca das estatísticas (faixa é do contato inteiro)', () => {
     renderTab();
     fireEvent.click(screen.getByText('Últimos 30 dias'));
