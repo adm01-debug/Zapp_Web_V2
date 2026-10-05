@@ -135,8 +135,14 @@ test('superfícies do Email herdam os mesmos tokens do sistema em claro e escuro
 
     const contrastViolations = await page.evaluate(async () => {
       const axe = (window as unknown as Window & {
-        axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> };
+        axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult>; _running?: boolean };
       }).axe;
+      // O app roda @axe-core/react em DEV a cada commit do React sobre a MESMA instância global
+      // `window.axe` que esta spec injeta. Como o laço de tema acima provoca commits, disparar a
+      // nossa auditoria enquanto a dele roda falhava de forma intermitente no Firefox com
+      // "Axe is already running". Esperar a instância ficar ociosa no MESMO frame síncrono que
+      // dispara o nosso run torna o estado final determinístico, sem tocar em nenhuma asserção.
+      while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
       const result = await axe.run('.email-workspace', { rules: { 'color-contrast': { enabled: true } } });
       return result.violations.filter(violation => violation.id === 'color-contrast').map(violation => ({
         id: violation.id,
@@ -216,9 +222,13 @@ test('painel CRM completo preserva ações, acessibilidade e fechamento em 320 p
   await expect(drawer.getByRole('link', { name: /abrir site da empresa/i })).toHaveAttribute('href', 'https://empresa.example.test/catalogo?origem=email#sobre');
   await expect(drawer.getByRole('link', { name: /abrir linkedin da empresa/i })).toBeVisible();
   await expect(drawer.getByRole('link', { name: /abrir instagram da empresa/i })).toBeVisible();
+  // A gaveta entra deslizando por animação CSS (Sheet data-[state=open]:slide-in-from-right,
+  // 500 ms). Medir o botão antes do fim/freeze da animação lia uma posição intermediária
+  // (x + largura > 320) e derrubava o teste de forma intermitente. Congelar as transições ANTES
+  // da medição fixa a posição final da gaveta; o congelamento segue valendo para a aferição do axe.
+  await freezeVisualTransitions(page);
   const close = await drawer.getByRole('button', { name: 'Fechar detalhes' }).boundingBox();
   expect(close && close.x >= 0 && close.x + close.width <= 320).toBeTruthy();
-  await freezeVisualTransitions(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => (await (window as unknown as Window & { axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> } }).axe.run('[role="dialog"]', {})).violations.map(violation => violation.id));
   expect(violations).toEqual([]);
