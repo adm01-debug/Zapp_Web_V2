@@ -171,14 +171,21 @@ export class RealtimeService {
       
     const messageContacts = await this.fetchContactsByIds(missingContactIds);
 
+    // A amostra só é considerada truncada quando o banco devolveu o teto de
+    // RECENT_MESSAGES_LIMIT linhas: aí pode existir histórico fora da janela global.
+    // Com menos linhas que o teto, a amostra é o histórico inteiro e o agregado nem
+    // é consultado — inclusive para contato que nunca teve mensagem (R2-INB-005).
+    const sampleTruncated = rawMessages.length >= RECENT_MESSAGES_LIMIT;
+
     // Contatos sem NENHUMA mensagem na amostra global: pergunta o agregado por
     // contato (última mensagem + não lidas) em vez de assumir que o histórico
-    // deles está vazio (R2-INB-005). Quando a amostra não é truncada, todo contato
-    // com histórico aparece nela e esta consulta nem sai.
+    // deles está vazio (R2-INB-005).
     const contactIdsWithSampleMessages = new Set(getUniqueMessageContactIds(normalizedMessages));
-    const contactIdsMissingSample = seededContactRows
-      .map((contact) => contact.id)
-      .filter((id) => !contactIdsWithSampleMessages.has(id));
+    const contactIdsMissingSample = sampleTruncated
+      ? seededContactRows
+          .map((contact) => contact.id)
+          .filter((id) => !contactIdsWithSampleMessages.has(id))
+      : [];
     const summaries = await this.fetchContactSummaries(contactIdsMissingSample);
 
     return buildConversations([...seededContactRows, ...messageContacts], normalizedMessages, summaries);

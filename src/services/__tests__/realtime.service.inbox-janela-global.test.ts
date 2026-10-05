@@ -180,6 +180,28 @@ describe('RealtimeService.fetchInitialConversations — janela global (R2-INB-00
     expect(a?.lastMessage?.content).toBe('A 0');
   });
 
+  it('amostra NÃO truncada (menos de 1000 mensagens): não consulta o agregado nenhuma vez', async () => {
+    // Só há histórico fora da janela quando a janela enche. Com 3 mensagens a
+    // amostra é o histórico inteiro: nem o contato B (sem mensagem na amostra)
+    // justifica a RPC, porque nada ficou de fora dela.
+    montarCenario({ mensagens: AS_1000_DE_A.slice(0, 3) });
+
+    const conversas = await RealtimeService.fetchInitialConversations();
+
+    expect(limitePedidoEmMessages).toEqual([LIMITE_GLOBAL]);
+    expect(rpc, 'amostra curta não pode disparar a RPC do agregado').not.toHaveBeenCalled();
+    expect(conversaDe(conversas, CONTATO_A.id)?.lastMessage?.content).toBe('A 0');
+    expect(conversaDe(conversas, CONTATO_B.id)?.lastMessage).toBeNull();
+  });
+
+  it('fronteira: 999 mensagens (abaixo do teto) também não consultam o agregado', async () => {
+    montarCenario({ mensagens: AS_1000_DE_A.slice(0, 999) });
+
+    await RealtimeService.fetchInitialConversations();
+
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it('não infla a inbox: contato sem nenhuma mensagem segue vazio', async () => {
     montarCenario({ resumos: [] });
 
