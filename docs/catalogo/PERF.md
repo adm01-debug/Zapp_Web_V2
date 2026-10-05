@@ -486,10 +486,11 @@ list_products | limit=24 | offset=0 | 81,5 KB
 bootstrap     | limit=null | offset=null | 186,1 KB
 ```
 
-Leitura: o alvo de **< 30 KB por página de 24 NÃO é atingido** — a página de 24 produtos traz
-**81,5 KB** (2,7× o teto). O `bootstrap` (que não é o alvo deste item) traz 186,1 KB. O aceite
-do CT-73 é a **medição**, que está feita; o corte de campos fica como o próximo passo, com o
-número agora conhecido.
+Leitura: a **medição histórica está concluída**, mas a **meta de desempenho não foi cumprida** — o
+alvo de **< 30 KB por página de 24 NÃO é atingido**: a página de 24 produtos traz **81,5 KB**
+(2,7× o teto). O `bootstrap` (que não é o alvo deste item) traz 186,1 KB. O número medido fica
+preservado como baseline; o corte de campos é o próximo passo e, **após reduzir o payload, é
+necessária nova medição real** antes de declarar o CT-73 atendido.
 
 ## CT-74 — correção aplicada (2026-10-02): o strip de KPIs reserva o espaço
 
