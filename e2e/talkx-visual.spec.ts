@@ -1,12 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
-import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  FixtureVaziaError,
   mockTalkXVisual,
-  hasDemoRows,
   fixtureDaTela,
   fixturesComDados,
   fixturesVazias,
+  loadDemoData,
 } from './fixtures/talkx-demo';
 
 declare global {
@@ -37,11 +38,14 @@ type Tela = {
   n: string;
   nome: string;
   existe: boolean;
+  conteudoVisivel?: string;
   abrir?: (page: Page) => Promise<void>;
 };
 
 async function abrirTalkX(page: Page) {
   await page.goto('/?view=talkx');
+  // O teto de 15 s cobre apenas o primeiro carregamento do Vite frio. O timeout
+  // padrão de 5 s oscilava antes de o React 19 montar o shell em workers paralelos.
   await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible({ timeout: 15000 });
 }
 
@@ -51,11 +55,11 @@ async function abrirTalkX(page: Page) {
 // exatamente o comportamento aceite da etapa.
 const TAB_URL: Record<string, string> = {
   'Visão geral': '/?view=talkx&tab=overview',
-  'Segmentos': '/?view=talkx&tab=segments',
-  'Templates': '/?view=talkx&tab=templates',
+  Segmentos: '/?view=talkx&tab=segments',
+  Templates: '/?view=talkx&tab=templates',
   'Lista de supressão': '/?view=talkx&tab=suppression',
-  'Analytics': '/?view=talkx&tab=analytics',
-  'Configurações': '/?view=talkx&tab=analytics&sub=configuracoes',
+  Analytics: '/?view=talkx&tab=analytics',
+  Configurações: '/?view=talkx&tab=analytics&sub=configuracoes',
 };
 
 async function abrirTab(page: Page, tab: string) {
@@ -84,23 +88,123 @@ async function capturar(page: Page, caminho: string) {
 }
 
 const TELAS: Tela[] = [
-  { n: '01', nome: 'Campanhas — Visão geral', existe: true, abrir: (p) => abrirTalkX(p) },
-  { n: '02', nome: 'Segmentos — biblioteca e detalhes', existe: true, abrir: (p) => abrirTab(p, 'Segmentos') },
-  { n: '03', nome: 'Segmentos — criar/editar', existe: true, abrir: async (p) => { await abrirTab(p, 'Segmentos'); await p.getByRole('button', { name: 'Novo segmento' }).click(); } },
-  { n: '04', nome: 'Templates — biblioteca', existe: true, abrir: (p) => abrirTab(p, 'Templates') },
-  { n: '05', nome: 'Templates — criar/editar', existe: true, abrir: async (p) => { await abrirTab(p, 'Templates'); await p.getByRole('button', { name: 'Novo Template' }).click(); } },
-  { n: '06', nome: 'Lista de supressão', existe: true, abrir: (p) => abrirTab(p, 'Lista de supressão') },
-  { n: '07', nome: 'Analytics', existe: true, abrir: (p) => abrirTab(p, 'Analytics') },
-  { n: '08', nome: 'Nova campanha', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=1'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({ timeout: 15000 }); } },
-  { n: '09', nome: 'Revisão final e confirmação', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=4'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({ timeout: 15000 }); } },
-  { n: '10', nome: 'Campanha agendada', existe: true, abrir: (p) => abrirCampanha(p, 'Black Friday - VIP') },
-  { n: '11', nome: 'Monitor ao vivo', existe: true, abrir: (p) => abrirCampanha(p, 'Dia do Cliente') },
-  { n: '12', nome: 'Campanha em andamento', existe: true, abrir: (p) => abrirCampanha(p, 'Lançamento Linha Office') },
+  {
+    n: '01',
+    nome: 'Campanhas — Visão geral',
+    existe: true,
+    conteudoVisivel: 'Lançamento Linha Office',
+    abrir: (p) => abrirTalkX(p),
+  },
+  {
+    n: '02',
+    nome: 'Segmentos — biblioteca e detalhes',
+    existe: true,
+    conteudoVisivel: 'Leads Quentes',
+    abrir: (p) => abrirTab(p, 'Segmentos'),
+  },
+  {
+    n: '03',
+    nome: 'Segmentos — criar/editar',
+    existe: true,
+    conteudoVisivel: 'Regras do segmento',
+    abrir: async (p) => {
+      await abrirTab(p, 'Segmentos');
+      await p.getByRole('button', { name: 'Novo segmento' }).click();
+    },
+  },
+  {
+    n: '04',
+    nome: 'Templates — biblioteca',
+    existe: true,
+    conteudoVisivel: 'Boas-vindas VIP',
+    abrir: (p) => abrirTab(p, 'Templates'),
+  },
+  {
+    n: '05',
+    nome: 'Templates — criar/editar',
+    existe: true,
+    conteudoVisivel: 'Novo template',
+    abrir: async (p) => {
+      await abrirTab(p, 'Templates');
+      await p.getByRole('button', { name: 'Novo Template' }).click();
+    },
+  },
+  {
+    n: '06',
+    nome: 'Lista de supressão',
+    existe: true,
+    conteudoVisivel: 'Ana Souza',
+    abrir: (p) => abrirTab(p, 'Lista de supressão'),
+  },
+  {
+    n: '07',
+    nome: 'Analytics',
+    existe: true,
+    conteudoVisivel: 'Dia do Cliente',
+    abrir: (p) => abrirTab(p, 'Analytics'),
+  },
+  {
+    n: '08',
+    nome: 'Nova campanha',
+    existe: true,
+    conteudoVisivel: 'Nova campanha',
+    abrir: async (p) => {
+      await p.goto('/?view=talkx&wizard=new&step=1');
+      await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({
+        timeout: 15000,
+      });
+    },
+  },
+  {
+    n: '09',
+    nome: 'Revisão final e confirmação',
+    existe: true,
+    conteudoVisivel: 'Revisão Final',
+    abrir: async (p) => {
+      await p.goto('/?view=talkx&wizard=new&step=4');
+      await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({
+        timeout: 15000,
+      });
+    },
+  },
+  {
+    n: '10',
+    nome: 'Campanha agendada',
+    existe: true,
+    conteudoVisivel: 'Black Friday - VIP',
+    abrir: (p) => abrirCampanha(p, 'Black Friday - VIP'),
+  },
+  {
+    n: '11',
+    nome: 'Monitor ao vivo',
+    existe: true,
+    conteudoVisivel: 'Dia do Cliente',
+    abrir: (p) => abrirCampanha(p, 'Dia do Cliente'),
+  },
+  {
+    n: '12',
+    nome: 'Campanha em andamento',
+    existe: true,
+    conteudoVisivel: 'Campanha em Andamento',
+    abrir: (p) => abrirCampanha(p, 'Lançamento Linha Office'),
+  },
   { n: '13', nome: 'Campanha pausada e retomada', existe: false },
   { n: '14', nome: 'Relatório da campanha concluída', existe: false },
   { n: '15', nome: 'Importação e vinculação CRM360', existe: false },
-  { n: '16', nome: 'Ajuda Talk X', existe: true, abrir: (p) => abrirAjuda(p) },
-  { n: '17', nome: 'Estados do sistema e modais', existe: true, abrir: (p) => abrirTab(p, 'Configurações') },
+  {
+    n: '16',
+    nome: 'Ajuda Talk X',
+    existe: true,
+    conteudoVisivel: 'Ajuda — Campanhas (Talk X)',
+    abrir: (p) => abrirAjuda(p),
+  },
+  {
+    n: '17',
+    nome: 'Estados do sistema e modais',
+    existe: true,
+    conteudoVisivel: 'Configurações Talk X',
+    abrir: (p) => abrirTab(p, 'Configurações'),
+  },
 ];
 
 // Watchdog de boot (index.html): o default de produção continua 8s; aqui o spec
@@ -127,15 +231,14 @@ for (const tela of TELAS) {
     // Toda tela possui dados sintéticos. O guard anti-vazio (loadDemoData)
     // impede regressão para `{}` ou coleções sem registros.
     const fixture = fixtureDaTela(tela.n);
-    if (!fixture) {
-      // Sem fixture, a tela sai da régua: apaga captura de execução anterior
-      // para o lado-a-lado não mostrar foto velha como se ainda fosse capturada.
-      rmSync(join(OUT, `captura-${tela.n}.png`), { force: true });
-    }
     expect(fixture, `fixture com dados da tela ${tela.n}`).toBeDefined();
 
     await mockTalkXVisual(page, fixture!);
     await tela.abrir!(page);
+    await expect(
+      page.getByText(tela.conteudoVisivel!, { exact: false }).first(),
+      `conteúdo característico visível antes da captura da tela ${tela.n}`
+    ).toBeVisible({ timeout: 15000 });
     const arquivo = join(OUT, `captura-${tela.n}.png`);
     await capturar(page, arquivo);
 
@@ -158,7 +261,7 @@ test('celular — lista de supressão cheia', async ({ page }) => {
   await expect(page.getByText('Ana Souza')).toBeVisible();
   await capturar(page, join(OUT, 'captura-06-mobile.png'));
   const semOverflowDaPagina = await page.evaluate(
-    () => document.documentElement.scrollWidth <= window.innerWidth,
+    () => document.documentElement.scrollWidth <= window.innerWidth
   );
   expect(semOverflowDaPagina).toBe(true);
 });
@@ -166,19 +269,57 @@ test('celular — lista de supressão cheia', async ({ page }) => {
 // Contrato de dados oficializado em X003: `{}` e arrays sem registros são
 // erro, nunca uma tela renderizada vazia em silêncio.
 test.describe('contrato de dados das fixtures (X003)', () => {
-  test('rejeita objeto vazio e coleção sem registros', () => {
-    expect(hasDemoRows({})).toBe(false);
-    expect(hasDemoRows({ talkx_campaigns: [] })).toBe(false);
-    expect(hasDemoRows({ talkx_campaigns: [{ id: 'sintetico' }] })).toBe(true);
+  test('loadDemoData e mockTalkXVisual rejeitam fixtures vazias', async ({ page }) => {
+    const fixtureDir = mkdtempSync(join(process.env.TMPDIR ?? OUT, 'talkx-fixture-vazia-'));
+    try {
+      writeFileSync(join(fixtureDir, 'objeto-vazio.json'), '{}');
+      writeFileSync(join(fixtureDir, 'colecoes-vazias.json'), '{"talkx_campaigns":[]}');
+
+      expect(() => loadDemoData('objeto-vazio', fixtureDir)).toThrow(FixtureVaziaError);
+      expect(() => loadDemoData('colecoes-vazias', fixtureDir)).toThrow(FixtureVaziaError);
+      await expect(mockTalkXVisual(page, 'objeto-vazio', fixtureDir)).rejects.toThrow(
+        FixtureVaziaError
+      );
+      await expect(mockTalkXVisual(page, 'colecoes-vazias', fixtureDir)).rejects.toThrow(
+        FixtureVaziaError
+      );
+    } finally {
+      rmSync(fixtureDir, { recursive: true, force: true });
+    }
   });
 
   test('a régua tem fixture real para as 17 telas', () => {
     expect(fixturesVazias()).toEqual([]);
     expect(fixturesComDados()).toHaveLength(17);
     for (const tela of TELAS) {
-      expect(fixtureDaTela(tela.n), `fixture da tela ${tela.n}`).toMatch(
-        new RegExp(`^${tela.n}-`),
-      );
+      expect(fixtureDaTela(tela.n), `fixture da tela ${tela.n}`).toMatch(new RegExp(`^${tela.n}-`));
     }
+  });
+
+  test('fixtures de campanha mantêm relações na campanha aberta', () => {
+    const casos = [
+      { slug: '11-monitor-ao-vivo', campaignId: 'camp-002' },
+      { slug: '13-campanha-pausada-retomada', campaignId: 'camp-010' },
+      { slug: '14-relatorio-campanha-concluida', campaignId: 'camp-002' },
+    ];
+    const tabelasRelacionadas = [
+      'talkx_recipients',
+      'talkx_campaign_events',
+      'talkx_campaign_metrics',
+      'talkx_link_clicks',
+    ];
+
+    for (const { slug, campaignId } of casos) {
+      const data = loadDemoData(slug);
+      expect(data.talkx_campaigns).toContainEqual(expect.objectContaining({ id: campaignId }));
+      for (const tabela of tabelasRelacionadas) {
+        for (const row of data[tabela] ?? []) {
+          expect(row).toEqual(expect.objectContaining({ campaign_id: campaignId }));
+        }
+      }
+    }
+
+    const pausada = loadDemoData('13-campanha-pausada-retomada');
+    expect(pausada.talkx_segments).toContainEqual(expect.objectContaining({ id: 'seg-office' }));
   });
 });

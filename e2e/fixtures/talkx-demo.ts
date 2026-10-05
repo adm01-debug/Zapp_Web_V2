@@ -45,9 +45,9 @@ export class FixtureVaziaError extends Error {
   constructor(tela: string) {
     super(
       `fixture sem dados para a tela "${tela}": nenhuma coleção possui registros. ` +
-      'O contrato exige dados sintéticos visíveis em cada tela — ' +
-      `popule e2e/fixtures/talkx-demo/${tela}.json antes de referenciá-la. ` +
-        'A régua só cobre telas com fixture real (docs/talkx/v4/etapas/F00-regua-e-governanca.md).',
+        'O contrato exige dados sintéticos visíveis em cada tela — ' +
+        `popule e2e/fixtures/talkx-demo/${tela}.json antes de referenciá-la. ` +
+        'A régua só cobre telas com fixture real (docs/talkx/v4/etapas/F00-regua-e-governanca.md).'
     );
     this.name = 'FixtureVaziaError';
   }
@@ -58,18 +58,18 @@ export function hasDemoRows(data: TalkXDemoData): boolean {
   return Object.values(data).some((rows) => Array.isArray(rows) && rows.length > 0);
 }
 
-export function loadDemoData(tela: string): TalkXDemoData {
-  if (!cache.has(tela)) {
-    const file = join(demoDir, `${tela}.json`);
+export function loadDemoData(tela: string, fixtureDir = demoDir): TalkXDemoData {
+  const file = join(fixtureDir, `${tela}.json`);
+  if (!cache.has(file)) {
     const data = JSON.parse(readFileSync(file, 'utf8')) as TalkXDemoData;
     // Guard anti-vazio (X003): uma chave com `[]` também não produz estado
     // cheio. Exigimos ao menos uma coleção com registros sintéticos visíveis.
     if (!hasDemoRows(data)) {
       throw new FixtureVaziaError(tela);
     }
-    cache.set(tela, data);
+    cache.set(file, data);
   }
-  return cache.get(tela)!;
+  return cache.get(file)!;
 }
 
 function fixtures(): { slug: string; dados: boolean }[] {
@@ -119,17 +119,33 @@ function emptyJson(route: Route) {
 
 const isRead = (m: string) => m === 'GET' || m === 'HEAD';
 
-export async function mockTalkXBackend(page: Page, tela: string) {
-  const data = loadDemoData(tela);
+export async function mockTalkXBackend(page: Page, tela: string, fixtureDir = demoDir) {
+  const data = loadDemoData(tela, fixtureDir);
 
   // Tabelas talkx_*: GET devolve a fixture; escrita é bloqueada.
   await page.route(/\/rest\/v1\/talkx_[a-z_]+/, (route) => {
     if (!isRead(route.request().method())) return writeBlocked(route);
-    const table = route.request().url().match(/\/rest\/v1\/(talkx_[a-z_]+)/)?.[1];
+    const request = route.request();
+    const url = new URL(request.url());
+    const table = url.pathname.match(/\/rest\/v1\/(talkx_[a-z_]+)/)?.[1];
+    let rows = data[table ?? ''] ?? [];
+    for (const field of ['id', 'campaign_id']) {
+      const filter = url.searchParams.get(field);
+      if (filter?.startsWith('eq.')) {
+        const expected = filter.slice('eq.'.length);
+        rows = rows.filter(
+          (row) => typeof row === 'object' && row !== null && Reflect.get(row, field) === expected
+        );
+      }
+    }
+    // O PostgREST devolve objeto para `.single()` e array para listagens. Sem
+    // esta distinção o monitor recebe `[campanha]` como se fosse `campanha`,
+    // renderiza título vazio e zera métricas apesar de a fixture estar cheia.
+    const wantsSingle = request.headers().accept?.includes('application/vnd.pgrst.object+json');
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(data[table ?? ''] ?? []),
+      body: JSON.stringify(wantsSingle ? (rows[0] ?? null) : rows),
     });
   });
 
@@ -140,10 +156,10 @@ export async function mockTalkXBackend(page: Page, tela: string) {
   // Criadores (get_team_profiles) e contatos (insights) respondem vazios para o
   // demo não ler produção. RPCs são POST no Supabase; contatos é GET/HEAD.
   await page.route(/\/rest\/v1\/rpc\/get_team_profiles/, (route) =>
-    route.request().method() === 'POST' ? emptyJson(route) : writeBlocked(route),
+    route.request().method() === 'POST' ? emptyJson(route) : writeBlocked(route)
   );
   await page.route(/\/rest\/v1\/contacts/, (route) =>
-    isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route),
+    isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route)
   );
 }
 
@@ -215,7 +231,7 @@ export async function installFakeSession(page: Page) {
       session: FAKE_SESSION,
       themeKey: 'theme',
       onboardingKey: 'onboarding_completed',
-    },
+    }
   );
 }
 
@@ -266,13 +282,13 @@ export async function mockTalkXAuth(page: Page) {
  * (notificações, contadores, etc.) respondem vazias — o spec visual nunca toca
  * o banco de produção.
  */
-export async function mockTalkXVisual(page: Page, tela: string) {
+export async function mockTalkXVisual(page: Page, tela: string, fixtureDir = demoDir) {
   await installFakeSession(page);
   await mockTalkXAuth(page);
-  await mockTalkXBackend(page, tela);
+  await mockTalkXBackend(page, tela, fixtureDir);
 
   // Catch-all para as leituras do app shell não interceptadas acima.
   await page.route(/\/rest\/v1\/(?!talkx_|rpc|profiles|user_roles|contacts)[a-z_]+/, (route) =>
-    isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route),
+    isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route)
   );
 }

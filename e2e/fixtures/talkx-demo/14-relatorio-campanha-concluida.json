@@ -42,7 +42,7 @@
   "talkx_recipients": [
     {
       "id": "rec-001",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-002",
       "contact_id": "contact-001",
       "status": "replied",
       "sent_at": "2026-10-01T09:01:00.000Z",
@@ -63,7 +63,7 @@
     },
     {
       "id": "rec-002",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-002",
       "contact_id": "contact-002",
       "status": "read",
       "sent_at": "2026-10-01T09:02:00.000Z",
@@ -84,7 +84,7 @@
     },
     {
       "id": "rec-003",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-002",
       "contact_id": "contact-003",
       "status": "delivered",
       "sent_at": "2026-10-01T09:03:00.000Z",
@@ -105,7 +105,7 @@
     },
     {
       "id": "rec-004",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-002",
       "contact_id": "contact-004",
       "status": "sent",
       "sent_at": "2026-10-01T09:04:00.000Z",
@@ -126,7 +126,7 @@
     },
     {
       "id": "rec-005",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-002",
       "contact_id": "contact-005",
       "status": "failed",
       "sent_at": "2026-10-01T09:05:00.000Z",
@@ -149,8 +149,8 @@
   "talkx_campaign_metrics": [
     {
       "id": "metric-001",
-      "campaign_id": "camp-001",
-      "campaign_name": "Lançamento Linha Office",
+      "campaign_id": "camp-002",
+      "campaign_name": "Dia do Cliente",
       "sent_count": 1364,
       "delivered_count": 1310,
       "read_count": 1042,
@@ -162,19 +162,19 @@
   "talkx_link_clicks": [
     {
       "id": "click-001",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-002",
       "recipient_id": "rec-001",
       "clicked_at": "2026-10-01T09:21:00.000Z"
     },
     {
       "id": "click-002",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-002",
       "recipient_id": "rec-002",
       "clicked_at": "2026-10-01T09:22:00.000Z"
     },
     {
       "id": "click-003",
-      "campaign_id": "camp-001",
+      "campaign_id": "camp-002",
       "recipient_id": "rec-003",
       "clicked_at": "2026-10-01T09:23:00.000Z"
     }
