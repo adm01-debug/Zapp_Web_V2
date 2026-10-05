@@ -11,6 +11,15 @@ export{
   createWebhookValidator 
 } from './hmac-validation.ts';
 
+// Política de rede (R2-AUTH-022 / 27.2): converte Request + endpoint canônico
+// na decisão da RPC public.resolve_network_policy e produz negação HTTP
+// consistente (403 negado / 503 indecidível). Integrada aqui no fluxo requireAuth.
+import {
+  resolveNetworkPolicy,
+  networkPolicyDenialResponse,
+  type NetworkPolicyRpcClient,
+} from './request-policy.ts';
+
 // ─── Structured Logger ─────────────────────────────────────────
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -337,27 +346,91 @@ export function requireEnv(name: string): string {
   return value;
 }
 
-export async function requireAuth(req: Request): Promise<{ userId: string } | Response> {
+/** Resultado de `auth.getUser()` (estrutural — não acopla a uma versão do supabase-js). */
+export type AuthUserResult = {
+  data: { user: { id: string } | null } | null;
+  error: unknown;
+};
+
+/**
+ * Dependências injetáveis de `requireAuth` (para teste offline). Em produção
+ * ficam ausentes e `requireAuth` usa o caminho real (esm.sh + env + service_role).
+ */
+export interface RequireAuthOptions {
+  /** Valida o bearer e devolve o usuário (ou erro). Injectable p/ testar sem esm.sh/Deno.env. */
+  getUser?: (authHeader: string) => PromiseLike<AuthUserResult>;
+  /** Client service_role p/ a política de rede (R2-AUTH-022). Injectable p/ teste. */
+  policyRpc?: NetworkPolicyRpcClient;
+  /** Fallback de rate limit quando a RPC não tem regra p/ o endpoint (máximos atuais). */
+  defaultMaxRequests?: number;
+  defaultWindowSeconds?: number;
+}
+
+/**
+ * Endpoint canônico derivado de forma estável da URL da Edge Function
+ * (R2-AUTH-022 / 27.3). A rota do gateway Supabase é `/functions/v1/<nome>`
+ * (ou `/functions/v1/<nome>/...`); o identificador canônico é o NOME da função,
+ * nunca algo derivado de body controlado pelo cliente. Domínio sem a barra
+ * `functions/v1`: o primeiro segmento do path é o nome. Path sem segmento
+ * devolve string vazia — `resolveNetworkPolicy` a trata como endpoint inválido
+ * e falha fechado (503).
+ */
+export function canonicalEndpointFromUrl(req: Request): string {
+  const url = new URL(req.url);
+  const segments = url.pathname.split("/").filter(Boolean);
+  let idx = 0;
+  if (segments[0] === "functions" && segments[1] === "v1") idx = 2;
+  return segments[idx] ?? "";
+}
+
+export async function requireAuth(
+  req: Request,
+  opts: RequireAuthOptions = {},
+): Promise<{ userId: string } | Response> {
   const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
   if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
     return errorResponse("Missing Authorization bearer token", 401, req);
   }
+
+  // 1. Autenticação (401 para token ausente/inválido) — antes de qualquer efeito.
+  let userId: string;
   try {
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.87.1");
-    const supabaseUrl = requireEnv("SUPABASE_URL");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
-    const client = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
-    const { data, error } = await client.auth.getUser();
-    if (error || !data?.user) {
+    const result: AuthUserResult = opts.getUser
+      ? await opts.getUser(authHeader)
+      : await (async (): Promise<AuthUserResult> => {
+          const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.87.1");
+          const supabaseUrl = requireEnv("SUPABASE_URL");
+          const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
+          const client = createClient(supabaseUrl, anonKey, {
+            global: { headers: { Authorization: authHeader } },
+            auth: { persistSession: false },
+          });
+          const { data, error } = await client.auth.getUser();
+          return { data: data as AuthUserResult["data"], error };
+        })();
+    if (result.error || !result.data?.user) {
       return errorResponse("Invalid or expired token", 401, req);
     }
-    return { userId: data.user.id };
+    userId = result.data.user.id;
   } catch (_err) {
     return errorResponse("Authentication failed", 401, req);
   }
+
+  // 2. Política de rede (R2-AUTH-022 / 27.3): JWT válido não basta quando a
+  //    política nega — 403 para bloqueio, 503 para decisão indisponível. A
+  //    consulta acontece aqui, uma única vez por requisição, ANTES de qualquer
+  //    efeito privilegiado do handler; consumidores de requireAuth herdam a
+  //    trava sem edição individual.
+  const endpoint = canonicalEndpointFromUrl(req);
+  const decision = await resolveNetworkPolicy(req, endpoint, {
+    rpc: opts.policyRpc ?? (await getServiceClient()),
+    defaultMaxRequests: opts.defaultMaxRequests ?? 30,
+    defaultWindowSeconds: opts.defaultWindowSeconds ?? 60,
+  });
+  if (!decision.allowed) {
+    return networkPolicyDenialResponse(decision, req);
+  }
+  return { userId };
 }
 
 export async function createAuthedClient(req: Request) {
