@@ -8,6 +8,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930290000_talk_me_queue_claim.sql"
 hardening_migration="$repo_root/supabase/migrations/20260930310000_harden_talk_me_authorization_and_groups.sql"
 pending_migration="$repo_root/supabase/migrations/20261005213751_talk_me_list_pending_messages.sql"
+pending_origins_migration="$repo_root/supabase/migrations/20261005231504_talk_me_pending_history_origins.sql"
 postgres_image="${TALK_ME_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-talk-me-test-$$"
 tmp_dir="$(mktemp -d)"
@@ -47,6 +48,7 @@ docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
 [[ -f "$hardening_migration" ]] || fail "migration nao encontrada: $hardening_migration"
 [[ -f "$pending_migration" ]] || fail "migration nao encontrada: $pending_migration"
+[[ -f "$pending_origins_migration" ]] || fail "migration nao encontrada: $pending_origins_migration"
 
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
 ready_checks=0
@@ -129,10 +131,26 @@ CREATE TABLE public.messages (
   message_type text NOT NULL DEFAULT 'text',
   media_url text,
   caption text,
+  external_id text,
   is_deleted boolean,
   created_at timestamptz NOT NULL
 );
 CREATE INDEX idx_messages_contact_created ON public.messages(contact_id, created_at DESC);
+CREATE TABLE public.talkx_recipients (
+  id uuid PRIMARY KEY,
+  contact_id uuid NOT NULL REFERENCES public.contacts(id),
+  external_id text,
+  personalized_message text,
+  sent_at timestamptz
+);
+CREATE TABLE public.contact_notes (
+  id uuid PRIMARY KEY,
+  contact_id uuid NOT NULL REFERENCES public.contacts(id),
+  author_id uuid NOT NULL REFERENCES public.profiles(id),
+  content text NOT NULL,
+  created_at timestamptz NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 CREATE TABLE public.audit_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid,
@@ -156,6 +174,7 @@ psql_file "$tmp_dir/pre.sql"
 psql_file "$migration"
 psql_file "$hardening_migration"
 psql_file "$pending_migration"
+psql_file "$pending_origins_migration"
 
 cat > "$tmp_dir/fixtures.sql" <<'SQL'
 INSERT INTO public.profiles(id,user_id) VALUES
@@ -199,7 +218,7 @@ INSERT INTO public.whatsapp_groups(group_id,name)
 VALUES ('120363000002-222@g.us','Grupo sem categoria no contato');
 
 INSERT INTO public.messages(id,contact_id,sender,content,created_at) VALUES
- ('d1000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001','agent','Como posso ajudar?','2026-09-01 08:00Z'),
+ ('d1000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001','agent','Campanha de reativação enviada','2026-09-01 08:00Z'),
  ('d1000000-0000-0000-0000-000000000002','c1000000-0000-0000-0000-000000000001','contact','Primeira sem resposta','2026-09-01 09:00Z'),
  ('d1000000-0000-0000-0000-000000000003','c1000000-0000-0000-0000-000000000001','contact','Segunda sem resposta','2026-09-01 09:05Z'),
  ('d1000000-0000-0000-0000-000000000004','c1000000-0000-0000-0000-000000000003','contact','Pergunta','2026-09-01 07:00Z'),
@@ -220,6 +239,11 @@ INSERT INTO public.messages(id,contact_id,sender,content,created_at) VALUES
  ('d1000000-0000-0000-0000-000000000019','c1000000-0000-0000-0000-000000000016','contact','Grupo legado','2026-09-01 11:10Z'),
  ('d1000000-0000-0000-0000-000000000020','c1000000-0000-0000-0000-000000000001','contact','Apagada depois','2026-09-01 09:10Z');
 UPDATE public.messages SET is_deleted=true WHERE id='d1000000-0000-0000-0000-000000000020';
+UPDATE public.messages SET external_id='campaign-provider-1' WHERE id='d1000000-0000-0000-0000-000000000001';
+INSERT INTO public.talkx_recipients(id,contact_id,external_id,personalized_message,sent_at) VALUES
+ ('f1000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001','campaign-provider-1','Campanha de reativação enviada','2026-09-01 08:00Z');
+INSERT INTO public.contact_notes(id,contact_id,author_id,content,created_at) VALUES
+ ('e1000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001','a1000000-0000-0000-0000-000000000001','Nota interna durante a espera','2026-09-01 09:03Z');
 SQL
 psql_file "$tmp_dir/fixtures.sql"
 
@@ -265,43 +289,47 @@ expect_value 'A13 grupos por tipo legado, categoria, telefone e registro relacio
   "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1','Grupo',50,NULL,NULL)"
 
 # Historico pendente antes do aceite (TM-01): a leitura e autorizada pelo mesmo
-# contrato da fila, devolve somente o bloco do cliente sem resposta e nao tem
-# efeito colateral (nao aceita nem marca lida). Roda antes do aceite de contact1.
-expect_value 'F1 membro da fila le o historico pendente em ordem cronologica' 'Primeira sem resposta,Segunda sem resposta' \
-  "SET app.user_id='$agent1'; SELECT string_agg(content,',' ORDER BY created_at) FROM public.talk_me_list_pending_messages('$contact1')"
-expect_value 'F2 mensagem apagada nao entra no historico pendente' '2' \
-  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
+# contrato da fila, inclui o contexto de saida e as notas internas sem ampliar o
+# bloco de mensagens do cliente ainda sem resposta, e nao tem efeito colateral.
+expect_value 'F1 membro da fila le e classifica campanha, cliente e nota interna em ordem cronologica' 'agent|Campanha de reativação enviada,contact|Primeira sem resposta,system|Nota interna durante a espera,contact|Segunda sem resposta' \
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT string_agg(sender||'|'||content,',' ORDER BY created_at,message_id) FROM public.talk_me_list_pending_messages('$contact1')"
+expect_value 'F1b a saida retornada e uma campanha real vinculada pelo external_id' '1' \
+  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1') h JOIN public.messages m ON m.id=h.message_id JOIN public.talkx_recipients r ON r.contact_id='$contact1' AND r.external_id=m.external_id WHERE h.sender='agent'"
+expect_value 'F1c a origem sistema vem da nota interna real do contato' '1' \
+  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1') h JOIN public.contact_notes n ON n.id=h.message_id WHERE h.sender='system' AND n.contact_id='$contact1'"
+expect_value 'F2 mensagem apagada nao entra e origens validas compoem o historico' '4' \
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
 expect_value 'F3 limite devolve as mais recentes primeiro' 'Segunda sem resposta' \
-  "SET app.user_id='$agent1'; SELECT content FROM public.talk_me_list_pending_messages('$contact1',1)"
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT content FROM public.talk_me_list_pending_messages('$contact1',1)"
 expect_value 'F4 leitura do historico nao assume o atendimento' 'true|0' \
   "SET app.user_id='$agent1'; SELECT count(*) > 0 FROM public.talk_me_list_pending_messages('$contact1'); SELECT (assigned_to IS NULL)::text||'|'||(SELECT count(*) FROM public.audit_logs WHERE entity_id='$contact1') FROM public.contacts WHERE id='$contact1'"
 expect_value 'F5 funcao do historico e somente leitura (STABLE)' 's' \
   "SELECT provolatile FROM pg_proc WHERE oid='public.talk_me_list_pending_messages(uuid,integer)'::regprocedure"
 expect_value 'F6 agente de outra fila nao le o historico' '0' \
-  "SET app.user_id='$outsider'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
-expect_value 'F7 administrador le o historico sem ser membro da fila' '2' \
-  "SET app.user_id='$admin'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
+  "SET ROLE authenticated; SET app.user_id='$outsider'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
+expect_value 'F7 administrador le o historico sem ser membro da fila' '4' \
+  "SET ROLE authenticated; SET app.user_id='$admin'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
 expect_value 'F8 anonimo nao recebe historico' '0' \
   "RESET app.user_id; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
 expect_error 'F9 role anon nao possui EXECUTE na RPC de historico' 'permission denied' \
   "SET ROLE anon; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
 expect_value 'F10 contato ja atribuido nao expõe historico' '0' \
-  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('c1000000-0000-0000-0000-000000000004')"
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('c1000000-0000-0000-0000-000000000004')"
 expect_value 'F11 conversa ja respondida nao tem bloco pendente' '0' \
-  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('c1000000-0000-0000-0000-000000000003')"
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('c1000000-0000-0000-0000-000000000003')"
 expect_value 'F12 contato de fila que o agente nao opera nao expõe historico' '0' \
-  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('c1000000-0000-0000-0000-000000000007')"
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('c1000000-0000-0000-0000-000000000007')"
 expect_value 'F12b administrador le historico de qualquer fila ativa' '1' \
-  "SET app.user_id='$admin'; SELECT count(*) FROM public.talk_me_list_pending_messages('c1000000-0000-0000-0000-000000000007')"
+  "SET ROLE authenticated; SET app.user_id='$admin'; SELECT count(*) FROM public.talk_me_list_pending_messages('c1000000-0000-0000-0000-000000000007')"
 
 psql_sql "UPDATE public.queue_members SET is_active=false WHERE queue_id='$queue1' AND profile_id='a1000000-0000-0000-0000-000000000002'" >/dev/null
 expect_value 'F13 permissao revogada bloqueia a leitura do historico' '0' \
-  "SET app.user_id='$agent2'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
+  "SET ROLE authenticated; SET app.user_id='$agent2'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
 psql_sql "UPDATE public.queue_members SET is_active=true WHERE queue_id='$queue1' AND profile_id='a1000000-0000-0000-0000-000000000002'" >/dev/null
 
 psql_sql "UPDATE public.feature_flags SET enabled=false WHERE key='inbox.talk-me'" >/dev/null
 expect_value 'F14 flag desligada esvazia o historico no servidor' '0' \
-  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
 psql_sql "UPDATE public.feature_flags SET enabled=true WHERE key='inbox.talk-me'" >/dev/null
 
 expect_value 'B1 aceite atribui ao perfil autenticado e abre a conversa' "${contact1}|a1000000-0000-0000-0000-000000000001|open" \
