@@ -1,6 +1,6 @@
 // TalkXCampaignRunning.tsx — E77: Tela "Campanha em Andamento"
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime } from './talkxShared';
+import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
 import { msToSeconds, secondsToMs, intervalForProfile, isValidIntervalSeconds, LIMITS_MIN_S, LIMITS_MAX_S } from './talkxLimits';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -87,7 +87,12 @@ function DonutChart({ sent, delivered, failed, outcomeUnknown, total }: { sent: 
 }
 
 // ─── Tab: Visão Geral ──────────────────────────────────────────────────────────
-function TabOverview({ c, chartData }: { c: TalkXCampaign; chartData: { time: string; Enviadas: number; Entregues: number }[] }) {
+function TabOverview({ c, chartData, historyQuery, onRetryHistory }: {
+  c: TalkXCampaign;
+  chartData: { time: string; Enviadas: number; Entregues: number }[];
+  historyQuery: TalkXQueryLike;
+  onRetryHistory: () => void;
+}) {
   const outcomeUnknown = c.outcome_unknown_count ?? 0;
   const processed = c.sent_count + c.failed_count + outcomeUnknown;
   const pending = Math.max(0, c.total_recipients - processed);
@@ -121,8 +126,23 @@ function TabOverview({ c, chartData }: { c: TalkXCampaign; chartData: { time: st
           </div>
         </div>
       )}
-      {/* Ritmo de Envio */}
-      {chartData.length > 0 && (
+      {/* Ritmo de Envio — X047: carregando -> erro -> vazio -> conteúdo */}
+      <TalkXQueryBoundary
+        query={historyQuery}
+        entity="estatísticas de envio"
+        onRetry={onRetryHistory}
+        skeleton={(
+          <div className="rounded-2xl bg-card border border-border/70 p-4">
+            <TalkXSkeletonRows rows={4} />
+          </div>
+        )}
+        isEmpty={chartData.length === 0}
+        empty={(
+          <RailCard title="Ritmo de Envio" color="blue" icon={Activity}>
+            <p className="pt-2 text-xs text-foreground-secondary">Nenhum envio registrado nesta campanha ainda.</p>
+          </RailCard>
+        )}
+      >
         <RailCard title="Ritmo de Envio" color="blue" icon={Activity}>
           <div className="h-[160px] pt-2">
             <ResponsiveContainer width="100%" height="100%">
@@ -143,7 +163,7 @@ function TabOverview({ c, chartData }: { c: TalkXCampaign; chartData: { time: st
             </ResponsiveContainer>
           </div>
         </RailCard>
-      )}
+      </TalkXQueryBoundary>
     </div>
   );
 }
@@ -172,12 +192,14 @@ const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: '
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
 
 function TabRecipients({ campaignId }: { campaignId: string }) {
-  const { data: recips, isLoading } = useQuery({
+  const { data: recips, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['talkx-running-recipients', campaignId],
     queryFn: async () => {
-      const { data } = await fromTable('talkx_recipients')
+      const { data, error } = await fromTable('talkx_recipients')
         .select('status, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
         .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
+      // X047: sem isto a falha virava lista vazia (o `data ?? []` engolia o erro).
+      if (error) throw error;
       return (data ?? []) as RecipRow[];
     },
     refetchInterval: 15_000,
@@ -186,13 +208,24 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
 
   return (
     <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-      <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-        <p className="text-[13px] font-bold text-foreground">Destinatários</p>
-        <p className="text-xs text-foreground-secondary">{isLoading ? 'Carregando…' : `Mostrando ${recips?.length ?? 0} recentes`}</p>
-      </div>
-      {isLoading ? (
-        <div className="space-y-2 p-4">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-9 bg-muted/40 rounded-lg animate-pulse" />)}</div>
-      ) : (
+      {/* X047: carregando -> erro -> vazio -> conteúdo (cabeçalho e lista juntos) */}
+      <TalkXQueryBoundary
+        query={{ isLoading, isFetching, isError, error }}
+        entity="informações dos destinatários"
+        onRetry={() => { void refetch(); }}
+        skeleton={<div className="p-4"><TalkXSkeletonRows rows={5} /></div>}
+        isEmpty={(recips?.length ?? 0) === 0}
+        empty={(
+          <div className="p-8 text-center">
+            <Users className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
+            <p className="text-xs font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
+          </div>
+        )}
+      >
+        <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
+          <p className="text-[13px] font-bold text-foreground">Destinatários</p>
+          <p className="text-xs text-foreground-secondary">{`Mostrando ${recips?.length ?? 0} recentes`}</p>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[540px] border-collapse">
             <thead><tr>
@@ -214,7 +247,7 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
           </table>
           {(recips?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center p-3">Mostrando 200 mais recentes.</p>}
         </div>
-      )}
+      </TalkXQueryBoundary>
     </div>
   );
 }
@@ -235,7 +268,7 @@ type MessageRow = {
 
 function TabMessages({ campaignId }: { campaignId: string }) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
-  const { data: messages, isLoading, isError } = useQuery({
+  const { data: messages, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['talkx-running-messages', campaignId],
     queryFn: async () => {
       const { data, error } = await fromTable('talkx_recipients')
@@ -263,30 +296,30 @@ function TabMessages({ campaignId }: { campaignId: string }) {
 
   return (
     <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-      <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-[13px] font-bold text-foreground">Mensagens por destinatário</p>
-          <p className="text-2xs text-foreground-secondary mt-0.5">Snapshots personalizados e imutáveis gravados antes do disparo.</p>
+      {/* X047: carregando -> erro -> vazio -> conteúdo (cabeçalho e lista juntos) */}
+      <TalkXQueryBoundary
+        query={{ isLoading, isFetching, isError, error }}
+        entity="mensagens"
+        onRetry={() => { void refetch(); }}
+        skeleton={<div className="space-y-3 p-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-24 bg-muted/40 rounded-xl animate-pulse" />)}</div>}
+        isEmpty={(messages?.length ?? 0) === 0}
+        empty={(
+          <div className="p-8 text-center">
+            <Send className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
+            <p className="text-xs font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
+          </div>
+        )}
+      >
+        <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-[13px] font-bold text-foreground">Mensagens por destinatário</p>
+            <p className="text-2xs text-foreground-secondary mt-0.5">Snapshots personalizados e imutáveis gravados antes do disparo.</p>
+          </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-2xs font-semibold text-foreground-secondary">
+            <Send className="h-3.5 w-3.5 text-primary" />
+            {`${snapshotCount} com conteúdo`}
+          </span>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-2xs font-semibold text-foreground-secondary">
-          <Send className="h-3.5 w-3.5 text-primary" />
-          {isLoading ? 'Carregando…' : `${snapshotCount} com conteúdo`}
-        </span>
-      </div>
-
-      {isLoading ? (
-        <div className="space-y-3 p-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-24 bg-muted/40 rounded-xl animate-pulse" />)}</div>
-      ) : isError ? (
-        <div className="p-8 text-center">
-          <p className="text-xs font-semibold text-foreground">Não foi possível carregar o histórico de mensagens.</p>
-          <p className="text-2xs text-foreground-secondary mt-1">Verifique sua permissão e tente atualizar a campanha.</p>
-        </div>
-      ) : (messages?.length ?? 0) === 0 ? (
-        <div className="p-8 text-center">
-          <Send className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
-          <p className="text-xs font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
-        </div>
-      ) : (
         <div className="divide-y divide-border/40">
           {messages?.map((message) => {
             const materialized = message.personalized_message?.trim() ?? '';
@@ -319,8 +352,8 @@ function TabMessages({ campaignId }: { campaignId: string }) {
             );
           })}
         </div>
-      )}
-      {(messages?.length ?? 0) >= 100 && <p className="border-t border-border/40 p-3 text-center text-2xs text-muted-foreground">Mostrando as 100 mensagens mais recentes.</p>}
+        {(messages?.length ?? 0) >= 100 && <p className="border-t border-border/40 p-3 text-center text-2xs text-muted-foreground">Mostrando as 100 mensagens mais recentes.</p>}
+      </TalkXQueryBoundary>
     </div>
   );
 }
@@ -333,30 +366,38 @@ const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'tex
 const LOG_ICON: Record<string, string> = { sent: '✔', failed: '✘', skipped: '‒', delivered: '✔✔' };
 
 function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }) {
-  const [events, setEvents] = useState<LogEvent[]>([]);
+  const queryClient = useQueryClient();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  useEffect(() => {
-    if (!active || !campaignId) return;
-    // Buscar ultimos 50 eventos para inicializar
-    void (async () => {
-      const { data } = await fromTable('talkx_recipients')
+  // X047: a carga inicial dos logs engolia o erro (`if (data)`) — uma falha virava
+  // "Aguardando eventos de envio…". Agora é uma consulta de verdade, com
+  // carregando/erro/refetch, e os eventos do realtime entram no cache dela.
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
+    queryKey: ['talkx-running-logs', campaignId],
+    queryFn: async () => {
+      const { data: rows, error: queryError } = await fromTable('talkx_recipients')
         .select('id, status, updated_at, error_message, contacts:contact_id(name, phone)')
         .eq('campaign_id', campaignId)
         .not('status', 'eq', 'pending')
         .order('updated_at', { ascending: false })
         .limit(50);
-      if (data) {
-        setEvents((data as Record<string, unknown>[]).map((r) => ({
-          id: r.id as string,
-          contact: (r.contacts as { name: string } | null)?.name ?? '—',
-          phone: (r.contacts as { phone: string } | null)?.phone ?? '—',
-          status: r.status as string,
-          ts: r.updated_at as string,
-          error: r.error_message as string | null,
-        })));
-      }
-    })();
+      if (queryError) throw queryError;
+      return ((rows ?? []) as Record<string, unknown>[]).map((r) => ({
+        id: r.id as string,
+        contact: (r.contacts as { name: string } | null)?.name ?? '—',
+        phone: (r.contacts as { phone: string } | null)?.phone ?? '—',
+        status: r.status as string,
+        ts: r.updated_at as string,
+        error: r.error_message as string | null,
+      }));
+    },
+    enabled: active && !!campaignId,
+  });
+
+  const events = data ?? [];
+
+  useEffect(() => {
+    if (!active || !campaignId) return;
 
     // Subscription realtime nos talkx_recipients desta campanha
     const ch = supabase
@@ -377,25 +418,33 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
           ts: r.updated_at as string,
           error: r.error_message as string | null,
         };
-        setEvents((prev) => [ev, ...prev.filter((e) => e.id !== ev.id)].slice(0, 50));
+        // O evento entra na mesma lista da consulta: uma fonte só para a tela.
+        queryClient.setQueryData<LogEvent[]>(['talkx-running-logs', campaignId], (prev) =>
+          [ev, ...(prev ?? []).filter((e) => e.id !== ev.id)].slice(0, 50));
       })
       .subscribe();
     channelRef.current = ch;
 
     return () => { void supabase.removeChannel(ch); };
-  }, [campaignId, active]);
+  }, [campaignId, active, queryClient]);
 
   return (
     <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-      <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-        <p className="text-[13px] font-bold text-foreground">Logs em Tempo Real</p>
-        <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-dash-green">
-          <span className="w-2 h-2 rounded-full bg-dash-green animate-pulse" />Ao vivo
-        </span>
-      </div>
-      {events.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center p-8">Aguardando eventos de envio…</p>
-      ) : (
+      {/* X047: carregando -> erro -> vazio -> conteúdo (cabeçalho e lista juntos) */}
+      <TalkXQueryBoundary
+        query={{ isLoading, isFetching, isError, error }}
+        entity="atividades em tempo real"
+        onRetry={() => { void refetch(); }}
+        skeleton={<div className="p-4"><TalkXSkeletonRows rows={4} /></div>}
+        isEmpty={events.length === 0}
+        empty={<p className="text-xs text-muted-foreground text-center p-8">Aguardando eventos de envio…</p>}
+      >
+        <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
+          <p className="text-[13px] font-bold text-foreground">Logs em Tempo Real</p>
+          <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-dash-green">
+            <span className="w-2 h-2 rounded-full bg-dash-green animate-pulse" />Ao vivo
+          </span>
+        </div>
         <div className="divide-y divide-border/30 max-h-[480px] overflow-y-auto">
           {events.map((ev) => (
             <div key={`${ev.id}-${ev.ts}`} className="flex items-start gap-3 px-4 py-2.5 hover:bg-muted/10">
@@ -411,13 +460,18 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
             </div>
           ))}
         </div>
-      )}
+      </TalkXQueryBoundary>
     </div>
   );
 }
 
 // ─── Tab: Resultados ───────────────────────────────────────────────────────────────
-function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time: string; Enviadas: number; Entregues: number }[] }) {
+function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
+  c: TalkXCampaign;
+  sentHistory: { time: string; Enviadas: number; Entregues: number }[];
+  historyQuery: TalkXQueryLike;
+  onRetryHistory: () => void;
+}) {
   const deliveryRate = c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : null;
   const outcomeUnknown = c.outcome_unknown_count ?? 0;
   const totalProcessed = c.sent_count + c.failed_count + outcomeUnknown;
@@ -459,20 +513,39 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
         ))}
       </div>
       {c.started_at && c.status === 'sending' && pending > 0 && (
-        <div className="rounded-2xl bg-card border border-border/70 p-4">
-          <p className="text-[13px] font-bold text-foreground mb-1">Tempo estimado para concluir</p>
-          {etaMinutes !== null ? (
-            <>
-              <p className="text-2xl font-bold text-primary">{etaMinutes} min</p>
-              <p className="text-2xs text-foreground-secondary">Baseado no ritmo atual ({avgRateText})</p>
-            </>
-          ) : (
-            <>
+        <TalkXQueryBoundary
+          query={historyQuery}
+          entity="estatísticas de envio"
+          onRetry={onRetryHistory}
+          skeleton={(
+            <div className="rounded-2xl bg-card border border-border/70 p-4">
+              <TalkXSkeletonRows rows={2} />
+            </div>
+          )}
+          isEmpty={sentHistory.length === 0}
+          empty={(
+            <div className="rounded-2xl bg-card border border-border/70 p-4">
+              <p className="text-[13px] font-bold text-foreground mb-1">Tempo estimado para concluir</p>
               <p className="text-2xl font-bold text-muted-foreground">Indisponível</p>
               <p className="text-2xs text-foreground-secondary">Sem envios nos últimos 10 minutos — não há ritmo para estimar.</p>
-            </>
+            </div>
           )}
-        </div>
+        >
+          <div className="rounded-2xl bg-card border border-border/70 p-4">
+            <p className="text-[13px] font-bold text-foreground mb-1">Tempo estimado para concluir</p>
+            {etaMinutes !== null ? (
+              <>
+                <p className="text-2xl font-bold text-primary">{etaMinutes} min</p>
+                <p className="text-2xs text-foreground-secondary">Baseado no ritmo atual ({avgRateText})</p>
+              </>
+            ) : (
+              <>
+                <p className="text-2xl font-bold text-muted-foreground">Indisponível</p>
+                <p className="text-2xs text-foreground-secondary">Sem envios nos últimos 10 minutos — não há ritmo para estimar.</p>
+              </>
+            )}
+          </div>
+        </TalkXQueryBoundary>
       )}
     </div>
   );
@@ -486,7 +559,11 @@ interface Props {
 }
 
 export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId }: Props) {
-  const { campaigns, updateCampaign, updateCampaignLimits, pauseCampaign, cancelCampaign, startCampaign, refetchCampaigns } = useTalkX();
+  const {
+    campaigns, updateCampaign, updateCampaignLimits, pauseCampaign, cancelCampaign, startCampaign,
+    refetchCampaigns, isLoading: campaignsLoading, isFetching: campaignsFetching,
+    isError: campaignsIsError, error: campaignsError,
+  } = useTalkX();
   const sending = useMemo(() => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'), [campaigns]);
 
   const [selectedId, setSelectedId] = useState<string | null>(initialCampaignId ?? sending[0]?.id ?? null);
@@ -534,18 +611,20 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   }, [sending, selectedId]);
 
   // Histórico de envios para gráfico AreaChart (últimos 20 pontos por minuto)
-  const { data: sentHistory } = useQuery({
+  const { data: sentHistory, isLoading: historyLoading, isFetching: historyFetching, isError: historyIsError, error: historyError, refetch: refetchHistory } = useQuery({
     queryKey: ['talkx-running-history', selectedId],
     queryFn: async () => {
       if (!selectedId) return [];
       // Ordem decrescente: o teto de 2000 guarda os envios MAIS RECENTES. Com ordem
       // crescente, o envio 2001+ ficava de fora e a série congelava no passado.
-      const { data } = await fromTable('talkx_recipients')
+      const { data, error } = await fromTable('talkx_recipients')
         .select('sent_at, delivered_at')
         .eq('campaign_id', selectedId)
         .not('sent_at', 'is', null)
         .order('sent_at', { ascending: false })
         .limit(2000);
+      // X047: sem isto a falha virava "sem envios" (o `if (!data?.length) return []` engolia o erro).
+      if (error) throw error;
       if (!data?.length) return [];
       // Buckets de minuto consecutivos (zeros incluídos), terminando no minuto atual.
       return recentMinuteSeries(
@@ -557,6 +636,14 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     refetchInterval: 30_000,
     staleTime: 20_000,
   });
+
+  const historyQuery: TalkXQueryLike = {
+    isLoading: historyLoading,
+    isFetching: historyFetching,
+    isError: historyIsError,
+    error: historyError,
+  };
+  const handleRetryHistory = useCallback(() => { void refetchHistory(); }, [refetchHistory]);
 
   const handleOpenLimits = useCallback(() => {
     if (!campaign) return;
@@ -647,7 +734,11 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             aria-label="Selecionar campanha"
             className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium max-w-[220px] truncate focus:outline-none focus:ring-1 focus:ring-primary"
           >
-            {sending.length === 0 && <option value="">Nenhuma campanha ativa</option>}
+            {sending.length === 0 && (
+              <option value="">
+                {campaignsLoading ? 'Carregando campanhas…' : campaignsIsError ? 'Campanhas indisponíveis' : 'Nenhuma campanha ativa'}
+              </option>
+            )}
             {sending.map((c) => (
               <option key={c.id} value={c.id}>{c.name} [{c.status}]</option>
             ))}
@@ -658,95 +749,104 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
         </div>
       </div>
 
-      {!campaign && (
-        <div className="rounded-2xl border border-border/50 bg-muted/20 p-10 text-center">
-          <p className="text-sm text-foreground-secondary">Nenhuma campanha em andamento no momento.</p>
-        </div>
-      )}
-
-      {campaign && (
-        <>
-          {/* Sub-tabs */}
-          <div className="flex gap-1 overflow-x-auto no-scrollbar border-b border-border/40 pb-0">
-            {RUN_TABS.map((t) => (
-              <button
-                key={t.id} type="button"
-                onClick={() => setActiveTab(t.id)}
-                className={`px-3.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors
-                  ${activeTab === t.id
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-foreground-secondary hover:text-foreground'}`}
-              >
-                {t.label}
-              </button>
-            ))}
+      {/* X047: a lista de campanhas decide carregando -> erro -> vazio -> conteúdo */}
+      <TalkXQueryBoundary
+        query={{ isLoading: campaignsLoading, isFetching: campaignsFetching, isError: campaignsIsError, error: campaignsError }}
+        entity="campanhas"
+        onRetry={() => { void refetchCampaigns(); }}
+        skeleton={<div className="rounded-2xl border border-border/50 bg-card p-4"><TalkXSkeletonRows rows={4} /></div>}
+        isEmpty={sending.length === 0 || !campaign}
+        empty={(
+          <div className="rounded-2xl border border-border/50 bg-muted/20 p-10 text-center">
+            <p className="text-sm text-foreground-secondary">Nenhuma campanha em andamento no momento.</p>
           </div>
-
-          {/* Conteúdo das sub-tabs */}
-          <div>
-            {activeTab === 'overview' && (
-              <TabOverview c={campaign} chartData={sentHistory ?? []} />
-            )}
-            {activeTab === 'config' && <TabConfig c={campaign} />}
-            {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
-            {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
-            {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} />}
-            {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}
-          </div>
-
-          {/* Card Ações */}
-          <div className="rounded-2xl bg-card border border-border/70 p-4">
-            <p className="text-[13px] font-bold text-foreground mb-3">Ações da Campanha</p>
-            <div className="flex flex-wrap gap-2">
-              {campaign.status === 'sending' && (
-                <button type="button" onClick={() => setPauseOpen(true)}
-                  className="h-9 px-4 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-2 hover:bg-amber-500/20">
-                  <Pause className="w-4 h-4" />Pausar
+        )}
+      >
+        {campaign ? (
+          <>
+            {/* Sub-tabs */}
+            <div className="flex gap-1 overflow-x-auto no-scrollbar border-b border-border/40 pb-0">
+              {RUN_TABS.map((t) => (
+                <button
+                  key={t.id} type="button"
+                  onClick={() => setActiveTab(t.id)}
+                  className={`px-3.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors
+                    ${activeTab === t.id
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-foreground-secondary hover:text-foreground'}`}
+                >
+                  {t.label}
                 </button>
-              )}
-              {campaign.status === 'paused' && (
-                <button type="button" disabled={resuming} onClick={async () => {
-                  setResuming(true);
-                  try {
-                    // startCampaign aguarda o invoke e mostra toasts internamente
-                    await startCampaign(campaign.id);
-                  } catch {
-                    toast.error('Erro ao retomar campanha.');
-                  } finally { setResuming(false); }
-                }}
-                  className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20 disabled:opacity-50">
-                  <Zap className="w-4 h-4" />{resuming ? 'Retomando…' : 'Retomar'}
-                </button>
-              )}
-              <button type="button" onClick={handleOpenLimits}
-                className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold flex items-center gap-2 hover:bg-muted/50">
-                <Settings2 className="w-4 h-4" />Editar Limites
-              </button>
-              <button type="button" onClick={() => onViewMonitor(campaign.id)}
-                className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold flex items-center gap-2 hover:bg-muted/50">
-                <Eye className="w-4 h-4" />Ver Monitor
-              </button>
-              {(campaign.status === 'completed' || campaign.status === 'paused') && (
-                <button type="button" onClick={async () => {
-                  try {
-                    await invokeEdge('talkx-report', { campaignId: campaign.id });
-                    toast.success('Relatório enviado por e-mail!');
-                  } catch {
-                    toast.error('Erro ao enviar relatório.');
-                  }
-                }}
-                  className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20">
-                  <Mail className="w-4 h-4" />Enviar Relatório
-                </button>
-              )}
-              <button type="button" onClick={() => setCancelOpen(true)}
-                className="h-9 px-4 rounded-lg border border-red-500/30 bg-red-500/8 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 hover:bg-red-500/15 ml-auto">
-                <Square className="w-4 h-4" />Cancelar campanha
-              </button>
+              ))}
             </div>
-          </div>
-        </>
-      )}
+
+            {/* Conteúdo das sub-tabs */}
+            <div>
+              {activeTab === 'overview' && (
+                <TabOverview c={campaign} chartData={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
+              )}
+              {activeTab === 'config' && <TabConfig c={campaign} />}
+              {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
+              {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
+              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
+              {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}
+            </div>
+
+            {/* Card Ações */}
+            <div className="rounded-2xl bg-card border border-border/70 p-4">
+              <p className="text-[13px] font-bold text-foreground mb-3">Ações da Campanha</p>
+              <div className="flex flex-wrap gap-2">
+                {campaign.status === 'sending' && (
+                  <button type="button" onClick={() => setPauseOpen(true)}
+                    className="h-9 px-4 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-2 hover:bg-amber-500/20">
+                    <Pause className="w-4 h-4" />Pausar
+                  </button>
+                )}
+                {campaign.status === 'paused' && (
+                  <button type="button" disabled={resuming} onClick={async () => {
+                    setResuming(true);
+                    try {
+                      // startCampaign aguarda o invoke e mostra toasts internamente
+                      await startCampaign(campaign.id);
+                    } catch {
+                      toast.error('Erro ao retomar campanha.');
+                    } finally { setResuming(false); }
+                  }}
+                    className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20 disabled:opacity-50">
+                    <Zap className="w-4 h-4" />{resuming ? 'Retomando…' : 'Retomar'}
+                  </button>
+                )}
+                <button type="button" onClick={handleOpenLimits}
+                  className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold flex items-center gap-2 hover:bg-muted/50">
+                  <Settings2 className="w-4 h-4" />Editar Limites
+                </button>
+                <button type="button" onClick={() => onViewMonitor(campaign.id)}
+                  className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold flex items-center gap-2 hover:bg-muted/50">
+                  <Eye className="w-4 h-4" />Ver Monitor
+                </button>
+                {(campaign.status === 'completed' || campaign.status === 'paused') && (
+                  <button type="button" onClick={async () => {
+                    try {
+                      await invokeEdge('talkx-report', { campaignId: campaign.id });
+                      toast.success('Relatório enviado por e-mail!');
+                    } catch {
+                      toast.error('Erro ao enviar relatório.');
+                    }
+                  }}
+                    className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20">
+                    <Mail className="w-4 h-4" />Enviar Relatório
+                  </button>
+                )}
+                <button type="button" onClick={() => setCancelOpen(true)}
+                  className="h-9 px-4 rounded-lg border border-red-500/30 bg-red-500/8 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 hover:bg-red-500/15 ml-auto">
+                  <Square className="w-4 h-4" />Cancelar campanha
+                </button>
+              </div>
+            </div>
+          </>
+        ) : null}
+      </TalkXQueryBoundary>
+
 
       {/* Modal: Editar Limites (E78) */}
       <AlertDialog open={limitsOpen} onOpenChange={setLimitsOpen}>
