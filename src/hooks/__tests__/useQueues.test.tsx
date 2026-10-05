@@ -1,3 +1,12 @@
+/**
+ * R2-QUE-002 (item 106 / P1): useQueues sobrescrevia `waiting_count` com 0 e
+ * QueuesView usa esse valor nos alertas configurados de fila — a tela mostrava
+ * "0 aguardando" e nenhum alerta de espera/atribuição disparava.
+ *
+ * O teste abaixo fixa a contagem real por fila: o PostgREST devolve
+ * `count: 'exact'` (head) para os contatos da fila sem responsável. No código
+ * anterior (waiting_count hardcoded 0) o primeiro caso falha (0 ≠ 2).
+ */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 
@@ -10,10 +19,21 @@ const mockMembers = [
   { id: 'm1', queue_id: 'q1', profile_id: 'p1', is_active: true, created_at: '', profile: { id: 'p1', name: 'Agent 1', avatar_url: null, is_active: true } },
 ];
 
-const mockWaiting = [
-  { queue_id: 'q1' },
-  { queue_id: 'q1' },
-];
+// Contagem real devolvida pelo PostgREST por fila (count exact + head).
+const mockWaitingCounts: Record<string, number> = { q1: 2, q2: 0 };
+
+function contactsCountBuilder(queueIdRef: { id: string }) {
+  return {
+    eq: vi.fn((column: string, value: unknown) => {
+      if (column === 'queue_id') queueIdRef.id = String(value);
+      return contactsCountBuilder(queueIdRef);
+    }),
+    is: vi.fn(() => contactsCountBuilder(queueIdRef)),
+    not: vi.fn(() =>
+      Promise.resolve({ count: mockWaitingCounts[queueIdRef.id] ?? 0, error: null }),
+    ),
+  };
+}
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -48,11 +68,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       }
       if (table === 'contacts') {
         return {
-          select: vi.fn().mockReturnValue({
-            not: vi.fn().mockReturnValue({
-              is: vi.fn().mockResolvedValue({ data: mockWaiting, error: null }),
-            }),
-          }),
+          select: vi.fn(() => contactsCountBuilder({ id: '' })),
         };
       }
       return {
@@ -67,7 +83,7 @@ vi.mock('@/hooks/ui/use-toast', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn() },
+  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 import { useQueues } from '@/hooks/business/useQueues';
@@ -100,19 +116,15 @@ describe('useQueues', () => {
     expect(suporteQueue?.members[0].profile?.name).toBe('Agent 1');
   });
 
-  it('calculates waiting counts per queue', async () => {
+  it('exposes the real waiting count per queue (R2-QUE-002)', async () => {
     const { result } = renderHook(() => useQueues());
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    const suporteQueue = result.current.queues.find(q => q.name === 'Suporte');
-    // waiting_count is intentionally 0 in the hook (logic moved to service layer)
-    expect(suporteQueue?.waiting_count).toBe(0);
-
-    const vendasQueue = result.current.queues.find(q => q.name === 'Vendas');
-    expect(vendasQueue?.waiting_count).toBe(0);
+    expect(result.current.queues.find(q => q.name === 'Suporte')?.waiting_count).toBe(2);
+    expect(result.current.queues.find(q => q.name === 'Vendas')?.waiting_count).toBe(0);
   });
 
   it('returns loading=true initially', () => {
