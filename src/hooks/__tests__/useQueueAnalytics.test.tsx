@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import { format } from 'date-fns';
 
 const mockFrom = vi.fn();
 
@@ -300,8 +301,8 @@ describe('useQueueAnalytics — paginação integral', () => {
     const { result } = renderHook(() => useQueueAnalytics('queue-all', analyticsRange));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    const todayKey = today.toISOString().slice(0, 10);
-    const tomorrowKey = tomorrow.toISOString().slice(0, 10);
+    const todayKey = format(today, 'yyyy-MM-dd');
+    const tomorrowKey = format(tomorrow, 'yyyy-MM-dd');
     expect(result.current.dailyData.find((day) => day.date === todayKey)).toMatchObject({
       mensagens: pageSize + 1,
       resolvidos: pageSize,
