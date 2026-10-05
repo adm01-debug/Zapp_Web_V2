@@ -20,7 +20,7 @@ import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCa
 import { fromTable } from '@/lib/supabaseHelpers';
 import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
 import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
-import { recentMinuteSeries, averageRatePerMinute } from './talkxRunningHistory';
+import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish } from './talkxRunningHistory';
 
 // ─── Sub-tab type ──────────────────────────────────────────────────────────────
 type RunTab = 'overview' | 'recipients' | 'messages' | 'config' | 'results' | 'logs';
@@ -424,10 +424,17 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
   const failRate = totalProcessed > 0 ? Math.round((c.failed_count / totalProcessed) * 1000) / 10 : null;
   const elapsed = c.started_at ? Math.round((new Date().getTime() - new Date(c.started_at).getTime()) / 60000) : null;
   const pending = Math.max(0, c.total_recipients - totalProcessed);
-  // Ritmo real: média sobre os últimos 10 minutos CONSECUTIVOS (zeros incluídos).
+  // Ritmo real (msgs/min) sobre os últimos 10 minutos CONSECUTIVOS (zeros incluídos).
   // Minutos sem envio entram no denominador — sem isso o prazo ficava otimista (R2-MOD-033).
   const avgRateRaw = averageRatePerMinute(sentHistory, 10);
-  const avgRate = avgRateRaw === null ? null : Math.round(avgRateRaw);
+  // Rótulo do ritmo com uma casa quando é fração: arredondar 0,4 para 0 escondia uma
+  // previsão que existe.
+  const avgRateText = avgRateRaw === null
+    ? '—'
+    : `${(Math.round(avgRateRaw * 10) / 10).toString().replace('.', ',')} msgs/min`;
+  // ETA: ritmo 0 (dez minutos sem envio) ou ausente → indisponível, nunca Infinity
+  // (recusa do item #135).
+  const etaMinutes = estimateMinutesToFinish(pending, avgRateRaw);
 
   const METRICS: { label: string; value: string; sub?: string }[] = [
     { label: 'Total de destinatários', value: fmtInt(c.total_recipients) },
@@ -437,7 +444,7 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
     { label: 'A confirmar', value: fmtInt(outcomeUnknown), sub: outcomeUnknown > 0 ? 'Sem reenvio automático' : undefined },
     { label: 'Pendentes', value: fmtInt(pending) },
     { label: 'Tempo decorrido', value: elapsed !== null ? `${elapsed} min` : '—' },
-    { label: 'Ritmo médio (últ. 10 min)', value: avgRate !== null ? `${avgRate} msgs/min` : '—' },
+    { label: 'Ritmo médio (últ. 10 min)', value: avgRateText },
   ];
 
   return (
@@ -451,11 +458,20 @@ function TabResults({ c, sentHistory }: { c: TalkXCampaign; sentHistory: { time:
           </div>
         ))}
       </div>
-      {c.started_at && c.status === 'sending' && pending > 0 && avgRate && avgRate > 0 && (
+      {c.started_at && c.status === 'sending' && pending > 0 && (
         <div className="rounded-2xl bg-card border border-border/70 p-4">
           <p className="text-[13px] font-bold text-foreground mb-1">Tempo estimado para concluir</p>
-          <p className="text-2xl font-bold text-primary">{Math.ceil(pending / avgRate)} min</p>
-          <p className="text-2xs text-foreground-secondary">Baseado no ritmo atual ({avgRate} msgs/min)</p>
+          {etaMinutes !== null ? (
+            <>
+              <p className="text-2xl font-bold text-primary">{etaMinutes} min</p>
+              <p className="text-2xs text-foreground-secondary">Baseado no ritmo atual ({avgRateText})</p>
+            </>
+          ) : (
+            <>
+              <p className="text-2xl font-bold text-muted-foreground">Indisponível</p>
+              <p className="text-2xs text-foreground-secondary">Sem envios nos últimos 10 minutos — não há ritmo para estimar.</p>
+            </>
+          )}
         </div>
       )}
     </div>

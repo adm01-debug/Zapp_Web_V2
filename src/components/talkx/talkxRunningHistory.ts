@@ -59,11 +59,24 @@ export function recentMinuteSeries(
 /**
  * Ritmo (envios/min) médio sobre os últimos `windowMinutes` buckets CONSECUTIVOS.
  * Devolve 0 quando a janela está vazia — quem consome decide se "0" vira
- * "indisponível" em vez de previsão otimista.
+ * "indisponível" em vez de previsão otimista (`estimateMinutesToFinish`).
  */
 export function averageRatePerMinute(series: MinuteBucket[], windowMinutes = 10): number | null {
   if (series.length === 0) return null;
   const janela = series.slice(-windowMinutes);
   const total = janela.reduce((a, b) => a + b.Enviadas, 0);
   return total / janela.length;
+}
+
+/**
+ * Minutos estimados para concluir `pending` envios no ritmo `ratePerMinute`.
+ *
+ * Ritmo zero (dez minutos sem envio), ausente ou não finito → `null`: a previsão
+ * fica "indisponível" em vez de dividir por zero e devolver `Infinity` (recusa do
+ * item #135). Um `pending` não positivo também não tem o que estimar.
+ */
+export function estimateMinutesToFinish(pending: number, ratePerMinute: number | null): number | null {
+  if (ratePerMinute === null || !Number.isFinite(ratePerMinute) || ratePerMinute <= 0) return null;
+  if (!Number.isFinite(pending) || pending <= 0) return null;
+  return Math.ceil(pending / ratePerMinute);
 }
