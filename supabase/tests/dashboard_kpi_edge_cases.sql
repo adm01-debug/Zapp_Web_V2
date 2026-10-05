@@ -16,6 +16,11 @@
 -- T1 usa um admin real (buscado em user_roles; FALHA se não houver — pular em
 -- silêncio é proibido) para sair do caminho fail-closed e exercitar de fato o
 -- filtro p_since.
+--
+-- Os blocos de outlier p50/p90 e virada de dia SP NÃO ficam aqui como literais:
+-- percentile_cont sobre VALUES e AT TIME ZONE sobre timestamps fixos testariam
+-- o Postgres, não a dashboard_kpi. A prova real desses cenários (chamadas à
+-- RPC sobre dados semeados) são D4–D7 do teste descartável acima.
 
 DO $$
 DECLARE
@@ -48,31 +53,5 @@ BEGIN
     RAISE EXCEPTION 'edge_cases T1c FALHOU: janela vazia deveria ter hourly8 zerado, veio %', v_kpi;
   END IF;
 
-  -- T2: 1 outlier de 10h (36000s) entre 5 respostas normais (60-150s). A RPC
-  -- usa percentile_cont(0.5) pro card e percentile_cont(0.9) só no tooltip —
-  -- o p50 não pode ser puxado pelo outlier, o p90 deve refleti-lo. Assinatura
-  -- exata das expressões usadas pela RPC; a prova acoplada à função real está
-  -- no teste descartável (D4/D5, mesmos valores esperados com dados seedados).
-  IF (SELECT round(percentile_cont(0.5) WITHIN GROUP (ORDER BY response_seconds))::int
-      FROM (VALUES (60::numeric), (120), (90), (150), (110), (36000)) t(response_seconds)) <> 115 THEN
-    RAISE EXCEPTION 'edge_cases T2 FALHOU: p50 deveria ser 115 (mediana robusta ao outlier)';
-  END IF;
-  IF (SELECT round(percentile_cont(0.9) WITHIN GROUP (ORDER BY response_seconds))::int
-      FROM (VALUES (60::numeric), (120), (90), (150), (110), (36000)) t(response_seconds)) <> 18075 THEN
-    RAISE EXCEPTION 'edge_cases T2b FALHOU: p90 deveria ser 18075 (reflete o outlier)';
-  END IF;
-
-  -- T3/T4: virada de dia + timezone SP. A RPC bucketa por
-  -- (created_at AT TIME ZONE 'America/Sao_Paulo')::date — evento 23:30 em SP
-  -- (02:30 UTC do dia seguinte) cai no dia SP; a prova acoplada à RPC está no
-  -- teste descartável (D6/D7, closure seedada às 23h30 de ontem-SP).
-  IF ('2026-09-25 23:30:00-03'::timestamptz AT TIME ZONE 'America/Sao_Paulo')::date <> '2026-09-25'::date
-     OR ('2026-09-25 23:30:00-03'::timestamptz AT TIME ZONE 'UTC')::date = '2026-09-25'::date THEN
-    RAISE EXCEPTION 'edge_cases T3 FALHOU: bucket deveria ser o dia civil SP (25), não UTC (26)';
-  END IF;
-  IF extract(hour FROM '2026-09-25 23:30:00-03'::timestamptz AT TIME ZONE 'America/Sao_Paulo')::int <> 23 THEN
-    RAISE EXCEPTION 'edge_cases T4 FALHOU: hora do bucket deveria ser 23 (SP), não 2 (UTC)';
-  END IF;
-
-  RAISE NOTICE 'dashboard_kpi_edge_cases: suite completa OK (T1-T4)';
+  RAISE NOTICE 'dashboard_kpi_edge_cases: suite OK (T1; p50/p90 e virada de dia SP cobertos por D4-D7 do teste descartavel)';
 END $$;
