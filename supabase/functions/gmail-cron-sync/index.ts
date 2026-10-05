@@ -50,6 +50,19 @@ export async function handleGmailCronSync(req: Request, deps: GmailCronSyncDeps 
             const { error: syncErr } = await supabase.from("gmail_accounts").update({ sync_status: "syncing" }).eq("id", account.id);
             if (syncErr) throw new Error(`Failed to mark account syncing: ${syncErr.message}`);
             const result = await syncMessages(supabase, account.id, accessToken, log, "in:inbox", 50);
+            // R2-API-011: a âncora do cursor também exige durabilidade. Sem
+            // history_id a conta repete o full sync; ancorar mesmo com
+            // mensagens falhas deixaria esses eventos atrás do cursor para
+            // sempre. Mesma disciplina do gmail-sync action=sync-inbox.
+            if (result.failed > 0) {
+              const { error: partialErr } = await supabase.from("gmail_accounts").update({
+                sync_status: "error",
+                last_sync_at: new Date().toISOString(),
+                last_error: `${result.failed} mensagens falharam no full sync; cursor não ancorado`,
+              }).eq("id", account.id);
+              if (partialErr) throw new Error(`Failed to record full sync failure: ${partialErr.message}`);
+              return { id: account.id, synced: result.synced, failed: result.failed, cursor_advanced: false, status: "partial_failure" };
+            }
             const profile = await gmailFetch<{ historyId?: string }>(accessToken, "/profile");
             const { error: doneErr } = await supabase.from("gmail_accounts").update({ sync_status: "synced", history_id: profile.historyId, last_sync_at: new Date().toISOString(), last_error: null }).eq("id", account.id);
             if (doneErr) throw new Error(`Failed to persist full sync cursor: ${doneErr.message}`);
