@@ -15,3 +15,14 @@ export const ACTION_TYPES = [
   { type: 'send_notification', label: 'Enviar Notificação', icon: AlertCircle, description: 'Envia notificação para a equipe' },
   { type: 'close_conversation', label: 'Fechar Conversa', icon: CheckCircle2, description: 'Marca a conversa como resolvida' },
 ];
+
+// R2-MOD-002 (#99): contrato de configuração obrigatória por tipo de ação.
+// O editor só coleta `message`; os demais parâmetros vêm da configuração já
+// persistida. Salvar sem eles produziria uma ação incompleta, então é bloqueado.
+export const REQUIRED_ACTION_CONFIG: Record<string, string[]> = {
+  send_message: ['message'],
+  assign_agent: ['agent_id'],
+  add_tag: ['tag_id'],
+  send_notification: ['message'],
+  close_conversation: [],
+};
