@@ -74,6 +74,14 @@ function mediaFileNameFromBlock(content: Record<string, unknown> | null | undefi
 
 type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
 
+/** MX01: a coluna `multiplix_events.correlation_id` e uuid; `newCorrelationId`
+ * pode cair no formato `c-...` quando o runtime nao tem `crypto.randomUUID`.
+ * Nesse caso a trilha vai sem correlacao em vez de derrubar a materializacao. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function uuidOrNull(value: string | null | undefined): string | null {
+  return typeof value === "string" && UUID_RE.test(value) ? value : null;
+}
+
 export async function handleMultiplixSend(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -261,6 +269,28 @@ export async function handleMultiplixSend(
       p_dispatch_id: dispatchId,
       p_action: "start",
     });
+
+    // MX01 (BACKLOG_VERIFICADO item 45): NUNCA disparar antes de materializar a
+    // fila por itens. O composer cria o disparo por `multiplix_create_draft`
+    // (SOMENTE dispatches + recipients) e chama este start em seguida; o worker
+    // consome EXCLUSIVAMENTE `multiplix_delivery_items`. Sem a conversao abaixo o
+    // disparo entrava em 'sending' com destinatarios pendentes e ZERO itens
+    // processaveis — nada saia e nenhum erro aparecia ("sucesso" silencioso).
+    //
+    // A conversao roda no SERVIDOR, e idempotente (no-op quando ja ha itens ou o
+    // disparo nao esta em 'sending') e acontece ANTES do loop de envio. Ela cobre
+    // qualquer disparo legado — inclusive um ja em 'sending' sem fila, que e
+    // auto-curado na passada seguinte do cron.
+    const { error: materializeError } = await supabase.rpc("multiplix_materialize_legacy_queue", {
+      p_dispatch_id: dispatchId,
+      p_correlation_id: uuidOrNull(correlationId),
+    });
+    if (materializeError) {
+      // Fail-closed: sem saber o estado da fila nao se envia nada. O cron
+      // reinvoca em ate 2 min e a proxima passada tenta de novo.
+      throw new Error(`multiplix_legacy_queue_materialize_failed: ${materializeError.message}`);
+    }
+
     if (transitionError) {
       return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
     }
