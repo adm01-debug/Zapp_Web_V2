@@ -287,6 +287,11 @@ jobs:
           WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/wa-tag-and-status-authorization.test.sh
 
+      - name: Simular escopo por conexão das etiquetas de WhatsApp (item 22 / TRA-006)
+        env:
+          WA_LABEL_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/wa-label-connection-scope.test.sh
+
       - name: Simular autorização do INSERT em análises de conversa
         env:
           ANALYSES_AUTHZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
