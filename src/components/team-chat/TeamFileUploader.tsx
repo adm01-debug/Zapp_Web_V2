@@ -9,14 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Paperclip, Image as ImageIcon, FileText, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { MAX_TEAM_CHAT_FILE_SIZE, getTeamChatFileSizeError } from '@/lib/teamChatRules';
 
 interface TeamFileUploaderProps {
   conversationId: string;
   onFileSent: (mediaPath: string, mediaType: string, fileName: string) => void;
   disabled?: boolean;
 }
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const ACCEPT_TYPES = 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip';
 
@@ -37,13 +36,14 @@ export function TeamFileUploader({ conversationId, onFileSent, disabled }: TeamF
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error(`Arquivo muito grande. Máximo: ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+    const sizeError = getTeamChatFileSizeError(file.size);
+    if (sizeError === 'too-large') {
+      toast.error(`Arquivo muito grande. Máximo: ${MAX_TEAM_CHAT_FILE_SIZE / 1024 / 1024}MB`);
       if (inputRef.current) inputRef.current.value = '';
       return;
     }
 
-    if (file.size === 0) {
+    if (sizeError === 'empty') {
       toast.error('Arquivo vazio não pode ser enviado.');
       if (inputRef.current) inputRef.current.value = '';
       return;

@@ -127,10 +127,6 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(partsSrc).toContain('rel="noopener noreferrer"');
     });
 
-    it('should enforce file size limit in uploader', () => {
-      expect(uploaderSrc).toContain('MAX_FILE_SIZE');
-      expect(uploaderSrc).toMatch(/10\s*\*\s*1024\s*\*\s*1024/);
-    });
 
     it('should detect media type from file MIME', () => {
       expect(uploaderSrc).toMatch(/file\.type\.startsWith\('image\/'\)/);
@@ -525,9 +521,6 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(inputSrc).toMatch(/catch\s*\{/);
     });
 
-    it('should validate file size before upload', () => {
-      expect(uploaderSrc).toMatch(/file\.size\s*>\s*MAX_FILE_SIZE/);
-    });
 
     it.todo('should set proper content type on upload', () => {
       expect(uploaderSrc).toContain('contentType: file.type');

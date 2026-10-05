@@ -11,6 +11,7 @@ import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { useCreateTeamConversation } from '@/hooks/chat/useTeamChat';
 import { useActiveDepartments } from '@/hooks/team-chat/useActiveDepartments';
 import { cn } from '@/lib/utils';
+import { canCreateTeamConversation } from '@/lib/teamChatRules';
 
 import { getLogger } from '@/lib/logger';
 const log = getLogger('NewConversationDialog');
@@ -69,9 +70,11 @@ export function NewConversationDialog({ open, onOpenChange, onCreated }: Props) 
   };
 
   const handleCreate = async () => {
-    if (tab === 'department' && !selectedDeptId) return;
-    if (tab !== 'department' && selectedIds.length === 0) return;
-    if (tab === 'group' && selectedIds.length < 2) return;
+    if (!canCreateTeamConversation({
+      type: tab,
+      selectedMemberCount: selectedIds.length,
+      selectedDepartmentId: selectedDeptId,
+    })) return;
     try {
       const dept = tab === 'department'
         ? departments.find(d => d.id === selectedDeptId)
@@ -94,10 +97,11 @@ export function NewConversationDialog({ open, onOpenChange, onCreated }: Props) 
     }
   };
 
-  const isDisabled =
-    createMutation.isPending ||
-    (tab === 'department' ? !selectedDeptId
-      : selectedIds.length === 0 || (tab === 'group' && selectedIds.length < 2));
+  const isDisabled = createMutation.isPending || !canCreateTeamConversation({
+    type: tab,
+    selectedMemberCount: selectedIds.length,
+    selectedDepartmentId: selectedDeptId,
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
