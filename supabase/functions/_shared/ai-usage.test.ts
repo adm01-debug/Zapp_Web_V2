@@ -32,16 +32,19 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import {
   calcularCusto,
+  chaveDeLog,
   contaParaQuota,
   extractAiRequestId,
   extrairUsageDoStream,
   identidadeDaAcao,
+  logAiUsage,
   logAiUsageDetached,
   medirStream,
   normalizeAttempt,
   normalizeCorrelationId,
   normalizeModality,
   reconciliarConsumo,
+  reprocessarLogEssencial,
   tarifaAplicavel,
   type LinhaDeConsumo,
   type StreamOutcome,
@@ -994,4 +997,195 @@ Deno.test("IA-055 zero medido ≠ preço ausente, e valor inválido não passa",
   });
   assertEquals(tarifaRuim.custo, null);
   assertEquals(tarifaRuim.motivo, "tarifa_invalida");
+});
+
+// ---------------------------------------------------------------------------
+// (j) IA-TIMEOUT-001 — log essencial durável: retenta o transitório, confere
+// a existência antes de reenviar e NUNCA perde em silêncio
+// ---------------------------------------------------------------------------
+// O defeito medido: `logAiUsage` fazia UM insert e engolia qualquer falha com
+// `console.warn` — consumo PAGO virava registro perdido, sem observabilidade
+// e sem caminho de reenvio. A correção dá ao insert uma chave de idempotência
+// (`metadata.log_key`), retenta o transitório com checagem de existência e,
+// esgotado o teto, emite um marcador reprocessável em vez de calar.
+//
+// Os testes abaixo fixam o contrato do aceite:
+//   (d) 500 transitório no primeiro POST → checa existência → reinsere → o
+//       consumo TERMINA gravado e a linha leva `metadata.log_key`;
+//   (e) falha insistente → `console.error` com `[ai-usage][LOG-ESSENCIAL-PERDIDO]`
+//       e payload com `log_key`; `reprocessarLogEssencial` grava UMA vez e um
+//       segundo reenvio NÃO gera novo POST ("sem duplicar cobrança");
+//   (f) resposta perdida DEPOIS da escrita → a checagem vê a linha e NÃO
+//       reinsere.
+function stubRestFalhas(
+  statusDosPosts: number[],
+  checagem: () => Record<string, unknown>[],
+): { capturas: Captura[]; restaurar: () => void } {
+  const capturas: Captura[] = [];
+  let posts = 0;
+  const original = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    const metodo = init?.method ?? "GET";
+    let corpo: unknown = null;
+    try {
+      corpo = init?.body ? JSON.parse(String(init.body)) : null;
+    } catch {
+      corpo = init?.body ?? null;
+    }
+    capturas.push({ metodo, url, corpo });
+
+    if (url.includes("/rest/v1/ai_usage_logs") && metodo === "POST") {
+      const status = statusDosPosts[Math.min(posts, statusDosPosts.length - 1)];
+      posts += 1;
+      return Promise.resolve(
+        new Response(status >= 200 && status < 300 ? "" : '{"message":"falhou"}', {
+          status,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    }
+    if (url.includes("/rest/v1/ai_usage_logs") && metodo === "GET") {
+      return Promise.resolve(
+        new Response(JSON.stringify(checagem()), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    }
+    // profiles e demais tabelas: vazio (ENTRADA usa userId nulo, mas a stub
+    // precisa responder algo caso um caminho futuro consulte).
+    return Promise.resolve(
+      new Response("[]", { status: 200, headers: { "content-type": "application/json" } }),
+    );
+  }) as typeof fetch;
+  return { capturas, restaurar: () => { globalThis.fetch = original; } };
+}
+
+const postsEmAiUsageLogs = (capturas: Captura[]) =>
+  capturas.filter((c) => c.metodo === "POST" && c.url.includes("/rest/v1/ai_usage_logs"));
+
+const checagensDeLogKey = (capturas: Captura[]) =>
+  capturas.filter((c) => c.metodo === "GET" && c.url.includes("log_key"));
+
+/** Espia console.error e devolve o restaurador. */
+function espiarConsoleError(): { mensagens: string[]; restaurar: () => void } {
+  const mensagens: string[] = [];
+  const original = console.error;
+  console.error = (...partes: unknown[]) => {
+    mensagens.push(partes.map(String).join(" "));
+  };
+  return { mensagens, restaurar: () => { console.error = original; } };
+}
+
+Deno.test("IA-TIMEOUT-001 logAiUsage: falha transitória retenta com checagem e o consumo TERMINA gravado", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, restaurar } = stubRestFalhas([500, 201], () => []);
+
+  try {
+    await logAiUsage(ENTRADA);
+
+    assertEquals(
+      postsEmAiUsageLogs(capturas).length,
+      2,
+      "o insert que falhou com 500 tinha de ser retentado",
+    );
+    assertEquals(
+      checagensDeLogKey(capturas).length,
+      1,
+      "antes do reenvio, a existência da linha por log_key tinha de ser conferida",
+    );
+
+    const linha = linhaEnviada(capturas);
+    assert(linha !== null, "nenhuma linha foi enviada ao PostgREST");
+    const metadata = (linha!.metadata ?? {}) as Record<string, unknown>;
+    assertEquals(typeof metadata.log_key, "string", "a linha tem de levar metadata.log_key");
+    assertEquals(
+      metadata.log_key,
+      await chaveDeLog(linha!),
+      "a log_key gravada tem de ser a chave dos campos estáveis da linha",
+    );
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 log essencial perdido é observável e reprocessável sem duplicar cobrança", async () => {
+  const restaurarEnv = stubEnv();
+  const espioes = espiarConsoleError();
+  let stub = stubRestFalhas([500, 500, 500], () => []);
+
+  try {
+    // Insistentemente 500: esgota o teto de tentativas.
+    await logAiUsage(ENTRADA);
+    assertEquals(
+      postsEmAiUsageLogs(stub.capturas).length,
+      3,
+      "o insert tinha de ser tentado até o teto de 3",
+    );
+    stub.restaurar();
+
+    const marcador = espioes.mensagens.find((m) =>
+      m.includes("[ai-usage][LOG-ESSENCIAL-PERDIDO]")
+    );
+    assert(marcador !== undefined, "a perda do log essencial não foi observável (sem marcador)");
+    const registro = JSON.parse(marcador!.slice(marcador!.indexOf(" ") + 1)) as
+      Record<string, unknown>;
+    assertEquals(
+      typeof ((registro.metadata ?? {}) as Record<string, unknown>).log_key,
+      "string",
+      "o payload do marcador tem de carregar a log_key para reenvio idempotente",
+    );
+
+    // PostgREST saudável e linha ausente: o reprocessamento grava UMA vez.
+    stub = stubRestFalhas([201], () => []);
+    assertEquals(await reprocessarLogEssencial(registro), "gravado");
+    assertEquals(
+      postsEmAiUsageLogs(stub.capturas).length,
+      1,
+      "o reenvio tinha de gravar exatamente uma vez",
+    );
+    stub.restaurar();
+
+    // Reenvio do MESMO registro com a linha já presente: nenhum POST novo —
+    // reprocessar não pode duplicar a cobrança.
+    stub = stubRestFalhas([201], () => [{ id: "log-9" }]);
+    assertEquals(await reprocessarLogEssencial(registro), "ja-existia");
+    assertEquals(
+      postsEmAiUsageLogs(stub.capturas).length,
+      0,
+      "reprocessar o mesmo consumo NÃO pode gerar segundo insert",
+    );
+  } finally {
+    stub.restaurar();
+    espioes.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 resposta perdida depois da escrita: a checagem impede o insert duplicado", async () => {
+  const restaurarEnv = stubEnv();
+  const espioes = espiarConsoleError();
+  // O primeiro insert GRAVOU no servidor, mas a resposta se perdeu (500).
+  // A checagem da volta seguinte já vê a linha: reenviar duplicaria a cobrança.
+  const { capturas, restaurar } = stubRestFalhas([500, 201], () => [{ id: "log-9" }]);
+
+  try {
+    await logAiUsage(ENTRADA);
+    assertEquals(
+      postsEmAiUsageLogs(capturas).length,
+      1,
+      "a linha já estava gravada: reenviar duplicaria a cobrança",
+    );
+    assertEquals(checagensDeLogKey(capturas).length, 1);
+    assert(
+      !espioes.mensagens.some((m) => m.includes("LOG-ESSENCIAL-PERDIDO")),
+      "nada foi perdido: o marcador não pode disparar",
+    );
+  } finally {
+    restaurar();
+    espioes.restaurar();
+    restaurarEnv();
+  }
 });
