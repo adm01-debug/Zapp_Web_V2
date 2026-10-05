@@ -117,6 +117,24 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
 }));
 
+// O alerta assina a chamada em curso no realtime (`useTerminoRemoto` → `supabase
+// .channel(...).on(...).subscribe()`). O cliente de `src/integrations/supabase/client.ts` tem a
+// URL/anon key de PRODUÇÃO fixas no código e a guarda de rede de `src/test/setup.ts` só troca o
+// `fetch` — o WebSocket passa direto. Sem este mock, cada `render(<IncomingCallAlert />)` com
+// `callId` abria um WebSocket REAL para `wss://<projeto>.supabase.co/realtime/v1/websocket`;
+// quando o socket conecta, o `dispatchEvent(new Event(...))` do undici estoura
+// `ERR_INVALID_ARG_TYPE` ("The \"event\" argument must be an instance of Event. Received an
+// instance of Event") porque o `Event` do jsdom não é o interno do node — vira "Unhandled Error"
+// e derruba o passo `testes` de `zapp-verify full .` mesmo com 0 testes falhando. Aqui o
+// transporte do realtime é dublado: nenhum byte sai para a rede. Mesmo padrão de
+// `src/components/inbox/__tests__/MediaVolume.test.tsx`.
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
+    removeChannel: vi.fn(),
+  },
+}));
+
 import { IncomingCallAlert } from '../IncomingCallAlert';
 
 describe('IncomingCallAlert — toque da chamada', () => {
