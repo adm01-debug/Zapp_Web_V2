@@ -41,13 +41,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const requestSeqRef = useRef(0);
 
-  const clearAuthState = useCallback(() => {
+  const clearAuthState = useCallback((options?: { preserveError?: boolean }) => {
     // Invalida qualquer consulta de perfil em voo e zera o estado publicado.
     requestSeqRef.current += 1;
     setProfile(null);
     setSession(null);
     setUser(null);
-    setError(null);
+    // O SIGNED_OUT emitido pelo signOut do próprio fail-closed não pode apagar
+    // a mensagem ('Sua conta está inativa.') que explica a saída na tela.
+    if (!options?.preserveError) setError(null);
   }, []);
 
   const clearCaches = useCallback(() => {
@@ -146,18 +148,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void initSession();
 
-    const subscription = AuthService.onAuthStateChange(async (event, session) => {
+    // O callback precisa ser síncrono: o supabase-js segura o lock de auth
+    // enquanto ele executa, e um await em applySession (fetchProfile/signOut)
+    // aqui dentro pode deadlockar. O trabalho async vai para o próximo tick.
+    const subscription = AuthService.onAuthStateChange((event, session) => {
       if (!mounted) return;
       log.info('[BOOT] Auth state change:', event, session ? 'Authenticated' : 'Unauthenticated');
 
       if (event === 'SIGNED_OUT') {
-        clearAuthState();
+        clearAuthState({ preserveError: true });
         clearCaches();
         return;
       }
 
       if (session?.user) {
-        await applySession(session);
+        setTimeout(() => {
+          if (mounted) void applySession(session);
+        }, 0);
       } else {
         clearAuthState();
       }

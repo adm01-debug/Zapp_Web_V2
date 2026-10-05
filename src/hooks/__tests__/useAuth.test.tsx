@@ -223,4 +223,44 @@ describe('useAuth hook', () => {
     expect(result.current.profile?.user_id).toBe('b');
     expect(supabase.auth.signOut).not.toHaveBeenCalled();
   });
+
+  it('does not call Supabase inside the onAuthStateChange callback', async () => {
+    // O supabase-js segura o lock de auth enquanto executa o callback: chamar
+    // fetchProfile/signOut dentro dele pode deadlockar. O handler precisa ser
+    // síncrono e adiar o trabalho async para fora do callback.
+    const fetchSpy = vi.spyOn(AuthService, 'fetchProfile').mockResolvedValue(makeProfile('b', true));
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    act(() => {
+      authCallback?.('SIGNED_IN', makeSession('b'));
+    });
+    // Ainda dentro do tick do callback: nenhuma chamada ao Supabase.
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(result.current.user?.id).toBe('b'));
+    expect(fetchSpy).toHaveBeenCalledWith('b');
+  });
+
+  it('keeps the inactive error after the SIGNED_OUT emitted by the fail-closed signOut', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: makeSession('a') }, error: null } as never);
+    vi.spyOn(AuthService, 'fetchProfile').mockResolvedValue(makeProfile('a', false));
+    // O signOut real emite SIGNED_OUT para os subscribers; o mock reproduz isso
+    // para provar que a mensagem não é apagada pelo próprio fail-closed.
+    vi.mocked(supabase.auth.signOut).mockImplementation((async () => {
+      authCallback?.('SIGNED_OUT', null);
+      return { error: null };
+    }) as never);
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => expect(supabase.auth.signOut).toHaveBeenCalled());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.user).toBeNull();
+    expect(result.current.profile).toBeNull();
+    expect(result.current.error).toBe('Sua conta está inativa.');
+  });
 });
