@@ -32,7 +32,6 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import {
   calcularCusto,
-  chaveDeLog,
   contaParaQuota,
   extractAiRequestId,
   extrairUsageDoStream,
@@ -44,7 +43,7 @@ import {
   normalizeCorrelationId,
   normalizeModality,
   reconciliarConsumo,
-  reprocessarLogEssencial,
+  reprocessarOutboxDeLog,
   tarifaAplicavel,
   type LinhaDeConsumo,
   type StreamOutcome,
@@ -54,7 +53,12 @@ import {
 type EdgeRuntimeType = { waitUntil?: (promise: Promise<unknown>) => void };
 const edgeGlobal = globalThis as { EdgeRuntime?: EdgeRuntimeType };
 
-type Captura = { metodo: string; url: string; corpo: unknown };
+type Captura = {
+  metodo: string;
+  url: string;
+  corpo: unknown;
+  cabecalhos?: Record<string, unknown>;
+};
 
 /** Fixa as credenciais do Supabase (sem rede real) e devolve o restaurador. */
 function stubEnv(): () => void {
@@ -1000,30 +1004,54 @@ Deno.test("IA-055 zero medido ≠ preço ausente, e valor inválido não passa",
 });
 
 // ---------------------------------------------------------------------------
-// (j) IA-TIMEOUT-001 — log essencial durável: retenta o transitório, confere
-// a existência antes de reenviar e NUNCA perde em silêncio
+// (j) IA-TIMEOUT-001 — log essencial durável: IDENTIDADE ÚNICA POR EVENTO no
+// banco (UNIQUE + ON CONFLICT) e OUTBOX persistente para o que falhar
 // ---------------------------------------------------------------------------
-// O defeito medido: `logAiUsage` fazia UM insert e engolia qualquer falha com
-// `console.warn` — consumo PAGO virava registro perdido, sem observabilidade
-// e sem caminho de reenvio. A correção dá ao insert uma chave de idempotência
-// (`metadata.log_key`), retenta o transitório com checagem de existência e,
-// esgotado o teto, emite um marcador reprocessável em vez de calar.
+// O que a rodada anterior errou, medido na recusa: `metadata.log_key` era uma
+// chave por CONTEÚDO (consumos legítimos idênticos colapsam) e a "idempotência"
+// era consultar-antes-de-inserir — sem restrição UNIQUE no banco, dois inserts
+// concorrentes passam pela checagem e duplicam a cobrança. E o que sobrava de
+// falha ia para `console.warn`: fora do banco, sem reprocessamento.
 //
-// Os testes abaixo fixam o contrato do aceite:
-//   (d) 500 transitório no primeiro POST → checa existência → reinsere → o
-//       consumo TERMINA gravado e a linha leva `metadata.log_key`;
-//   (e) falha insistente → `console.error` com `[ai-usage][LOG-ESSENCIAL-PERDIDO]`
-//       e payload com `log_key`; `reprocessarLogEssencial` grava UMA vez e um
-//       segundo reenvio NÃO gera novo POST ("sem duplicar cobrança");
-//   (f) resposta perdida DEPOIS da escrita → a checagem vê a linha e NÃO
-//       reinsere.
-function stubRestFalhas(
-  statusDosPosts: number[],
-  checagem: () => Record<string, unknown>[],
-): { capturas: Captura[]; restaurar: () => void } {
+// O contrato que estes testes fixam:
+//   1. event_id: identidade ÚNICA gerada no produtor, independente de conteúdo,
+//      imposta no banco por UNIQUE + upsert (`on_conflict=event_id`,
+//      `resolution=ignore-duplicates`) — NUNCA consultar-antes-de-inserir;
+//   2. reentrega do MESMO evento não duplica nem perde; conteúdo idêntico com
+//      evento distinto grava DUAS linhas;
+//   3. toda falha — do insert esgotado E de qualquer passo antes/depois dele —
+//      persiste na OUTBOX durável (`ai_usage_outbox`), reprocessável por
+//      leitura da própria outbox; console é só o ÚLTIMO recurso.
+
+/**
+ * Banco falso que honra o contrato real do PostgREST:
+ *  - `ai_usage_logs` tem UNIQUE(event_id): POST com `on_conflict` e
+ *    `resolution=ignore-duplicates` devolve `[]` quando o evento já existe;
+ *  - `ai_usage_outbox` persiste falhas (POST), expõe pendentes (GET) e aceita
+ *    baixa (PATCH);
+ *  - `posts` simula respostas do insert: `{status, grava}` — `grava: true` com
+ *    status de erro é a "resposta perdida depois da escrita".
+ */
+function stubBancoDeLog(opts: {
+  posts?: Array<{ status: number; grava?: boolean }>;
+  outboxStatus?: number;
+} = {}) {
   const capturas: Captura[] = [];
+  const tabela = new Map<string, Record<string, unknown>>();
+  const outbox: Array<Record<string, unknown>> = [];
+  let postsCfg = opts.posts ?? [{ status: 201 }];
   let posts = 0;
+  const outboxStatus = opts.outboxStatus ?? 201;
   const original = globalThis.fetch;
+
+  const json = (valor: unknown, status = 200) =>
+    Promise.resolve(
+      new Response(JSON.stringify(valor), {
+        status,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
     const metodo = init?.method ?? "GET";
@@ -1033,40 +1061,72 @@ function stubRestFalhas(
     } catch {
       corpo = init?.body ?? null;
     }
-    capturas.push({ metodo, url, corpo });
+    capturas.push({
+      metodo,
+      url,
+      corpo,
+      cabecalhos: (init?.headers ?? {}) as Record<string, unknown>,
+    });
 
     if (url.includes("/rest/v1/ai_usage_logs") && metodo === "POST") {
-      const status = statusDosPosts[Math.min(posts, statusDosPosts.length - 1)];
+      const cfg = postsCfg[Math.min(posts, postsCfg.length - 1)];
       posts += 1;
-      return Promise.resolve(
-        new Response(status >= 200 && status < 300 ? "" : '{"message":"falhou"}', {
-          status,
-          headers: { "content-type": "application/json" },
-        }),
-      );
+      const linha = corpo as Record<string, unknown> | null;
+      const eventId = linha?.event_id as string | undefined;
+      if (eventId && tabela.has(eventId)) return json([], 200); // ON CONFLICT DO NOTHING
+      const gravou = cfg.grava ?? (cfg.status >= 200 && cfg.status < 300);
+      if (gravou && eventId) tabela.set(eventId, linha!);
+      if (cfg.status >= 200 && cfg.status < 300) return json([linha], cfg.status);
+      return json({ message: "insert falhou" }, cfg.status);
     }
-    if (url.includes("/rest/v1/ai_usage_logs") && metodo === "GET") {
-      return Promise.resolve(
-        new Response(JSON.stringify(checagem()), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        }),
-      );
+    if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "POST") {
+      if (outboxStatus >= 300) return json({ message: "outbox falhou" }, outboxStatus);
+      const linha = corpo as Record<string, unknown>;
+      if (linha?.event_id && outbox.some((r) => r.event_id === linha.event_id)) {
+        return json([], 200);
+      }
+      outbox.push({
+        id: `ob-${outbox.length + 1}`,
+        tentativas: 0,
+        processed_at: null,
+        ...linha,
+      });
+      return json([linha], outboxStatus);
     }
-    // profiles e demais tabelas: vazio (ENTRADA usa userId nulo, mas a stub
-    // precisa responder algo caso um caminho futuro consulte).
-    return Promise.resolve(
-      new Response("[]", { status: 200, headers: { "content-type": "application/json" } }),
-    );
+    if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "GET") {
+      return json(outbox.filter((r) => r.processed_at === null));
+    }
+    if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "PATCH") {
+      const alvo = url.match(/id=eq\.([^&]+)/);
+      for (const r of outbox) {
+        if (!alvo || r.id === decodeURIComponent(alvo[1])) Object.assign(r, corpo);
+      }
+      return json([]);
+    }
+    return json([]);
   }) as typeof fetch;
-  return { capturas, restaurar: () => { globalThis.fetch = original; } };
+
+  return {
+    capturas,
+    tabela,
+    outbox,
+    setPosts: (p: Array<{ status: number; grava?: boolean }>) => {
+      postsCfg = p;
+      posts = 0;
+    },
+    restaurar: () => {
+      globalThis.fetch = original;
+    },
+  };
 }
 
 const postsEmAiUsageLogs = (capturas: Captura[]) =>
   capturas.filter((c) => c.metodo === "POST" && c.url.includes("/rest/v1/ai_usage_logs"));
 
-const checagensDeLogKey = (capturas: Captura[]) =>
-  capturas.filter((c) => c.metodo === "GET" && c.url.includes("log_key"));
+const postsNaOutbox = (capturas: Captura[]) =>
+  capturas.filter((c) => c.metodo === "POST" && c.url.includes("/rest/v1/ai_usage_outbox"));
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Espia console.error e devolve o restaurador. */
 function espiarConsoleError(): { mensagens: string[]; restaurar: () => void } {
@@ -1078,32 +1138,38 @@ function espiarConsoleError(): { mensagens: string[]; restaurar: () => void } {
   return { mensagens, restaurar: () => { console.error = original; } };
 }
 
-Deno.test("IA-TIMEOUT-001 logAiUsage: falha transitória retenta com checagem e o consumo TERMINA gravado", async () => {
+Deno.test("IA-TIMEOUT-001 a linha leva event_id gerado no produtor e o insert é UPSERT por ON CONFLICT", async () => {
   const restaurarEnv = stubEnv();
-  const { capturas, restaurar } = stubRestFalhas([500, 201], () => []);
+  const { capturas, restaurar } = stubBancoDeLog();
 
   try {
     await logAiUsage(ENTRADA);
 
-    assertEquals(
-      postsEmAiUsageLogs(capturas).length,
-      2,
-      "o insert que falhou com 500 tinha de ser retentado",
+    const post = postsEmAiUsageLogs(capturas)[0];
+    assert(post, "nenhum insert foi enviado ao PostgREST");
+    assert(
+      post.url.includes("on_conflict=event_id"),
+      "o insert tem de ser UPSERT ancorado na restrição UNIQUE de event_id",
     );
-    assertEquals(
-      checagensDeLogKey(capturas).length,
-      1,
-      "antes do reenvio, a existência da linha por log_key tinha de ser conferida",
+    const prefer = String(post.cabecalhos?.Prefer ?? post.cabecalhos?.prefer ?? "");
+    assert(
+      prefer.includes("ignore-duplicates"),
+      "reentrega do mesmo evento tem de virar DO NOTHING, não segunda linha",
     );
 
-    const linha = linhaEnviada(capturas);
-    assert(linha !== null, "nenhuma linha foi enviada ao PostgREST");
-    const metadata = (linha!.metadata ?? {}) as Record<string, unknown>;
-    assertEquals(typeof metadata.log_key, "string", "a linha tem de levar metadata.log_key");
+    const linha = post.corpo as Record<string, unknown>;
+    assert(
+      typeof linha.event_id === "string" && UUID_RE.test(linha.event_id),
+      "o produtor tem de gerar a identidade do evento (uuid) na linha",
+    );
+
+    const consultas = capturas.filter(
+      (c) => c.metodo === "GET" && c.url.includes("/rest/v1/ai_usage_logs"),
+    );
     assertEquals(
-      metadata.log_key,
-      await chaveDeLog(linha!),
-      "a log_key gravada tem de ser a chave dos campos estáveis da linha",
+      consultas.length,
+      0,
+      "consultar-antes-de-inserir admite corrida: a unicidade é do BANCO, não de um SELECT",
     );
   } finally {
     restaurar();
@@ -1111,51 +1177,151 @@ Deno.test("IA-TIMEOUT-001 logAiUsage: falha transitória retenta com checagem e 
   }
 });
 
-Deno.test("IA-TIMEOUT-001 log essencial perdido é observável e reprocessável sem duplicar cobrança", async () => {
+Deno.test("IA-TIMEOUT-001 conteúdo idêntico com eventos distintos grava DUAS linhas (não colapsa)", async () => {
   const restaurarEnv = stubEnv();
-  const espioes = espiarConsoleError();
-  let stub = stubRestFalhas([500, 500, 500], () => []);
+  const { capturas, tabela, restaurar } = stubBancoDeLog();
 
   try {
-    // Insistentemente 500: esgota o teto de tentativas.
     await logAiUsage(ENTRADA);
-    assertEquals(
-      postsEmAiUsageLogs(stub.capturas).length,
-      3,
-      "o insert tinha de ser tentado até o teto de 3",
-    );
-    stub.restaurar();
+    await logAiUsage(ENTRADA); // mesmo conteúdo, evento NOVO
 
-    const marcador = espioes.mensagens.find((m) =>
-      m.includes("[ai-usage][LOG-ESSENCIAL-PERDIDO]")
-    );
-    assert(marcador !== undefined, "a perda do log essencial não foi observável (sem marcador)");
-    const registro = JSON.parse(marcador!.slice(marcador!.indexOf(" ") + 1)) as
-      Record<string, unknown>;
+    const posts = postsEmAiUsageLogs(capturas);
+    assertEquals(posts.length, 2, "dois consumos legítimos = dois inserts");
+    const ids = posts.map((c) => (c.corpo as Record<string, unknown>).event_id);
+    assert(ids[0] !== ids[1], "a identidade é do EVENTO, não do conteúdo");
     assertEquals(
-      typeof ((registro.metadata ?? {}) as Record<string, unknown>).log_key,
-      "string",
-      "o payload do marcador tem de carregar a log_key para reenvio idempotente",
+      tabela.size,
+      2,
+      "consumos legítimos idênticos não podem colapsar por chave de conteúdo",
     );
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
 
-    // PostgREST saudável e linha ausente: o reprocessamento grava UMA vez.
-    stub = stubRestFalhas([201], () => []);
-    assertEquals(await reprocessarLogEssencial(registro), "gravado");
+Deno.test("IA-TIMEOUT-001 reentrega do MESMO evento não duplica nem perde", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, tabela, outbox, restaurar } = stubBancoDeLog();
+  const EVENTO = "7b3f1a2c-9d4e-4f50-8a6b-1c2d3e4f5a6b";
+
+  try {
+    // O mesmo evento entregue duas vezes (reentrada/concorrência no produtor).
+    await Promise.all([
+      logAiUsage({ ...ENTRADA, eventId: EVENTO }),
+      logAiUsage({ ...ENTRADA, eventId: EVENTO }),
+    ]);
+
+    assertEquals(postsEmAiUsageLogs(capturas).length, 2, "as duas entregas tentam gravar");
     assertEquals(
-      postsEmAiUsageLogs(stub.capturas).length,
+      tabela.size,
       1,
-      "o reenvio tinha de gravar exatamente uma vez",
+      "o UNIQUE do banco colapsa a reentrega em UMA linha — sem depender de checagem prévia",
     );
-    stub.restaurar();
+    assertEquals(
+      outbox.length,
+      0,
+      "o evento foi entregue nas duas tentativas: nada pode ir para a outbox",
+    );
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
 
-    // Reenvio do MESMO registro com a linha já presente: nenhum POST novo —
-    // reprocessar não pode duplicar a cobrança.
-    stub = stubRestFalhas([201], () => [{ id: "log-9" }]);
-    assertEquals(await reprocessarLogEssencial(registro), "ja-existia");
+Deno.test("IA-TIMEOUT-001 resposta perdida DEPOIS da escrita: a restrição impede a duplicata", async () => {
+  const restaurarEnv = stubEnv();
+  // O primeiro POST GRAVOU no servidor, mas o cliente viu 500. O reenvio bate
+  // na UNIQUE — é o banco que decide, não uma consulta que admite corrida.
+  const { capturas, tabela, outbox, restaurar } = stubBancoDeLog({
+    posts: [{ status: 500, grava: true }],
+  });
+
+  try {
+    await logAiUsage(ENTRADA);
+
+    assertEquals(
+      postsEmAiUsageLogs(capturas).length,
+      2,
+      "o 500 transitório retenta — e a segunda tentativa é absorvida pela restrição",
+    );
+    assertEquals(tabela.size, 1, "reenviar o que já gravou não pode duplicar a cobrança");
+    assertEquals(outbox.length, 0, "consumo entregue não é falha: a outbox fica vazia");
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 falha transitória retenta e o consumo TERMINA gravado", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, tabela, outbox, restaurar } = stubBancoDeLog({
+    posts: [{ status: 500 }, { status: 201 }],
+  });
+
+  try {
+    await logAiUsage(ENTRADA);
+
+    assertEquals(postsEmAiUsageLogs(capturas).length, 2, "o 500 tinha de ser retentado");
+    assertEquals(tabela.size, 1, "o consumo terminou gravado");
+    assertEquals(outbox.length, 0, "sucesso na retentativa não gera registro de falha");
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 insert esgotado vai para a OUTBOX durável e reprocessa UMA vez", async () => {
+  const restaurarEnv = stubEnv();
+  const espioes = espiarConsoleError();
+  const stub = stubBancoDeLog({ posts: [{ status: 500 }, { status: 500 }, { status: 500 }] });
+
+  try {
+    await logAiUsage(ENTRADA);
+    assertEquals(postsEmAiUsageLogs(stub.capturas).length, 3, "o insert tinha de ir até o teto");
+    assertEquals(
+      postsNaOutbox(stub.capturas).length,
+      1,
+      "a falha tem de persistir na outbox — console.warn sozinho não é durável nem reprocessável",
+    );
+    assertEquals(stub.outbox.length, 1);
+    assertEquals(
+      stub.outbox[0].processed_at,
+      null,
+      "o registro fica PENDENTE até um reprocessamento confirmar a entrega",
+    );
+    const payload = stub.outbox[0].payload as Record<string, unknown>;
+    const linhaOutbox = payload.linha as Record<string, unknown>;
+    assert(linhaOutbox, "a outbox carrega a linha pronta para reenvio");
+    assertEquals(
+      linhaOutbox.event_id,
+      stub.outbox[0].event_id,
+      "a identidade do evento é a mesma da linha — o reenvio reencontra o evento",
+    );
+    assert(
+      !espioes.mensagens.some((m) => m.includes("LOG-ESSENCIAL-PERDIDO")),
+      "com a outbox durável disponível, o marcador de último recurso não dispara",
+    );
+
+    // Reprocessamento por LEITURA DA OUTBOX: banco saudável, entrega confirma.
+    stub.setPosts([{ status: 201 }]);
+    const r1 = await reprocessarOutboxDeLog();
+    assertEquals(r1.lidos, 1);
+    assertEquals(r1.gravados, 1, "o pendente foi entregue ao log");
+    assertEquals(stub.tabela.size, 1);
+    assert(
+      stub.outbox[0].processed_at !== null,
+      "entrega confirmada tira o registro da fila (processed_at)",
+    );
+
+    // Segundo reprocessamento: nada pendente, nenhum POST novo — sem duplicata.
+    const postsAntes = postsEmAiUsageLogs(stub.capturas).length;
+    const r2 = await reprocessarOutboxDeLog();
+    assertEquals(r2.lidos, 0, "a fila processada não volta a aparecer");
     assertEquals(
       postsEmAiUsageLogs(stub.capturas).length,
-      0,
-      "reprocessar o mesmo consumo NÃO pode gerar segundo insert",
+      postsAntes,
+      "reprocessar o que já foi entregue NÃO pode gerar novo insert",
     );
   } finally {
     stub.restaurar();
@@ -1164,24 +1330,112 @@ Deno.test("IA-TIMEOUT-001 log essencial perdido é observável e reprocessável 
   }
 });
 
-Deno.test("IA-TIMEOUT-001 resposta perdida depois da escrita: a checagem impede o insert duplicado", async () => {
+Deno.test("IA-TIMEOUT-001 pendente cuja linha JÁ existe é baixado sem novo consumo (sem duplicar)", async () => {
   const restaurarEnv = stubEnv();
-  const espioes = espiarConsoleError();
-  // O primeiro insert GRAVOU no servidor, mas a resposta se perdeu (500).
-  // A checagem da volta seguinte já vê a linha: reenviar duplicaria a cobrança.
-  const { capturas, restaurar } = stubRestFalhas([500, 201], () => [{ id: "log-9" }]);
+  // O POST é PERMANENTE (400) mas GRAVOU no servidor — falha sem retentativa,
+  // e a linha está lá. A outbox recebe o pendente; o reprocessamento confirma
+  // a existência pela restrição (ON CONFLICT → []) e baixa o registro.
+  const stub = stubBancoDeLog({ posts: [{ status: 400, grava: true }] });
 
   try {
     await logAiUsage(ENTRADA);
+    assertEquals(stub.outbox.length, 1, "o cliente viu falha: o registro vai para a outbox");
+    assertEquals(stub.tabela.size, 1, "mas a linha está gravada no servidor");
+
+    stub.setPosts([{ status: 201 }]);
+    const r = await reprocessarOutboxDeLog();
+    assertEquals(r.lidos, 1);
+    assertEquals(r.gravados, 0, "não pode gravar de novo: seria cobrança dupla");
+    assertEquals(r.jaExistiam, 1, "a restrição confirmou a linha existente");
+    assertEquals(stub.tabela.size, 1);
+    assert(stub.outbox[0].processed_at !== null, "pendência confirmada sai da fila");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 falha EXTERNA ao insert vai para a outbox durável — sem catch mudo", async () => {
+  const restaurarEnv = stubEnv();
+  // Quebra um passo ANTES do insert (a geração da identidade do evento): o
+  // defeito apontado era a falha externa cair no catch com console.warn.
+  const original = Crypto.prototype.randomUUID;
+  Crypto.prototype.randomUUID = () => {
+    throw new Error("rng indisponivel");
+  };
+  const stub = stubBancoDeLog();
+
+  try {
+    await logAiUsage(ENTRADA);
+
     assertEquals(
-      postsEmAiUsageLogs(capturas).length,
-      1,
-      "a linha já estava gravada: reenviar duplicaria a cobrança",
+      postsEmAiUsageLogs(stub.capturas).length,
+      0,
+      "a falha foi anterior ao insert — nenhum POST em ai_usage_logs",
     );
-    assertEquals(checagensDeLogKey(capturas).length, 1);
+    assertEquals(
+      postsNaOutbox(stub.capturas).length,
+      1,
+      "a falha externa tinha de virar registro DURÁVEL na outbox",
+    );
+    assert(String(stub.outbox[0].motivo).includes("rng indisponivel"));
+    const payload = stub.outbox[0].payload as Record<string, unknown>;
     assert(
-      !espioes.mensagens.some((m) => m.includes("LOG-ESSENCIAL-PERDIDO")),
-      "nada foi perdido: o marcador não pode disparar",
+      payload.entrada !== undefined && payload.entrada !== null,
+      "sem linha montada, a outbox guarda a ENTRADA para remontar no reprocessamento",
+    );
+  } finally {
+    Crypto.prototype.randomUUID = original;
+    stub.restaurar();
+  }
+
+  // Com o runtime saudável, o pendente de entrada remonta a linha e entrega.
+  const stub2 = stubBancoDeLog({ posts: [{ status: 201 }] });
+  try {
+    // Mesma fila: o stub novo começa vazio — injetamos o registro pendente.
+    stub2.outbox.push({
+      id: "ob-ext-1",
+      event_id: null,
+      tentativas: 0,
+      processed_at: null,
+      payload: { entrada: ENTRADA },
+      motivo: "rng indisponivel",
+    });
+
+    const r = await reprocessarOutboxDeLog();
+    assertEquals(r.lidos, 1);
+    assertEquals(r.gravados, 1, "a entrada pendente remonta a linha e entrega");
+    assertEquals(stub2.tabela.size, 1);
+    const [linhaEntregue] = [...stub2.tabela.values()];
+    assert(
+      typeof linhaEntregue.event_id === "string" && UUID_RE.test(linhaEntregue.event_id),
+      "o reprocessamento gera a identidade que faltou — a linha sempre nasce com event_id",
+    );
+    assert(stub2.outbox[0].processed_at !== null, "pendência externa também sai da fila");
+  } finally {
+    stub2.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 outbox indisponível: o marcador de console é o ÚLTIMO recurso", async () => {
+  const restaurarEnv = stubEnv();
+  const espioes = espiarConsoleError();
+  const { capturas, restaurar } = stubBancoDeLog({
+    posts: [{ status: 500 }, { status: 500 }, { status: 500 }],
+    outboxStatus: 500,
+  });
+
+  try {
+    await logAiUsage(ENTRADA);
+
+    assert(
+      postsNaOutbox(capturas).length >= 1,
+      "a outbox durável tem de ser tentada ANTES de qualquer marcador",
+    );
+    assert(
+      espioes.mensagens.some((m) => m.includes("[ai-usage][LOG-ESSENCIAL-PERDIDO]")),
+      "se nem a outbox grava, a única saída que resta é o marcador observável",
     );
   } finally {
     restaurar();
