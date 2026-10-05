@@ -1097,9 +1097,15 @@ function stubBancoDeLog(opts: {
       return json(outbox.filter((r) => r.processed_at === null));
     }
     if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "PATCH") {
-      const alvo = url.match(/id=eq\.([^&]+)/);
+      const porId = url.match(/(?:[?&])id=eq\.([^&]+)/);
+      const porEvento = url.match(/event_id=eq\.([^&]+)/);
+      const exigeEntregue = url.includes("processed_at=not.is.null");
       for (const r of outbox) {
-        if (!alvo || r.id === decodeURIComponent(alvo[1])) Object.assign(r, corpo);
+        const casa = porEvento
+          ? r.event_id === decodeURIComponent(porEvento[1]) &&
+            (!exigeEntregue || r.processed_at !== null)
+          : (!porId || r.id === decodeURIComponent(porId[1]));
+        if (casa) Object.assign(r, corpo);
       }
       return json([]);
     }
@@ -1440,6 +1446,53 @@ Deno.test("IA-TIMEOUT-001 outbox indisponível: o marcador de console é o ÚLTI
   } finally {
     restaurar();
     espioes.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 outbox JA ENTREGUE volta a fila quando o mesmo evento falha de novo", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubBancoDeLog({ posts: [{ status: 400 }] });
+  const EVENTO = "1f2e3d4c-5b6a-4789-8abc-0d1e2f3a4b5c";
+
+  try {
+    // Registro JÁ ENTREGUE (processed_at preenchido) do mesmo evento: ele veio
+    // do banco, não foi criado por este stub.
+    stub.outbox.push({
+      id: "ob-ja-entregue",
+      event_id: EVENTO,
+      tentativas: 3,
+      processed_at: "2026-10-05T12:00:00.000Z",
+      payload: { linha: { event_id: EVENTO } },
+      motivo: "antigo",
+    });
+
+    // O MESMO evento falha de novo com falha PERMANENTE (400, sem retentativa):
+    // o UNIQUE(event_id) absorveria a duplicata — a falha nova ficaria perdida
+    // se o registro entregue não voltasse para a fila.
+    await logAiUsage({ ...ENTRADA, eventId: EVENTO });
+
+    assertEquals(postsEmAiUsageLogs(stub.capturas).length, 1, "a falha permanente não retenta");
+    assertEquals(stub.outbox.length, 1, "não duplica o registro da outbox");
+    assertEquals(
+      stub.outbox[0].processed_at,
+      null,
+      "registro entregue cujo evento falhou de novo VOLTA para a fila (durável, não silenciado)",
+    );
+    assert(
+      postsNaOutbox(stub.capturas).length >= 1,
+      "a outbox foi o destino — não um console.warn",
+    );
+
+    // E o reprocessamento entrega de verdade, sem duplicar cobrança.
+    stub.setPosts([{ status: 201 }]);
+    const r = await reprocessarOutboxDeLog();
+    assertEquals(r.lidos, 1);
+    assertEquals(r.gravados, 1);
+    assertEquals(stub.tabela.size, 1);
+    assert(stub.outbox[0].processed_at !== null, "entregue de novo, sai da fila");
+  } finally {
+    stub.restaurar();
     restaurarEnv();
   }
 });

@@ -382,14 +382,65 @@ async function gravarNaOutbox(
       method: "POST",
       headers: {
         ...cabecalhosRest(chave),
-        Prefer: "resolution=ignore-duplicates,return=minimal",
+        Prefer: "resolution=ignore-duplicates,return=representation",
       },
       body: JSON.stringify({ event_id: eventId, payload, motivo }),
     });
-    try { await resposta.text(); } catch { /* corpo de erro pode nem existir */ }
-    return resposta.ok;
+    const corpo = await resposta.text();
+    if (!resposta.ok) return false;
+    // A resposta é `[]` quando o UNIQUE(event_id) absorveu o conflito — a linha
+    // já existia. Se essa linha já tinha sido ENTREGUE (`processed_at`), o
+    // mesmo evento falhou de NOVO: ignorar a duplicata apagaria a falha nova
+    // (era o buraco apontado). Devolvemos o registro à fila; linha ainda
+    // PENDENTE não é tocada, porque já está na fila.
+    if (eventId !== null && ehConflitoAbsorvido(corpo)) {
+      await devolverPendenciaAOutbox(url, chave, eventId, payload, motivo);
+    }
+    return true;
   } catch {
     return false;
+  }
+}
+
+/** `true` quando o corpo é o array vazio do `ON CONFLICT DO NOTHING` (conflito absorvido). */
+function ehConflitoAbsorvido(corpo: string): boolean {
+  if (corpo === "") return false;
+  try {
+    const parsed = JSON.parse(corpo) as unknown;
+    return Array.isArray(parsed) && parsed.length === 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Devolve à fila o registro JÁ ENTREGUE do mesmo evento que falhou de novo.
+ *
+ * O filtro `processed_at=not.is.null` é a garantia de que só a linha congelada
+ * volta a pendente: um registro que ainda está pendente permanece intocado.
+ * Falha aqui não é fatal — o registro anterior segue entregue e a próxima
+ * falha do mesmo evento tentará de novo.
+ */
+async function devolverPendenciaAOutbox(
+  url: string,
+  chave: string,
+  eventId: string,
+  payload: Record<string, unknown>,
+  motivo: string,
+): Promise<void> {
+  try {
+    const resposta = await fetch(
+      `${url}/rest/v1/ai_usage_outbox?event_id=eq.${encodeURIComponent(eventId)}` +
+        `&processed_at=not.is.null`,
+      {
+        method: "PATCH",
+        headers: { ...cabecalhosRest(chave), Prefer: "return=minimal" },
+        body: JSON.stringify({ processed_at: null, tentativas: 0, payload, motivo }),
+      },
+    );
+    try { await resposta.text(); } catch { /* corpo de erro pode nem existir */ }
+  } catch {
+    // Sem o reenfileiramento, o registro anterior segue entregue; nada a apagar.
   }
 }
 
