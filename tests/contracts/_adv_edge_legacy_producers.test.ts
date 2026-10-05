@@ -137,6 +137,12 @@
  *    reconcilia como tentativa sem cobrança de tokens). É arquivo de teste, não produz token
  *    legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
  *    varrido sobe, medido pela varredura depois do merge.
+ *  - 245: IA-050 (05/10/2026) — `_shared/ai-circuit.ts` (circuit breaker por provedor no
+ *    despacho de IA, derivado do ledger `ai_usage_logs`) e `_shared/ai-circuit.test.ts` (prova
+ *    Deno vermelho→verde do bloqueio sem fetch, da meia-abertura e de que 4xx do pedido não abre
+ *    o circuito). Nenhum dos dois produz vocabulário legado: o mapa INVENTARIO e a contagem de
+ *    ocorrências (3) seguem idênticos — só o total varrido sobe (243 → 245), medido pela
+ *    varredura depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -211,8 +217,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('243 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(243);
+  it('245 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(245);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
