@@ -264,16 +264,50 @@ export function useConnectionsManager() {
     toast({ title: 'Conexão padrão atualizada' });
   };
 
+  // TRA-005: excluir conexão NÃO pode esconder falha na Evolution GO nem
+  // apagar o vínculo local quando o remoto falha. Ordem obrigatória: primeiro
+  // a GO (o edge só apaga a linha em whatsapp_connections quando a GO
+  // confirma), depois o vínculo local. Se o vínculo sobrar, o estado é
+  // "exclusão pendente" — nunca sucesso mudo.
   const handleDelete = async (connection: WhatsAppConnection) => {
     try {
-      if (connection.instance_id) await deleteInstance(connection.instance_id).catch(() => {});
-      const { error } = await supabase.from('whatsapp_connections').delete().eq('id', connection.id);
-      if (!error) {
-        setConnections(connections.filter((conn) => conn.id !== connection.id));
-        toast({ title: 'Conexão removida', description: 'A conexão foi excluída com sucesso.' });
+      if (connection.instance_id) {
+        // Sem `.catch(() => {})`: a rejeição da GO sobe e interrompe o fluxo,
+        // para não remover o vínculo local com a instância remota ainda viva.
+        await deleteInstance(connection.instance_id);
       }
+
+      // Idempotente: cobre linha órfã (sem instance_id) e o caso de o edge não
+      // ter conseguido apagar o vínculo local após o OK da GO.
+      const { error } = await supabase
+        .from('whatsapp_connections')
+        .delete()
+        .eq('id', connection.id);
+
+      if (error) {
+        toast({
+          title: 'Exclusão pendente',
+          description: connection.instance_id
+            ? 'A instância foi removida na Evolution GO, mas o vínculo local não pôde ser apagado. Tente excluir novamente.'
+            : 'Não foi possível apagar o vínculo local. Tente novamente.',
+          variant: 'destructive',
+        });
+        await fetchConnections();
+        return;
+      }
+
+      setConnections((prev) => prev.filter((conn) => conn.id !== connection.id));
+      toast({ title: 'Conexão removida', description: 'A conexão foi excluída com sucesso.' });
     } catch (error: unknown) {
-      toast({ title: 'Erro ao excluir', description: error instanceof Error ? error.message : 'Erro desconhecido', variant: 'destructive' });
+      log.error('Error deleting connection:', error);
+      // Falha na GO: nada foi apagado localmente. Re-sincroniza o estado real
+      // e mostra o motivo — nunca anuncia sucesso.
+      await fetchConnections();
+      toast({
+        title: 'Erro ao excluir',
+        description: `${error instanceof Error ? error.message : 'Erro desconhecido'} — a conexão foi mantida.`,
+        variant: 'destructive',
+      });
     }
   };
 
