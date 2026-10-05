@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { TRIGGER_TYPES, ACTION_TYPES } from './automationConstants';
+import { TRIGGER_TYPES, ACTION_TYPES, REQUIRED_ACTION_CONFIG } from './automationConstants';
 import type { AutomationRow } from './useAutomations';
 
 interface AutomationEditorDialogProps {
@@ -14,6 +14,22 @@ interface AutomationEditorDialogProps {
   onOpenChange: (open: boolean) => void;
   automation?: AutomationRow | null;
   onSave: (data: Partial<AutomationRow>) => Promise<void>;
+}
+
+type ActionRecord = Record<string, unknown>;
+
+function readActions(automation?: AutomationRow | null): ActionRecord[] {
+  const raw = Array.isArray(automation?.actions) ? automation.actions : [];
+  return raw as unknown as ActionRecord[];
+}
+
+function readConfig(action?: ActionRecord): ActionRecord {
+  const config = action?.config;
+  return config && typeof config === 'object' && !Array.isArray(config) ? (config as ActionRecord) : {};
+}
+
+function readString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
 }
 
 // R2-MOD-001: o `AutomationsManager` mantém este diálogo SEMPRE montado e troca
@@ -29,19 +45,62 @@ export function AutomationEditorDialog(props: AutomationEditorDialogProps) {
 }
 
 function AutomationEditorForm({ open, onOpenChange, automation, onSave }: AutomationEditorDialogProps) {
-  const [name, setName] = useState(automation?.name || '');
-  const [description, setDescription] = useState(automation?.description || '');
-  const [triggerType, setTriggerType] = useState(automation?.trigger_type || 'new_message');
-  const actions = Array.isArray(automation?.actions) ? automation.actions : [];
-  const [actionType, setActionType] = useState((actions[0] as Record<string, unknown>)?.type as string || 'send_message');
-  const [messageContent, setMessageContent] = useState(((actions[0] as Record<string, Record<string, string>>)?.config)?.message || '');
+  const [name, setName] = useState(automation?.name ?? '');
+  const [description, setDescription] = useState(automation?.description ?? '');
+  const [triggerType, setTriggerType] = useState(automation?.trigger_type ?? 'new_message');
+  const [actionType, setActionType] = useState(() => {
+    const [firstAction] = readActions(automation);
+    return readString(firstAction?.type) || 'send_message';
+  });
+  const [messageContent, setMessageContent] = useState(() => {
+    const [firstAction] = readActions(automation);
+    return readString(readConfig(firstAction).message);
+  });
   const [isSaving, setIsSaving] = useState(false);
+
+  // Mescla a primeira ação com a existente em vez de recriá-la, para não perder
+  // parâmetros de configuração que o editor não expõe (ex.: delay_seconds).
+  // #99: `message` só é sobrescrito para `send_message` — `send_notification`
+  // TAMBÉM exige `message`, e apagá-lo impedia salvar/renomear esse tipo. Ao
+  // TROCAR de tipo, removemos apenas as chaves que não pertencem ao novo tipo
+  // segundo REQUIRED_ACTION_CONFIG, para não arrastar configuração obsoleta
+  // (ex.: `tag_id` ao virar `assign_agent`); dentro do mesmo tipo, preserva-se
+  // tudo o que já existia.
+  const buildFirstAction = (): { action: ActionRecord; config: ActionRecord } => {
+    const [firstAction] = readActions(automation);
+    const config: ActionRecord = { ...readConfig(firstAction) };
+    if (actionType === 'send_message') {
+      config.message = messageContent;
+    } else {
+      delete config.message;
+    }
+    return { action: { ...(firstAction ?? {}), type: actionType, config }, config };
+  };
+
+  const { config: draftConfig } = buildFirstAction();
+  const requiredConfig = REQUIRED_ACTION_CONFIG[actionType] ?? [];
+  const missingConfig = requiredConfig.filter((configKey) => readString(draftConfig[configKey]).trim() === '');
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
+    if (missingConfig.length > 0) {
+      const label = ACTION_TYPES.find((a) => a.type === actionType)?.label ?? actionType;
+      toast.error(`Ação "${label}" está sem configuração obrigatória: ${missingConfig.join(', ')}`);
+      return;
+    }
+    const existing = readActions(automation);
+    const { action: firstAction } = buildFirstAction();
+    const actions = existing.length > 0 ? [firstAction, ...existing.slice(1)] : [firstAction];
     setIsSaving(true);
     try {
-      await onSave({ name, description, trigger_type: triggerType, trigger_config: {}, actions: [{ type: actionType, config: { message: messageContent } }] });
+      // R2-MOD-002: preserva trigger_config e as demais ações que a UI não edita.
+      await onSave({
+        name,
+        description,
+        trigger_type: triggerType,
+        trigger_config: automation?.trigger_config ?? {},
+        actions: actions as unknown as AutomationRow['actions'],
+      });
       onOpenChange(false);
     } finally { setIsSaving(false); }
   };
@@ -96,6 +155,12 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
               <Label>Mensagem</Label>
               <Input value={messageContent} onChange={(e) => setMessageContent(e.target.value)} placeholder="Digite a mensagem automática..." />
             </div>
+          )}
+          {missingConfig.length > 0 && actionType !== 'send_message' && (
+            <p className="text-xs text-amber-600">
+              Esta ação exige configuração ({missingConfig.join(', ')}) que não é editável nesta tela e não
+              está presente na automação salva. Salvar ficará bloqueado até a configuração existir.
+            </p>
           )}
         </div>
         <DialogFooter>
