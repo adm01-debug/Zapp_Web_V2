@@ -24,7 +24,10 @@
  *  - contraprova: o mesmo heredoc com o comentario de Bash volta a travar a
  *    consulta, entao a regressao e' detectada por EXECUCAO, nao por texto.
  *
- * Roda com docker real (o wrapper de CI seta SKIP_DOCKER_SHIM=1):
+ * Roda pelo docker-shim E47 como os demais testes do job (o shim cria um banco
+ * isolado por container no PostgreSQL compartilhado); com docker real funciona
+ * igual, porque a prontidao e' o mesmo gate do wait_for_postgres() do harness
+ * (marcador de init nos logs + SELECT 1):
  *   bash scripts/db-audit/retry-disposable-postgres-test.sh \
  *     node --test scripts/db-audit/ledger-postapply-query.integration.mjs
  */
@@ -81,18 +84,28 @@ try {
   dockerOk(['run', '--rm', '-d', '--name', container, '--network', 'none',
     '--env', 'POSTGRES_HOST_AUTH_METHOD=trust', imagem]);
 
+  // Mesmo gate do wait_for_postgres() do harness (check-mcp-exec-acl.test.sh):
+  // a imagem oficial sobe um servidor temporario durante o initdb e o encerra
+  // antes do servidor real, no MESMO socket — pg_isready sozinho passa nessa
+  // janela e o primeiro psql cai no vazio (ENOENT no socket). O marcador de init
+  // nos logs E um SELECT 1 real so confirmam o servidor final de pe; no shim E47
+  // ambos respondem sobre o PostgreSQL compartilhado do job, sem socket.
   let pronto = false;
   for (let i = 0; i < 60; i += 1) {
-    if (dockerStatus(['exec', container, 'pg_isready', '-U', 'postgres']).status === 0) {
+    const logs = dockerStatus(['logs', container]);
+    const saidaDosLogs = String(logs.stdout ?? '') + String(logs.stderr ?? '');
+    if (saidaDosLogs.includes('PostgreSQL init process complete; ready for start up.') &&
+      dockerStatus(['exec', container, 'psql', '-X', '-At', '-v', 'ON_ERROR_STOP=1',
+        '-U', 'postgres', '-d', 'postgres', '-c', 'SELECT 1']).status === 0) {
       pronto = true;
       break;
     }
-    await delay(500);
+    await delay(1000);
   }
   if (!pronto) {
     // Mensagem com a assinatura de bootstrap que retry-disposable-postgres-test.sh
     // repete: falha de infraestrutura no start do container nao e' falha do contrato.
-    throw new Error('FAIL: PostgreSQL de teste não iniciou (pg_isready sem resposta em 30s)');
+    throw new Error('FAIL: PostgreSQL de teste não iniciou (logs sem marcador de init ou SELECT 1 falhou em 60s)');
   }
 
   const criacao = psql(`CREATE SCHEMA supabase_migrations;

@@ -728,9 +728,6 @@ jobs:
       # workflow e executado em PostgreSQL 17 descartavel.
       - name: Executar o SQL do ledger pos-apply no PostgreSQL 17 (R2-INF-005)
         env:
-          # E47: SKIP_DOCKER_SHIM=1 -- o teste sobe um container proprio e usa
-          # `docker exec ... psql`; o shim roteia exec para o servico compartilhado.
-          SKIP_DOCKER_SHIM: "1"
           LEDGER_POSTAPPLY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node --test scripts/db-audit/ledger-postapply-query.integration.mjs
 
