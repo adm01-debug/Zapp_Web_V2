@@ -68,7 +68,15 @@ export default function ChatPopup() {
   const [contact, setContact] = useState<ContactRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMaximized, setIsMaximized] = useState(false);
-  const { messages, loading: messagesLoading } = useMessages({
+  // R2-INB-004: o contrato de paginação do hook (histórico antigo) tem de chegar
+  // ao controle da área de mensagens — sem ele o popup fica preso na 1ª página.
+  const {
+    messages,
+    loading: messagesLoading,
+    hasOlder,
+    loadingOlder,
+    loadOlderMessages,
+  } = useMessages({
     contactId: contactId || '',
     enabled: !!contactId,
   });
@@ -298,6 +306,9 @@ export default function ChatPopup() {
               messages={legacyMessages}
               onSendMessage={handleSendMessage}
               onSendAudio={handleSendAudio}
+              hasOlderMessages={hasOlder}
+              loadingOlderMessages={loadingOlder}
+              onLoadOlderMessages={loadOlderMessages}
             />
           </Suspense>
         </div>
