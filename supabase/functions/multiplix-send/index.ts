@@ -19,6 +19,7 @@ import {
   newCorrelationId,
   normalizePhone,
   personalize,
+  planRetry,
   prepareMedia,
   providerErrorInfo,
   randomBetween,
@@ -73,6 +74,12 @@ function mediaFileNameFromBlock(content: Record<string, unknown> | null | undefi
 }
 
 type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
+
+// MX05: UMA tabela de backoff para o worker inteiro — a mesma do kernel
+// (errors.ts): 30 s, 2 min, 10 min. O primeiro degrau e o piso deterministico
+// quando o planRetry nao devolve retryAfter (decisao dead_letter): retry
+// imediato e proibido; quem decide o teto continua sendo a RPC.
+const RETRY_BACKOFF_MS: readonly number[] = [30_000, 120_000, 600_000];
 
 export async function handleMultiplixSend(
   req: Request,
@@ -697,49 +704,99 @@ export async function handleMultiplixSend(
           } else if (envio.ok && !sendResult.error) {
             throw new Error("multiplix_provider_outcome_unknown: missing_provider_message_id");
           } else {
-            failedCount++;
             // F61: o operador le TEXTO, nunca o JSON do provedor. `providerErrorInfo`
             // traduz o par (status, corpo) pelo mapa do E095 e devolve o codigo ESTAVEL
             // do erro — assim "Numero nao existe no WhatsApp" chega na tela em vez de
             // {"status":400,"error":{"code":...}}. O corpo bruto nao entra no campo que
             // a tela mostra; o codigo vai para a trilha de eventos (abaixo).
             const providerError = providerErrorInfo(envio.status, envio.body);
-            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
-              p_item_id: item.item_id,
-              p_claim_token: claim.claim_token,
-              p_status: "failed",
-              p_error_message: providerError.operatorMessage,
-            });
-            if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
-            // F61 (segunda metade): o codigo CRU (classe + codigo estavel + status HTTP)
-            // vai para `multiplix_events`, que e onde quem depura olha. NAO grava o corpo
-            // do provedor: ele pode carregar telefone/conteudo de cliente, e diagnostico
-            // nao precisa disso — o par (classe, codigo) ja diz o que aconteceu.
-            await supabase.from("multiplix_events").insert({
-              dispatch_id: dispatchId,
-              item_id: item.item_id,
-              recipient_id: item.recipient_id ?? null,
-              kind: "item_failed",
-              payload: {
-                error_class: providerError.class,
-                error_code: providerError.code,
-                provider_status: envio.status,
-              },
-            });
-            // F60 (gatilho): um erro PERMANENTE nao e azar de um item — e sinal de que a
-            // CONEXAO esta em risco. Tres consecutivos, ou um banimento, pausam todos os
-            // dispatches dela (a funcao decide o limiar; o worker so reporta o sinal).
-            // `unknown` NAO conta: nao sabemos o que aconteceu, e pausar por duvida
-            // derrubaria disparo bom.
-            if (providerError.class === "permanent" && connection?.id) {
-              const { error: riskError } = await supabase.rpc("register_multiplix_connection_failure", {
-                p_connection_id: connection.id,
-                p_signal: null,
-                p_error_class: "permanent",
+            if (providerError.class === "transient") {
+              // MX05: rejeicao TRANSITORIA inequivoca do provedor (rate limit / timeout de
+              // rede) NAO e falha terminal — o item volta para a fila com o MESMO backoff com
+              // teto do kernel (30 s / 2 min / 10 min) e so vira dead letter quando a RPC
+              // esgotar as tentativas. Antes este ramo concluia o item como 'failed' e a
+              // garantida pelo plano nunca acontecia (probe de rate limit: failed=1, rescheduleCalls=0).
+              // Um 5xx NAO entra aqui: o resultado do POST e ambiguo e reenviar cego pode
+              // duplicar mensagem (o caminho de outcome_unknown, acima, e a protecao de
+              // idempotencia).
+              // attempt_count do item + 1 e a tentativa que acabou de falhar (o claim ja
+              // incrementou no banco; o valor que list_multiplix_claimable_items devolve e o
+              // anterior).
+              const attempt = (typeof item.attempt_count === "number" ? item.attempt_count : 0) + 1;
+              const decision = planRetry(providerError, attempt);
+              // Sem retryAfter o kernel ja decidiu dead_letter (attempt >= MAX_ATTEMPTS).
+              // `new Date()` agendaria o retry para AGORA — proibido. O piso e o
+              // primeiro degrau deterministico do backoff; quem transforma em
+              // falha definitiva e a RPC, nao o relogio do worker.
+              const retryAfter = decision.retryAfter ?? new Date(Date.now() + RETRY_BACKOFF_MS[0]).toISOString();
+              const { data: schedResult, error: rescheduleError } = await supabase.rpc("reschedule_multiplix_item", {
+                p_item_id: item.item_id,
+                p_claim_token: claim.claim_token,
+                p_retry_after: retryAfter,
+                p_error_message: providerError.operatorMessage,
               });
-              // Nao derruba o envio: o item ja foi concluido acima. A marcacao de risco e
-              // defesa em profundidade — falhar nela nao pode fazer o worker perder o item.
-              if (riskError) console.error(`multiplix_connection_risk_failed: ${riskError.message}`);
+              if (rescheduleError) throw new Error(`multiplix_recipient_reschedule_failed: ${rescheduleError.message}`);
+              // Quem decide o TETO e a funcao SQL (attempt_count >= 3 -> failed); o worker so
+              // informa quando tentar de novo — nunca reenvia sem fim.
+              const schedAction = schedResult?.action;
+              if (schedAction === "dead_lettered") failedCount++;
+              // Mesma trilha de eventos do F61: classe + codigo estavel + status. O texto do
+              // provedor nao entra (pode carregar dado de cliente). dead_lettered NAO e
+              // reagendamento — a RPC ja marcou o item 'failed' no banco e a trilha registra
+              // item_failed; payload.action guarda o veredicto da RPC para a auditoria.
+              await supabase.from("multiplix_events").insert({
+                dispatch_id: dispatchId,
+                item_id: item.item_id,
+                recipient_id: item.recipient_id ?? null,
+                kind: schedAction === "dead_lettered" ? "item_failed" : "item_rescheduled",
+                payload: {
+                  error_class: providerError.class,
+                  error_code: providerError.code,
+                  provider_status: envio.status,
+                  attempt,
+                  retry_after: retryAfter,
+                  action: schedAction,
+                },
+              });
+            } else {
+              const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+                p_item_id: item.item_id,
+                p_claim_token: claim.claim_token,
+                p_status: "failed",
+                p_error_message: providerError.operatorMessage,
+              });
+              if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+              failedCount++;
+              // F61 (segunda metade): o codigo CRU (classe + codigo estavel + status HTTP)
+              // vai para `multiplix_events`, que e onde quem depura olha. NAO grava o corpo
+              // do provedor: ele pode carregar telefone/conteudo de cliente, e diagnostico
+              // nao precisa disso — o par (classe, codigo) ja diz o que aconteceu.
+              await supabase.from("multiplix_events").insert({
+                dispatch_id: dispatchId,
+                item_id: item.item_id,
+                recipient_id: item.recipient_id ?? null,
+                kind: "item_failed",
+                payload: {
+                  error_class: providerError.class,
+                  error_code: providerError.code,
+                  provider_status: envio.status,
+                },
+              });
+              // F60 (gatilho): um erro PERMANENTE nao e azar de um item — e sinal de que a
+              // CONEXAO esta em risco. Tres consecutivos, ou um banimento, pausam todos os
+              // dispatches dela (a funcao decide o limiar; o worker so reporta o sinal).
+              // `unknown` NAO conta: nao sabemos o que aconteceu, e pausar por duvida
+              // derrubaria disparo bom.
+              if (providerError.class === "permanent" && connection?.id) {
+                const { error: riskError } = await supabase.rpc("register_multiplix_connection_failure", {
+                  p_connection_id: connection.id,
+                  p_signal: null,
+                  p_error_class: "permanent",
+                });
+                // Nao derruba o envio: o item ja foi concluido acima. A marcacao de risco e
+                // defesa em profundidade — falhar nela nao pode fazer o worker perder o item.
+                if (riskError) console.error(`multiplix_connection_risk_failed: ${riskError.message}`);
+              }
             }
           }
           stopHeartbeat();
@@ -747,9 +804,8 @@ export async function handleMultiplixSend(
           clearTimeout(sendTimeout);
           stopHeartbeat();
           if (!providerPostAttempted) {
-            const backoffMs = [30_000, 120_000, 600_000];
             const attemptSoFar = typeof item.attempt_count === "number" ? item.attempt_count : 0;
-            const delayMs = backoffMs[Math.min(attemptSoFar, backoffMs.length - 1)];
+            const delayMs = RETRY_BACKOFF_MS[Math.min(attemptSoFar, RETRY_BACKOFF_MS.length - 1)];
             const retryAfter = new Date(Date.now() + delayMs).toISOString();
             const reason = err instanceof Error ? err.message : "pre_dispatch_error";
             const { data: schedResult } = await supabase.rpc("reschedule_multiplix_item", {
