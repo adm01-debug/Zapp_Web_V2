@@ -46,10 +46,21 @@ const claimRows = [{
   claimed_at: '2026-09-30T12:10:00.000Z',
 }];
 
+const pendingRows = [{
+  message_id: 'message-0',
+  sender: 'contact',
+  content: 'Primeira sem resposta',
+  message_type: 'text',
+  media_url: null,
+  caption: null,
+  created_at: '2026-09-30T12:00:00.000Z',
+}];
+
 const rpcNames = {
   queues: 'talk_me_list_queues',
   waiting: 'talk_me_list_waiting',
   claim: 'talk_me_claim',
+  pending: 'talk_me_list_pending_messages',
 } as const;
 
 type RpcHandler = () => unknown;
@@ -66,6 +77,7 @@ function installRpcHandlers(overrides: RpcHandlers = {}) {
     queues: () => Promise.resolve({ data: queueRows, error: null }),
     waiting: () => waitingRequest(),
     claim: () => Promise.resolve({ data: claimRows, error: null }),
+    pending: () => Promise.resolve({ data: pendingRows, error: null }),
     ...overrides,
   };
 
@@ -197,6 +209,47 @@ describe('useTalkMeQueue', () => {
 
     expect(claimResult).toMatchObject({ contactId: 'contact-1' });
     await waitFor(() => expect(result.current.queuesError).toBe('Não foi possível atualizar as filas.'));
+  });
+
+  it('carrega o histórico pendente sob demanda sem aceitar o atendimento', async () => {
+    const { result } = await renderLoadedQueue();
+
+    let messages;
+    await act(async () => { messages = await result.current.fetchPendingMessages('contact-1'); });
+
+    expect(messages).toEqual([{
+      messageId: 'message-0',
+      sender: 'contact',
+      content: 'Primeira sem resposta',
+      messageType: 'text',
+      mediaUrl: null,
+      caption: null,
+      createdAt: '2026-09-30T12:00:00.000Z',
+    }]);
+    expect(rpc).toHaveBeenCalledWith('talk_me_list_pending_messages', { p_contact_id: 'contact-1' });
+    expect(rpcCallCount(rpcNames.claim)).toBe(0);
+  });
+
+  it('propaga a falha do histórico sem derrubar a fila carregada', async () => {
+    installRpcHandlers({ pending: () => Promise.resolve({ data: null, error: { message: 'permission denied' } }) });
+    const { result } = await renderLoadedQueue();
+
+    await act(async () => {
+      await expect(result.current.fetchPendingMessages('contact-1')).rejects.toBeTruthy();
+    });
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.itemsError).toBeNull();
+  });
+
+  it('não chama a RPC de histórico com a feature desabilitada', async () => {
+    const { result } = renderHook(() => useTalkMeQueue(true, false));
+    await waitFor(() => expect(result.current.queuesLoading).toBe(false));
+
+    let messages;
+    await act(async () => { messages = await result.current.fetchPendingMessages('contact-1'); });
+
+    expect(messages).toEqual([]);
+    expect(rpcCallCount(rpcNames.pending)).toBe(0);
   });
 
   it('traduz conflito do banco em erro de domínio sem abrir conversa incorreta', async () => {

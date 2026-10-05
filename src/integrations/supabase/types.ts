@@ -12113,6 +12113,18 @@ export type Database = {
           waiting_since: string
         }[]
       }
+      talk_me_list_pending_messages: {
+        Args: { p_contact_id: string; p_limit?: number }
+        Returns: {
+          caption: string
+          content: string
+          created_at: string
+          media_url: string
+          message_id: string
+          message_type: string
+          sender: string
+        }[]
+      }
       talk_me_list_queues: {
         Args: never
         Returns: {
