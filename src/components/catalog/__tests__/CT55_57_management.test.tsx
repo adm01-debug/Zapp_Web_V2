@@ -17,7 +17,7 @@
  * si (card do presetContact) já é coberto em SendProductDialog.test.tsx (CT-17).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductManagement } from '../ExternalProductManagement';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
@@ -86,6 +86,20 @@ vi.mock('../SendProductDialog', () => ({
       data-contact-phone={presetContact?.phone ?? ''}
       data-variant={initialVariantColor ?? ''}
     />
+  ),
+}));
+
+vi.mock('../ExternalProductCard', () => ({
+  ExternalProductCard: ({
+    product,
+    onSend,
+  }: {
+    product: ExternalProduct;
+    onSend?: (product: ExternalProduct, variantColor?: string) => void;
+  }) => (
+    <button type="button" onClick={() => onSend?.(product, 'Vermelho')}>
+      Enviar variação Vermelho
+    </button>
   ),
 }));
 
@@ -310,5 +324,16 @@ describe('CT-55 — deep link ?contact=<id>', () => {
     const dialog = await screen.findByTestId('send-dialog', {}, { timeout: 5000 });
     expect(dialog).toHaveAttribute('data-contact-id', 'c9');
     expect(dialog).toHaveAttribute('data-contact-phone', '5541999990000');
+  });
+});
+
+describe('#414 — envio de variação no catálogo de gestão', () => {
+  it('repassa a cor escolhida no detalhe ao SendProductDialog', async () => {
+    renderManagement();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar variação Vermelho' }));
+
+    const dialog = await screen.findByTestId('send-dialog');
+    expect(dialog).toHaveAttribute('data-variant', 'Vermelho');
   });
 });

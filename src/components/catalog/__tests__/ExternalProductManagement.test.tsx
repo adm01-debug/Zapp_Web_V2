@@ -158,6 +158,12 @@ describe('ExternalProductManagement', () => {
     expect(screen.getByText('Caneta Vermelha')).toBeInTheDocument();
   });
 
+  it('estado carregando: mantém a grade ocupada com esqueletos', () => {
+    mockUseExternalCatalog.mockReturnValue(baseHookReturn({ products: [], loading: true }));
+    const { container } = renderManagement();
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+  });
+
   it('E33: clicar no KPI "Em destaque" aplica is_featured=true na proxima busca', async () => {
     const hookReturn = baseHookReturn();
     mockUseExternalCatalog.mockReturnValue(hookReturn);
