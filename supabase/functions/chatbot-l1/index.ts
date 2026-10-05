@@ -8,7 +8,7 @@ import { ChatbotL1Output, parseModelOutput } from "../_shared/ai-response-contra
 import { normalizeSentiment, normalizeOperationalPriority } from "../_shared/ai-vocabulary.ts";
 import { parseJsonObject } from "../_shared/ai-json.ts";
 
-Deno.serve(async (req) => {
+export async function handleChatbotL1Request(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -45,6 +45,20 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { contactId, message, connectionId } = parsed.data;
+
+    // IA-CHATBOT-001: `connectionId` é OBRIGATÓRIO. É o único dado que diz por
+    // qual NÚMERO a mensagem chegou; sem ele o handler escolheria um flow ativo
+    // QUALQUER e leria o histórico do mesmo contato misturando canais. Não há
+    // fonte interna confiável para derivar a conexão (o corpo traz só contato e
+    // texto), então a ausência/invalidade é rejeitada AQUI — antes de qualquer
+    // consulta a flow, histórico ou IA.
+    if (!connectionId) {
+      return validationErrorResponse(
+        [{ path: 'connectionId', message: 'connectionId é obrigatório', code: 'custom' }],
+        req,
+      );
+    }
+
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
     // Chamada autenticada por JWT (não-webhook): sem esta checagem, um agente
@@ -66,11 +80,16 @@ Deno.serve(async (req) => {
     }
 
     // Check if chatbot is active for this connection
+    // IA-CHATBOT-001: o flow é escolhido PELA CONEXÃO em que a mensagem chegou.
+    // Sem o filtro, qualquer flow ativo respondia por qualquer número — o
+    // chamador mandava `connectionId` e ele era descartado. A conexão já é
+    // obrigatória (rejeição acima), então o filtro é SEMPRE aplicado.
     const { data: flow } = await supabase
       .from('chatbot_flows')
       .select('*')
       .eq('is_active', true)
       .eq('trigger_type', 'ai_l1')
+      .eq('whatsapp_connection_id', connectionId)
       .limit(1)
       .maybeSingle();
 
@@ -104,10 +123,14 @@ Deno.serve(async (req) => {
     }
 
     // Fetch conversation history
+    // IA-CHATBOT-001: o histórico é da CONEXÃO da mensagem. O mesmo contato pode
+    // falar por números diferentes; misturar as conversas colocaria no prompt
+    // (e na resposta) mensagens de outro canal. O filtro é SEMPRE aplicado.
     const { data: history } = await supabase
       .from('messages')
       .select('content, sender, message_type')
       .eq('contact_id', contactId)
+      .eq('whatsapp_connection_id', connectionId)
       .order('created_at', { ascending: false })
       .limit(15);
 
@@ -263,4 +286,8 @@ Responda em JSON:
     // (js/stack-trace-exposure).
     return errorResponse(error instanceof Error ? error.message : "Unknown error", 500, req);
   }
-});
+}
+
+// `Deno.serve` só quando este módulo é o principal (deploy). O guard deixa o
+// handler ser exercitado direto pelos testes de contrato, sem abrir porta.
+if (import.meta.main) Deno.serve(handleChatbotL1Request);
