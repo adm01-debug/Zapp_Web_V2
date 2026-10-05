@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  History,
   Inbox,
   Loader2,
   MessageCircleMore,
@@ -36,7 +37,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { getInitials } from '@/lib/avatar-colors';
-import { TalkMeConflictError, type TalkMeWaitingContact } from './types';
+import { TalkMeConflictError, type TalkMePendingMessage, type TalkMeWaitingContact } from './types';
 import type { TalkMeQueueController } from './useTalkMeQueue';
 import './talk-me-layout.css';
 
@@ -51,16 +52,30 @@ function waitingLabel(iso: string) {
   return formatDistanceToNowStrict(new Date(iso), { addSuffix: false, locale: ptBR });
 }
 
-function messagePreview(item: TalkMeWaitingContact) {
-  const text = item.lastMessageCaption?.trim() || item.lastMessageContent?.trim();
+function describeMessageText(content: string | null, caption: string | null, messageType: string) {
+  const text = caption?.trim() || content?.trim();
   if (text) return text;
-  const type = item.lastMessageType.toLowerCase();
+  const type = messageType.toLowerCase();
   if (type.includes('audio')) return 'Mensagem de áudio';
   if (type.includes('image')) return 'Imagem recebida';
   if (type.includes('video')) return 'Vídeo recebido';
   if (type.includes('document') || type.includes('file')) return 'Arquivo recebido';
   return 'Nova mensagem recebida';
 }
+
+function messagePreview(item: TalkMeWaitingContact) {
+  return describeMessageText(item.lastMessageContent, item.lastMessageCaption, item.lastMessageType);
+}
+
+function pendingSenderLabel(sender: string) {
+  if (sender === 'contact') return 'Cliente';
+  if (sender === 'agent') return 'Saída';
+  return 'Sistema';
+}
+
+type PendingHistoryState =
+  | { contactId: string; status: 'loading' | 'error' }
+  | { contactId: string; status: 'ready'; messages: TalkMePendingMessage[] };
 
 function TalkMeCard({ item, active, onSelect, onFocus, buttonRef, onMove }: {
   item: TalkMeWaitingContact;
@@ -245,6 +260,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     loadMore,
     refresh,
     claim,
+    fetchPendingMessages,
   } = controller;
   const reduceMotion = useReducedMotion() ?? false;
   const scopeKey = `${selectedQueueId ?? 'none'}:${search}`;
@@ -266,6 +282,8 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   const lastCardFocusRef = useRef<{ contactId: string; surface: 'main' | 'queue' } | null>(null);
   const selectedContactId = selection?.scopeKey === scopeKey ? selection.contactId : null;
   const notifiedMissingRef = useRef<string | null>(null);
+  const [pendingHistory, setPendingHistory] = useState<PendingHistoryState | null>(null);
+  const historyRequestRef = useRef(0);
 
   const activeIndex = useMemo(
     () => items.findIndex((item) => item.contactId === selectedContactId),
@@ -372,13 +390,37 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     }
   }, [activeItem, reduceMotion]);
 
+  const openPendingHistory = useCallback(async (contactId: string) => {
+    const requestId = historyRequestRef.current + 1;
+    historyRequestRef.current = requestId;
+    setPendingHistory({ contactId, status: 'loading' });
+    try {
+      const messages = await fetchPendingMessages(contactId);
+      if (historyRequestRef.current !== requestId) return;
+      setPendingHistory({ contactId, status: 'ready', messages });
+    } catch {
+      if (historyRequestRef.current !== requestId) return;
+      setPendingHistory({ contactId, status: 'error' });
+    }
+  }, [fetchPendingMessages]);
+
+  const closePendingHistory = useCallback(() => {
+    historyRequestRef.current += 1;
+    setPendingHistory(null);
+  }, []);
+
+  const handleViewOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen) closePendingHistory();
+    onOpenChange(nextOpen);
+  }, [closePendingHistory, onOpenChange]);
+
   const handleClaim = useCallback(async () => {
     if (!activeItem) return;
     const contactId = activeItem.contactId;
     try {
       await claim(contactId);
       toast.success(`Atendimento de ${activeItem.name} assumido.`);
-      onOpenChange(false);
+      handleViewOpenChange(false);
     } catch (error) {
       if (error instanceof TalkMeConflictError) {
         toast.info('Este atendimento acabou de ser assumido ou deixou a fila.');
@@ -393,7 +435,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     } catch {
       toast.error('Atendimento assumido, mas a conversa não abriu. Atualize o Inbox.');
     }
-  }, [activeItem, claim, onAccepted, onOpenChange, refresh]);
+  }, [activeItem, claim, handleViewOpenChange, onAccepted, refresh]);
 
   const isClaiming = !!activeItem && claimingContactId === activeItem.contactId;
   const showInitialLoading = queuesLoading || searchPending || (itemsLoading && items.length === 0);
@@ -405,7 +447,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleViewOpenChange}>
       <DialogContent
         size="full"
         showCloseButton={false}
@@ -420,7 +462,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
 
           <header className="relative z-20 flex shrink-0 flex-col gap-2 border-b border-border/70 bg-background/70 px-4 py-2 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between lg:px-5 lg:py-1">
             <div className="flex min-w-0 items-center gap-3">
-              <Button variant="outline" size="icon" onClick={() => onOpenChange(false)} className="h-8 w-8 shrink-0 rounded-full" aria-label="Voltar para o Inbox">
+              <Button variant="outline" size="icon" onClick={() => handleViewOpenChange(false)} className="h-8 w-8 shrink-0 rounded-full" aria-label="Voltar para o Inbox">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="min-w-0">
@@ -556,7 +598,19 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                     </Button>
                   </div>
 
-                  <div className="mx-auto mt-1.5 flex w-full max-w-[360px] justify-center px-3">
+                  <div className="mx-auto mt-1.5 flex w-full max-w-[360px] flex-col justify-center gap-2 px-3">
+                    {activeItem && activeItem.pendingMessageCount > 1 && (
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => void openPendingHistory(activeItem.contactId)}
+                        disabled={!!claimingContactId || reconciling}
+                        className="h-9 w-full rounded-full border-white/15 bg-black/60 px-5 text-xs font-semibold text-zinc-100 hover:bg-zinc-900"
+                      >
+                        <History className="mr-2 h-4 w-4" />
+                        Ver as {activeItem.pendingMessageCount} mensagens do cliente
+                      </Button>
+                    )}
                     <Button
                       size="lg"
                       onClick={() => void handleClaim()}
@@ -679,6 +733,57 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
           </main>
         </div>
       </DialogContent>
+
+      <Dialog open={open && pendingHistory !== null} onOpenChange={(nextOpen) => { if (!nextOpen) closePendingHistory(); }}>
+        <DialogContent
+          aria-describedby="talk-me-history-description"
+          className="flex max-h-[80dvh] w-[calc(100vw-32px)] max-w-lg flex-col gap-3 overflow-hidden rounded-2xl"
+        >
+          <DialogTitle className="text-lg font-black tracking-tight">Mensagens aguardando resposta</DialogTitle>
+          <DialogDescription id="talk-me-history-description" className="text-xs">
+            Histórico do cliente antes do aceite. A leitura não assume o atendimento nem marca as mensagens como lidas.
+          </DialogDescription>
+
+          {pendingHistory?.status === 'loading' && (
+            <div role="status" aria-label="Carregando mensagens" className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground motion-reduce:animate-none" />
+            </div>
+          )}
+
+          {pendingHistory?.status === 'error' && (
+            <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
+              <p className="text-sm text-muted-foreground">Não foi possível carregar as mensagens.</p>
+              <Button variant="outline" size="sm" onClick={() => void openPendingHistory(pendingHistory.contactId)}>
+                Tentar novamente
+              </Button>
+            </div>
+          )}
+
+          {pendingHistory?.status === 'ready' && (
+            pendingHistory.messages.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Não há mensagens pendentes para este atendimento.
+              </p>
+            ) : (
+              <ol aria-label="Mensagens do cliente aguardando resposta" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+                {pendingHistory.messages.map((message) => (
+                  <li key={message.messageId} className="rounded-xl border border-border/60 bg-muted/35 p-3">
+                    <div className="mb-1 flex items-center justify-between gap-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <span>{pendingSenderLabel(message.sender)}</span>
+                      <time dateTime={message.createdAt}>
+                        {format(new Date(message.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </time>
+                    </div>
+                    <p className="whitespace-pre-wrap break-words text-sm leading-5 text-foreground">
+                      {describeMessageText(message.content, message.caption, message.messageType)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )
+          )}
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
