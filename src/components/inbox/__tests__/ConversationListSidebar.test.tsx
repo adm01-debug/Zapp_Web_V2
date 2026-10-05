@@ -10,6 +10,15 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
+// Captura o onTransfer que a sidebar entrega ao TransferDialog, para o teste
+// chamar direto e provar que a rejeição propaga (o diálogo real confia nisso
+// para manter-se aberto na falha).
+const transferDialogOnTransfer = vi.hoisted(() => ({
+  current: undefined as
+    | ((type: 'agent' | 'queue', targetId: string, message?: string) => void | Promise<void>)
+    | undefined,
+}));
+
 vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));
 vi.mock('@/components/mobile/MobilePullToRefresh', () => ({
   MobilePullToRefreshIndicator: () => null,
@@ -53,8 +62,9 @@ vi.mock('@/components/inbox/TransferDialog', () => ({
   TransferDialog: (props: {
     open: boolean;
     onTransfer?: (type: 'agent' | 'queue', targetId: string, message?: string) => void | Promise<void>;
-  }) =>
-    props.open ? (
+  }) => {
+    transferDialogOnTransfer.current = props.onTransfer;
+    return props.open ? (
       <div data-testid="transfer-dialog">
         {/* Replica o catch do handleTransfer real: o diálogo engole a rejeição
             e permanece aberto; quem decide fechar é o estado transferTarget. */}
@@ -66,7 +76,8 @@ vi.mock('@/components/inbox/TransferDialog', () => ({
           confirmar-transferencia
         </button>
       </div>
-    ) : null,
+    ) : null;
+  },
 }));
 
 import { ConversationListSidebar } from '@/components/inbox/ConversationListSidebar';
@@ -204,6 +215,49 @@ describe('ConversationListSidebar — diálogo de Resolver/Transferir some com a
     rerender(<ConversationListSidebar {...baseProps([{ contact: { id: 'c1' } }, { contact: { id: 'c2' } }])} />);
 
     expect(screen.getByTestId('close-dialog')).toBeInTheDocument();
+  });
+
+  it('onTransfer do diálogo propaga a rejeição quando transferContact falha (é o que mantém o TransferDialog real aberto)', async () => {
+    const transferContact = vi.fn().mockRejectedValue(new Error('falhou'));
+    const props = baseProps([{ contact: { id: 'c1' } }]);
+    props.conversationActions = {
+      pinnedIds: new Set(),
+      favoriteIds: new Set(),
+      isPinned: vi.fn(() => false),
+      isFavorite: vi.fn(() => false),
+      pinConversation: vi.fn(),
+      unpinConversation: vi.fn(),
+      favoriteContact: vi.fn(),
+      unfavoriteContact: vi.fn(),
+      snoozeConversation: vi.fn(),
+      archiveContact: vi.fn(),
+      transferContact,
+      profileId: 'me',
+    } as unknown as typeof props.conversationActions;
+    render(<ConversationListSidebar {...props} />);
+
+    fireEvent.click(screen.getByText('abrir-transferir-c1'));
+    expect(screen.getByTestId('transfer-dialog')).toBeInTheDocument();
+
+    const onTransfer = transferDialogOnTransfer.current;
+    expect(onTransfer).toBeTypeOf('function');
+    // Se a sidebar engolisse a falha, a Promise resolveria e o diálogo fecharia
+    // como se a transferência tivesse dado certo — aqui ela precisa REJEITAR.
+    await expect(onTransfer?.('queue', 'q1', 'nota de teste')).rejects.toThrow('falhou');
+  });
+
+  it('onTransfer do diálogo também rejeita quando conversationActions está ausente', async () => {
+    const props = baseProps([{ contact: { id: 'c1' } }]);
+    render(<ConversationListSidebar {...props} />);
+
+    fireEvent.click(screen.getByText('abrir-transferir-c1'));
+    expect(screen.getByTestId('transfer-dialog')).toBeInTheDocument();
+
+    const onTransfer = transferDialogOnTransfer.current;
+    expect(onTransfer).toBeTypeOf('function');
+    await expect(onTransfer?.('queue', 'q1', 'nota de teste')).rejects.toThrow(
+      'Ações de conversa indisponíveis'
+    );
   });
 
   it('repassa conversations/pinnedIds/favoriteIds de conversationActions para a VirtualizedRealtimeList', () => {
