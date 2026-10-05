@@ -10,9 +10,11 @@
 # passa pelo enforcement de verdade, como no PostgREST.
 #
 # O que este teste faz:
-#   1. Recria o schema mínimo e as funções/policies de autorização VERBATIM das
-#      migrations (mesmo contrato de produção — se a migration mudar, o teste
-#      segue o código real).
+#   1. Recria o schema mínimo (roles, auth.*, tabelas stub) e EXTRAI as
+#      funções/policies de autorização verbatim dos arquivos de migration que
+#      guardam a definição final — se a migration mudar, o teste segue o código
+#      real. pg_policies/pg_proc conferem que o aplicado é idêntico ao
+#      extraído.
 #   2. Aplica as migrations do dashboard EM CADEIA, na ordem do diretório — a
 #      função final é a que produção tem (tamḃém ensaia replay da cadeia).
 #   3. Fixtures determinísticas: 3 agentes, filas com/sobrepostas/estanques,
@@ -34,7 +36,9 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migrations_dir="$repo_root/supabase/migrations"
+# Override existe só para o teste de mutação local (rodar contra uma cópia
+# adulterada fora do repo); CI e uso normal apontam para o diretório real.
+migrations_dir="${DASH_RLS_TEST_MIGRATIONS_DIR:-$repo_root/supabase/migrations}"
 postgres_image="${DASH_RLS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-dash-rls-test-$$"
 
@@ -106,7 +110,10 @@ done
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"; cleanup' EXIT INT TERM
 
-# ── Schema mínimo + funções/policies VERBATIM das migrations ──────────────────
+# ── Schema mínimo: roles, auth.*, tabelas stub ────────────────────────────────
+# As TABELAS sao stubs com as colunas minimas que helpers/policies/RPCs usam —
+# nao sao o contrato testado. O contrato (helpers SECURITY DEFINER + policies
+# RLS) e EXTRAIDO dos arquivos de migration logo abaixo.
 cat > "$tmp_dir/pre.sql" <<'SQL'
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
@@ -179,188 +186,13 @@ CREATE TABLE public.conversation_sla (
   first_response_breached boolean
 );
 
--- Funções de autorização VERBATIM das migrations vigentes
--- (is_admin_or_supervisor: 20251215025014; get_profile_id_for_user,
---  get_visible_agent_ids, is_contact_visible_to_user: 20260909200000;
---  can_edit_contact 5+2 args: 20260929810000).
-CREATE OR REPLACE FUNCTION public.is_admin_or_supervisor(_user_id UUID)
-RETURNS BOOLEAN
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = _user_id AND role IN ('admin', 'supervisor')
-  )
-$$;
-
-CREATE OR REPLACE FUNCTION public.get_profile_id_for_user(_user_id uuid)
-RETURNS uuid
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-  SELECT profile.id
-  FROM public.profiles AS profile
-  WHERE _user_id = auth.uid()
-    AND profile.user_id = _user_id
-  LIMIT 1;
-$$;
-
-CREATE OR REPLACE FUNCTION public.get_visible_agent_ids(_user_id uuid)
-RETURNS SETOF uuid
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-  SELECT profile.id
-  FROM public.profiles AS profile
-  WHERE _user_id = auth.uid()
-    AND profile.user_id = _user_id
-  UNION
-  SELECT visibility.can_see_agent_id
-  FROM public.agent_visibility_grants AS visibility
-  JOIN public.profiles AS viewer ON viewer.id = visibility.agent_id
-  WHERE _user_id = auth.uid()
-    AND viewer.user_id = _user_id
-    AND EXISTS (
-      SELECT 1
-      FROM public.user_roles AS role_assignment
-      WHERE role_assignment.user_id = _user_id
-        AND role_assignment.role = 'special_agent'
-    );
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_contact_visible_to_user(
-  _contact_id uuid,
-  _user_id uuid
-)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-  SELECT _user_id = auth.uid()
-    AND EXISTS (
-      SELECT 1
-      FROM public.contacts AS contact
-      WHERE contact.id = _contact_id
-        AND (
-          public.is_admin_or_supervisor(_user_id)
-          OR contact.assigned_to IN (
-            SELECT public.get_visible_agent_ids(_user_id)
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM public.queue_members AS member
-            WHERE member.queue_id = contact.queue_id
-              AND member.profile_id = public.get_profile_id_for_user(_user_id)
-              AND member.is_active = true
-          )
-        )
-    );
-$$;
-
-CREATE OR REPLACE FUNCTION public.can_edit_contact(
-  p_assigned_to uuid,
-  p_queue_id uuid,
-  p_visible_agent_ids uuid[],
-  p_profile_id uuid,
-  p_is_admin boolean
-) RETURNS boolean
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-  SELECT COALESCE(
-    COALESCE(p_is_admin, public.is_admin_or_supervisor(auth.uid()))
-    OR p_assigned_to = ANY (COALESCE(p_visible_agent_ids, (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v)))
-    OR EXISTS (
-         SELECT 1
-         FROM public.queue_members qm
-         WHERE qm.queue_id = p_queue_id
-           AND qm.profile_id = COALESCE(p_profile_id, public.get_profile_id_for_user(auth.uid()))
-           AND qm.is_active = true
-       ),
-    false)
-$function$;
-
-CREATE OR REPLACE FUNCTION public.can_edit_contact(p_assigned_to uuid, p_queue_id uuid)
- RETURNS boolean
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-  SELECT public.can_edit_contact(p_assigned_to, p_queue_id, NULL::uuid[], NULL::uuid, NULL::boolean)
-$function$;
-
-REVOKE ALL ON FUNCTION public.get_profile_id_for_user(uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.get_visible_agent_ids(uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.is_contact_visible_to_user(uuid, uuid) FROM PUBLIC, anon;
-REVOKE EXECUTE ON FUNCTION public.can_edit_contact(uuid, uuid) FROM PUBLIC, anon;
-REVOKE EXECUTE ON FUNCTION public.can_edit_contact(uuid, uuid, uuid[], uuid, boolean) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.get_profile_id_for_user(uuid) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.get_visible_agent_ids(uuid) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.is_contact_visible_to_user(uuid, uuid) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.can_edit_contact(uuid, uuid) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.can_edit_contact(uuid, uuid, uuid[], uuid, boolean) TO authenticated, service_role;
-
--- Policies RLS finais (verbatim):
--- contacts_select_policy: 20260929810000 (predicado hoisted, mesmo do vigente)
--- messages_select_policy: 20260902023200
--- conversation_sla_select_policy: 20260830110000
--- "Agents or admins can view closures": 20260409222809
+-- RLS ligada nas 4 tabelas-alvo. Helpers SECURITY DEFINER e policies NAO ficam
+-- aqui: sao extraidos verbatim das migrations logo abaixo (mesmo padrao awk da
+-- extracao de dashboard_kpi) — o contrato testado e o codigo real vigente.
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversation_sla ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversation_closures ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "contacts_select_policy" ON public.contacts
-  FOR SELECT
-  TO authenticated
-  USING (public.can_edit_contact(assigned_to, queue_id,
-           (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v),
-           (SELECT public.get_profile_id_for_user(auth.uid())),
-           (SELECT public.is_admin_or_supervisor(auth.uid()))));
-
-CREATE POLICY "messages_select_policy" ON public.messages
-  FOR SELECT TO authenticated
-  USING (
-    is_admin_or_supervisor(auth.uid())
-    OR contact_id IN (
-        SELECT c.id FROM public.contacts c
-        WHERE c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid()))
-      )
-    OR EXISTS (
-        SELECT 1 FROM public.contacts c
-        JOIN public.queue_members qm ON qm.queue_id = c.queue_id
-        WHERE c.id = messages.contact_id
-          AND qm.profile_id = get_profile_id_for_user(auth.uid())
-          AND qm.is_active = true
-      )
-  );
-
-CREATE POLICY "conversation_sla_select_policy" ON public.conversation_sla
-  FOR SELECT TO authenticated
-  USING (
-    is_admin_or_supervisor(auth.uid())
-    OR contact_id IN (
-      SELECT c.id FROM public.contacts c
-      WHERE c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid()))
-    )
-  );
-
-CREATE POLICY "Agents or admins can view closures"
-ON public.conversation_closures FOR SELECT TO authenticated
-USING (
-  is_contact_visible_to_user(contact_id, auth.uid())
-  OR is_admin_or_supervisor(auth.uid())
-);
 
 -- Grants de tabela como em produção: largos, a RLS faz o trabalho.
 -- anon também tem SELECT em contacts/messages — e mesmo assim não lê nada
@@ -373,6 +205,132 @@ SQL
 
 psql_file "$tmp_dir/pre.sql"
 
+# ── Helpers + policies EXTRAÍDOS verbatim das migrations ──────────────────────
+# Nada de copia manual: cada objeto sai do arquivo de migration que guarda a
+# definicao FINAL (verificado: nenhuma migration posterior o redefine). Mesmo
+# padrao awk da extracao de dashboard_kpi abaixo — se a migration mudar, o
+# teste aplica o codigo novo.
+extract_between() { # $1=literal da linha inicial, $2=literal contido na linha final, $3=arquivo, $4=saida
+  awk -v s="$1" -v e="$2" 'index($0, s) {on=1} on {print} on && index($0, e) {exit}' "$3" > "$4"
+  [[ -s "$4" ]] || fail "extracao vazia em $3 a partir de '$1'"
+}
+
+mig_admin="$migrations_dir/20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql"
+mig_inbox="$migrations_dir/20260909200000_harden_inbox_contact_authorization.sql"
+mig_canedit="$migrations_dir/20260929810000_contacts_can_edit_contact_hoisted_params.sql"
+mig_msgs="$migrations_dir/20260902023200_consolidate_rls_select_messages_contacts.sql"
+mig_sla="$migrations_dir/20260830110000_extend_special_agent_visibility_to_related_tables.sql"
+mig_clos="$migrations_dir/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
+for f in "$mig_admin" "$mig_inbox" "$mig_canedit" "$mig_msgs" "$mig_sla" "$mig_clos"; do
+  [[ -f "$f" ]] || fail "migration de autorizacao nao encontrada: $(basename "$f")"
+done
+
+# Helpers SECURITY DEFINER: o CREATE inteiro + REVOKE/GRANT quando estao no
+# mesmo arquivo. is_admin_or_supervisor primeiro — as demais a referenciam.
+extract_between 'CREATE OR REPLACE FUNCTION public.is_admin_or_supervisor' '$$;' \
+  "$mig_admin" "$tmp_dir/helpers.sql"
+grep -q 'CREATE OR REPLACE FUNCTION public.is_admin_or_supervisor' "$tmp_dir/helpers.sql" \
+  || fail 'extracao de is_admin_or_supervisor veio vazia'
+grep -q '\$\$;' "$tmp_dir/helpers.sql" \
+  || fail 'extracao de is_admin_or_supervisor nao fechou o corpo da funcao'
+
+for fn in get_profile_id_for_user get_visible_agent_ids is_contact_visible_to_user; do
+  extract_between "CREATE OR REPLACE FUNCTION public.$fn" 'TO authenticated, service_role;' \
+    "$mig_inbox" "$tmp_dir/h.sql"
+  grep -q "CREATE OR REPLACE FUNCTION public.$fn" "$tmp_dir/h.sql" \
+    || fail "extracao de $fn veio vazia"
+  grep -q 'TO authenticated, service_role;' "$tmp_dir/h.sql" \
+    || fail "extracao de $fn nao incluiu o REVOKE/GRANT da migration"
+  cat "$tmp_dir/h.sql" >> "$tmp_dir/helpers.sql"
+done
+
+# can_edit_contact: 20260929810000 define as DUAS assinaturas (5 args + 2 args)
+# e os 4 statements de ACL em sequencia — o bloco inteiro vem junto.
+extract_between 'CREATE OR REPLACE FUNCTION public.can_edit_contact' \
+  'uuid, boolean) TO authenticated, service_role;' \
+  "$mig_canedit" "$tmp_dir/h.sql"
+grep -q 'p_visible_agent_ids uuid\[\]' "$tmp_dir/h.sql" \
+  || fail 'extracao de can_edit_contact nao pegou a versao de 5 args'
+grep -q 'can_edit_contact(p_assigned_to uuid, p_queue_id uuid)' "$tmp_dir/h.sql" \
+  || fail 'extracao de can_edit_contact nao pegou a versao de 2 args'
+[[ "$(grep -c 'GRANT EXECUTE ON FUNCTION public.can_edit_contact' "$tmp_dir/h.sql")" == '2' ]] \
+  || fail 'extracao de can_edit_contact nao incluiu os dois GRANTs'
+cat "$tmp_dir/h.sql" >> "$tmp_dir/helpers.sql"
+
+psql_file "$tmp_dir/helpers.sql" || fail 'falha ao aplicar helpers extraidos das migrations'
+
+# Policies RLS: DROP + CREATE finais extraidos da migration de cada uma. O
+# contrato testado e o CREATE POLICY (texto extraido); o DROP e o da migration
+# quando e uma linha simples, ou DROP POLICY IF EXISTS literal equivalente
+# quando o DROP original e condicional (DO $$) ou mira outro nome.
+{ grep -F 'DROP POLICY IF EXISTS "contacts_select_policy" ON public.contacts;' "$mig_canedit" \
+    || fail 'DROP de contacts_select_policy nao achado em 20260929810000'
+  extract_between 'CREATE POLICY "contacts_select_policy"' ';' "$mig_canedit" "$tmp_dir/p_body.sql"
+  cat "$tmp_dir/p_body.sql"; } > "$tmp_dir/pol_contacts.sql"
+
+{ grep -F 'DROP POLICY IF EXISTS "messages_select_policy" ON public.messages;' "$mig_msgs" \
+    || fail 'DROP de messages_select_policy nao achado em 20260902023200'
+  extract_between 'CREATE POLICY "messages_select_policy"' ';' "$mig_msgs" "$tmp_dir/p_body.sql"
+  cat "$tmp_dir/p_body.sql"; } > "$tmp_dir/pol_messages.sql"
+
+{ echo 'DROP POLICY IF EXISTS "conversation_sla_select_policy" ON public.conversation_sla;'
+  extract_between 'CREATE POLICY "conversation_sla_select_policy"' ';' "$mig_sla" "$tmp_dir/p_body.sql"
+  cat "$tmp_dir/p_body.sql"; } > "$tmp_dir/pol_sla.sql"
+
+{ echo 'DROP POLICY IF EXISTS "Agents or admins can view closures" ON public.conversation_closures;'
+  extract_between 'CREATE POLICY "Agents or admins can view closures"' ';' "$mig_clos" "$tmp_dir/p_body.sql"
+  cat "$tmp_dir/p_body.sql"; } > "$tmp_dir/pol_closures.sql"
+
+for p in contacts messages sla closures; do
+  grep -q 'CREATE POLICY' "$tmp_dir/pol_$p.sql" \
+    || fail "extracao da policy ($p) veio sem CREATE POLICY"
+  tail -n1 "$tmp_dir/pol_$p.sql" | grep -q ';' \
+    || fail "extracao da policy ($p) nao fechou o statement"
+done
+
+psql_file "$tmp_dir/pol_contacts.sql"  || fail 'falha ao aplicar contacts_select_policy'
+psql_file "$tmp_dir/pol_messages.sql"  || fail 'falha ao aplicar messages_select_policy'
+psql_file "$tmp_dir/pol_sla.sql"       || fail 'falha ao aplicar conversation_sla_select_policy'
+psql_file "$tmp_dir/pol_closures.sql"  || fail 'falha ao aplicar policy de conversation_closures'
+
+echo '── pg_policies: a policy aplicada e identica a das migrations ─────────────'
+# pg_policies.qual mostra a expressao DECOMPILADA pelo Postgres (IN vira
+# = ANY (SubPlan), casts e qualificacao mudam) — comparar texto normalizado com
+# o fonte daria falso negativo. A normalizacao e feita pelo proprio parser: a
+# mesma expressao USING extraida da migration e recriada como policy temporaria
+# na MESMA tabela, e os dois quals decompilados tem que ser identicos.
+check_policy() { # $1=nome da policy real, $2=tabela, $3=arquivo com DROP+CREATE extraidos
+  local name="$1" table="$2" file="$3" tmp_name="zz_${2}_expected"
+  grep -v '^DROP POLICY' "$file" \
+    | sed "s/CREATE POLICY \"$name\"/CREATE POLICY \"$tmp_name\"/" > "$tmp_dir/chk.sql"
+  grep -q "CREATE POLICY \"$tmp_name\"" "$tmp_dir/chk.sql" \
+    || fail "nao consegui montar a policy de conferencia para $name"
+  psql_file "$tmp_dir/chk.sql"
+  expect_value "PGP $name existe em public.$table (cmd=SELECT, TO authenticated)" '1' \
+    "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='$table' AND policyname='$name' AND cmd='SELECT' AND 'authenticated'=ANY(roles);"
+  expect_value "PGP qual de $name e identico ao USING extraido da migration" 't' \
+    "SELECT p.qual = e.qual FROM pg_policies p JOIN pg_policies e ON e.schemaname='public' AND e.tablename='$table' AND e.policyname='$tmp_name' WHERE p.schemaname='public' AND p.tablename='$table' AND p.policyname='$name';"
+  psql_sql "DROP POLICY \"$tmp_name\" ON public.$table" >/dev/null
+}
+check_policy 'contacts_select_policy'             contacts              "$tmp_dir/pol_contacts.sql"
+check_policy 'messages_select_policy'             messages              "$tmp_dir/pol_messages.sql"
+check_policy 'conversation_sla_select_policy'     conversation_sla      "$tmp_dir/pol_sla.sql"
+check_policy 'Agents or admins can view closures' conversation_closures "$tmp_dir/pol_closures.sql"
+
+echo
+echo '── pg_proc: corpos das helpers sao os extraidos das migrations ────────────'
+prosrc_contains() { # $1=label, $2=proname, $3=pronargs, $4=marcador LIKE
+  expect_value "$1" 't' \
+    "SELECT prosrc LIKE '$4' FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='$2' AND p.pronargs=$3;"
+}
+prosrc_contains "HLP is_admin_or_supervisor: role IN ('admin','supervisor')" is_admin_or_supervisor 1 "%role IN (''admin'', ''supervisor'')%"
+prosrc_contains 'HLP get_profile_id_for_user: profile.user_id = _user_id'    get_profile_id_for_user 1 '%profile.user_id = _user_id%'
+prosrc_contains "HLP get_visible_agent_ids: trava 'special_agent'"           get_visible_agent_ids    1 "%''special_agent''%"
+prosrc_contains 'HLP is_contact_visible_to_user: usa get_visible_agent_ids'  is_contact_visible_to_user 2 '%get_visible_agent_ids(_user_id)%'
+prosrc_contains 'HLP can_edit_contact(5): COALESCE(p_is_admin, ...)'         can_edit_contact         5 '%COALESCE(p_is_admin%'
+prosrc_contains 'HLP can_edit_contact(2): delega com NULLs'                  can_edit_contact         2 '%NULL::uuid[]%'
+
+echo
 # ── RPCs do dashboard: cadeia de migrations REAL, na ordem do diretório ────────
 echo '── Aplicando a cadeia de migrations do dashboard (código produtivo) ─────────'
 for f in \
