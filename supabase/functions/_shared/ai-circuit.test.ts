@@ -117,10 +117,22 @@ function stubFetch(estado: EstadoStub): { contadores: Contadores; restaurar: () 
       if (metodo === "GET") {
         contadores.leiturasLedger++;
         contadores.consultasLedger.push(url);
-        return Promise.resolve(json(estado.ledger));
+        // Fiel ao PostgREST: a leitura devolve o que as insercoes ANTERIORES
+        // gravaram (mais novo primeiro), nunca uma fixture estatica — e isso que
+        // faz o circuito reagir ao que ele mesmo auditou.
+        return Promise.resolve(json(ordenarLedger(estado.ledger)));
       }
       const corpo = init?.body ? JSON.parse(String(init.body)) : null;
-      contadores.insertsLog.push(Array.isArray(corpo) ? corpo[0] : corpo);
+      const linha = Array.isArray(corpo) ? corpo[0] : corpo;
+      contadores.insertsLog.push(linha);
+      if (linha && typeof linha === "object") {
+        // O banco preenche `created_at` (default now()); sem a coluna a linha
+        // gravada seria invisivel para a leitura do circuito (`status`+`created_at`).
+        estado.ledger.unshift({
+          ...(linha as Record<string, unknown>),
+          created_at: new Date().toISOString(),
+        });
+      }
       return Promise.resolve(json([], 201));
     }
     return Promise.reject(new Error(`fetch nao esperado no teste: ${metodo} ${url}`));
@@ -153,6 +165,13 @@ function assertLogComProvider(contadores: Contadores, status: string): void {
     metadata?.provider_id,
     PROVIDER_KEY,
     `o log ${status} precisa gravar a mesma chave minúscula consultada pelo circuito`,
+  );
+}
+
+/** Ordena o ledger da leitura como o `select` ordena: mais novo primeiro. */
+function ordenarLedger(linhas: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  return [...linhas].sort((a, b) =>
+    Date.parse(String(b.created_at ?? "")) - Date.parse(String(a.created_at ?? ""))
   );
 }
 
@@ -344,12 +363,14 @@ Deno.test("IA-050: sonda que FALHA (5xx do provedor) reabre o circuito — a adm
 });
 
 // ---------------------------------------------------------------------------
-// (a') 4xx do PEDIDO não é falha do provedor: não abre o circuito para todos
+// (a') 4xx do PEDIDO não é falha do provedor: NÃO abre o circuito — e a mesma
+// ledger realimentada prova que a falha TRANSITÓRIA do provedor continua abrindo
 // ---------------------------------------------------------------------------
-Deno.test("IA-050: 4xx do pedido NÃO abre o circuito — a falha é do chamador, não do provedor", async () => {
+Deno.test("IA-050: seis 4xx do pedido não abrem o circuito e a falha transitória ainda abre", async () => {
   const restaurarEnv = stubEnv();
   const estado: EstadoStub = {
-    // Nenhuma falha REAL do provedor no ledger: só o chamador erra o pedido.
+    // Ledger VAZIO: tudo o que a leitura devolver veio dos INSERTs desta execução
+    // (o stub de leitura REALIMENTA o ledger — nada de fixture estática).
     ledger: [],
     probeHits: 1,
     providerStatus: 400, // pedido inválido (ex.: prompt malformado) — culpa do chamador
@@ -357,15 +378,28 @@ Deno.test("IA-050: 4xx do pedido NÃO abre o circuito — a falha é do chamador
   };
   const { contadores, restaurar } = stubFetch(estado);
   try {
-    for (let tentativa = 0; tentativa < 6; tentativa++) {
+    // (1) SEIS rejeições 4xx do MESMO chamador. Cada admissão LÊ o ledger, e a
+    // leitura devolve o que as inserções anteriores gravaram.
+    for (let tentativa = 1; tentativa <= 6; tentativa++) {
       const r = await chamarGenerate();
-      assertEquals(r.ok, false);
+      assertEquals(r.ok, false, `tentativa ${tentativa}: o 4xx é falha explícita`);
       assertEquals(r.response.status, 400, "o 400 real do provedor atravessa para o chamador");
+      // Sem a correção o limiar já teria bloqueado: aqui o provedor SEGUE sendo chamado.
+      assertEquals(
+        contadores.provedor,
+        tentativa,
+        "cada 4xx do pedido tem de chegar ao provedor (o circuito não abre)",
+      );
+      assertEquals(
+        contadores.insertsLog.length,
+        tentativa,
+        "cada tentativa tem de ser auditada no ledger",
+      );
     }
 
-    // O defeito: sem a correção, cada 400 entrava como 'error' e 6 rejeições do
-    // MESMO chamador abririam o circuito para TODOS. Aqui cada linha é 'request_error'.
-    assertEquals(contadores.insertsLog.length, 6, "cada tentativa tem de ser auditada");
+    // A leitura do circuito rodou a cada admissão, e as linhas gravadas entraram
+    // no ledger como 'request_error' — auditadas, não silenciadas.
+    assert(contadores.leiturasLedger >= 6, "o circuito tem de LER o ledger a cada admissão");
     for (const linha of contadores.insertsLog) {
       assertEquals(
         (linha as { status?: string }).status,
@@ -373,25 +407,62 @@ Deno.test("IA-050: 4xx do pedido NÃO abre o circuito — a falha é do chamador
         "4xx causado pelo pedido não pode contar como falha do provedor",
       );
     }
+
+    // Derivação sobre o ledger REALIMENTADO (o mesmo que a leitura devolveu):
+    // 'request_error' não conta como falha nem quebra a sequência.
+    const { deriveCircuitVerdict } = await import("./ai-circuit.ts");
+    const linhasDoLedger = estado.ledger.map((l) => ({
+      status: (l.status ?? null) as string | null,
+      created_at: (l.created_at ?? null) as string | null,
+    }));
+    const veredito = deriveCircuitVerdict(linhasDoLedger, Date.now(), {
+      failureThreshold: 5,
+      windowMs: 300_000,
+      cooldownMs: 60_000,
+    });
+    assertEquals(veredito.state, "closed", "seis 4xx do pedido não podem abrir o circuito");
+    assertEquals(veredito.consecutiveFailures, 0);
+
+    // E as seis tentativas seguem RECONCILIADAS como falha do pedido (não somem).
+    const { reconciliarConsumo } = await import("./ai-usage.ts");
+    const reconciliacao = reconciliarConsumo(
+      contadores.insertsLog.map((linha, i) => ({
+        id: `log-${i}`,
+        status: (linha as { status?: string }).status ?? null,
+      })),
+    );
+    assertEquals(reconciliacao.falhas, 6, "as seis rejeições continuam contadas como falha");
+
+    // (2) A MESMA ledger, agora com falha TRANSITÓRIA do provedor (5xx): o
+    // circuito volta a contar e ABRE no limiar — o 4xx não o cegou.
+    estado.providerStatus = 503;
+    estado.providerBody = { error: "provedor indisponivel" };
+    let abriu = false;
+    let ultimoStatus: string | undefined;
+    for (let tentativa = 0; tentativa < 6 && !abriu; tentativa++) {
+      const r = await chamarGenerate();
+      if (r.errorCode === "CIRCUIT_OPEN") {
+        abriu = true;
+        break;
+      }
+      assertEquals(r.ok, false, "o 5xx do provedor é falha explícita");
+      ultimoStatus = (contadores.insertsLog.at(-1) as { status?: string })?.status;
+    }
+    assert(abriu, "a falha transitória do provedor tem de abrir o circuito no limiar");
+    assertEquals(ultimoStatus, "error", "o 5xx do provedor entra no ledger como 'error'");
+    const provedorAposAbrir = contadores.provedor;
+    const bloqueada = await chamarGenerate();
+    assertEquals(
+      bloqueada.errorCode,
+      "CIRCUIT_OPEN",
+      "circuito aberto bloqueia a admissão seguinte",
+    );
+    assertEquals(bloqueada.response.status, 503);
     assertEquals(
       contadores.provedor,
-      6,
-      "mesmo após 6 rejeições do pedido o provedor segue sendo chamado (circuito fechado)",
+      provedorAposAbrir,
+      "circuito aberto não faz fetch ao provedor",
     );
-
-    // A derivação pura confirma: 'request_error' não conta como falha nem quebra a sequência.
-    const { deriveCircuitVerdict } = await import("./ai-circuit.ts");
-    const agora = Date.now();
-    const veredito = deriveCircuitVerdict(
-      Array.from({ length: 6 }, (_, i) => ({
-        status: "request_error",
-        created_at: new Date(agora - i * 1_000).toISOString(),
-      })),
-      agora,
-      { failureThreshold: 5, windowMs: 300_000, cooldownMs: 60_000 },
-    );
-    assertEquals(veredito.state, "closed");
-    assertEquals(veredito.consecutiveFailures, 0);
   } finally {
     restaurar();
     restaurarEnv();
