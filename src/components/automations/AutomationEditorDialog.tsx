@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { TRIGGER_TYPES, ACTION_TYPES, REQUIRED_ACTION_CONFIG, filterActionConfig } from './automationConstants';
+import { TRIGGER_TYPES, ACTION_TYPES, filterActionConfig } from './automationConstants';
 import type { AutomationRow } from './useAutomations';
 
 interface AutomationEditorDialogProps {
@@ -76,24 +76,11 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
   const [isSaving, setIsSaving] = useState(false);
 
   // Mescla a primeira ação com a existente em vez de recriá-la, para não perder
-  // parâmetros de configuração que o editor não expõe (ex.: delay_seconds).
-  // #99: `message` só é sobrescrito para `send_message` — `send_notification`
-  // TAMBÉM exige `message`, e apagá-lo impedia salvar/renomear esse tipo. Ao
-  // TROCAR de tipo, removemos apenas as chaves que não pertencem ao novo tipo
-  // segundo ALLOWED_ACTION_CONFIG, para não arrastar configuração obsoleta
-  // (ex.: `tag_id` ao virar `assign_agent`); dentro do mesmo tipo, preserva-se
-  // tudo o que já existia.
-  const { config: draftConfig } = buildFirstAction(automation, actionType, messageContent);
-  const requiredConfig = REQUIRED_ACTION_CONFIG[actionType] ?? [];
-  const missingConfig = requiredConfig.filter((configKey) => readString(draftConfig[configKey]).trim() === '');
-
+  // parâmetros que o editor não expõe. Ao trocar o tipo, remove só chaves
+  // conhecidas como exclusivas de outro tipo; chaves desconhecidas são mantidas
+  // porque este repositório não contém o executor que definiria o contrato total.
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
-    if (missingConfig.length > 0) {
-      const label = ACTION_TYPES.find((a) => a.type === actionType)?.label ?? actionType;
-      toast.error(`Ação "${label}" está sem configuração obrigatória: ${missingConfig.join(', ')}`);
-      return;
-    }
     const existing = readActions(automation);
     const { action: firstAction } = buildFirstAction(automation, actionType, messageContent);
     const actions = existing.length > 0 ? [firstAction, ...existing.slice(1)] : [firstAction];
@@ -161,12 +148,6 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
               <Label>Mensagem</Label>
               <Input value={messageContent} onChange={(e) => setMessageContent(e.target.value)} placeholder="Digite a mensagem automática..." />
             </div>
-          )}
-          {missingConfig.length > 0 && actionType !== 'send_message' && (
-            <p className="text-xs text-amber-600">
-              Esta ação exige configuração ({missingConfig.join(', ')}) que não é editável nesta tela e não
-              está presente na automação salva. Salvar ficará bloqueado até a configuração existir.
-            </p>
           )}
         </div>
         <DialogFooter>

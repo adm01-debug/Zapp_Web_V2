@@ -16,29 +16,21 @@ export const ACTION_TYPES = [
   { type: 'close_conversation', label: 'Fechar Conversa', icon: CheckCircle2, description: 'Marca a conversa como resolvida' },
 ];
 
-// R2-MOD-002 (#99): contrato de configuração obrigatória por tipo de ação.
-// O editor só coleta `message`; os demais parâmetros vêm da configuração já
-// persistida. Salvar sem eles produziria uma ação incompleta, então é bloqueado.
-export const REQUIRED_ACTION_CONFIG: Record<string, string[]> = {
-  send_message: ['message'],
-  assign_agent: ['agent_id'],
-  add_tag: ['tag_id'],
-  send_notification: ['message'],
-  close_conversation: [],
-};
-
-// Chaves aceitas por tipo, incluindo parâmetros opcionais. Esta lista é usada
-// somente ao trocar o tipo para remover configuração que pertence à ação antiga;
-// a validação de presença continua usando REQUIRED_ACTION_CONFIG.
-export const ALLOWED_ACTION_CONFIG: Record<string, string[]> = {
-  send_message: ['message', 'delay_seconds'],
-  assign_agent: ['agent_id', 'delay_seconds'],
-  add_tag: ['tag_id', 'delay_seconds'],
-  send_notification: ['message', 'priority', 'delay_seconds'],
-  close_conversation: ['delay_seconds'],
+// Chaves conhecidas como pertencentes a tipos específicos. Chaves sem dono
+// conhecido (incluindo parâmetros futuros do executor) são preservadas na troca;
+// somente dados comprovadamente incompatíveis com o novo tipo são removidos.
+const ACTION_CONFIG_OWNERS: Record<string, string[]> = {
+  message: ['send_message', 'send_notification'],
+  agent_id: ['assign_agent'],
+  tag_id: ['add_tag'],
+  priority: ['send_notification'],
 };
 
 export function filterActionConfig(actionType: string, config: Record<string, unknown>): Record<string, unknown> {
-  const allowed = ALLOWED_ACTION_CONFIG[actionType] ?? [];
-  return Object.fromEntries(Object.entries(config).filter(([configKey]) => allowed.includes(configKey)));
+  return Object.fromEntries(
+    Object.entries(config).filter(([configKey]) => {
+      const owners = ACTION_CONFIG_OWNERS[configKey];
+      return owners === undefined || owners.includes(actionType);
+    })
+  );
 }
