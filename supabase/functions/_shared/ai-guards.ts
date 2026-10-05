@@ -193,6 +193,42 @@ export async function enforceAiGuards(opts: AiGuardOptions): Promise<Response | 
   const { functionName, userId, req } = opts;
   if (!userId) return errorResponse("Unauthenticated", 401, req);
 
+  // 0) Bloqueio de capacidade por incidente (IA-058): consulta ANTES de
+  //    consumir o contador compartilhado ou a cota. A recusa é explícita e
+  //    carrega incident_id + motivo; falha de infraestrutura falha ABERTA —
+  //    nunca simula um bloqueio que não existe.
+  try {
+    const supabase = await getServiceClient();
+    const { data: blocks, error: blockError } = await supabase.rpc(
+      "ai_capability_active_block",
+      { p_function_name: functionName },
+    );
+    if (blockError) {
+      console.warn(JSON.stringify({
+        level: "warn",
+        source: "edge",
+        msg: "[ai-guards] consulta de bloqueio de capacidade falhou; seguindo fail-open",
+        error: blockError.message ?? String(blockError),
+      }));
+    } else {
+      const block = Array.isArray(blocks) ? blocks[0] : blocks;
+      if (block) {
+        return errorResponse(
+          `AI capability '${functionName}' bloqueada por incidente ${block.incident_id}: ${block.reason}`,
+          403,
+          req,
+        );
+      }
+    }
+  } catch (err) {
+    console.warn(JSON.stringify({
+      level: "warn",
+      source: "edge",
+      msg: "[ai-guards] consulta de bloqueio de capacidade falhou; seguindo fail-open",
+      error: err instanceof Error ? err.message : String(err),
+    }));
+  }
+
   const perMin = opts.perUserPerMinute ?? DEFAULT_PER_USER_PER_MIN;
 
   // 1) Cheap local pre-check (per-isolate). NOT the source of truth: it only
