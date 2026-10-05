@@ -43,12 +43,43 @@ function row(overrides: Partial<MessageRow> = {}): MessageRow {
   } as MessageRow;
 }
 
+function config() {
+  return h.realtime.config as {
+    onInsert: (payload: unknown) => void;
+    onUpdate: (payload: unknown) => void;
+    onDelete: (payload: unknown) => void;
+  };
+}
+
 function onInsert(payloadRow: MessageRow) {
-  const config = h.realtime.config as { onInsert: (payload: unknown) => void };
-  config.onInsert({
+  config().onInsert({
     eventType: 'INSERT',
     new: payloadRow,
     old: {},
+    schema: 'public',
+    table: 'messages',
+    commit_timestamp: '2026-01-01T10:00:00Z',
+    errors: null,
+  } as unknown as RealtimePostgresChangesPayload<MessageRow>);
+}
+
+function onUpdate(oldRow: MessageRow, newRow: MessageRow) {
+  config().onUpdate({
+    eventType: 'UPDATE',
+    new: newRow,
+    old: oldRow,
+    schema: 'public',
+    table: 'messages',
+    commit_timestamp: '2026-01-01T10:00:00Z',
+    errors: null,
+  } as unknown as RealtimePostgresChangesPayload<MessageRow>);
+}
+
+function onDelete(oldRow: MessageRow) {
+  config().onDelete({
+    eventType: 'DELETE',
+    new: {},
+    old: oldRow,
     schema: 'public',
     table: 'messages',
     commit_timestamp: '2026-01-01T10:00:00Z',
@@ -67,6 +98,13 @@ function render() {
   return { ...view, invalidateSpy };
 }
 
+async function renderReady() {
+  const view = render();
+  await waitFor(() => expect(h.realtime.config).not.toBeNull());
+  await waitFor(() => expect(h.fetchMessages).toHaveBeenCalled());
+  return view;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   h.realtime.config = null;
@@ -76,9 +114,7 @@ beforeEach(() => {
 
 describe('useMessages — atualização ao vivo da aba Arquivos (etapa 45)', () => {
   it('evento realtime COM media_url invalida a galeria, o badge da aba e os chips', async () => {
-    const { invalidateSpy } = render();
-    await waitFor(() => expect(h.realtime.config).not.toBeNull());
-    await waitFor(() => expect(h.fetchMessages).toHaveBeenCalled());
+    const { invalidateSpy } = await renderReady();
 
     act(() => { onInsert(row({ media_url: 'https://x/a.jpg' })); });
 
@@ -90,9 +126,7 @@ describe('useMessages — atualização ao vivo da aba Arquivos (etapa 45)', () 
   });
 
   it('evento sem media_url NAO invalida nenhuma query', async () => {
-    const { invalidateSpy } = render();
-    await waitFor(() => expect(h.realtime.config).not.toBeNull());
-    await waitFor(() => expect(h.fetchMessages).toHaveBeenCalled());
+    const { invalidateSpy } = await renderReady();
 
     act(() => { onInsert(row({ media_url: null, message_type: 'chat' })); });
 
@@ -100,10 +134,59 @@ describe('useMessages — atualização ao vivo da aba Arquivos (etapa 45)', () 
   });
 
   it('mensagem de outro contato nao invalida nada', async () => {
-    const { invalidateSpy } = render();
-    await waitFor(() => expect(h.realtime.config).not.toBeNull());
+    const { invalidateSpy } = await renderReady();
 
     act(() => { onInsert(row({ contact_id: 'outro-contato', media_url: 'https://x/a.jpg' })); });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+});
+
+// #144 / OTH-002: a exclusão remota (UPDATE is_deleted / DELETE) não pode deixar chips e badge
+// com o número antigo. Antes, só o INSERT invalidava; UPDATE e DELETE ficavam de fora.
+describe('useMessages — exclusão remota atualiza os agregados (OTH-002)', () => {
+  it('UPDATE que apaga mídia (is_deleted = true) invalida galeria, badge e chips', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => {
+      onUpdate(
+        row({ media_url: 'https://x/a.jpg', is_deleted: false } as Partial<MessageRow>),
+        row({ media_url: 'https://x/a.jpg', is_deleted: true } as Partial<MessageRow>),
+      );
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey(CONTACT) });
+  });
+
+  it('UPDATE sem mídia NAO invalida os agregados da aba Arquivos', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => {
+      onUpdate(
+        row({ media_url: null, message_type: 'chat', content: 'oi' }),
+        row({ media_url: null, message_type: 'chat', content: 'oi, tudo bem?' }),
+      );
+    });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  it('DELETE remoto de mídia invalida galeria, badge e chips', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onDelete(row({ media_url: 'https://x/a.jpg' })); });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey(CONTACT) });
+  });
+
+  it('DELETE remoto sem mídia NAO invalida os agregados da aba Arquivos', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onDelete(row({ media_url: null, message_type: 'chat' })); });
 
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
