@@ -40,7 +40,7 @@ const opts = (rpc: NetworkPolicyRpcClient) => ({
 function fakeRpc(
   outcome:
     | { data: unknown; error: null }
-    | { data: null; error: { message: string } },
+    | { data: null; error: { message: string; code?: string } },
 ) {
   const calls: Array<{ fn: string; args: Record<string, unknown> }> = [];
   const client: NetworkPolicyRpcClient & { calls: typeof calls } = {
@@ -170,21 +170,80 @@ Deno.test("resolveNetworkPolicy: whitelist de IP NÃO isenta país — país blo
   assertEquals(rpc.calls[0].args.p_ip, "10.0.0.8");
 });
 
-Deno.test("resolveNetworkPolicy: país ausente (header ausente) falha fechado — 403 com p_country_code null", async () => {
-  // Geo ativo (whitelist vazia) + país ausente -> a RPC devolve country_blocked.
-  // O módulo encaminha null e converte a negação em 403, sem inventar país.
+Deno.test("resolveNetworkPolicy: país ausente (header ausente) NÃO bloqueia — permite com notice geo_country_unknown", async () => {
+  // QA5-08: sem cf-ipcountry o país é desconhecido — não é evidência de violação.
+  // Mesmo que a RPC (antiga, na janela de deploy) negue com country_blocked, o
+  // módulo converte em "permite + notice" em vez de derrubar o login.
   const rpc = fakeRpc({
     data: [{ allowed: false, reason: "country_blocked", rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }],
     error: null,
   });
   const decision = await resolveNetworkPolicy(request(), "auth-login", opts(rpc));
-  assertEquals(decision, { allowed: false, status: 403, reason: "country_blocked" });
+  assertEquals(decision, {
+    allowed: true,
+    rateLimitMaxRequests: 30,
+    rateLimitWindowSeconds: 60,
+    notice: "geo_country_unknown",
+  });
+  // o país ausente foi encaminhado como null (nenhum código inventado)
   assertEquals(rpc.calls[0].args.p_country_code, null);
+});
+
+Deno.test("resolveNetworkPolicy: país ausente NÃO isenta bloqueio de IP — ip_blocked continua 403", async () => {
+  // O fail-open do QA5-08 vale só para negação POR PAÍS: IP bloqueado segue
+  // bloqueado mesmo sem header de país (o IP é conhecido, a regra é real).
+  const rpc = fakeRpc({
+    data: [{ allowed: false, reason: "ip_blocked", rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }],
+    error: null,
+  });
+  const decision = await resolveNetworkPolicy(request(), "auth-login", opts(rpc));
+  assertEquals(decision, { allowed: false, status: 403, reason: "ip_blocked" });
+});
+
+Deno.test("resolveNetworkPolicy: allowed com reason carrega o aviso da RPC como notice", async () => {
+  // QA5-08: a RPC nova permite mas avisa quando o modo está ligado sem lista
+  // ('geo_empty_allowlist') ou o país é desconhecido ('geo_country_unknown').
+  for (const notice of ["geo_empty_allowlist", "geo_country_unknown"]) {
+    const rpc = fakeRpc({
+      data: [{ allowed: true, reason: notice, rate_limit_max_requests: 25, rate_limit_window_seconds: 120 }],
+      error: null,
+    });
+    const decision = await resolveNetworkPolicy(request(), "auth-login", opts(rpc));
+    assertEquals(decision, {
+      allowed: true,
+      rateLimitMaxRequests: 25,
+      rateLimitWindowSeconds: 120,
+      notice,
+    });
+  }
+  // allowed sem reason -> sem notice (contrato antigo intacto)
+  const rpc = fakeRpc(ALLOWED);
+  const decision = await resolveNetworkPolicy(request(), "auth-login", opts(rpc));
+  assertEquals(decision, { allowed: true, rateLimitMaxRequests: 25, rateLimitWindowSeconds: 120 });
 });
 
 Deno.test("resolveNetworkPolicy: erro da RPC falha fechado com 503 (não vaza decisão)", async () => {
   const rpc = fakeRpc({ data: null, error: { message: "connection reset" } });
   const decision = await resolveNetworkPolicy(request({ "cf-ipcountry": "br" }), "auth-login", opts(rpc));
+  assertEquals(decision, { allowed: false, status: 503 });
+});
+
+Deno.test("resolveNetworkPolicy: RPC ausente (42883/PGRST202) NÃO derruba — permite com defaults + notice", async () => {
+  // QA5-08: Edge publicada antes da migration -> a função não existe no banco.
+  // Em vez de 503 em massa, degrada para "permite" com os limites do chamador.
+  for (const code of ["42883", "PGRST202"]) {
+    const rpc = fakeRpc({ data: null, error: { code, message: "function not found" } });
+    const decision = await resolveNetworkPolicy(request({ "cf-ipcountry": "br" }), "auth-login", opts(rpc));
+    assertEquals(decision, {
+      allowed: true,
+      rateLimitMaxRequests: 30,
+      rateLimitWindowSeconds: 60,
+      notice: "policy_rpc_missing",
+    });
+  }
+  // erro com outro código continua falhando fechado
+  const rpc = fakeRpc({ data: null, error: { code: "57014", message: "query canceled" } });
+  const decision = await resolveNetworkPolicy(request(), "auth-login", opts(rpc));
   assertEquals(decision, { allowed: false, status: 503 });
 });
 

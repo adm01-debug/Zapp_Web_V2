@@ -12,7 +12,8 @@
 #       * IP explicitamente bloqueado nega; whitelist isenta SOMENTE o bloqueio por IP
 #         (não isenta país); IP ao mesmo tempo bloqueado e whitelisted passa.
 #       * país: disabled permite; blacklist nega listados; whitelist permite apenas listados;
-#         whitelist vazia e país ausente em modo ativo falham fechados.
+#         QA5-08: whitelist VAZIA e país ausente em modo ativo NÃO bloqueiam —
+#         permitem com aviso (reason 'geo_empty_allowlist'/'geo_country_unknown').
 #       * rate limit: regra ativa que casa (exato ou glob '*') prevalece sobre o default;
 #         glob mais específico vence; regra inativa é ignorada; sem regra usa o default.
 #       * entrada inválida (p_ip vazio) levanta exceção.
@@ -26,6 +27,9 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
+# QA5-08: semântica geo corrigida por CREATE OR REPLACE posterior — a decisão
+# efetiva é a da migration mais nova; ambas são aplicadas em ordem.
+migration_fix="$repo_root/supabase/migrations/20261005111846_resolve_network_policy_geo_nao_derruba.sql"
 postgres_image="${NETWORK_POLICY_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 
 main_container="zapp-v2-netpolicy-test-$$"
@@ -35,6 +39,7 @@ target_container=""
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
+[[ -f "$migration_fix" ]] || fail "migration QA5-08 nao encontrada: $migration_fix"
 
 fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
 
@@ -90,6 +95,14 @@ expect_allow() {
   local label="$1" args="$2" max="$3" window="$4" row
   row="$(rpc_row "$args" | tail -n1)"
   [[ "$row" == "true|NULL|$max|$window" ]] || fail "$label: esperado 'true|NULL|$max|$window', obtido '$row'"
+  printf '[PASS] %s\n' "$label"
+}
+# QA5-08: allow com AVISO (reason preenchido em linha allowed=true) — a Edge
+# propaga como notice para log; nunca bloqueia por configuração incompleta.
+expect_allow_notice() {
+  local label="$1" args="$2" reason="$3" row
+  row="$(rpc_row "$args" | tail -n1)"
+  [[ "$row" == "true|$reason|"* ]] || fail "$label: esperado 'true|$reason|...', obtido '$row'"
   printf '[PASS] %s\n' "$label"
 }
 
@@ -207,8 +220,9 @@ expect_value "tabela rate_limit_configs existe (config sem consumidor)" "t" \
 expect_value "RPC canônica resolve_network_policy AUSENTE (defeito)" "f" \
   "SELECT to_regprocedure('public.resolve_network_policy(text,text,text,integer,integer)') IS NOT NULL"
 
-echo "===== BLOCO B (VERDE): migration aplicada ====="
+echo "===== BLOCO B (VERDE): migrations aplicadas (original + QA5-08) ====="
 psql_file "$migration"
+psql_file "$migration_fix"
 
 expect_value "RPC canônica agora EXISTE" "t" \
   "SELECT to_regprocedure('public.resolve_network_policy(text,text,text,integer,integer)') IS NOT NULL"
@@ -231,18 +245,19 @@ expect_allow "IP whitelisted passa (geo disabled)" "'198.51.100.9','BR','/x',30,
 expect_allow "IP bloqueado E whitelisted: whitelist vence" "'203.0.113.8','BR','/x',30,60" 30 60
 expect_deny  "IP bloqueado com limite de regra resolvido" "'203.0.113.7','BR','/auth/login',30,60" "ip_blocked"
 
-echo "-- Política de país --"
+echo "-- Política de país (QA5-08: lista vazia / país ausente NÃO bloqueiam) --"
 psql_sql "UPDATE public.geo_blocking_settings SET mode='blacklist', updated_at=now()"
 expect_deny  "blacklist nega país listado (CN)" "'1.1.1.1','CN','/x',30,60" "country_blocked"
 expect_allow "blacklist permite país fora da lista (BR)" "'1.1.1.1','BR','/x',30,60" 30 60
-expect_deny  "blacklist + país ausente falha fechado" "'1.1.1.1',NULL,'/x',30,60" "country_blocked"
+expect_allow_notice "blacklist + país ausente NÃO bloqueia (avisa)" "'1.1.1.1',NULL,'/x',30,60" "geo_country_unknown"
 psql_sql "UPDATE public.geo_blocking_settings SET mode='whitelist', updated_at=now()"
 expect_allow "whitelist permite país listado (BR)" "'1.1.1.1','BR','/x',30,60" 30 60
 expect_deny  "whitelist nega país fora da lista (CN)" "'1.1.1.1','CN','/x',30,60" "country_blocked"
-expect_deny  "whitelist + país ausente falha fechado" "'1.1.1.1',NULL,'/x',30,60" "country_blocked"
+expect_allow_notice "whitelist + país ausente NÃO bloqueia (avisa)" "'1.1.1.1',NULL,'/x',30,60" "geo_country_unknown"
 expect_deny  "whitelist de IP NÃO isenta país (IP wl + país fora)" "'198.51.100.9','CN','/x',30,60" "country_blocked"
 psql_sql "DELETE FROM public.allowed_countries"
-expect_deny  "whitelist VAZIA nega todos" "'1.1.1.1','BR','/x',30,60" "country_blocked"
+expect_allow_notice "whitelist VAZIA NÃO bloqueia (avisa geo_empty_allowlist)" "'1.1.1.1','BR','/x',30,60" "geo_empty_allowlist"
+expect_allow_notice "whitelist VAZIA + país ausente: avisa lista vazia" "'1.1.1.1',NULL,'/x',30,60" "geo_empty_allowlist"
 psql_sql "UPDATE public.geo_blocking_settings SET mode='disabled', updated_at=now()"
 expect_allow "disabled permite qualquer país (mesmo em blocked)" "'1.1.1.1','CN','/x',30,60" 30 60
 
@@ -260,17 +275,18 @@ expect_error "p_ip vazio levanta exceção" "p_ip obrigatorio" \
   "SELECT * FROM public.resolve_network_policy('', 'BR', '/x', 30, 60)"
 
 echo "===== MUTAÇÃO: remover isenção de whitelist (o teste deve pegá-la) ====="
-sed "s/if not v_ip_whitelisted then/if true then/" "$migration" > "$tmp_dir/mut.sql"
+# a função efetiva é a da migration mais nova (QA5-08): a mutação mira ela
+sed "s/if not v_ip_whitelisted then/if true then/" "$migration_fix" > "$tmp_dir/mut.sql"
 # garante que a mutação de fato alterou a cópia (e não o original)
 grep -q "if true then" "$tmp_dir/mut.sql" || fail 'mutacao nao aplicada na copia'
-grep -q "if not v_ip_whitelisted then" "$migration" || fail 'original foi tocado (whitelist)'
-orig_sha="$(sha256sum "$migration" | cut -d' ' -f1)"
+grep -q "if not v_ip_whitelisted then" "$migration_fix" || fail 'original foi tocado (whitelist)'
+orig_sha="$(sha256sum "$migration_fix" | cut -d' ' -f1)"
 boot_container "$mut_container"
 psql_file "$tmp_dir/mut.sql"
 mut_row="$(rpc_row "'203.0.113.8','BR','/x',30,60" | tail -n1)"
 [[ "$mut_row" == "false|ip_blocked|"* ]] || fail "mutacao deveria tornar whitelist inerte e negar 203.0.113.8, obtido '$mut_row'"
 printf '[PASS] mutação: sem isenção de whitelist, IP bloqueado+whitelisted é negado (o teste a pega)\n'
-now_sha="$(sha256sum "$migration" | cut -d' ' -f1)"
+now_sha="$(sha256sum "$migration_fix" | cut -d' ' -f1)"
 [[ "$orig_sha" == "$now_sha" ]] || fail 'sha256 da migration mudou durante o teste'
 printf '[PASS] sha256 da migration do repo preservado (%s)\n' "${now_sha:0:16}"
 

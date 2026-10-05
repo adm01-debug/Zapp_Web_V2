@@ -134,6 +134,95 @@ Deno.test("negação por país (403) não chama autenticação nem grava tentati
   assertEquals(rl.calls.length, 0);
 });
 
+Deno.test("RPC ausente (PGRST202) NÃO derruba o login — segue para autenticar com aviso", async () => {
+  // QA5-08: Edge publicada antes da migration 20261004182245 — a função não
+  // existe no PostgREST. O login deve SEGUIR (com warn registrado), não 503.
+  const warns: string[] = [];
+  const origWarn = console.warn;
+  console.warn = (msg: unknown) => warns.push(String(msg));
+  try {
+    const admin = fakeAdmin(
+      { data: null, error: { code: "PGRST202", message: "Could not find the function" } },
+      {
+        is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+        clear_login_attempts: { data: null, error: null },
+      },
+    );
+    const anon = fakeAnon();
+    const rl = fakeRateLimit();
+
+    const res = await handleLogin(
+      post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+      { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+    );
+
+    assertEquals(res.status, 200);
+    assertEquals((await res.json()).access_token, "tok");
+    // login seguiu: autenticou e registrou o aviso de degradação
+    assertEquals(anon.calls.length, 1);
+    assertEquals(warns.some((w) => w.includes("policy_rpc_missing")), true);
+  } finally {
+    console.warn = origWarn;
+  }
+});
+
+Deno.test("sem cabeçalho de país, negação country_blocked NÃO bloqueia — segue com aviso", async () => {
+  // QA5-08: sem cf-ipcountry (RPC antiga ainda devolveria country_blocked),
+  // o login segue e o aviso é registrado.
+  const warns: string[] = [];
+  const origWarn = console.warn;
+  console.warn = (msg: unknown) => warns.push(String(msg));
+  try {
+    const admin = fakeAdmin(POLICY_DENY_COUNTRY, {
+      is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+      clear_login_attempts: { data: null, error: null },
+    });
+    const anon = fakeAnon();
+    const rl = fakeRateLimit();
+
+    const res = await handleLogin(
+      post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+      { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+    );
+
+    assertEquals(res.status, 200);
+    assertEquals(anon.calls.length, 1);
+    assertEquals(warns.some((w) => w.includes("geo_country_unknown")), true);
+  } finally {
+    console.warn = origWarn;
+  }
+});
+
+Deno.test("allowlist vazia (aviso da RPC) NÃO bloqueia — segue com aviso registrado", async () => {
+  // QA5-08: modo allowlist ligado sem países cadastrados — a RPC nova devolve
+  // allowed=true com reason='geo_empty_allowlist'; o login segue e registra.
+  const warns: string[] = [];
+  const origWarn = console.warn;
+  console.warn = (msg: unknown) => warns.push(String(msg));
+  try {
+    const admin = fakeAdmin(
+      { data: [{ allowed: true, reason: "geo_empty_allowlist", rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null },
+      {
+        is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+        clear_login_attempts: { data: null, error: null },
+      },
+    );
+    const anon = fakeAnon();
+    const rl = fakeRateLimit();
+
+    const res = await handleLogin(
+      post({ "x-forwarded-for": IP, "cf-ipcountry": "br" }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+      { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+    );
+
+    assertEquals(res.status, 200);
+    assertEquals(anon.calls.length, 1);
+    assertEquals(warns.some((w) => w.includes("geo_empty_allowlist")), true);
+  } finally {
+    console.warn = origWarn;
+  }
+});
+
 Deno.test("erro de decisão responde 503 (indecidível, sem vazar regras)", async () => {
   const admin = fakeAdmin(POLICY_ERROR);
   const anon = fakeAnon();

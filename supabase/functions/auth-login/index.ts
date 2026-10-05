@@ -109,6 +109,9 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
       log.done(policy.status, policy.status === 403 ? { reason: policy.reason } : {});
       return networkPolicyDenialResponse(policy, req);
     }
+    // QA5-08: permissão degradada (RPC ausente, allowlist vazia ou país
+    // desconhecido) segue o login, mas fica registrada para observabilidade.
+    if (policy.notice) log.warn("network-policy degraded", { notice: policy.notice });
 
     const ip = getClientIP(req);
     // Limite configurável de `auth-login` prevalece; fallback mantém os limites

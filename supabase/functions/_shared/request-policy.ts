@@ -20,6 +20,18 @@
  * - Endpoint: explícito no chamador e validado aqui, nunca derivado de body
  *   controlado pelo cliente.
  * - Falha/erro da RPC falha fechado (503); a resposta nunca revela listas/regras.
+ *
+ * QA5-08 (cartão t_3abd76ce) — a política não pode derrubar TODO o login por
+ * configuração incompleta ou falta de sinal:
+ * - RPC ausente no banco (42883/PGRST202 — Edge publicada antes da migration):
+ *   degrada para "permite com os defaults do chamador" + `notice`, em vez de
+ *   503 em massa. Demais erros da RPC continuam falhando fechado.
+ * - `country_blocked` com país ausente (sem header confiável) não bloqueia:
+ *   vira "permite" + `notice` — país desconhecido não é evidência de violação.
+ *   Cobre também a janela Edge nova × RPC antiga (antes da migration do QA5-08).
+ * - Linha `allowed=true` com `reason` preenchido carrega aviso da RPC
+ *   ('geo_empty_allowlist', 'geo_country_unknown') → propagado como `notice`
+ *   para o chamador registrar. O corpo da resposta nunca carrega o aviso.
  */
 
 import { errorResponse, getClientIP } from "./validation.ts";
@@ -101,11 +113,32 @@ export interface NetworkPolicyOptions {
 /**
  * Decisão de política de rede. `reason` (só a categoria) existe para LOG
  * server-side; o corpo enviado ao cliente nunca a carrega.
+ *
+ * `notice` (QA5-08) marca uma permissão DEGRADADA que o chamador deve registrar
+ * em log: 'policy_rpc_missing' (RPC ausente — deploy fora de ordem),
+ * 'geo_empty_allowlist' (modo allowlist sem países cadastrados),
+ * 'geo_country_unknown' (país ausente em modo geo ativo). Nunca vai ao cliente.
  */
 export type NetworkPolicyDecision =
-  | { allowed: true; rateLimitMaxRequests: number; rateLimitWindowSeconds: number }
+  | {
+      allowed: true;
+      rateLimitMaxRequests: number;
+      rateLimitWindowSeconds: number;
+      notice?: string;
+    }
   | { allowed: false; status: 403; reason: "ip_blocked" | "country_blocked" }
   | { allowed: false; status: 503 };
+
+/**
+ * Erros que indicam a RPC `resolve_network_policy` AUSENTE no banco — Edge
+ * publicada antes da migration (ou schema cache do PostgREST sem a função):
+ * 42883 = undefined_function (SQL), PGRST202 = função não encontrada (PostgREST).
+ */
+function isMissingPolicyRpcError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const code = (error as { code?: unknown }).code;
+  return code === "42883" || code === "PGRST202";
+}
 
 /**
  * Converte Request + endpoint canônico na decisão da RPC de política de rede.
@@ -127,6 +160,21 @@ export async function resolveNetworkPolicy(
   const ip = getClientIP(req);
   const countryCode = extractCountryCode(req);
 
+  // Limites efetivos: os da RPC quando válidos, senão os defaults do chamador.
+  const limits = (row: {
+    rate_limit_max_requests?: unknown;
+    rate_limit_window_seconds?: unknown;
+  } | null) => ({
+    rateLimitMaxRequests:
+      typeof row?.rate_limit_max_requests === "number" && row.rate_limit_max_requests >= 1
+        ? row.rate_limit_max_requests
+        : opts.defaultMaxRequests,
+    rateLimitWindowSeconds:
+      typeof row?.rate_limit_window_seconds === "number" && row.rate_limit_window_seconds >= 1
+        ? row.rate_limit_window_seconds
+        : opts.defaultWindowSeconds,
+  });
+
   try {
     const { data, error } = await opts.rpc.rpc("resolve_network_policy", {
       p_ip: ip,
@@ -137,6 +185,12 @@ export async function resolveNetworkPolicy(
     });
 
     if (error) {
+      // QA5-08: RPC ausente (deploy fora de ordem) NÃO derruba o login — degrada
+      // para "permite com os defaults" + notice para log. Qualquer outro erro
+      // continua indecidível → 503.
+      if (isMissingPolicyRpcError(error)) {
+        return { allowed: true, ...limits(null), notice: "policy_rpc_missing" };
+      }
       return { allowed: false, status: 503 };
     }
 
@@ -153,22 +207,24 @@ export async function resolveNetworkPolicy(
     }
 
     if (row.allowed) {
-      const rateLimitMaxRequests =
-        typeof row.rate_limit_max_requests === "number" && row.rate_limit_max_requests >= 1
-          ? row.rate_limit_max_requests
-          : opts.defaultMaxRequests;
-      const rateLimitWindowSeconds =
-        typeof row.rate_limit_window_seconds === "number" && row.rate_limit_window_seconds >= 1
-          ? row.rate_limit_window_seconds
-          : opts.defaultWindowSeconds;
-      return { allowed: true, rateLimitMaxRequests, rateLimitWindowSeconds };
+      // reason preenchido em linha permitida é AVISO da RPC (QA5-08:
+      // 'geo_empty_allowlist', 'geo_country_unknown') — propaga como notice.
+      const notice =
+        typeof row.reason === "string" && row.reason !== "" ? row.reason : undefined;
+      return { allowed: true, ...limits(row), ...(notice ? { notice } : {}) };
     }
 
     // Negada: a RPC só devolve categorias ('ip_blocked' | 'country_blocked').
     // Qualquer outra grafia cai na categoria genérica — nunca vaza regra/lista.
-    const reason: "ip_blocked" | "country_blocked" =
-      row.reason === "ip_blocked" ? "ip_blocked" : "country_blocked";
-    return { allowed: false, status: 403, reason };
+    if (row.reason === "ip_blocked") {
+      return { allowed: false, status: 403, reason: "ip_blocked" };
+    }
+    // QA5-08: negação por país com país AUSENTE (sem header confiável) não
+    // bloqueia — vale inclusive para a RPC antiga na janela de deploy.
+    if (countryCode === null) {
+      return { allowed: true, ...limits(row), notice: "geo_country_unknown" };
+    }
+    return { allowed: false, status: 403, reason: "country_blocked" };
   } catch {
     return { allowed: false, status: 503 };
   }
