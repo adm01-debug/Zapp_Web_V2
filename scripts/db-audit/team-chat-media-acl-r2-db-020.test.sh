@@ -11,15 +11,31 @@
 # profiles.name fosse igual ao media_path de uma mensagem de conversa da qual participa
 # liberava a leitura de QUALQUER objeto do bucket, inclusive de conversa alheia.
 #
-# Roda o MESMO roteiro duas vezes no mesmo container:
+# Roda o MESMO roteiro no mesmo container:
 #   BLOCO A — estado ANTERIOR (policy vulnerável): prova o vazamento.
 #   BLOCO B — migration aplicada: prova a correção e preserva membro/dono/admin; e
 #             prova o CHECK que vincula media_path a sender_id/conversation_id.
+#   BLOCO E — contrato de ESCRITA: a policy de INSERT team_chat_files_insert
+#             (20260928560000, já vigente antes desta migration) exige 1º segmento =
+#             current_profile_id — alinhada ao formato canônico que o frontend grava
+#             (TeamFileUploader.tsx / useTeamChatDraft.ts: <profile_id>/<conversation_id>/
+#             <opaco>). Sem policy de UPDATE (UPDATE revogado em 20260928560000).
+#   BLOCO C — ROLLBACK REAL: aplica o SQL da linha "-- Rollback:" da migration e
+#             prova que ela recria uma leitura equivalente E segura (objects.name
+#             qualificado), não a versão vulnerável, nem "bucket sem policy".
+#
+# Legado <auth_uid>/...: o bucket team-chat-files tinha 0 objetos e 0 linhas de
+# team_messages com media_bucket='team-chat-files' em produção (contagem via gateway
+# read-only em 2026-10-05) — o formato antigo foi ABANDONADO. O teste prova que um
+# objeto em <auth_uid>/..., legível pelo dono sob a policy antiga, deixa de ser
+# legível sob a nova (dono = current_profile_id, não auth.uid), e que o ADD
+# CONSTRAINT simples é seguro por não haver linha que o viole.
 #
 # Pré-estado fiel: storage.objects + storage.foldername (definição viva do Supabase),
 # profiles/team_conversations/team_conversation_members/team_messages, helpers
-# is_admin_or_supervisor/current_profile_id/is_team_conversation_member e a policy
-# vulnerável de 20260927270012. A chave canônica é <profile_id>/<conversation_id>/<opaco>.
+# is_admin_or_supervisor/current_profile_id/is_team_conversation_member, a policy
+# vulnerável de 20260927270012 (SELECT) e a policy de INSERT de 20260928560000.
+# A chave canônica é <profile_id>/<conversation_id>/<opaco>.
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -200,7 +216,16 @@ CREATE POLICY "Members can view conversation members" ON public.team_conversatio
 GRANT SELECT ON public.profiles TO authenticated;
 GRANT SELECT ON public.team_messages TO authenticated;
 GRANT SELECT ON public.team_conversation_members TO authenticated;
-GRANT SELECT ON storage.objects TO authenticated;
+GRANT SELECT, INSERT ON storage.objects TO authenticated;
+-- Como em produção (20260928560000): UPDATE foi revogado de authenticated — não há
+-- policy de UPDATE no bucket; quem grava só INSERTa (e DELETE fica fora do escopo).
+REVOKE UPDATE ON storage.objects FROM authenticated;
+
+-- POLICY DE INSERT VIGENTE (20260928560000), tal como em produção: o 1º segmento do
+-- nome do objeto deve ser o profile_id do uploader — é a metade "escrita" do
+-- contrato canônico <profile_id>/<conversation_id>/<opaco> que o frontend grava.
+CREATE POLICY team_chat_files_insert ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'team-chat-files' AND (storage.foldername(name))[1] = (public.current_profile_id())::text);
 
 -- POLICY VULNERÁVEL (20260927270012), tal como em produção.
 CREATE POLICY "Conversation members can read team chat files" ON storage.objects FOR SELECT USING (
@@ -255,7 +280,10 @@ INSERT INTO public.team_messages (conversation_id, sender_id, content, message_t
 INSERT INTO storage.objects (bucket_id, name) VALUES
   ('team-chat-files', '$OWNER_PATH'),
   ('team-chat-files', '$O2_PATH'),
-  ('team-chat-files', 'shortpath');
+  ('team-chat-files', 'shortpath'),
+  -- Formato LEGADO <auth_uid>/<opaco> (policy de INSERT anterior a 20260928560000):
+  -- objeto do Bob (auth.uid 2222...) que a policy antiga deixava o dono ler.
+  ('team-chat-files', '22222222-2222-2222-2222-222222222222/legacy.png');
 SQL
 
 psql_file "$tmp_dir/pre.sql"
@@ -278,6 +306,12 @@ expect_value 'A1 (defeito) membro lê objeto de conversa ALHEIA' '1' \
   "$(as_actor "$MEMBER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='$O2_PATH';")"
 expect_value 'A1b controle: membro lê o próprio objeto da conversa' '1' \
   "$(as_actor "$MEMBER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='$OWNER_PATH';")"
+
+# A2 (controle do legado): sob a policy ANTIGA o dono lia o objeto em
+# <auth_uid>/<opaco> (foldername[1] = auth.uid). Serve de contraste com o BLOCO B,
+# que prova o abandono desse formato.
+expect_value 'A2 controle: formato legado <auth_uid>/ era legível pelo dono' '1' \
+  "$(as_actor "$OWNER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='22222222-2222-2222-2222-222222222222/legacy.png';")"
 
 echo
 echo '── Aplicando a migration ─────────────────────────────────────────────────────────'
@@ -309,6 +343,28 @@ expect_value 'B5 não-membro NÃO lê objeto da conversa alheia' '0' \
 # B6: caminho curto/malformado nega (sem erro de cast).
 expect_value 'B6 caminho curto/malformado nega' '0' \
   "$(as_actor "$MEMBER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='shortpath';")"
+
+# B14/B15: formato legado <auth_uid>/... ABANDONADO — o dono agora é
+# current_profile_id (1º segmento), não auth.uid. O objeto legado do Bob deixa de
+# ser legível por ele (contraste direto com A2); admin continua lendo tudo.
+expect_value 'B14 formato legado <auth_uid>/ NÃO é mais legível pelo dono' '0' \
+  "$(as_actor "$OWNER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='22222222-2222-2222-2222-222222222222/legacy.png';")"
+expect_value 'B15 admin ainda lê o objeto legado (controle: objeto existe)' '1' \
+  "$(as_actor "$ADMIN_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='22222222-2222-2222-2222-222222222222/legacy.png';")"
+
+echo
+echo '── BLOCO E: contrato de ESCRITA (policy de INSERT vigente, 20260928560000) ───────'
+# O frontend grava <profile_id>/<conversation_id>/<opaco> (TeamFileUploader.tsx,
+# useTeamChatDraft.ts). A policy de INSERT exige o 1º segmento = current_profile_id:
+# é ela que garante que o "dono da pasta" da policy nova (profile_id) é quem de fato
+# consegue gravar na pasta — sem ela o dono da policy nova seria um contrato vazio.
+expect_value 'E1 upload no formato canônico é aceito (1º segmento = próprio profile)' '1' \
+  "$(as_actor "$OWNER_UID" "WITH ins AS (INSERT INTO storage.objects (bucket_id, name) VALUES ('team-chat-files','b0000000-0000-0000-0000-000000000001/1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/e2.png') RETURNING 1) SELECT count(*) FROM ins;")"
+expect_error 'E2 upload com 1º segmento de OUTRO profile é recusado' \
+  'violates row-level security policy' \
+  "$(as_actor "$OWNER_UID" "INSERT INTO storage.objects (bucket_id, name) VALUES ('team-chat-files','c0000000-0000-0000-0000-000000000001/1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/e2.png');")"
+expect_value 'E3 objeto recém-gravado pelo dono é legível pela policy nova' '1' \
+  "$(as_actor "$OWNER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='b0000000-0000-0000-0000-000000000001/1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/e2.png';")"
 
 echo
 echo '── CHECK de persistência de team_messages.media_path ─────────────────────────────'
@@ -363,5 +419,37 @@ expect_value 'D5 expressão NÃO referencia profiles (fim do vetor via profiles.
 
 expect_value 'D6 CHECK de media_path presente' '1' \
   "SELECT count(*) FROM pg_constraint WHERE conname='team_messages_media_path_matches_sender_conversation' AND contype='c';"
+
+expect_value 'D7 policy de INSERT exige current_profile_id no 1º segmento' '1' \
+  "SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='team_chat_files_insert' AND cmd='INSERT' AND roles = ARRAY['authenticated']::name[] AND with_check LIKE '%current_profile_id%';"
+
+echo
+echo '── BLOCO C: o Rollback do cabeçalho é REAL — recria leitura equivalente E segura ──'
+# Executa exatamente o SQL da linha "-- Rollback:" da migration: a policy nova e o
+# CHECK saem, e a leitura volta a existir com o MESMO nome de antes, MAS com
+# objects.name qualificado (o vetor profiles.name não retorna) e TO authenticated.
+rollback_sql="$(sed -n 's/^-- Rollback: //p' "$migration" | head -n1)"
+[[ -n "$rollback_sql" ]] || fail 'migration sem linha "-- Rollback:" preenchida'
+printf '%s\n' "$rollback_sql" | docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres >/dev/null
+
+expect_value 'C1 rollback remove a policy nova' '0' \
+  "SELECT count(*) FROM pg_policy WHERE polrelid='storage.objects'::regclass AND polname='Team chat files readable by owner admin or conversation member';"
+expect_value 'C2 rollback remove o CHECK de media_path' '0' \
+  "SELECT count(*) FROM pg_constraint WHERE conname='team_messages_media_path_matches_sender_conversation' AND contype='c';"
+expect_value 'C3 rollback recria a policy de leitura (bucket não fica sem policy)' '1' \
+  "SELECT count(*) FROM pg_policy WHERE polrelid='storage.objects'::regclass AND polname='Conversation members can read team chat files';"
+expect_value 'C4 policy recriada é TO authenticated' '1' \
+  "SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='Conversation members can read team chat files' AND roles = ARRAY['authenticated']::name[];"
+expect_value 'C5 policy recriada usa objects.name qualificado (não profiles.name)' '1' \
+  "SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='Conversation members can read team chat files' AND qual LIKE '%objects.name%' AND qual NOT LIKE '%p.name%';"
+# Comportamento da leitura recriada: membro lê a própria conversa, conversa alheia
+# continua fechada (o vazamento NÃO volta) e o formato legado volta a ser legível
+# pelo dono (contrato <auth_uid>/ restaurado, como no estado anterior à migration).
+expect_value 'C6 membro lê objeto da própria conversa após rollback' '1' \
+  "$(as_actor "$MEMBER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='$OWNER_PATH';")"
+expect_value 'C7 membro NÃO lê objeto de conversa alheia após rollback' '0' \
+  "$(as_actor "$MEMBER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='$O2_PATH';")"
+expect_value 'C8 formato legado <auth_uid>/ volta a ser legível pelo dono' '1' \
+  "$(as_actor "$OWNER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='22222222-2222-2222-2222-222222222222/legacy.png';")"
 
 printf '\n[OK] contrato R2-DB-020 (ACL + persistência de media_path do Team Chat) verificado\n'
