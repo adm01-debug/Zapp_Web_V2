@@ -39,6 +39,23 @@ export const roleConfig: Record<AppRole, { label: string; icon: string; color: s
   special_agent: { label: 'Agente Especial', icon: 'Eye', color: 'text-accent-foreground' },
 };
 
+// Mensagens claras para os erros levantados pela RPC `admin_set_role`
+// (PostgREST devolve o texto do RAISE EXCEPTION em `error.message`).
+const ROLE_CHANGE_ERROR_MESSAGES: Record<string, string> = {
+  cannot_demote_self: 'Você não pode remover o próprio papel de administrador.',
+  cannot_demote_last_admin: 'A instalação precisa de pelo menos um administrador.',
+  admin_required: 'Apenas administradores podem alterar papéis.',
+  jwt_session_required: 'Sessão expirada. Faça login novamente.',
+};
+
+function roleChangeErrorMessage(error: { message?: string }): string {
+  const message = error.message ?? '';
+  for (const [code, text] of Object.entries(ROLE_CHANGE_ERROR_MESSAGES)) {
+    if (message.includes(code)) return text;
+  }
+  return 'Erro ao atualizar role';
+}
+
 export const accessLevelConfig: Record<string, { label: string; description: string }> = {
   basic: { label: 'Básico', description: 'Acesso apenas aos próprios atendimentos' },
   standard: { label: 'Padrão', description: 'Acesso a atendimentos e contatos atribuídos' },
@@ -104,15 +121,19 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     setLoading(false);
   }, [activeTab]);
 
+  // R2-AUTH-008 (item 74): a troca de papel vai pela RPC atômica
+  // `admin_set_role` (SECURITY DEFINER). O caminho delete+insert era
+  // não-transacional — se o INSERT falhava depois do DELETE, o usuário
+  // ficava sem role. A RPC exige JWT real, autoriza só admin, protege
+  // auto-rebaixamento e o último administrador, e faz INSERT/UPDATE atômico.
   const handleRoleChange = useCallback(async (userId: string, newRole: AppRole) => {
-    await supabase.from('user_roles').delete().eq('user_id', userId);
-    const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: newRole });
+    const { error } = await supabase.rpc('admin_set_role', { _user_id: userId, _role: newRole });
     if (error) {
-      toast.error('Erro ao atualizar role');
-    } else {
-      toast.success(`Usuário agora é ${roleConfig[newRole].label}.`);
-      fetchData();
+      toast.error(roleChangeErrorMessage(error));
+      return;
     }
+    toast.success(`Usuário agora é ${roleConfig[newRole].label}.`);
+    fetchData();
   }, [fetchData]);
 
   const handleToggleActive = useCallback(async (user: UserWithRole) => {
