@@ -26,6 +26,19 @@ interface UseChatPanelHandlersOptions {
   handleSetActiveTool: (tool: 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null) => void;
 }
 
+/**
+ * R2-INB-003 (item 82) — o construtor de mensagens interativas confirmava o envio
+ * sem transporte. O transporte canônico de saída não aceita este tipo hoje:
+ * `enqueue_outbound_message` (text/image/audio/video/document/sticker/location) e
+ * `enqueue_rich_outbound_message` (poll/contact) rejeitam o tipo e a
+ * `message-delivery` responde `unsupported_message_type`. Enquanto não existir
+ * enqueue/entrega para botões e listas, o envio é declarado indisponível — a
+ * composição fica preservada no formulário e nada é descartado em silêncio.
+ * Fonte única: guarda no handler + apresentação no builder, via o retorno do hook.
+ */
+export const ENVIO_INTERATIVO_INDISPONIVEL =
+  'Envio de mensagens interativas indisponível: o transporte de botões e listas ainda não está publicado. Sua composição foi mantida.';
+
 function useLatest<T>(value: T) {
   const ref = useRef(value);
   useEffect(() => {
@@ -239,8 +252,12 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     }
   }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation, criarTarefaRef]);
 
-  const handleSendInteractiveMessage = useCallback((interactive: InteractiveMessage) => {
-    toast({ title: 'Mensagem interativa enviada!', description: `Mensagem com ${interactive.buttons?.length || 0} botões enviada.` });
+  // Contrato explícito (R2-INB-003): resolve só quando o transporte aceitou a
+  // composição; rejeita quando o envio não foi confirmado. Sem transporte para
+  // botões/lista, rejeita com o motivo — o builder mantém a composição.
+  const handleSendInteractiveMessage = useCallback(async (interactive: InteractiveMessage) => {
+    log.warn('Interactive message transport unavailable', { type: interactive.type });
+    throw new Error(ENVIO_INTERATIVO_INDISPONIVEL);
   }, []);
 
   const handleInteractiveButtonClick = useCallback((button: InteractiveButton) => {
@@ -281,7 +298,8 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     handleEditStart, handleCancelEdit, handleSend,
     handleReplyToMessage, handleCopyMessage, handleForwardMessage, handleForwardToTargets,
     handleInputChange, handleKeyDown, handleSlashCommand,
-    handleSendInteractiveMessage, handleInteractiveButtonClick,
+    handleSendInteractiveMessage, interactiveSendUnavailableReason: ENVIO_INTERATIVO_INDISPONIVEL,
+    handleInteractiveButtonClick,
     handleSendLocation, handleAudioSend,
   };
 }
