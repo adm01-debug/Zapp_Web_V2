@@ -73,6 +73,21 @@ test('E63: a forma de lista tambem e lida', () => {
   assert.equal(r.ok, true);
 });
 
+test('E63: CLI 2.116 imprime a lista em linhas com marcador e e lida na ordem', () => {
+  const texto = [CABECALHO, 'Connecting to remote database...', 'Would push these migrations:',
+    ' \u2022 20261001110000_a.sql', ' \u2022 20261001120000_b.sql', 'Finished supabase db push.'].join('\n');
+  const { cabecalhoReconhecido, migracoes } = parseDryRunPlan(texto);
+  assert.equal(cabecalhoReconhecido, true);
+  assert.deepEqual(migracoes.map((m) => m.version), ['20261001110000', '20261001120000']);
+});
+
+test('E63: linha com marcador fora da lista nao conta, e lista que nao termina em .sql e recusada', () => {
+  const solta = [CABECALHO, ' \u2022 20261001120000_b.sql'].join('\n');
+  assert.equal(parseDryRunPlan(solta).migracoes.length, 0);
+  const estranha = [CABECALHO, 'Would push these migrations:', ' \u2022 rm -rf'].join('\n');
+  assert.equal(parseDryRunPlan(estranha).migracoes.length, 0);
+});
+
 test('E63: bundle autorizado exige ordem estrita e presenca do alvo', () => {
   const crescente = [CABECALHO, `Would push migration ${ALVO}_a.sql...`, 'Would push migration 20261001130000_b.sql...'].join('\n');
   assert.equal(avaliarPlanoDoDryRun({ texto: crescente, esperado: ALVO, permitirBundle: true }).ok, true);
