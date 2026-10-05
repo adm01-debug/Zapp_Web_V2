@@ -4,11 +4,11 @@
 
 **Plano:** [PLANO_REFINAMENTO_TALK_ME_50_ETAPAS_2026-09-30.md](PLANO_REFINAMENTO_TALK_ME_50_ETAPAS_2026-09-30.md).
 
-**Status:** 50 de 50 etapas concluídas.
+**Status:** 49 de 50 etapas concluídas; etapa 049 parcialmente concluída.
 
 **Implementação integrada:** PR [#1352](https://github.com/adm01-debug/Zapp_Web_V2/pull/1352), commit `c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897`.
 
-**Validação do deploy da implementação:** antes da integração deste relatório, `https://zapp-web-v2.vercel.app/version.json` respondeu HTTP 200 com `buildId` igual a `c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897`. Commits documentais posteriores alteram o `buildId` sem alterar o código validado.
+**Validação do deploy da implementação:** antes da integração deste relatório, `https://zapp-web-v2.vercel.app/version.json` respondeu HTTP 200 com `buildId` igual a `c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897`. Commits documentais posteriores alteram o `buildId` sem alterar o código validado. O `buildId` comprova somente o código publicado; não comprova revisão visual/funcional autenticada.
 
 ## Resultado entregue
 
@@ -83,7 +83,7 @@ A seleção usa `contactId` e o escopo formado por departamento e busca. O avan�
 | 046 | Concluída | Controlador autorizado e feature flag foram preservados; contrato SQL passou em 33 cenários. |
 | 047 | Concluída | Build, TypeScript, testes, CI, lint alterado, guardas e auditorias passaram. |
 | 048 | Concluída | Diff ficou restrito a quatro arquivos de código/teste; fixtures temporárias foram removidas. |
-| 049 | Concluída | PR integrada, Vercel concluiu o deploy e o endpoint público confirmou o commit servido. |
+| 049 | Parcial | PR integrada, deploy concluído e commit servido foram comprovados; a revisão visual autenticada do ambiente publicado permanece pendente. |
 | 050 | Concluída | Este relatório consolida requisitos, evidências, limitações e reversão. |
 
 ## Verificações executadas
@@ -102,12 +102,12 @@ A seleção usa `contactId` e o escopo formado por departamento e busca. O avan�
 | CI da PR | Build, unidade, E2E, segurança, contrato, lint/typecheck, CodeQL e Sonar aprovados. |
 | Acessibilidade | axe sem violações e revisão de foco, teclado e contraste concluída. |
 | Multibrowser | Chromium, Firefox e WebKit aprovados. |
-| Publicação | Vercel aprovado; o deploy da implementação apresentou `buildId` `c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897`. |
+| Publicação | Vercel aprovado; o deploy da implementação apresentou `buildId` `c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897`. Esta evidência comprova publicação, não homologação visual autenticada. |
 
 O comando de lint global continua apontando 945 ocorrências históricas fora dos quatro arquivos desta entrega. O lint restrito e o ratchet passaram, portanto a mudança não ampliou essa dívida.
 
 ## Limites e reversão
 
-O preview da Vercel exige SSO. A aparência foi validada no mesmo código com dados sintéticos e navegadores locais; o deploy foi comprovado pelo status do provedor e pelo `buildId` público. Nenhum contato real foi assumido durante a validação.
+O preview da Vercel exige SSO. A aparência foi validada localmente no mesmo código, com dados sintéticos e navegadores locais; o deploy foi comprovado separadamente pelo status do provedor e pelo `buildId` público. A revisão visual autenticada do ambiente publicado não foi executada e permanece pendente. Nenhum contato real foi assumido durante a validação.
 
 Não houve alteração de schema, migration, RLS, RPC ou dado canônico. Para reverter, criar uma PR que reverta o commit `c4d7d03d2412ba9d4c1b6a014a5e594bf2dbd897`. Essa reversão remove somente o refinamento da interface e da reconciliação no cliente; atendimentos já aceitos permanecem intactos.
