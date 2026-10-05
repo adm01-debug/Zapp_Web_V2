@@ -12,6 +12,12 @@ import { chunkEmailIds, collectEmailPages } from '@/lib/emailPagination';
 export type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
 import type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
 
+// Arrays vazios de identidade estável: `= []` no destructuring cria uma referência nova a cada
+// render enquanto a consulta carrega, o que re-dispara memos/efeitos dos consumidores
+// (R2-COM-001: EmailChatThread re-emitia o contexto e alimentava o ciclo de atualização do painel).
+const EMPTY_MESSAGES: EmailMessage[] = [];
+const EMPTY_ATTACHMENTS: EmailAttachment[] = [];
+
 /**
  * Origin view for the OAuth return trip. The canonical URL is ?view=<id>; the
  * hash stays as a migration fallback for links minted before the switch.
@@ -140,7 +146,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
     enabled: !!activeAccount && !!requestedThreadId,
   });
 
-  const { data: threadMessages = [], isLoading: messagesLoading, error: messagesError } = useQuery({
+  const { data: threadMessages = EMPTY_MESSAGES, isLoading: messagesLoading, error: messagesError } = useQuery({
     queryKey: ['gmail-messages', activeAccount?.id, selectedThreadId],
     queryFn: async () => {
       if (!selectedThreadId || !activeAccount) return [];
@@ -151,7 +157,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
     enabled: !!selectedThreadId && !!activeAccount,
   });
 
-  const { data: threadAttachments = [] } = useQuery({
+  const { data: threadAttachments = EMPTY_ATTACHMENTS } = useQuery({
     queryKey: ['gmail-attachments', activeAccount?.id, selectedThreadId, threadMessages.map(message => message.id).join(':')],
     queryFn: async () => {
       if (!activeAccount || threadMessages.length === 0) return [];
