@@ -68,27 +68,27 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     }
   }, [selectedIds, clearSelection, refetch]);
 
-  const bulkTransfer = useCallback(async (type: 'agent' | 'queue', targetId: string, _message?: string) => {
+  const bulkTransfer = useCallback(async (type: 'agent' | 'queue', targetId: string, message?: string) => {
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
     try {
       const contactIds = Array.from(selectedIds);
-      const updateData: { assigned_to?: string; queue_id?: string } = {};
-      if (type === 'agent') {
-        updateData.assigned_to = targetId;
-      } else {
-        updateData.queue_id = targetId;
-      }
-      const { error } = await supabase
-        .from('contacts')
-        .update(updateData)
-        .in('id', contactIds);
+      // Uma unica chamada: a RPC grava os eventos e atualiza os contatos na
+      // mesma transacao — se algum contato nao atualizar (RLS filtra sem erro),
+      // ela aborta e desfaz tambem os eventos.
+      const { error } = await supabase.rpc('bulk_transfer_contacts', {
+        p_contact_ids: contactIds,
+        p_to_agent_id: type === 'agent' ? targetId : null,
+        p_to_queue_id: type === 'queue' ? targetId : null,
+        p_note: message ?? null,
+      });
       if (error) throw error;
       toast.success(`${contactIds.length} contato(s) transferido(s)`);
       clearSelection();
       refetch();
-    } catch {
+    } catch (err) {
       toast.error('Erro ao transferir contatos');
+      throw err;
     } finally {
       setBulkLoading(false);
     }

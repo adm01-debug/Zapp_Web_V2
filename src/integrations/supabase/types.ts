@@ -10442,6 +10442,15 @@ export type Database = {
         Args: { p_contact_id: string; p_message_id: string; p_phone: string }
         Returns: Json
       }
+      bulk_transfer_contacts: {
+        Args: {
+          p_contact_ids: string[]
+          p_note?: string | null
+          p_to_agent_id?: string | null
+          p_to_queue_id?: string | null
+        }
+        Returns: number
+      }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       can_delete_contacts: {
         Args: { p_ids: string[] }
