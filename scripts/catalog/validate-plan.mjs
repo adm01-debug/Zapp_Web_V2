@@ -25,11 +25,20 @@ const seen = new Set();
 for (const b of blocks) {
   const id = b.match(/^E(\d{2,3})/)[1];
   seen.add(Number(id));
+  // OTH-011: etapas riscadas/descartadas ("~~...~~ (RISCADO)") sao a
+  // representacao historica de um item retirado do plano e ficam legitimamente
+  // vazias. O ID conta para as 100 etapas, mas a estrutura (10 sub-etapas,
+  // checklist e Objetivo) nao se aplica a elas. Etapas nao riscadas seguem
+  // exigindo a estrutura completa -- a excecao e estreita e explicita.
+  const titulo = b.split('\n', 1)[0];
+  if (/~~.+~~/.test(titulo) && /\(RISCADO\)/.test(titulo)) continue;
   const steps = b.split('**Checklist**')[0].match(/^\d{1,2}\. /gm) || [];
   if (steps.length !== 10) errors.push(`E${id}: ${steps.length} sub-etapas`);
   const nums = steps.map((s) => Number(s));
   if (nums.some((n, i) => n !== i + 1)) errors.push(`E${id}: numeração fora de ordem`);
-  const checks = (b.split('**Checklist**')[1] || '').match(/^- \[ \] /gm) || [];
+  // OTH-011: o total do checklist conta itens marcados E nao marcados
+  // (`[ ]`, `[x]`, `[X]`); o estado de conclusao nao altera a estrutura exigida.
+  const checks = (b.split('**Checklist**')[1] || '').match(/^- \[[ xX]\] /gm) || [];
   if (checks.length < 3) errors.push(`E${id}: checklist com ${checks.length} itens`);
   if (!/\*\*Objetivo:\*\*/.test(b)) errors.push(`E${id}: sem Objetivo`);
 }
