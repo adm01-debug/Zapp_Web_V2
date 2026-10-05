@@ -115,6 +115,17 @@ test('R2-INF-002: o artifact so sobe se a sanitizacao do log terminar com sucess
   const posRedigir = redacao.indexOf('redigir-log.mjs');
   const posDestino = redacao.indexOf('"$DESTINO/deploy-output.log"');
   assert.ok(posRedigir > 0 && posDestino > posRedigir, 'o log tem de ser redigido antes de entrar no diretorio publicado');
+
+  // (4) o residuo e' conferido pelo VALOR do segredo (via env, sem imprimir), nao
+  // pela chave — o redator reescreve access_token=... como token=***, entao um
+  // grep pela chave falharia sempre e nenhuma evidencia subiria
+  assert.doesNotMatch(redacao, /grep[^\n]*access\[_%-]\?token/, 'nao pode mais conferir residuo pela chave');
+  assert.match(redacao, /grep -qF[^\n]*SUPABASE_ACCESS_TOKEN/, 'tem de conferir o VALOR do segredo');
+
+  // (5) a base do redator e' explicita no passo e cobre o staging em
+  // $RUNNER_TEMP — sem isso o confinamento podia recusar o caminho (exit 2) e
+  // o artifact sumia em todo deploy
+  assert.match(redacao, /REDIGIR_LOG_BASE: \$\{\{ runner\.temp \}\}/, 'a base do redator tem de ser explicita no passo');
 });
 
 test('E55: o passo de atestacao tem teto proprio de 10 min', () => {

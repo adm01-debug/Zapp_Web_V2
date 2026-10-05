@@ -509,10 +509,11 @@ jobs:
         # (edge-deployment-evidence-public): a copia em massa exclui o log
         # bruto, que so' entra depois de redigido num staging e conferido. O
         # passo de upload exige steps.redigir_log.outcome == 'success':
-        # qualquer falha aqui (leitura, gravacao, chave residual) e nada sobe.
+        # qualquer falha aqui (leitura, gravacao, valor residual) e nada sobe.
         if: always() && inputs.dry_run != true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          REDIGIR_LOG_BASE: ${{ runner.temp }}
         run: |
           set -euo pipefail
           ORIGEM="$RUNNER_TEMP/edge-deployment-evidence"
@@ -525,8 +526,8 @@ jobs:
           if [ -f "$ORIGEM/deploy-output.log" ]; then
             cp "$ORIGEM/deploy-output.log" "$STAGING"
             node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/redigir-log.mjs" "$STAGING" --segredo-env=SUPABASE_ACCESS_TOKEN
-            if grep -qiE 'access[_%-]?token' "$STAGING"; then
-              echo "::error::chave de token ainda presente no log sanitizado; artifact bloqueado."
+            if [ -n "${SUPABASE_ACCESS_TOKEN:-}" ] && grep -qF -- "$SUPABASE_ACCESS_TOKEN" "$STAGING"; then
+              echo "::error::valor do token ainda presente no log sanitizado; artifact bloqueado."
               exit 1
             fi
             mv "$STAGING" "$DESTINO/deploy-output.log"
