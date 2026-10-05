@@ -275,3 +275,129 @@ describe('R2-MOD-024 — variante do template ativo continua salvando e excluind
     expect(deleteVariant).toHaveBeenCalledWith('var-A');
   });
 });
+
+/**
+ * R2-MOD-024 (refazer 2/2) — a origem ativa não pode ficar obsoleta quando o
+ * template ativo muda por CRIAÇÃO ou DUPLICAÇÃO, isto é, sem passar por
+ * `loadTemplate`. O editor recebe o template recém-criado/duplicado como
+ * `editing` e o ref que guarda a origem (`activeTemplateIdRef`) precisa
+ * acompanhar essa troca; caso contrário `isActiveOrigin` recusaria variantes e
+ * histórico legítimos e as ações saveVariant/deleteVariant do novo template.
+ */
+const tplDup: TalkXTemplate = {
+  ...tplA, id: 'tpl-dup', name: 'Template A (cópia)', content: 'corpo do template duplicado', status: 'draft',
+};
+
+/** Editor aberto direto no template recém-criado/duplicado (troca do ativo sem `loadTemplate`). */
+function renderNewTemplateEditor() {
+  return render(
+    <TalkXTemplateEditor
+      key="novo-template"
+      templates={[tplA as never, tplDup as never]}
+      isLoading={false}
+      editing={tplDup as never}
+      onClose={vi.fn()}
+    />,
+  );
+}
+
+describe('R2-MOD-024 — template recém-criado/duplicado (sem loadTemplate) é o ativo', () => {
+  it('carrega variantes e histórico do template criado/duplicado', async () => {
+    fetchVariants.mockResolvedValue([variant('var-dup', 'tpl-dup', 'variante do novo')]);
+    fetchVersionHistory.mockResolvedValue([version('ver-dup', 'tpl-dup', 'Versao do novo')]);
+
+    renderNewTemplateEditor();
+
+    fireEvent.click(variantsToggle());
+    await flush();
+    expect(fetchVariants).toHaveBeenCalledWith('tpl-dup');
+    expect(screen.getAllByDisplayValue('variante do novo').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver versões' }));
+    await flush();
+    expect(fetchVersionHistory).toHaveBeenCalledWith('tpl-dup');
+    expect(screen.getAllByText((_, el) => el?.tagName === 'P' && el.textContent === 'v2 · Versao do novo').length).toBeGreaterThan(0);
+  });
+
+  it('saveVariant no onBlur e deleteVariant no clique funcionam no template criado/duplicado', async () => {
+    fetchVariants.mockResolvedValue([variant('var-dup', 'tpl-dup', 'variante do novo')]);
+    countVariantRecipients.mockResolvedValue(0);
+
+    renderNewTemplateEditor();
+    fireEvent.click(variantsToggle());
+    await flush();
+
+    const textarea = screen.getAllByDisplayValue('variante do novo')[0];
+
+    fireEvent.blur(textarea);
+    await flush();
+    expect(saveVariant).toHaveBeenCalledTimes(1);
+    expect(saveVariant.mock.calls[0][0]).toBe('tpl-dup');
+    expect(saveVariant.mock.calls[0][1]).toMatchObject({ id: 'var-dup', template_id: 'tpl-dup' });
+
+    const row = textarea.closest('div[class*="rounded-xl"]') as HTMLElement;
+    fireEvent.click(row.querySelector('button') as HTMLElement);
+    await flush();
+    expect(countVariantRecipients).toHaveBeenCalledWith('var-dup');
+    expect(deleteVariant).toHaveBeenCalledWith('var-dup');
+  });
+
+  it('variante do template ANTERIOR continua recusada quando o ativo é o criado/duplicado', async () => {
+    fetchVariants.mockResolvedValue([variant('var-A', 'tpl-A', 'variante do antigo')]);
+
+    renderNewTemplateEditor();
+    fireEvent.click(variantsToggle());
+    await flush();
+
+    const textarea = screen.getAllByDisplayValue('variante do antigo')[0];
+    fireEvent.blur(textarea);
+    await flush();
+    expect(saveVariant).not.toHaveBeenCalled();
+
+    const row = textarea.closest('div[class*="rounded-xl"]') as HTMLElement;
+    fireEvent.click(row.querySelector('button') as HTMLElement);
+    await flush();
+    expect(deleteVariant).not.toHaveBeenCalled();
+  });
+
+  it('mudança do ativo para o recém-duplicado (sem loadTemplate) recarrega a origem', async () => {
+    fetchVariants.mockImplementation((id: string) =>
+      Promise.resolve([
+        id === 'tpl-dup'
+          ? variant('var-dup', 'tpl-dup', 'variante do novo')
+          : variant('var-A', 'tpl-A', 'variante do antigo'),
+      ]));
+
+    const view = render(
+      <TalkXTemplateEditor
+        key="tpl-a"
+        templates={[tplA as never, tplDup as never]}
+        isLoading={false}
+        editing={tplA as never}
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(variantsToggle());
+    await flush();
+    expect(fetchVariants).toHaveBeenCalledWith('tpl-A');
+    expect(screen.getAllByDisplayValue('variante do antigo').length).toBeGreaterThan(0);
+
+    // o editor passa a apontar para o template recém-criado/duplicado sem loadTemplate
+    view.rerender(
+      <TalkXTemplateEditor
+        key="tpl-dup"
+        templates={[tplA as never, tplDup as never]}
+        isLoading={false}
+        editing={tplDup as never}
+        onClose={vi.fn()}
+      />,
+    );
+    fireEvent.click(variantsToggle());
+    await flush();
+
+    expect(fetchVariants).toHaveBeenLastCalledWith('tpl-dup');
+    expect(screen.getAllByDisplayValue('variante do novo').length).toBeGreaterThan(0);
+    expect(screen.queryAllByDisplayValue('variante do antigo')).toHaveLength(0);
+  });
+});
