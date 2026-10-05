@@ -16,6 +16,17 @@ const EMOJI_CATEGORIES = [
 const FUNCTION_NAME = "classify-emoji";
 
 /**
+ * Dependências injetáveis — usadas SÓ nos testes, para o handler não tocar
+ * rede nem env. Cada uso resolve `deps.X ?? X` com a assinatura real (`typeof`).
+ */
+export interface ClassifyEmojiDeps {
+  requireIdentity?: typeof requireAiIdentity;
+  toInlineImage?: typeof toInlineImage;
+  generate?: typeof generateWithRouting;
+  logUsage?: typeof logAiUsage;
+}
+
+/**
  * Detalhes do erro TIPADO do helper de imagem (código, tamanho medido, limite,
  * tipo declarado) para a trilha em `ai_usage_logs`. Não expõe a URL: o objeto
  * do Storage é privado e a mensagem do erro já omite token.
@@ -54,14 +65,17 @@ async function embutirImagem(
   imageUrl: string,
   userId: string | null,
   bearerToken: string,
+  deps: ClassifyEmojiDeps,
 ): Promise<InlineImage | null> {
+  const toInlineImageImpl = deps.toInlineImage ?? toInlineImage;
+  const logUsage = deps.logUsage ?? logAiUsage;
   try {
-    return await toInlineImage(imageUrl, {
+    return await toInlineImageImpl(imageUrl, {
       storageIdentity: { kind: 'user', bearerToken },
     });
   } catch (err) {
     const motivo = err instanceof Error ? err.message : String(err);
-    await logAiUsage({
+    await logUsage({
       functionName: FUNCTION_NAME,
       userId,
       status: 'error',
@@ -79,13 +93,20 @@ async function embutirImagem(
   }
 }
 
-Deno.serve(async (req) => {
+export async function handleClassifyEmojiRequest(
+  req: Request,
+  deps: ClassifyEmojiDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
+  const requireIdentity = deps.requireIdentity ?? requireAiIdentity;
+  const generate = deps.generate ?? generateWithRouting;
+  const logUsage = deps.logUsage ?? logAiUsage;
+
   // IA-011: identidade de usuário verificada + cota antes de gastar provedor.
   // Sem isto, o endpoint aceitava qualquer portador da anon key pública.
-  const identity = await requireAiIdentity(req, "classify-emoji");
+  const identity = await requireIdentity(req, "classify-emoji");
   if (identity instanceof Response) return identity;
 
   const log = new Logger(FUNCTION_NAME);
@@ -99,7 +120,7 @@ Deno.serve(async (req) => {
     // Degradação REGISTRADA: sem imagem e sem nome não há classificação. Antes
     // este caminho devolvia 'outros' em silêncio; agora deixa linha de erro.
     if (!image_url && !file_name) {
-      await logAiUsage({
+      await logUsage({
         functionName: FUNCTION_NAME,
         userId: identity.userId,
         status: 'error',
@@ -123,7 +144,7 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
     // Sem image_url (só file_name) segue sem a parte de imagem, como hoje.
     let imagem: InlineImage | null = null;
     if (image_url) {
-      imagem = await embutirImagem(image_url, identity.userId, bearerTokenDoPedido(req));
+      imagem = await embutirImagem(image_url, identity.userId, bearerTokenDoPedido(req), deps);
       if (!imagem) {
         log.error("Falha ao preparar a imagem; degradando para 'outros' com motivo registrado");
         return jsonResponse({ category: 'outros' }, 200, req);
@@ -141,7 +162,7 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
     // Despacho central (Bloco 04 / PR-4 — IA-033): sem URL fixa do gateway, sem
     // modelo fixo e sem chave fixa no consumidor. A modalidade 'vision' é a
     // exigência declarada; o provedor de visão e o modelo são decididos no servidor.
-    const gen = await generateWithRouting({
+    const gen = await generate({
       purpose: 'tagging',
       functionName: FUNCTION_NAME,
       userId: identity.userId,
@@ -175,7 +196,7 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
     // Exceção fora dos caminhos tratados (ex.: corpo inválido): também registrada,
     // para que NENHUM 'outros' saia sem trilha em ai_usage_logs.
     const motivo = err instanceof Error ? err.message : String(err);
-    await logAiUsage({
+    await logUsage({
       functionName: FUNCTION_NAME,
       userId: identity.userId,
       status: 'error',
@@ -188,4 +209,10 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
     log.error("Error", { error: motivo });
     return jsonResponse({ category: 'outros' }, 200, req);
   }
-});
+}
+
+// O Deno.serve fica sob import.meta.main: importar este módulo num teste não
+// sobe servidor — o handler é exercitado direto, com deps injetadas.
+if (import.meta.main) {
+  Deno.serve((req) => handleClassifyEmojiRequest(req));
+}
