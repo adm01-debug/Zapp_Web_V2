@@ -5,9 +5,21 @@ import { Conversation } from '@/types/chat';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { BrowserRouter } from 'react-router-dom';
 
+// R2-SLA-003: o cabeçalho deve resolver o prazo granular de primeira resposta
+// pelo hook useApplicableSLA (fonte única da hierarquia), em vez do literal 5.
+const mocks = vi.hoisted(() => ({ useApplicableSLA: vi.fn() }));
+
+vi.mock('@/hooks/sla/useApplicableSLA', () => ({ useApplicableSLA: mocks.useApplicableSLA }));
 vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));
 vi.mock('@/lib/popupManager', () => ({ openChatPopup: vi.fn() }));
-vi.mock('@/components/inbox/SLAIndicator', () => ({ SLAIndicator: () => null }));
+vi.mock('@/components/inbox/SLAIndicator', () => ({
+  SLAIndicator: ({ firstResponseMinutes }: { firstResponseMinutes?: number }) => (
+    <div
+      data-testid="sla-indicator"
+      data-minutes={firstResponseMinutes === undefined ? '' : String(firstResponseMinutes)}
+    />
+  ),
+}));
 vi.mock('@/components/inbox/VoiceSelector', () => ({ VoiceSelector: () => null }));
 vi.mock('@/components/inbox/SpeedSelector', () => ({ SpeedSelector: () => null }));
 vi.mock('@/components/inbox/RealtimeCollaboration', () => ({ RealtimeCollaboration: () => null }));
@@ -35,7 +47,7 @@ const mockConversation = {
   contact: {
     id: 'c-1',
     name: 'Maria Silva',
-    phone: '+5511999999999',
+    phone: '+551****9999',
     avatar: '',
   },
   lastMessage: { content: 'Olá', timestamp: new Date(), sender: 'contact' },
@@ -46,6 +58,20 @@ const mockConversation = {
   tags: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+} as unknown as Conversation;
+
+/** Conversa com todos os atributos que o resolvedor de SLA sabe usar. */
+const granularConversation = {
+  ...mockConversation,
+  contact: {
+    ...mockConversation.contact,
+    company: 'Promo Brindes',
+    job_title: 'Comprador',
+    contact_type: 'lead',
+    queue_id: 'q-legacy',
+  },
+  queue: { id: 'q-1', name: 'Comercial' },
+  assignedTo: { id: 'agent-1', name: 'Ana Souza' },
 } as unknown as Conversation;
 
 const baseProps = {
@@ -72,7 +98,14 @@ const Wrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe('ChatPanelHeader', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Prazo aplicável granular: 2 min (não o literal 5 de antes).
+    mocks.useApplicableSLA.mockReturnValue({
+      data: { firstResponseMinutes: 2, resolutionMinutes: 30, ruleName: 'Granular', ruleId: 'r-1' },
+      isLoading: false,
+    });
+  });
 
   it('renders contact name', () => {
     render(
@@ -191,5 +224,44 @@ describe('ChatPanelHeader', () => {
     );
     fireEvent.click(screen.getByLabelText('Favoritar conversa'));
     expect(onToggleFavorite).toHaveBeenCalledTimes(1);
+  });
+
+  // ── R2-SLA-003 ────────────────────────────────────────────────────────────
+
+  it('R2-SLA-003: repassa ao SLAIndicator o prazo aplicável granular (2 min), não o literal 5', () => {
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} conversation={granularConversation} />
+      </Wrapper>
+    );
+    expect(screen.getByTestId('sla-indicator')).toHaveAttribute('data-minutes', '2');
+  });
+
+  it('R2-SLA-003: envia ao resolvedor os identificadores disponíveis da conversa', () => {
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} conversation={granularConversation} />
+      </Wrapper>
+    );
+    expect(mocks.useApplicableSLA).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactId: 'c-1',
+        company: 'Promo Brindes',
+        jobTitle: 'Comprador',
+        contactType: 'lead',
+        queueId: 'q-1',
+        agentId: 'agent-1',
+      })
+    );
+  });
+
+  it('R2-SLA-003: usa o padrão seguro enquanto o prazo aplicável ainda não chegou', () => {
+    mocks.useApplicableSLA.mockReturnValue({ data: undefined, isLoading: true });
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} conversation={granularConversation} />
+      </Wrapper>
+    );
+    expect(screen.getByTestId('sla-indicator')).toHaveAttribute('data-minutes', '5');
   });
 });
