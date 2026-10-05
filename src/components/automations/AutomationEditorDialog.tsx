@@ -68,11 +68,16 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
   // tudo o que já existia.
   const buildFirstAction = (): { action: ActionRecord; config: ActionRecord } => {
     const [firstAction] = readActions(automation);
+    const previousType = readString(firstAction?.type);
     const config: ActionRecord = { ...readConfig(firstAction) };
     if (actionType === 'send_message') {
       config.message = messageContent;
-    } else {
-      delete config.message;
+    }
+    if (previousType !== actionType) {
+      const allowed = REQUIRED_ACTION_CONFIG[actionType] ?? [];
+      for (const configKey of Object.keys(config)) {
+        if (!allowed.includes(configKey)) delete config[configKey];
+      }
     }
     return { action: { ...(firstAction ?? {}), type: actionType, config }, config };
   };
