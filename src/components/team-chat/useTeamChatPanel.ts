@@ -230,6 +230,12 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     } catch (err) {
       log.error('Erro ao enviar mensagem', err);
       toast.error('Erro ao enviar mensagem');
+      // TC-010: o campo era limpo ANTES do await e nada voltava no erro — uma
+      // falha de rede/RLS apagava o rascunho e a resposta sem recuperação.
+      // Devolve o que foi enviado, mas nunca sobrescreve o que o usuário já
+      // digitou enquanto o envio estava em voo (só restaura se ainda vazio).
+      setText(prev => (prev.length === 0 ? content : prev));
+      setReplyTo(prev => (prev === null ? reply : prev));
     }
   }, [text, profile, replyTo, conversation.id, sendMutation]);
 
