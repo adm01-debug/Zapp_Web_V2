@@ -1,5 +1,6 @@
-import { useRef, useCallback, useMemo, useState, useEffect, memo } from 'react';
+import { useRef, useCallback, useMemo, useState, useEffect, useContext, memo, type ReactNode } from 'react';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
+import { QueryClient, QueryClientContext, QueryClientProvider } from '@tanstack/react-query';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -295,6 +296,30 @@ interface ConversationRowProps {
 // duplicada aqui: passamos os atributos crus e useApplicableSLA decide.
 const FALLBACK_FIRST_RESPONSE_MINUTES = 5;
 
+// R2-SLA-003 (correcao da recusa "No QueryClient set"): o badge resolve o prazo
+// com useApplicableSLA (react-query). Quando a lista e montada FORA de um
+// QueryClientProvider -- arvores de teste que montam o componente direto, sem
+// o provider da aplicacao -- useQuery lanca "No QueryClient set, use
+// QueryClientProvider to set one" e derruba o render da linha. Este limite
+// fornece um cliente de fallback SOMENTE quando nao existe cliente no
+// contexto. Com o provider da aplicacao presente (producao) ele e
+// transparente: o mesmo cliente e o mesmo cache compartilhado do app, sem
+// mudar o comportamento de producao nem a hierarquia do resolver.
+let fallbackQueryClient: QueryClient | undefined;
+
+function getFallbackQueryClient(): QueryClient {
+  fallbackQueryClient ??= new QueryClient({
+    defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
+  });
+  return fallbackQueryClient;
+}
+
+const SLAQueryClientBoundary = ({ children }: { children: ReactNode }) => {
+  const client = useContext(QueryClientContext);
+  if (client) return <>{children}</>;
+  return <QueryClientProvider client={getFallbackQueryClient()}>{children}</QueryClientProvider>;
+};
+
 interface ConversationSLABadgeProps {
   contact: ConversationWithMessages['contact'];
   firstMessageAt: Date;
@@ -551,10 +576,12 @@ const ConversationRow = memo(({
                   <Badge variant="outline" className="text-2xs px-1.5 py-0 h-4 bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>
                 )}
                 {firstMessageAt && (
-                  <ConversationSLABadge
-                    contact={conversation.contact}
-                    firstMessageAt={new Date(firstMessageAt)}
-                  />
+                  <SLAQueryClientBoundary>
+                    <ConversationSLABadge
+                      contact={conversation.contact}
+                      firstMessageAt={new Date(firstMessageAt)}
+                    />
+                  </SLAQueryClientBoundary>
                 )}
                 {tags.slice(0, 2).map((tag) => (
                   <Badge key={tag} variant="secondary" className="text-2xs px-1.5 py-0 h-4 bg-muted/50 border-border/20">{tag}</Badge>
