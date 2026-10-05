@@ -42,7 +42,7 @@ if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
 interface ChatPanelProps {
   conversation: Conversation;
   messages: Message[];
-  onSendMessage: (content: string) => Promise<void> | void;
+  onSendMessage: (content: string, replyToId?: string | null) => Promise<void> | void;
   onSendAudio?: (blob: Blob) => Promise<void>;
   showDetails?: boolean;
   onToggleDetails?: () => void;

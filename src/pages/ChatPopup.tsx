@@ -130,11 +130,12 @@ export default function ChatPopup() {
     : [];
 
   const handleSendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, replyToId?: string | null) => {
       if (!contactId) return;
       // envia de verdade via Evolution API (antes: so gravava no banco —
-      // a mensagem nunca chegava ao cliente no WhatsApp)
-      await sendMessageToContact(contactId, content, 'text');
+      // a mensagem nunca chegava ao cliente no WhatsApp). A citação escolhida
+      // no Composer segue junto: sem o replyToId o destino perde o vínculo.
+      await sendMessageToContact(contactId, content, 'text', undefined, undefined, replyToId);
     },
     [contactId]
   );

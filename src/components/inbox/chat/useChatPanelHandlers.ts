@@ -16,7 +16,7 @@ interface UseChatPanelHandlersOptions {
   contactId: string;
   contactPhone: string;
   instanceName?: string;
-  onSendMessage: (content: string) => Promise<void> | void;
+  onSendMessage: (content: string, replyToId?: string | null) => Promise<void> | void;
   editMessageApi: (instance: string, params: { number: string; messageId: string; text: string }) => Promise<unknown>;
   applySignature: (text: string) => string;
   handleTypingStart: () => void;
@@ -111,7 +111,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     if (wasReply) log.debug('Sending reply to:', wasReply.id);
 
     try {
-      await onSendMessage(messageContent);
+      await onSendMessage(messageContent, wasReply?.id ?? null);
       undoToast({
         message: 'Mensagem enviada', icon: '📨', delay: 3000,
         onUndo: () => {

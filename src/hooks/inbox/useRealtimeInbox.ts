@@ -147,11 +147,11 @@ export function useRealtimeInbox() {
     await Promise.all([refetch(), refetchSelectedMessages()]);
   }, [refetch, refetchSelectedMessages]);
 
-  const handleSendMessage = useCallback(async (content: string) => {
+  const handleSendMessage = useCallback(async (content: string, replyToId?: string | null) => {
     if (!selectedContactId) return;
     const currentId = selectedContactId;
     try {
-      await sendMessage(currentId, content);
+      await sendMessage(currentId, content, 'text', undefined, undefined, replyToId);
     } catch (err) {
       log.error('Error sending message:', err);
       // O ChatPanel é responsável pelo feedback visual. A rejeição precisa
