@@ -69,6 +69,19 @@ test("scanTsxInline: acusa fontFamily literal", () => {
   });
 });
 
+test("scanTsxInline: acusa font-family literal em CSS embutido", () => {
+  withTmpDir((dir) => {
+    writeFileSync(
+      path.join(dir, "ScreenProtection.tsx"),
+      "const html = `<div style=\"font-family: system-ui;\">Protegido</div>`;\n" +
+        "const token = `<div style=\"font-family: var(--font-sans);\">Permitido</div>`;\n",
+    );
+    const { literalFamily } = scanTsxInline(dir);
+    assert.equal(literalFamily.length, 1);
+    assert.equal(literalFamily[0].value, "system-ui");
+  });
+});
+
 test("parseLoadedWeights: le faixa variavel (wght@min..max) da URL do Google Fonts", () => {
   withTmpDir((dir) => {
     const html = `<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Outfit:wght@100..900&display=swap" rel="stylesheet" />`;

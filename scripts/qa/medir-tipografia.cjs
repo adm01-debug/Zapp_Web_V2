@@ -131,8 +131,9 @@ function scanCss(stylesDir = STYLES) {
   return { halfStep, literalFamily };
 }
 
-/** .tsx: fontSize numerico inline (achado A9) e fontFamily literal (achado
- *  A2/A3). Um arquivo migrado para src/lib/chart-theme.ts passa a usar
+/** .tsx: fontSize numerico inline (achado A9), fontFamily literal e
+ *  font-family literal em CSS embutido (achado A2/A3/LT-TYPE-02). Um arquivo
+ *  migrado para src/lib/chart-theme.ts passa a usar
  *  identificadores (CHART_TICK_FONT_SIZE), nao numeros — some do regex
  *  sozinho, sem precisar checar import. */
 function scanTsxInline(srcDir = SRC) {
@@ -141,6 +142,7 @@ function scanTsxInline(srcDir = SRC) {
   const literalFamily = [];
   const fontSizeRe = /fontSize:\s*([0-9.]+)\b/g;
   const familyRe = /fontFamily:\s*(['"])((?:(?!\1).)+)\1/g;
+  const embeddedFamilyRe = /font-family:\s*([^;\n]+?)\s*;/g;
   for (const f of files) {
     const rel = path.relative(ROOT, f);
     const txt = fs.readFileSync(f, 'utf8');
@@ -154,6 +156,13 @@ function scanTsxInline(srcDir = SRC) {
     while ((m = familyRe.exec(txt))) {
       const line = txt.slice(0, m.index).split('\n').length;
       literalFamily.push({ where: `${rel}:${line}`, value: m[2] });
+    }
+    embeddedFamilyRe.lastIndex = 0;
+    while ((m = embeddedFamilyRe.exec(txt))) {
+      const value = m[1].trim();
+      if (value.startsWith('var(')) continue;
+      const line = txt.slice(0, m.index).split('\n').length;
+      literalFamily.push({ where: `${rel}:${line}`, value });
     }
   }
   return { fontSizeInline, literalFamily };
