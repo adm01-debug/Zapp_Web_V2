@@ -64,6 +64,21 @@ function igual(recebido: unknown, esperado: unknown, mensagem: string) {
   }
 }
 
+function afirmaErroConnectionId(status: number, corpo: Record<string, unknown>) {
+  igual(status, 422, "falha de connectionId precisa usar HTTP 422");
+
+  const erro = corpo.error as Record<string, unknown> | undefined;
+  afirma(erro, "resposta precisa conter o objeto error");
+  igual(erro.code, "VALIDATION_ERROR", "falha precisa usar o código canônico de validação");
+
+  const campos = erro.fields as Array<Record<string, unknown>> | undefined;
+  afirma(Array.isArray(campos), "erro de validação precisa listar os campos inválidos");
+  afirma(
+    campos.some((campo) => campo.path === "connectionId"),
+    "erro de validação precisa identificar o campo connectionId",
+  );
+}
+
 // ── infraestrutura falsa ────────────────────────────────────────────────────
 
 interface Chamada {
@@ -369,7 +384,7 @@ Deno.test("IA-CHATBOT-001: requisição SEM connectionId é rejeitada sem tocar 
         message: "Qual e o prazo de entrega?",
       }));
 
-      afirma(status >= 400, "sem connectionId a requisição precisa ser rejeitada");
+      afirmaErroConnectionId(status, corpo);
       igual(corpo.handled, undefined, "não pode atender sem a conexão da mensagem");
       igual(vivo.chamadas.length, 0, "nenhuma consulta ao banco pode acontecer sem a conexão");
       igual(vivo.prompts.length, 0, "nenhuma chamada à IA pode acontecer sem a conexão");
@@ -387,7 +402,7 @@ Deno.test("IA-CHATBOT-001: connectionId NULO é rejeitado como ausente", async (
         connectionId: null,
       }));
 
-      afirma(status >= 400, "connectionId nulo precisa ser rejeitado");
+      afirmaErroConnectionId(status, corpo);
       igual(corpo.handled, undefined, "não pode atender sem a conexão da mensagem");
       igual(vivo.chamadas.length, 0, "nenhuma consulta ao banco pode acontecer sem a conexão");
       igual(vivo.prompts.length, 0, "nenhuma chamada à IA pode acontecer sem a conexão");
@@ -399,13 +414,13 @@ Deno.test("IA-CHATBOT-001: connectionId INVÁLIDO (não-UUID) é rejeitado na en
   await comCenario(
     { fluxos: [flow("flow-a", CONEXAO_A)], mensagens: [] },
     async (vivo) => {
-      const { status } = await enviarCorpo(JSON.stringify({
+      const { status, corpo } = await enviarCorpo(JSON.stringify({
         contactId: CONTATO,
         message: "qualquer",
         connectionId: "nao-e-um-uuid",
       }));
 
-      afirma(status >= 400, "connectionId com formato inválido precisa ser rejeitado");
+      afirmaErroConnectionId(status, corpo);
       igual(vivo.chamadas.length, 0, "nenhuma consulta ao banco pode acontecer com conexão inválida");
       igual(vivo.prompts.length, 0, "nenhuma chamada à IA pode acontecer com conexão inválida");
     },
