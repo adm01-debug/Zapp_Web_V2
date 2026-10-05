@@ -1035,12 +1035,14 @@ Deno.test("IA-055 zero medido ≠ preço ausente, e valor inválido não passa",
 function stubBancoDeLog(opts: {
   posts?: Array<{ status: number; grava?: boolean }>;
   outboxStatus?: number;
+  falharBaixaUmaVez?: boolean;
 } = {}) {
   const capturas: Captura[] = [];
   const tabela = new Map<string, Record<string, unknown>>();
   const outbox: Array<Record<string, unknown>> = [];
   let postsCfg = opts.posts ?? [{ status: 201 }];
   let posts = 0;
+  let falharBaixaUmaVez = opts.falharBaixaUmaVez ?? false;
   const outboxStatus = opts.outboxStatus ?? 201;
   const original = globalThis.fetch;
 
@@ -1099,15 +1101,26 @@ function stubBancoDeLog(opts: {
     if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "PATCH") {
       const porId = url.match(/(?:[?&])id=eq\.([^&]+)/);
       const porEvento = url.match(/event_id=eq\.([^&]+)/);
+      const exigeEventoNulo = url.includes("event_id=is.null");
       const exigeEntregue = url.includes("processed_at=not.is.null");
+      const campos = corpo as Record<string, unknown>;
+      if (campos.processed_at !== undefined && falharBaixaUmaVez) {
+        falharBaixaUmaVez = false;
+        return json({ message: "baixa falhou" }, 500);
+      }
+      const alteradas: Array<Record<string, unknown>> = [];
       for (const r of outbox) {
         const casa = porEvento
           ? r.event_id === decodeURIComponent(porEvento[1]) &&
             (!exigeEntregue || r.processed_at !== null)
-          : (!porId || r.id === decodeURIComponent(porId[1]));
-        if (casa) Object.assign(r, corpo);
+          : (!porId || r.id === decodeURIComponent(porId[1])) &&
+            (!exigeEventoNulo || r.event_id === null);
+        if (casa) {
+          Object.assign(r, campos);
+          alteradas.push({ ...r });
+        }
       }
-      return json([]);
+      return json(alteradas);
     }
     return json([]);
   }) as typeof fetch;
@@ -1420,6 +1433,58 @@ Deno.test("IA-TIMEOUT-001 falha EXTERNA ao insert vai para a outbox durável —
     assert(stub2.outbox[0].processed_at !== null, "pendência externa também sai da fila");
   } finally {
     stub2.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 baixa falha e segunda passada reutiliza event_id persistido", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubBancoDeLog({ posts: [{ status: 201 }], falharBaixaUmaVez: true });
+  stub.outbox.push({
+    id: "ob-sem-evento",
+    event_id: null,
+    tentativas: 0,
+    processed_at: null,
+    payload: { entrada: ENTRADA },
+    motivo: "falha antes da identidade",
+  });
+
+  try {
+    const primeira = await reprocessarOutboxDeLog();
+    assertEquals(primeira.gravados, 1, "o primeiro upsert grava o consumo");
+    assertEquals(stub.tabela.size, 1);
+    assertEquals(stub.outbox[0].processed_at, null, "a baixa simulada falhou");
+    const eventoPersistido = stub.outbox[0].event_id;
+    assert(
+      typeof eventoPersistido === "string" && UUID_RE.test(eventoPersistido),
+      "o UUID precisa estar persistido na outbox ANTES do upsert",
+    );
+    const indiceReserva = stub.capturas.findIndex(
+      (captura) =>
+        captura.metodo === "PATCH" &&
+        captura.url.includes("/rest/v1/ai_usage_outbox") &&
+        captura.url.includes("event_id=is.null") &&
+        (captura.corpo as Record<string, unknown>)?.event_id === eventoPersistido,
+    );
+    const indicePrimeiroUpsert = stub.capturas.findIndex(
+      (captura) => captura.metodo === "POST" && captura.url.includes("/rest/v1/ai_usage_logs"),
+    );
+    assert(indiceReserva >= 0, "a reserva usa PATCH condicionado a event_id IS NULL");
+    assert(indiceReserva < indicePrimeiroUpsert, "a identidade é persistida antes do upsert");
+
+    const segunda = await reprocessarOutboxDeLog();
+    assertEquals(segunda.jaExistiam, 1, "a segunda passada reencontra o mesmo evento");
+    assertEquals(stub.tabela.size, 1, "falha da baixa não pode criar segunda cobrança");
+    assert(stub.outbox[0].processed_at !== null, "a segunda baixa conclui a pendência");
+
+    const eventosEnviados = postsEmAiUsageLogs(stub.capturas).map(
+      (captura) => (captura.corpo as Record<string, unknown>).event_id,
+    );
+    assertEquals(eventosEnviados.length, 2);
+    assertEquals(eventosEnviados[0], eventoPersistido);
+    assertEquals(eventosEnviados[1], eventoPersistido);
+  } finally {
+    stub.restaurar();
     restaurarEnv();
   }
 });

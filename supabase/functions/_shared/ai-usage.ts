@@ -513,7 +513,7 @@ async function atualizarOutbox(
   chave: string,
   id: string,
   campos: Record<string, unknown>,
-): Promise<void> {
+): Promise<boolean> {
   try {
     const resposta = await fetch(
       `${url}/rest/v1/ai_usage_outbox?id=eq.${encodeURIComponent(id)}`,
@@ -523,21 +523,56 @@ async function atualizarOutbox(
         body: JSON.stringify(campos),
       },
     );
-    try { await resposta.text(); } catch { /* baixa falhou: fica pendente */ }
+    try { await resposta.text(); } catch { /* corpo de erro pode nem existir */ }
+    return resposta.ok;
   } catch {
-    // Baixa falhou: o registro segue pendente e a próxima passada o retoma.
+    return false;
   }
 }
 
 /**
- * Reprocessa a outbox de logs essenciais — a garantia de entrega.
+ * Reserva de forma condicional a identidade de um pendente legado. O PATCH
+ * precisa alterar a linha ainda sem identidade antes que qualquer consumo seja
+ * enviado; resposta vazia significa que outra passada venceu a corrida.
+ */
+async function persistirEventIdNaOutbox(
+  url: string,
+  chave: string,
+  id: string,
+  eventId: string,
+): Promise<boolean> {
+  try {
+    const resposta = await fetch(
+      `${url}/rest/v1/ai_usage_outbox?id=eq.${encodeURIComponent(id)}&event_id=is.null`,
+      {
+        method: "PATCH",
+        headers: { ...cabecalhosRest(chave), Prefer: "return=representation" },
+        body: JSON.stringify({ event_id: eventId }),
+      },
+    );
+    const corpo = await resposta.text();
+    if (!resposta.ok) return false;
+    const alteradas = JSON.parse(corpo) as unknown;
+    return Array.isArray(alteradas) && alteradas.some(
+      (linha) =>
+        typeof linha === "object" && linha !== null &&
+        (linha as Record<string, unknown>).event_id === eventId,
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Reprocessa explicitamente a dead-letter de logs essenciais.
  *
- * Lê os pendentes (`processed_at IS NULL`, mais antigos primeiro), reenvia a
- * linha pelo MESMO upsert por `event_id` e baixa o registro quando a entrega é
- * confirmada — inclusive quando a linha já existia (a restrição devolve `[]`:
- * é a prova de que reprocessar não duplica cobrança). Pendente com só a
- * `entrada` remonta a linha inteira (enriquecimento incluso) e recebe o
- * `event_id` que faltou. O que falhar segue na fila com `tentativas` +1.
+ * Este módulo não agenda a operação: o chamador autorizado precisa dispará-la.
+ * Cada passada lê os pendentes (`processed_at IS NULL`, mais antigos primeiro),
+ * reenvia a linha pelo MESMO upsert por `event_id` e baixa o registro quando a
+ * entrega é confirmada — inclusive quando a linha já existia (a restrição
+ * devolve `[]`: é a prova de que reprocessar não duplica cobrança). Pendente
+ * sem `event_id` reserva e persiste a identidade na outbox ANTES do upsert. O
+ * que falhar segue na fila para uma nova invocação explícita.
  */
 export async function reprocessarOutboxDeLog(limite = 50): Promise<ResultadoReprocessamento> {
   const resultado: ResultadoReprocessamento = {
@@ -586,19 +621,38 @@ export async function reprocessarOutboxDeLog(limite = 50): Promise<ResultadoRepr
     const tentativas = Number(item.tentativas ?? 0);
 
     let linha = (payload.linha ?? null) as Record<string, unknown> | null;
+    const eventoDaOutbox = normalizeCorrelationId(item.event_id);
+    let evento = eventoDaOutbox ?? normalizeCorrelationId(linha?.event_id);
+
+    if (eventoDaOutbox === null) {
+      try {
+        evento ??= crypto.randomUUID();
+      } catch {
+        evento = null;
+      }
+      const persistiu = evento !== null && await persistirEventIdNaOutbox(
+        supabaseUrl,
+        serviceRoleKey,
+        id,
+        evento,
+      );
+      if (!persistiu) {
+        resultado.pendentes += 1;
+        await atualizarOutbox(supabaseUrl, serviceRoleKey, id, { tentativas: tentativas + 1 });
+        continue;
+      }
+    }
+
     if (linha === null && payload.entrada !== undefined && payload.entrada !== null) {
       try {
-        // O evento que falhou antes de ter identidade ganha uma agora; o que
-        // já tinha reencontra a MESMA identidade.
-        const evento = normalizeCorrelationId(item.event_id) ?? crypto.randomUUID();
-        linha = await montarLinhaDeConsumo(supabase, payload.entrada as AiUsageEntry, evento);
+        linha = await montarLinhaDeConsumo(supabase, payload.entrada as AiUsageEntry, evento!);
       } catch {
         linha = null;
       }
     }
     if (linha !== null) {
-      // A linha da outbox sempre nasce com o event_id do registro.
-      linha = { ...linha, event_id: normalizeCorrelationId(item.event_id) ?? linha.event_id ?? crypto.randomUUID() };
+      // A linha enviada usa a identidade que já estava — ou foi reservada — na outbox.
+      linha = { ...linha, event_id: evento };
     }
 
     let entregue = false;
@@ -611,14 +665,15 @@ export async function reprocessarOutboxDeLog(limite = 50): Promise<ResultadoRepr
           else resultado.jaExistiam += 1;
         }
       } catch {
-        // Transitório: segue pendente para a próxima passada.
+        // Transitório: segue pendente para uma nova invocação explícita.
       }
     }
 
     if (entregue) {
-      await atualizarOutbox(supabaseUrl, serviceRoleKey, id, {
+      const baixou = await atualizarOutbox(supabaseUrl, serviceRoleKey, id, {
         processed_at: new Date().toISOString(),
       });
+      if (!baixou) resultado.pendentes += 1;
     } else {
       resultado.pendentes += 1;
       await atualizarOutbox(supabaseUrl, serviceRoleKey, id, { tentativas: tentativas + 1 });
