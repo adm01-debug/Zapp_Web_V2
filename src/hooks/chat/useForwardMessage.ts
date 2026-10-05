@@ -26,15 +26,15 @@ export interface ForwardTargetSummary {
 }
 
 /**
- * Callback de envio (etapa 37). Devolve `Promise<ForwardResult>` para o caminho honesto
- * (aba Arquivos) ou `void` para o caminho legado do chat. O `onProgress` alimenta o
- * contador "X/Y enviados" (etapa 38).
+ * Callback de envio (etapa 37 / R2-INB-002). Sempre assíncrono e sempre devolve o
+ * `ForwardResult` real do transporte — `void` NÃO significa sucesso. O `onProgress`
+ * alimenta o contador "X/Y enviados" (etapa 38).
  */
 export type ForwardCallback = (
   targetIds: string[],
   targetType: 'contact' | 'group',
   onProgress?: (done: number, total: number) => void,
-) => void | Promise<ForwardResult | void>;
+) => Promise<ForwardResult>;
 
 export interface UseForwardMessageOptions {
   open: boolean;
@@ -159,10 +159,14 @@ export function useForwardMessage({
   }, []);
 
   const runForward = useCallback(
-    async (targetIds: string[], targetType: 'contact' | 'group'): Promise<ForwardResult | null> => {
+    async (targetIds: string[], targetType: 'contact' | 'group'): Promise<ForwardResult> => {
       const result = await onForward(targetIds, targetType, (done, total) => setProgress({ done, total }));
-      if (typeof result === 'object' && result !== null) return result;
-      return null;
+      // R2-INB-002: sem resultado do transporte não existe sucesso — melhor falhar do
+      // que anunciar entregas que ninguém fez.
+      if (!result || typeof result !== 'object') {
+        throw new Error('O encaminhamento não devolveu o resultado do transporte.');
+      }
+      return result;
     },
     [onForward],
   );
@@ -215,22 +219,8 @@ export function useForwardMessage({
     setLastResult(null);
     try {
       const collected: ForwardResult[] = [];
-      if (contactIds.length > 0) {
-        const result = await runForward(contactIds, 'contact');
-        if (result) collected.push(result);
-      }
-      if (groupIds.length > 0) {
-        const result = await runForward(groupIds, 'group');
-        if (result) collected.push(result);
-      }
-
-      if (collected.length === 0) {
-        // Caminho legado (chat): callback sem resultado — mantem o fechamento simples.
-        toast({ title: 'Mensagem encaminhada!', description: `Encaminhada para ${totalTargets} ${totalTargets === 1 ? 'destinatário' : 'destinatários'}.` });
-        reset();
-        onOpenChange(false);
-        return;
-      }
+      if (contactIds.length > 0) collected.push(await runForward(contactIds, 'contact'));
+      if (groupIds.length > 0) collected.push(await runForward(groupIds, 'group'));
 
       applyResult(combineResults(collected));
     } catch (error) {
@@ -239,7 +229,7 @@ export function useForwardMessage({
     } finally {
       setIsSending(false);
     }
-  }, [isSending, selectedContacts, selectedGroups, allowGroups, itemCount, runForward, applyResult, reset, onOpenChange]);
+  }, [isSending, selectedContacts, selectedGroups, allowGroups, itemCount, runForward, applyResult]);
 
   const failedTargets = useMemo<ForwardTargetSummary[]>(() => {
     if (!lastResult) return [];
@@ -265,19 +255,8 @@ export function useForwardMessage({
     setProgress(null);
     try {
       const collected: ForwardResult[] = [];
-      if (contactIds.length > 0) {
-        const result = await runForward(contactIds, 'contact');
-        if (result) collected.push(result);
-      }
-      if (groupIds.length > 0) {
-        const result = await runForward(groupIds, 'group');
-        if (result) collected.push(result);
-      }
-      if (collected.length === 0) {
-        reset();
-        onOpenChange(false);
-        return;
-      }
+      if (contactIds.length > 0) collected.push(await runForward(contactIds, 'contact'));
+      if (groupIds.length > 0) collected.push(await runForward(groupIds, 'group'));
       applyResult(combineResults(collected));
     } catch (error) {
       log.error('Error retrying forward:', error);
@@ -285,7 +264,7 @@ export function useForwardMessage({
     } finally {
       setIsSending(false);
     }
-  }, [isSending, failedTargets, runForward, applyResult, reset, onOpenChange]);
+  }, [isSending, failedTargets, runForward, applyResult]);
 
   const handleClose = () => {
     reset();

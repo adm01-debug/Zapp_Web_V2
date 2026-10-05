@@ -3,6 +3,7 @@ import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
 import { Conversation, Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
 import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
+import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
 
 const TransferDialog = lazy(() => import('../TransferDialog').then(m => ({ default: m.TransferDialog })));
 const ScheduleMessageDialog = lazy(() => import('../ScheduleMessageDialog').then(m => ({ default: m.ScheduleMessageDialog })));
@@ -30,7 +31,7 @@ interface ChatDialogsProps {
   onTransfer: (type: 'agent' | 'queue', targetId: string, message?: string) => void;
   onScheduleMessage: (message: string, scheduledAt: Date, attachment?: File) => Promise<void>;
   onSendInteractiveMessage: (interactive: InteractiveMessage) => void;
-  onForwardToTargets: (targetIds: string[], targetType: 'contact' | 'group') => void;
+  onForwardToTargets: ForwardCallback;
   onSendLocation: (location: LocationMessage) => Promise<void> | void;
   onSetInputValue: (value: string | ((prev: string) => string)) => void;
 }
