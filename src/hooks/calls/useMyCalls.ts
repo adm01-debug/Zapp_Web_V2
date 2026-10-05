@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { periodoParaIntervalo } from './useCallsKpi';
 
 /** Itens por página do histórico (o plano fixa 8). */
 export const PAGE_SIZE = 8;
@@ -30,6 +31,13 @@ export interface MyCalls {
  * A RPC `search_my_calls` já existia e faz o recorte no banco: filtro por canal,
  * direção, resultado, busca, período e escopo, com `total_count` vindo junto. Por
  * isso a tela não pagina em memória nem conta linha no cliente.
+ *
+ * TEL-PERIOD-001: esta é a fronteira do contrato com a RPC, então é aqui que os
+ * filtros da UI viram parâmetros válidos para o banco:
+ *  - a RPC só interpreta NULL como "sem filtro"; o literal `'all'` da UI virava
+ *    `c.channel = 'all'` / `c.direction = 'all'` e o histórico padrão voltava vazio.
+ *  - `period` só mudava o queryKey e o histórico consultava sem janela de data,
+ *    divergindo do KPI. Agora usa a mesma `periodoParaIntervalo` que o `my_calls_kpi`.
  */
 export function useMyCalls(params: MyCallsParams) {
   const { page, period, channel, direction, result, q, scope } = params;
@@ -41,12 +49,15 @@ export function useMyCalls(params: MyCallsParams) {
     placeholderData: keepPreviousData,
     staleTime: 15_000,
     queryFn: async (): Promise<MyCalls> => {
+      const { from, to } = periodoParaIntervalo(period);
       const { data, error } = await supabase.rpc('search_my_calls', {
         p_limit: PAGE_SIZE,
         p_offset: (page - 1) * PAGE_SIZE,
-        p_channel: channel,
-        p_direction: direction,
-        p_result: result,
+        p_channel: channel === 'all' ? undefined : channel,
+        p_direction: direction === 'all' ? undefined : direction,
+        p_result: result === 'all' ? undefined : result,
+        p_from: from,
+        p_to: to,
         p_q: q,
         p_scope: scope,
       });
