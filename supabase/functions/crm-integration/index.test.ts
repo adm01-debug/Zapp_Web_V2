@@ -266,6 +266,47 @@ Deno.test('batch drops a contact whose phone no longer matches the stable link',
   if (!(FREE_PHONE in data)) throw new Error('unlinked phone lost its projection');
 });
 
+Deno.test('batch drops a shared phone that also belongs to a linked contact', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listContacts: () => Promise.resolve({
+      data: [
+        { id: LINKED_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+        { id: FREE_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+      ],
+      error: null,
+    }),
+    listExternalPhones: () => Promise.resolve({
+      data: [{ contact_id: OTHER_EXTERNAL_ID, numero_e164: LINKED_PHONE }],
+      error: null,
+    }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('shared phone was released through the unlinked path despite a divergent link');
+});
+
+Deno.test('batch drops a phone whose link row has a null external_contact_id', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listStableLinks: () => Promise.resolve({
+      data: [{ zapp_contact_id: LINKED_CONTACT_ID, normalized_phone: LINKED_PHONE, external_contact_id: null }],
+      error: null,
+    }),
+  }));
+  if (LINKED_PHONE in data) throw new Error('phone bound to a null external_contact_id link received data');
+  if (!(FREE_PHONE in data)) throw new Error('unlinked phone lost its projection');
+});
+
+Deno.test('batch releases a shared phone only when the link identity is proven', async () => {
+  const data = await resolveContactLookupBatch([LINKED_CONTACT_ID, FREE_CONTACT_ID], batchDeps({
+    listContacts: () => Promise.resolve({
+      data: [
+        { id: LINKED_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+        { id: FREE_CONTACT_ID, phone: '+55 (11) 98888-1111' },
+      ],
+      error: null,
+    }),
+  }));
+  if (!(LINKED_PHONE in data)) throw new Error('proven shared phone lost its projection');
+});
+
 Deno.test('derives the external participant without treating the active Gmail account as the contact', () => {
   const participant = externalParticipantEmail([
     { from_address: 'agent@example.com', to_addresses: ['other@example.com'], cc_addresses: [], direction: 'outbound' },

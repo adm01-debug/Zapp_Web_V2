@@ -246,7 +246,9 @@ interface ContactLookupBatchDependencies {
  * externo prova que ele ainda pertence ao contato vinculado — exatamente uma
  * linha em `contact_phones` e o mesmo `contact_id`. Telefone ausente,
  * divergente, ambíguo ou com leitura indisponível fica fora da lista
- * (fail closed); contato sem vínculo continua resolvendo por telefone.
+ * (fail closed); contato sem vínculo continua resolvendo por telefone,
+ * desde que o telefone não apareça em nenhuma linha de vínculo — qualquer
+ * presença em `crm_contact_links` exige vínculo válido e prova externa.
  */
 export async function resolveContactLookupBatch(
   contactIds: string[],
@@ -257,21 +259,26 @@ export async function resolveContactLookupBatch(
   const { data: links, error: linksError } = await deps.listStableLinks(contactIds);
   if (linksError) throw new Error(`CRM_LINK_READ:${linksError.code || 'unknown'}`);
   const linkedByContact = new Map((links || []).map((link) => [link.zapp_contact_id, link]));
+  const linkedPhones = new Set<string>();
   const unlinkedPhones = new Set<string>();
   const expectedByPhone = new Map<string, Set<string>>();
   for (const contact of contacts || []) {
     const phone = normalizePhone(contact.phone);
     if (!phone) continue;
     const link = linkedByContact.get(contact.id);
-    if (link?.normalized_phone && link.normalized_phone !== phone) continue;
-    if (link?.external_contact_id) {
+    if (!link) {
+      unlinkedPhones.add(phone);
+      continue;
+    }
+    linkedPhones.add(phone);
+    if (link.normalized_phone && link.normalized_phone !== phone) continue;
+    if (link.external_contact_id) {
       const expected = expectedByPhone.get(phone) ?? new Set<string>();
       expected.add(link.external_contact_id);
       expectedByPhone.set(phone, expected);
-    } else {
-      unlinkedPhones.add(phone);
     }
   }
+  for (const phone of linkedPhones) unlinkedPhones.delete(phone);
   const phones = [...unlinkedPhones];
   if (expectedByPhone.size > 0) {
     const proof = await withTimeout(deps.listExternalPhones([...expectedByPhone.keys()]));
