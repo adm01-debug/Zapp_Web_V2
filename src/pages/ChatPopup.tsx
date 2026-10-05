@@ -7,6 +7,7 @@ import type { Database } from '@/integrations/supabase/types';
 import { Conversation, Message } from '@/types/chat';
 import { log } from '@/lib/logger';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
+import { toast } from '@/hooks/ui/use-toast';
 
 type ContactRow = Database['public']['Tables']['contacts']['Row'];
 import { Skeleton } from '@/components/ui/skeleton';
@@ -140,9 +141,11 @@ export default function ChatPopup() {
     [contactId]
   );
 
+  // R2-INB-022: devolve `false` em falha (com aviso ao usuário) para o ChatPanel manter o
+  // gravador aberto e a gravação recuperável para reenvio.
   const handleSendAudio = useCallback(
-    async (blob: Blob) => {
-      if (!contactId) return;
+    async (blob: Blob): Promise<boolean> => {
+      if (!contactId) return false;
       try {
         const fileName = `audio_${contactId}_${Date.now()}.webm`;
         const { error: uploadError } = await supabase.storage
@@ -157,8 +160,11 @@ export default function ChatPopup() {
 
         // envia de verdade via Evolution API (antes: so gravava no banco)
         await sendMessageToContact(contactId, '🎵 Mensagem de áudio', 'audio', urlData.publicUrl);
+        return true;
       } catch (err) {
         log.error('Failed to send audio from popup:', err);
+        toast({ title: 'Erro ao enviar áudio', description: 'Tente novamente.', variant: 'destructive' });
+        return false;
       }
     },
     [contactId]

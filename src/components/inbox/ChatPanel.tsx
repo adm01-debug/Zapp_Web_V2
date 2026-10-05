@@ -43,7 +43,9 @@ interface ChatPanelProps {
   conversation: Conversation;
   messages: Message[];
   onSendMessage: (content: string, replyToId?: string | null) => Promise<void> | void;
-  onSendAudio?: (blob: Blob) => Promise<void>;
+  /** R2-INB-022: retorna `true` só quando o áudio foi realmente enviado; `false` mantém o gravador
+   *  aberto (gravação recuperável para reenvio) em vez de descartá-la. */
+  onSendAudio?: (blob: Blob) => Promise<boolean>;
   showDetails?: boolean;
   onToggleDetails?: () => void;
   onBack?: () => void;

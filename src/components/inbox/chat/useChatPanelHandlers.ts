@@ -57,6 +57,10 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  // R2-INB-022: guarda de reenvio. Como o gravador passa a continuar aberto quando o envio
+  // falha, o usuário pode tocar "Enviar" de novo; este ref evita disparar dois envios
+  // concorrentes da mesma gravação enquanto o primeiro ainda está em voo.
+  const isSendingAudioRef = useRef(false);
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [forwardMessage, setForwardMessage] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
@@ -290,11 +294,32 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     }
   }, [contactId]);
 
-  const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob) => Promise<void>) => {
-    if (onSendAudio) {
-      try { await onSendAudio(audioBlob); } catch (err) { log.error('Error sending audio:', err); toast({ title: 'Erro ao enviar áudio', description: 'Tente novamente.', variant: 'destructive' }); }
-    } else { toast({ title: 'Erro', description: 'Envio de áudio não configurado.', variant: 'destructive' }); }
-    setIsRecordingAudio(false);
+  // R2-INB-022: só fecha o gravador quando o envio CONFIRMA. Em falha, mantém o AudioRecorder
+  // montado — o blob vive no estado dele, então fechar descartaria uma gravação ainda recuperável.
+  // Devolve true/false para o chamador (o ChatPanel hoje ignora; os testes pinam o contrato).
+  const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob) => Promise<boolean>): Promise<boolean> => {
+    if (!onSendAudio) {
+      toast({ title: 'Erro', description: 'Envio de áudio não configurado.', variant: 'destructive' });
+      return false;
+    }
+    if (isSendingAudioRef.current) return false;
+    isSendingAudioRef.current = true;
+    try {
+      const enviado = await onSendAudio(audioBlob);
+      // A ponte sinaliza falha com `false` (ela mesma já avisa o usuário); ausência de retorno
+      // também conta como falha — o padrão seguro é NÃO descartar a gravação.
+      if (enviado) {
+        setIsRecordingAudio(false);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      log.error('Error sending audio:', err);
+      toast({ title: 'Erro ao enviar áudio', description: 'Tente novamente.', variant: 'destructive' });
+      return false;
+    } finally {
+      isSendingAudioRef.current = false;
+    }
   }, []);
 
   return {
