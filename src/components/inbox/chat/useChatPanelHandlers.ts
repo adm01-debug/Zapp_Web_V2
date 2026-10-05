@@ -162,7 +162,12 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       return;
     }
 
-    const messageContent = applySignature(currentInput.trim());
+    // R2-INB-007: a assinatura é aplicada só no payload enviado. O editor (e o
+    // Desfazer) guardam o texto ORIGINAL — restaurar o texto assinado fazia o
+    // retry prefixar de novo (assinatura duplicada) e mudava o `content`, que
+    // participa da chave de idempotência do serviço de envio.
+    const originalText = currentInput.trim();
+    const messageContent = applySignature(originalText);
     const wasReply = replyToMessageRef.current;
     setIsSending(true); setInputValue(''); setReplyToMessage(null); handleTypingStop();
     if (wasReply) log.debug('Sending reply to:', wasReply.id);
@@ -172,14 +177,14 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       undoToast({
         message: 'Mensagem enviada', icon: '📨', delay: 3000,
         onUndo: () => {
-          setInputValue(messageContent);
+          setInputValue(originalText);
           if (wasReply) setReplyToMessage(wasReply);
           toast({ title: '↩️ Mensagem restaurada', description: 'O texto foi restaurado no campo de entrada.' });
         },
       });
     } catch (err) {
       log.error('Failed to send message:', err);
-      setInputValue(messageContent);
+      setInputValue(originalText);
       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
     } finally { setIsSending(false); }
   }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef]);
