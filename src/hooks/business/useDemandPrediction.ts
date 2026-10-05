@@ -18,6 +18,8 @@ export interface DemandInsights {
   trend: 'up' | 'down';
   peakTime: string;
   capacityRisk: boolean;
+  /** true quando existe uma capacidade informada (prop ou global_settings). */
+  capacityConfigured: boolean;
 }
 
 function generatePredictionFromHistory(messageHistory: { hour: number; count: number }[]): PredictionPoint[] {
@@ -49,7 +51,29 @@ function generatePredictionFromHistory(messageHistory: { hour: number; count: nu
   return data;
 }
 
-export function useDemandPrediction(externalData?: PredictionPoint[], currentCapacity = 35) {
+/**
+ * Capacidade por hora configurada em `global_settings.demand_capacity_per_hour`
+ * — DASH-CONTROLS-001 (ponto 4): antes o card assumia 35 fixo, um número
+ * inventado. Sem configuração devolve `null` e a UI diz "Não configurada".
+ */
+export function useConfiguredDemandCapacity() {
+  return useQuery({
+    queryKey: ['demand-capacity-config'],
+    queryFn: async (): Promise<number | null> => {
+      const { data, error } = await supabase
+        .from('global_settings')
+        .select('value')
+        .eq('key', 'demand_capacity_per_hour')
+        .maybeSingle();
+      if (error) throw error;
+      const n = Number(data?.value);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useDemandPrediction(externalData?: PredictionPoint[], currentCapacity?: number) {
   const { data: messageHistory = [] } = useQuery({
     queryKey: ['demand-prediction-history'],
     queryFn: async () => {
@@ -77,13 +101,16 @@ export function useDemandPrediction(externalData?: PredictionPoint[], currentCap
 
   const insights = useMemo<DemandInsights>(() => {
     const predictions = data.filter(d => d.isPrediction);
-    const maxPredicted = Math.max(...predictions.map(p => p.predicted));
-    const avgPredicted = predictions.reduce((a, b) => a + b.predicted, 0) / predictions.length;
+    const maxPredicted = predictions.length ? Math.max(...predictions.map(p => p.predicted)) : 0;
+    const avgPredicted = predictions.length ? predictions.reduce((a, b) => a + b.predicted, 0) / predictions.length : 0;
     const currentActual = data.find(d => !d.isPrediction && d.actual !== undefined)?.actual || 0;
-    const trend = predictions[predictions.length - 1].predicted > currentActual ? 'up' : 'down';
+    const trend = predictions.length && predictions[predictions.length - 1].predicted > currentActual ? 'up' : 'down';
     const peakTime = predictions.find(p => p.predicted === maxPredicted)?.time || '';
-    const capacityRisk = maxPredicted > currentCapacity;
-    return { maxPredicted, avgPredicted, currentActual, trend, peakTime, capacityRisk };
+    // Sem capacidade configurada não há risco a afirmar — comparar contra um
+    // default inventado era o defeito (DASH-CONTROLS-001).
+    const capacityConfigured = currentCapacity !== undefined;
+    const capacityRisk = currentCapacity !== undefined && maxPredicted > currentCapacity;
+    return { maxPredicted, avgPredicted, currentActual, trend, peakTime, capacityRisk, capacityConfigured };
   }, [data, currentCapacity]);
 
   return { data, insights };

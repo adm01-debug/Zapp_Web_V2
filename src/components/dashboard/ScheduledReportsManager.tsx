@@ -18,9 +18,16 @@ import { cn } from '@/lib/utils';
 import { DashboardCard, SectionHeader, PrimaryButton, Pill, VerTodasButton } from './overview/DashboardCard';
 import { useScheduledReportConfigs } from '@/hooks/dashboard/useScheduledReportConfigs';
 
+// DASH-CONTROLS-001 (ponto 5): UM mapa de rótulos de frequência — a exibição
+// das linhas, o filtro e os tiles leem daqui. `biweekly` segue mapeado para
+// exibir configs legadas, mas NÃO é ofertado na criação: o executor real
+// (`send-scheduled-report` → calculateNextSend) só agenda daily/weekly/monthly.
 const FREQUENCY_LABELS: Record<string, string> = {
   daily: 'Diário', weekly: 'Semanal', biweekly: 'Quinzenal', monthly: 'Mensal',
 };
+
+/** Frequências que o executor real sabe agendar (send-scheduled-report). */
+const SCHEDULABLE_FREQUENCIES = ['daily', 'weekly', 'monthly'] as const;
 const REPORT_TYPE_LABELS: Record<string, string> = {
   performance: 'Desempenho da Equipe', satisfaction: 'Satisfação', sla: 'Métricas SLA',
   conversations: 'Volume de Atendimentos', agents: 'Agentes', full: 'Resumo Executivo',
@@ -41,12 +48,13 @@ const TEMPLATES = [
   { key: 'conversations', label: 'Volume de Atendimentos', desc: 'Total de conversas, por canal e por período.' },
   { key: 'satisfaction', label: 'Satisfação do Cliente', desc: 'NPS, CSAT e análise de sentimentos.' },
 ];
-const FREQ_TILES = [
-  { value: 'daily', label: 'Diário', sub: 'Todo dia' },
-  { value: 'weekly', label: 'Semanal', sub: 'Toda semana' },
-  { value: 'monthly', label: 'Mensal', sub: 'Todo mês' },
-  { value: 'biweekly', label: 'Personalizada', sub: 'Sob demanda' },
-];
+const FREQ_TILE_SUBS: Record<string, string> = {
+  daily: 'Todo dia', weekly: 'Toda semana', monthly: 'Todo mês',
+};
+// Tiles derivados de FREQUENCY_LABELS: o rótulo não pode divergir da listagem.
+const FREQ_TILES = SCHEDULABLE_FREQUENCIES.map(value => ({
+  value, label: FREQUENCY_LABELS[value], sub: FREQ_TILE_SUBS[value],
+}));
 
 export function ScheduledReportsManager() {
   const { configs, isLoading, createConfig, toggleActive, deleteConfig } = useScheduledReportConfigs();
@@ -208,7 +216,7 @@ export function ScheduledReportsManager() {
                   <button key={f.value} onClick={() => { setFormFrequency(f.value); openCreate(); }}
                     className={cn('h-[84px] rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-colors',
                       active ? 'bg-primary/15 border-primary/60 text-primary-glow' : 'border-border/60 bg-input/20 text-foreground hover:bg-muted/40')}>
-                    {f.value === 'monthly' ? <Calendar className="w-5 h-5" /> : f.value === 'biweekly' ? <Clock className="w-5 h-5" /> : f.value === 'daily' ? <Calendar className="w-5 h-5" /> : <BarChart3 className="w-5 h-5" />}
+                    {f.value === 'weekly' ? <BarChart3 className="w-5 h-5" /> : <Calendar className="w-5 h-5" />}
                     <span className="text-[13px] font-semibold leading-none">{f.label}</span>
                     <span className={cn('text-2xs', active ? 'text-primary-glow/80' : 'text-muted-foreground')}>{f.sub}</span>
                   </button>
@@ -249,7 +257,7 @@ export function ScheduledReportsManager() {
             <div><label className="text-[13px] font-medium mb-1 block">Frequência</label>
               <Select value={formFrequency} onValueChange={setFormFrequency}>
                 <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                <SelectContent>{Object.entries(FREQUENCY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                <SelectContent>{SCHEDULABLE_FREQUENCIES.map(k => <SelectItem key={k} value={k}>{FREQUENCY_LABELS[k]}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><label className="text-[13px] font-medium mb-1 block">Destinatários</label><Input value={formRecipients} onChange={e => setFormRecipients(e.target.value)} placeholder="email1@empresa.com, email2@empresa.com" className="bg-input border-border" /></div>
