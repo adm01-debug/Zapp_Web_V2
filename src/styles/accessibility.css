@@ -155,15 +155,20 @@
 /* ===== DENSITY MODES ===== */
 :root, [data-density="comfortable"] {
   --density-padding-y: 0.5rem; --density-padding-x: 1rem; --density-gap: 0.75rem;
-  --density-row-height: 2.5rem; --density-text-size: var(--text-sm);
+  --density-row-height: 2.5rem; --density-text-size: 1rem;
 }
 [data-density="compact"] {
   --density-padding-y: 0.25rem; --density-padding-x: 0.5rem; --density-gap: 0.375rem;
-  --density-row-height: 2rem; --density-text-size: var(--text-xs);
+  --density-row-height: 2rem; --density-text-size: 0.875rem;
 }
 [data-density="dense"] {
   --density-padding-y: 0.125rem; --density-padding-x: 0.375rem; --density-gap: 0.25rem;
-  --density-row-height: 1.75rem; --density-text-size: var(--text-xs);
+  --density-row-height: 1.75rem; --density-text-size: 0.75rem;
+}
+
+/* Tamanho-base herdável: componentes com escala tipográfica própria continuam soberanos. */
+[data-density] #root {
+  font-size: var(--density-text-size);
 }
 
 /* ===== AMBIENT SENTIMENT COLORS ===== */
