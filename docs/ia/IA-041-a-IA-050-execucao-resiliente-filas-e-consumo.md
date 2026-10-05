@@ -208,7 +208,7 @@ vazio) — declarado pela execução.
   Medido em 02/10/2026: `gh pr list --state all --search "IA-050"` devolve lista vazia (nenhum PR) e a busca
   em `supabase/functions/**` por contagem de falhas/suspensão não encontra mecanismo algum (o único casamento
   é a palavra "short-circuits" num comentário de `_shared/ai-guards.ts`). **Retificação (05/10/2026, cartão
-  `t_ab463e39`):** o mecanismo foi implementado em `_shared/ai-circuit.ts` (limiar 5 falhas consecutivas,
+  `t_4e3bf2dc`):** o mecanismo foi implementado em `_shared/ai-circuit.ts` (limiar 5 falhas consecutivas,
   janela 5 min, cooldown 60 s com sonda única atômica) e ligado no despacho de `ai-generate.ts`, com teste
   `ai-circuit.test.ts` que prova abertura, bloqueio sem `fetch`, sonda única e reabertura no fracasso.
 - **O handler `ai.generate` do worker está DESLIGADO por padrão** (flag `AI_JOBS_ENABLE_AI_GENERATE`):
