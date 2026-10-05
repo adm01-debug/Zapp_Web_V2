@@ -30,9 +30,10 @@ vi.mock('@/hooks/chat/useContactMedia', async () => {
   return { ...actual, useContactMedia: (...args: unknown[]) => mockUseContactMedia(...args) };
 });
 
-vi.mock('@/hooks/chat/useContactMediaCounts', () => ({
-  useContactMediaCounts: (...args: unknown[]) => mockUseContactMediaCounts(...args),
-}));
+vi.mock('@/hooks/chat/useContactMediaCounts', async () => {
+  const actual = await vi.importActual<typeof import('@/hooks/chat/useContactMediaCounts')>('@/hooks/chat/useContactMediaCounts');
+  return { ...actual, useContactMediaCounts: (...args: unknown[]) => mockUseContactMediaCounts(...args) };
+});
 
 vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
   useResolvedStorageUrl: (source: string) => ({ url: source, isLoading: false, error: null, refresh: vi.fn() }),

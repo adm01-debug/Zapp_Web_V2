@@ -81,7 +81,8 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     refetch,
   } = useContactMedia(contactId);
   // Etapa 42: chips contam no banco (contagem exata por tipo), nao nos itens carregados.
-  const { counts } = useContactMediaCounts(contactId);
+  // #144/OTH-002: erro na contagem nao pode virar "0" confirmado — vira "indisponivel" (—).
+  const { counts, isError: countsError } = useContactMediaCounts(contactId);
 
   const [selected, setSelected] = useState<ContactMediaItem | null>(null);
   const [previewItem, setPreviewItem] = useState<ContactMediaItem | null>(null);
@@ -221,13 +222,13 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
             >
               {chip.label}
               <span className={cn('tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center', view.typeFilter === chip.id ? 'bg-white/15' : 'bg-muted')}>
-                {counts[chip.id]}
+                {countsError ? '—' : counts[chip.id]}
               </span>
             </button>
           ))}
         </div>
-        <p className="ml-auto text-xs text-muted-foreground tabular-nums">
-          {counts.all} {counts.all === 1 ? 'arquivo' : 'arquivos'}
+        <p className="ml-auto text-xs text-muted-foreground tabular-nums" title={countsError ? 'Contagem indisponível' : undefined}>
+          {countsError ? '—' : `${counts.all} ${counts.all === 1 ? 'arquivo' : 'arquivos'}`}
         </p>
       </header>
 
