@@ -17,6 +17,7 @@ export{
 import {
   resolveNetworkPolicy,
   networkPolicyDenialResponse,
+  type NetworkPolicyDecision,
   type NetworkPolicyRpcClient,
 } from './request-policy.ts';
 
@@ -361,6 +362,10 @@ export interface RequireAuthOptions {
   getUser?: (authHeader: string) => PromiseLike<AuthUserResult>;
   /** Client service_role p/ a política de rede (R2-AUTH-022). Injectable p/ teste. */
   policyRpc?: NetworkPolicyRpcClient;
+  /** Obtém o client de política quando `policyRpc` não é injetado (padrão: o
+   *  client service_role compartilhado de `getServiceClient`). Injectable p/
+   *  testar a falha de CRIAÇÃO do client sem tocar rede/env real. */
+  policyRpcFactory?: () => PromiseLike<NetworkPolicyRpcClient>;
   /** Fallback de rate limit quando a RPC não tem regra p/ o endpoint (máximos atuais). */
   defaultMaxRequests?: number;
   defaultWindowSeconds?: number;
@@ -422,11 +427,20 @@ export async function requireAuth(
   //    efeito privilegiado do handler; consumidores de requireAuth herdam a
   //    trava sem edição individual.
   const endpoint = canonicalEndpointFromUrl(req);
-  const decision = await resolveNetworkPolicy(req, endpoint, {
-    rpc: opts.policyRpc ?? (await getServiceClient()),
-    defaultMaxRequests: opts.defaultMaxRequests ?? 30,
-    defaultWindowSeconds: opts.defaultWindowSeconds ?? 60,
-  });
+  // Criação do client de política (import dinâmico + env) e execução da RPC
+  // sob o mesmo guarda-chuva: qualquer exceção/rejeição aqui vira negação
+  // fechada 503 — requireAuth nunca rejeita a Promise por causa da política.
+  let decision: NetworkPolicyDecision;
+  try {
+    const rpc = opts.policyRpc ?? (await (opts.policyRpcFactory ?? getServiceClient)());
+    decision = await resolveNetworkPolicy(req, endpoint, {
+      rpc,
+      defaultMaxRequests: opts.defaultMaxRequests ?? 30,
+      defaultWindowSeconds: opts.defaultWindowSeconds ?? 60,
+    });
+  } catch {
+    decision = { allowed: false, status: 503 };
+  }
   if (!decision.allowed) {
     return networkPolicyDenialResponse(decision, req);
   }

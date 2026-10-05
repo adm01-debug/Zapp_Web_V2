@@ -97,6 +97,46 @@ describe('requireAuth — política de rede obrigatória (R2-AUTH-022 / 27.3)', 
     expect((res as Response).status).toBe(503);
   });
 
+  it('retorna 503 quando a CRIAÇÃO do client de política rejeita — nunca rejeita a Promise', async () => {
+    // getServiceClient() real rejeita quando import/esm.sh falha ou env falta;
+    // requireAuth precisa converter isso em 503, não em Promise rejeitada.
+    const res = await requireAuth(
+      req('https://x.supabase.co/functions/v1/multiplix-dispatch', bearer()),
+      {
+        getUser: () => Promise.resolve(user()),
+        policyRpcFactory: () => Promise.reject(new Error('SUPABASE_URL is not configured')),
+      },
+    );
+    expect(res).toBeInstanceOf(Response);
+    expect((res as Response).status).toBe(503);
+  });
+
+  it('retorna 503 quando a criação do client de política lança exceção síncrona', async () => {
+    const res = await requireAuth(
+      req('https://x.supabase.co/functions/v1/multiplix-dispatch', bearer()),
+      {
+        getUser: () => Promise.resolve(user()),
+        policyRpcFactory: () => {
+          throw new Error('import dinâmico falhou');
+        },
+      },
+    );
+    expect(res).toBeInstanceOf(Response);
+    expect((res as Response).status).toBe(503);
+  });
+
+  it('retorna 503 quando a CHAMADA da RPC rejeita (exceção, não só error resolvido)', async () => {
+    const rpc = {
+      rpc: () => Promise.reject(new Error('socket hangup')),
+    };
+    const res = await requireAuth(
+      req('https://x.supabase.co/functions/v1/multiplix-dispatch', bearer()),
+      { getUser: () => Promise.resolve(user()), policyRpc: rpc },
+    );
+    expect(res).toBeInstanceOf(Response);
+    expect((res as Response).status).toBe(503);
+  });
+
   it('preserva o caminho permitido — devolve { userId } e encaminha IP/país', async () => {
     const rpc = fakeRpc({
       data: [{ allowed: true, reason: null, rate_limit_max_requests: 25, rate_limit_window_seconds: 120 }],
