@@ -12,10 +12,36 @@ interface ContactStatsCardsProps {
 export function ContactStatsCards({ totalAll, fornecedoresAll, includeLegacy = false }: ContactStatsCardsProps) {
   const { data: kpi, isLoading } = useContactsKpi(includeLegacy);
 
+  /**
+   * "Total de Contatos" é o número-âncora da tela e o aceite da etapa 98 exige que
+   * ele bata com o badge da aba "Todos" no MESMO snapshot (toggle ligado e
+   * desligado). Por isso ele (a) lê `totalAll`, a MESMA fonte do badge
+   * (`contacts_count_by_type`), e (b) NÃO espera o agregado pesado
+   * (`useContactsKpi`, que pagina a tabela inteira) nem anima por CountUp — as
+   * duas coisas faziam o card exibir 0 ou um valor intermediário enquanto o badge
+   * já mostrava o total (a "divergência de 29" registrada em
+   * docs/audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md, etapa 98).
+   */
+  const totalCard = (
+    <ContactKpiCard
+      label="Total de Contatos"
+      value={totalAll}
+      deltaPct={kpi?.deltaTotalPct ?? null}
+      tile="blue"
+      icon={Users}
+      series={kpi?.seriesTotalCumulative12w ?? []}
+      chart="line"
+      animateValue={false}
+    />
+  );
+
+  // Enquanto só o agregado carrega, o Total (que vem de fora, junto do badge) já
+  // está pronto: três esqueletos, não quatro.
   if (isLoading || !kpi) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {Array.from({ length: 4 }, (_, i) => (
+        {totalCard}
+        {Array.from({ length: 3 }, (_, i) => (
           <div key={i} className="h-[108px] rounded-[14px] border border-border/70 bg-card animate-shimmer" />
         ))}
       </div>
@@ -24,15 +50,7 @@ export function ContactStatsCards({ totalAll, fornecedoresAll, includeLegacy = f
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <ContactKpiCard
-        label="Total de Contatos"
-        value={totalAll}
-        deltaPct={kpi.deltaTotalPct}
-        tile="blue"
-        icon={Users}
-        series={kpi.seriesTotalCumulative12w}
-        chart="line"
-      />
+      {totalCard}
       <ContactKpiCard
         label="Novos (30 dias)"
         value={kpi.novos30}
