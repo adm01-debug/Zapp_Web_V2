@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { TalkMeQueueController } from '../useTalkMeQueue';
-import type { TalkMeWaitingContact } from '../types';
+import type { TalkMePendingMessage, TalkMeWaitingContact } from '../types';
 
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
@@ -46,6 +46,27 @@ const second: TalkMeWaitingContact = {
   position: 2,
 };
 
+const pendingMessages: TalkMePendingMessage[] = [
+  {
+    messageId: 'message-0',
+    sender: 'contact',
+    content: 'Bom dia, ainda estou aguardando retorno',
+    messageType: 'text',
+    mediaUrl: null,
+    caption: null,
+    createdAt: '2026-09-30T12:00:00.000Z',
+  },
+  {
+    messageId: 'message-1',
+    sender: 'contact',
+    content: 'Preciso de cem caixas',
+    messageType: 'text',
+    mediaUrl: null,
+    caption: null,
+    createdAt: '2026-09-30T12:05:00.000Z',
+  },
+];
+
 function controller(overrides: Partial<TalkMeQueueController> = {}): TalkMeQueueController {
   return {
     queues: [{ queueId: 'queue-1', name: 'Comercial', color: '#2563eb', waitingCount: 2, oldestWaitingAt: first.waitingSince }],
@@ -75,6 +96,7 @@ function controller(overrides: Partial<TalkMeQueueController> = {}): TalkMeQueue
       conversationStatus: 'open',
       claimedAt: '2026-09-30T12:20:00.000Z',
     })),
+    fetchPendingMessages: vi.fn(async () => pendingMessages),
     ...overrides,
   };
 }
@@ -320,6 +342,65 @@ describe('TalkMeView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Próximo atendimento' }));
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Bruno Financeiro' })).toHaveAttribute('aria-current', 'true'));
+  });
+
+  it('abre o histórico pendente sob demanda sem aceitar o atendimento', async () => {
+    const ctrl = controller();
+    renderView(ctrl);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver as 2 mensagens do cliente' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Mensagens aguardando resposta' });
+    await waitFor(() => expect(within(dialog).getByText('Bom dia, ainda estou aguardando retorno')).toBeInTheDocument());
+    expect(ctrl.fetchPendingMessages).toHaveBeenCalledWith('contact-1');
+    expect(ctrl.claim).not.toHaveBeenCalled();
+    const items = within(dialog).getAllByRole('listitem');
+    expect(items).toHaveLength(2);
+    expect(within(items[0]).getByText('Cliente')).toBeInTheDocument();
+    expect(within(items[0]).queryByText('Preciso de cem caixas')).not.toBeInTheDocument();
+    expect(within(items[1]).getByText('Preciso de cem caixas')).toBeInTheDocument();
+  });
+
+  it('distingue a origem de cada mensagem do histórico', async () => {
+    const mixed: TalkMePendingMessage[] = [
+      { ...pendingMessages[0], sender: 'agent', content: 'Campanha de reativação enviada' },
+      pendingMessages[1],
+    ];
+    const ctrl = controller({ fetchPendingMessages: vi.fn(async () => mixed) });
+    renderView(ctrl);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver as 2 mensagens do cliente' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Mensagens aguardando resposta' });
+    const items = await within(dialog).findAllByRole('listitem');
+    expect(within(items[0]).getByText('Saída')).toBeInTheDocument();
+    expect(within(items[0]).getByText('Campanha de reativação enviada')).toBeInTheDocument();
+    expect(within(items[1]).getByText('Cliente')).toBeInTheDocument();
+  });
+
+  it('oferece nova tentativa quando o histórico falha', async () => {
+    const fetchPendingMessages = vi.fn()
+      .mockRejectedValueOnce(new Error('falha de rede'))
+      .mockResolvedValueOnce(pendingMessages);
+    const ctrl = controller({ fetchPendingMessages });
+    renderView(ctrl);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver as 2 mensagens do cliente' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Mensagens aguardando resposta' });
+    await waitFor(() => expect(within(dialog).getByRole('alert')).toHaveTextContent('Não foi possível carregar as mensagens.'));
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tentar novamente' }));
+    await waitFor(() => expect(within(dialog).getByText('Bom dia, ainda estou aguardando retorno')).toBeInTheDocument());
+    expect(fetchPendingMessages).toHaveBeenCalledTimes(2);
+    expect(ctrl.claim).not.toHaveBeenCalled();
+  });
+
+  it('não oferece histórico quando só a última mensagem está pendente', () => {
+    renderView(controller({ items: [second], totalCount: 1 }));
+
+    expect(screen.queryByRole('button', { name: /Ver as \d+ mensagens do cliente/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Aceitar e conversar' })).toBeInTheDocument();
   });
 
   it('mantém a fila visível e permite repetir quando apenas a próxima página falha', () => {
