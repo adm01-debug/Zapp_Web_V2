@@ -74,6 +74,34 @@ describe('AIQuickAccess — controles ligados a dado real', () => {
     expect(within(card).queryByText('Nenhuma análise recente')).not.toBeInTheDocument();
   });
 
+  it('normaliza critico antes de renderizar o rótulo da análise recente', () => {
+    h.recent.mockReturnValue({
+      data: [{
+        id: 'a-critica', contactName: 'Caso crítico', sentiment: 'critico',
+        sentimentScore: 5, createdAt: '2026-10-05T10:00:00',
+      }],
+    });
+
+    render(<AIQuickAccess />);
+
+    const card = screen.getByTestId('ai-recent-card');
+    expect(within(card).getByText('Negativo')).toBeInTheDocument();
+  });
+
+  it('renderiza travessão para sentimento recente desconhecido', () => {
+    h.recent.mockReturnValue({
+      data: [{
+        id: 'a-desconhecida', contactName: 'Sem classe', sentiment: 'fora-do-vocabulario',
+        sentimentScore: null, createdAt: '2026-10-05T10:00:00',
+      }],
+    });
+
+    render(<AIQuickAccess />);
+
+    const card = screen.getByTestId('ai-recent-card');
+    expect(within(card).getByText('—')).toBeInTheDocument();
+  });
+
   it('insights do período renderizam os agregados reais quando há dados', () => {
     h.insights.mockReturnValue({
       data: { total: 12, negativePct: 25, topNegativeDepartment: 'Suporte', avgSentimentScore: 61.4 },

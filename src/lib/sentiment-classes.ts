@@ -1,4 +1,4 @@
-import { normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
+import { normalizeSentiment } from '@/lib/ai-vocabulary';
 
 /**
  * Classe de 3 vias que os widgets do Dashboard exibem (Positivo/Neutro/Negativo).
@@ -14,7 +14,8 @@ import { normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
  *   - desconhecido/ausente (`null`) NÃO é classe: o consumidor decide, e nenhum
  *     widget pode contá-lo como 'neutro' por um `else` de conveniência.
  */
-export type SentimentClass = Extract<Sentiment, 'positivo' | 'neutro' | 'negativo'>;
+export const SENTIMENT_CLASSES = ['positivo', 'neutro', 'negativo'] as const;
+export type SentimentClass = (typeof SENTIMENT_CLASSES)[number];
 
 /** Classe de exibição do sentimento cru, ou `null` quando não é reconhecido. */
 export function classifySentiment(raw: unknown): SentimentClass | null {

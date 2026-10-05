@@ -55,7 +55,7 @@ const INSIGHT_SINCE: Record<InsightPeriod, () => Date> = {
 export interface AIInsights {
   /** Total de análises no período — 0 mantém o empty state honesto. */
   total: number;
-  /** % de análises com classe negativa (critico entra aqui, desconhecido não). */
+  /** % de análises classificadas como negativas; classifySentiment converte critico em negativo e exclui desconhecido. */
   negativePct: number;
   /** Departamento/fila com mais análises negativas, ou null. */
   topNegativeDepartment: string | null;

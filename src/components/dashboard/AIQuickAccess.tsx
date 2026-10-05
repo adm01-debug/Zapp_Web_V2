@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Cpu, FileText, Bell, ArrowRight, ChevronRight, Clock, Lightbulb, TrendingUp, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { classifySentiment, type SentimentClass } from '@/lib/sentiment-classes';
 import { AI_FEATURES, useAIFeatureNavigation } from './aiFeatures';
 import { useAIStats } from '@/hooks/analytics/useAIStats';
 import { useActiveAIProvider } from '@/hooks/analytics/useActiveAIProvider';
@@ -36,12 +37,19 @@ const INSIGHT_PERIODS: { value: InsightPeriod; label: string }[] = [
   { value: '30d', label: 'Últimos 30 dias' },
 ];
 
-const SENTIMENT_RESULT_LABEL: Record<string, string> = {
+const SENTIMENT_RESULT_LABEL: Record<SentimentClass, string> = {
   positivo: 'Positivo', neutro: 'Neutro', negativo: 'Negativo',
 };
-const SENTIMENT_RESULT_TONE: Record<string, 'success' | 'muted' | 'danger'> = {
+const SENTIMENT_RESULT_TONE: Record<SentimentClass, 'success' | 'muted' | 'danger'> = {
   positivo: 'success', neutro: 'muted', negativo: 'danger',
 };
+
+function SentimentResult({ sentiment }: { sentiment: unknown }) {
+  const sentimentClass = classifySentiment(sentiment);
+  return sentimentClass
+    ? <Pill label={SENTIMENT_RESULT_LABEL[sentimentClass]} tone={SENTIMENT_RESULT_TONE[sentimentClass]} />
+    : <span className="text-muted-foreground">—</span>;
+}
 
 function TrendText({ trend, label }: { trend?: { direction: 'up' | 'down' | 'stable'; percentage: number }; label: string }) {
   if (!trend || trend.direction === 'stable') return <p className="text-xs text-muted-foreground">{label}</p>;
@@ -181,9 +189,7 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
                 <div key={a.id} className="grid grid-cols-[2fr_1.4fr_1fr_0.8fr_auto] items-center px-4 py-3 text-[13px]">
                   <span className="truncate text-foreground font-medium">{a.contactName}</span>
                   <span className="text-muted-foreground">Análise de conversa</span>
-                  <span>{a.sentiment
-                    ? <Pill label={SENTIMENT_RESULT_LABEL[a.sentiment]} tone={SENTIMENT_RESULT_TONE[a.sentiment]} />
-                    : <span className="text-muted-foreground">—</span>}</span>
+                  <span><SentimentResult sentiment={a.sentiment} /></span>
                   <span className="text-muted-foreground tabular-nums">{format(new Date(a.createdAt), 'dd/MM HH:mm')}</span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </div>
