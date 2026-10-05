@@ -70,10 +70,10 @@ export function ConversationListSidebar({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- inbox é `any` (tipo de useRealtimeInbox()), então o linter não vê inbox.refetch como estável; dep no objeto inteiro reproduziria o bug do #810 (inbox é novo a cada render).
   }, [conversationActions, inbox.refetch]);
 
-  const handleListTransfer = useCallback(async (type: 'agent' | 'queue' | 'connection', targetId: string) => {
+  const handleListTransfer = useCallback(async (type: 'agent' | 'queue', targetId: string, note?: string) => {
     if (!transferTarget) return;
     if (!conversationActions) { toast.error('Ação indisponível — tente recarregar a página'); return; }
-    await conversationActions.transferContact(transferTarget, type, targetId);
+    await conversationActions.transferContact(transferTarget, type, targetId, note);
     inbox.refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mesmo motivo acima.
   }, [transferTarget, conversationActions, inbox.refetch]);
@@ -298,7 +298,7 @@ export function ConversationListSidebar({
         <TransferDialog
           open={!!activeTransferTarget}
           onOpenChange={(open) => !open && setTransferTarget(null)}
-          onTransfer={async (type, targetId) => { await handleListTransfer(type, targetId); setTransferTarget(null); }}
+          onTransfer={async (type, targetId, message) => { await handleListTransfer(type, targetId, message); setTransferTarget(null); }}
           queueId={activeTransferContact?.contact?.queue_id ?? null}
         />
       )}

@@ -50,11 +50,44 @@ vi.mock('@/components/inbox/CloseConversationDialog', () => ({
 }));
 
 vi.mock('@/components/inbox/TransferDialog', () => ({
-  TransferDialog: (props: { open: boolean }) =>
-    props.open ? <div data-testid="transfer-dialog" /> : null,
+  TransferDialog: (props: {
+    open: boolean;
+    onTransfer?: (type: 'agent' | 'queue', targetId: string, message?: string) => void | Promise<void>;
+  }) =>
+    props.open ? (
+      <div data-testid="transfer-dialog">
+        {/* O dialog real captura a rejeição de onTransfer no try/catch do
+            handleTransfer — o .catch aqui reproduz isso para a promise não
+            ficar sem tratamento no teste. */}
+        <button
+          onClick={() => {
+            void Promise.resolve(props.onTransfer?.('queue', 'q-1', 'nota de repasse')).catch(() => {});
+          }}
+        >
+          confirmar-transfer
+        </button>
+      </div>
+    ) : null,
 }));
 
 import { ConversationListSidebar } from '@/components/inbox/ConversationListSidebar';
+
+function actionsStub(transferContact: ReturnType<typeof vi.fn>) {
+  return {
+    pinnedIds: new Set<string>(),
+    favoriteIds: new Set<string>(),
+    isPinned: vi.fn(() => false),
+    isFavorite: vi.fn(() => false),
+    pinConversation: vi.fn(),
+    unpinConversation: vi.fn(),
+    favoriteContact: vi.fn(),
+    unfavoriteContact: vi.fn(),
+    snoozeConversation: vi.fn(),
+    archiveContact: vi.fn(),
+    transferContact,
+    profileId: 'me',
+  };
+}
 
 function baseProps(filteredConversations: Array<{ contact: { id: string } }>) {
   return {
@@ -209,5 +242,38 @@ describe('ConversationListSidebar — diálogo de Resolver/Transferir some com a
     expect(archiveContact).toHaveBeenCalledWith('c1');
     // handleArchive é async — o refetch só roda depois do await, em outra microtask.
     await waitFor(() => expect(props.inbox.refetch).toHaveBeenCalled());
+  });
+
+  it('repassa alvo e nota do diálogo para transferContact e fecha o diálogo após sucesso', async () => {
+    const transferContact = vi.fn().mockResolvedValue(undefined);
+    const props = baseProps([{ contact: { id: 'c1' } }]);
+    props.conversationActions = actionsStub(transferContact) as unknown as typeof props.conversationActions;
+    render(<ConversationListSidebar {...props} />);
+
+    fireEvent.click(screen.getByText('abrir-transferir-c1'));
+    fireEvent.click(screen.getByText('confirmar-transfer'));
+
+    await waitFor(() =>
+      expect(transferContact).toHaveBeenCalledWith('c1', 'queue', 'q-1', 'nota de repasse')
+    );
+    await waitFor(() => expect(screen.queryByTestId('transfer-dialog')).not.toBeInTheDocument());
+    expect(props.inbox.refetch).toHaveBeenCalled();
+  });
+
+  it('quando transferContact rejeita, o diálogo permanece aberto mantendo o alvo e sem refetch', async () => {
+    const transferContact = vi.fn().mockRejectedValue(new Error('falhou'));
+    const props = baseProps([{ contact: { id: 'c1' } }]);
+    props.conversationActions = actionsStub(transferContact) as unknown as typeof props.conversationActions;
+    render(<ConversationListSidebar {...props} />);
+
+    fireEvent.click(screen.getByText('abrir-transferir-c1'));
+    fireEvent.click(screen.getByText('confirmar-transfer'));
+
+    await waitFor(() => expect(transferContact).toHaveBeenCalledWith('c1', 'queue', 'q-1', 'nota de repasse'));
+    // A rejeição precisa propagar por handleListTransfer antes de qualquer
+    // fechamento — um flush de microtasks garante que o alvo não foi limpo.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.getByTestId('transfer-dialog')).toBeInTheDocument();
+    expect(props.inbox.refetch).not.toHaveBeenCalled();
   });
 });

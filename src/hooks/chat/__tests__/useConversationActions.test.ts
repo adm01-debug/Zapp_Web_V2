@@ -26,6 +26,9 @@ let favoriteDeleteResult: Record<string, unknown> = { error: null };
 let snoozeInsertResult: Record<string, unknown> = { error: null };
 const snoozeInsertCalls: unknown[] = [];
 
+let eventInsertResult: Record<string, unknown> = { error: null };
+const eventInsertCalls: unknown[] = [];
+
 // favoriteContact/unfavoriteContact disparam _favBus, que aciona um
 // loadFavorites() assíncrono em segundo plano (sincroniza outras instâncias
 // do hook). Sem refletir o estado real aqui, esse refetch sempre lia []
@@ -93,6 +96,14 @@ vi.mock('@/integrations/supabase/client', () => ({
           }),
         };
       }
+      if (table === 'conversation_events') {
+        return {
+          insert: vi.fn((payload: unknown) => {
+            eventInsertCalls.push(payload);
+            return resultChain(eventInsertResult);
+          }),
+        };
+      }
       if (table === 'contacts') {
         return {
           select: vi.fn(() => resultChain(contactsSelectResult)),
@@ -141,6 +152,8 @@ describe('useConversationActions', () => {
     fakeFavoriteRows = [];
     snoozeInsertResult = { error: null };
     snoozeInsertCalls.length = 0;
+    eventInsertResult = { error: null };
+    eventInsertCalls.length = 0;
   });
 
   afterEach(() => {
@@ -186,18 +199,7 @@ describe('useConversationActions', () => {
   });
 
   describe('transferContact', () => {
-    it('recusa transferência por conexão sem tocar o banco', async () => {
-      const { result } = await withProfileReady();
-
-      await act(async () => {
-        await result.current.transferContact('contact-1', 'connection', 'conn-1');
-      });
-
-      expect(contactsUpdateCalls).toEqual([]);
-      expect(toast.error).toHaveBeenCalledWith('Transferência por conexão ainda não é suportada');
-    });
-
-    it('transfere para outro atendente atualizando assigned_to', async () => {
+    it('transfere para outro atendente atualizando assigned_to e grava evento com to_agent_id', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
@@ -205,10 +207,13 @@ describe('useConversationActions', () => {
       });
 
       expect(contactsUpdateCalls).toEqual([{ assigned_to: 'agent-2' }]);
+      expect(eventInsertCalls).toEqual([
+        { contact_id: 'contact-1', event_type: 'transfer', to_agent_id: 'agent-2' },
+      ]);
       expect(toast.success).toHaveBeenCalledWith('Chat transferido para outro atendente');
     });
 
-    it('transfere para outra fila atualizando queue_id', async () => {
+    it('transfere para outra fila atualizando queue_id e grava evento com to_queue_id', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
@@ -216,18 +221,64 @@ describe('useConversationActions', () => {
       });
 
       expect(contactsUpdateCalls).toEqual([{ queue_id: 'queue-2' }]);
+      expect(eventInsertCalls).toEqual([
+        { contact_id: 'contact-1', event_type: 'transfer', to_queue_id: 'queue-2' },
+      ]);
       expect(toast.success).toHaveBeenCalledWith('Chat transferido para outra fila');
     });
 
-    it('em erro no update, mostra toast de erro', async () => {
+    it('persiste a nota opcional em conversation_events.metadata.note', async () => {
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.transferContact('contact-1', 'agent', 'agent-2', 'cliente pediu retorno às 14h');
+      });
+
+      expect(eventInsertCalls).toEqual([
+        {
+          contact_id: 'contact-1',
+          event_type: 'transfer',
+          to_agent_id: 'agent-2',
+          metadata: { note: 'cliente pediu retorno às 14h' },
+        },
+      ]);
+    });
+
+    it('nota vazia não grava metadata no evento', async () => {
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.transferContact('contact-1', 'queue', 'queue-2', '   ');
+      });
+
+      expect(eventInsertCalls).toEqual([
+        { contact_id: 'contact-1', event_type: 'transfer', to_queue_id: 'queue-2' },
+      ]);
+    });
+
+    it('em erro no update, rejeita sem gravar evento e sem sinalizar sucesso', async () => {
       contactsUpdateResult = { error: { message: 'falhou' } };
       const { result } = await withProfileReady();
 
       await act(async () => {
-        await result.current.transferContact('contact-1', 'agent', 'agent-2');
+        await expect(result.current.transferContact('contact-1', 'agent', 'agent-2')).rejects.toThrow('falhou');
       });
 
       expect(toast.error).toHaveBeenCalledWith('Erro ao transferir conversa');
+      expect(eventInsertCalls).toEqual([]);
+      expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('em erro no insert do evento, rejeita e não sinaliza sucesso', async () => {
+      eventInsertResult = { error: { message: 'insert falhou' } };
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await expect(result.current.transferContact('contact-1', 'agent', 'agent-2')).rejects.toThrow('insert falhou');
+      });
+
+      expect(contactsUpdateCalls).toEqual([{ assigned_to: 'agent-2' }]);
+      expect(toast.success).not.toHaveBeenCalled();
     });
   });
 
