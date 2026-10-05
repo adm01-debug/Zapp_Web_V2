@@ -188,17 +188,32 @@ export function useAuthForm() {
 
   const handlePasskeyLogin = async () => {
     const result = await authenticateWithPasskey(formData.email || undefined);
-    if (result.success && result.userEmail) {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: result.userEmail,
-        options: { shouldCreateUser: false },
-      });
-      if (!error) {
-        toast({ title: 'Autenticado com Passkey!', description: 'Redirecionando...' });
-        navigate('/');
-      } else {
-        toast({ title: 'Erro ao entrar com Passkey', description: error.message, variant: 'destructive' });
-      }
+    if (!result.success) {
+      toast({ title: 'Erro ao entrar com Passkey', description: 'A autenticação com a passkey não foi concluída.', variant: 'destructive' });
+      return;
+    }
+    if (!result.userEmail) {
+      toast({ title: 'Erro ao entrar com Passkey', description: 'Não foi possível identificar a conta para enviar o link de acesso.', variant: 'destructive' });
+      return;
+    }
+    const { error } = await supabase.auth.signInWithOtp({
+      email: result.userEmail,
+      options: { shouldCreateUser: false },
+    });
+    if (error) {
+      toast({ title: 'Erro ao entrar com Passkey', description: error.message, variant: 'destructive' });
+      return;
+    }
+    // signInWithOtp só ENVIA o link de acesso por e-mail — não cria sessão.
+    // Anunciar "autenticado" e navegar para '/' aqui derrubava o usuário de
+    // volta no /auth (ProtectedRoute sem sessão). Só anuncia e navega quando a
+    // sessão existe de fato; sem sessão, o estado correto é "link enviado".
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      toast({ title: 'Autenticado com Passkey!', description: 'Redirecionando...' });
+      navigate('/');
+    } else {
+      toast({ title: 'Passkey verificada', description: 'Enviamos um link de acesso para o seu email. Abra o link para entrar.' });
     }
   };
 
