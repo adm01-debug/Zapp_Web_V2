@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
@@ -45,12 +45,18 @@ export function useLeaderboard() {
   const [agents, setAgents] = useState<LeaderboardAgent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Geração da requisição: só a requisição ATUAL escreve no estado. A resposta de um
+  // período que já não é o atual (chegou depois da nova) é descartada, em vez de
+  // voltar com a tela para o recorte anterior.
+  const requisicaoRef = useRef(0);
 
   // Antes, fetchLeaderboard tinha deps [] e sempre buscava agent_stats (contadores
   // all-time) -- o useEffect refazia a chamada ao trocar timeRange, mas a query
   // nunca usava o periodo, entao o seletor hoje/semana/mes era decorativo (#777).
   // Agora o periodo entra como parametro e vai direto pra RPC no servidor.
   const fetchLeaderboard = useCallback(async (period: 'today' | 'week' | 'month') => {
+    const requisicao = requisicaoRef.current + 1;
+    requisicaoRef.current = requisicao;
     try {
       // cast temporario: types.ts gerado ainda nao tem dashboard_leaderboard (RPC nova) -- sync automatico (PR #791) traz o tipo real em breve.
       const { data, error } = await (supabase as any).rpc('dashboard_leaderboard', { // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporario ate sync de types
@@ -58,6 +64,8 @@ export function useLeaderboard() {
         p_limit: 10,
       });
 
+      // Resposta superada pelo período novo: descarta sem tocar no estado.
+      if (requisicao !== requisicaoRef.current) return;
       if (error) throw error;
       const rows = (data || []) as unknown as LeaderboardRpcRow[];
       if (rows.length === 0) { setAgents([]); return; }
@@ -68,6 +76,9 @@ export function useLeaderboard() {
         .select('profile_id, achievement_type')
         .in('profile_id', profileIds)
         .order('earned_at', { ascending: false });
+
+      // Continua superada depois da segunda leitura? Descarta também.
+      if (requisicao !== requisicaoRef.current) return;
 
       const achievementsByProfile: Record<string, string[]> = {};
       achievements?.forEach(a => {
@@ -92,8 +103,11 @@ export function useLeaderboard() {
     } catch (error) {
       log.error('Error fetching leaderboard:', error);
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      // Só a requisição atual encerra o carregamento; a obsoleta não mexe na tela.
+      if (requisicao === requisicaoRef.current) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
     }
   }, []);
 

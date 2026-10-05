@@ -58,11 +58,11 @@ export function PermissionMatrix() {
     try {
       const has = hasPermission(role, permissionId);
       if (has) {
-        await removePermissionFromRole(role, permissionId);
-        toast.success('Permissão removida');
+        const ok = await removePermissionFromRole(role, permissionId);
+        if (ok) toast.success('Permissão removida');
       } else {
-        await addPermissionToRole(role, permissionId);
-        toast.success('Permissão adicionada');
+        const ok = await addPermissionToRole(role, permissionId);
+        if (ok) toast.success('Permissão adicionada');
       }
     } catch (err) {
       toast.error('Erro ao atualizar permissão');

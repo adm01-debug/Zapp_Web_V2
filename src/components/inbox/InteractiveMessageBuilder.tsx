@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Trash2, ExternalLink, Phone, MessageSquare,
@@ -24,10 +25,17 @@ import { MessagePreview } from './interactive-builder/MessagePreview';
 interface InteractiveMessageBuilderProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSend: (interactive: InteractiveMessage) => void;
+  /**
+   * Contrato explícito de envio: resolve SÓ quando o transporte aceitou a
+   * composição; rejeita quando o envio não foi confirmado (a composição fica
+   * preservada no formulário, sem fechar nem limpar).
+   */
+  onSend: (interactive: InteractiveMessage) => Promise<void>;
+  /** Quando presente, o envio está indisponível e é apresentado como tal. */
+  sendUnavailableReason?: string | null;
 }
 
-export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: InteractiveMessageBuilderProps) {
+export function InteractiveMessageBuilder({ open, onOpenChange, onSend, sendUnavailableReason }: InteractiveMessageBuilderProps) {
   const {
     messageType, setMessageType,
     body, setBody, footer, setFooter, headerText, setHeaderText,
@@ -40,15 +48,38 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
     validate, buildMessage,
   } = useInteractiveMessage();
 
-  const handleSend = () => {
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  // Fecha/limpa só depois do ACEITE do transporte; em rejeição a composição
+  // continua no formulário (R2-INB-003).
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) setSendError(null);
+    onOpenChange(nextOpen);
+  };
+
+  const handleSend = async () => {
+    if (isSending) return;
     if (!validate()) return;
-    onSend(buildMessage());
-    resetForm();
-    onOpenChange(false);
+    setIsSending(true);
+    setSendError(null);
+    try {
+      await onSend(buildMessage());
+      resetForm();
+      handleOpenChange(false);
+    } catch (error) {
+      setSendError(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Não foi possível enviar a mensagem interativa. Sua composição foi mantida.',
+      );
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent aria-describedby={undefined} className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -237,9 +268,15 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
           sections={sections}
         />
 
+        {(sendUnavailableReason || sendError) && (
+          <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+            {sendUnavailableReason || sendError}
+          </p>
+        )}
+
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSend} className="gap-2"><Check className="w-4 h-4" />Enviar Mensagem</Button>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancelar</Button>
+          <Button onClick={() => { void handleSend(); }} disabled={isSending || Boolean(sendUnavailableReason)} title={sendUnavailableReason ?? undefined} className="gap-2"><Check className="w-4 h-4" />{isSending ? 'Enviando...' : 'Enviar Mensagem'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

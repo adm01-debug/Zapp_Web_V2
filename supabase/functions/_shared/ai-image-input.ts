@@ -7,16 +7,22 @@
  *    para terceiros — o modelo NÃO consegue buscar a imagem;
  *  - tornar o bucket público foi DESCARTADO (exporia mídia de clientes).
  *
- * Então a imagem é **baixada no servidor** com a service role e embutida na mensagem
- * como data URL base64 (`data:<mime>;base64,<...>`) — o valor de
+ * Então a imagem é **baixada no servidor** sob a identidade explícita do chamador
+ * (R2-INF-022: usuário → anon key + JWT do chamador; fluxo interno do webhook →
+ * service role) e embutida na mensagem como data URL base64
+ * (`data:<mime>;base64,<...>`) — o valor de
  * `content: [{ type:'image_url', image_url:{ url } }]` enviado ao provedor.
  *
  * Contrato (fail-closed, nunca improvisar):
  *  1. URL `data:` pronta volta COMO ESTÁ, sem nenhuma chamada de rede;
  *  2. URL de Storage do PRÓPRIO projeto (`/object/public/<bucket>/<path>` ou
  *     `/object/sign/<bucket>/<path>`) vira leitura AUTENTICADA
- *     (`/storage/v1/object/<bucket>/<path>` + service role): a URL pública crua
- *     NUNCA é usada para o download;
+ *     (`/storage/v1/object/<bucket>/<path>`), sob a identidade EXIGIDA em
+ *     `storageIdentity` — usuário: anon key + JWT do chamador (a policy de
+ *     `storage.objects` decide); serviço: service role (fluxo interno do
+ *     webhook). Sem `storageIdentity` o download falha FECHADO
+ *     (IMAGE_STORAGE_UNAVAILABLE) antes de qualquer rede: não existe padrão
+ *     implícito privilegiado. A URL pública crua NUNCA é usada para o download;
  *  3. origem de outro projeto, bucket fora da allowlist, travessia de caminho
  *     (`..`, `\`, NUL) ou URL que não é do Storage → `AiImageInputError`;
  *  4. LIMITE de `MAX_INLINE_IMAGE_BYTES` (4 MiB): conferido no `content-length` ANTES
@@ -137,6 +143,17 @@ export interface InlineImage {
   path: string | null;
 }
 
+/**
+ * Identidade sob a qual o objeto PRIVADO do Storage é baixado (decisão
+ * `20261004-162305-r2-inf-022`). O helper distingue download de USUÁRIO — anon
+ * key + JWT do chamador, sujeito à policy de `storage.objects` — do download de
+ * SERVIÇO (service role, fluxo interno do webhook). Misturar os dois (preflight
+ * com usuário e depois baixar privilegiado) é proibido e não existe aqui.
+ */
+export type StorageIdentity =
+  | { kind: "user"; bearerToken: string; anonKey?: string }
+  | { kind: "service" };
+
 /** Ajustes opcionais (os padrões vêm do ambiente da função). */
 export interface InlineImageOptions {
   supabaseUrl?: string;
@@ -144,6 +161,14 @@ export interface InlineImageOptions {
   allowedBuckets?: readonly string[];
   maxBytes?: number;
   timeoutMs?: number;
+  /**
+   * Identidade de download do Storage privado — OBRIGATÓRIA para qualquer URL
+   * de Storage: sem ela o download falha fechado (IMAGE_STORAGE_UNAVAILABLE)
+   * antes de qualquer rede; não existe credencial implícita. `kind:'user'`
+   * exige `bearerToken` (JWT do chamador) e `anonKey` (opção ou
+   * `SUPABASE_ANON_KEY`). URL `data:` pronta não exige identidade.
+   */
+  storageIdentity?: StorageIdentity;
   /** Injeção para teste; o padrão é o `fetch` global resolvido na hora da chamada. */
   fetchImpl?: typeof fetch;
 }
@@ -274,9 +299,11 @@ function inlineFromDataUrl(url: string, maxBytes: number): InlineImage {
 }
 
 /**
- * Converte a URL que o app manda hoje numa imagem EMBUTIDA (data URL base64), baixando
- * o objeto no servidor com a service role. Lança SEMPRE `AiImageInputError` em falha —
- * nunca string solta, nunca resposta pela metade.
+ * Converte a URL que o app manda hoje numa imagem EMBUTIDA (data URL base64),
+ * baixando o objeto no servidor sob a identidade EXPLÍCITA de `storageIdentity`
+ * (`'user'` → anon key + JWT do chamador; `'service'` → service role; ausente →
+ * falha fechada, sem credencial implícita). Lança SEMPRE `AiImageInputError` em
+ * falha — nunca string solta, nunca resposta pela metade.
  */
 export async function toInlineImage(
   imageUrl: string,
@@ -295,14 +322,53 @@ export async function toInlineImage(
   // (1) data URL pronta: devolvida como está, sem rede.
   if (/^data:/i.test(rawUrl)) return inlineFromDataUrl(rawUrl, maxBytes);
 
-  // (2) credencial de serviço do ambiente da função (a mesma das funções de IA).
+  // (2) identidade de download do Storage privado — EXIGIDA, fail-closed. Sem
+  // `storageIdentity` não há credencial implícita: o fallback silencioso para
+  // service role foi removido (R2-INF-022).
   const supabaseUrl = options.supabaseUrl ?? readEnv("SUPABASE_URL");
-  const serviceRoleKey = options.serviceRoleKey ?? readEnv("SUPABASE_SERVICE_ROLE_KEY");
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl) {
     throw new AiImageInputError(
       "IMAGE_STORAGE_UNAVAILABLE",
-      "SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY ausentes: sem credencial nao ha download autenticado.",
+      "SUPABASE_URL ausente: sem origem nao ha download autenticado.",
     );
+  }
+
+  const identity = options.storageIdentity;
+  if (!identity) {
+    throw new AiImageInputError(
+      "IMAGE_STORAGE_UNAVAILABLE",
+      "storageIdentity ausente: o download privado exige identidade explicita ('user' ou 'service').",
+    );
+  }
+
+  // Credencial do GET: usuário → anon key + JWT do chamador (a policy de
+  // storage.objects decide); serviço → service role. Ausência/inconsistência
+  // falha FECHADA aqui, antes de qualquer rede, com erro tipado e sem token.
+  let apikey: string;
+  let authorization: string;
+  if (identity.kind === "user") {
+    const bearerToken = typeof identity.bearerToken === "string" ? identity.bearerToken.trim() : "";
+    const anonKeyRaw = identity.anonKey ?? readEnv("SUPABASE_ANON_KEY");
+    const anonKey = typeof anonKeyRaw === "string" ? anonKeyRaw.trim() : "";
+    if (!bearerToken || !anonKey) {
+      throw new AiImageInputError(
+        "IMAGE_STORAGE_UNAVAILABLE",
+        "Identidade de usuario sem bearerToken ou anon key: download privado nao autorizado.",
+      );
+    }
+    apikey = anonKey;
+    authorization = `Bearer ${bearerToken}`;
+  } else {
+    const serviceRoleKeyRaw = options.serviceRoleKey ?? readEnv("SUPABASE_SERVICE_ROLE_KEY");
+    const serviceRoleKey = typeof serviceRoleKeyRaw === "string" ? serviceRoleKeyRaw.trim() : "";
+    if (!serviceRoleKey) {
+      throw new AiImageInputError(
+        "IMAGE_STORAGE_UNAVAILABLE",
+        "SUPABASE_SERVICE_ROLE_KEY ausente: sem credencial nao ha download autenticado.",
+      );
+    }
+    apikey = serviceRoleKey;
+    authorization = `Bearer ${serviceRoleKey}`;
   }
 
   // (3) só objeto do Storage DESTE projeto, em bucket da allowlist.
@@ -328,12 +394,13 @@ export async function toInlineImage(
 
   let response: Response;
   try {
-    // (2) leitura AUTENTICADA: /storage/v1/object/<bucket>/<path> + service role.
+    // leitura AUTENTICADA: /storage/v1/object/<bucket>/<path> sob a identidade
+    // resolvida acima (usuário ou serviço — nunca a URL pública crua).
     response = await fetchImpl(buildObjectEndpoint(supabaseUrl, bucket, path), {
       method: "GET",
       headers: {
-        apikey: serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey,
+        Authorization: authorization,
       },
       signal: controller.signal,
     });

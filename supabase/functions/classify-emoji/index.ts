@@ -31,15 +31,34 @@ function detalhesDoErroDeImagem(err: unknown): Record<string, unknown> {
 }
 
 /**
- * Baixa a imagem no servidor com a service role e a devolve EMBUTIDA como data
- * URL (o bucket é privado; o modelo não alcança a URL). Em QUALQUER falha do
- * helper (storage indisponível, HTTP não-ok, objeto grande demais, tipo
+ * JWT do chamador, extraído do header `Authorization` (`Bearer <jwt>`,
+ * case-insensitive). Duplicada de `ai-auth.ts` de propósito: lá a extração não
+ * é exportada, e aqui o token cru é o que autoriza o download do objeto privado
+ * sob a identidade do usuário (a policy de `storage.objects` decide).
+ */
+function bearerTokenDoPedido(req: Request): string {
+  const header = req.headers.get('authorization') ?? '';
+  if (!header.toLowerCase().startsWith('bearer ')) return '';
+  return header.slice(7).trim();
+}
+
+/**
+ * Baixa a imagem no servidor sob a identidade do USUÁRIO que chamou a função
+ * (anon key + JWT do pedido — nunca service role) e a devolve EMBUTIDA como
+ * data URL (o bucket é privado; o modelo não alcança a URL). Em QUALQUER falha
+ * do helper (storage indisponível, HTTP não-ok, objeto grande demais, tipo
  * não-imagem) registra o motivo em `ai_usage_logs` com status de erro e devolve
  * `null` — o chamador degrada para `outros` sem propagar exceção.
  */
-async function embutirImagem(imageUrl: string, userId: string | null): Promise<InlineImage | null> {
+async function embutirImagem(
+  imageUrl: string,
+  userId: string | null,
+  bearerToken: string,
+): Promise<InlineImage | null> {
   try {
-    return await toInlineImage(imageUrl);
+    return await toInlineImage(imageUrl, {
+      storageIdentity: { kind: 'user', bearerToken },
+    });
   } catch (err) {
     const motivo = err instanceof Error ? err.message : String(err);
     await logAiUsage({
@@ -104,7 +123,7 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
     // Sem image_url (só file_name) segue sem a parte de imagem, como hoje.
     let imagem: InlineImage | null = null;
     if (image_url) {
-      imagem = await embutirImagem(image_url, identity.userId);
+      imagem = await embutirImagem(image_url, identity.userId, bearerTokenDoPedido(req));
       if (!imagem) {
         log.error("Falha ao preparar a imagem; degradando para 'outros' com motivo registrado");
         return jsonResponse({ category: 'outros' }, 200, req);

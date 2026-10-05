@@ -193,6 +193,7 @@ jobs:
           FN: ${{ inputs.function_name }}
           ROTATE_SECRETS: ${{ inputs.rotate_secrets }}
           SOURCE_REF: ${{ inputs.source_ref }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
           ARQUIVO="$RUNNER_TEMP/secrets-list.json"
@@ -200,8 +201,13 @@ jobs:
             echo "::warning::Nao foi possivel ler os secrets do projeto; a decisao cai no comportamento anterior."
             rm -f "$ARQUIVO"
           fi
+          # A decisao CONTINUA rodando no ensaio (sem if de dry_run aqui): e' ela
+          # que registra no log/plano o que o deploy faria. O modo chega ao
+          # secrets-scope.mjs como --dry-run e a decisao devolve MANTER.
           set -- --fn "$FN" --lista "$ARQUIVO"
-          if [ -n "$SOURCE_REF" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
+            set -- "$@" --dry-run
+          elif [ -n "$SOURCE_REF" ]; then
             set -- "$@" --rollback
           elif [ "$ROTATE_SECRETS" = "true" ]; then
             set -- "$@" --rotate
@@ -209,6 +215,12 @@ jobs:
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/secrets-scope.mjs" "$@"
 
       - name: Configurar secrets nas edges
+        # R2-INF-001 (auditoria R2, 2026-10-03): este passo invoca
+        # `supabase secrets set` e ate esta correcao NAO tinha guarda de dry_run
+        # -- o unico gate era o do passo Deploy, DEPOIS da escrita. Um ensaio com
+        # rotate_secrets, listagem divergente ou listagem falhando reescrevia os
+        # secrets de funcoes ja publicadas sem deploy nenhum.
+        if: inputs.dry_run != true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: tnnnlkbymytvtqngbbqh

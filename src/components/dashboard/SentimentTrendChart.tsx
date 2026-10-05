@@ -232,7 +232,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
               {recent.alerts.map((a) => (
                 <button key={a.id} type="button" onClick={() => navigateToView('inbox')}
                   className="w-full h-12 grid grid-cols-[88px_1fr_170px_110px_70px_16px] items-center gap-3 text-left hover:bg-muted/20 rounded-lg px-1">
-                  <Pill label={a.sentiment === 'negativo' ? 'Negativo' : 'Neutro'} tone={a.sentiment === 'negativo' ? 'danger' : 'warning'} className="w-[84px] justify-center" />
+                  <Pill label={a.sentiment === 'neutro' ? 'Neutro' : a.sentiment === 'critico' ? 'Crítico' : 'Negativo'} tone={a.sentiment === 'neutro' ? 'warning' : 'danger'} className="w-[84px] justify-center" />
                   <span className="text-[13px] text-foreground truncate">“{a.summary}”</span>
                   <span className="flex items-center gap-2 min-w-0"><InitialsAvatar name={a.contactName} size={24} /><span className="text-[13px] font-medium text-foreground truncate">{a.contactName}</span></span>
                   <span className="text-xs text-muted-foreground truncate">{a.department ?? '—'}</span>

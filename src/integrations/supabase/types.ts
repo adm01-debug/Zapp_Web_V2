@@ -10826,6 +10826,14 @@ export type Database = {
         }
         Returns: Json
       }
+      create_team_group_conversation: {
+        Args: {
+          p_department_id?: string
+          p_member_ids?: string[]
+          p_name?: string
+        }
+        Returns: string
+      }
       current_profile_id: { Args: never; Returns: string }
       dashboard_contact_counts: {
         Args: {
@@ -12310,6 +12318,10 @@ export type Database = {
       }
       transfer_team_conversation_department: {
         Args: { p_conversation_id: string; p_to_department_id: string }
+        Returns: Json
+      }
+      transfer_team_conversation_ownership: {
+        Args: { p_conversation_id: string; p_new_owner_id: string }
         Returns: Json
       }
       transition_multiplix_dispatch: {

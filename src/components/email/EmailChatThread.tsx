@@ -18,6 +18,11 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { emailLoadErrorCopy } from '@/lib/emailErrorState';
 
+type ThreadContextData = {
+  messages: EmailMessage[];
+  attachments: Array<EmailAttachment & { gmail_message_id?: string }>;
+};
+
 interface EmailChatThreadProps {
   accountId?: string;
   thread: EmailThread;
@@ -25,7 +30,7 @@ interface EmailChatThreadProps {
   onToggleDetails?: () => void;
   showDetailsButton?: boolean;
   labels?: EmailLabel[];
-  onContextDataChange?: (data: { messages: EmailMessage[]; attachments: Array<EmailAttachment & { gmail_message_id?: string }> }) => void;
+  onContextDataChange?: (data: ThreadContextData) => void;
 }
 
 function DateSeparator({ date }: { date: string }) {
@@ -135,9 +140,23 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
     [threadAttachments, threadMessages],
   );
 
+  // R2-COM-001: o callback do pai troca de identidade a cada render dele; guardá-lo em ref
+  // tira a função das dependências. O efeito abaixo emite só quando mensagens/anexos mudam,
+  // e a ref evita re-emitir o mesmo contexto (o pai não grava estado à toa).
+  const onContextDataChangeRef = useRef(onContextDataChange);
+  const lastContextRef = useRef<ThreadContextData | null>(null);
+
   useEffect(() => {
-    onContextDataChange?.({ messages: threadMessages, attachments: contextualAttachments });
-  }, [contextualAttachments, onContextDataChange, threadMessages]);
+    onContextDataChangeRef.current = onContextDataChange;
+  }, [onContextDataChange]);
+
+  useEffect(() => {
+    const last = lastContextRef.current;
+    if (last && last.messages === threadMessages && last.attachments === contextualAttachments) return;
+    const next = { messages: threadMessages, attachments: contextualAttachments };
+    lastContextRef.current = next;
+    onContextDataChangeRef.current?.(next);
+  }, [contextualAttachments, threadMessages]);
 
   // Group messages by date for separators
   const messagesWithDates = useMemo(() => {

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { subDays, startOfDay, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { appDayKey, appHour, appShiftDayKey } from '@/lib/localDay';
 
 // Bucket agregado pela RPC dashboard_hourly_volume (E22): 1 linha por (dia, hora)
 // com a contagem já somada no servidor — nunca mais linha por mensagem crua (achado
@@ -16,18 +16,21 @@ export interface HourlyVolumeFilters {
 }
 
 export function aggregateHourlyVolume(buckets: HourlyBucket[], now = new Date()) {
-  const todayStart = startOfDay(now);
-  const currentHour = now.getHours();
-  const todayKey = format(todayStart, 'yyyy-MM-dd');
+  // R2-MOD-075: 'hoje', a 'hora atual' e as chaves dos 7 dias têm de sair do fuso do APP
+  // (America/Sao_Paulo), o mesmo em que `dashboard_hourly_volume` derivou `day`/`hour`. Com
+  // `startOfDay`/`format`/`getHours` (fuso do dispositivo) o mesmo instante e os mesmos buckets
+  // eram jogados para o dia anterior e a hora corrente ficava zerada em qualquer fuso != SP.
+  const currentHour = appHour(now);
+  const todayKey = appDayKey(now);
 
   const todayByHour: (number | null)[] = Array.from({ length: 24 }, (_, h) => (h > currentHour ? null : 0));
 
   // últimos 7 dias, hoje incluído (para o select "Últimos 7 dias (por dia)").
-  const last7Keys = Array.from({ length: 7 }, (_, i) => format(startOfDay(subDays(now, 6 - i)), 'yyyy-MM-dd'));
+  const last7Keys = Array.from({ length: 7 }, (_, i) => appShiftDayKey(todayKey, -(6 - i)));
   const countsByDay = new Map<string, number>(last7Keys.map((k) => [k, 0]));
 
   // 7 dias ANTERIORES a hoje (exclui hoje) — base do avg7dCurrentHour.
-  const priorKeys = Array.from({ length: 7 }, (_, i) => format(startOfDay(subDays(now, i + 1)), 'yyyy-MM-dd'));
+  const priorKeys = Array.from({ length: 7 }, (_, i) => appShiftDayKey(todayKey, -(i + 1)));
   const countsAtHourByPriorDay = new Map<string, number>(priorKeys.map((k) => [k, 0]));
 
   for (const b of buckets) {

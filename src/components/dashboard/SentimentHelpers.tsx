@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { classifySentiment } from '@/lib/sentiment-classes';
 
 export interface SentimentData {
   date: string;
@@ -39,9 +40,15 @@ export function useRealSentimentData(days: number): SentimentData[] | null {
         if (!dayMap.has(dateKey)) dayMap.set(dateKey, { positive: 0, negative: 0, neutral: 0, total: 0, alerts: 0 });
         const entry = dayMap.get(dateKey)!;
         entry.total++;
-        if (a.sentiment === 'positivo') entry.positive++;
-        else if (a.sentiment === 'negativo') { entry.negative++; entry.alerts++; }
-        else entry.neutral++;
+        // Classificação canônica: traduz o legado EN na leitura e soma `critico`
+        // no negativo. Desconhecido/ausente não entra em balde nenhum — antes o
+        // `else` final transformava crítico E desconhecido em 'neutro'
+        // (IA-SENTIMENT-001). O total do dia segue sendo o total REAL de
+        // análises, então a soma dos baldes pode ficar abaixo de 100%.
+        const classe = classifySentiment(a.sentiment);
+        if (classe === 'positivo') entry.positive++;
+        if (classe === 'negativo') { entry.negative++; entry.alerts++; }
+        if (classe === 'neutro') entry.neutral++;
       });
       
       return Array.from(dayMap.entries()).map(([date, counts]) => ({

@@ -18,6 +18,10 @@ export function useTeamMessages(conversationId: string | null) {
         .select('*, sender:profiles!team_messages_sender_id_fkey(id, name, avatar_url), media_bucket, media_path, status')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: false })
+        // TC-006: desempate estável. O cursor de paginação é composto
+        // `(created_at, id)`; sem o `id` no ORDER BY a fronteira do lote não
+        // fica bem definida quando várias mensagens caem no mesmo instante.
+        .order('id', { ascending: false })
         .limit(200);
       if (error) throw error;
       return ((data || []) as TeamMessage[]).reverse();

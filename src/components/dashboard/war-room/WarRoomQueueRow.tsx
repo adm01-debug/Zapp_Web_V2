@@ -29,13 +29,13 @@ export function WarRoomQueueRow({ queue, onClick }: QueueRowProps) {
         </div>
         <div className="flex items-center gap-2">
           {queue.slaBreaches > 0 && <Badge variant="destructive" className="animate-pulse">{queue.slaBreaches} violações</Badge>}
-          {queue.slaWarnings > 0 && <Badge variant="secondary" className="bg-warning/20 text-warning">{queue.slaWarnings} em risco</Badge>}
+          {(queue.slaWarnings ?? 0) > 0 && <Badge variant="secondary" className="bg-warning/20 text-warning">{queue.slaWarnings} em risco</Badge>}
         </div>
       </div>
       <div className="grid grid-cols-4 gap-4 text-sm">
         <div><div className="text-muted-foreground text-xs">Aguardando</div><div className="font-semibold">{queue.waiting}</div></div>
         <div><div className="text-muted-foreground text-xs">Em Atendimento</div><div className="font-semibold">{queue.inProgress}</div></div>
-        <div><div className="text-muted-foreground text-xs">Tempo Médio</div><div className="font-semibold">{queue.avgWaitTime.toFixed(1)}min</div></div>
+        <div><div className="text-muted-foreground text-xs">Tempo Médio</div><div className="font-semibold">{queue.avgWaitTime === null ? '—' : `${queue.avgWaitTime.toFixed(1)}min`}</div></div>
         <div><div className="text-muted-foreground text-xs mb-1">Utilização</div><Progress value={utilizationPercent} className="h-2" /></div>
       </div>
     </motion.div>

@@ -7,6 +7,7 @@ import {
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
+import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -649,15 +650,16 @@ export async function handleStickerMedia(
     const directMediaUrl = (data.mediaUrl as string) || stickerNode?.mediaUrl as string || stickerNode?.URL as string || stickerNode?.url as string;
     if (directMediaUrl && directMediaUrl.startsWith('http')) {
       try {
-        const resp = await fetch(directMediaUrl, { signal: AbortSignal.timeout(10000) });
-        if (resp.ok) {
-          const arrayBuf = await resp.arrayBuffer();
-          const bytes = new Uint8Array(arrayBuf);
-          if (bytes.length > 100) {
-            const fileName = `sticker_${key.id.replace(/[^a-zA-Z0-9]/g, '')}.webp`;
-            const { error: uploadErr } = await supabase.storage.from('whatsapp-media').upload(`stickers/${fileName}`, bytes, { contentType: 'image/webp', cacheControl: '31536000', upsert: true });
-            if (!uploadErr) { const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(`stickers/${fileName}`); mediaUrl = urlData.publicUrl; }
-          }
+        // R2-API-009: mediaUrl do payload passa pela política de egress antes
+        // de qualquer fetch (destino validado, redirect revalidado, teto de bytes).
+        const download = await downloadMediaWithEgressPolicy(directMediaUrl, {
+          maxBytes: SMALL_MEDIA_DOWNLOAD_MAX_BYTES, timeoutMs: 10000, logTag: 'STICKER',
+        });
+        const bytes = download?.bytes;
+        if (bytes && bytes.length > 100) {
+          const fileName = `sticker_${key.id.replace(/[^a-zA-Z0-9]/g, '')}.webp`;
+          const { error: uploadErr } = await supabase.storage.from('whatsapp-media').upload(`stickers/${fileName}`, bytes, { contentType: 'image/webp', cacheControl: '31536000', upsert: true });
+          if (!uploadErr) { const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(`stickers/${fileName}`); mediaUrl = urlData.publicUrl; }
         }
       } catch (dlErr) { console.error('[STICKER] mediaUrl download error:', dlErr); }
     }

@@ -8,7 +8,7 @@ Fonte: `supabase/config.toml`. Todas conferidas contra o código-fonte de cada f
 |---|---|---|
 | `evolution-webhook` | Webhook do provedor Evolution GO (WhatsApp), não tem como enviar JWT do Supabase | `WEBHOOK_SECRET` + HMAC + `timingSafeEqual` + rate-limit |
 | `whatsapp-webhook` | Webhook do Meta/WhatsApp Business API | Assinatura `x-hub-signature` (HMAC, `WHATSAPP_APP_SECRET`) |
-| `gmail-webhook` | Webhook do Google Pub/Sub (Gmail push) | HMAC de verificação própria |
+| `gmail-webhook` | Webhook do Google Pub/Sub (Gmail push) | OIDC do Pub/Sub: Bearer JWT RS256 verificado contra o JWKS do Google + `aud` exata (`GMAIL_OIDC_AUDIENCE`) + e-mail exato do service account (`GMAIL_OIDC_EMAIL`, obrigatório — fail-closed) |
 | `gmail-cron-sync` | Disparado por cron externo (Actions/N8N), não é um usuário logado | `CRON_SECRET` via header `x-cron-secret` |
 | `elevenlabs-webhook` | Webhook do provedor ElevenLabs (TTS) | `ELEVENLABS_WEBHOOK_SECRET` + HMAC |
 | `crm-integration` | Worker acionado por cron externo | `CRON_SECRET` + `timingSafeEqual` |
@@ -42,6 +42,7 @@ projeto oficial), nem documentação. Não fabrico datas: registro o gap como es
 | `EVOLUTION_API_KEY` / `EVOLUTION_INSTANCE_TOKEN` / `EVOLUTION_API_URL` / `EVOLUTION_API_FLAVOR` | Todas as edges de envio/instância WhatsApp via `_shared/evolution-go-routes.ts` |
 | `EVOLUTION_WEBHOOK_SECRET` / `EVOLUTION_WEBHOOK_ENFORCE` | `evolution-webhook` |
 | `WHATSAPP_APP_SECRET` / `WHATSAPP_VERIFY_TOKEN` | `whatsapp-webhook` |
+| `GMAIL_OIDC_AUDIENCE` / `GMAIL_OIDC_EMAIL` | `gmail-webhook` (gate OIDC do Pub/Sub — aud exata + service account esperado; ambos obrigatórios) |
 | `ELEVENLABS_WEBHOOK_SECRET` | `elevenlabs-webhook` |
 | `WEBHOOK_SECRET` | `evolution-webhook` (genérico) |
 | `CRON_SECRET` | `gmail-cron-sync`, `crm-integration` (também no GH Actions, usado pelo workflow) |

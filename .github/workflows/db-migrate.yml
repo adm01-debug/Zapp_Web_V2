@@ -924,9 +924,9 @@ jobs:
               FROM supabase_migrations.schema_migrations
               WHERE version = :'target_version'
                 AND name = :'target_name'
-                # E65 (auditoria de 01/10/2026): o registro existe, mas precisa
-                # dizer O QUE foi aplicado. Sem estas duas linhas, uma version
-                # gravada com statements NULL ou vazio passava como valida.
+                -- E65 (auditoria de 01/10/2026): o registro existe, mas precisa
+                -- dizer O QUE foi aplicado. Sem estas duas linhas, uma version
+                -- gravada com statements NULL ou vazio passava como valida.
                 AND statements IS NOT NULL
                 AND array_length(statements, 1) > 0;
           SQL

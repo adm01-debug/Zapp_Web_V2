@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AppRole } from '@/hooks/system/useUserRole';
@@ -39,6 +39,23 @@ export const roleConfig: Record<AppRole, { label: string; icon: string; color: s
   special_agent: { label: 'Agente Especial', icon: 'Eye', color: 'text-accent-foreground' },
 };
 
+// Mensagens claras para os erros levantados pela RPC `admin_set_role`
+// (PostgREST devolve o texto do RAISE EXCEPTION em `error.message`).
+const ROLE_CHANGE_ERROR_MESSAGES: Record<string, string> = {
+  cannot_demote_self: 'Você não pode remover o próprio papel de administrador.',
+  cannot_demote_last_admin: 'A instalação precisa de pelo menos um administrador.',
+  admin_required: 'Apenas administradores podem alterar papéis.',
+  jwt_session_required: 'Sessão expirada. Faça login novamente.',
+};
+
+function roleChangeErrorMessage(error: { message?: string }): string {
+  const message = error.message ?? '';
+  for (const [code, text] of Object.entries(ROLE_CHANGE_ERROR_MESSAGES)) {
+    if (message.includes(code)) return text;
+  }
+  return 'Erro ao atualizar role';
+}
+
 export const accessLevelConfig: Record<string, { label: string; description: string }> = {
   basic: { label: 'Básico', description: 'Acesso apenas aos próprios atendimentos' },
   standard: { label: 'Padrão', description: 'Acesso a atendimentos e contatos atribuídos' },
@@ -50,6 +67,9 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  // Reentrância de desativação/reativação por usuário: evita que um duplo clique
+  // no Switch dispare duas gravações concorrentes do mesmo perfil.
+  const togglingRef = useRef<Set<string>>(new Set());
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -101,27 +121,49 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     setLoading(false);
   }, [activeTab]);
 
+  // R2-AUTH-008 (item 74): a troca de papel vai pela RPC atômica
+  // `admin_set_role` (SECURITY DEFINER). O caminho delete+insert era
+  // não-transacional — se o INSERT falhava depois do DELETE, o usuário
+  // ficava sem role. A RPC exige JWT real, autoriza só admin, protege
+  // auto-rebaixamento e o último administrador, e faz INSERT/UPDATE atômico.
   const handleRoleChange = useCallback(async (userId: string, newRole: AppRole) => {
-    await supabase.from('user_roles').delete().eq('user_id', userId);
-    const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: newRole });
+    const { error } = await supabase.rpc('admin_set_role', { _user_id: userId, _role: newRole });
     if (error) {
-      toast.error('Erro ao atualizar role');
-    } else {
-      toast.success(`Usuário agora é ${roleConfig[newRole].label}.`);
-      fetchData();
+      toast.error(roleChangeErrorMessage(error));
+      return;
     }
+    toast.success(`Usuário agora é ${roleConfig[newRole].label}.`);
+    fetchData();
   }, [fetchData]);
 
   const handleToggleActive = useCallback(async (user: UserWithRole) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_active: !user.is_active })
-      .eq('id', user.id);
-    if (error) {
-      toast.error('Erro ao atualizar status');
-    } else {
-      toast.success(user.is_active ? 'Usuário desativado' : 'Usuário ativado');
+    // R2-AUTH-004 (item 6): desativar deve depender da operação server-side
+    // atômica — o trigger `trg_revoke_sessions_on_profile_deactivate` revoga as
+    // sessões Auth do usuário quando `is_active` vira false. Aqui o frontend só
+    // grava o campo; a revogação real é do backend. Reativar só volta `is_active`
+    // para true e NÃO cria sessão (o trigger só dispara na transição para false).
+    if (togglingRef.current.has(user.id)) return;
+    togglingRef.current.add(user.id);
+    try {
+      const deactivating = user.is_active !== false;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: !deactivating })
+        .eq('id', user.id);
+      if (error) {
+        toast.error('Erro ao atualizar status');
+        return;
+      }
+      if (deactivating) {
+        toast.success(
+          'Usuário desativado. As sessões foram revogadas agora; um token de acesso já emitido pode continuar válido até expirar.'
+        );
+      } else {
+        toast.success('Usuário reativado. Nenhuma sessão foi criada.');
+      }
       fetchData();
+    } finally {
+      togglingRef.current.delete(user.id);
     }
   }, [fetchData]);
 

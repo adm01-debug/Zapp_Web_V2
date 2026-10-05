@@ -30,16 +30,6 @@ interface Finding {
 /** Defeitos (comparação morta / ausência → valor). Todos com evidência no fonte. */
 const DEFEITOS: readonly Finding[] = [
   {
-    file: 'src/hooks/analytics/useAIStats.ts',
-    pattern: /a\.sentiment === 'positive'/,
-    what: 'contador de sentimento compara com literal EN — dado gravado é pt-BR, sempre 0',
-  },
-  {
-    file: 'src/hooks/analytics/useAIStats.ts',
-    pattern: /else\s+existing\.neutral\+\+/,
-    what: "else final joga TODO sentimento não-EN no balde 'neutro' (neutro = total)",
-  },
-  {
     file: 'supabase/functions/send-scheduled-report/index.ts',
     pattern: /sentiment_score as number\) \|\| 50/,
     what: 'ausência de nota vira 50 na média do relatório',
@@ -184,6 +174,33 @@ describe('ADVERSARIAL — o guard de contrato do bloco não cobre estes arquivos
 
   it.each(AUSENTES_DO_GUARD)('%s está FORA da lista de consumidores pinados', (path) => {
     expect(guard).not.toContain(path);
+  });
+});
+
+/**
+ * IA-SENTIMENT-001 — defeitos CORRIGIDOS nos consumidores do Dashboard. Saíram
+ * do inventário de pendências: agora são ratchets INVERSOS — o padrão defeituoso
+ * (comparação com literal EN, `else` que jogava crítico/desconhecido em neutro)
+ * não pode voltar. A normalização é pela classe canônica, não por comparação crua.
+ */
+describe('IA-SENTIMENT-001 — consumidores do Dashboard corrigidos', () => {
+  it('useAIStats classifica pela classe canônica em vez do literal EN', () => {
+    const src = stripComments(read('src/hooks/analytics/useAIStats.ts'));
+    expect(src).toMatch(/classifySentiment\(/);
+    expect(src).not.toMatch(/a\.sentiment === 'positive'/);
+    expect(src).not.toMatch(/else\s+existing\.neutral\+\+/);
+  });
+
+  it('useRecentSentimentAlerts normaliza o sentimento canônico', () => {
+    const src = stripComments(read('src/hooks/analytics/useRecentSentimentAlerts.ts'));
+    expect(src).toMatch(/normalizeSentiment\(/);
+    expect(src).not.toMatch(/r\.sentiment === 'negativo'/);
+  });
+
+  it('SentimentHelpers classifica pela classe canônica, sem `else` → neutro', () => {
+    const src = stripComments(read('src/components/dashboard/SentimentHelpers.tsx'));
+    expect(src).toMatch(/classifySentiment\(/);
+    expect(src).not.toMatch(/a\.sentiment === 'negativo'/);
   });
 });
 

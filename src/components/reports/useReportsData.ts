@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAgents } from '@/hooks/crm/useAgents';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { format, parseISO } from 'date-fns';
 import { appDayEnd, appDayKey, appDayKeyLabel as dayKeyLabel, appDayStart, appShiftDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
@@ -41,68 +42,82 @@ export function useReportsData() {
     };
   }, [period]);
 
-  // Fetch messages data
-  const { data: messagesData, isLoading: loadingMessages } = useQuery({
+  // R2-MOD-018: um `select()` sem `range` devolve só a primeira página (teto do PostgREST) e os
+  // totais/repartições do período — chamados de "total" na tela — subcontavam em silêncio.
+  // Aqui a leitura percorre todas as páginas com ordenação estável (`id`) e devolve `incomplete`
+  // quando não cobriu tudo, para o relatório não publicar parcial como total definitivo.
+  // R2-MOD-019: o resultado do conjunto carrega o próprio `incomplete`; o erro da leitura é
+  // exposto pelo hook (`error`) em vez de virar métricas zero.
+  const { data: messagesResult, isLoading: loadingMessages, error: messagesError } = useQuery({
     queryKey: ['reports-messages', period, selectedAgent],
     queryFn: async () => {
-      let query = supabase
-        .from('messages')
-        .select('id, created_at, sender, agent_id, contact_id, is_read')
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString());
-      if (selectedAgent !== 'all') query = query.eq('agent_id', selectedAgent);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      const base = () => {
+        let query = supabase
+          .from('messages')
+          .select('id, created_at, sender, agent_id, contact_id, is_read')
+          .gte('created_at', dateRange.from.toISOString())
+          .lte('created_at', dateRange.to.toISOString());
+        if (selectedAgent !== 'all') query = query.eq('agent_id', selectedAgent);
+        return query;
+      };
+      return fetchAllRows((from, to) => base().order('id').range(from, to));
     },
   });
 
-  const { data: previousMessagesData, isLoading: loadingPreviousMessages } = useQuery({
+  const { data: previousMessagesResult, isLoading: loadingPreviousMessages, error: previousMessagesError } = useQuery({
     queryKey: ['reports-messages-previous', period, selectedAgent],
     queryFn: async () => {
-      let query = supabase
-        .from('messages')
-        .select('id, created_at, sender, agent_id, contact_id, is_read')
-        .gte('created_at', previousDateRange.from.toISOString())
-        .lte('created_at', previousDateRange.to.toISOString());
-      if (selectedAgent !== 'all') query = query.eq('agent_id', selectedAgent);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      const base = () => {
+        let query = supabase
+          .from('messages')
+          .select('id, created_at, sender, agent_id, contact_id, is_read')
+          .gte('created_at', previousDateRange.from.toISOString())
+          .lte('created_at', previousDateRange.to.toISOString());
+        if (selectedAgent !== 'all') query = query.eq('agent_id', selectedAgent);
+        return query;
+      };
+      return fetchAllRows((from, to) => base().order('id').range(from, to));
     },
     enabled: compareEnabled,
   });
 
-  const { data: contactsData, isLoading: loadingContacts } = useQuery({
+  const { data: contactsResult, isLoading: loadingContacts, error: contactsError } = useQuery({
     queryKey: ['reports-contacts', period, selectedAgent, selectedTag],
     queryFn: async () => {
-      let query = supabase
-        .from('contacts')
-        .select('id, created_at, assigned_to, tags, contact_type')
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString());
-      if (selectedAgent !== 'all') query = query.eq('assigned_to', selectedAgent);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      const base = () => {
+        let query = supabase
+          .from('contacts')
+          .select('id, created_at, assigned_to, tags, contact_type')
+          .gte('created_at', dateRange.from.toISOString())
+          .lte('created_at', dateRange.to.toISOString());
+        if (selectedAgent !== 'all') query = query.eq('assigned_to', selectedAgent);
+        return query;
+      };
+      return fetchAllRows((from, to) => base().order('id').range(from, to));
     },
   });
 
-  const { data: previousContactsData, isLoading: loadingPreviousContacts } = useQuery({
+  const { data: previousContactsResult, isLoading: loadingPreviousContacts, error: previousContactsError } = useQuery({
     queryKey: ['reports-contacts-previous', period, selectedAgent, selectedTag],
     queryFn: async () => {
-      let query = supabase
-        .from('contacts')
-        .select('id, created_at, assigned_to, tags, contact_type')
-        .gte('created_at', previousDateRange.from.toISOString())
-        .lte('created_at', previousDateRange.to.toISOString());
-      if (selectedAgent !== 'all') query = query.eq('assigned_to', selectedAgent);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      const base = () => {
+        let query = supabase
+          .from('contacts')
+          .select('id, created_at, assigned_to, tags, contact_type')
+          .gte('created_at', previousDateRange.from.toISOString())
+          .lte('created_at', previousDateRange.to.toISOString());
+        if (selectedAgent !== 'all') query = query.eq('assigned_to', selectedAgent);
+        return query;
+      };
+      return fetchAllRows((from, to) => base().order('id').range(from, to));
     },
     enabled: compareEnabled,
   });
+
+  const messagesData = messagesResult?.rows;
+  const previousMessagesData = previousMessagesResult?.rows;
+  const contactsData = contactsResult?.rows;
+  const previousContactsData = previousContactsResult?.rows;
 
   const tags = useMemo(() => {
     if (!contactsData) return [];
@@ -216,6 +231,19 @@ export function useReportsData() {
 
   const isLoading = loadingMessages || loadingContacts || (compareEnabled && (loadingPreviousMessages || loadingPreviousContacts));
 
+  // R2-MOD-018/019: transparência da leitura — falha de rede/permissão vira `error` (não zero
+  // confirmado) e leitura que parou no meio vira `isIncomplete` (total é parcial).
+  const error =
+    messagesError || contactsError || previousMessagesError || previousContactsError ||
+    messagesResult?.error || contactsResult?.error || previousMessagesResult?.error || previousContactsResult?.error ||
+    null;
+  const isError = Boolean(error);
+  const isIncomplete =
+    (messagesResult?.incomplete ?? false) ||
+    (contactsResult?.incomplete ?? false) ||
+    (previousMessagesResult?.incomplete ?? false) ||
+    (previousContactsResult?.incomplete ?? false);
+
   const getExportData = () => ({
     title: 'Relatório de Atendimento',
     subtitle: `Período: ${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`,
@@ -241,6 +269,6 @@ export function useReportsData() {
     compareEnabled, setCompareEnabled,
     agents, tags, dateRange,
     chartData, previousChartData, comparisonSummary, contactsChartData, stats,
-    isLoading, getExportData,
+    isLoading, isError, isIncomplete, error, getExportData,
   };
 }

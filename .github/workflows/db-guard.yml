@@ -246,6 +246,13 @@ jobs:
           WEBHOOK_ACL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-webhook-failures-acl.test.sh
 
+      # M-DB-02: nenhuma SECURITY DEFINER de public com EXECUTE para PUBLIC/anon
+      # (a T26 abriu uma assim por create or replace com parametro novo).
+      - name: Simular SECURITY DEFINER aberta para PUBLIC/anon
+        env:
+          SECDEF_EXEC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-secdef-public-execute.test.sh
+
       - name: Provar remoção do token legado da API pública
         env:
           PUBLIC_API_DISABLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
@@ -649,6 +656,15 @@ jobs:
           TALKX_X033_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-health.test.sh
 
+      # M-DB-01: o tick do motor nao aborta no expurgo LGPD (storage.protect_delete
+      # FOR EACH STATEMENT levanta 42501 em DELETE direto; a fixture recria o gatilho).
+      # Manifesto talkx_storage_purge_queue, alerta purge_failed com espera de 1 h,
+      # gate diario e outcome_unknown alinhado ao CHECK. Harness RED→GREEN em PostgreSQL 17.
+      - name: Provar que o tick nao aborta no expurgo (M-DB-01)
+        env:
+          TALKX_MDB01_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-tick-expurgo.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
@@ -704,6 +720,17 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node scripts/db-audit/psql-environment.integration.mjs
 
+      # R2-INF-005 (reauditoria de 03/10/2026): tres linhas de comentario de BASH
+      # ('#') ficaram DENTRO do heredoc do passo "Validar registro no ledger" do
+      # db-migrate.yml. Heredoc e' texto literal: para o psql aquilo e' SQL, nao
+      # comentario -- a consulta abortava e o contrato E65 nao via, porque
+      # conferia PRESENCA DE TEXTO no YAML. Aqui o heredoc EXATO e' extraido do
+      # workflow e executado em PostgreSQL 17 descartavel.
+      - name: Executar o SQL do ledger pos-apply no PostgreSQL 17 (R2-INF-005)
+        env:
+          LEDGER_POSTAPPLY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh node --test scripts/db-audit/ledger-postapply-query.integration.mjs
+
       - name: Simular ambiguidade da RPC e recursao da policy do team chat (#1266)
         env:
           TEAM_CHAT_RPC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
@@ -733,6 +760,14 @@ jobs:
         env:
           TEAM_RECEIPTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-membership.test.sh
+
+      # TC-003 (P1): membership nao protegia bootstrap nem ultimo owner e o GRANT UPDATE
+      # de team_conversations anulava os REVOKEs de coluna. Bloco A prova o defeito no
+      # mesmo container, aplica a migration e o bloco B prova a correcao.
+      - name: Simular guarda de bootstrap e ultimo owner no team chat (TC-003)
+        env:
+          TEAM_MEMBERSHIP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-membership-bootstrap-owner.test.sh
 
       # E76 (plano MAPA Fase 7), ajuste (b) da decisao 20261002-063721: o contrato da
       # RPC `search_contacts` (8 campos de endereco, ACL sem anon/PUBLIC e trigger de
@@ -773,3 +808,24 @@ jobs:
           F64_VOZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/f64-voz-assets-e-grants.test.sh
+
+      # t_138a15f0 (PR 1890): os dois testes abaixo existiam no disco sem passo
+      # no CI e o check-test-inventory os reprovava como orfaos. Ambos iniciam
+      # containers Docker proprios incompativeis com o docker-shim do E47 —
+      # SKIP_DOCKER_SHIM="1" nos dois, como no bloco E50 acima:
+      #   * network-policy-rpc: sobe DOIS containers simultaneos (contrato e
+      #     mutacao) e cada um roda CREATE ROLE anon/authenticated/service_role;
+      #     roles sao globais ao cluster, entao no shim o segundo CREATE ROLE
+      #     colidiria com o primeiro.
+      #   * revoke-auth-sessions: o readiness usa `docker exec <c> pg_isready`
+      #     e o shim so intercepta `exec` de psql — sai 1 nos demais comandos.
+      - name: Provar a RPC canônica de política de rede (R2-AUTH-022)
+        env:
+          NETWORK_POLICY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/network-policy-rpc.test.sh
+
+      - name: Provar revogação de sessões Auth por migration (R2-AUTH-004)
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh

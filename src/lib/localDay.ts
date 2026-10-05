@@ -163,6 +163,24 @@ export function appDayKey(value: string | Date): string {
   }).format(d);
 }
 
+/**
+ * Hora (0-23) do relógio **no fuso do app** para um instante.
+ *
+ * Existe para o mesmo motivo do `appDayKey`: a RPC `dashboard_hourly_volume` já devolve os
+ * buckets com `day`/`hour` derivados em America/Sao_Paulo, então "hora atual" tem de ser lida
+ * no mesmo fuso — `Date#getHours` usa o fuso do dispositivo e desloca o bucket corrente.
+ */
+export function appHour(now: Date = new Date()): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: APP_TIMEZONE,
+    hour12: false,
+    hourCycle: 'h23',
+    hour: '2-digit',
+  }).formatToParts(now);
+  const hora = Number(parts.find((p) => p.type === 'hour')?.value ?? '0');
+  return hora % 24;
+}
+
 /** Início (00:00) do dia de calendário `key` no fuso do app. */
 export function appDayStartOfKey(key: string): Date {
   return zonedDayStartFromKey(APP_TIMEZONE, key);

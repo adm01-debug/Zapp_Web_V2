@@ -1,12 +1,19 @@
+// O agregador lê hoje/hora no fuso do APP (America/Sao_Paulo), não no do dispositivo
+// (R2-MOD-075). TZ forçado a UTC para o resultado ser o mesmo em qualquer máquina de CI:
+// sem isso o teste passaria por acidente num host em São Paulo e quebraria em UTC.
+process.env.TZ = 'UTC';
+
 import { describe, it, expect } from 'vitest';
 import { aggregateHourlyVolume } from '../useTodayHourlyVolume';
 
-const NOW = new Date(2026, 5, 15, 10, 30, 0); // hoje 15/06, hora atual = 10
+// 2026-06-15T13:30Z = 15/06 10:30 em São Paulo → hora corrente do app = 10.
+const NOW = new Date('2026-06-15T13:30:00.000Z');
 
 function bucket(daysAgo: number, hour: number, message_count: number) {
-  const d = new Date(2026, 5, 15 - daysAgo, 0, 0, 0);
-  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  return { day, hour, message_count };
+  // 15/06 00:00 em São Paulo = 03:00Z; subtrair dias inteiros mantém a data de calendário de SP.
+  const baseSp = Date.UTC(2026, 5, 15, 3, 0, 0);
+  const d = new Date(baseSp - daysAgo * 86_400_000);
+  return { day: d.toISOString().slice(0, 10), hour, message_count };
 }
 
 describe('aggregateHourlyVolume', () => {

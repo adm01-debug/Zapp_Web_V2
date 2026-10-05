@@ -28,6 +28,11 @@ interface UploadedPrivateObject {
   storagePath: string;
 }
 
+interface PendingMediaUpload extends UploadedPrivateObject {
+  /** Id de idempotencia estavel mantido entre o envio e o retry do mesmo arquivo. */
+  clientMessageId: string;
+}
+
 interface QueuedFile extends FilePreview {
   id: string;
   status: 'pending' | 'uploading' | 'sending' | 'done' | 'error';
@@ -37,6 +42,37 @@ interface QueuedFile extends FilePreview {
 
 const categoryOrder: Record<string, number> = { image: 0, video: 1, audio: 2, document: 3, sticker: 4 };
 const MAX_FILES = 10;
+
+/**
+ * Reconciliacao da fila por `(contact_id, client_message_id)` — mesmo contrato de
+ * `useForwardMedia`: `true` = existe linha apontando para o objeto; `false` = provado
+ * ausente (objeto orfao); `null` = estado indeterminado (a consulta falhou). Somente
+ * `false` autoriza remover o objeto do Storage (R2-INB-006).
+ */
+async function outboundRowExists(contactId: string, clientMessageId: string): Promise<boolean | null> {
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('id')
+      .eq('contact_id', contactId)
+      .eq('client_message_id', clientMessageId)
+      .limit(1);
+    if (error) return null;
+    return (data?.length ?? 0) > 0;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Identidade do envio de um arquivo (contato + arquivo escolhido + papel na mensagem).
+ * Mantem o MESMO objeto no Storage e o MESMO id logico enquanto o resultado da entrega
+ * for incerto: o retry nao pode refazer o upload (URL novo mudaria a actionKey) nem criar
+ * outra acao (R2-INB-006).
+ */
+function mediaActionKey(contactId: string, file: File, category: string | undefined): string {
+  return JSON.stringify([contactId, category ?? null, file.name, file.size, file.lastModified]);
+}
 
 export type { FileMessageData, FilePreview, QueuedFile };
 
@@ -60,6 +96,10 @@ export function useFileUploadLogic(opts: {
   const [uploadStage, setUploadStage] = useState<'uploading' | 'sending' | null>(null);
   const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Objetos ja gravados + id logico por arquivo, ate a entrega confirmar. Sem isso o
+  // retry refazia o upload (novo locator -> nova actionKey) e apagava o objeto que uma
+  // linha ja enfileirada referencia (R2-INB-006).
+  const pendingUploadsRef = useRef(new Map<string, PendingMediaUpload>());
 
   const apiLoading = false;
 
@@ -118,7 +158,18 @@ export function useFileUploadLogic(opts: {
 
   const sendFileViaApi = useCallback(async (file: File, category: string | undefined, cap?: string) => {
     if (!contactId) throw new Error('Selecione uma conversa antes de enviar um arquivo.');
-    const { locatorUrl, storagePath } = await uploadFileToStorage(file);
+    const actionKey = mediaActionKey(contactId, file, category);
+
+    // Retry de resultado incerto reaproveita o objeto ja gravado e o id logico:
+    // reenviar o arquivo criaria outro objeto/locator e outra acao (R2-INB-006).
+    let pending = pendingUploadsRef.current.get(actionKey);
+    if (!pending) {
+      const uploaded = await uploadFileToStorage(file);
+      pending = { ...uploaded, clientMessageId: createStorageObjectId() };
+      pendingUploadsRef.current.set(actionKey, pending);
+    }
+    const { locatorUrl, storagePath, clientMessageId } = pending;
+
     const messageContent = category === 'document' ? file.name : `[${category === 'image' ? 'Imagem' : category === 'video' ? 'Vídeo' : category === 'audio' ? 'Áudio' : category === 'sticker' ? 'Sticker' : 'Arquivo'}]`;
     const messageType: OutboundMessageType = category === 'image' || category === 'video' || category === 'audio' || category === 'sticker'
       ? category
@@ -127,10 +178,20 @@ export function useFileUploadLogic(opts: {
       const result = await sendOutboundMessage({
         contactId, content: messageContent, messageType, mediaUrl: locatorUrl,
         caption: cap?.trim() || null, whatsappConnectionId: connectionId ?? null,
+        clientMessageId,
       });
+      pendingUploadsRef.current.delete(actionKey);
       return { result, mediaUrl: locatorUrl, category: messageType };
     } catch (error) {
-      await removeStoredObjectBestEffort('whatsapp-media', storagePath);
+      // `sendOutboundMessage` grava a linha ANTES de despachar: a falha depois do enqueue
+      // nao prova que o objeto ficou orfao. So remove quando a reconciliacao responder
+      // ZERO linhas; linha encontrada ou consulta falhando (estado indeterminado) mantem
+      // o objeto e o id para o retry (R2-INB-006).
+      const rowExists = await outboundRowExists(contactId, clientMessageId);
+      if (rowExists === false) {
+        await removeStoredObjectBestEffort('whatsapp-media', storagePath);
+        pendingUploadsRef.current.delete(actionKey);
+      }
       throw error;
     }
   }, [contactId, connectionId, uploadFileToStorage]);

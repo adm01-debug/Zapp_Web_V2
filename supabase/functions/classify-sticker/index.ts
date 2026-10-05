@@ -1,6 +1,6 @@
 import { handleCors, jsonResponse, Logger } from "../_shared/validation.ts";
 import { ClassifyStickerSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
-import { requireAiIdentityOrService } from "../_shared/ai-auth.ts";
+import { requireAiIdentityOrService, type AiIdentity } from "../_shared/ai-auth.ts";
 import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { logAiUsage } from "../_shared/ai-usage.ts";
 import { AiImageInputError, toInlineImage, type InlineImage } from "../_shared/ai-image-input.ts";
@@ -30,20 +30,42 @@ function detalhesDoErroDeImagem(err: unknown): Record<string, unknown> {
 }
 
 /**
- * Baixa a imagem no servidor com a service role e a devolve EMBUTIDA como data
- * URL (o bucket é privado; o modelo não alcança a URL). Em QUALQUER falha do
- * helper (storage indisponível, HTTP não-ok, objeto grande demais, tipo
- * não-imagem) registra o motivo em `ai_usage_logs` com status de erro e devolve
- * `null` — o chamador degrada para `outros` sem propagar exceção.
+ * JWT do chamador, extraído do header `Authorization` (`Bearer <jwt>`,
+ * case-insensitive). Duplicada de `ai-auth.ts` de propósito: lá a extração não
+ * é exportada, e aqui o token cru é o que autoriza o download do objeto privado
+ * sob a identidade do usuário (a policy de `storage.objects` decide).
  */
-async function embutirImagem(imageUrl: string, userId: string | null): Promise<InlineImage | null> {
+function bearerTokenDoPedido(req: Request): string {
+  const header = req.headers.get('authorization') ?? '';
+  if (!header.toLowerCase().startsWith('bearer ')) return '';
+  return header.slice(7).trim();
+}
+
+/**
+ * Baixa a imagem no servidor sob a identidade do CHAMADOR — usuário: anon key +
+ * JWT do pedido (a policy de `storage.objects` decide); serviço (webhook do
+ * WhatsApp): service role explícita — e a devolve EMBUTIDA como data URL (o
+ * bucket é privado; o modelo não alcança a URL). Em QUALQUER falha do helper
+ * (storage indisponível, HTTP não-ok, objeto grande demais, tipo não-imagem)
+ * registra o motivo em `ai_usage_logs` com status de erro e devolve `null` — o
+ * chamador degrada para `outros` sem propagar exceção.
+ */
+async function embutirImagem(
+  imageUrl: string,
+  identity: AiIdentity,
+  bearerToken: string,
+): Promise<InlineImage | null> {
   try {
-    return await toInlineImage(imageUrl);
+    return await toInlineImage(imageUrl, {
+      storageIdentity: identity.kind === 'user'
+        ? { kind: 'user', bearerToken }
+        : { kind: 'service' },
+    });
   } catch (err) {
     const motivo = err instanceof Error ? err.message : String(err);
     await logAiUsage({
       functionName: FUNCTION_NAME,
-      userId,
+      userId: identity.userId,
       status: 'error',
       errorMessage: motivo,
       // IA-052 — a etapa é de VISÃO: modalidade declarada mesmo na degradação,
@@ -100,7 +122,7 @@ Deno.serve(async (req) => {
 Categorias: ${STICKER_CATEGORIES.join(', ')}`;
 
     // Imagem EMBUTIDA (data URL): o provedor de visão não busca nada pela rede.
-    const imagem = await embutirImagem(image_url, identity.userId);
+    const imagem = await embutirImagem(image_url, identity, bearerTokenDoPedido(req));
     if (!imagem) {
       log.error("Falha ao preparar a imagem; degradando para 'outros' com motivo registrado");
       return jsonResponse({ category: 'outros' }, 200, req);

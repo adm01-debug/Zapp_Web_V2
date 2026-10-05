@@ -3,7 +3,7 @@ import { getLogger } from '@/lib/logger';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
 
 const log = getLogger('TeamFileUploader');
-import { supabase } from '@/integrations/supabase/client';
+import { uploadTeamMedia } from '@/hooks/team-chat/uploadTeamMedia';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Button } from '@/components/ui/button';
 import { Paperclip, Image as ImageIcon, FileText, X, Loader2 } from 'lucide-react';
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 interface TeamFileUploaderProps {
   conversationId: string;
-  onFileSent: (mediaUrl: string, mediaType: string, fileName: string) => void;
+  onFileSent: (mediaPath: string, mediaType: string, fileName: string) => void;
   disabled?: boolean;
 }
 
@@ -62,21 +62,17 @@ export function TeamFileUploader({ conversationId, onFileSent, disabled }: TeamF
     setUploading(true);
     try {
       const { file } = preview;
-      const ext = getFileExtensionWithDefault(file.name, 'bin');
-      const path = `${profile.id}/${conversationId}/${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('team-chat-files')
-        .upload(path, file, { contentType: file.type });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('team-chat-files')
-        .getPublicUrl(path);
+      const locator = await uploadTeamMedia({
+        profileId: profile.id,
+        conversationId,
+        file,
+        extension: getFileExtensionWithDefault(file.name, 'bin'),
+        contentType: file.type,
+      });
+      if (!locator) return;
 
       const mediaType = getMediaType(file);
-      onFileSent(urlData.publicUrl, mediaType, file.name);
+      onFileSent(locator.mediaPath, mediaType, file.name);
       
       URL.revokeObjectURL(preview.url);
       setPreview(null);

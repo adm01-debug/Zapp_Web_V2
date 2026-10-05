@@ -1,6 +1,7 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { getCorsHeaders, handleCors } from '../_shared/validation.ts';
+import { decideControlAuthz } from '../_shared/evolution-control-authz.ts';
 
 export interface WebhookRecord {
   webhook?: string;
@@ -24,18 +25,43 @@ export function normalizeWebhookEvents(webhook: WebhookRecord | null): string[] 
 
 const IS_GO = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
 
-if (import.meta.main) {
-  Deno.serve(async (req: Request) => {
+/** Dependências injetáveis nos testes (mesma forma das edges com guard). */
+export interface WebhookDiagnosticDeps {
+  supabase?: SupabaseClient;
+  callerClient?: SupabaseClient;
+  serviceKey?: string;
+  anonKey?: string;
+}
+
+export async function handleWebhookDiagnostic(req: Request, _injected?: WebhookDiagnosticDeps): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
   const corsHeaders = getCorsHeaders(req);
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabase = _injected?.supabase
+      ?? createClient(supabaseUrl, _injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')!;
     const evolutionKey = Deno.env.get('EVOLUTION_API_KEY')!;
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const callerClient = _injected?.callerClient
+      ?? createClient(supabaseUrl, _injected?.anonKey ?? Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+        global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
+      });
+
+    // R2-API-001: a leitura sensível de diagnóstico (telefones/status/config de
+    // TODAS as conexões) e o auto-fix (POST de configuração do webhook na GO)
+    // deixam de ser abertos a qualquer JWT válido — o reparo NÃO é exceção ao
+    // gate. Exigem papel admin/supervisor (mesma matriz das ações de controle).
+    const { data: { user }, error: authError } = await callerClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Não autenticado.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const { data: isAdmin } = await callerClient.rpc('is_admin_or_supervisor', { _user_id: user.id });
+    const decision = decideControlAuthz(!!isAdmin);
+    if (!decision.allowed) {
+      return new Response(JSON.stringify({ error: decision.message }), { status: decision.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'full-diagnostic';
@@ -236,5 +262,8 @@ if (import.meta.main) {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-  });
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleWebhookDiagnostic(req));
 }

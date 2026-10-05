@@ -9,6 +9,7 @@ import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
+import { uploadTeamMedia, TEAM_CHAT_FILES_BUCKET } from '@/hooks/team-chat/uploadTeamMedia';
 import { toast } from 'sonner';
 
 const log = getLogger('TeamChatPanel');
@@ -37,9 +38,20 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [showStats, setShowStats] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [olderMessages, setOlderMessages] = useState<TeamMessage[]>([]);
-  const [oldestCursor, setOldestCursor] = useState<string | null>(null);
+  const [oldestCursor, setOldestCursor] = useState<{ createdAt: string; id: string } | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
+
+  // Rascunho e resposta são da conversa: o painel não remonta ao trocar de
+  // conversa, então o reset acontece no render (mesmo padrão de
+  // useFilesViewState). Sem isso o texto de uma conversa aparece na outra e o
+  // autosave do rascunho grava na chave errada — idem para o reply_to.
+  const [conversationScopeId, setConversationScopeId] = useState(conversation.id);
+  if (conversationScopeId !== conversation.id) {
+    setConversationScopeId(conversation.id);
+    setText('');
+    setReplyTo(null);
+  }
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -106,13 +118,11 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     return combined;
   }, [olderMessages, newestMessages]);
 
-  useEffect(() => {
-    if (newestMessages.length > 0 && oldestCursor === null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setOldestCursor(newestMessages[0].created_at);
-    }
-  }, [newestMessages, oldestCursor]);
-
+  // TC-006 — o reset por conversa roda ANTES do init do cursor: se rodasse
+  // depois (como estava), o `setOldestCursor(null)` do reset apagava o cursor
+  // que o efeito de init tinha acabado de gravar (ambos disparam no mesmo
+  // commit de montagem/troca), e a paginação nunca começava — as mensagens
+  // antigas ficavam inalcançáveis.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOlderMessages([]);
@@ -122,6 +132,14 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     setShowTransferDialog(false);
     setShowGroupManagement(false);
   }, [conversation.id]);
+
+  useEffect(() => {
+    if (newestMessages.length > 0 && oldestCursor === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOldestCursor({ createdAt: newestMessages[0].created_at, id: newestMessages[0].id });
+    }
+  }, [newestMessages, oldestCursor]);
+
 
   useEffect(() => {
     if (savedScrollFromBottomRef.current === null) return;
@@ -139,19 +157,29 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     if (el) savedScrollFromBottomRef.current = el.scrollHeight - el.scrollTop;
     setIsFetchingOlder(true);
     try {
+      // TC-006 — keyset composto `(created_at, id)`. Só `created_at` pulava as
+      // mensagens que empatam no mesmo instante: o lote seguinte trazia
+      // `created_at < cursor` e as empatadas com o instante do cursor ficavam
+      // de fora. O `id` desempata de forma estável e casa com o
+      // `order by created_at desc, id desc` das consultas. As aspas no
+      // timestamptz são obrigatórias (o valor serializado traz ':' e '+', que o
+      // parser de filtro do PostgREST leria como separadores) — mesmo padrão de
+      // `useCSAT`.
+      const ts = `"${oldestCursor.createdAt}"`;
       const { data, error } = await supabase
         .from('team_messages')
         .select('*, sender:profiles!team_messages_sender_id_fkey(id, name, avatar_url), media_bucket, media_path, status')
         .eq('conversation_id', conversation.id)
-        .lt('created_at', oldestCursor)
+        .or(`created_at.lt.${ts},and(created_at.eq.${ts},id.lt.${oldestCursor.id})`)
         .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
         .limit(60);
       if (error) throw error;
       const older = ((data || []) as TeamMessage[]).reverse();
       if (older.length === 0) {
         setHasOlderMessages(false);
       } else {
-        setOldestCursor(older[0].created_at);
+        setOldestCursor({ createdAt: older[0].created_at, id: older[0].id });
         setOlderMessages(prev => {
           const ids = new Set(prev.map(m => m.id));
           return [...older.filter(m => !ids.has(m.id)), ...prev];
@@ -243,28 +271,36 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const handleAudioSend = useCallback(async (blob: Blob) => {
     if (!profile?.id) return;
-    const fileName = `audio-${Date.now()}.webm`;
-    const { data, error } = await supabase.storage.from('team-chat-files').upload(
-      `${conversation.id}/${fileName}`,
-      blob,
-      { contentType: 'audio/webm', upsert: false },
-    );
-    if (error) { toast.error('Erro ao enviar áudio'); return; }
-    await sendMutation.mutateAsync({
-      conversationId: conversation.id,
-      content: '🎤 Mensagem de áudio',
-      mediaPath: data?.path ?? undefined,
-      mediaBucket: 'team-chat-files',
-      mediaType: 'audio',
-    });
+    try {
+      const locator = await uploadTeamMedia({
+        profileId: profile.id,
+        conversationId: conversation.id,
+        file: blob,
+        extension: 'webm',
+        contentType: 'audio/webm',
+        upsert: false,
+      });
+      if (!locator) return;
+      await sendMutation.mutateAsync({
+        conversationId: conversation.id,
+        content: '🎤 Mensagem de áudio',
+        mediaPath: locator.mediaPath,
+        mediaBucket: locator.mediaBucket,
+        mediaType: 'audio',
+      });
+    } catch (err) {
+      log.error('Erro ao enviar áudio', err);
+      toast.error('Erro ao enviar áudio');
+    }
   }, [profile, conversation.id, sendMutation]);
 
-  const handleFileSent = useCallback(async (mediaUrl: string, mediaType: string, fileName: string) => {
+  const handleFileSent = useCallback(async (mediaPath: string, mediaType: string, fileName: string) => {
     if (!profile?.id) return;
     await sendMutation.mutateAsync({
       conversationId: conversation.id,
       content: fileName,
-      mediaUrl,
+      mediaBucket: TEAM_CHAT_FILES_BUCKET,
+      mediaPath,
       mediaType: (mediaType as TeamMessage['media_type']) ?? undefined,
     });
   }, [profile, conversation.id, sendMutation]);

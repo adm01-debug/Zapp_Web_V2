@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
 import { useTheme } from '@/hooks/ui/useTheme';
@@ -79,5 +79,33 @@ describe('useTheme', () => {
     });
 
     expect(result.current.isDark).toBe(false);
+  });
+
+  // Regressão da suíte completa vermelha: o `setTimeout` de transição do `setTheme`
+  // ficava pendente e disparava depois do teardown do jsdom (`ReferenceError: document
+  // is not defined`), virando unhandled error e derrubando a suíte com 0 teste falhando.
+  // O timer tem de ser cancelado no unmount.
+  it('cancela os timers de transição no unmount (não deixa timeout do tema pendente)', () => {
+    vi.useFakeTimers();
+
+    try {
+      const { result, unmount } = renderHook(() => useTheme());
+
+      act(() => {
+        result.current.setTheme('dark');
+      });
+
+      const pendentesComTema = vi.getTimerCount();
+      expect(pendentesComTema).toBeGreaterThan(0);
+
+      unmount();
+
+      // Dois timers são do tema (350ms do `documentElement`, 300ms do `body` via
+      // `applyThemeToDocument`) e têm de morrer no unmount. O jsdom mantém 1 timer
+      // próprio de 0ms (`Storage-impl.setItem`), que não é do tema.
+      expect(vi.getTimerCount()).toBe(pendentesComTema - 2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

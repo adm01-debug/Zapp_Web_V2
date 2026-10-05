@@ -23,6 +23,11 @@ interface EmailChatInboxProps {
   embedded?: boolean;
 }
 
+type ThreadContextData = {
+  messages: EmailMessage[];
+  attachments: Array<EmailAttachment & { gmail_message_id?: string }>;
+};
+
 export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
   const [accountId, setAccountId] = useState<string>();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('emailThread'));
@@ -35,7 +40,19 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
   const [composerTo, setComposerTo] = useState('');
   const [showDetails, setShowDetails] = useState(matchesWideDetailsLayout);
   const [isWideDetailsLayout, setIsWideDetailsLayout] = useState(matchesWideDetailsLayout);
-  const [threadContext, setThreadContext] = useState<{ accountId: string | null; messages: EmailMessage[]; attachments: Array<EmailAttachment & { gmail_message_id?: string }> }>({ accountId: null, messages: [], attachments: [] });
+  const [threadContext, setThreadContext] = useState<{ accountId: string | null } & ThreadContextData>({ accountId: null, messages: [], attachments: [] });
+  // R2-COM-001: a identidade deste callback precisa ser estável e o estado só pode mudar
+  // quando mensagens/anexos mudam de verdade. Uma arrow inline gravava um objeto novo a cada
+  // render do pai, o que re-disparava o efeito do filho em ciclo.
+  const activeAccountId = activeAccount?.id ?? null;
+  const handleThreadContextChange = useCallback((data: ThreadContextData) => {
+    if (!activeAccountId) return;
+    setThreadContext(previous => (
+      previous.accountId === activeAccountId && previous.messages === data.messages && previous.attachments === data.attachments
+        ? previous
+        : { accountId: activeAccountId, messages: data.messages, attachments: data.attachments }
+    ));
+  }, [activeAccountId]);
   const detailsTriggerRef = useRef<HTMLElement | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const helpButtonRef = useRef<HTMLButtonElement>(null);
@@ -149,7 +166,7 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
           <EmailThreadList threads={threads} totalCount={threadsTotalCount} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={() => setGlobalSearchQuery('')} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} />
         </aside>
         <section data-testid="email-conversation" aria-label="Conteúdo da conversa" className={cn('min-w-0 flex-1 flex-col bg-background', !selectedThread ? 'hidden md:flex' : 'flex')}>
-          {selectedThread ? <EmailChatThread key={`${activeAccount.id}:${selectedThread.id}`} accountId={activeAccount.id} thread={selectedThread} labels={labels} onContextDataChange={data => setThreadContext({ accountId: activeAccount.id, ...data })} onBack={() => navigateToThread(null, true)} onToggleDetails={toggleDetails} showDetailsButton /> : (
+          {selectedThread ? <EmailChatThread key={`${activeAccount.id}:${selectedThread.id}`} accountId={activeAccount.id} thread={selectedThread} labels={labels} onContextDataChange={handleThreadContextChange} onBack={() => navigateToThread(null, true)} onToggleDetails={toggleDetails} showDetailsButton /> : (
             <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground"><div className="mb-4 rounded-2xl border border-border bg-card p-5"><Mail className="h-12 w-12 opacity-40" /></div><p className="text-sm font-medium text-foreground">Selecione uma conversa para começar</p><p className="mt-1 text-xs">A leitura e a resposta acontecerão no painel central.</p></div>
           )}
         </section>

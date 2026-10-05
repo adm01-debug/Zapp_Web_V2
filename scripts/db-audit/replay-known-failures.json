@@ -79,6 +79,14 @@
     "20260928430000_team_chat_fix_policies_to_authenticated.sql": {
       "categoria": "cascata-objeto-existe-no-canonico",
       "motivo": "column 'conversation_id' does not exist no replay. Canonico: existe (4 tabelas). A tabela que a define nao e criada no banco vazio."
+    },
+    "20261003182707_fixture_e2e_aba_arquivos_midia.sql": {
+      "categoria": "ambiente",
+      "motivo": "Fixture de dados (DML): insere mensagem para o contato E2E 04dff4dc-..., que so existe no canonico. No banco vazio do replay viola messages_contact_id_fkey. Canonico: aplicada (ledger 20261003182707). Medido em 04/10/2026."
+    },
+    "20261003192707_fixture_e2e_aba_arquivos_segunda_midia.sql": {
+      "categoria": "ambiente",
+      "motivo": "Mesma causa da 20261003182707: segunda midia da fixture E2E, depende do contato que so existe no canonico. Canonico: aplicada (ledger 20261003192707). Medido em 04/10/2026."
     }
   }
 }

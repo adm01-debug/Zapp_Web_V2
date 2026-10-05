@@ -76,28 +76,37 @@ async function storeTokens(supabase: any, accountId: string, accessToken: string
   });
 }
 
-Deno.serve(async (req) => {
+// ── Seams de injeção (R2-COM-009) ─────────────────────────────────────────
+// O handler exportado recebe tudo o que faz efeito (client service_role, quem
+// resolve o usuário do JWT e as chamadas ao Google) para o teste provar a
+// validação do `state` no servidor SEM tocar banco nem a API do Google.
+
+export interface GmailOAuthDeps {
+  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any;
+  getUser: () => Promise<{ user: { id: string } | null; error: unknown }>;
+  google: {
+    clientId: string;
+    redirectUri: string;
+    exchangeCode: (code: string) => Promise<TokenResponse>;
+    refreshToken: (refreshToken: string) => Promise<TokenResponse>;
+    fetchProfile: (accessToken: string) => Promise<{ emailAddress: string }>;
+  };
+}
+
+export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("gmail-oauth");
+  const { supabase } = deps;
 
   try {
-    const GOOGLE_CLIENT_ID = requireEnv("GOOGLE_CLIENT_ID");
-    const GOOGLE_CLIENT_SECRET = requireEnv("GOOGLE_CLIENT_SECRET");
-    const GOOGLE_REDIRECT_URI = requireEnv("GOOGLE_REDIRECT_URI");
-    const SUPABASE_URL = requireEnv("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-
     const authHeader = req.headers.get("authorization");
     if (!authHeader) return errorResponse("Missing authorization header", 401, req);
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { data: { user }, error: authError } = await createClient(
-      SUPABASE_URL, requireEnv("SUPABASE_ANON_KEY"),
-      { global: { headers: { Authorization: authHeader } } }
-    ).auth.getUser();
-
+    const { user, error: authError } = await deps.getUser();
     if (authError || !user) return errorResponse("Unauthorized", 401, req);
 
     const parsed = parseBody(GmailOAuthActionSchema, await req.json());
@@ -107,15 +116,36 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "get-auth-url": {
-        const url = await getAuthUrl(GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI, state);
+        // CSRF (RFC 6749 §10.12): a tentativa só existe se for registrada aqui,
+        // vinculada ao usuário autenticado. O retorno sem state registrado é
+        // recusado no exchange-code.
+        if (!state) return errorResponse("Missing OAuth state", 400, req);
+        const { error: stateError } = await supabase
+          .from("gmail_oauth_states")
+          .insert({ user_id: user.id, state });
+        if (stateError) throw stateError;
+
+        const url = await getAuthUrl(deps.google.clientId, deps.google.redirectUri, state);
         log.done(200, { action });
         return jsonResponse({ url }, 200, req);
       }
 
       case "exchange-code": {
         if (!code) return errorResponse("Missing authorization code", 400, req);
-        const tokens = await exchangeCode(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
-        const gmailProfile = await getGmailProfile(tokens.access_token);
+        if (!state) return errorResponse("Missing OAuth state", 400, req);
+
+        // O state é consumido ANTES de qualquer chamada ao Google: só passa se
+        // existir, pertencer a este usuário, não estar expirado e não ter sido
+        // usado (uso único atômico — replay e troca de sessão caem aqui).
+        const { data: stateOk, error: consumeError } = await supabase.rpc("consume_gmail_oauth_state", {
+          p_user_id: user.id,
+          p_state: state,
+        });
+        if (consumeError) throw consumeError;
+        if (!stateOk) return errorResponse("Invalid or expired OAuth state", 403, req);
+
+        const tokens = await deps.google.exchangeCode(code);
+        const gmailProfile = await deps.google.fetchProfile(tokens.access_token);
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
         // Guard against account takeover: reject if this Gmail address is already linked to another user
@@ -159,7 +189,7 @@ Deno.serve(async (req) => {
         if (!account) return errorResponse("Gmail account not found", 404, req);
 
         const storedTokens = await getTokens(supabase, account.id);
-        const tokens = await refreshAccessToken(storedTokens.refresh_token, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
+        const tokens = await deps.google.refreshToken(storedTokens.refresh_token);
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
         await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
@@ -211,4 +241,36 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(async (req) => {
+    const cors = handleCors(req);
+    if (cors) return cors;
+
+    const GOOGLE_CLIENT_ID = requireEnv("GOOGLE_CLIENT_ID");
+    const GOOGLE_CLIENT_SECRET = requireEnv("GOOGLE_CLIENT_SECRET");
+    const GOOGLE_REDIRECT_URI = requireEnv("GOOGLE_REDIRECT_URI");
+    const SUPABASE_URL = requireEnv("SUPABASE_URL");
+
+    const authHeader = req.headers.get("authorization") ?? "";
+    const anonClient = createClient(SUPABASE_URL, requireEnv("SUPABASE_ANON_KEY"), {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    return handleGmailOAuth(req, {
+      supabase: createClient(SUPABASE_URL, requireEnv("SUPABASE_SERVICE_ROLE_KEY")),
+      getUser: async () => {
+        const { data, error } = await anonClient.auth.getUser();
+        return { user: data.user, error };
+      },
+      google: {
+        clientId: GOOGLE_CLIENT_ID,
+        redirectUri: GOOGLE_REDIRECT_URI,
+        exchangeCode: (code) => exchangeCode(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI),
+        refreshToken: (refreshToken) => refreshAccessToken(refreshToken, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
+        fetchProfile: getGmailProfile,
+      },
+    });
+  });
+}

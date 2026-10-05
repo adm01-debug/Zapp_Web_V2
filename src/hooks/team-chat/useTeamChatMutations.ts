@@ -101,38 +101,21 @@ export function useCreateTeamConversation() {
         return conv;
       }
 
-      if (type === 'department' && departmentId) {
-        const { data: existing } = await supabase
-          .from('team_conversations')
-          .select('id')
-          .eq('department_id', departmentId)
-          .maybeSingle();
-        if (existing) return existing;
-
-        const { data: conv, error } = await supabase
-          .from('team_conversations')
-          .insert({ type: 'department', name: name || null, created_by: profile.id, department_id: departmentId })
-          .select()
-          .single();
-        if (error) throw error;
-        const { error: memError } = await supabase
-          .from('team_conversation_members')
-          .insert([{ conversation_id: conv.id, profile_id: profile.id }]);
-        if (memError) throw memError;
-        return conv;
-      }
-
-      const { data: conv, error } = await supabase
+      // Grupo/departamento nasce numa operacao atomica no banco: conversa + membership
+      // (criador vira owner). Antes eram duas requests e a policy de INSERT exigia membro
+      // previo, entao agente nao-admin deixava a conversa orfa (TC-003).
+      const { data: convId, error: rpcErr } = await supabase.rpc('create_team_group_conversation', {
+        p_name: name || undefined,
+        p_member_ids: memberIds.filter(id => id !== profile.id),
+        p_department_id: type === 'department' ? departmentId : undefined,
+      });
+      if (rpcErr) throw rpcErr;
+      const { data: conv, error: convErr } = await supabase
         .from('team_conversations')
-        .insert({ type, name: name || null, created_by: profile.id })
-        .select()
+        .select('*')
+        .eq('id', convId as string)
         .single();
-      if (error) throw error;
-      const allMembers = [profile.id, ...memberIds.filter(id => id !== profile.id)];
-      const { error: memError } = await supabase
-        .from('team_conversation_members')
-        .insert(allMembers.map(pid => ({ conversation_id: conv.id, profile_id: pid })));
-      if (memError) throw memError;
+      if (convErr) throw convErr;
       return conv;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team-conversations'] }); },
@@ -221,10 +204,12 @@ export function useTransferConversation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ conversationId, newOwnerId }: { conversationId: string; newOwnerId: string }) => {
-      const { error } = await supabase
-        .from('team_conversations')
-        .update({ created_by: newOwnerId })
-        .eq('id', conversationId);
+      // created_by nao e mais gravavel por DML (grant por coluna); a transferencia
+      // canonica e a RPC, que exige owner/admin e alvo membro (TC-003).
+      const { error } = await supabase.rpc('transfer_team_conversation_ownership', {
+        p_conversation_id: conversationId,
+        p_new_owner_id: newOwnerId,
+      });
       if (error) throw error;
     },
     onSuccess: () => {

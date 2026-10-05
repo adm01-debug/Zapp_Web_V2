@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useReportsData } from './useReportsData';
+import { ReportsIntegrityNotice } from './ReportsIntegrityNotice';
 import {
   ComparisonSummaryChart, PeriodAreaChart, DistributionPieChart,
   DailyMessagesChart, AgentsChart, ContactsCharts,
@@ -38,7 +39,7 @@ export function AdvancedReportsView() {
     compareEnabled, setCompareEnabled,
     agents, tags, dateRange,
     chartData, previousChartData, comparisonSummary, contactsChartData, stats,
-    isLoading, getExportData,
+    isLoading, isError, isIncomplete, error, getExportData,
   } = useReportsData();
 
   const previousDateRange = {
@@ -86,6 +87,9 @@ export function AdvancedReportsView() {
         </div>
       </div>
 
+      {/* R2-MOD-018/019: falha/leitura parcial do período não pode virar "0" confirmado */}
+      <ReportsIntegrityNotice error={error} incomplete={isIncomplete} />
+
       {/* Comparison Indicator */}
       {compareEnabled && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-muted/30 border rounded-lg p-4">
@@ -114,8 +118,10 @@ export function AdvancedReportsView() {
                       <stat.icon className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div className="flex items-end gap-2 mt-2">
-                      <p className="text-3xl font-bold text-foreground">{stat.value.toLocaleString()}</p>
-                      {stat.trend !== undefined && (
+                      <p className="text-3xl font-bold text-foreground">
+                        {isError ? '—' : `${isIncomplete ? '≥' : ''}${stat.value.toLocaleString()}`}
+                      </p>
+                      {!isError && stat.trend !== undefined && (
                         <Badge variant="outline" className={cn('text-xs', stat.trend >= 0 ? 'text-success border-success' : 'text-destructive border-destructive')}>
                           {stat.trend >= 0 ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
                           {Math.abs(stat.trend).toFixed(1)}%

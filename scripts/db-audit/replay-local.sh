@@ -70,6 +70,20 @@ alter table auth.users add column if not exists raw_user_meta_data jsonb not nul
 alter database postgres set app.settings.trusted_domains = 'localhost,127.0.0.1';
 SQL
 
+# TRAVAS CONTRA A PRODUCAO (medido em 04/10/2026): as migrations gravam a URL do banco canonico em
+# 4 jobs do pg_cron, 3 funcoes e 2 segredos do cofre. Esta imagem traz pg_cron e pg_net ativos,
+# entao um replay que fique de pe alguns minutos faz POST nas edge functions REAIS (com segredo
+# local, que elas recusam - mas chama). Duas travas, antes de aplicar qualquer migration:
+#   1. o host do canonico resolve para 127.0.0.1 dentro do container;
+#   2. o agendador nao dispara job nenhum.
+echo "travando o acesso a producao a partir do replay" | tee -a "$LOG"
+docker exec -u 0 "$NOME" sh -c "echo '127.0.0.1 tnnnlkbymytvtqngbbqh.supabase.co tnnnlkbymytvtqngbbqh.functions.supabase.co db.tnnnlkbymytvtqngbbqh.supabase.co' >> /etc/hosts"
+docker exec "$NOME" grep -q 'tnnnlkbymytvtqngbbqh' /etc/hosts \
+  || { echo "FALHA: trava de DNS nao entrou; abortando antes das migrations" | tee -a "$LOG"; docker rm -f "$NOME" >/dev/null 2>&1; exit 1; }
+docker exec -i "$NOME" psql -U supabase_admin -d postgres -q -v ON_ERROR_STOP=1 \
+  -c "alter system set cron.launch_active_jobs = off" -c "select pg_reload_conf()" >>"$LOG" 2>&1 \
+  || { echo "FALHA: nao consegui desligar o agendador; abortando antes das migrations" | tee -a "$LOG"; docker rm -f "$NOME" >/dev/null 2>&1; exit 1; }
+
 TOTAL=$(ls supabase/migrations/*.sql | wc -l)
 echo "aplicando $TOTAL migrations" | tee -a "$LOG"
 OK=0; FALHA=0

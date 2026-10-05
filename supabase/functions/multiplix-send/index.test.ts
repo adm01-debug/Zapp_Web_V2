@@ -143,6 +143,8 @@ interface MockOpts {
   claimReturnsNothing?: boolean;
   /** F10: a janela de envio fecha logo depois do start (disparo em andamento) */
   windowClosesAfterStart?: boolean;
+  /** MX07: resposta da RPC get_instance_token (null = instância sem token cadastrado) */
+  instanceToken?: string | null;
 }
 
 interface MockCtx {
@@ -310,6 +312,13 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
               : opts.suppressAfterFirstCheck ? ctx.suppressionChecks > 1 || listed : listed;
             return Promise.resolve({ data: suppress, error: null });
           }
+          case "get_instance_token":
+            // MX07: devolve o token DA instancia pedida (o args fica gravado em
+            // rpcCalls — o teste confere se o worker pediu o da conexao selecionada).
+            return Promise.resolve({
+              data: opts.instanceToken === undefined ? "tok-instancia-teste" : opts.instanceToken,
+              error: null,
+            });
           case "multiplix_connection_daily_usage": {
             const remaining = opts.dailyRemaining ?? 500;
             return Promise.resolve({ data: { limit: 500, sent: 500 - remaining, remaining }, error: null });
@@ -466,6 +475,24 @@ function stubProviderSuccess(id = "WAMID-TESTE-1") {
     urls,
     restore: () => { globalThis.fetch = original; },
   };
+}
+
+/** Provedor que responde sucesso e grava o header apikey de CADA chamada (MX07:
+ * prova que a credencial que sai na rede e o token da instancia, nao a key global). */
+function stubProviderComApiKey(id = "WAMID-TESTE-1") {
+  const calls: { url: string; apikey: string | undefined }[] = [];
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.fetch = ((input: any, init?: { headers?: Record<string, string> }) => {
+    const url = typeof input === "string" ? input : String(input?.url ?? input);
+    calls.push({ url, apikey: init?.headers?.apikey });
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ key: { id } }),
+    });
+  }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return { calls, restore: () => { globalThis.fetch = original; } };
 }
 
 /** Opcoes de um disparo em 'sending' com a fila toda suprimida: cada item vira
@@ -742,15 +769,16 @@ Deno.test("F17: a cota da conexão é consumida por envio concluído (1 enviado,
   };
   const ctx = newCtx(opts);
   const provider = stubProviderSuccess();
-  // O default do shared e o flavor "go", que troca a rota e exige token de
-  // instancia (o worker chama evoFetch sem instanceToken). Em "v2" o path passa
-  // direto para o fetch e o caminho de envio concluido fica observavel.
-  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  // MX07: o worker agora resolve e passa o instanceToken da conexao — o caminho
+  // go (o default do projeto) voltou a ser testavel e e o que este teste exercita.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
   try {
     const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
     assert(res.status === 200, `esperado 200, recebido ${res.status}`);
   } finally {
-    Deno.env.delete("EVOLUTION_API_FLAVOR");
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
     provider.restore();
   }
   assert(
@@ -764,6 +792,122 @@ Deno.test("F17: a cota da conexão é consumida por envio concluído (1 enviado,
     rpcs(ctx, "claim_multiplix_item").length === 1,
     `esperava 1 reivindicacao (a cota acaba depois dela), houve ${rpcs(ctx, "claim_multiplix_item").length}`,
   );
+});
+
+// ------------------------------------------------------ MX07 (token da instancia)
+// O worker tem de resolver o token DA instancia selecionada (get_instance_token,
+// mesmo padrao do talkx-send) e enviar com ele no header apikey — nunca com a
+// key global nem com o token de outra instancia.
+
+Deno.test("MX07: o worker resolve o token da instância selecionada e envia com ele (nunca a key global)", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  const keyAnterior = Deno.env.get("EVOLUTION_API_KEY");
+  const tokenEnvAnterior = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+  // Em 'go' a rota de envio e auth=instance: o header apikey tem de ser o token
+  // da instancia, resolvido por get_instance_token — a key global e de admin.
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  Deno.env.set("EVOLUTION_API_KEY", "admin-key-teste");
+  Deno.env.delete("EVOLUTION_INSTANCE_TOKEN");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550100")],
+    instanceToken: "tok-instancia-xyz",
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComApiKey();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+    if (keyAnterior === undefined) Deno.env.delete("EVOLUTION_API_KEY");
+    else Deno.env.set("EVOLUTION_API_KEY", keyAnterior);
+    if (tokenEnvAnterior !== undefined) Deno.env.set("EVOLUTION_INSTANCE_TOKEN", tokenEnvAnterior);
+  }
+  const tokenCalls = rpcs(ctx, "get_instance_token");
+  assert(tokenCalls.length === 1, `esperava 1 resolucao de token, houve ${tokenCalls.length}`);
+  assert(
+    tokenCalls[0].args.p_instance_id === "instance-abc",
+    `token resolvido para a instancia errada: ${String(tokenCalls[0].args.p_instance_id)}`,
+  );
+  // So as chamadas ao Evolution contam: com SUPABASE_URL setada (outros testes da
+  // suite setam, env e global) o rate-limiter persistente faz um fetch proprio.
+  const chamadasGo = provider.calls.filter((c) =>
+    c.url.includes("/send/") || c.url.includes("/message/") || c.url.includes("/chat/")
+  );
+  const envios = chamadasGo.filter((c) => c.url.endsWith("/send/text"));
+  assert(envios.length === 1, `esperava 1 POST /send/text, veio ${JSON.stringify(chamadasGo.map((c) => c.url))}`);
+  assert(
+    envios[0].apikey === "tok-instancia-xyz",
+    `apikey esperada 'tok-instancia-xyz', veio '${envios[0].apikey}'`,
+  );
+  // Presenca e envio saem com a MESMA identidade: nenhuma chamada leva a key global.
+  assert(
+    chamadasGo.every((c) => c.apikey === "tok-instancia-xyz"),
+    `todas as chamadas ao GO tem de levar o token da instancia: ${JSON.stringify(chamadasGo)}`,
+  );
+  // Sao 2 presencas: a pre-envio do worker (acima) e a do proprio adaptador no
+  // send — antes da correcao so a do adaptador saia (a do worker morria no 400
+  // do evoFetch por falta de instanceToken).
+  const presencas = chamadasGo.filter((c) => c.url.endsWith("/message/presence"));
+  assert(
+    presencas.length === 2,
+    `a presenca pre-envio tem de sair com a identidade da instancia: ${JSON.stringify(chamadasGo.map((c) => c.url))}`,
+  );
+  assert(
+    presencas.every((c) => c.apikey === "tok-instancia-xyz"),
+    `presenca com credencial errada: ${JSON.stringify(presencas)}`,
+  );
+});
+
+Deno.test("MX07: instância sem token pausa com 'connection_lost' e nenhum POST sai (fail-closed)", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  const nameAnterior = Deno.env.get("EVOLUTION_INSTANCE_NAME");
+  const tokenAnterior = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+  // Instancia NAO-padrao sem token cadastrado: sem fallback de transicao, a
+  // unica saida segura e pausar — enviar com a key global seria o defeito do MX07.
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  Deno.env.delete("EVOLUTION_INSTANCE_NAME");
+  Deno.env.delete("EVOLUTION_INSTANCE_TOKEN");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550101")],
+    instanceToken: null,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComApiKey();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+    if (nameAnterior !== undefined) Deno.env.set("EVOLUTION_INSTANCE_NAME", nameAnterior);
+    if (tokenAnterior !== undefined) Deno.env.set("EVOLUTION_INSTANCE_TOKEN", tokenAnterior);
+  }
+  const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
+  assert(pause, "instancia sem token tem de pausar o disparo");
+  assert(
+    pause.args.p_pause_reason === "connection_lost",
+    `motivo esperado 'connection_lost', veio ${String(pause.args.p_pause_reason)}`,
+  );
+  // Nenhuma chamada ao EVOLUTION pode sair sem o token da instancia (o fetch do
+  // rate-limiter vai para o Supabase e nao conta aqui).
+  const chamadasGo = provider.calls.filter((c) =>
+    c.url.includes("/send/") || c.url.includes("/message/") || c.url.includes("/chat/")
+  );
+  assert(
+    chamadasGo.length === 0,
+    `nenhuma chamada ao provedor pode sair sem o token da instancia: ${JSON.stringify(chamadasGo)}`,
+  );
+  assert(rpcs(ctx, "record_multiplix_item_sent").length === 0, "nada pode ser marcado como enviado");
+  // O item ja reivindicado volta para a fila (release), nao some numa quarentena.
+  assert(rpcs(ctx, "release_multiplix_item_claim").length === 1, "o item tem de ser devolvido a fila");
 });
 
 // ------------------------------------------------------------------- F10 (janela)

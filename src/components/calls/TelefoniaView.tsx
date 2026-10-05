@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,7 +19,6 @@ import { SelectedCallPanel } from './SelectedCallPanel';
 import { useCallSession } from '@/providers/CallSessionProvider';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useCalls } from '@/hooks/communication/useCalls';
-import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 import { claimLeadership } from '@/lib/calls/tabLeaderStore';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TelefoniaTopActions } from './TelefoniaTopActions';
@@ -82,9 +81,6 @@ export function TelefoniaView() {
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
-  // E35 — gravação de chamada é mídia de conversa (não alerta): entra no volume global.
-  const recordingAudioRef = useRef<HTMLAudioElement>(null);
-  useMediaElementVolume(recordingAudioRef);
 
   // T20: a eleição de aba líder COMEÇA aqui. Sem esta reivindicação nenhuma aba
   // assume a sessão, `isLeader()` fica falso e o portão de `connect()`

@@ -10,8 +10,8 @@ import { useCallChannels } from '@/hooks/calls/useCallChannels';
 import { ROTULO_IGNORAR_WHATSAPP } from '@/lib/calls/WhatsAppCallAdapter';
 import { deveTocar, proximoToque, type EstadoDeToque } from '@/lib/calls/toqueDaChamada';
 import { useTerminoRemoto } from '@/hooks/calls/useTerminoRemoto';
+import { useAcoesDoAlerta } from '@/hooks/calls/useAcoesDoAlerta';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
-import { useCallSession } from '@/providers/CallSessionProvider';
 import { cn } from '@/lib/utils';
 
 import { getLogger } from '@/lib/logger';
@@ -33,10 +33,11 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   function IncomingCallAlert(_props, ref) {
   const { incomingCall, dismissCall } = useIncomingCallListener();
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
-  // Atender/recusar falam com a MÁQUINA da sessão (o provider decide o desfecho:
-  // `accept()` → atendida, `reject()` → `declined` e persistência em `declined`).
-  // O componente não escreve mais direto na tabela `calls` (legado `useCalls`).
-  const { accept, reject } = useCallSession();
+  // Atender/ignorar são encaminhados pelo CANAL da notificação
+  // (`useAcoesDoAlerta`): WhatsApp executa o contrato local daquele canal (grava
+  // o desfecho e abre a conversa) e NUNCA fala com o SIP; VoIP continua na
+  // máquina da sessão. O componente não conhece nem um nem outro.
+  const { atender, ignorar } = useAcoesDoAlerta();
   const { voip, whatsapp, rotuloLinhaWhatsApp } = useCallChannels();
   // T28: quando o outro lado desliga, a linha em `calls` encerra a sessao e o alerta
   // sai de cena sozinho (o listener para de entrega-la).
@@ -109,13 +110,21 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   // decidir desfecho por tempo na UI.
 
   const handleAnswer = () => {
-    if (incomingCall?.callId) void accept();
-    setShowDialog(true);
+    const notificacao = incomingCall;
+    if (!notificacao) return;
+    // O estado "atendido" só abre com o desfecho VÁLIDO da operação do canal
+    // alvo (o id da notificação, não a sessão corrente): falhou a gravação local,
+    // o alerta não finge que a chamada foi atendida.
+    void atender(notificacao).then((resultado) => {
+      if (resultado.ok) setShowDialog(true);
+    });
   };
 
   const handleDecline = () => {
-    void reject();
+    const notificacao = incomingCall;
+    // Ignorar silencia o PRÓPRIO alerta na hora; o desfecho é do canal.
     dismissCall();
+    if (notificacao) void ignorar(notificacao);
   };
 
   const handleDialogEnd = () => {

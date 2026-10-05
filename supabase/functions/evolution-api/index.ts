@@ -1,10 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
+import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 
-serve(async (req) => {
+/** Dependências injetáveis nos testes (mesma forma das edges com guard). */
+export interface EvolutionApiDeps {
+  /** client service-role (grava/atualiza whatsapp_connections etc.). */
+  supabase?: SupabaseClient;
+  /** client do chamador (anon key + JWT do caller) — usado para resolver papel. */
+  callerClient?: SupabaseClient;
+  /** chave de serviço (testes). */
+  serviceKey?: string;
+  /** anon key (testes). */
+  anonKey?: string;
+}
+
+export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiDeps): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -27,13 +40,14 @@ serve(async (req) => {
     });
   }
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+  const supabase = _injected?.supabase
+    ?? createClient(supabaseUrl, _injected?.serviceKey ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
   // Midia privada e assinada com o JWT de quem chamou: as policies de SELECT em
   // storage.objects (contato atribuido / admin / membro da conversa) decidem o que ele
   // pode mandar para a GO — o service_role nao passa por cima da autorizacao por objeto.
-  const callerClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') || '', {
+  const callerClient = _injected?.callerClient
+    ?? createClient(supabaseUrl, _injected?.anonKey ?? Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
     global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
   });
 
@@ -73,6 +87,70 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: true, message: 'instance (instanceName) é obrigatório para esta ação.' }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // ─── R2-API-001 (P1): matriz de autorização por ação, aplicada ANTES de
+    // qualquer fetch/RPC privilegiado (inclusive a consulta de manutenção com o
+    // client service-role). Ação de CONTROLE — e toda ação DESCONHECIDA, que o
+    // classificador trata como controle por padrão — exige papel
+    // admin/supervisor (que, no modelo single-tenant, é também o escopo de
+    // conexão global — IA-004 §5/§6.5). ENVIO direto e mutação de conversa
+    // exigem esse papel OU visibilidade do contato alvo
+    // (is_contact_visible_to_user). LEITURA segue exigindo só JWT válido (gate
+    // global acima) — somente as ações de READ_ACTIONS.
+    const callerUserId = _callerUser.id;
+    const isCallerAdminOrSupervisor = async (): Promise<boolean> => {
+      const { data: isAdmin } = await callerClient.rpc('is_admin_or_supervisor', { _user_id: callerUserId });
+      return !!isAdmin;
+    };
+    // Ações de conversa podem apontar o alvo por JID (send-reaction usa
+    // key.remoteJid, archive-chat usa chat, mark-read usa key) em vez de
+    // `number`. JID → dígitos locais para bater em contacts.phone; algo sem
+    // dígitos (status@broadcast, @g.us sem contato) resolve '' e nega.
+    const jidToDigits = (value: unknown): string => {
+      const raw = String(value ?? '');
+      return (raw.includes('@') ? raw.split('@')[0] : raw).replace(/\D/g, '');
+    };
+    const resolveSendTarget = (): string =>
+      jidToDigits(body.number) || jidToDigits(body.remoteJid) || jidToDigits(body.chat) ||
+      jidToDigits((body.key as Record<string, unknown> | undefined)?.remoteJid);
+    const resolveSendAccess = async (): Promise<EvolutionAuthzDecision> => {
+      if (await isCallerAdminOrSupervisor()) return { allowed: true };
+      // Falha de modo seguro: sem vínculo com a conexão, sem número ou sem
+      // contato local visível, o envio direto é negado (grupo/número fora da
+      // carteira do agente exige admin/supervisor).
+      const { data: conn, error: connErr } = await supabase
+        .from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
+      if (connErr || !conn) {
+        return { allowed: false, status: 403, message: 'Sem permissão para enviar por esta conexão.' };
+      }
+      const number = resolveSendTarget();
+      if (!number) {
+        return { allowed: false, status: 403, message: 'Destinatário (number) é obrigatório para envio.' };
+      }
+      const { data: contact } = await supabase
+        .from('contacts').select('id').eq('phone', number).eq('whatsapp_connection_id', conn.id).maybeSingle();
+      if (!contact) {
+        return { allowed: false, status: 403, message: 'Sem permissão para enviar para este contato/conexão.' };
+      }
+      const { data: visible } = await callerClient.rpc('is_contact_visible_to_user', { _contact_id: contact.id, _user_id: callerUserId });
+      if (!visible) {
+        return { allowed: false, status: 403, message: 'Sem permissão para enviar para este contato/conexão.' };
+      }
+      return { allowed: true };
+    };
+    const actionKind = classifyEvolutionAction(action);
+    if (actionKind === 'control') {
+      const decision = decideControlAuthz(await isCallerAdminOrSupervisor());
+      if (!decision.allowed) {
+        return new Response(JSON.stringify({ error: true, message: decision.message }), { status: decision.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+    if (actionKind === 'send') {
+      const decision = await resolveSendAccess();
+      if (!decision.allowed) {
+        return new Response(JSON.stringify({ error: true, message: decision.message }), { status: decision.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
     }
 
     // E22: chave do circuit breaker por instância — '__admin' para list-instances.
@@ -871,4 +949,8 @@ serve(async (req) => {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-});
+}
+
+if (import.meta.main) {
+  serve((req) => handleEvolutionApi(req));
+}

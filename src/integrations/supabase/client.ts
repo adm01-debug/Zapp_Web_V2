@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
-import { SUPABASE_URL } from '@/config/supabase';
+import { LOCAL_SUPABASE, SUPABASE_URL } from '@/config/supabase';
 
 export { SUPABASE_URL } from '@/config/supabase';
 
@@ -10,7 +10,10 @@ export { SUPABASE_URL } from '@/config/supabase';
 // (vpkmqeumtxhrwgawxdrl) e levariam o app para o banco errado. Secrets do tipo
 // EXTERNAL_* só existem em edge functions, não no bundle, então usamos valores
 // fixos aqui (a ANON KEY é pública por design).
+// Exceção única: o desvio explícito para o banco LOCAL de desenvolvimento, validado em
+// `@/config/supabase` (só fora de build de produção e só para http://127.0.0.1|localhost).
 export const SUPABASE_ANON_KEY =
+  LOCAL_SUPABASE?.anonKey ??
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm5sa2J5bXl0dnRxbmdiYnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjU0MDEsImV4cCI6MjEwMzMwMTQwMX0.4kDVowXzo3yBVboLOFn1bsij-vBKncJXVoPot3iknC0';
 
 // Google OAuth ATIVO desde 28/08/2026 (GET /auth/v1/settings retorna

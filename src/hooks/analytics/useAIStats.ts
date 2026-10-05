@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { aggregateScores } from '@/lib/ai-values';
+import { classifySentiment } from '@/lib/sentiment-classes';
 
 export type PeriodOption = 7 | 14 | 30;
 
@@ -19,6 +20,13 @@ export interface SentimentAlert {
   contact_name?: string;
   sentiment_score?: number;
   consecutive_low?: number;
+}
+
+/** Linha mínima de `conversation_analyses` que o agregado lê. */
+interface AnaliseRow {
+  sentiment: string | null;
+  sentiment_score: number | null;
+  created_at: string;
 }
 
 export interface AIStats {
@@ -76,13 +84,25 @@ export function useAIStats(selectedPeriod: PeriodOption) {
       // Média que EXCLUI ausente/inválido em vez de tratá-lo como 0 (IA-023):
       // sem nenhuma amostra válida devolve `null` (nunca 0 nem 50).
       const avgSentimentScore = aggregateScores((currentAnalyses || []).map(a => a.sentiment_score)).average;
-      const positiveSentiment = currentAnalyses?.filter(a => a.sentiment === 'positive').length || 0;
-      const negativeSentiment = currentAnalyses?.filter(a => a.sentiment === 'negative').length || 0;
-      const neutralSentiment = currentAnalyses?.filter(a => a.sentiment === 'neutral').length || 0;
+      // IA-SENTIMENT-001: o sentimento é contado pela classe canônica
+      // (pt-BR + legado EN traduzido na leitura); `critico` soma no negativo e
+      // desconhecido/ausente não entra em balde nenhum — antes comparava com o
+      // literal EN e TODA classe gravada (pt-BR) zerava.
+      const contagem = (rows: AnaliseRow[] | null) => {
+        const baldes = { positive: 0, neutral: 0, negative: 0 };
+        for (const row of rows || []) {
+          const classe = classifySentiment(row.sentiment);
+          if (classe === 'positivo') baldes.positive++;
+          else if (classe === 'neutro') baldes.neutral++;
+          else if (classe === 'negativo') baldes.negative++;
+        }
+        return baldes;
+      };
+      const { positive: positiveSentiment, neutral: neutralSentiment, negative: negativeSentiment } = contagem(currentAnalyses);
 
       const prevTotal = previousAnalyses?.length || 0;
       const prevAvgSentiment = aggregateScores((previousAnalyses || []).map(a => a.sentiment_score)).average;
-      const prevNegative = previousAnalyses?.filter(a => a.sentiment === 'negative').length || 0;
+      const prevNegative = contagem(previousAnalyses).negative;
 
       const trendMap = new Map<string, { scores: Array<number | null>; positive: number; negative: number; neutral: number }>();
       for (let i = selectedPeriod - 1; i >= 0; i--) {
@@ -90,12 +110,15 @@ export function useAIStats(selectedPeriod: PeriodOption) {
         trendMap.set(date, { scores: [], positive: 0, negative: 0, neutral: 0 });
       }
       currentAnalyses?.forEach(a => {
+        const classe = classifySentiment(a.sentiment);
+        // Classe desconhecida não é contada como 'neutro' (IA-SENTIMENT-001).
+        if (classe === null) return;
         const date = format(new Date(a.created_at), 'yyyy-MM-dd');
         const existing = trendMap.get(date) || { scores: [], positive: 0, negative: 0, neutral: 0 };
         existing.scores.push(a.sentiment_score);
-        if (a.sentiment === 'positive') existing.positive++;
-        else if (a.sentiment === 'negative') existing.negative++;
-        else existing.neutral++;
+        if (classe === 'positivo') existing.positive++;
+        if (classe === 'negativo') existing.negative++;
+        if (classe === 'neutro') existing.neutral++;
         trendMap.set(date, existing);
       });
 

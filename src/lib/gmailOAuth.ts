@@ -39,14 +39,17 @@ export function parseGmailOAuthState(value: string | null): GmailOAuthState | nu
       return null;
     }
 
-    // Verify CSRF nonce (RFC 6749 §10.12) — reject state without matching nonce
+    // Verify CSRF nonce (RFC 6749 §10.12) — the return is only bound to this
+    // session when a stored nonce exists AND matches. A missing stored nonce
+    // means this session never started a connection: reject, never accept.
     const storage = getSessionStorage();
     const storedNonce = storage?.getItem(GMAIL_OAUTH_NONCE_KEY);
-    if (storedNonce) {
-      storage?.removeItem(GMAIL_OAUTH_NONCE_KEY);
-      if (!parsed.nonce || parsed.nonce !== storedNonce) {
-        return null;
-      }
+    if (!storedNonce) {
+      return null;
+    }
+    storage?.removeItem(GMAIL_OAUTH_NONCE_KEY);
+    if (!parsed.nonce || parsed.nonce !== storedNonce) {
+      return null;
     }
 
     return parsed;

@@ -24,9 +24,13 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
     // o StoryViewer só era usado pela WhatsAppStatusSection morta). Se a
     // superfície voltar, re-entra aqui no mesmo commit.
 
-    ['chat interno da equipe', 'src/components/team-chat/TeamChatPanel.tsx'],
+    // TC-006 moveu os <video>/<audio> do Panel para teamChatParts.tsx; é lá que o volume global é aplicado.
+    ['chat interno da equipe', 'src/components/team-chat/teamChatParts.tsx'],
     ['transcrições (autoplay)', 'src/components/transcriptions/TranscriptionContactGroup.tsx'],
-    ['gravação de chamada', 'src/components/calls/TelefoniaView.tsx'],
+    // VOL-02: a superfície é o player que RENDERIZA o `<audio>` (RecordingPlayer), não o
+    // shell. Antes o contrato apontava para TelefoniaView e ficava verde com a ref órfã
+    // enquanto o elemento real tocava fora do controle.
+    ['gravação de chamada', 'src/components/calls/RecordingPlayer.tsx'],
   ];
 
   it.each(superfícies)('%s usa o controle único', (_nome, arquivo) => {
@@ -35,6 +39,30 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
       /useMediaElementVolume|useMediaVolume\b/.test(fonte),
       `${arquivo} precisa aplicar o volume de mídia global`,
     ).toBe(true);
+  });
+
+  /**
+   * VOL-02: a ocorrência textual do hook num shell que não renderiza áudio não é prova —
+   * foi exatamente isso que mascarou o defeito. A superfície de gravação tem de ligar o
+   * controle ao `<audio>` EFETIVO; e o shell não pode voltar a carregar a ligação órfã.
+   */
+  it('gravação de chamada liga o <audio> efetivo ao controle único', () => {
+    const fonte = read('src/components/calls/RecordingPlayer.tsx');
+
+    expect(fonte, 'o player de gravação precisa renderizar um <audio>').toContain('<audio');
+    expect(
+      fonte,
+      'o <audio> efetivo precisa estar ligado ao controle único de volume',
+    ).toMatch(/useMediaElementVolume\(audioRef\)/);
+    expect(
+      fonte,
+      'a ref do controle precisa estar aplicada ao elemento',
+    ).toMatch(/<audio\s+ref=\{audioRef\}/);
+
+    expect(
+      read('src/components/calls/TelefoniaView.tsx'),
+      'o shell da Telefonia não renderiza áudio: não pode voltar a segurar a ligação órfã',
+    ).not.toMatch(/useMediaElementVolume/);
   });
 
   it('as prévias de voz/TTS também usam o controle único', () => {

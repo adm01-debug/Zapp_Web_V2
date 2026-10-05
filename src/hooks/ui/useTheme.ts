@@ -45,10 +45,29 @@ let themeState: ThemeSnapshot = {
 
 const listeners = new Set<(snapshot: ThemeSnapshot) => void>();
 let transitionTimeout: number | null = null;
+let rootTransitionTimeout: number | null = null;
 let systemListenerAttached = false;
 
 const notify = () => {
   listeners.forEach((listener) => listener(themeState));
+};
+
+// Cancela os timers de transição pendentes. O `setTimeout` que só mexe no DOM
+// precisa morrer junto com os hooks: sem isso ele dispara depois do teardown
+// (jsdom) e vira `ReferenceError: document is not defined` — unhandled error que
+// derruba a suíte inteira mesmo com 0 teste falhando.
+const clearPendingTransitions = () => {
+  if (typeof window === 'undefined') return;
+
+  if (transitionTimeout !== null) {
+    window.clearTimeout(transitionTimeout);
+    transitionTimeout = null;
+  }
+
+  if (rootTransitionTimeout !== null) {
+    window.clearTimeout(rootTransitionTimeout);
+    rootTransitionTimeout = null;
+  }
 };
 
 const applyThemeToDocument = (resolvedTheme: ResolvedTheme, animate = true) => {
@@ -156,18 +175,35 @@ export function useTheme(): UseThemeReturn {
 
     return () => {
       listeners.delete(listener);
+
+      // Último hook desmontado: não deixa nenhum timer de transição para trás
+      // (ele tocaria o `document` já destruído no teardown do jsdom).
+      if (listeners.size === 0) {
+        clearPendingTransitions();
+      }
     };
   }, []);
 
   const setTheme = useCallback((nextTheme: Theme) => {
-    // Add transition class for smooth theme switching
-    if (document.documentElement) {
-      document.documentElement.classList.add('theme-transitioning');
-      updateThemeState(nextTheme);
-      setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 350);
-    } else {
-      updateThemeState(nextTheme);
+    // Transição suave, só quando existe DOM: em SSR/teardown `document` não existe.
+    if (typeof document !== 'undefined' && document.documentElement) {
+      const root = document.documentElement;
+
+      root.classList.add('theme-transitioning');
+
+      if (rootTransitionTimeout !== null) {
+        window.clearTimeout(rootTransitionTimeout);
+      }
+
+      // O callback usa o nó capturado (não `document`): se o timer sobreviver ao
+      // teardown, ele não estoura `ReferenceError`.
+      rootTransitionTimeout = window.setTimeout(() => {
+        root.classList.remove('theme-transitioning');
+        rootTransitionTimeout = null;
+      }, 350);
     }
+
+    updateThemeState(nextTheme);
   }, []);
 
   const toggleTheme = useCallback(() => {

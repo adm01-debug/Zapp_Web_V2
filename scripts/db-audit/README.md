@@ -15,6 +15,8 @@ container. Etapa 98 do plano: publicar aqui para nao perder de novo.
 | `catalog.sql` | sim | Regenera `supabase/schema-catalog.json` (relacoes, colunas e assinaturas/overloads de funcoes) |
 | `check-catalog-fresh.mjs` | nao | Compara por conjuntos o catalogo commitado com uma geracao fresca |
 | `check-mcp-exec-acl.sql` | sim | Falha se as funcoes MCP sairem do contrato `postgres` + `service_role` |
+| `check-secdef-public-execute.sql` | sim | Falha se qualquer funcao SECURITY DEFINER de `public` tiver EXECUTE para PUBLIC ou `anon` |
+| `check-secdef-public-execute.test.sh` | Docker local | Prova que a guarda bloqueia o estado da T26, passa depois de `20261004172554` e nao e vacua |
 | `check-migration-drift.mjs` | parcial | Valida migrations locais e compara versao, nome e evidencia com `schema_migrations` |
 | `check-migration-drift.test.mjs` | nao | Simula duplicata, vazio, conteudo alterado e drift do ledger com `psql` fake |
 | `check-reconcile-ledger-drift.test.sh` | Docker local | Prova replay limpo, colisao historica, fail-closed e idempotencia da reconciliacao de 29/08 |

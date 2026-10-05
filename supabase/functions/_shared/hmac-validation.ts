@@ -426,3 +426,233 @@ function decodeJwtSegment(segment: string): string {
   const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
   return new TextDecoder('utf-8').decode(bytes);
 }
+
+function decodeJwtSegmentBytes(segment: string): Uint8Array<ArrayBuffer> {
+  const normalized = segment.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * Verificação BLOQUEANTE de autenticidade (R2-API-021)
+ * ---------------------------------------------------------------------------
+ * Ao contrário dos helpers [WEBHOOK_AUTH_SHADOW] acima — que por contrato nunca
+ * bloqueiam — o veredito destas funções DECIDE a resposta: quem chama rejeita
+ * com 401 quando `ok` não é true, antes de qualquer efeito (banco/provedor).
+ * Todas falham fechado: sem a credencial esperada configurada (secret, JWKS,
+ * audience), a requisição é recusada, nunca processada.
+ */
+
+export type WebhookAuthFailureReason =
+  | 'missing_secret'
+  | 'missing_audience'
+  | 'missing_signature'
+  | 'malformed_signature'
+  | 'invalid_signature'
+  | 'malformed_token'
+  | 'jwks_unavailable'
+  | 'unknown_kid'
+  | 'bad_issuer'
+  | 'bad_audience'
+  | 'token_expired'
+  | 'bad_email';
+
+export type WebhookAuthVerdict =
+  | { ok: true; reason: 'valid'; email?: string }
+  | { ok: false; reason: WebhookAuthFailureReason };
+
+/**
+ * Verificação bloqueante do `x-hub-signature-256` da Meta/WhatsApp Cloud:
+ * HMAC-SHA256 hex do corpo cru com WHATSAPP_APP_SECRET. Sem timestamp no
+ * esquema da Meta — o vínculo com o corpo é o que impede replay/adulteração.
+ */
+export async function verifyMetaWebhookSignature(
+  headers: Headers,
+  payload: string,
+  secret: string | undefined | null,
+): Promise<WebhookAuthVerdict> {
+  if (!secret) return { ok: false, reason: 'missing_secret' };
+
+  const header = headers.get('x-hub-signature-256');
+  if (!header) return { ok: false, reason: 'missing_signature' };
+
+  if (!/^sha256=[0-9a-f]{64}$/i.test(header.trim())) {
+    return { ok: false, reason: 'malformed_signature' };
+  }
+
+  const valid = await verifyHmacSignature(payload, header.trim(), secret);
+  return valid
+    ? { ok: true, reason: 'valid' }
+    : { ok: false, reason: 'invalid_signature' };
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * OIDC do Google Pub/Sub (push) — verificação REAL do JWT RS256
+ * ---------------------------------------------------------------------------
+ * O push do Pub/Sub pode ser configurado com um token OIDC (service account).
+ * O token chega em `Authorization: Bearer <jwt>`; a assinatura é verificada
+ * contra o JWKS público do Google e os claims conferem issuer, audience
+ * (configurada na subscription), janela de validade e identidade do emissor.
+ */
+
+const GOOGLE_JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
+const GOOGLE_OIDC_ISSUERS = new Set(['accounts.google.com', 'https://accounts.google.com']);
+const OIDC_LEEWAY_SECONDS = 60;
+const JWKS_CACHE_TTL_MS = 15 * 60 * 1000;
+
+type GoogleJwk = JsonWebKey & { kid?: string };
+
+const googleJwksCache = new Map<string, { keys: GoogleJwk[]; expiresAt: number }>();
+
+async function fetchGoogleJwks(
+  jwksUrl: string,
+  fetcher: typeof fetch,
+  forceRefresh = false,
+): Promise<GoogleJwk[] | null> {
+  const cached = googleJwksCache.get(jwksUrl);
+  if (!forceRefresh && cached && cached.expiresAt > Date.now()) return cached.keys;
+
+  try {
+    const res = await fetcher(jwksUrl);
+    if (!res.ok) return null;
+    const body: unknown = await res.json();
+    const keys = (body as { keys?: unknown })?.keys;
+    if (!Array.isArray(keys)) return null;
+    googleJwksCache.set(jwksUrl, { keys: keys as GoogleJwk[], expiresAt: Date.now() + JWKS_CACHE_TTL_MS });
+    return keys as GoogleJwk[];
+  } catch {
+    return null;
+  }
+}
+
+export interface GoogleOidcVerifyOptions {
+  /**
+   * `aud` esperado — a audience configurada na push subscription do Pub/Sub
+   * (em geral a URL pública do endpoint). Obrigatório: sem ele a verificação
+   * falha fechada.
+   */
+  audience: string | undefined | null;
+  /**
+   * `email` exato do service account emissor (claim `email` do token).
+   * Obrigatório: sem ele a verificação falha fechada (`missing_secret`) —
+   * um JWT Google válido com `aud` correta NÃO prova a origem, porque
+   * qualquer service account de qualquer projeto GCP emite token com
+   * audience arbitrária (a audience é a URL pública, conhecida).
+   */
+  expectedEmail?: string | null;
+  /** URL do JWKS — padrão: endpoint oficial do Google. */
+  jwksUrl?: string;
+  /** fetch injetável para teste. */
+  fetcher?: typeof fetch;
+  /** relógio injetável para teste. */
+  nowMs?: number;
+}
+
+/**
+ * Verifica um JWT OIDC do Google (Pub/Sub push): assinatura RS256 contra o
+ * JWKS, `iss` Google, `aud` exata, `exp`/`iat` dentro da janela (anti-replay)
+ * e identidade do emissor (`email`/`email_verified`).
+ */
+export async function verifyGoogleOidcToken(
+  token: string,
+  options: GoogleOidcVerifyOptions,
+): Promise<WebhookAuthVerdict> {
+  const audience = options.audience || '';
+  if (!audience) return { ok: false, reason: 'missing_audience' };
+
+  const expectedEmail = options.expectedEmail || '';
+  if (!expectedEmail) return { ok: false, reason: 'missing_secret' };
+
+  const segments = token.split('.');
+  if (segments.length !== 3) return { ok: false, reason: 'malformed_token' };
+
+  let header: { alg?: string; kid?: string };
+  let claims: Record<string, unknown>;
+  try {
+    header = JSON.parse(decodeJwtSegment(segments[0]));
+    claims = JSON.parse(decodeJwtSegment(segments[1]));
+  } catch {
+    return { ok: false, reason: 'malformed_token' };
+  }
+  // Só RS256 — qualquer outro alg (incl. "none") é recusado antes de verificar.
+  if (header.alg !== 'RS256' || typeof header.kid !== 'string' || !header.kid) {
+    return { ok: false, reason: 'malformed_token' };
+  }
+
+  const jwksUrl = options.jwksUrl || GOOGLE_JWKS_URL;
+  const fetcher = options.fetcher ?? fetch;
+
+  let keys = await fetchGoogleJwks(jwksUrl, fetcher);
+  if (keys === null) return { ok: false, reason: 'jwks_unavailable' };
+  let jwk = keys.find((k) => k.kid === header.kid && (k.kty === 'RSA' || k.kty === undefined));
+  if (!jwk) {
+    // O Google rotaciona as chaves: um kid desconhecido ganha uma segunda
+    // chance fora do cache antes de ser recusado.
+    keys = await fetchGoogleJwks(jwksUrl, fetcher, true);
+    if (keys === null) return { ok: false, reason: 'jwks_unavailable' };
+    jwk = keys.find((k) => k.kid === header.kid && (k.kty === 'RSA' || k.kty === undefined));
+    if (!jwk) return { ok: false, reason: 'unknown_kid' };
+  }
+
+  let signatureOk = false;
+  try {
+    const publicKey = await crypto.subtle.importKey(
+      'jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify'],
+    );
+    signatureOk = await crypto.subtle.verify(
+      'RSASSA-PKCS1-v1_5', publicKey,
+      decodeJwtSegmentBytes(segments[2]),
+      new TextEncoder().encode(`${segments[0]}.${segments[1]}`),
+    );
+  } catch {
+    return { ok: false, reason: 'invalid_signature' };
+  }
+  if (!signatureOk) return { ok: false, reason: 'invalid_signature' };
+
+  const iss = typeof claims.iss === 'string' ? claims.iss : '';
+  if (!GOOGLE_OIDC_ISSUERS.has(iss)) return { ok: false, reason: 'bad_issuer' };
+
+  const aud = claims.aud;
+  const audOk = typeof aud === 'string'
+    ? aud === audience
+    : Array.isArray(aud) && aud.includes(audience);
+  if (!audOk) return { ok: false, reason: 'bad_audience' };
+
+  const nowSeconds = (options.nowMs ?? Date.now()) / 1000;
+  const exp = typeof claims.exp === 'number' ? claims.exp : 0;
+  const iat = typeof claims.iat === 'number' ? claims.iat : 0;
+  if (exp <= nowSeconds - OIDC_LEEWAY_SECONDS || iat > nowSeconds + OIDC_LEEWAY_SECONDS) {
+    return { ok: false, reason: 'token_expired' };
+  }
+
+  const email = typeof claims.email === 'string' ? claims.email : '';
+  // Match EXATO contra o service account esperado — nunca por sufixo/domínio:
+  // `*.gserviceaccount.com` inclui service accounts de projetos alheios.
+  if (!email || claims.email_verified !== true || !timingSafeEqual(email, expectedEmail)) {
+    return { ok: false, reason: 'bad_email' };
+  }
+
+  return { ok: true, reason: 'valid', email };
+}
+
+/**
+ * Extrai o Bearer do `Authorization` e verifica como token OIDC do Google.
+ * Header ausente/não-Bearer/vazio já é veredito de recusa.
+ */
+export async function verifyGmailOidcRequest(
+  headers: Headers,
+  options: GoogleOidcVerifyOptions,
+): Promise<WebhookAuthVerdict> {
+  const authHeader = headers.get('authorization') ?? '';
+  if (!authHeader.toLowerCase().startsWith('bearer ')) {
+    return { ok: false, reason: 'missing_signature' };
+  }
+  const token = authHeader.slice(7).trim();
+  if (!token) return { ok: false, reason: 'missing_signature' };
+  return verifyGoogleOidcToken(token, options);
+}

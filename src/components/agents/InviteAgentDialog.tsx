@@ -34,19 +34,14 @@ export function InviteAgentDialog({ open, onOpenChange }: InviteAgentDialogProps
 
     setIsSending(true);
     try {
-      // Send invite email via edge function
+      // Send invite email via edge function. O relay `send-email` autoriza a chamada
+      // (JWT + admin/supervisor) e deriva remetente, assunto e corpo de um template do
+      // servidor: o cliente só informa e-mail, nome e cargo (sem subject/html arbitrários).
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
-          to: email,
-          subject: 'Convite para a plataforma ZAPP',
-          html: `
-            <h2>Você foi convidado!</h2>
-            <p>Olá ${name || 'colega'},</p>
-            <p>Você foi convidado para participar da plataforma ZAPP como <strong>${
-              role === 'admin' ? 'Administrador' : role === 'supervisor' ? 'Supervisor' : 'Atendente'
-            }</strong>.</p>
-            <p>Acesse a plataforma e crie sua conta para começar.</p>
-          `,
+          email,
+          name: name || undefined,
+          role,
         },
       });
 
