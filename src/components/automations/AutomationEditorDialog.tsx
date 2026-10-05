@@ -16,7 +16,19 @@ interface AutomationEditorDialogProps {
   onSave: (data: Partial<AutomationRow>) => Promise<void>;
 }
 
-export function AutomationEditorDialog({ open, onOpenChange, automation, onSave }: AutomationEditorDialogProps) {
+// R2-MOD-001: o `AutomationsManager` mantém este diálogo SEMPRE montado e troca
+// apenas a prop `automation` (o `open` só o esconde). Como os inicializadores de
+// `useState` rodam uma única vez, na montagem, o formulário ficava preso nos
+// valores do PRIMEIRO registro aberto — abrir outro registro reutilizava o estado
+// do anterior. Remontamos o formulário sempre que o alvo muda (registro
+// diferente, ou abertura depois de fechar, inclusive de volta para "Nova") via
+// `key`, o padrão do React para reset de estado por prop.
+export function AutomationEditorDialog(props: AutomationEditorDialogProps) {
+  const key = props.open ? (props.automation?.id ?? 'new') : 'closed';
+  return <AutomationEditorForm key={key} {...props} />;
+}
+
+function AutomationEditorForm({ open, onOpenChange, automation, onSave }: AutomationEditorDialogProps) {
   const [name, setName] = useState(automation?.name || '');
   const [description, setDescription] = useState(automation?.description || '');
   const [triggerType, setTriggerType] = useState(automation?.trigger_type || 'new_message');
