@@ -553,7 +553,9 @@ export function reconciliarConsumo(linhas: LinhaDeConsumo[]): ReconciliacaoDeCon
     totais.tentativas += 1;
 
     const status = (linha.status ?? "").toLowerCase();
-    if (status === "error") totais.falhas += 1;
+    // 'request_error' (IA-050) = erro HTTP do PEDIDO (4xx): a ação falhou e segue
+    // contada como falha aqui — o circuito é quem ignora (não é queda do provedor).
+    if (status === "error" || status === "request_error") totais.falhas += 1;
     else if (status === "cancelled") totais.cancelamentos += 1;
     else if (status === "success" || status === "fallback") totais.sucessos += 1;
 

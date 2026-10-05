@@ -306,25 +306,28 @@ Deno.test("IA-050: meia-abertura SEM token de sonda bloqueia sem fetch (sonda ú
   }
 });
 
-Deno.test("IA-050: sonda que FALHA reabre o circuito — a admissão seguinte já bloqueia", async () => {
+Deno.test("IA-050: sonda que FALHA (5xx do provedor) reabre o circuito — a admissão seguinte já bloqueia", async () => {
   const restaurarEnv = stubEnv();
   const estado: EstadoStub = {
     ledger: ledgerComErros(5, 120_000),
     probeHits: 1,
-    providerStatus: 400, // falha permanente: sem retentativa (rápido) e ainda conta como erro
-    providerBody: { error: "provedor quebrou" },
+    providerStatus: 503, // falha TRANSITÓRIA do provedor (IA-042): retenta e conta como 'error'
+    providerBody: { error: "provedor indisponivel" },
   };
   const { contadores, restaurar } = stubFetch(estado);
   try {
     const sonda = await chamarGenerate();
     assertEquals(sonda.ok, false, "a sonda falhou no provedor");
-    assertEquals(sonda.response.status, 400, "o erro real do provedor atravessa para o chamador");
-    assertEquals(contadores.provedor, 1, "a sonda foi tentada uma única vez");
+    assertEquals(sonda.response.status, 503, "o erro real do provedor atravessa para o chamador");
+    assert(contadores.provedor >= 1, "a sonda foi tentada");
     assertConsultaLedger(contadores);
     assertLogComProvider(contadores, "error");
 
-    // O fracasso da sonda virou linha 'error' nova (mais recente): o circuito
-    // volta a ABERTO e a admissão seguinte bloqueia sem fetch nem sonda.
+    // O 5xx é FALHA DO PROVEDOR: entra no ledger como 'error' — é o desfecho que
+    // reabre o circuito. A admissão seguinte bloqueia sem fetch nem sonda nova.
+    const ultimoLog = contadores.insertsLog.at(-1) as { status?: string };
+    assertEquals(ultimoLog?.status, "error", "5xx do provedor tem de contar como falha");
+    const aposSonda = contadores.provedor;
     estado.ledger = [
       { status: "error", created_at: new Date().toISOString() },
       ...estado.ledger,
@@ -332,8 +335,63 @@ Deno.test("IA-050: sonda que FALHA reabre o circuito — a admissão seguinte j�
     const proxima = await chamarGenerate();
     assertEquals(proxima.ok, false);
     assertEquals(proxima.errorCode, "CIRCUIT_OPEN");
-    assertEquals(contadores.provedor, 1, "circuito reaberto não pode gerar nova chamada");
+    assertEquals(contadores.provedor, aposSonda, "circuito reaberto não pode gerar nova chamada");
     assertEquals(contadores.sonda, 1, "circuito reaberto não consome sonda nova");
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// (a') 4xx do PEDIDO não é falha do provedor: não abre o circuito para todos
+// ---------------------------------------------------------------------------
+Deno.test("IA-050: 4xx do pedido NÃO abre o circuito — a falha é do chamador, não do provedor", async () => {
+  const restaurarEnv = stubEnv();
+  const estado: EstadoStub = {
+    // Nenhuma falha REAL do provedor no ledger: só o chamador erra o pedido.
+    ledger: [],
+    probeHits: 1,
+    providerStatus: 400, // pedido inválido (ex.: prompt malformado) — culpa do chamador
+    providerBody: { error: "pedido invalido" },
+  };
+  const { contadores, restaurar } = stubFetch(estado);
+  try {
+    for (let tentativa = 0; tentativa < 6; tentativa++) {
+      const r = await chamarGenerate();
+      assertEquals(r.ok, false);
+      assertEquals(r.response.status, 400, "o 400 real do provedor atravessa para o chamador");
+    }
+
+    // O defeito: sem a correção, cada 400 entrava como 'error' e 6 rejeições do
+    // MESMO chamador abririam o circuito para TODOS. Aqui cada linha é 'request_error'.
+    assertEquals(contadores.insertsLog.length, 6, "cada tentativa tem de ser auditada");
+    for (const linha of contadores.insertsLog) {
+      assertEquals(
+        (linha as { status?: string }).status,
+        "request_error",
+        "4xx causado pelo pedido não pode contar como falha do provedor",
+      );
+    }
+    assertEquals(
+      contadores.provedor,
+      6,
+      "mesmo após 6 rejeições do pedido o provedor segue sendo chamado (circuito fechado)",
+    );
+
+    // A derivação pura confirma: 'request_error' não conta como falha nem quebra a sequência.
+    const { deriveCircuitVerdict } = await import("./ai-circuit.ts");
+    const agora = Date.now();
+    const veredito = deriveCircuitVerdict(
+      Array.from({ length: 6 }, (_, i) => ({
+        status: "request_error",
+        created_at: new Date(agora - i * 1_000).toISOString(),
+      })),
+      agora,
+      { failureThreshold: 5, windowMs: 300_000, cooldownMs: 60_000 },
+    );
+    assertEquals(veredito.state, "closed");
+    assertEquals(veredito.consecutiveFailures, 0);
   } finally {
     restaurar();
     restaurarEnv();
