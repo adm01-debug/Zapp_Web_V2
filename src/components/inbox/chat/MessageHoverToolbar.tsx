@@ -59,7 +59,20 @@ export function MessageHoverToolbar({
           log.warn('WhatsApp API delete failed, marking locally only');
         }
       }
-      await supabase.from('messages').update({ is_deleted: true, content: '[Mensagem apagada]' }).eq('id', message.id);
+      // PostgREST não lança: sem checar `error` a UI confirmava uma exclusão
+      // que o banco rejeitou (R2-INB-014). O fallback local (Evolution API
+      // fora) só é sucesso se a marcação local persistir de fato.
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_deleted: true, content: '[Mensagem apagada]' })
+        .eq('id', message.id);
+
+      if (error) {
+        log.error('Falha ao marcar mensagem como deletada', error);
+        toast.error('Erro ao deletar mensagem');
+        return;
+      }
+
       toast.success(externalId ? 'Mensagem deletada para todos' : 'Mensagem removida');
       onMessageDeleted(message.id);
     } catch {
