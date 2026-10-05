@@ -44,7 +44,7 @@ export function PresetCard({ preset, isActive, onSelect }: PresetCardProps) {
             onKeyDown={handleKeyDown}
             whileHover={reducedMotion ? undefined : { scale: 1.04, y: -2 }}
             whileTap={reducedMotion ? undefined : { scale: 0.96 }}
-            className={`relative cursor-pointer rounded-xl border-2 p-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`relative cursor-pointer rounded-xl border-2 p-3 outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:ring-2 focus-visible:ring-ring ${
               isActive
                 ? 'border-primary shadow-lg shadow-primary/20'
                 : 'border-border/40 hover:border-primary/40'

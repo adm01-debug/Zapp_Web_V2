@@ -38,6 +38,17 @@ describe('PresetCard', () => {
     expect(screen.getByRole('radio')).toHaveAttribute('tabIndex', '0');
   });
 
+  it('mantém outline de foco visível independente do ring da skin', () => {
+    render(<PresetCard preset={preset} isActive={false} onSelect={vi.fn()} />);
+    const radio = screen.getByRole('radio');
+
+    expect(radio).toHaveClass(
+      'focus-visible:outline-2',
+      'focus-visible:outline-offset-2',
+      'focus-visible:outline-ring',
+    );
+  });
+
   it('data-testid segue o padrão preset-card-{id}', () => {
     render(<PresetCard preset={preset} isActive={false} onSelect={vi.fn()} />);
     expect(screen.getByTestId('preset-card-gx-classic')).toBeInTheDocument();
