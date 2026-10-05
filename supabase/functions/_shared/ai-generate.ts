@@ -92,6 +92,7 @@ import {
   callCustomWebhook,
   callLovableAI,
   callOpenAICompatible,
+  classifyFailure,
   withRetry,
 } from "./ai-providers.ts";
 import { extractTokenUsage, logAiUsage } from "./ai-usage.ts";
@@ -187,6 +188,16 @@ export const AI_CIRCUIT_OPEN_ERROR_CODE = "CIRCUIT_OPEN";
  * como "sem chamada ao provedor").
  */
 export const AI_CIRCUIT_OPEN_STATUS = "circuit_open";
+
+/**
+ * `status` do ledger para erro HTTP em que a falha é DO PEDIDO, não do provedor
+ * (4xx não transitório: 400 de prompt inválido, 401/403 de credencial, 404 de
+ * modelo, 422...). O provedor respondeu — está no ar — e por isso NÃO pode
+ * alimentar o circuito (IA-050): sem esta distinção, um único chamador com
+ * entrada ruim abriria o circuito para TODOS. A linha segue auditada e
+ * reconciliada como falha (`ai-usage.ts`); só não é desfecho de provedor.
+ */
+export const AI_REQUEST_ERROR_STATUS = "request_error";
 
 /** Todo código de erro que um desfecho do despacho pode carregar. */
 export type AiGenerateErrorCode =
@@ -977,9 +988,15 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
 
   // (9) erro HTTP: a resposta REAL volta para o consumidor (429/402 continuam tratáveis).
   if (!response.ok) {
+    // IA-050: só falha TRANSITÓRIA do provedor (5xx, 408, 429) abre o circuito.
+    // 4xx do PEDIDO (400/401/403/404/422...) é resposta do provedor ao CHAMADOR,
+    // não queda dele: gravar como 'error' deixaria um chamador com entrada ruim
+    // abrir o circuito para todos. `classifyFailure` é o classificador canônico
+    // (IA-042) — 'transient' = soluço do provedor, 'permanent' = erro do pedido.
+    const falhaDoProvedor = classifyFailure(response.status) === "transient";
     await logUsage({
       model,
-      status: "error",
+      status: falhaDoProvedor ? "error" : AI_REQUEST_ERROR_STATUS,
       errorMessage: `HTTP ${response.status}`,
       providerId,
       providerName,

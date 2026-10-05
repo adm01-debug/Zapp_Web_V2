@@ -34,8 +34,9 @@
  *    decisão humana (IA-009/IA-039), e o desligamento não impede o
  *    atendimento humano — o bloqueio devolve `ok:false` explícito;
  *  - só contam desfechos REAIS do provedor (`status` 'success'/'error' no
- *    ledger): bloqueios (`circuit_open`), negações de orçamento e falhas de
- *    roteamento sem rota não alimentam nem quebram a sequência;
+ *    ledger): bloqueios (`circuit_open`), rejeições do PEDIDO (`request_error`,
+ *    4xx), negações de orçamento e falhas de roteamento sem rota não alimentam
+ *    nem quebram a sequência;
  *  - falha ABERTA quando a observabilidade falha (env ausente, erro de
  *    leitura do ledger, RPC da sonda indisponível): a IA segue e o motivo
  *    fica em `detail`/`source: "unavailable"` — distinguível de um veredito
