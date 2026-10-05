@@ -29,7 +29,9 @@ for (const b of blocks) {
   if (steps.length !== 10) errors.push(`E${id}: ${steps.length} sub-etapas`);
   const nums = steps.map((s) => Number(s));
   if (nums.some((n, i) => n !== i + 1)) errors.push(`E${id}: numeração fora de ordem`);
-  const checks = (b.split('**Checklist**')[1] || '').match(/^- \[ \] /gm) || [];
+  // OTH-011: o total do checklist conta itens marcados E nao marcados
+  // (`[ ]`, `[x]`, `[X]`); o estado de conclusao nao altera a estrutura exigida.
+  const checks = (b.split('**Checklist**')[1] || '').match(/^- \[[ xX]\] /gm) || [];
   if (checks.length < 3) errors.push(`E${id}: checklist com ${checks.length} itens`);
   if (!/\*\*Objetivo:\*\*/.test(b)) errors.push(`E${id}: sem Objetivo`);
 }
