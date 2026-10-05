@@ -7,6 +7,7 @@
  *   tempo do balão enviado (`text-primary-foreground/70` sobre `bg-primary-foreground/10`) ... 2,94:1
  *   ícone de arquivo (`/50`) ............................................................... 2,21:1
  *   faixa do slider (`--primary`) sobre a trilha (`--secondary`) no alto contraste ........ 1,30:1
+ *   controle de volume no overlay (`--secondary-foreground` sobre `--secondary`) ........... 3,30:1
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -64,7 +65,9 @@ function tokensDoBloco(css: string, seletor: string): Record<string, Rgb> {
         nivel -= 1;
         if (nivel === 0) {
           for (const t of Array.from(
-            limpo.slice(abre + 1, j).matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g),
+            limpo
+              .slice(abre + 1, j)
+              .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g)
           )) {
             tokens[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
           }
@@ -82,7 +85,10 @@ const ACESSIBILIDADE = readFileSync('src/styles/accessibility.css', 'utf8');
 const ESTADOS = {
   claro: { ...tokensDoBloco(TOKENS, ':root') },
   escuro: { ...tokensDoBloco(TOKENS, ':root'), ...tokensDoBloco(TOKENS, '.dark') },
-  'alto-contraste': { ...tokensDoBloco(TOKENS, ':root'), ...tokensDoBloco(ACESSIBILIDADE, '.high-contrast') },
+  'alto-contraste': {
+    ...tokensDoBloco(TOKENS, ':root'),
+    ...tokensDoBloco(ACESSIBILIDADE, '.high-contrast'),
+  },
   'escuro-alto-contraste': {
     ...tokensDoBloco(TOKENS, ':root'),
     ...tokensDoBloco(TOKENS, '.dark'),
@@ -99,15 +105,41 @@ function token(tokens: Record<string, Rgb>, nome: string): Rgb {
 
 /** Classes reais do sent-bubble (pinadas por varredura do componente). */
 const COMPONENTE = readFileSync('src/components/inbox/AudioMessagePlayer.tsx', 'utf8');
+const CONTROLE_VOLUME = readFileSync('src/components/inbox/MediaVolumeControl.tsx', 'utf8');
 const SLIDER = readFileSync('src/components/ui/slider.tsx', 'utf8');
 
-describe('contraste AA — balão de áudio e slider (só classes do componente)', () => {
+/** Extrai as listas efetivamente condicionadas ao variant, sem pinar formatação ou o literal inteiro. */
+function classesDoVariant(codigo: string, variant: string): string[][] {
+  const padrao = new RegExp(
+    `variant\\s*===\\s*["']${variant}["']\\s*&&\\s*(["'])([^"']+)\\1`,
+    'g'
+  );
+  return Array.from(codigo.matchAll(padrao), (match) => match[2].trim().split(/\s+/));
+}
+
+function tokenDeCor(classes: string[], propriedade: 'bg' | 'text'): string {
+  const classe = classes.find((item) => item.startsWith(`${propriedade}-`));
+  if (!classe) throw new Error(`classe ${propriedade}-* ausente em: ${classes.join(' ')}`);
+  return classe.slice(propriedade.length + 1).split('/')[0];
+}
+
+const CLASSES_OVERLAY = classesDoVariant(CONTROLE_VOLUME, 'overlay');
+
+describe('contraste AA — balão de áudio, overlay e slider (só classes do componente)', () => {
   it('o componente não voltou a usar alfa no texto do balão enviado', () => {
     expect(COMPONENTE).not.toMatch(/text-primary-foreground\/\d/);
   });
 
   it('a superfície interna do balão é o tom do --primary-foreground (chip invertido)', () => {
     expect(COMPONENTE).toContain("isSent ? 'bg-primary-foreground'");
+  });
+
+  it('encontra os dois controles do overlay e suas classes de cor reais', () => {
+    expect(CLASSES_OVERLAY).toHaveLength(2);
+    for (const classes of CLASSES_OVERLAY) {
+      expect(tokenDeCor(classes, 'bg')).toBeTruthy();
+      expect(tokenDeCor(classes, 'text')).toBeTruthy();
+    }
   });
 
   it('a trilha do slider não é mais --secondary (que em alto contraste ficava 1,30:1)', () => {
@@ -123,22 +155,39 @@ describe('contraste AA — balão de áudio e slider (só classes do componente)
       // isso exige mexer no token, que está vetado; o teste pina o valor real para não
       // piorar em silêncio, em vez de declarar AA que não existe.
       const limiar = estado.includes('alto-contraste') ? 4.4 : LIMIAR_TEXTO;
-      expect(razao(token(tokens, 'primary'), token(tokens, 'primary-foreground'))).toBeGreaterThanOrEqual(limiar);
+      expect(
+        razao(token(tokens, 'primary'), token(tokens, 'primary-foreground'))
+      ).toBeGreaterThanOrEqual(limiar);
     });
 
     it(`${estado}: ícones e barras do balão fecham 3:1`, () => {
       const chip = token(tokens, 'primary-foreground');
       const tinta = token(tokens, 'primary');
       expect(razao(tinta, chip), 'ícone sólido').toBeGreaterThanOrEqual(LIMIAR_UI);
-      expect(razao(tinta, compor(chip, tinta, 0.1)), 'botão com fundo próprio').toBeGreaterThanOrEqual(LIMIAR_UI);
+      expect(
+        razao(tinta, compor(chip, tinta, 0.1)),
+        'botão com fundo próprio'
+      ).toBeGreaterThanOrEqual(LIMIAR_UI);
       // A barra INATIVA do waveform é decorativa: o que informa o progresso é a barra
       // ATIVA (já checada acima como tinta cheia contra o chip) e o tempo escrito. Exigir
       // 3:1 dela exigiria um alfa tão alto que ela ficaria igual à ativa.
-      expect(razao(compor(chip, tinta, 0.6), chip), 'barra inativa (decorativa)').toBeGreaterThan(1);
+      expect(razao(compor(chip, tinta, 0.6), chip), 'barra inativa (decorativa)').toBeGreaterThan(
+        1
+      );
     });
 
     it(`${estado}: faixa do slider fecha 3:1 contra a trilha`, () => {
-      expect(razao(token(tokens, 'primary'), token(tokens, 'background'))).toBeGreaterThanOrEqual(LIMIAR_UI);
+      expect(razao(token(tokens, 'primary'), token(tokens, 'background'))).toBeGreaterThanOrEqual(
+        LIMIAR_UI
+      );
+    });
+
+    it(`${estado}: classes reais dos controles do overlay fecham 4,5:1`, () => {
+      for (const classes of CLASSES_OVERLAY) {
+        const fundo = token(tokens, tokenDeCor(classes, 'bg'));
+        const texto = token(tokens, tokenDeCor(classes, 'text'));
+        expect(razao(texto, fundo), classes.join(' ')).toBeGreaterThanOrEqual(LIMIAR_TEXTO);
+      }
     });
   }
 });
