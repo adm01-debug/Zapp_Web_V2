@@ -138,7 +138,8 @@ serve(async (req) => {
     // Em 'shadow' apenas observa via logs.
     if (!validation.signatureValid) {
       const bodyRec = rawBody as Record<string, unknown>;
-      if (!await goTokenMatches(bodyRec, (name) => resolveInstanceToken(supabase as InstanceTokenClient, name))) {
+      // cacheMiss:false — input pré-autenticação não grava miss no cache.
+      if (!await goTokenMatches(bodyRec, (name) => resolveInstanceToken(supabase as InstanceTokenClient, name, { cacheMiss: false }))) {
         // C11: v2-shaped payloads (with 'instance' field, no 'instanceName') also
         // reach this branch because isGoPayload() returns false — but the token check
         // runs here on the raw body regardless of shape. In shadow mode all payloads
