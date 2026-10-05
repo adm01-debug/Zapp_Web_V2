@@ -58,9 +58,23 @@ export default function QueueDetails() {
       );
       setContacts(contactsWithDetails);
 
-      const totalContacts = contactsWithDetails.length;
-      const assignedContacts = contactsWithDetails.filter(c => c.assigned_to).length;
-      setMetrics({ totalContacts, assignedContacts, waitingContacts: totalContacts - assignedContacts, avgResponseTime: '~3 min', resolvedToday: Math.floor(assignedContacts * 0.7) });
+      // R2-QUE-003: Total/Aguardando sao TOTAIS da fila, e por isso vem do agregado do
+      // servidor (`count: exact`) — nunca do tamanho da pagina visivel, que o
+      // `.limit(50)` acima trunca. Antes, uma fila com mais de 50 contatos exibia
+      // "Total de Contatos" = 50 e "Aguardando" calculado sobre esse recorte.
+      const [
+        { count: totalContactsCount, error: totalCountError },
+        { count: assignedContactsCount, error: assignedCountError },
+      ] = await Promise.all([
+        supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('queue_id', id),
+        supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('queue_id', id).not('assigned_to', 'is', null),
+      ]);
+      if (totalCountError) throw totalCountError;
+      if (assignedCountError) throw assignedCountError;
+
+      const totalContacts = totalContactsCount ?? 0;
+      const assignedContacts = assignedContactsCount ?? 0;
+      setMetrics({ totalContacts, assignedContacts, waitingContacts: Math.max(totalContacts - assignedContacts, 0), avgResponseTime: '~3 min', resolvedToday: Math.floor(assignedContacts * 0.7) });
     } catch (error) { log.error('Error fetching queue data:', error); }
     finally { setLoading(false); }
   }, [id]);
