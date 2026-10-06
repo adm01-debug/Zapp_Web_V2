@@ -598,7 +598,8 @@ interface AsyncStartDepsOpts {
   authUser?: { id: string } | null;
   isAdminOrSupervisor?: boolean;
   roleRpcError?: boolean;
-  kickError?: boolean;
+  /** R2-INF-016: TEXTO do erro que o RPC kick_talkx_campaign devolve (marcador sintetico). */
+  kickError?: string;
 }
 
 /**
@@ -633,7 +634,7 @@ function makeAsyncStartDeps(opts: AsyncStartDepsOpts = {}) {
           }
           if (name === "kick_talkx_campaign") {
             ctx.kickCalls++;
-            return Promise.resolve({ data: null, error: opts.kickError ? { message: "kick failed" } : null });
+            return Promise.resolve({ data: null, error: opts.kickError ? { message: opts.kickError } : null });
           }
           if (name === "transition_talkx_campaign") return Promise.resolve({ data: [{ current_status: "sending" }], error: null });
           if (name === "get_talkx_cron_secret") return Promise.resolve({ data: null, error: null });
@@ -1103,5 +1104,31 @@ Deno.test("X025 continue: lote com 2 suprimidos → 1 evento agregado skipped_su
   } finally {
     provider.restore();
     clock.restore();
+  }
+});
+
+// --------------------------------------------------------------------------- R2-INF-016
+
+Deno.test("R2-INF-016 start: falha do kick → 500 sanitizado (sem detalhe do banco)", async () => {
+  setDispatchEnv();
+  const KICK_SEGREDO = "detalhe-interno-do-kick-7d2f";
+  const { deps } = makeAsyncStartDeps({ recipients: makeContinueRecipients(1), kickError: KICK_SEGREDO });
+  const provider = mockProviderRecording();
+  const linhas: string[] = [];
+  const originalError = console.error;
+  console.error = (...args: unknown[]) => { linhas.push(args.map((a) => String(a)).join(" ")); };
+  try {
+    const res = await handleTalkxSend(makeDispatchPost(), deps);
+    assert(res.status === 500, `esperado 500, recebido ${res.status}`);
+    const texto = await res.text();
+    assert(!texto.includes(KICK_SEGREDO), `o corpo nao pode trazer o detalhe interno: ${texto}`);
+    assert(JSON.parse(texto).error === "Internal server error", `corpo inesperado: ${texto}`);
+    assert(
+      linhas.some((l) => l.includes(KICK_SEGREDO)),
+      `o detalhe interno precisa constar no log do servidor; capturado:\n${linhas.join("\n")}`,
+    );
+  } finally {
+    console.error = originalError;
+    provider.restore();
   }
 });
