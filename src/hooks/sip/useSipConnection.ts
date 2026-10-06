@@ -78,6 +78,8 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
     if (uaRef.current || attemptRef.current) return;
     const attempt = { cancelled: false };
     attemptRef.current = attempt;
+    let ua: UserAgent | undefined;
+    let registerer: Registerer | undefined;
     try {
       clearReconnectTimer();
       setSipStatus('connecting');
@@ -90,7 +92,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
       const uri = UserAgent.makeURI(`sip:${config.user}@${config.server}`);
       if (!uri) throw new Error('URI SIP inválida');
 
-      const ua = new UserAgent({
+      ua = new UserAgent({
         uri,
         transportOptions: { server: wsServer, traceSip: false },
         authorizationPassword: config.password,
@@ -139,7 +141,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
         try { await ua.stop(); } catch { /* transporte ja encerrado */ }
         return;
       }
-      const registerer = new Registerer(ua);
+      registerer = new Registerer(ua);
       // T16: o REGISTER pode ser recusado (403) antes de `register()` resolver,
       // entao o motivo e guardado localmente para decidir o que fazer depois.
       let registroRecusado = false;
@@ -182,7 +184,11 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
       // Ela também NÃO pode mexer nos refs: o `start()` dela pode rejeitar
       // DEPOIS de uma tentativa nova já ter publicado — zerar `uaRef` aqui
       // apagaria a guarda de quem está de pé e liberaria um terceiro connect.
-      if (!attempt.cancelled) {
+      if (attempt.cancelled) {
+        if (ua) ua.transport.onDisconnect = () => {};
+        try { await registerer?.unregister(); } catch { /* REGISTER nunca saiu */ }
+        try { await ua?.stop(); } catch { /* transporte ja encerrado */ }
+      } else {
         uaRef.current = null;
         registererRef.current = null;
         setSipStatus('unavailable');

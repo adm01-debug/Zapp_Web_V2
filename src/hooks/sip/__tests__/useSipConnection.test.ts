@@ -306,6 +306,36 @@ describe('useSipConnection', () => {
     expect(result.current.sipStatus).toBe('idle');
   });
 
+  it('disconnect() durante register() rejeitado limpa Registerer e UA sem sair de idle', async () => {
+    vi.useFakeTimers();
+    const reg = deferred();
+    registerImpl = (options) => { mockRegisterCalls.push(options); return reg.promise; };
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    expect(mockRegistererInstances.length).toBe(1);
+
+    await act(async () => { await result.current.disconnect(); });
+    const ua = mockUaInstances[0];
+    const registerer = mockRegistererInstances[0];
+    await act(async () => { reg.reject(new Error('register tardio falhou')); await pending; });
+
+    expect(registerer.unregister).toHaveBeenCalled();
+    expect(ua.stop).toHaveBeenCalled();
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+    expect(toast.error).not.toHaveBeenCalled();
+
+    act(() => { ua.transport.onDisconnect?.(); });
+    expect(result.current.sipStatus).toBe('idle');
+    expect(toast.info).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(60000); });
+    expect(mockUaInstances.length).toBe(1);
+    vi.useRealTimers();
+  });
+
   it('após um connect() invalidado por disconnect(), um novo connect() cria uma única tentativa válida', async () => {
     const start = deferred();
     startImpl = () => start.promise;
@@ -347,6 +377,7 @@ describe('useSipConnection', () => {
     // os refs da tentativa nova nem derrubar o estado para "unavailable".
     await act(async () => { start.reject(new Error('start tardio falhou')); await pending; });
 
+    expect(mockUaInstances[0].stop).toHaveBeenCalled();
     expect(result.current.uaRef.current).toBe(mockUaInstances[1]);
     expect(result.current.sipStatus).not.toBe('unavailable');
   });
