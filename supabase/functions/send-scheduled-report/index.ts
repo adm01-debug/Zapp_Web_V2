@@ -40,6 +40,10 @@ export interface ScheduledReportDeps {
   supabase?: any;
   /** Override do CRON_SECRET (facilita o teste sem tocar no env do processo). */
   cronSecret?: string;
+  /** Override da chave do provedor de e-mail (teste sem tocar no env do processo). */
+  resendApiKey?: string;
+  /** Override do fetch usado para entregar o e-mail (teste sem rede). */
+  fetchImpl?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 export async function handleScheduledReport(
@@ -95,7 +99,10 @@ export async function handleScheduledReport(
       requireEnv("SUPABASE_URL"),
       requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
     );
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const resendApiKey = deps.resendApiKey !== undefined
+      ? deps.resendApiKey
+      : Deno.env.get("RESEND_API_KEY");
+    const doFetch = deps.fetchImpl ?? fetch;
 
     const parsed = parseBody(ScheduledReportSchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
@@ -173,10 +180,23 @@ export async function handleScheduledReport(
     }
 
     const emailHtml = buildReportEmail(reportData);
+    const recipients: string[] = Array.isArray(report.recipients) ? report.recipients : [];
+    const failedRecipients: string[] = [];
 
-    if (resendApiKey && report.recipients?.length > 0) {
-      for (const recipient of report.recipients) {
-        const emailResponse = await fetch("https://api.resend.com/emails", {
+    if (recipients.length > 0) {
+      // Sem provedor configurado não há envio: falha fechada, como o envio falho.
+      if (!resendApiKey) {
+        log.error("RESEND_API_KEY ausente: relatório não enviado", { recipients: recipients.length });
+        log.done(502);
+        return jsonResponse(
+          { success: false, error: "Email provider not configured", failedRecipients: recipients },
+          502,
+          req,
+        );
+      }
+
+      for (const recipient of recipients) {
+        const emailResponse = await doFetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -184,7 +204,26 @@ export async function handleScheduledReport(
             subject: `📊 ${reportData.title} - ${reportData.period}`, html: emailHtml,
           }),
         });
-        if (!emailResponse.ok) log.error(`Failed to send to ${recipient}`, { error: await emailResponse.text() });
+        if (!emailResponse.ok) {
+          failedRecipients.push(recipient);
+          log.error(`Failed to send to ${recipient}`, { error: await emailResponse.text() });
+        }
+      }
+
+      // R2-API-023: com qualquer envio falho NÃO se avança `last_sent_at` nem se
+      // anuncia sucesso — o agendamento continua vencido para o próximo cron
+      // tentar de novo, em vez de o relatório ser silenciosamente perdido.
+      if (failedRecipients.length > 0) {
+        log.error("Relatório não entregue a todos os destinatários", {
+          failed: failedRecipients.length,
+          total: recipients.length,
+        });
+        log.done(502);
+        return jsonResponse(
+          { success: false, error: "Report delivery failed", failedRecipients },
+          502,
+          req,
+        );
       }
     }
 

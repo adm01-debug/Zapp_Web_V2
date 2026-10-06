@@ -50,6 +50,8 @@ function authClientMock(opts: {
 // Cliente service-role (usado SÓ depois da autorização) com contagem de tabelas.
 function serviceMock(opts: { report?: unknown; reportError?: unknown } = {}) {
   const fromCalls: string[] = [];
+  // Payloads passados a .update() — prova se o agendamento foi (ou não) avançado.
+  const updateCalls: unknown[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const qb: any = {
     select: () => qb,
@@ -57,7 +59,10 @@ function serviceMock(opts: { report?: unknown; reportError?: unknown } = {}) {
     eq: () => qb,
     order: () => qb,
     single: () => Promise.resolve({ data: opts.report ?? null, error: opts.reportError ?? null }),
-    update: () => qb,
+    update: (payload: unknown) => {
+      updateCalls.push(payload);
+      return qb;
+    },
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase: any = {
@@ -66,7 +71,20 @@ function serviceMock(opts: { report?: unknown; reportError?: unknown } = {}) {
       return qb;
     },
   };
-  return { supabase, fromCalls };
+  return { supabase, fromCalls, updateCalls };
+}
+
+// fetch do provedor de e-mail: devolve a resposta por destinatário (por `to`).
+function resendFetchStub(byRecipient: Record<string, number>, fallback = 200) {
+  const calls: Array<{ to: string }> = [];
+  const fetchImpl = (_input: RequestInfo | URL, init?: RequestInit) => {
+    const parsed = JSON.parse(String(init?.body ?? "{}")) as { to?: string };
+    const to = parsed.to ?? "";
+    calls.push({ to });
+    const status = byRecipient[to] ?? fallback;
+    return Promise.resolve(new Response(status === 200 ? "{}" : "erro", { status }));
+  };
+  return { fetchImpl, calls };
 }
 
 Deno.test("auth: sem identidade → 401 e zero lookup/Resend/service-role", async () => {
@@ -166,4 +184,119 @@ Deno.test("admin autorizado processa o relatório e recebe reportData", async ()
   assert(body.success === true, `success esperado true: ${JSON.stringify(body)}`);
   assert(body.reportData && body.reportData.title === "Resumo do Dashboard",
     `reportData inesperado: ${JSON.stringify(body.reportData)}`);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// R2-API-023 (P2) — o agendamento só avança (e só se anuncia sucesso) quando o
+// envio realmente aconteceu. Antes: o laço só registrava a falha e, em seguida,
+// gravava `last_sent_at` e devolvia `success: true` de qualquer jeito.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function reportFixture(over: Record<string, unknown> = {}) {
+  return {
+    id: crypto.randomUUID(),
+    report_type: "dashboard_summary",
+    recipients: [] as string[],
+    frequency: "daily",
+    ...over,
+  };
+}
+
+function cronRequest() {
+  return makePost({ headers: { "x-cron-secret": "segredo" }, body: { reportId: crypto.randomUUID() } });
+}
+
+Deno.test("envio: falha do provedor (500) → 502, last_sent_at NÃO avança e sem success", async () => {
+  const mock = serviceMock({ report: reportFixture({ recipients: ["a@example.com"] }) });
+  const fetchStub = resendFetchStub({}, 500);
+  const res = await handleScheduledReport(cronRequest(), {
+    supabase: mock.supabase,
+    cronSecret: "segredo",
+    resendApiKey: "chave-de-teste",
+    fetchImpl: fetchStub.fetchImpl,
+  });
+  assert(res.status === 502, `esperado 502, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.success === false, `success deve ser false: ${JSON.stringify(body)}`);
+  assert(
+    Array.isArray(body.failedRecipients) && body.failedRecipients.includes("a@example.com"),
+    `failedRecipients inesperado: ${JSON.stringify(body.failedRecipients)}`,
+  );
+  assert(!("reportData" in body), "resposta de falha não pode entregar reportData");
+  assert(mock.updateCalls.length === 0, `last_sent_at não pode ser avançado: ${JSON.stringify(mock.updateCalls)}`);
+});
+
+Deno.test("envio: sucesso do provedor → 200 e avança last_sent_at/next_send_at", async () => {
+  const mock = serviceMock({ report: reportFixture({ recipients: ["a@example.com"], frequency: "daily" }) });
+  const fetchStub = resendFetchStub({}, 200);
+  const res = await handleScheduledReport(cronRequest(), {
+    supabase: mock.supabase,
+    cronSecret: "segredo",
+    resendApiKey: "chave-de-teste",
+    fetchImpl: fetchStub.fetchImpl,
+  });
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.success === true, `success esperado true: ${JSON.stringify(body)}`);
+  assert(fetchStub.calls.length === 1, `esperado 1 envio, recebido ${fetchStub.calls.length}`);
+  assert(mock.updateCalls.length === 1, `esperado 1 update do agendamento, recebido ${mock.updateCalls.length}`);
+  const patch = mock.updateCalls[0] as Record<string, unknown>;
+  assert(
+    typeof patch.last_sent_at === "string" && typeof patch.next_send_at === "string",
+    `update deve avançar last_sent_at e next_send_at: ${JSON.stringify(patch)}`,
+  );
+});
+
+Deno.test("envio parcial: um de dois destinatários falha → 502, só o falho listado, nada avança", async () => {
+  const mock = serviceMock({
+    report: reportFixture({ recipients: ["ok@example.com", "falha@example.com"] }),
+  });
+  const fetchStub = resendFetchStub({ "falha@example.com": 500 }, 200);
+  const res = await handleScheduledReport(cronRequest(), {
+    supabase: mock.supabase,
+    cronSecret: "segredo",
+    resendApiKey: "chave-de-teste",
+    fetchImpl: fetchStub.fetchImpl,
+  });
+  assert(res.status === 502, `esperado 502, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.success === false, `success deve ser false: ${JSON.stringify(body)}`);
+  assert(fetchStub.calls.length === 2, `os dois destinatários devem ser tentados: ${JSON.stringify(fetchStub.calls)}`);
+  assert(
+    body.failedRecipients.length === 1 && body.failedRecipients[0] === "falha@example.com",
+    `failedRecipients deve conter só o falho: ${JSON.stringify(body.failedRecipients)}`,
+  );
+  assert(mock.updateCalls.length === 0, `last_sent_at não pode ser avançado: ${JSON.stringify(mock.updateCalls)}`);
+});
+
+Deno.test("envio: sem provedor configurado e com destinatários → 502 (falha fechada), nada avança", async () => {
+  const mock = serviceMock({ report: reportFixture({ recipients: ["a@example.com"] }) });
+  const fetchStub = resendFetchStub({}, 200);
+  const res = await handleScheduledReport(cronRequest(), {
+    supabase: mock.supabase,
+    cronSecret: "segredo",
+    resendApiKey: "",
+    fetchImpl: fetchStub.fetchImpl,
+  });
+  assert(res.status === 502, `esperado 502 (falha fechada), recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.success === false, `success deve ser false: ${JSON.stringify(body)}`);
+  assert(fetchStub.calls.length === 0, "sem provedor não pode tentar enviar");
+  assert(mock.updateCalls.length === 0, `last_sent_at não pode ser avançado: ${JSON.stringify(mock.updateCalls)}`);
+});
+
+Deno.test("envio: relatório sem destinatários → 200 e avança o agendamento", async () => {
+  const mock = serviceMock({ report: reportFixture({ recipients: [] }) });
+  const fetchStub = resendFetchStub({}, 200);
+  const res = await handleScheduledReport(cronRequest(), {
+    supabase: mock.supabase,
+    cronSecret: "segredo",
+    resendApiKey: "",
+    fetchImpl: fetchStub.fetchImpl,
+  });
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.success === true, `success esperado true: ${JSON.stringify(body)}`);
+  assert(fetchStub.calls.length === 0, "sem destinatários não há envio");
+  assert(mock.updateCalls.length === 1, `esperado 1 update, recebido ${mock.updateCalls.length}`);
 });
