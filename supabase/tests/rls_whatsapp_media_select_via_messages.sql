@@ -1,106 +1,131 @@
--- Teste de regressão da policy "whatsapp media readable via visible message"
--- (PR G, etapas 36-40 — encaminhar mídia RECEBIDA; decisão 20261003-094634-3c7e-arquivos-fase7-pr-g)
--- Ref: docs/design/PLANO_REDESIGN_ARQUIVOS_CHAT_PANEL_50_ETAPAS_2026-10-01.md, etapa 39.
+-- Teste de regressão da ACL de LEITURA dos buckets privados de mídia do WhatsApp.
+-- R2-DB-022 B1 — contrato VIGENTE: a leitura de storage.objects nos buckets
+-- `whatsapp-media` e `audio-messages` é autorizada SÓ pela propriedade canônica do
+-- objeto (primeiro segmento do path = contact_id visível via
+-- public.is_contact_visible_to_user) ou por admin/supervisor
+-- (public.is_admin_or_supervisor). NENHUMA policy pode autorizar por
+-- `public.messages.media_url` nem por join em `public.messages`.
 --
--- CONTEXTO. As policies de SELECT de storage.objects autorizam por (storage.foldername(name))[1]
--- comparado com id de contato (ou auth.uid()). Mídia recebida é gravada em `<messageType>/...`
--- (`image/`, `video/`, `document/`, áudio em `audio-messages/audio/...`), então o primeiro
--- segmento nunca é contato e o copy server-side do encaminhar falhava na leitura da origem.
--- A correção é uma policy ADITIVA que resolve o contato pela linha de public.messages.
+-- HISTÓRICO. A policy "whatsapp media readable via visible message"
+-- (20261003142707_whatsapp_media_recebida_select_via_messages.sql) autorizava por
+-- `media_url` (right/position, inclusive variantes com '?' e '%20'); como as policies
+-- permissivas se combinam por OR — e a policy de INSERT de public.messages não
+-- restringe sender/external_id/media_url —, um agente autenticado podia forjar uma
+-- mensagem visível apontando para o objeto privado de outro contato e passar a lê-lo.
+-- A migration `20261006175251_r2_db_022_storage_acl.sql` (R2-DB-022 B1) removeu essa
+-- policy e o ramo por `media_url` das duas "assigned" (fail-closed).
 --
 -- ESCOPO E LIMITAÇÃO (importante, ler antes de confiar no resultado):
--- Rodando pela wrapper `db_query` do MCP, a sessão é service_role, que tem BYPASSRLS: os SELECTs
--- daqui NÃO passam pelo enforcement real das policies (mesma limitação declarada em
--- rls_dashboard.sql). O que este arquivo prova:
---   (a) ESTRUTURA: a policy nova existe com o predicado esperado e as DUAS policies antigas
---       continuam existindo — a condição "aditiva, nada removido ou alterado" fica travada;
---   (b) LÓGICA de autorização, com auth.uid() respondendo como usuário real via
---       set_config('request.jwt.claims', ..., true), no mesmo caminho que a policy usa.
--- O ENFORCEMENT real de RLS (atendente atribuído lê / não atribuído e anon são negados /
--- caminho sem message é negado / nome com `%` não vira curinga) foi provado em PG 17
--- DESCARTÁVEL com os papéis da plataforma emulados: 11 asserções, PROVA_OK=1 FALHAS=0,
--- incluindo o estado ANTERIOR (derrubada a policy, o mesmo atendente volta a ser negado).
--- Read-only, sem side effects (transação implicita do db_query).
+-- Rodando pela wrapper `db_query` do MCP a sessão é service_role, que tem BYPASSRLS:
+-- os SELECTs daqui NÃO passam pelo enforcement real das policies (mesma limitação
+-- declarada em rls_dashboard.sql). O que este arquivo prova é a ESTRUTURA vigente —
+-- existência/ausência, cmd, roles e predicado —, que é exatamente o que fica
+-- contraditório quando alguém recria a policy removida (combinação por OR volta).
+-- O ENFORCEMENT real, com papel real e SEM BYPASSRLS, é provado em
+-- `scripts/db-audit/rls-whatsapp-media-storage-acl.test.sh` (PostgreSQL 17
+-- descartável, migrations reais): vermelho sem a migration da ACL, verde com ela.
+--
+-- Este arquivo substitui a prova anterior, que exigia a policy removida e que o
+-- predicado consultasse `messages` (contrato revogado — não deixar teste
+-- contradizendo o contrato vigente).
+-- Read-only, sem side effects (transação implícita do db_query).
 
 DO $$
 DECLARE
-  v_pred text;
-  v_falta_antiga text;
+  v_pred        text;
+  v_extra       text;
+  v_n           integer;
+  v_buckets     text[] := ARRAY['whatsapp-media', 'audio-messages'];
+  v_policies    text[] := ARRAY['Users can read assigned whatsapp media',
+                                'Users can read assigned audio messages'];
 BEGIN
-  -- (a1) a policy nova existe e é SELECT em storage.objects, TO authenticated
-  SELECT qual INTO v_pred
+  -- T0 a policy baseada em media_url foi REMOVIDA de propósito (o vetor é
+  --    forjável por authenticated enquanto a fronteira de escrita de messages
+  --    estiver aberta). Se ela voltar, esta suíte tem de ficar vermelha.
+  SELECT count(*) INTO v_n
     FROM pg_policies
    WHERE schemaname = 'storage' AND tablename = 'objects'
-     AND policyname = 'whatsapp media readable via visible message'
-     AND cmd = 'SELECT';
-  IF v_pred IS NULL THEN
-    RAISE EXCEPTION 'rls_whatsapp_media T0 FALHOU: policy nova ausente (migration nao aplicada?)';
+     AND policyname = 'whatsapp media readable via visible message';
+  IF v_n <> 0 THEN
+    RAISE EXCEPTION
+      'rls_whatsapp_media T0 FALHOU: policy "whatsapp media readable via visible message" existe (contrato revogado por R2-DB-022 B1)';
   END IF;
 
-  -- (a2) o predicado cobre os dois buckets de midia do WhatsApp...
-  IF position('whatsapp-media' IN v_pred) = 0 OR position('audio-messages' IN v_pred) = 0 THEN
-    RAISE EXCEPTION 'rls_whatsapp_media T0 FALHOU: predicado sem os buckets de midia: %', v_pred;
-  END IF;
-  -- ...e resolve o acesso pela linha de public.messages (sem SECURITY DEFINER)
-  IF position('messages' IN v_pred) = 0 THEN
-    RAISE EXCEPTION 'rls_whatsapp_media T0 FALHOU: predicado nao consulta messages: %', v_pred;
-  END IF;
-
-  -- (a3) condicao do Joaquim: aditiva — as DUAS policies antigas continuam existindo
-  SELECT string_agg(p.policyname, ', ') INTO v_falta_antiga
-    FROM (VALUES ('Users can read assigned whatsapp media'),
-                 ('Users can read assigned audio messages')) AS esperado(nome)
+  -- T1 as DUAS policies de locator canônico existem, são SELECT e valem para
+  --    authenticated (o papel do PostgREST com sessão de usuário).
+  SELECT string_agg(esperado.nome, ', ') INTO v_extra
+    FROM unnest(v_policies) AS esperado(nome)
     LEFT JOIN pg_policies p
-      ON p.schemaname = 'storage' AND p.tablename = 'objects' AND p.policyname = esperado.nome
+      ON p.schemaname = 'storage' AND p.tablename = 'objects'
+     AND p.policyname = esperado.nome
+     AND p.cmd = 'SELECT'
+     AND p.roles = ARRAY['authenticated']::name[]
    WHERE p.policyname IS NULL;
-  IF v_falta_antiga IS NOT NULL THEN
-    RAISE EXCEPTION 'rls_whatsapp_media T1 FALHOU: policy antiga removida/renomeada: %', v_falta_antiga;
+  IF v_extra IS NOT NULL THEN
+    RAISE EXCEPTION
+      'rls_whatsapp_media T1 FALHOU: policy de locator canônico ausente/incorreta (cmd=SELECT TO authenticated): %', v_extra;
   END IF;
-  RAISE NOTICE 'rls_whatsapp_media: estrutura ok (policy nova + duas antigas intactas)';
 
-  -- (b) logica: usuario sem permissao nao enxerga o contato do atendente; o atendente enxerga
-  DECLARE
-    v_msg_contact uuid;
-    v_msg_url     text;
-    v_agent_user  uuid;
-    v_other_user  uuid;
-    v_other_prof  uuid;
-  BEGIN
-    SELECT m.contact_id, m.media_url INTO v_msg_contact, v_msg_url
-      FROM public.messages m
-     WHERE m.media_url LIKE '%/whatsapp-media/%'
-     LIMIT 1;
+  -- T2 VETOR FORJÁVEL FECHADO: nenhuma policy SELECT de storage.objects que cubra
+  --    estes buckets pode autorizar por `media_url`, por comparação de padrão
+  --    (~~/LIKE, position, substring, replace, right) nem por join em public.messages.
+  SELECT string_agg(p.policyname || ' [' || coalesce(p.qual, '') || ']', ' | ')
+    INTO v_extra
+    FROM pg_policies p
+   WHERE p.schemaname = 'storage' AND p.tablename = 'objects'
+     AND p.cmd = 'SELECT'
+     AND (
+       p.qual ~* 'media_url'
+       OR p.qual ~ '~~'
+       OR p.qual ~* 'position\('
+       OR p.qual ~* 'substring\('
+       OR p.qual ~* 'replace\('
+       OR p.qual ~* 'right\('
+       OR p.qual ~ 'public\.messages'
+       OR p.qual ~* '\mfrom\s+public\.messages\M'
+     )
+     AND (
+       p.qual ~ 'whatsapp-media'
+       OR p.qual ~ 'audio-messages'
+       OR p.policyname = ANY (v_policies)
+     );
+  IF v_extra IS NOT NULL THEN
+    RAISE EXCEPTION
+      'rls_whatsapp_media T2 FALHOU: policy SELECT com referência forjável (media_url/pattern-match/public.messages): %', v_extra;
+  END IF;
 
-    IF v_msg_contact IS NULL THEN
-      RAISE NOTICE 'rls_whatsapp_media: sem mensagem de whatsapp-media em producao, T2-T3 pulados';
-    ELSE
-      SELECT p.user_id INTO v_agent_user
-        FROM public.contacts c JOIN public.profiles p ON p.id = c.assigned_to
-       WHERE c.id = v_msg_contact LIMIT 1;
-      -- usuario comum (nem admin, nem supervisor, nem special_agent) e sem vinculo com o contato
-      SELECT p.user_id, p.id INTO v_other_user, v_other_prof
-        FROM public.profiles p
-        JOIN public.user_roles ur ON ur.user_id = p.user_id AND ur.role = 'agent'
-       WHERE p.id <> (SELECT assigned_to FROM public.contacts WHERE id = v_msg_contact)
-       LIMIT 1;
+  -- T3 soma por OR: exatamente UMA policy SELECT por bucket (qualquer policy
+  --    permissiva residual nos mesmos buckets apareceria aqui).
+  SELECT string_agg(b.bucket, ', ') INTO v_extra
+    FROM unnest(v_buckets) AS b(bucket)
+   WHERE (SELECT count(*) FROM pg_policies p
+           WHERE p.schemaname = 'storage' AND p.tablename = 'objects'
+             AND p.cmd = 'SELECT' AND p.qual ~ b.bucket) <> 1;
+  IF v_extra IS NOT NULL THEN
+    RAISE EXCEPTION
+      'rls_whatsapp_media T3 FALHOU: esperava exatamente 1 policy SELECT por bucket; divergente em: %', v_extra;
+  END IF;
 
-      IF v_agent_user IS NOT NULL THEN
-        PERFORM set_config('request.jwt.claims', json_build_object('sub', v_agent_user)::text, true);
-        IF NOT public.can_edit_contact(
-             (SELECT assigned_to FROM public.contacts WHERE id = v_msg_contact), NULL, NULL, NULL, NULL) THEN
-          RAISE EXCEPTION 'rls_whatsapp_media T2 FALHOU: atendente atribuido nao enxerga o contato dono da midia';
-        END IF;
-
-        -- T3: agora auth.uid() responde como o usuário comum (sem trocar de role)
-        IF v_other_user IS NOT NULL THEN
-          PERFORM set_config('request.jwt.claims', json_build_object('sub', v_other_user)::text, true);
-          IF public.can_edit_contact(
-               (SELECT assigned_to FROM public.contacts WHERE id = v_msg_contact), NULL, NULL, NULL, NULL) THEN
-            RAISE EXCEPTION 'rls_whatsapp_media T3 FALHOU: usuario NAO atribuido enxerga o contato dono da midia';
-          END IF;
-        END IF;
-        RAISE NOTICE 'rls_whatsapp_media: logica de visibilidade ok (uid=% sobre a midia %)', v_agent_user, v_msg_url;
-      END IF;
+  -- T4 PREDICADO CANÔNICO: as duas policies usam o bucket + o locator
+  --    (storage.foldername(name))[1] resolvido por is_contact_visible_to_user, e
+  --    mantêm is_admin_or_supervisor; nada de media_url, LIKE, curinga ou auth.uid().
+  FOR v_pred IN
+    SELECT p.qual FROM pg_policies p
+     WHERE p.schemaname = 'storage' AND p.tablename = 'objects'
+       AND p.cmd = 'SELECT' AND p.policyname = ANY (v_policies)
+  LOOP
+    IF position('foldername' IN v_pred) = 0
+       OR position('is_contact_visible_to_user' IN v_pred) = 0
+       OR position('is_admin_or_supervisor' IN v_pred) = 0 THEN
+      RAISE EXCEPTION
+        'rls_whatsapp_media T4 FALHOU: policy de locator sem o predicado canônico (foldername + is_contact_visible_to_user + is_admin_or_supervisor): %', v_pred;
     END IF;
-  END;
+    IF position('media_url' IN v_pred) > 0 THEN
+      RAISE EXCEPTION
+        'rls_whatsapp_media T4 FALHOU: policy de locator voltou a citar media_url: %', v_pred;
+    END IF;
+  END LOOP;
+
+  RAISE NOTICE
+    'rls_whatsapp_media: estrutura ok — policy por media_url ausente, 2 policies de locator canônico (contact_id visível ou admin/supervisor), nenhuma policy residual por OR. Enforcement real: scripts/db-audit/rls-whatsapp-media-storage-acl.test.sh';
 END $$;
