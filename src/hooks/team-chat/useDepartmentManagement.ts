@@ -74,13 +74,9 @@ export function useDepartmentProfiles() {
   return useQuery<DepartmentProfile[]>({
     queryKey: ['departmentChat', 'profiles'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name, email, avatar_url, is_active, department_id')
-        .eq('is_active', true)
-        .order('name');
+      const { data, error } = await supabase.rpc('get_team_profiles');
       if (error) throw error;
-      return (data ?? []) as DepartmentProfile[];
+      return ((data ?? []) as DepartmentProfile[]).sort((a, b) => a.name.localeCompare(b.name));
     },
     staleTime: 30 * 1000,
   });
