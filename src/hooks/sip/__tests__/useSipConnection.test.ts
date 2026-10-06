@@ -8,7 +8,23 @@ const mockRegisterStateListeners: StateListener[] = [];
 type RegisterOptions = { requestDelegate?: { onReject?: (response: { message: { statusCode: number } }) => void } };
 const mockRegisterCalls: Array<RegisterOptions | undefined> = [];
 const mockUaInstances: Array<{ start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; transport: { onDisconnect: (() => void) | null } }> = [];
+const mockRegistererInstances: Array<{ register: ReturnType<typeof vi.fn>; unregister: ReturnType<typeof vi.fn> }> = [];
 let lastDelegate: { onInvite?: (invitation: unknown) => void } | undefined;
+
+// Corrida connect/disconnect: os testes trocam estas impls para segurar
+// `start()`/`register()` pendentes (deferred) e resolvê-los na hora certa.
+function deferred<T = void>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
+const defaultRegisterImpl = (options?: RegisterOptions) => {
+  mockRegisterCalls.push(options);
+  return Promise.resolve();
+};
+let startImpl: () => Promise<unknown> = () => Promise.resolve();
+let registerImpl: (options?: RegisterOptions) => Promise<unknown> = defaultRegisterImpl;
 
 vi.mock('sip.js', () => {
   return {
@@ -19,7 +35,7 @@ vi.mock('sip.js', () => {
       }
       configuration = { uri: { host: 'test.server.com' } };
       transport: { onDisconnect: (() => void) | null } = { onDisconnect: null };
-      start = vi.fn().mockResolvedValue(undefined);
+      start = vi.fn(() => startImpl());
       stop = vi.fn().mockResolvedValue(undefined);
       constructor(options: { delegate?: { onInvite?: (invitation: unknown) => void } }) {
         lastDelegate = options.delegate;
@@ -30,8 +46,11 @@ vi.mock('sip.js', () => {
       stateChange = {
         addListener: (fn: StateListener) => { mockRegisterStateListeners.push(fn); },
       };
-      register = vi.fn((options?: RegisterOptions) => { mockRegisterCalls.push(options); return Promise.resolve(undefined); });
+      register = vi.fn((options?: RegisterOptions) => registerImpl(options));
       unregister = vi.fn().mockResolvedValue(undefined);
+      constructor() {
+        mockRegistererInstances.push(this);
+      }
     },
   };
 });
@@ -68,7 +87,10 @@ describe('useSipConnection', () => {
     mockRegisterStateListeners.length = 0;
     mockRegisterCalls.length = 0;
     mockUaInstances.length = 0;
+    mockRegistererInstances.length = 0;
     lastDelegate = undefined;
+    startImpl = () => Promise.resolve();
+    registerImpl = defaultRegisterImpl;
   });
 
   afterEach(() => {
@@ -211,6 +233,97 @@ describe('useSipConnection', () => {
     await act(async () => { vi.advanceTimersByTime(120000); });
     expect(mockUaInstances.length).toBe(uaCount);
     vi.useRealTimers();
+  });
+
+  // === Corrida connect/disconnect: uma única tentativa em voo ===
+
+  it('duas chamadas de connect() em paralelo criam um único UserAgent e um único Registerer', async () => {
+    // O start da primeira tentativa fica pendurado: o segundo connect chega
+    // com a tentativa AINDA em voo — sem marca síncrona, ele atravessa a
+    // guarda de `uaRef` e cria a própria instância. (O segundo connect é
+    // disparado depois do import da primeira resolver: um `import('sip.js')`
+    // CONCORRENTE no vitest escapa do mock e carrega o módulo real.)
+    const start = deferred();
+    startImpl = () => start.promise;
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let first!: Promise<void>;
+    await act(async () => { first = result.current.connect(config); });
+    expect(mockUaInstances.length).toBe(1);
+
+    let second!: Promise<void>;
+    await act(async () => { second = result.current.connect(config); });
+    await act(async () => { start.resolve(); await Promise.all([first, second]); });
+
+    expect(mockUaInstances.length).toBe(1);
+    expect(mockRegistererInstances.length).toBe(1);
+    expect(mockRegisterCalls.length).toBe(1);
+  });
+
+  it('disconnect() durante start() invalida a tentativa: refs nulos, estado idle e UA parado', async () => {
+    const start = deferred();
+    startImpl = () => start.promise;
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    expect(mockUaInstances.length).toBe(1);
+
+    await act(async () => { await result.current.disconnect(); });
+    expect(result.current.sipStatus).toBe('idle');
+
+    const ua = mockUaInstances[0];
+    await act(async () => { start.resolve(); await pending; });
+
+    expect(ua.stop).toHaveBeenCalled();
+    expect(mockRegistererInstances.length).toBe(0);
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+  });
+
+  it('disconnect() durante register() invalida a tentativa: refs nulos, estado idle e UA parado', async () => {
+    const reg = deferred();
+    registerImpl = (options) => { mockRegisterCalls.push(options); return reg.promise; };
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    expect(mockRegistererInstances.length).toBe(1);
+
+    await act(async () => { await result.current.disconnect(); });
+    expect(result.current.sipStatus).toBe('idle');
+
+    const ua = mockUaInstances[0];
+    const registerer = mockRegistererInstances[0];
+    await act(async () => { reg.resolve(); await pending; });
+
+    expect(registerer.unregister).toHaveBeenCalled();
+    expect(ua.stop).toHaveBeenCalled();
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+  });
+
+  it('após um connect() invalidado por disconnect(), um novo connect() cria uma única tentativa válida', async () => {
+    const start = deferred();
+    startImpl = () => start.promise;
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    await act(async () => { await result.current.disconnect(); });
+    await act(async () => { start.resolve(); await pending; });
+    expect(result.current.uaRef.current).toBeNull();
+
+    await act(async () => { await result.current.connect(config); });
+
+    expect(mockUaInstances.length).toBe(2);
+    expect(mockRegistererInstances.length).toBe(1);
+    expect(result.current.uaRef.current).toBe(mockUaInstances[1]);
+    expect(result.current.sipStatus).toBe('connecting');
   });
 
   // === T20: eleição de aba — só a líder registra ===
