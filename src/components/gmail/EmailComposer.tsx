@@ -106,6 +106,7 @@ export function EmailComposer({
   const [draftDirty, setDraftDirty] = useState(false);
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [discardConfirmationOpen, setDiscardConfirmationOpen] = useState(false);
+  const [discardError, setDiscardError] = useState<string | null>(null);
   const [sendOutcomeUnknown, setSendOutcomeUnknown] = useState(false);
   const saveDraftMutateAsync = saveDraft?.mutateAsync;
   const draftIdRef = useRef<string | undefined>(restoredDraft?.draftId);
@@ -287,7 +288,18 @@ export function EmailComposer({
     }
     setDraftDirty(false);
     await draftSaveQueueRef.current;
-    if (draftIdRef.current && deleteDraft) await deleteDraft.mutateAsync(draftIdRef.current).catch(() => undefined);
+    if (draftIdRef.current && deleteDraft) {
+      try {
+        await deleteDraft.mutateAsync(draftIdRef.current);
+      } catch (error) {
+        if (mountedRef.current) {
+          setDiscardError(error instanceof Error ? error.message : 'Não foi possível excluir o rascunho remoto.');
+        }
+        toast.error('Não foi possível descartar o rascunho remoto. A composição e o rascunho local foram mantidos.');
+        return;
+      }
+    }
+    setDiscardError(null);
     removeEmailDraftSession(draftStorageKey);
     onClose();
   };
@@ -427,6 +439,13 @@ export function EmailComposer({
                   <div role="alert" className="flex gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-[hsl(var(--warning-text))]">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                     <div><p className="font-medium">Resultado do envio não confirmado</p><p className="mt-0.5 opacity-80">A conexão terminou sem uma resposta conclusiva. O email pode ter sido aceito pelo Gmail. Confira a pasta Enviados antes de tentar novamente para evitar duplicidade.</p></div>
+                  </div>
+                )}
+
+                {discardError && (
+                  <div role="alert" className="flex gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div><p className="font-medium">Rascunho remoto não descartado</p><p className="mt-0.5 opacity-80">Não foi possível excluir o rascunho no Gmail: {discardError} A composição e o rascunho local foram mantidos; tente descartar novamente.</p></div>
                   </div>
                 )}
 
