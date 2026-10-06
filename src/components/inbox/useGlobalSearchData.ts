@@ -28,6 +28,18 @@ export type MediaTypeFilter = 'all' | 'text' | 'image' | 'video' | 'audio' | 'do
 
 export interface TagSuggestion { id: string; name: string; color: string; }
 
+/**
+ * IDs dos contatos que carregam PELO MENOS UMA das tags selecionadas.
+ *
+ * O filtro de tag é resolvido no banco (`tags` é array; `overlaps` = algum),
+ * nunca em JS depois de um LIMIT — o LIMIT do PostgREST corta pela ordem da
+ * consulta e o casamento podia ficar de fora (R2-INB-020).
+ */
+async function fetchContactIdsByTag(tags: string[]): Promise<string[]> {
+  const { data } = await supabase.from('contacts').select('id').overlaps('tags', tags);
+  return (data ?? []).map((contact: { id: string }) => contact.id);
+}
+
 function getDateFilterStart(filter: DateFilter): Date | null {
   const now = new Date();
   switch (filter) {
@@ -105,6 +117,15 @@ export function useGlobalSearchData(open: boolean) {
       const searchResults: SearchResult[] = [];
       const addedMessageIds = new Set<string>();
 
+      // Escopo por tag: a tag mora no CONTATO, então o filtro vale para todo tipo
+      // que carrega contato — mensagem, transcrição e contato —, e entra na
+      // consulta ANTES do LIMIT. Sem contato com a tag, o escopo é vazio.
+      const tagScopedContactIds = tags.length > 0 ? await fetchContactIdsByTag(tags) : null;
+      if (tagScopedContactIds && tagScopedContactIds.length === 0) {
+        if (requestId === searchRequestId.current) setResults([]);
+        return;
+      }
+
       if (types.has('message') && (cleanQuery.length >= 2 || mediaType !== 'all')) {
         let textQuery = supabase.from('messages')
           .select(`id, content, message_type, created_at, contact_id, contacts:contact_id (id, name, surname)`)
@@ -123,6 +144,7 @@ export function useGlobalSearchData(open: boolean) {
 
         if (mediaType !== 'all' && mediaType !== 'link') textQuery = textQuery.eq('message_type', mediaType);
         if (dateStart) textQuery = textQuery.gte('created_at', dateStart.toISOString());
+        if (tagScopedContactIds) textQuery = textQuery.in('contact_id', tagScopedContactIds);
 
         const { data: textMessages } = await textQuery;
         textMessages?.forEach((msg) => {
@@ -145,6 +167,7 @@ export function useGlobalSearchData(open: boolean) {
           .not('transcription', 'is', null).ilike('transcription', `%${cleanQuery}%`)
           .order('created_at', { ascending: false }).limit(15);
         if (dateStart) audioQuery = audioQuery.gte('created_at', dateStart.toISOString());
+        if (tagScopedContactIds) audioQuery = audioQuery.in('contact_id', tagScopedContactIds);
 
         const { data: audioMessages } = await audioQuery;
         audioMessages?.forEach((msg) => {
@@ -168,22 +191,19 @@ export function useGlobalSearchData(open: boolean) {
           const q = escapeOrFilterValue(`%${cleanQuery}%`);
           contactQuery = contactQuery.or(`name.ilike.${q},surname.ilike.${q},phone.ilike.${q},email.ilike.${q}`);
         }
+        // A tag entra na CONSULTA, antes do `.limit(10)`: filtrar em JS depois do
+        // LIMIT devolvia zero quando o contato marcado era o 11º da ordem.
+        if (tagScopedContactIds) contactQuery = contactQuery.in('id', tagScopedContactIds);
 
         const { data: contacts } = await contactQuery.order('name', { ascending: true }).limit(10);
-        if (contacts) {
-          let filtered = contacts;
-          if (tags.length > 0) {
-            filtered = contacts.filter(c => c.tags && c.tags.some((tag: string) => tags.includes(tag)));
-          }
-          filtered.forEach((contact) => {
-            searchResults.push({
-              id: contact.id, type: 'contact',
-              title: `${contact.name}${contact.surname ? ` ${contact.surname}` : ''}`,
-              preview: contact.phone ?? contact.email ?? '',
-              timestamp: new Date(contact.created_at), contactId: contact.id, tags: contact.tags ?? undefined,
-            });
+        contacts?.forEach((contact) => {
+          searchResults.push({
+            id: contact.id, type: 'contact',
+            title: `${contact.name}${contact.surname ? ` ${contact.surname}` : ''}`,
+            preview: contact.phone ?? contact.email ?? '',
+            timestamp: new Date(contact.created_at), contactId: contact.id, tags: contact.tags ?? undefined,
           });
-        }
+        });
       }
 
       if (types.has('crm') && isSupervisor && crmIntegrationEnabled && cleanQuery.length >= 3) {
