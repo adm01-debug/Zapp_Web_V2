@@ -150,9 +150,24 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
     queryKey: ['gmail-messages', activeAccount?.id, selectedThreadId],
     queryFn: async () => {
       if (!selectedThreadId || !activeAccount) return [];
-      const { data, error } = await supabase.from('email_messages').select('*').eq('gmail_account_id', activeAccount.id).eq('thread_id', selectedThreadId).order('internal_date', { ascending: true });
-      if (error) throw error;
-      return (data || []) as EmailMessage[];
+      // R2-COM-007: uma conversa maior que o teto de linhas por resposta da API
+      // voltava truncada (as mensagens recentes sumiam e o alvo de resposta caía
+      // numa mensagem antiga da amostra). A lista de threads já pagina com
+      // collectEmailPages; o histórico passa a paginar igual. A ordem declara o
+      // desempate por `id` porque paginar por offset exige ordem estável —
+      // `internal_date` sozinho empata e a página seguinte não é reprodutível.
+      return collectEmailPages<EmailMessage>(async (from, to) => {
+        const { data, error } = await supabase
+          .from('email_messages')
+          .select('*')
+          .eq('gmail_account_id', activeAccount.id)
+          .eq('thread_id', selectedThreadId)
+          .order('internal_date', { ascending: true })
+          .order('id', { ascending: true })
+          .range(from, to);
+        if (error) throw error;
+        return (data || []) as EmailMessage[];
+      });
     },
     enabled: !!selectedThreadId && !!activeAccount,
   });
@@ -161,9 +176,23 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
     queryKey: ['gmail-attachments', activeAccount?.id, selectedThreadId, threadMessages.map(message => message.id).join(':')],
     queryFn: async () => {
       if (!activeAccount || threadMessages.length === 0) return [];
-      const { data, error } = await supabase.from('email_attachments').select('*').in('email_message_id', threadMessages.map(message => message.id));
-      if (error) throw error;
-      return (data || []) as EmailAttachment[];
+      // R2-COM-007: o conjunto de anexos da conversa também podia passar do teto
+      // de linhas de uma resposta (um e-mail com vários anexos gera uma linha por
+      // anexo). Cada lote de ids — o lote existe para o filtro `in` não estourar —
+      // é paginado com `range`, com ordem estável pelo `id`.
+      const paginas = await Promise.all(chunkEmailIds(threadMessages.map(message => message.id)).map(ids =>
+        collectEmailPages<EmailAttachment>(async (from, to) => {
+          const { data, error } = await supabase
+            .from('email_attachments')
+            .select('*')
+            .in('email_message_id', ids)
+            .order('id', { ascending: true })
+            .range(from, to);
+          if (error) throw error;
+          return (data || []) as EmailAttachment[];
+        }),
+      ));
+      return paginas.flat();
     },
     enabled: !!activeAccount && threadMessages.length > 0,
   });
