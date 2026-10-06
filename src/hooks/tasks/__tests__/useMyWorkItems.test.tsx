@@ -24,6 +24,7 @@ import {
 import {
   useMyWorkItems,
   useMyWorkItemsBadge,
+  useMyWorkItemsBadgeInfo,
   workItemsKey,
   workItemsBadgeKey,
   tomorrowAtNine,
@@ -252,6 +253,38 @@ describe('useMyWorkItems — Fase B', () => {
     expect(h.select).toHaveBeenCalledTimes(1);
     expect(h.select.mock.calls[0][0]).toBe('id,due_date,remind_at,notified_at,status');
     expect(workItemsBadgeKey('u1')).toEqual(['work-items-badge', 'u1']);
+  });
+
+  it('R2-MOD-058: o badge do menu e o KPI do módulo dão o MESMO veredito sobre prazo de hoje', async () => {
+    // Relógio do aceite: 15h no fuso local. Antes da correção o badge contava o
+    // prazo das 9h como atraso (comparava com o instante) enquanto o módulo o
+    // tratava como "Hoje" (comparava com o início do dia) — 1 contra 0.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 3, 15, 0, 0, 0));
+    try {
+      setSelectResult({
+        data: [
+          dbRow({ id: 'nove', due_date: new Date(2026, 9, 3, 9, 0).toISOString() }),
+          dbRow({ id: 'fim',  due_date: new Date(2026, 9, 3, 23, 59).toISOString() }),
+        ],
+        error: null,
+      });
+      const qc = makeQueryClient();
+      const badge = renderHook(() => useMyWorkItemsBadgeInfo(), { wrapper: makeWrapper(qc) });
+      const lista = renderHook(() => useMyWorkItems(), { wrapper: makeWrapper(qc) });
+
+      await waitFor(() => expect(lista.result.current.isLoading).toBe(false));
+      await waitFor(() => expect(badge.result.current.count).toBe(1));
+
+      // 1 atrasada: a das 09h. O prazo de dia inteiro (23:59) continua "Hoje".
+      expect(badge.result.current.hasOverdue).toBe(true);
+      expect(lista.result.current.kpis.overdue).toBe(1);
+      expect(lista.result.current.kpis.dueToday).toBe(1);
+      expect(lista.result.current.byDue.overdue.map((i) => i.id)).toEqual(['nove']);
+      expect(lista.result.current.byDue.today.map((i) => i.id)).toEqual(['fim']);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('create coloca o item no topo da coluna (position = min - 1)', async () => {

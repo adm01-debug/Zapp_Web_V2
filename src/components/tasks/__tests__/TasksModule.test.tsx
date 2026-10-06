@@ -49,6 +49,18 @@ function modoAtual() {
 }
 
 /**
+ * Prazo de DIA INTEIRO de hoje (23:59 locais) — a convenção que o próprio app
+ * grava nos chips "Hoje/Amanhã". R2-MOD-058: `new Date().toISOString()` produzia
+ * um prazo COM hora que já passou no instante seguinte, e a tarefa deixaria de
+ * contar como "para hoje"; aqui o caso é "vence hoje".
+ */
+function hojeFimDoDia() {
+  const d = new Date();
+  d.setHours(23, 59, 0, 0);
+  return d.toISOString();
+}
+
+/**
  * Etapa 45: a barra de filtros (5 controles) com o estado espelhado na URL.
  *
  * Os dois `Select` (prioridade e contato) não são dirigidos por aqui — o radix
@@ -273,7 +285,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
         makeTaskRow({ id: 'a', status: 'todo' }),
         makeTaskRow({ id: 'b', status: 'doing' }),
         makeTaskRow({ id: 'c', status: 'waiting' }),
-        makeTaskRow({ id: 'd', status: 'todo', due_date: new Date().toISOString() }),
+        makeTaskRow({ id: 'd', status: 'todo', due_date: hojeFimDoDia() }),
         makeTaskRow({ id: 'e', status: 'done', completed_at: '2026-09-30T10:00:00.000Z' }),
       ],
       error: null,
@@ -287,7 +299,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
 
   it('usa singular com uma única tarefa aberta', async () => {
     setSelectResult({
-      data: [makeTaskRow({ id: 'a', status: 'todo', due_date: new Date().toISOString() })],
+      data: [makeTaskRow({ id: 'a', status: 'todo', due_date: hojeFimDoDia() })],
       error: null,
     });
 
@@ -328,7 +340,7 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
     setSelectResult({
       data: [
         makeTaskRow({ id: 'o1', status: 'todo', due_date: ontem }),
-        makeTaskRow({ id: 'h1', status: 'todo', due_date: new Date().toISOString() }),
+        makeTaskRow({ id: 'h1', status: 'todo', due_date: hojeFimDoDia() }),
         makeTaskRow({ id: 'f1', status: 'doing' }),
         makeTaskRow({ id: 'f2', status: 'doing' }),
         makeTaskRow({ id: 'd1', status: 'done', completed_at: new Date().toISOString() }),

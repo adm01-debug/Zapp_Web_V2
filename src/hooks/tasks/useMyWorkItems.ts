@@ -42,7 +42,7 @@ import {
   applyTransition,
   countDoing,
 } from './workItemMachine';
-import { bucketByDue, bucketByStatus, kpis } from './workItemAggregates';
+import { bucketByDue, bucketByStatus, isOverdue, kpis } from './workItemAggregates';
 import type { WorkItem, WorkItemStatus, Priority, WorkItemContact } from './workItem.types';
 
 export type { WorkItemContact };
@@ -630,7 +630,7 @@ export function useMyWorkItemsBadgeInfo(): WorkItemsBadgeInfo {
     queryKey: [...workItemsBadgeKey(profileId), 'info'] as const,
     queryFn: async (): Promise<WorkItemsBadgeInfo> => {
       if (!profileId) return EMPTY_BADGE_INFO;
-      const now = Date.now();
+      const now = new Date();
       // Uma unica query e contagem no cliente (evita 2 round-trips).
       const { data, error } = await supabase
         .from('conversation_tasks')
@@ -640,11 +640,15 @@ export function useMyWorkItemsBadgeInfo(): WorkItemsBadgeInfo {
       if (error) throw error;
       const rows = (data ?? []) as Array<Pick<TaskRow, 'id' | 'due_date' | 'remind_at' | 'notified_at' | 'status'>>;
 
-      // Atrasadas: prazo vencido.
-      const overdue = rows.filter((r) => r.due_date != null && new Date(r.due_date).getTime() < now).length;
+      // Atrasadas: a MESMA regra do modulo (`isOverdue`) — prazo com hora vence
+      // no instante; prazo de dia inteiro (23:59/00:00) so no fim do dia local.
+      // R2-MOD-058: antes daqui saia `due_date < Date.now()` enquanto o modulo
+      // so olhava o inicio do dia, e o prazo de hoje as 9h acendia o menu sem
+      // aparecer em "Atrasadas" na lista.
+      const overdue = rows.filter((r) => isOverdue(r.due_date, now)).length;
       // Avisado e nao tratado: o alarme ja disparou (notified_at preenchido).
       const fired = rows.filter(
-        (r) => r.remind_at != null && new Date(r.remind_at).getTime() <= now && r.notified_at != null
+        (r) => r.remind_at != null && new Date(r.remind_at).getTime() <= now.getTime() && r.notified_at != null
       ).length;
       return { count: overdue + fired, hasOverdue: overdue > 0 };
     },
