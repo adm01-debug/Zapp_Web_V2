@@ -304,7 +304,7 @@ export function useConversationHistoryTimeline(
 
       const dealIds = (dealsRes.data ?? []).map((d) => d.id);
       const activitiesRes = dealIds.length
-        ? await supabase.from('deal_activities').select('id, deal_id, description, activity_type, created_at').in('deal_id', dealIds).limit(fetchLimit)
+        ? await supabase.from('deal_activities').select('id, deal_id, description, activity_type, created_at').in('deal_id', dealIds).order('created_at', { ascending: false }).limit(fetchLimit)
         : { data: [] as RawActivityRow[], error: null };
       if (activitiesRes.error) throw activitiesRes.error;
 

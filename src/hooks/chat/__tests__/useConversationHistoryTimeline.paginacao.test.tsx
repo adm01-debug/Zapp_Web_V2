@@ -6,32 +6,50 @@
  * transferências a tela mostrava 200 e já dizia hasMore=false; com 501 mensagens o "Carregar
  * mais" terminava em 500.
  *
- * Aqui o cliente Supabase é dublado como um servidor paginado de verdade: cada `.limit(n)`
- * devolve no máximo n linhas do conjunto, então a janela de transporte fica observável.
+ * Aqui o cliente Supabase é dublado como um servidor paginado de verdade: cada `.order(col, {ascending})`
+ * ordena o conjunto como o PostgREST faria (sem `order` a ordem é arbitrária = a crua do array) e cada
+ * `.limit(n)` devolve no máximo n linhas depois da ordenação, então a janela de transporte fica observável.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
+type ChamadaServidor = {
+  tabela: string;
+  limite: number | null;
+  ordem: { coluna: string; ascending: boolean } | null;
+};
+
 const servidor = vi.hoisted(() => ({
   tabelas: {} as Record<string, Array<Record<string, unknown>>>,
-  chamadas: [] as Array<{ tabela: string; limite: number | null }>,
+  chamadas: [] as Array<{ tabela: string; limite: number | null; ordem: { coluna: string; ascending: boolean } | null }>,
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
   const construir = (tabela: string) => {
-    const estado: { tabela: string; limite: number | null } = { tabela, limite: null };
+    const estado: ChamadaServidor = { tabela, limite: null, ordem: null };
     servidor.chamadas.push(estado);
     const pagina = () => {
       const linhas = servidor.tabelas[tabela] ?? [];
-      const n = estado.limite ?? linhas.length;
-      return { data: linhas.slice(0, n), error: null };
+      const ordem = estado.ordem;
+      const ordenadas = ordem
+        ? [...linhas].sort((a, b) => {
+            const va = String(a[ordem.coluna] ?? '');
+            const vb = String(b[ordem.coluna] ?? '');
+            return ordem.ascending ? va.localeCompare(vb) : vb.localeCompare(va);
+          })
+        : linhas;
+      const n = estado.limite ?? ordenadas.length;
+      return { data: ordenadas.slice(0, n), error: null };
     };
     const c: Record<string, unknown> = {};
     c.select = () => c;
     c.eq = () => c;
-    c.order = () => c;
+    c.order = (coluna: string, opcoes?: { ascending?: boolean }) => {
+      estado.ordem = { coluna, ascending: opcoes?.ascending !== false };
+      return c;
+    };
     c.in = () => c;
     c.gte = () => c;
     c.limit = (n: number) => {
@@ -53,6 +71,11 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 const ultimoLimite = (tabela: string) => {
   const limites = servidor.chamadas.filter((c) => c.tabela === tabela).map((c) => c.limite);
   return limites[limites.length - 1];
+};
+
+const ultimaOrdem = (tabela: string) => {
+  const ordens = servidor.chamadas.filter((c) => c.tabela === tabela).map((c) => c.ordem);
+  return ordens[ordens.length - 1];
 };
 
 const eventoDeConversa = (i: number) => ({
@@ -134,6 +157,32 @@ describe('useConversationHistoryTimeline — paginação além das janelas fixas
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data!.days.flatMap((d) => d.events)).toHaveLength(1);
+    expect(result.current.data?.hasMore).toBe(true);
+  });
+
+  it('com 250 atividades de negócio, a página traz as mais recentes (ordem do servidor)', async () => {
+    // A consulta de deal_activities só roda quando existe negócio para a conversa.
+    servidor.tabelas.sales_deals = [
+      { id: 'd1', title: 'Negócio 1', value: null, status: 'open', created_at: '2026-09-01T00:00:00.000Z' },
+    ];
+    // Ordem CRUA antiga->nova: a atividade mais recente (a249) é a ÚLTIMA do array, então um
+    // slice sem ORDER BY devolve a0..a200 e a249 fica de fora da Jornada — o defeito do cartão.
+    servidor.tabelas.deal_activities = Array.from({ length: 250 }, (_, i) => ({
+      id: `a${i}`,
+      deal_id: 'd1',
+      description: `atividade ${i}`,
+      activity_type: 'note',
+      created_at: new Date(Date.UTC(2026, 8, 1, 0, 0, 0) + i * 60_000).toISOString(),
+    }));
+
+    const { result } = renderHook(() => useConversationHistoryTimeline('c1', 0, 'all', 200), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(ultimaOrdem('deal_activities')).toEqual({ coluna: 'created_at', ascending: false });
+
+    const ids = result.current.data!.days.flatMap((d) => d.events.map((e) => e.id));
+    expect(ids).toContain('activity-a249');
+    expect(ids).not.toContain('activity-a0');
     expect(result.current.data?.hasMore).toBe(true);
   });
 });
