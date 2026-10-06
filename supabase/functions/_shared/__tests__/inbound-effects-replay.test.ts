@@ -1,8 +1,7 @@
 /**
- * R2-API-006 (#69) — recuperação de efeitos no replay. Travado: toda entrega
- * drena `drain_inbound_message_effects`; erro de ingest/drain é LANÇADO (500 →
- * reentrega); autoresposta só com `suppression_id` NOVO; palavra de opt-out e
- * citação viajam no mesmo ingest. Atomicidade SQL provada na migration real:
+ * R2-API-006 (#69): toda entrega drena `drain_inbound_message_effects`; erro de
+ * ingest/drain e LANCADO (500 -> reentrega); autoresposta so com suppression_id
+ * NOVO; direcao (fromMe) viaja no ingest. Atomicidade SQL provada em:
  *   scripts/db-audit/inbound-effects-replay.test.sh
  */
 import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
@@ -81,7 +80,7 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
 }
 
 /** Payload GO anonimizado; com `stanzaId` vira resposta citando envio nosso. */
-const goIncoming = (texto: string, id: string, stanzaId?: string): Record<string, unknown> => ({
+const goIncoming = (texto: string, id: string, stanzaId?: string, fromMe = false): Record<string, unknown> => ({
   event: "message",
   instanceName: "inst-go-r2-006",
   data: {
@@ -91,7 +90,7 @@ const goIncoming = (texto: string, id: string, stanzaId?: string): Record<string
       Sender: "5511000000001@c.us",
       PushName: "Contato Fixture",
       Timestamp: "2026-10-03T12:00:00.000Z",
-      IsFromMe: false,
+      IsFromMe: fromMe,
     },
     Message: stanzaId
       ? { extendedTextMessage: { text: texto, contextInfo: { stanzaId } } }
@@ -107,8 +106,8 @@ function traduzir(payload: Record<string, unknown>) {
 const originalFetch = globalThis.fetch;
 let fetchCalls: Array<{ url: string; init: RequestInit }> = [];
 
-async function entregar(supabase: EvolutionDbClient, texto: string, id: string, stanzaId?: string) {
-  const { data, key } = traduzir(goIncoming(texto, id, stanzaId));
+async function entregar(supabase: EvolutionDbClient, texto: string, id: string, stanzaId?: string, fromMe = false) {
+  const { data, key } = traduzir(goIncoming(texto, id, stanzaId, fromMe));
   await handleIncomingMessage(supabase, "inst-go-r2-006", data, key, "http://localhost:54321", "svc");
 }
 
@@ -146,7 +145,7 @@ Deno.test("R2-API-006: falha no drain é lançada; a reentrega drena e a supress
       ],
     });
 
-    // Entrega 1: o erro de banco NÃO é engolido — a entrega falha e o produtor reenvia.
+    // Entrega 1: o erro de banco nao e engolido — a entrega falha e o produtor reenvia.
     await assertRejects(
       () => entregar(supabase, "PARE", "3EB0FAIL"),
       Error,
@@ -201,4 +200,26 @@ Deno.test("R2-API-006: citação e palavra entram na mesma operação do ingest"
     assertEquals(ingest.args.p_quoted_external_id, "EXT-QUOTED-1", "a citação (stanzaId) viaja no ingest");
     assertEquals(ingest.args.p_opt_out_keyword, null, "texto normal não vira opt-out");
     assertEquals(fetchCalls.length, 0, "sem supressão não há autoresposta");
+  }));
+
+Deno.test("R2-API-006 (#69 refazer): a direção viaja no ingest — fromMe=true nunca vira resposta", () =>
+  comCenario(async (chamadas) => {
+    const supabase = fakeSupabase(chamadas, {});
+
+    // IsFromMe=true: a RPC precisa da direcao para NAO enfileirar atribuicao.
+    await entregar(supabase, "mensagem mandada por nós", "3EB0ME1", undefined, true);
+    // Recebida: direcao false, efeitos seguem valendo.
+    await entregar(supabase, "mensagem mandada por nós", "3EB0ME2");
+
+    const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
+    assertEquals(ingests.length, 2, "as duas entregas passam pelo ingest");
+    const propria = ingests.find((c) => c.args.p_external_id === "3EB0ME1")!;
+    assertEquals(propria.args.p_from_me, true,
+      "mensagem própria chega ao ingest marcada — sem p_from_me a RPC enfileira atribuição para a nossa própria mensagem");
+    assertEquals(propria.args.p_opt_out_keyword, null,
+      "opt-out nunca é avaliado para mensagem própria");
+    const recebida = ingests.find((c) => c.args.p_external_id === "3EB0ME2")!;
+    assertEquals(recebida.args.p_from_me, false,
+      "mensagem recebida informa p_from_me=false e continua enfileirando os efeitos");
+    assertEquals(fetchCalls.length, 0, "nenhuma autoresposta sai para mensagem própria");
   }));
