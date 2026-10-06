@@ -96,7 +96,8 @@ export function useCallRecording(callId: string | null | undefined, recordingSta
       if (!resposta.ok) throw new Error(`Gravacao indisponivel (${resposta.status})`);
 
       const blob = await resposta.blob();
-      return { disponivel: blob.size > 0, blob };
+      if (blob.size === 0) return { disponivel: false, blob: null };
+      return { disponivel: true, blob };
     },
   });
 

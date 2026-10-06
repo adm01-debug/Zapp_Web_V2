@@ -68,6 +68,18 @@ describe('useCallRecording — contrato com a Edge get-call-recording (TEL-RECOR
     expect(createObjectURL.mock.calls[0][0]).toBeInstanceOf(Blob);
   });
 
+  it('trata resposta 200 com corpo vazio como gravacao indisponivel', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, blob: async () => audioDaEdge('') });
+
+    const { result } = renderHook(() => useCallRecording('c-vazia', 'available'), { wrapper });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(result.current.buscando).toBe(false));
+    expect(result.current.disponivel).toBe(false);
+    expect(result.current.url).toBeNull();
+    expect(createObjectURL).not.toHaveBeenCalled();
+  });
+
   it('pede a Edge por POST com os headers de auth e o callId no corpo JSON (nunca na query string)', async () => {
     fetchMock.mockResolvedValue({ ok: true, status: 200, blob: async () => audioDaEdge() });
 
