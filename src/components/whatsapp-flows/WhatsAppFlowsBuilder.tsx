@@ -94,7 +94,12 @@ export function WhatsAppFlowsBuilder() {
   };
 
   const deleteFlow = async (id: string) => {
-    await supabase.from('whatsapp_flows').delete().eq('id', id);
+    // R2-API-053: o DELETE era descartado e a remoção era anunciada mesmo com error.
+    const { error } = await supabase.from('whatsapp_flows').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'Erro ao remover flow', description: error.message, variant: 'destructive' });
+      return;
+    }
     if (selectedFlow?.id === id) setSelectedFlow(null);
     toast({ title: 'Flow removido' }); fetchFlows();
   };
