@@ -28,6 +28,8 @@ interface MockOpts {
   messages?: Array<Record<string, unknown>> | null;
   /** resultado do lookup em whatsapp_connections */
   connection?: { instance_id: string } | null;
+  /** instância por id de conexão (lote multi-conexão); tem prioridade sobre `connection` */
+  connections?: Record<string, { instance_id: string } | null>;
 }
 
 interface Effects {
@@ -36,6 +38,8 @@ interface Effects {
   rpcCalls: Array<{ name: string; args: Record<string, unknown> }>;
   uploads: number;
   updates: number;
+  /** ids consultados em whatsapp_connections (prova que a conexão é resolvida por mensagem) */
+  connLookups?: string[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,16 +47,27 @@ function makeSupabase(opts: MockOpts, fx: Effects): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const builder = (table: string): any => {
     fx.tables.push(table);
+    let eqValue: string | undefined;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = (): { data: any; error: any } => {
       if (table === "messages") return { data: opts.messages ?? [], error: null };
-      if (table === "whatsapp_connections") return { data: opts.connection ?? null, error: null };
+      if (table === "whatsapp_connections") {
+        if (opts.connections && eqValue !== undefined) {
+          return { data: opts.connections[eqValue] ?? null, error: null };
+        }
+        return { data: opts.connection ?? null, error: null };
+      }
       return { data: null, error: null };
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const b: Record<string, any> = {};
     const chain = () => b;
-    b.select = chain; b.eq = chain; b.not = chain; b.like = chain;
+    b.select = chain; b.not = chain; b.like = chain;
+    b.eq = (_col: string, val: unknown) => {
+      eqValue = String(val);
+      if (table === "whatsapp_connections") fx.connLookups?.push(String(val));
+      return chain();
+    };
     b.order = chain; b.range = chain; b.single = () => Promise.resolve(rows());
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     b.update = (_row: any) => { fx.updates++; return chain(); };
@@ -203,4 +218,87 @@ Deno.test("R2-API-022: admin valido e admitido (dry_run devolve metadados)", asy
   assertEquals(fx.rpcCalls.map((c) => c.name), ["is_admin_or_supervisor"]);
   assertEquals(fx.uploads, 0);
   assertEquals(fx.updates, 0);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// R2-API-034 (#208) — a instância de origem é POR MENSAGEM, não a da 1ª do lote
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** "OggS" + 8 bytes nulos — cabeçalho válido para `isValidAudioBytes`. */
+const OGG_B64 = "T2dnUwAAAAAAAAAA";
+
+Deno.test("R2-API-034: lote multi-conexao baixa cada audio na instancia da SUA conexao", async () => {
+  const fx: Effects = {
+    tables: [], getUserCalls: [], rpcCalls: [], uploads: 0, updates: 0, connLookups: [],
+  };
+  const messages = [
+    {
+      id: "m1",
+      external_id: "ext-1",
+      media_url: "https://x.supabase.co/storage/v1/object/public/audio-messages/ext-1.ogg",
+      whatsapp_connection_id: "conn-1",
+    },
+    {
+      id: "m2",
+      external_id: "ext-2",
+      media_url: "https://x.supabase.co/storage/v1/object/public/audio-messages/ext-2.ogg",
+      whatsapp_connection_id: "conn-2",
+    },
+  ];
+  const opts: MockOpts = {
+    authUser: ADMIN,
+    isAdmin: true,
+    messages,
+    connections: {
+      "conn-1": { instance_id: "INSTANCE_1" },
+      "conn-2": { instance_id: "INSTANCE_2" },
+    },
+  };
+
+  const evoUrls: string[] = [];
+  const origFetch = globalThis.fetch;
+  const origFlavor = Deno.env.get("EVOLUTION_API_FLAVOR");
+  // Em v2 a instância aparece no path da chamada — é o que o teste observa.
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  globalThis.fetch = ((input: RequestInfo | URL) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    if (url.includes("evo.test")) {
+      evoUrls.push(url);
+      return Promise.resolve(new Response(
+        JSON.stringify({ base64: `data:audio/ogg;base64,${OGG_B64}`, mimetype: "audio/ogg" }),
+        { headers: { "Content-Type": "application/json" } },
+      ));
+    }
+    // URL de mídia já existente no Storage: bytes inválidos → o handler re-baixa.
+    return Promise.resolve(new Response(new Uint8Array([0x00, 0x01, 0x02, 0x03])));
+  }) as typeof fetch;
+
+  try {
+    const res = await handleRecoverCorruptedAudios(
+      makeReq({ bearer: "jwt.admin", body: { dry_run: false } }),
+      depsFor(opts, fx),
+    );
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    assertEquals(body.recovered, 2);
+    assertEquals(body.failed, 0);
+
+    // Cada mensagem foi buscar a mídia na instância da PRÓPRIA conexão.
+    assertEquals(evoUrls.length, 2);
+    assert(
+      evoUrls[0].includes("/chat/getBase64FromMediaMessage/INSTANCE_1"),
+      `1a mensagem deveria usar INSTANCE_1: ${evoUrls[0]}`,
+    );
+    assert(
+      evoUrls[1].includes("/chat/getBase64FromMediaMessage/INSTANCE_2"),
+      `2a mensagem deveria usar INSTANCE_2 (conexão dela), não a da 1a: ${evoUrls[1]}`,
+    );
+    assert(!evoUrls[1].includes("INSTANCE_1"), "2a mensagem nao pode reutilizar a instancia da 1a");
+    // As duas conexões do lote foram resolvidas no banco (conn-2 não veio de cache).
+    assertEquals(fx.connLookups, ["conn-1", "conn-2"]);
+  } finally {
+    globalThis.fetch = origFetch;
+    if (origFlavor === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", origFlavor);
+  }
 });
