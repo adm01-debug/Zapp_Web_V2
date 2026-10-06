@@ -15,6 +15,7 @@ import { MemoryRouter } from 'react-router-dom';
 const PAGE_SIZE = 50;
 const TOTAL_CONTACTS = 137;
 const ASSIGNED_CONTACTS = 92;
+const RESOLVED_TODAY = 12;
 
 const { mockFrom, contactsSelect, AUTH } = vi.hoisted(() => ({
   mockFrom: vi.fn(),
@@ -66,15 +67,27 @@ function thenable(resposta: unknown) {
 
 /**
  * `select('id', { count: 'exact', head: true }).eq(...)` — o total do servidor.
- * A variante com `.not('assigned_to','is',null)` e o total de atribuidos.
+ * A variante com `.not('assigned_to','is',null)` e o total de atribuidos; a que filtra
+ * `conversation_status = 'resolved'` (com a janela do dia em `.gte`/`.lt`) e Resolvidos Hoje.
  */
 function contagemNode() {
   let atribuido = false;
+  let resolvido = false;
   const node: Record<string, unknown> = {};
-  node.eq = () => node;
+  node.eq = (coluna?: string) => {
+    if (coluna === 'conversation_status') resolvido = true;
+    return node;
+  };
   node.not = () => { atribuido = true; return node; };
+  // R2-QUE-001: Resolvidos Hoje recorta `conversation_status_changed_at` na janela semiaberta do dia.
+  node.gte = () => node;
+  node.lt = () => node;
   node.then = (f: (v: unknown) => unknown) =>
-    Promise.resolve({ data: null, count: atribuido ? ASSIGNED_CONTACTS : TOTAL_CONTACTS, error: null }).then(f);
+    Promise.resolve({
+      data: null,
+      count: resolvido ? RESOLVED_TODAY : atribuido ? ASSIGNED_CONTACTS : TOTAL_CONTACTS,
+      error: null,
+    }).then(f);
   return node;
 }
 
@@ -110,6 +123,14 @@ beforeEach(() => {
     }
     if (tabela === 'profiles') {
       return { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { name: 'Ana', avatar_url: null } }) }) }) };
+    }
+    if (tabela === 'conversation_sla') {
+      // R2-QUE-001: a fila inteira e lida por `contacts.queue_id`, paginando com `.range`.
+      return {
+        select: () => ({
+          eq: () => ({ order: () => ({ range: () => Promise.resolve({ data: [], error: null }) }) }),
+        }),
+      };
     }
     return { select: () => thenable({ data: [], error: null }) };
   });
@@ -154,5 +175,16 @@ describe('QueueDetails — totais de fila vem do servidor, nao da pagina (R2-QUE
   it('a pagina de contatos continua sendo a lista paginada (50 linhas)', async () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(PAGE_SIZE + 1));
+  });
+
+  // R2-QUE-001 (item 105): a fila tem 137 contatos, a pagina visivel so 50 e NENHUM dos 50 esta
+  // resolvido hoje. O cartao tem de mostrar a contagem do servidor (12) — antes ele mostrava
+  // floor(atribuidos da pagina * 0.7) = 35 e, pior, so enxergava resolvidos dentro dos 50.
+  it('Resolvidos Hoje e a contagem do servidor da fila inteira, nao o recorte de 50', async () => {
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText('Resolvidos Hoje')).toBeInTheDocument());
+    expect(await screen.findByText(String(RESOLVED_TODAY))).toBeInTheDocument();
+    expect(screen.queryByText('35')).not.toBeInTheDocument(); // floor(50 * 0.7), a estimativa do recorte
   });
 });
