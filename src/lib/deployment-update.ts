@@ -1,4 +1,5 @@
 import { getLogger } from '@/lib/logger';
+import { haBloqueioRecarga, observarBloqueiosRecarga } from '@/lib/reload-blockers';
 
 declare const __ZAPP_BUILD_ID__: string;
 
@@ -6,7 +7,10 @@ const log = getLogger('DeploymentUpdate');
 const CHECK_INTERVAL_MS = 10 * 60 * 1000;
 let updateAlreadyAnnounced = false;
 let recarregar: () => void = () => window.location.reload();
-let recargaAoEsconderArmada = false;
+/** Uma versao nova foi detectada e espera o momento seguro (aba oculta E sem bloqueio) para recarregar. */
+let recargaPendente = false;
+/** Cancelamento da observacao dos bloqueios, armada enquanto existe recarga pendente. */
+let pararObservadorBloqueios: (() => void) | null = null;
 
 export type AcaoNaAtualizacao = 'recarregar-agora' | 'avisar-e-recarregar-ao-esconder';
 
@@ -23,17 +27,40 @@ export type AcaoNaAtualizacao = 'recarregar-agora' | 'avisar-e-recarregar-ao-esc
  *
  * **Aba visivel:** avisar (o toast de "Atualizar agora" continua) e recarregar no primeiro
  * instante em que a aba for escondida — quem esta escrevendo uma mensagem nao perde o texto.
+ *
+ * A visibilidade e so metade da regra: o monitor tambem exige que `haBloqueioRecarga()` seja falso
+ * (edicao de mensagem ou sessao critica em andamento). `decidirAcaoNaAtualizacao` responde apenas
+ * pela visibilidade; quem combina as duas condicoes e o proprio monitor.
  */
 export function decidirAcaoNaAtualizacao(visibilidade: DocumentVisibilityState): AcaoNaAtualizacao {
   return visibilidade === 'hidden' ? 'recarregar-agora' : 'avisar-e-recarregar-ao-esconder';
 }
 
+function desarmarObservadorBloqueios() {
+  pararObservadorBloqueios?.();
+  pararObservadorBloqueios = null;
+}
+
+/** Recarrega uma unica vez e desarma o que esperava o momento seguro (listener e observador). */
+function concluirRecargaPendente() {
+  if (!recargaPendente) return;
+  recargaPendente = false;
+  desarmarObservadorBloqueios();
+  document.removeEventListener('visibilitychange', aoEsconder);
+  recarregar();
+}
+
 function aoEsconder() {
-  if (recargaAoEsconderArmada && document.visibilityState === 'hidden') {
-    recargaAoEsconderArmada = false;
-    document.removeEventListener('visibilitychange', aoEsconder);
-    recarregar();
-  }
+  if (document.visibilityState !== 'hidden') return;
+  // Trabalho ativo em andamento: a recarga fica pendente e volta a ser avaliada quando ele terminar.
+  if (haBloqueioRecarga()) return;
+  concluirRecargaPendente();
+}
+
+/** O observador so avisa na transicao agregada bloqueado -> livre, ou seja, quando o ULTIMO bloqueio termina. */
+function aoTransicionarBloqueios(bloqueado: boolean) {
+  if (bloqueado || document.visibilityState !== 'hidden') return;
+  concluirRecargaPendente();
 }
 
 async function checkForDeploymentUpdate() {
@@ -52,14 +79,19 @@ async function checkForDeploymentUpdate() {
 
     updateAlreadyAnnounced = true;
 
-    if (decidirAcaoNaAtualizacao(document.visibilityState) === 'recarregar-agora') {
+    // Recarga automatica so quando ninguem esta olhando E nao ha trabalho em andamento.
+    if (decidirAcaoNaAtualizacao(document.visibilityState) === 'recarregar-agora' && !haBloqueioRecarga()) {
       recarregar();
       return;
     }
 
-    // Aba visivel: avisa e arma a recarga para assim que ela for escondida.
-    recargaAoEsconderArmada = true;
+    // Adiado: a versao nova fica PENDENTE. Avisa (o toast de "Atualizar agora" continua imediato),
+    // observa a visibilidade e o registro de bloqueios e recarrega sozinha no primeiro instante
+    // seguro — inclusive quando o ultimo bloqueio termina com a aba ja oculta.
+    recargaPendente = true;
     document.addEventListener('visibilitychange', aoEsconder);
+    desarmarObservadorBloqueios();
+    pararObservadorBloqueios = observarBloqueiosRecarga(aoTransicionarBloqueios);
 
     const { toast } = await import('sonner');
     toast.info('Uma nova versão do Zapp está disponível', {
@@ -89,7 +121,8 @@ export function startDeploymentUpdateMonitor(opcoes: { recarregar?: () => void }
     window.clearTimeout(timeout); // o timer inicial tambem precisa morrer, senao dispara depois do teardown
     document.removeEventListener('visibilitychange', handleVisibility);
     document.removeEventListener('visibilitychange', aoEsconder);
-    recargaAoEsconderArmada = false;
+    desarmarObservadorBloqueios();
+    recargaPendente = false;
     updateAlreadyAnnounced = false;
   };
 }
