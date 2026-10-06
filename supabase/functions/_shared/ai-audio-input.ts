@@ -245,6 +245,108 @@ function tooLarge(
   );
 }
 
+/** Marcador interno: a leitura do corpo foi abortada pelo timeout do download. */
+class AudioReadAborted extends Error {
+  constructor() {
+    super("leitura do corpo abortada pelo timeout");
+    this.name = "AudioReadAborted";
+  }
+}
+
+/**
+ * Um `reader.read()` corrido contra o sinal do AbortController do download.
+ * Repassar o `signal` ao `fetch` não basta — um fetch injetado pode ignorá-lo e
+ * o corpo continuaria pendente para sempre: se o prazo estourar com o `read()`
+ * em espera (ou já tiver estourado), o reader é cancelado e a promessa rejeita
+ * com o marcador, que o chamador traduz para `AUDIO_DOWNLOAD_FAILED`.
+ */
+function readChunk(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  signal: AbortSignal,
+): Promise<ReadableStreamReadResult<Uint8Array>> {
+  if (signal.aborted) return Promise.reject(new AudioReadAborted());
+  return new Promise((resolve, reject) => {
+    const onAbort = (): void => {
+      reject(new AudioReadAborted());
+      try {
+        void reader.cancel().catch(() => undefined);
+      } catch {
+        // Cancelar é higiene: a rejeição por abort já está decidida.
+      }
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+    reader.read().then(
+      (result) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(result);
+      },
+      (err: unknown) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err instanceof Error ? err : new Error(errorText(err)));
+      },
+    );
+  });
+}
+
+/**
+ * Lê o corpo por streaming, contabilizando os bytes a cada pedaço. Passou do
+ * teto, cancela a leitura na hora — o restante do corpo NUNCA é materializado —
+ * e rejeita com `AUDIO_TOO_LARGE`. Abort/erro do stream viram
+ * `AUDIO_DOWNLOAD_FAILED`. `body === null` devolve corpo vazio (mesmo desfecho
+ * do "objeto vazio" de antes).
+ */
+async function readBodyWithLimit(
+  response: Response,
+  signal: AbortSignal,
+  maxBytes: number,
+  timeoutMs: number,
+  bucket: string,
+  path: string,
+): Promise<Uint8Array> {
+  const body = response.body;
+  if (body === null) return new Uint8Array(0);
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await readChunk(reader, signal);
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        try {
+          await reader.cancel();
+        } catch {
+          // Cancelar é higiene: o desfecho já é o erro de tamanho.
+        }
+        throw tooLarge(total, maxBytes, bucket, path);
+      }
+      chunks.push(value);
+    }
+  } catch (err) {
+    if (err instanceof AiAudioInputError) throw err;
+    if (err instanceof AudioReadAborted) {
+      throw new AiAudioInputError(
+        "AUDIO_DOWNLOAD_FAILED",
+        `Download do audio abortado: timeout de ${timeoutMs} ms na leitura do corpo (${bucket}/${path}).`,
+        { bucket, path },
+      );
+    }
+    throw new AiAudioInputError(
+      "AUDIO_DOWNLOAD_FAILED",
+      `Falha ao ler o corpo do audio do Storage (${bucket}/${path}): ${errorText(err)}`,
+      { bucket, path },
+    );
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
+
 /**
  * Baixa o áudio AUTORIZADO do Storage do próprio projeto e o devolve embutido
  * (base64 + formato) para a parte `input_audio` da mensagem. Lança SEMPRE
@@ -338,81 +440,92 @@ export async function toInlineAudio(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  let response: Response;
+  // O prazo vale para o download INTEIRO: requisição, validação dos headers e
+  // leitura/montagem do corpo. Por isso o timer só morre neste finally externo —
+  // toda saída (sucesso ou AiAudioInputError) passa por ele uma única vez.
   try {
-    response = await fetchImpl(buildObjectEndpoint(supabaseUrl, bucket, path), {
-      method: "GET",
-      headers: { apikey, Authorization: authorization },
-      signal: controller.signal,
-    });
-  } catch (err) {
-    throw new AiAudioInputError(
-      "AUDIO_DOWNLOAD_FAILED",
-      `Falha ao baixar o audio do Storage (${bucket}/${path}): ${errorText(err)}`,
-      { bucket, path },
+    let response: Response;
+    try {
+      response = await fetchImpl(buildObjectEndpoint(supabaseUrl, bucket, path), {
+        method: "GET",
+        headers: { apikey, Authorization: authorization },
+        signal: controller.signal,
+      });
+    } catch (err) {
+      throw new AiAudioInputError(
+        "AUDIO_DOWNLOAD_FAILED",
+        `Falha ao baixar o audio do Storage (${bucket}/${path}): ${errorText(err)}`,
+        { bucket, path },
+      );
+    }
+
+    if (!response.ok) {
+      releaseBody(response);
+      throw new AiAudioInputError(
+        "AUDIO_DOWNLOAD_FAILED",
+        `Storage respondeu HTTP ${response.status} para ${bucket}/${path}.`,
+        { status: response.status, bucket, path },
+      );
+    }
+
+    // Tipo antes de embutir.
+    const declaredType = response.headers.get("content-type");
+    const mime = normalizeAudioMime(declaredType);
+    if (!mime) {
+      releaseBody(response);
+      throw new AiAudioInputError(
+        "AUDIO_TYPE_INVALID",
+        `content-type nao e audio: ${declaredType ?? "(ausente)"} (${bucket}/${path}).`,
+        { contentType: declaredType, bucket, path },
+      );
+    }
+
+    // Formato aceito pelo provedor — o payload nunca sai com formato que ele recusaria.
+    const format = formatForMime(mime);
+    if (!format) {
+      releaseBody(response);
+      throw new AiAudioInputError(
+        "AUDIO_FORMAT_UNSUPPORTED",
+        `Formato de audio nao aceito pelo provedor: ${mime} (${bucket}/${path}).`,
+        { contentType: mime, bucket, path },
+      );
+    }
+
+    // Limite ANTES do corpo quando o provedor informa content-length...
+    const announcedBytes = parseContentLength(response.headers.get("content-length"));
+    if (announcedBytes !== null && announcedBytes > maxBytes) {
+      releaseBody(response);
+      throw tooLarge(announcedBytes, maxBytes, bucket, path);
+    }
+
+    // ...e CONFIRMADO nos bytes reais, lidos por streaming: sem content-length
+    // (ou com valor falso) a contagem para no primeiro pedaço que estoura o
+    // teto — o restante do corpo é cancelado, nunca materializado.
+    const bytes = await readBodyWithLimit(
+      response,
+      controller.signal,
+      maxBytes,
+      timeoutMs,
+      bucket,
+      path,
     );
+    if (bytes.byteLength === 0) {
+      throw new AiAudioInputError(
+        "AUDIO_DOWNLOAD_FAILED",
+        `Objeto vazio no Storage (${bucket}/${path}).`,
+        { bytes: 0, bucket, path },
+      );
+    }
+
+    return {
+      data: bytesToBase64(bytes),
+      format,
+      mime,
+      bytes: bytes.byteLength,
+      bucket,
+      path,
+    };
   } finally {
     clearTimeout(timer);
   }
-
-  if (!response.ok) {
-    releaseBody(response);
-    throw new AiAudioInputError(
-      "AUDIO_DOWNLOAD_FAILED",
-      `Storage respondeu HTTP ${response.status} para ${bucket}/${path}.`,
-      { status: response.status, bucket, path },
-    );
-  }
-
-  // Tipo antes de embutir.
-  const declaredType = response.headers.get("content-type");
-  const mime = normalizeAudioMime(declaredType);
-  if (!mime) {
-    releaseBody(response);
-    throw new AiAudioInputError(
-      "AUDIO_TYPE_INVALID",
-      `content-type nao e audio: ${declaredType ?? "(ausente)"} (${bucket}/${path}).`,
-      { contentType: declaredType, bucket, path },
-    );
-  }
-
-  // Formato aceito pelo provedor — o payload nunca sai com formato que ele recusaria.
-  const format = formatForMime(mime);
-  if (!format) {
-    releaseBody(response);
-    throw new AiAudioInputError(
-      "AUDIO_FORMAT_UNSUPPORTED",
-      `Formato de audio nao aceito pelo provedor: ${mime} (${bucket}/${path}).`,
-      { contentType: mime, bucket, path },
-    );
-  }
-
-  // Limite ANTES do corpo quando o provedor informa content-length...
-  const announcedBytes = parseContentLength(response.headers.get("content-length"));
-  if (announcedBytes !== null && announcedBytes > maxBytes) {
-    releaseBody(response);
-    throw tooLarge(announcedBytes, maxBytes, bucket, path);
-  }
-
-  // ...e CONFIRMADO nos bytes reais (cabeçalho mentiroso não passa).
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  if (bytes.byteLength > maxBytes) {
-    throw tooLarge(bytes.byteLength, maxBytes, bucket, path);
-  }
-  if (bytes.byteLength === 0) {
-    throw new AiAudioInputError(
-      "AUDIO_DOWNLOAD_FAILED",
-      `Objeto vazio no Storage (${bucket}/${path}).`,
-      { bytes: 0, bucket, path },
-    );
-  }
-
-  return {
-    data: bytesToBase64(bytes),
-    format,
-    mime,
-    bytes: bytes.byteLength,
-    bucket,
-    path,
-  };
 }

@@ -394,6 +394,196 @@ describe('(1) ai-audio-input: download AUTENTICADO e limites', () => {
     await expect(toInlineAudio(MEME_PUBLIC_URL, { supabaseUrl: SUPABASE_BASE, storageIdentity: identity }))
       .rejects.toBeInstanceOf(AiAudioInputError);
   });
+
+  it('corpo chunked SEM content-length: para de puxar e cancela ao passar do teto', async () => {
+    // Resposta de 8 MiB em pedaços de 1 MiB, sem cabeçalho content-length: o
+    // limite só pode ser conferido DURANTE a leitura — e a leitura tem de parar
+    // assim que o teto estoura, sem consumir o restante.
+    const PEDACO_BYTES = 1024 * 1024;
+    const TOTAL_PEDACOS = 8;
+    let puxados = 0;
+    let cancelado = false;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (puxados >= TOTAL_PEDACOS) {
+          controller.close();
+          return;
+        }
+        puxados += 1;
+        controller.enqueue(new Uint8Array(PEDACO_BYTES));
+      },
+      cancel() {
+        cancelado = true;
+      },
+    });
+    const fetchImpl: typeof fetch = async () =>
+      new Response(stream, { status: 200, headers: { 'content-type': 'audio/mpeg' } });
+
+    await expect(
+      toInlineAudio(MEME_PUBLIC_URL, {
+        supabaseUrl: SUPABASE_BASE,
+        storageIdentity: { kind: 'user', bearerToken: JWT_USUARIO_TESTE, anonKey: ANON_KEY_FICTICIA },
+        fetchImpl,
+      }),
+    ).rejects.toMatchObject({ code: 'AUDIO_TOO_LARGE', limitBytes: MAX_INLINE_AUDIO_BYTES });
+
+    // Com `arrayBuffer()` o corpo inteiro era materializado antes da rejeição:
+    // os 8 pedaços eram produzidos e `cancel` jamais era chamado. Com a leitura
+    // por streaming, a produção para (no máximo 7 pedaços) e o reader é cancelado.
+    expect(puxados).toBeLessThan(TOTAL_PEDACOS);
+    expect(cancelado).toBe(true);
+  });
+
+  it('corpo bloqueado depois dos headers: o timeout aborta a leitura do corpo', async () => {
+    // Os headers chegam dentro do prazo, mas o corpo nunca entrega nem fecha:
+    // o timeout iniciado na requisição TEM de continuar valendo durante a
+    // leitura — mesmo que o fetch injetado ignore o AbortSignal (ele ignora).
+    const fetchImpl: typeof fetch = async () =>
+      new Response(new ReadableStream<Uint8Array>({ start() {} }), {
+        status: 200,
+        headers: { 'content-type': 'audio/mpeg' },
+      });
+
+    const promessa = toInlineAudio(MEME_PUBLIC_URL, {
+      supabaseUrl: SUPABASE_BASE,
+      storageIdentity: { kind: 'user', bearerToken: JWT_USUARIO_TESTE, anonKey: ANON_KEY_FICTICIA },
+      timeoutMs: 25,
+      fetchImpl,
+    });
+    await expect(promessa).rejects.toMatchObject({ code: 'AUDIO_DOWNLOAD_FAILED' });
+    await expect(promessa).rejects.toThrow(/timeout|abort/i);
+  });
+
+  it('o timer do download cobre a leitura do corpo e é limpo em sucesso e em erro', async () => {
+    // O espião isola o timer DO MÓDULO pelo delay distintivo: mede se
+    // `clearTimeout(id)` foi chamado, e quando.
+    const TIMEOUT_DISTINTO = 61_337;
+    const setSpy = vi.spyOn(globalThis, 'setTimeout');
+    const clearSpy = vi.spyOn(globalThis, 'clearTimeout');
+    const timerDoModulo = (): unknown => {
+      const indice = setSpy.mock.calls.findIndex((c) => c[1] === TIMEOUT_DISTINTO);
+      return indice < 0 ? undefined : setSpy.mock.results[indice]?.value;
+    };
+    const timerFoiLimpo = (): boolean => {
+      const id = timerDoModulo();
+      return id !== undefined && clearSpy.mock.calls.some((c) => c[0] === id);
+    };
+
+    try {
+      // (a) SUCESSO: enquanto o corpo é produzido, o timer continua armado (o
+      // código anterior o matava ao receber os headers). Ao resolver, limpo.
+      // O 1º pull é o aquecimento interno do ReadableStream — dispara na
+      // construção, dentro do fetch, com o timer armado nos DOIS códigos; os
+      // pulls seguintes só disparam quando a leitura do corpo consome um pedaço,
+      // e é neles que o timer se mede.
+      let pullNum = 0;
+      const limpoDuranteLeitura: boolean[] = [];
+      const corpoOk = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          pullNum += 1;
+          if (pullNum === 1) {
+            controller.enqueue(MP3_BYTES.subarray(0, 6));
+            return;
+          }
+          limpoDuranteLeitura.push(timerFoiLimpo());
+          controller.enqueue(MP3_BYTES.subarray(6));
+          controller.close();
+        },
+      });
+      const fetchOk: typeof fetch = async () =>
+        new Response(corpoOk, { status: 200, headers: { 'content-type': 'audio/mpeg' } });
+
+      const audio = await toInlineAudio(MEME_PUBLIC_URL, {
+        supabaseUrl: SUPABASE_BASE,
+        storageIdentity: { kind: 'user', bearerToken: JWT_USUARIO_TESTE, anonKey: ANON_KEY_FICTICIA },
+        timeoutMs: TIMEOUT_DISTINTO,
+        fetchImpl: fetchOk,
+      });
+      expect(audio.bytes).toBe(MP3_BYTES.byteLength);
+      expect(limpoDuranteLeitura.length).toBeGreaterThan(0);
+      expect(limpoDuranteLeitura).toContain(false);
+      expect(timerFoiLimpo()).toBe(true);
+
+      // (b) ERRO: a rejeição por AUDIO_TOO_LARGE também não deixa timer vivo.
+      setSpy.mockClear();
+      clearSpy.mockClear();
+      const fetchGrande: typeof fetch = async () =>
+        new Response(new Uint8Array(MAX_INLINE_AUDIO_BYTES + 1), {
+          status: 200,
+          headers: { 'content-type': 'audio/mpeg' },
+        });
+      await expect(
+        toInlineAudio(MEME_PUBLIC_URL, {
+          supabaseUrl: SUPABASE_BASE,
+          storageIdentity: { kind: 'user', bearerToken: JWT_USUARIO_TESTE, anonKey: ANON_KEY_FICTICIA },
+          timeoutMs: TIMEOUT_DISTINTO,
+          fetchImpl: fetchGrande,
+        }),
+      ).rejects.toMatchObject({ code: 'AUDIO_TOO_LARGE' });
+      expect(timerFoiLimpo()).toBe(true);
+    } finally {
+      setSpy.mockRestore();
+      clearSpy.mockRestore();
+    }
+  });
+
+  it('content-length acima do teto rejeita ANTES de ler o corpo (zero pedaços puxados)', async () => {
+    // Cabeçalho honesto acima do limite: a decisão sai na validação dos headers,
+    // dentro do prazo do download — a fonte não é puxada nenhuma vez e o corpo é
+    // devolvido por cancel (releaseBody), ainda com o timer armado.
+    const TIMEOUT_DISTINTO = 61_337;
+    const setSpy = vi.spyOn(globalThis, 'setTimeout');
+    const clearSpy = vi.spyOn(globalThis, 'clearTimeout');
+    const timerFoiLimpo = (): boolean => {
+      const indice = setSpy.mock.calls.findIndex((c) => c[1] === TIMEOUT_DISTINTO);
+      const id = indice < 0 ? undefined : setSpy.mock.results[indice]?.value;
+      return id !== undefined && clearSpy.mock.calls.some((c) => c[0] === id);
+    };
+
+    let puxados = 0;
+    let cancelado = false;
+    let timerArmadoNoRelease: boolean | null = null;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        // Sempre entrega: qualquer LEITURA do corpo geraria um pull novo. O 1º
+        // pull é o aquecimento interno do ReadableStream (não é leitura do
+        // módulo), então `puxados <= 1` prova que nada foi consumido.
+        puxados += 1;
+        controller.enqueue(new Uint8Array(8));
+      },
+      cancel() {
+        cancelado = true;
+        timerArmadoNoRelease = !timerFoiLimpo();
+      },
+    });
+    const fetchImpl: typeof fetch = async () =>
+      new Response(stream, {
+        status: 200,
+        headers: {
+          'content-type': 'audio/mpeg',
+          'content-length': String(MAX_INLINE_AUDIO_BYTES + 1),
+        },
+      });
+
+    try {
+      await expect(
+        toInlineAudio(MEME_PUBLIC_URL, {
+          supabaseUrl: SUPABASE_BASE,
+          storageIdentity: { kind: 'user', bearerToken: JWT_USUARIO_TESTE, anonKey: ANON_KEY_FICTICIA },
+          timeoutMs: TIMEOUT_DISTINTO,
+          fetchImpl,
+        }),
+      ).rejects.toMatchObject({ code: 'AUDIO_TOO_LARGE' });
+
+      expect(puxados).toBeLessThanOrEqual(1);
+      expect(cancelado).toBe(true);
+      expect(timerArmadoNoRelease).toBe(true);
+      expect(timerFoiLimpo()).toBe(true);
+    } finally {
+      setSpy.mockRestore();
+      clearSpy.mockRestore();
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
