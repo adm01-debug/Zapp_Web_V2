@@ -123,7 +123,7 @@ function fakeAdmin(opts: {
         }) as Record<string, unknown>;
         builder.update = (row: Record<string, unknown>) => {
           updateCalls.push(row);
-          return fakeChain({ default: updateResults.shift() ?? { data: null, error: null } });
+          return fakeChain({ default: updateResults.shift() ?? { data: [{ id: "acc-1" }], error: null } });
         };
         return builder;
       }
@@ -417,4 +417,60 @@ Deno.test("disconnect sem tokens armazenados responde revoked:null", async () =>
   assertEquals(body.revoked, null);
   assertEquals(body.partial, undefined);
   assertEquals(calls.revoke, []);
+});
+
+// ── UPDATE que afeta ZERO linhas não é sucesso (mesma classe do defeito):
+// o PostgREST não devolve erro quando o filtro não casa nada, então a resposta
+// só pode ser success quando a escrita realmente aconteceu.
+
+Deno.test("disconnect: update local sem linhas afetadas responde 500 sem success", async () => {
+  const admin = fakeAdmin({
+    tokens: { access_token: "ya29.old", refresh_token: "rt.old" },
+    updateResults: [{ data: [], error: null }],
+  });
+  const calls = newCalls();
+
+  const res = await handleGmailOAuth(
+    post({ action: "disconnect", account_id: ACCOUNT_ID }),
+    makeDeps("user-1", admin, calls),
+  );
+
+  assertEquals(res.status, 500);
+  const body = await res.json();
+  assertEquals(body.success, undefined);
+  assertEquals(body.disconnected, undefined);
+});
+
+Deno.test("refresh-token: update de expiração sem linhas afetadas responde 500 sem success", async () => {
+  const admin = fakeAdmin({
+    tokens: { access_token: "ya29.old", refresh_token: "rt.old" },
+    updateResults: [{ data: [], error: null }],
+  });
+  const calls = newCalls();
+
+  const res = await handleGmailOAuth(
+    post({ action: "refresh-token", account_id: ACCOUNT_ID }),
+    makeDeps("user-1", admin, calls),
+  );
+
+  assertEquals(res.status, 500);
+  const body = await res.json();
+  assertEquals(body.success, undefined);
+  assertEquals(body.access_token, undefined);
+});
+
+Deno.test("exchange-code: recuperação sem linhas afetadas continua respondendo 500", async () => {
+  const admin = fakeAdmin({
+    rpcErrors: { store_gmail_tokens: { message: "rpc denied" } },
+    updateResults: [{ data: [], error: null }],
+  });
+  const calls = newCalls();
+  const deps = makeDeps("user-1", admin, calls);
+
+  await handleGmailOAuth(post({ action: "get-auth-url", state: STATE }), deps);
+  const res = await handleGmailOAuth(post({ action: "exchange-code", code: "code-1", state: STATE }), deps);
+
+  assertEquals(res.status, 500);
+  const body = await res.json();
+  assertEquals(body.success, undefined);
 });

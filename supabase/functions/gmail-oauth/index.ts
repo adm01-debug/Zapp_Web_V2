@@ -180,12 +180,18 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         try {
           await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || "");
         } catch {
-          const { error: markError } = await supabase.from("gmail_accounts").update({
+          const { data: marked, error: markError } = await supabase.from("gmail_accounts").update({
             is_active: false,
             sync_status: "error",
             last_error: "Falha ao armazenar os tokens do Gmail",
-          }).eq("id", account.id);
-          if (markError) log.error("Falha ao marcar conta Gmail como erro", { error: markError.message });
+          }).eq("id", account.id).select("id");
+          // A recuperacao tambem e conferida (erro E linhas afetadas): se ela falhar,
+          // registra — a resposta continua sendo erro (500), nunca success.
+          if (markError || !marked?.length) {
+            log.error("Falha ao marcar a conta Gmail como erro", {
+              error: markError?.message ?? "nenhuma linha atualizada",
+            });
+          }
           return errorResponse("Falha ao armazenar os tokens do Gmail", 500, req);
         }
 
@@ -206,8 +212,14 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
         await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
-        const { error: expiryError } = await supabase.from("gmail_accounts").update({ token_expires_at: expiresAt }).eq("id", account_id);
+        const { data: expiryRows, error: expiryError } = await supabase
+          .from("gmail_accounts")
+          .update({ token_expires_at: expiresAt })
+          .eq("id", account_id)
+          .select("id");
         if (expiryError) throw expiryError;
+        // Zero linhas afetadas = expiracao nao gravada: nao pode virar success.
+        if (!expiryRows?.length) throw new Error("Falha ao atualizar a expiracao do token do Gmail");
 
         log.done(200, { action });
         return jsonResponse({ success: true, access_token: tokens.access_token, expires_at: expiresAt }, 200, req);
@@ -231,12 +243,14 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
             }
           } catch { /* tokens may not exist */ }
           // Clear encrypted tokens and deactivate: never call store_gmail_tokens with empty string (raises EXCEPTION)
-          const { error: deactivateError } = await supabase.from("gmail_accounts").update({
+          const { data: deactivated, error: deactivateError } = await supabase.from("gmail_accounts").update({
             is_active: false,
             access_token_encrypted: null,
             refresh_token_encrypted: null,
-          }).eq("id", account_id);
+          }).eq("id", account_id).select("id");
           if (deactivateError) throw deactivateError;
+          // Zero linhas afetadas = nada foi desconectado: nao pode virar success.
+          if (!deactivated?.length) throw new Error("Desconexao do Gmail nao aplicada");
         }
 
         if (revoked === false) {
