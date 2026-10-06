@@ -35,8 +35,17 @@
 --   herdam esse updated_at recente e podem aparecer UMA vez em failure_rate_15m; a purga roda
 --   no maximo 1x/dia e o alerta exige >= 5 falhas e >= 50%, entao o efeito e pontual e nao se
 --   repete (as purgas seguintes nao movem mais status_changed_at).
--- * O backfill faz UPDATE em todas as linhas (a coluna e nova) e o gatilho generico empurra
---   updated_at junto; nada consome talkx_recipients.updated_at para saude depois desta migration.
+-- * O backfill faz UPDATE em todas as linhas (a coluna e nova) e, sem cuidado, o gatilho
+--   generico empurraria updated_at = now() em todas elas — destruindo o carimbo real de cada
+--   destinatario e fazendo a view ANTIGA (a que o rollback devolve) enxergar todo o historico
+--   como recente. Por isso o gatilho public.update_talkx_recipients_updated_at fica DESLIGADO
+--   APENAS durante esse UPDATE e e religado em seguida, na mesma transacao (secao 1).
+-- * O SQL de rollback e so DDL (create or replace view, drop trigger/function/column): nao faz
+--   UPDATE em talkx_recipients, entao tambem nao regrava updated_at em massa.
+-- * updated_at continua sendo escrito pelo gatilho generico no expurgo e em qualquer edicao da
+--   linha, e continua sendo lido por quem ja lia. Este cartao NAO audita os demais consumidores
+--   de talkx_recipients.updated_at e NAO afirma que ele seja dispensavel: o que muda de fonte e
+--   so o sinal de saude (que passa a ler status_changed_at).
 
 -- ============================================================================
 -- (1) coluna de transicao REAL de status do destinatario
@@ -44,9 +53,18 @@
 ALTER TABLE public.talkx_recipients
   ADD COLUMN IF NOT EXISTS status_changed_at timestamptz;
 
+-- O UPDATE abaixo toca TODAS as linhas (a coluna acabou de nascer) e o gatilho generico
+-- public.update_talkx_recipients_updated_at (BEFORE UPDATE FOR EACH ROW) regravaria
+-- updated_at = now() em todas elas. Ele fica desligado SOMENTE durante este UPDATE e volta
+-- ligado logo em seguida; o ALTER TABLE segura o lock exclusivo ate o COMMIT, entao nenhum
+-- outro escritor chega a ver a tabela com o gatilho desligado.
+ALTER TABLE public.talkx_recipients DISABLE TRIGGER update_talkx_recipients_updated_at;
+
 UPDATE public.talkx_recipients AS r
    SET status_changed_at = COALESCE(r.updated_at, r.created_at, now())
  WHERE r.status_changed_at IS NULL;
+
+ALTER TABLE public.talkx_recipients ENABLE TRIGGER update_talkx_recipients_updated_at;
 
 ALTER TABLE public.talkx_recipients
   ALTER COLUMN status_changed_at SET DEFAULT now();
@@ -73,8 +91,13 @@ BEGIN
 END;
 $function$;
 
--- Gatilho nao e chamavel por cliente nenhum (mesmo tratamento de update_updated_at_column).
-REVOKE EXECUTE ON FUNCTION public.set_talkx_recipient_status_changed_at() FROM PUBLIC, anon;
+-- Gatilho nao e chamavel por cliente nenhum: a execucao por gatilho nao passa pelo privilegio
+-- EXECUTE (o Postgres nao checa EXECUTE ao rodar trigger function), e o Supabase concede EXECUTE
+-- a anon/authenticated/service_role por default privileges em funcao nova de public — revogar so
+-- PUBLIC/anon deixaria authenticated e service_role com o privilegio. Mesmo tratamento dado a
+-- public.update_updated_at_column() (REVOKE em 20260903260000_revoke_unnecessary_anon_grants.sql).
+REVOKE EXECUTE ON FUNCTION public.set_talkx_recipient_status_changed_at()
+  FROM PUBLIC, anon, authenticated, service_role;
 
 DROP TRIGGER IF EXISTS trg_talkx_recipients_status_changed_at ON public.talkx_recipients;
 CREATE TRIGGER trg_talkx_recipients_status_changed_at
