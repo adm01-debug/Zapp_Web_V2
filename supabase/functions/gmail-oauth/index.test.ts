@@ -66,6 +66,7 @@ interface StateRow { user_id: string; state: string; consumed: boolean }
 function fakeAdmin(opts: {
   existingAccountUserId?: string | null;
   account?: typeof ACCOUNT | null;
+  accountError?: { message: string; code?: string } | null;
   rpcErrors?: Record<string, { message: string }>;
   updateResults?: Terminal[];
   tokens?: { access_token: string; refresh_token: string } | null;
@@ -119,7 +120,7 @@ function fakeAdmin(opts: {
             data: opts.existingAccountUserId ? { user_id: opts.existingAccountUserId } : null,
             error: null,
           },
-          single: { data: account, error: null },
+          single: { data: opts.accountError ? null : account, error: opts.accountError ?? null },
         }) as Record<string, unknown>;
         builder.update = (row: Record<string, unknown>) => {
           updateCalls.push(row);
@@ -342,6 +343,61 @@ Deno.test("refresh-token: falha no update de expiração responde 500 sem succes
   const body = await res.json();
   assertEquals(body.success, undefined);
   assertEquals(body.access_token, undefined);
+});
+
+
+Deno.test("disconnect: erro ao buscar a conta responde 500 sem success nem disconnected", async () => {
+  const admin = fakeAdmin({ accountError: { message: "select denied" } });
+  const calls = newCalls();
+
+  const res = await handleGmailOAuth(
+    post({ action: "disconnect", account_id: ACCOUNT_ID }),
+    makeDeps("user-1", admin, calls),
+  );
+
+  assertEquals(res.status, 500);
+  const body = await res.json();
+  assertEquals(body.success, undefined);
+  assertEquals(body.disconnected, undefined);
+  assertEquals(calls.revoke, []);
+  assertEquals(admin.updateCalls, []);
+});
+
+Deno.test("disconnect: conta inexistente responde 404 sem success nem disconnected", async () => {
+  const admin = fakeAdmin({ accountError: { message: "JSON object requested, multiple (or no) rows returned", code: "PGRST116" } });
+  const calls = newCalls();
+
+  const res = await handleGmailOAuth(
+    post({ action: "disconnect", account_id: ACCOUNT_ID }),
+    makeDeps("user-1", admin, calls),
+  );
+
+  assertEquals(res.status, 404);
+  const body = await res.json();
+  assertEquals(body.success, undefined);
+  assertEquals(body.disconnected, undefined);
+  assertEquals(calls.revoke, []);
+  assertEquals(admin.updateCalls, []);
+});
+
+Deno.test("disconnect: erro ao ler tokens responde parcial sem apagar tokens locais", async () => {
+  const admin = fakeAdmin({ rpcErrors: { get_gmail_tokens: { message: "rpc denied" } } });
+  const calls = newCalls();
+
+  const res = await handleGmailOAuth(
+    post({ action: "disconnect", account_id: ACCOUNT_ID }),
+    makeDeps("user-1", admin, calls),
+  );
+
+  assertEquals(res.status, 500);
+  const body = await res.json();
+  assertEquals(body.success, false);
+  assertEquals(body.disconnected, false);
+  assertEquals(body.revoked, false);
+  assertEquals(body.partial, true);
+  assertEquals(typeof body.warning, "string");
+  assertEquals(calls.revoke, []);
+  assertEquals(admin.updateCalls, []);
 });
 
 Deno.test("disconnect: falha na desativação local responde 500 sem success", async () => {
