@@ -396,6 +396,40 @@ describe('janela separada para liberações (t_6300082e)', () => {
  * reconcilia, por `message_id`, a linha efetivamente mais recente.
  */
 describe('paginação das liberações (t_e062f638)', () => {
+  it('mantém pending/deleted re-quarentenado quando ele é mais recente que uma liberação antiga do mesmo message_id', async () => {
+    linhas = [{ id: 'q-old', message_id: 'm1', decision: 'pending', created_at: '2026-09-01T00:00:00.000Z' }];
+
+    montar();
+    await drenar();
+    expect(quarantineStore.get('m1')?.decision).toBe('pending');
+
+    chamadas = [];
+
+    // A mídia foi liberada antes, mas depois voltou à quarentena com uma linha
+    // pending mais nova para o mesmo message_id. A liberação antiga chega pela
+    // consulta separada de releases e NÃO pode sobrescrever a re-quarentena.
+    linhas = [
+      {
+        id: 'rel-old',
+        message_id: 'm1',
+        decision: 'allowed',
+        created_at: '2026-09-01T00:00:00.000Z',
+        reviewed_at: '2026-09-02T00:00:00.000Z',
+      },
+      {
+        id: 'q-new',
+        message_id: 'm1',
+        decision: 'pending',
+        created_at: '2026-10-01T00:00:00.000Z',
+      },
+    ];
+
+    await avancar(INTERVALO_MS);
+
+    expect(quarantineStore.get('m1')?.id).toBe('q-new');
+    expect(quarantineStore.get('m1')?.decision).toBe('pending');
+  });
+
   it('cobre todos os ids cacheados e faz a versão mais recente vencer com >500 liberações', async () => {
     // 1º tick: a janela de ATIVOS hidrata m1, m2 e m3 (todos `pending`).
     linhas = [
@@ -452,5 +486,11 @@ describe('paginação das liberações (t_e062f638)', () => {
     const liberacoesChamadas = chamadasDeLiberacoes();
     expect(liberacoesChamadas.length).toBeGreaterThan(1);
     expect(liberacoesChamadas.map((c) => c.offset ?? 0)).toContain(500);
+    // Paginação por offset precisa de ordem estável: o proxy só aceita um
+    // campo de ordenação, então usamos o id único em vez de created_at com empates.
+    const ordensLiberacoes = liberacoesChamadas.map(
+      (c) => c.order as { column?: string; ascending?: boolean } | undefined,
+    );
+    expect(ordensLiberacoes.every((order) => order?.column === 'id' && order?.ascending === true)).toBe(true);
   });
 });

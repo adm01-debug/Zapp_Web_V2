@@ -34,6 +34,10 @@ const QUARANTINE_SELECT =
 const ACTIVE_DECISIONS = ['pending', 'deleted'];
 const RELEASED_DECISIONS = ['allowed', 'whitelisted'];
 
+function hasDecision(decision: QuarantineRecord['decision'], allowed: string[]): boolean {
+  return typeof decision === 'string' && allowed.includes(decision);
+}
+
 /**
  * Busca TODAS as liberações (`allowed`/`whitelisted`) dos ids já cacheados,
  * PAGINANDO por `offset` até esgotar o resultado.
@@ -56,7 +60,9 @@ async function fetchAllReleases(
         { column: 'decision', operator: 'in', value: RELEASED_DECISIONS },
         { column: 'message_id', operator: 'in', value: cachedIds },
       ],
-      order: { column: 'created_at', ascending: true },
+      // O proxy aceita um único `order`; ordenar pelo `id` (único) torna o
+      // offset estável mesmo quando várias liberações empatam em created_at.
+      order: { column: 'id', ascending: true },
       limit: RELEASES_PAGE_SIZE,
       offset: all.length,
       countMode: 'exact',
@@ -76,25 +82,26 @@ async function fetchAllReleases(
 
 /**
  * Chave de versão de um registro, para decidir qual linha de um mesmo
- * `message_id` é a MAIS RECENTE: quando o admin decidiu (`reviewed_at`), quando
- * a linha nasceu (`created_at`) e, por fim, o id — comparação lexicográfica de
- * ISO 8601 (o separador mantém a ordem dos campos).
+ * `message_id` é a MAIS RECENTE: quando o admin decidiu (`reviewed_at`), ou,
+ * quando ainda está ativo, quando a linha nasceu (`created_at`), e por fim o id.
+ * A comparação lexicográfica preserva a ordem de timestamps ISO 8601.
  */
-function releaseVersionKey(r: QuarantineRecord): string {
-  return `${r.reviewed_at ?? ''}|${r.created_at ?? ''}|${r.id ?? ''}`;
+function recordVersionKey(r: QuarantineRecord): string {
+  return r.reviewed_at ?? r.created_at ?? r.id ?? '';
 }
 
 /**
- * Reduz as liberações a UMA linha por `message_id` — a efetivamente mais
- * recente. Com versões repetidas do mesmo id, a ordem de chegada do servidor
- * não basta: comparamos a versão explicitamente (t_e062f638).
+ * Reduz qualquer conjunto de linhas a UMA linha por `message_id` — a
+ * efetivamente mais recente. A comparação precisa cruzar ATIVOS e LIBERAÇÕES:
+ * uma liberação antiga não pode sobrescrever um `pending`/`deleted` mais novo
+ * de uma re-quarentena do mesmo message_id.
  */
-function latestReleasePerMessageId(rows: QuarantineRecord[]): QuarantineRecord[] {
+function latestRecordPerMessageId(rows: QuarantineRecord[]): QuarantineRecord[] {
   const latest = new Map<string, QuarantineRecord>();
   for (const r of rows) {
     if (!r.message_id) continue;
     const prev = latest.get(r.message_id);
-    if (!prev || releaseVersionKey(r) > releaseVersionKey(prev)) {
+    if (!prev || recordVersionKey(r) > recordVersionKey(prev)) {
       latest.set(r.message_id, r);
     }
   }
@@ -178,17 +185,21 @@ export function QuarantineMonitorProvider({ children }: { children: React.ReactN
         const cachedIds = [...quarantineStore.getSnapshot().keys()];
         let releases: QuarantineRecord[] = [];
         if (cachedIds.length > 0) {
-          const allReleases = await fetchAllReleases(cachedIds, () => cancelled);
+          releases = await fetchAllReleases(cachedIds, () => cancelled);
           if (cancelled) return;
-          // Uma linha por `message_id` — a mais recente — vence no cache.
-          releases = latestReleasePerMessageId(allReleases);
         }
+
+        // Uma linha por `message_id`, escolhida ENTRE ativos e liberações. Isso
+        // evita que uma liberação antiga apague uma re-quarentena mais nova.
+        const latestRows = latestRecordPerMessageId([...records, ...releases]);
+        const latestActiveRows = latestRows.filter((r) => hasDecision(r.decision, ACTIVE_DECISIONS));
+        const latestReleasedRows = latestRows.filter((r) => hasDecision(r.decision, RELEASED_DECISIONS));
 
         // `count` (countMode: 'exact') diz se a janela de 500 foi truncada. Só
         // reconciliamos por ausência quando ela é um retrato completo.
         const total = typeof res.count === 'number' ? res.count : records.length;
         const truncated = total > records.length;
-        quarantineStore.reconcile(records, releases, { truncated });
+        quarantineStore.reconcile(latestActiveRows, latestReleasedRows, { truncated });
 
         // Detect new pending records since last tick (skip first run).
         if (isAdminRef.current && !firstRunRef.current) {
