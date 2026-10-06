@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 74,
-    "source_file_count": 145,
+    "source_file_count": 146,
     "verify_jwt_true": 60,
     "verify_jwt_false": 14
   },
@@ -181,8 +181,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 34637,
-      "sha256": "f0cbacc237f748ad8120f39b51b7086880d4433058395a478291d8e69604cf3c"
+      "bytes": 35721,
+      "sha256": "c049737bfaa0f48ca40982252b2c05be0b9d79257313383bcbd70bbb34925468"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -476,8 +476,13 @@
     },
     {
       "path": "supabase/functions/elevenlabs-sfx/index.ts",
-      "bytes": 2449,
-      "sha256": "71fffb25ec9eecf27bf751c18d09beb4c96ad896f6a655a7019daeb52f114146"
+      "bytes": 2296,
+      "sha256": "834df0d54f94ee0ddc41bc40bc783e95ef0b6448ab7141e51172251c51a31235"
+    },
+    {
+      "path": "supabase/functions/elevenlabs-sfx/request.ts",
+      "bytes": 892,
+      "sha256": "7a58a5571acd0ac50f9e5351d4fdefa6e769a30b28d91e6bcc233af531035486"
     },
     {
       "path": "supabase/functions/elevenlabs-sts/index.ts",
@@ -571,8 +576,8 @@
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "bytes": 12546,
-      "sha256": "b9c61e1069663471bbd6e2dbf365b6f4786eaa6e5534fd631d12ee19d2282dbe"
+      "bytes": 13661,
+      "sha256": "9d5ee2b1e23c94667f925ca235562da75bebf1c5d972111583854207c9c32054"
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
@@ -696,8 +701,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 60028,
-      "sha256": "2a744172bc5538b50300264d55dff51101e81baa201f3656e149cdb834300642"
+      "bytes": 62213,
+      "sha256": "7f7c376d6e3f2b9a3c4b48d7f777840685f76284dd8ff0f8d07117b24f83d580"
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
@@ -1225,12 +1230,13 @@
       "name": "elevenlabs-sfx",
       "entrypoint": "supabase/functions/elevenlabs-sfx/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2f113a0fb1c1fdf5817099e5c32e2a39a2a31e29063e97c202c44fdcca711840",
+      "source_sha256": "80c454b17ac6c851e33da63860676283d8758e578b6c7ffe10d3135ad9e65956",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
-        "supabase/functions/elevenlabs-sfx/index.ts"
+        "supabase/functions/elevenlabs-sfx/index.ts",
+        "supabase/functions/elevenlabs-sfx/request.ts"
       ]
     },
     {
@@ -1330,7 +1336,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "4ed6d3e728998f6d814b0cfd0e0cf8e6dd77e4467491acb2dc10709cc882cfcc",
+      "source_sha256": "4dccf926054a3d49da406345c2bc88fdc5cbb0c7d83a80246588fec2ea6f6bfa",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1473,8 +1479,9 @@
       "name": "gmail-webhook",
       "entrypoint": "supabase/functions/gmail-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "24ea41428e845eec77ec3daeaac1b289a081639c0d8d52d6d70ecbac75b72858",
+      "source_sha256": "a5f4abc5c371dd04ce1161639c7d102e1d60e35eff1d2c86210f90fd24f32309",
       "source_files": [
+        "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/gmail-webhook/index.ts"
@@ -1765,7 +1772,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "31aeccb83f72ae634f7d377b53bcb5c728d556be9bbaddc314a57bee41623192",
+      "source_sha256": "7cc1c216358fc85b83eb0bb0cda9fd2b73b8890b5a4ae390c23e336c0cdcfd5b",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -1880,5 +1887,5 @@
       ]
     }
   ],
-  "manifest_sha256": "305ab88914d0f6a650efbca8c3037815423ea5225003a63784d01dfa1c60998c"
+  "manifest_sha256": "78131814b0b20fb9483cf623d7514fee596d2eea33dbaa04a1d7d1867901ba0e"
 }
