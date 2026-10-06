@@ -394,7 +394,7 @@ async function gravarNaOutbox(
     // (era o buraco apontado). Devolvemos o registro à fila; linha ainda
     // PENDENTE não é tocada, porque já está na fila.
     if (eventId !== null && ehConflitoAbsorvido(corpo)) {
-      await devolverPendenciaAOutbox(url, chave, eventId, payload, motivo);
+      return await devolverPendenciaAOutbox(url, chave, eventId, payload, motivo);
     }
     return true;
   } catch {
@@ -418,8 +418,8 @@ function ehConflitoAbsorvido(corpo: string): boolean {
  *
  * O filtro `processed_at=not.is.null` é a garantia de que só a linha congelada
  * volta a pendente: um registro que ainda está pendente permanece intocado.
- * Falha aqui não é fatal — o registro anterior segue entregue e a próxima
- * falha do mesmo evento tentará de novo.
+ * Falha aqui é propagada para `gravarNaOutbox`: sem reenfileiramento, a
+ * falha nova não ficou durável e precisa acionar o marcador observável.
  */
 async function devolverPendenciaAOutbox(
   url: string,
@@ -427,7 +427,7 @@ async function devolverPendenciaAOutbox(
   eventId: string,
   payload: Record<string, unknown>,
   motivo: string,
-): Promise<void> {
+): Promise<boolean> {
   try {
     const resposta = await fetch(
       `${url}/rest/v1/ai_usage_outbox?event_id=eq.${encodeURIComponent(eventId)}` +
@@ -438,9 +438,14 @@ async function devolverPendenciaAOutbox(
         body: JSON.stringify({ processed_at: null, tentativas: 0, payload, motivo }),
       },
     );
-    try { await resposta.text(); } catch { /* corpo de erro pode nem existir */ }
+    try {
+      await resposta.text();
+    } catch {
+      return false;
+    }
+    return resposta.ok;
   } catch {
-    // Sem o reenfileiramento, o registro anterior segue entregue; nada a apagar.
+    return false;
   }
 }
 
