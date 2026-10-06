@@ -253,6 +253,13 @@ export async function logAiUsageDetached(entry: AiUsageEntry): Promise<void> {
 const MAX_TENTATIVAS_LOG = 3;
 
 /**
+ * Teto de reprocessamentos de uma pendência da outbox. Acima dele a pendência
+ * recebe BAIXA EXPLÍCITA (`motivo` + `processed_at`): uma linha venenosa não
+ * pode ficar para sempre na frente da fila bloqueando pendências válidas.
+ */
+const MAX_TENTATIVAS_REPROCESSO = 5;
+
+/**
  * Chave de idempotência da linha de log: SHA-256 hex dos campos estáveis.
  * O próprio `metadata.log_key` não entra no cálculo.
  */
@@ -391,6 +398,11 @@ export interface ResultadoReprocessamentoLogEssencial {
   lidos: number;
   entregues: number;
   pendentes: number;
+  /**
+   * Baixas definitivas COM motivo: payload inválido ou teto de tentativas
+   * atingido. Não é entrega, não é pendência: é saída explícita da fila.
+   */
+  esgotadas: number;
   falha: string | null;
 }
 
@@ -398,6 +410,12 @@ export interface ResultadoReprocessamentoLogEssencial {
  * Lê pendências da outbox, tenta entregá-las e só preenche `processed_at`
  * depois de a linha existir em `ai_usage_logs`. Falha de entrega ou de baixa
  * deixa o item pendente para a próxima execução.
+ *
+ * A fila é lida por `tentativas.asc,created_at.asc`: quem menos tentou vai
+ * primeiro, então pendências venenosas (que falham sempre) não trava a fila —
+ * a pendência válida mais nova não fica atrás delas. E quem esgota o teto de
+ * tentativas ou chega com payload inválido sai da fila com baixa EXPLÍCITA
+ * (`motivo` + `processed_at`), nunca por descarte silencioso.
  */
 export async function reprocessarLogEssencial(
   limite = 50,
@@ -406,6 +424,7 @@ export async function reprocessarLogEssencial(
     lidos: 0,
     entregues: 0,
     pendentes: 0,
+    esgotadas: 0,
     falha: null,
   };
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -419,7 +438,8 @@ export async function reprocessarLogEssencial(
   try {
     const resposta = await fetch(
       `${supabaseUrl}/rest/v1/ai_usage_outbox?select=id,payload,tentativas` +
-        `&processed_at=is.null&order=created_at.asc&limit=${Math.max(1, Math.floor(limite))}`,
+        `&processed_at=is.null&order=tentativas.asc,created_at.asc` +
+        `&limit=${Math.max(1, Math.floor(limite))}`,
       { headers: cabecalhosRest(serviceRoleKey) },
     );
     const corpo = await resposta.text();
@@ -443,34 +463,73 @@ export async function reprocessarLogEssencial(
     const id = typeof pendencia.id === "string" ? pendencia.id : "";
     const payload = pendencia.payload as Record<string, unknown> | null;
     const linha = payload?.linha as Record<string, unknown> | null;
-    const tentativas = Number(pendencia.tentativas ?? 0);
-    let entregue = false;
+    const tentativas = Math.max(0, Math.floor(Number(pendencia.tentativas ?? 0)) || 0);
+    const agora = new Date().toISOString();
 
-    if (id && linha && typeof linha.function_name === "string") {
-      try {
-        const logKey = await chaveDeLog(linha);
-        const linhaFinal = {
-          ...linha,
-          metadata: { ...((linha.metadata ?? {}) as Record<string, unknown>), log_key: logKey },
-        };
-        entregue = await existeLinhaDeLog(supabaseUrl, serviceRoleKey, logKey) ||
-          await gravarLogEssencial(supabaseUrl, serviceRoleKey, linhaFinal, logKey) === "gravado";
-      } catch {
-        entregue = false;
-      }
+    if (!id) {
+      // Sem id não há como dar baixa (o PATCH é por id): fica pendente e o
+      // motivo vai para o log, nunca para o silêncio.
+      console.error("[ai-usage] pendência da outbox sem id não pode receber baixa");
+      resultado.pendentes += 1;
+      continue;
+    }
+
+    // Baixa explícita: payload inválido ou teto atingido sai da fila com
+    // `motivo` gravado — nunca descarte silencioso nem loop infinito.
+    if (!linha || typeof linha.function_name !== "string" || tentativas >= MAX_TENTATIVAS_REPROCESSO) {
+      const motivo = tentativas >= MAX_TENTATIVAS_REPROCESSO
+        ? "tentativas_esgotadas"
+        : "payload_invalido";
+      const baixou = await atualizarPendencia(supabaseUrl, serviceRoleKey, id, {
+        motivo,
+        tentativas: tentativas + 1,
+        processed_at: agora,
+      });
+      if (baixou) resultado.esgotadas += 1;
+      else resultado.pendentes += 1;
+      continue;
+    }
+
+    let entregue = false;
+    try {
+      const logKey = await chaveDeLog(linha);
+      const linhaFinal = {
+        ...linha,
+        metadata: { ...((linha.metadata ?? {}) as Record<string, unknown>), log_key: logKey },
+      };
+      entregue = await existeLinhaDeLog(supabaseUrl, serviceRoleKey, logKey) ||
+        await gravarLogEssencial(supabaseUrl, serviceRoleKey, linhaFinal, logKey) === "gravado";
+    } catch {
+      entregue = false;
     }
 
     if (entregue) {
       const baixou = await atualizarPendencia(supabaseUrl, serviceRoleKey, id, {
-        processed_at: new Date().toISOString(),
+        processed_at: agora,
       });
       if (baixou) {
         resultado.entregues += 1;
         continue;
       }
-    } else if (id) {
-      await atualizarPendencia(supabaseUrl, serviceRoleKey, id, { tentativas: tentativas + 1 });
+      resultado.pendentes += 1;
+      continue;
     }
+
+    const novasTentativas = tentativas + 1;
+    if (novasTentativas >= MAX_TENTATIVAS_REPROCESSO) {
+      // Última falha antes do teto: baixa definitiva com motivo, para a
+      // pendência não virar letra morta nem travar a fila na próxima leitura.
+      const baixou = await atualizarPendencia(supabaseUrl, serviceRoleKey, id, {
+        motivo: "tentativas_esgotadas",
+        tentativas: novasTentativas,
+        processed_at: agora,
+      });
+      if (baixou) resultado.esgotadas += 1;
+      else resultado.pendentes += 1;
+      continue;
+    }
+
+    await atualizarPendencia(supabaseUrl, serviceRoleKey, id, { tentativas: novasTentativas });
     resultado.pendentes += 1;
   }
   return resultado;
@@ -504,22 +563,34 @@ async function registrarFalhaDeLog(
   motivo: string,
 ): Promise<void> {
   if (await gravarNaOutbox(url, chave, linha, motivo)) return;
-  console.error(
-    `[ai-usage][LOG-ESSENCIAL-PERDIDO] ${JSON.stringify({ motivo, linha })}`,
-  );
+  try {
+    console.error(
+      `[ai-usage][LOG-ESSENCIAL-PERDIDO] ${JSON.stringify({ motivo, linha })}`,
+    );
+  } catch {
+    // Linha não serializável (ex.: referência circular): o motivo ainda sai.
+    console.error(`[ai-usage][LOG-ESSENCIAL-PERDIDO] ${motivo} (linha não serializável)`);
+  }
 }
 
 /** Log AI usage to database (essencial: nunca lança, nunca perde em silêncio) */
 export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!supabaseUrl || !serviceRoleKey) return;
-
-  // A linha nasce completa antes do enriquecimento. Assim até uma falha na
-  // resolução de profile_id tem um payload pronto e reprocessável na outbox.
-  let linha = montarLinhaDeConsumo(entry, entry.profileId || null);
-
+  // Env e linha ficam FORA do try só na declaração: a LEITURA de `Deno.env` e
+  // a MONTAGEM da linha (`montarLinhaDeConsumo`/normalizadores) acontecem
+  // dentro do try/catch — o contrato é resolver sem lançar mesmo quando a
+  // entrada é inválida a ponto de a montagem explodir.
+  let supabaseUrl: string | undefined;
+  let serviceRoleKey: string | undefined;
+  let linha: Record<string, unknown> | null = null;
   try {
+    supabaseUrl = Deno.env.get("SUPABASE_URL");
+    serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !serviceRoleKey) return;
+
+    // A linha nasce completa antes do enriquecimento. Assim até uma falha na
+    // resolução de profile_id tem um payload pronto e reprocessável na outbox.
+    linha = montarLinhaDeConsumo(entry, entry.profileId || null);
+
     const logKey = await chaveDeLog(linha);
     linha = {
       ...linha,
@@ -536,6 +607,12 @@ export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
     }
   } catch (e) {
     const motivo = e instanceof Error ? e.message : String(e);
+    if (!linha || !supabaseUrl || !serviceRoleKey) {
+      // Sem linha (montagem/normalização explodiu) ou sem rota de persistência
+      // não há outbox possível: a evidência é o marcador no log da função.
+      console.error(`[ai-usage][LOG-ESSENCIAL-PERDIDO] ${JSON.stringify({ motivo })}`);
+      return;
+    }
     await registrarFalhaDeLog(supabaseUrl, serviceRoleKey, linha, `pre_insert:${motivo}`);
   }
 }

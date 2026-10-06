@@ -1041,7 +1041,13 @@ function stubOutbox(opts: {
         : json([]);
     }
     if (url.includes("/rest/v1/ai_usage_logs") && metodo === "POST") {
-      const status = logStatuses[Math.min(logPosts, logStatuses.length - 1)];
+      // Linha marcada como venenosa falha SEMPRE, qualquer que seja o status
+      // configurado: é assim que o teste semeia pendência que nunca entrega.
+      const marcador = ((corpo as Record<string, unknown> | null)?.metadata ?? {}) as
+        Record<string, unknown>;
+      const status = marcador.venenosa === true
+        ? 500
+        : logStatuses[Math.min(logPosts, logStatuses.length - 1)];
       logPosts += 1;
       return json(status >= 300 ? { message: "insert falhou" } : [], status);
     }
@@ -1055,12 +1061,47 @@ function stubOutbox(opts: {
         event_id: null,
         tentativas: 0,
         processed_at: null,
+        created_at: new Date(1_700_000_000_000 + outbox.length * 1000).toISOString(),
         ...pendencia,
       });
       return json([pendencia], 201);
     }
     if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "GET") {
-      return json(outbox.filter((item) => item.processed_at === null));
+      // O stub HONRA o contrato PostgREST que a função usa: filtro
+      // `processed_at=is.null`, `tentativas=lt.N`, `order=` e `limit`.
+      // Sem isso o teste de fila travada não provaria nada.
+      const parametros = new URL(url).searchParams;
+      let itens = outbox.filter((item) => item.processed_at === null);
+
+      const filtroTentativas = parametros.get("tentativas");
+      if (filtroTentativas?.startsWith("lt.")) {
+        const teto = Number(filtroTentativas.slice(3));
+        itens = itens.filter((item) => Number(item.tentativas ?? 0) < teto);
+      }
+
+      const ordenacao = (parametros.get("order") ?? "")
+        .split(",")
+        .map((termo) => termo.trim())
+        .filter(Boolean);
+      if (ordenacao.length > 0) {
+        itens = [...itens].sort((a, b) => {
+          for (const termo of ordenacao) {
+            const [coluna, direcao] = termo.split(".");
+            const va = a[coluna] as string | number | null | undefined;
+            const vb = b[coluna] as string | number | null | undefined;
+            if (va === vb) continue;
+            const cmp = va == null ? 1 : vb == null ? -1 : va < vb ? -1 : 1;
+            return direcao === "desc" ? -cmp : cmp;
+          }
+          return 0;
+        });
+      }
+
+      const limiteParam = Number(parametros.get("limit"));
+      if (Number.isFinite(limiteParam) && limiteParam > 0) {
+        itens = itens.slice(0, limiteParam);
+      }
+      return json(itens);
     }
     if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "PATCH") {
       const id = url.match(/(?:[?&])id=eq\.([^&]+)/)?.[1];
@@ -1189,7 +1230,7 @@ Deno.test("IA-TIMEOUT-001 reprocessamento lê a outbox, entrega e só então dá
     stub.setLogStatuses([201]);
     const resultado = await reprocessarLogEssencial();
 
-    assertEquals(resultado, { lidos: 1, entregues: 1, pendentes: 0, falha: null });
+    assertEquals(resultado, { lidos: 1, entregues: 1, pendentes: 0, esgotadas: 0, falha: null });
     assert(stub.outbox[0].processed_at !== null, "a baixa vem depois da entrega confirmada");
     const leitura = stub.capturas.find(
       (c) => c.metodo === "GET" && c.url.includes("/rest/v1/ai_usage_outbox") && c.url.includes("processed_at=is.null"),
@@ -1210,10 +1251,190 @@ Deno.test("IA-TIMEOUT-001 falha persistente no reprocesso continua pendente", as
 
     const resultado = await reprocessarLogEssencial();
 
-    assertEquals(resultado, { lidos: 1, entregues: 0, pendentes: 1, falha: null });
+    assertEquals(resultado, { lidos: 1, entregues: 0, pendentes: 1, esgotadas: 0, falha: null });
     assertEquals(stub.outbox[0].processed_at, null, "falha não pode receber baixa");
     assertEquals(stub.outbox[0].tentativas, 1, "a pendência registra a tentativa sem sair da fila");
   } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// (k) IA-TIMEOUT-001 — a fila não trava: venenosas não escondem a válida
+// ---------------------------------------------------------------------------
+// O defeito corrigido: a leitura `order=created_at.asc&limit=N` colocava as
+// pendências mais ANTIGAS na frente. Se as primeiras N fossem venenosas
+// (falham sempre), a pendência válida mais nova nunca era lida. A correção
+// ordena por `tentativas.asc` antes de `created_at.asc` e dá baixa EXPLÍCITA
+// (motivo + processed_at) no que esgota o teto ou chega com payload inválido.
+Deno.test("IA-TIMEOUT-001 venenosas em excesso não travam a fila: a válida mais nova é entregue", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [201] });
+  try {
+    // SEIS venenosas (mais que o limite 3), mais antigas, já retentadas.
+    for (let i = 0; i < 6; i++) {
+      stub.outbox.push({
+        id: `venenosa-${i}`,
+        event_id: null,
+        tentativas: 1 + (i % 2),
+        processed_at: null,
+        created_at: `2026-10-01T00:00:0${i}.000Z`,
+        payload: {
+          linha: {
+            function_name: "ai-proxy",
+            input_tokens: 1,
+            output_tokens: 1,
+            status: "success",
+            metadata: { venenosa: true },
+          },
+        },
+      });
+    }
+    // UMA válida, a MAIS NOVA de todas: com a leitura antiga ela ficava fora
+    // da página (as 3 primeiras por created_at são venenosas).
+    stub.outbox.push({
+      id: "valida-mais-nova",
+      event_id: null,
+      tentativas: 0,
+      processed_at: null,
+      created_at: "2026-10-02T00:00:00.000Z",
+      payload: {
+        linha: {
+          function_name: "ai-proxy",
+          input_tokens: 7,
+          output_tokens: 3,
+          status: "success",
+          metadata: {},
+        },
+      },
+    });
+
+    const resultado = await reprocessarLogEssencial(3);
+
+    const leitura = stub.capturas.find(
+      (c) => c.metodo === "GET" && c.url.includes("/rest/v1/ai_usage_outbox"),
+    );
+    assert(leitura, "o reprocessamento precisa ler a outbox");
+    assert(
+      leitura.url.includes("order=tentativas.asc,created_at.asc"),
+      `a leitura tem de ordenar por tentativas antes de created_at: ${leitura.url}`,
+    );
+
+    assertEquals(
+      resultado.entregues,
+      1,
+      "a pendência válida tinha de ser entregue mesmo atrás de 6 venenosas",
+    );
+    const valida = stub.outbox.find((item) => item.id === "valida-mais-nova");
+    assert(
+      valida?.processed_at !== null && valida?.processed_at !== undefined,
+      "a pendência válida precisa receber baixa depois da entrega confirmada",
+    );
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 pendência que atinge o teto sai da fila com baixa EXPLÍCITA", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [201] });
+  try {
+    // Venenosa na penúltima tentativa: a próxima falha cruza o teto.
+    stub.outbox.push({
+      id: "no-teto",
+      event_id: null,
+      tentativas: 4,
+      processed_at: null,
+      created_at: "2026-10-01T00:00:00.000Z",
+      payload: {
+        linha: {
+          function_name: "ai-proxy",
+          input_tokens: 1,
+          output_tokens: 1,
+          status: "success",
+          metadata: { venenosa: true },
+        },
+      },
+    });
+
+    const resultado = await reprocessarLogEssencial(10);
+
+    assertEquals(resultado.esgotadas, 1, "o teto tem de gerar baixa definitiva, não mais pendência");
+    assertEquals(resultado.pendentes, 0);
+    const item = stub.outbox[0];
+    assertEquals(item.motivo, "tentativas_esgotadas", "a baixa precisa declarar o motivo");
+    assert(item.processed_at !== null, "baixa silenciosa é proibida: processed_at tem de ser gravado");
+    assertEquals(item.tentativas, 5);
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 payload inválido sai da fila com baixa e motivo, sem tentar insert", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [201] });
+  try {
+    stub.outbox.push({
+      id: "sem-linha",
+      event_id: null,
+      tentativas: 0,
+      processed_at: null,
+      created_at: "2026-10-01T00:00:00.000Z",
+      payload: { motivo_original: "gravado_sem_linha" },
+    });
+
+    const resultado = await reprocessarLogEssencial(10);
+
+    assertEquals(resultado.esgotadas, 1);
+    assertEquals(postsNoLog(stub.capturas).length, 0, "payload inválido não pode virar insert");
+    const item = stub.outbox[0];
+    assertEquals(item.motivo, "payload_invalido");
+    assert(item.processed_at !== null, "a baixa explícita grava processed_at");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// (l) IA-TIMEOUT-001 — logAiUsage resolve mesmo quando a montagem explode
+// ---------------------------------------------------------------------------
+// O defeito corrigido: `montarLinhaDeConsumo` (e os normalizadores que ele
+// chama) e os `Deno.env.get` ficavam FORA do try/catch — uma entrada com
+// metadata quebrado fazia a função REJEITAR apesar do contrato "nunca lança".
+Deno.test("IA-TIMEOUT-001 logAiUsage resolve sem lançar quando a montagem da linha explode", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox();
+  const erros: string[] = [];
+  const consoleOriginal = console.error;
+  console.error = (...args: unknown[]) => erros.push(args.map(String).join(" "));
+  try {
+    // `metadata` com getter que lança: o spread de `buildUsageMetadata` dentro
+    // de `montarLinhaDeConsumo` explode ANTES de qualquer linha existir.
+    const metadataQuebrado: Record<string, unknown> = {};
+    Object.defineProperty(metadataQuebrado, "explode", {
+      enumerable: true,
+      get() {
+        throw new Error("metadata corrompido");
+      },
+    });
+
+    await logAiUsage({ ...ENTRADA, metadata: metadataQuebrado });
+
+    assert(
+      erros.some((m) => m.includes("[ai-usage][LOG-ESSENCIAL-PERDIDO]")),
+      "sem linha para a outbox, o motivo tem de sair pelo marcador de log",
+    );
+    assertEquals(
+      postsNaOutbox(stub.capturas).length,
+      0,
+      "sem linha montada não há o que enfileirar — e nenhuma pendência inválida nasce",
+    );
+  } finally {
+    console.error = consoleOriginal;
     stub.restaurar();
     restaurarEnv();
   }
