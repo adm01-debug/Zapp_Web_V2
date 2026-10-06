@@ -867,9 +867,18 @@ saida_sem="$(psql_test -Atqc "$service_session SELECT items_created, items_total
 [[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$mx_sem_elegivel';")" == '0' ]] \
   || fail 'MX01.4: item nasceu para destinatario inelegivel'
 
-# (MX01.R2.4) O comando declarado no cabecalho como rollback e SQL executavel.
+# (MX01.R2.4) Executa exatamente o SQL declarado no cabecalho como rollback.
 # A transacao e revertida no fim para os demais testes continuarem vendo a RPC.
-psql_test >/dev/null <<'SQL'
+rollback_line=''
+while IFS= read -r line; do
+  case "$line" in
+    '-- Rollback:'*) rollback_line="$line"; break ;;
+  esac
+done < "$migrations_dir/20261005150259_mx01_legacy_queue_materialize.sql"
+rollback_sql="${rollback_line#-- Rollback: }"
+[[ -n "$rollback_sql" && "$rollback_sql" != "$rollback_line" ]] \
+  || fail 'MX01.R2.4: cabecalho -- Rollback: ausente ou vazio'
+psql_test -v rollback_sql="$rollback_sql" >/dev/null <<'SQL'
 BEGIN;
 INSERT INTO public.multiplix_dispatches (
   id, name, message_template, status, pause_reason, paused_at, created_by, total_recipients, whatsapp_connection_id
@@ -878,14 +887,7 @@ INSERT INTO public.multiplix_dispatches (
   'legacy_queue_unmaterialized', now(), '10000000-0000-0000-0000-00000000000a', 0,
   '70000000-0000-0000-0000-000000000001'
 );
-UPDATE public.multiplix_dispatches AS d
-   SET status = 'sending', pause_reason = NULL, paused_at = NULL
- WHERE d.status = 'paused'
-   AND d.pause_reason = 'legacy_queue_unmaterialized'
-   AND NOT EXISTS (
-     SELECT 1 FROM public.multiplix_delivery_items AS item WHERE item.dispatch_id = d.id
-   );
-DROP FUNCTION IF EXISTS public.multiplix_materialize_legacy_queue(uuid, uuid);
+:rollback_sql
 DO $assert$
 BEGIN
   IF NOT EXISTS (
