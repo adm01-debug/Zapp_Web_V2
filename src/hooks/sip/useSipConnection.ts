@@ -178,10 +178,13 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
       registererRef.current = registerer;
     } catch (err: unknown) {
       log.error('SIP connection error:', err);
-      uaRef.current = null;
-      registererRef.current = null;
       // Tentativa cancelada: quem falou por último foi o `disconnect` (idle).
+      // Ela também NÃO pode mexer nos refs: o `start()` dela pode rejeitar
+      // DEPOIS de uma tentativa nova já ter publicado — zerar `uaRef` aqui
+      // apagaria a guarda de quem está de pé e liberaria um terceiro connect.
       if (!attempt.cancelled) {
+        uaRef.current = null;
+        registererRef.current = null;
         setSipStatus('unavailable');
         toast.error(`Erro ao conectar VoIP: ${err instanceof Error ? err.message : 'Falha na conexão'}`);
       }
