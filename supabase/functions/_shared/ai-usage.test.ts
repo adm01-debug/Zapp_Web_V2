@@ -1035,6 +1035,7 @@ Deno.test("IA-055 zero medido ≠ preço ausente, e valor inválido não passa",
 function stubBancoDeLog(opts: {
   posts?: Array<{ status: number; grava?: boolean }>;
   outboxStatus?: number;
+  outboxPatchStatus?: number;
 } = {}) {
   const capturas: Captura[] = [];
   const tabela = new Map<string, Record<string, unknown>>();
@@ -1042,6 +1043,7 @@ function stubBancoDeLog(opts: {
   let postsCfg = opts.posts ?? [{ status: 201 }];
   let posts = 0;
   const outboxStatus = opts.outboxStatus ?? 201;
+  const outboxPatchStatus = opts.outboxPatchStatus ?? 200;
   const original = globalThis.fetch;
 
   const json = (valor: unknown, status = 200) =>
@@ -1097,6 +1099,9 @@ function stubBancoDeLog(opts: {
       return json(outbox.filter((r) => r.processed_at === null));
     }
     if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "PATCH") {
+      if (outboxPatchStatus >= 300) {
+        return json({ message: "reenfileiramento falhou" }, outboxPatchStatus);
+      }
       const porId = url.match(/(?:[?&])id=eq\.([^&]+)/);
       const porEvento = url.match(/event_id=eq\.([^&]+)/);
       const exigeEntregue = url.includes("processed_at=not.is.null");
@@ -1493,6 +1498,43 @@ Deno.test("IA-TIMEOUT-001 outbox JA ENTREGUE volta a fila quando o mesmo evento 
     assert(stub.outbox[0].processed_at !== null, "entregue de novo, sai da fila");
   } finally {
     stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 conflito com falha no reenfileiramento emite marcador de perda", async () => {
+  const restaurarEnv = stubEnv();
+  const espioes = espiarConsoleError();
+  const stub = stubBancoDeLog({
+    posts: [{ status: 400 }],
+    outboxPatchStatus: 500,
+  });
+  const EVENTO = "2a3b4c5d-6e7f-4890-9abc-1d2e3f4a5b6c";
+
+  try {
+    stub.outbox.push({
+      id: "ob-ja-entregue",
+      event_id: EVENTO,
+      tentativas: 2,
+      processed_at: "2026-10-05T12:00:00.000Z",
+      payload: { linha: { event_id: EVENTO } },
+      motivo: "antigo",
+    });
+
+    await logAiUsage({ ...ENTRADA, eventId: EVENTO });
+
+    assertEquals(
+      stub.outbox[0].processed_at,
+      "2026-10-05T12:00:00.000Z",
+      "o PATCH rejeitado não devolveu o registro à fila",
+    );
+    assert(
+      espioes.mensagens.some((m) => m.includes("[ai-usage][LOG-ESSENCIAL-PERDIDO]")),
+      "a falha do reenfileiramento precisa chegar ao marcador final observável",
+    );
+  } finally {
+    stub.restaurar();
+    espioes.restaurar();
     restaurarEnv();
   }
 });
