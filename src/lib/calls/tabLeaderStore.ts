@@ -220,9 +220,21 @@ function tick(): void {
   considerPromotion();
 }
 
-/** Renovação periódica: estende o lock e avisa as seguidoras. */
+/**
+ * Renovação periódica: estende o lock e avisa as seguidoras — mas só depois
+ * de RELER o lock. A aba suspensa pelo navegador retoma com o tick atrasado
+ * e se considera líder em memória, mesmo que outra aba já tenha assumido:
+ * lock vivo de terceiro significa que esta aba perdeu a liderança enquanto
+ * dormia, então ela cede em vez de regravar o tabId antigo por cima do dono
+ * vigente (que produziria duas líderes renovando o lock em alternância).
+ */
 function renewLeadership(): void {
   if (current.role !== 'leader') return;
+  const lock = readLock();
+  if (lock && lock.tabId !== tabId && lock.expiresAt > Date.now()) {
+    becomeFollower(lock.tabId, lock.expiresAt);
+    return;
+  }
   const expiresAt = Date.now() + LEADER_TTL_MS;
   writeLock({ tabId, expiresAt });
   setState({ role: 'leader', leaderId: tabId, expiresAt });
@@ -288,8 +300,17 @@ function handleMessage(payload: unknown): void {
     return;
   }
 
-  // Líder não cede a mensagens de terceiros: ela é quem segura o lock.
-  if (current.role === 'leader') return;
+  // Líder não cede a mensagens de terceiros — a menos que o remetente prove
+  // que já segura o lock vivo (CLAIM/HEARTBEAT são publicados depois de
+  // gravar o lock). É a aba suspensa retomando: a nova líder assumiu durante
+  // a suspensão e quem detém o lock manda.
+  if (current.role === 'leader') {
+    const lock = readLock();
+    if (lock && lock.tabId === payload.tabId && lock.expiresAt > Date.now()) {
+      becomeFollower(payload.tabId, lock.expiresAt);
+    }
+    return;
+  }
 
   if (payload.type === 'CLAIM') {
     becomeFollower(payload.tabId, Date.now() + LEADER_TTL_MS);
