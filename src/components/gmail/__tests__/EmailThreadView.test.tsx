@@ -62,6 +62,10 @@ vi.mock('@/lib/emailHtml', () => ({
   sanitizeEmailHtml: (html: string) => html,
 }));
 
+vi.mock('sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
+
 vi.mock('lucide-react', () => ({
   ArrowLeft: () => <span data-testid="icon-arrow-left" />,
   Trash2: () => <span data-testid="icon-trash" />,
@@ -84,6 +88,7 @@ vi.mock('lucide-react', () => ({
 const setSelectedThreadId = vi.fn();
 const markAsReadMutate = vi.fn();
 const trashMessageMutate = vi.fn();
+const modifyThreadLabelsMutateAsync = vi.fn();
 
 const config: {
   threadMessages: EmailMessage[];
@@ -99,6 +104,7 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
     messagesLoading: config.messagesLoading,
     markAsRead: { mutate: markAsReadMutate },
     trashMessage: { mutate: trashMessageMutate },
+    modifyThreadLabels: { mutate: vi.fn(), mutateAsync: modifyThreadLabelsMutateAsync, isPending: false },
     setSelectedThreadId,
   }),
 }));
@@ -158,6 +164,7 @@ describe('EmailThreadView', () => {
     setSelectedThreadId.mockClear();
     markAsReadMutate.mockClear();
     trashMessageMutate.mockClear();
+    modifyThreadLabelsMutateAsync.mockReset();
   });
 
   it('chama setSelectedThreadId com thread.id no mount', () => {
@@ -241,5 +248,38 @@ describe('EmailThreadView', () => {
     render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
     fireEvent.click(screen.getByTestId('icon-trash').closest('button')!);
     expect(trashMessageMutate).toHaveBeenCalledWith('gm-trash');
+  });
+
+  it('botão Arquivar remove o rótulo INBOX da thread inteira via modifyThreadLabels.mutateAsync', () => {
+    modifyThreadLabelsMutateAsync.mockResolvedValue({});
+    render(<EmailThreadView thread={makeThread({ gmail_thread_id: 'gt-arquivar' })} onBack={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText('Arquivar'));
+    expect(modifyThreadLabelsMutateAsync).toHaveBeenCalledWith({
+      thread_id: 'gt-arquivar',
+      remove_labels: ['INBOX'],
+    });
+  });
+
+  it('Arquivar só chama onBack depois de a mutação resolver', async () => {
+    let resolver: (value: unknown) => void = () => {};
+    modifyThreadLabelsMutateAsync.mockImplementationOnce(
+      () => new Promise((resolve) => { resolver = resolve; })
+    );
+    const onBack = vi.fn();
+    render(<EmailThreadView thread={makeThread()} onBack={onBack} />);
+    fireEvent.click(screen.getByLabelText('Arquivar'));
+    expect(modifyThreadLabelsMutateAsync).toHaveBeenCalled();
+    expect(onBack).not.toHaveBeenCalled();
+    resolver({});
+    await waitFor(() => expect(onBack).toHaveBeenCalledTimes(1));
+  });
+
+  it('uma rejeição no arquivamento não navega de volta como se tivesse funcionado', async () => {
+    modifyThreadLabelsMutateAsync.mockRejectedValueOnce(new Error('falha ao arquivar'));
+    const onBack = vi.fn();
+    render(<EmailThreadView thread={makeThread()} onBack={onBack} />);
+    fireEvent.click(screen.getByLabelText('Arquivar'));
+    await waitFor(() => expect(modifyThreadLabelsMutateAsync).toHaveBeenCalled());
+    expect(onBack).not.toHaveBeenCalled();
   });
 });
