@@ -32,7 +32,7 @@ em 02/10 — a opção (a) deste plano (`strict=false` permanente) fica **revoga
 | Etapa | Status | Evidência medida em 02/10 |
 |---|---|---|
 | **E01** restaurar `strict=false` | SUPERADA | medido `strict=false`, mas a política da casa é `true`; aplicar E01 deixaria o guard da casa em conflito permanente com a configuração |
-| **E13** criar `settings-guard.yml` | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | Guards existem e explicitam pontos cegos; administração não se comprova só com GITHUB_TOKEN (403). |
+| **E13** criar `settings-guard.yml` | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | `.github/workflows/settings-guard.yml`, schedule de 6 h; a §1 deste plano não o listou |
 | **E14** `github-settings-guard.mjs` + testes | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | 6 testes verdes; o script **restaura via `PATCH`** — é ele que sustenta a política `strict=true` |
 | **E16** apagar `auto-update-pr-branch.yml` | SUPERADA | não é código morto: o cabeçalho do próprio arquivo registra reativação em 01/10 para a política `strict=true` |
 
@@ -70,7 +70,7 @@ Nota operacional: com `strict=false` medido em 02/10, **a próxima execução do
 
 ## Reconciliação TRA-009 — estados, evidências e limitações (2026-10-05)
 
-Achado `TRA-009` de `docs/reconciliation/FINDINGS.json` (baseline `2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6`):
+Achado `TRA-009` de `docs/reconciliation/FINDINGS.json` (baseline `2e7cf81c`):
 os checkboxes deste plano não tinham relação explícita com entregas, alternativas, código e limitações já apurados,
 e o texto herdava a contagem antiga de workflows. Esta seção é a **camada de reconciliação**: o checkbox é só um
 marcador — a evidência de cada etapa é o que está aqui.
@@ -381,7 +381,7 @@ Apps externos com check/comentário no HEAD da `main` e na PR #1343: **SonarClou
 - **G-29 · `db-migrate`: `--include-all` sem parse do dry-run** (`:1140-1154`): não há asserção de que o CLI listou
   exatamente `TARGET_VERSION`; pós-apply só `count(*)=1`, não `statements IS NOT NULL` nem igualdade com o arquivo.
   `confirm_runtime_sha256` não amarra o conteúdo do arquivo nem o `github.sha` do dry-run (F-11).
-- **G-30 · `SUPABASE_PROJECT_REF` como secret** (7 usos) mascara `tnnnlkbymytvtqngbbqh` em todo log — valor público e
+- **G-30 · `SUPABASE_PROJECT_REF` como secret** (7 usos) mascara `<ref-do-projeto>` em todo log — valor público e
   literal em 4 workflows (`crm-sync-worker:38`, `deploy-functions:151`, `supabase-sync:45,80`, `e2e-logado:97`).
 - **G-31 · Drafts rodam a pipeline inteira** (nenhum `if: !github.event.pull_request.draft`).
 - **G-32 · Artifacts: 2.333 acumulados**, retenção 1/3/14/30 dias e **default 90** em `supabase-sync.yml:104`;
@@ -477,6 +477,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
     obrigatório**. Quem lê o texto espera uma aprovação que não existe.
     **(e) Cadência do guarda vivo:** o `db-live-guard.yml` tem `push` (linha 13) e `schedule` com
     `cron: '13 6 * * *'` — diário. A afirmação "não roda em PR" está **correta**; o texto só não dá a cadência.
+  - ✅ **Nota de status (05/10/2026):** a nota de execução de 03/10 acima é **histórica** — a E11 foi **concluída em 05/10** conforme a **Reconciliação TRA-009** (linha da E11, no topo deste documento). A escrita no `CLAUDE.md` (arquivo de instrução de agente, exige aprovação do dono) entra no lote do dia pelo cartão `t_bd92cc1f`, fora deste recorte.
 - [~] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,
   `db-migrate.yml:7`). Verificação: revisão de texto no PR.
 
@@ -616,7 +617,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [~] **E38** · A · G-21 · Apagar `VITE_CLIENTES_SUPABASE_URL` e `VITE_CLIENTES_SUPABASE_ANON_KEY` do repo (0 usos).
   Verificação: `GET /actions/secrets` → 15.
   > **Medido 02/10 pela API: 14 secrets no repositorio e nenhum `VITE_CLIENTES_*` entre eles - os dois alvos da etapa nao existem mais.**
-- [~] **E39** · B · G-30 · `SUPABASE_PROJECT_REF`: trocar o secret por `env: PROJECT_REF: tnnnlkbymytvtqngbbqh` no
+- [~] **E39** · B · G-30 · `SUPABASE_PROJECT_REF`: trocar o secret por `env: PROJECT_REF: <ref-do-projeto>` no
   topo dos 4 workflows (valor público; já literal em 4 lugares) e manter a asserção de igualdade. Apagar o secret.
   Verificação: logs mostram a URL da função legível; `deploy-functions` ✅.
   > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** Nenhum workflow de `origin/main` usa `secrets.SUPABASE_PROJECT_REF`: os pontos viraram `env:` com o valor literal do project ref e a assercao de igualdade continua no lugar. O secret **nao existe mais** (a API lista 14 secrets, nenhum de project ref). A 1a medicao leu a arvore de trabalho defasada.**
