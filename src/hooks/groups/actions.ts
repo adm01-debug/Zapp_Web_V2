@@ -14,6 +14,24 @@ interface UseGroupActionsParams {
   fetchGroups: () => Promise<void>;
 }
 
+/**
+ * O proxy da Evolution responde HTTP 200 com a falha lógica no corpo
+ * (`{ error: true, message }`); R2-API-042 também cobre `error` textual (ex.: "falha").
+ * Sem esta checagem a ação termina como sucesso apesar da recusa da Evolution.
+ */
+function evolutionRecusou(payload: unknown): boolean {
+  if (!payload || typeof payload !== 'object') return false;
+  const erro = (payload as { error?: unknown }).error;
+  if (typeof erro === 'string') return erro.trim() !== '';
+  return erro === true;
+}
+
+/** Mensagem legível da recusa, para o log. */
+function motivosDaRecusa(payload: unknown): unknown {
+  const recusa = payload as { error?: unknown; message?: string };
+  return recusa?.message ?? recusa?.error;
+}
+
 export function useGroupActions({ connections, groups, selectedGroups, setGroups, setSelectedGroups, fetchGroups }: UseGroupActionsParams) {
   const feedback = useActionFeedback();
 
@@ -34,6 +52,11 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
           body: { action: 'list-groups', instanceName: conn.instance_id, getParticipants: 'false' },
         });
         if (error) { totalErrors++; continue; }
+        if (evolutionRecusou(data)) {
+          log.error(`Evolution recusou list-groups da conexão ${conn.name}:`, motivosDaRecusa(data));
+          totalErrors++;
+          continue;
+        }
 
         const apiGroups = Array.isArray(data) ? data : (data?.data || data?.groups || []);
         for (const g of apiGroups) {
@@ -95,10 +118,14 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
       const conn = connections.find(c => c.id === group.whatsapp_connection_id);
       if (!conn?.instance_id) { failed++; continue; }
       try {
-        const { error } = await supabase.functions.invoke('evolution-api', {
+        const { data, error } = await supabase.functions.invoke('evolution-api', {
           body: { action: 'send-text', instanceName: conn.instance_id, number: group.group_id, text: broadcastMessage },
         });
-        if (error) failed++; else sent++;
+        if (error) failed++;
+        else if (evolutionRecusou(data)) {
+          log.error(`Evolution recusou send-text para ${group.group_id}:`, motivosDaRecusa(data));
+          failed++;
+        } else sent++;
         if (groupsToSend.indexOf(group) < groupsToSend.length - 1) await new Promise(r => setTimeout(r, 2000));
       } catch { failed++; }
     }
