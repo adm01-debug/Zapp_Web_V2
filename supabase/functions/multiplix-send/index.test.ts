@@ -400,23 +400,6 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             const remaining = opts.dailyRemaining ?? 500;
             return Promise.resolve({ data: { limit: 500, sent: 500 - remaining, remaining }, error: null });
           }
-          case "reschedule_multiplix_item": {
-            // MX05: espelha o efeito REAL da RPC no banco - o item volta a fila
-            // (next_attempt_at) e a RPC e quem decide o dead letter pelo
-            // attempt_count persistido (>= 3). Sem tirar o item da fila o laco
-            // reprocessaria o MESMO item ate a rede de seguranca derrubar o teste.
-            const id = String(args.p_item_id).replace(/^item-/, "");
-            const alvo = ctx.remaining.find((r) => r.id === id);
-            const attempt = Number(alvo?.attempt_count ?? 0);
-            ctx.remaining = ctx.remaining.filter((r) => r.id !== id);
-            if (attempt >= 3) {
-              return Promise.resolve({ data: { action: "dead_lettered", attempt }, error: null });
-            }
-            return Promise.resolve({
-              data: { action: "rescheduled", attempt: attempt + 1, retry_after: args.p_retry_after },
-              error: null,
-            });
-          }
           default:
             return Promise.resolve({ data: true, error: null });
         }
