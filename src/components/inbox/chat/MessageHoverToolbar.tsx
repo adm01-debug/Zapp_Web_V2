@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { Reply, Forward, Copy, MoreVertical, Pin, Star, Trash2, Flag, Clock, CheckCheck, EyeOff, Pencil } from 'lucide-react';
+import { Reply, Forward, Copy, MoreVertical, Trash2, CheckCheck, EyeOff, Pencil } from 'lucide-react';
 import { Message } from '@/types/chat';
 import { TextToSpeechButton } from '../TextToSpeechButton';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
@@ -10,7 +10,6 @@ import { getLogger } from '@/lib/logger';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
-  DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 
 const log = getLogger('MessageHoverToolbar');
@@ -158,42 +157,19 @@ export function MessageHoverToolbar({
               </>
             )}
 
-            <DropdownMenuItem className="gap-2 cursor-pointer">
-              <Star className="w-4 h-4" /> Favoritar
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 cursor-pointer">
-              <Pin className="w-4 h-4" /> Fixar
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger className="gap-2">
-                <Clock className="w-4 h-4" /> Responder depois
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-44 bg-card border-border/50">
-                <DropdownMenuItem className="cursor-pointer">Em 1 hora</DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">Em 3 horas</DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">Amanhã</DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">Escolher data/hora...</DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-
-            <DropdownMenuSeparator />
+            {/*
+              R2-INB-021 (item 317): Favoritar/Fixar/Responder depois/Reportar
+              saíram daqui. Eram entradas visíveis sem handler e sem nenhuma
+              implementação de mensagem (tabela, hook ou serviço) — a interface
+              anunciava operações que não concluía. Voltar a oferecê-las só
+              quando existir a operação por trás; até então, não anunciar.
+            */}
             <DropdownMenuItem className="gap-2 cursor-pointer" onClick={handleMarkRead}>
               <CheckCheck className="w-4 h-4" /> Marcar como lida
             </DropdownMenuItem>
             <DropdownMenuItem className="gap-2 cursor-pointer" onClick={handleMarkUnread}>
               <EyeOff className="w-4 h-4" /> Marcar como não lida
             </DropdownMenuItem>
-
-            {!isSent && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-2 cursor-pointer text-warning">
-                  <Flag className="w-4 h-4" /> Reportar
-                </DropdownMenuItem>
-              </>
-            )}
 
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 cursor-pointer text-destructive" onClick={handleDelete}>

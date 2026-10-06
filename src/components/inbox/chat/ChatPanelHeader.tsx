@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  MoreVertical, Tag, Archive, CheckCircle, Clock, ArrowRight, ArrowLeft, ExternalLink, XCircle,
+  MoreVertical, Archive, CheckCircle, Clock, ArrowRight, ArrowLeft, ExternalLink, XCircle,
   Star, Search, Radar, GraduationCap, FileText, Info, Loader2,
 } from 'lucide-react';
 import { VisionIcon } from '../ai-tools/VisionIcon';
@@ -174,7 +174,9 @@ function ChatPanelHeaderBase({
             <DropdownMenuItem onClick={() => openChatPopup(conversation.contact.id, conversation.contact.name)}>
               <ExternalLink className="w-4 h-4 mr-2" />Abrir em popup
             </DropdownMenuItem>
-            <DropdownMenuItem><Tag className="w-4 h-4 mr-2" />Adicionar tag</DropdownMenuItem>
+            {/* R2-INB-021 (item 317): "Adicionar tag" saiu daqui — era item sem
+                onClick e sem editor de tags no chat (as tags vivem em Contatos).
+                Item de menu só volta quando a operação por trás existir. */}
             <DropdownMenuItem onClick={onOpenTransfer}><ArrowRight className="w-4 h-4 mr-2" />Transferir</DropdownMenuItem>
             <DropdownMenuItem onClick={onOpenSchedule}><Clock className="w-4 h-4 mr-2" />Agendar mensagem</DropdownMenuItem>
             <DropdownMenuSeparator />
