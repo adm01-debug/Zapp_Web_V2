@@ -45,6 +45,15 @@
 -- foram copiados VIVOS de 20261003222707 (X031) e o de enforce_talkx_campaign_mutability de
 -- 20261003232707 (X032, o mais recente). So o delta acima foi aplicado. Nao reconstruir.
 --
+-- COLISAO COM O #123 (R3-DELTA-004, 20261006193650_talkx_retry_lote_ids_inexistentes.sql):
+-- aquele cartao recria a MESMA retry_talkx_recipients (assinatura de 2 argumentos) validando
+-- o lote pelo conjunto PEDIDO x ENCONTRADO. Por ordem de versao ele e aplicado ANTES desta
+-- migration, entao o CREATE OR REPLACE daqui o sobrescreveria: o corpo abaixo ja inclui esse
+-- delta (v_pedidos/v_pedidos_nulos/v_validos) e a validacao do lote fica ANTES do gate de
+-- reabertura, para lote invalido continuar dando talkx_retry_recipient_not_found. Quando a
+-- assinatura for de 3 argumentos, o delta do #123 e o gate do #124 convivem no mesmo corpo.
+-- Se o #123 for entregue por outro caminho, reconciliar antes de aplicar (nao reordenar).
+--
 -- Classe: CONTRATO (DROP FUNCTION + CREATE OR REPLACE FUNCTION + ACL + COMMENT).
 -- Idempotente/replayavel: DROP FUNCTION IF EXISTS, CREATE OR REPLACE, guard fail-closed.
 
@@ -258,8 +267,9 @@ AS $function$
 DECLARE
   v_actor       uuid;
   v_campaign    public.talkx_campaigns%ROWTYPE;
-  v_found       integer;
-  v_valid       integer;
+  v_pedidos       integer;
+  v_pedidos_nulos integer;
+  v_validos       integer;
   v_failed      integer;
   v_skipped     integer;
   v_reopened    boolean := false;
@@ -303,24 +313,40 @@ BEGIN
     RAISE EXCEPTION 'talkx_campaign_not_retryable_from_%', v_campaign.status USING ERRCODE = '55000';
   END IF;
 
+  -- Conjunto PEDIDO: ids distintos do array. Nulo nao e destinatario.
+  -- (#123 / R3-DELTA-004 — reconstrucao do corpo vivo: 20261006193650 e aplicada ANTES
+  --  desta migration pela ordem de versao; sem este delta, o CREATE OR REPLACE daqui
+  --  desfaria a validacao fail-closed do lote que o #123 fechou.)
+  SELECT count(DISTINCT pedido.id), count(*) FILTER (WHERE pedido.id IS NULL)
+    INTO v_pedidos, v_pedidos_nulos
+    FROM unnest(p_recipient_ids) AS pedido(id);
+  IF v_pedidos_nulos > 0 THEN
+    RAISE EXCEPTION 'invalid_talkx_retry_request' USING ERRCODE = '22023';
+  END IF;
+
+  -- Conjunto ENCONTRADO na campanha. Todo id pedido precisa existir AQUI:
+  -- fail-closed, tudo-ou-nada. Vem ANTES do gate de reabertura do #124 (precedencia
+  -- preservada: lote invalido continua dando talkx_retry_recipient_not_found).
+  SELECT count(DISTINCT recipient.id)
+    INTO v_validos
+    FROM public.talkx_recipients AS recipient
+   WHERE recipient.campaign_id = p_campaign_id
+     AND recipient.id = ANY(p_recipient_ids);
+  IF v_validos <> v_pedidos THEN
+    RAISE EXCEPTION 'talkx_retry_recipient_not_found' USING ERRCODE = 'P0002';
+  END IF;
+
   -- #124 (R3-DELTA-005): reabrir uma campanha 'completed' e um NOVO lancamento — o retry
   -- volta a disparar mensagem para cliente real depois de a campanha ja ter terminado e
   -- encerrado. Exige a nova confirmacao de lancamento, explicita do operador (mesmo padrao
   -- de p_confirm_duplicate_risk em resolve_talkx_outcome_unknown). Sem ela nada e escrito.
+  -- Fica DEPOIS da validacao do lote: lote invalido continua dando
+  -- talkx_retry_recipient_not_found, como no #123.
   IF v_campaign.status = 'completed' AND p_confirm_relaunch IS NOT TRUE THEN
     RAISE EXCEPTION 'talkx_relaunch_confirmation_required' USING ERRCODE = '22023';
   END IF;
 
-  -- Todos os ids precisam existir na campanha (fail-closed, tudo-ou-nada).
-  SELECT count(*), count(*) FILTER (WHERE recipient.campaign_id = p_campaign_id)
-    INTO v_found, v_valid
-    FROM public.talkx_recipients AS recipient
-   WHERE recipient.id = ANY(p_recipient_ids);
-  IF v_found <> v_valid THEN
-    RAISE EXCEPTION 'talkx_retry_recipient_not_found' USING ERRCODE = 'P0002';
-  END IF;
-
-  -- Valida cada destinatário ANTES de escrever qualquer linha.
+  -- Valida cada destinatario ANTES de escrever qualquer linha.
   FOR rec IN
     SELECT recipient.id, recipient.status, recipient.manual_retry_count, recipient.contact_id
       FROM public.talkx_recipients AS recipient
