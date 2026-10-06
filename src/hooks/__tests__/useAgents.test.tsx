@@ -38,11 +38,21 @@ vi.mock('@/integrations/supabase/client', () => ({
         };
       }
       if (table === 'contacts') {
-        return {
-          select: vi.fn().mockReturnValue({
-            not: vi.fn().mockResolvedValue({ data: [{ assigned_to: 'p1' }, { assigned_to: 'p1' }], error: null }),
-          }),
+        // useAgents conta só o episódio ABERTO de cada atendente e lê paginado
+        // (fetchAllRows monta `.eq/.is/.order/.range` antes de resolver), por isso o mock
+        // é encadeável e devolve 2 conversas abertas do agente p1.
+        const contatosAbertos = [{ assigned_to: 'p1' }, { assigned_to: 'p1' }];
+        const q: Record<string, unknown> = {
+          select: () => q,
+          not: () => q,
+          eq: () => q,
+          is: () => q,
+          order: () => q,
+          range: () => q,
+          then: (resolve: (v: unknown) => unknown) =>
+            Promise.resolve(resolve({ data: contatosAbertos, error: null })),
         };
+        return q;
       }
       return { select: vi.fn().mockResolvedValue({ data: [], error: null }) };
     }),
@@ -89,5 +99,7 @@ describe('useAgents', () => {
 
     // At least one agent should exist
     expect(result.current.agents.length).toBeGreaterThan(0);
+    // A capacidade sai da consulta de conversas abertas (2 do p1), não dos perfis.
+    expect(result.current.agents.find((a) => a.id === 'p1')?.activeChats).toBe(2);
   });
 });

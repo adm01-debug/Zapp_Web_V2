@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { useAgentPresenceMap } from './useAgentPresence';
 
 export interface AgentProfile {
@@ -73,19 +74,36 @@ export function useAgents() {
   });
 
   // Fetch active chats count per agent
+  //
+  // R2-AUTH-020: "chat ativo" é o episódio de atendimento ABERTO
+  // (`conversation_status = 'open'`, contato não excluído). Contato com `assigned_to`
+  // preenchido é CADASTRO — resolvido, arquivado ou aguardando não está em curso — e não
+  // pode ocupar a capacidade do atendente (mesma régua do War Room, R2-MOD-030, e do
+  // `inProgress` da fila). A leitura é paginada: um `select` sem `range` devolve só a
+  // primeira página e a capacidade vira subtotal silencioso.
   const { data: activeChatsData } = useQuery({
     queryKey: ['agents-active-chats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contacts')
-        .select('assigned_to')
-        .not('assigned_to', 'is', null);
+      const { rows, incomplete, error } = await fetchAllRows<{ assigned_to: string | null }>(
+        (from, to) => supabase
+          .from('contacts')
+          .select('assigned_to')
+          .not('assigned_to', 'is', null)
+          .eq('conversation_status', 'open')
+          .is('deleted_at', null)
+          .order('id')
+          .range(from, to),
+      );
 
-      if (error) throw error;
+      // Capacidade lida pela metade é pior que capacidade indisponível: falha alto em vez
+      // de exibir um número menor que o real.
+      if (incomplete) {
+        throw new Error(error?.message ?? 'Leitura de contatos em atendimento excedeu o limite de segurança');
+      }
 
-      // Count contacts per agent
+      // Count open conversations per agent
       const chatCounts: Record<string, number> = {};
-      data?.forEach((contact) => {
+      rows.forEach((contact) => {
         if (contact.assigned_to) {
           chatCounts[contact.assigned_to] = (chatCounts[contact.assigned_to] || 0) + 1;
         }
