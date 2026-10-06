@@ -1,11 +1,24 @@
 #!/usr/bin/env bash
 # Prova de orcamento e rate limit em PRODUCAO (auditoria Blocos 04/05, item 3).
 #
-# O que esta prova responde, com uma chamada real:
-#   1. a reserva de orcamento roda?      -> ai_budget_reservations (RPC ai_budget_reserve)
-#   2. o rate limit roda?                -> edge_rate_limits      (RPC ai_rate_limit_hit)
-#   3. o consumo fica registrado?        -> ai_usage_logs         (logAiUsage)
-#   4. o despacho central resolve provedor e modelo no servidor? -> metadata.provider_name / model
+# R2-INF-012: esta prova TERMINA COM VEREDITO MEDIDO. Ela nao pode mais imprimir
+# "ok" so porque chegou ao fim do script. Transporte, codigo HTTP, corpo e o
+# proprio registro de consumo sao CONFERIDOS, e o resultado sai como
+#   FIM_PROVA=aprovado     (exit 0)
+#   FIM_PROVA=inconclusivo (exit 2)  nao foi possivel MEDIR um criterio
+#   FIM_PROVA=falha        (exit 1)  um criterio medido FALHOU
+# Qualquer coisa que nao seja "aprovado" termina com codigo de saida nao-zero.
+#
+# O que esta prova responde, com chamadas reais:
+#   1. o login no Auth do projeto funciona?   -> HTTP 200 + access_token
+#   2. a rota de IA responde?                 -> cada chamada em {200, 429}
+#   3. o consumo/despacho ficou registrado?   -> linhas DESTE RUN em ai_usage_logs
+#   4. a rejeicao por limite, quando ocorre   -> 429 conta como PROVA do limite
+#
+# Correlacao por RUN, nunca por total global: cada execucao tem RUN_ID e
+# RUN_INICIO, e a leitura do banco filtra por `function_name` + `created_at >=
+# RUN_INICIO` (a RLS de `ai_usage_logs` limita a leitura ao proprio usuario).
+# Contagens globais nao provam nada sobre ESTA execucao (R2-INF-012).
 #
 # A funcao usada e' `classify-audio-meme` porque ela e' barata (poucos tokens),
 # nao envia mensagem para ninguem e passa pelos tres caminhos acima.
@@ -18,13 +31,24 @@
 #   export SUPABASE_ANON_KEY='<chave publicavel do projeto>'   # publica por desenho
 #   PROVA_PRODUCAO=sim bash scripts/qa/prova-orcamento-rate-limit.sh .tmp/prova-out
 #
+# ZAPP_SUPABASE_URL e OBRIGATORIO (vem do arquivo de escopo): o script nao guarda
+# a URL do projeto embutida.
+#
+# Ajustes usados tambem pelo teste `scripts/ci/prova-orcamento-rate-limit.unit.mjs`:
+#   ZAPP_FUNCAO_PROVA   (default: classify-audio-meme)
+#   ZAPP_PROVA_CHAMADAS (default: 3)
+#   ZAPP_PROVA_RUN_ID   (default: uuid novo)
+#   ZAPP_PROVA_ESPERA   (segundos entre tentativas de leitura; default: 2)
+#
 # NUNCA imprime senha nem token: a saida traz apenas o email da conta, os codigos
-# HTTP, o resultado da classificacao e (opcionalmente) o resumo lido do banco.
+# HTTP, o resultado da classificacao e o resumo lido do banco.
 set -uo pipefail
 
 OUT="${1:?uso: prova-orcamento-rate-limit.sh <dir-de-saida>}"
-BASE="${ZAPP_SUPABASE_URL:-https://tnnnlkbymytvtqngbbqh.supabase.co}"
+BASE="${ZAPP_SUPABASE_URL:?ZAPP_SUPABASE_URL ausente no ambiente (URL do projeto Supabase)}"
 FUNCAO="${ZAPP_FUNCAO_PROVA:-classify-audio-meme}"
+N_CHAMADAS="${ZAPP_PROVA_CHAMADAS:-3}"
+ESPERA="${ZAPP_PROVA_ESPERA:-2}"
 
 if [[ "${PROVA_PRODUCAO:-}" != "sim" ]]; then
   echo "RECUSADO: esta prova chama producao e consome credito de IA."
@@ -38,52 +62,162 @@ fi
 
 mkdir -p "$OUT"
 
+FALHAS=0
+INCONCLUSIVOS=0
+falha()        { FALHAS=$((FALHAS + 1));            echo "CRITERIO_FALHOU: $*"; }
+inconclusivo() { INCONCLUSIVOS=$((INCONCLUSIVOS + 1)); echo "CRITERIO_INCONCLUSIVO: $*"; }
+
+# Veredito unico do script: aprovado so com TODOS os criterios medidos e verdes.
+veredito() {
+  if (( FALHAS > 0 )); then
+    echo "FIM_PROVA=falha"
+    exit 1
+  fi
+  if (( INCONCLUSIVOS > 0 )); then
+    echo "FIM_PROVA=inconclusivo"
+    exit 2
+  fi
+  echo "FIM_PROVA=aprovado"
+  exit 0
+}
+
+# Identidade do RUN: correlaciona TODAS as leituras a ESTA execucao.
+RUN_INICIO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+RUN_ID="${ZAPP_PROVA_RUN_ID:-$(cat /proc/sys/kernel/random/uuid 2>/dev/null || printf 'run-%s-%s' "$(date -u +%s)" "$$")}"
+
 echo "== PROVA DE ORCAMENTO E RATE LIMIT (producao) =="
-echo "BASE=$BASE  FUNCAO=$FUNCAO"
+echo "BASE=$BASE  FUNCAO=$FUNCAO  RUN_ID=$RUN_ID  RUN_INICIO=$RUN_INICIO"
 
 # 1) Login no Supabase Auth do Zapp V2. O corpo vai por --data (nao por argv) e o
 #    token nunca e' ecoado.
 BODY=$(jq -nc --arg e "$ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_EMAIL" \
               --arg p "$ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_PASSWORD" '{email:$e,password:$p}')
+LOGIN_RC=0
 LOGIN_HTTP=$(curl -sS -o "$OUT/login.json" -w '%{http_code}' \
   -X POST "$BASE/auth/v1/token?grant_type=password" \
   -H "apikey: $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' \
-  --data "$BODY")
+  --data "$BODY") || LOGIN_RC=$?
 echo "LOGIN_HTTP=$LOGIN_HTTP  CONTA=$ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_EMAIL"
 
-JWT=$(jq -r '.access_token // empty' "$OUT/login.json")
-if [[ -z "$JWT" ]]; then
-  echo "ERRO: login nao devolveu access_token"
+JWT=""
+if (( LOGIN_RC != 0 )); then
+  falha "transporte do login falhou (curl exit=$LOGIN_RC)"
+elif [[ "$LOGIN_HTTP" != "200" ]]; then
+  falha "login nao devolveu HTTP 200 (recebido: $LOGIN_HTTP)"
   jq -c '{error,error_description,msg}' "$OUT/login.json" 2>/dev/null | head -c 300; echo
-  exit 1
+else
+  JWT=$(jq -r '.access_token // empty' "$OUT/login.json" 2>/dev/null || true)
+  if [[ -z "$JWT" ]]; then
+    falha "login HTTP 200 sem access_token"
+  else
+    echo "JWT_OK=sim  (len=${#JWT}; valor nunca impresso)"
+  fi
 fi
-echo "JWT_OK=sim  (len=${#JWT}; valor nunca impresso)"
 
-# 2) Chamadas reais (3, para o rate limit ter o que contar)
-chamar() {
-  local rotulo="$1" payload="$2" saida="$3" http
+# Sem login nao ha o que medir adiante: fecha o veredito com o que ja' foi medido.
+if (( FALHAS > 0 )); then veredito; fi
+
+# 2) Chamadas reais. Cada resposta e' CONFERIDA (transporte, HTTP, corpo): uma
+#    chamada que falha NAO pode terminar em "ok". 429 e' resultado VALIDO — e' a
+#    propria prova de que o limite agiu — e nao entra como falha.
+PAYLOADS=(
+  '{"file_name":"risada-troll-meme.mp3","audio_url":"https://exemplo.invalid/risada-troll-meme.mp3"}'
+  '{"file_name":"aplausos-standup.mp3","audio_url":"https://exemplo.invalid/aplausos-standup.mp3"}'
+  '{"file_name":"suspense-drama.mp3","audio_url":"https://exemplo.invalid/suspense-drama.mp3"}'
+)
+
+OK_200=0
+LIMITE=0
+for (( i=0; i<N_CHAMADAS; i++ )); do
+  n=$((i + 1))
+  payload="${PAYLOADS[$((i % ${#PAYLOADS[@]}))]}"
+  saida="$OUT/chamada$n.json"
+  rc=0
   http=$(curl -sS -o "$saida" -w '%{http_code}' \
     -X POST "$BASE/functions/v1/$FUNCAO" \
     -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $JWT" \
-    -H 'Content-Type: application/json' --data "$payload")
-  echo "${rotulo}_HTTP=$http  corpo=$(head -c 200 "$saida")"
-}
+    -H 'Content-Type: application/json' --data "$payload") || rc=$?
+  echo "CHAMADA${n}_HTTP=$http  corpo=$(head -c 200 "$saida")"
+  if (( rc != 0 )); then
+    falha "chamada $n: transporte falhou (curl exit=$rc)"
+    continue
+  fi
+  case "$http" in
+    200)
+      OK_200=$((OK_200 + 1))
+      if ! jq -e 'type == "object" and (.category | type == "string")' "$saida" >/dev/null 2>&1; then
+        falha "chamada $n: HTTP 200 sem corpo de classificacao valido"
+      fi
+      ;;
+    429)
+      LIMITE=$((LIMITE + 1))
+      echo "CHAMADA${n}: 429 = rejeicao por rate limit (PROVA do limite, nao falha)"
+      ;;
+    *)
+      falha "chamada $n: HTTP inesperado ($http)"
+      ;;
+  esac
+done
 
-chamar "CHAMADA1" '{"file_name":"risada-troll-meme.mp3","audio_url":"https://exemplo.invalid/risada-troll-meme.mp3"}' "$OUT/chamada1.json"
-chamar "CHAMADA2" '{"file_name":"aplausos-standup.mp3","audio_url":"https://exemplo.invalid/aplausos-standup.mp3"}' "$OUT/chamada2.json"
-chamar "CHAMADA3" '{"file_name":"suspense-drama.mp3","audio_url":"https://exemplo.invalid/suspense-drama.mp3"}' "$OUT/chamada3.json"
+# 3) Consumo registrado. Le as linhas DESTE run (janela + funcao), nunca um total
+#    global; a RLS de ai_usage_logs limita a leitura ao proprio usuario.
+if (( OK_200 == 0 )); then
+  inconclusivo "nenhuma chamada chegou ao provedor (${LIMITE} resposta(s) 429): o caminho de consumo nao foi exercitado"
+else
+  registradas=-1
+  leitura_http=""
+  leitura_ok=0
+  for (( tentativa=1; tentativa<=3; tentativa++ )); do
+    rc=0
+    leitura_http=$(curl -sS -o "$OUT/ai_usage_logs.json" -w '%{http_code}' -G \
+      "$BASE/rest/v1/ai_usage_logs" \
+      --data-urlencode "select=request_id,function_name,status,model,created_at" \
+      --data-urlencode "function_name=eq.$FUNCAO" \
+      --data-urlencode "created_at=gte.$RUN_INICIO" \
+      -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $JWT") || rc=$?
+    if (( rc != 0 )); then
+      inconclusivo "transporte da leitura de ai_usage_logs falhou (curl exit=$rc)"
+      break
+    fi
+    if [[ "$leitura_http" != "200" ]]; then
+      inconclusivo "nao consegui ler ai_usage_logs (HTTP $leitura_http): consumo do run NAO medido"
+      break
+    fi
+    registradas=$(jq 'length' "$OUT/ai_usage_logs.json" 2>/dev/null || echo -1)
+    [[ "$registradas" =~ ^[0-9]+$ ]] || registradas=-1
+    if (( registradas >= OK_200 )); then
+      leitura_ok=1
+      break
+    fi
+    if (( tentativa < 3 )); then sleep "$ESPERA"; fi
+  done
 
-# 3) Como ler o resultado no banco canonico (nao roda aqui: e' leitura do operador)
-cat <<'SQL'
--- Depois de rodar, confirme no banco canonico (tnnnlkbymytvtqngbbqh):
---   select count(*) from ai_budget_reservations;   -- a reserva rodou?
---   select count(*) from edge_rate_limits;         -- o rate limit contou?
---   select function_name, status, model, error_message, metadata, created_at
---     from ai_usage_logs order by created_at desc limit 5;
--- As tres chamadas devem aparecer em ai_usage_logs. `status=success` prova o
--- caminho completo (reserva -> provedor -> liquidacao -> log). `status=error`
--- com HTTP 401 significa provedor recusando a credencial: a rota, o orcamento e
--- o rate limit funcionaram; o que falhou foi a chave do provedor.
+  if (( leitura_ok == 1 )); then
+    echo "CONSUMO_REGISTRADO=sim  linhas_do_run=$registradas  esperado>=$OK_200"
+    jq -c '.[]? | {request_id, status, model}' "$OUT/ai_usage_logs.json" 2>/dev/null | head -c 600; echo
+  elif [[ "$leitura_http" == "200" && "$registradas" != "-1" ]]; then
+    falha "consumo nao registrado: $registradas linha(s) do run em ai_usage_logs (esperado >= $OK_200)"
+  fi
+fi
+
+# 4) Leituras CORRELACIONADAS ao run (para o operador conferir no banco canonico,
+#    quando precisar). Nunca use totais globais: eles nao provam ESTA execucao.
+cat <<SQL
+
+-- Confirme no banco canonico do projeto, sempre pelo RUN:
+--   RUN_ID=$RUN_ID  RUN_INICIO=$RUN_INICIO  FUNCAO=$FUNCAO
+--   select request_id, function_name, status, model, created_at
+--     from ai_usage_logs
+--    where function_name = '$FUNCAO' and created_at >= '$RUN_INICIO'
+--    order by created_at;
+--   select key, hits, window_start from edge_rate_limits
+--    where key like 'ai:user:$FUNCAO:%' and window_start >= '$RUN_INICIO';
+--   select id, status, tokens, created_at from ai_budget_reservations
+--    where created_at >= '$RUN_INICIO';
+-- As chamadas com HTTP 200 devem aparecer em ai_usage_logs. `status=success`
+-- prova o caminho completo (reserva -> provedor -> liquidacao -> log).
+-- `status=error` com HTTP 401 significa provedor recusando a credencial: a rota,
+-- o orcamento e o rate limit funcionaram; o que falhou foi a chave do provedor.
 SQL
 
-echo "FIM_PROVA=ok"
+veredito
