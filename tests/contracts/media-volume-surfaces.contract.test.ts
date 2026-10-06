@@ -24,7 +24,8 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
     // o StoryViewer só era usado pela WhatsAppStatusSection morta). Se a
     // superfície voltar, re-entra aqui no mesmo commit.
 
-    ['chat interno da equipe', 'src/components/team-chat/TeamChatPanel.tsx'],
+    // TC-006 moveu os <video>/<audio> do Panel para teamChatParts.tsx; é lá que o volume global é aplicado.
+    ['chat interno da equipe', 'src/components/team-chat/teamChatParts.tsx'],
     ['transcrições (autoplay)', 'src/components/transcriptions/TranscriptionContactGroup.tsx'],
     // VOL-02: a superfície é o player que RENDERIZA o `<audio>` (RecordingPlayer), não o
     // shell. Antes o contrato apontava para TelefoniaView e ficava verde com a ref órfã

@@ -193,6 +193,8 @@ jobs:
           MISSING_COUNT=$(wc -l < /tmp/missing-versions | tr -d ' ')
           MISSING_VERSION=$(sed -n '1p' /tmp/missing-versions)
           ATOMIC_DELIVERY_BUNDLE=$'20260909250000\n20260909260000\n20260909270000'
+          # Pacote do lote de 04-05/10/2026 (PR #1890): 8 migrations, alvo = a ultima versao. Autorizado pelo dono em 05/10.
+          LOTE_0510_BUNDLE=$'20261003272707\n20261004172554\n20261004173439\n20261004181921\n20261004182245\n20261004185228\n20261004190606\n20261004195051'
           TALKX_RECOVERY_BUNDLE=$'20260911130000\n20260911140000\n20260911150000\n20260911160000\n20260911170000\n20260911180000\n20260911190000\n20260911200000\n20260912110000\n20260912120000\n20260912130000'
           if [ "$MISSING_COUNT" = "1" ] && [ "$MISSING_VERSION" = "$TARGET_VERSION" ]; then
             NEEDS_APPLY=true
@@ -200,6 +202,11 @@ jobs:
           elif [ "$TARGET_VERSION" = "20260909270000" ] \
             && [ "$MISSING_COUNT" = "3" ] \
             && diff -u <(printf '%s\n' "$ATOMIC_DELIVERY_BUNDLE") /tmp/missing-versions; then
+            NEEDS_APPLY=true
+            APPLY_BUNDLE=true
+          elif [ "$TARGET_VERSION" = "20261004195051" ] \
+            && [ "$MISSING_COUNT" = "8" ] \
+            && diff -u <(printf '%s\n' "$LOTE_0510_BUNDLE") /tmp/missing-versions; then
             NEEDS_APPLY=true
             APPLY_BUNDLE=true
           elif [ "$TARGET_VERSION" = "20260912130000" ] \
@@ -897,7 +904,8 @@ jobs:
           APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
         run: |
           set -euo pipefail
-          supabase db push --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
+          # O CLI 2.116 ignora SUPABASE_DB_URL e cai no projeto "linkado" ("Cannot find project ref"): --db-url explicito.
+          supabase db push --db-url "$SUPABASE_DB_URL" --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
           if [ "$APPLY_BUNDLE" = "true" ]; then
             node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --esperado "$TARGET_VERSION" --bundle
           else
@@ -907,7 +915,7 @@ jobs:
       - name: Aplicar alvo unico ou bundle ordenado autorizado
         if: inputs.apply == true && steps.preflight.outputs.needs_apply == 'true'
         run: >-
-          supabase db push --include-all
+          supabase db push --db-url "$SUPABASE_DB_URL" --include-all
           --skip-vault --yes
 
       - name: Validar registro no ledger
@@ -949,6 +957,31 @@ jobs:
           )
           test "$BUNDLE_COUNT" = "3"
           echo "OK: ledger possui todas as tres migrations do contrato atomico."
+
+      - name: Validar ledger completo do pacote do lote de 05/10
+        if: >-
+          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
+          && inputs.migration_version == '20261004195051'
+        env:
+          DESTINO_URL: ${{ secrets.DESTINO_URL }}
+        run: |
+          BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
+            SELECT count(*)
+            FROM supabase_migrations.schema_migrations
+            WHERE version IN (
+              '20261003272707',
+              '20261004172554',
+              '20261004173439',
+              '20261004181921',
+              '20261004182245',
+              '20261004185228',
+              '20261004190606',
+              '20261004195051'
+            );
+          SQL
+          )
+          test "$BUNDLE_COUNT" = "8"
+          echo "OK: ledger possui as 8 migrations do lote de 05/10."
 
       - name: Validar ledger completo do bundle de recuperacao Talk X
         if: >-

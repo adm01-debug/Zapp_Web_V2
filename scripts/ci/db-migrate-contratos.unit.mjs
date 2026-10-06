@@ -9,6 +9,9 @@ const raiz = new URL('../../', import.meta.url);
 const ler = (p) => readFileSync(new URL(p, raiz), 'utf8');
 const sha256 = (t) => createHash('sha256').update(t, 'utf8').digest('hex');
 const CONTRATOS = new URL('../../scripts/db-audit/contracts/', import.meta.url);
+// Contratos GENERICOS posteriores ao E62 (cópia de generic-migration-runtime.sql, para o pacote autorizado de uma
+// versao-alvo). Lista fechada: acrescentar uma versao aqui e' uma decisao revisada no PR, nunca automatica.
+const NOVOS_GENERICOS = ['20261004195051.sql'];
 
 test('E62: os 12 contratos sao ARQUIVOS, e o workflow nao tem mais nenhum braco embutido', () => {
   const y = ler('.github/workflows/db-migrate.yml');
@@ -22,12 +25,22 @@ test('E62: os 12 contratos sao ARQUIVOS, e o workflow nao tem mais nenhum braco 
   assert.match(y, /confirmacao !== process\.env\.CONFIRM_RUNTIME_SHA256/, 'a comparacao do sha tem de continuar');
   assert.match(y, /if \(process\.env\.APPLY === 'true'/, 'e continuar condicionada ao apply');
   const arquivos = readdirSync(CONTRATOS).filter((f) => f.endsWith('.sql'));
-  assert.equal(arquivos.length, 12, `esperava 12 contratos, achei ${arquivos.length}`);
+  const historicos = arquivos.filter((f) => !NOVOS_GENERICOS.includes(f));
+  assert.equal(historicos.length, 12, `esperava 12 contratos historicos, achei ${historicos.length}`);
+  assert.deepEqual(
+    arquivos.filter((f) => NOVOS_GENERICOS.includes(f)).sort(),
+    [...NOVOS_GENERICOS].sort(),
+    'os contratos genericos autorizados tem de existir, e so eles',
+  );
+  const generico = readFileSync(new URL('../../scripts/db-audit/generic-migration-runtime.sql', import.meta.url), 'utf8');
+  for (const f of NOVOS_GENERICOS) {
+    assert.equal(readFileSync(new URL(f, CONTRATOS), 'utf8'), generico, `${f} tem de ser identico ao contrato generico`);
+  }
 });
 
 test('E62: cada contrato e o texto do braco de origem (equivalencia pelo sha do documento)', () => {
   const doc = ler('docs/audits/evidence/db-migrate-contratos-historicos.md');
-  const arquivos = readdirSync(CONTRATOS).filter((f) => f.endsWith('.sql'));
+  const arquivos = readdirSync(CONTRATOS).filter((f) => f.endsWith('.sql') && !NOVOS_GENERICOS.includes(f));
   let comFingerprint = 0;
   for (const f of arquivos) {
     const versao = f.replace('.sql', '');

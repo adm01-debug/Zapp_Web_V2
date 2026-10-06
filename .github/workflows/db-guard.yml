@@ -836,12 +836,6 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/network-policy-rpc.test.sh
 
-      # R2-AUTH-004 (05/10/2026): o passo falhou UMA vez no runner com exit 2 silencioso
-      # e passou na repetição. Diagnóstico local: 6/6 execuções verdes e o exit 2 é
-      # inalcançável por esta trilha — o teste só emite exit 1 e o wrapper só
-      # propaga 0/1 (ou 64 de uso, sem argumento). Falha transitória da infraestrutura
-      # do runner, não do contrato. A flag `-x` de diagnóstico (commit 5143f0381)
-      # nunca chegou a esta base; o passo permanece sem o `-x`.
       - name: Provar revogação de sessões Auth por migration (R2-AUTH-004)
         env:
           SKIP_DOCKER_SHIM: "1"
