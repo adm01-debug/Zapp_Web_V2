@@ -4,19 +4,24 @@
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { stripTypeScriptTypes } from 'node:module';
-import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { attestProvenance, installNetworkBlock, sha256Of } from '../lib/source-provenance.mjs';
 
 const root = process.env.RECONCILIATION_REPO || process.cwd();
+// Um caminho de checkout não é permissão para executar outra fonte: o HEAD e o SHA-256
+// dos dois módulos executados são atestados ANTES de ler ou importar qualquer coisa.
+const pins = JSON.parse(readFileSync(new URL('./source-pins.json', import.meta.url), 'utf8'));
+const provenance = attestProvenance({ root, pins });
+// Bloqueio de rede instalado antes da carga do código: as tentativas são medidas, não declaradas.
+const network = installNetworkBlock(globalThis);
 const outDir = process.env.RECONCILIATION_OUTPUT || path.dirname(fileURLToPath(import.meta.url));
 mkdirSync(outDir,{recursive:true});
 const out = path.join(outDir,'volume_offline_results.json');
-const baseline = '2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6';
 const paths = ['src/lib/mediaVolumeStore.ts', 'src/lib/mediaVolumeElement.ts'];
+for (const p of paths) if (!(p in provenance.expected.source_sha256)) throw new Error(`Unattested module: ${p}`);
 const originals = Object.fromEntries(paths.map(p => [p, readFileSync(`${root}/${p}`, 'utf8')]));
-const hashes = Object.fromEntries(paths.map(p => [p, createHash('sha256').update(originals[p]).digest('hex')]));
 let seq = 0;
 const asUrl = code => `data:text/javascript;base64,${Buffer.from(code).toString('base64')}#${++seq}`;
 const strip = text => stripTypeScriptTypes(text, { mode: 'strip' });
@@ -73,11 +78,19 @@ function install({ readonly = false, audioContext = false, blockedStorage = fals
   globalThis.webkitAudioContext = undefined;
   return { calls, storage, windowObject, nodes, media: () => new FakeMedia(readonly) };
 }
+const adaptations = new Map();
+const recordAdaptation = (kind, module, code) => adaptations.set(module, { kind, module, executed_sha256: sha256Of(code) });
+const STORE_ALIAS = "'@/lib/mediaVolumeStore'";
 async function modules() {
-  const storeUrl = asUrl(strip(originals[paths[0]]));
+  const storeCode = strip(originals[paths[0]]);
+  recordAdaptation('type-strip', paths[0], storeCode);
+  const storeUrl = asUrl(storeCode);
   const store = await import(storeUrl);
-  const elementUrl = asUrl(strip(originals[paths[1]]).replace("'@/lib/mediaVolumeStore'", JSON.stringify(storeUrl)));
-  const element = await import(elementUrl);
+  const elementStripped = strip(originals[paths[1]]);
+  // O hash registra o código que o harness executa, com a URL volátil normalizada:
+  // a substituição em si fica declarada, o resto dos bytes é verificável.
+  recordAdaptation('type-strip+alias-rewrite', paths[1], elementStripped.replace(STORE_ALIAS, '"<runtime-store-module-url>"'));
+  const element = await import(asUrl(elementStripped.replace(STORE_ALIAS, JSON.stringify(storeUrl))));
   return { store, element };
 }
 async function run(id, purpose, body) {
@@ -216,10 +229,18 @@ await run('VOL-P08', 'Element: neither native volume nor AudioContext reports un
 });
 
 const report = {
-  baseline_commit: baseline, executed_at: new Date().toISOString(), node_version: process.version,
+  // O rótulo do baseline é o HEAD observado e atestado, nunca um literal fixo.
+  baseline_commit: provenance.observed.head,
+  baseline_sha_expected: provenance.expected.baseline_sha,
+  provenance,
+  executed_at: new Date().toISOString(), node_version: process.version,
   method: 'Actual TypeScript modules stripped in memory; import alias rewritten only to the actual store module. DOM, storage, BroadcastChannel and WebAudio are offline test doubles.',
-  source_sha256: hashes,
-  production_changes: false, network_requests: 0, database_queries: 0,
+  source_sha256: provenance.observed.source_sha256,
+  harness_adaptation: [...adaptations.values()],
+  production_changes: false, database_queries: 0,
+  // Medição, não literal: o bloqueio de rede conta cada tentativa observada.
+  network_requests: network.attempts.length,
+  network_attempts: network.attempts,
   results,
   summary: { probes: results.length, harness_passed: results.filter(r => r.harness_result === 'PASS').length, requirement_passed: results.filter(r => r.requirement_result === 'PASS').length, requirement_failed: results.filter(r => r.requirement_result === 'VALIDATED_FAIL').length },
 };

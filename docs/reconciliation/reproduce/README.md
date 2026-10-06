@@ -57,6 +57,10 @@ node --experimental-strip-types "$RECONCILIATION_PROBES/volume/volume_offline_pr
 | Skins | Persistência de presets, falha de quota e formato JSON null | Módulo real com DOM/storage/estado de hook simulados; sem renderização no navegador. |
 | Volume | Store, binding e liberação de AudioContext | WebAudio e players simulados; sem audição real em aparelho. |
 
+## Proveniência das fontes (R2-INF-015)
+
+`other/source-pins.json`, `transversal/source-pins.json` e `volume/source-pins.json` fixam o commit auditado (`baseline_sha`) e o SHA-256 de cada arquivo que o probe lê ou importa — inclusive o import transitivo (`evolution-go-routes.ts`). Antes de qualquer leitura, import ou execução o probe confere o HEAD do `RECONCILIATION_REPO` e os bytes de cada fonte e, se algo divergir, sai com `Provenance refusal` sem publicar relatório. O relato separa o hash esperado, o observado e o código que o harness adaptou, e `network_requests` é a contagem medida de tentativas de rede bloqueadas, não um `0` declarado. Para reproduzir outro commit, atualize os três `source-pins.json` de forma explícita e revisada: trocar o caminho do checkout não basta. A biblioteca compartilhada é `lib/source-provenance.mjs`.
+
 Os quatro conjuntos foram testados novamente em cópias com outra profundidade de diretório. [Resultado da portabilidade](../evidence/portable-probe-retest-results.json). O arquivo TypeScript do cliente Functions incluído no conjunto Cross-module corresponde à versão2.117.2, fixada pelo lock auditado, e serve à reprodução de desserialização.
 
 A referência do SDK é preservada em `supabase-functions-client-2.117.2.ts.txt`, com os bytes originais. O probe lê esse dado e remove os tipos somente na cópia de execução. Essa separação mantém o código de terceiro como evidência e evita introduzi-lo no conjunto de fontes de aplicação verificado pelo ratchet de lint. Nenhuma regra ou baseline foi relaxado.
