@@ -56,6 +56,40 @@ export function OmnichannelManager() {
     },
   });
 
+  // R2-API-063: a contagem WhatsApp era a constante 1. Agora vem da fonte
+  // autorizada (`whatsapp_connections_safe`), que distingue conexão operacional
+  // ('connected') de cadastro, com estado de carregamento/erro explícito.
+  const whatsappQuery = useQuery({
+    queryKey: ['whatsapp-connections-status'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('whatsapp_connections_safe')
+        .select('id, status');
+      if (error) throw error;
+      return (data ?? []) as { id: string | null; status: string | null }[];
+    },
+  });
+
+  const whatsappConnections = whatsappQuery.data ?? [];
+  const whatsappConnectedCount = whatsappConnections.filter((c) => c.status === 'connected').length;
+
+  const whatsappStatValue = (() => {
+    if (whatsappQuery.isLoading) return '…';
+    if (whatsappQuery.isError) return '—';
+    return String(whatsappConnectedCount);
+  })();
+
+  const whatsappSummary = (() => {
+    if (whatsappQuery.isLoading) return 'Verificando as conexões WhatsApp…';
+    if (whatsappQuery.isError) return 'Não foi possível verificar as conexões WhatsApp.';
+    if (whatsappConnectedCount === 1) return '1 conexão WhatsApp conectada.';
+    if (whatsappConnectedCount > 1) return `${whatsappConnectedCount} conexões WhatsApp conectadas.`;
+    return 'Nenhuma conexão WhatsApp conectada.';
+  })();
+
+  const statValue = (key: string) =>
+    key === 'whatsapp' ? whatsappStatValue : String(channels.filter((c) => c.channel_type === key).length);
+
   const addChannel = useMutation({
     mutationFn: async (channel: { name: string; channel_type: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -173,7 +207,7 @@ export function OmnichannelManager() {
               <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">Nenhum canal adicional configurado</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Seus canais WhatsApp já estão ativos. Adicione Instagram, Telegram ou outros.
+                {whatsappSummary} Adicione Instagram, Telegram, Messenger, Web Chat ou Gmail.
               </p>
             </div>
           ) : (
@@ -213,18 +247,21 @@ export function OmnichannelManager() {
 
       {/* Channel Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {Object.entries(channelConfig).map(([key, cfg]) => {
-          const count = key === 'whatsapp' ? 1 : channels.filter(c => c.channel_type === key).length;
-          return (
-            <Card key={key} className="border-border/50">
-              <CardContent className="p-4 text-center">
-                <cfg.icon className={`w-6 h-6 ${cfg.color} mx-auto mb-2`} />
-                <p className="text-xs text-muted-foreground">{cfg.label}</p>
-                <p className="text-lg font-bold">{count}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {Object.entries(channelConfig).map(([key, cfg]) => (
+          <Card key={key} className="border-border/50">
+            <CardContent className="p-4 text-center">
+              <cfg.icon className={`w-6 h-6 ${cfg.color} mx-auto mb-2`} />
+              <p className="text-xs text-muted-foreground">{cfg.label}</p>
+              <p
+                className="text-lg font-bold"
+                data-testid={`channel-count-${key}`}
+                title={key === 'whatsapp' && whatsappQuery.isError ? 'Não foi possível consultar as conexões WhatsApp' : undefined}
+              >
+                {statValue(key)}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Channel Routing Rules */}
