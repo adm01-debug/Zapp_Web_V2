@@ -86,6 +86,32 @@ fs.writeFileSync(process.argv[2],JSON.stringify(m));
 ' "$repo_root/$manifest" "$tmp_dir/dois-ledgers.json"
 expect_guard_fails 'A.4 (defeito) dois ledgers vivos continuam sem autoridade reconciliada' "$tmp_dir/dois-ledgers.json"
 
+# A.5-A.8 provam que a guarda NAO e vacua: ela le os arquivos reais do repositorio e
+# reprova cada forma de reconciliacao quebrada (ledger inexistente, publication que nao
+# cobre o consumidor, guarda de DO_NOT_REPLAY vencida e divergencia sem decisao).
+tamper() { # tamper <tipo> <saida>
+  node -e '
+const fs=require("fs");
+const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+switch(process.argv[3]){
+  case "ledger": m.live_ledger[0].path="docs/team-chat/PLANO_QUE_NAO_EXISTE.md"; break;
+  case "publication": m.publication_decision.tables=m.publication_decision.tables.filter(function(t){return t!=="public.team_messages";}); break;
+  case "guard": m.do_not_replay.push({steps:["XX-99"],why:"teste",guard:{kind:"src_reference",file:"src/hooks/team-chat/useDepartmentManagement.ts",token:"token-que-nao-existe"}}); break;
+  case "conflict": m.contract_resolutions=m.contract_resolutions.filter(function(r){return r.id!=="TC-AUTH-04";}); break;
+  default: throw new Error("tipo desconhecido: "+process.argv[3]);
+}
+fs.writeFileSync(process.argv[2],JSON.stringify(m));
+' "$repo_root/$manifest" "$2" "$1"
+}
+tamper ledger "$tmp_dir/tamper-ledger.json"
+expect_guard_fails 'A.5 ledger vivo que nao existe no repositorio e reprovado' "$tmp_dir/tamper-ledger.json"
+tamper publication "$tmp_dir/tamper-publication.json"
+expect_guard_fails 'A.6 publication que nao cobre o consumidor de src e reprovada' "$tmp_dir/tamper-publication.json"
+tamper guard "$tmp_dir/tamper-guard.json"
+expect_guard_fails 'A.7 guarda de DO_NOT_REPLAY vencida (token ausente no arquivo real) e reprovada' "$tmp_dir/tamper-guard.json"
+tamper conflict "$tmp_dir/tamper-conflict.json"
+expect_guard_fails 'A.8 divergencia F/TC sem decisao registrada e reprovada' "$tmp_dir/tamper-conflict.json"
+
 printf '\n============ BLOCO B — reconciliacao aplicada ============\n'
 expect_guard_passes 'B.1 autoridade reconciliada: 1 ledger vivo + linhagem, 100 itens, publication coberta' "$manifest"
 
