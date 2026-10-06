@@ -16,8 +16,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  * 2. consulta de campanhas carregando -> esqueleto com `aria-busy`, não o vazio;
  * 3. consulta dos destinatários falhou -> erro com "Tentar novamente" que refaz SÓ aquela
  *    consulta e mantém a campanha e a aba selecionadas;
- * 4. consulta do histórico de envios falhou -> erro na Visão Geral, não o card vazio;
- * 5. carga inicial dos logs falhou -> erro, não "Aguardando eventos de envio…".
+ * 4. consulta das mensagens falhou -> erro e retry sem perder campanha/aba;
+ * 5. consulta do histórico de envios falhou -> erro na Visão Geral, não o card vazio;
+ * 6. carga inicial dos logs falhou -> erro, não "Aguardando eventos de envio…".
  *
  * O teste fica em arquivo próprio porque mocka o hook `useTalkX` inteiro (o
  * `TalkXCampaignRunning.limits.test.tsx` já usa esse padrão).
@@ -87,8 +88,9 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
 
 vi.mock('recharts', () => {
   const Box = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;
+  const SvgBox = ({ children }: { children?: React.ReactNode }) => <svg>{children}</svg>;
   return {
-    AreaChart: Box,
+    AreaChart: SvgBox,
     Area: () => null,
     XAxis: () => null,
     YAxis: () => null,
@@ -161,6 +163,19 @@ const MESSAGE_ROW = {
   contacts: { name: 'Contato Retry X047', phone: 'telefone-sintetico' },
 };
 
+const HISTORY_ROW = {
+  sent_at: new Date().toISOString(),
+  delivered_at: null,
+};
+
+const LOG_ROW = {
+  id: 'log-1',
+  status: 'sent',
+  updated_at: '2026-10-05T12:00:00.000Z',
+  error_message: null,
+  contacts: { name: 'Atividade recuperada X047', phone: 'telefone-sintetico' },
+};
+
 describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () => {
   beforeEach(() => {
     state.campaignList = [mockCampaign];
@@ -175,7 +190,7 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     refetchCampaigns.mockClear();
   });
 
-  it('erro na consulta de campanhas: mostra o erro e NÃO o vazio', () => {
+  it('erro na consulta de campanhas: mostra o erro, NÃO o vazio e permite refetch', () => {
     state.campaignList = [];
     state.campaignsIsError = true;
 
@@ -184,6 +199,9 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     expect(screen.getByText(/Não foi possível carregar as campanhas/)).toBeTruthy();
     expect(screen.queryByText('Nenhuma campanha em andamento no momento.')).toBeNull();
     expect(container.querySelector('[data-talkx-query="empty"]')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(refetchCampaigns).toHaveBeenCalledTimes(1);
   });
 
   it('erro na consulta de campanhas: o cabeçalho não anuncia "Nenhuma campanha ativa"', () => {
@@ -245,16 +263,24 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     expect(screen.getByRole('button', { name: 'Mensagens' }).className).toContain('border-primary');
   });
 
-  it('erro no histórico de envios: a Visão Geral mostra o erro e NÃO o card vazio', async () => {
+  it('erro no histórico: retry recupera a Visão Geral sem perder campanha e aba', async () => {
     state.rows[2000] = { data: null, error: { message: 'falha X047 — histórico' } };
 
     renderView();
 
     expect(await screen.findByText(/Não foi possível carregar as estatísticas de envio/)).toBeTruthy();
     expect(screen.queryByText('Nenhum envio registrado nesta campanha ainda.')).toBeNull();
+
+    state.rows[2000] = { data: [HISTORY_ROW], error: null };
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    expect(await screen.findByText('Ritmo de Envio')).toBeTruthy();
+    const select = screen.getByLabelText('Selecionar campanha') as HTMLSelectElement;
+    expect(select.value).toBe('c1');
+    expect(screen.getByRole('button', { name: 'Visão Geral' }).className).toContain('border-primary');
   });
 
-  it('erro na carga inicial dos logs: mostra o erro e NÃO "Aguardando eventos de envio…"', async () => {
+  it('erro nos logs: retry recupera atividades sem perder campanha e aba', async () => {
     state.rows[50] = { data: null, error: { message: 'falha X047 — logs' } };
 
     renderView();
@@ -262,5 +288,13 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
 
     expect(await screen.findByText(/Não foi possível carregar as atividades em tempo real/)).toBeTruthy();
     expect(screen.queryByText('Aguardando eventos de envio…')).toBeNull();
+
+    state.rows[50] = { data: [LOG_ROW], error: null };
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    expect(await screen.findByText(/Atividade recuperada X047/)).toBeTruthy();
+    const select = screen.getByLabelText('Selecionar campanha') as HTMLSelectElement;
+    expect(select.value).toBe('c1');
+    expect(screen.getByRole('button', { name: 'Logs em Tempo Real' }).className).toContain('border-primary');
   });
 });
