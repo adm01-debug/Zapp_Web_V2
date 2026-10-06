@@ -180,7 +180,7 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     }
 
     // Migrate the URL: replace hash with ?view= query param
-    setViewParam(hash, true);
+    setViewParam(resolveLegacyView(hash), true);
 
     // Handle as a view change using the same logic as onPopState
     onPopState();
@@ -199,7 +199,7 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     // One-time migration: if URL still uses hash (#inbox) with no ?view=, rewrite to ?view=inbox
     const hash = window.location.hash.replace('#', '');
     if (hash && !RESERVED_HASHES.has(hash) && !params.get('view')) {
-      setViewParam(hash, true);
+      setViewParam(resolveLegacyView(hash), true);
     }
 
     window.addEventListener('popstate', onPopState);

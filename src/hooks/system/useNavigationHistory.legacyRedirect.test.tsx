@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { useNavigationHistory, LEGACY_VIEW_REDIRECTS, resolveLegacyView } from './useNavigationHistory';
 
 /**
@@ -37,6 +37,30 @@ describe('useNavigationHistory — compatibilidade de rota do view=tags removido
 
     expect(screen.getByTestId('view').textContent).toBe('contacts');
     expect(urlView()).toBe('contacts');
+  });
+
+  it('resolve #tags para estado e URL canônicos de contacts na carga inicial', () => {
+    window.history.replaceState(null, '', '/#tags');
+
+    render(<Probe />);
+
+    expect(screen.getByTestId('view').textContent).toBe('contacts');
+    expect(urlView()).toBe('contacts');
+    expect(window.location.hash).toBe('');
+  });
+
+  it('resolve #tags para contacts quando o hash muda durante a sessão', () => {
+    window.history.replaceState(null, '', '/?view=inbox');
+    render(<Probe />);
+
+    act(() => {
+      window.history.replaceState(null, '', '/?view=inbox#tags');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+
+    expect(screen.getByTestId('view').textContent).toBe('contacts');
+    expect(urlView()).toBe('contacts');
+    expect(window.location.hash).toBe('');
   });
 
   it('não mexe na URL de uma view válida', () => {

@@ -55,4 +55,9 @@ describe('resíduos da remoção de Etiquetas (TRA-010)', () => {
     const plano = read('docs/audits/PLANO_REMOCAO_ETIQUETAS_100_ETAPAS_2026-09-27.md');
     expect(plano).not.toMatch(/Nada foi removido ainda/);
   });
+
+  it('o plano não expõe identificador de projeto Supabase', () => {
+    const plano = read('docs/audits/PLANO_REMOCAO_ETIQUETAS_100_ETAPAS_2026-09-27.md');
+    expect(plano).not.toMatch(/\b[a-z]{20}\b/);
+  });
 });
