@@ -3,7 +3,7 @@
 # validate_destino.sh — roda VALIDATE_DESTINO.sql no banco destino
 #
 # Uso:
-#   DESTINO_URL="postgresql://user:pass@host:5432/db" \
+#   DESTINO_URL="postgresql://user:***@host:5432/db" \
 #     bash supabase-export/validate_destino.sh
 #
 # Ou:
@@ -12,9 +12,12 @@
 # Exit codes:
 #   0 = tudo OK
 #   1 = falha de validação (FAIL ou tabela sem PK/RLS)
-#   2 = erro de conexão / arquivo
+#   2 = erro de conexão / arquivo / execução do comando de banco
 # ============================================================
-set -u
+# `pipefail` é obrigatório aqui: sem ele o status do pipeline `node ... | tee`
+# é o do `tee` (0 quando ele escreve), então a falha do comando de banco era
+# descartada, o resumo saía "0 FAIL" e o script anunciava sucesso (R2-GOV-004).
+set -uo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 SQL="$DIR/VALIDATE_DESTINO.sql"
@@ -39,6 +42,7 @@ OUT="$(mktemp)"
 trap 'rm -f "$OUT"' EXIT
 
 echo "▶  Validando destino..."
+# Com `set -o pipefail` o `if !` enxerga o status do node/psql, não o do tee.
 if ! node "$PSQL_SAFE" -v ON_ERROR_STOP=1 -f "$SQL" 2>&1 | tee "$OUT"; then
   echo "❌ psql falhou."
   exit 2
@@ -61,9 +65,12 @@ fi
 
 echo "📝 Gerando logs de validação..."
 
-# Gera JSON
+# Gera JSON — também é um comando de banco: se ele falha, não há sucesso.
 if [[ -f "$JSON_SQL" ]]; then
-  node "$PSQL_SAFE" -v ON_ERROR_STOP=1 -f "$JSON_SQL" -o "$JSON_FILE"
+  if ! node "$PSQL_SAFE" -v ON_ERROR_STOP=1 -f "$JSON_SQL" -o "$JSON_FILE"; then
+    echo "❌ Geração do JSON de validação falhou."
+    exit 2
+  fi
   echo "📄 JSON: $JSON_FILE"
 fi
 
