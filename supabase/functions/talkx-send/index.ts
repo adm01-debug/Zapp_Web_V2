@@ -594,6 +594,9 @@ export async function handleTalkxSend(
       sent: number;
       failed: number;
       blacklisted: number;
+      // t_afa5df1d: valor de `blacklisted` do último agregado `skipped_suppressed`
+      // já gravado — o delta até `blacklisted` é o que ainda falta publicar.
+      blacklistedFlushed: number;
       outcomeUnknown: number;
       processed: number;
       handled: number;
@@ -671,6 +674,25 @@ export async function handleTalkxSend(
         worker_id: workerId,
         duration_ms: durationMs,
       };
+    };
+
+    // t_afa5df1d — grava 1 evento AGREGADO `skipped_suppressed` em
+    // `talkx_campaign_events` quando a passada pulou destinatários por supressão.
+    // Antes esse insert vivia só no fim do laço, DEPOIS do flush e fora de qualquer
+    // `finally`: uma exceção num destinatário (ex.: claim indisponível) subia
+    // antes dele e os pulos já contados se perdiam na timeline da campanha
+    // (mesma classe do R3-DELTA-011, que cobriu o lote de `talkx_delivery_log`).
+    // Agora o mesmo gravador atende o fim de cada passada e a saída por exceção.
+    // Best-effort: a timeline nunca pode mascarar a falha do envio.
+    const gravarAgregadoDeSupressao = async (quantidade: number) => {
+      if (quantidade <= 0) return;
+      try {
+        await supabase.from("talkx_campaign_events").insert({
+          campaign_id: campaignId,
+          event_type: "skipped_suppressed",
+          message: `${quantidade} destinatário(s) pulado(s) por supressão`,
+        });
+      } catch { /* timeline é best-effort */ }
     };
 
     // X033 — grava em LOTE, ao fim de cada passada, as linhas de log dos
@@ -871,6 +893,7 @@ export async function handleTalkxSend(
         sent: Number(campaign.sent_count ?? 0),
         failed: Number(campaign.failed_count ?? 0),
         blacklisted: 0,
+        blacklistedFlushed: 0,
         outcomeUnknown: 0,
         processed: 0,
         handled: 0,
@@ -917,6 +940,12 @@ export async function handleTalkxSend(
           success: true, skipped: "worker_alive", processed: 0, remaining: 0, has_more: true,
         }), { headers });
       }
+
+      // t_afa5df1d: o `finally` externo (que solta o lease) precisa publicar o
+      // agregado `skipped_suppressed` da passada abortada por uma exceção num
+      // destinatário, mas o `state` do motor nasce dentro do `try`; esta
+      // referência liga os dois.
+      let engineStateParaSaida: EngineState | null = null;
 
       try {
         const { businessHours } = await loadBusinessHoursAndDailyLimit();
@@ -979,6 +1008,7 @@ export async function handleTalkxSend(
           campaignRow, workerId, initialInstanceId, instanceToken,
           dailyLimit, sentTodayTotal, minuteLimit, minuteRemaining, dayRemaining, businessHours, trackingUrlFor, linksByLabelFor,
         );
+        engineStateParaSaida = state;
 
         const parsedBatchSize = Number.parseInt(Deno.env.get("TALKX_BATCH_SIZE") ?? "", 10);
         const batchSize = Number.isFinite(parsedBatchSize) && parsedBatchSize > 0 ? Math.min(parsedBatchSize, 200) : 20;
@@ -1042,15 +1072,11 @@ export async function handleTalkxSend(
           // pulados por supressão. Antes o contador só existia em memória e a
           // timeline nunca registrava esses pulos.
           const skippedBySuppression = state.blacklisted - blacklistedBeforeBatch;
-          if (skippedBySuppression > 0) {
-            try {
-              await supabase.from("talkx_campaign_events").insert({
-                campaign_id: campaignId,
-                event_type: "skipped_suppressed",
-                message: `${skippedBySuppression} destinatário(s) pulado(s) por supressão`,
-              });
-            } catch { /* timeline é best-effort */ }
-          }
+          await gravarAgregadoDeSupressao(skippedBySuppression);
+          // t_afa5df1d: marca o que já foi para a timeline nesta passada — o
+          // `finally` externo publica só o delta que ficou de fora quando a
+          // passada é abortada por uma exceção num destinatário.
+          state.blacklistedFlushed = state.blacklisted;
           if (index < processRows.length) {
             remaining = processRows.length - index;
             hasMore = true;
@@ -1086,6 +1112,15 @@ export async function handleTalkxSend(
           { headers },
         );
       } finally {
+        // t_afa5df1d: quando a passada é abortada por uma exceção num
+        // destinatário, o gravador do fim do laço não roda e os pulos por
+        // supressão já contados se perderiam na timeline. Publica aqui o delta
+        // que ficou pendente (no caminho normal já saiu no fim de cada passada e
+        // o delta é zero, então nunca duplica). Best-effort: o erro original
+        // segue subindo.
+        if (engineStateParaSaida) {
+          await gravarAgregadoDeSupressao(engineStateParaSaida.blacklisted - engineStateParaSaida.blacklistedFlushed);
+        }
         // Solta o lease ao sair (inclusive sob exceção). Se falhar, o lease
         // expira sozinho em 90s — nunca mascara a resposta.
         const { error: releaseError } = await supabase.rpc("release_talkx_campaign_worker", {
