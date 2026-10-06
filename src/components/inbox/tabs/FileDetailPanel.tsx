@@ -24,10 +24,13 @@ interface FileDetailContentProps {
 
 export function FileDetailContent({ item, contactName, onClose, onRequestDelete }: FileDetailContentProps) {
   const [hasError, setHasError] = useState(false);
-  // Etapa 10: a consulta ja assina em lote, um request por bucket. O hook individual
-  // continua como fallback para item sem URL assinada (objeto publico ou lote que falhou).
-  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.signedUrl ? '' : item.url);
-  const displayUrl = item.signedUrl ?? resolvedUrl;
+  // Etapa 10 + R2-INB-059: o locator vai SEMPRE para o resolver (a URL em lote entra como
+  // semente), entao o `refresh` do erro consegue renovar a assinatura que falhou.
+  const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.url, undefined, {
+    signedUrl: item.signedUrl,
+    signedUrlExpiresAt: item.expiresAt,
+  });
+  const displayUrl = resolvedUrl || item.signedUrl || '';
   const size = formatSize(item.size);
   // Etapa 31: nome tecnico so quando agrega — quando difere do displayName legivel.
   const technicalName = item.filename && item.filename !== item.displayName ? item.filename : null;
