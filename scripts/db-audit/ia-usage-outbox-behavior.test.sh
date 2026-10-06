@@ -54,6 +54,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE service_role NOLOGIN;
+CREATE ROLE public_probe NOLOGIN;
 CREATE SCHEMA IF NOT EXISTS auth;
 CREATE TABLE public.ai_usage_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -82,6 +83,67 @@ psql_test >/dev/null < "$migration"
 psql_test -q -c "GRANT ALL ON public.ai_usage_outbox TO anon, authenticated;"
 psql_test >/dev/null < "$acl_migration"
 
+# O caminho autorizado precisa funcionar sob o papel real, não como postgres
+# (dono/superusuário contorna RLS e esconderia uma policy quebrada).
+service_role_proof="$(psql_test -qAt <<'SQL'
+SET ROLE service_role;
+WITH inserted AS (
+  INSERT INTO public.ai_usage_outbox (event_id, payload, motivo)
+  VALUES (
+    '99999999-7777-4777-8777-777777777777',
+    '{"linha":{"event_id":"99999999-7777-4777-8777-777777777777"}}'::jsonb,
+    'prova_service_role'
+  )
+  RETURNING 1
+)
+SELECT 'service_role_insert=' || CASE WHEN count(*) = 1 THEN 'ok' ELSE 'fail' END FROM inserted;
+SELECT 'service_role_select=' || CASE WHEN count(*) = 1 THEN 'ok' ELSE 'fail' END
+  FROM public.ai_usage_outbox
+ WHERE event_id = '99999999-7777-4777-8777-777777777777';
+WITH updated AS (
+  UPDATE public.ai_usage_outbox
+     SET tentativas = tentativas + 1
+   WHERE event_id = '99999999-7777-4777-8777-777777777777'
+  RETURNING 1
+)
+SELECT 'service_role_update=' || CASE WHEN count(*) = 1 THEN 'ok' ELSE 'fail' END FROM updated;
+RESET ROLE;
+SQL
+)"
+
+for proof in service_role_insert=ok service_role_select=ok service_role_update=ok; do
+  grep -Fx "$proof" <<<"$service_role_proof" >/dev/null || {
+    echo "Missing proof: $proof" >&2
+    echo "$service_role_proof" >&2
+    exit 1
+  }
+done
+
+# PUBLIC é um pseudo-papel e não aceita SET ROLE. public_probe não recebe
+# nenhum GRANT próprio, portanto exercita exclusivamente o que PUBLIC herdaria.
+access_proof=""
+expect_permission_denied() {
+  local role="$1" action="$2" sql="$3" error
+  if error="$(psql_test -qAt -c "SET ROLE $role; $sql" 2>&1)"; then
+    echo "$role conseguiu $action em public.ai_usage_outbox" >&2
+    exit 1
+  fi
+  grep -Fq 'permission denied for table ai_usage_outbox' <<<"$error" || {
+    echo "$role falhou em $action por motivo inesperado: $error" >&2
+    exit 1
+  }
+  access_proof+="${role}_${action}_denied=ok"$'\n'
+}
+
+for denied_role in public_probe anon authenticated; do
+  expect_permission_denied "$denied_role" select \
+    "SELECT count(*) FROM public.ai_usage_outbox;"
+  expect_permission_denied "$denied_role" insert \
+    "INSERT INTO public.ai_usage_outbox (payload, motivo) VALUES ('{}'::jsonb, 'deve_falhar');"
+  expect_permission_denied "$denied_role" update \
+    "UPDATE public.ai_usage_outbox SET tentativas = tentativas + 1;"
+done
+
 output="$(
 psql_test -At <<'SQL'
 -- 1. a coluna e os índices únicos existem (a unicidade é do BANCO)
@@ -102,12 +164,31 @@ SELECT 'outbox_unique=' || CASE WHEN
             AND indexdef LIKE '%UNIQUE%')
 THEN 'ok' ELSE 'fail' END;
 
--- 1b. ACL endurecida: anon/authenticated sem privilegio; service_role com o caminho
+-- 1b. ACL completa: PUBLIC/anon/authenticated sem QUALQUER privilégio de tabela.
+-- public_probe enxerga somente privilégios herdados de PUBLIC. A consulta ao
+-- ACL também garante que não restou grant direto ao pseudo-papel PUBLIC.
 SELECT 'outbox_acl_endurecida=' || CASE WHEN
-  NOT has_table_privilege('anon', 'public.ai_usage_outbox', 'SELECT')
-  AND NOT has_table_privilege('anon', 'public.ai_usage_outbox', 'INSERT')
-  AND NOT has_table_privilege('authenticated', 'public.ai_usage_outbox', 'SELECT')
-  AND NOT has_table_privilege('authenticated', 'public.ai_usage_outbox', 'INSERT')
+  NOT has_table_privilege(
+    'public_probe', 'public.ai_usage_outbox',
+    'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN'
+  )
+  AND NOT has_table_privilege(
+    'anon', 'public.ai_usage_outbox',
+    'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN'
+  )
+  AND NOT has_table_privilege(
+    'authenticated', 'public.ai_usage_outbox',
+    'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN'
+  )
+  AND NOT EXISTS (
+    SELECT 1
+      FROM pg_class AS c
+      CROSS JOIN LATERAL aclexplode(
+        COALESCE(c.relacl, acldefault('r', c.relowner))
+      ) AS acl
+     WHERE c.oid = 'public.ai_usage_outbox'::regclass
+       AND acl.grantee = 0
+  )
   AND has_table_privilege('service_role', 'public.ai_usage_outbox', 'SELECT')
   AND has_table_privilege('service_role', 'public.ai_usage_outbox', 'INSERT')
   AND has_table_privilege('service_role', 'public.ai_usage_outbox', 'UPDATE')
@@ -183,6 +264,8 @@ SELECT 'outbox_entregue_volta_a_fila=' || CASE WHEN
 THEN 'ok' ELSE 'fail' END;
 SQL
 )"
+output+=$'\n'"$service_role_proof"
+output+=$'\n'"${access_proof%$'\n'}"
 
 # ---- 7. CONCORRÊNCIA de verdade: duas sessões inserem o MESMO evento em paralelo ----
 concurrente_event="ffffffff-6666-4666-8666-666666666666"
@@ -197,6 +280,10 @@ concorrencia="$(psql_test -At -c "SELECT count(*) FROM public.ai_usage_logs WHER
 output+=$'\n'"upserts_concorrentes_mesmo_evento=$([ "$concorrencia" = "1" ] && echo ok || echo fail)"
 
 for proof in event_id_column=ok logs_event_id_unique=ok outbox_unique=ok outbox_acl_endurecida=ok \
+  service_role_insert=ok service_role_select=ok service_role_update=ok \
+  public_probe_select_denied=ok public_probe_insert_denied=ok public_probe_update_denied=ok \
+  anon_select_denied=ok anon_insert_denied=ok anon_update_denied=ok \
+  authenticated_select_denied=ok authenticated_insert_denied=ok authenticated_update_denied=ok \
   conteudo_identico_nao_colapsa=ok upsert_absorve_reentrega=ok return_representation=ok \
   outbox_mesmo_evento_uma_linha=ok outbox_entregue_volta_a_fila=ok \
   upserts_concorrentes_mesmo_evento=ok; do
