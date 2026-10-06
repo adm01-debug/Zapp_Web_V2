@@ -60,7 +60,12 @@ export function useRealtimeInbox() {
     enabled: !USE_EXTERNAL_DB && Boolean(selectedContactId),
   });
 
+  // R2-INB-024: `useMessages` termina o `loading` mesmo quando a busca falha e publica o
+  // motivo em `error`. Sem repassar esse `error`, a ponte só sabia dizer "não está carregando
+  // e não há mensagens" — o consumidor exibia conversa vazia para falha de transporte/permissão,
+  // indistinguível de um contato sem histórico e sem retry daquela consulta.
   const selectedMessagesLoading = USE_EXTERNAL_DB ? externalMsgs.loading : localMsgs.loading;
+  const selectedMessagesError = USE_EXTERNAL_DB ? externalMsgs.error : localMsgs.error;
   const refetchSelectedMessages = USE_EXTERNAL_DB ? externalMsgs.refetch : localMsgs.refetch;
 
   // Listen for open-contact-chat events
@@ -242,6 +247,8 @@ export function useRealtimeInbox() {
      selectedMessagesFromCache,
      loading, error,
      selectedMessagesLoading,
+     selectedMessagesError,
+     refetchSelectedMessages,
      hasOlderMessages: !USE_EXTERNAL_DB && localMsgs.hasOlder,
      loadingOlderMessages: !USE_EXTERNAL_DB && localMsgs.loadingOlder,
      loadOlderMessages: !USE_EXTERNAL_DB ? localMsgs.loadOlderMessages : async () => {},

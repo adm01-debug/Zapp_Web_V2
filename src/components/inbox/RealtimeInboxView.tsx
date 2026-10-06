@@ -289,7 +289,20 @@ export function RealtimeInboxView() {
                     />
                   ) : null}
                 />
-                {inbox.selectedContactId && inbox.selectedMessagesLoading ? <ChatFallback /> : (
+                {/* R2-INB-024: a carga das mensagens desta conversa falhou. O `loading` do
+                    hook termina mesmo no erro, então sem este ramo o painel caía no ChatPanel
+                    com zero mensagens — ilegível como "falha" e igual a um contato sem histórico,
+                    sem caminho de retry. O retry é o refetch DESTA consulta, não da lista global. */}
+                {inbox.selectedMessagesError && inbox.legacyMessages.length === 0 ? (
+                  <div role="alert" className="flex-1 flex items-center justify-center p-8">
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4"><WifiOff className="w-8 h-8 text-destructive" /></div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar as mensagens</h3>
+                      <p className="text-muted-foreground text-sm mb-4 break-words">{inbox.selectedMessagesError}</p>
+                      <Button onClick={() => { void inbox.refetchSelectedMessages(); }} variant="outline"><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button>
+                    </div>
+                  </div>
+                ) : inbox.selectedContactId && inbox.selectedMessagesLoading ? <ChatFallback /> : (
                   <ConversationTabContent
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
