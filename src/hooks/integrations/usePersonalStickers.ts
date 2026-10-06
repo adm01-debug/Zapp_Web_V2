@@ -10,11 +10,28 @@ export function usePersonalStickers() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
-  const { data: profile } = useQuery({
+  // R2-API-051 (item 225): a identidade NÃO pode ser pedida com `.single()` sem
+  // filtro — administradores/supervisores enxergam várias linhas de `profiles`
+  // pela policy, o PostgREST devolve erro de cardinalidade e a pasta do próprio
+  // usuário ficava vazia. Resolve-se pelo `user_id` do usuário autenticado, com
+  // `.maybeSingle()`, e o loading/erro dessa resolução é exposto ao componente.
+  const {
+    data: profile,
+    isLoading: profileLoading,
+    error: profileError,
+  } = useQuery({
     queryKey: ['my-profile-stickers'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('id, name').single();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!user?.id) throw new Error('Sessão não encontrada');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error('Perfil do usuário não encontrado');
       return data;
     },
   });
@@ -80,5 +97,5 @@ export function usePersonalStickers() {
     supabase.from('stickers').update({ use_count: sticker.use_count + 1 }).eq('id', sticker.id);
   }, []);
 
-  return { profile, stickers, isLoading, uploading, fileInputRef, handleUpload, toggleFavorite, deleteSticker, incrementUseCount };
+  return { profile, profileLoading, profileError, stickers, isLoading, uploading, fileInputRef, handleUpload, toggleFavorite, deleteSticker, incrementUseCount };
 }
