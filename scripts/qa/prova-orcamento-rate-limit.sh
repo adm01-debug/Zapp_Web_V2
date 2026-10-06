@@ -183,7 +183,7 @@ else
       inconclusivo "nao consegui ler ai_usage_logs (HTTP $leitura_http): consumo do run NAO medido"
       break
     fi
-    registradas=$(jq 'length' "$OUT/ai_usage_logs.json" 2>/dev/null || echo -1)
+    registradas=$(jq 'if type=="array" then length else -1 end' "$OUT/ai_usage_logs.json" 2>/dev/null || echo -1)
     [[ "$registradas" =~ ^[0-9]+$ ]] || registradas=-1
     if (( registradas >= OK_200 )); then
       leitura_ok=1
@@ -197,6 +197,8 @@ else
     jq -c '.[]? | {request_id, status, model}' "$OUT/ai_usage_logs.json" 2>/dev/null | head -c 600; echo
   elif [[ "$leitura_http" == "200" && "$registradas" != "-1" ]]; then
     falha "consumo nao registrado: $registradas linha(s) do run em ai_usage_logs (esperado >= $OK_200)"
+  else
+    inconclusivo "resposta de ai_usage_logs nao pode ser interpretada: consumo do run NAO medido"
   fi
 fi
 
@@ -214,9 +216,9 @@ cat <<SQL
 --    where key like 'ai:user:$FUNCAO:%' and window_start >= '$RUN_INICIO';
 --   select id, status, tokens, created_at from ai_budget_reservations
 --    where created_at >= '$RUN_INICIO';
--- As chamadas com HTTP 200 devem aparecer em ai_usage_logs. `status=success`
+-- As chamadas com HTTP 200 devem aparecer em ai_usage_logs. 'status=success'
 -- prova o caminho completo (reserva -> provedor -> liquidacao -> log).
--- `status=error` com HTTP 401 significa provedor recusando a credencial: a rota,
+-- 'status=error' com HTTP 401 significa provedor recusando a credencial: a rota,
 -- o orcamento e o rate limit funcionaram; o que falhou foi a chave do provedor.
 SQL
 

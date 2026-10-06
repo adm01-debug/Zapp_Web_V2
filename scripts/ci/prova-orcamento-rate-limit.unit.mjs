@@ -200,6 +200,39 @@ describe('prova-orcamento-rate-limit: veredito medido (R2-INF-012)', () => {
     }
   });
 
+  it('vira inconclusivo quando ai_usage_logs responde HTTP 200 com corpo que não é array', async () => {
+    const s = await subirServidor([
+      { prefixo: '/auth/v1/token', corpo: { access_token: 'jwt-de-teste' } },
+      { prefixo: ROTA_FUNCAO, corpo: CATEGORIA },
+      { prefixo: '/rest/v1/ai_usage_logs', corpo: { message: 'resposta inesperada' } },
+    ]);
+    try {
+      const r = await rodarProva(s.url);
+      assert.notEqual(r.code, 0, `corpo não-array não pode terminar com exit 0${CONTEXTO(r)}`);
+      assert.match(r.stdout, /FIM_PROVA=inconclusivo/, CONTEXTO(r));
+      assert.doesNotMatch(r.stdout, /FIM_PROVA=aprovado/);
+    } finally {
+      await s.fechar();
+    }
+  });
+
+  it('preserva os marcadores de status no roteiro SQL sem substituição de comando', async () => {
+    const s = await subirServidor([
+      { prefixo: '/auth/v1/token', corpo: { access_token: 'jwt-de-teste' } },
+      { prefixo: ROTA_FUNCAO, corpo: CATEGORIA },
+      { prefixo: '/rest/v1/ai_usage_logs', corpo: linhasDeConsumo(3) },
+    ]);
+    try {
+      const r = await rodarProva(s.url);
+      assert.equal(r.code, 0, CONTEXTO(r));
+      assert.match(r.stdout, /'status=success'/, CONTEXTO(r));
+      assert.match(r.stdout, /'status=error'/, CONTEXTO(r));
+      assert.doesNotMatch(r.stderr, /command not found/, CONTEXTO(r));
+    } finally {
+      await s.fechar();
+    }
+  });
+
   it('429 é resultado válido (prova do limite) e não derruba o veredito', async () => {
     const s = await subirServidor([
       { prefixo: '/auth/v1/token', corpo: { access_token: 'jwt-de-teste' } },
