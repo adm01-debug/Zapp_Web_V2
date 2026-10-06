@@ -91,9 +91,15 @@ function focarQuickAdd(tentativas = 20): void {
 export function RealtimeInboxView() {
   const isMobile = useIsMobile();
   const inbox = useRealtimeInbox();
-  const inboxFilters = useInboxFilters({ conversations: inbox.cachedConversations, profileId: inbox.profile?.id });
-  const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const conversationActions = useConversationActions();
+  // `snoozedIds` entra no filtro para a lista ativa suspender a conversa adiada e
+  // retomá-la no vencimento do prazo (R2-INB-029).
+  const inboxFilters = useInboxFilters({
+    conversations: inbox.cachedConversations,
+    profileId: inbox.profile?.id,
+    snoozedIds: conversationActions.snoozedIds,
+  });
+  const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const [talkMeOpen, setTalkMeOpen] = useState(false);
   const talkMeEnabled = useFeatureFlag('inbox.talk-me', false);
   const talkMe = useTalkMeQueue(talkMeOpen, talkMeEnabled);
