@@ -326,6 +326,43 @@ describe('useSipConnection', () => {
     expect(result.current.sipStatus).toBe('connecting');
   });
 
+  it('start() rejeitado de tentativa cancelada não apaga os refs do connect() novo', async () => {
+    const start = deferred();
+    startImpl = () => start.promise;
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    // Tentativa 1 fica pendurada no start() e é cancelada pelo disconnect().
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    expect(mockUaInstances.length).toBe(1);
+    await act(async () => { await result.current.disconnect(); });
+
+    // O connect() novo passa pela guarda e publica seus refs normalmente.
+    startImpl = () => Promise.resolve();
+    await act(async () => { await result.current.connect(config); });
+    expect(result.current.uaRef.current).toBe(mockUaInstances[1]);
+
+    // O start() da tentativa 1 rejeita só agora: o catch dela não pode apagar
+    // os refs da tentativa nova nem derrubar o estado para "unavailable".
+    await act(async () => { start.reject(new Error('start tardio falhou')); await pending; });
+
+    expect(result.current.uaRef.current).toBe(mockUaInstances[1]);
+    expect(result.current.sipStatus).not.toBe('unavailable');
+  });
+
+  it('erro numa tentativa VÁLIDA continua virando "unavailable" (a guarda não engole o erro)', async () => {
+    startImpl = () => Promise.reject(new Error('transporte caiu'));
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    await act(async () => { await result.current.connect(config); });
+
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('unavailable');
+    expect(toast.error).toHaveBeenCalledWith('Erro ao conectar VoIP: transporte caiu');
+  });
+
   // === T20: eleição de aba — só a líder registra ===
 
   it('T20: aba SEGUIDORA não registra — nenhum UserAgent nasce e o motivo fica "outra aba"', async () => {
