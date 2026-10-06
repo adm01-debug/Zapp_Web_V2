@@ -305,6 +305,45 @@ OLD_ID="$(psql_sql "SELECT id FROM public.agent_invitations WHERE code = '$CODE_
 expect_value_as 'list_agent_invites marca o convite vencido como expired' '1' "$ADMIN" \
   "SELECT count(*) FROM public.list_agent_invites(50) WHERE id = '$OLD_ID' AND status = 'expired'"
 
+# --- e-mail com convite vencido volta a ser convidavel (o defeito da recusa) ---
+expect_value_as 'convite vencido libera o e-mail para um novo convite' 'true' "$ADMIN" \
+  "SELECT public.create_agent_invite('outro@empresa.com', 'Outro', 'supervisor') ->> 'ok'"
+expect_value 'linha vencida sai de pending para estado terminal revoked' 'revoked' \
+  "SELECT status FROM public.agent_invitations WHERE code = '$CODE_OLD'"
+expect_value_as 'codigo do convite vencido continua recusado' 'invalid_or_expired_code' "$OTHER" \
+  "SELECT public.accept_agent_invite('$CODE_OLD') ->> 'error'"
+expect_value 'codigo vencido nao atribui papel nem depois do novo convite' '0' \
+  "SELECT count(*) FROM public.user_roles WHERE user_id = '$OTHER_UUID' AND role = 'supervisor'"
+expect_value_as 'convite pendente AINDA VALIDO nao e substituido' 'already_pending' "$ADMIN" \
+  "SELECT public.create_agent_invite('outro@empresa.com', 'Outro', 'supervisor') ->> 'error'"
+CODE_NEW="$(psql_sql "SELECT code FROM public.agent_invitations WHERE email = 'outro@empresa.com' AND status = 'pending'")"
+[[ -n "$CODE_NEW" && "$CODE_NEW" != "$CODE_OLD" ]] || fail "novo convite pendente nao encontrado para outro@empresa.com"
+expect_value_as 'convite novo e aceito e atribui o papel DO CONVITE' 'supervisor' "$OTHER" \
+  "SELECT public.accept_agent_invite('$CODE_NEW') ->> 'role'"
+expect_value 'aceite do convite novo provisiona supervisor em user_roles' '1' \
+  "SELECT count(*) FROM public.user_roles WHERE user_id = '$OTHER_UUID' AND role = 'supervisor'"
+
+# --- duas chamadas concorrentes sobre e-mail vencido: no maximo um pendente sobrevive ---
+psql_sql "INSERT INTO public.agent_invitations (email, name, role, code, expires_at, created_by, status, created_at)
+          VALUES ('concorre@empresa.com', 'C', 'agent', 'CONCORREOLD1', now() - interval '1 hour',
+                  '91111111-1111-1111-1111-111111111111', 'pending', now() - interval '2 days')" >/dev/null
+race_sql="SELECT coalesce(r ->> 'error', 'criou') FROM (SELECT public.create_agent_invite('concorre@empresa.com', 'C', 'agent') AS r) s"
+set +e
+as_user "$ADMIN" "$race_sql" > "$tmp_dir/race1.out" 2>&1 &
+race1_pid=$!
+as_user "$ADMIN" "$race_sql" > "$tmp_dir/race2.out" 2>&1 &
+race2_pid=$!
+race1_st=0; race2_st=0
+wait "$race1_pid" || race1_st=$?
+wait "$race2_pid" || race2_st=$?
+set -e
+(( race1_st == 0 && race2_st == 0 )) || { cat "$tmp_dir/race1.out" "$tmp_dir/race2.out" >&2; fail 'chamada concorrente estourou excecao em vez de devolver jsonb'; }
+race_out="$( { tail -n1 "$tmp_dir/race1.out"; tail -n1 "$tmp_dir/race2.out"; } | sort | paste -sd'|' -)"
+[[ "$race_out" == 'already_pending|criou' ]] || fail "concorrencia em e-mail vencido: esperado 'already_pending|criou', obtido '$race_out'"
+printf '[PASS] %s\n' 'duas chamadas concorrentes sobre e-mail vencido: uma cria, a outra devolve already_pending'
+expect_value 'concorrencia deixa exatamente um pendente para o e-mail' '1' \
+  "SELECT count(*) FROM public.agent_invitations WHERE email = 'concorre@empresa.com' AND status = 'pending'"
+
 # --- leitura do estado: admin/supervisor sim, o resto nao ---
 expect_value_as 'admin ve os convites com estado' 't' "$ADMIN" \
   "SELECT count(*) > 0 FROM public.list_agent_invites(50) WHERE status IN ('pending', 'used', 'expired')"
