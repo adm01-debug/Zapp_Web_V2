@@ -257,6 +257,36 @@ describe('OmnichannelInbox', () => {
       expect(await screen.findByText('Zeca Fora da Amostra')).toBeInTheDocument();
       expect(await screen.findByText('Vim pela busca')).toBeInTheDocument();
     });
+
+    it('não afirma que o contato sem mensagem na página limitada não tem histórico', async () => {
+      h.state.contactsResult = {
+        data: [
+          contact({ id: 'c-heavy', name: 'Contato muito ativo' }),
+          contact({ id: 'c-starved', name: 'Contato com histórico' }),
+        ],
+        error: null,
+      };
+      h.state.messagesResult = {
+        data: Array.from({ length: 500 }, (_, index) => ({
+          id: `m-heavy-${index}`,
+          contact_id: 'c-heavy',
+          content: `Mensagem ${index}`,
+          sender: 'contact',
+          is_read: false,
+          created_at: `2026-10-03T08:${String(index % 60).padStart(2, '0')}:00.000Z`,
+        })),
+        error: null,
+      };
+
+      render(<OmnichannelInbox />);
+      await screen.findByText('Maria Silva');
+
+      await typeSearch('Contato');
+
+      const starvedRow = await screen.findByRole('button', { name: /Abrir conversa de Contato com histórico/ });
+      expect(within(starvedRow).queryByText(/Sem mensagens ainda/)).not.toBeInTheDocument();
+      expect(within(starvedRow).getByText(/Histórico não carregado/)).toBeInTheDocument();
+    });
   });
 
   // ===== RENDERING =====

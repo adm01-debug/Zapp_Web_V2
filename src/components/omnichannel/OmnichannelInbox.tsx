@@ -61,10 +61,15 @@ function toChannelType(value: string | null | undefined): ChannelType {
  * cada conversa com a última mensagem e as não lidas — a amostra carregada na tela não
  * é o limite da busca.
  */
-async function searchConversations(term: string): Promise<ConversationWithMessages[]> {
+async function searchConversations(term: string): Promise<{
+  conversations: ConversationWithMessages[];
+  messagesTruncated: boolean;
+}> {
   // `,` `(` `)` `%` `\` quebram a sintaxe do filtro `or=` do PostgREST.
   const sanitized = term.replace(/[%,()\\]/g, ' ').trim();
-  if (sanitized.length < SEARCH_MIN_LENGTH) return [];
+  if (sanitized.length < SEARCH_MIN_LENGTH) {
+    return { conversations: [], messagesTruncated: false };
+  }
 
   const { data: contacts, error } = await supabase
     .from('contacts')
@@ -77,7 +82,9 @@ async function searchConversations(term: string): Promise<ConversationWithMessag
   if (error) throw error;
 
   const contactRows = (contacts ?? []) as ConversationContact[];
-  if (contactRows.length === 0) return [];
+  if (contactRows.length === 0) {
+    return { conversations: [], messagesTruncated: false };
+  }
 
   const { data: messages, error: messagesError } = await supabase
     .from('messages')
@@ -88,10 +95,11 @@ async function searchConversations(term: string): Promise<ConversationWithMessag
 
   if (messagesError) throw messagesError;
 
-  return buildConversations(
-    contactRows,
-    ((messages ?? []) as RealtimeMessage[]).map(normalizeMessage),
-  );
+  const messageRows = (messages ?? []) as RealtimeMessage[];
+  return {
+    conversations: buildConversations(contactRows, messageRows.map(normalizeMessage)),
+    messagesTruncated: messageRows.length >= SEARCH_MESSAGES_LIMIT,
+  };
 }
 
 export function OmnichannelInbox() {
@@ -102,6 +110,7 @@ export function OmnichannelInbox() {
   const [searchResults, setSearchResults] = useState<{
     term: string;
     conversations: ConversationWithMessages[];
+    messagesTruncated: boolean;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeChannel, setActiveChannel] = useState<string>('all');
@@ -159,10 +168,10 @@ export function OmnichannelInbox() {
       void (async () => {
         try {
           const results = await searchConversations(term);
-          if (!cancelled) setSearchResults({ term, conversations: results });
+          if (!cancelled) setSearchResults({ term, ...results });
         } catch (err) {
           if (!cancelled) {
-            setSearchResults({ term, conversations: [] });
+            setSearchResults({ term, conversations: [], messagesTruncated: false });
             toast.error('Erro ao buscar conversas');
           }
         }
@@ -181,6 +190,7 @@ export function OmnichannelInbox() {
       : null;
   const searching = activeSearchTerm.length > 0 && searchProjection === null;
   const hasServerSearch = searchProjection !== null;
+  const searchMessagesTruncated = hasServerSearch && searchResults?.messagesTruncated === true;
   const displayedConversations = (searchProjection ?? conversations).filter(
     (conversation) => activeChannel === 'all' || toChannelType(conversation.contact.channel_type) === activeChannel,
   );
@@ -346,7 +356,11 @@ export function OmnichannelInbox() {
                                 </span>
                               </div>
                               <p className="text-xs text-muted-foreground truncate">
-                                {lastMessage ? lastMessage.content : `Sem mensagens ainda — ${rowContact.phone}`}
+                                {lastMessage
+                                  ? lastMessage.content
+                                  : searchMessagesTruncated
+                                    ? `Histórico não carregado — ${rowContact.phone}`
+                                    : `Sem mensagens ainda — ${rowContact.phone}`}
                               </p>
                             </div>
                             {showStatus && (
