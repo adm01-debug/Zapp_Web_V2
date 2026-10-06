@@ -216,10 +216,54 @@ export async function syncMessageIds(supabase: SupabaseClient, accountId: string
   return { synced: results.length, failed: failed.length, failures: failed, messages: results };
 }
 
+const GMAIL_MESSAGES_MAX_PAGES = 100;
+
 export async function syncMessages(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = "", maxResults = 50) {
-  const params = new URLSearchParams({ maxResults: String(maxResults) });
-  if (query) params.set("q", query);
-  const listData = await gmailFetch<GmailMessageList>(accessToken, `/messages?${params.toString()}`);
-  const result = await syncMessageIds(supabase, accountId, accessToken, log, (listData.messages || []).map(message => message.id));
-  return { ...result, nextPageToken: listData.nextPageToken };
+  const totals = {
+    synced: 0, failed: 0,
+    failures: [] as Array<{ id: string; error: string }>,
+    messages: [] as Array<{ id: string; threadId: string; subject: string }>,
+  };
+  const seenPageTokens = new Set<string>();
+  let pageToken: string | undefined;
+  let pages = 0;
+  do {
+    const params = new URLSearchParams({ maxResults: String(maxResults) });
+    if (query) params.set("q", query);
+    if (pageToken) params.set("pageToken", pageToken);
+    const listData = await gmailFetch<GmailMessageList>(accessToken, `/messages?${params.toString()}`);
+    const result = await syncMessageIds(supabase, accountId, accessToken, log, (listData.messages || []).map(message => message.id));
+    totals.synced += result.synced;
+    totals.failed += result.failed;
+    totals.failures.push(...result.failures);
+    totals.messages.push(...result.messages);
+    pages += 1;
+    if (listData.nextPageToken) {
+      if (seenPageTokens.has(listData.nextPageToken)) throw new Error("Gmail messages sync received a repeated page token");
+      seenPageTokens.add(listData.nextPageToken);
+    }
+    pageToken = listData.nextPageToken;
+    if (pageToken && pages >= GMAIL_MESSAGES_MAX_PAGES) throw new Error("Gmail messages sync exceeded the safe pagination limit");
+  } while (pageToken);
+  return { ...totals, pages };
+}
+
+export async function runGmailFullSync(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = "in:inbox", maxResults = 50) {
+  const result = await syncMessages(supabase, accountId, accessToken, log, query, maxResults);
+  if (result.failed > 0) {
+    const { error: statusError } = await supabase.from("gmail_accounts").update({
+      sync_status: "error", last_sync_at: new Date().toISOString(),
+      last_error: `${result.failed} mensagens falharam na sincronização`,
+    }).eq("id", accountId);
+    if (statusError) throw new Error("Failed to record Gmail sync error state");
+    return result;
+  }
+  const profile = await gmailFetch<{ historyId?: string }>(accessToken, "/profile");
+  if (!profile.historyId) throw new Error("Gmail profile response missing historyId");
+  const { error } = await supabase.from("gmail_accounts").update({
+    sync_status: "synced", history_id: profile.historyId,
+    last_sync_at: new Date().toISOString(), last_error: null,
+  }).eq("id", accountId);
+  if (error) throw new Error("Failed to persist Gmail sync cursor");
+  return result;
 }

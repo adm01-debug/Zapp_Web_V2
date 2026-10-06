@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, syncMessages } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, runGmailFullSync, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const BATCH = 3; // max contas em paralelo para evitar timeout de 60s
 
@@ -34,21 +34,23 @@ Deno.serve(async (req) => {
         try {
           const accessToken = await ensureValidToken(supabase, account, log);
           if (!account.history_id) {
-            // conta sem history_id: full sync
+            // conta sem history_id: full sync (todas as páginas; cursor só no fim, sem falhas)
             await supabase.from("gmail_accounts").update({ sync_status: "syncing" }).eq("id", account.id);
-            const result = await syncMessages(supabase, account.id, accessToken, log, "in:inbox", 50);
-            const pr = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", { headers: { Authorization: `Bearer ${accessToken}` } });
-            const profile = await pr.json();
-            await supabase.from("gmail_accounts").update({ sync_status: "synced", history_id: profile.historyId, last_sync_at: new Date().toISOString(), last_error: null }).eq("id", account.id);
+            const result = await runGmailFullSync(supabase, account.id, accessToken, log, "in:inbox", 50);
+            if (result.failed > 0) throw new Error(`Full sync incompleto: ${result.failed} mensagens falharam`);
             return { id: account.id, synced: result.synced };
           } else {
-            // sync incremental
+            // sync incremental: aplica só os IDs do histórico; cursor avança só sem falhas
             const hr = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/history?startHistoryId=${account.history_id}&historyTypes=messageAdded`, { headers: { Authorization: `Bearer ${accessToken}` } });
             if (!hr.ok) throw new Error(`History API: ${await hr.text()}`);
             const hd = await hr.json();
             const ids = new Set<string>(); for (const r of hd.history || []) for (const a of r.messagesAdded || []) ids.add(a.message.id);
             let synced = 0;
-            if (ids.size > 0) { const r = await syncMessages(supabase, account.id, accessToken, log, "in:inbox", Math.min(ids.size + 5, 50)); synced = r.synced; }
+            if (ids.size > 0) {
+              const r = await syncMessageIds(supabase, account.id, accessToken, log, [...ids]);
+              if (r.failed > 0) throw new Error(`${r.failed} mensagens falharam no sync incremental; cursor preservado`);
+              synced = r.synced;
+            }
             await supabase.from("gmail_accounts").update({ history_id: hd.historyId || account.history_id, last_sync_at: new Date().toISOString(), last_error: null }).eq("id", account.id);
             return { id: account.id, synced };
           }

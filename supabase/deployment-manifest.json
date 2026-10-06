@@ -186,8 +186,8 @@
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
-      "bytes": 14116,
-      "sha256": "5ce618f441d37a08a665bfb17fb5d97b51c5fa9123025dd025a012c082a82b60"
+      "bytes": 16177,
+      "sha256": "b643252d4f96e2190ba928fdae7e954d1dbe9d3a41b5cb1c6088adb2c3e94e8d"
     },
     {
       "path": "supabase/functions/_shared/gmail-mime.ts",
@@ -541,8 +541,8 @@
     },
     {
       "path": "supabase/functions/gmail-cron-sync/index.ts",
-      "bytes": 4544,
-      "sha256": "7471d0a32274d655ddbbd92479acfd6daf220e5492fd856d85cbf9329c69211a"
+      "bytes": 4539,
+      "sha256": "ce72ad8c69d6b2b11afa1556eac4daaa2f8b758d122ee6f90ba1c6e70275bab0"
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
@@ -556,8 +556,8 @@
     },
     {
       "path": "supabase/functions/gmail-sync/index.ts",
-      "bytes": 11392,
-      "sha256": "85ee9e4b525e6bf15e101ac1455ff08ccdf4d623ad98d05c831e62079cb0f18b"
+      "bytes": 10880,
+      "sha256": "b22fbc652d1db9b93e3c6a4652b4efdd06489d6c3b2bdb9f79d68d97acf1f7d7"
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
@@ -1403,7 +1403,7 @@
       "name": "gmail-cron-sync",
       "entrypoint": "supabase/functions/gmail-cron-sync/index.ts",
       "verify_jwt": false,
-      "source_sha256": "45c50d234f8904ecfc8ff4afe85c1f547a9e0c82ca5ff40ea5a28e7bf6917960",
+      "source_sha256": "4af3891e13bbb7bc75071e904fde91b482040e532b1a7b16883c106cb359f999",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1440,7 +1440,7 @@
       "name": "gmail-sync",
       "entrypoint": "supabase/functions/gmail-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2256d7bd74f4650067143159fdfbad8294a37e35aaef01c08cdc8d4e94cfd5fc",
+      "source_sha256": "e040470676e35cc5920c8b2741788693f333ac1e413619dfb7ab37a0de34a331",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1856,5 +1856,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d5d0aeaa19fde7940ddd73fe82a371c8bc7320ef715485afc99f124cd143840c"
+  "manifest_sha256": "69375111389babfdf4774624dc5fdba4fb155b2c59f8cba63f9f786f3ba34bed"
 }
