@@ -186,8 +186,8 @@
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
-      "bytes": 14116,
-      "sha256": "5ce618f441d37a08a665bfb17fb5d97b51c5fa9123025dd025a012c082a82b60"
+      "bytes": 22224,
+      "sha256": "a3f771a78b0dff7d7b2713cc603c4089d5b0e00180c1c4b416507e91a8b1f797"
     },
     {
       "path": "supabase/functions/_shared/gmail-mime.ts",
@@ -541,8 +541,8 @@
     },
     {
       "path": "supabase/functions/gmail-cron-sync/index.ts",
-      "bytes": 4544,
-      "sha256": "7471d0a32274d655ddbbd92479acfd6daf220e5492fd856d85cbf9329c69211a"
+      "bytes": 6316,
+      "sha256": "def222233895058b1534214fd6e5602bd5fd253b0dd440af391d904b937baf7c"
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
@@ -556,13 +556,13 @@
     },
     {
       "path": "supabase/functions/gmail-sync/index.ts",
-      "bytes": 11392,
-      "sha256": "85ee9e4b525e6bf15e101ac1455ff08ccdf4d623ad98d05c831e62079cb0f18b"
+      "bytes": 9410,
+      "sha256": "7217a6c64a409b11af7adeec11fdd6c1940efa0be05da59b6da068a8ce5ce035"
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "bytes": 12546,
-      "sha256": "b9c61e1069663471bbd6e2dbf365b6f4786eaa6e5534fd631d12ee19d2282dbe"
+      "bytes": 5149,
+      "sha256": "1a40d9f868da62e908fec898520c5b270f15336a25b9611e1076f1fe9c8d1633"
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
@@ -1403,7 +1403,7 @@
       "name": "gmail-cron-sync",
       "entrypoint": "supabase/functions/gmail-cron-sync/index.ts",
       "verify_jwt": false,
-      "source_sha256": "45c50d234f8904ecfc8ff4afe85c1f547a9e0c82ca5ff40ea5a28e7bf6917960",
+      "source_sha256": "2383781c8a8f639ad8fb110fe095203706f105a35832d053dc503a79cbecefd8",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1440,7 +1440,7 @@
       "name": "gmail-sync",
       "entrypoint": "supabase/functions/gmail-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2256d7bd74f4650067143159fdfbad8294a37e35aaef01c08cdc8d4e94cfd5fc",
+      "source_sha256": "16563ce8c95287143ec7c9cdf946ce5960737f029901fa476ab052482f2d0868",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1452,8 +1452,9 @@
       "name": "gmail-webhook",
       "entrypoint": "supabase/functions/gmail-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "24ea41428e845eec77ec3daeaac1b289a081639c0d8d52d6d70ecbac75b72858",
+      "source_sha256": "16e3e26bcf5b0fee3b3c62fb59fc05012f58482d0abffb0e4c47de050bf6b2d4",
       "source_files": [
+        "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/gmail-webhook/index.ts"
@@ -1856,5 +1857,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d5d0aeaa19fde7940ddd73fe82a371c8bc7320ef715485afc99f124cd143840c"
+  "manifest_sha256": "ad16b0dfab7151686df1c0714169a0a03ec8030b9ccd79905b83e6d58381c0c5"
 }

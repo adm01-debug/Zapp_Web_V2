@@ -456,6 +456,44 @@ Deno.test("pipeline: history 404 (startHistoryId expirado) marca resync sem avan
   });
 });
 
+Deno.test("pipeline: history 404 atrasado não apaga cursor avançado por execução concorrente", async () => {
+  const { db, client } = makeFakeSupabase({ gmail_accounts: [{ ...ACCOUNT }] });
+  let historyCalls = 0;
+  let notifyFirstHistory!: () => void;
+  let releaseFirst404!: () => void;
+  const firstHistoryStarted = new Promise<void>((resolve) => { notifyFirstHistory = resolve; });
+  const first404Gate = new Promise<void>((resolve) => { releaseFirst404 = resolve; });
+  const fetcher = async (input: Request | URL | string): Promise<Response> => {
+    const url = new URL(String(input));
+    if (!url.pathname.endsWith("/history")) throw new Error(`fetch não mockado: ${url}`);
+    historyCalls += 1;
+    if (historyCalls === 1) {
+      notifyFirstHistory();
+      await first404Gate;
+      return new Response(JSON.stringify({ error: "notFound" }), { status: 404 });
+    }
+    return new Response(JSON.stringify({ history: [], historyId: "200" }), { status: 200 });
+  };
+
+  await withFetch(fetcher, async () => {
+    const delayed404 = runGmailIncrementalSync(client as never, { id: "acc-1", history_id: "100" }, "ya29.fake", log);
+    await firstHistoryStarted;
+
+    const winner = await runGmailIncrementalSync(client as never, { id: "acc-1", history_id: "100" }, "ya29.fake", log);
+    assertEquals(winner.status, "synced");
+    assertEquals(winner.cursor_advanced, true);
+    assertEquals(db.tables.gmail_accounts[0].history_id, "200");
+
+    releaseFirst404();
+    const stale = await delayed404;
+    assertEquals(stale.status, "cursor_conflict");
+    assertEquals(stale.cursor_advanced, false);
+    assertEquals(db.tables.gmail_accounts[0].history_id, "200");
+    assertEquals(db.tables.gmail_accounts[0].sync_status, "synced");
+    assertEquals(db.tables.gmail_accounts[0].last_error, null);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // gmail-sync real: action=sync-incremental usa o MESMO pipeline e preserva o
 // contrato HTTP (207 parcial / 200 sucesso) que o hook useGmail consome.

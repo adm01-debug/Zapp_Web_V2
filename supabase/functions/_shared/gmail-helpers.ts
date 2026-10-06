@@ -308,12 +308,16 @@ export async function runGmailIncrementalSync(
     });
     if (response.status === 404) {
       log.warn("Gmail history_id expirado; marcando conta para resync completo", { account: account.id });
-      const { error } = await supabase.from("gmail_accounts").update({
+      const { data: reset, error } = await supabase.from("gmail_accounts").update({
         sync_status: "pending",
         history_id: null,
         last_error: "History ID expired - full resync needed",
-      }).eq("id", account.id);
+      }).eq("id", account.id).eq("history_id", account.history_id).select("id");
       if (error) throw new Error("Failed to flag Gmail account for full resync");
+      if (!reset?.length) {
+        log.warn("Conflito de cursor do Gmail: outro processo já avançou o history_id", { account: account.id });
+        return { status: "cursor_conflict", ...base };
+      }
       return { status: "history_expired", ...base };
     }
     if (!response.ok) throw new Error(`Gmail API error (${response.status}): ${await response.text()}`);
