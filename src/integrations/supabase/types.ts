@@ -680,6 +680,7 @@ export type Database = {
         Row: {
           action: string
           created_at: string
+          dedupe_key: string | null
           details: Json | null
           entity_id: string | null
           entity_type: string | null
@@ -691,6 +692,7 @@ export type Database = {
         Insert: {
           action: string
           created_at?: string
+          dedupe_key?: string | null
           details?: Json | null
           entity_id?: string | null
           entity_type?: string | null
@@ -702,6 +704,7 @@ export type Database = {
         Update: {
           action?: string
           created_at?: string
+          dedupe_key?: string | null
           details?: Json | null
           entity_id?: string | null
           entity_type?: string | null
@@ -4188,6 +4191,33 @@ export type Database = {
           updated_at?: string
           user_id?: string
           watch_expiration?: string | null
+        }
+        Relationships: []
+      }
+      gmail_oauth_states: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          state: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          state: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          state?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -8367,6 +8397,42 @@ export type Database = {
         }
         Relationships: []
       }
+      talkx_storage_purge_queue: {
+        Row: {
+          attempts: number
+          bucket_id: string
+          enqueued_at: string
+          id: string
+          last_error: string | null
+          object_id: string | null
+          object_name: string
+          processed_at: string | null
+          reason: string
+        }
+        Insert: {
+          attempts?: number
+          bucket_id: string
+          enqueued_at?: string
+          id?: string
+          last_error?: string | null
+          object_id?: string | null
+          object_name: string
+          processed_at?: string | null
+          reason?: string
+        }
+        Update: {
+          attempts?: number
+          bucket_id?: string
+          enqueued_at?: string
+          id?: string
+          last_error?: string | null
+          object_id?: string | null
+          object_name?: string
+          processed_at?: string | null
+          reason?: string
+        }
+        Relationships: []
+      }
       talkx_template_variants: {
         Row: {
           content: string
@@ -9087,6 +9153,7 @@ export type Database = {
       }
       user_sessions: {
         Row: {
+          auth_session_id: string | null
           device_id: string | null
           ended_at: string | null
           expires_at: string
@@ -9099,6 +9166,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auth_session_id?: string | null
           device_id?: string | null
           ended_at?: string | null
           expires_at?: string
@@ -9111,6 +9179,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auth_session_id?: string | null
           device_id?: string | null
           ended_at?: string | null
           expires_at?: string
@@ -10795,6 +10864,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      consume_gmail_oauth_state: {
+        Args: { p_state: string; p_user_id: string }
+        Returns: boolean
+      }
       consume_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_seconds: number }
         Returns: {
@@ -11453,7 +11526,15 @@ export type Database = {
       }
       is_ip_blocked: { Args: { check_ip: string }; Returns: boolean }
       is_ip_whitelisted: { Args: { check_ip: string }; Returns: boolean }
+      is_last_team_conversation_owner: {
+        Args: { _conversation_id: string; _profile_id: string }
+        Returns: boolean
+      }
       is_privileged_contact_caller: { Args: never; Returns: boolean }
+      is_team_conversation_creator: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_team_conversation_member: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
@@ -11694,40 +11775,23 @@ export type Database = {
           locked_until: string
         }[]
       }
-      record_incoming_call_event:
-        | {
-            Args: {
-              p_contact_id: string
-              p_is_video: boolean
-              p_provider_event_id?: string
-              p_should_notify?: boolean
-              p_status: string
-              p_whatsapp_connection_id: string
-            }
-            Returns: {
-              call_id: string
-              duplicate: boolean
-              notification_created: boolean
-              notification_id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_contact_id: string
-              p_direction?: string
-              p_is_video: boolean
-              p_provider_event_id?: string
-              p_should_notify?: boolean
-              p_status: string
-              p_whatsapp_connection_id: string
-            }
-            Returns: {
-              call_id: string
-              duplicate: boolean
-              notification_created: boolean
-              notification_id: string
-            }[]
-          }
+      record_incoming_call_event: {
+        Args: {
+          p_contact_id: string
+          p_direction?: string
+          p_is_video: boolean
+          p_provider_event_id?: string
+          p_should_notify?: boolean
+          p_status: string
+          p_whatsapp_connection_id: string
+        }
+        Returns: {
+          call_id: string
+          duplicate: boolean
+          notification_created: boolean
+          notification_id: string
+        }[]
+      }
       record_multiplix_item_delivered: {
         Args: {
           p_connection_id: string
@@ -11899,6 +11963,21 @@ export type Database = {
         Returns: Json
       }
       resolve_contact_guard_actor: { Args: never; Returns: string }
+      resolve_network_policy: {
+        Args: {
+          p_country_code: string
+          p_default_max_requests: number
+          p_default_window_seconds: number
+          p_endpoint: string
+          p_ip: string
+        }
+        Returns: {
+          allowed: boolean
+          rate_limit_max_requests: number
+          rate_limit_window_seconds: number
+          reason: string
+        }[]
+      }
       resolve_talkx_outcome_unknown: {
         Args: {
           p_confirm_duplicate_risk?: boolean
@@ -11915,6 +11994,16 @@ export type Database = {
       retry_talkx_recipients: {
         Args: { p_campaign_id: string; p_recipient_ids: string[] }
         Returns: Json
+      }
+      revoke_auth_sessions: {
+        Args: {
+          p_actor_user_id?: string
+          p_preserve_session_id?: string
+          p_scope: string
+          p_target_session_id?: string
+          p_target_user_id?: string
+        }
+        Returns: number
       }
       save_talkx_campaign_draft: {
         Args: {
