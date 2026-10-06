@@ -7,9 +7,15 @@ const OLD_KEY = 'contact-details-accordion-state';
 describe('sidebarSections — migração do localStorage (etapa 44)', () => {
   beforeEach(() => localStorage.clear());
 
-  it('storage antigo só com seções que não existem mais → default (3 abertas)', () => {
+  it('storage antigo só com seções que não existem mais → default', () => {
+    localStorage.setItem(OLD_KEY, JSON.stringify(['info', 'timeline']));
+    expect(getStoredSidebarState()).toEqual(DEFAULT_OPEN_SECTIONS);
+  });
+
+  it('storage antigo com "tags" migra — a seção voltou ao painel (cartão #241)', () => {
     localStorage.setItem(OLD_KEY, JSON.stringify(['info', 'tags']));
-    expect(getStoredSidebarState()).toEqual(['professional', 'personal', 'singu']);
+    expect(getStoredSidebarState()).toEqual(['tags']);
+    expect(localStorage.getItem(NEW_KEY)).toBe(JSON.stringify(['tags']));
   });
 
   it('storage antigo com valor válido sobrevive e migra para a chave nova', () => {
