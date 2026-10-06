@@ -257,4 +257,57 @@ describe('useChatSearch', () => {
     act(() => result.current.navigateDown());
     expect(result.current.activeIndex).toBe(0);
   });
+
+  // Item 322 (R2-INB-027): o preset "Última interação" cortava a sessão no
+  // começo do dia (`startOfDay`), então toda mensagem do mesmo dia voltava ao
+  // resultado — inclusive as de uma sessão antiga, encerrada horas antes.
+  describe('preset Última interação', () => {
+    it('não reintroduz sessões antigas do mesmo dia', () => {
+      const messages = [
+        makeMockMessage({ id: 'old-1', content: 'bom dia', timestamp: new Date('2026-04-08T09:00:00') }),
+        makeMockMessage({ id: 'old-2', content: 'bom dia, tudo bem?', timestamp: new Date('2026-04-08T09:10:00') }),
+        // 5h50 de silêncio separam a sessão antiga da última interação
+        makeMockMessage({ id: 'last-1', content: 'segue o orçamento', timestamp: new Date('2026-04-08T15:00:00') }),
+        makeMockMessage({ id: 'last-2', content: 'qualquer dúvida me chame', timestamp: new Date('2026-04-08T15:30:00') }),
+      ];
+      const { result } = renderHook(() => useChatSearch({ ...defaultOpts, messages }));
+
+      act(() => result.current.setDatePreset('last_interaction'));
+
+      const ids = result.current.results.map((r) => r.id);
+      expect(ids).toEqual(['last-1', 'last-2']);
+      expect(result.current.filterCounts.all).toBe(2);
+    });
+
+    it('mantém a sessão separada por exatamente 4h e corta o que vem antes dela', () => {
+      const messages = [
+        makeMockMessage({ id: 'old-1', content: 'madrugada', timestamp: new Date('2026-04-08T05:59:59.999') }),
+        // 4h + 1ms de silêncio até a sessão recente (o limite é > 4h)
+        makeMockMessage({ id: 'last-1', content: 'abriu a conversa', timestamp: new Date('2026-04-08T10:00:00.000') }),
+        // gap de exatamente 4h: continua sendo a mesma sessão
+        makeMockMessage({ id: 'last-2', content: 'segue o orçamento', timestamp: new Date('2026-04-08T14:00:00.000') }),
+      ];
+      const { result } = renderHook(() => useChatSearch({ ...defaultOpts, messages }));
+
+      act(() => result.current.setDatePreset('last_interaction'));
+
+      const ids = result.current.results.map((r) => r.id);
+      expect(ids).toEqual(['last-1', 'last-2']);
+    });
+
+    it('mantém a sessão inteira quando ela cruza a meia-noite', () => {
+      const messages = [
+        makeMockMessage({ id: 'old-1', content: 'fim de tarde', timestamp: new Date('2026-04-07T18:00:00') }),
+        // 5h de silêncio, depois uma sessão que atravessa 00:00
+        makeMockMessage({ id: 'last-1', content: 'boa noite', timestamp: new Date('2026-04-07T23:00:00') }),
+        makeMockMessage({ id: 'last-2', content: 'resolvido, obrigado', timestamp: new Date('2026-04-08T00:30:00') }),
+      ];
+      const { result } = renderHook(() => useChatSearch({ ...defaultOpts, messages }));
+
+      act(() => result.current.setDatePreset('last_interaction'));
+
+      const ids = result.current.results.map((r) => r.id);
+      expect(ids).toEqual(['last-1', 'last-2']);
+    });
+  });
 });

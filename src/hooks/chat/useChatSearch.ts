@@ -76,7 +76,9 @@ export function useChatSearch({
       return { from: customDateFrom, to: customDateTo };
     }
     if (datePreset === 'last_interaction') {
-      // Find the start of the last interaction session (gap > 4h between messages)
+      // Sessão da última interação: mensagens encadeadas com silêncio de até 4h.
+      // O corte é o INSTANTE da mensagem que abre a sessão — cortar em
+      // `startOfDay` reintroduzia as sessões anteriores do mesmo dia.
       const sorted = [...messages].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       if (sorted.length === 0) return { from: null, to: null };
       const GAP_MS = 4 * 60 * 60 * 1000; // 4 hours
@@ -90,7 +92,7 @@ export function useChatSearch({
         }
         cutoff = new Date(sorted[i].timestamp);
       }
-      return { from: startOfDay(cutoff), to: null };
+      return { from: cutoff, to: null };
     }
     return getPresetRange(datePreset);
   }, [datePreset, customDateFrom, customDateTo, messages]);
