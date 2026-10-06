@@ -1,37 +1,23 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, requireEnv, checkRateLimit, getClientIP, Logger } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP, Logger } from "../_shared/validation.ts";
 
 /**
- * T73 — entrega a gravacao da chamada SEM expor a URL.
+ * T73 / item 62 — entrega a gravacao da chamada ao dono, com o JWT dele.
  *
- * O front nunca recebe `recording_url`: ele pede o audio aqui, com o proprio JWT, e a
- * funcao confere o dono pela RLS antes de buscar. Isso resolve dois problemas de uma vez:
- * (1) a URL do provedor costuma ser assinada e temporaria, e (2) se ela vazasse no HTML,
- * qualquer um com o link ouviria a ligacao de outra pessoa.
+ * CONTRATO: a resposta e JSON `{ "url": "<url da gravacao>" }` (200). E o que o player consome:
+ * `useCallRecording` le `data.url` e `RecordingPlayer` monta `<audio src={url}>` e o link de
+ * download com essa URL. Corpo de audio cru (Blob) nao tem `.url` — era o defeito do item 62:
+ * a Edge respondia `new Response(upstream.body)` com Content-Type de audio, o player devolvia
+ * null e a gravacao disponivel nunca aparecia para ouvir.
  *
- * Aceite da etapa: com JWT e dono -> 200; com JWT de outro agente -> 403 (a RLS nao devolve
- * a linha); sem JWT -> 401.
+ * O QUE PROTEGE A GRAVACAO: quem decide o que existe e a RLS do proprio chamador (cliente com o
+ * JWT dele) — chamada de outro agente nao aparece e vira 403, sem JWT e 401. A URL do provedor
+ * so chega a quem ja podia ouvir a chamada, e so depois de a origem confirmar que o audio existe
+ * (502 se ela nao responder). A resposta sai com `Cache-Control: no-store`, entao intermediario
+ * nao guarda essa URL temporaria.
+ *
+ * Aceite: com JWT e dono -> 200 (JSON com `url`); com JWT de outro agente -> 403; sem JWT -> 401.
  */
-/**
- * Cabecalhos da resposta de audio. Extraido como funcao pura porque e onde mora o aceite
- * "nao expor URL": o cliente so ve bytes e a faixa pedida, nunca de onde eles vieram.
- */
-export function cabecalhosDoAudio(
-  de: { tipo?: string | null; tamanho?: string | null; faixa?: string | null; aceita?: string | null },
-  cors: Record<string, string>,
-): Record<string, string> {
-  const cabecalhos: Record<string, string> = {
-    ...cors,
-    "Content-Type": de.tipo ?? "audio/mpeg",
-    "Accept-Ranges": de.aceita ?? "bytes",
-    "Cache-Control": "private, no-store",
-  };
-  if (de.tamanho) cabecalhos["Content-Length"] = de.tamanho;
-  if (de.faixa) cabecalhos["Content-Range"] = de.faixa;
-  return cabecalhos;
-}
-
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, range" };
 
 // ── Costura de injecao (item 62) ─────────────────────────────────────────────
 // O handler exportado recebe o que faz efeito (o cliente com o JWT do chamador e a busca
@@ -61,8 +47,8 @@ export interface ClienteDoChamador {
 export interface GetCallRecordingDeps {
   /** Cliente com o JWT do chamador: quem decide o que ele pode ler e a RLS. */
   clienteDoChamador(authHeader: string): ClienteDoChamador;
-  /** Busca a gravacao na origem, repassando o Range do cliente quando houver. */
-  buscarOrigem(url: string, range: string | null): Promise<Response>;
+  /** Confere na origem que a gravacao existe antes de entregar a URL ao player. */
+  buscarOrigem(url: string): Promise<Response>;
 }
 
 export const depsReais: GetCallRecordingDeps = {
@@ -71,7 +57,7 @@ export const depsReais: GetCallRecordingDeps = {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },
     }) as unknown as ClienteDoChamador,
-  buscarOrigem: (url, range) => fetch(url, { headers: range ? { Range: range } : {} }),
+  buscarOrigem: (url) => fetch(url),
 };
 
 export async function handleGetCallRecording(
@@ -123,23 +109,21 @@ export async function handleGetCallRecording(
       return errorResponse("Sem gravacao disponivel", 404, req);
     }
 
-    // Repassa o Range do cliente: o <audio> pede pedaco e o provedor responde 206.
-    const range = req.headers.get("Range");
-    const upstream = await deps.buscarOrigem(chamada.recording_url, range);
-
-    if (!upstream.ok && upstream.status !== 206) {
-      logger.error("upstream da gravacao falhou", { status: upstream.status });
+    // A origem precisa estar de pe agora: antes este mesmo ramo devolvia 502 quando o audio
+    // tinha sumido. O corpo do probe nao e consumido — quem baixa o audio e o <audio> do
+    // player, direto na URL (com o Range que ele quiser); aqui so se confirma que existe.
+    const origem = await deps.buscarOrigem(chamada.recording_url);
+    if (!origem.ok && origem.status !== 206) {
+      logger.error("upstream da gravacao falhou", { status: origem.status });
       return errorResponse("Gravacao indisponivel na origem", 502, req);
     }
+    try {
+      await origem.body?.cancel();
+    } catch {
+      // Descartar o corpo do probe nao decide a resposta — a URL ja foi validada acima.
+    }
 
-    const headers = cabecalhosDoAudio({
-      tipo: upstream.headers.get("Content-Type"),
-      tamanho: upstream.headers.get("Content-Length"),
-      faixa: upstream.headers.get("Content-Range"),
-      aceita: upstream.headers.get("Accept-Ranges"),
-    }, cors);
-
-    return new Response(upstream.body, { status: upstream.status, headers });
+    return jsonResponse({ url: chamada.recording_url }, 200, req);
   } catch (erro) {
     logger.error("falha inesperada", { erro: String(erro) });
     return errorResponse("Erro inesperado", 500, req);
