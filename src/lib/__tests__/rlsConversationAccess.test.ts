@@ -5,6 +5,8 @@ import {
   policiesOn,
   predicadoEfetivo,
   resolveEffectivePolicies,
+  resolvePolicyState,
+  type EffectivePolicy,
 } from './helpers/rlsSchema';
 
 // ─── RLS REAL: contacts e messages ───
@@ -37,6 +39,29 @@ const ADMIN_OU_SUPERVISOR = /is_admin_or_supervisor\(\s*auth\.uid\(\)\s*\)/;
 const AGENTES_VISIVEIS = /get_visible_agent_ids\(\s*auth\.uid\(\)\s*\)/;
 const MEMBRO_DE_FILA = /queue_members[\s\S]*?is_active\s*=\s*true/;
 const PERFIL_DO_CHAMADOR = /profiles[\s\S]*?user_id\s*=\s*auth\.uid\(\)/;
+
+/**
+ * Contrato de DELETE de `messages`: hoje nao existe policy cobrindo o comando
+ * (a exclusao passa pelo fluxo proprio, sob o predicado de visibilidade). Se
+ * uma policy passar a cobrir DELETE, ela so e aceita carregando exatamente o
+ * predicado contratado — e `FOR ALL` CONTA como cobertura (semantica do
+ * Postgres), logo nao escapa desta checagem. Devolve o nome de cada policy que
+ * cobre DELETE sem atender o contrato.
+ */
+function deleteSemContrato(policies: EffectivePolicy[]): string[] {
+  return policies
+    .filter((p) => cobreComando(p, 'DELETE'))
+    .filter((p) => {
+      const predicado = predicadoEfetivo(p, 'DELETE');
+      return !(
+        predicado !== 'true' &&
+        ADMIN_OU_SUPERVISOR.test(predicado) &&
+        AGENTES_VISIVEIS.test(predicado) &&
+        MEMBRO_DE_FILA.test(predicado)
+      );
+    })
+    .map((p) => p.name);
+}
 
 describe('RLS real: contacts (schema resolvido das migrations)', () => {
   const policies = policiesOn(ESTADO, 'contacts');
@@ -132,5 +157,49 @@ describe('RLS real: messages (schema resolvido das migrations)', () => {
       expect(using, p.name).toMatch(MEMBRO_DE_FILA);
       expect(using, p.name).toMatch(ADMIN_OU_SUPERVISOR);
     }
+  });
+
+  it('DELETE exige o predicado contratado — ausencia total de cobertura ou FOR ALL com o mesmo predicado', () => {
+    // O contrato vigente nao tem policy de DELETE em messages. Qualquer policy
+    // que cubra DELETE — inclusive `FOR ALL` — tem de carregar o predicado
+    // contratado de visibilidade; `true` nunca passa, nem como WITH CHECK
+    // restritivo, porque DELETE e filtrado pelo USING.
+    for (const p of policies.filter((p) => cobreComando(p, 'DELETE'))) {
+      expect(predicadoEfetivo(p, 'DELETE'), `${p.name} abriu DELETE`).not.toBe('true');
+    }
+    expect(deleteSemContrato(policies)).toEqual([]);
+  });
+});
+
+describe('RLS real: mensagens nao dao DELETE por atalho (regressivo FOR ALL)', () => {
+  const PREDICADO_CONTRATADO =
+    'is_admin_or_supervisor(auth.uid()) OR contact_id IN (SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid())) OR c.queue_id IN (SELECT queue_id FROM public.queue_members WHERE is_active = true))';
+
+  const estadoDe = (sql: string) =>
+    policiesOn(resolvePolicyState([{ name: '0001_policy.sql', sql }]), 'messages');
+
+  it('FOR ALL USING (true) cobre DELETE e nao contorna a exigencia', () => {
+    const policies = estadoDe(
+      `CREATE POLICY "tudo em messages" ON public.messages FOR ALL TO authenticated
+       USING (true) WITH CHECK (is_admin_or_supervisor(auth.uid()));`,
+    );
+    // A validacao anterior (so `command === 'DELETE'`) nao enxergava esta
+    // policy: e exatamente a brecha da recusa.
+    expect(policies.filter((p) => p.command === 'DELETE')).toEqual([]);
+    // A validacao corrigida enxerga: FOR ALL cobre DELETE e o predicado
+    // efetivo e 'true' (o WITH CHECK restritivo nao protege DELETE).
+    expect(cobreComando(policies[0], 'DELETE')).toBe(true);
+    expect(predicadoEfetivo(policies[0], 'DELETE')).toBe('true');
+    expect(deleteSemContrato(policies)).toEqual(['tudo em messages']);
+  });
+
+  it('FOR ALL com o predicado contratado passa — a exigencia e o predicado, nao a forma', () => {
+    const policies = estadoDe(
+      `CREATE POLICY "contratado" ON public.messages FOR ALL TO authenticated
+       USING (${PREDICADO_CONTRATADO}) WITH CHECK (${PREDICADO_CONTRATADO});`,
+    );
+    expect(cobreComando(policies[0], 'DELETE')).toBe(true);
+    expect(predicadoEfetivo(policies[0], 'DELETE')).not.toBe('true');
+    expect(deleteSemContrato(policies)).toEqual([]);
   });
 });
