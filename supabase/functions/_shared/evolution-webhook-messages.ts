@@ -1,6 +1,7 @@
 // Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
 import { evoFetch, extractBase64Media } from './evolution-send.ts';
 import { attributeMultiplixReply, attributeTalkXReply } from "./talkx-reply.ts";
+import { maybeSendAwayMessage } from './away-message.ts';
 
 import {
   isRecord, normalizePhone, resolveEventJid,
@@ -584,6 +585,23 @@ export async function handleIncomingMessage(
         console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
       }
     }
+  }
+
+  // R2-API-045 (#219): consumidor da mensagem automática de ausência. Antes
+  // desta ligação `away_messages`/`business_hours` eram apenas persistidas e
+  // nenhuma Edge Function as lia — a promessa do BusinessHoursDialog nunca
+  // saía. Só a mensagem RECEBIDA já ingerida dispara (`inserted`, não
+  // `duplicate` do replay), nunca a nossa; opt-out tem precedência (quem pediu
+  // para sair não recebe aviso de ausência). `maybeSendAwayMessage` não lança:
+  // falha de leitura, de token ou de provedor vira registro e a ingestão segue.
+  if (tx.outcome === 'inserted' && !key.fromMe && tx.contact_id && phone && !optOutKeyword) {
+    await maybeSendAwayMessage(supabase, {
+      connectionId: connection.id,
+      instance,
+      phone,
+      contactId: tx.contact_id,
+      contactName: tx.contact_name,
+    });
   }
 
   // E88/X028: atribuir resposta TalkX, exceto opt-out. O handler AGUARDA a RPC
