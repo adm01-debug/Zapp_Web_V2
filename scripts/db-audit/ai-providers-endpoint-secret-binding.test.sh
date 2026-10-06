@@ -213,6 +213,24 @@ expect_error_as 'B.2 IP privado literal (10.0.0.1) recusado' \
 expect_error_as 'B.3 IP do metadata em https recusado (literal completo)' \
   'ai_providers_api_endpoint_safe' \
   "INSERT INTO public.ai_providers (name, provider_type, api_endpoint, use_for) VALUES ('ssrf-meta2', 'custom_webhook', 'https://169.254.169.254/latest/meta-data/', ARRAY['copilot']);"
+expect_error_as 'B.3a IPv4 abreviado WHATWG (127.1) recusado' \
+  'ai_providers_api_endpoint_safe' \
+  "INSERT INTO public.ai_providers (name, provider_type, api_endpoint, use_for) VALUES ('ssrf-loopback-short', 'custom_webhook', 'https://127.1/v1', ARRAY['copilot']);"
+expect_error_as 'B.3b IPv4 abreviado WHATWG (169.254.43518) recusado' \
+  'ai_providers_api_endpoint_safe' \
+  "INSERT INTO public.ai_providers (name, provider_type, api_endpoint, use_for) VALUES ('ssrf-meta-short', 'custom_webhook', 'https://169.254.43518/', ARRAY['copilot']);"
+expect_error_as 'B.3c IPv4 hexadecimal WHATWG (0x7f.0.0.1) recusado' \
+  'ai_providers_api_endpoint_safe' \
+  "INSERT INTO public.ai_providers (name, provider_type, api_endpoint, use_for) VALUES ('ssrf-loopback-hex', 'custom_webhook', 'https://0x7f.0.0.1/', ARRAY['copilot']);"
+expect_error_as 'B.3d IPv4 com ponto final WHATWG (10.0.0.1.) recusado' \
+  'ai_providers_api_endpoint_safe' \
+  "INSERT INTO public.ai_providers (name, provider_type, api_endpoint, use_for) VALUES ('ssrf-priv-trailing-dot', 'custom_webhook', 'https://10.0.0.1./v1', ARRAY['copilot']);"
+expect_error_as 'B.3e localhost com ponto final recusado' \
+  'ai_providers_api_endpoint_safe' \
+  "INSERT INTO public.ai_providers (name, provider_type, api_endpoint, use_for) VALUES ('localhost-trailing-dot', 'custom_webhook', 'https://localhost./v1', ARRAY['copilot']);"
+expect_error_as 'B.3f IPv4 abreviado WHATWG (10.1) recusado' \
+  'ai_providers_api_endpoint_safe' \
+  "INSERT INTO public.ai_providers (name, provider_type, api_endpoint, use_for) VALUES ('ssrf-priv-short', 'custom_webhook', 'https://10.1/v1', ARRAY['copilot']);"
 expect_error_as 'B.4 IPv6 literal ([::1]) recusado' \
   'ai_providers_api_endpoint_safe' \
   "INSERT INTO public.ai_providers (name, provider_type, api_endpoint, use_for) VALUES ('ssrf-v6', 'custom_webhook', 'https://[::1]/v1', ARRAY['copilot']);"

@@ -46,23 +46,35 @@ RETURNS boolean
 LANGUAGE sql
 IMMUTABLE
 AS $fn$
-  SELECT endpoint IS NULL OR (
-    lower(endpoint) !~ '^https://([^/?#]*\.)?(localhost|local|internal|lan|home|corp|intranet)([:/?#]|$)'
-    AND EXISTS (
-      SELECT 1
-      FROM (SELECT (regexp_match(lower(endpoint), '^https://([^/?#]+)'))[1] AS authority) AS e
-      WHERE e.authority IS NOT NULL
-        -- sem credencial embutida (userinfo: user:senha@host)
-        AND position('@' IN e.authority) = 0
-        -- sem literal de IPv4 (ex.: 10.0.0.1 ou 10.0.0.1:443)
-        AND e.authority !~ '^[0-9]{1,3}(\.[0-9]{1,3}){3}(:[0-9]+)?$'
-        -- sem literal de IPv6 (na URL vem sempre entre colchetes)
-        AND e.authority !~ '^\['
-        -- host tem de ser nome com domínio público (não rótulo único)
-        AND position('.' IN e.authority) > 0
-        -- porta explícita: só a padrão do https (443); qualquer outra é recusada
-        AND (position(':' IN e.authority) = 0 OR e.authority ~ ':443$')
-    )
+  SELECT endpoint IS NULL OR EXISTS (
+    SELECT 1
+    FROM (SELECT (regexp_match(lower(endpoint), '^https://([^/?#]*)'))[1] AS authority) AS e
+    CROSS JOIN LATERAL (
+      SELECT regexp_replace(e.authority, ':[0-9]+$', '') AS host_com_ponto
+    ) AS hp
+    CROSS JOIN LATERAL (
+      SELECT regexp_replace(hp.host_com_ponto, '\.$', '') AS host
+    ) AS h
+    CROSS JOIN LATERAL (
+      SELECT regexp_replace(h.host, '^.*\.', '') AS ultimo_rotulo
+    ) AS u
+    WHERE e.authority IS NOT NULL
+      -- authority vazio ou com credencial embutida (userinfo: user:senha@host)
+      AND e.authority <> ''
+      AND position('@' IN e.authority) = 0
+      -- sem literal de IPv6 (na URL vem sempre entre colchetes) nem ':' sobrando no host
+      AND e.authority !~ '^\['
+      AND h.host !~ ':'
+      -- porta explícita: só a padrão do https (443); qualquer outra é recusada
+      AND (position(':' IN e.authority) = 0 OR e.authority ~ ':443$')
+      -- normaliza um ponto final WHATWG antes de testar localhost/internal e IP abreviado
+      AND h.host <> ''
+      AND h.host NOT LIKE '%..%'
+      AND h.host !~ '(^|\.)(localhost|local|internal|lan|home|corp|intranet)$'
+      -- host tem de ser nome com domínio público (não rótulo único)
+      AND position('.' IN h.host) > 0
+      -- WHATWG: host cujo último rótulo termina em número é interpretável como IPv4
+      AND u.ultimo_rotulo !~ '^(0x[0-9a-f]*|[0-9]+)$'
   );
 $fn$;
 
