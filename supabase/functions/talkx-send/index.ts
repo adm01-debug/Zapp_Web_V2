@@ -326,7 +326,11 @@ export async function handleTalkxSend(
         .from("talkx_settings").select("key, value")
         .in("key", ["business_hours", "daily_limit_per_connection"]);
       if (!settingsErr) {
-        for (const row of (settingsRows ?? []) as { key: string; value: string }[]) {
+        // #121A: `talkx_settings.value` é JSONB — `business_hours` chega como
+        // OBJETO `{start,end,tz,days}` (string JSON só por compatibilidade).
+        // Valor presente e inválido entra marcado e FECHA a janela, em vez de
+        // cair silenciosamente no default.
+        for (const row of (settingsRows ?? []) as { key: string; value: unknown }[]) {
           if (row.key === "business_hours") {
             const parsed = parseBusinessHours(row.value);
             if (parsed) businessHours = parsed;
