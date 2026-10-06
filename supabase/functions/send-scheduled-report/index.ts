@@ -174,8 +174,19 @@ export async function handleScheduledReport(
 
     const emailHtml = buildReportEmail(reportData);
 
-    if (resendApiKey && report.recipients?.length > 0) {
-      for (const recipient of report.recipients) {
+    // R2-API-023 (P2): o ciclo só é confirmado quando TODO destinatário aceitou.
+    // Antes desta correção a resposta era sempre `success: true` e o agendamento
+    // avançava mesmo sem a chave do provedor ou com recusa HTTP — o relatório era
+    // dado como enviado sem entrega e a próxima execução era postergada.
+    const recipients: string[] = Array.isArray(report.recipients) ? report.recipients : [];
+    const delivered: string[] = [];
+    const failed: string[] = [];
+    const missingApiKey = recipients.length > 0 && !resendApiKey;
+
+    if (missingApiKey) {
+      log.error("Resend not configured: report not sent", { reportId, recipients: recipients.length });
+    } else {
+      for (const recipient of recipients) {
         const emailResponse = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
@@ -184,15 +195,64 @@ export async function handleScheduledReport(
             subject: `📊 ${reportData.title} - ${reportData.period}`, html: emailHtml,
           }),
         });
-        if (!emailResponse.ok) log.error(`Failed to send to ${recipient}`, { error: await emailResponse.text() });
+        if (emailResponse.ok) {
+          delivered.push(recipient);
+        } else {
+          failed.push(recipient);
+          log.error(`Failed to send to ${recipient}`, { error: await emailResponse.text() });
+        }
       }
     }
 
-    const nextSendAt = calculateNextSend(report.frequency);
-    await supabase.from("scheduled_reports").update({ last_sent_at: now.toISOString(), next_send_at: nextSendAt }).eq("id", reportId);
+    const total = recipients.length;
+    // "sent" exige a entrega de todos (ou de nenhum destinatário configurado).
+    // "partial" e "failed" NÃO confirmam o ciclo nem avançam o agendamento.
+    const deliveryStatus = delivered.length === total ? "sent" : delivered.length > 0 ? "partial" : "failed";
 
-    log.done(200);
-    return jsonResponse({ success: true, reportData }, 200, req);
+    if (deliveryStatus !== "sent") {
+      const httpStatus = missingApiKey ? 503 : 502;
+      log.done(httpStatus, { deliveryStatus, delivered: delivered.length, failed: failed.length, total });
+      return jsonResponse({
+        success: false,
+        status: deliveryStatus,
+        delivered: delivered.length,
+        failed: failed.length,
+        total,
+        last_sent_advanced: false,
+        error: missingApiKey
+          ? "Provedor de e-mail não configurado"
+          : "Falha no envio para um ou mais destinatários",
+      }, httpStatus, req);
+    }
+
+    const nextSendAt = calculateNextSend(report.frequency);
+    const { data: updatedRows, error: scheduleError } = await supabase
+      .from("scheduled_reports")
+      .update({ last_sent_at: now.toISOString(), next_send_at: nextSendAt })
+      .eq("id", reportId)
+      .select("id");
+
+    // R2-API-023: sem o UPDATE confirmado — erro OU zero linhas afetadas, que o
+    // PostgREST devolve sem erro — o ciclo não está registrado; responder sucesso
+    // aqui esconderia o envio e o próximo ciclo repetiria o lote.
+    if (scheduleError || !Array.isArray(updatedRows) || updatedRows.length === 0) {
+      log.error("Failed to advance scheduled report", {
+        error: scheduleError ? (scheduleError as Error).message : "no rows updated",
+      });
+      log.done(500, { delivered: delivered.length, total });
+      return jsonResponse({
+        success: false,
+        status: "sent",
+        delivered: delivered.length,
+        failed: 0,
+        total,
+        last_sent_advanced: false,
+        error: "Falha ao registrar o envio do relatório",
+      }, 500, req);
+    }
+
+    log.done(200, { delivered: delivered.length, total });
+    return jsonResponse({ success: true, status: "sent", delivered: delivered.length, total, reportData }, 200, req);
   } catch (error) {
     log.error("Error sending report", { error: (error as Error).message });
     return internalErrorResponse(error, req);
