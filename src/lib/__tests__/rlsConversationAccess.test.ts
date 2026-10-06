@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   cobreComando,
+  normSql,
   paridadeDeNomes,
   policiesOn,
   predicadoEfetivo,
@@ -40,25 +41,78 @@ const AGENTES_VISIVEIS = /get_visible_agent_ids\(\s*auth\.uid\(\)\s*\)/;
 const MEMBRO_DE_FILA = /queue_members[\s\S]*?is_active\s*=\s*true/;
 const PERFIL_DO_CHAMADOR = /profiles[\s\S]*?user_id\s*=\s*auth\.uid\(\)/;
 
+/** Ramo de OR que, sozinho, nao restringe nada. */
+const RAMO_PERMISSIVO = /^(true|1\s*=\s*1)$/;
+
 /**
- * Contrato de DELETE de `messages`: hoje nao existe policy cobrindo o comando
- * (a exclusao passa pelo fluxo proprio, sob o predicado de visibilidade). Se
- * uma policy passar a cobrir DELETE, ela so e aceita carregando exatamente o
- * predicado contratado — e `FOR ALL` CONTA como cobertura (semantica do
- * Postgres), logo nao escapa desta checagem. Devolve o nome de cada policy que
- * cobre DELETE sem atender o contrato.
+ * Ramificacoes de OR de nivel zero de um predicado, normalizadas e ordenadas.
+ * E a forma canonica que compara dois predicados: um ramo a mais muda o
+ * resultado, entao `true OR <contrato>` NAO passa por ser "parecido" — era
+ * exatamente o buraco da checagem por trechos/regex.
+ */
+function ramosDeOr(predicado: string): string[] {
+  const ramos: string[] = [];
+  let profundidade = 0;
+  let inicio = 0;
+  for (let i = 0; i < predicado.length; i++) {
+    const char = predicado[i];
+    if (char === '(') profundidade++;
+    else if (char === ')') profundidade--;
+    else if (profundidade === 0 && /\s/.test(char)) {
+      const separador = /^\s+OR\s+/i.exec(predicado.slice(i));
+      if (separador) {
+        ramos.push(predicado.slice(inicio, i));
+        i += separador[0].length;
+        inicio = i;
+        i--;
+      }
+    }
+  }
+  ramos.push(predicado.slice(inicio));
+  return ramos
+    .map((ramo) => normSql(ramo))
+    .filter((ramo) => ramo.length > 0)
+    .sort();
+}
+
+/**
+ * Forma canonica do contrato VIGENTE de visibilidade de `messages`, lida do
+ * schema REAL (`ESTADO`, resolvido das migrations): o predicado que hoje
+ * autoriza enxergar a mensagem. Sai do schema real, nunca do estado sob teste —
+ * senao a propria policy enfraquecida viraria o contrato dela mesma.
+ */
+function contratoDeVisibilidade(policies: EffectivePolicy[]): string[] {
+  const ramos = policies
+    .filter((p) => cobreComando(p, 'SELECT'))
+    .map((p) => predicadoEfetivo(p, 'SELECT'))
+    .flatMap((predicado) => ramosDeOr(predicado));
+  return [...new Set(ramos)].sort();
+}
+
+const CONTRATO_VISIBILIDADE_MESSAGES = contratoDeVisibilidade(policiesOn(ESTADO, 'messages'));
+
+/** `true` quando o predicado reproduz exatamente a forma canonica do contrato. */
+function mesmaForma(predicado: string, contrato: string[]): boolean {
+  return JSON.stringify(ramosDeOr(predicado)) === JSON.stringify(contrato);
+}
+
+/**
+ * Contrato de DELETE de `messages`: hoje o schema real NAO tem policy cobrindo
+ * o comando (a exclusao passa pelo fluxo proprio, sob o predicado de
+ * visibilidade). Entao toda policy que cobrir DELETE — e `FOR ALL` CONTA, pela
+ * semantica do Postgres — tem de reproduzir EXATAMENTE a forma canonica do
+ * contrato vigente. Predicado irrestrito (`true`, `1 = 1`) ou ramo permissivo
+ * a mais (`true OR <contrato>`) reprovam: nao basta conter os trechos do
+ * contrato. Devolve o nome de cada policy que cobre DELETE sem atender isso.
  */
 function deleteSemContrato(policies: EffectivePolicy[]): string[] {
   return policies
     .filter((p) => cobreComando(p, 'DELETE'))
     .filter((p) => {
       const predicado = predicadoEfetivo(p, 'DELETE');
-      return !(
-        predicado !== 'true' &&
-        ADMIN_OU_SUPERVISOR.test(predicado) &&
-        AGENTES_VISIVEIS.test(predicado) &&
-        MEMBRO_DE_FILA.test(predicado)
-      );
+      const ramos = ramosDeOr(predicado);
+      if (ramos.length === 0 || ramos.some((ramo) => RAMO_PERMISSIVO.test(ramo))) return true;
+      return !mesmaForma(predicado, CONTRATO_VISIBILIDADE_MESSAGES);
     })
     .map((p) => p.name);
 }
@@ -159,11 +213,24 @@ describe('RLS real: messages (schema resolvido das migrations)', () => {
     }
   });
 
-  it('DELETE exige o predicado contratado — ausencia total de cobertura ou FOR ALL com o mesmo predicado', () => {
-    // O contrato vigente nao tem policy de DELETE em messages. Qualquer policy
-    // que cubra DELETE — inclusive `FOR ALL` — tem de carregar o predicado
-    // contratado de visibilidade; `true` nunca passa, nem como WITH CHECK
-    // restritivo, porque DELETE e filtrado pelo USING.
+  it('o contrato de visibilidade lido do schema real nao tem ramo permissivo', () => {
+    // Se o proprio predicado de visibilidade ganhar um ramo que nao restringe
+    // (`true`, `1 = 1`), ele deixaria de ser contrato — e o DELETE abaixo
+    // passaria a aceitar o enfraquecimento. Este teste fecha esse atalho.
+    expect(CONTRATO_VISIBILIDADE_MESSAGES.length).toBeGreaterThan(0);
+    for (const ramo of CONTRATO_VISIBILIDADE_MESSAGES) {
+      expect(ramo, 'ramo permissivo no contrato de visibilidade de messages').not.toMatch(
+        RAMO_PERMISSIVO,
+      );
+    }
+  });
+
+  it('DELETE exige o contrato vigente inteiro — ausencia total de cobertura ou predicado identico', () => {
+    // O contrato vigente nao tem policy de DELETE em messages: a exclusao passa
+    // pelo fluxo proprio. Qualquer policy que cubra DELETE — inclusive `FOR ALL`
+    // — so passa reproduzindo exatamente as ramificacoes do contrato de
+    // visibilidade; `true`, `1 = 1` ou um ramo permissivo a mais reprovam,
+    // porque DELETE e filtrado pelo USING (o WITH CHECK nao protege).
     for (const p of policies.filter((p) => cobreComando(p, 'DELETE'))) {
       expect(predicadoEfetivo(p, 'DELETE'), `${p.name} abriu DELETE`).not.toBe('true');
     }
@@ -172,8 +239,9 @@ describe('RLS real: messages (schema resolvido das migrations)', () => {
 });
 
 describe('RLS real: mensagens nao dao DELETE por atalho (regressivo FOR ALL)', () => {
-  const PREDICADO_CONTRATADO =
-    'is_admin_or_supervisor(auth.uid()) OR contact_id IN (SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid())) OR c.queue_id IN (SELECT queue_id FROM public.queue_members WHERE is_active = true))';
+  // O predicado contratado e a propria forma canonica lida do schema real
+  // (SELECT de messages): quem cobrir DELETE tem de reproduzi-la inteira.
+  const PREDICADO_CONTRATADO = CONTRATO_VISIBILIDADE_MESSAGES.join(' OR ');
 
   const estadoDe = (sql: string) =>
     policiesOn(resolvePolicyState([{ name: '0001_policy.sql', sql }]), 'messages');
@@ -193,7 +261,7 @@ describe('RLS real: mensagens nao dao DELETE por atalho (regressivo FOR ALL)', (
     expect(deleteSemContrato(policies)).toEqual(['tudo em messages']);
   });
 
-  it('FOR ALL com o predicado contratado passa — a exigencia e o predicado, nao a forma', () => {
+  it('FOR ALL com o predicado contratado passa — a exigencia e a forma, nao a policy', () => {
     const policies = estadoDe(
       `CREATE POLICY "contratado" ON public.messages FOR ALL TO authenticated
        USING (${PREDICADO_CONTRATADO}) WITH CHECK (${PREDICADO_CONTRATADO});`,
@@ -201,5 +269,23 @@ describe('RLS real: mensagens nao dao DELETE por atalho (regressivo FOR ALL)', (
     expect(cobreComando(policies[0], 'DELETE')).toBe(true);
     expect(predicadoEfetivo(policies[0], 'DELETE')).not.toBe('true');
     expect(deleteSemContrato(policies)).toEqual([]);
+  });
+
+  it('FOR ALL com `true OR <predicado contratado>` e recusado — sobra o ramo permissivo', () => {
+    const policies = estadoDe(
+      `CREATE POLICY "atalho" ON public.messages FOR ALL TO authenticated
+       USING (true OR ${PREDICADO_CONTRATADO});`,
+    );
+    const predicado = predicadoEfetivo(policies[0], 'DELETE');
+    // Os TRES trechos do contrato estao presentes — era exatamente isto que a
+    // checagem antiga por regex/trechos aceitava:
+    expect(predicado).toMatch(ADMIN_OU_SUPERVISOR);
+    expect(predicado).toMatch(AGENTES_VISIVEIS);
+    expect(predicado).toMatch(MEMBRO_DE_FILA);
+    expect(predicado).not.toBe('true');
+    expect(cobreComando(policies[0], 'DELETE')).toBe(true);
+    // ... e ainda assim a policy e recusada, porque sobra o ramo `true`.
+    expect(ramosDeOr(predicado)).toContain('true');
+    expect(deleteSemContrato(policies)).toEqual(['atalho']);
   });
 });
