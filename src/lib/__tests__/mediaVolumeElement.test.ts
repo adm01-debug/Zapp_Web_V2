@@ -30,7 +30,14 @@ function simularIOS() {
   });
 }
 
-const grafo = { contextos: 0, sources: 0, resumidos: 0, ganhos: [] as { gain: { value: number } }[] };
+const grafo = {
+  contextos: 0,
+  sources: 0,
+  resumidos: 0,
+  fechados: 0,
+  falharSource: false,
+  ganhos: [] as { gain: { value: number } }[],
+};
 
 class FakeGainNode {
   gain = { value: 1 };
@@ -51,11 +58,17 @@ class FakeAudioContext {
     return node;
   }
   createMediaElementSource() {
+    // Simula a falha de preparação ANTES de o nó existir (o elemento continua sem dono).
+    if (grafo.falharSource) throw new Error('grafo indisponível');
     grafo.sources += 1;
     return { connect: vi.fn(), disconnect: vi.fn() };
   }
   resume() {
     grafo.resumidos += 1;
+    return Promise.resolve();
+  }
+  close() {
+    grafo.fechados += 1;
     return Promise.resolve();
   }
 }
@@ -66,6 +79,8 @@ describe('mediaVolumeElement — volume no elemento de mídia', () => {
     grafo.contextos = 0;
     grafo.sources = 0;
     grafo.resumidos = 0;
+    grafo.fechados = 0;
+    grafo.falharSource = false;
     grafo.ganhos = [];
   });
 
@@ -206,5 +221,108 @@ describe('mediaVolumeElement — volume no elemento de mídia', () => {
 
     Object.defineProperty(webkit, 'audioTracks', { configurable: true, value: { length: 1 } });
     expect(el.detectVideoAudioTrack(webkit)).toBe(true);
+  });
+
+  it('VOL-01: no caminho de volume nativo o play não instancia AudioContext nenhum', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    const { el } = await fresh();
+    const audio = document.createElement('audio');
+
+    expect(el.detectNativeVolumeSupport()).toBe(true);
+
+    const detach = el.attachMediaVolume(audio);
+    audio.dispatchEvent(new Event('play'));
+
+    // O gesto realmente aplicou o volume (caminho nativo seguiu vivo)…
+    expect(audio.volume).toBeCloseTo(0.64, 5);
+
+    detach();
+
+    // …e nada de WebAudio: o singleton não pode nascer para quem não vai usá-lo.
+    expect(grafo.contextos).toBe(0);
+    expect(grafo.sources).toBe(0);
+    expect(grafo.fechados).toBe(0);
+  });
+
+  it('VOL-01: no fallback dois elementos compartilham o contexto — e ele fecha exatamente uma vez, ao soltar o último', async () => {
+    simularIOS();
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    const { el } = await fresh();
+
+    const um = document.createElement('audio');
+    const dois = document.createElement('audio');
+    const soltarUm = el.attachMediaVolume(um);
+    const soltarDois = el.attachMediaVolume(dois);
+
+    um.dispatchEvent(new Event('play'));
+    dois.dispatchEvent(new Event('play'));
+
+    expect(grafo.contextos).toBe(1);
+    expect(grafo.sources).toBe(2);
+    expect(grafo.fechados).toBe(0);
+
+    soltarUm();
+    // O segundo continua na tela: fechar aqui emudeceria quem ainda está tocando.
+    expect(grafo.fechados).toBe(0);
+
+    soltarDois();
+    expect(grafo.fechados).toBe(1);
+  });
+
+  it('VOL-01: falha antes de registrar o GainNode não retém contexto sem dono e a próxima tentativa cria contexto novo', async () => {
+    simularIOS();
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    const { el } = await fresh();
+
+    grafo.falharSource = true;
+    const quebrado = document.createElement('audio');
+    const soltarQuebrado = el.attachMediaVolume(quebrado);
+    quebrado.dispatchEvent(new Event('play'));
+
+    expect(grafo.contextos).toBe(1);
+    expect(grafo.sources).toBe(0);
+    // O contexto nasceu para este elemento e ficou sem consumidor: tem de ser fechado.
+    expect(grafo.fechados).toBe(1);
+
+    grafo.falharSource = false;
+    const sadio = document.createElement('audio');
+    const soltarSadio = el.attachMediaVolume(sadio);
+    sadio.dispatchEvent(new Event('play'));
+
+    expect(grafo.contextos).toBe(2);
+    expect(grafo.sources).toBe(1);
+
+    soltarQuebrado();
+    soltarSadio();
+    expect(grafo.fechados).toBe(2);
+  });
+
+  it('VOL-01: no fallback, soltar um elemento que nunca registrou GainNode também não deixa o contexto retido', async () => {
+    simularIOS();
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    const { el } = await fresh();
+
+    const audio = document.createElement('audio');
+    // `apply` que não passa pelo caminho de ganho: o contexto nasce no gesto e fica sem dono.
+    const detach = el.bindMediaVolume(audio, () => {});
+    audio.dispatchEvent(new Event('play'));
+
+    expect(grafo.contextos).toBe(1);
+    expect(grafo.sources).toBe(0);
+    expect(grafo.fechados).toBe(0);
+
+    detach();
+    expect(grafo.fechados).toBe(1);
+
+    // O singleton reiniciou: o próximo consumidor cria um contexto novo.
+    const outro = document.createElement('audio');
+    const soltarOutro = el.attachMediaVolume(outro);
+    outro.dispatchEvent(new Event('play'));
+
+    expect(grafo.contextos).toBe(2);
+    expect(grafo.sources).toBe(1);
+
+    soltarOutro();
+    expect(grafo.fechados).toBe(2);
   });
 });
