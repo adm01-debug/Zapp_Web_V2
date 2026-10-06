@@ -26,7 +26,7 @@ vi.mock('@/lib/logger', () => ({
   log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { FileDetailContent } from '../FileDetailPanel';
+import { FileDetailContent, FileDetailPanel } from '../FileDetailPanel';
 import { PRODUCTION_SUPABASE_URL } from '@/config/supabase';
 
 const ORIGIN = new URL(PRODUCTION_SUPABASE_URL).origin;
@@ -43,7 +43,7 @@ function mediaItem(overrides: Partial<ContactMediaItem> = {}): ContactMediaItem 
   };
 }
 
-function renderPanel(overrides: Partial<ContactMediaItem> = {}) {
+function renderContent(overrides: Partial<ContactMediaItem> = {}) {
   const props = {
     item: mediaItem(overrides),
     contactName: 'Ana Cliente',
@@ -51,6 +51,11 @@ function renderPanel(overrides: Partial<ContactMediaItem> = {}) {
     onRequestDelete: vi.fn(),
   };
   return { ...render(<FileDetailContent {...props} />), props };
+}
+
+function renderPanel(item: ContactMediaItem) {
+  const props = { item, contactName: 'Ana Cliente', onClose: vi.fn(), onRequestDelete: vi.fn() };
+  return { ...render(<FileDetailPanel {...props} />), props };
 }
 
 beforeEach(() => {
@@ -61,14 +66,14 @@ beforeEach(() => {
 
 describe('FileDetailContent — SL-083 (G4/G5)', () => {
   it('G5: mostra a URL assinada em lote sem pedir assinatura individual', () => {
-    const { container } = renderPanel();
+    const { container } = renderContent();
 
     expect(container.querySelector('img')).toHaveAttribute('src', BATCH);
     expect(storageMocks.createSignedUrl).not.toHaveBeenCalled();
   });
 
   it('G5: quando a URL em lote falha, renova UMA vez pelo locator durável', async () => {
-    const { container } = renderPanel();
+    const { container } = renderContent();
 
     fireEvent.error(container.querySelector('img') as HTMLImageElement);
 
@@ -80,7 +85,7 @@ describe('FileDetailContent — SL-083 (G4/G5)', () => {
     const writeText = vi.fn();
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
 
-    const { props } = renderPanel();
+    const { props } = renderContent();
     // Percorre TODAS as ações do painel (as desabilitadas não disparam handler).
     for (const button of screen.getAllByRole('button')) fireEvent.click(button);
 
@@ -88,5 +93,62 @@ describe('FileDetailContent — SL-083 (G4/G5)', () => {
     expect(writeText).not.toHaveBeenCalled();
     // "Excluir" continua PEDINDO a exclusão ao dono do estado (nunca apaga sozinho).
     expect(props.onRequestDelete).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('FileDetailContent — R2-INB-060', () => {
+  it('mostra a imagem de B depois de a imagem de A falhar no mesmo painel, sem desmontar', async () => {
+    const imagemA = mediaItem({ id: 'a1', signedUrl: `${BATCH}-a`, displayName: 'foto-a.png', filename: 'IMG-1.jpg' });
+    const imagemB = mediaItem({ id: 'b2', signedUrl: `${BATCH}-b`, displayName: 'foto-b.png', filename: 'IMG-2.jpg' });
+    const { container, rerender, props } = renderPanel(imagemA);
+    const imgA = container.querySelector('img');
+    expect(imgA).not.toBeNull();
+    expect(imgA).toHaveAttribute('src', `${BATCH}-a`);
+
+    // A falha (URL expirada/objeto ausente) e o placeholder de erro entra no lugar.
+    fireEvent.error(imgA as HTMLImageElement);
+    expect(container.querySelector('img')).toBeNull();
+    expect(props.onClose).not.toHaveBeenCalled();
+    await waitFor(() => expect(storageMocks.createSignedUrl).toHaveBeenCalledTimes(1));
+
+    // O usuário seleciona o arquivo B na lista: mesma instância, nova prop `item`.
+    rerender(<FileDetailPanel {...props} item={imagemB} />);
+
+    const imgB = container.querySelector('img');
+    expect(imgB).not.toBeNull();
+    expect(imgB).toHaveAttribute('src', `${BATCH}-b`);
+    expect(imgB).toHaveAttribute('alt', 'foto-b.png');
+    // O resto dos detalhes também tem de acompanhar o novo arquivo.
+    expect(screen.getByText('foto-b.png')).toBeInTheDocument();
+    expect(screen.queryByText('foto-a.png')).not.toBeInTheDocument();
+  });
+
+  it('a renovação bem-sucedida da URL reapresenta a imagem do mesmo arquivo', async () => {
+    const expirada = mediaItem({ id: 'c3', displayName: 'foto-c.png', signedUrl: `${BATCH}-expirada` });
+    const renovada = { ...expirada, signedUrl: `${FRESH}-renovada` };
+    const { container, rerender, props } = renderPanel(expirada);
+    const img = container.querySelector('img');
+    expect(img).toHaveAttribute('src', `${BATCH}-expirada`);
+
+    fireEvent.error(img as HTMLImageElement);
+    expect(container.querySelector('img')).toBeNull();
+    await waitFor(() => expect(storageMocks.createSignedUrl).toHaveBeenCalledTimes(1));
+
+    // O resolvedor terminou o refresh e a consulta entregou uma URL assinada nova.
+    rerender(<FileDetailPanel {...props} item={renovada} />);
+
+    expect(container.querySelector('img')).toHaveAttribute('src', `${FRESH}-renovada`);
+  });
+
+  it('a mesma URL que falhou continua com o placeholder (o erro não é esquecido a cada render)', () => {
+    const imagemA = mediaItem({ id: 'a1', signedUrl: `${BATCH}-a`, displayName: 'foto-a.png' });
+    storageMocks.createSignedUrl.mockReturnValueOnce(new Promise(() => undefined));
+    const { container, rerender, props } = renderPanel(imagemA);
+    fireEvent.error(container.querySelector('img') as HTMLImageElement);
+    expect(container.querySelector('img')).toBeNull();
+
+    rerender(<FileDetailPanel {...props} />);
+
+    expect(container.querySelector('img')).toBeNull();
   });
 });
