@@ -47,7 +47,15 @@ vi.mock('@/components/ui/tooltip', () => ({
 }));
 
 vi.mock('@/components/ui/GenericEmptyState', () => ({
-  GenericEmptyState: ({ title }: { title: ReactNode }) => <div data-testid="empty-state">{title}</div>,
+  GenericEmptyState: ({ title, description, actionLabel, onAction }: {
+    title: ReactNode; description?: ReactNode; actionLabel?: string; onAction?: () => void;
+  }) => (
+    <div data-testid="empty-state">
+      <span>{title}</span>
+      {description && <span>{description}</span>}
+      {actionLabel && onAction && <button onClick={onAction}>{actionLabel}</button>}
+    </div>
+  ),
 }));
 
 vi.mock('@/components/gmail/EmailComposer', () => ({
@@ -64,6 +72,7 @@ vi.mock('@/lib/emailHtml', () => ({
 
 vi.mock('lucide-react', () => ({
   ArrowLeft: () => <span data-testid="icon-arrow-left" />,
+  AlertTriangle: () => <span data-testid="icon-alert" />,
   Trash2: () => <span data-testid="icon-trash" />,
   Archive: () => <span data-testid="icon-archive" />,
   Loader2: () => <div data-testid="loader" />,
@@ -84,19 +93,24 @@ vi.mock('lucide-react', () => ({
 const setSelectedThreadId = vi.fn();
 const markAsReadMutate = vi.fn();
 const trashMessageMutate = vi.fn();
+const refetchMessages = vi.fn();
 
 const config: {
   threadMessages: EmailMessage[];
   messagesLoading: boolean;
+  messagesError: Error | null;
 } = {
   threadMessages: [],
   messagesLoading: false,
+  messagesError: null,
 };
 
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({
     threadMessages: config.threadMessages,
     messagesLoading: config.messagesLoading,
+    messagesError: config.messagesError,
+    refetchMessages,
     markAsRead: { mutate: markAsReadMutate },
     trashMessage: { mutate: trashMessageMutate },
     setSelectedThreadId,
@@ -155,6 +169,8 @@ describe('EmailThreadView', () => {
   beforeEach(() => {
     config.threadMessages = [];
     config.messagesLoading = false;
+    config.messagesError = null;
+    refetchMessages.mockClear();
     setSelectedThreadId.mockClear();
     markAsReadMutate.mockClear();
     trashMessageMutate.mockClear();
@@ -241,5 +257,30 @@ describe('EmailThreadView', () => {
     render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
     fireEvent.click(screen.getByTestId('icon-trash').closest('button')!);
     expect(trashMessageMutate).toHaveBeenCalledWith('gm-trash');
+  });
+
+  // R2-API-059: consulta fracassada e thread vazia são estados diferentes, com recuperação.
+  it('consulta de mensagens falhou: mostra erro com recuperação e não "Sem mensagens"', () => {
+    config.messagesError = new Error('permission denied for table email_messages');
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    expect(screen.getByText('Não foi possível carregar as mensagens')).toBeInTheDocument();
+    expect(screen.queryByText('Sem mensagens')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+    expect(refetchMessages).toHaveBeenCalledTimes(1);
+  });
+
+  it('consulta bem-sucedida sem mensagens: mantém o estado vazio com o texto de vazio', () => {
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    expect(screen.getByText('Sem mensagens')).toBeInTheDocument();
+    expect(screen.queryByText('Não foi possível carregar as mensagens')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tentar de novo' })).not.toBeInTheDocument();
+  });
+
+  it('consulta de mensagens falhou, mas há mensagens em cache: mantém as mensagens na tela', () => {
+    config.threadMessages = [makeMessage({ from_name: 'Remetente em cache' })];
+    config.messagesError = new Error('timeout');
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    expect(screen.getByText('Remetente em cache')).toBeInTheDocument();
+    expect(screen.queryByText('Não foi possível carregar as mensagens')).not.toBeInTheDocument();
   });
 });

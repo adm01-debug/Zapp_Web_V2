@@ -146,7 +146,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
     enabled: !!activeAccount && !!requestedThreadId,
   });
 
-  const { data: threadMessages = EMPTY_MESSAGES, isLoading: messagesLoading, error: messagesError } = useQuery({
+  const { data: threadMessages = EMPTY_MESSAGES, isLoading: messagesLoading, error: messagesError, refetch: refetchMessages } = useQuery({
     queryKey: ['gmail-messages', activeAccount?.id, selectedThreadId],
     queryFn: async () => {
       if (!selectedThreadId || !activeAccount) return [];
@@ -342,7 +342,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
   return {
     accounts, activeAccount, accountsLoading, accountsError, refetchAccounts, connectGmail, exchangeCode, disconnectGmail,
     threads, threadsLoading, threadsError, requestedThread, requestedThreadLoading, requestedThreadError, selectedThreadId, setSelectedThreadId, refetchThreads,
-    threadMessages, messagesLoading, messagesError, threadAttachments, labels,
+    threadMessages, messagesLoading, messagesError, refetchMessages, threadAttachments, labels,
     syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, trashThread, modifyLabels, modifyThreadLabels, saveDraft, deleteDraft, downloadAttachment, getAttachmentContent,
     subscribeToThreads,
     threadsTotalCount: exactThreadCounts?.total ?? threads.length,
