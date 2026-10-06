@@ -23,11 +23,16 @@ interface FileDetailContentProps {
 }
 
 export function FileDetailContent({ item, contactName, onClose, onRequestDelete }: FileDetailContentProps) {
-  const [hasError, setHasError] = useState(false);
   // Etapa 10: a consulta ja assina em lote, um request por bucket. O hook individual
   // continua como fallback para item sem URL assinada (objeto publico ou lote que falhou).
   const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.signedUrl ? '' : item.url);
   const displayUrl = item.signedUrl ?? resolvedUrl;
+  // R2-INB-060: o erro pertence a URL que falhou, nao ao painel. O `FilesTab` troca o
+  // arquivo selecionado na MESMA instancia deste componente (sem `key` por arquivo), entao
+  // um `hasError` solto mantinha a imagem A em erro quando o usuario escolhia B — e a
+  // renovacao bem-sucedida da URL tambem nao podia reapresentar a imagem.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const hasError = displayUrl !== '' && failedUrl === displayUrl;
   const size = formatSize(item.size);
   // Etapa 31: nome tecnico so quando agrega — quando difere do displayName legivel.
   const technicalName = item.filename && item.filename !== item.displayName ? item.filename : null;
@@ -48,7 +53,7 @@ export function FileDetailContent({ item, contactName, onClose, onRequestDelete 
 
       <div className="aspect-square rounded-lg bg-muted flex items-center justify-center overflow-hidden">
         {item.type === 'image' && !hasError && displayUrl ? (
-          <img src={displayUrl} alt={item.displayName} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
+          <img src={displayUrl} alt={item.displayName} className="w-full h-full object-cover" onError={() => { setFailedUrl(displayUrl); void refresh(); }} />
         ) : item.type === 'video' || item.type === 'audio' ? (
           <Play className="w-8 h-8 text-muted-foreground" />
         ) : item.type === 'document' ? (
