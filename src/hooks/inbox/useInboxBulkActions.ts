@@ -73,9 +73,9 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     setBulkLoading(true);
     try {
       const contactIds = Array.from(selectedIds);
-      // Uma unica chamada: a RPC grava os eventos e atualiza os contatos na
-      // mesma transacao — se algum contato nao atualizar (RLS filtra sem erro),
-      // ela aborta e desfaz tambem os eventos.
+      // Uma única chamada: a RPC SECURITY DEFINER reaplica can_edit_contact por
+      // contato, grava o evento e atualiza o lote na mesma transação. Qualquer
+      // erro aborta tudo, inclusive eventos e updates já executados.
       const { error } = await supabase.rpc('bulk_transfer_contacts', {
         p_contact_ids: contactIds,
         p_to_agent_id: type === 'agent' ? targetId : null,

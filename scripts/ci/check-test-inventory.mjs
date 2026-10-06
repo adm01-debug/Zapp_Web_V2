@@ -32,6 +32,8 @@ const ALLOWLIST = new Set([
   // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
+  // R2-INB-009/#88: RPC + trigger real em PostgreSQL descartável; promover no db-guard.yml pelo dono.
+  'scripts/db-audit/bulk-transfer-contacts-rpc.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
