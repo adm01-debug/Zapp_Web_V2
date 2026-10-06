@@ -280,8 +280,13 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const handleKeyDown = useCallback((e: React.KeyboardEvent, slashCommandsOpen: boolean) => {
     if (slashCommandsOpen && (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) return;
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-    if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); openDialog('globalSearch'); }
-    if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSetActiveTool('chatSearch'); }
+    // R2-INB-017 (item 313): o textarea é o dono de Ctrl/Cmd+F e Ctrl+K quando o evento nasce
+    // no composer. Sem consumir o evento (stopPropagation), o listener de window do ChatPanel
+    // repetia o Ctrl+F — dois toggles devolviam a busca ao estado anterior — e o listener de
+    // document (busca global da Inbox) abria um segundo painel no Ctrl+K. Consumido aqui, um
+    // pressionamento produz uma única ação; fora do composer, os listeners globais seguem donos.
+    if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); e.stopPropagation(); openDialog('globalSearch'); }
+    if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); handleSetActiveTool('chatSearch'); }
     if (e.key === 'Escape' && slashCommandsOpen) closeDialog('slashCommands');
   }, [handleSend, openDialog, closeDialog, handleSetActiveTool]);
 
