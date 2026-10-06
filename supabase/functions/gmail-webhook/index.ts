@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
 import { verifyGmailOidcRequest } from "../_shared/hmac-validation.ts";
+import { extractAttachments } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -220,6 +221,7 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
 
         const headers = msg.payload.headers || [];
         const { text, html } = extractBody(msg.payload);
+        const attachments = extractAttachments(msg.payload);
 
         const fromRaw = getHeader(headers, "From");
         const fromMatch = fromRaw.match(/(?:"?([^"]*)"?\s)?<?([^>]+)>?/);
@@ -245,8 +247,7 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
         }, { onConflict: "gmail_account_id,gmail_thread_id" }).select().single();
 
         // Upsert email message
-        // deno-lint-ignore no-explicit-any
-        await supabase.from("email_messages").upsert({
+        const { data: savedMessage, error: messageError } = await supabase.from("email_messages").upsert({
           thread_id: thread?.id,
           gmail_message_id: msg.id,
           gmail_account_id: account.id,
@@ -260,12 +261,31 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
           snippet: msg.snippet,
           label_ids: msg.labelIds || [],
           is_read: !(msg.labelIds || []).includes("UNREAD"),
-          has_attachments: (msg.payload.parts || []).some((p: any) => p.filename && p.body?.attachmentId),
+          has_attachments: attachments.length > 0,
           in_reply_to: getHeader(headers, "In-Reply-To") || null,
           references_header: getHeader(headers, "References") || null,
           internal_date: new Date(Number.parseInt(msg.internalDate)).toISOString(),
           direction: isOutbound ? "outbound" : "inbound",
-        }, { onConflict: "gmail_account_id,gmail_message_id" });
+        }, { onConflict: "gmail_account_id,gmail_message_id" }).select("id").single();
+
+        if (messageError || !savedMessage?.id) {
+          throw new Error("Failed to persist Gmail message");
+        }
+
+        // R2-API-012: o download sob demanda (gmail-sync, action=get-attachment)
+        // exige a linha em email_attachments — sem ela o anexo que acabou de ser
+        // notificado responde sempre 404. Persistimos cada anexo do payload com o
+        // FK da mensagem, igual a syncMessageIds em _shared/gmail-helpers.ts.
+        for (const attachment of attachments) {
+          const { error: attachmentError } = await supabase.from("email_attachments").upsert({
+            email_message_id: savedMessage.id,
+            gmail_attachment_id: attachment.attachmentId,
+            filename: attachment.filename,
+            mime_type: attachment.mimeType,
+            size_bytes: attachment.size,
+          }, { onConflict: "email_message_id,gmail_attachment_id" });
+          if (attachmentError) throw new Error(`Failed to persist attachment ${attachment.attachmentId}`);
+        }
 
         // Link to contact if possible
         if (thread && !thread.contact_id) {
