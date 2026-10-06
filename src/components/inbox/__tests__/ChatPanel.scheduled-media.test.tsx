@@ -38,6 +38,15 @@ vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
+// R2-INB-026: a presença de digitação passou a usar a identidade da sessão
+// (useAuth) em vez do literal 'agent' que colidia entre agentes.
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'agente-sessao', email: 'agente@teste.local' },
+    profile: { name: 'Agente da Sessão' },
+  }),
+}));
+
 vi.mock('@/hooks/chat/useTypingPresence', () => ({
   useTypingPresence: () => ({
     isContactTyping: false,

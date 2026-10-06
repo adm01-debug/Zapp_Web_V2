@@ -81,6 +81,13 @@ vi.mock('@/lib/logger', () => ({
 vi.mock('@/hooks/chat/useTypingPresence', () => ({
   useTypingPresence: () => ({ isContactTyping: false, typingUsers: [], handleTypingStart: vi.fn(), handleTypingStop: vi.fn() }),
 }));
+// R2-INB-026: ChatPanel usa a identidade da sessão na presença de digitação.
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'agente-sessao', email: 'agente@teste.local' },
+    profile: { name: 'Agente da Sessão' },
+  }),
+}));
 vi.mock('@/hooks/integrations/useEvolutionApi', () => ({ useEvolutionApi: () => ({ editMessage: vi.fn() }) }));
 vi.mock('@/hooks/chat/useQuickReplies', () => ({ useQuickReplies: () => ({ quickReplies: [], incrementUseCount: vi.fn() }) }));
 vi.mock('@/hooks/communication/useTextToSpeech', () => ({

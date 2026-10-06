@@ -5,6 +5,7 @@ import { createStorageObjectId, removeStoredObjectBestEffort, sanitizeStorageFil
 import { Conversation, Message } from '@/types/chat';
 import { FileUploaderRef } from './FileUploader';
 import { useTypingPresence } from '@/hooks/chat/useTypingPresence';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import { useQuickReplies } from '@/hooks/chat/useQuickReplies';
 import { useTextToSpeech } from '@/hooks/communication/useTextToSpeech';
@@ -119,8 +120,14 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const messagesAreaRef = useRef<ChatMessagesAreaRef>(null);
   const dragCounterRef = useRef(0);
 
-  const { isContactTyping, typingUsers, handleTypingStart, handleTypingStop } = useTypingPresence({
-    conversationId: conversation.id, currentUserId: 'agent', currentUserName: conversation.assignedTo?.name || 'Agente',
+  // R2-INB-026: a presença de digitação usava a identidade literal 'agent' para
+  // todo mundo — dois agentes no mesmo contato colidiam na mesma chave e cada um
+  // descartava o colega como se fosse si mesmo. A identidade agora é a da sessão.
+  const { user, profile } = useAuth();
+  const { isContactTyping, isColleagueTyping, typingUsers, handleTypingStart, handleTypingStop } = useTypingPresence({
+    conversationId: conversation.id,
+    currentUserId: user?.id,
+    currentUserName: profile?.name || user?.email || conversation.assignedTo?.name || undefined,
   });
   const { quickReplies: dbQuickReplies, incrementUseCount } = useQuickReplies();
   const { settings, updateSettings, saveSettings } = useUserSettings();
@@ -287,7 +294,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           <NextBestActionEngine contactId={conversation.contact.id} contactName={conversation.contact.name} />
         </Suspense>
 
-        <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} typingUserName={typingUsers[0]?.name || conversation.contact.name}
+        <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
+          typingUserName={isContactTyping ? conversation.contact.name : (typingUsers[0]?.name || conversation.contact.name)}
           ttsLoading={ttsLoading} ttsPlaying={ttsPlaying} ttsMessageId={ttsMessageId} instanceName={instanceName}
           conversationId={conversation.id} contactJid={contactJid} contactAvatar={contactAvatar}
           onSpeak={speak} onStop={stop} onReply={handlers.handleReplyToMessage} onForward={handlers.handleForwardMessage} onCopy={handlers.handleCopyMessage}

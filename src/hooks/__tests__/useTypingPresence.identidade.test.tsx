@@ -31,6 +31,7 @@ interface FakeChannel {
   unsubscribe: () => void;
   send: () => void;
   emitSync: () => void;
+  emitBroadcast: (event: string, payload: unknown) => void;
 }
 
 const mocks = vi.hoisted(() => ({ channels: [] as FakeChannel[] }));
@@ -57,6 +58,7 @@ vi.mock('@/integrations/supabase/client', () => ({
         send: () => {},
         /** dispara o handler de `presence:sync` como o provedor faz */
         emitSync: () => { handlers['presence:sync']?.({}); },
+        emitBroadcast: (event, payload) => { handlers[`broadcast:${event}`]?.({ payload }); },
       };
       mocks.channels.push(channel);
       return channel;
@@ -147,5 +149,28 @@ describe('useTypingPresence — identidade de presença entre agentes (R2-INB-02
     aba1.unmount();
     aba2.unmount();
     colega.unmount();
+  });
+
+  it('guarda de regressão: a digitação do CONTATO continua vindo do broadcast e convive com a do colega', () => {
+    const ana = renderHook(() => useTypingPresence({ conversationId: 'conv-5', currentUserId: 'agente-ana' }));
+    const canalAna = mocks.channels[0];
+
+    act(() => { canalAna.emitBroadcast('contact_typing', { isTyping: true }); });
+    expect(ana.result.current.isContactTyping).toBe(true);
+    expect(ana.result.current.typingUsers).toEqual([]);
+
+    // Presença de colega não substitui nem apaga o aviso do contato.
+    const bruno = renderHook(() => useTypingPresence({ conversationId: 'conv-5', currentUserId: 'agente-bruno' }));
+    canalAna.presenceState = () => ({ [presenceKeyOf(1)]: [{ oderId: 'agente-bruno', name: 'Bruno', isTyping: true }] });
+    act(() => { canalAna.emitSync(); });
+    expect(ana.result.current.isContactTyping).toBe(true);
+    expect(ana.result.current.typingUsers.map(u => u.name)).toEqual(['Bruno']);
+
+    // O contato parou de digitar e o aviso dele sai de cena.
+    act(() => { canalAna.emitBroadcast('contact_typing', { isTyping: false }); });
+    expect(ana.result.current.isContactTyping).toBe(false);
+
+    ana.unmount();
+    bruno.unmount();
   });
 });
