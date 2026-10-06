@@ -2,27 +2,62 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, sanitizeString, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 
-Deno.serve(async (req) => {
+// ── Seams de injeção (R2-AUTH-016) ──────────────────────────────────────────
+// O handler exportado recebe o que faz efeito (client admin service_role, client
+// do chamador, rate limit e leitura de env) para o teste provar, sem tocar banco
+// nem GoTrue, que a falha de QUALQUER escrita dependente (role, perfil, contas
+// auxiliares) derruba o sucesso e dispara a compensação (auth.admin.deleteUser).
+
+export interface CreateUserCallerClient {
+  auth: {
+    getUser: () => PromiseLike<{ data: { user: { id: string } | null }; error: unknown }>;
+  };
+}
+
+export interface CreateUserAdminClient {
+  auth: {
+    admin: {
+      createUser: (attrs: {
+        email: string;
+        password: string;
+        email_confirm: boolean;
+        user_metadata: Record<string, unknown>;
+      }) => PromiseLike<{ data: { user: { id: string } | null }; error: { message?: string } | null }>;
+      deleteUser: (id: string) => PromiseLike<{ data?: unknown; error: { message?: string } | null }>;
+    };
+  };
+  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from: (table: string) => any;
+}
+
+export interface CreateUserDeps {
+  env?: (name: string) => string;
+  checkRateLimit?: (key: string, maxRequests: number, windowMs: number) => { allowed: boolean };
+  caller?: CreateUserCallerClient;
+  admin?: CreateUserAdminClient;
+}
+
+export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps = {}): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("create-user");
+  const env = deps.env ?? requireEnv;
+  const rateLimit = deps.checkRateLimit ?? checkRateLimit;
 
   const ip = getClientIP(req);
-  const rl = checkRateLimit(`create-user:${ip}`, 5, 60_000);
+  const rl = rateLimit(`create-user:${ip}`, 5, 60_000);
   if (!rl.allowed) return errorResponse('Rate limit exceeded', 429, req);
 
   try {
-    const supabaseUrl = requireEnv("SUPABASE_URL");
-    const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       log.warn("Missing auth header");
       return errorResponse("Não autorizado", 401, req);
     }
 
-    const callerClient = createClient(supabaseUrl, requireEnv("SUPABASE_ANON_KEY"), {
+    const callerClient: CreateUserCallerClient = deps.caller ?? createClient(env("SUPABASE_URL"), env("SUPABASE_ANON_KEY"), {
       global: { headers: { Authorization: authHeader } },
     });
 
@@ -32,7 +67,7 @@ Deno.serve(async (req) => {
       return errorResponse("Não autorizado", 401, req);
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const adminClient: CreateUserAdminClient = deps.admin ?? createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"));
     const { data: roleData } = await adminClient
       .from("user_roles")
       .select("role")
@@ -76,48 +111,70 @@ Deno.serve(async (req) => {
 
     if (createError) {
       log.error("User creation failed", { error: createError.message });
-      return errorResponse(createError.message, 400, req);
+      return errorResponse(createError.message ?? "Falha ao criar usuário", 400, req);
     }
 
-    if (role && role !== "agent" && newUser.user) {
-      await adminClient
+    const createdUserId = newUser.user?.id;
+    if (!createdUserId) {
+      log.error("GoTrue não devolveu o usuário criado");
+      return errorResponse("Falha ao criar usuário", 500, req);
+    }
+
+    // R2-AUTH-016: o usuário já existe no GoTrue. Se QUALQUER escrita dependente
+    // falhar, a resposta não pode ser sucesso — compensa apagando o usuário e
+    // responde 500. Falha da própria compensação é logada e ainda responde erro.
+    const failAndCompensate = async (msg: string, err: { message?: string } | null): Promise<Response> => {
+      log.error(msg, { error: err?.message ?? String(err), userId: createdUserId });
+      try {
+        const { error: delError } = await adminClient.auth.admin.deleteUser(createdUserId);
+        if (delError) {
+          log.error("Compensação falhou: usuário órfão no GoTrue", { error: delError.message, userId: createdUserId });
+        }
+      } catch (delErr) {
+        log.error("Compensação falhou: usuário órfão no GoTrue", {
+          error: delErr instanceof Error ? delErr.message : String(delErr),
+          userId: createdUserId,
+        });
+      }
+      return errorResponse(msg, 500, req);
+    };
+
+    if (role !== "agent") {
+      const { error: roleError } = await adminClient
         .from("user_roles")
         .update({ role })
-        .eq("user_id", newUser.user.id);
+        .eq("user_id", createdUserId);
+      if (roleError) return failAndCompensate("Falha ao definir o papel do usuário", roleError);
     }
 
-    if (newUser.user) {
-      const profileUpdate: Record<string, unknown> = {};
-      if (nickname) profileUpdate.nickname = nickname;
-      if (signature) profileUpdate.signature = signature;
-      if (job_title) profileUpdate.job_title = job_title;
-      if (avatar_url) profileUpdate.avatar_url = avatar_url;
+    const profileUpdate: Record<string, unknown> = {};
+    if (nickname) profileUpdate.nickname = nickname;
+    if (signature) profileUpdate.signature = signature;
+    if (job_title) profileUpdate.job_title = job_title;
+    if (avatar_url) profileUpdate.avatar_url = avatar_url;
 
-      if (Object.keys(profileUpdate).length > 0) {
-        await adminClient
-          .from("profiles")
-          .update(profileUpdate)
-          .eq("user_id", newUser.user.id);
-      }
+    if (Object.keys(profileUpdate).length > 0) {
+      const { error: profileError } = await adminClient
+        .from("profiles")
+        .update(profileUpdate)
+        .eq("user_id", createdUserId);
+      if (profileError) return failAndCompensate("Falha ao atualizar o perfil do usuário", profileError);
     }
 
-    if (gmail_email && newUser.user) {
+    if (gmail_email) {
       const { error: gmailError } = await adminClient
         .from("gmail_accounts")
         .insert({
-          user_id: newUser.user.id,
+          user_id: createdUserId,
           email_address: gmail_email,
           is_active: true,
           sync_status: "pending",
         });
-
-      if (gmailError) {
-        log.error("Gmail account creation failed", { error: gmailError.message });
-      }
+      if (gmailError) return failAndCompensate("Falha ao vincular a conta Gmail", gmailError);
 
       if (google_services && google_services.length > 0) {
         const serviceRows = google_services.map((svc: string) => ({
-          user_id: newUser.user!.id,
+          user_id: createdUserId,
           service_type: svc,
           account_email: gmail_email,
           is_active: true,
@@ -126,32 +183,28 @@ Deno.serve(async (req) => {
         const { error: svcError } = await adminClient
           .from("user_service_accounts")
           .insert(serviceRows);
-
-        if (svcError) {
-          log.error("Service accounts creation failed", { error: svcError.message });
-        }
+        if (svcError) return failAndCompensate("Falha ao vincular os serviços Google", svcError);
       }
     }
 
-    if (dropbox_email && newUser.user) {
+    if (dropbox_email) {
       const { error: dropboxError } = await adminClient
         .from("user_service_accounts")
         .insert({
-          user_id: newUser.user.id,
+          user_id: createdUserId,
           service_type: "dropbox",
           account_email: dropbox_email,
           is_active: true,
         });
-
-      if (dropboxError) {
-        log.error("Dropbox account creation failed", { error: dropboxError.message });
-      }
+      if (dropboxError) return failAndCompensate("Falha ao vincular a conta Dropbox", dropboxError);
     }
 
-    log.done(200, { userId: newUser.user?.id });
-    return jsonResponse({ success: true, user_id: newUser.user?.id }, 200, req);
+    log.done(200, { userId: createdUserId });
+    return jsonResponse({ success: true, user_id: createdUserId }, 200, req);
   } catch (err: unknown) {
     log.error("Unhandled error", { error: err instanceof Error ? err.message : String(err) });
     return internalErrorResponse(err, req);
   }
-});
+}
+
+if (import.meta.main) Deno.serve((req) => handleCreateUserRequest(req));
