@@ -201,17 +201,14 @@ async function resolveProfileId(
   userId: string | null | undefined
 ): Promise<string | null> {
   if (!userId) return null;
-  try {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .limit(1)
-      .maybeSingle();
-    return (data as Record<string, unknown>)?.id as string || null;
-  } catch {
-    return null;
-  }
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', userId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as Record<string, unknown>)?.id as string || null;
 }
 
 /**
@@ -245,34 +242,19 @@ export async function logAiUsageDetached(entry: AiUsageEntry): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// IA-TIMEOUT-001 — log essencial durável: retenta o transitório, confere a
-// existência antes de reenviar e nunca perde em silêncio
+// IA-TIMEOUT-001 — log essencial durável com pendência na outbox
 // ---------------------------------------------------------------------------
-// O defeito medido: `logAiUsage` fazia UM insert e engolia a falha com
-// `console.warn`. Consumo PAGO virava registro perdido — e uma resposta
-// perdida DEPOIS da escrita era indistinguível de falha real, então reenviar
-// às cegas poderia duplicar a cobrança. A política aqui resolve os dois lados:
-//  - `metadata.log_key` = SHA-256 dos campos estáveis da linha: a mesma
-//    execução sempre produz a mesma chave, o que torna a checagem de
-//    existência possível;
-//  - retenta até MAX_TENTATIVAS_LOG, conferindo a existência por log_key antes
-//    de cada reenvio — a linha que já gravou NÃO é inserida de novo;
-//  - só retenta transitório (sem resposta, 429, 5xx); permanente (4xx) para na
-//    hora, porque repetir só repete o erro;
-//  - esgotado o teto, emite `console.error` com o marcador estável
-//    `[ai-usage][LOG-ESSENCIAL-PERDIDO]` e a linha inteira em JSON —
-//    observável no log e reenviável por `reprocessarLogEssencial`.
+// Mantém a base de 3abda0372: chave estável e retentativa só do transitório.
+// A diferença é a garantia exigida pelo schema pai: toda falha remanescente vai
+// para `ai_usage_outbox`, e o reprocessamento lê a própria fila e só dá baixa
+// depois de confirmar a entrega em `ai_usage_logs`.
 
 /** Teto de tentativas do insert do log essencial (1 + reenvios). */
 const MAX_TENTATIVAS_LOG = 3;
 
 /**
- * Chave de idempotência da linha de log: SHA-256 hex dos campos ESTÁVEIS.
- *
- * Dois reenvios do mesmo consumo calculam a mesma `log_key` — é o que permite
- * conferir `metadata->>log_key` antes de inserir de novo, e o que torna
- * `reprocessarLogEssencial` seguro contra cobrança dupla. O próprio
- * `metadata.log_key` não entra na conta (ele é derivado, não é dado).
+ * Chave de idempotência da linha de log: SHA-256 hex dos campos estáveis.
+ * O próprio `metadata.log_key` não entra no cálculo.
  */
 export async function chaveDeLog(linha: Record<string, unknown>): Promise<string> {
   const metadata = (linha.metadata ?? {}) as Record<string, unknown>;
@@ -301,12 +283,6 @@ export async function chaveDeLog(linha: Record<string, unknown>): Promise<string
   return [...new Uint8Array(resumo)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/**
- * Escrita/leitura do log essencial via PostgREST direto, não pelo cliente
- * supabase-js: a política de retentativa precisa do STATUS HTTP da resposta
- * (429/5xx retenta, 4xx não) e o `PostgrestError` do cliente não garante esse
- * campo — sem ele, transitório e permanente seriam indistinguíveis.
- */
 function cabecalhosRest(serviceRoleKey: string): Record<string, string> {
   return {
     apikey: serviceRoleKey,
@@ -325,7 +301,6 @@ async function inserirLinhaDeLog(
     headers: { ...cabecalhosRest(chave), Prefer: "return=minimal" },
     body: JSON.stringify(linha),
   });
-  // Esvazia o corpo para não segurar a conexão antes de classificar o status.
   try { await resposta.text(); } catch { /* corpo de erro pode nem existir */ }
   return resposta;
 }
@@ -342,20 +317,10 @@ async function existeLinhaDeLog(url: string, chave: string, logKey: string): Pro
   return Array.isArray(linhas) && linhas.length > 0;
 }
 
-/** 429/5xx valem retentativa; 4xx é pedido inválido — repetir só repete o erro. */
 function statusTransitorioDeLog(status: number): boolean {
   return status === 429 || (status >= 500 && status <= 599);
 }
 
-/**
- * Grava a linha com retentativa transitória + checagem de existência.
- *
- * Da segunda volta em diante, confere `metadata->>log_key` ANTES de reenviar:
- * se a linha já está lá, a resposta anterior se perdeu depois da escrita e
- * reenviar duplicaria a cobrança. Se a própria CHECAGEM falha, a volta não
- * insere às cegas — sem confirmar a ausência não dá para garantir a
- * idempotência (a linha segue recuperável pelo marcador de perdido).
- */
 async function gravarLogEssencial(
   url: string,
   chave: string,
@@ -375,105 +340,203 @@ async function gravarLogEssencial(
       if (resposta.ok) return "gravado";
       if (!statusTransitorioDeLog(resposta.status)) return "falhou";
     } catch {
-      // fetch lançou = sem resposta: transitório, a próxima volta checa antes.
+      // Sem resposta: a próxima volta confere a existência antes de reenviar.
     }
   }
   return "falhou";
 }
 
+async function gravarNaOutbox(
+  url: string,
+  chave: string,
+  linha: Record<string, unknown>,
+  motivo: string,
+): Promise<boolean> {
+  try {
+    const resposta = await fetch(`${url}/rest/v1/ai_usage_outbox`, {
+      method: "POST",
+      headers: { ...cabecalhosRest(chave), Prefer: "return=minimal" },
+      body: JSON.stringify({ event_id: null, payload: { linha }, motivo }),
+    });
+    try { await resposta.text(); } catch { /* resposta sem corpo */ }
+    return resposta.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function atualizarPendencia(
+  url: string,
+  chave: string,
+  id: string,
+  campos: Record<string, unknown>,
+): Promise<boolean> {
+  try {
+    const resposta = await fetch(
+      `${url}/rest/v1/ai_usage_outbox?id=eq.${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        headers: { ...cabecalhosRest(chave), Prefer: "return=minimal" },
+        body: JSON.stringify(campos),
+      },
+    );
+    try { await resposta.text(); } catch { /* resposta sem corpo */ }
+    return resposta.ok;
+  } catch {
+    return false;
+  }
+}
+
+export interface ResultadoReprocessamentoLogEssencial {
+  lidos: number;
+  entregues: number;
+  pendentes: number;
+  falha: string | null;
+}
+
 /**
- * Reenvia um log essencial perdido (o JSON do marcador
- * `[ai-usage][LOG-ESSENCIAL-PERDIDO]`).
- *
- * Idempotente por construção: recalcula a `log_key` dos campos estáveis e
- * confere a existência ANTES de inserir — reenviar o mesmo registro nunca
- * cobra duas vezes. Aceita o objeto ou a string JSON do marcador.
+ * Lê pendências da outbox, tenta entregá-las e só preenche `processed_at`
+ * depois de a linha existir em `ai_usage_logs`. Falha de entrega ou de baixa
+ * deixa o item pendente para a próxima execução.
  */
 export async function reprocessarLogEssencial(
-  registro: unknown,
-): Promise<"gravado" | "ja-existia" | "falhou"> {
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !serviceRoleKey) return "falhou";
-
-    let bruto: unknown = registro;
-    if (typeof bruto === "string") {
-      try { bruto = JSON.parse(bruto); } catch { return "falhou"; }
-    }
-    if (typeof bruto !== "object" || bruto === null || Array.isArray(bruto)) return "falhou";
-    const linha = bruto as Record<string, unknown>;
-    // A linha precisa ao menos dizer de qual função é o consumo.
-    if (typeof linha.function_name !== "string" || linha.function_name === "") return "falhou";
-
-    // A chave é RECALCULADA dos campos estáveis, não herdada do payload —
-    // confiar no log_key recebido deixaria um payload adulterado burlar a
-    // idempotência.
-    const logKey = await chaveDeLog(linha);
-    const linhaFinal = {
-      ...linha,
-      metadata: { ...((linha.metadata ?? {}) as Record<string, unknown>), log_key: logKey },
-    };
-
-    if (await existeLinhaDeLog(supabaseUrl, serviceRoleKey, logKey)) return "ja-existia";
-
-    const resposta = await inserirLinhaDeLog(supabaseUrl, serviceRoleKey, linhaFinal);
-    return resposta.ok ? "gravado" : "falhou";
-  } catch {
-    return "falhou";
+  limite = 50,
+): Promise<ResultadoReprocessamentoLogEssencial> {
+  const resultado: ResultadoReprocessamentoLogEssencial = {
+    lidos: 0,
+    entregues: 0,
+    pendentes: 0,
+    falha: null,
+  };
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) {
+    resultado.falha = "env_ausente";
+    return resultado;
   }
+
+  let pendencias: Array<Record<string, unknown>>;
+  try {
+    const resposta = await fetch(
+      `${supabaseUrl}/rest/v1/ai_usage_outbox?select=id,payload,tentativas` +
+        `&processed_at=is.null&order=created_at.asc&limit=${Math.max(1, Math.floor(limite))}`,
+      { headers: cabecalhosRest(serviceRoleKey) },
+    );
+    const corpo = await resposta.text();
+    if (!resposta.ok) {
+      resultado.falha = `leitura_http_${resposta.status}`;
+      return resultado;
+    }
+    const parsed = JSON.parse(corpo) as unknown;
+    if (!Array.isArray(parsed)) {
+      resultado.falha = "leitura_invalida";
+      return resultado;
+    }
+    pendencias = parsed as Array<Record<string, unknown>>;
+  } catch (e) {
+    resultado.falha = `leitura:${e instanceof Error ? e.message : String(e)}`;
+    return resultado;
+  }
+
+  resultado.lidos = pendencias.length;
+  for (const pendencia of pendencias) {
+    const id = typeof pendencia.id === "string" ? pendencia.id : "";
+    const payload = pendencia.payload as Record<string, unknown> | null;
+    const linha = payload?.linha as Record<string, unknown> | null;
+    const tentativas = Number(pendencia.tentativas ?? 0);
+    let entregue = false;
+
+    if (id && linha && typeof linha.function_name === "string") {
+      try {
+        const logKey = await chaveDeLog(linha);
+        const linhaFinal = {
+          ...linha,
+          metadata: { ...((linha.metadata ?? {}) as Record<string, unknown>), log_key: logKey },
+        };
+        entregue = await existeLinhaDeLog(supabaseUrl, serviceRoleKey, logKey) ||
+          await gravarLogEssencial(supabaseUrl, serviceRoleKey, linhaFinal, logKey) === "gravado";
+      } catch {
+        entregue = false;
+      }
+    }
+
+    if (entregue) {
+      const baixou = await atualizarPendencia(supabaseUrl, serviceRoleKey, id, {
+        processed_at: new Date().toISOString(),
+      });
+      if (baixou) {
+        resultado.entregues += 1;
+        continue;
+      }
+    } else if (id) {
+      await atualizarPendencia(supabaseUrl, serviceRoleKey, id, { tentativas: tentativas + 1 });
+    }
+    resultado.pendentes += 1;
+  }
+  return resultado;
+}
+
+function montarLinhaDeConsumo(
+  entry: AiUsageEntry,
+  profileId: string | null,
+): Record<string, unknown> {
+  return {
+    user_id: entry.userId || null,
+    profile_id: profileId,
+    function_name: entry.functionName,
+    model: entry.model || null,
+    input_tokens: entry.usageUnknown === true ? null : (entry.inputTokens ?? 0),
+    output_tokens: entry.usageUnknown === true ? null : (entry.outputTokens ?? 0),
+    duration_ms: entry.durationMs || null,
+    status: entry.status || "success",
+    error_message: entry.errorMessage || null,
+    metadata: buildUsageMetadata(entry),
+    request_id: normalizeCorrelationId(entry.requestId),
+    job_id: normalizeCorrelationId(entry.jobId),
+    attempt: normalizeAttempt(entry.attempt),
+  };
+}
+
+async function registrarFalhaDeLog(
+  url: string,
+  chave: string,
+  linha: Record<string, unknown>,
+  motivo: string,
+): Promise<void> {
+  if (await gravarNaOutbox(url, chave, linha, motivo)) return;
+  console.error(
+    `[ai-usage][LOG-ESSENCIAL-PERDIDO] ${JSON.stringify({ motivo, linha })}`,
+  );
 }
 
 /** Log AI usage to database (essencial: nunca lança, nunca perde em silêncio) */
 export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) return;
+
+  // A linha nasce completa antes do enriquecimento. Assim até uma falha na
+  // resolução de profile_id tem um payload pronto e reprocessável na outbox.
+  let linha = montarLinhaDeConsumo(entry, entry.profileId || null);
+
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !serviceRoleKey) return;
-
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-    // Auto-resolve profile_id if not provided
-    const profileId = entry.profileId || await resolveProfileId(supabase, entry.userId);
-
-    const linha: Record<string, unknown> = {
-      user_id: entry.userId || null,
-      profile_id: profileId,
-      function_name: entry.functionName,
-      model: entry.model || null,
-      // IA-053 — TRI-ESTADO dos tokens: número medido (inclusive 0) ou NULL
-      // quando não houve medição. Antes, `|| 0` fazia "não medido" virar zero e
-      // o caminho de streaming entrava nos relatórios com custo zero.
-      input_tokens: entry.usageUnknown === true ? null : (entry.inputTokens ?? 0),
-      output_tokens: entry.usageUnknown === true ? null : (entry.outputTokens ?? 0),
-      duration_ms: entry.durationMs || null,
-      status: entry.status || 'success',
-      error_message: entry.errorMessage || null,
-      // IA-052 — rota efetiva anexada aqui, num lugar só: nenhum chamador
-      // precisa lembrar do formato, e o que o servidor mediu não se perde.
-      metadata: buildUsageMetadata(entry),
-      // IA-051 — correlação ponta a ponta. Passa pelo normalizador para que
-      // nenhum dado pessoal atravesse este caminho, mesmo por engano.
-      request_id: normalizeCorrelationId(entry.requestId),
-      job_id: normalizeCorrelationId(entry.jobId),
-      attempt: normalizeAttempt(entry.attempt),
+    const logKey = await chaveDeLog(linha);
+    linha = {
+      ...linha,
+      metadata: { ...((linha.metadata ?? {}) as Record<string, unknown>), log_key: logKey },
     };
 
-    // IA-TIMEOUT-001 — a chave vai no metadata e é o que torna o reenvio
-    // idempotente: a checagem de existência antes de cada retentativa impede
-    // que resposta perdida depois da escrita duplique a cobrança.
-    const logKey = await chaveDeLog(linha);
-    linha.metadata = { ...(linha.metadata as Record<string, unknown>), log_key: logKey };
+    if (!entry.profileId && entry.userId) {
+      const supabase = createClient(supabaseUrl, serviceRoleKey);
+      linha.profile_id = await resolveProfileId(supabase, entry.userId);
+    }
 
     if (await gravarLogEssencial(supabaseUrl, serviceRoleKey, linha, logKey) === "falhou") {
-      // O consumo NÃO foi gravado e NÃO pode sumir: o marcador leva a linha
-      // inteira em JSON — observável no log e reenviável por
-      // `reprocessarLogEssencial` sem risco de cobrança dupla.
-      console.error(`[ai-usage][LOG-ESSENCIAL-PERDIDO] ${JSON.stringify(linha)}`);
+      await registrarFalhaDeLog(supabaseUrl, serviceRoleKey, linha, "insert_exaurido");
     }
   } catch (e) {
-    // Never throw — logging failures must not break the main flow
-    console.warn(`[ai-usage] Failed to log: ${e instanceof Error ? e.message : String(e)}`);
+    const motivo = e instanceof Error ? e.message : String(e);
+    await registrarFalhaDeLog(supabaseUrl, serviceRoleKey, linha, `pre_insert:${motivo}`);
   }
 }
 
