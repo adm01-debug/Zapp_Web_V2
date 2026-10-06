@@ -19,19 +19,40 @@
  * módulo observa (o placeholder do combobox). Ela DEVE sobreviver — é a prova de que o
  * runner distingue "mutante morto" de "mutante vivo", em vez de só imprimir "ok".
  *
- * Uso:  npm run mutation:mapa            (6 mutações da etapa)
+ * ── R2-INF-019 (#366): falha de infraestrutura NÃO é mutante morto ──────────────
+ * Antes: `killed = processo.status !== 0`. Binário que não inicia (status null),
+ * configuração quebrada, "No test files found" ou erro não tratado do vitest davam
+ * MORTO sem executar um único teste — medido: escondendo o vitest e rodando o runner
+ * antigo, ele imprimia "6/6 mutantes MORTOS" e saía 0. Agora:
+ *
+ *   - BASELINE obrigatório: a suíte roda uma vez SEM mutação e precisa ficar VERDE.
+ *     Sem baseline verde nada é medido (saída 2), porque um vermelho pré-existente
+ *     "mataria" toda mutação.
+ *   - MORTO só com pelo menos um teste NOMEADO vermelho, presente no resumo `Tests ...`
+ *     e no corpo da saída: asserção rastreável, não apenas "saiu diferente de zero".
+ *   - INFRA (não iniciou, morreu por sinal, não imprimiu o resumo) e INCONCLUSIVO
+ *     (saiu diferente de zero, resumo presente, nenhum teste nomeado vermelho) são
+ *     estados próprios e NUNCA contam como mutante morto.
+ *   - Sobreviventes: política explícita. Sobrevive por construção o mutante
+ *     equivalente documentado em `EQUIVALENTES_DECLARADOS` e a mutação de controle
+ *     que declara `esperado: ESTADOS.sobrevivente`. Qualquer outro sobrevivente é
+ *     lacuna de teste e reprova a rodada (código 1).
+ *
+ * Política de saída (a conclusão vai para o status, não só para o texto):
+ *   0 = baseline verde, todas as rodadas conclusivas e nenhum sobrevivente fora de
+ *       EQUIVALENTES_DECLARADOS;
+ *   1 = medição válida com sobrevivente NÃO declarado equivalente;
+ *   2 = medição inválida (baseline não verde, rodada INFRA/INCONCLUSIVA ou erro
+ *       inesperado) — aqui o runner não afirma nada sobre a qualidade da suíte.
+ *
+ * Uso:  npm run mutation:mapa               (6 mutações da etapa)
  *       npm run mutation:mapa -- --control  (6 + controle)
  */
 
 import { spawnSync } from "node:child_process";
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-} from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { resolverExecutavel } from "../lib/seguranca-processo.mjs";
 
@@ -49,6 +70,31 @@ const SUITE = [
   "src/components/inbox/__tests__/LocationPicker.test.tsx",
   "src/components/inbox/__tests__/LocationPicker.integration.test.tsx",
 ];
+
+/** Estados possíveis de uma rodada (e, portanto, de um mutante). */
+export const ESTADOS = {
+  /** O teste nomeado certo falhou: o mutante foi pego. */
+  morto: "morto",
+  /** Suíte verde sob a mutação: nenhum teste observa essa mudança. */
+  sobrevivente: "sobrevivente",
+  /** A suíte não chegou a medir (não iniciou, sinal, sem resumo `Tests ...`). */
+  infra: "infra",
+  /** Rodou, mas saiu diferente de zero sem nenhum teste nomeado vermelho. */
+  inconclusivo: "inconclusivo",
+};
+
+/**
+ * Mutantes que SOBREVIVEM por equivalência conhecida e documentada — não são lacuna
+ * de teste e não reprovam a rodada. Qualquer sobrevivente fora deste mapa é reportado
+ * e derruba a saída para 1.
+ */
+export const EQUIVALENTES_DECLARADOS = new Map([
+  [
+    "F3-abort",
+    "equivalente: o abort() do setQuery é redundante sob o guard activeTermRef — a resposta " +
+      "velha já é descartada de qualquer forma (docs/mapa/PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md, E69)",
+  ],
+]);
 
 /**
  * Cada mutação: `from` (literal único, só para o pré-check de sanidade) + `sedScript`
@@ -111,6 +157,9 @@ const CONTROL = {
   desc: "CONTROLE: troca o placeholder (valor que nenhum teste observa)",
   file: PICKER,
   from: 'placeholder="Buscar endereço..."',
+  // Mutação de CONTROLE: sobreviver é o resultado ESPERADO (nenhum teste observa o
+  // placeholder). Sem essa declaração, um sobrevivente reprovaria a rodada (código 1).
+  esperado: ESTADOS.sobrevivente,
   sedScript:
     's/placeholder="Buscar endereço\\.\\.\\."/placeholder="Buscar endereços..."/',
 };
@@ -122,27 +171,261 @@ function vitestBin() {
   return process.platform === "win32" ? `${bin}.cmd` : bin;
 }
 
-function runSuite() {
-  const res = spawnSync(vitestBin(), ["run", ...SUITE], {
-    cwd: ROOT,
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
-  });
-  const out = `${res.stdout ?? ""}\n${res.stderr ?? ""}`;
-  // Nomes dos testes vermelhos: o reporter default do vitest marca cada falha com `×`.
-  const failed = [
+/** Linha de resumo do vitest (`Tests  1 failed | 41 passed (42)`), quando existe. */
+function resumoDeTestes(saida) {
+  return (saida.match(/^\s*Tests\s+.*$/m) ?? [])[0]?.trim() ?? null;
+}
+
+/** Nomes dos testes vermelhos: é o que torna a detecção rastreável. */
+function testesVermelhos(saida) {
+  return [
     ...new Set(
-      (out.match(/^\s*×\s+(.+?)\s*$/gm) ?? []).map((l) =>
+      (saida.match(/^\s*×\s+(.+?)\s*$/gm) ?? []).map((l) =>
         l.replace(/^\s*×\s+/, "").replace(/\s*$/u, ""),
       ),
     ),
   ];
-  const summary =
-    (out.match(/^\s*Tests\s+.*$/m) ?? []).map((s) => s.trim())[0] ?? "(sem resumo)";
-  return { code: res.status, failed, summary };
 }
 
-function main() {
+/**
+ * Classifica a rodada a partir do resultado cru do processo da suíte. R2-INF-019:
+ * erro de execução/configuração NUNCA vira "mutante morto".
+ */
+export function interpretarRodada(processo) {
+  const saida = `${processo?.stdout ?? ""}\n${processo?.stderr ?? ""}`;
+  const resumo = resumoDeTestes(saida);
+  const falhas = testesVermelhos(saida);
+
+  if (!processo || processo.error) {
+    return {
+      estado: ESTADOS.infra,
+      motivo: `a suíte não iniciou: ${processo?.error?.message ?? "sem resultado do processo"}`,
+      resumo,
+      falhas,
+    };
+  }
+  if (processo.status === null || processo.signal) {
+    return {
+      estado: ESTADOS.infra,
+      motivo: `processo encerrado por sinal ${processo.signal ?? "(desconhecido)"} antes do resumo`,
+      resumo,
+      falhas,
+    };
+  }
+  if (!resumo) {
+    return {
+      estado: ESTADOS.infra,
+      motivo:
+        "a suíte saiu sem imprimir o resumo `Tests ...` — coleta/configuração falhou ou nenhum teste rodou",
+      resumo,
+      falhas,
+    };
+  }
+  const falhasNoResumo = Number((resumo.match(/(\d+)\s+failed/) ?? [])[1] ?? 0);
+  if (falhasNoResumo > 0 && falhas.length > 0) {
+    return {
+      estado: ESTADOS.morto,
+      motivo: `${falhas.length} teste(s) nomeado(s) vermelho(s) — ${resumo}`,
+      resumo,
+      falhas,
+    };
+  }
+  if (processo.status === 0 && falhasNoResumo === 0) {
+    return {
+      estado: ESTADOS.sobrevivente,
+      motivo: `suíte verde sob a mutação (${resumo})`,
+      resumo,
+      falhas,
+    };
+  }
+  return {
+    estado: ESTADOS.inconclusivo,
+    motivo: `saída ${processo.status} sem nenhum teste nomeado vermelho (${resumo})`,
+    resumo,
+    falhas,
+  };
+}
+
+/**
+ * Roda a suíte que cobre o módulo. `comando`/`argumentos` existem para o teste injetar
+ * um processo controlado (suíte que não inicia, que sai 1 sem rodar teste, suíte verde
+ * sintética) sem depender do vitest instalado.
+ */
+export function rodarSuite({ comando = vitestBin(), argumentos = ["run", ...SUITE] } = {}) {
+  const processo = spawnSync(comando, argumentos, {
+    cwd: ROOT,
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return { ...interpretarRodada(processo), saidaProcesso: processo?.status ?? null };
+}
+
+/**
+ * Política de saída: o que o runner afirma ao terminar. Ver o cabeçalho do arquivo.
+ *
+ * Um sobrevivente só deixa de reprovar quando é ESPERADO: mutação de controle que
+ * declara `esperado: ESTADOS.sobrevivente` (nenhum teste observa o valor trocado) ou
+ * mutante equivalente documentado em `EQUIVALENTES_DECLARADOS`.
+ */
+export function veredito({ baseline, resultados, equivalentes = EQUIVALENTES_DECLARADOS }) {
+  if (!baseline || baseline.estado !== ESTADOS.sobrevivente) {
+    return {
+      codigo: 2,
+      sobreviventesEsperados: [],
+      sobreviventesInesperados: [],
+      motivo: `baseline ${baseline?.estado ?? "ausente"} (${baseline?.motivo ?? "a suíte não rodou sem mutação"})`,
+    };
+  }
+  const semMedicao = resultados.filter(
+    (r) => r.estado === ESTADOS.infra || r.estado === ESTADOS.inconclusivo,
+  );
+  if (semMedicao.length > 0) {
+    return {
+      codigo: 2,
+      sobreviventesEsperados: [],
+      sobreviventesInesperados: [],
+      motivo: `medição inválida em ${semMedicao.map((r) => `${r.id} (${r.estado})`).join(", ")}`,
+    };
+  }
+  const sobreviventes = resultados.filter((r) => r.estado === ESTADOS.sobrevivente);
+  const eraEsperado = (r) => equivalentes.has(r.id) || r.esperado === ESTADOS.sobrevivente;
+  const sobreviventesEsperados = sobreviventes.filter(eraEsperado).map((r) => r.id);
+  const sobreviventesInesperados = sobreviventes.filter((r) => !eraEsperado(r)).map((r) => r.id);
+  if (sobreviventesInesperados.length > 0) {
+    return {
+      codigo: 1,
+      sobreviventesEsperados,
+      sobreviventesInesperados,
+      motivo: `sobreviventes NÃO declarados: ${sobreviventesInesperados.join(", ")}`,
+    };
+  }
+  return {
+    codigo: 0,
+    sobreviventesEsperados,
+    sobreviventesInesperados: [],
+    motivo: `${resultados.length} mutante(s) medido(s); nenhum sobrevivente inesperado`,
+  };
+}
+
+const ROTULO = {
+  [ESTADOS.morto]: "MORTO     ",
+  [ESTADOS.sobrevivente]: "SOBREVIVEU",
+  [ESTADOS.infra]: "INFRA     ",
+  [ESTADOS.inconclusivo]: "INCONCL.  ",
+};
+
+/** Roda UM mutante e devolve o resultado já classificado (nunca lança por medição). */
+function medirMutante(m) {
+  const abs = path.join(ROOT, m.file);
+  const before = readFileSync(abs, "utf8");
+  const occurrences = COUNT(before, m.from);
+  const literalOk = m.expectOnce === false ? occurrences >= 1 : occurrences === 1;
+  if (!literalOk) {
+    return {
+      ...m,
+      estado: ESTADOS.inconclusivo,
+      motivo: `literal ${m.expectOnce === false ? "não encontrado" : `aparece ${occurrences}× (esperado 1)`}: ${m.from}`,
+      resumo: null,
+      falhas: [],
+    };
+  }
+
+  try {
+    const sed = spawnSync(resolverExecutavel("sed"), ["-i", "-E", m.sedScript, m.file], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    if (sed.status !== 0) {
+      return {
+        ...m,
+        estado: ESTADOS.inconclusivo,
+        motivo: `sed falhou: ${sed.stderr}`,
+        resumo: null,
+        falhas: [],
+      };
+    }
+    const after = readFileSync(abs, "utf8");
+    if (after === before) {
+      return {
+        ...m,
+        estado: ESTADOS.inconclusivo,
+        motivo: "sed não alterou o arquivo (padrão sem efeito)",
+        resumo: null,
+        falhas: [],
+      };
+    }
+    return { ...m, ...rodarSuite() };
+  } catch (erro) {
+    return {
+      ...m,
+      estado: ESTADOS.inconclusivo,
+      motivo: `rodada não mediu: ${erro.message}`,
+      resumo: null,
+      falhas: [],
+    };
+  } finally {
+    // Restaura sempre — inclusive quando a rodada foi inconclusiva ou lançou.
+    copyFileSync(path.join(BACKUP_DIR, path.basename(m.file)), abs);
+    const restaurado = readFileSync(abs, "utf8");
+    if (restaurado !== before) throw new Error(`[${m.id}] restauração divergiu de byte a byte`);
+  }
+}
+
+function imprimirTabela(baseline, resultados, v) {
+  const line = "─".repeat(96);
+  console.log(
+    `\n${line}\nE69 · mutação do módulo do mapa — cópia temporária: ${path.relative(ROOT, BACKUP_DIR)}\n` +
+      `Baseline (sem mutação): ${baseline.estado} — ${baseline.resumo ?? "(sem resumo)"}\n` +
+      `Suíte: ${SUITE.length} arquivos\n${line}`,
+  );
+  for (const r of resultados) {
+    console.log(`${ROTULO[r.estado] ?? r.estado}  ${r.id.padEnd(9)} ${r.desc}`);
+    console.log(`          ${r.motivo}`);
+    if (r.falhas?.length) {
+      console.log(`          testes que pegaram: ${r.falhas.join(" | ")}`);
+    }
+  }
+  const mortos = resultados.filter((r) => r.estado === ESTADOS.morto).length;
+  const sobreviventes = resultados.filter((r) => r.estado === ESTADOS.sobrevivente);
+  const semMedicao = resultados.filter(
+    (r) => r.estado === ESTADOS.infra || r.estado === ESTADOS.inconclusivo,
+  );
+  console.log(line);
+  console.log(
+    `Resultado: ${mortos}/${resultados.length} mutantes MORTOS · ${sobreviventes.length} SOBREVIVENTE(S) ` +
+      `(${v.sobreviventesEsperados.length} esperado(s)) · ${semMedicao.length} sem medição`,
+  );
+  if (sobreviventes.length > 0) {
+    console.log(
+      `Sobreviventes: ${sobreviventes
+        .map((r) =>
+          v.sobreviventesEsperados.includes(r.id)
+            ? `${r.id} (${r.esperado === ESTADOS.sobrevivente ? "controle: sobreviver é o esperado" : "equivalente declarado"})`
+            : `${r.id} (NÃO declarado)`,
+        )
+        .join(", ")}`,
+    );
+  }
+  if (semMedicao.length > 0) {
+    console.log(
+      `Sem medição (NÃO contam como mortos): ${semMedicao.map((r) => `${r.id} (${r.estado})`).join(", ")}`,
+    );
+  }
+  const controlesDiferentes = resultados.filter(
+    (r) => r.esperado === ESTADOS.sobrevivente && r.estado !== ESTADOS.sobrevivente,
+  );
+  if (controlesDiferentes.length > 0) {
+    console.log(
+      `ATENÇÃO: controle declarado sobrevivente não sobreviveu (${controlesDiferentes
+        .map((r) => `${r.id}: ${r.estado}`)
+        .join(", ")}) — revise o controle`,
+    );
+  }
+  console.log(`Veredito: ${v.motivo} → saída ${v.codigo}`);
+  console.log(`${line}\n`);
+}
+
+function executar() {
   const withControl = process.argv.includes("--control");
   const list = withControl ? [...MUTATIONS, CONTROL] : MUTATIONS;
 
@@ -159,39 +442,23 @@ function main() {
     }
   }
 
-  const results = [];
+  // 0) BASELINE: sem mutação, a suíte tem de ficar verde. Sem isso não há medição —
+  // um vermelho pré-existente mataria qualquer mutante, e uma infra quebrada mataria
+  // todos de uma vez (era exatamente o defeito R2-INF-019).
+  const baseline = rodarSuite();
+  console.log(
+    `\nBaseline (sem mutação): ${baseline.estado} — ${baseline.motivo}`,
+  );
+  if (baseline.estado !== ESTADOS.sobrevivente) {
+    console.error("BASELINE INVÁLIDO: a suíte precisa passar SEM mutação. Nada foi medido.");
+    process.exitCode = 2;
+    return;
+  }
+
+  const resultados = [];
   try {
     for (const m of list) {
-      const abs = path.join(ROOT, m.file);
-      const before = readFileSync(abs, "utf8");
-      const occurrences = COUNT(before, m.from);
-      if (m.expectOnce === false) {
-        if (occurrences < 1) throw new Error(`[${m.id}] literal não encontrado: ${m.from}`);
-      } else if (occurrences !== 1) {
-        throw new Error(`[${m.id}] literal aparece ${occurrences}× (esperado 1): ${m.from}`);
-      }
-
-      const sed = spawnSync(resolverExecutavel("sed"), ["-i", "-E", m.sedScript, m.file], {
-        cwd: ROOT,
-        encoding: "utf8",
-      });
-      if (sed.status !== 0) throw new Error(`[${m.id}] sed falhou: ${sed.stderr}`);
-
-      const after = readFileSync(abs, "utf8");
-      if (after === before) throw new Error(`[${m.id}] sed não alterou o arquivo (padrão sem efeito)`);
-
-      const r = runSuite();
-      results.push({
-        ...m,
-        killed: r.code !== 0,
-        failed: r.failed,
-        summary: r.summary,
-      });
-
-      // Restaura sempre, mesmo se a rodada falhar de um jeito inesperado.
-      copyFileSync(path.join(BACKUP_DIR, path.basename(m.file)), abs);
-      const restored = readFileSync(abs, "utf8");
-      if (restored !== before) throw new Error(`[${m.id}] restauração divergiu de byte a byte`);
+      resultados.push(medirMutante(m));
     }
   } finally {
     for (const [file, buf] of originals) {
@@ -202,32 +469,30 @@ function main() {
     }
   }
 
-  // Tabela final.
-  const line = "─".repeat(96);
-  console.log(`\n${line}\nE69 · mutação do módulo do mapa — cópia temporária: ${path.relative(ROOT, BACKUP_DIR)}\nSuíte: ${SUITE.length} arquivos (${results[0]?.summary ?? ""})\n${line}`);
-  let killed = 0;
-  for (const r of results) {
-    const state = r.killed ? "MORTO     " : "SOBREVIVEU";
-    killed += r.killed ? 1 : 0;
-    console.log(`${state}  ${r.id.padEnd(9)} ${r.desc}`);
-    console.log(`          ${r.summary}`);
-    if (r.failed.length) {
-      console.log(`          testes que pegaram: ${r.failed.join(" | ")}`);
-    }
-  }
-  console.log(line);
-  console.log(`Resultado: ${killed}/${results.length} mutantes MORTOS, ${results.length - killed} SOBREVIVENTES.`);
-  const survivors = results.filter((r) => !r.killed).map((r) => r.id);
-  console.log(`Sobreviventes: ${survivors.length ? survivors.join(", ") : "(nenhum)"}`);
-  console.log(`${line}\n`);
+  const v = veredito({ baseline, resultados });
+  imprimirTabela(baseline, resultados, v);
 
   // Todos os arquivos voltaram idênticos? (garante que nada ficou mutado na árvore)
   for (const [file, buf] of originals) {
     if (readFileSync(path.join(ROOT, file)).compare(buf) !== 0) {
       console.error(`!! ${file} não voltou ao original`);
       process.exitCode = 2;
+      return;
     }
+  }
+
+  process.exitCode = v.codigo;
+}
+
+function main() {
+  try {
+    executar();
+  } catch (erro) {
+    console.error(`MEDIÇÃO INVÁLIDA: ${erro.message}`);
+    process.exitCode = 2;
   }
 }
 
-main();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+}
