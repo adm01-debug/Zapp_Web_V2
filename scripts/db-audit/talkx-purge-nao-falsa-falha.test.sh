@@ -21,7 +21,11 @@
 #          para a campanha terminal -> "falha recente" falsa;
 #   A5/A6  DANO: talkx_engine_alerts() abre 'high_failure_rate' e 'outcome_unknown' FALSOS.
 # Bloco B (GREEN, depois da correcao):
-#   B0     coluna/trava novas existem; a view segue security_invoker e com os grants;
+#   B0     coluna/trava novas existem; a view segue security_invoker e com os grants; o backfill
+#          NAO regravou updated_at (digest antes/depois identico em c_green e c_live) e o gatilho
+#          publico do status nao tem EXECUTE para cliente nenhum — com controle (funcao sonda
+#          criada sob o mesmo default privilege do Supabase) provando que o harness concede
+#          EXECUTE por padrao, senao a afirmacao seria sobre o harness e nao sobre o banco;
 #   B1/B2  o expurgo continua anulando a PII, mas agora NAO cria sinal falso
 #          (a view le status_changed_at, que o expurgo nao move, e updated_at segue sendo
 #          empurrado — prova de que o defeito do updated_at continua e nao e ele que cura);
@@ -306,6 +310,32 @@ assert_eq 'A5. alerta high_failure_rate falso aberto na campanha terminal' '1' "
 assert_eq 'A6. alerta outcome_unknown falso aberto na campanha terminal' '1' "$(alerts_open outcome_unknown "$c_red")"
 
 # ═════════════════════════════════════════════════════════════════════════════
+# ACL DE PARTIDA DO SUPABASE (default privileges) + SONDA DE CONTROLE
+# ═════════════════════════════════════════════════════════════════════════════
+# No banco real, funcao nova em public nasce com EXECUTE para anon, authenticated e service_role
+# (default privileges do Supabase). Sem reproduzir isso, "authenticated sem EXECUTE" passaria
+# porque o harness nunca concedeu nada a ninguem — afirmacao sobre o harness, nao sobre o banco.
+# Aplicado aqui (logo antes da correcao) para valer exatamente sobre a funcao que a correcao cria.
+# A sonda e criada no mesmo regime e NAO e revogada: ela e o controle que prova que o harness
+# concede EXECUTE por padrao (se ela viesse sem EXECUTE, o teste tem de parar).
+psql_exec >/dev/null <<'SQL'
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
+CREATE FUNCTION public.talkx_x126_acl_probe() RETURNS integer LANGUAGE sql AS $$ SELECT 1 $$;
+SQL
+assert_eq 'B0-controle. harness concede EXECUTE a authenticated por padrao (sonda)' 't' \
+  "$(psql_val "SELECT has_function_privilege('authenticated','public.talkx_x126_acl_probe()','EXECUTE')")"
+
+# Digest do carimbo real (id | updated_at) por campanha, lido ANTES da correcao: e o que o
+# backfill da coluna nova nao pode tocar.
+upd_digest() {
+  psql_val "SELECT md5(string_agg(id::text || '|' || updated_at::text, ',' ORDER BY id)) FROM public.talkx_recipients WHERE campaign_id='$1'"
+}
+upd_before_green="$(upd_digest "$c_green")"
+upd_before_live="$(upd_digest "$c_live")"
+[[ -n "$upd_before_green" && -n "$upd_before_live" ]] || fail 'nao consegui ler o digest de updated_at antes da correcao'
+
+# ═════════════════════════════════════════════════════════════════════════════
 # CORRECAO
 # ═════════════════════════════════════════════════════════════════════════════
 psql_exec < "$fix" >/dev/null || fail 'migration da correcao nao aplicou'
@@ -317,6 +347,9 @@ pass "correcao aplicada ($(basename "$fix"))"
 assert_eq 'B0. coluna status_changed_at criada' '1' "$(psql_val "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='talkx_recipients' AND column_name='status_changed_at'")"
 assert_eq 'B0. gatilho do status criado (BEFORE UPDATE OF status)' '1' "$(psql_val "SELECT count(*) FROM pg_trigger WHERE tgname='trg_talkx_recipients_status_changed_at' AND NOT tgisinternal")"
 assert_eq 'B0. backfill herdou o updated_at antigo (nada de now())' 'true' "$(psql_val "SELECT (max(status_changed_at) < now() - interval '1 hour')::text FROM public.talkx_recipients WHERE campaign_id='$c_green'")"
+assert_eq 'B0. o backfill NAO regravou updated_at em c_green' "$upd_before_green" "$(upd_digest "$c_green")"
+assert_eq 'B0. o backfill NAO regravou updated_at em c_live' "$upd_before_live" "$(upd_digest "$c_live")"
+assert_eq 'B0. o backfill de c_green usou o updated_at que ja existia (nao now())' "$upd_before_green" "$(psql_val "SELECT md5(string_agg(id::text || '|' || status_changed_at::text, ',' ORDER BY id)) FROM public.talkx_recipients WHERE campaign_id='$c_green'")"
 assert_eq 'B0. a view segue security_invoker' 'true' "$(psql_val "SELECT (reloptions::text LIKE '%security_invoker=true%')::text FROM pg_class WHERE oid='public.talkx_engine_health'::regclass")"
 assert_eq 'B0. authenticated continua lendo a view' 't' "$(psql_val "SELECT has_table_privilege('authenticated','public.talkx_engine_health','SELECT')")"
 assert_eq 'B0. anon NAO le a view' 'f' "$(psql_val "SELECT has_table_privilege('anon','public.talkx_engine_health','SELECT')")"
@@ -324,6 +357,7 @@ assert_eq 'B0. anon NAO le a view' 'f' "$(psql_val "SELECT has_table_privilege('
 # o gatilho publico do status nao e chamavel por cliente nenhum
 assert_eq 'B0. authenticated sem EXECUTE no gatilho do status' 'f' "$(psql_val "SELECT has_function_privilege('authenticated','public.set_talkx_recipient_status_changed_at()','EXECUTE')")"
 assert_eq 'B0. anon sem EXECUTE no gatilho do status' 'f' "$(psql_val "SELECT has_function_privilege('anon','public.set_talkx_recipient_status_changed_at()','EXECUTE')")"
+assert_eq 'B0. service_role sem EXECUTE no gatilho do status (so o gatilho o chama)' 'f' "$(psql_val "SELECT has_function_privilege('service_role','public.set_talkx_recipient_status_changed_at()','EXECUTE')")"
 
 # rearma PII na campanha verde e libera o gate diario do expurgo (bookkeeping do teste)
 reset_purge_gate >/dev/null
@@ -366,9 +400,13 @@ pass 'B5. migration da correcao reaplicada sem erro (idempotencia)'
 # ═════════════════════════════════════════════════════════════════════════════
 sed -n '/^-- BEGIN-ROLLBACK-SQL$/,/^-- END-ROLLBACK-SQL$/p' "$fix" | sed '1d;$d' | sed 's/^-- //' > "$rb"
 [[ -s "$rb" ]] || fail 'nao consegui extrair o SQL do rollback da migration'
+upd_rollback_green="$(upd_digest "$c_green")"
+upd_rollback_live="$(upd_digest "$c_live")"
 psql_exec < "$rb" >/dev/null || fail 'o SQL do rollback nao rodou'
 rm -f "$rb"
 pass 'C0. o SQL do rollback (extraido verbatim do cabecalho) rodou'
+assert_eq 'C0. o rollback NAO regrava updated_at em massa (c_green)' "$upd_rollback_green" "$(upd_digest "$c_green")"
+assert_eq 'C0. o rollback NAO regrava updated_at em massa (c_live)' "$upd_rollback_live" "$(upd_digest "$c_live")"
 
 assert_eq 'C1. rollback removeu a coluna nova' '0' "$(psql_val "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='talkx_recipients' AND column_name='status_changed_at'")"
 assert_eq 'C1. rollback removeu o gatilho novo' '0' "$(psql_val "SELECT count(*) FROM pg_trigger WHERE tgname='trg_talkx_recipients_status_changed_at' AND NOT tgisinternal")"
@@ -387,4 +425,5 @@ assert_eq 'C2. ROLLBACK: taxa falsa (4/5)' '0.8000' "$(psql_val "SELECT COALESCE
 echo '[OK] Talk X #126 / R3-DELTA-009: a purga LGPD nao transforma expurgo de PII em "falha recente".'
 echo '     ANTES: a purga empurrava updated_at e a view lia updated_at -> failure_rate_15m/outcome_unknown_24h falsos e alertas high_failure_rate/outcome_unknown falsos.'
 echo '     DEPOIS: a view le status_changed_at (so troca REAL de status), o expurgo segue anulando a PII e a falha real continua sendo detectada e alertada.'
-echo '     ROLLBACK: extraido do cabecalho, roda e devolve o comportamento anterior.'
+echo '     BACKFILL: o gatilho generico fica desligado SO durante o backfill (updated_at identico antes/depois em c_green e c_live).'
+echo '     ROLLBACK: extraido do cabecalho, roda, nao regrava updated_at em massa e devolve o comportamento anterior.'
