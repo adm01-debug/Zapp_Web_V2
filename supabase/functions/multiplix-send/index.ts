@@ -31,6 +31,7 @@ import {
 // MESMO modulo que a previa usa. Antes o worker usava `dispatch.message_template`
 // e `dispatch.media_url/media_type` (globais) e so o fileName vinha do bloco — o
 // operador revisava uma mensagem e saia outra.
+import { DEFAULT_MEDIA_TTL_SECONDS } from "../_shared/messaging/media.ts";
 import { resolveBlockContent, type BlockAsset, type ContentBlockRow, type ResolvedBlock } from "../_shared/multiplix-content.ts";
 
 // F37/F43: as duplicatas locais (`getGreeting`, `personalizeMultiplix`,
@@ -413,7 +414,7 @@ export async function handleMultiplixSend(
         // material do envio.
         const { data: itemDetail, error: itemDetailError } = await supabase
           .from("multiplix_delivery_items")
-          .select("id, recipient_id, block_id, attempt_count, status, personalized_message, " +
+          .select("id, recipient_id, block_id, attempt_count, status, personalized_message, voice_asset_id, " +
             "recipient:multiplix_recipients!inner(id, destino_e164, company_name_snapshot, variables_snapshot), " +
             "block:multiplix_blocks!inner(id, block_order, block_type, content, personalization_mode, content_version, asset_id)")
           .eq("id", item.item_id)
@@ -421,6 +422,7 @@ export async function handleMultiplixSend(
         if (itemDetailError) throw new Error(`multiplix_item_detail_failed: ${itemDetailError.message}`);
         const itemDetailRow = itemDetail as unknown as {
           personalized_message: string | null;
+          voice_asset_id: string | null;
           recipient: {
             id: string;
             destino_e164: string | null;
@@ -509,9 +511,11 @@ export async function handleMultiplixSend(
         // gravacao do snapshot (RPC, I/O) fica FORA — ver logo abaixo.
         let resolvedBlock: ResolvedBlock;
         let mediaAsset: (BlockAsset & { url: string }) | null;
+        let effectiveVoiceAssetId: string | null;
         let voicePending: boolean;
         let blockHasNothing: boolean;
         let personalizedMsg: string;
+        let unresolvedVariables: string | null = null;
         // Sinaliza que o texto veio do BLOCO (e nao de um snapshot ja gravado) e
         // precisa ser persistido no item.
         let persistSnapshot = false;
@@ -529,17 +533,28 @@ export async function handleMultiplixSend(
           mediaAsset = resolvedBlock.asset && typeof mediaAssetUrl === "string" && mediaAssetUrl !== ""
             ? { ...resolvedBlock.asset, url: mediaAssetUrl }
             : null;
-          // F69: bloco de voz sem ativo renderizado (F65 pendente) SEGURA o item —
-          // nunca vira texto solto nem cai no template global.
-          voicePending = resolvedBlock.asset?.kind === "voice" && mediaAsset === null;
+          // F65: voz personalizada congela o ativo no ITEM; same_audio congela no
+          // BLOCO. A existencia do id, nao a URL (que e assinada abaixo), decide
+          // se a voz esta pronta ou ainda deve segurar a fila.
+          effectiveVoiceAssetId = resolvedBlock.asset?.kind === "voice"
+            ? itemDetailRow.voice_asset_id ?? resolvedBlock.asset.asset_id
+            : null;
+          voicePending = resolvedBlock.asset?.kind === "voice" && effectiveVoiceAssetId === null;
           // Bloco sem texto e sem midia: nao existe mensagem a enviar.
-          blockHasNothing = resolvedBlock.text === "" && mediaAsset === null && !voicePending;
+          blockHasNothing = resolvedBlock.text === "" && mediaAsset === null && !voicePending && effectiveVoiceAssetId === null;
 
           // MX02: o snapshot e do ITEM (`multiplix_delivery_items.personalized_message`).
           // Um destinatario tem N itens (um por bloco) — guardar a mensagem no
           // recipient (como o worker fazia) apagaria a dos blocos 2..N.
           personalizedMsg = itemDetailRow.personalized_message ?? "";
-          if (!personalizedMsg && !voicePending && !blockHasNothing) {
+          if (!personalizedMsg && !voicePending) {
+            const variableErrors = [
+              ...[...resolvedBlock.missing].sort().map((key) => `missing_variable:${key}`),
+              ...[...resolvedBlock.unknown].sort().map((key) => `unknown_variable:${key}`),
+            ];
+            unresolvedVariables = variableErrors.length > 0 ? variableErrors.join(";") : null;
+          }
+          if (!personalizedMsg && unresolvedVariables === null && !voicePending && !blockHasNothing) {
             // O texto do bloco ja vem renderizado pelo kernel (`personalize`), com o
             // nome da empresa e o `variables_snapshot` do item — a MESMA saida da
             // previa. Nada e remontado a partir do template global do disparo.
@@ -563,6 +578,43 @@ export async function handleMultiplixSend(
           const interval = randomBetween(dispatch.send_interval_min, dispatch.send_interval_max);
           await sleep(interval);
           continue;
+        }
+
+        if (unresolvedVariables !== null) {
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
+            p_claim_token: claim.claim_token,
+            p_status: "skipped",
+            p_error_message: unresolvedVariables,
+          });
+          if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+          skippedCount++;
+          processedCount++;
+          continue;
+        }
+
+        // F65/F69: o id congelado prova que o audio foi renderizado; a URL e
+        // temporaria e precisa ser resolvida no momento do envio. Esta leitura e
+        // assinatura sao I/O e ficam fora do catch deterministico acima.
+        if (effectiveVoiceAssetId !== null && resolvedBlock.asset?.kind === "voice") {
+          const { data: voiceAsset, error: voiceAssetError } = await supabase
+            .from("multiplix_voice_assets")
+            .select("id, caminho, invalidated_at")
+            .eq("id", effectiveVoiceAssetId)
+            .maybeSingle();
+          if (voiceAssetError) {
+            throw new Error(`multiplix_voice_asset_lookup_failed: ${voiceAssetError.message}`);
+          }
+          if (!voiceAsset || voiceAsset.invalidated_at || typeof voiceAsset.caminho !== "string") {
+            throw new Error("multiplix_voice_asset_unavailable");
+          }
+          const { data: signedVoice, error: signedVoiceError } = await supabase.storage
+            .from("multiplix-voice")
+            .createSignedUrl(voiceAsset.caminho, DEFAULT_MEDIA_TTL_SECONDS);
+          if (signedVoiceError || typeof signedVoice?.signedUrl !== "string" || signedVoice.signedUrl === "") {
+            throw new Error(`multiplix_voice_asset_sign_failed: ${signedVoiceError?.message ?? "signed_url_missing"}`);
+          }
+          mediaAsset = { ...resolvedBlock.asset, url: signedVoice.signedUrl };
         }
 
         // MX02/F70: a gravacao do snapshot fica FORA do try/catch determinista. O RPC

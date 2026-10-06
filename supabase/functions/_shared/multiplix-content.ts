@@ -280,6 +280,9 @@ export interface ResolvedBlock {
   content_version: number | null;
   /** Texto final do bloco (ou o roteiro final, em bloco de voz). */
   text: string;
+  /** Variaveis sem valor/fora do contrato, para o worker negar o envio. */
+  missing: string[];
+  unknown: string[];
   asset: BlockAsset | null;
 }
 
@@ -304,14 +307,23 @@ export function resolveBlockContent(
     ? (type === "voice_ai" ? voiceScriptOf(block) : null)
     : (blockTextOf(block) ?? mediaCaptionOf(block) ?? "");
 
-  const text = template === null
-    ? ""
-    : renderForRecipient(template, company, variables, timezone);
+  const textResolution = template === null
+    ? { text: "", missing: [] as string[], unknown: [] as string[] }
+    : personalize(template, { company: asString(company) }, variables, timezone);
 
   const captionTemplate = mediaCaptionOf(block);
-  const caption = captionTemplate === null
+  const captionResolution = captionTemplate === null
     ? null
-    : renderForRecipient(captionTemplate, company, variables, timezone);
+    : personalize(captionTemplate, { company: asString(company) }, variables, timezone);
+  const caption = captionResolution?.text ?? null;
+  const missing = [...new Set([
+    ...textResolution.missing,
+    ...(captionResolution?.missing ?? []),
+  ])];
+  const unknown = [...new Set([
+    ...textResolution.unknown,
+    ...(captionResolution?.unknown ?? []),
+  ])];
 
   return {
     block_id: block.id,
@@ -319,8 +331,10 @@ export function resolveBlockContent(
     block_type: type,
     personalization_mode: asString(block.personalization_mode),
     content_version: typeof block.content_version === "number" ? block.content_version : null,
-    text,
-    asset: buildAsset(block, caption, type === "voice_ai" ? text : null),
+    text: textResolution.text,
+    missing,
+    unknown,
+    asset: buildAsset(block, caption, type === "voice_ai" ? textResolution.text : null),
   };
 }
 

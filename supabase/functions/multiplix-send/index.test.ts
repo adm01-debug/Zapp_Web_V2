@@ -146,6 +146,12 @@ interface MockOpts {
   blockContent?: Record<string, unknown>;
   /** MX02: `block_type` do bloco devolvido no detalhe do item (default "text") */
   blockType?: string;
+  /** Ativo compartilhado congelado no bloco (`same_audio`). */
+  blockAssetId?: string | null;
+  /** Ativo personalizado congelado no item (F65). */
+  itemVoiceAssetId?: string | null;
+  /** Caminho privado do ativo de voz pronto. */
+  voiceAssetPath?: string | null;
   /** MX02: `variables_snapshot` do destinatario (variaveis congeladas do item) */
   variablesSnapshot?: Record<string, string>;
   /** MX02: `multiplix_delivery_items.personalized_message` — snapshot DO ITEM */
@@ -219,9 +225,10 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
           block_id: "block-1",
           attempt_count: alvo.attempt_count ?? 0,
           status: "sending",
+          voice_asset_id: opts.itemVoiceAssetId ?? null,
           // MX02: o snapshot da mensagem e do ITEM (um destinatario tem N itens),
           // nao do recipient — ler o do recipient perderia os blocos 2..N.
-          personalized_message: opts.itemPersonalizedMessage ?? null,
+          personalized_message: opts.itemPersonalizedMessage ?? alvo.personalized_message ?? null,
           recipient: { ...alvo, variables_snapshot: opts.variablesSnapshot ?? alvo.variables_snapshot ?? null },
           // MX02: o conteudo do envio vem do BLOCO do item. O default espelha o
           // template do disparo do mock, para o cenario legado "bloco == template".
@@ -229,12 +236,22 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
             id: "block-1",
             block_order: 0,
             block_type: opts.blockType ?? "text",
-            content: opts.blockContent ?? { text: "Ola {{empresa}}" },
-            personalization_mode: null,
+            content: opts.blockContent ?? { text: String(opts.dispatch?.message_template ?? "Ola {{empresa}}") },
+            personalization_mode: opts.blockType === "voice_ai"
+              ? (opts.itemVoiceAssetId ? "personalized" : "same_audio")
+              : null,
             content_version: 1,
-            asset_id: null,
+            asset_id: opts.blockAssetId ?? null,
           },
         },
+        error: null,
+      };
+    }
+    if (table === "multiplix_voice_assets") {
+      return {
+        data: opts.voiceAssetPath
+          ? { id: opts.itemVoiceAssetId ?? opts.blockAssetId, caminho: opts.voiceAssetPath, invalidated_at: null }
+          : null,
         error: null,
       };
     }
@@ -415,6 +432,15 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
       },
       from(table: string) {
         return tableBuilder(table, opts, ctx);
+      },
+      storage: {
+        from(_bucket: string) {
+          return {
+            createSignedUrl(path: string, _ttl: number) {
+              return Promise.resolve({ data: { signedUrl: `https://storage.test/${path}?token=teste` }, error: null });
+            },
+          };
+        },
       },
     },
   };
@@ -1933,6 +1959,9 @@ Deno.test("MX05: decisao dead_letter (sem retryAfter do kernel) nao agenda retry
   assert(
     esperaMs >= 29_000 && esperaMs <= 31_000,
     `p_retry_after fora do 1o degrau de 30 s: ${String(reagendamentos[0].args.p_retry_after)} (${esperaMs}ms)`,
+  );
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MX02 (item 46/P1) — o worker envia o conteudo do BLOCO do item, e nao mais o
 // template/midia GLOBAIS do disparo. A previa (F48) e o worker compartilham o
@@ -2034,6 +2063,64 @@ Deno.test("MX02/F69: bloco de voz sem ativo renderizado SEGURA o item (nao manda
     `codigo nomeado esperado, veio: ${String(reschedules[0].p_error_message)}`,
   );
   assert(rpcs(ctx, "record_multiplix_item_sent").length === 0, "nada pode ser marcado como enviado");
+});
+
+Deno.test("MX02/F69: bloco voice_ai com ativo pronto envia o audio sem reschedule nem dead-letter", async () => {
+  const assetId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550016")],
+    blockType: "voice_ai",
+    blockAssetId: assetId,
+    blockContent: { voice: { voice_id: "voz-teste" } },
+    voiceAssetPath: "comercial/audio-pronto.ogg",
+  };
+
+  const { ctx, provider, body } = await runComClienteV2(opts);
+  const audio = provider.posts.find((post) =>
+    post.url.includes("audio") || post.url.includes("sendWhatsAppAudio")
+  );
+  assert(audio !== undefined, `ativo pronto deveria gerar POST de audio: ${JSON.stringify(provider.posts)}`);
+  assert(
+    String(audio.body.audio ?? audio.body.media ?? "").includes("audio-pronto.ogg"),
+    `POST deve usar a URL assinada do ativo pronto: ${JSON.stringify(audio.body)}`,
+  );
+  assert(ctx.reschedules.length === 0, "ativo pronto nao pode voltar para a fila");
+  assert(ctx.deadLettered.length === 0, "ativo pronto nao pode ir para dead-letter");
+  assert(
+    ctx.completions.every((call) => call.p_status !== "failed"),
+    "ativo pronto nao pode ser concluido como failed",
+  );
+  assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "ativo pronto deve ser marcado como enviado");
+  assert(body.sent === 1 && body.failed === 0, `resultado inesperado: ${JSON.stringify(body)}`);
+});
+
+Deno.test("MX02/F69: voice_asset_id congelado no item prevalece e envia o audio personalizado", async () => {
+  const itemAssetId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550017")],
+    blockType: "voice_ai",
+    itemVoiceAssetId: itemAssetId,
+    blockContent: { voice: { script: "Roteiro personalizado", voice_id: "voz-teste" } },
+    voiceAssetPath: "comercial/audio-personalizado.ogg",
+  };
+
+  const { ctx, provider, body } = await runComClienteV2(opts);
+  const audio = provider.posts.find((post) =>
+    post.url.includes("audio") || post.url.includes("sendWhatsAppAudio")
+  );
+  assert(audio !== undefined, `ativo do item deveria gerar POST de audio: ${JSON.stringify(provider.posts)}`);
+  assert(
+    String(audio.body.audio ?? audio.body.media ?? "").includes("audio-personalizado.ogg"),
+    `POST deve usar a URL assinada do ativo do item: ${JSON.stringify(audio.body)}`,
+  );
+  assert(ctx.reschedules.length === 0, "ativo do item nao pode voltar para a fila");
+  assert(ctx.deadLettered.length === 0, "ativo do item nao pode ir para dead-letter");
+  assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "ativo do item deve ser marcado como enviado");
+  assert(body.sent === 1 && body.failed === 0, `resultado inesperado: ${JSON.stringify(body)}`);
 });
 
 Deno.test("MX02: bloco sem texto e sem midia nao vira POST (devolve o item com codigo nomeado)", async () => {
