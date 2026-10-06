@@ -451,14 +451,10 @@ export async function handleIncomingMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  // R2-API-006: a palavra de opt-out e a citação viajam NA MESMA chamada do
-  // ingest — a RPC grava mensagem + efeitos pendentes (inbound_message_effects)
-  // numa transação só. Resolvido aqui porque a reentrega também precisa
-  // registrar o que faltou (mensagens pré-outbox recuperam o efeito no replay).
-  //
-  // X030: opt-out por palavra configurada (talkx_optout_keywords, casada com a
-  // MESMA normalização da RPC) OU por resposta de botão/lista com id
-  // `talkx_optout` (X064). Avaliado só para mensagem recebida (nunca a nossa).
+  // R2-API-006: palavra de opt-out e citacao viajam na MESMA transacao do ingest
+  // (a RPC grava mensagem + efeitos pendentes; a reentrega retoma o que faltou).
+  // X030/X064: por palavra configurada (mesma normalizacao da RPC) OU botao/lista
+  // `talkx_optout` — avaliado so para mensagem recebida (nunca a nossa).
   const optOutKeyword = key.fromMe
     ? null
     : interactiveResponseId === TALKX_OPTOUT_BUTTON_ID
@@ -468,9 +464,9 @@ export async function handleIncomingMessage(
     : null;
   const quotedExternalId = extractQuotedExternalId(data);
 
-  // Uma transacao (migration 20260905050000 + outbox R2-API-006): contato
-  // find-or-create (variantes do 9o digito, relink) + upsert idempotente da
-  // mensagem + efeitos pendentes (opt-out OU respostas — nunca os dois).
+  // Uma transacao (20260905050000 + outbox R2-API-006): contato find-or-create
+  // (variantes do 9o digito, relink) + upsert idempotente + efeitos pendentes
+  // (opt-out OU respostas — nunca os dois).
   const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', {
     p_connection_id: connection.id,
     p_phone: phone,
@@ -480,13 +476,14 @@ export async function handleIncomingMessage(
     p_media_url: mediaUrl,
     p_external_id: key.id,
     p_created_at: messageCreatedAt,
+    p_from_me: key.fromMe === true,
     p_opt_out_keyword: optOutKeyword,
     p_quoted_external_id: quotedExternalId,
   });
   if (txError) {
     console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone, messageType });
-    // R2-API-006: engolir o erro transformaria a falha em "mensagem perdida" —
-    // a exceção vira 500 no webhook e a Evolution reentrega a operação inteira.
+    // R2-API-006: engolir o erro seria "mensagem perdida"; a excecao vira 500 e a
+    // Evolution reentrega a operacao inteira.
     throw new Error(`ingest_inbound_message falhou (${txError.code ?? 'sem_codigo'}): ${txError.message}`);
   }
   const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
@@ -508,9 +505,8 @@ export async function handleIncomingMessage(
   }
 
   // R2-API-006: a drenagem roda em TODA entrega — inclusive 'duplicate', que
-  // antes saía aqui sem retomar nada. A RPC aplica e baixa cada pendência na
-  // mesma transação; falha fica pendente (last_error) e a próxima retenta.
-  // Erro e pendência são lançados: o 500 faz a Evolution reentregar.
+  // antes saia sem retomar nada. A RPC aplica e baixa na mesma transacao; falha
+  // fica pendente (last_error). Erro e pendencia sao lancados (500 -> reentrega).
   const { data: drainData, error: drainErr } = await supabase.rpc('drain_inbound_message_effects', {
     p_connection_id: connection.id,
     p_external_id: key.id,
@@ -541,9 +537,8 @@ export async function handleIncomingMessage(
     }
   }
 
-  // E57/E59: a confirmação só sai quando a drenagem criou uma supressão NOVA
-  // (suppression_id não-nulo). Já suprimido (reentrega ou opt-out anterior) e
-  // gate de 30 dias não reenviam — a autoresposta nunca sai duas vezes.
+  // E57/E59: a confirmacao so sai quando a drenagem criou supressao NOVA
+  // (suppression_id nao-nulo) — a autoresposta nunca sai duas vezes.
   if (drain?.suppression_id) {
     const resolvedPhone = phone ?? ((key.remoteJid ?? '').split('@')[0].replace(/\D/g, ''));
     console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist (' + optOutKeyword + ')');
@@ -596,8 +591,7 @@ export async function handleIncomingMessage(
     console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', phone);
   }
 
-  // E88/F62: resultados das atribuições aplicadas pela drenagem (log de
-  // observabilidade — o efeito no banco já está garantido na transação da RPC).
+  // E88/F62: resultados das atribuicoes aplicadas pela drenagem (observabilidade).
   if (drain?.talkx_reply?.attributed === true) {
     console.warn(`[E88] Resposta atribuida (${drain.talkx_reply.attribution}): recipient=${drain.talkx_reply.recipient_id} campaign=${drain.talkx_reply.campaign_id}`);
   }
