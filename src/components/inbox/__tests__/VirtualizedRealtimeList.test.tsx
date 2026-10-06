@@ -325,3 +325,59 @@ describe('VirtualizedRealtimeList — prazo granular de SLA por conversa (R2-SLA
     expect(mocks.slaIndicator).not.toHaveBeenCalled();
   });
 });
+
+describe('VirtualizedRealtimeList — prioridade de não lidas definida pelos filtros (R2-INB-028)', () => {
+  // Defeito: o componente reordenava TODA a entrada por timestamp antes de
+  // agrupar, desfazendo o "não lidas primeiro" calculado em useInboxFilters
+  // (regra implementada uma única vez, no hook). Os testes montam a lista já na
+  // ordem que o filtro entrega e exigem que ela sobreviva à renderização: a não
+  // lida MAIS ANTIGA tem de ficar acima da lida MAIS NOVA do mesmo grupo.
+  function comMensagem(
+    id: string,
+    name: string,
+    ultimaMensagemEm: string,
+    unreadCount: number
+  ): ConversationWithMessages {
+    const conversation = makeConversation({ id, name });
+    conversation.lastMessage = {
+      id: `m-${id}`,
+      content: `ultima mensagem de ${id}`,
+      created_at: ultimaMensagemEm,
+      sender: 'contact',
+    } as unknown as ConversationWithMessages['lastMessage'];
+    conversation.unreadCount = unreadCount;
+    return conversation;
+  }
+
+  function linhasRenderizadas(): string[] {
+    return screen.getAllByTestId('conversation-item').map((el) => el.textContent ?? '');
+  }
+
+  it('no mesmo grupo de data, a não lida antiga fica acima da lida nova', () => {
+    // Datas fora de hoje/ontem: as duas caem em "Mais antigas", então só a
+    // prioridade de não lidas pode inverter a ordem temporal (a antiga é a não lida).
+    const naoLidaAntiga = comMensagem('nao-lida', 'AlfaNaoLida Contato', '2026-08-01T10:00:00Z', 2);
+    const lidaNova = comMensagem('lida', 'BetaLida Contato', '2026-08-05T10:00:00Z', 0);
+
+    renderList([naoLidaAntiga, lidaNova]);
+
+    const linhas = linhasRenderizadas();
+    expect(linhas).toHaveLength(2);
+    expect(linhas[0]).toContain('AlfaNaoLida');
+    expect(linhas[1]).toContain('BetaLida');
+  });
+
+  it('dentro das Fixadas, a não lida antiga também fica acima da lida nova', () => {
+    const naoLidaAntiga = comMensagem('pin-nao-lida', 'GamaNaoLida Contato', '2026-08-01T10:00:00Z', 4);
+    const lidaNova = comMensagem('pin-lida', 'DeltaLida Contato', '2026-08-05T10:00:00Z', 0);
+
+    renderList([naoLidaAntiga, lidaNova], {
+      pinnedIds: new Set([naoLidaAntiga.contact.id, lidaNova.contact.id]),
+    });
+
+    const linhas = linhasRenderizadas();
+    expect(linhas).toHaveLength(2);
+    expect(linhas[0]).toContain('GamaNaoLida');
+    expect(linhas[1]).toContain('DeltaLida');
+  });
+});

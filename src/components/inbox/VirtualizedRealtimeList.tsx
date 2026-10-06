@@ -117,13 +117,17 @@ export function VirtualizedRealtimeList({
     return conversations.filter(c => c?.contact?.id);
   }, [conversations]);
 
-  // Ordem interna preservada — só particiona em grupos (Fixadas / Hoje / Ontem /
-  // Mais antigas), não reordena dentro de cada grupo além do que o filtro já entrega.
+  // R2-INB-028: a ordem de exibição (não lidas primeiro, depois mais recentes)
+  // é decidida em useInboxFilters e chega pronta em `conversations`. Aqui só
+  // PARTICIONAMOS em grupos (Fixadas / Hoje / Ontem / Mais antigas) preservando
+  // a ordem de entrada dentro de cada grupo. Reordenar por timestamp neste
+  // ponto descartava a prioridade de não lidas: uma não lida antiga caía atrás
+  // de uma lida mais recente do mesmo grupo de data.
   const flatRows = useMemo<FlatRow[]>(() => {
-    const sorted = [...safeConversations].sort((a, b) => getConversationTime(b) - getConversationTime(a));
+    const ordered = safeConversations;
 
-    const pinned = sorted.filter(c => pinnedIds.has(c.contact.id));
-    const rest = sorted.filter(c => !pinnedIds.has(c.contact.id));
+    const pinned = ordered.filter(c => pinnedIds.has(c.contact.id));
+    const rest = ordered.filter(c => !pinnedIds.has(c.contact.id));
 
     const today = rest.filter(c => isToday(new Date(getConversationTime(c))));
     const yesterday = rest.filter(c => isYesterday(new Date(getConversationTime(c))));
