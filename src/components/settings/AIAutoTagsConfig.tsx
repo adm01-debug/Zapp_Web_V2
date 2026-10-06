@@ -46,26 +46,54 @@ export function AIAutoTagsConfig() {
         .order('updated_at', { ascending: false })
         .limit(20);
 
-      if (!contacts) return;
+      if (!contacts) return { processed: 0, failed: 0 };
 
       let processed = 0;
+      let failed = 0;
       for (const contact of contacts) {
         try {
-          await supabase.functions.invoke('ai-auto-tag', {
+          const { data, error } = await supabase.functions.invoke('ai-auto-tag', {
             body: { contactId: contact.id },
           });
-          processed++;
+
+          // `functions.invoke` NÃO lança em resposta de erro HTTP: devolve
+          // `{ data: null, error }`. Sem olhar o `error` (e o `status` do
+          // envelope devolvido pela função), uma resposta de erro entrava na
+          // contagem como se a conversa tivesse sido classificada.
+          const status = (data as { status?: string } | null)?.status;
+          const classificada = !error && (status === 'ok' || status === 'partial');
+
+          if (classificada) {
+            processed++;
+          } else {
+            failed++;
+            log.error('Error tagging contact:', contact.id, error ?? status ?? 'resposta sem status');
+          }
         } catch (e) {
+          failed++;
           log.error('Error tagging contact:', contact.id, e);
         }
         // Small delay to avoid rate limits
         await new Promise(r => setTimeout(r, 1000));
       }
-      return processed;
+      return { processed, failed };
     },
-    onSuccess: (count) => {
+    onSuccess: ({ processed, failed }) => {
       queryClient.invalidateQueries({ queryKey: ['ai-tag-stats'] });
-      toast({ title: 'Tags atualizadas!', description: `${count} conversas classificadas por IA.` });
+      if (processed === 0 && failed > 0) {
+        toast({
+          title: 'Nenhuma conversa classificada',
+          description: `${failed} ${failed === 1 ? 'resposta de erro' : 'respostas de erro'} da IA.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      toast({
+        title: 'Tags atualizadas!',
+        description: failed > 0
+          ? `${processed} conversas classificadas por IA. ${failed} ${failed === 1 ? 'falha' : 'falhas'}.`
+          : `${processed} conversas classificadas por IA.`,
+      });
     },
     onError: (e: Error) => {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
