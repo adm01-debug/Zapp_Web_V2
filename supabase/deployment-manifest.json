@@ -226,8 +226,8 @@
     },
     {
       "path": "supabase/functions/_shared/messaging/evolution-go.ts",
-      "bytes": 11101,
-      "sha256": "9382f7d07cc9e31af42f46b050565846d11db9e013a0d1e5cdf3fdd768f5913f"
+      "bytes": 13785,
+      "sha256": "656e264273069e5f2dc631d7da3e136b06f8bd64d595e667c647edecedae2aaa"
     },
     {
       "path": "supabase/functions/_shared/messaging/index.ts",
@@ -746,8 +746,8 @@
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
-      "bytes": 5537,
-      "sha256": "982f1460272a527126235a932fa9deea6019fba027c07444ef900de8a69760e9"
+      "bytes": 11174,
+      "sha256": "ce0a201abc2e34c93fed483a05e33daef2cafac39508cd1aaad240856ef9221d"
     }
   ],
   "functions": [
@@ -1539,7 +1539,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d29ecfed3b6e4b38b0c35ff7116daaaf01d6c2928848174a2e564e3395aa5358",
+      "source_sha256": "0d81bae521a90f4f888766a6a8747901bbfd59ab922a4ead19945a53a1a72b19",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1576,7 +1576,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2382deb52e026daec3cc982a56fec74d4d0c4f63c3180c76a03c2ca58f984567",
+      "source_sha256": "ad5d4e4d7d913228cc821880829345d49788b6829bf0d76cafbb628483ed75c8",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1778,7 +1778,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7cc1c216358fc85b83eb0bb0cda9fd2b73b8890b5a4ae390c23e336c0cdcfd5b",
+      "source_sha256": "8b851d97010386597d5b13a8c5f6c970d429ebdba607065f056afecf2a7adfc9",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -1885,13 +1885,19 @@
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "5080c348f0662c8b8aff3505af3925f57da9c0f7161d4ed963aa1b22d55495e1",
+      "source_sha256": "f54826a0b7e56751ec918391f36451b09a696a584e605087e5aeda4c6ca334ab",
       "source_files": [
+        "supabase/functions/_shared/evolution-go-routes.ts",
+        "supabase/functions/_shared/evolution-helpers.ts",
+        "supabase/functions/_shared/evolution-send.ts",
+        "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/media-egress.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/whatsapp-webhook/index.ts"
       ]
     }
   ],
-  "manifest_sha256": "a9b3e045124568014497bb9b11ef8fe4ca6e28b2e7192c8a43d58c635571a92f"
+  "manifest_sha256": "1535a97816c3db58ab428946772234aa8c4db7e9b359aac9f6938dfde7115427"
 }
