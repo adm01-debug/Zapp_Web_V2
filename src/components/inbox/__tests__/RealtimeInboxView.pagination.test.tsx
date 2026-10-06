@@ -152,6 +152,10 @@ import { RealtimeInboxView } from '../RealtimeInboxView';
 // ChatMessagesArea), só o carregamento do módulo deixa de ser assíncrono.
 import '../ChatPanel';
 
+// Mantém espera local ao boundary lazy/Suspense para máquinas lentas, sem alterar
+// o timeout global da suíte nem afrouxar as asserções funcionais deste teste.
+const ESPERA_LAZY = { timeout: 10000, interval: 50 };
+
 const CONTACT_ID = 'contato-1';
 
 const conversation = {
@@ -235,7 +239,7 @@ describe('RealtimeInboxView — contrato de paginação da Inbox ativa (R2-INB-0
   it('leva o clique visível ao inbox.loadOlderMessages exatamente uma vez e reflete o loading', async () => {
     const { rerender } = renderInbox();
 
-    const botao = await screen.findByRole('button', { name: CARREGAR });
+    const botao = await screen.findByRole('button', { name: CARREGAR }, ESPERA_LAZY);
 
     fireEvent.click(botao);
     expect(mocks.loadOlderMessages).toHaveBeenCalledTimes(1);
@@ -244,7 +248,7 @@ describe('RealtimeInboxView — contrato de paginação da Inbox ativa (R2-INB-0
     mocks.inbox = { ...mocks.inbox, loadingOlderMessages: true };
     rerender();
 
-    const emCarga = await screen.findByRole('button', { name: CARREGAR });
+    const emCarga = await screen.findByRole('button', { name: CARREGAR }, ESPERA_LAZY);
     expect(emCarga).toBeDisabled();
     expect(emCarga).toHaveAttribute('aria-busy', 'true');
     expect(mocks.loadOlderMessages).toHaveBeenCalledTimes(1);
@@ -256,7 +260,7 @@ describe('RealtimeInboxView — contrato de paginação da Inbox ativa (R2-INB-0
 
     // Prova que a Inbox ativa montou (o painel da conversa está na árvore) e só então
     // que o controle de carga NÃO existe.
-    await screen.findByRole('log', { name: /mensagens da conversa/i });
+    await screen.findByRole('log', { name: /mensagens da conversa/i }, ESPERA_LAZY);
     expect(screen.queryByRole('button', { name: CARREGAR })).toBeNull();
     expect(mocks.loadOlderMessages).not.toHaveBeenCalled();
   });
