@@ -611,8 +611,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 46800,
-      "sha256": "8c136901e587b11733d1a1dc0b82f5efb154102450eb4dca455631b792cb592d"
+      "bytes": 48728,
+      "sha256": "2ff641eeeb2bca70d3e9401636e80dbad924c0e141bbd368cd2c6125243a2e25"
     },
     {
       "path": "supabase/functions/multiplix-voices/index.ts",
@@ -1541,7 +1541,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "bfbbf00e9be099694dd03d647dcf9475a2a6990b4e1aa9fbdd8eec31a836efa7",
+      "source_sha256": "897a056a7b6eb002784773abf4561c731eb98bcdf225893237e4144d8b108164",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1856,5 +1856,5 @@
       ]
     }
   ],
-  "manifest_sha256": "9650959929b6d90f71f420374832120a8c8ae92f603ad99e4195467dc2aa065b"
+  "manifest_sha256": "d5d0aeaa19fde7940ddd73fe82a371c8bc7320ef715485afc99f124cd143840c"
 }
