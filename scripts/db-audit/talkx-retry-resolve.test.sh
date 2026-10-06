@@ -491,6 +491,17 @@ assert_has '#124 7. guard recusa reabrir sem o carimbo renovado' 'talkx_relaunch
 assert_eq '#124 7. campanha continua completed apos a recusa do guard' 'completed' \
   "$(psql_val "SELECT status FROM public.talkx_campaigns WHERE id='$c_sending2'")"
 
+# ── 8) o contrato do #123 (validação do lote) continua valendo neste corpo ───
+# (o #123 / R3-DELTA-004 recria esta RPC com versão ANTERIOR à minha: se a minha não
+#  carregasse o delta dele, o CREATE OR REPLACE daqui desfaria a validação do lote)
+id_inexistente_124='f0000000-0000-0000-0000-0000000012ff'
+g6="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_sending2', ARRAY['$id_inexistente_124']::uuid[])")"
+assert_has '#124 8. id inexistente -> talkx_retry_recipient_not_found (delta do #123 preservado)' 'P0002|talkx_retry_recipient_not_found' "$g6"
+assert_eq '#124 8. lote inválido vem ANTES do gate: campanha completed intacta' 'completed' \
+  "$(psql_val "SELECT status FROM public.talkx_campaigns WHERE id='$c_sending2'")"
+g7="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_sending2', ARRAY[NULL]::uuid[])")"
+assert_has '#124 8. nulo no array -> invalid_talkx_retry_request (delta do #123 preservado)' '22023|invalid_talkx_retry_request' "$g7"
+
 # ── 4) campanha completed reabre SO com a nova confirmacao de lancamento (#124) ──
 out4="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_completed', ARRAY['$r_done']::uuid[], true)")"
 assert_has '4. retry em campanha completed com a confirmacao -> OK' 'OK|' "$out4"
