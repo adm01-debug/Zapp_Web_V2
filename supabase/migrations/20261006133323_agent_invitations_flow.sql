@@ -92,6 +92,14 @@ BEGIN
   v_expires_at := now() + (least(greatest(coalesce(p_expires_hours, 72), 1), 720) || ' hours')::interval;
   v_code := upper(substring(replace(encode(gen_random_bytes(9), 'base64'), '/', 'A'), 1, 12));
 
+  -- convite pendente JA VENCIDO nao segura o e-mail para sempre: vira estado terminal,
+  -- e o indice unico parcial (status='pending') so bloqueia quem ainda esta valido
+  UPDATE public.agent_invitations
+     SET status = 'revoked'
+   WHERE email = v_email
+     AND status = 'pending'
+     AND expires_at <= now();
+
   BEGIN
     INSERT INTO public.agent_invitations (email, name, role, code, expires_at, created_by, status)
     VALUES (v_email, nullif(btrim(coalesce(p_name, '')), ''), p_role, v_code, v_expires_at, v_profile_id, 'pending')
