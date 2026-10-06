@@ -23,7 +23,9 @@ async function main() {
     if (!args.before || !/^[a-f0-9]{40}$/.test(args['git-sha'] ?? '') || !/^\d+$/.test(args['run-id'] ?? '') || !args.scope) throw new Error('Before snapshot, immutable SHA, run and scope required');
     // --unchanged (opcional): lista JSON de slugs que o proprio passo de deploy
     // reportou como "No change found" (bundle identico ao ja publicado, o CLI
-    // nao bumpa versao). Sem o arquivo, comportamento identico ao anterior.
+    // nao bumpa versao). Sem o arquivo, nenhuma funcao e aceita so pelo digest
+    // identico ao baseline: a prova de no-op do deploy e exigida (R2-INF-017) e,
+    // sem bump de versao nem sinal do CLI, a atestacao esgota as tentativas.
     const knownUnchanged = args.unchanged ? JSON.parse(await readFile(args.unchanged, 'utf8')) : [];
     evidence = await collectStableAttestation({ manifest, before: JSON.parse(await readFile(args.before, 'utf8')),
       gitSha: args['git-sha'], runId: args['run-id'], deploymentScope: args.scope, fetchInventory, knownUnchanged });

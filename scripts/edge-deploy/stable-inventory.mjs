@@ -98,42 +98,44 @@ export async function collectStableAttestation({
         if (!fn.remote_updated_at || !fn.remote_id) throw new Error('Missing remote identity or timestamp');
       }
       const acceptedByDigest = [];
+      const acceptedWithoutVersionBaseline = [];
       for (const name of selected) {
         const old = pre.get(name);
         if (!old) continue;
         const current = byName.get(name);
         if (old.id !== current.id) {
-          throw new Error('Selected deployment not yet observed');
+          throw new Error(`Selected deployment not yet observed: ${name}`);
         }
         // E08 (run 36560547941, 2026-09-29): versao null no baseline (API retornou
         // version <= 0 ou nao-inteiro) impedia toda tentativa de estabilizacao por
-        // 24 min. Sem baseline de versao verificavel, aceitar a funcao se o id bate.
-        if (old.version === null) continue;
+        // 24 min. Sem baseline de versao verificavel, aceitar a funcao se o id bate
+        // -- e registrar no artefato: o aceite nao pode ser silencioso.
+        if (old.version === null) {
+          acceptedWithoutVersionBaseline.push(name);
+          continue;
+        }
         const versionBumped = current.version !== null && current.version > old.version;
         if (versionBumped) continue;
         const digestUnchanged = old.ezbr_sha256 !== null && current.ezbr_sha256 === old.ezbr_sha256;
-        // Contrato alterado em 01/10/2026 (run 36852598923): o Supabase CLI pula o
-        // deploy de uma funcao cujo bundle bate byte a byte com o publicado e NAO
-        // bumpa version, sinalizando "No change found in Function: X" -- e escreve
-        // essa linha no STDERR. Enquanto a aceitacao dependia do log capturado pelo
-        // workflow (knownUnchanged), o arquivo chegava vazio, a funcao ficava sem
-        // bump e a atestacao queimava 144 amostras (~24 min) para falhar com
-        // "did not stabilize", escondendo a causa. O digest remoto identico ao
-        // baseline prova que nao havia bundle novo a publicar para essa funcao, e
-        // passa a ser o sinal primario; o log do CLI continua aceito e agora cobre
-        // o caso oposto (contradicao), logo abaixo.
-        if (digestUnchanged) {
-          acceptedByDigest.push(name);
-          continue;
-        }
+        // R2-INF-017 (reauditoria de 03/10/2026): o digest remoto identico ao
+        // baseline NAO prova que o deploy selecionado apareceu -- um inventario
+        // ainda nao atualizado satisfaz o mesmo ramo e versao antiga era atribuida
+        // ao run (o probe offline mediu 73 versoes antigas aceitas aos 60 s num
+        // run cuja atualizacao so aparecia aos 70 s). O aceite sem bump exige a
+        // prova de no-op do proprio passo de deploy: o slug tem de estar em
+        // knownUnchanged ("No change found" do CLI, extraido pelo workflow).
         if (unchangedSet.has(name)) {
+          if (digestUnchanged) {
+            acceptedByDigest.push(name);
+            continue;
+          }
           // `permanentError` e privada do manifest-lib.mjs; aqui o padrao do
           // proprio modulo (ver o 401/403 em fetchRemoteInventory).
           const contradicao = new Error(`${name}: o passo de deploy reportou "No change found" e o bundle remoto mudou desde o baseline (deploy concorrente ou sinal do CLI divergente); a atestacao nao pode inferir o que foi publicado`);
           contradicao.permanent = true;
           throw contradicao;
         }
-        throw new Error('Selected deployment not yet observed');
+        throw new Error(`Selected deployment not yet observed: ${name}`);
       }
       const digest = createHash('sha256').update(JSON.stringify(snapshot.functions)).digest('hex');
       consecutive = digest === previousDigest ? consecutive + 1 : 1;
@@ -149,13 +151,18 @@ export async function collectStableAttestation({
             mode: 'stable-management-inventory-v1',
             consecutive_samples: consecutive, observation_ms: now() - started, samples,
             selected_functions: selected, changed_outside_scope: changedOutsideScope,
-            // Funcoes do escopo aceitas sem bump de versao porque o digest remoto
-            // segue identico ao baseline (nada novo a publicar). Fica explicito no
-            // artefato o que foi aceito por digest -- nao e prova de equivalencia
+            // Funcoes do escopo aceitas sem bump de versao porque o proprio passo
+            // de deploy as reportou como "No change found" E o digest remoto segue
+            // identico ao baseline. O aceite por digest EXIGE essa prova de no-op
+            // do deploy (R2-INF-017) -- e nao e prova de equivalencia
             // fonte<->bundle, so de que o bundle publicado nao mudou.
             accepted_without_version_bump: acceptedByDigest,
+            // Funcoes aceitas sem baseline de versao verificavel (E08): o id
+            // remoto bateu com o pre-deploy. Fica explicito porque a atestacao
+            // nao confirma que o deploy desta rodada alterou essas funcoes.
+            accepted_without_version_baseline: acceptedWithoutVersionBaseline,
             source_to_bundle_equivalence_proven: false,
-            limitation: 'Stable metadata associates source inputs and observed deployment versions; it does not reproduce remote bundle bytes or prove business E2E.',
+            limitation: 'Stable metadata associates source inputs and observed deployment versions; acceptance without a version bump requires the deploy step no-op proof; it does not reproduce remote bundle bytes or prove business E2E.',
           },
         };
       }
