@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 74,
-    "source_file_count": 146,
+    "source_file_count": 147,
     "verify_jwt_true": 60,
     "verify_jwt_false": 14
   },
@@ -163,6 +163,11 @@
       "path": "supabase/functions/_shared/evolution-send.ts",
       "bytes": 5026,
       "sha256": "02c4039199552dd1576b361fb8ecafa601a23f01f9c3609b8a3e36285aeb24d8"
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-session-routes.ts",
+      "bytes": 4718,
+      "sha256": "f55b61050b4a1476ba0fef65fc77c592a18e25bb4f0cc159b34c8f6a1421ea38"
     },
     {
       "path": "supabase/functions/_shared/evolution-sync-actions.ts",
@@ -511,8 +516,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 72883,
-      "sha256": "adfd0a669dc28f867359b055335d9ebefddc815f54cfe89c886aee05b437e1dc"
+      "bytes": 78372,
+      "sha256": "d7e3e9c3cc84a4006fca513463b2fac066313d5c4c5a64c70fe7f8acb99d62f1"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -1304,12 +1309,13 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "36722ffe7820c78ce65c172fa142260a08d7567054d8c17499528cd19fe9f05b",
+      "source_sha256": "58c98229d93c6c4bc7b6b5e90fe160c2161d1ede657f2581edc118ebbd1788c0",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
+        "supabase/functions/_shared/evolution-session-routes.ts",
         "supabase/functions/_shared/evolution-sync-actions.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1887,5 +1893,5 @@
       ]
     }
   ],
-  "manifest_sha256": "78131814b0b20fb9483cf623d7514fee596d2eea33dbaa04a1d7d1867901ba0e"
+  "manifest_sha256": "ccda6a1f1371a945ee54d42569c64c495b8d4a8d3ed9f5cc62372b94fa5d50a6"
 }
