@@ -825,3 +825,90 @@ describe('CallEngine — cerca de sessão (R2-CALL-001)', () => {
     }
   });
 });
+
+// ─── Duração da chamada: a espera do registro não entra no tempo de conversa ──
+
+/**
+ * O defeito: `encerrar()` lia `Date.now()` DENTRO do `.then()` do
+ * `callIdPromise`. Se a criação do registro demorava a resolver depois de a
+ * sessão já ter terminado, o relógio andava durante essa espera e a duração
+ * gravada era maior que a conversa real. A correção captura o instante do
+ * encerramento ANTES da espera e mede a duração a partir dele.
+ */
+describe('CallEngine — duração após espera assíncrona do registro', () => {
+  async function escoar(voltas = 8): Promise<void> {
+    for (let i = 0; i < voltas; i += 1) await Promise.resolve();
+  }
+
+  /** Adapter que não toca em mídia (a duração não é sobre áudio). */
+  class AdapterSemMidia extends TestAdapter {
+    override attachRemoteAudio(): null { return null; }
+  }
+
+  /** `create` que só resolve quando o teste liberar — o registro demorado. */
+  function registroControlado() {
+    let liberar: (id: string | null) => void = () => undefined;
+    const create = vi.fn(() => new Promise<string | null>((resolve) => { liberar = resolve; }));
+    return { create, liberar: (id: string | null) => { liberar(id); } };
+  }
+
+  it('talkSeconds mede só atendimento->encerramento, sem somar a espera da promise', async () => {
+    vi.useFakeTimers();
+    try {
+      const adapter = new AdapterSemMidia();
+      const sessao = { ...sessionWithTrack(fakeAudioTrack(true)), cancel: vi.fn() };
+      adapter.inviter = sessao;
+      const registro = registroControlado();
+      const sink = fakeSink({ create: registro.create });
+      const engine = new CallEngine(adapter, sink);
+
+      const T0 = new Date('2026-01-01T10:00:00.000Z').getTime();
+      vi.setSystemTime(T0);
+      await engine.makeCall('11999992048', fakeUa(), true, 'sessao-1');
+
+      // Atendida em T0.
+      engine.handleStateChange('Established', sessao as unknown as Session, '11999992048', 'outbound');
+
+      // Falou 30s e desligou — o registro AINDA não resolveu.
+      vi.setSystemTime(T0 + 30_000);
+      engine.handleStateChange('Terminated', sessao as unknown as Session, '11999992048', 'outbound');
+
+      // O registro demora mais 25s DEPOIS do fim: o relógio corre nessa espera.
+      vi.setSystemTime(T0 + 55_000);
+      registro.liberar('call-1');
+      await escoar();
+
+      // Só os 30s de conversa — não 55s.
+      expect(sink.onFinished).toHaveBeenCalledWith('call-1', 30, { endedBy: 'hangup_remote', sipCode: null });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('não atendida com o registro pendente continua emitindo talkSeconds = null', async () => {
+    vi.useFakeTimers();
+    try {
+      const adapter = new AdapterSemMidia();
+      const sessao = { ...sessionWithTrack(fakeAudioTrack(true)), cancel: vi.fn() };
+      adapter.inviter = sessao;
+      const registro = registroControlado();
+      const sink = fakeSink({ create: registro.create });
+      const engine = new CallEngine(adapter, sink);
+
+      const T0 = new Date('2026-01-01T10:00:00.000Z').getTime();
+      vi.setSystemTime(T0);
+      await engine.makeCall('11999992048', fakeUa(), true, 'sessao-1');
+
+      // Nunca atendeu; encerra e o registro resolve 40s depois.
+      vi.setSystemTime(T0 + 5_000);
+      engine.handleStateChange('Terminated', sessao as unknown as Session, '11999992048', 'outbound');
+      vi.setSystemTime(T0 + 45_000);
+      registro.liberar('call-2');
+      await escoar();
+
+      expect(sink.onFinished).toHaveBeenCalledWith('call-2', null, { endedBy: 'hangup_remote', sipCode: null });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
