@@ -53,8 +53,11 @@ export function GroupsView() {
 
   const onBroadcast = async () => {
     setIsSending(true);
-    await handleBroadcast(broadcastMessage);
+    const resultado = await handleBroadcast(broadcastMessage);
     setIsSending(false);
+    // R2-API-062: se nenhum envio deu certo (ou houve falha), o texto e os grupos
+    // selecionados ficam de pé para o usuário tentar de novo.
+    if (!resultado || resultado.failed > 0) return;
     setIsBroadcastOpen(false);
     setBroadcastMessage('');
   };
