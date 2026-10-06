@@ -96,6 +96,25 @@ export function playTtsAudio(
   const chunkPromises = new Map<number, Promise<string>>();
   const textChunks = splitTextIntoTtsChunks(text);
 
+  // #341 (R2-INB-047) — interromper a fala tem de ENCERRAR a Promise devolvida aqui.
+  // `stop()` chama `cleanup()`, que desliga `onended`/`onerror` do elemento, e o
+  // `speechSynthesis.cancel()` do caminho do navegador não garante `onend`: sem este
+  // sinal, o `await playObjectUrl(...)` (e o `await playWithBrowserSpeech(...)`) ficava
+  // pendente para sempre. Quem aguarda a Promise — `await tts.promise` no useVoiceAgent —
+  // nunca terminava e a ação seguinte (log, onAction, voltar a 'idle') não acontecia.
+  let notificarParada: () => void = () => {};
+  const sinalDeParada = new Promise<void>((resolve) => {
+    notificarParada = resolve;
+  });
+
+  /** Corre a etapa contra a parada: interromper encerra o que estava pendente. */
+  const aguardarOuParar = <T,>(etapa: Promise<T>): Promise<T | void> => {
+    // Marca uma rejeição tardia como tratada (o ramo perdedor da corrida não vira
+    // "unhandled rejection"); a Promise original segue na corrida e rejeita normalmente.
+    etapa.catch(() => {});
+    return Promise.race([etapa, sinalDeParada]);
+  };
+
   // Create Audio element SYNCHRONOUSLY in the user gesture context
   // This is critical for browser autoplay policy compliance
   const audioElement = new Audio();
@@ -241,7 +260,7 @@ export function playTtsAudio(
           options?.onLoadingChange?.(false);
         }
 
-        await playObjectUrl(objectUrl);
+        await aguardarOuParar(playObjectUrl(objectUrl));
       }
     } catch (err) {
       if (stopped || controller.signal.aborted) return;
@@ -254,7 +273,7 @@ export function playTtsAudio(
       } else {
         options?.onError?.(realErr);
         const remainingText = textChunks.slice(currentChunkIndex).join(' ') || text;
-        await playWithBrowserSpeech(remainingText);
+        await aguardarOuParar(playWithBrowserSpeech(remainingText));
       }
     } finally {
       options?.onLoadingChange?.(false);
@@ -264,6 +283,9 @@ export function playTtsAudio(
 
   const stop = () => {
     stopped = true;
+    // #341 — solta quem está aguardando a reprodução: sem isto, o `await` interno (e a
+    // Promise devolvida por esta função) ficaria pendente depois de `cleanup()`.
+    notificarParada();
     controller.abort();
     window.speechSynthesis?.cancel();
     cleanup();
