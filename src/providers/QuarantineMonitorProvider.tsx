@@ -18,12 +18,14 @@ const POLL_INTERVAL_MS = 30_000; // 30s — quarantine is rarely time-critical
 const TRANSIENT_BACKOFF_MAX_MS = 5 * 60_000; // teto do backoff de falha transitória
 
 /**
- * Decisões que o selo conhece. Consultar TODAS (e não só `pending`/`deleted`) é
- * o que permite OBSERVAR a liberação por valor — o registro volta como
- * `allowed`/`whitelisted` — em vez de inferi-la porque ele saiu do filtro
- * (R2-API-066).
+ * Estados ATIVOS da janela principal (até HYDRATE_LIMIT, por created_at desc):
+ * é ela que precisa enxergar até o `pending`/`deleted` mais antigo. As
+ * LIBERADAS (`allowed`/`whitelisted`) NÃO disputam essa janela — uma
+ * liberação em massa expulsaria o ativo antigo da hidratação. Elas chegam por
+ * uma consulta à parte, restrita aos `message_id` já cacheados (R2-API-066).
  */
-const MONITORED_DECISIONS = ['pending', 'deleted', 'allowed', 'whitelisted'];
+const ACTIVE_DECISIONS = ['pending', 'deleted'];
+const RELEASED_DECISIONS = ['allowed', 'whitelisted'];
 
 /**
  * Mounts a silent monitor that:
@@ -77,7 +79,7 @@ export function QuarantineMonitorProvider({ children }: { children: React.ReactN
         const res = await queryExternalProxy<QuarantineRecord>({
           table: 'media_quarantine',
           select: 'id,message_id,decision,threat_name,threat_level,scan_engine,media_type,mime_type,created_at,reviewed_at',
-          filters: [{ column: 'decision', operator: 'in', value: MONITORED_DECISIONS }],
+          filters: [{ column: 'decision', operator: 'in', value: ACTIVE_DECISIONS }],
           order: { column: 'created_at', ascending: false },
           limit: HYDRATE_LIMIT,
           countMode: 'exact',
@@ -93,11 +95,31 @@ export function QuarantineMonitorProvider({ children }: { children: React.ReactN
         }
 
         const records = Array.isArray(res.data) ? res.data : [];
+
+        // Liberações (`allowed`/`whitelisted`) só interessam para registros já
+        // cacheados: a consulta à parte atualiza a decisão antiga sem competir
+        // pela janela dos ativos. Cache vazio → nenhuma chamada extra.
+        const cachedIds = [...quarantineStore.getSnapshot().keys()];
+        let releases: QuarantineRecord[] = [];
+        if (cachedIds.length > 0) {
+          const relRes = await queryExternalProxy<QuarantineRecord>({
+            table: 'media_quarantine',
+            select: 'id,message_id,decision,threat_name,threat_level,scan_engine,media_type,mime_type,created_at,reviewed_at',
+            filters: [
+              { column: 'decision', operator: 'in', value: RELEASED_DECISIONS },
+              { column: 'message_id', operator: 'in', value: cachedIds },
+            ],
+            limit: HYDRATE_LIMIT,
+          });
+          if (cancelled) return;
+          releases = Array.isArray(relRes.data) ? relRes.data : [];
+        }
+
         // `count` (countMode: 'exact') diz se a janela de 500 foi truncada. Só
         // reconciliamos por ausência quando ela é um retrato completo.
         const total = typeof res.count === 'number' ? res.count : records.length;
         const truncated = total > records.length;
-        quarantineStore.reconcile(records, { truncated });
+        quarantineStore.reconcile(records, releases, { truncated });
 
         // Detect new pending records since last tick (skip first run).
         if (isAdminRef.current && !firstRunRef.current) {
