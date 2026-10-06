@@ -13,9 +13,11 @@ type ContactRow = Database['public']['Tables']['contacts']['Row'];
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
+  AlertTriangle,
   Minus,
   Maximize2,
   Minimize2,
+  RefreshCw,
   X,
   MessageSquare,
 } from 'lucide-react';
@@ -70,9 +72,14 @@ export default function ChatPopup() {
   const [isMaximized, setIsMaximized] = useState(false);
   // R2-INB-004: o contrato de paginação do hook (histórico antigo) tem de chegar
   // ao controle da área de mensagens — sem ele o popup fica preso na 1ª página.
+  // R2-INB-024: `error`/`refetch` do MESMO hook também são necessários — sem eles a
+  // falha de transporte/permissão na carga virava lista vazia, indistinguível de
+  // "contato sem histórico" e sem retry nesta janela.
   const {
     messages,
     loading: messagesLoading,
+    error: messagesError,
+    refetch: refetchMessages,
     hasOlder,
     loadingOlder,
     loadOlderMessages,
@@ -221,6 +228,26 @@ export default function ChatPopup() {
         </p>
         <Button variant="outline" size="sm" onClick={handleClose}>
           Fechar janela
+        </Button>
+      </div>
+    );
+  }
+
+  // ── Falha na carga das mensagens (R2-INB-024) ──
+  // O hook termina o `loading` mesmo quando a busca falha; sem este ramo a lista vazia
+  // passava por "conversa sem histórico". Só vale quando nada foi renderizado: uma falha
+  // do refetch silencioso não pode apagar as mensagens que já estão na tela.
+  if (messagesError && legacyMessages.length === 0) {
+    return (
+      <div role="alert" className="h-screen bg-background flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center">
+          <AlertTriangle className="w-6 h-6 text-destructive" />
+        </div>
+        <p className="text-sm font-medium text-foreground">Erro ao carregar as mensagens</p>
+        <p className="text-xs text-muted-foreground break-words">{messagesError}</p>
+        <Button variant="outline" size="sm" onClick={() => { void refetchMessages(); }}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Tentar novamente
         </Button>
       </div>
     );
