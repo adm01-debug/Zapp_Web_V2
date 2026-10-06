@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Brain, Plus } from 'lucide-react';
 import { useAIProviders } from './ai-providers/useAIProviders';
 import { AIProviderCard } from './ai-providers/AIProviderCard';
+import { purposesLosingDefaultProvider } from './ai-providers/deletionImpact';
 import { AIProviderFormDialog } from './ai-providers/AIProviderFormDialog';
 import { AIProviderHealthPanel } from './ai-providers/AIProviderHealthPanel';
 
@@ -73,6 +74,7 @@ export function AIProvidersManager() {
               onEdit={openEdit}
               onDelete={(id) => deleteMutation.mutate(id)}
               index={i}
+              affectedPurposes={purposesLosingDefaultProvider(providers, p)}
             />
           ))}
         </div>
