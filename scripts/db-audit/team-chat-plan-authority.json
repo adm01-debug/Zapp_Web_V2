@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "finding": "TC-013",
+  "title": "Autoridade reconciliada dos dois planos de finalizacao do Team Chat (F/TC)",
+  "problem": "F100 (PR1171) se declara o unico ledger vivo; TC-100 (PR1174), 114 s depois, substitui apenas os planos E anteriores e nao menciona o F. Dois planos de finalizacao coexistem sem autoridade reconciliada e divergem em contrato vivo (RPC de WhatsApp, retorno de reacao e publication).",
+  "authority_rule": "Um unico ledger executa (TC-01..TC-100). O F permanece como linhagem (nada e apagado) e o que ele tem de exclusivo chega por conteudo, item a item, pelo crosswalk. NAO somar as duas listas como 200 funcionalidades. Onde F e TC divergem de CONTRATO, vale o contrato vivo (banco/consumidores de realtime); a etapa divergente fica DO_NOT_REPLAY ate ser reescrita contra o contrato vivo.",
+  "live_ledger": [
+    {
+      "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+      "prefix": "TC-",
+      "baseline": "ac5d629",
+      "reason": "Baseline posterior (ac5d629 > e433589) e diagnostico mais amplo (11 DONE / 33 PARCIAL / 56 AUSENTE + 10 regressoes R1-R10). O PLAN_REGISTRY.json ja aponta este plano como sucessor do F."
+    }
+  ],
+  "retained_for_lineage": [
+    {
+      "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+      "prefix": "F",
+      "baseline": "e433589",
+      "reason": "Baseline anterior. Conserva o espelho das 18 migrations aplicadas fora do fluxo (F02/F03) e a RPC de config segura de WhatsApp (F10). Nao reabrir como ledger: consultar por item pelo crosswalk."
+    }
+  ],
+  "items_source": "docs/reconciliation/evidence/team_chat_f_tc_crosswalk.json",
+  "conflicts_source": "docs/reconciliation/evidence/team_chat_plan_authority_conflicts.json",
+  "items_not_summed": "As 100 etapas sao TC-01..TC-100; as F correspondentes entram como ORIGEM/LINHAGEM, nao como um segundo lote.",
+  "live_contract": {
+    "toggle_team_reaction": {
+      "signature": "public.toggle_team_reaction(uuid, text)",
+      "returns": "jsonb",
+      "result_keys": ["action", "emoji"],
+      "execute": ["authenticated"],
+      "migration": "supabase/migrations/20260930260000_team_reaction_membership_guard.sql",
+      "note": "Nem o boolean do F43 nem o {reacted:boolean} do TC-37 correspondem ao retorno vivo; ambos reescrevem o valor de retorno e quebram o consumidor atual."
+    },
+    "get_department_whatsapp_credentials": {
+      "signature": "public.get_department_whatsapp_credentials(uuid)",
+      "returns": "jsonb",
+      "execute": ["service_role"],
+      "returns_secret": true,
+      "migration": "supabase/migrations/20260928550000_team_chat_e19_department_whatsapp_cred_rpc.sql",
+      "note": "Devolve whatsapp_api_key em claro; por isso e service_role-only. Conceder EXECUTE a authenticated (TC-13) entrega a chave do departamento a qualquer usuario autenticado."
+    },
+    "realtime_publication": {
+      "baseline": "scripts/db-audit/realtime-publication-baseline.json",
+      "team_tables": [
+        "public.team_conversation_members",
+        "public.team_conversations",
+        "public.team_message_reactions",
+        "public.team_message_receipts",
+        "public.team_messages"
+      ],
+      "rule": "A publication tem de COBRIR os consumidores. Nao estreitar o baseline: remover tabela que o realtime pode voltar a consumir e falha silenciosa."
+    }
+  },
+  "publication_decision": {
+    "decision": "Manter o conjunto do baseline canonico (5 tabelas de Team Chat, incluindo team_conversations). Nao aplicar a reducao para 4 tabelas do F49.",
+    "baseline": "scripts/db-audit/realtime-publication-baseline.json",
+    "tables": [
+      "public.team_conversation_members",
+      "public.team_conversations",
+      "public.team_message_reactions",
+      "public.team_message_receipts",
+      "public.team_messages"
+    ],
+    "subset_of_consumers_ok": "Os 4 consumidores atuais (team_messages, team_conversation_members, team_message_reactions, team_message_receipts) estao contidos no baseline.",
+    "superseded_claim": "F49 (4 tabelas, team_conversations fora)"
+  },
+  "contract_resolutions": [
+    {
+      "id": "TC-AUTH-01",
+      "subject": "Autoridade exclusiva (F100 x TC-100)",
+      "decision": "Ledger vivo = TC; F retido como linhagem; requisitos nao somados.",
+      "replayed_steps": []
+    },
+    {
+      "id": "TC-AUTH-02",
+      "subject": "Rota de reconciliacao (F02/F05 x TC-04/TC-05)",
+      "decision": "Historico encerrado: #1151 fechada sem merge, recuperacao pela #1199. Nao reabrir nem reexecutar.",
+      "replayed_steps": ["F02", "F03", "F05", "TC-04", "TC-05"]
+    },
+    {
+      "id": "TC-AUTH-03",
+      "subject": "RPC de WhatsApp de departamento (F10 x TC-13)",
+      "decision": "Contrato vivo ratificado: credencial com segredo permanece service_role-only. TC-13 (GRANT a authenticated + troca de assinatura) NAO reaplicar.",
+      "replayed_steps": ["TC-13"]
+    },
+    {
+      "id": "TC-AUTH-04",
+      "subject": "Retorno de reacao (F43 x TC-37)",
+      "decision": "Contrato vivo ratificado: toggle_team_reaction RETURNS jsonb com {action,emoji}. F43 (boolean) e TC-37 ({reacted}) NAO reaplicar sem mudar o consumidor no mesmo PR.",
+      "replayed_steps": ["F43", "TC-37"]
+    },
+    {
+      "id": "TC-AUTH-05",
+      "subject": "DROP department_invites preso a presenca (F78 x TC-08/19/66/69/74)",
+      "decision": "DROP bloqueado: department_invites ainda e referenciada por src/hooks/team-chat/useDepartmentManagement.ts. Nao reaplicar o DROP enquanto houver consumidor.",
+      "replayed_steps": ["F78", "TC-19", "TC-74"]
+    },
+    {
+      "id": "TC-AUTH-06",
+      "subject": "Decisao de publication desatualizada no F (F49 x TC-07/TC-97)",
+      "decision": "Publication = baseline canonico (5 tabelas de Team Chat). F49 (4 tabelas) NAO reaplicar; provar que todo consumidor de src esta coberto.",
+      "replayed_steps": ["F49"]
+    },
+    {
+      "id": "TC-AUTH-07",
+      "subject": "Referencia interna incorreta de URL (F87 x TC-68/79/80)",
+      "decision": "Correcao documental: o cid da URL serve o deep link de push (TC-80), nao as mencoes (TC-79). Nenhuma etapa reaplicada.",
+      "replayed_steps": []
+    }
+  ],
+  "closed_external_actions": [
+    {
+      "steps": ["F02", "F03"],
+      "action": "Espelhar em main os 18 arquivos 20260928420000-600000 e completar cabecalho de Rollback",
+      "closed_evidence": {
+        "kind": "migration_files_present",
+        "dir": "supabase/migrations",
+        "versions": [
+          "20260928420000",
+          "20260928430000",
+          "20260928440000",
+          "20260928450000",
+          "20260928460000",
+          "20260928470000",
+          "20260928480000",
+          "20260928490000",
+          "20260928500000",
+          "20260928510000",
+          "20260928520000",
+          "20260928530000",
+          "20260928540000",
+          "20260928550000",
+          "20260928560000",
+          "20260928570000",
+          "20260928580000",
+          "20260928600000"
+        ]
+      }
+    },
+    {
+      "steps": ["F01", "TC-04", "TC-05"],
+      "action": "Comentar/mergear a PR #1151 como reconciliacao",
+      "closed_evidence": {
+        "kind": "migration_files_present",
+        "dir": "supabase/migrations",
+        "versions": ["20260928420000"]
+      },
+      "note": "A propria rota estava fechada no historico (reconciliacao do modulo exigia os espelhos, que existem). O comentario na PR nao se repete."
+    }
+  ],
+  "do_not_replay": [
+    {
+      "steps": ["F02", "F03", "F01"],
+      "why": "Acoes externas ja fechadas; o espelho das 18 migrations ja esta em main.",
+      "guard": {
+        "kind": "migration_files_present",
+        "dir": "supabase/migrations",
+        "versions": ["20260928420000", "20260928550000", "20260928600000"]
+      }
+    },
+    {
+      "steps": ["TC-13"],
+      "why": "Concederia EXECUTE de uma RPC que devolve o segredo do WhatsApp a qualquer authenticated.",
+      "guard": {
+        "kind": "src_reference",
+        "file": "supabase/migrations/20260928550000_team_chat_e19_department_whatsapp_cred_rpc.sql",
+        "token": "REVOKE EXECUTE ON FUNCTION public.get_department_whatsapp_credentials(uuid) FROM PUBLIC, anon, authenticated"
+      }
+    },
+    {
+      "steps": ["F43", "TC-37"],
+      "why": "Reescreveriam o tipo de retorno de RPC viva consumida pelo front.",
+      "guard": {
+        "kind": "src_reference",
+        "file": "supabase/migrations/20260930260000_team_reaction_membership_guard.sql",
+        "token": "RETURNS jsonb"
+      }
+    },
+    {
+      "steps": ["F49"],
+      "why": "Estreitaria a publication removendo team_conversations, que esta no baseline canonico.",
+      "guard": {
+        "kind": "baseline_table",
+        "table": "public.team_conversations"
+      }
+    },
+    {
+      "steps": ["F78", "TC-19", "TC-74"],
+      "why": "DROP de department_invites ainda teria consumidor no front.",
+      "guard": {
+        "kind": "src_reference",
+        "file": "src/hooks/team-chat/useDepartmentManagement.ts",
+        "token": "department_invites"
+      }
+    }
+  ]
+}
