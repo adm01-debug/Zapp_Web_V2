@@ -96,3 +96,132 @@ describe('prova-visao-classificadores: log injection (jssecurity:S5145)', () => 
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// R2-INF-020 — a prova só pode aprovar com CORRELAÇÃO do consumo.
+//
+// O defeito original: qualquer resposta do REST de `ai_usage_logs` que não
+// fosse 2xx virava apenas um AVISO (falhas continuava 0 → "PROVA OK"), e quando
+// a consulta funcionava bastava existir DUAS linhas quaisquer dos dois
+// classificadores nos últimos 5 minutos — inclusive de execuções ANTERIORES ou
+// duas linhas de UMA só função — para a prova aprovar, sem correlação nenhuma
+// com as duas chamadas feitas agora.
+//
+// Estes testes executam o script de verdade com um `fetch` stubado e provam o
+// contrato blindado: um registro NOVO e válido por chamada; leitura recusada
+// deixa a prova INCONCLUSIVA; dado anterior e duas linhas da mesma função NÃO
+// aprovam. São vermelhos contra a versão defeituosa e verdes depois da correção.
+// ---------------------------------------------------------------------------
+
+/** Linha de `ai_usage_logs` como o REST devolve (sucesso + provedor de visão). */
+function linhaUso(id, functionName, { status = 'success', model = 'google/gemini-3.8-flash' } = {}) {
+  return {
+    id,
+    function_name: functionName,
+    model,
+    status,
+    error_message: null,
+    metadata: { provider_id: 'openrouter' },
+    created_at: '2026-10-06T12:00:00.000Z',
+  };
+}
+
+/**
+ * Stub com o REST de consumo ESTATEFUL: `respostas` é a sequência de corpos
+ * devolvida às leituras sucessivas (a última se repete). Assim simulamos a
+ * linha de base (leitura ANTES das chamadas) e o estado posterior.
+ */
+function buildConsumoStub({ usoStatus = 200, respostas = [[]] }) {
+  return [
+    'const send = (status, raw) => ({',
+    '  ok: status >= 200 && status < 300,',
+    '  status: status,',
+    '  json: async () => { try { return JSON.parse(raw); } catch { return {}; } },',
+    '  text: async () => raw,',
+    '});',
+    `const STATUS_CONSUMO = ${usoStatus};`,
+    `const RESPOSTAS_CONSUMO = ${JSON.stringify(respostas)};`,
+    'let leiturasConsumo = 0;',
+    'globalThis.fetch = async (url) => {',
+    '  const u = String(url);',
+    '  if (u.includes("/auth/v1/token")) return send(200, JSON.stringify({ access_token: "stub-token" }));',
+    '  if (u.includes("/functions/v1/classify-sticker")) return send(200, JSON.stringify({ category: "comemoracao" }));',
+    '  if (u.includes("/functions/v1/classify-emoji")) return send(200, JSON.stringify({ category: "feliz" }));',
+    '  if (u.includes("/rest/v1/ai_usage_logs")) {',
+    '    const corpo = RESPOSTAS_CONSUMO[Math.min(leiturasConsumo, RESPOSTAS_CONSUMO.length - 1)] ?? [];',
+    '    leiturasConsumo += 1;',
+    '    return send(STATUS_CONSUMO, JSON.stringify(corpo));',
+    '  }',
+    '  return send(200, "{}");',
+    '};',
+    '',
+  ].join('\n');
+}
+
+function runComConsumo(config) {
+  const stub = 'data:text/javascript,' + encodeURIComponent(buildConsumoStub(config));
+  return spawnSync(process.execPath, ['--import', stub, SCRIPT], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      ZAPP_SUPABASE_URL: 'https://stub.invalid',
+      ZAPP_ANON_KEY: 'stub-anon',
+      ZAPP_QA_EMAIL: 'qa@stub.invalid',
+      ZAPP_QA_PASSWORD: 'stub-password',
+    },
+  });
+}
+
+describe('prova-visao-classificadores: consumo correlacionado (R2-INF-020)', () => {
+  it('leitura de consumo recusada (HTTP não-ok) não aprova — fica inconclusiva', () => {
+    const res = runComConsumo({ usoStatus: 401, respostas: [[]] });
+    const out = `${res.stdout}${res.stderr}`;
+    assert.notEqual(res.status, 0, `sem permissão de leitura o exit NÃO pode ser 0:\n${out}`);
+    assert.ok(!out.includes('PROVA OK'), `não pode imprimir PROVA OK:\n${out}`);
+    assert.ok(out.includes('PROVA INCONCLUSIVA'), `deveria declarar a prova inconclusiva:\n${out}`);
+  });
+
+  it('registros ANTERIORES (linha de base) não aprovam a prova', () => {
+    const anteriores = [linhaUso('uso-1', 'classify-sticker'), linhaUso('uso-2', 'classify-emoji')];
+    const res = runComConsumo({ respostas: [anteriores] });
+    const out = `${res.stdout}${res.stderr}`;
+    assert.notEqual(res.status, 0, `dado anterior não pode fechar a prova verde:\n${out}`);
+    assert.ok(!out.includes('PROVA OK'), `dado anterior aprovou indevidamente:\n${out}`);
+  });
+
+  it('duas linhas de UMA só função não aprovam a prova', () => {
+    // Linha de base VAZIA e duas linhas NOVAS de `classify-sticker` na leitura
+    // posterior: nada é descartado como registro anterior. A única razão
+    // possível para a reprovação é a validação POR FUNÇÃO — não há registro
+    // novo e válido de `classify-emoji` para correlacionar à segunda chamada.
+    const soSticker = [linhaUso('uso-1', 'classify-sticker'), linhaUso('uso-2', 'classify-sticker')];
+    const res = runComConsumo({ respostas: [[], soSticker] });
+    const out = `${res.stdout}${res.stderr}`;
+    assert.notEqual(res.status, 0, `faltando o emoji a prova não pode fechar verde:\n${out}`);
+    assert.ok(!out.includes('PROVA OK'), `duas linhas da mesma função aprovaram indevidamente:\n${out}`);
+
+    // Prova de que a linha de base NÃO filtrou nada: as duas linhas contam como NOVAS.
+    assert.ok(
+      out.includes('registros de consumo NOVOS (não existiam antes das chamadas): 2'),
+      `a linha de base deveria estar vazia (as duas linhas são NOVAS):\n${out}`,
+    );
+    // Prova do MOTIVO: o registro NOVO e válido de `classify-sticker` passa na
+    // validação POR FUNÇÃO; quem reprova é a ausência de registro de `classify-emoji`.
+    assert.ok(
+      out.split('\n').some((l) => /^\s+OK\s+classify-sticker \(figurinha\)/.test(l)),
+      `o registro NOVO e válido de classify-sticker deveria ser aceito:\n${out}`,
+    );
+    assert.ok(
+      out.split('\n').some((l) => /^\s+FALHA\s+classify-emoji \(emoji\)/.test(l)),
+      `a reprovação tem de vir da ausência de registro de classify-emoji:\n${out}`,
+    );
+  });
+
+  it('um registro NOVO e válido por chamada aprova (controle verde)', () => {
+    const novas = [linhaUso('uso-1', 'classify-sticker'), linhaUso('uso-2', 'classify-emoji')];
+    const res = runComConsumo({ respostas: [[], novas] });
+    const out = `${res.stdout}${res.stderr}`;
+    assert.equal(res.status, 0, `com as duas linhas correlacionadas o exit deve ser 0:\n${out}`);
+    assert.ok(out.includes('PROVA OK'), `deveria aprovar com as duas linhas correlacionadas:\n${out}`);
+  });
+});
