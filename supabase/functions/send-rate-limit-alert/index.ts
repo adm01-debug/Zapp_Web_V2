@@ -86,19 +86,43 @@ export async function handleRateLimitAlert(
 
     if (blocked) {
       const blockDuration = 15;
-      const expiresAt = new Date(Date.now() + blockDuration * 60 * 1000);
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + blockDuration * 60 * 1000);
+      const reason = `Rate limit exceeded: ${request_count} requests to ${endpoint}`;
 
-      const { error: blockError } = await supabaseClient
+      // R2-API-056: duas operações com semântica no banco (compare-and-swap),
+      // em vez de upsert incondicional que sobrescrevia até bloqueio
+      // administrativo permanente (is_permanent=true, expires_at=null).
+      // (1) ON CONFLICT DO NOTHING: cria o bloqueio temporário só se o IP
+      //     ainda não tem linha; nunca toca numa linha existente.
+      const { error: insertError } = await supabaseClient
         .from("blocked_ips")
         .upsert({
           ip_address,
-          reason: `Rate limit exceeded: ${request_count} requests to ${endpoint}`,
-          blocked_at: new Date().toISOString(),
+          reason,
+          blocked_at: now.toISOString(),
           expires_at: expiresAt.toISOString(),
           is_permanent: false,
           request_count,
-          last_attempt_at: new Date().toISOString(),
-        }, { onConflict: "ip_address" });
+          last_attempt_at: now.toISOString(),
+        }, { onConflict: "ip_address", ignoreDuplicates: true });
+
+      if (insertError) log.error("Error blocking IP", { error: insertError.message });
+
+      // (2) Estende o prazo SÓ de linha temporária e mais curta:
+      //     is_permanent=false exclui bloqueio permanente e lt nunca reduz
+      //     prazo administrativo mais longo (expires_at NULL não casa lt).
+      const { error: blockError } = await supabaseClient
+        .from("blocked_ips")
+        .update({
+          expires_at: expiresAt.toISOString(),
+          reason,
+          request_count,
+          last_attempt_at: now.toISOString(),
+        })
+        .eq("ip_address", ip_address)
+        .eq("is_permanent", false)
+        .lt("expires_at", expiresAt.toISOString());
 
       if (blockError) log.error("Error blocking IP", { error: blockError.message });
     }
