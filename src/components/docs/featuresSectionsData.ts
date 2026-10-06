@@ -6,6 +6,7 @@ import {
   Plug, ClipboardList, Palette, Database, Cloud,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { PUSH_NOTIFICATIONS_ENABLED, SERVICE_WORKER_ENABLED } from '@/config/service_worker';
 
 export interface FeatureSection {
   id: number;
@@ -375,3 +376,38 @@ export const sections: FeatureSection[] = [
 ];
 
 export const totalFeatures = sections.reduce((sum, s) => sum + s.items.length, 0);
+
+/**
+ * R2-GOV-002 — o catálogo acima é uma DECLARAÇÃO HISTÓRICA de produto (espelho de
+ * docs/COMPLETE_SYSTEM_FEATURES.md, 2026-03-15). Nem todo item levantado segue ativo:
+ * as capacidades que dependem de Service Worker/Push foram desligadas por decisão em
+ * `src/config/service_worker.ts` e os itens continuam listados. Em vez de repetir o ✅
+ * do documento, a tela pergunta o estado à configuração ativa do produto.
+ */
+export type FeatureState = 'active' | 'disabled';
+
+const FEATURE_GATES: Readonly<Record<string, () => boolean>> = {
+  'Push notifications (browser)': () => PUSH_NOTIFICATIONS_ENABLED,
+  'Configurações de push': () => PUSH_NOTIFICATIONS_ENABLED,
+  'Notificações de segurança push': () => PUSH_NOTIFICATIONS_ENABLED,
+  'Service Worker para push': () => PUSH_NOTIFICATIONS_ENABLED,
+  'Service Worker': () => SERVICE_WORKER_ENABLED,
+};
+
+export function featureState(item: string): FeatureState {
+  const gate = FEATURE_GATES[item];
+  if (!gate) return 'active';
+  return gate() ? 'active' : 'disabled';
+}
+
+export interface CatalogSummary {
+  total: number;
+  active: number;
+  disabled: number;
+}
+
+export function catalogSummary(): CatalogSummary {
+  const all = sections.flatMap((section) => section.items);
+  const disabled = all.filter((item) => featureState(item) === 'disabled').length;
+  return { total: all.length, active: all.length - disabled, disabled };
+}

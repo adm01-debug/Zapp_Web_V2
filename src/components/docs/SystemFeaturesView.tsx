@@ -4,12 +4,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronDown, ChevronRight, CheckCircle2 } from 'lucide-react';
-import { sections, totalFeatures } from './featuresSectionsData';
+import { Search, ChevronDown, ChevronRight, CheckCircle2, CircleSlash } from 'lucide-react';
+import { sections, totalFeatures, featureState, catalogSummary } from './featuresSectionsData';
 
 export function SystemFeaturesView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
+  const summary = catalogSummary();
 
   const toggleSection = (id: number) => {
     setExpandedSections(prev => {
@@ -40,7 +41,18 @@ export function SystemFeaturesView() {
             <p className="text-sm text-muted-foreground mt-1">
               <span className="font-semibold text-primary">{totalFeatures}+</span> funcionalidades em{' '}
               <span className="font-semibold text-primary">34</span> seções •{' '}
-              <Badge variant="default" className="text-xs">100% Implementado</Badge>
+              {summary.disabled === 0 ? (
+                <Badge variant="default" className="text-xs" data-testid="catalog-status-badge">
+                  {summary.active} ativas
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="text-xs" data-testid="catalog-status-badge">
+                  {summary.disabled} desativada{summary.disabled === 1 ? '' : 's'}
+                </Badge>
+              )}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Catálogo histórico de produto — o estado de cada item vem da configuração ativa do sistema.
             </p>
           </div>
           <div className="flex gap-2">
@@ -82,14 +94,22 @@ export function SystemFeaturesView() {
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
                         <CardContent className="pt-0 pb-4 px-4">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                            {filteredItems.map((item, idx) => (
-                              <motion.div key={idx} initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.01 }}
-                                className="flex items-start gap-2 text-sm text-foreground/80 py-1 px-2 rounded-md hover:bg-muted/50 transition-colors"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0 mt-0.5" />
-                                <span>{item}</span>
-                              </motion.div>
-                            ))}
+                            {filteredItems.map((item, idx) => {
+                              const disabled = featureState(item) === 'disabled';
+                              return (
+                                <motion.div key={idx} initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.01 }}
+                                  className="flex items-start gap-2 text-sm text-foreground/80 py-1 px-2 rounded-md hover:bg-muted/50 transition-colors"
+                                >
+                                  {disabled
+                                    ? <CircleSlash className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                                    : <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0 mt-0.5" aria-hidden="true" />}
+                                  <span className={disabled ? 'text-muted-foreground line-through' : undefined}>{item}</span>
+                                  {disabled && (
+                                    <span className="ml-auto shrink-0 text-3xs uppercase tracking-wide text-muted-foreground">desativado</span>
+                                  )}
+                                </motion.div>
+                              );
+                            })}
                           </div>
                         </CardContent>
                       </motion.div>
