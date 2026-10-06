@@ -2,44 +2,254 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { OmnichannelInbox } from '../OmnichannelInbox';
 
-const mockContacts = [
-  { id: 'c1', name: 'Maria Silva', phone: '+5511999990001', channel_type: 'whatsapp', updated_at: new Date().toISOString(), assigned_to: null },
-  { id: 'c2', name: 'João Santos', phone: '+5511999990002', channel_type: 'instagram', updated_at: new Date().toISOString(), assigned_to: 'agent1' },
-  { id: 'c3', name: 'Ana Costa', phone: '+5511999990003', channel_type: 'telegram', updated_at: new Date().toISOString(), assigned_to: null },
-  { id: 'c4', name: 'Pedro Lima', phone: '+5511999990004', channel_type: 'messenger', updated_at: new Date().toISOString(), assigned_to: null },
-  { id: 'c5', name: 'Carla Dias', phone: '+5511999990005', channel_type: 'email', updated_at: new Date().toISOString(), assigned_to: null },
-  { id: 'c6', name: 'Lucas Souza', phone: '+5511999990006', channel_type: 'webchat', updated_at: new Date().toISOString(), assigned_to: null },
-  { id: 'c7', name: 'Fernanda Oliveira', phone: '+5511999990007', channel_type: null, updated_at: new Date().toISOString(), assigned_to: null },
-];
+// R2-API-064 — a tela projetava cadastros (contacts, 200 por updated_at) como se
+// fossem conversas: sem última mensagem, sem não lidas, sem abrir a conversa.
+// Estes testes provam que a tela consome a projeção canônica de conversas, abre a
+// conversa da linha e busca no universo de contatos (não só na amostra carregada).
+
+const h = vi.hoisted(() => {
+  const makeChain = (resolve: () => unknown) => {
+    const chain: Record<string, unknown> = {};
+    for (const method of ['select', 'eq', 'or', 'in', 'order', 'limit', 'not']) {
+      chain[method] = vi.fn(() => chain);
+    }
+    chain.then = (onFulfilled: (value: unknown) => unknown) =>
+      Promise.resolve(resolve()).then(onFulfilled);
+    return chain;
+  };
+
+  return {
+    makeChain,
+    state: {
+      connections: [] as unknown[],
+      contactsResult: { data: [] as unknown[], error: null as unknown },
+      messagesResult: { data: [] as unknown[], error: null as unknown },
+      lastContactsQuery: null as Record<string, ReturnType<typeof vi.fn>> | null,
+      openContactChat: vi.fn(),
+      fetchInitialConversations: vi.fn(),
+    },
+  };
+});
+
+vi.mock('@/components/catalog/useSendProduct', () => ({
+  openContactChat: h.state.openContactChat,
+}));
+
+vi.mock('@/services/realtime.service', () => ({
+  RealtimeService: { fetchInitialConversations: h.state.fetchInitialConversations },
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: (table: string) => {
+      if (table === 'channel_connections_safe') {
+        return h.makeChain(() => ({ data: h.state.connections, error: null }));
+      }
+      if (table === 'contacts') {
+        const chain = h.makeChain(() => h.state.contactsResult);
+        h.state.lastContactsQuery = chain as Record<string, ReturnType<typeof vi.fn>>;
+        return chain;
+      }
+      return h.makeChain(() => h.state.messagesResult);
+    },
+  },
+}));
 
 const mockConnections = [
   { id: 'conn1', channel_type: 'whatsapp', name: 'WhatsApp Principal', is_active: true },
   { id: 'conn2', channel_type: 'instagram', name: 'Instagram Oficial', is_active: true },
 ];
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn((table: string) => {
-      if (table === 'channel_connections_safe') {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn().mockResolvedValue({ data: mockConnections, error: null }),
-          })),
-        };
-      }
-      return {
-        select: vi.fn(() => ({
-          order: vi.fn(() => ({
-            limit: vi.fn().mockResolvedValue({ data: mockContacts, error: null }),
-          })),
-        })),
-      };
-    }),
+const contact = (over: Record<string, unknown>) => ({
+  id: 'c0',
+  name: 'Contato',
+  phone: '+5511990000000',
+  channel_type: 'whatsapp',
+  conversation_status: 'open',
+  is_lid_legacy: false,
+  created_at: '2026-10-01T10:00:00.000Z',
+  updated_at: '2026-10-02T12:00:00.000Z',
+  assigned_to: null,
+  ...over,
+});
+
+// Projeção canônica: conversa com última mensagem, não lidas e estado.
+const sampleConversations = [
+  {
+    contact: contact({ id: 'c1', name: 'Maria Silva', channel_type: 'whatsapp' }),
+    messages: [],
+    unreadCount: 3,
+    lastMessage: {
+      id: 'm1',
+      contact_id: 'c1',
+      content: 'Pode me enviar o orçamento?',
+      sender: 'contact',
+      is_read: false,
+      created_at: '2026-10-02T12:00:00.000Z',
+    },
   },
-}));
+  {
+    contact: contact({
+      id: 'c2',
+      name: 'João Santos',
+      channel_type: 'instagram',
+      conversation_status: 'resolved',
+    }),
+    messages: [],
+    unreadCount: 0,
+    lastMessage: {
+      id: 'm2',
+      contact_id: 'c2',
+      content: 'Obrigado!',
+      sender: 'agent',
+      is_read: true,
+      created_at: '2026-10-02T09:00:00.000Z',
+    },
+  },
+  {
+    contact: contact({ id: 'c3', name: 'Ana Costa', channel_type: 'telegram' }),
+    messages: [],
+    unreadCount: 0,
+    lastMessage: null,
+  },
+  {
+    contact: contact({ id: 'c4', name: 'Lid Legado', channel_type: 'whatsapp', is_lid_legacy: true }),
+    messages: [],
+    unreadCount: 0,
+    lastMessage: null,
+  },
+];
+
+// Contato que NÃO está na amostra carregada: só aparece pela busca no banco.
+const searchContactsResult = {
+  data: [
+    contact({
+      id: 'c9',
+      name: 'Zeca Fora da Amostra',
+      phone: '+5511990000009',
+      conversation_status: 'waiting',
+    }),
+  ],
+  error: null,
+};
+
+const searchMessagesResult = {
+  data: [
+    {
+      id: 'm9',
+      contact_id: 'c9',
+      content: 'Vim pela busca',
+      sender: 'contact',
+      is_read: false,
+      created_at: '2026-10-03T08:00:00.000Z',
+    },
+  ],
+  error: null,
+};
 
 describe('OmnichannelInbox', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    h.state.connections = mockConnections;
+    h.state.contactsResult = { data: [], error: null };
+    h.state.messagesResult = { data: [], error: null };
+    h.state.lastContactsQuery = null;
+    h.state.fetchInitialConversations.mockResolvedValue(sampleConversations);
+  });
+
+  // ===== R2-API-064: PROJEÇÃO CANÔNICA DE CONVERSAS =====
+  describe('Projeção canônica de conversas', () => {
+    it('mostra a última mensagem de cada conversa em vez de só o cadastro', async () => {
+      render(<OmnichannelInbox />);
+
+      expect(await screen.findByText('Pode me enviar o orçamento?')).toBeInTheDocument();
+      expect(screen.getByText('Obrigado!')).toBeInTheDocument();
+    });
+
+    it('marca não lidas com a contagem vinda da projeção', async () => {
+      render(<OmnichannelInbox />);
+
+      const unreadRow = await screen.findByRole('button', { name: /Abrir conversa de Maria Silva/ });
+      expect(unreadRow).toHaveAccessibleName(/3 mensagens não lidas/);
+
+      const readRow = screen.getByRole('button', { name: /Abrir conversa de João Santos/ });
+      expect(readRow).toHaveAccessibleName(expect.not.stringContaining('não lidas'));
+    });
+
+    it('representa contato sem histórico sem inventar última mensagem', async () => {
+      render(<OmnichannelInbox />);
+
+      expect(await screen.findByText(/Sem mensagens ainda/)).toBeInTheDocument();
+    });
+
+    it('não lista cadastro LID legado como conversa', async () => {
+      render(<OmnichannelInbox />);
+
+      await screen.findByText('Maria Silva');
+      expect(screen.queryByText('Lid Legado')).not.toBeInTheDocument();
+    });
+
+    it('declara que a lista é uma amostra de conversas recentes', async () => {
+      render(<OmnichannelInbox />);
+
+      expect(await screen.findByText(/conversas recentes/i)).toBeInTheDocument();
+    });
+  });
+
+  // ===== R2-API-064: ABRIR A CONVERSA =====
+  describe('Abrir conversa', () => {
+    it('abre a conversa no canal correspondente ao acionar a linha', async () => {
+      render(<OmnichannelInbox />);
+
+      const row = await screen.findByRole('button', { name: /Abrir conversa de Maria Silva/ });
+      fireEvent.click(row);
+
+      expect(h.state.openContactChat).toHaveBeenCalledWith('c1');
+    });
+
+    it('abre também a conversa de contato sem histórico', async () => {
+      render(<OmnichannelInbox />);
+
+      const row = await screen.findByRole('button', { name: /Abrir conversa de Ana Costa/ });
+      fireEvent.click(row);
+
+      expect(h.state.openContactChat).toHaveBeenCalledWith('c3');
+    });
+  });
+
+  // ===== R2-API-064: BUSCA NO UNIVERSO, NÃO SÓ NA AMOSTRA =====
+  describe('Busca no universo de contatos', () => {
+    it('consulta o banco por nome/telefone quando a busca é digitada', async () => {
+      render(<OmnichannelInbox />);
+      await screen.findByText('Maria Silva');
+
+      fireEvent.change(screen.getByPlaceholderText(/Buscar por nome ou telefone/), {
+        target: { value: 'Zeca' },
+      });
+
+      await waitFor(() => {
+        const query = h.state.lastContactsQuery;
+        expect(query?.or).toHaveBeenCalled();
+        expect(query?.or.mock.calls[0][0]).toContain('name.ilike.%Zeca%');
+        expect(query?.or.mock.calls[0][0]).toContain('phone.ilike.%Zeca%');
+      });
+    });
+
+    it('mostra contato que está fora da amostra carregada, com a última mensagem', async () => {
+      h.state.contactsResult = searchContactsResult;
+      h.state.messagesResult = searchMessagesResult;
+
+      render(<OmnichannelInbox />);
+      await screen.findByText('Maria Silva');
+
+      fireEvent.change(screen.getByPlaceholderText(/Buscar por nome ou telefone/), {
+        target: { value: 'Zeca' },
+      });
+
+      expect(await screen.findByText('Zeca Fora da Amostra')).toBeInTheDocument();
+      expect(await screen.findByText('Vim pela busca')).toBeInTheDocument();
+    });
+  });
 
   // ===== RENDERING =====
   describe('Rendering', () => {
@@ -100,47 +310,23 @@ describe('OmnichannelInbox', () => {
     };
 
     it('has 6 channel types', () => expect(Object.keys(CHANNEL_CONFIG).length).toBe(6));
-    
+
     Object.entries(CHANNEL_CONFIG).forEach(([type, config]) => {
       it(`${type} has label ${config.label}`, () => expect(config.label).toBeTruthy());
       it(`${type} has color`, () => expect(config.color).toBeTruthy());
     });
   });
 
-  // ===== SEARCH FILTER =====
-  describe('Search filtering', () => {
-    it('accepts search input', () => {
-      render(<OmnichannelInbox />);
-      const input = screen.getByPlaceholderText(/Buscar/);
-      fireEvent.change(input, { target: { value: 'Maria' } });
-      expect(input).toHaveValue('Maria');
-    });
-
-    it('filters by name (logic)', () => {
-      const msgs = mockContacts.map(c => ({ contactName: c.name, contactPhone: c.phone, channelType: c.channel_type }));
-      const filtered = msgs.filter(m => m.contactName.toLowerCase().includes('maria'));
-      expect(filtered.length).toBe(1);
-    });
-
-    it('filters by phone (logic)', () => {
-      const msgs = mockContacts.map(c => ({ contactName: c.name, contactPhone: c.phone }));
-      const filtered = msgs.filter(m => m.contactPhone.includes('0007'));
-      expect(filtered.length).toBe(1);
-    });
-  });
-
   // ===== CHANNEL FILTER =====
   describe('Channel filtering', () => {
     it('filters by channel type (logic)', () => {
-      const msgs = mockContacts.map(c => ({ channelType: c.channel_type || 'whatsapp' }));
+      const msgs = [
+        { channelType: 'whatsapp' },
+        { channelType: 'instagram' },
+        { channelType: 'telegram' },
+      ];
       const filtered = msgs.filter(m => m.channelType === 'instagram');
       expect(filtered.length).toBe(1);
-    });
-
-    it('shows all when filter is "all"', () => {
-      const msgs = mockContacts.map(c => ({ channelType: c.channel_type || 'whatsapp' }));
-      const filtered = msgs.filter(() => true);
-      expect(filtered.length).toBe(7);
     });
 
     it('renders clear filter button when filtered', async () => {
@@ -153,19 +339,29 @@ describe('OmnichannelInbox', () => {
         expect(screen.getByText('Limpar filtro')).toBeInTheDocument();
       });
     });
+
+    it('filtra as conversas pelo canal escolhido', async () => {
+      render(<OmnichannelInbox />);
+      await screen.findByText('Maria Silva');
+
+      fireEvent.click(screen.getAllByText('Telegram')[0].closest('.cursor-pointer') as Element);
+
+      await waitFor(() => {
+        expect(screen.getByText('Ana Costa')).toBeInTheDocument();
+        expect(screen.queryByText('Maria Silva')).not.toBeInTheDocument();
+      });
+    });
   });
 
   // ===== CHANNEL STATS =====
   describe('Channel stats', () => {
-    it('computes channel stats from contacts', () => {
-      const stats: Record<string, number> = {};
-      mockContacts.forEach(c => {
-        const type = c.channel_type || 'whatsapp';
-        stats[type] = (stats[type] || 0) + 1;
+    it('computes channel stats from the conversation projection', async () => {
+      render(<OmnichannelInbox />);
+      await screen.findByText('Maria Silva');
+      // 1 WhatsApp (Maria) + 1 Instagram (João) + 1 Telegram (Ana); o LID legado não conta.
+      await waitFor(() => {
+        expect(screen.getByText('Conversas (3)')).toBeInTheDocument();
       });
-      expect(stats.whatsapp).toBe(2); // 1 explicit + 1 null defaulting
-      expect(stats.instagram).toBe(1);
-      expect(stats.telegram).toBe(1);
     });
   });
 
@@ -197,21 +393,16 @@ describe('OmnichannelInbox', () => {
 
   // ===== EDGE CASES =====
   describe('Edge cases', () => {
-    it('handles null channel_type defaulting to whatsapp', () => {
-      const contact = mockContacts.find(c => c.channel_type === null);
-      expect(contact).toBeDefined();
-      const type = contact?.channel_type || 'whatsapp';
-      expect(type).toBe('whatsapp');
+    it('handles empty conversations list', async () => {
+      h.state.fetchInitialConversations.mockResolvedValue([]);
+      render(<OmnichannelInbox />);
+      expect(await screen.findByText('Nenhuma conversa encontrada')).toBeInTheDocument();
     });
 
-    it('handles empty connections', () => {
-      const connections: unknown[] = [];
-      expect(connections.length).toBe(0);
-    });
-
-    it('handles empty contacts list', () => {
-      const contacts: unknown[] = [];
-      expect(contacts.length).toBe(0);
+    it('handles empty connections', async () => {
+      h.state.connections = [];
+      render(<OmnichannelInbox />);
+      expect(await screen.findByText('Nenhum canal adicional conectado')).toBeInTheDocument();
     });
   });
 });
