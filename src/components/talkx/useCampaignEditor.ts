@@ -5,6 +5,7 @@ import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXSegments, resolveAudience, countAudience, RULE_FIELDS, RULE_OPS, emptyRules, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type RuleField, type RuleOp } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { SPEED_PROFILES, estimateSeconds, fmtDurationShort } from './talkxShared';
 
@@ -499,10 +500,22 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     queryKey: ['talkx-draft-recipient-ids', campaign?.id],
     enabled: !!campaign?.id && (campaign.status === 'draft' || campaign.status === 'scheduled'),
     queryFn: async () => {
-      const { data, error } = await supabase.from('talkx_recipients')
-        .select('contact_id').eq('campaign_id', campaign!.id);
-      if (error) throw error;
-      return [...new Set((data ?? []).map((recipient) => recipient.contact_id))];
+      // #103: `select()` sem `range` devolve só a primeira página (teto do
+      // PostgREST). A audiência hidratada truncada era depois regravada pelo
+      // autosave como se fosse a seleção inteira. Paginação estável por `id`
+      // (chave única); se a leitura não cobrir tudo, o erro sobe em vez de
+      // hidratar uma lista parcial — um save com público incompleto voltaria a
+      // reduzir a audiência sem ação do usuário.
+      const { rows, error, incomplete } = await fetchAllRows<{ contact_id: string }>(
+        (from, to) => supabase.from('talkx_recipients')
+          .select('contact_id')
+          .eq('campaign_id', campaign!.id)
+          .order('id')
+          .range(from, to),
+      );
+      if (error) throw new Error(error.message);
+      if (incomplete) throw new Error('Não foi possível carregar toda a audiência do rascunho.');
+      return [...new Set(rows.map((recipient) => recipient.contact_id))];
     },
   });
 
@@ -844,8 +857,17 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
 
   useEffect(() => {
-    // Registrar snapshot inicial (abertura da campanha) para nao salvar antes de mudancas
-    if (autosaveInitialRef.current === null) { autosaveInitialRef.current = autosaveFields; return; }
+    // Registrar snapshot inicial (abertura da campanha) para nao salvar antes de mudancas.
+    // #103: o baseline só é fixado quando a audiência do rascunho terminou de
+    // hidratar (recipientSnapshotReady). Antes disso persistSave recusa a
+    // gravação; fixar o baseline no estado parcial faria a própria hidratação
+    // parecer edição do usuário e dispararia um autosave que regrava
+    // contact_ids sem ninguém ter tocado no público.
+    if (autosaveInitialRef.current === null) {
+      if (!recipientSnapshotReady) return;
+      autosaveInitialRef.current = autosaveFields;
+      return;
+    }
     if (!name.trim()) return;
     if (autosaveFields === autosaveInitialRef.current) return; // sem mudanca
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
@@ -871,7 +893,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     }, 3000);
     return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autosaveFields]); // name e intencional fora dos deps: snapshot inicial no useRef, nao re-trigger
+  }, [autosaveFields, recipientSnapshotReady]); // name e intencional fora dos deps: snapshot inicial no useRef, nao re-trigger
 
   const retryAutosave = useCallback(async () => {
     setAutosaveStatus('saving');
