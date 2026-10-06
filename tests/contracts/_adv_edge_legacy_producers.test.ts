@@ -137,6 +137,13 @@
  *    reconcilia como tentativa sem cobrança de tokens). É arquivo de teste, não produz token
  *    legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
  *    varrido sobe, medido pela varredura depois do merge.
+ *  - 244: IA-TIMEOUT-001 (06/10/2026) — `_shared/ai-providers.test.ts` (prova Deno de que
+ *    o prazo do provedor cobre a LEITURA do corpo: corpo que trava depois dos headers e
+ *    abortado dentro do orcamento, sem `timeoutMs` nenhum signal chega ao fetch e o timer
+ *    desarma no fim da leitura). E arquivo de teste, nao produz token legado: o mapa
+ *    INVENTARIO e a contagem de ocorrencias (3) seguem identicos — so o total varrido sobe
+ *    (243 -> 244), medido pela varredura depois do merge. O pino sobe porque o cartao
+ *    t-06187820 acrescenta exatamente esse arquivo de teste.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -211,8 +218,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('243 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(243);
+  it('244 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(244);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
