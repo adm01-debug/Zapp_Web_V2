@@ -58,7 +58,14 @@ vi.mock('@/hooks/communication/useIncomingCallListener', () => ({
 }));
 
 vi.mock('@/providers/CallSessionProvider', () => ({
-  useCallSession: () => ({ accept: mockAccept, reject: mockReject }),
+  useCallSession: () => ({
+    accept: mockAccept,
+    reject: mockReject,
+    // R2-CALL-006: o alerta lê o estado terminal do provedor. Aqui a sessão fica
+    // neutra (`idle`, sem linha) — a notificação de WhatsApp não roda no SIP e o
+    // aceite de VoIP é dublado; nenhum dos casos deste teste deve encerrar sozinho.
+    session: { status: 'idle', sessionId: null, answeredAt: null },
+  }),
 }));
 
 vi.mock('@/hooks/calls/useCallChannels', () => ({
