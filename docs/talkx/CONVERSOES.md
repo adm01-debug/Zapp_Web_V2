@@ -22,13 +22,28 @@ headers:
 | Header               | Valor                                                              |
 | -------------------- | ------------------------------------------------------------------ |
 | `x-talkx-timestamp`  | Timestamp UNIX em **milissegundos** (aceito com tolerância de ±5 min) |
-| `x-talkx-signature`  | `HMAC-SHA256(secret, corpo_cru)` em hex, minúsculo                  |
+| `x-talkx-signature`  | `HMAC-SHA256(secret, payload_canonico)` em hex, minúsculo           |
 
-A assinatura é calculada sobre o **corpo bruto** (os bytes exatos enviados, sem
-reformatação). A comparação é em tempo constante.
+A assinatura (**esquema v1**) é calculada sobre a representação canônica:
+
+```
+v1\n<timestamp>\n<external_ref>\n<corpo_cru>
+```
+
+ou seja, `["v1", timestamp, external_ref, corpo_cru].join("\n")`, onde
+`timestamp` é o valor exato enviado em `x-talkx-timestamp`, `external_ref` é o
+campo `external_ref` do JSON e `corpo_cru` são os bytes exatos enviados, sem
+reformatação. A comparação é em tempo constante.
+
+O timestamp e o `external_ref` **fazem parte da assinatura**: reenviar o mesmo
+corpo com a mesma assinatura e um timestamp novo → **401** (replay bloqueado), e
+trocar o `external_ref` depois de assinar → **401**. A assinatura calculada só
+sobre o corpo (formato anterior à v1) **não é aceita**.
 
 - Sem os headers, ou timestamp fora da janela, ou assinatura inválida → **401**.
 - Corpo acima de 4 KB → **413**.
+- `external_ref` ausente, vazio ou não-string → **400** (a assinatura nem é
+  verificada).
 
 ## Corpo da requisição (JSON)
 
@@ -51,7 +66,7 @@ reformatação). A comparação é em tempo constante.
 | `action`        | string   | sim         | sempre `"convert"`                                                |
 | `recipient_id`  | string   | sim         | vem do parâmetro `r` da URL do link                               |
 | `value`         | number   | não         | valor da conversão; `texto`/negativo/não-finito → **422**          |
-| `external_ref`  | string   | não         | chave de idempotência — repetir o mesmo valor devolve `duplicate` |
+| `external_ref`  | string   | **sim**     | identidade estável do evento; entra na assinatura e é a chave de idempotência — ausente/vazio → **400**, repetido → `duplicate` |
 | `source`        | string   | não         | canal (padrão `"webhook"`)                                        |
 | `link_id`       | string   | não         | link clicado; rejeitado se for de outra campanha                  |
 | `currency`      | string   | não         | moeda (padrão `"BRL"`)                                            |
@@ -64,6 +79,7 @@ reformatação). A comparação é em tempo constante.
 | ------ | ------------------------------------- | ------------------------------------------------ |
 | 200    | `{ "success": true, "campaign_id": ... }` | conversão gravada                            |
 | 200    | `{ "duplicate": true, "campaign_id": ... }` | `external_ref` repetido — **não** duplica   |
+| 400    | —                                     | JSON inválido, `action` != `"convert"`, `recipient_id` ou `external_ref` ausente/vazio |
 | 401    | —                                     | autenticação ausente/inválida/vencida           |
 | 404    | —                                     | `recipient_id` não encontrado                   |
 | 413    | —                                     | corpo acima de 4 KB                             |
@@ -92,7 +108,10 @@ async function registrarConversao({ recipientId, value, externalRef, linkId, sou
   });
 
   const timestamp = String(Date.now());
-  const signature = createHmac("sha256", TALKX_CONVERT_SECRET).update(body).digest("hex");
+  // Esquema v1: a assinatura cobre versão + timestamp + external_ref + corpo,
+  // então cada reenvio exige assinatura nova e um replay capturado não vale.
+  const payloadCanonico = ["v1", timestamp, externalRef, body].join("\n");
+  const signature = createHmac("sha256", TALKX_CONVERT_SECRET).update(payloadCanonico).digest("hex");
 
   const res = await fetch(TALKX_LINK_ENDPOINT, {
     method: "POST",
@@ -120,7 +139,10 @@ async function registrarConversao({ recipientId, value, externalRef, linkId, sou
 
 ## Por que `external_ref`
 
-O `external_ref` é a chave de idempotência. Se o site reenviar o webhook (retry,
+O `external_ref` é a identidade estável do evento e a chave de idempotência —
+**obrigatório desde o esquema v1**. Se o site reenviar o webhook (retry,
 reload, double-submit do checkout), a repetição com o mesmo `external_ref` devolve
 `duplicate: true` e **não** cria uma segunda linha de conversão — a receita da
-campanha não infla.
+campanha não infla. Como ele entra na assinatura, ninguém pode trocar a
+identidade do evento de um corpo já assinado, e nenhuma conversão fica de fora
+do dedupe atômico do banco.

@@ -13,6 +13,15 @@ import { verifyHmacSignature } from "../_shared/hmac-validation.ts";
 const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min
 const MAX_BODY_BYTES = 4096;             // corpo do POST até 4 KB
 
+// R2-API-035: versão do esquema de assinatura. O HMAC-SHA256 (hex minúsculo)
+// cobre "v1\n<timestamp_ms>\n<external_ref>\n<corpo_cru>" — o par corpo+
+// assinatura capturado não vale com timestamp nem external_ref trocados.
+export const SIGNATURE_VERSION = "v1";
+
+export function buildSignaturePayload(timestamp: string, externalRef: string, rawBody: string): string {
+  return [SIGNATURE_VERSION, timestamp, externalRef, rawBody].join("\n");
+}
+
 interface TalkxLinkDeps {
   supabase: SupabaseClient;
   env: { get: (name: string) => string | undefined };
@@ -104,7 +113,9 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
       return new Response("Payload too large", { status: 413 });
     }
 
-    // X022: autenticação — timestamp (±5 min) + assinatura HMAC-SHA256 do corpo.
+    // X022: autenticação — timestamp fresco (±5 min). A assinatura HMAC é
+    // verificada depois do parse porque a v1 cobre também o external_ref do
+    // corpo (R2-API-035).
     const timestampHeader = req.headers.get("x-talkx-timestamp");
     const signatureHeader = req.headers.get("x-talkx-signature");
     if (!timestampHeader || !signatureHeader) {
@@ -112,10 +123,6 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
     }
     const timestamp = Number(timestampHeader);
     if (!Number.isFinite(timestamp) || Math.abs(Date.now() - timestamp) > CONVERT_WINDOW_MS) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-    const signatureValid = await verifyHmacSignature(rawBody, signatureHeader, convertSecret);
-    if (!signatureValid) {
       return new Response("Unauthorized", { status: 401 });
     }
 
@@ -143,6 +150,25 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
       return new Response("recipient_id required", { status: 400 });
     }
 
+    // R2-API-035: external_ref é a identidade estável do evento e entra na
+    // assinatura — obrigatório para a dedupe atômica do banco valer em TODA
+    // conversão (índice único parcial só cobre linhas com external_ref).
+    if (typeof external_ref !== "string" || external_ref.trim() === "") {
+      return new Response("external_ref required", { status: 400 });
+    }
+
+    // R2-API-035: assinatura v1 = HMAC-SHA256 de
+    // "v1\n<timestamp>\n<external_ref>\n<corpo>". O formato antigo (HMAC só do
+    // corpo) NÃO é aceito — aceitar os dois manteria o replay vivo.
+    const signatureValid = await verifyHmacSignature(
+      buildSignaturePayload(timestampHeader, external_ref, rawBody),
+      signatureHeader,
+      convertSecret,
+    );
+    if (!signatureValid) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
     // X022: validação de valor antes do banco — texto/negativo/não-finito → 422.
     if (value !== undefined && value !== null) {
       if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
@@ -165,7 +191,7 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
     // IDOR de link e atribuição), nunca INSERT direto no edge.
     const { data: convResult, error: convErr } = await supabase.rpc("record_talkx_conversion", {
       p_campaign_id:  rec.campaign_id,
-      p_external_ref: external_ref ?? null,
+      p_external_ref: external_ref,
       p_value:        (typeof value === "number" ? value : null),
       p_source:       source ?? "webhook",
       p_currency:     currency ?? null,
