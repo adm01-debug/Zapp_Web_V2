@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 
 const DRAFT_KEY_PREFIX = 'chat_draft_';
-const CHAR_LIMIT = 4096;
+/** Limite de caracteres do editor de mensagem — fonte única (contador, botão e envio). */
+export const CHAR_LIMIT = 4096;
 
 interface UseChatInputLogicParams {
   inputValue: string;
