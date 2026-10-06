@@ -48,6 +48,11 @@ const ALLOWLIST = new Set([
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
   'scripts/db-audit/replay-classify.test.sh',
+  // --- .test.sh — prova em container descartável (docker); passo de YAML a promover em
+  // db-guard.yml pelo dono do workflow (agente não edita workflow).
+  // R2-AUTH-015: convite de agente com destinatário, papel autorizado, expiração e uso único,
+  // com atribuição do papel decidida no servidor na aceitação.
+  'scripts/db-audit/agent-invitations-flow.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
