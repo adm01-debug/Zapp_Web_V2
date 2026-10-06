@@ -1105,3 +1105,20 @@ Deno.test("X025 continue: lote com 2 suprimidos → 1 evento agregado skipped_su
     clock.restore();
   }
 });
+
+// --------------------------------------------------------------------------- R2-INF-016
+
+Deno.test("R2-INF-016 start: falha do kick → 500 sanitizado (sem detalhe do banco)", async () => {
+  setDispatchEnv();
+  const { deps } = makeAsyncStartDeps({ recipients: makeContinueRecipients(1), kickError: true });
+  const provider = mockProviderRecording();
+  try {
+    const res = await handleTalkxSend(makeDispatchPost(), deps);
+    assert(res.status === 500, `esperado 500, recebido ${res.status}`);
+    const texto = await res.text();
+    assert(!texto.includes("kick failed"), `o corpo nao pode trazer o detalhe interno: ${texto}`);
+    assert(JSON.parse(texto).error === "Internal server error", `corpo inesperado: ${texto}`);
+  } finally {
+    provider.restore();
+  }
+});

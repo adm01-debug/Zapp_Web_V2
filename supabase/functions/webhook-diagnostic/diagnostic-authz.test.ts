@@ -71,3 +71,25 @@ Deno.test("R2-API-001: admin passa o gate do diagnóstico", async () => {
   );
   assertEquals(res.status, 200, "admin deve passar o gate");
 });
+
+// R2-INF-016: o catch do handler montava o 500 à mão com `err.message` no corpo.
+Deno.test("R2-INF-016: falha inesperada vira 500 sanitizado (o detalhe interno não sai no corpo)", async () => {
+  const SEGREDO = "detalhe-interno-do-handler-7c1e";
+  const res = await handleWebhookDiagnostic(
+    new Request("http://localhost/functions/v1/webhook-diagnostic", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer agent-jwt" },
+      body: JSON.stringify({ action: "full-diagnostic" }),
+    }),
+    {
+      callerClient: {
+        auth: { getUser: () => { throw new Error(SEGREDO); } },
+      } as any,
+      supabase: makeServiceClient(() => {}),
+    },
+  );
+  assertEquals(res.status, 500, "falha inesperada deve virar 500");
+  const texto = await res.text();
+  assertEquals(texto.includes(SEGREDO), false, `o corpo não pode trazer o detalhe interno: ${texto}`);
+  assertEquals(JSON.parse(texto).error, "Internal server error", `corpo inesperado: ${texto}`);
+});
