@@ -165,7 +165,9 @@
         "team_conversation_members": "215c2d45b491f5c815ace782ce450fdf",
         "link_preview_cache_metrics": "215c2d45b491f5c815ace782ce450fdf",
         "multiplix_audience_members": "fe2e7aa3a94b94b876d7713f1517686d",
-        "whatsapp_connection_queues": "215c2d45b491f5c815ace782ce450fdf"
+        "whatsapp_connection_queues": "215c2d45b491f5c815ace782ce450fdf",
+        "gmail_oauth_states": "215c2d45b491f5c815ace782ce450fdf",
+        "talkx_storage_purge_queue": "215c2d45b491f5c815ace782ce450fdf"
     },
     "types": {
         "e:app_role": "5fe9cb65299844e7f830bf9cfe2974ce",
@@ -5239,7 +5241,10 @@
         "r:public.team_conversation_members.is_muted|authenticated|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.team_conversation_members.is_pinned|authenticated|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.team_conversation_members.is_archived|authenticated|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "r:public.team_conversation_members.last_read_at|authenticated|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
+        "r:public.team_conversation_members.last_read_at|authenticated|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.team_conversations.avatar_url|authenticated|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.team_conversations.name|authenticated|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "r:public.team_conversations.updated_at|authenticated|UPDATE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
     "schema_grants": {
         "public|anon|USAGE|grantor=pg_database_owner": "68934a3e9455fa72420237eb05902327",
