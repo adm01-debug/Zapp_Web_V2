@@ -1,4 +1,4 @@
-import { buildTagOrExpr } from './index.ts';
+import { buildTagOrExpr, promogiftsCatalogHandler, type CatalogHandlerDeps } from './index.ts';
 
 function assertEquals(actual: unknown, expected: unknown, msg?: string) {
   if (actual !== expected) {
@@ -84,4 +84,134 @@ Deno.test('buildTagOrExpr: array vazio retorna null (sem cláusulas)', () => {
 
 Deno.test('buildTagOrExpr: só valores que sanitizam para vazio retorna null', () => {
   assertEquals(buildTagOrExpr('materials', ['%%%', '...', '()']), null);
+});
+
+// ─── Janela de 30 dias do filtro "novos" (list_products + is_new) ─────────
+//
+// O contrato público continua `is_new: true` (o front manda só isso), mas na
+// edge o predicado passa a exigir created_at >= agora-30d, com fronteira
+// INCLUSIVA e o corte calculado uma vez por requisição em UTC/ISO. Sem essa
+// segunda condição, produto marcado como novo há mais de 30 dias continuava
+// na listagem e na exportação do filtro new_30d.
+//
+// Os testes chamam o handler real (promogiftsCatalogHandler) com os clients
+// injetados pelo seam CT-77 e o relógio fixo via deps.now — nada de banco.
+
+type QueryCall = { m: string; args: unknown[] };
+type QueryTerminal = { data?: unknown; error?: unknown; count?: number | null };
+
+/** Builder PostgREST falso: registra cada método de filtro e resolve no terminal. */
+function fakeQuery(terminal: QueryTerminal, calls: QueryCall[]) {
+  const b: Record<string, unknown> = {};
+  const passthrough = [
+    'select', 'eq', 'neq', 'in', 'is', 'gt', 'gte', 'lt', 'lte', 'not',
+    'or', 'like', 'ilike', 'textSearch', 'order', 'range', 'limit',
+  ];
+  for (const m of passthrough) {
+    b[m] = (...args: unknown[]) => {
+      calls.push({ m, args });
+      return b;
+    };
+  }
+  b.maybeSingle = () => Promise.resolve({ data: null, error: null });
+  b.then = (
+    resolve: (v: QueryTerminal) => unknown,
+    reject: (e: unknown) => unknown,
+  ) => Promise.resolve(terminal).then(resolve, reject);
+  return b;
+}
+
+/** Client externo falso: cada `from()` consome o próximo terminal da fila. */
+function fakeExtClient(terminals: QueryTerminal[], calls: QueryCall[]) {
+  let i = 0;
+  return {
+    from(_table: string) {
+      const terminal = terminals[Math.min(i, terminals.length - 1)];
+      i += 1;
+      return fakeQuery(terminal, calls);
+    },
+    rpc: () => Promise.resolve({ data: null, error: null }),
+  };
+}
+
+/** Client local falso: JWT válido e cota de rate limit sempre disponível. */
+const fakeLocalClient = {
+  auth: {
+    getUser: () => Promise.resolve({ data: { user: { id: 'user-teste' } }, error: null }),
+  },
+  rpc: () => Promise.resolve({ data: true, error: null }),
+};
+
+function postCatalog(body: unknown): Request {
+  return new Request('https://example.supabase.co/functions/v1/promogifts-catalog', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: 'Bearer tok' },
+    body: JSON.stringify(body),
+  });
+}
+
+// Relógio fixo: o corte de 30 dias a partir de 2026-10-06T15:04:05Z é
+// exatamente 2026-09-06T15:04:05.000Z (literal — não recomputado aqui, para
+// o teste provar o VALOR e não a fórmula).
+const FIXED_NOW = new Date('2026-10-06T15:04:05.000Z');
+const EXPECTED_CUTOFF = '2026-09-06T15:04:05.000Z';
+
+function catalogDeps(terminals: QueryTerminal[], calls: QueryCall[]): CatalogHandlerDeps {
+  return {
+    localClient: fakeLocalClient,
+    extClient: fakeExtClient(terminals, calls),
+    now: () => FIXED_NOW,
+  } as unknown as CatalogHandlerDeps;
+}
+
+Deno.test('list_products com is_new=true exige is_new=true E created_at >= agora-30d (inclusivo)', async () => {
+  const calls: QueryCall[] = [];
+  const res = await promogiftsCatalogHandler(
+    postCatalog({ action: 'list_products', params: { is_new: true } }),
+    catalogDeps([{ data: [], error: null, count: 0 }], calls),
+  );
+
+  assertEquals(res.status, 200);
+  assertEquals(
+    calls.some((c) => c.m === 'eq' && c.args[0] === 'is_new' && c.args[1] === true),
+    true,
+    'esperava o predicado eq("is_new", true)',
+  );
+  assertEquals(
+    calls.some((c) => c.m === 'gte' && c.args[0] === 'created_at' && c.args[1] === EXPECTED_CUTOFF),
+    true,
+    `esperava o predicado gte("created_at", "${EXPECTED_CUTOFF}")`,
+  );
+});
+
+Deno.test('list_products: a contagem de fallback (PGRST103) usa o MESMO corte, calculado uma vez por requisição', async () => {
+  const calls: QueryCall[] = [];
+  const res = await promogiftsCatalogHandler(
+    postCatalog({ action: 'list_products', params: { is_new: true, offset: 500 } }),
+    catalogDeps([
+      { data: null, error: { code: 'PGRST103', message: 'range not satisfiable' }, count: null },
+      { data: null, error: null, count: 7 },
+    ], calls),
+  );
+
+  assertEquals(res.status, 200);
+  // A consulta paginada e a contagem de fallback têm de usar o mesmo instante
+  // de corte — se o corte fosse recalculado por consulta, os valores podiam
+  // divergir e a fronteira deixava de ser determinística.
+  const cortes = calls
+    .filter((c) => c.m === 'gte' && c.args[0] === 'created_at')
+    .map((c) => c.args[1]);
+  assertEquals(JSON.stringify(cortes), JSON.stringify([EXPECTED_CUTOFF, EXPECTED_CUTOFF]));
+});
+
+Deno.test('list_products sem is_new não aplica corte de created_at nem filtra is_new', async () => {
+  const calls: QueryCall[] = [];
+  const res = await promogiftsCatalogHandler(
+    postCatalog({ action: 'list_products', params: {} }),
+    catalogDeps([{ data: [], error: null, count: 0 }], calls),
+  );
+
+  assertEquals(res.status, 200);
+  assertEquals(calls.some((c) => c.m === 'gte' && c.args[0] === 'created_at'), false);
+  assertEquals(calls.some((c) => c.m === 'eq' && c.args[0] === 'is_new'), false);
 });
