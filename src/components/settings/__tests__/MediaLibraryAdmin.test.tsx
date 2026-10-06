@@ -1656,9 +1656,22 @@ describe('MediaLibraryAdmin - Pure Logic', () => {
     });
   });
 
-  // ─── Reclassify Error Counting ────────────────────────
+  // ─── Reclassify Error Counting (R2-INB-053 · item #346) ─
+  // O handler tem de ler o `error` devolvido por supabase.functions.invoke
+  // (não só exceções lançadas) e conservar a seleção dos itens que falharam,
+  // para o operador tentar de novo. Estes testes dirigem o hook REAL:
+  // renderizam MediaLibraryAdmin, selecionam itens e clicam "Reclassificar IA".
 
   describe('Reclassify Error Counting', () => {
+    beforeEach(() => {
+      // Este bloco vive sob `MediaLibraryAdmin - Pure Logic`, que não tem
+      // beforeEach próprio: limpa os mocks aqui para não vazar chamadas
+      // (toast/invoke) de um teste para o outro.
+      vi.clearAllMocks();
+      mockFunctions.invoke.mockReset();
+    });
+
+    // Testes originais deste bloco — mantidos (contagem e formatação da mensagem).
     it('counts errors separately from updates', () => {
       let updated = 0;
       let errors = 0;
@@ -1687,6 +1700,77 @@ describe('MediaLibraryAdmin - Pure Logic', () => {
       const msg = `${updated}/${total} itens reclassificados com IA`;
       const msgWithErrors = `${msg} (${errors} erros)`;
       expect(msgWithErrors).toBe('2/4 itens reclassificados com IA (1 erros)');
+    });
+
+    // ── R2-INB-053: provas que dirigem o hook REAL (não só a conta) ──
+
+    // Seleciona as duas figurinhas e devolve o botão da barra de ações em massa.
+    async function selecionaDuasFigurinhas() {
+      setupSupabaseQuery([
+        makeSticker({ id: 'st-1', name: 'Figurinha Um', image_url: 'https://storage.example.com/stickers/st-1.webp' }),
+        makeSticker({ id: 'st-2', name: 'Figurinha Dois', image_url: 'https://storage.example.com/stickers/st-2.webp' }),
+      ]);
+      setupStorage();
+      render(<MediaLibraryAdmin />);
+      await screen.findAllByText('Figurinha Um');
+      await screen.findAllByText('Figurinha Dois');
+      const checkboxes = screen.getAllByRole('checkbox'); // [0] = todas, [1..] = itens
+      fireEvent.click(checkboxes[1]);
+      fireEvent.click(checkboxes[2]);
+      return screen.getByRole('button', { name: /Reclassificar IA/i });
+    }
+
+    function ultimoToast(mock: unknown): string {
+      const calls = (mock as { mock: { calls: unknown[][] } }).mock.calls;
+      return (calls[calls.length - 1]?.[0] ?? '') as string;
+    }
+
+    it('conta o error devolvido pela função e mantém a seleção para retry', async () => {
+      mockFunctions.invoke.mockResolvedValue({ data: null, error: { message: 'classificador indisponível' } });
+      const reclassificar = await selecionaDuasFigurinhas();
+
+      fireEvent.click(reclassificar);
+
+      await waitFor(() => expect(toast.info).toHaveBeenCalled());
+      expect(ultimoToast(toast.info)).toContain('0/2 itens reclassificados com IA');
+      expect(ultimoToast(toast.info)).toContain('2 erros');
+      expect(toast.success).not.toHaveBeenCalled();
+      // A barra de ações em massa só existe enquanto há seleção: os itens que
+      // falharam continuam selecionados para uma nova tentativa.
+      expect(await screen.findByRole('button', { name: /Reclassificar IA/i })).toBeInTheDocument();
+      const checkboxes = screen.getAllByRole('checkbox');
+      expect(checkboxes[1]).toBeChecked();
+      expect(checkboxes[2]).toBeChecked();
+    });
+
+    it('conta rejeição lançada pela função como erro e mantém a seleção', async () => {
+      mockFunctions.invoke.mockRejectedValue(new Error('edge function fora do ar'));
+      const reclassificar = await selecionaDuasFigurinhas();
+
+      fireEvent.click(reclassificar);
+
+      await waitFor(() => expect(toast.info).toHaveBeenCalled());
+      expect(ultimoToast(toast.info)).toContain('2 erros');
+      expect(screen.getAllByRole('checkbox')[1]).toBeChecked();
+    });
+
+    it('conserva apenas os itens que falharam quando parte da turma tem sucesso', async () => {
+      // Determinístico por item (não depende da ordem das chamadas).
+      mockFunctions.invoke.mockImplementation((_fn: string, opts: { body: { image_url?: string } }) =>
+        opts.body.image_url?.includes('st-1')
+          ? Promise.resolve({ data: { category: 'memes' }, error: null })
+          : Promise.resolve({ data: null, error: { message: 'classificador indisponível' } }),
+      );
+      const reclassificar = await selecionaDuasFigurinhas();
+
+      fireEvent.click(reclassificar);
+
+      await waitFor(() => expect(toast.info).toHaveBeenCalled());
+      expect(ultimoToast(toast.info)).toContain('1/2 itens reclassificados com IA');
+      expect(ultimoToast(toast.info)).toContain('1 erros');
+      const checkboxes = screen.getAllByRole('checkbox');
+      expect(checkboxes[1]).not.toBeChecked(); // st-1 reclassificou e saiu da seleção
+      expect(checkboxes[2]).toBeChecked();     // st-2 falhou e ficou para retry
     });
   });
 
