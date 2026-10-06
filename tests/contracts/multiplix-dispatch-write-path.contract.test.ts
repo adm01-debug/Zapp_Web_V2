@@ -6,8 +6,9 @@
  * entao muta. Este contrato prova a fronteira:
  *   (a) NENHUM arquivo em `src/` insere/atualiza/apaga `multiplix_dispatches`,
  *       `multiplix_blocks` ou `multiplix_delivery_items` — a escrita passa pela edge;
- *   (b) as acoes de ESCRITA da edge conferem dono (`created_by = ctx.userId`, ou
- *       `manage_all`) ANTES de mutar;
+ *   (b) as acoes de ESCRITA da edge conferem dono pela IDENTIDADE CANONICA
+ *       (`created_by = profiles.id`, resolvido de `profiles.user_id` = auth.uid) e
+ *       honram `manage_all` ANTES de mutar — nunca comparando com o `ctx.userId` cru;
  *   (c) `confirm` e o UNICO caminho que muda o status do dispatch para
  *       `scheduled`/`sending` — e quem faz isso e a RPC transacional, nao um UPDATE solto.
  *
@@ -139,19 +140,44 @@ registrar('(a) o front NAO escreve direto em multiplix_dispatches/blocks/deliver
 // (b) escopo: dono conferido antes de mutar.
 // ---------------------------------------------------------------------------
 
-registrar('(b) as acoes de escrita da edge conferem dono (created_by = ctx.userId) antes de mutar', () => {
+registrar('(b) as acoes de escrita conferem dono pela IDENTIDADE CANONICA (profiles.id), nunca pelo auth.uid cru', () => {
   const index = stripComments(read(INDEX));
-  const ownerInWhere = [...index.matchAll(/\.eq\('created_by',\s*ctx\.userId\)/g)].length;
+  // MX08: `multiplix_dispatches.created_by` (e o `p_created_by` da RPC) guarda
+  // `profiles.id`, enquanto `requireAuth` entrega o `auth.uid` em `ctx.userId`.
+  // Usar o auth.uid como dono negava o PROPRIO dono (404/409) e fazia a criacao
+  // cair em `multiplix_draft_owner_not_found` (o defeito de identidades do MX08).
+  assert(
+    !/\.eq\('created_by',\s*ctx\.userId\)/.test(index),
+    'nenhuma escrita pode escopar created_by = ctx.userId (auth.uid != profiles.id)',
+  );
+  assert(
+    /p_created_by:\s*profileId/.test(index),
+    'draft.create deve gravar p_created_by = profiles.id resolvido do JWT',
+  );
+  assert(
+    /export async function resolveProfileId/.test(index) && /\.eq\('user_id',\s*ctx\.userId\)/.test(index),
+    'a identidade canonica sai de profiles.user_id (auth.uid) -> profiles.id',
+  );
+  const ownerReads = [...index.matchAll(/readOwnerId\(ctx,/g)].length;
+  assert(ownerReads >= 2, `draft.update e draft.discard devem LER o dono antes de mutar (achei ${ownerReads})`);
+  const ownerInWhere = [...index.matchAll(/\.eq\('created_by',\s*ownerId\)/g)].length;
   assert(
     ownerInWhere >= 2,
-    `draft.update e draft.discard devem escopar por created_by no WHERE (achei ${ownerInWhere})`,
+    `draft.update e draft.discard devem escopar por created_by = dono LIDO da linha (achei ${ownerInWhere})`,
   );
-  assert(/p_created_by:\s*ctx\.userId/.test(index), 'draft.create deve gravar p_created_by = ctx.userId');
+  assert(
+    /export async function resolveOwnerScope/.test(index) && /profileId === createdBy/.test(index),
+    'resolveOwnerScope deve reconhecer o dono comparando com o profiles.id resolvido',
+  );
 
   const blocks = stripComments(read(`${EDGE}/actions/blocks.ts`));
   assert(
-    /function guardEditableDispatch[\s\S]*?row\.created_by !== ctx\.userId/.test(blocks),
-    'blocks: guardEditableDispatch deve comparar row.created_by com ctx.userId',
+    /function guardEditableDispatch[\s\S]*?resolveOwnerScope\(ctx,\s*row\?\.created_by\)/.test(blocks),
+    'blocks: guardEditableDispatch deve usar o resolver canonico (profiles.id OU manage_all)',
+  );
+  assert(
+    !/row\.created_by !== ctx\.userId/.test(blocks),
+    'blocks: guardEditableDispatch nao pode comparar created_by com o auth.uid',
   );
   const guardCalls = [...blocks.matchAll(/guardEditableDispatch\(ctx,/g)].length;
   assert(guardCalls === 3, `blocks: cada mutacao deve chamar guardEditableDispatch (achei ${guardCalls})`);

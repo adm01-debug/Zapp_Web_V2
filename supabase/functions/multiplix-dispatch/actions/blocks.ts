@@ -29,7 +29,7 @@
  */
 
 import { z } from 'https://esm.sh/zod@3.23.8';
-import { type ActionContext, DispatchError } from '../index.ts';
+import { type ActionContext, DispatchError, resolveOwnerScope } from '../index.ts';
 import { errorResponse, jsonResponse } from '../../_shared/validation.ts';
 
 // Ordem de code-unit UTF-16 (identica a `.sort()` sem argumento) DE PROPOSITO: e a
@@ -186,7 +186,12 @@ async function guardEditableDispatch(
 
   if (error) throw new DispatchError('MULTIPLIX_BLOCKS_DISPATCH', error.message, 502);
   const row = data as { status?: string; created_by?: string } | null;
-  if (!row || row.created_by !== ctx.userId || row.status !== 'draft') {
+  // MX08: `created_by` guarda `profiles.id` — o escopo resolve pelo
+  // `resolveOwnerScope` canonico do index.ts (dono por profiles.id OU
+  // manage_all), nunca comparando com o `auth.uid` cru, que nao e o que a
+  // coluna guarda (a comparacao direta negava o proprio dono).
+  const scope = await resolveOwnerScope(ctx, row?.created_by);
+  if (!row || !(scope.isOwner || scope.manageAll) || row.status !== 'draft') {
     // Mesmo codigo para "nao e seu" e "nao esta em draft": nao revela a
     // existencia de rascunho de outro usuario em rota de mutacao.
     return errorResponse('multiplix_dispatch_not_editable', 409, ctx.req);
