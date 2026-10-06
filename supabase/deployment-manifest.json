@@ -401,8 +401,8 @@
     },
     {
       "path": "supabase/functions/auto-close-conversations/index.ts",
-      "bytes": 7521,
-      "sha256": "7559ed34924df1a36285ba761c515504ff1ed28c8d9434ae89e3622c6d057f2c"
+      "bytes": 8792,
+      "sha256": "aab2f37cc427d6ced4c0b17e2eaa4335c3280f1e3cfedbfb91b9df705f141fca"
     },
     {
       "path": "supabase/functions/batch-fetch-avatars/index.ts",
@@ -411,8 +411,8 @@
     },
     {
       "path": "supabase/functions/bitrix-api/index.ts",
-      "bytes": 9799,
-      "sha256": "7f699943d5e2155e0deff5f93499e801ec6b16614e38d7d36ac235943f0b39dc"
+      "bytes": 14293,
+      "sha256": "5224df6f82e78f33a18d5d8fa6b2287c3e06e0f98467081c4ee56e515f27b68e"
     },
     {
       "path": "supabase/functions/chatbot-l1/index.ts",
@@ -471,8 +471,8 @@
     },
     {
       "path": "supabase/functions/elevenlabs-dialogue/index.ts",
-      "bytes": 2461,
-      "sha256": "af1cf96e2cbe9c37a2ec002fcb2c11ccd508cdaceb6daf7935f87995bc9f4778"
+      "bytes": 4556,
+      "sha256": "b14eb3b93da9e1d124288fb4d8e6701ebb9cb94da47d4214f578fdb81d4cf586"
     },
     {
       "path": "supabase/functions/elevenlabs-scribe-token/index.ts",
@@ -990,7 +990,7 @@
       "name": "auto-close-conversations",
       "entrypoint": "supabase/functions/auto-close-conversations/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c140255340e6d5093c934f4fc158a2ebaa545d0f129ce00b4f600fde4dda7c04",
+      "source_sha256": "bf92ee176234407c8d686b754af486112af3def78d703a7299c895e640cc28e2",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1020,7 +1020,7 @@
       "name": "bitrix-api",
       "entrypoint": "supabase/functions/bitrix-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "bb93d1d69e864d26e9c8f6ee777d8c8b472c05e5cff099be9cdd81334233f779",
+      "source_sha256": "c16a6930a148b8061c11281c61864e59734d8dc15c096227cabef78e452d338e",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1212,7 +1212,7 @@
       "name": "elevenlabs-dialogue",
       "entrypoint": "supabase/functions/elevenlabs-dialogue/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e59aa6344711501fec2114b5ded910ae90cc53556121b6cf1cfbff5f653384b6",
+      "source_sha256": "c4a65c61b6555e521da4a1fc9fa74a4ffd60cf36a5aedebd9856910c0765c938",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1893,5 +1893,5 @@
       ]
     }
   ],
-  "manifest_sha256": "ccda6a1f1371a945ee54d42569c64c495b8d4a8d3ed9f5cc62372b94fa5d50a6"
+  "manifest_sha256": "a9b3e045124568014497bb9b11ef8fe4ca6e28b2e7192c8a43d58c635571a92f"
 }
