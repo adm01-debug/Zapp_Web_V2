@@ -273,7 +273,7 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
         const msg = (entry.message || baseData.message) as Record<string, unknown> | undefined;
         if (msg?.reactionMessage) {
           console.log(`[MSG_UPSERT] Processing reaction for ${externalId}`);
-          await handleReactionEvent(db, msg.reactionMessage as Record<string, unknown>, !!key.fromMe);
+          await handleReactionEvent(db, instance, msg.reactionMessage as Record<string, unknown>, !!key.fromMe);
           continue;
         }
 
@@ -314,7 +314,7 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
     if (event === 'messages.set') await handleMessagesSet(db, instance, data);
     if (event === 'contacts.set') await handleContactsSet(db, instance, data);
     if (event === 'chats.set') await handleChatsSet(db, instance, data);
-    if (event === 'messages.edited' || event === 'messages.edit') await handleMessagesEdited(db, data, baseData);
+    if (event === 'messages.edited' || event === 'messages.edit') await handleMessagesEdited(db, instance, data, baseData);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

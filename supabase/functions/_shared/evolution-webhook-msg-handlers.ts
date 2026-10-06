@@ -325,7 +325,8 @@ export async function handleMessagesSet(supabase: EvolutionDbClient, instance: s
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleMessagesEdited(supabase: EvolutionDbClient, data: unknown, baseData: Record<string, unknown>) {
+export async function handleMessagesEdited(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
+  const connection = await getConnectionByInstance(supabase, instance);
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { id?: string } | null;
@@ -338,9 +339,17 @@ export async function handleMessagesEdited(supabase: EvolutionDbClient, data: un
 
     if (!editedContent) continue;
 
+    // Escopado por whatsapp_connection_id: o mesmo external_id existe em outras
+    // conexoes — sem o filtro a edicao gravava na mensagem de outra conexao.
+    // Sem conexao resolvida nao ha escopo seguro: pula (fail-closed).
+    if (!connection?.id) {
+      console.warn(`Edit event for ${key.id} skipped -- instance ${instance} has no connection`);
+      continue;
+    }
     // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
     const { data: existing } = await supabase.from('messages').select('id')
-      .eq('external_id', key.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      .eq('external_id', key.id).eq('whatsapp_connection_id', connection.id)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (existing) {
       await supabase.from('messages').update({ content: editedContent, is_edited: true, updated_at: new Date().toISOString() }).eq('id', existing.id);
       console.log(`Message edited: ${key.id}`);

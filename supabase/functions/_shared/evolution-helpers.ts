@@ -353,14 +353,33 @@ export async function persistProfilePicture(supabase: EvolutionDbClient, phone: 
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleReactionEvent(supabase: EvolutionDbClient, reactionMessage: Record<string, unknown>, actorFromMe: boolean) {
+export async function handleReactionEvent(supabase: EvolutionDbClient, instance: string, reactionMessage: Record<string, unknown>, actorFromMe: boolean) {
   const emoji = (reactionMessage.text as string) || '';
   const reactKey = reactionMessage.key as Record<string, unknown> | undefined;
   if (!reactKey?.id) return;
 
+  // Escopado por whatsapp_connection_id: o mesmo external_id existe em outras
+  // conexoes — sem o filtro a reacao caia na mensagem de outra conexao (e o
+  // maybeSingle estourava com multiplas linhas). Sem conexao resolvida nao ha
+  // escopo seguro: retorna (fail-closed). O delete/upsert em message_reactions
+  // fica escopado pelo message_id resolvido (a tabela nao tem coluna de conexao).
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection?.id) {
+    console.warn(`Reaction ignored -- instance ${instance} has no connection`);
+    return;
+  }
+
   const targetExternalId = reactKey.id as string;
-  const { data: targetMessage } = await supabase
-    .from('messages').select('id, contact_id').eq('external_id', targetExternalId).maybeSingle();
+  // order+limit(1): mesmo escopo do indice unico ux_messages_dedup
+  // (connection + external_id + sender quando key.fromMe vem no evento);
+  // o limit evita o maybeSingle estourar com duplicata concorrente.
+  let targetQuery = supabase.from('messages').select('id, contact_id')
+    .eq('external_id', targetExternalId).eq('whatsapp_connection_id', connection.id);
+  if (typeof reactKey.fromMe === 'boolean') {
+    targetQuery = targetQuery.eq('sender', reactKey.fromMe ? 'agent' : 'contact');
+  }
+  const { data: targetMessage } = await targetQuery
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (!targetMessage) { console.log(`Reaction target not found: ${targetExternalId}`); return; }
   // Stub sem contact_id (linha criada por recibo adiantado): o CHECK
   // reaction_author_check exige autor — reagir aqui só geraria 23514.
