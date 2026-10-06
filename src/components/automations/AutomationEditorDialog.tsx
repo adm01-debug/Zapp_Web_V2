@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { TRIGGER_TYPES, ACTION_TYPES } from './automationConstants';
+import { TRIGGER_TYPES, ACTION_TYPES, filterActionConfig } from './automationConstants';
 import type { AutomationRow } from './useAutomations';
 
 interface AutomationEditorDialogProps {
@@ -14,6 +14,39 @@ interface AutomationEditorDialogProps {
   onOpenChange: (open: boolean) => void;
   automation?: AutomationRow | null;
   onSave: (data: Partial<AutomationRow>) => Promise<void>;
+}
+
+type ActionRecord = Record<string, unknown>;
+
+function readActions(automation?: AutomationRow | null): ActionRecord[] {
+  const raw = Array.isArray(automation?.actions) ? automation.actions : [];
+  return raw as unknown as ActionRecord[];
+}
+
+function readConfig(action?: ActionRecord): ActionRecord {
+  const config = action?.config;
+  return config && typeof config === 'object' && !Array.isArray(config) ? (config as ActionRecord) : {};
+}
+
+function readString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function buildFirstAction(
+  automation: AutomationRow | null | undefined,
+  actionType: string,
+  messageContent: string
+): { action: ActionRecord; config: ActionRecord } {
+  const [firstAction] = readActions(automation);
+  const previousType = readString(firstAction?.type);
+  let config: ActionRecord = { ...readConfig(firstAction) };
+  if (actionType === 'send_message') {
+    config.message = messageContent;
+  }
+  if (previousType !== actionType) {
+    config = filterActionConfig(actionType, config);
+  }
+  return { action: { ...(firstAction ?? {}), type: actionType, config }, config };
 }
 
 // R2-MOD-001: o `AutomationsManager` mantém este diálogo SEMPRE montado e troca
@@ -29,19 +62,38 @@ export function AutomationEditorDialog(props: AutomationEditorDialogProps) {
 }
 
 function AutomationEditorForm({ open, onOpenChange, automation, onSave }: AutomationEditorDialogProps) {
-  const [name, setName] = useState(automation?.name || '');
-  const [description, setDescription] = useState(automation?.description || '');
-  const [triggerType, setTriggerType] = useState(automation?.trigger_type || 'new_message');
-  const actions = Array.isArray(automation?.actions) ? automation.actions : [];
-  const [actionType, setActionType] = useState((actions[0] as Record<string, unknown>)?.type as string || 'send_message');
-  const [messageContent, setMessageContent] = useState(((actions[0] as Record<string, Record<string, string>>)?.config)?.message || '');
+  const [name, setName] = useState(automation?.name ?? '');
+  const [description, setDescription] = useState(automation?.description ?? '');
+  const [triggerType, setTriggerType] = useState(automation?.trigger_type ?? 'new_message');
+  const [actionType, setActionType] = useState(() => {
+    const [firstAction] = readActions(automation);
+    return readString(firstAction?.type) || 'send_message';
+  });
+  const [messageContent, setMessageContent] = useState(() => {
+    const [firstAction] = readActions(automation);
+    return readString(readConfig(firstAction).message);
+  });
   const [isSaving, setIsSaving] = useState(false);
 
+  // Mescla a primeira ação com a existente em vez de recriá-la, para não perder
+  // parâmetros que o editor não expõe. Ao trocar o tipo, remove só chaves
+  // conhecidas como exclusivas de outro tipo; chaves desconhecidas são mantidas
+  // porque este repositório não contém o executor que definiria o contrato total.
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
+    const existing = readActions(automation);
+    const { action: firstAction } = buildFirstAction(automation, actionType, messageContent);
+    const actions = existing.length > 0 ? [firstAction, ...existing.slice(1)] : [firstAction];
     setIsSaving(true);
     try {
-      await onSave({ name, description, trigger_type: triggerType, trigger_config: {}, actions: [{ type: actionType, config: { message: messageContent } }] });
+      // R2-MOD-002: preserva trigger_config e as demais ações que a UI não edita.
+      await onSave({
+        name,
+        description,
+        trigger_type: triggerType,
+        trigger_config: automation?.trigger_config ?? {},
+        actions: actions as unknown as AutomationRow['actions'],
+      });
       onOpenChange(false);
     } finally { setIsSaving(false); }
   };

@@ -15,3 +15,22 @@ export const ACTION_TYPES = [
   { type: 'send_notification', label: 'Enviar Notificação', icon: AlertCircle, description: 'Envia notificação para a equipe' },
   { type: 'close_conversation', label: 'Fechar Conversa', icon: CheckCircle2, description: 'Marca a conversa como resolvida' },
 ];
+
+// Chaves conhecidas como pertencentes a tipos específicos. Chaves sem dono
+// conhecido (incluindo parâmetros futuros do executor) são preservadas na troca;
+// somente dados comprovadamente incompatíveis com o novo tipo são removidos.
+const ACTION_CONFIG_OWNERS: Record<string, string[]> = {
+  message: ['send_message', 'send_notification'],
+  agent_id: ['assign_agent'],
+  tag_id: ['add_tag'],
+  priority: ['send_notification'],
+};
+
+export function filterActionConfig(actionType: string, config: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(config).filter(([configKey]) => {
+      const owners = ACTION_CONFIG_OWNERS[configKey];
+      return owners === undefined || owners.includes(actionType);
+    })
+  );
+}
