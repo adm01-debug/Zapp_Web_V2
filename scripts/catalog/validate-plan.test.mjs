@@ -73,8 +73,9 @@ test('rejeita caminho absoluto fora do repositorio e do temporario', () => {
 });
 
 test('aceita o caminho default do plano dentro do repositorio', () => {
-  // O plano pode estar valido ou nao (divida conhecida do E54); o que este caso
-  // garante e que o caminho default do repositorio nao e barrado pela guarda.
+  // O que este caso garante e que o caminho default do repositorio nao e
+  // barrado pela guarda; a validade estrutural do plano canonico e provada
+  // pelos casos de tombstone abaixo.
   const result = executar();
   assert.doesNotMatch(result.stderr, /fora das raizes permitidas/);
 });
@@ -92,6 +93,76 @@ test('aceita plano valido cujo checklist mistura [ ], [x] e [X]', () => {
 test('mantem a exigencia de estrutura numa etapa sem estrutura', () => {
   const result = executarPlano(
     planoCom(['54'], (id) => `### E${id} · Etapa ${id} sem estrutura`),
+  );
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /E54: 0 sub-etapas/);
+  assert.match(result.stderr, /E54: checklist com 0 itens/);
+  assert.match(result.stderr, /E54: sem Objetivo/);
+});
+
+/**
+ * Tombstone no formato estrito: cabecalho `### E<id> · ~~<titulo>~~ (RISCADO)`
+ * mais a linha `**Status:** descartado em AAAA-MM-DD`. `status: null` omite a
+ * linha de status (caso negativo) e `cabecalho` permite trocar so o cabecalho.
+ */
+function tombstone(id, { status = '**Status:** descartado em 2026-09-24 (decisao do dono do produto).', cabecalho } = {}) {
+  const linhas = [cabecalho || `### E${id} · ~~Etapa ${id} riscada~~ (RISCADO)`];
+  if (status !== null) linhas.push(status);
+  linhas.push('', 'Posicao mantida para preservar a numeracao; sem estrutura executavel.');
+  return linhas.join('\n');
+}
+
+test('conta o tombstone estrito como a posicao E54 e dispensa a estrutura executavel', () => {
+  // E54/RISCADO segue entre as 100 posicoes estaveis (senao o validador diria
+  // "E54: ausente"), mas o bloco riscado nao precisa de Objetivo, 10
+  // sub-etapas nem checklist.
+  const result = executarPlano(planoCom(['54'], (id) => tombstone(id)));
+  assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+  assert.match(result.stdout, /etapas: 100\/100/);
+  assert.match(result.stdout, /OK: 100 etapas/);
+  assert.doesNotMatch(result.stderr, /E54:/);
+});
+
+test('aceita o plano canonico com E54 como tombstone (regressao do defeito)', () => {
+  // Antes da correcao o plano real encerrava com exit 1 e os tres erros de E54.
+  const result = executar();
+  assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+  assert.match(result.stdout, /etapas: 100\/100/);
+  assert.match(result.stdout, /OK: 100 etapas/);
+  assert.doesNotMatch(result.stderr, /E54:/);
+});
+
+test('rejeita cabecalho RISCADO sem status de descarte datado', () => {
+  const result = executarPlano(planoCom(['54'], (id) => tombstone(id, { status: null })));
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /E54: 0 sub-etapas/);
+  assert.match(result.stderr, /E54: checklist com 0 itens/);
+  assert.match(result.stderr, /E54: sem Objetivo/);
+});
+
+test('rejeita status de descarte sem cabecalho riscado', () => {
+  const result = executarPlano(
+    planoCom(['54'], (id) =>
+      tombstone(id, {
+        cabecalho: `### E${id} · Etapa ${id} normal`,
+        status: '**Status:** descartado em 2026-09-24',
+      }),
+    ),
+  );
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /E54: 0 sub-etapas/);
+  assert.match(result.stderr, /E54: checklist com 0 itens/);
+  assert.match(result.stderr, /E54: sem Objetivo/);
+});
+
+test('rejeita marcador RISCADO sem titulo riscado e sem data valida', () => {
+  const result = executarPlano(
+    planoCom(['54'], (id) =>
+      tombstone(id, {
+        cabecalho: `### E${id} · Etapa ${id} (RISCADO)`,
+        status: '**Status:** descartado em data a definir',
+      }),
+    ),
   );
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /E54: 0 sub-etapas/);
