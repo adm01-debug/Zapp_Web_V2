@@ -117,19 +117,34 @@ export function useContactQuickActions(contact: ConversationContact) {
       icon: '📦',
       onUndo: async () => {
         // contacts.conversation_status é NOT NULL: anterior nulo vira 'open'.
-        // O FSM só aceita archived → open/pending; destino recusado vira erro
-        // honesto (toast.error), nunca sucesso falso.
         const restore: ConversationStatus = prev ?? 'open';
         const { error: undoError } = await supabase
           .from('contacts')
           .update({ conversation_status: restore })
           .eq('id', contactId);
+        let alvo: ConversationStatus = restore;
         if (undoError) {
-          toast.error('Erro ao desarquivar contato');
-          return;
+          // O FSM do banco desarquiva só para 'open'/'pending'
+          // (archived → open|pending). Anterior waiting/resolved/closed é
+          // recusado: em vez de deixar o Desfazer sem efeito nenhum, reabre
+          // como Aberta e diz o porquê — nunca sucesso falso.
+          if (restore === 'open' || restore === 'pending') {
+            toast.error('Erro ao desarquivar contato');
+            return;
+          }
+          const { error: reabrirError } = await supabase
+            .from('contacts')
+            .update({ conversation_status: 'open' })
+            .eq('id', contactId);
+          if (reabrirError) {
+            toast.error('Erro ao desarquivar contato');
+            return;
+          }
+          alvo = 'open';
+          toast.info(`O banco não permite voltar de arquivado para "${restore}" — contato reaberto como Aberta.`);
         }
-        statusRef.current = restore;
-        setLocal((p) => ({ ...p, status: restore }));
+        statusRef.current = alvo;
+        setLocal((p) => ({ ...p, status: alvo }));
       },
     });
   };
