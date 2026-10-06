@@ -102,7 +102,26 @@ export function EmailComposer({
   const sendLockRef = useRef(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [missingAttachmentNames, setMissingAttachmentNames] = useState<string[]>(() => restoredDraft?.attachmentNames || []);
-  const [selectedForwardAttachmentIds, setSelectedForwardAttachmentIds] = useState(() => new Set(forwardAttachments.map(attachment => attachment.id)));
+  // R2-COM-004: o encaminhamento abre junto com a mensagem, mas os metadados de anexo chegam numa
+  // segunda consulta (useGmail: threadAttachments). A seleção acompanha as chegadas novas sem
+  // ressuscitar o que o usuário removeu de propósito — por isso é conciliada por id, e não
+  // inicializada uma única vez com a lista do primeiro render.
+  const [selectedForwardAttachmentIds, setSelectedForwardAttachmentIds] = useState<Set<string>>(() => new Set(forwardAttachments.map(attachment => attachment.id)));
+  const knownForwardAttachmentIdsRef = useRef(new Set(forwardAttachments.map(attachment => attachment.id)));
+  const dismissedForwardAttachmentIdsRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    const arrived = forwardAttachments.filter(attachment => !knownForwardAttachmentIdsRef.current.has(attachment.id));
+    if (arrived.length === 0) return;
+    arrived.forEach(attachment => knownForwardAttachmentIdsRef.current.add(attachment.id));
+    const selectable = arrived.filter(attachment => !dismissedForwardAttachmentIdsRef.current.has(attachment.id));
+    if (selectable.length === 0) return;
+    setSelectedForwardAttachmentIds(current => {
+      const next = new Set(current);
+      selectable.forEach(attachment => next.add(attachment.id));
+      return next;
+    });
+  }, [forwardAttachments]);
   const [draftDirty, setDraftDirty] = useState(false);
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [discardConfirmationOpen, setDiscardConfirmationOpen] = useState(false);
@@ -148,6 +167,8 @@ export function EmailComposer({
     () => forwardAttachments.filter(attachment => selectedForwardAttachmentIds.has(attachment.id)),
     [forwardAttachments, selectedForwardAttachmentIds],
   );
+  // A mensagem anuncia anexo, mas os metadados ainda não chegaram (segunda consulta do thread).
+  const forwardAttachmentsPending = mode === 'forward' && forwardAttachments.length === 0 && Boolean(replyTo?.has_attachments);
 
   const prepareAttachments = useCallback(async () => {
     const localAttachments = await Promise.all(attachments.map(fileToEmailAttachment));
@@ -465,6 +486,13 @@ export function EmailComposer({
                   </div>
                 )}
 
+                {forwardAttachmentsPending && (
+                  <div role="status" className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-2 py-1 text-3xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Carregando anexos da mensagem original…
+                  </div>
+                )}
+
                 {selectedForwardAttachments.length > 0 && (
                   <div className="space-y-1 rounded-lg border border-primary/20 bg-primary/5 p-2" aria-label="Anexos da mensagem encaminhada">
                     <p className="text-3xs font-medium text-primary">Anexos originais incluídos</p>
@@ -473,7 +501,7 @@ export function EmailComposer({
                         <Badge key={attachment.id} variant="secondary" className="gap-1 text-3xs">
                           <Paperclip className="h-2.5 w-2.5" /><span className="max-w-[220px] truncate">{attachment.filename || 'Anexo'}</span>
                           <span className="text-muted-foreground">{formatEmailFileSize(attachment.size_bytes || 0)}</span>
-                          <button type="button" aria-label={`Remover ${attachment.filename || 'anexo'}`} onClick={() => { setSelectedForwardAttachmentIds(current => { const next = new Set(current); next.delete(attachment.id); return next; }); markDraftDirty(); }}><X className="h-2.5 w-2.5" /></button>
+                          <button type="button" aria-label={`Remover ${attachment.filename || 'anexo'}`} onClick={() => { dismissedForwardAttachmentIdsRef.current.add(attachment.id); setSelectedForwardAttachmentIds(current => { const next = new Set(current); next.delete(attachment.id); return next; }); markDraftDirty(); }}><X className="h-2.5 w-2.5" /></button>
                         </Badge>
                       ))}
                     </div>

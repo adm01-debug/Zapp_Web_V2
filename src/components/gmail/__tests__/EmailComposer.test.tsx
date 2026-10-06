@@ -229,6 +229,65 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
     }));
   });
 
+  it('#286: inclui anexos originais que chegam depois da abertura do encaminhamento', async () => {
+    const attachment = {
+      id: 'att-late', email_message_id: 'm1', gmail_attachment_id: 'gmail-att-late',
+      filename: 'contrato.pdf', mime_type: 'application/pdf', size_bytes: 3,
+      created_at: '2026-10-02T12:00:00Z', gmail_message_id: 'g1',
+    } as EmailAttachment & { gmail_message_id: string };
+
+    const { rerender } = render(
+      <EmailComposer mode="forward" replyTo={makeMessage({ has_attachments: true })} forwardAttachments={[]} onClose={vi.fn()} />
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('Carregando anexos');
+
+    // Os metadados do anexo chegam na segunda consulta do thread (useGmail: threadAttachments).
+    rerender(
+      <EmailComposer mode="forward" replyTo={makeMessage({ has_attachments: true })} forwardAttachments={[attachment]} onClose={vi.fn()} />
+    );
+
+    expect(await screen.findByText('contrato.pdf')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('destinatario@email.com'), { target: { value: 'dest@email.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
+
+    await waitFor(() => expect(getAttachmentContent).toHaveBeenCalledWith(attachment));
+    expect(sendEmailMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      attachments: [{ filename: 'contrato.pdf', mimeType: 'application/pdf', content: 'AQID' }],
+    }));
+  });
+
+  it('#286: preserva a remoção explícita do anexo original quando novos anexos chegam depois', async () => {
+    const first = {
+      id: 'att-1', email_message_id: 'm1', gmail_attachment_id: 'gmail-att-1',
+      filename: 'proposta.pdf', mime_type: 'application/pdf', size_bytes: 3,
+      created_at: '2026-10-02T12:00:00Z', gmail_message_id: 'g1',
+    } as EmailAttachment & { gmail_message_id: string };
+    const second = {
+      id: 'att-2', email_message_id: 'm1', gmail_attachment_id: 'gmail-att-2',
+      filename: 'contrato.pdf', mime_type: 'application/pdf', size_bytes: 3,
+      created_at: '2026-10-02T12:00:00Z', gmail_message_id: 'g1',
+    } as EmailAttachment & { gmail_message_id: string };
+
+    const { rerender } = render(
+      <EmailComposer mode="forward" replyTo={makeMessage({ has_attachments: true })} forwardAttachments={[first]} onClose={vi.fn()} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Remover proposta.pdf' }));
+    expect(screen.queryByText('proposta.pdf')).not.toBeInTheDocument();
+
+    rerender(
+      <EmailComposer mode="forward" replyTo={makeMessage({ has_attachments: true })} forwardAttachments={[first, second]} onClose={vi.fn()} />
+    );
+
+    expect(await screen.findByText('contrato.pdf')).toBeInTheDocument();
+    expect(screen.queryByText('proposta.pdf')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('destinatario@email.com'), { target: { value: 'dest@email.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
+
+    await waitFor(() => expect(getAttachmentContent).toHaveBeenCalledWith(second));
+    expect(getAttachmentContent).not.toHaveBeenCalledWith(first);
+  });
+
   it('bloqueia duplo clique desde o início da preparação do envio', async () => {
     sendEmailMutateAsync.mockImplementation(() => new Promise(() => undefined));
     render(<EmailComposer mode="new" defaultTo="dest@email.com" onClose={vi.fn()} />);
