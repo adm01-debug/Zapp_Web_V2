@@ -3,8 +3,17 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { StatusChips } from '../conversation-list/StatusChips';
 import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 
+// R2-INB-056 (#349): o usuário logado tem DOIS ids distintos — o do auth
+// (auth.users.id, exposto em `user`) e o do perfil (public.profiles.id, alvo
+// da FK contacts.assigned_to). O mock dá valores DIFERENTES aos dois, como no
+// runtime: um mock com o mesmo valor nos dois papéis esconderia o defeito do
+// contador comparando o id errado (auth id no lugar do profile id).
+const AUTH_USER_ID = 'auth-user-1';
+const CURRENT_PROFILE_ID = 'perfil-atual-1';
+const OTHER_PROFILE_ID = 'perfil-colega-2';
+
 vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
+  useAuth: () => ({ user: { id: AUTH_USER_ID }, profile: { id: CURRENT_PROFILE_ID } }),
 }));
 
 function makeConversation(overrides: Partial<ConversationWithMessages['contact']> & { hasMessages?: boolean; unreadCount?: number }): ConversationWithMessages {
@@ -23,9 +32,10 @@ function makeConversation(overrides: Partial<ConversationWithMessages['contact']
 
 describe('StatusChips', () => {
   const conversations: ConversationWithMessages[] = [
-    makeConversation({ id: 'c1', assigned_to: 'user-1', unreadCount: 2 }),
-    makeConversation({ id: 'c2', assigned_to: null }),
-    makeConversation({ id: 'c3', hasMessages: false }),
+    makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2 }),
+    makeConversation({ id: 'c2', assigned_to: OTHER_PROFILE_ID }),
+    makeConversation({ id: 'c3', assigned_to: null }),
+    makeConversation({ id: 'c4', hasMessages: false }),
   ];
 
   it('renders the 5 chips (no Spam — não existe no modelo)', () => {
@@ -40,7 +50,7 @@ describe('StatusChips', () => {
 
   it('maps "Todas" to open conversations count', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
-    expect(screen.getByTestId('status-chip-all')).toHaveTextContent('2');
+    expect(screen.getByTestId('status-chip-all')).toHaveTextContent('3');
   });
 
   it('maps "Não lidas" to conversations with unreadCount > 0', () => {
@@ -48,9 +58,13 @@ describe('StatusChips', () => {
     expect(screen.getByTestId('status-chip-unread')).toHaveTextContent('1');
   });
 
-  it('maps "Em atendimento" to conversations assigned to the current user', () => {
+  it('conta "Em atendimento" pelo profile.id logado, não pelo auth id (#349)', () => {
+    // c1 está atribuída ao profile do usuário logado; c2 está com o perfil de
+    // um colega e c3 não tem responsável. Comparando com o auth id — que não é
+    // um profile id válido — o contador zeraria mesmo com a conversa atribuída
+    // ao próprio usuário.
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
-    expect(screen.getByTestId('status-chip-attending')).toHaveTextContent('1');
+    expect(screen.getByTestId('status-chip-attending').querySelector('span')?.textContent).toBe('1');
   });
 
   it('maps "Aguardando" to unassigned open conversations', () => {

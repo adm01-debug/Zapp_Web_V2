@@ -22,13 +22,17 @@ const COUNTER_TONE: Record<ChipTab, { active: string; inactive: string }> = {
 };
 
 export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusChipsProps) {
-  const { user } = useAuth();
+  // R2-INB-056 (#349): contacts.assigned_to é FK para public.profiles(id), que
+  // é um id DIFERENTE do auth.users.id exposto em `user`. Comparar o
+  // responsável com o auth id zerava "Em atendimento" (e divergia do filtro da
+  // lista, que usa profileId em useInboxFilters).
+  const { profile } = useAuth();
 
   const counts = useMemo(() => {
-    const userId = user?.id;
+    const profileId = profile?.id;
     const openConversations = conversations.filter(c => c.messages.length > 0);
 
-    const attending = openConversations.filter(c => c.contact.assigned_to === userId);
+    const attending = openConversations.filter(c => c.contact.assigned_to === profileId);
     const waiting = openConversations.filter(c => !c.contact.assigned_to);
     const unread = openConversations.filter(c => {
       const unreadMessages = (c.contact as unknown as { unread_messages?: number }).unread_messages ?? 0;
@@ -43,7 +47,7 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
       waiting: waiting.length,
       resolved: resolved.length,
     };
-  }, [conversations, user?.id]);
+  }, [conversations, profile?.id]);
 
   const chips: { id: ChipTab; label: string; count: number }[] = [
     { id: 'all', label: 'Todas', count: counts.all },
