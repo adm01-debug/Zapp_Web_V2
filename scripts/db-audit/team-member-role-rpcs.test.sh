@@ -15,6 +15,9 @@
 #             respondem, o contrato (assinatura/RETURNS jsonb/SECURITY DEFINER/search_path) nao
 #             mudou e a autorizacao continua igual — so que lida de `member_role`: guardas de papel,
 #             promocao do proximo dono GRAVANDO member_role='owner' e EXECUTE de anon fechado.
+#   BLOCO C — extrai e EXECUTA o SQL completo entre `-- Rollback: ...` e `-- Rollback end.` da migration;
+#             prova que as duas funcoes voltam aos corpos anteriores com `tcm.role`/`SET role`,
+#             preservando assinatura, SECURITY DEFINER, search_path e ACL.
 #
 # TEAM_MEMBER_ROLE_TEST_MIGRATIONS_DIR existe para o teste de MUTACAO local (rodar contra uma copia
 # do diretorio de migrations com a correcao desfeita): o BLOCO B tem de ficar VERMELHO. CI e uso
@@ -189,6 +192,11 @@ GRANT EXECUTE ON FUNCTION public.remove_team_member(uuid, uuid) TO authenticated
 SQL
 
 psql_file "$tmp_dir/rpcs_vigentes.sql"
+
+# Retrato canonico dos corpos anteriores, depois de o PostgreSQL compilar o SQL real da migration
+# historica. O bloco C compara pg_get_functiondef depois do rollback, nao apenas trechos/regex.
+leave_before_definition="$(psql_sql "SELECT pg_get_functiondef('public.leave_team_group(uuid)'::regprocedure)")"
+remove_before_definition="$(psql_sql "SELECT pg_get_functiondef('public.remove_team_member(uuid, uuid)'::regprocedure)")"
 
 cat > "$tmp_dir/seed.sql" <<'SQL'
 DELETE FROM public.team_conversation_members;
@@ -366,4 +374,54 @@ expect_value 'B18 authenticated tem EXECUTE nas duas RPCs (fronteira intacta)' '
 expect_value 'B19 anon nao tem EXECUTE nas duas RPCs' 'false|false' \
   "SELECT has_function_privilege('anon','public.leave_team_group(uuid)','EXECUTE') || '|' || has_function_privilege('anon','public.remove_team_member(uuid, uuid)','EXECUTE')"
 
-printf '\n[OK] member_role nas RPCs leave_team_group/remove_team_member verificado (defeito no bloco A, correcao no bloco B)\n'
+echo
+echo '── BLOCO C: rollback executavel restaura integralmente os corpos anteriores ──────'
+
+rollback_sql="$tmp_dir/rollback.sql"
+set +e
+awk '
+  /^-- Rollback:/ { in_rollback=1; found_start=1; next }
+  /^-- Rollback end\.$/ { if (in_rollback) found_end=1; exit }
+  in_rollback {
+    if ($0 !~ /^--( |$)/) exit 43
+    sub(/^-- ?/, "")
+    print
+  }
+  END {
+    if (!found_start) exit 41
+    if (!found_end) exit 42
+  }
+' "$migrations_dir/$mig_fix" > "$rollback_sql"
+rollback_extract_status=$?
+set -e
+(( rollback_extract_status == 0 )) || fail 'C0 o bloco Rollback nao contem SQL executavel completo entre os marcadores'
+grep -q '^CREATE OR REPLACE FUNCTION public.leave_team_group' "$rollback_sql" \
+  || fail 'C0 rollback nao recria leave_team_group'
+grep -q '^CREATE OR REPLACE FUNCTION public.remove_team_member' "$rollback_sql" \
+  || fail 'C0 rollback nao recria remove_team_member'
+grep -q 'tcm\.role' "$rollback_sql" \
+  || fail 'C0 rollback nao contem os corpos anteriores com tcm.role'
+
+psql_file "$rollback_sql"
+psql_file "$tmp_dir/seed.sql"
+
+leave_after_rollback="$(psql_sql "SELECT pg_get_functiondef('public.leave_team_group(uuid)'::regprocedure)")"
+remove_after_rollback="$(psql_sql "SELECT pg_get_functiondef('public.remove_team_member(uuid, uuid)'::regprocedure)")"
+[[ "$leave_after_rollback" == "$leave_before_definition" ]] \
+  || fail 'C1 rollback nao restaurou integralmente a definicao anterior de leave_team_group'
+printf '[PASS] C1 rollback restaurou integralmente a definicao anterior de leave_team_group\n'
+[[ "$remove_after_rollback" == "$remove_before_definition" ]] \
+  || fail 'C2 rollback nao restaurou integralmente a definicao anterior de remove_team_member'
+printf '[PASS] C2 rollback restaurou integralmente a definicao anterior de remove_team_member\n'
+expect_value 'C3 rollback preservou assinaturas, retorno jsonb e search_path' '2' \
+  "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND ((p.proname='leave_team_group' AND pg_get_function_arguments(p.oid)='p_conversation_id uuid') OR (p.proname='remove_team_member' AND pg_get_function_arguments(p.oid)='p_conversation_id uuid, p_profile_id uuid')) AND pg_get_function_result(p.oid)='jsonb' AND p.proconfig @> ARRAY['search_path=public']"
+expect_value 'C4 rollback preservou ACL (authenticated sim; anon nao)' 'true|true|false|false' \
+  "SELECT has_function_privilege('authenticated','public.leave_team_group(uuid)','EXECUTE') || '|' || has_function_privilege('authenticated','public.remove_team_member(uuid, uuid)','EXECUTE') || '|' || has_function_privilege('anon','public.leave_team_group(uuid)','EXECUTE') || '|' || has_function_privilege('anon','public.remove_team_member(uuid, uuid)','EXECUTE')"
+expect_error_as 'C5 rollback executado: leave_team_group voltou ao erro anterior em tcm.role' \
+  'column tcm.role does not exist' "$A" \
+  "SELECT public.leave_team_group('$G_SAIR'::uuid);"
+expect_error_as 'C6 rollback executado: remove_team_member voltou ao erro anterior em tcm.role' \
+  'column tcm.role does not exist' "$A" \
+  "SELECT public.remove_team_member('$G_REMOVER'::uuid, '$PERFIL_B'::uuid);"
+
+printf '\n[OK] member_role nas RPCs e rollback executavel verificados no PostgreSQL local (A=antes, B=correcao, C=rollback)\n'
