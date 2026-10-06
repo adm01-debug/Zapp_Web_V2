@@ -18,10 +18,14 @@
 #     6. destinatario de campanha concluida ha 181 dias -> personalized_message e
 #        snapshots de midia nulos, contadores intactos;
 #     7. segunda execucao no mesmo dia -> 0 linhas afetadas (last_purge_at);
-#     8. talkx_blacklist intacta apos o expurgo.
+#     8. talkx_blacklist intacta apos o expurgo;
+#     9. R3-DELTA-008: com acervo vencido MAIOR que o lote (p_limit), UMA execucao do dia
+#        drena TODO o acervo vencido (nao so um lote) e o dia so fecha depois de drenar.
 #
 # A migration e encontrada pelo marcador interno 'talkx_x032_objetos_ausentes'
 # (sobrevive ao rename do hermes-db-migrar --nova); fallback para .tmp/x032.sql.
+# A prova de retencao em volume (item 9) fecha tambem sobre a versao DRENADA do expurgo,
+# encontrada pelo marcador interno 'talkx_r3delta008_laco_ausente'.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -31,6 +35,11 @@ if [[ -z "$migration" ]]; then
   migration="$repo_root/.tmp/x032.sql"
 fi
 [[ -f "$migration" ]] || { printf '[FALHA] migration X032 nao encontrada (marcador talkx_x032_objetos_ausentes)\n' >&2; exit 1; }
+
+# R3-DELTA-008: a retencao em volume so existe com a versao DRENADA do expurgo (lotes ate
+# acabar o acervo vencido). Sem ela o cenario de volume (item 11) tem de falhar.
+drain_migration="$(grep -rlF 'talkx_r3delta008_laco_ausente' "$repo_root/supabase/migrations" 2>/dev/null | grep -v '/_superseded/' | sort | tail -1 || true)"
+[[ -f "$drain_migration" ]] || { printf '[FALHA] migration do R3-DELTA-008 nao encontrada (marcador talkx_r3delta008_laco_ausente)\n' >&2; exit 1; }
 
 fail() { printf '[FALHA] %s\n' "$1" >&2; exit 1; }
 pass() { printf '[PASS] %s\n' "$1"; }
@@ -304,6 +313,12 @@ CREATE TABLE public.ai_jobs (
   created_at timestamptz NOT NULL DEFAULT now(),
   finished_at timestamptz
 );
+
+-- X033/R3-DELTA-008: o expurgo tambem drena o log de entrega por destinatario (30 dias).
+CREATE TABLE public.talkx_delivery_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 SQL
 
 psql_exec >/dev/null <<SQL
@@ -360,6 +375,10 @@ assert_has 'RED: purge_talkx_expired_data nao existe antes da X032' 'does not ex
 # ═════════════════════════════════════════════════════════════════════════════
 psql_exec < "$migration" >/dev/null || fail 'migration X032 nao aplicou (GREEN)'
 pass "migration X032 aplicada ($(basename "$migration"))"
+
+# R3-DELTA-008: a versao drenada do expurgo (lotes ate acabar o acervo vencido).
+psql_exec < "$drain_migration" >/dev/null || fail 'migration R3-DELTA-008 (drenagem) nao aplicou'
+pass "migration R3-DELTA-008 aplicada ($(basename "$drain_migration"))"
 
 col_ok="$(psql_val "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='talkx_campaigns' AND column_name IN ('consent_confirmed_by','consent_confirmed_at','legal_basis')")"
 assert_eq 'GREEN: 3 colunas de consentimento existem' '3' "$col_ok"
@@ -479,8 +498,36 @@ psql_raw "$admin_session SELECT campaign_id FROM public.save_talkx_campaign_draf
 saved_nocon="$(psql_val "SELECT (consent_confirmed_at IS NULL)::text FROM public.talkx_campaigns WHERE draft_creation_key = '$k2'")"
 assert_eq '9b. save sem confirmacao -> consent_confirmed_at nulo' 'true' "$saved_nocon"
 
+# ── 11) R3-DELTA-008: retencao EM VOLUME — a execucao do dia drena o acervo vencido ─────────
+# Simula um novo dia (o gate diario e por dia de calendario) e um acervo vencido MAIOR que o
+# p_limit da chamada (2500 > 1000). Com o defeito (um unico lote de p_limit por dia) sobra
+# acervo vencido guardado e a retencao nao vale em volume.
+psql_val "DELETE FROM public.talkx_settings WHERE key = 'last_purge_at'" >/dev/null
+c_vol='d0000000-0000-0000-0000-0000000000a1'
+psql_val "INSERT INTO public.talkx_campaigns (id, name, message_template, status, created_by, total_recipients, sent_count, completed_at, updated_at) VALUES ('$c_vol', 'Volume', 'Oi', 'completed', '$profile_admin', 2500, 2500, now() - interval '181 days', now() - interval '181 days')" >/dev/null
+psql_exec >/dev/null <<SQL
+INSERT INTO public.talkx_recipients (id, campaign_id, contact_id, status, personalized_message)
+SELECT gen_random_uuid(), '$c_vol', '$contact_ok', 'sent', 'texto vencido ' || g
+  FROM generate_series(1, 2500) AS g;
+SQL
+vol_antes="$(psql_val "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id = '$c_vol' AND personalized_message IS NOT NULL")"
+assert_eq '11. cenario: 2500 vencidos (mais que o lote de 1000)' '2500' "$vol_antes"
+
+vol_run="$(psql_val "$service_session SELECT public.purge_talkx_expired_data(1000)")"
+vol_depois="$(psql_val "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id = '$c_vol' AND (personalized_message IS NOT NULL OR media_url_snapshot IS NOT NULL OR media_type_snapshot IS NOT NULL)")"
+assert_eq '11. UMA execucao do dia drena TODO o acervo vencido (sobram 0)' '0' "$vol_depois"
+vol_msg="$(printf '%s' "$vol_run" | sed -n 's/.*"messages": \([0-9][0-9]*\).*/\1/p')"
+[ -n "$vol_msg" ] || fail "11. execucao do expurgo nao devolveu a contagem: $vol_run"
+[[ "$vol_msg" -ge 2500 ]] || fail "11. a contagem do dia nao somou os lotes: messages=$vol_msg (esperado >= 2500)"
+pass "11. a contagem do dia soma todos os lotes (messages=$vol_msg >= 2500)"
+assert_has '11. execucao que drenou nao e skipped' '"skipped": false' "$vol_run"
+vol_second="$(psql_val "$service_session SELECT public.purge_talkx_expired_data(1000)")"
+assert_has '11. o dia fecha depois de drenar (2a chamada no mesmo dia -> skipped)' '"skipped": true' "$vol_second"
+
 # ── 10) idempotencia: reaplicar a migration nao quebra ───────────────────────
 psql_exec < "$migration" >/dev/null || fail 'migration X032 nao reaplicou (idempotencia)'
 pass 'migration X032 reaplicada sem erro (idempotencia)'
+psql_exec < "$drain_migration" >/dev/null || fail 'migration R3-DELTA-008 nao reaplicou (idempotencia)'
+pass 'migration R3-DELTA-008 reaplicada sem erro (idempotencia)'
 
-echo '[OK] Talk X X032: consentimento no lancamento (revoked fora da audiencia, strict opcional, start/agendar recusam sem confirmacao, opt-out automatico revoga) e expurgo por prazo 1x/dia (texto/midia, ua/ip_hash, teste, IA) sem tocar blacklist, contadores ou eventos.'
+echo '[OK] Talk X X032: consentimento no lancamento (revoked fora da audiencia, strict opcional, start/agendar recusam sem confirmacao, opt-out automatico revoga) e expurgo por prazo 1x/dia (texto/midia, ua/ip_hash, teste, IA) sem tocar blacklist, contadores ou eventos. R3-DELTA-008: a execucao do dia drena em lotes todo o acervo vencido (retencao em volume), nao so um lote.'
