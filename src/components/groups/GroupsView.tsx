@@ -55,9 +55,11 @@ export function GroupsView() {
     setIsSending(true);
     const resultado = await handleBroadcast(broadcastMessage);
     setIsSending(false);
-    // R2-API-062: se nenhum envio deu certo (ou houve falha), o texto e os grupos
-    // selecionados ficam de pé para o usuário tentar de novo.
-    if (!resultado || resultado.failed > 0) return;
+    // R2-API-062 (#234): texto e diálogo só permanecem quando NADA foi enviado
+    // (resultado nulo ou sent === 0). Com qualquer envio bem-sucedido — inclusive em
+    // falha parcial — a tentativa termina: o diálogo fecha, o texto é limpo e a
+    // seleção (limpa em handleBroadcast) recomeça, sem reenviar a quem já recebeu.
+    if (!resultado || resultado.sent === 0) return;
     setIsBroadcastOpen(false);
     setBroadcastMessage('');
   };

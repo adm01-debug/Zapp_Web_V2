@@ -8,6 +8,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
  * Antes: `handleBroadcast` limpava a seleção incondicionalmente e `onBroadcast`
  * fechava o diálogo e zerava o texto sempre — inclusive quando nenhum envio deu
  * certo, fazendo o usuário perder a mensagem escrita e os grupos escolhidos.
+ *
+ * Correção desta rodada: a tentativa (texto + seleção) só é preservada quando
+ * NENHUM envio deu certo (`sent === 0`). Na falha parcial — parte dos grupos já
+ * recebeu — o diálogo fecha, o texto é limpo e a seleção inteira é descartada, para
+ * que um novo clique não reenvie aos grupos que já receberam.
  */
 const mockOrder = vi.hoisted(() => vi.fn());
 const mockInvoke = vi.hoisted(() => vi.fn());
@@ -63,21 +68,42 @@ import { toast } from 'sonner';
 
 const MENSAGEM = 'Olá, clientes! Promoção desta semana.';
 const PLACEHOLDER_TEXTO = 'Digite a mensagem para enviar a todos os grupos selecionados...';
+/** Cada grupo é enviado com 2s de intervalo — os waitFor dos cenários com 2 grupos precisam de folga. */
+const ESPERA_ENVIO = { timeout: 6000 };
 
-const grupo = {
-  id: 'g1', group_id: '1@g.us', name: 'Meu Grupo', description: 'Desc', participant_count: 10,
-  avatar_url: null, is_admin: true, whatsapp_connection_id: 'c1',
-  created_at: '2025-01-01', updated_at: '2025-01-01',
+const grupoBase = {
+  description: 'Desc', participant_count: 10, avatar_url: null, is_admin: true,
+  whatsapp_connection_id: 'c1', created_at: '2025-01-01', updated_at: '2025-01-01',
 };
+const grupo = { id: 'g1', group_id: '1@g.us', name: 'Meu Grupo', ...grupoBase };
+const grupoDois = { id: 'g2', group_id: '2@g.us', name: 'Grupo Dois', ...grupoBase };
 const conexao = { id: 'c1', name: 'WPP', phone_number: '5511', instance_id: 'inst-1' };
 
-/** Carrega a tela com um grupo vinculado a uma conexão e abre o diálogo de envio. */
-async function abrirBroadcastComGrupoSelecionado() {
-  mockOrder.mockResolvedValueOnce({ data: [grupo], error: null }).mockResolvedValueOnce({ data: [conexao], error: null });
+/** Último aviso de falha mostrado ao usuário. */
+function ultimoAviso(): string {
+  const chamadas = vi.mocked(toast.warning).mock.calls;
+  return chamadas[chamadas.length - 1]?.[0] as string;
+}
+
+/** Números de destino chamados no `evolution-api`, na ordem em que foram enviados. */
+function numerosEnviados(): string[] {
+  return mockInvoke.mock.calls.map((chamada) => (chamada[1] as { body: { number: string } }).body.number);
+}
+
+/**
+ * Carrega a tela com os grupos informados (todos vinculados à mesma conexão),
+ * seleciona todos pela interface e abre o diálogo de envio com uma mensagem escrita.
+ */
+async function selecionarTodosEAbrirBroadcast(gruposCarregados: (typeof grupo)[] = [grupo]) {
+  mockOrder
+    .mockResolvedValueOnce({ data: gruposCarregados, error: null })
+    .mockResolvedValueOnce({ data: [conexao], error: null });
   render(<GroupsView />);
 
-  fireEvent.click(await screen.findByText('Meu Grupo'));
-  fireEvent.click(await screen.findByRole('button', { name: /Enviar para 1 grupo/ }));
+  for (const g of gruposCarregados) {
+    fireEvent.click(await screen.findByText(g.name));
+  }
+  fireEvent.click(await screen.findByRole('button', { name: new RegExp(`Enviar para ${gruposCarregados.length} grupo`) }));
 
   const textarea = await screen.findByPlaceholderText(PLACEHOLDER_TEXTO);
   fireEvent.change(textarea, { target: { value: MENSAGEM } });
@@ -85,10 +111,14 @@ async function abrirBroadcastComGrupoSelecionado() {
 }
 
 describe('GroupsView — broadcast de grupos (#234 / R2-API-062)', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockOrder.mockReset();
+    mockInvoke.mockReset();
+  });
 
   it('mantém texto e destinatários quando TODOS os envios falham', async () => {
-    await abrirBroadcastComGrupoSelecionado();
+    await selecionarTodosEAbrirBroadcast();
     mockInvoke.mockResolvedValue({ data: null, error: new Error('falha de transporte') });
 
     fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
@@ -100,6 +130,12 @@ describe('GroupsView — broadcast de grupos (#234 / R2-API-062)', () => {
     });
     await waitFor(() => { expect(toast.warning).toHaveBeenCalled(); });
 
+    // O aviso de falha total informa que mensagem e seleção foram mantidas e que
+    // NENHUM envio saiu (não pode ser confundido com um envio parcial).
+    expect(ultimoAviso()).toMatch(/nenhum envio/i);
+    expect(ultimoAviso()).toMatch(/mantid/i);
+    expect(ultimoAviso()).toMatch(/sele[çc][ãa]o/i);
+
     // Diálogo continua aberto com a mensagem escrita...
     expect(screen.getByPlaceholderText(PLACEHOLDER_TEXTO)).toHaveValue(MENSAGEM);
     // ...e o grupo continua selecionado (destinatários preservados): o botão de envio
@@ -109,7 +145,7 @@ describe('GroupsView — broadcast de grupos (#234 / R2-API-062)', () => {
   });
 
   it('limpa texto, seleção e fecha o diálogo quando o envio dá certo', async () => {
-    await abrirBroadcastComGrupoSelecionado();
+    await selecionarTodosEAbrirBroadcast();
     mockInvoke.mockResolvedValue({ data: { key: { id: 'msg-1' } }, error: null });
 
     fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
@@ -117,5 +153,42 @@ describe('GroupsView — broadcast de grupos (#234 / R2-API-062)', () => {
     await waitFor(() => { expect(toast.success).toHaveBeenCalled(); });
     await waitFor(() => { expect(screen.queryByPlaceholderText(PLACEHOLDER_TEXTO)).not.toBeInTheDocument(); });
     expect(screen.queryByText('Enviar para 1 grupo(s)')).not.toBeInTheDocument();
+  });
+
+  it('descarta a seleção na falha parcial e impede que um novo envio alcance o grupo que já recebeu', async () => {
+    await selecionarTodosEAbrirBroadcast([grupo, grupoDois]);
+    // Primeiro grupo recebe; o segundo falha (falha parcial).
+    mockInvoke
+      .mockResolvedValueOnce({ data: { key: { id: 'msg-1' } }, error: null })
+      .mockResolvedValueOnce({ data: null, error: new Error('falha de transporte') });
+
+    fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
+
+    await waitFor(() => { expect(toast.warning).toHaveBeenCalled(); }, ESPERA_ENVIO);
+
+    // Diálogo fecha, texto é limpo e a seleção inteira é descartada.
+    await waitFor(() => { expect(screen.queryByPlaceholderText(PLACEHOLDER_TEXTO)).not.toBeInTheDocument(); }, ESPERA_ENVIO);
+    expect(screen.queryByText('Enviar para 2 grupo(s)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Enviar para 1 grupo(s)')).not.toBeInTheDocument();
+    expect(toast.success).not.toHaveBeenCalled();
+
+    // A tentativa anterior alcançou os dois grupos, na ordem da tela.
+    expect(numerosEnviados()).toEqual(['1@g.us', '2@g.us']);
+
+    // O aviso de falha parcial NÃO afirma que mensagem/seleção foram mantidas.
+    expect(ultimoAviso()).not.toMatch(/mantid/i);
+
+    // Nova tentativa pela interface: como nada ficou selecionado, o usuário recomeça
+    // pelo grupo que falhou — e o grupo que já recebeu não é chamado de novo.
+    mockInvoke.mockReset();
+    mockInvoke.mockResolvedValue({ data: { key: { id: 'msg-2' } }, error: null });
+
+    fireEvent.click(screen.getByText('Grupo Dois'));
+    fireEvent.click(await screen.findByRole('button', { name: /Enviar para 1 grupo/ }));
+    fireEvent.change(await screen.findByPlaceholderText(PLACEHOLDER_TEXTO), { target: { value: MENSAGEM } });
+    fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
+
+    await waitFor(() => { expect(toast.success).toHaveBeenCalled(); });
+    expect(numerosEnviados()).toEqual(['2@g.us']);
   });
 });

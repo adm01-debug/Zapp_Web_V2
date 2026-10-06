@@ -102,10 +102,13 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
         if (groupsToSend.indexOf(group) < groupsToSend.length - 1) await new Promise(r => setTimeout(r, 2000));
       } catch { failed++; }
     }
-    // R2-API-062: a seleção só é descartada quando TODOS os envios deram certo.
-    // Antes era limpa sempre — com todos falhando, o usuário perdia os destinatários escolhidos.
-    if (failed === 0) setSelectedGroups(new Set());
-    if (failed > 0) toast.warning(`Enviado para ${sent} grupo(s), ${failed} falha(s) — mensagem e seleção mantidas`);
+    // R2-API-062 (#234): a tentativa só é preservada quando NENHUM envio deu certo
+    // (sent === 0). Qualquer envio bem-sucedido — inclusive falha parcial — encerra a
+    // tentativa e limpa a seleção, para que um novo clique não reenvie a mensagem aos
+    // grupos que já receberam.
+    if (sent > 0) setSelectedGroups(new Set());
+    if (sent === 0) toast.warning(`Nenhum envio deu certo (${failed} falha(s)) — mensagem e seleção mantidas`);
+    else if (failed > 0) toast.warning(`Enviado para ${sent} grupo(s), ${failed} falha(s)`);
     else toast.success(`Mensagem enviada para ${sent} grupo(s)!`);
     return { sent, failed };
   }, [connections, groups, selectedGroups, setSelectedGroups]);
