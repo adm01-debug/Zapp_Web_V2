@@ -31,6 +31,8 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-v26-template-version.test.sh',
   // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
+  // login_gate_rpc: prova a RPC consume_login_gate (t_9d4452e2) em Postgres descartável.
+  'scripts/db-audit/login_gate_rpc.test.sh',
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',

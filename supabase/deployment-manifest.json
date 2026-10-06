@@ -381,8 +381,8 @@
     },
     {
       "path": "supabase/functions/auth-login/index.ts",
-      "bytes": 7948,
-      "sha256": "39b4513f77d0631e62bee7d66a0c65570446cb1a8a486949d8eff73ca3a2a657"
+      "bytes": 8582,
+      "sha256": "509cea93cd7a4baadd6f2b4c615e1c4ec1346ee8e2fdffe87d8b873f5b50d643"
     },
     {
       "path": "supabase/functions/auto-close-conversations/index.ts",
@@ -951,7 +951,7 @@
       "name": "auth-login",
       "entrypoint": "supabase/functions/auth-login/index.ts",
       "verify_jwt": false,
-      "source_sha256": "cab2a67d7d27c0d173f05c12e5d88b27ab2f930d4cd74d5541fb6b7fbdc24fab",
+      "source_sha256": "838c25e787c6e0554bfe02c47eca9af6399278629eaf504cfeacfa46441e7d01",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/request-policy.ts",
@@ -1856,5 +1856,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d5d0aeaa19fde7940ddd73fe82a371c8bc7320ef715485afc99f124cd143840c"
+  "manifest_sha256": "21f033c1dc9ccfdd3507046711fa66b0edf44253507bf6c203418edc2d140941"
 }
