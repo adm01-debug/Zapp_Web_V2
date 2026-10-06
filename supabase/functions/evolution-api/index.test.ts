@@ -311,8 +311,14 @@ for (const [label, respondGet] of PRIVACY_GET_SCENARIOS) {
         },
       );
       const json = await res.json();
-      assert(res.status >= 500, `esperava 5xx, veio ${res.status}: ${JSON.stringify(json)}`);
+      // Convenção do proxy: a negação sai como HTTP 200 e o erro vai no corpo
+      // (é esse shape que useEvolutionApiCore lê); o código real fica em `status`.
+      assertEquals(res.status, 200, `convenção do proxy: HTTP 200, veio ${res.status}`);
       assert(json?.error === true, "resposta deve ser { error: true }");
+      assert(
+        Number(json?.status) >= 500,
+        `corpo deve trazer status >= 500 (veio ${json?.status})`,
+      );
       assertEquals(
         fake.writes.length,
         0,
@@ -324,21 +330,33 @@ for (const [label, respondGet] of PRIVACY_GET_SCENARIOS) {
   });
 }
 
-Deno.test("R2-API-014: update-privacy com provedor inalcançável (fetch rejeita) é negado", async () => {
-  // Porta 1 nunca tem listener: o fetch do GET /user/privacy rejeita na
-  // conexão — exercita o ramo `catch` do handler (não só o HTTP não-ok).
-  Deno.env.set("EVOLUTION_API_URL", "http://127.0.0.1:1");
+Deno.test("R2-API-014: update-privacy com GET /user/privacy de corpo não-JSON é negado", async () => {
+  // 200 com corpo que não parseia: exercita o ramo `catch` do handler (não só o
+  // HTTP não-ok). Antes do fix o erro de parse era engolido, `current` ficava
+  // vazio e a escrita saía ao provedor com seis campos em 'all'.
+  const fake = createPrivacyFake(() =>
+    new Response("<html>boom</html>", { status: 200, headers: { "Content-Type": "text/html" } }));
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
   Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  const res = await handleEvolutionApi(
-    controlRequest("update-privacy", { instanceName: "PRINCIPAL", readreceipts: "contacts" }),
-    {
-      callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
-      supabase: makeServiceClient(),
-    },
-  );
-  const json = await res.json();
-  assert(res.status >= 500, `esperava 5xx, veio ${res.status}: ${JSON.stringify(json)}`);
-  assert(json?.error === true, "resposta deve ser { error: true }");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("update-privacy", { instanceName: "PRINCIPAL", readreceipts: "contacts" }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeServiceClient(),
+      },
+    );
+    const json = await res.json();
+    assertEquals(res.status, 200, `convenção do proxy: HTTP 200, veio ${res.status}`);
+    assert(json?.error === true, "resposta deve ser { error: true }");
+    assert(
+      Number(json?.status) >= 500,
+      `corpo deve trazer status >= 500 (veio ${json?.status})`,
+    );
+    assertEquals(fake.writes.length, 0, "leitura inválida → nenhuma escrita pode sair ao provedor");
+  } finally {
+    await fake.stop();
+  }
 });
 
 Deno.test("R2-API-014: update-privacy parcial mergeia com o snapshot lido — nenhum 'all' fabricado", async () => {

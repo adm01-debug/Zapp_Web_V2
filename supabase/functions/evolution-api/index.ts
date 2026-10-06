@@ -851,15 +851,20 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // + merge para atualizar só o que veio, sem resetar o resto para 'all'.
       // R2-API-014: na dúvida ou na falha, NEGAR — leitura que falha (rede,
       // HTTP não-ok, corpo sem objeto `data`) ou snapshot sem algum campo
-      // devolvem 5xx ao chamador e NENHUMA escrita sai ao provedor. O antigo
+      // negam a atualização e NENHUMA escrita sai ao provedor. O antigo
       // fallback inventava 'all', o valor MAIS permissivo, e a atualização
       // parcial abria campos que o operador não alterou.
+      // Convenção do proxy (_shared/evolution-api-proxy.ts): falha de provedor
+      // sai como HTTP 200 com { error: true, status, message } — é esse o corpo
+      // que useEvolutionApiCore lê para mostrar o toast; um status cru não-2xx
+      // perderia a mensagem e o operador veria só "non-2xx status code".
       if (isGoFlavor) {
         const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
         const denyPrivacy = () => new Response(JSON.stringify({
           error: true,
+          status: 502,
           message: 'Não foi possível confirmar a privacidade atual da instância; a atualização foi negada para não alterar outros campos.',
-        }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         let current: Record<string, unknown>;
         try {
           const curRes = await fetch(`${evolutionApiUrl}/user/privacy`, {
