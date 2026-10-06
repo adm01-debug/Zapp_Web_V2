@@ -20,7 +20,7 @@
  *     saem 'start' para agendadas vencidas e retomadas de pausas elegíveis.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns } from "../_shared/talkx-resume-policy.ts";
 import { parseBusinessHours, type BusinessHours } from "../_shared/talkx-window.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
@@ -152,7 +152,8 @@ export async function handleTalkxScheduler(
 
     if (schedErr) {
       log.error("Error fetching scheduled campaigns", { error: schedErr.message });
-      return new Response(JSON.stringify({ error: schedErr.message }), { status: 500, headers });
+      // R2-INF-016: `{ error: schedErr.message }` num 500 cru vazava detalhe do banco.
+      return internalErrorResponse(schedErr, req);
     }
 
     // ── 2. Campanhas pausadas que PODEM ser retomadas ──────────────────────────────
@@ -325,10 +326,8 @@ export async function handleTalkxScheduler(
     );
   } catch (err) {
     log.error("Scheduler error", { error: err instanceof Error ? err.message : String(err) });
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
-      { status: 500, headers }
-    );
+    // R2-INF-016: o 500 montado à mão devolvia `err.message` cru ao chamador.
+    return internalErrorResponse(err, req);
   }
 }
 

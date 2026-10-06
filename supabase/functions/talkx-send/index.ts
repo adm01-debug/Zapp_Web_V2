@@ -4,7 +4,7 @@
  * Supports text + media (image, video, document, audio)
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
@@ -176,7 +176,10 @@ export async function handleTalkxSend(
           .eq("request_key", requestKey)
           .maybeSingle();
         if (lookupError) {
-          return new Response(JSON.stringify({ error: `claim_lookup_failed: ${lookupError.message}` }), { status: 500, headers });
+          // R2-INF-016: o prefixo `claim_lookup_failed: ${lookupError.message}` ia cru no 500;
+          // o motivo fica no log do servidor e a resposta passa pelo helper sanitizante.
+          log.error("claim_lookup_failed", { correlationId, error: lookupError.message });
+          return internalErrorResponse(lookupError, req);
         }
         const jaEnviado = (existing as { provider_message_id?: string | null } | null)?.provider_message_id;
         if (typeof jaEnviado === "string" && jaEnviado.length > 0) {
@@ -188,7 +191,9 @@ export async function handleTalkxSend(
         return new Response(JSON.stringify({ success: true, pending: true, idempotent: true }), { status: 202, headers });
       }
       if (claimError) {
-        return new Response(JSON.stringify({ error: `claim_failed: ${claimError.message}` }), { status: 500, headers });
+        // R2-INF-016: 500 cru com o detalhe do banco; o log guarda o motivo.
+        log.error("claim_failed", { correlationId, error: claimError.message });
+        return internalErrorResponse(claimError, req);
       }
 
       try {
@@ -230,7 +235,9 @@ export async function handleTalkxSend(
         // Exceção (rede/timeout): o efeito externo ficou INDETERMINADO, então o
         // claim NÃO é liberado — repetir não pode virar um segundo POST (não se
         // presume exactly-once externo).
-        return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro ao enviar" }), { status: 500, headers });
+        // R2-INF-016: o 500 montado a mao devolvia `e.message` cru ao chamador.
+        log.error("Falha ao enviar apos o claim", { correlationId, error: e instanceof Error ? e.message : String(e) });
+        return internalErrorResponse(e, req);
       }
     }
 
@@ -257,7 +264,9 @@ export async function handleTalkxSend(
         p_phone: null,
       });
       if (suppressionError) {
-        return new Response(JSON.stringify({ error: suppressionError.message }), { status: 500, headers });
+        // R2-INF-016: detalhe do banco ia cru no corpo do 500.
+        log.error("talkx_recipient_is_suppressed falhou", { correlationId, error: suppressionError.message });
+        return internalErrorResponse(suppressionError, req);
       }
       if (suppressed === true) {
         return new Response(JSON.stringify({ success: false, reason: "suppressed" }), { headers });
@@ -1248,7 +1257,9 @@ export async function handleTalkxSend(
       p_campaign_id: campaignId,
     });
     if (kickError) {
-      return new Response(JSON.stringify({ error: kickError.message }), { status: 500, headers });
+      // R2-INF-016: o detalhe do banco ia cru no corpo do 500.
+      log.error("kick_talkx_campaign falhou", { correlationId, error: kickError.message });
+      return internalErrorResponse(kickError, req);
     }
 
     log.done(200, { correlationId, campaignId, accepted: true });
@@ -1259,10 +1270,8 @@ export async function handleTalkxSend(
     );
   } catch (err) {
     log.error("Talk X error", { correlationId, error: err instanceof Error ? err.message : String(err) });
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
-      { status: 500, headers }
-    );
+    // R2-INF-016: o 500 montado a mao devolvia `err.message` cru ao chamador.
+    return internalErrorResponse(err, req);
   }
 }
 
