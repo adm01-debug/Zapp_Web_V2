@@ -263,6 +263,31 @@ describe('janela separada para liberações (t_6300082e)', () => {
     });
   });
 
+  it('pending antigo PERMANECE no cache com mais de 500 liberações recentes na origem', async () => {
+    // Cache VAZIO no mount: a única chance de hidratar o pending antigo é a
+    // janela de ativos. Numa janela única de 500 ordenada por created_at desc,
+    // as 600 liberações recentes ocupariam todas as posições e o pending que
+    // continua ativo na origem nunca apareceria — o selo do MessageBubble
+    // sumiria para uma mídia ainda em quarentena.
+    linhas = [
+      ...liberacoes(600),
+      { id: 'q1', message_id: 'm1', decision: 'pending', created_at: '2026-09-01T00:00:00.000Z' },
+    ];
+
+    montar();
+    await drenar();
+
+    expect(quarantineStore.get('m1')?.decision).toBe('pending');
+
+    // A janela principal é só dos ativos: ela não pede allowed/whitelisted.
+    expect(chamadas[0]?.limit).toBe(500);
+    expect(chamadas[0]?.filters).toContainEqual({
+      column: 'decision',
+      operator: 'in',
+      value: ['pending', 'deleted'],
+    });
+  });
+
   it('janela de ativos completa: registro apagado na origem some do cache mesmo com 600 liberações', async () => {
     linhas = [{ id: 'q1', message_id: 'm1', decision: 'pending', created_at: '2026-09-01T00:00:00.000Z' }];
 
@@ -306,30 +331,51 @@ describe('janela separada para liberações (t_6300082e)', () => {
     expect(quarantineStore.get('m2')?.decision).toBe('allowed');
   });
 
-  it('toast administrativo dispara só para pending novo — inclusive um fora da janela de liberações', async () => {
+  it('toast administrativo dispara só para pending novo — nunca para deleted/allowed/whitelisted', async () => {
     h.fetchUserRoles.mockResolvedValue(['admin']);
-    linhas = liberacoes(600);
+    linhas = [
+      { id: 'r1', message_id: 'mx1', decision: 'pending', created_at: '2026-10-04T00:00:00.000Z' },
+      { id: 'r2', message_id: 'mx2', decision: 'pending', created_at: '2026-10-04T01:00:00.000Z' },
+    ];
 
     montar();
     await drenar();
+    // 1º tick hidrata o cache e NÃO dispara toast: nada é "novo" ainda.
+    expect(quarantineStore.get('mx1')?.decision).toBe('pending');
+    expect(quarantineStore.get('mx2')?.decision).toBe('pending');
     expect(h.toast).not.toHaveBeenCalled();
 
-    // Surge um pending ANTIGO (mais velho que as 600 liberações), um deleted e
-    // um whitelisted novos. Só o pending pode disparar toast.
+    // Agora chega um `pending` novo, um `deleted` novo, e as duas pendências
+    // cacheadas são liberadas (`allowed`/`whitelisted`). As liberações são
+    // observadas pela consulta à parte, porque os message_id já estão no cache.
     linhas = [
-      ...liberacoes(600),
-      { id: 'qp', message_id: 'mp', decision: 'pending', threat_name: 'Eicar-Test', created_at: '2026-09-01T00:00:00.000Z' },
-      { id: 'qd', message_id: 'md', decision: 'deleted', created_at: '2026-10-05T00:00:00.000Z' },
-      { id: 'qw', message_id: 'mw', decision: 'whitelisted', created_at: '2026-10-05T01:00:00.000Z' },
-      { id: 'qa', message_id: 'ma', decision: 'allowed', created_at: '2026-10-05T02:00:00.000Z' },
+      { id: 'r1', message_id: 'mx1', decision: 'allowed', created_at: '2026-10-04T00:00:00.000Z', reviewed_at: '2026-10-05T00:00:00.000Z' },
+      { id: 'r2', message_id: 'mx2', decision: 'whitelisted', created_at: '2026-10-04T01:00:00.000Z', reviewed_at: '2026-10-05T00:00:00.000Z' },
+      { id: 'qp', message_id: 'mp', decision: 'pending', threat_name: 'Eicar-Test', created_at: '2026-10-05T00:00:00.000Z' },
+      { id: 'qd', message_id: 'md', decision: 'deleted', created_at: '2026-10-05T01:00:00.000Z' },
     ];
 
     await avancar(INTERVALO_MS);
 
+    // Só o `pending` novo virou toast — o `deleted` novo e as duas liberações, não.
     expect(h.toast).toHaveBeenCalledTimes(1);
     expect(h.toast.mock.calls[0][0]).toMatchObject({
       title: expect.stringContaining('1 nova(s)'),
       variant: 'destructive',
     });
+
+    // As liberações chegaram por VALOR (consulta à parte), não por ausência.
+    const chamadaLiberacoes = chamadas.find((c) => {
+      const fs = (c.filters as Array<{ column: string; operator: string }>) ?? [];
+      return fs.some((f) => f.column === 'message_id' && f.operator === 'in');
+    });
+    const filtroIds = (
+      chamadaLiberacoes?.filters as Array<{ column: string; operator: string; value?: unknown }> | undefined
+    )?.find((f) => f.column === 'message_id' && f.operator === 'in');
+    // A ordem dos ids vem do cache (o tick anterior grava por created_at desc),
+    // então comparo como conjunto — o que importa é pedir só os ids cacheados.
+    expect(new Set(filtroIds?.value as string[])).toEqual(new Set(['mx1', 'mx2']));
+    expect(quarantineStore.get('mx1')?.decision).toBe('allowed');
+    expect(quarantineStore.get('mx2')?.decision).toBe('whitelisted');
   });
 });

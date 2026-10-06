@@ -30,8 +30,10 @@ const RELEASED_DECISIONS = ['allowed', 'whitelisted'];
 /**
  * Mounts a silent monitor that:
  *  1. Hydrates the global quarantine store with the current quarantine records
- *     (pending/deleted AND allowed/whitelisted) so message bubbles render the
- *     🛡️ badge on first paint and reflect the latest decision.
+ *     — `pending`/`deleted` vêm da janela de ATIVOS e as liberações
+ *     (`allowed`/`whitelisted`) de uma consulta à parte, restrita aos
+ *     `message_id` já cacheados — so message bubbles render the 🛡️ badge on
+ *     first paint and reflect the latest decision.
  *  2. Polls every 30s; when admins are online and new pending records appear,
  *     surfaces a destructive toast (acts as a frontend "reverse webhook" until
  *     the VPS pushes events directly).
@@ -109,6 +111,9 @@ export function QuarantineMonitorProvider({ children }: { children: React.ReactN
               { column: 'decision', operator: 'in', value: RELEASED_DECISIONS },
               { column: 'message_id', operator: 'in', value: cachedIds },
             ],
+            // Ordem crescente: `reconcile` grava na ordem recebida, então a
+            // linha de liberação MAIS RECENTE do message_id vence no cache.
+            order: { column: 'created_at', ascending: true },
             limit: HYDRATE_LIMIT,
           });
           if (cancelled) return;
