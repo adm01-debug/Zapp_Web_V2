@@ -71,6 +71,10 @@ export function normalizePhone(rawJid?: string): string | null {
 // em remoteJidAlt via .find() por ordem de posicao, nao por confiabilidade.
 const isLidLengthDigits = (jid: string) => /^\+?\d{14,15}$/.test(jid);
 
+// JID de chat de grupo do WhatsApp (ex.: 120363421234567890@g.us).
+export const isGroupJid = (jid?: string | null): boolean =>
+  typeof jid === 'string' && jid.includes('@g.us');
+
 export function resolveBestJid(...candidates: Array<string | null | undefined>): string | null {
   const valid = candidates
     .map((candidate) => candidate?.trim())
@@ -87,7 +91,46 @@ export function resolveBestJid(...candidates: Array<string | null | undefined>):
     ?? null;
 }
 
+// Campos que identificam o CHAT de um evento (não o autor). O `participant`/
+// `sender` de uma mensagem de grupo aponta o autor DENTRO do grupo — nunca o chat.
+const CHAT_JID_FIELDS = ['remoteJid', 'remoteJidAlt', 'chatId', 'chatJid'] as const;
+
+// JID do chat do evento: primeiro campo de chat não-vazio entre os sources, na
+// ordem em que foram passados (o key/entry do evento vem primeiro; os demais são
+// o mesmo evento em outro embrulho). Olha o source e o `key` aninhado.
+function firstChatJid(sources: unknown[]): string | null {
+  for (const source of sources) {
+    const jid = eventChatJid(source);
+    if (jid) return jid;
+  }
+  return null;
+}
+
+function eventChatJid(source: unknown): string | null {
+  if (typeof source === 'string') return source.trim() || null;
+  if (!isRecord(source)) return null;
+  const holders: Record<string, unknown>[] = [];
+  if (isRecord(source.key)) holders.push(source.key);
+  holders.push(source);
+  for (const holder of holders) {
+    for (const field of CHAT_JID_FIELDS) {
+      const value = holder[field];
+      if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+  }
+  return null;
+}
+
 export function resolveEventJid(...sources: unknown[]): string | null {
+  // Classifica o CHAT do evento ANTES de resolver a identidade do autor.
+  // Num evento de grupo, o chat é o `remoteJid` (@g.us) e o `participant`/`sender`
+  // do key é o autor DENTRO do grupo — não um interlocutor 1:1. Sem separar os dois,
+  // resolveBestJid() prefere o telefone do participante e a mensagem do grupo entra
+  // no inbox direto dele (R2-API-005). Só campos de CHAT do próprio evento são
+  // olhados; um grupo citado no contextInfo de uma conversa direta não reclassifica.
+  const chatJid = firstChatJid(sources);
+  if (isGroupJid(chatJid)) return chatJid;
+
   const candidates: string[] = [];
   const seen = new Set<string>();
   const directFields = [
