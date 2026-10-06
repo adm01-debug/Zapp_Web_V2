@@ -69,11 +69,12 @@ async function getTokens(supabase: any, accountId: string): Promise<{ access_tok
 
 // deno-lint-ignore no-explicit-any
 async function storeTokens(supabase: any, accountId: string, accessToken: string, refreshToken?: string | null) {
-  await supabase.rpc("store_gmail_tokens", {
+  const { error } = await supabase.rpc("store_gmail_tokens", {
     p_account_id: accountId,
     p_access_token: accessToken,
     p_refresh_token: refreshToken ?? null,
   });
+  if (error) throw new Error("Falha ao armazenar os tokens do Gmail: " + (error.message ?? "erro desconhecido"));
 }
 
 // ── Seams de injeção (R2-COM-009) ─────────────────────────────────────────
@@ -92,6 +93,7 @@ export interface GmailOAuthDeps {
     exchangeCode: (code: string) => Promise<TokenResponse>;
     refreshToken: (refreshToken: string) => Promise<TokenResponse>;
     fetchProfile: (accessToken: string) => Promise<{ emailAddress: string }>;
+    revoke: (token: string) => Promise<Response>;
   };
 }
 
@@ -173,8 +175,19 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
 
         if (upsertError) throw upsertError;
 
-        // Store tokens encrypted
-        await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || "");
+        // Store tokens encrypted: sem os tokens persistidos a conta ficaria
+        // ativa sem credencial — falha aqui NUNCA pode ser anunciada como success.
+        try {
+          await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || "");
+        } catch {
+          const { error: markError } = await supabase.from("gmail_accounts").update({
+            is_active: false,
+            sync_status: "error",
+            last_error: "Falha ao armazenar os tokens do Gmail",
+          }).eq("id", account.id);
+          if (markError) log.error("Falha ao marcar conta Gmail como erro", { error: markError.message });
+          return errorResponse("Falha ao armazenar os tokens do Gmail", 500, req);
+        }
 
         log.done(200, { action });
         return jsonResponse({
@@ -193,7 +206,8 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
         await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
-        await supabase.from("gmail_accounts").update({ token_expires_at: expiresAt }).eq("id", account_id);
+        const { error: expiryError } = await supabase.from("gmail_accounts").update({ token_expires_at: expiresAt }).eq("id", account_id);
+        if (expiryError) throw expiryError;
 
         log.done(200, { action });
         return jsonResponse({ success: true, access_token: tokens.access_token, expires_at: expiresAt }, 200, req);
@@ -203,23 +217,44 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         if (!account_id) return errorResponse("Missing account_id", 400, req);
         const { data: account } = await supabase.from("gmail_accounts").select("id, user_id").eq("id", account_id).eq("user_id", user.id).single();
 
+        let revoked: boolean | null = null;
+        let revokeStatus: number | null = null;
         if (account) {
           try {
             const storedTokens = await getTokens(supabase, account.id);
-            await fetch(`https://oauth2.googleapis.com/revoke?token=${storedTokens.access_token}`, {
-              method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            }).catch(() => {});
+            try {
+              const revokeRes = await deps.google.revoke(storedTokens.access_token);
+              revokeStatus = revokeRes.status;
+              revoked = revokeRes.ok;
+            } catch {
+              revoked = false;
+            }
           } catch { /* tokens may not exist */ }
           // Clear encrypted tokens and deactivate: never call store_gmail_tokens with empty string (raises EXCEPTION)
-          await supabase.from("gmail_accounts").update({
+          const { error: deactivateError } = await supabase.from("gmail_accounts").update({
             is_active: false,
             access_token_encrypted: null,
             refresh_token_encrypted: null,
           }).eq("id", account_id);
+          if (deactivateError) throw deactivateError;
+        }
+
+        if (revoked === false) {
+          // Desconexão parcial: a conta saiu daqui, mas o Google não confirmou a
+          // revogação — o cliente precisa saber que sobrou credencial ativa lá.
+          log.error("Revogacao Google nao confirmada", { status: revokeStatus });
+          log.done(200, { action });
+          return jsonResponse({
+            success: true,
+            disconnected: true,
+            revoked: false,
+            partial: true,
+            warning: "A conta foi desconectada aqui, mas a revogacao do acesso no Google nao foi confirmada.",
+          }, 200, req);
         }
 
         log.done(200, { action });
-        return jsonResponse({ success: true }, 200, req);
+        return jsonResponse({ success: true, disconnected: true, revoked }, 200, req);
       }
 
       case "list-accounts": {
@@ -270,6 +305,9 @@ if (import.meta.main) {
         exchangeCode: (code) => exchangeCode(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI),
         refreshToken: (refreshToken) => refreshAccessToken(refreshToken, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
         fetchProfile: getGmailProfile,
+        revoke: (token) => fetch(`https://oauth2.googleapis.com/revoke?token=${token}`, {
+          method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        }),
       },
     });
   });
