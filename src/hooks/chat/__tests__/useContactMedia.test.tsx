@@ -248,3 +248,26 @@ describe('classificador de nome (etapa 09)', () => {
     expect(shortDateTime(null)).toBe('');
   });
 });
+
+describe('#309 / R2-INB-012 - galeria nao diverge do contador (audio WebM)', () => {
+  it('audio WebM sem metadata nao vira video: listagem casa com o chip de Audio', async () => {
+    // Regressao do defeito: message_type='audio' + URL .webm, sem media_type/mimetype e sem ptt
+    // (o fallback por extensao classificava como video, enquanto o contador conta 'audio').
+    limitSpy.mockResolvedValueOnce({
+      data: [
+        {
+          ...mediaRow({ id: 'w1', media_url: 'https://x/storage/audio-messages/c1/voice.webm' }),
+          message_type: 'audio', media_type: null, media_mimetype: null,
+          media_filename: null, media_size: null, ptt: false,
+        },
+      ],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0].type).toBe('audio');
+  });
+});
