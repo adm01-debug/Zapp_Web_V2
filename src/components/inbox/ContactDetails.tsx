@@ -11,8 +11,8 @@ import { ContactSidebarSections } from './contact-details/sidebar/ContactSidebar
 import { useContactEnrichedData } from '@/hooks/crm/useContactEnrichedData';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { Accordion } from '@/components/ui/accordion';
-import { toast } from 'sonner';
-import { undoToast } from '@/lib/undoToast';
+import { useContactQuickActions } from '@/hooks/inbox/useContactQuickActions';
+import { ContactTagsSection } from './contact-details/ContactTagsSection';
 import { getStoredSidebarState, saveSidebarState } from './contact-details/sidebar/sidebarSections';
 
 interface ContactDetailsProps {
@@ -61,30 +61,16 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
+  const quickActions = useContactQuickActions(contact);
+
+  // VIP/arquivar/bloquear gravam de verdade via useContactQuickActions (#241):
+  // uma escrita por ação, Desfazer faz a escrita reversa, erro vira toast.error.
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'edit': setEditDialogOpen(true); break;
-      case 'vip':
-        undoToast({
-          message: `${contact.name} marcado como VIP`,
-          icon: '⭐',
-          onUndo: () => { toast.info('VIP removido'); },
-        });
-        break;
-      case 'archive':
-        undoToast({
-          message: `${contact.name} arquivado`,
-          icon: '📦',
-          onUndo: () => { toast.info('Contato restaurado'); },
-        });
-        break;
-      case 'block':
-        undoToast({
-          message: `${contact.name} bloqueado`,
-          icon: '🚫',
-          onUndo: () => { toast.info('Contato desbloqueado'); },
-        });
-        break;
+      case 'vip': void quickActions.markVip(); break;
+      case 'archive': void quickActions.archive(); break;
+      case 'block': void quickActions.block(); break;
     }
   };
 
@@ -130,6 +116,10 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
             <ContactSidebarSections
               contact={contact} enrichedData={enrichedData ?? null}
               onQuickAction={handleQuickAction}
+            />
+            <ContactTagsSection
+              index={3} tags={quickActions.tags}
+              onAddTag={quickActions.addTag} onRemoveTag={quickActions.removeTag}
             />
           </Accordion>
         </div>
