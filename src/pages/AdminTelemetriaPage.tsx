@@ -6,13 +6,19 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, RefreshCw, Trash2, CalendarIcon } from "lucide-react";
+import { Activity, RefreshCw, Trash2, CalendarIcon, AlertTriangle } from "lucide-react";
 import { TelemetryCharts } from "@/components/admin/telemetry/TelemetryCharts";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import type { TelemetryRow, SeverityFilter, TimeFilter } from "./admin-telemetria/telemetryTypes";
-import { formatDuration, computeTopOffenders, periodStartIso } from "./admin-telemetria/telemetryUtils";
+import {
+  formatDuration,
+  computeTopOffenders,
+  periodStartIso,
+  telemetryViewState,
+  telemetryReadFailureDetail,
+} from "./admin-telemetria/telemetryUtils";
 import { TelemetryStatsCards } from "./admin-telemetria/TelemetryStatsCards";
 import { TelemetryTopOffenders } from "./admin-telemetria/TelemetryTopOffenders";
 import { TelemetryTable } from "./admin-telemetria/TelemetryTable";
@@ -34,7 +40,7 @@ export default function AdminTelemetriaPage() {
     return { from: periodStartIso(timeFilter, now), to };
   };
 
-  const { data: rows = [], isLoading, refetch, isRefetching } = useQuery<TelemetryRow[]>({
+  const { data, isLoading, isError, error, refetch, isRefetching } = useQuery<TelemetryRow[]>({
     queryKey: ["query-telemetry", severityFilter, timeFilter, customDateFrom?.toISOString(), customDateTo?.toISOString()],
     queryFn: async () => {
       const { from, to } = getTimeThreshold();
@@ -57,6 +63,14 @@ export default function AdminTelemetriaPage() {
     refetchInterval: 30000,
     staleTime: 10000,
   });
+
+  // R2-INF-040: é o estado da CONSULTA que decide a tela. `rows` vazio só significa bom
+  // desempenho quando a leitura terminou em sucesso; falha de leitura tem apresentação
+  // própria e nunca é resumida a "nenhuma query lenta".
+  const rows = data ?? [];
+  const leitura = telemetryViewState({ isLoading, isError, rowCount: rows.length });
+  const leituraFalhou = leitura === 'error';
+  const atualizacaoFalhou = leitura === 'stale';
 
   const handleCleanup = async () => {
     const threshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -93,59 +107,85 @@ export default function AdminTelemetriaPage() {
         </div>
       </div>
 
-      <TelemetryStatsCards verySlow={verySlow} slow={slow} errors={errors} avgDuration={formatDuration(avgDuration)} />
-      <TelemetryTopOffenders topOffenders={topOffenders} />
-      <TelemetryCharts rows={rows} timeFilter={timeFilter} />
+      {atualizacaoFalhou && (
+        <div
+          data-telemetria-leitura="stale"
+          role="status"
+          className="flex items-center gap-2 rounded-xl border border-warning/40 bg-warning/5 p-3"
+        >
+          <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
+          <p className="text-xs text-foreground">
+            A atualização da telemetria falhou: os números abaixo são da última leitura bem-sucedida e
+            podem estar defasados.
+          </p>
+          <Button variant="outline" size="sm" className="ml-auto shrink-0" onClick={() => refetch()} disabled={isRefetching}>
+            <RefreshCw className={cn("h-3.5 w-3.5 mr-1.5", isRefetching && "animate-spin")} />Tentar novamente
+          </Button>
+        </div>
+      )}
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Select value={severityFilter} onValueChange={(v) => setSeverityFilter(v as SeverityFilter)}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="Severidade" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="slow">🟡 Lentas</SelectItem>
-            <SelectItem value="very_slow">🔴 Muito Lentas</SelectItem>
-            <SelectItem value="error">❌ Erros</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={timeFilter} onValueChange={(v) => setTimeFilter(v as TimeFilter)}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="Período" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1h">Última hora</SelectItem>
-            <SelectItem value="6h">Últimas 6h</SelectItem>
-            <SelectItem value="24h">Últimas 24h</SelectItem>
-            <SelectItem value="7d">Últimos 7 dias</SelectItem>
-            <SelectItem value="custom">📅 Personalizado</SelectItem>
-          </SelectContent>
-        </Select>
-        {timeFilter === "custom" && (
-          <>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("w-36 justify-start text-left font-normal", !customDateFrom && "text-muted-foreground")}>
-                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />{customDateFrom ? format(customDateFrom, "dd/MM/yyyy") : "De"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={customDateFrom} onSelect={setCustomDateFrom} initialFocus className="p-3 pointer-events-auto" />
-              </PopoverContent>
-            </Popover>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("w-36 justify-start text-left font-normal", !customDateTo && "text-muted-foreground")}>
-                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />{customDateTo ? format(customDateTo, "dd/MM/yyyy") : "Até"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={customDateTo} onSelect={setCustomDateTo} initialFocus className="p-3 pointer-events-auto" />
-              </PopoverContent>
-            </Popover>
-          </>
-        )}
-        <span className="text-xs text-muted-foreground ml-auto">{rows.length} registros · auto-refresh 30s</span>
-      </div>
+      {!leituraFalhou && (
+        <>
+          <TelemetryStatsCards verySlow={verySlow} slow={slow} errors={errors} avgDuration={formatDuration(avgDuration)} />
+          <TelemetryTopOffenders topOffenders={topOffenders} />
+          <TelemetryCharts rows={rows} timeFilter={timeFilter} />
 
-      <TelemetryTable rows={rows} isLoading={isLoading} />
+          {/* Filters */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <Select value={severityFilter} onValueChange={(v) => setSeverityFilter(v as SeverityFilter)}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Severidade" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="slow">🟡 Lentas</SelectItem>
+                <SelectItem value="very_slow">🔴 Muito Lentas</SelectItem>
+                <SelectItem value="error">❌ Erros</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={timeFilter} onValueChange={(v) => setTimeFilter(v as TimeFilter)}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Período" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1h">Última hora</SelectItem>
+                <SelectItem value="6h">Últimas 6h</SelectItem>
+                <SelectItem value="24h">Últimas 24h</SelectItem>
+                <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                <SelectItem value="custom">📅 Personalizado</SelectItem>
+              </SelectContent>
+            </Select>
+            {timeFilter === "custom" && (
+              <>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("w-36 justify-start text-left font-normal", !customDateFrom && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />{customDateFrom ? format(customDateFrom, "dd/MM/yyyy") : "De"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={customDateFrom} onSelect={setCustomDateFrom} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("w-36 justify-start text-left font-normal", !customDateTo && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />{customDateTo ? format(customDateTo, "dd/MM/yyyy") : "Até"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={customDateTo} onSelect={setCustomDateTo} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </>
+            )}
+            <span className="text-xs text-muted-foreground ml-auto">{rows.length} registros · auto-refresh 30s</span>
+          </div>
+        </>
+      )}
+
+      <TelemetryTable
+        rows={rows}
+        isLoading={isLoading}
+        isError={leituraFalhou}
+        errorDetail={leituraFalhou ? telemetryReadFailureDetail(error) : undefined}
+      />
     </div>
   );
 }

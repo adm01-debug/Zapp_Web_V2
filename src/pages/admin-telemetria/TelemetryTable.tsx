@@ -1,33 +1,52 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Activity } from 'lucide-react';
+import { Activity, AlertTriangle } from 'lucide-react';
 import { formatDuration, formatTime, getSeverityBadge } from './telemetryUtils';
 import type { TelemetryRow } from './telemetryTypes';
 
 interface TelemetryTableProps {
   rows: TelemetryRow[];
   isLoading: boolean;
+  /**
+   * R2-INF-040: consulta que FALHOU não pode virar "nenhuma query lenta registrada / o
+   * sistema está performando bem". Sem esta prop a tabela só via `isLoading` e
+   * `rows.length`, e a ausência de dados por erro chegava aqui como bom desempenho.
+   */
+  isError?: boolean;
+  /** Detalhe técnico da falha (mensagem do SDK) — mostrado só no estado de erro. */
+  errorDetail?: string;
 }
 
-export function TelemetryTable({ rows, isLoading }: TelemetryTableProps) {
+export function TelemetryTable({ rows, isLoading, isError = false, errorDetail }: TelemetryTableProps) {
   return (
     <Card>
       <CardContent className="p-0">
         {isLoading ? (
-          <div className="p-4 space-y-3">
+          <div data-telemetria-leitura="carregando" className="p-4 space-y-3">
             {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
+        ) : isError ? (
+          <div data-telemetria-leitura="falha" role="alert" aria-live="assertive" className="text-center py-16 px-4 text-muted-foreground">
+            <AlertTriangle className="h-12 w-12 mx-auto mb-3 text-destructive" />
+            <p className="font-medium text-foreground">Não foi possível ler a telemetria</p>
+            <p className="text-sm mt-1 max-w-md mx-auto">
+              Sem leitura não há medição: a lista vazia aqui é falha de consulta, não ausência de
+              queries lentas nem bom desempenho. A tela volta a tentar sozinha a cada 30 s — ou use
+              Atualizar.
+            </p>
+            {errorDetail && <p className="text-2xs mt-3 font-mono break-words">{errorDetail}</p>}
+          </div>
         ) : rows.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
+          <div data-telemetria-leitura="vazio" className="text-center py-16 text-muted-foreground">
             <Activity className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="font-medium">Nenhuma query lenta registrada</p>
             <p className="text-sm mt-1">Isso é bom! O sistema está performando bem.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div data-telemetria-leitura="dados" className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/30">
