@@ -181,10 +181,16 @@ Responda APENAS em JSON:
     }
 
     let tagsReplaced = false;
-    if (validContactId && tagPayload.length > 0) {
+    if (validContactId) {
       // Uma única transação no banco (IA-028): apaga SOMENTE as etiquetas de IA
       // e insere as novas, preservando etiqueta humana. O par anterior (delete
       // seguido de insert) não era atômico e ignorava {error} nos dois awaits.
+      //
+      // R2-API-033: a RPC é chamada MESMO com `tagPayload` vazio, porque lista
+      // vazia tem semântica explícita na função (LIMPA as etiquetas de IA). A
+      // guarda antiga (`tagPayload.length > 0`) pulava a chamada quando a nova
+      // classificação — válida — não trazia tags, e as etiquetas de IA da
+      // análise anterior ficavam no contato contradizendo a classificação atual.
       const { error: tagsError } = await supabase.rpc('replace_ai_conversation_tags', {
         p_contact_id: validContactId,
         p_tags: tagPayload,
