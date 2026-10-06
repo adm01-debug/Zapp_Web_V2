@@ -2717,6 +2717,95 @@ Deno.test("R2-API-013: o timer do heartbeat morre em toda saida do item (inclusi
   } finally {
     erroPre.restoreTimers();
   }
+
+  // (d) erro do item -> catch -> reagendamento -> `await sleep(interval)` -> continue.
+  // A regressao era o timer ficar VIVO na janela entre o erro tratado e o fim do
+  // sleep (o finally so roda depois do sleep): um tick nessa janela renovava um
+  // item ja devolvido a fila e logava 'multiplix_heartbeat_not_renewed' falso.
+  // Como send_interval_min/max sao 0, o sleep do catch e um setTimeout(0) — para
+  // enxergar a janela o teste CAPTURA os timeouts e retem o do catch ate depois
+  // das assercoes.
+  const setTimeoutReal = globalThis.setTimeout;
+  const timeoutsCapturados: Array<{ cb: () => void; ms: number }> = [];
+  globalThis.setTimeout = ((cb: (...a: unknown[]) => void, ms?: number, ...a: unknown[]) => {
+    timeoutsCapturados.push({ cb: () => cb(...a), ms: Number(ms ?? 0) });
+    return timeoutsCapturados.length; // id simbolico — o clearTimeout real nao o encontra (inofensivo)
+  }) as unknown as typeof globalThis.setTimeout;
+  const timersErro = stubHeartbeatTimers();
+  const optsErro: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550307")],
+    // voice_ai sem ativo renderizado lanca multiplix_block_pending_media dentro do
+    // try, ANTES do POST — o catch cai no ramo !providerPostAttempted (reagendamento).
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}" } },
+    lazyHeartbeat: true,
+  };
+  const ctxErro = newCtx(optsErro);
+  try {
+    // Um macrotask real drena TODAS as microtasks pendentes — e assim que o teste
+    // bombeia o worker sem depender do setTimeout (que ficou capturado).
+    const ceder = () => new Promise<void>((resolve) => setTimeoutReal(resolve, 0));
+    const execucao = handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(optsErro, ctxErro));
+    // Tratador anexado desde ja: qualquer rejeicao do handler fica guardada em
+    // vez de virar unhandledrejection no meio do bombeio.
+    const fim = execucao.then((res) => ({ res }), (err: unknown) => ({ err }));
+
+    // Dispara os timeouts capturados ate o item ser REAGENDADO. O primeiro
+    // timeout que nasce depois disso e o `await sleep(interval)` do catch —
+    // ele fica retido para o teste olhar dentro da janela.
+    let sleepDoCatch: (() => void) | null = null;
+    for (let volta = 0; volta < 1_000 && sleepDoCatch === null; volta++) {
+      await ceder();
+      if (ctxErro.reschedules.length === 0) {
+        while (timeoutsCapturados.length > 0) timeoutsCapturados.shift()!.cb();
+      } else if (timeoutsCapturados.length > 0) {
+        sleepDoCatch = timeoutsCapturados.shift()!.cb;
+      }
+    }
+    assert(
+      ctxErro.reschedules.length === 1 &&
+        String(ctxErro.reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+      `esperava o item reagendado pelo catch (ramo pre-dispatch), houve ${JSON.stringify(ctxErro.reschedules)}`,
+    );
+    assert(sleepDoCatch !== null, "o catch nao chegou ao `await sleep(interval)`");
+    assert(timersErro.ticks.length === 1, "o heartbeat nao foi armado neste cenario");
+
+    // DENTRO da janela: item ja reagendado e sleep do catch ainda pendente. O tick
+    // virtual so dispara se o timer ainda estiver ATIVO — que e o que a regressao
+    // permitia (clearInterval so viria no finally, depois do sleep).
+    if (timersErro.ativos.size > 0) {
+      timersErro.ticks[0]();
+      await ceder();
+    }
+    assert(
+      timersErro.ativos.size === 0,
+      `timer do heartbeat vivo durante o sleep do catch: ${timersErro.ativos.size} ativo(s)`,
+    );
+    assert(
+      heartbeatConsumidas(ctxErro) === 0,
+      `tick na janela do erro tratado renovou o lease de um item ja reagendado (${heartbeatConsumidas(ctxErro)} consumidas)`,
+    );
+
+    sleepDoCatch(); // libera o sleep do catch -> finally -> continue -> fim da passada
+    const fimResult = await fim;
+    assert("res" in fimResult, `o handler rejeitou depois do erro tratado: ${String((fimResult as { err: unknown }).err)}`);
+    assert(fimResult.res.status === 200, `esperado 200 depois do erro tratado, recebido ${fimResult.res.status}`);
+
+    // DEPOIS da janela: nao pode sobrar timer nem sair renovacao tardia.
+    if (timersErro.ativos.size > 0) {
+      timersErro.ticks[0]();
+      await ceder();
+    }
+    assert(
+      timersErro.ativos.size === 0 && heartbeatConsumidas(ctxErro) === 0,
+      `heartbeat tardio depois do continue do catch: timers=${timersErro.ativos.size}, consumidas=${heartbeatConsumidas(ctxErro)}`,
+    );
+  } finally {
+    timersErro.restore();
+    globalThis.setTimeout = setTimeoutReal;
+  }
 });
 
 Deno.test("R2-API-013: falha da RPC de heartbeat e tratada (nao derruba o envio nem vira rejeicao solta)", async () => {

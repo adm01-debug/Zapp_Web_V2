@@ -961,6 +961,14 @@ export async function handleMultiplixSend(
             }
           }
         } catch (err) {
+          // R2-API-013: o timer morre na ENTRADA do catch, junto do timeout do
+          // POST — antes do reagendamento/conclusao e do `await sleep(interval)`
+          // que precede o continue. O finally segue como rede de seguranca (a
+          // funcao e idempotente), mas so ele nao basta: ele roda DEPOIS do
+          // sleep, e um tick nessa janela renovava um item ja reagendado ou
+          // concluido, gerando RPC inutil e 'multiplix_heartbeat_not_renewed'
+          // falso.
+          stopHeartbeat();
           clearTimeout(sendTimeout);
           if (!providerPostAttempted) {
             const attemptSoFar = typeof item.attempt_count === "number" ? item.attempt_count : 0;
