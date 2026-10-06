@@ -9,10 +9,21 @@ import {
   toGain,
 } from '@/lib/mediaVolumeStore';
 
-const invoke = vi.fn();
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } },
+/**
+ * TEL-RECORDING-001 (item 62): a Edge `get-call-recording` responde o PROPRIO audio (stream),
+ * nao um JSON com `{ url }`. O mock antigo devolvia `{ data: { url } }` de `functions.invoke` -
+ * forma que a Edge nunca entrega - e por isso o player "passava" no teste e devolvia `null` em
+ * producao. Agora o mock entrega bytes e o player tem de montar o <audio> a partir deles.
+ */
+vi.mock('@/lib/edgeAuthHeaders', () => ({
+  edgeAuthHeaders: vi.fn(async () => ({ apikey: 'anon', Authorization: 'Bearer token' })),
 }));
+
+const fetchMock = vi.fn();
+const createObjectURL = vi.fn((_blob: Blob) => 'blob:audio-do-player');
+const revokeObjectURL = vi.fn();
+
+const audioDaEdge = () => new Blob(['bytes-de-audio-mp3'], { type: 'audio/mpeg' });
 
 const renderPlayer = (ui: React.ReactElement) => {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -22,7 +33,14 @@ const renderPlayer = (ui: React.ReactElement) => {
 const audioDoPlayer = (container: HTMLElement) => container.querySelector('audio') as HTMLAudioElement;
 
 describe('RecordingPlayer (T67)', () => {
-  beforeEach(() => invoke.mockReset().mockResolvedValue({ data: { url: 'https://exemplo/g.mp3' }, error: null }));
+  beforeEach(() => {
+    fetchMock.mockReset().mockResolvedValue({ ok: true, status: 200, blob: async () => audioDaEdge() });
+    createObjectURL.mockReset().mockImplementation((_blob: Blob) => 'blob:audio-do-player');
+    revokeObjectURL.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
+  });
 
   it('nao renderiza nada quando a chamada nao tem gravacao', () => {
     renderPlayer(<RecordingPlayer callId="c1" recordingStatus="none" />);
@@ -32,15 +50,38 @@ describe('RecordingPlayer (T67)', () => {
   it('nao renderiza nem requisita quando a chamada nao diz que tem', () => {
     renderPlayer(<RecordingPlayer callId="c2" recordingStatus={null} />);
     expect(screen.queryByTestId('tel-recording-player')).toBeNull();
-    expect(invoke).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('com gravacao disponivel o player existe e pede o audio pela Edge (nunca pela URL)', async () => {
-    renderPlayer(<RecordingPlayer callId="c3" recordingStatus="available" />);
-    // D3 revisado em 29/09 (reconciliar com o Bitrix24): a Edge get-call-recording existe, entao
-    // o player deixa de devolver null e passa a buscar o audio - sem que a URL chegue ao front.
-    await waitFor(() => expect(invoke).toHaveBeenCalledWith('get-call-recording', expect.objectContaining({ body: { callId: 'c3' } })));
-    expect(JSON.stringify(document.body.innerHTML)).not.toContain('http');
+  // c3 e c4 sao dois cenarios independentes (um player por caso): juntar os dois no mesmo
+  // `it` deixava o segundo player invisivel para o proprio teste - o container lido era o do
+  // primeiro render, e o `screen` global via os dois.
+  it('c3: com gravacao disponivel o player existe e busca o audio na Edge', async () => {
+    const { container } = renderPlayer(<RecordingPlayer callId="c3" recordingStatus="available" />);
+
+    // A Edge get-call-recording entrega o audio em bytes; o player monta o <audio> a partir
+    // deles (blob local) sem que a URL do provedor chegue ao DOM.
+    await screen.findByTestId('tel-recording-player');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/functions/v1/get-call-recording');
+
+    const audio = audioDoPlayer(container);
+    expect(audio).not.toBeNull();
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('blob:audio-do-player'));
+  });
+
+  it('c4: o <audio> e o link de download usam o blob local (nunca a URL de origem)', async () => {
+    const { container } = renderPlayer(<RecordingPlayer callId="c4" recordingStatus="available" />);
+    await screen.findByTestId('tel-recording-player');
+
+    const audio = audioDoPlayer(container);
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('blob:audio-do-player'));
+
+    // Nem o <audio> nem o link de download carregam a URL de origem (o blob e local).
+    const link = container.querySelector('a[download]') as HTMLAnchorElement | null;
+    expect(link).not.toBeNull();
+    expect(audio.getAttribute('src')).not.toMatch(/^https?:/);
+    expect(link?.getAttribute('href')).toBe('blob:audio-do-player');
   });
 });
 
@@ -52,7 +93,12 @@ describe('RecordingPlayer (T67)', () => {
  */
 describe('RecordingPlayer (VOL-02) — a gravacao respeita o volume global', () => {
   beforeEach(() => {
-    invoke.mockReset().mockResolvedValue({ data: { url: 'https://exemplo/g.mp3' }, error: null });
+    fetchMock.mockReset().mockResolvedValue({ ok: true, status: 200, blob: async () => audioDaEdge() });
+    createObjectURL.mockReset().mockImplementation((_blob: Blob) => 'blob:audio-do-player');
+    revokeObjectURL.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
     act(() => {
       setVolume(DEFAULT_MEDIA_VOLUME_STATE.volume);
       setMuted(DEFAULT_MEDIA_VOLUME_STATE.muted);
