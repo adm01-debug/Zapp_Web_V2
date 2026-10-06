@@ -119,7 +119,10 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const messagesAreaRef = useRef<ChatMessagesAreaRef>(null);
   const dragCounterRef = useRef(0);
 
-  const { isContactTyping, typingUsers, handleTypingStart, handleTypingStop } = useTypingPresence({
+  // R2-INB-026: o chamador legado ainda envia o literal 'agent'; o hook
+  // normaliza esse placeholder para uma chave de presença única por cliente,
+  // sem depender de AuthProvider nos testes/consumidores isolados do ChatPanel.
+  const { isContactTyping, isColleagueTyping, typingUsers, handleTypingStart, handleTypingStop } = useTypingPresence({
     conversationId: conversation.id, currentUserId: 'agent', currentUserName: conversation.assignedTo?.name || 'Agente',
   });
   const { quickReplies: dbQuickReplies, incrementUseCount } = useQuickReplies();
@@ -287,7 +290,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           <NextBestActionEngine contactId={conversation.contact.id} contactName={conversation.contact.name} />
         </Suspense>
 
-        <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} typingUserName={typingUsers[0]?.name || conversation.contact.name}
+        <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
+          typingUserName={isContactTyping ? conversation.contact.name : (typingUsers[0]?.name || conversation.contact.name)}
           ttsLoading={ttsLoading} ttsPlaying={ttsPlaying} ttsMessageId={ttsMessageId} instanceName={instanceName}
           conversationId={conversation.id} contactJid={contactJid} contactAvatar={contactAvatar}
           onSpeak={speak} onStop={stop} onReply={handlers.handleReplyToMessage} onForward={handlers.handleForwardMessage} onCopy={handlers.handleCopyMessage}
