@@ -11931,6 +11931,7 @@ export type Database = {
       resolve_talkx_outcome_unknown: {
         Args: {
           p_confirm_duplicate_risk?: boolean
+          p_confirm_relaunch?: boolean
           p_note?: string
           p_recipient_id: string
           p_resolution: string
@@ -11942,7 +11943,7 @@ export type Database = {
         Returns: boolean
       }
       retry_talkx_recipients: {
-        Args: { p_campaign_id: string; p_recipient_ids: string[] }
+        Args: { p_campaign_id: string; p_confirm_relaunch?: boolean; p_recipient_ids: string[] }
         Returns: Json
       }
       save_talkx_campaign_draft: {
