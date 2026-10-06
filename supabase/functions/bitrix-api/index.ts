@@ -12,13 +12,47 @@ const BitrixBodySchema = z.object({
   entityId: z.string().max(100).optional(),
   data: z.record(z.unknown()).optional(),
   filters: z.record(z.unknown()).optional(),
-});
+}).strict();
 
-Deno.serve(async (req) => {
+/**
+ * R2-API-048 — o alvo do teste é o webhook CONFIGURADO no servidor, nunca um
+ * valor vindo do chamador: a URL do webhook carrega o token do portal e está
+ * classificada como segredo em docs/security/secret-surface-inventory.md.
+ * Dependências externas por injeção para o teste chamar o handler real.
+ */
+export interface BitrixDeps {
+  /** client do chamador (auth.getUser + rpc is_admin_or_supervisor). */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  callerClient?: any;
+  /** fetch para o provedor (default: globalThis.fetch). */
+  fetchImpl?: typeof fetch;
+}
+
+/**
+ * Host do portal Bitrix do webhook configurado — o que a resposta pode nomear
+ * sem expor o token (só o host, nunca o caminho `/rest/1/<token>/`).
+ *
+ * Devolve null quando não há URL configurada ou quando ela não é uma URL
+ * http(s) absoluta. Os dois casos NEGAM sem tocar no provedor: uma conexão
+ * "testada" contra alvo que não existe não pode virar estado conectado.
+ */
+export function configuredPortalHost(webhookUrl: string | null | undefined): string | null {
+  if (typeof webhookUrl !== 'string' || webhookUrl.trim() === '') return null;
+  try {
+    const parsed = new URL(webhookUrl.trim());
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.host || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function handleBitrixApi(req: Request, deps?: BitrixDeps): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("bitrix-api");
+  const doFetch: typeof fetch = deps?.fetchImpl ?? fetch;
 
   try {
     // SECURITY: require an authenticated user JWT before touching the
@@ -34,7 +68,7 @@ Deno.serve(async (req) => {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       return errorResponse("Server misconfigured", 500, req);
     }
-    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    const authClient = deps?.callerClient ?? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: userData, error: userErr } = await authClient.auth.getUser();
@@ -42,9 +76,19 @@ Deno.serve(async (req) => {
       return errorResponse("Unauthorized", 401, req);
     }
 
+    // O alvo do teste é SEMPRE o webhook configurado no servidor: nenhum campo
+    // do corpo escolhe o portal (o schema é .strict() e recusa webhookUrl/domain).
     const BITRIX_WEBHOOK_URL = Deno.env.get('BITRIX_WEBHOOK_URL');
+    const portal = configuredPortalHost(BITRIX_WEBHOOK_URL);
     if (!BITRIX_WEBHOOK_URL) {
       return errorResponse('Bitrix não configurado. Configure BITRIX_WEBHOOK_URL nas configurações', 400, req);
+    }
+    if (!portal) {
+      // Configurada porém inválida: NEGA sem tocar no provedor. Sem isso o teste
+      // "conectava" contra um alvo inexistente e a resposta não dizia qual
+      // portal respondeu (R2-API-048).
+      log.error('BITRIX_WEBHOOK_URL inválido', { error: 'url absoluta http(s) esperada' });
+      return errorResponse('BITRIX_WEBHOOK_URL inválido: informe a URL completa do webhook (https://<portal>.bitrix24.com.br/rest/1/<token>/)', 400, req);
     }
 
     const raw = await req.json().catch(() => null);
@@ -53,14 +97,18 @@ Deno.serve(async (req) => {
     const parsed = BitrixBodySchema.safeParse(raw);
     if (!parsed.success) {
       const errors = parsed.error.flatten();
-      const msg = Object.entries(errors.fieldErrors)
+      const fieldMsg = Object.entries(errors.fieldErrors)
         .map(([k, v]) => `${k}: ${(v as string[]).join(', ')}`)
         .join('; ');
+      // .strict(): chave desconhecida (ex.: webhookUrl/domain digitados na tela)
+      // cai aqui e é recusada — o chamador não escolhe o alvo do teste.
+      const formMsg = (errors.formErrors ?? []).join('; ');
+      const msg = [fieldMsg, formMsg].filter(Boolean).join('; ');
       return errorResponse(msg || 'Validation error', 400, req);
     }
 
     const { action, entityType, entityId, data, filters } = parsed.data;
-    log.info(`action=${action} entityType=${entityType || 'none'}`);
+    log.info(`action=${action} entityType=${entityType || 'none'}`, { portal });
 
     // Bitrix é um CRM externo sem RLS/dono por contato no nosso schema —
     // TODA ação desta function (mesmo padrão já usado em crm-integration
@@ -139,7 +187,7 @@ Deno.serve(async (req) => {
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        const contactsResponse = await fetch(`${BITRIX_WEBHOOK_URL}/crm.contact.list`, {
+        const contactsResponse = await doFetch(`${BITRIX_WEBHOOK_URL}/crm.contact.list`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -168,13 +216,13 @@ Deno.serve(async (req) => {
               .select().single();
             if (!error) syncResults.push(upsertedContact);
           }
-          log.done(200, { synced: syncResults.length });
-          return jsonResponse({ success: true, synced: syncResults.length, total: contactsData.result.length }, 200, req);
+          log.done(200, { synced: syncResults.length, portal });
+          return jsonResponse({ success: true, portal, synced: syncResults.length, total: contactsData.result.length }, 200, req);
         }
         break;
       }
       case 'push_contact': {
-        const pushResponse = await fetch(`${BITRIX_WEBHOOK_URL}/crm.contact.add`, {
+        const pushResponse = await doFetch(`${BITRIX_WEBHOOK_URL}/crm.contact.add`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -187,11 +235,11 @@ Deno.serve(async (req) => {
           }),
         });
         const pushData = await pushResponse.json();
-        log.done(200);
-        return jsonResponse({ success: true, bitrixId: pushData.result }, 200, req);
+        log.done(200, { portal });
+        return jsonResponse({ success: true, portal, bitrixId: pushData.result }, 200, req);
       }
       case 'create_lead_from_conversation': {
-        const leadResponse = await fetch(`${BITRIX_WEBHOOK_URL}/crm.lead.add`, {
+        const leadResponse = await doFetch(`${BITRIX_WEBHOOK_URL}/crm.lead.add`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -207,16 +255,16 @@ Deno.serve(async (req) => {
           }),
         });
         const leadData = await leadResponse.json();
-        log.done(200);
-        return jsonResponse({ success: true, leadId: leadData.result }, 200, req);
+        log.done(200, { portal });
+        return jsonResponse({ success: true, portal, leadId: leadData.result }, 200, req);
       }
       default:
         return errorResponse('Ação não suportada', 400, req);
     }
 
     if (endpoint) {
-      log.info(`Calling Bitrix: ${endpoint}`);
-      const bitrixResponse = await fetch(`${BITRIX_WEBHOOK_URL}/${endpoint}`, {
+      log.info(`Calling Bitrix: ${endpoint}`, { portal });
+      const bitrixResponse = await doFetch(`${BITRIX_WEBHOOK_URL}/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: body ? JSON.stringify(body) : undefined,
@@ -224,12 +272,18 @@ Deno.serve(async (req) => {
       const responseData = await bitrixResponse.json();
 
       if (responseData.error) {
-        log.error('Bitrix error', { error: responseData.error });
-        return errorResponse(responseData.error_description || responseData.error, 400, req);
+        // Mesmo status/corpo de antes ({error}, 400) + o portal testado: quem
+        // informou B na tela não pode ler a falha de A como se fosse a sua.
+        log.error('Bitrix error', { error: responseData.error, portal });
+        return jsonResponse({
+          success: false,
+          portal,
+          error: responseData.error_description || responseData.error,
+        }, 400, req);
       }
 
-      log.done(200);
-      return jsonResponse({ success: true, data: responseData.result, total: responseData.total }, 200, req);
+      log.done(200, { portal });
+      return jsonResponse({ success: true, portal, data: responseData.result, total: responseData.total }, 200, req);
     }
 
     return errorResponse('Endpoint não definido', 400, req);
@@ -238,4 +292,11 @@ Deno.serve(async (req) => {
     log.error('Unhandled error', { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+// O Deno.serve fica sob import.meta.main: importar este módulo num teste não
+// pode subir um servidor na porta 8000 (mesmo padrão de get-call-recording e
+// recover-corrupted-audios).
+if (import.meta.main) {
+  Deno.serve((req) => handleBitrixApi(req));
+}
