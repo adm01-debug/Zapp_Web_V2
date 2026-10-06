@@ -591,8 +591,9 @@ BEGIN
   SELECT count(*) INTO c FROM pg_policies
    WHERE schemaname='storage' AND tablename='objects' AND cmd='SELECT'
      AND (qual ~ 'whatsapp-media' OR qual ~ 'audio-messages')
-     AND (qual ~* 'media_url' OR qual ~ '~~' OR qual ~* 'position\(' OR qual ~* 'substring\('
-          OR qual ~* 'replace\(' OR qual ~* 'right\(' OR qual ~ 'public\.messages');
+     AND (qual ~* 'media_url' OR qual ~ '~~' OR qual ~* '"?position"?\(' OR qual ~* '"?substring"?\('
+          OR qual ~* '"?replace"?\(' OR qual ~* '"?right"?\(' OR qual ~ 'public\.messages'
+          OR qual ~* '\m(from|join)\s+\(?(public\.)?messages\M');
   IF c <> 0 THEN
     RAISE EXCEPTION 'FALHOU: % policy(s) SELECT residual(is) por media_url/pattern-match/public.messages', c;
   END IF;
@@ -633,6 +634,13 @@ if [[ "$SEM_ACL" == '1' ]]; then
     printf '[FAIL] o contrato passou SEM a migration da ACL — o teste nao e sensivel\n' >&2
     exit 1
   fi
+  # O vermelho esperado so vale se a PRIMEIRA negacao do contrato disparou: erro de sintaxe,
+  # objeto ausente ou qualquer outro erro NAO e prova de sensibilidade.
+  if ! grep -qF 'FALHOU: A enxerga o objeto canonico de B' "$tmp_dir/out.log"; then
+    printf '[FAIL] --sem-acl: o contrato falhou, mas NAO pela negacao esperada (A enxerga o objeto canonico de B). Primeiras linhas do log:\n' >&2
+    sed -n '1,20p' "$tmp_dir/out.log" >&2
+    exit 1
+  fi
   printf '[OK] VERMELHO esperado: sem a migration da ACL o contrato falha\n'
   grep -E 'ERROR|FALHOU' "$tmp_dir/out.log" | head -3
   exit 0
@@ -647,5 +655,50 @@ psql_file "$tmp_dir/assert_defeito.sql" || fail 'BLOCO A: o estado anterior nao 
 printf '\n===== BLOCO B — migration da ACL aplicada (contrato vigente) =====\n'
 apply_acl
 psql_file "$tmp_dir/assert_contrato.sql" || fail 'BLOCO B: o contrato falhou com a migration aplicada'
+
+# ── Bloco C: a trava contra policy SELECT por join em messages ────────────────
+# O deparse de pg_policies.qual NAO qualifica o schema (`FROM messages m`,
+# `FROM (messages m JOIN contacts c ON ...)`) nem as funcoes reservadas
+# (`"right"(...)`, `"substring"(...)`). Prova-se aqui, no container, que a trava pega uma
+# policy SELECT dos buckets do contrato que autoriza por join em messages sem citar
+# media_url — forma em que a trava antiga passava (falso verde).
+printf '\n===== BLOCO C — trava contra policy SELECT por join em messages =====\n'
+estrutura_sql="$repo_root/supabase/tests/rls_whatsapp_media_select_via_messages.sql"
+[[ -f "$estrutura_sql" ]] || fail "prova de estrutura nao encontrada: $estrutura_sql"
+
+# C0 — estado vigente (so as 2 policies de locator): a prova de estrutura fica VERDE.
+psql_file "$estrutura_sql" > "$tmp_dir/estrutura_c0.log" 2>&1 \
+  || { sed -n '1,20p' "$tmp_dir/estrutura_c0.log" >&2; fail 'BLOCO C/C0: prova de estrutura falhou no estado vigente (esperado VERDE)'; }
+ok 'BLOCO C/C0: prova de estrutura VERDE no estado vigente'
+
+# C1 — recria a policy canonica do whatsapp-media somando o ramo por join em messages
+#      (sem media_url); os termos canonicos ficam para que o desvio seja SO o join.
+for adv in 'exists' 'join'; do
+  if [[ "$adv" == 'exists' ]]; then
+    adv_branch="OR EXISTS (SELECT 1 FROM public.messages m WHERE m.contact_id = 'aaaaaaaa-0000-0000-0000-000000000111'::uuid)"
+  else
+    adv_branch="OR EXISTS (SELECT 1 FROM public.messages m JOIN public.contacts c ON c.id = m.contact_id WHERE c.id = 'aaaaaaaa-0000-0000-0000-000000000111'::uuid)"
+  fi
+  psql_sql 'DROP POLICY "Users can read assigned whatsapp media" ON storage.objects' >/dev/null \
+    || fail "BLOCO C/C1($adv): nao consegui remover a policy canonica"
+  psql_sql "CREATE POLICY \"Users can read assigned whatsapp media\" ON storage.objects FOR SELECT TO authenticated USING (objects.bucket_id = 'whatsapp-media' AND (public.is_admin_or_supervisor(auth.uid()) OR EXISTS (SELECT 1 FROM public.contacts c WHERE c.id::text = (storage.foldername(objects.name))[1] AND public.is_contact_visible_to_user(c.id, auth.uid())) $adv_branch))" >/dev/null \
+    || fail "BLOCO C/C1($adv): nao consegui criar a policy adversarial"
+
+  printf 'BLOCO C/C1(%s): qual deparseado da policy adversarial:\n' "$adv"
+  psql_sql "SELECT qual FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='Users can read assigned whatsapp media'"
+
+  # C2 — a prova de estrutura tem de ficar VERMELHA, e pela trava T2.
+  if psql_file "$estrutura_sql" > "$tmp_dir/estrutura_c2_$adv.log" 2>&1; then
+    fail "BLOCO C/C2($adv): a prova de estrutura NAO pegou a policy SELECT por join em messages (falso verde)"
+  fi
+  grep -qE '^ERROR:.*rls_whatsapp_media T2 FALHOU' "$tmp_dir/estrutura_c2_$adv.log" \
+    || { grep -E '^ERROR' "$tmp_dir/estrutura_c2_$adv.log" | head -3 >&2; fail "BLOCO C/C2($adv): a prova ficou vermelha, mas nao pela trava T2"; }
+  ok "BLOCO C/C2($adv): a trava T2 pega a policy SELECT por join em messages sem media_url"
+  grep -E '^ERROR' "$tmp_dir/estrutura_c2_$adv.log" | head -2
+done
+
+# volta ao estado vigente para o resto do script (idempotencia do bloco)
+psql_sql 'DROP POLICY "Users can read assigned whatsapp media" ON storage.objects' >/dev/null
+psql_file "$acl_migration" >/dev/null || fail 'BLOCO C: nao consegui reaplicar a migration da ACL'
 
 printf '\n[OK] R2-DB-022 B1: leitura dos buckets privados so pelo locator canonico (contact_id visivel) ou admin/supervisor — nunca por messages.media_url.\n'

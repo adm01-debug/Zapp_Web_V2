@@ -68,7 +68,15 @@ BEGIN
 
   -- T2 VETOR FORJÁVEL FECHADO: nenhuma policy SELECT de storage.objects que cubra
   --    estes buckets pode autorizar por `media_url`, por comparação de padrão
-  --    (~~/LIKE, position, substring, replace, right) nem por join em public.messages.
+  --    (~~/LIKE, position, substring, replace, right) nem por join em messages.
+  --    FATO MEDIDO no container (postgres:17-alpine): o deparse de
+  --    pg_policies.qual NÃO qualifica o schema — sai `FROM messages m` e
+  --    `FROM (messages m JOIN contacts c ON ...)` — e cita funções reservadas
+  --    com aspas (`"right"(...)`, `"substring"(...)`). Por isso o filtro usa
+  --    `\m(from|join)\s+\(?(public\.)?messages\M` (o `\(?` pega a forma do JOIN,
+  --    vetor histórico das policies "assigned") e `"?X"?\(` para as funções.
+  --    O literal `audio-messages` NÃO casa (medido): não há `from|join` antes
+  --    de `messages`, e `\m`/`\M` ainda exigem fronteira de palavra.
   SELECT string_agg(p.policyname || ' [' || coalesce(p.qual, '') || ']', ' | ')
     INTO v_extra
     FROM pg_policies p
@@ -77,12 +85,12 @@ BEGIN
      AND (
        p.qual ~* 'media_url'
        OR p.qual ~ '~~'
-       OR p.qual ~* 'position\('
-       OR p.qual ~* 'substring\('
-       OR p.qual ~* 'replace\('
-       OR p.qual ~* 'right\('
+       OR p.qual ~* '"?position"?\('
+       OR p.qual ~* '"?substring"?\('
+       OR p.qual ~* '"?replace"?\('
+       OR p.qual ~* '"?right"?\('
+       OR p.qual ~* '\m(from|join)\s+\(?(public\.)?messages\M'
        OR p.qual ~ 'public\.messages'
-       OR p.qual ~* '\mfrom\s+public\.messages\M'
      )
      AND (
        p.qual ~ 'whatsapp-media'
