@@ -131,8 +131,9 @@ function scanCss(stylesDir = STYLES) {
   return { halfStep, literalFamily };
 }
 
-/** .tsx: fontSize numerico inline (achado A9) e fontFamily literal (achado
- *  A2/A3). Um arquivo migrado para src/lib/chart-theme.ts passa a usar
+/** .tsx: fontSize numerico inline (achado A9), fontFamily literal e
+ *  font-family literal em CSS embutido (achado A2/A3/LT-TYPE-02). Um arquivo
+ *  migrado para src/lib/chart-theme.ts passa a usar
  *  identificadores (CHART_TICK_FONT_SIZE), nao numeros — some do regex
  *  sozinho, sem precisar checar import. */
 function scanTsxInline(srcDir = SRC) {
@@ -141,6 +142,7 @@ function scanTsxInline(srcDir = SRC) {
   const literalFamily = [];
   const fontSizeRe = /fontSize:\s*([0-9.]+)\b/g;
   const familyRe = /fontFamily:\s*(['"])((?:(?!\1).)+)\1/g;
+  const embeddedFamilyRe = /font-family:\s*([^;\n]+?)\s*;/g;
   for (const f of files) {
     const rel = path.relative(ROOT, f);
     const txt = fs.readFileSync(f, 'utf8');
@@ -155,13 +157,24 @@ function scanTsxInline(srcDir = SRC) {
       const line = txt.slice(0, m.index).split('\n').length;
       literalFamily.push({ where: `${rel}:${line}`, value: m[2] });
     }
+    embeddedFamilyRe.lastIndex = 0;
+    while ((m = embeddedFamilyRe.exec(txt))) {
+      const value = m[1].trim();
+      if (value.startsWith('var(')) continue;
+      const line = txt.slice(0, m.index).split('\n').length;
+      literalFamily.push({ where: `${rel}:${line}`, value });
+    }
   }
   return { fontSizeInline, literalFamily };
 }
 
-/** Faixa de peso que cada familia carrega, extraida da URL do Google Fonts
- *  em index.html. wght@min..max (variavel) vira [min,max]; wght@a;b;c
- *  (lista estatica) vira [min(lista),max(lista)]. */
+/** Pesos que cada familia carrega, extraidos da URL do Google Fonts em
+ *  index.html. wght@min..max (eixo variavel) vira { min, max, exact: null } —
+ *  qualquer peso inteiro no intervalo e renderizavel. wght@a;b;c (lista
+ *  estatica) vira { min, max, exact: [a,b,c] } — so os pesos listados estao
+ *  carregados; um peso intermediario ausente (ex.: 450 numa lista 300..700)
+ *  NAO e coberto. Antes o parser colapsava a lista em [min,max] e o scanner
+ *  tratava 450 como carregado so por cair dentro do intervalo (LT-TYPE-03). */
 function parseLoadedWeights(indexHtmlPath = INDEX_HTML) {
   if (!fs.existsSync(indexHtmlPath)) return {};
   const html = fs.readFileSync(indexHtmlPath, 'utf8');
@@ -173,24 +186,38 @@ function parseLoadedWeights(indexHtmlPath = INDEX_HTML) {
   while ((m = familyRe.exec(urlMatch[0]))) {
     const [namePart, spec] = m[1].split(':wght@');
     const name = decodeURIComponent(namePart.replace(/\+/g, ' '));
-    if (!spec) { families[name] = [400, 400]; continue; }
+    if (!spec) { families[name] = { min: 400, max: 400, exact: [400] }; continue; }
     const range = spec.match(/^([0-9]+)\.\.([0-9]+)$/);
     if (range) {
-      families[name] = [+range[1], +range[2]];
+      // eixo variavel: qualquer peso inteiro dentro de [min,max] e renderizavel.
+      families[name] = { min: +range[1], max: +range[2], exact: null };
     } else {
-      const weights = spec.split(';').map(Number).filter((n) => !Number.isNaN(n));
-      if (weights.length) families[name] = [Math.min(...weights), Math.max(...weights)];
+      // lista estatica: so os pesos EXATAMENTE listados estao carregados.
+      const weights = [...new Set(spec.split(';').map(Number).filter((n) => !Number.isNaN(n)))]
+        .sort((a, b) => a - b);
+      if (weights.length) families[name] = { min: weights[0], max: weights[weights.length - 1], exact: weights };
     }
   }
   return families;
 }
 
+/** Um peso e renderizavel pela familia carregada? Eixo variavel cobre o
+ *  intervalo continuo [min,max]; lista estatica cobre SO os pesos listados —
+ *  um intermediario ausente (450 numa lista 300;400;500;600;700) NAO conta. */
+function isWeightLoaded(spec, weight) {
+  if (!spec) return false;
+  if (spec.exact) return spec.exact.includes(weight);
+  return weight >= spec.min && weight <= spec.max;
+}
+
 /** Achado A1: font-weight pedido no CSS "sans" (base/utilities/tokens —
- *  onde vivem as regras de peso do dark) fora da faixa que a fonte padrao
- *  (Plus Jakarta Sans) carrega. E exatamente o bug original: 450/550/650
- *  pedidos sem nenhum peso estatico cobrindo. 900 (font-black) fica fora
- *  do eixo publicado da Jakarta (max 800) por limitacao da propria fonte —
- *  vira teto no budget, nao zero, ver PR que introduziu a faixa variavel. */
+ *  onde vivem as regras de peso do dark) que a fonte padrao (Plus Jakarta
+ *  Sans) nao carrega. E o bug original: 450/550/650 pedidos sem nenhum peso
+ *  estatico cobrindo. 900 (font-black) fica fora do eixo publicado da Jakarta
+ *  (max 800) por limitacao da propria fonte — vira teto no budget, nao zero,
+ *  ver PR que introduziu a faixa variavel. LT-TYPE-03: quando a URL traz uma
+ *  LISTA ESTATICA, o scanner so aceita os pesos exatamente listados (antes
+ *  colapsava em [min,max] e deixava passar um intermediario ausente). */
 function scanOrphanWeights(stylesDir = STYLES, indexHtmlPath = INDEX_HTML) {
   const loaded = parseLoadedWeights(indexHtmlPath);
   const jakarta = loaded['Plus Jakarta Sans'];
@@ -207,9 +234,14 @@ function scanOrphanWeights(stylesDir = STYLES, indexHtmlPath = INDEX_HTML) {
     re.lastIndex = 0;
     while ((m = re.exec(txt))) {
       const w = +m[1];
-      if (w < jakarta[0] || w > jakarta[1]) {
+      if (!isWeightLoaded(jakarta, w)) {
         const line = txt.slice(0, m.index).split('\n').length;
-        orphan.push({ where: `${rel}:${line}`, weight: w, faixaCarregada: jakarta });
+        orphan.push({
+          where: `${rel}:${line}`,
+          weight: w,
+          faixaCarregada: [jakarta.min, jakarta.max],
+          pesosCarregados: jakarta.exact,
+        });
       }
     }
   }
@@ -398,6 +430,6 @@ function main() {
   }
 }
 
-module.exports = { parseScale, toPx, walk, walkCss, scanCss, scanTsxInline, parseLoadedWeights, scanOrphanWeights, isNamedAbove16, MODULAR_SCALE, main };
+module.exports = { parseScale, toPx, walk, walkCss, scanCss, scanTsxInline, parseLoadedWeights, isWeightLoaded, scanOrphanWeights, isNamedAbove16, MODULAR_SCALE, main };
 
 if (require.main === module) main();

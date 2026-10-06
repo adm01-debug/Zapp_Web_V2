@@ -574,6 +574,47 @@ export function reconciliarConsumo(linhas: LinhaDeConsumo[]): ReconciliacaoDeCon
   return totais;
 }
 
+/**
+ * IA-054 / IA-QUOTA-001 — registra UMA ação calculada (sem chamada ao modelo).
+ *
+ * O defeito que isto fecha: `enforceAiGuards` mede a quota diária CONTANDO
+ * linhas de `ai_usage_logs` por (user_id, function_name) — mas os handlers
+ * calculados (`ai-churn-analysis`, `ai-classify-tickets`) respondiam por regras
+ * próprias e nunca gravavam a linha. A ação passava pela guarda e era invisível
+ * para a quota: ação, tentativa e cobrança existiam no modelo (regras 1–5
+ * acima), só não estavam ligadas ao contador real.
+ *
+ * A linha gravada aqui é honesta com a regra 3: o handler NÃO chamou provedor,
+ * então não há tokens a cobrar — `usageUnknown: true` manda as colunas de token
+ * como NULL e `contaParaQuota` devolve "sem_medicao" (fora da soma, nunca zero
+ * falso). A linha vale como TENTATIVA/AÇÃO para a quota e para a reconciliação;
+ * `requestId` (IA-051) dá a identidade da ação quando o cliente a envia.
+ *
+ * Deve ser chamada UMA vez por resposta da ação admitida pela guarda — negada
+ * pela guarda não gera linha (regra 4: bloqueado por guarda não tem chamada).
+ */
+export async function registrarAcaoCalculada(acao: {
+  /** Mesmo slug passado a `enforceAiGuards` — a quota conta por (usuário, função). */
+  functionName: string;
+  userId: string | null;
+  req: Request;
+  /** Resposta que a ação produziu: o status HTTP vira o `status` da linha. */
+  resposta: Response;
+  /** `Date.now()` capturado quando a ação passou pela guarda. */
+  inicio: number;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  await logAiUsageDetached({
+    functionName: acao.functionName,
+    userId: acao.userId,
+    requestId: extractAiRequestId(acao.req),
+    durationMs: Date.now() - acao.inicio,
+    status: acao.resposta.ok ? "success" : "error",
+    usageUnknown: true,
+    metadata: { acao_calculada: true, ...(acao.metadata ?? {}) },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // IA-055 — tarifa versionada por vigência
 // ---------------------------------------------------------------------------

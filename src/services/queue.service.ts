@@ -12,6 +12,32 @@ export class QueueService {
       .order('priority', { ascending: false });
   }
 
+  /**
+   * Contagem real de contatos aguardando atendimento por fila.
+   *
+   * Cada fila usa `count: 'exact'` com `head: true`: o PostgREST conta no
+   * servidor, sem baixar linhas e sem o corte silencioso de 1000 registros do
+   * PostgREST. A definicao de "aguardando" e a mesma do dashboard
+   * (`dashboard_contact_counts`, metrica `pending`): contato sem responsavel,
+   * nao soft-deletado e ainda nao encerrado (resolved/archived).
+   */
+  static async fetchWaitingCounts(queueIds: string[]): Promise<Map<string, number>> {
+    const entries = await Promise.all(
+      queueIds.map(async (queueId) => {
+        const { count, error } = await supabase
+          .from('contacts')
+          .select('id', { count: 'exact', head: true })
+          .eq('queue_id', queueId)
+          .is('assigned_to', null)
+          .is('deleted_at', null)
+          .not('conversation_status', 'in', '(resolved,archived)');
+        if (error) throw error;
+        return [queueId, count ?? 0] as const;
+      })
+    );
+    return new Map(entries);
+  }
+
   static async fetchMembers() {
     return supabase
       .from('queue_members')

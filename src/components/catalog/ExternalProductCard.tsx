@@ -8,7 +8,8 @@ import { CatalogProductCard } from './CatalogProductCard';
 
 interface ExternalProductCardProps {
   product: ExternalProduct;
-  onSend?: (product: ExternalProduct) => void;
+  /** Cor selecionada no detalhe, quando o envio parte de uma variação. */
+  onSend?: (product: ExternalProduct, variantColor?: string) => void;
   /** compact = modo lista; sem compact = grade */
   compact?: boolean;
   /** E43: favoritos */

@@ -46,6 +46,9 @@ export function CallHistoryTable({ rows, selecionadaId, onSelecionar, onLimparSe
               tabIndex={0}
               onClick={() => onSelecionar(row.id)}
               onKeyDown={(e) => {
+                // Eventos dos botoes da celula de acoes sobem ate a linha. Nao os
+                // cancele: Enter/Espaco precisam manter a ativacao nativa do botao.
+                if (e.target !== e.currentTarget) return;
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   onSelecionar(row.id);

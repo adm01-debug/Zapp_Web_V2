@@ -106,6 +106,10 @@ function getElementGainNode(element: HTMLMediaElement): GainNode | null {
     if (context.state === 'suspended') void context.resume().catch(() => {});
     return gain;
   } catch {
+    // A preparação falhou antes de o nó existir (VOL-01): o contexto criado nesta
+    // tentativa ficaria sem dono nenhum. Sem consumidor ligado, fecha e reinicia o
+    // singleton — a próxima tentativa cria um contexto novo em vez de herdar o órfão.
+    if (elementosLigados === 0) closeMediaAudioContext();
     return null;
   }
 }
@@ -137,24 +141,12 @@ export function applyMediaVolume(element: HTMLMediaElement, gain: number, muted:
 }
 
 /**
- * E10 — solta o ganho deste elemento e, se era o último, fecha o contexto.
- * Nunca fechar vaza um `AudioContext` por sessão (o Chrome limita quantos existem ao
- * mesmo tempo); fechar sempre emudeceria os players que continuam na tela. Por isso a
- * contagem: o contexto morre quando o último elemento solta.
+ * VOL-01 — encerra o singleton da mídia: fecha o contexto e reinicia o registry, de
+ * modo que o próximo consumidor crie um contexto novo. Usado quando o último elemento
+ * solta o ganho e quando uma preparação WebAudio falha antes de registrar qualquer
+ * consumidor (contexto órfão).
  */
-export function releaseMediaElement(element: HTMLMediaElement): void {
-  const gain = elementGainNodes.get(element);
-  if (!gain) return;
-
-  try {
-    gain.disconnect();
-  } catch {
-    // já estava desligado
-  }
-  elementGainNodes.delete(element);
-  elementosLigados -= 1;
-  if (elementosLigados > 0) return;
-
+function closeMediaAudioContext(): void {
   const contexto = mediaAudioContext;
   mediaAudioContext = null;
   mediaAudioContextResolved = false;
@@ -168,6 +160,31 @@ export function releaseMediaElement(element: HTMLMediaElement): void {
 }
 
 /**
+ * E10 — solta o ganho deste elemento e, se era o último, fecha o contexto.
+ * Nunca fechar vaza um `AudioContext` por sessão (o Chrome limita quantos existem ao
+ * mesmo tempo); fechar sempre emudeceria os players que continuam na tela. Por isso a
+ * contagem: o contexto morre quando o último elemento solta.
+ */
+export function releaseMediaElement(element: HTMLMediaElement): void {
+  const gain = elementGainNodes.get(element);
+  if (gain) {
+    try {
+      gain.disconnect();
+    } catch {
+      // já estava desligado
+    }
+    elementGainNodes.delete(element);
+    elementosLigados -= 1;
+  }
+  if (elementosLigados > 0) return;
+
+  // Sem nó para soltar (caminho de volume nativo) o contexto nem existe: a chamada é
+  // um no-op. Com um contexto WebAudio aberto sem dono (o `apply` do chamador não
+  // chegou a registrar ganho), é aqui que o órfão é encerrado.
+  closeMediaAudioContext();
+}
+
+/**
  * E07/E10 — liga um elemento ao store: aplica agora, reaplica no `loadedmetadata`
  * (a URL assinada renova e o elemento recarrega), no `play` (onde o contexto nasce) e
  * a cada mudança do store. O retorno desliga tudo — inclusive o ganho e o contexto.
@@ -175,8 +192,11 @@ export function releaseMediaElement(element: HTMLMediaElement): void {
 export function bindMediaVolume(element: HTMLMediaElement, apply: () => void): () => void {
   element.addEventListener('loadedmetadata', apply);
   const aoDarPlay = () => {
+    // VOL-01 — o gesto marca o elemento e aquece o contexto SÓ no caminho que vai
+    // consumi-lo (WebAudio do iOS/Safari). No caminho de volume nativo não existe
+    // GainNode nenhum: instanciar aqui criava um `AudioContext` que ninguém fecharia.
     elementosComGesto.add(element);
-    getMediaAudioContext();
+    if (!detectNativeVolumeSupport()) getMediaAudioContext();
     apply();
   };
   element.addEventListener('play', aoDarPlay);

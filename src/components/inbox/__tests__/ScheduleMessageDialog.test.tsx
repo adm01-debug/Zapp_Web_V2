@@ -10,8 +10,11 @@
  * as partes da data, para o teste valer em qualquer fuso (em UTC o defeito é invisível).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { ScheduleMessageDialog } from '@/components/inbox/ScheduleMessageDialog';
+
+const toastMock = vi.hoisted(() => vi.fn());
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: toastMock }));
 
 const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 /** instante local (fuso do processo) de uma data/hora de calendário, como ISO */
@@ -84,5 +87,82 @@ describe(`ScheduleMessageDialog — dia local (TZ=${TZ})`, () => {
     fireEvent.click(screen.getByRole('button', { name: /^agendar$/i }));
     expect(onSchedule).toHaveBeenCalledTimes(1);
     expect((onSchedule.mock.calls[0][1] as Date).toISOString()).toBe(instanteLocal(2026, 10, 1, 9, 0));
+  });
+});
+
+/**
+ * R2-INB-010 — o agendamento fechava e apagava o rascunho ANTES de a persistência
+ * confirmar: `handleSchedule` chamava `onSchedule` (assíncrono) sem aguardar, exibia o
+ * aviso de sucesso, fechava o diálogo e limpava mensagem/anexo na hora. Uma falha de
+ * gravação deixava o usuário com um falso "Mensagem agendada!" e sem o texto digitado.
+ *
+ * Estes testes usam temporizadores reais (controle de promessa + `waitFor`).
+ */
+describe('ScheduleMessageDialog — R2-INB-010: fecha e limpa o rascunho só após persistir', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    toastMock.mockClear();
+  });
+
+  const preencher = (onSchedule: (m: string, s: Date, a?: File) => Promise<void> | void, onOpenChange: (v: boolean) => void) => {
+    render(<ScheduleMessageDialog open onOpenChange={onOpenChange} onSchedule={onSchedule} />);
+    const texto = screen.getByPlaceholderText(/digite a mensagem/i) as HTMLTextAreaElement;
+    fireEvent.change(texto, { target: { value: 'Enviar proposta' } });
+    return texto;
+  };
+
+  const agendar = async () => {
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /^agendar$/i }));
+    });
+  };
+
+  it('não fecha, não limpa o rascunho e não anuncia sucesso enquanto a persistência não confirma', async () => {
+    let confirmar: (() => void) | undefined;
+    const onSchedule = vi.fn(() => new Promise<void>((resolve) => { confirmar = resolve; }));
+    const onOpenChange = vi.fn();
+    const texto = preencher(onSchedule, onOpenChange);
+
+    await agendar();
+
+    expect(onSchedule).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    expect(texto.value).toBe('Enviar proposta');
+    expect(toastMock).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Mensagem agendada!' }));
+
+    // Só depois de a persistência resolver é que o diálogo fecha.
+    await act(async () => { confirmar?.(); });
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Mensagem agendada!' }));
+  });
+
+  it('mantém o diálogo aberto, o texto e o anexo quando a persistência falha', async () => {
+    const onSchedule = vi.fn(() => Promise.reject(new Error('insert falhou')));
+    const onOpenChange = vi.fn();
+    const texto = preencher(onSchedule, onOpenChange);
+
+    const arquivo = new File(['conteúdo'], 'contrato.pdf', { type: 'application/pdf' });
+    fireEvent.change(document.getElementById('file-upload') as HTMLInputElement, { target: { files: [arquivo] } });
+    expect(screen.getByText('contrato.pdf')).toBeTruthy();
+
+    await agendar();
+
+    await waitFor(() => expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Não foi possível agendar' })));
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    expect(texto.value).toBe('Enviar proposta');
+    expect(screen.getByText('contrato.pdf')).toBeTruthy();
+    expect(toastMock).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Mensagem agendada!' }));
+  });
+
+  it('fecha e limpa o rascunho quando a persistência confirma', async () => {
+    const onSchedule = vi.fn(() => Promise.resolve());
+    const onOpenChange = vi.fn();
+    const texto = preencher(onSchedule, onOpenChange);
+
+    await agendar();
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(texto.value).toBe('');
+    expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Mensagem agendada!' }));
   });
 });

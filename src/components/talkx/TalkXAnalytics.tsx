@@ -279,13 +279,13 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
         <section className="rounded-2xl bg-card border border-border/70 p-4 flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-3">
             <IconTile icon={Sparkles} color="violet" size={36} />
-            <div><p className="text-[15px] font-bold text-foreground">Melhor horário</p><p className="text-xs text-foreground-secondary">Pico de entrega no período</p></div>
+            <div><p className="text-[15px] font-bold text-foreground">Melhor horário de envio</p><p className="text-xs text-foreground-secondary">Pico de envios no período</p></div>
           </div>
           {bestHour ? (
             <div className="text-center py-4">
               <p className="text-5xl font-bold text-foreground tabular-nums leading-none">{String(bestHour.hour).padStart(2, '0')}h</p>
               {bestHour.day && <p className="text-sm text-foreground-secondary mt-1">{bestHour.day} &mdash; {bestHour.count} envios</p>}
-              <p className="text-2xs text-muted-foreground mt-3 leading-snug">Programe campanhas próximas a este horário para maior taxa de abertura.</p>
+              <p className="text-2xs text-muted-foreground mt-3 leading-snug">Maior volume de envios da amostra. Não mede abertura — referência de agenda, não de resultado.</p>
             </div>
           ) : (
             <p className="text-[13px] text-muted-foreground text-center py-6">Sem dados de envio no período selecionado.</p>
@@ -372,7 +372,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
             </ResponsiveContainer>
           </div>
           <div className="flex items-center gap-4 justify-end">
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-green" /><span className="text-2xs text-foreground-secondary">Taxa de entrega</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-green" /><span className="text-2xs text-foreground-secondary">Taxa de envio</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-red" /><span className="text-2xs text-foreground-secondary">Taxa de falha</span></div>
           </div>
         </section>

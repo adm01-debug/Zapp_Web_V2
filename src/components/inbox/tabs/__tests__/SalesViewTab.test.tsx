@@ -137,4 +137,14 @@ describe('SalesViewTab', () => {
     await screen.findByTestId('commercial-summary-strip');
     expect(screen.queryByText(/pedidos?/i)).not.toBeInTheDocument();
   });
+
+  it('aviso de escopo: o resumo explicita que Compras e Ticket médio consideram somente compras concluídas/aprovadas', async () => {
+    mockUseContactCrm360.mockReturnValue({ data: EMPTY_CRM360 });
+    renderTab();
+
+    await screen.findByTestId('commercial-summary-strip');
+    const aviso = screen.getByRole('note');
+    expect(aviso).toHaveTextContent(/Compras e Ticket médio/i);
+    expect(aviso).toHaveTextContent(/somente compras concluídas ou aprovadas/i);
+  });
 });

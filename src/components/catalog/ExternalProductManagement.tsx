@@ -397,6 +397,16 @@ export const ExternalProductManagement: React.FC = () => {
     });
   }, []);
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+  // R2-MOD-007 — o envio em lote devolve só os ids concluídos; falhados e
+  // parciais seguem selecionados para reenvio.
+  const removeFromSelection = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+  }, []);
   const toggleSelectAll = useCallback(() => {
     const pageIds = visibleProducts.map((p) => p.id);
     const allSelected = pageIds.every((id) => selectedIds.has(id));
@@ -601,7 +611,11 @@ export const ExternalProductManagement: React.FC = () => {
     onlyInStock ? 'in_stock' : isFeatured ? 'featured' : isNew ? 'new_30d' : null;
 
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
-  const handleSendProduct = (product: ExternalProduct) => { setSendProduct(product); };
+  const [sendVariantColor, setSendVariantColor] = useState<string | undefined>(undefined);
+  const handleSendProduct = (product: ExternalProduct, variantColor?: string) => {
+    setSendVariantColor(variantColor);
+    setSendProduct(product);
+  };
 
   /** E56 — reabrir envio a partir do rail. catalog_send_events guarda só
    * o id do produto, então busca o produto completo antes de abrir o
@@ -610,7 +624,10 @@ export const ExternalProductManagement: React.FC = () => {
   const handleOpenProductFromRail = useCallback(async (productId: string) => {
     lastRequestedProductIdRef.current = productId;
     const product = await fetchProduct(productId);
-    if (product && lastRequestedProductIdRef.current === productId) setSendProduct(product);
+    if (product && lastRequestedProductIdRef.current === productId) {
+      setSendVariantColor(undefined);
+      setSendProduct(product);
+    }
   }, [fetchProduct]);
 
   // E78 — deep link ?product=<id>&send=1[&variant=<cor>][&contact=<id>] abre o
@@ -1100,8 +1117,8 @@ export const ExternalProductManagement: React.FC = () => {
             key={sendProduct.id}
             product={sendProduct}
             open={!!sendProduct}
-            onOpenChange={(open) => { if (!open) { setSendProduct(null); setDeepLinkVariant(undefined); setDeepLinkContact(null); } }}
-            initialVariantColor={deepLinkVariant}
+            onOpenChange={(open) => { if (!open) { setSendProduct(null); setSendVariantColor(undefined); setDeepLinkVariant(undefined); setDeepLinkContact(null); } }}
+            initialVariantColor={sendVariantColor ?? deepLinkVariant}
             /* CT-55 — contato pré-selecionado vindo de `?contact=<id>`. */
             presetContact={deepLinkContact}
           />
@@ -1113,7 +1130,7 @@ export const ExternalProductManagement: React.FC = () => {
           products={[...selectedIds].map((id) => products.find((p) => p.id === id)).filter((p): p is ExternalProduct => p !== undefined)}
           open={bulkSendOpen}
           onOpenChange={setBulkSendOpen}
-          onSent={clearSelection}
+          onSent={removeFromSelection}
         />
       </Suspense>
     </div>

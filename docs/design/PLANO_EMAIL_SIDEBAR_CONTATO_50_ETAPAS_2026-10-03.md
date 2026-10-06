@@ -220,3 +220,54 @@ Marcar uma etapa com `[x]` exige acrescentar evidência e SHA. Uma dependência 
 - ES-26/ES-32/ES-33: logo passa pela normalização HTTP(S); anexos exibem data quando disponível; conversas relacionadas exibem data e estado.
 - Verificações: `bun run build`; lint dos arquivos alterados; Vitest focado (5 arquivos, 38 testes); `deno check` e `deno test` da Edge (6 testes); smoke público da função com OPTIONS permitido, origem não correspondente e POST anônimo 401.
 - Pendências que impedem `[x]`: resolver/UX de seleção para múltiplas empresas, fluxos autorizados de vincular/abrir CRM, matriz de permissões com atendente real, fixtures integrais, Playwright responsivo/acessível e smoke autenticado de uma empresa conhecida.
+
+## Matriz final do contrato empresarial — OTH-013
+
+Fecha a documentação do achado OTH-013 (`docs/reconciliation/FINDINGS.json`). Cada linha liga um campo ou cenário à origem autorizada no CRM externo (Singu), ao contrato TypeScript, ao arquivo de implementação, ao teste local/sintético e à evidência versionada. A coluna **Estado** usa a taxonomia de `docs/reconciliation/STATUS_TAXONOMY.md`.
+
+### Estado da prova (legenda)
+
+Diferenciação obrigatória entre as três provas — nenhuma substitui a seguinte:
+
+- **contrato TS** — declaração de tipo + guarda de runtime em `src/types/emailContactContext.ts`. Prova apenas a forma local; não prova disponibilidade no Singu.
+- **teste local** — Vitest (front) ou `deno test` (edge) sobre dados sintéticos. Não acessa o Singu nem produção.
+- **publicado** — só quando existe registro de versão da edge ou migration aplicada **posterior** ao último commit de código. Nesta cópia a publicação não é verificável (regra R1) e permanece **pendência nominal**.
+
+Ao pé desta seção estão as pendências nominais: ausência de prova de produção **nunca** equivale a aprovação.
+
+### Campos (seis exigidos)
+
+| Campo | Origem autorizada no Singu | Contrato TS | Implementação | Teste local/sintético | Evidência versionada | Estado |
+|---|---|---|---|---|---|---|
+| Site | `companies.website` — `supabase/functions/crm-integration/index.ts` (readEmailCompanyContext, select de `companies`) | `EmailCompanyContext.website` | `src/components/email/EmailContactPanel.tsx` (CompanyLink "Site") + `src/lib/emailCompanyLinks.ts` (`normalizeExternalUrl`) | `src/lib/__tests__/emailCompanyLinks.test.ts`; `src/components/email/__tests__/EmailContactPanel.test.tsx` ("renders only the safe company fields") | `c6c793f9c` (#1812), `77210533e` (#1846) | comprovado local |
+| LinkedIn empresarial | `company_social_media` plataforma `linkedin`, `is_active` — `index.ts` (readEmailCompanyContext) | `EmailCompanySocial.platform` = `linkedin` | `EmailContactPanel.tsx` (CompanyLink "LinkedIn") + `emailCompanyLinks.ts` (`companySocialLinks`) | `supabase/functions/crm-integration/index.test.ts` ("projects only social networks accepted by the Email company contract"); `emailCompanyLinks.test.ts`; `EmailContactPanel.test.tsx` | `c6c793f9c`, `77210533e` | comprovado local |
+| Instagram empresarial | `company_social_media` plataforma `instagram`, `is_active` — `index.ts` (readEmailCompanyContext) | `EmailCompanySocial.platform` = `instagram` | `EmailContactPanel.tsx` (CompanyLink "Instagram") | idem LinkedIn | idem LinkedIn | comprovado local |
+| Sobre | descrição: `customers.sobre` por `company_id` (`aboutKnown` = sucesso da leitura); identidade: `companies.nome_fantasia` → `nome_crm` → `razao_social` — `index.ts` (readEmailCompanyContext) | `EmailCompanyContext.about`, `aboutKnown`, `name`, `legalName` | `EmailContactPanel.tsx` (`CompanyDescription` expansível "Ver mais/Ver menos" + cabeçalho da empresa) | `EmailContactPanel.test.tsx` (about "Descrição empresarial") | `c6c793f9c`, `77210533e` | comprovado local para cliente; fornecedor/transportadora sem descrição = estado vazio explícito; o significado de `customers.sobre` no Singu é pendência nominal (ES-03) |
+| Logo | `companies.logo_url` — `index.ts` (readEmailCompanyContext) | `EmailCompanyContext.logoUrl` | `src/components/contacts/CompanyLogo.tsx` (imagem + fallback iniciais/ícone no `onError`) + `emailCompanyLinks.ts` | `EmailContactPanel.test.tsx` (logoUrl nulo → fallback; sem favicon por domínio) | `c6c793f9c`, `77210533e` | comprovado local (imagem + fallback) |
+| Tipos de relacionamento | `customers`, `suppliers`, `carriers` por `company_id` — `index.ts` (readEmailCompanyContext, bloco de relações) | `EmailCompanyRelationship` (`cliente`/`fornecedor`/`transportadora`) + `relationshipsKnown` | `EmailContactPanel.tsx` (badges `relationshipLabels`) | `EmailContactPanel.test.tsx` (Cliente + Fornecedor simultâneos); `src/types/__tests__/emailContactContext.test.ts` (rejeita tipo fora do contrato) | `c6c793f9c`, `77210533e` | comprovado local para cliente + fornecedor; transportadora isolada coberta por código e tipo, sem teste dedicado = pendência nominal |
+
+### Cenários críticos
+
+| Cenário | Comportamento autorizado | Prova local/sintética | Estado |
+|---|---|---|---|
+| Atendente autorizado | A permissão nomeada `crm.email_contact_link.manage` (apenas admin/supervisor) libera "Vincular empresa"; a leitura fica limitada ao vínculo/aba visível ao usuário, nunca a uma consulta genérica de CRM | `supabase/migrations/20261003160000_add_email_crm_link_permission.sql`; `index.ts` (`canManageEmailContactLink`, gate 403 em linkEmailContactCompany); `EmailContactPanel.test.tsx` ("informs an authorized user when the explicit company link fails") | contrato e migration comprovados localmente; aceite com atendente real = pendência nominal |
+| Atendente negado | A implementação tem ramo 403 quando falta `crm.email_contact_link.manage` e ramos 404 quando thread, conta ou contato não são visíveis; `canLink=false` não oferece vínculo, e o e-mail continua utilizável | `index.ts` (`linkEmailContactCompany`, ramos 403/404); `useEmailContactContext.test.tsx` ("mapeia o kill switch e a negação de visibilidade sem expor fallback") prova somente o estado seguro do hook, não os status HTTP | pendência nominal: não existe teste local dedicado que exerça o 403 sem permissão e o 404 sem visibilidade; matriz com atendente sintético também pendente |
+| Contato somente com e-mail | Sem telefone, resolve por e-mail exato normalizado (`resolution` = `email_exact`); zero resultado → `not_linked`; mais de um → `ambiguous` bounded; domínio nunca infere empresa | `index.ts` (`findExactEmailCandidates`, ramo `!stableLink && participantEmail`); `index.test.ts` ("escapes SQL pattern characters before exact insensitive email lookup"); `emailContactContext.test.ts`; `src/hooks/crm/__tests__/useEmailContactContext.test.tsx` | comprovado local (contrato + unidade + hook); sem prova contra o Singu vivo = pendência nominal |
+| Escolha entre múltiplas empresas | `candidates` (2 a 3) com escolha explícita `selectedExternalContactId`; seleção inválida → 409; ambiguidade nunca vira empresa A silenciosa | `index.ts` (ramo `candidates.length > 1` e validação de `selectedExternalContactId`); `emailContactContext.test.ts`; `useEmailContactContext.test.tsx` ("consulta o contexto com a identidade da thread e a escolha explícita") | contrato e fronteira comprovados; UX completa de seleção = pendência nominal (ver Lote 1) |
+
+### Migration e edge — versionado versus publicado
+
+| Objeto | Origem versionada | Prova local | Estado publicado |
+|---|---|---|---|
+| Migration de vínculo manual | `supabase/migrations/20261003151520_add_manual_email_crm_link_guard.sql` (RPC `link_email_crm_contact_guarded`, executável só por `service_role`) | `db:guard` (`scripts/db-audit/check-migration-drift.mjs`) e testes de fronteira RLS | não verificável nesta cópia (R1): pendência nominal |
+| Migration de permissão | `supabase/migrations/20261003160000_add_email_crm_link_permission.sql` (`crm.email_contact_link.manage` → admin/supervisor) | idem vínculo manual | pendência nominal |
+| Edge `crm-integration` | `supabase/functions/crm-integration/index.ts`; últimos commits `2dab15912` (#1636), `77210533e` (#1846), `ccd0f0d8d` (#1855) | `deno test` (13 testes) e `scripts/ci/crm-integration-contract.unit.mjs` | versão publicada sem registro posterior a esses commits = pendência nominal |
+
+### Pendências nominais (não são aprovação)
+
+1. Aceite do contrato empresarial contra o **Singu vivo** (leitura autorizada) — bloqueio externo, ES-03.
+2. **Smoke autenticado** de uma empresa conhecida, após deploy — ES-49.
+3. **Publicação da edge** e **aplicação das migrations** no projeto canônico, com SHA posterior ao código — ES-49.
+4. **Playwright/responsivo/acessibilidade** do painel e **matriz de permissões com atendente real** — ES-45 e ES-04.
+
+Comando determinístico de consistência desta matriz (falha se a seção, os seis campos, os quatro cenários ou um caminho citado estiverem ausentes, se OTH-013 tiver chaves duplicadas/ausentes ou se o cenário negado alegar prova inexistente): `python3 scripts/ci/matriz-oth013-validar.py docs/design/PLANO_EMAIL_SIDEBAR_CONTATO_50_ETAPAS_2026-10-03.md`.

@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
+import { registrarAcaoCalculada } from "../_shared/ai-usage.ts";
 import { AiChurnAnalysisSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 Deno.serve(async (req) => {
@@ -28,102 +29,128 @@ Deno.serve(async (req) => {
     const __guard = await enforceAiGuards({ functionName: "ai-churn-analysis", userId: user.id, req });
     if (__guard) return __guard;
 
-    const parsed = parseBody(AiChurnAnalysisSchema, await req.json());
-    if (!parsed.success) return validationErrorResponse(parsed, req);
+    // IA-054/IA-QUOTA-001 — ação admitida pela guarda tem de virar linha em
+    // ai_usage_logs: é essa contagem por (usuário, função) que a quota diária lê
+    // (passo 3 de _shared/ai-guards.ts). Sem a linha, a ação passava pela guarda
+    // e era invisível para a quota — o defeito do cartão. O handler é calculado
+    // (nenhum modelo é chamado), então a linha grava tokens NULL ("não medido"):
+    // conta como ação/tentativa na quota, nunca como cobrança de tokens. Toda
+    // saída de `responder` — sucesso, entrada inválida ou erro interno — gera
+    // exatamente uma linha.
+    const responder = async (): Promise<Response> => {
+      try {
+        const parsed = parseBody(AiChurnAnalysisSchema, await req.json());
+        if (!parsed.success) return validationErrorResponse(parsed, req);
 
-    const { contactIds } = parsed.data;
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+        const { contactIds } = parsed.data;
+        const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: visibleContacts } = await callerClient
-      .from("contacts")
-      .select("id")
-      .in("id", contactIds);
-    const visibleContactIds = (visibleContacts || []).map((c: { id: string }) => c.id);
+        const { data: visibleContacts } = await callerClient
+          .from("contacts")
+          .select("id")
+          .in("id", contactIds);
+        const visibleContactIds = (visibleContacts || []).map((c: { id: string }) => c.id);
 
-    const { data: contacts } = await adminClient
-      .from("contacts")
-      .select("id, name, phone, created_at, updated_at")
-      .in("id", visibleContactIds);
+        const { data: contacts } = await adminClient
+          .from("contacts")
+          .select("id, name, phone, created_at, updated_at")
+          .in("id", visibleContactIds);
 
-    if (!contacts || contacts.length === 0) {
-      return jsonResponse({ results: [], message: "Nenhum contato encontrado" }, 200, req);
-    }
+        if (!contacts || contacts.length === 0) {
+          return jsonResponse({ results: [], message: "Nenhum contato encontrado" }, 200, req);
+        }
 
-    log.info("Analyzing churn risk", { contactCount: contacts.length });
+        log.info("Analyzing churn risk", { contactCount: contacts.length });
 
-    const results = [];
+        const results = [];
 
-    for (const contact of contacts) {
-      const { data: lastMsg } = await adminClient
-        .from("messages")
-        .select("created_at")
-        .eq("contact_id", contact.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        for (const contact of contacts) {
+          const { data: lastMsg } = await adminClient
+            .from("messages")
+            .select("created_at")
+            .eq("contact_id", contact.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { count: recentMsgCount } = await adminClient
-        .from("messages")
-        .select("id", { count: "exact", head: true })
-        .eq("contact_id", contact.id)
-        .gte("created_at", thirtyDaysAgo);
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          const { count: recentMsgCount } = await adminClient
+            .from("messages")
+            .select("id", { count: "exact", head: true })
+            .eq("contact_id", contact.id)
+            .gte("created_at", thirtyDaysAgo);
 
-      const { count: totalMsgCount } = await adminClient
-        .from("messages")
-        .select("id", { count: "exact", head: true })
-        .eq("contact_id", contact.id);
+          const { count: totalMsgCount } = await adminClient
+            .from("messages")
+            .select("id", { count: "exact", head: true })
+            .eq("contact_id", contact.id);
 
-      const lastMessageAt = lastMsg?.created_at || contact.updated_at;
-      const daysSinceLastMessage = Math.floor(
-        (Date.now() - new Date(lastMessageAt).getTime()) / (1000 * 60 * 60 * 24)
-      );
+          const lastMessageAt = lastMsg?.created_at || contact.updated_at;
+          const daysSinceLastMessage = Math.floor(
+            (Date.now() - new Date(lastMessageAt).getTime()) / (1000 * 60 * 60 * 24)
+          );
 
-      let riskScore = 0;
+          let riskScore = 0;
 
-      if (daysSinceLastMessage > 90) riskScore += 40;
-      else if (daysSinceLastMessage > 60) riskScore += 30;
-      else if (daysSinceLastMessage > 30) riskScore += 20;
-      else if (daysSinceLastMessage > 14) riskScore += 10;
+          if (daysSinceLastMessage > 90) riskScore += 40;
+          else if (daysSinceLastMessage > 60) riskScore += 30;
+          else if (daysSinceLastMessage > 30) riskScore += 20;
+          else if (daysSinceLastMessage > 14) riskScore += 10;
 
-      const avgMonthly = (totalMsgCount || 0) > 0
-        ? ((totalMsgCount || 0) / Math.max(1, Math.floor((Date.now() - new Date(contact.created_at).getTime()) / (30 * 24 * 60 * 60 * 1000))))
-        : 0;
+          const avgMonthly = (totalMsgCount || 0) > 0
+            ? ((totalMsgCount || 0) / Math.max(1, Math.floor((Date.now() - new Date(contact.created_at).getTime()) / (30 * 24 * 60 * 60 * 1000))))
+            : 0;
 
-      if (avgMonthly > 0 && (recentMsgCount || 0) < avgMonthly * 0.3) riskScore += 30;
-      else if (avgMonthly > 0 && (recentMsgCount || 0) < avgMonthly * 0.5) riskScore += 20;
-      else if (avgMonthly > 0 && (recentMsgCount || 0) < avgMonthly * 0.7) riskScore += 10;
+          if (avgMonthly > 0 && (recentMsgCount || 0) < avgMonthly * 0.3) riskScore += 30;
+          else if (avgMonthly > 0 && (recentMsgCount || 0) < avgMonthly * 0.5) riskScore += 20;
+          else if (avgMonthly > 0 && (recentMsgCount || 0) < avgMonthly * 0.7) riskScore += 10;
 
-      if ((totalMsgCount || 0) <= 1) riskScore += 30;
-      else if ((totalMsgCount || 0) <= 5) riskScore += 20;
-      else if ((totalMsgCount || 0) <= 10) riskScore += 10;
+          if ((totalMsgCount || 0) <= 1) riskScore += 30;
+          else if ((totalMsgCount || 0) <= 5) riskScore += 20;
+          else if ((totalMsgCount || 0) <= 10) riskScore += 10;
 
-      let riskLevel = "low";
-      if (riskScore >= 80) riskLevel = "critical";
-      else if (riskScore >= 60) riskLevel = "high";
-      else if (riskScore >= 40) riskLevel = "medium";
+          let riskLevel = "low";
+          if (riskScore >= 80) riskLevel = "critical";
+          else if (riskScore >= 60) riskLevel = "high";
+          else if (riskScore >= 40) riskLevel = "medium";
 
-      const reasons: string[] = [];
-      if (daysSinceLastMessage > 30) reasons.push(`${daysSinceLastMessage} dias sem interação`);
-      if ((recentMsgCount || 0) === 0) reasons.push("Sem mensagens nos últimos 30 dias");
-      if ((totalMsgCount || 0) <= 5) reasons.push("Baixo engajamento total");
+          const reasons: string[] = [];
+          if (daysSinceLastMessage > 30) reasons.push(`${daysSinceLastMessage} dias sem interação`);
+          if ((recentMsgCount || 0) === 0) reasons.push("Sem mensagens nos últimos 30 dias");
+          if ((totalMsgCount || 0) <= 5) reasons.push("Baixo engajamento total");
 
-      results.push({
-        contactId: contact.id,
-        name: contact.name,
-        riskScore: Math.min(100, riskScore),
-        riskLevel,
-        daysSinceLastMessage,
-        recentMessageCount: recentMsgCount || 0,
-        totalMessageCount: totalMsgCount || 0,
-        reasons,
-      });
-    }
+          results.push({
+            contactId: contact.id,
+            name: contact.name,
+            riskScore: Math.min(100, riskScore),
+            riskLevel,
+            daysSinceLastMessage,
+            recentMessageCount: recentMsgCount || 0,
+            totalMessageCount: totalMsgCount || 0,
+            reasons,
+          });
+        }
 
-    results.sort((a, b) => b.riskScore - a.riskScore);
+        results.sort((a, b) => b.riskScore - a.riskScore);
 
-    log.done(200, { analyzed: results.length });
-    return jsonResponse({ results }, 200, req);
+        log.done(200, { analyzed: results.length });
+        return jsonResponse({ results }, 200, req);
+      } catch (err: unknown) {
+        log.error("Error", { error: err instanceof Error ? err.message : String(err) });
+        return internalErrorResponse(err, req);
+      }
+    };
+
+    const __inicio = Date.now();
+    const resposta = await responder();
+    await registrarAcaoCalculada({
+      functionName: "ai-churn-analysis",
+      userId: user.id,
+      req,
+      resposta,
+      inicio: __inicio,
+    });
+    return resposta;
   } catch (err: unknown) {
     log.error("Error", { error: err instanceof Error ? err.message : String(err) });
     return internalErrorResponse(err, req);

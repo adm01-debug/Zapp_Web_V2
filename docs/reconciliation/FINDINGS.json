@@ -1482,7 +1482,7 @@
         "Atendente autorizado, contato sem telefone e escolha entre múltiplas empresas são exercitados.",
         "Publicação da edge e estado da migration usam evidência posterior ao último código."
       ],
-      "limitations": "Nenhuma chamada foi feita ao Singu nesta frente. Contrato TypeScript, preflight e HTTP 401 anônimo não certificam payload autorizado. Comparador posterior sugere aplicação das migrations locais, mas não imprime cada uma individualmente.",
+      "limitations": "Nenhuma chamada foi feita ao Singu ou à produção nesta frente (regra R1). O contrato TypeScript, os testes locais/sintéticos e o teste de contrato da edge cobrem forma e fronteira, não o payload autorizado do Singu vivo nem a versão publicada. Publicação da edge e aplicação das migrations permanecem pendências nominais, registradas na seção 'Matriz final do contrato empresarial' do plano; ausência de prova de produção não é aprovação.",
       "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
       "audit_source": "modules/other/findings.json",
       "severity_original": "P2",
@@ -1624,6 +1624,43 @@
         "resolved_references": 6,
         "unresolved_references": 0,
         "reference_scope": "Original source auditor associations; no additional tasks inferred from prose or number suffixes."
+      },
+      "status": "PARTIAL",
+      "proof_detail": "DOCUMENTATION_MATRIX_CONSOLIDATED_LOCAL_EVIDENCE_PRODUCTION_PENDING",
+      "documentation_fix": {
+        "plan_path": "docs/design/PLANO_EMAIL_SIDEBAR_CONTATO_50_ETAPAS_2026-10-03.md",
+        "section": "Matriz final do contrato empresarial — OTH-013",
+        "consolidated_at": "2026-10-05",
+        "matrix_columns": [
+          "campo/cenário",
+          "origem autorizada no Singu",
+          "contrato TypeScript",
+          "implementação/arquivo",
+          "teste local/sintético",
+          "evidência versionada",
+          "estado"
+        ],
+        "fields_covered": [
+          "Site",
+          "LinkedIn empresarial",
+          "Instagram empresarial",
+          "Sobre",
+          "Logo",
+          "Tipos de relacionamento"
+        ],
+        "scenarios_covered": [
+          "atendente autorizado",
+          "atendente negado",
+          "contato somente com e-mail",
+          "escolha entre múltiplas empresas"
+        ],
+        "local_evidence": [
+          "Vitest: EmailContactPanel.test.tsx, emailCompanyLinks.test.ts, emailContactIdentity.test.ts, emailContactContext.test.ts, useEmailContactContext.test.tsx, useContactSidebar.test.tsx (6 arquivos, 43 testes)",
+          "Deno: supabase/functions/crm-integration/index.test.ts (13 testes)",
+          "scripts/ci/crm-integration-contract.unit.mjs"
+        ],
+        "validation_command": "python3 scripts/ci/matriz-oth013-validar.py docs/design/PLANO_EMAIL_SIDEBAR_CONTATO_50_ETAPAS_2026-10-03.md",
+        "validation_result": "FALHOU antes (cenário negado alegava prova inexistente); OK depois (6 campos, 4 cenários, 14 caminhos e estrutura JSON conferidos)"
       }
     },
     {

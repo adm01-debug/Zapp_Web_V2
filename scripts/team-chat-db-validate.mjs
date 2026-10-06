@@ -52,7 +52,10 @@ async function checkTable(table) {
   }
 }
 
-/** E98: check RPC exists (404 = absent; any other status = present). */
+/** E98: check RPC exists. Só HTTP 2xx prova que o RPC existe E executou; erro de
+ *  autenticação (401/403), não encontrado (404) ou de servidor (5xx) reprovam.
+ *  Antes bastava qualquer status != 404 para contar como sucesso — um 500 ou um
+ *  401 passavam e o script saía 0 sem validar nada (achado TC-012). */
 async function checkRpc(rpc, payload = {}) {
   const url = `${SUPABASE_URL}/rest/v1/rpc/${rpc}`;
   try {
@@ -61,10 +64,15 @@ async function checkRpc(rpc, payload = {}) {
       headers,
       body: JSON.stringify(payload),
     });
-    if (res.status !== 404) {
+    if (res.ok) {
       console.log(`  ✓ rpc/${rpc} (HTTP ${res.status})`);
     } else {
-      console.error(`  ✗ rpc/${rpc} — não encontrado (HTTP 404)`);
+      if (res.status === 404) {
+        console.error(`  ✗ rpc/${rpc} — não encontrado (HTTP 404)`);
+      } else {
+        const corpo = semQuebra((await res.text()).slice(0, 120));
+        console.error(`  ✗ rpc/${rpc} — resposta de erro HTTP ${res.status}: ${corpo}`);
+      }
       failures++;
     }
   } catch (e) {
@@ -95,7 +103,7 @@ console.log('\n=== Team Chat DB Validation ===\n');
 console.log('→ Tabelas:');
 await checkTable('team_conversations');
 await checkTable('team_messages');
-await checkTable('team_members');
+await checkTable('team_conversation_members');
 await checkTable('department_invites');
 await checkTable('department_audit_logs');
 
@@ -103,11 +111,14 @@ console.log('\n→ Colunas críticas:');
 await checkColumn('team_messages', 'conversation_id');
 await checkColumn('team_messages', 'sender_id');
 await checkColumn('team_messages', 'status');
-await checkColumn('department_invites', 'token');
+await checkColumn('department_invites', 'code');
 await checkColumn('department_invites', 'expires_at');
 
 console.log('\n→ RPCs:');
-await checkRpc('accept_department_invite', { p_token: 'VALIDATE_DRY_RUN' });
+// Contrato canônico: accept_department_invite(p_code text). O código de dry-run
+// não casa com convite real, então o RPC devolve {ok:false,error:'invalid_or_expired_code'}
+// com HTTP 200 (ou 'not_authenticated' com a service role) sem escrever nada.
+await checkRpc('accept_department_invite', { p_code: 'VALIDATE_DRY_RUN' });
 
 console.log('');
 if (failures === 0) {

@@ -38,6 +38,12 @@ describe('ContactStatsStrip', () => {
     expect(strip).toHaveTextContent('3 avaliações');
   });
 
+  it('explicita que o tempo médio é amostra das 200 primeiras mensagens (SV-002/S26)', () => {
+    renderStrip();
+    const strip = screen.getByTestId('contact-stats-strip');
+    expect(strip).toHaveTextContent('Resposta ao cliente · 200 primeiras msgs');
+  });
+
   it('90 minutos vira "1h30m"', () => {
     renderStrip({ ...STATS, avgResponseTimeMinutes: 90 });
     expect(screen.getByTestId('contact-stats-strip')).toHaveTextContent('1h30m');

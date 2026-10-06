@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+import { openFixtureConversation } from './fixtures/fixture-conversation';
+
 // Seletores confirmados lendo src/components/inbox/chat/ChatInputArea.tsx: o
 // textarea nao tem data-testid, o aria-label default (sem edicao/resposta em
 // andamento) e "Digite sua mensagem"; o botao de anexo de imagem tem aria-label
@@ -22,6 +24,13 @@ import { test, expect } from '@playwright/test';
 // para escopar o seletor a area de mensagens abertas. Sem escopo, getByText(text)
 // resolvia 2 elementos: (1) preview na lista de conversas e (2) corpo da mensagem
 // na conversa aberta -- causando strict mode violation.
+//
+// R2-INF-007: a conversa aberta NUNCA e escolhida por posicao. Antes este spec usava
+// `locator('[data-testid="conversation-item"]').first()`, o que enviava a mensagem
+// para quem estivesse no topo quando a conta enxergava mais de um contato (ou a
+// ordem mudava). Agora todo teste chama openFixtureConversation, que seleciona pelo
+// nome exibido da fixture e aborta sem enviar se ela nao estiver visivel ou se
+// houver ambiguidade.
 test.describe('Messaging flows', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -29,8 +38,11 @@ test.describe('Messaging flows', () => {
   });
 
   test('send text message appears in conversation', async ({ page }) => {
-    const conversation = page.locator('[data-testid="conversation-item"]').first();
-    await conversation.click();
+    // R2-INF-007: nunca escolher o primeiro item por posicao. Abre SO a conversa do
+    // contato fixture, conferindo o nome exibido antes de digitar/enviar e abortando
+    // quando o contato nao esta visivel ou quando ha ambiguidade. Antes, um contato
+    // real no topo da lista recebia o enqueue de verdade deste teste.
+    await openFixtureConversation(page);
 
     const input = page.getByRole('textbox', { name: /digite sua mensagem/i });
     const text = `Mensagem de teste E2E ${Date.now()}`;
@@ -53,8 +65,11 @@ test.describe('Messaging flows', () => {
   });
 
   test('image attachment button is enabled', async ({ page }) => {
-    const conversation = page.locator('[data-testid="conversation-item"]').first();
-    await conversation.click();
+    // R2-INF-007: nunca escolher o primeiro item por posicao. Abre SO a conversa do
+    // contato fixture, conferindo o nome exibido antes de digitar/enviar e abortando
+    // quando o contato nao esta visivel ou quando ha ambiguidade. Antes, um contato
+    // real no topo da lista recebia o enqueue de verdade deste teste.
+    await openFixtureConversation(page);
 
     await expect(page.getByRole('button', { name: /enviar imagem/i })).toBeEnabled();
   });

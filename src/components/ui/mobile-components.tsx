@@ -169,7 +169,7 @@ export function BottomNavigation({
               </div>
               <span className={cn(
                 'text-3xs leading-none transition-all',
-                isActive ? 'text-primary font-bold' : 'text-muted-foreground font-medium'
+                isActive ? 'text-[hsl(var(--primary-text))] font-bold' : 'text-muted-foreground font-medium'
               )}>
                 {item.label}
               </span>

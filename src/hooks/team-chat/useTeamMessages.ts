@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { getLogger } from '@/lib/logger';
 import type { TeamMessage } from './teamChatTypes';
+
+const log = getLogger('useTeamMessages');
 
 export function useTeamMessages(conversationId: string | null) {
   const { profile } = useAuth();
@@ -50,32 +53,57 @@ export function useTeamMessages(conversationId: string | null) {
 
     const cacheKey = `${conversationId}:${messages[messages.length - 1]?.id}`;
     if (markedRef.current === cacheKey) return;
-    markedRef.current = cacheKey;
 
     const now = new Date().toISOString();
+    const profileId = profile.id;
 
     const receipts = unread.map(m => ({
       message_id: m.id,
       // team_message_receipts.conversation_id e NOT NULL (migration 20260929440000):
       // sem ele o upsert falha e o recibo de leitura nunca e gravado.
       conversation_id: conversationId,
-      profile_id: profile.id,
+      profile_id: profileId,
       status: 'read' as const,
       read_at: now,
       delivered_at: now,
     }));
 
-    supabase
-      .from('team_message_receipts')
-      .upsert(receipts, { onConflict: 'message_id,profile_id' })
-      .then();
+    // TC-010: a marcação só avança DEPOIS que a gravação confirma. Antes o
+    // `markedRef` era fixado antes do await e o resultado dos dois writes era
+    // descartado (`.then()` sem callback): um erro de rede/RLS deixava a
+    // conversa "lida" só na tela — sem recibo no banco, sem log e sem nova
+    // tentativa, porque a chave já estava marcada. Agora, com a falha, a chave
+    // continua livre e o próximo ciclo do efeito (dado novo/realtime) tenta
+    // gravar de novo.
+    let cancelado = false;
 
-    supabase
-      .from('team_conversation_members')
-      .update({ last_read_at: now })
-      .eq('conversation_id', conversationId)
-      .eq('profile_id', profile.id)
-      .then();
+    const persistir = async () => {
+      const [recibos, membro] = await Promise.all([
+        supabase
+          .from('team_message_receipts')
+          .upsert(receipts, { onConflict: 'message_id,profile_id' }),
+        supabase
+          .from('team_conversation_members')
+          .update({ last_read_at: now })
+          .eq('conversation_id', conversationId)
+          .eq('profile_id', profileId),
+      ]);
+
+      // Troca de conversa/desmontagem: o resultado não vale mais para a chave
+      // atual e não pode promover a marcação dela.
+      if (cancelado) return;
+
+      const error = recibos.error ?? membro.error;
+      if (error) {
+        log.error('Falha ao gravar o recibo de leitura', error);
+        return;
+      }
+
+      markedRef.current = cacheKey;
+    };
+
+    void persistir();
+    return () => { cancelado = true; };
   }, [conversationId, profile, query.data]);
 
   return { messages: query.data ?? [], isLoading: query.isLoading };

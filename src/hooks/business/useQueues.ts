@@ -52,10 +52,15 @@ export function useQueues() {
        if (queuesError) throw queuesError;
        if (membersError) throw membersError;
 
-       const queuesWithMembers: QueueWithMembers[] = (queuesData || []).map(queue => ({
+       const queueList = queuesData || [];
+       // R2-QUE-002: a contagem de espera tem que ser real; zerada aqui, os alertas
+       // configurados de fila (QueuesView) nunca disparam.
+       const waitingCounts = await QueueService.fetchWaitingCounts(queueList.map(queue => queue.id));
+
+       const queuesWithMembers: QueueWithMembers[] = queueList.map(queue => ({
          ...queue,
          members: (membersData || []).filter(m => m.queue_id === queue.id) as QueueMember[],
-         waiting_count: 0 // Waiting counts logic could be moved to service if needed
+         waiting_count: waitingCounts.get(queue.id) ?? 0
        }));
 
        if (isMountedRef.current) {

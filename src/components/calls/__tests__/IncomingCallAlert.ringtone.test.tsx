@@ -1,5 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
+import { registrarGuardaDeWebSocket } from './websocketSpy';
+
+// Prova de regressão "zero WebSocket": o realtime-js captura o construtor de
+// `WebSocket` quando o módulo `@/integrations/supabase/client` é avaliado
+// (`_initializeOptions` → `WebSocketFactory.getWebSocketConstructor()`), então
+// o espião precisa estar instalado ANTES dos imports — daí `vi.hoisted`, não
+// uma chamada no escopo de módulo. O `vi.mock` do cliente Supabase continua
+// sendo o que IMPEDE a construção; a guarda é quem PROVA que nenhum socket foi
+// criado (falha se o mock acima for removido).
+await vi.hoisted(async () => {
+  (await import('./websocketSpy')).instalarEspiaoWebSocket();
+});
+registrarGuardaDeWebSocket();
 
 /**
  * O toque da chamada é o único alerta que cria o `AudioContext` na mão. Como a chamada
@@ -115,6 +128,23 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+}));
+
+// O alerta assina a sessão de chamada no realtime (`useTerminoRemoto` →
+// `supabase.channel(...).on(...).subscribe()`) para encerrar quando o outro lado desliga.
+// A guarda de rede de `src/test/setup.ts` só troca o `fetch` — o WebSocket do realtime
+// passa direto e abre conexão real durante o teste. Quando esse socket conecta, o
+// `dispatchEvent(new Event(...))` do undici estoura `ERR_INVALID_ARG_TYPE` ("The \"event\"
+// argument must be an instance of Event. Received an instance of Event") porque o `Event`
+// do jsdom não é o interno do node: vira "Uncaught Exception" e derruba o passo `testes`
+// de `zapp-verify full .` mesmo com 0 testes falhando. Aqui o transporte do realtime é
+// dublado: nenhum byte sai para a rede. Mesmo padrão de
+// `src/components/inbox/__tests__/MediaVolume.test.tsx`.
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
+    removeChannel: vi.fn(),
+  },
 }));
 
 import { IncomingCallAlert } from '../IncomingCallAlert';

@@ -43,7 +43,9 @@ interface ChatPanelProps {
   conversation: Conversation;
   messages: Message[];
   onSendMessage: (content: string, replyToId?: string | null) => Promise<void> | void;
-  onSendAudio?: (blob: Blob) => Promise<void>;
+  /** R2-INB-022: retorna `true` só quando o áudio foi realmente enviado; `false` mantém o gravador
+   *  aberto (gravação recuperável para reenvio) em vez de descartá-la. */
+  onSendAudio?: (blob: Blob) => Promise<boolean>;
   showDetails?: boolean;
   onToggleDetails?: () => void;
   onBack?: () => void;
@@ -56,6 +58,10 @@ interface ChatPanelProps {
   onArchiveConversation?: () => void;
   pinnedConversations?: PinnedChatItem[];
   onSelectPinned?: (contactId: string) => void;
+  /** Contrato de paginacao do historico antigo (opcional: ausente = consumidor antigo, sem controle). */
+  hasOlderMessages?: boolean;
+  loadingOlderMessages?: boolean;
+  onLoadOlderMessages?: () => Promise<void> | void;
 }
 
 type DialogKey = 'quickReplies' | 'slashCommands' | 'transferDialog' | 'scheduleDialog' | 
@@ -94,7 +100,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, pinnedConversations, onSelectPinned }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, pinnedConversations, onSelectPinned, hasOlderMessages, loadingOlderMessages, onLoadOlderMessages }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -286,7 +292,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           conversationId={conversation.id} contactJid={contactJid} contactAvatar={contactAvatar}
           onSpeak={speak} onStop={stop} onReply={handlers.handleReplyToMessage} onForward={handlers.handleForwardMessage} onCopy={handlers.handleCopyMessage}
           onScrollToMessage={handleScrollToMessage} onInteractiveButtonClick={handlers.handleInteractiveButtonClick} onEditStart={handlers.handleEditStart}
-          highlightedMessageIds={highlightedMessageIds} activeHighlightId={activeHighlightId} searchQuery={searchQuery} />
+          highlightedMessageIds={highlightedMessageIds} activeHighlightId={activeHighlightId} searchQuery={searchQuery}
+          hasOlderMessages={hasOlderMessages} loadingOlderMessages={loadingOlderMessages} onLoadOlderMessages={onLoadOlderMessages} />
 
         <ChatQuickRepliesPopover show={dialogs.quickReplies} replies={filteredQuickReplies} onSelect={handleQuickReply} onClose={() => closeDialog('quickReplies')} />
 

@@ -125,7 +125,7 @@ export function useScreenProtection() {
         transition: opacity 0.2s ease;
       `;
       overlay.innerHTML = `
-        <div style="text-align:center; color: hsl(var(--foreground)); font-family: system-ui;">
+        <div style="text-align:center; color: hsl(var(--foreground)); font-family: var(--font-sans);">
           <div style="font-size:3rem; margin-bottom:1rem;">🔒</div>
           <div style="font-size:1.25rem; font-weight:600;">Conteúdo Protegido</div>
           <div style="font-size:0.875rem; opacity:0.7; margin-top:0.5rem;">Volte à janela para continuar</div>

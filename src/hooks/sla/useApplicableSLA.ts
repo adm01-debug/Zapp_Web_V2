@@ -128,7 +128,16 @@ export function useApplicableSLA(params: ContactSLAParams) {
 
       return SYSTEM_DEFAULT;
     },
-    enabled: !!params.contactId || !!params.company || !!params.queueId || !!params.agentId,
+    // Qualquer nível da hierarquia (contact > company > job_title > contact_type >
+    // queue > agent) precisa habilitar a consulta: sem isso, um consumidor que só
+    // conhece job_title ou contact_type nunca resolveria o prazo configurado.
+    enabled:
+      !!params.contactId ||
+      !!params.company ||
+      !!params.jobTitle ||
+      !!params.contactType ||
+      !!params.queueId ||
+      !!params.agentId,
     staleTime: 30000,
   });
 }

@@ -13,9 +13,10 @@ vi.mock('@/hooks/chat/useContactMedia', async () => {
   return { ...actual, useContactMedia: (...args: unknown[]) => mockUseContactMedia(...args) };
 });
 
-vi.mock('@/hooks/chat/useContactMediaCounts', () => ({
-  useContactMediaCounts: (...args: unknown[]) => mockUseContactMediaCounts(...args),
-}));
+vi.mock('@/hooks/chat/useContactMediaCounts', async () => {
+  const actual = await vi.importActual<typeof import('@/hooks/chat/useContactMediaCounts')>('@/hooks/chat/useContactMediaCounts');
+  return { ...actual, useContactMediaCounts: (...args: unknown[]) => mockUseContactMediaCounts(...args) };
+});
 
 vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
   useResolvedStorageUrl: (source: string) => ({ url: source, isLoading: false, error: null, refresh: vi.fn() }),
@@ -52,7 +53,12 @@ interface MediaOverrides {
   isError?: boolean;
 }
 
-function renderTab(items: ContactMediaItem[] = ITEMS, overrides: MediaOverrides = {}) {
+interface RenderOverrides extends MediaOverrides {
+  /** #144/OTH-002: força a query de contagens a falhar (erro != zero confirmado). */
+  countsError?: boolean;
+}
+
+function renderTab(items: ContactMediaItem[] = ITEMS, overrides: RenderOverrides = {}) {
   const counts = {
     all: items.length,
     image: items.filter((i) => i.type === 'image').length,
@@ -71,7 +77,12 @@ function renderTab(items: ContactMediaItem[] = ITEMS, overrides: MediaOverrides 
     refetch: vi.fn(),
     ...overrides,
   });
-  mockUseContactMediaCounts.mockReturnValue({ counts, isLoading: false, isError: false, refetch: vi.fn() });
+  mockUseContactMediaCounts.mockReturnValue({
+    counts: overrides.countsError ? { all: 0, image: 0, video: 0, audio: 0, document: 0 } : counts,
+    isLoading: false,
+    isError: overrides.countsError ?? false,
+    refetch: vi.fn(),
+  });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
@@ -105,6 +116,18 @@ describe('FilesTab', () => {
     expect(screen.getByText('Imagens').closest('button')).toHaveTextContent('1');
     expect(screen.getByText('Docs').closest('button')).toHaveTextContent('1');
     expect(screen.getByText('Vídeos').closest('button')).toHaveTextContent('0');
+  });
+
+  // #144/OTH-002: erro na query de contagens não pode virar "0" confirmado nos chips/header.
+  it('#144/OTH-002: erro na contagem mostra indisponível, nao um zero confirmado', () => {
+    renderTab(ITEMS, { countsError: true });
+
+    const todos = screen.getByText('Todos').closest('button') as HTMLElement;
+    const videos = screen.getByText('Vídeos').closest('button') as HTMLElement;
+    expect(todos).toHaveTextContent('—');
+    expect(videos).toHaveTextContent('—');
+    expect(todos).not.toHaveTextContent('0');
+    expect(screen.queryByText(/^0 arquivos?$/)).not.toBeInTheDocument();
   });
 
   it('mostra os dois arquivos por padrão', () => {

@@ -17,12 +17,14 @@ Deno.test('personalize resolve {{saudacao}} para um período válido do dia', ()
   assert(validGreetings.includes(result), `unexpected greeting result: ${result}`);
 });
 
-Deno.test('personalize usa string vazia quando company é ausente/null (built-in {{empresa}} sem valor)', () => {
-  // Comportamento do kernel para um built-in SEM valor: {{empresa}} resolve para
-  // '' — o fallback "[variavel]" cobre apenas chaves FORA do conjunto de
-  // built-ins. Idêntico ao antigo personalizeMultiplix; nada a corrigir aqui.
-  const result = personalize('Empresa: {{empresa}}', {}).text;
-  assert(result === 'Empresa: ', `unexpected result: ${result}`);
+Deno.test('personalize mantém o texto byte a byte E reporta {{empresa}} sem valor em missing (MX06)', () => {
+  // O kernel NÃO muda de semântica: built-in sem valor continua resolvendo o
+  // TEXTO para '' — a novidade do MX06 é que o worker passa a consumir o
+  // relatório e pula o destinatário em vez de mandar a lacuna. Este teste só
+  // existe para fixar as duas metades do contrato do kernel.
+  const result = personalize('Empresa: {{empresa}}', {});
+  assert(result.text === 'Empresa: ', `unexpected result: ${result.text}`);
+  assert(result.missing.includes('empresa'), `missing deveria conter empresa: ${JSON.stringify(result.missing)}`);
 });
 
 Deno.test('personalize usa fallback [variavel] para placeholder fora do conjunto fixo (nunca lança)', () => {
@@ -96,7 +98,7 @@ function dispatchRow(overrides: DispatchRow = {}): DispatchRow {
   };
 }
 
-function recipientRow(index: number, phone: string | null) {
+function recipientRow(index: number, phone: string | null, overrides: Record<string, unknown> = {}) {
   return {
     id: `recipient-${index}`,
     dispatch_id: "00000000-0000-0000-0000-000000000001",
@@ -108,7 +110,11 @@ function recipientRow(index: number, phone: string | null) {
     attempt_count: 0,
     retry_after: null,
     personalized_message: null,
+    // F48/MX06: mapa de campos customizados congelado no confirm — o MESMO
+    // insumo que o validate alimenta ao personalize.
+    variables_snapshot: {},
     created_at: new Date(Date.now() + index).toISOString(),
+    ...overrides,
   };
 }
 
@@ -322,6 +328,23 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
           case "multiplix_connection_daily_usage": {
             const remaining = opts.dailyRemaining ?? 500;
             return Promise.resolve({ data: { limit: 500, sent: 500 - remaining, remaining }, error: null });
+          }
+          case "reschedule_multiplix_item": {
+            // MX05: espelha o efeito REAL da RPC no banco - o item volta a fila
+            // (next_attempt_at) e a RPC e quem decide o dead letter pelo
+            // attempt_count persistido (>= 3). Sem tirar o item da fila o laco
+            // reprocessaria o MESMO item ate a rede de seguranca derrubar o teste.
+            const id = String(args.p_item_id).replace(/^item-/, "");
+            const alvo = ctx.remaining.find((r) => r.id === id);
+            const attempt = Number(alvo?.attempt_count ?? 0);
+            ctx.remaining = ctx.remaining.filter((r) => r.id !== id);
+            if (attempt >= 3) {
+              return Promise.resolve({ data: { action: "dead_lettered", attempt }, error: null });
+            }
+            return Promise.resolve({
+              data: { action: "rescheduled", attempt: attempt + 1, retry_after: args.p_retry_after },
+              error: null,
+            });
           }
           default:
             return Promise.resolve({ data: true, error: null });
@@ -1192,6 +1215,205 @@ Deno.test("F38: destino invalido (possivel LID de 14 digitos) vira 'skipped' no_
   );
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MX06 — variável não resolvida bloqueia o envio (skipped, NUNCA POST com lacuna)
+// O validate (multiplix-dispatch/inspect.ts) já classifica campo ausente como
+// `exclusao`; o worker honra o MESMO contrato consumindo missing/unknown do
+// personalize. Antes do MX06 ele lia só .text: "Ola {{empresa}}" com snapshot
+// nulo saía como "Ola ".
+// ─────────────────────────────────────────────────────────────────────────────
+
+Deno.test("MX06: {{empresa}} sem company_name_snapshot vira 'skipped' missing_variable — zero POST, zero snapshot", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550200", { company_name_snapshot: null })],
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "mensagem incompleta nao pode ser congelada em snapshot",
+  );
+  assert(
+    rpcs(ctx, "mark_multiplix_item_dispatch_started").length === 0,
+    "o envio ao provedor nao pode nem comecar com variavel pendente",
+  );
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(ctx.completions[0].p_status === "skipped", `status esperado 'skipped', veio ${ctx.completions[0].p_status}`);
+  assert(
+    ctx.completions[0].p_error_message === "missing_variable:empresa",
+    `motivo inesperado: ${ctx.completions[0].p_error_message}`,
+  );
+});
+
+Deno.test("MX06: placeholder desconhecido (typo {{empressa}}) vira 'skipped' unknown_variable — zero POST", async () => {
+  // typo nao e builtin, nao e campo customizado, nao e link -> `unknown` do
+  // kernel. Antes saia "[empressa]" para o cliente.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empressa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550201")],
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "mensagem com placeholder desconhecido nao pode ser congelada",
+  );
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(ctx.completions[0].p_status === "skipped", `status esperado 'skipped', veio ${ctx.completions[0].p_status}`);
+  assert(
+    ctx.completions[0].p_error_message === "unknown_variable:empressa",
+    `motivo inesperado: ${ctx.completions[0].p_error_message}`,
+  );
+});
+
+Deno.test("MX06: o motivo lista TODAS as chaves pendentes, ordenadas (missing + unknown)", async () => {
+  // Deterministico: independente da ordem no template, o motivo sai ordenado —
+  // e cada chave carrega o prefixo da sua classe (missing vs unknown).
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "{{cargo}} de {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550202", { company_name_snapshot: null })],
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(
+    ctx.completions[0].p_error_message === "missing_variable:empresa;unknown_variable:cargo",
+    `motivo inesperado: ${ctx.completions[0].p_error_message}`,
+  );
+});
+
+Deno.test("MX06: builtin presente envia byte a byte o texto do kernel ({{empresa}} com snapshot)", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550203", { company_name_snapshot: "Acme Ltda" })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const esperado = personalize("Ola {{empresa}}", { company: "Acme Ltda" }, {}, "America/Sao_Paulo").text;
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    // MX06/juiz: alem do oraculo do kernel (criterio 2 pede igualdade byte a
+    // byte com o kernel), o payload tem de casar com o literal esperado — assim
+    // o teste nao depende de recalcular o mesmo codigo que esta sob teste.
+    assert(
+      textos[0].body.text === "Ola Acme Ltda",
+      `payload literal divergente: '${String(textos[0].body.text)}' !== 'Ola Acme Ltda'`,
+    );
+    assert(
+      textos[0].body.text === esperado,
+      `payload diverge do kernel: '${String(textos[0].body.text)}' !== '${esperado}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio resolvido tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("MX06: campo customizado do variables_snapshot resolve e envia byte a byte ({{cargo}})", async () => {
+  // O validate alimenta personalize com as strings de variables_snapshot — o
+  // worker usa o MESMO insumo, senao um campo aprovado viraria [cargo]/skip.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{cargo}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550204", { variables_snapshot: { cargo: "Diretor" } })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const esperado = personalize("Ola {{cargo}}", { company: "Empresa 1" }, { cargo: "Diretor" }, "America/Sao_Paulo").text;
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    // MX06/juiz: oraculo do kernel + literal, para o teste nao ser tautologico.
+    assert(
+      textos[0].body.text === "Ola Diretor",
+      `payload literal divergente: '${String(textos[0].body.text)}' !== 'Ola Diretor'`,
+    );
+    assert(
+      textos[0].body.text === esperado,
+      `payload diverge do kernel: '${String(textos[0].body.text)}' !== '${esperado}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio resolvido tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("MX06: default explicito {{empresa|padrao}} com snapshot nulo ENVIA (nao entra em missing)", async () => {
+  // `{{chave|padrao}}`: o kernel nao inclui a chave em missing/unknown — o valor
+  // padrao e aprovado pelo contrato do validate e o envio segue normal.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa|Empresa Parceira}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550205", { company_name_snapshot: null })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText (default explicito), veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      textos[0].body.text === "Ola Empresa Parceira",
+      `payload inesperado: '${String(textos[0].body.text)}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio com default tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("MX06: mensagem congelada (personalized_message) sai como esta, mesmo com variavel pendente no template", async () => {
+  // Snapshot ja aprovado no confirm: o worker nao repersonaliza nem revalida —
+  // o texto congelado e a verdade do que foi revisado.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550206", { company_name_snapshot: null, personalized_message: "Texto congelado" })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      textos[0].body.text === "Texto congelado",
+      `o congelado tem de sair como esta: '${String(textos[0].body.text)}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio congelado tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
 Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 envio e pausa)", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
@@ -1410,4 +1632,227 @@ Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por
   } finally {
     provider.restore();
   }
+});
+
+// -----------------------------------------------------------------------------
+// MX05 - rejeicao TRANSITORIA do provedor (429) volta para a fila com backoff
+// limitado; nunca vira 'failed' terminal.
+// O kernel (errors.ts) ja classifica (429 -> transient/rate_limited) e ja tem o
+// backoff com teto; o defeito era o CONSUMIDOR: o ramo de resposta nao-OK
+// concluia o item como 'failed' e `reschedule_multiplix_item` so era chamado
+// quando nenhum POST tinha saido (Probe429: failed=1, rescheduleCalls=0).
+// Um 5xx continua em `outcome_unknown` (o POST e ambiguo; reenviar cego pode
+// duplicar mensagem) - por isso a guarda abaixo.
+// -----------------------------------------------------------------------------
+
+Deno.test("MX05: 429 do provedor reagenda o item com backoff limitado (nunca 'failed' terminal)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550701")],
+  };
+  const ctx = newCtx(opts);
+  const antes = Date.now();
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  let corpo: { sent?: number; failed?: number; outcome_unknown?: number } = {};
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    corpo = await res.json();
+  } finally {
+    provider.restore();
+  }
+
+  const reagendamentos = rpcs(ctx, "reschedule_multiplix_item");
+  assert(reagendamentos.length === 1, `esperava 1 reagendamento do item, houve ${reagendamentos.length}`);
+  const args = reagendamentos[0].args;
+  assert(args.p_item_id === "item-recipient-1", `item_id inesperado: ${String(args.p_item_id)}`);
+  assert(
+    args.p_claim_token === "claim-item-recipient-1",
+    `claim_token inesperado: ${String(args.p_claim_token)}`,
+  );
+  // Backoff COM TETO do kernel: a 1a falha espera 30 s (nao retry imediato).
+  const retryAfter = Date.parse(String(args.p_retry_after));
+  assert(Number.isFinite(retryAfter), `p_retry_after invalido: ${String(args.p_retry_after)}`);
+  const esperaMs = retryAfter - antes;
+  assert(
+    esperaMs >= 29_000 && esperaMs <= 31_000,
+    `p_retry_after fora da 1a janela de 30 s: ${String(args.p_retry_after)} (${esperaMs}ms)`,
+  );
+
+  // O ponto do MX05: rejeicao temporaria NAO conclui o item como falha terminal.
+  assert(
+    rpcs(ctx, "complete_multiplix_item").length === 0,
+    "429 transitorio NAO pode concluir o item ('failed') - a retentativa do kernel tem de acontecer",
+  );
+  // Nem marca a conexao em risco: isso e para erro PERMANENTE (F60).
+  assert(
+    rpcs(ctx, "register_multiplix_connection_failure").length === 0,
+    "429 transitorio nao pode marcar a conexao em risco",
+  );
+  // O codigo cru continua indo para a trilha de eventos, com a classe transitoria.
+  const evento = ctx.events.find((e: Record<string, unknown>) => String(e.kind).startsWith("item_"));
+  assert(evento !== undefined, "esperava um evento do item na trilha");
+  const payload = evento.payload as Record<string, unknown>;
+  assert(payload.error_class === "transient", `error_class inesperado: ${String(payload.error_class)}`);
+  assert(payload.error_code === "rate_limited", `error_code inesperado: ${String(payload.error_code)}`);
+  assert(payload.provider_status === 429, `provider_status inesperado: ${String(payload.provider_status)}`);
+  // E o item nao conta como falha na resposta do worker.
+  assert(corpo.failed === 0, `o reagendamento nao pode contar como falha: ${JSON.stringify(corpo)}`);
+});
+
+Deno.test("MX05/guarda: erro PERMANENTE continua indo para dead letter (nao vira retentativa)", async () => {
+  // A correcao do MX05 nao pode transformar TODO erro do provedor em retry:
+  // numero inexistente/opt-out sao permanentes e NUNCA reententam.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550702")],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ status: 400, error: { code: "400", message: "number not exists" } }, 400);
+  let corpo: { failed?: number } = {};
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    corpo = await res.json();
+  } finally {
+    provider.restore();
+  }
+  assert(
+    rpcs(ctx, "reschedule_multiplix_item").length === 0,
+    "erro permanente NAO pode ser reagendado (reententaria quem nunca vai receber)",
+  );
+  const completions = rpcs(ctx, "complete_multiplix_item");
+  assert(completions.length === 1, `esperava 1 conclusao, houve ${completions.length}`);
+  assert(completions[0].args.p_status === "failed", `status esperado 'failed', veio ${String(completions[0].args.p_status)}`);
+  // O item concluido como 'failed' tem de contar na resposta do worker —
+  // antes do conserto a conclusao acontecia mas failed saia 0.
+  assert(corpo.failed === 1, `a falha permanente tem de contar na resposta: ${JSON.stringify(corpo)}`);
+  assert(
+    rpcs(ctx, "register_multiplix_connection_failure").length === 1,
+    "erro permanente continua marcando o risco da conexao (F60)",
+  );
+});
+
+Deno.test("MX05/guarda: 5xx continua outcome_unknown (reenviar cego duplicaria mensagem)", async () => {
+  // A protecao de idempotencia do POST ambiguo NAO entra na retentativa: o
+  // 5xx segue pelo caminho de resultado desconhecido.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550703")],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ status: 503, error: { code: "503", message: "service unavailable" } }, 503);
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+  }
+  assert(rpcs(ctx, "reschedule_multiplix_item").length === 0, "5xx nao pode virar retentativa cega");
+  const completions = rpcs(ctx, "complete_multiplix_item");
+  assert(completions.length === 1, `esperava 1 conclusao, houve ${completions.length}`);
+  assert(
+    completions[0].args.p_status === "outcome_unknown",
+    `status esperado 'outcome_unknown', veio ${String(completions[0].args.p_status)}`,
+  );
+});
+
+Deno.test("MX05: transitorio que esgota as tentativas vira dead letter pela RPC (teto respeitado)", async () => {
+  // Na 3a tentativa a propria RPC transforma o reagendamento em dead letter (o
+  // worker informa o retry_after, nao decide o teto) - o item nao reententa
+  // sem fim.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550704")],
+  };
+  opts.recipients![0].attempt_count = 3;
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  let corpo: { sent?: number; failed?: number } = {};
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    corpo = await res.json();
+  } finally {
+    provider.restore();
+  }
+  assert(rpcs(ctx, "reschedule_multiplix_item").length === 1, "a RPC de reagendamento continua sendo a autoridade do teto");
+  assert(corpo.failed === 1, `o dead letter da RPC conta como falha: ${JSON.stringify(corpo)}`);
+});
+
+Deno.test("MX05: dead_lettered da RPC vira item_failed na trilha (nao mero reagendamento)", async () => {
+  // Quando a RPC esgota as tentativas ela devolve action='dead_lettered' e o
+  // item ja esta 'failed' no banco. Registrar 'item_rescheduled' esconderia a
+  // morte do item numa trilha que so deveria mostrar fila — a auditoria tem de
+  // enxergar a falha.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550705")],
+  };
+  opts.recipients![0].attempt_count = 3;
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+  }
+
+  const reagendamentos = ctx.events.filter(
+    (e: Record<string, unknown>) => e.kind === "item_rescheduled" && e.item_id === "item-recipient-1",
+  );
+  assert(
+    reagendamentos.length === 0,
+    "dead_lettered NAO pode ser auditado como item_rescheduled (o item morreu, nao voltou a fila)",
+  );
+  const falha = ctx.events.find(
+    (e: Record<string, unknown>) => e.kind === "item_failed" && e.item_id === "item-recipient-1",
+  );
+  assert(falha !== undefined, "esperava um evento item_failed para o dead_lettered da RPC");
+  const payload = falha.payload as Record<string, unknown>;
+  assert(
+    payload.action === "dead_lettered",
+    `payload.action esperado 'dead_lettered', veio ${String(payload.action)}`,
+  );
+  assert(payload.error_class === "transient", `error_class inesperado: ${String(payload.error_class)}`);
+  assert(payload.provider_status === 429, `provider_status inesperado: ${String(payload.provider_status)}`);
+});
+
+Deno.test("MX05: decisao dead_letter (sem retryAfter do kernel) nao agenda retry imediato", async () => {
+  // attempt_count = 3 -> a tentativa que falha e a 4a: planRetry devolve
+  // dead_letter SEM retryAfter. O fallback do worker tem de ser o 1o degrau do
+  // backoff (30 s) — `new Date()` agendaria o retry para AGORA, o que e
+  // proibido; quem aposenta o item continua sendo a RPC.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550706")],
+  };
+  opts.recipients![0].attempt_count = 3;
+  const ctx = newCtx(opts);
+  const antes = Date.now();
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+  }
+
+  const reagendamentos = rpcs(ctx, "reschedule_multiplix_item");
+  assert(reagendamentos.length === 1, `esperava 1 chamada a reschedule_multiplix_item, houve ${reagendamentos.length}`);
+  const retryAfter = Date.parse(String(reagendamentos[0].args.p_retry_after));
+  assert(Number.isFinite(retryAfter), `p_retry_after invalido: ${String(reagendamentos[0].args.p_retry_after)}`);
+  const esperaMs = retryAfter - antes;
+  assert(esperaMs > 1_000, `retry quase imediato (${esperaMs}ms) — o fallback nao pode ser 'agora'`);
+  assert(
+    esperaMs >= 29_000 && esperaMs <= 31_000,
+    `p_retry_after fora do 1o degrau de 30 s: ${String(reagendamentos[0].args.p_retry_after)} (${esperaMs}ms)`,
+  );
 });

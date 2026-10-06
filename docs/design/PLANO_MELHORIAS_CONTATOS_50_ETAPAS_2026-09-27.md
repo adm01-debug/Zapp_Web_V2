@@ -7,6 +7,7 @@
 > (escala 38/48/108 APROVADA em 2026-10-01 como definitiva do módulo Contatos; ver etapa 20 de
 > [`../audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md`](../audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md) e a
 > tabela de Decisões lá — ramo "D3 = Navy": `text-[38px]` → token `text-page-title`, teto `acima16px` de volta a 1).
+> **Reconciliação pós-redesign:** `38px` não se aplica ao cabeçalho visual de Contatos desde #1262, que o removeu; `text-page-title` permanece como token compartilhado, enquanto 48/108 continuam válidos nos controles e KPIs ainda visíveis.
 > Tudo o que restou vive em [`../audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md`](../audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md).
 > Não registrar checkboxes aqui.
 

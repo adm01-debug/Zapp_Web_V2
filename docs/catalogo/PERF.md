@@ -486,10 +486,11 @@ list_products | limit=24 | offset=0 | 81,5 KB
 bootstrap     | limit=null | offset=null | 186,1 KB
 ```
 
-Leitura: o alvo de **< 30 KB por página de 24 NÃO é atingido** — a página de 24 produtos traz
-**81,5 KB** (2,7× o teto). O `bootstrap` (que não é o alvo deste item) traz 186,1 KB. O aceite
-do CT-73 é a **medição**, que está feita; o corte de campos fica como o próximo passo, com o
-número agora conhecido.
+Leitura: a **medição histórica está concluída**, mas a **meta de desempenho não foi cumprida** — o
+alvo de **< 30 KB por página de 24 NÃO é atingido**: a página de 24 produtos traz **81,5 KB**
+(2,7× o teto). O `bootstrap` (que não é o alvo deste item) traz 186,1 KB. O número medido fica
+preservado como baseline; o corte de campos é o próximo passo e, **após reduzir o payload, é
+necessária nova medição real** antes de declarar o CT-73 atendido.
 
 ## CT-74 — correção aplicada (2026-10-02): o strip de KPIs reserva o espaço
 
@@ -673,3 +674,32 @@ Leitura, agora com o dado certo:
 - **Próximo passo (não feito aqui):** medir a altura do bloco **acima** do strip (cabeçalho, subtítulo com a
   contagem de produtos, abas) antes e depois de os dados chegarem — com a rede atrasada de propósito, para ter
   o antes. É a medição que aponta o culpado; a minha tese anterior (o próprio strip) já está descartada.
+
+## CT-74 — meta de desempenho: estado do aceite (2026-10-05)
+
+**Meta vigente (literal):** *Lighthouse `perf ≥ 90` na view autenticada em 4G; `CLS < 0,05`*. É o critério
+do plano (`PLANO_FINALIZACAO_CATALOGO_100.md`, CT-74) e **não** foi relaxado.
+
+**Baseline medido (preservado):** as últimas leituras em produção foram **perf 44 / CLS 0,2452**
+(02/10, pós-#1682, o strip de KPIs), **perf 39 / CLS 0,2451** (02/10) e **perf 44 / CLS 0,2455**
+(02/10, antes do #1682). Nenhuma delas cumpre a meta.
+
+**O que mudou depois dessas medições — e NÃO foi medido.** A última alteração de rendimento foi a PR
+**#1735** (`fix(catalogo): header do catálogo para de trocar de altura quando os stats chegam`), que removeu
+a troca do header por um esqueleto de altura diferente — a causa estrutural que sobrava depois de
+descartada a faixa de KPIs. **A própria PR declara a Lighthouse pendente** (o Auth do Supabase estava
+fora na janela). Nenhuma medição foi feita depois do #1735.
+
+**Aceite NÃO aprovado.** A meta do Catálogo continua **sem medição aprovada**: a última evidência
+disponível é **anterior** à correção final e não existe leitura posterior. Inspeção de JSX, geometria de
+elemento ou screenshot parada não provam o número agregado — não se fecha este aceite por estática
+(é o limite explícito da auditoria, `docs/reconciliation/FINDINGS.json`, OTH-008).
+
+**O que vale como medição aprovada (critério e ambiente).** Um relatório que relacione, na mesma
+medição: 1. o **SHA** medido; 2. o **deploy** correspondente; 3. o **perfil de rede** (mobile/Slow 4G) e o
+**cache** limpo (sessão autenticada dentro do perfil persistente); 4. o **resultado** cru (perf e CLS);
+5. o **artefato Lighthouse** versionado no repositório — não em diretório efêmero. A evidência tem de ser
+**datada depois** do #1735, com o critério literal (`≥ 90` e `< 0,05`).
+
+**Próximo passo:** repetir a medição com a metodologia acima contra o build/deploy que contém o #1735.
+Enquanto ela não existir, **CT-74 segue aberto** e o aceite de desempenho **não** está cumprido.

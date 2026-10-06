@@ -51,10 +51,13 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
     onRecordingComplete: (blob) => setAudioBlob(blob),
   });
 
+  // Os callbacks do hook sao estaveis (operam em refs, nao em estado capturado),
+  // entao a lista de deps nao reexecuta o efeito — e o cleanup do desmonte chama
+  // o cancelRecording correto em vez de uma closure do primeiro render.
   useEffect(() => {
     startRecording();
     return () => cancelRecording();
-  }, []);
+  }, [startRecording, cancelRecording]);
 
   // Playback progress tracking
   useEffect(() => {

@@ -1,8 +1,10 @@
 # Dashboard — fonte de dados por card
 
-E48 (`claude/PLANO_DASHBOARD_50_ETAPAS.md`, Fase 6). Gerado em 25/09/2026 a partir do estado real do
-código/banco em produção — não é um design doc, é um mapa de "onde cada número vem" pra próxima sessão
-não redescobrir na marra. Se um card mudar de fonte, atualize esta tabela na mesma PR.
+Mapa "de onde cada número vem" do Dashboard (aberto no E48, 25/09/2026, a partir do estado real do
+código/banco em produção): não é um design doc, é o registro pra próxima sessão não redescobrir na marra.
+A linhagem vigente do Dashboard é o documento externo
+`docs/reconciliation/sources/Plano_Dashboard_100_Etapas_2026-09-30.md` (100 etapas) — origem distinta do
+E48, que não o substitui. Se um card mudar de fonte, atualize esta tabela na mesma PR.
 
 ## Matriz de escopo (regra oficial, ratificada E03)
 
@@ -27,19 +29,20 @@ local, sem `searchParams` (auditado no E37).
 | Resolvidas Hoje | `useDashboardKpi.ts` | mesma RPC `dashboard_kpi` (`resolvedToday`/`resolvedHourly8`) | idem |
 | Gráfico de Volume (8 dias) | `useTodayHourlyVolume.ts` | RPC `dashboard_hourly_volume(p_days, p_queue, p_agent)` | trava `p_agent` server-side (E33) |
 | Saúde das Filas / Fila com maior volume | `useQueueHealth.ts` (agora `useMemo` puro) | mesma RPC `dashboard_contact_counts` (campo `queues[]`, breakdown) | staff-only (aba) |
-| Equipe em Destaque (ranking) | `useLeaderboard.ts` | tabela `agent_stats` (+ `agent_achievements`) — atualizada por triggers `trg_gamification_on_closure`/`trg_gamification_on_message_sent` (E38/E43) | staff-only (aba Equipe) |
+| Equipe em Destaque (ranking) | `useLeaderboard.ts` | RPC `dashboard_leaderboard(p_period, p_limit)` (migration `20260926112500_dashboard_leaderboard_rpc.sql`) — XP/resolvidas/mensagens/tempo de resposta/satisfação calculados **por período no servidor**; `agent_achievements` lido à parte | staff-only (aba Equipe) |
 | Desafios do Dia | `useGoalsDashboard.ts` | tabela de goals (seed por papel, migration `20260925190001`) — cai em fallback hardcoded só se config real ausente (E42) | agente = próprio, staff = equipe |
-| Alertas de Sentimento | `useSentimentData.ts` | RPC `dashboard_sentiment_alerts(p_since)` (SECURITY DEFINER, guard interno — não lê `audit_logs` direto, E39) | staff-only, fail-closed |
+| Alertas de Sentimento | `useSentimentData.ts` | RPC `dashboard_sentiment_alerts(p_since)` (SECURITY DEFINER com guard interno, em vez de abrir a policy de `audit_logs` — E39) | staff-only, fail-closed |
 | Análises de Sentimento / CSAT / NPS | `useSentimentData.ts` e telas de Satisfação | tabelas `conversation_analyses`, `csat_surveys`, `nps_surveys` — RLS nativa já escopa agente=próprio/staff=tudo | RLS nativa (sem RPC) |
-| Relatórios Agendados | `useScheduledReportConfigs.ts` / `ScheduledReportsManager.tsx` | tabela `scheduled_report_configs` — recurso staff-only compartilhado, não owner-only (E40) | `is_admin_or_supervisor` nas 4 policies |
+| Relatórios Agendados | `useScheduledReportConfigs.ts` / `ScheduledReportsManager.tsx` | tabela `scheduled_report_configs` — **owner-only** desde o E40: cada usuário vê/edita só os próprios relatórios (`created_by`), admin vê tudo. Migrations `20260926113806_scheduled_report_configs_owner_only.sql` e `20260926140000_fix_scheduled_report_configs_insert_owner_check.sql` | `created_by` = profile do usuário, ou admin |
 | XP / Nível | `agent_stats.xp`/`level` (via `useLeaderboard`/gamificação) | triggers atualizam `xp` atomicamente; `level` recalculado por `update_agent_level()` (trigger separado, preexistente) | mesma fonte do ranking |
 
 ## Padrão de RLS/RPC do módulo
 
 - Guard de staff: função `is_admin_or_supervisor(auth.uid())` (SQL, `SECURITY DEFINER`) — checa
   `user_roles.role IN ('admin','supervisor')`. É o padrão em quase toda tabela/RPC do dashboard.
-  Exceção histórica corrigida: `audit_logs` usava `has_role(auth.uid(),'admin')` (só admin) — não mais
-  lido direto pelo dashboard desde E39 (RPC dedicada).
+  Exceção histórica corrigida: `audit_logs` usava `has_role(auth.uid(),'admin')` (só admin) — o card de
+  Alertas de Sentimento passou a usar a RPC dedicada `dashboard_sentiment_alerts` em vez de abrir a policy.
+  Ponto vivo: `useAIStats.ts` **ainda lê `audit_logs` direto do client** (`action = 'sentiment_alert'`).
 - RPC com guard interno em vez de abrir RLS: quando um card precisa de uma fatia de uma tabela sensível/
   compartilhada, o padrão deste módulo é criar uma RPC `SECURITY DEFINER` escopada e com guard de papel
   interno (fail-closed: não-staff recebe 0 linhas), em vez de afrouxar a policy da tabela inteira. Usado em
@@ -65,10 +68,12 @@ local, sem `searchParams` (auditado no E37).
 
 ## Débitos conhecidos (não corrigidos, fora do escopo literal das etapas que os encontraram)
 
-- `useLeaderboard.ts` aceita `timeRange` (hoje/semana/mês) mas a query em `agent_stats` é sempre all-time —
-  o seletor de período do card Equipe é cosmético hoje (achado do E38, não corrigido).
-- `DemandPrediction.tsx` ainda usa o texto "Previsão IA" (mesmo problema do E41, mas em componente
-  diferente — fora do escopo daquela etapa).
+- **Corrigido:** o ranking do card Equipe não é mais all-time. `useLeaderboard.ts` deixou de ler `agent_stats`
+  sem recorte e passou a chamar a RPC `dashboard_leaderboard(p_period, p_limit)` — o seletor hoje/semana/mês
+  muda o recorte no servidor (antes era cosmético).
+- `DemandPrediction.tsx` — o texto que rotulava o card como previsão por IA não existe mais: o card se chama
+  "Previsão de Demanda" com um badge "IA". O débito remanescente é outro (DASH-CONTROLS-001): a confiança de
+  95% e a capacidade padrão 35 seguem heurísticas, não medidas.
 - ~~E34/E35/E36~~ — corrigido 25/09/2026: PR #750 (branch ainda nomeada `e31-e33`) teve o escopo
   expandido por outra sessão concorrente e passou a cobrir E34 (aviso `dash-kpis-period-notice` em
   `DashboardView.tsx` quando `period !== 'today'`), E35 (`useDashboardUrlFilters.ts`, filtros na URL) e
@@ -76,8 +81,10 @@ local, sem `searchParams` (auditado no E37).
 - E46 (smoke E2E Playwright) bloqueado por falha de conexão do MCP nesta sessão; E47 (Web Vitals real)
   sem ferramenta disponível (Speed Insights não habilitado no projeto Vercel).
 
-- **E53 (card "Sessões Search Box no mês / teto") — registrado como NÃO FEITO, com o motivo.** A etapa
-  pede o card "só se já existe painel de KPIs com slot". Este README tem a **matriz de escopo** por
+- **E53 (card "Sessões Search Box no mês / teto") — registrado como NÃO FEITO, com o motivo.** Etapa do
+  plano do Search Box (`docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md`), **não** do Dashboard — linhagem
+  distinta, não contar como etapa do Dashboard.
+  A etapa pede o card "só se já existe painel de KPIs com slot". Este README tem a **matriz de escopo** por
   audiência (**Agente comum** / **Staff**) e a **fonte de dados por card da Visão Geral** — não há slot
   de **KPI de sistema** (quota/consumo de infraestrutura), que é a natureza desta métrica: ela não é por
   agente nem por fila, é consumo do mês contra um teto. O lugar próprio seria o painel de telemetria

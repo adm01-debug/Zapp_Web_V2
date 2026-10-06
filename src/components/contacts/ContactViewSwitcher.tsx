@@ -116,7 +116,7 @@ export function ContactViewSwitcher({
       {/* Colunas + Agrupamento */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="h-11 px-4 rounded-xl bg-input border-border text-sm font-medium gap-2">
+          <Button variant="outline" aria-label="Colunas" className="h-11 px-4 rounded-xl bg-input border-border text-sm font-medium gap-2">
             <Settings2 className="w-[18px] h-[18px]" />
             <span className="hidden sm:inline">Colunas</span>
           </Button>

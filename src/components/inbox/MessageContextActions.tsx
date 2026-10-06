@@ -64,7 +64,18 @@ export function MessageContextActions({
         }
       }
       // Always mark as deleted in local DB
-      await supabase.from('messages').update({ is_deleted: true, content: '[Mensagem apagada]' }).eq('id', message.id);
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_deleted: true, content: '[Mensagem apagada]' })
+        .eq('id', message.id);
+
+      // PostgREST não lança: sem checar `error`, a UI confirmava exclusão rejeitada.
+      if (error) {
+        log.error('Falha ao marcar mensagem como apagada localmente', { error });
+        toast.error('Erro ao deletar mensagem');
+        return;
+      }
+
       toast.success(externalId ? 'Mensagem deletada para todos' : 'Mensagem removida');
       onMessageDeleted?.(message.id);
     } catch {

@@ -20,22 +20,30 @@ interface ContactKpiCardProps {
   icon: LucideIcon;
   series: number[];
   chart: 'line' | 'bars';
+  /**
+   * Quando `false`, o número é renderizado direto (sem CountUp): já aparece com o
+   * valor real no primeiro frame. Usado pelo card "Total de Contatos", que precisa
+   * bater com o badge da aba "Todos" no MESMO snapshot — o badge é estático e um
+   * CountUp 0→N fazia o Total exibir um valor intermediário (a "divergência de 29"
+   * da etapa 98). Default `true` preserva a animação dos demais cards.
+   */
+  animateValue?: boolean;
 }
 
-function CountUp({ value }: { value: number }) {
+function CountUp({ value, enabled }: { value: number; enabled: boolean }) {
   const reduceMotion = useReducedMotion();
   const motionValue = useMotionValue(0);
   const rounded = useTransform(motionValue, (v) => Math.round(v).toLocaleString('pt-BR'));
   const [display, setDisplay] = useState('0');
 
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion || !enabled) return;
     const controls = animate(motionValue, value, { duration: 0.6, ease: 'easeOut' });
     const unsubscribe = rounded.on('change', setDisplay);
     return () => { controls.stop(); unsubscribe(); };
-  }, [value, reduceMotion, motionValue, rounded]);
+  }, [value, reduceMotion, enabled, motionValue, rounded]);
 
-  if (reduceMotion) return <span>{value.toLocaleString('pt-BR')}</span>;
+  if (reduceMotion || !enabled) return <span>{value.toLocaleString('pt-BR')}</span>;
   return <span>{display}</span>;
 }
 
@@ -114,7 +122,7 @@ function Sparkline({ series, chart, className }: { series: number[]; chart: 'lin
   );
 }
 
-export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, series, chart }: ContactKpiCardProps) {
+export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, series, chart, animateValue = true }: ContactKpiCardProps) {
   const { bg, fg } = TILE_CLASSES[tile];
   const noData = deltaPct === null;
   const flat = deltaPct === 0;
@@ -132,7 +140,7 @@ export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, serie
         <p className="text-sm font-medium text-muted-foreground truncate leading-tight">{label}</p>
         <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
           <p data-testid="kpi-value" className="text-kpi-value font-bold tabular-nums leading-none text-foreground">
-            <CountUp value={value} />
+            <CountUp value={value} enabled={animateValue} />
           </p>
           {!noData && !flat && (
             <span data-testid="kpi-delta" className={cn('flex items-center gap-0.5 text-xs font-semibold shrink-0', deltaPct! > 0 ? 'text-success' : 'text-destructive')}>

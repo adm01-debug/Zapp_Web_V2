@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { GhostButton, PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble } from './talkxShared';
+import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/states';
 import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { toast } from 'sonner';
@@ -47,7 +48,7 @@ interface Props {
 }
 
 export function TalkXCampaignScheduled({ campaignId, onBack, onEdit, onStatusChange }: Props) {
-  const { campaigns } = useTalkX();
+  const { campaigns, isLoading, isError, error, isFetching, refetchCampaigns } = useTalkX();
   // P1: deriva sempre da query -- nunca stale
   const campaign = campaigns.find((c) => c.id === campaignId) ?? null;
 
@@ -57,18 +58,36 @@ export function TalkXCampaignScheduled({ campaignId, onBack, onEdit, onStatusCha
     if (campaign && campaign.status !== 'scheduled') onStatusChange(campaign);
   }, [campaign, onStatusChange]);
 
-  // A query chega de forma assíncrona. Montar o editor somente depois de
-  // localizar a campanha permite derivar o estado inicial sem um efeito que
-  // sobrescreva alterações que o operador ainda não salvou.
-  if (!campaign) return null;
-
+  // X047: erro e vazio deixam de ser decididos à mão aqui (antes a lista vazia
+  // no erro virava `return null`, uma tela em branco). O boundary decide na
+  // ordem carregando -> erro -> vazio -> conteúdo, com o erro vencendo o vazio,
+  // e o retry refaz a consulta mantendo esta campanha aberta.
   return (
-    <TalkXCampaignScheduledEditor
-      key={campaign.id}
-      campaign={campaign}
-      onBack={onBack}
-      onEdit={onEdit}
-    />
+    <TalkXQueryBoundary
+      query={{ isLoading, isFetching, isError, error }}
+      entity="campanhas agendadas"
+      onRetry={() => { void refetchCampaigns(); }}
+      skeleton={<TalkXSkeletonRows rows={3} variant="cards" />}
+      isEmpty={!campaign}
+      empty={(
+        <TalkXEmptyState
+          title="Campanha agendada não encontrada"
+          description="Ela pode ter sido cancelada ou enviada. Volte para a lista de campanhas e abra novamente."
+        />
+      )}
+    >
+      {/* Montar o editor somente depois de localizar a campanha permite derivar
+          o estado inicial sem um efeito que sobrescreva alterações ainda não
+          salvas pelo operador. */}
+      {campaign && (
+        <TalkXCampaignScheduledEditor
+          key={campaign.id}
+          campaign={campaign}
+          onBack={onBack}
+          onEdit={onEdit}
+        />
+      )}
+    </TalkXQueryBoundary>
   );
 }
 

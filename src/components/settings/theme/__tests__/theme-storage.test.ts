@@ -58,6 +58,16 @@ describe('storage v6', () => {
     expect(loadThemeConfig()).toEqual(getDefaultConfig());
   });
 
+  // #157 (SK02): JSON válido mas que não é um objeto — o caso "null" fazia o
+  // `readStored()` devolver null (o catch não cobre isso: JSON.parse("null")
+  // não lança) e `loadThemeConfig` estourava em `stored.v`. Todos devem
+  // recuperar para o default, nunca lançar.
+  it.each(['null', 'true', '42', '"texto"', '[]'])('JSON %s no storage cai para default sem lançar', (raw) => {
+    localStorage.setItem(STORAGE_KEY, raw);
+    expect(() => loadThemeConfig()).not.toThrow();
+    expect(loadThemeConfig()).toEqual(getDefaultConfig());
+  });
+
   it('saveThemeConfig preserva cssVarsCache existente (merge)', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 6, preset: 'corporate', borderRadius: 14, cacheMode: 'dark', cachePreset: 'corporate', cssVarsCache: { primary: '221 83% 53%' } }));
     saveThemeConfig({ preset: 'gx-classic', borderRadius: 10 });

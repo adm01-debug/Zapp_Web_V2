@@ -1,6 +1,6 @@
 import {
   isExpectedExternalAnonKey, isExpectedExternalServerKey, isExpectedExternalUrl, normalizePhone, parseSyncResult, validateMutation, validateRpc, validIdentifier,
-  extractContact360Id, extractSidebarContactId,
+  extractContact360Id, extractIntelligenceContactId, extractSidebarContactId,
 } from '../crm-integration-contract.ts';
 
 Deno.test('normalizes valid phones and rejects malformed values', () => {
@@ -63,6 +63,20 @@ Deno.test('sidebar contact id is extracted only from a found UUID payload', () =
   if (extractSidebarContactId({ found: true, contact_id: 42 }) !== null) throw new Error('numeric contact_id accepted');
   if (extractSidebarContactId(null) !== null) throw new Error('null payload accepted');
   if (extractSidebarContactId('x') !== null) throw new Error('string payload accepted');
+});
+
+Deno.test('intelligence contact id is extracted only from a verifiable payload', () => {
+  const id = '11111111-2222-3333-4444-555555555555';
+  if (extractIntelligenceContactId({ contact_id: id }) !== id) throw new Error('payload without found flag rejected');
+  if (extractIntelligenceContactId({ found: true, contact_id: id }) !== id) throw new Error('found payload rejected');
+  if (extractIntelligenceContactId({ found: false, contact_id: id }) !== null) throw new Error('not-found payload accepted');
+  if (extractIntelligenceContactId({ contact_id: 'not-a-uuid' }) !== null) throw new Error('non-UUID contact_id accepted');
+  if (extractIntelligenceContactId({ contact_id: 42 }) !== null) throw new Error('numeric contact_id accepted');
+  if (extractIntelligenceContactId({}) !== null) throw new Error('missing contact_id accepted');
+  if (extractIntelligenceContactId(null) !== null) throw new Error('null payload accepted');
+  if (extractIntelligenceContactId('x') !== null) throw new Error('string payload accepted');
+  if (extractIntelligenceContactId(42) !== null) throw new Error('number payload accepted');
+  if (extractIntelligenceContactId([{ contact_id: id }]) !== null) throw new Error('array payload accepted');
 });
 
 Deno.test('identifier validation rejects PostgREST injection syntax', () => {

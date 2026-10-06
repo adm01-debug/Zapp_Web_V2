@@ -33,6 +33,9 @@ export function CommercialSummaryStrip({ contactId, compact }: CommercialSummary
       <Tile value={ticketMedio ? formatCurrency(ticketMedio) : '—'} label="Ticket médio" />
       <Tile value={resumo?.propostas ?? '—'} label="Propostas" />
       <Tile value={resumo?.emAberto ?? '—'} label="Em aberto" />
+      <p role="note" className="col-span-full text-2xs text-muted-foreground">
+        Compras e Ticket médio consideram somente compras concluídas ou aprovadas.
+      </p>
     </div>
   );
 }

@@ -15,12 +15,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, AlertCircle, Settings } from 'lucide-react';
 import { QueueCharts } from '@/components/queues/QueueCharts';
 import { QueueMetricsCards } from './queue-details/QueueMetricsCards';
+import { fetchQueueMetrics, type QueueMetrics } from './queue-details/queueMetrics';
 import { QueueContactsTable } from './queue-details/QueueContactsTable';
 
 interface QueueDetailsData { id: string; name: string; description: string | null; color: string; max_wait_time_minutes: number | null; created_at: string; }
 interface QueueMember { id: string; profile_id: string; profile: { name: string; avatar_url: string | null; is_active: boolean }; }
 interface QueueContact { id: string; name: string; phone: string; avatar_url: string | null; assigned_to: string | null; created_at: string; assigned_agent?: { name: string | null; avatar_url: string | null } | null; messages_count: number; last_message_at: string | null; }
-interface QueueMetrics { totalContacts: number; assignedContacts: number; waitingContacts: number; avgResponseTime: string; resolvedToday: number; }
 
 export default function QueueDetails() {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +45,8 @@ export default function QueueDetails() {
       const { data: membersData } = await supabase.from('queue_members').select('id, profile_id, profile:profiles(name, avatar_url, is_active)').eq('queue_id', id);
       setMembers(membersData as unknown as QueueMember[]);
 
+      // Amostra visual da tabela (50 mais recentes). As MÉTRICAS não saem daqui: vêm de
+      // `fetchQueueMetrics`, que conta a fila inteira no servidor.
       const { data: contactsData } = await supabase.from('contacts').select('id, name, phone, avatar_url, assigned_to, created_at').eq('queue_id', id).order('created_at', { ascending: false }).limit(50);
 
       const contactsWithDetails = await Promise.all(
@@ -58,9 +60,11 @@ export default function QueueDetails() {
       );
       setContacts(contactsWithDetails);
 
-      const totalContacts = contactsWithDetails.length;
-      const assignedContacts = contactsWithDetails.filter(c => c.assigned_to).length;
-      setMetrics({ totalContacts, assignedContacts, waitingContacts: totalContacts - assignedContacts, avgResponseTime: '~3 min', resolvedToday: Math.floor(assignedContacts * 0.7) });
+      // R2-QUE-001/R2-QUE-003: os cartões medem a FILA INTEIRA. As contagens (total, atribuídos e
+      // resolvidos hoje) e o tempo médio de SLA vêm de `fetchQueueMetrics`, com `count: 'exact'` no
+      // servidor e leitura paginada de `conversation_sla` — nada é derivado da página de 50 contatos
+      // acima, que existe só para a tabela visual.
+      setMetrics(await fetchQueueMetrics(supabase, id, new Date()));
     } catch (error) { log.error('Error fetching queue data:', error); }
     finally { setLoading(false); }
   }, [id]);

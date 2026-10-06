@@ -135,8 +135,14 @@ test('superfícies do Email herdam os mesmos tokens do sistema em claro e escuro
 
     const contrastViolations = await page.evaluate(async () => {
       const axe = (window as unknown as Window & {
-        axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> };
+        axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult>; _running?: boolean };
       }).axe;
+      // O app roda @axe-core/react em DEV a cada commit do React sobre a MESMA instância global
+      // `window.axe` que esta spec injeta. Como o laço de tema acima provoca commits, disparar a
+      // nossa auditoria enquanto a dele roda falhava de forma intermitente no Firefox com
+      // "Axe is already running". Esperar a instância ficar ociosa no MESMO frame síncrono que
+      // dispara o nosso run torna o estado final determinístico, sem tocar em nenhuma asserção.
+      while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
       const result = await axe.run('.email-workspace', { rules: { 'color-contrast': { enabled: true } } });
       return result.violations.filter(violation => violation.id === 'color-contrast').map(violation => ({
         id: violation.id,

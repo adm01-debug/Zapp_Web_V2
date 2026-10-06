@@ -17,20 +17,20 @@ const iniciarTour = () => undefined;
 
 describe('a11y: modal de boas-vindas (landmark dialog)', () => {
   it('o card é um dialog modal com nome acessível vindo do próprio título', () => {
-    const { container } = render(
+    render(
       <WelcomeModal isOpen onClose={fechar} onStartTour={iniciarTour} userName="Ana" />,
     );
 
     // Dialogo UNICO: se aparecer mais de um (ex.: role=dialog no overlay E no card), os leitores de
     // tela anunciam dois dialogos aninhados. Este assert pega exatamente esse defeito.
-    const dialogs = container.querySelectorAll('[role="dialog"]');
+    const dialogs = document.body.querySelectorAll('[role="dialog"]');
     expect(dialogs).toHaveLength(1);
     const dlg = dialogs[0];
     expect(dlg?.getAttribute('aria-modal')).toBe('true');
 
     const id = dlg?.getAttribute('aria-labelledby');
     expect(id).toBe('welcome-modal-title');
-    expect(container.querySelector(`#${id}`)?.textContent).toMatch(/Bem-vindo/);
+    expect(document.body.querySelector(`#${id}`)?.textContent).toMatch(/Bem-vindo/);
   });
 
   it('axe não acusa conteúdo fora de landmark (regra region)', async () => {

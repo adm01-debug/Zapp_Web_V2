@@ -77,6 +77,14 @@ export function extractSidebarContactId(value: unknown): string | null {
   return typeof id === 'string' && isUuidLike(id) ? id : null;
 }
 
+export function extractIntelligenceContactId(value: unknown): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const payload = value as Record<string, unknown>;
+  if (payload.found === false) return null;
+  const id = payload.contact_id;
+  return typeof id === 'string' && isUuidLike(id) ? id : null;
+}
+
 function isUuidLike(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }

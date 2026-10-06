@@ -331,4 +331,42 @@ describe('TalkMeView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
     expect(loadMore).toHaveBeenCalledTimes(1);
   });
+
+  it('permite ler a mensagem completa sem assumir o atendimento', () => {
+    const longMessage = `Preciso de um orçamento detalhado para 500 unidades.\n${'Detalhe importante. '.repeat(40)}`.trim();
+    const ctrl = controller({ items: [{ ...first, lastMessageContent: longMessage }], totalCount: 1 });
+    renderView(ctrl);
+
+    const card = screen.getByRole('button', { name: 'Ana Compras' });
+    expect(within(card).getByText(/Preciso de um orçamento detalhado/)).toHaveClass('line-clamp-2');
+    expect(screen.queryByTestId('talk-me-full-message')).not.toBeInTheDocument();
+
+    const readMore = screen.getByRole('button', { name: 'Ler mensagem completa' });
+    expect(readMore).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(readMore);
+
+    const panel = screen.getByTestId('talk-me-full-message');
+    expect(panel.querySelector('p')?.textContent).toBe(longMessage);
+    expect(panel.querySelector('.line-clamp-2')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Recolher mensagem' })).toHaveAttribute('aria-expanded', 'true');
+    expect(ctrl.claim).not.toHaveBeenCalled();
+  });
+
+  it('recolhe a leitura integral e volta a resumir ao trocar de contato', () => {
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Ler mensagem completa' }));
+    expect(screen.getByTestId('talk-me-full-message')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo atendimento' }));
+
+    expect(screen.queryByTestId('talk-me-full-message')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ler mensagem completa' })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('informa as mensagens anteriores pendentes na leitura integral', () => {
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Ler mensagem completa' }));
+    expect(screen.getByTestId('talk-me-full-message')).toHaveTextContent('2 mensagens aguardando resposta neste atendimento.');
+  });
+
 });

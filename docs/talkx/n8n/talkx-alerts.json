@@ -80,7 +80,7 @@
           "conditions": [
             {
               "id": "c1000000-0000-4000-8000-000000000001",
-              "leftValue": "={{ $json.length }}",
+              "leftValue": "={{ $input.all().filter((item) => item.json && typeof item.json === 'object' && !Array.isArray(item.json) && item.json.id != null && item.json.kind != null && item.json.opened_at != null).length }}",
               "rightValue": 0,
               "operator": {
                 "type": "number",
@@ -101,7 +101,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// X033: monta o resumo do grupo interno a partir dos alertas abertos.\n// Somente aviso — nao decide nem dispara campanha.\nconst items = $input.all().flatMap((i) => (Array.isArray(i.json) ? i.json : [i.json]));\nconst linhas = items.map((a) => {\n  const campanha = a.campaign_id ? `\\ncampanha: ${a.campaign_id}` : '';\n  const payload = a.payload ? `\\ndetalhe: ${JSON.stringify(a.payload)}` : '';\n  return `• *${a.kind}*\\naberto em: ${a.opened_at}${campanha}${payload}`;\n});\nconst texto = `⚠️ *Talk X — ${items.length} alerta(s) aberto(s)*\\n\\n` + linhas.join('\\n\\n') +\n  '\\n\\nVer docs/talkx/OPERACAO.md §7.2 para o que fazer.';\nreturn [{ json: { total: items.length, texto } }];"
+        "jsCode": "// X033: monta o resumo do grupo interno a partir dos alertas abertos.\n// Somente aviso — nao decide nem dispara campanha.\n// O HTTP Request 4.2 expande a resposta array em itens: aqui so entram os itens com\n// contrato minimo de alerta (id/kind/opened_at); objeto de erro/resposta invalida nunca conta.\nconst recebidos = $input.all().flatMap((i) => (Array.isArray(i.json) ? i.json : [i.json]));\nconst items = recebidos.filter((a) => a != null && typeof a === 'object' && !Array.isArray(a) && a.id != null && a.kind != null && a.opened_at != null);\nconst linhas = items.map((a) => {\n  const campanha = a.campaign_id ? `\\ncampanha: ${a.campaign_id}` : '';\n  const payload = a.payload ? `\\ndetalhe: ${JSON.stringify(a.payload)}` : '';\n  return `• *${a.kind}*\\naberto em: ${a.opened_at}${campanha}${payload}`;\n});\nconst texto = `⚠️ *Talk X — ${items.length} alerta(s) aberto(s)*\\n\\n` + linhas.join('\\n\\n') +\n  '\\n\\nVer docs/talkx/OPERACAO.md §7.2 para o que fazer.';\nreturn [{ json: { total: items.length, texto } }];"
       },
       "id": "a1000000-0000-4000-8000-000000000004",
       "name": "Montar resumo",

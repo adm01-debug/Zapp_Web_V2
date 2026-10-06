@@ -1,12 +1,20 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
+import { SUPABASE_URL } from '@/config/supabase';
+import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { toast } from 'sonner';
 import { type StickerItem, type PendingUpload, CATEGORY_LABELS } from '@/components/inbox/stickers/StickerTypes';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
 
 const log = getLogger('StickerPicker');
 const RECENT_LIMIT = 8;
+
+// Origem do próprio projeto: só um locator emitido por ele pode ser objeto físico da biblioteca.
+const STORAGE_ORIGINS = [new URL(SUPABASE_URL).origin] as const;
+// Único bucket cujo objeto pode ser removido junto da entrada. `whatsapp-media` guarda a mídia
+// original da conversa: excluir a figurinha da biblioteca NUNCA pode apagar aquele objeto.
+const DELETABLE_STICKER_BUCKETS = ['stickers'] as const;
 
 export function useStickerPicker(onSendSticker: (url: string) => void) {
   const [open, setOpen] = useState(false);
@@ -96,8 +104,11 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
 
   const handleDelete = async (e: React.MouseEvent, sticker: StickerItem) => {
     e.stopPropagation(); setStickers(prev => prev.filter(s => s.id !== sticker.id));
-    if (sticker.image_url.includes('/whatsapp-media/')) { const path = sticker.image_url.split('/whatsapp-media/')[1]; if (path) await supabase.storage.from('whatsapp-media').remove([path]); }
-    else { const path = sticker.image_url.split('/stickers/')[1]; if (path) await supabase.storage.from('stickers').remove([path]); }
+    // A linha do catálogo sempre sai; o objeto físico só sai quando o locator é reconhecidamente
+    // do bucket próprio `stickers`. URL de outro bucket (whatsapp-media), de outra origem ou
+    // malformada é fail-safe: preserva o objeto e apenas remove a entrada.
+    const object = parseSupabaseStorageObjectUrl(sticker.image_url, DELETABLE_STICKER_BUCKETS, STORAGE_ORIGINS);
+    if (object) await supabase.storage.from(object.bucket).remove([object.path]);
     await supabase.from('stickers').delete().eq('id', sticker.id); toast.success('Figurinha removida');
   };
 

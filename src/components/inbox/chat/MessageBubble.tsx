@@ -29,6 +29,41 @@ import { LinkPreviewCard } from './LinkPreviewCard';
 import { getLogger } from '@/lib/logger';
 const log = getLogger('MessageBubble');
 
+// #92A: ao salvar uma figurinha recebida na biblioteca, o arquivo precisa ser
+// COPIADO para o bucket `stickers` — a biblioteca não pode compartilhar o
+// objeto da mensagem em `whatsapp-media` (vida útil distinta; apagar a
+// mensagem/arquivo não pode quebrar o catálogo).
+
+/**
+ * O destino é derivado do id estável da mensagem. Assim a URL da cópia também
+ * é estável e pode ser usada para detectar um segundo salvamento antes do
+ * download/upload, sem persistir a URL temporária da mídia recebida.
+ */
+function getReceivedStickerDestination(messageId: string): { url: string; storagePath: string } {
+  const storagePath = `recebida_${encodeURIComponent(messageId)}.webp`;
+  const { data } = supabase.storage.from('stickers').getPublicUrl(storagePath);
+  if (!data?.publicUrl) throw new Error('Falha ao definir o destino da cópia da figurinha');
+  return { url: data.publicUrl, storagePath };
+}
+
+/**
+ * Baixa a mídia recebida e publica uma cópia própria no bucket `stickers`.
+ */
+async function copyReceivedStickerToLibrary(
+  receivedUrl: string,
+  destination: { url: string; storagePath: string }
+): Promise<{ url: string; storagePath: string }> {
+  const response = await fetch(receivedUrl);
+  if (!response.ok) throw new Error(`Falha ao baixar figurinha (HTTP ${response.status})`);
+  const blob = await response.blob();
+  const contentType = blob.type || 'image/webp';
+  const { error: uploadError } = await supabase.storage
+    .from('stickers')
+    .upload(destination.storagePath, blob, { contentType, cacheControl: '31536000' });
+  if (uploadError) throw uploadError;
+  return destination;
+}
+
 interface MessageBubbleProps {
   message: Message;
   isFirstInGroup: boolean;
@@ -206,7 +241,13 @@ export const MessageBubble = memo(function MessageBubble({
                         onClick={async (e) => {
                           e.stopPropagation();
                           try {
-                            const { data: existing } = await supabase.from('stickers').select('id').eq('image_url', message.mediaUrl!).maybeSingle();
+                            const destination = getReceivedStickerDestination(message.id);
+                            const { data: existing, error: duplicateCheckError } = await supabase
+                              .from('stickers')
+                              .select('id')
+                              .eq('image_url', destination.url)
+                              .maybeSingle();
+                            if (duplicateCheckError) throw duplicateCheckError;
                             if (existing) { toast({ title: 'Figurinha já está na biblioteca!' }); return; }
                             toast({ title: '🔍 Classificando figurinha com IA...' });
                             let category = 'recebidas';
@@ -214,7 +255,16 @@ export const MessageBubble = memo(function MessageBubble({
                               const { data: classifyData, error: classifyErr } = await supabase.functions.invoke('classify-sticker', { body: { image_url: message.mediaUrl } });
                               if (!classifyErr && classifyData?.category) category = classifyData.category;
                             } catch (err) { log.error('Unexpected error in MessageBubble:', err); }
-                            await supabase.from('stickers').insert({ name: `Recebida ${new Date().toLocaleDateString('pt-BR')}`, image_url: message.mediaUrl!, category, is_favorite: false, use_count: 0 });
+                            // #92A: copia a mídia recebida para o bucket `stickers`
+                            // e insere SÓ a URL da cópia na biblioteca.
+                            const copy = await copyReceivedStickerToLibrary(message.mediaUrl!, destination);
+                            const { error: insertError } = await supabase.from('stickers').insert({ name: `Recebida ${new Date().toLocaleDateString('pt-BR')}`, image_url: copy.url, category, is_favorite: false, use_count: 0 });
+                            if (insertError) {
+                              // compensa o objeto recém-publicado: sem INSERT ele ficaria órfão
+                              try { await supabase.storage.from('stickers').remove([copy.storagePath]); }
+                              catch (cleanupErr) { log.error('Unexpected error in MessageBubble:', cleanupErr); }
+                              throw insertError;
+                            }
                             toast({ title: `✅ Figurinha salva como "${category}"!` });
                           } catch { toast({ title: 'Erro ao salvar figurinha', variant: 'destructive' }); }
                         }}

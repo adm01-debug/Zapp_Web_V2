@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { TypingIndicatorCompact } from '../TypingIndicator';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { SLAIndicator } from '../SLAIndicator';
+import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -22,6 +23,9 @@ import { PinnedConversationsStack, PinnedChatItem } from './PinnedConversationsS
 
 interface ChatMessage { id: string; content: string; sender: string; timestamp: string; }
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
+
+/** Prazo seguro de 1ª resposta enquanto o prazo aplicável ainda não chegou do hook. */
+const DEFAULT_FIRST_RESPONSE_MINUTES = 5;
 
 interface ChatPanelHeaderProps {
   conversation: Conversation;
@@ -64,6 +68,15 @@ function ChatPanelHeaderBase({
   isFavorite, onToggleFavorite, pinnedConversations, onSelectPinned,
 }: ChatPanelHeaderProps) {
   const isMobile = useIsMobile();
+  const { data: applicableSla } = useApplicableSLA({
+    contactId: conversation.contact.id,
+    company: conversation.contact.company ?? null,
+    jobTitle: conversation.contact.job_title ?? null,
+    contactType: conversation.contact.contact_type ?? null,
+    queueId: conversation.queue?.id ?? conversation.contact.queue_id ?? null,
+    agentId: conversation.assignedTo?.id ?? null,
+  });
+  const firstResponseMinutes = applicableSla?.firstResponseMinutes ?? DEFAULT_FIRST_RESPONSE_MINUTES;
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
   const isVip = (conversation.tags ?? []).some(t => t.toLowerCase() === 'vip');
   const isHighPriority = conversation.priority === 'high';
@@ -128,7 +141,7 @@ function ChatPanelHeaderBase({
             <SLAIndicator
               firstMessageAt={conversation.createdAt}
               firstResponseAt={conversation.firstResponseAt ?? null}
-              firstResponseMinutes={5}
+              firstResponseMinutes={firstResponseMinutes}
             />
           </div>
         </div>

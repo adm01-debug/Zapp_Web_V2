@@ -165,7 +165,7 @@
     "cssMeiaMedida": 0,
     "cssFontFamilyLiteral": 0,
     "tsxFontSizeInline": 1,
-    "tsxFontFamilyLiteral": 0,
+    "tsxFontFamilyLiteral": 1,
     "pesoOrfao": 0
   },
   "detalheViolacoes": {
@@ -185,7 +185,12 @@
         "px": 10
       }
     ],
-    "tsxFontFamilyLiteral": [],
+    "tsxFontFamilyLiteral": [
+      {
+        "where": "src/components/email/EmailFullViewDialog.tsx:33",
+        "value": "system-ui,sans-serif"
+      }
+    ],
     "pesoOrfao": []
   }
 }

@@ -620,7 +620,14 @@ interface StoredShape {
 function readStored(): StoredShape {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as StoredShape) : {};
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    // #157 (SK02): JSON válido que não é objeto (ex.: o literal "null") não
+    // pode virar StoredShape — `loadThemeConfig` lê `stored.v` e estourava com
+    // TypeError em vez de recuperar o default.
+    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as StoredShape)
+      : {};
   } catch {
     return {};
   }

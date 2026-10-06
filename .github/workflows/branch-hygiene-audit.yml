@@ -78,7 +78,17 @@ jobs:
             echo '```'
             for ref in $(git branch -r --format='%(refname:short)' | grep -v '^origin/HEAD' | grep -v '^origin/main$' | grep -v '^origin$'); do
               b="${ref#origin/}"
-              n=$(git cherry origin/main "$ref" 2>/dev/null | grep -c '^+' || true)
+              # t_ff817d9f: `git cherry ... | grep -c '^+' || true` mascarava falha REAL do
+              # git cherry. Com pipefail o retorno nao zero do git caia no mesmo `|| true`
+              # que so' deveria tolerar o retorno 1 do `grep -c` sem match — e a branch
+              # impossivel de comparar entrava na lista de podaveis. Agora o status do git
+              # cherry e' validado ANTES de contar: o status do grep nao decide nada, e zero
+              # linhas `+` continua sendo equivalencia valida.
+              if ! cherry=$(git cherry origin/main "$ref"); then
+                echo "::error::git cherry falhou ao comparar origin/main com $ref; a equivalencia de '$b' nao pode ser decidida" >&2
+                exit 1
+              fi
+              n=$(printf '%s\n' "$cherry" | awk '/^\+/ { c += 1 } END { print c + 0 }')
               if [ "$n" = "0" ]; then
                 echo "$b"
               fi

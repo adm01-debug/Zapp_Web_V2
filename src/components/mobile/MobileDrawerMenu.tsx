@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { X, Search, Moon, Sun, LogOut, ChevronRight, Clock } from 'lucide-react';
@@ -19,6 +19,7 @@ import {
 } from '@/components/layout/sidebarNavConfig';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { NavigationService } from '@/services/navigation.service';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 
 interface MobileDrawerMenuProps {
   isOpen: boolean;
@@ -93,6 +94,7 @@ export function MobileDrawerMenu({
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const { roles, permissions } = useUserRole();
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const initials = agentName
     ?.split(' ')
@@ -131,24 +133,38 @@ export function MobileDrawerMenu({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
+    <DialogPrimitive.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <AnimatePresence>
+        {isOpen && (
+          <DialogPrimitive.Portal forceMount>
           {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm"
-          />
+          <DialogPrimitive.Overlay asChild forceMount>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm"
+            />
+          </DialogPrimitive.Overlay>
 
           {/* Drawer */}
-          <motion.div
+          <DialogPrimitive.Content
+            asChild
+            forceMount
             role="dialog"
             aria-modal="true"
             aria-label="Menu de navegação"
+            aria-describedby={undefined}
+            onOpenAutoFocus={() => {
+              previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            }}
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              previousFocusRef.current?.focus();
+            }}
+          >
+          <motion.div
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
@@ -163,6 +179,7 @@ export function MobileDrawerMenu({
             }}
             className="fixed top-0 left-0 z-[101] h-full w-[80%] max-w-[300px] bg-card border-r border-border/40 shadow-2xl flex flex-col safe-area-top"
           >
+            <DialogPrimitive.Title className="sr-only">Menu de navegação</DialogPrimitive.Title>
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
               <div className="flex items-center gap-3">
@@ -313,8 +330,10 @@ export function MobileDrawerMenu({
               )}
             </div>
           </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+          </DialogPrimitive.Content>
+          </DialogPrimitive.Portal>
+        )}
+      </AnimatePresence>
+    </DialogPrimitive.Root>
   );
 }

@@ -55,7 +55,7 @@ export function ContactStatsStrip({ contactId, compact }: ContactStatsStripProps
       icon: Clock,
       label: 'Tempo médio',
       value: formatAvgResponse(stats?.avgResponseTimeMinutes),
-      subtitle: 'Resposta ao cliente',
+      subtitle: 'Resposta ao cliente · 200 primeiras msgs',
       change: undefined,
     },
     {

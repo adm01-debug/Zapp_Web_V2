@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { getLogger } from '@/lib/logger';
+import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
 
 const log = getLogger('TeamChatNotifications');
 
@@ -127,8 +128,14 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           .limit(1);
         const membership = membershipRows?.[0] ?? null;
 
-        if (!membership) return; // Not a member
-        if (membership.is_muted) return; // Muted
+        if (!shouldNotifyTeamMessage({
+          senderId: msg.sender_id,
+          profileId: profile.id,
+          documentHidden: document.hidden,
+          activeConversationId: activeIdRef.current,
+          conversationId: msg.conversation_id,
+          membership,
+        })) return;
 
         // Play sound if enabled — volume do painel (10-100), nunca fixo
         if (notifSettings.soundEnabled && !isQuietHours()) {
@@ -148,14 +155,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
             if (data) senderName = data.name;
           } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
-          const body = msg.media_type
-            ? msg.media_type === 'image' ? '📷 Imagem'
-              : msg.media_type === 'audio' || msg.media_type === 'audio_meme' ? '🎤 Áudio'
-              : msg.media_type === 'video' ? '🎥 Vídeo'
-              : msg.media_type === 'sticker' ? '🎨 Figurinha'
-              : msg.media_type === 'document' ? '📎 Documento'
-              : msg.content.slice(0, 100)
-            : msg.content.slice(0, 100);
+          const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
           await showNotification({
             title: `💬 Teams: ${senderName}`,

@@ -11,10 +11,21 @@
 // O caso do caminho do relatorio e' regressao real, nao hipotese: a primeira
 // versao usava `mktemp` e o passo 2 morreu com "RELATORIO: unbound variable" —
 // cada `run:` e' um shell novo, entao a variavel nao atravessa, so' o arquivo.
+//
+// t_ff817d9f (2026-10-05): a contagem de commits unicos usava
+// `git cherry origin/main "$ref" 2>/dev/null | grep -c '^+' || true`. O `|| true`
+// existe para tolerar o retorno 1 legitimo do `grep -c` (zero linhas), mas com
+// `set -o pipefail` ele engolia tambem o retorno nao zero do proprio `git cherry`:
+// branch impossivel de comparar entrava na lista de "candidatas a poda". A correcao
+// valida o status do `git cherry` ANTES de contar linhas. Os dois ultimos testes
+// rodam o `run:` real com um `git` dublado e provam os dois caminhos.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdtemp, writeFile, mkdir, chmod, rm } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const workflow = await readFile(new URL('../../.github/workflows/branch-hygiene-audit.yml', import.meta.url), 'utf8');
 
@@ -41,6 +52,9 @@ function blocos(texto) {
 }
 
 const todos = blocos(workflow);
+
+/** O bloco `run:` que gera o relatorio (o unico que chama `git cherry`). */
+const blocoRelatorio = todos.find(({ corpo }) => corpo.includes('git cherry'));
 
 test('E91: o relatorio vai para a issue, alem do Job Summary', () => {
   assert.match(workflow, /GITHUB_STEP_SUMMARY/, 'o Job Summary sumiu — ele era o comportamento anterior e deve continuar');
@@ -85,5 +99,122 @@ test('E91: o ref simbolico `origin` nao entra na lista de branches', () => {
       /grep -v '\^origin\$'/,
       `linha ${linha}: o loop de branches nao filtra o ref simbolico \`origin\``,
     );
+  }
+});
+
+test('t_ff817d9f: a contagem de commits unicos nao engole falha do git cherry', () => {
+  // Invariante estatico: o `|| true` colado no `grep -c` era o mascaramento.
+  // Comentarios citam a expressao antiga de proposito, entao so' as linhas que
+  // executam entram na checagem.
+  assert.ok(blocoRelatorio, 'nao achei o bloco `run:` que gera o relatorio');
+  const executaveis = blocoRelatorio.corpo
+    .split('\n')
+    .filter((linha) => !linha.trim().startsWith('#'))
+    .join('\n');
+  assert.doesNotMatch(
+    executaveis,
+    /git cherry[^\n]*\|\s*grep -c[^\n]*\|\|\s*true/,
+    'o `|| true` depois do `grep -c` mascara falha real do git cherry (bug t_ff817d9f)',
+  );
+  assert.match(
+    executaveis,
+    /git cherry origin\/main "\$ref"/,
+    'o git cherry tem de continuar comparando origin/main com o ref do loop',
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Regressao comportamental: roda o `run:` real do passo "Gerar relatorio" com um
+// `git` dublado, provando que (a) zero linhas `+` mantem a branch como equivalente
+// e (b) retorno nao zero do git cherry derruba a auditoria em vez de classificar.
+// ---------------------------------------------------------------------------
+
+function executar(caminhoScript, env) {
+  return new Promise((resolve) => {
+    execFile('bash', [caminhoScript], { env, encoding: 'utf8' }, (erro, stdout, stderr) => {
+      resolve({ status: erro ? (typeof erro.code === 'number' ? erro.code : 1) : 0, stdout, stderr });
+    });
+  });
+}
+
+/**
+ * Executa o corpo do passo com `git`/`gh` dublados.
+ * `cherryMode`: 'ok' (sempre sucesso) ou 'falha' (origin/feature-quebrada devolve 128).
+ */
+async function rodarPassoRelatorio(cherryMode) {
+  const raiz = await mkdtemp(join(tmpdir(), 'branch-hygiene-'));
+  const bin = join(raiz, 'bin');
+  await mkdir(bin, { recursive: true });
+
+  const gitDublado = join(bin, 'git');
+  await writeFile(gitDublado, `#!/usr/bin/env bash
+case "$1" in
+  fetch) exit 0 ;;
+  branch) printf 'origin/HEAD\\norigin/main\\norigin/feature-equiv\\norigin/feature-quebrada\\n' ;;
+  cherry)
+    if [ "$CHERRY_MODE" = "falha" ] && [ "$3" = "origin/feature-quebrada" ]; then
+      echo "fatal: cherry: nao foi possivel comparar $2 e $3" >&2
+      exit 128
+    fi
+    exit 0 ;;
+  log) printf '0\\n' ;;
+  *) exit 0 ;;
+esac
+`);
+  await chmod(gitDublado, 0o755);
+
+  const ghDublado = join(bin, 'gh');
+  await writeFile(ghDublado, '#!/usr/bin/env bash\nexit 0\n');
+  await chmod(ghDublado, 0o755);
+
+  const script = join(raiz, 'passo.sh');
+  await writeFile(script, blocoRelatorio.corpo);
+
+  const resumo = join(raiz, 'summary.md');
+  await writeFile(resumo, '');
+  const tmp = join(raiz, 'tmp');
+  await mkdir(tmp, { recursive: true });
+
+  const resultado = await executar(script, {
+    ...process.env,
+    PATH: `${bin}:${process.env.PATH}`,
+    RUNNER_TEMP: raiz,
+    GITHUB_STEP_SUMMARY: resumo,
+    REPO: 'Promo-Brindes/Zapp_Web_V2',
+    GH_TOKEN: 'token-de-teste',
+    CHERRY_MODE: cherryMode,
+    TMPDIR: tmp,
+  });
+
+  return { ...resultado, raiz, resumo: await readFile(resumo, 'utf8') };
+}
+
+test('t_ff817d9f: git cherry sem commits unicos mantem a branch como equivalente', async () => {
+  const r = await rodarPassoRelatorio('ok');
+  try {
+    assert.equal(r.status, 0, `o passo deveria terminar verde com git cherry OK\nstderr: ${r.stderr}`);
+    const equivalentes = r.resumo.split('### Sem commit ha mais de 30 dias')[0];
+    assert.match(
+      equivalentes,
+      /feature-equiv/,
+      'zero commits unicos e equivalencia valida: a branch tem de continuar na lista de candidatas a poda',
+    );
+  } finally {
+    await rm(r.raiz, { recursive: true, force: true });
+  }
+});
+
+test('t_ff817d9f: falha do git cherry derruba a auditoria em vez de classificar como equivalente', async () => {
+  const r = await rodarPassoRelatorio('falha');
+  try {
+    assert.notEqual(r.status, 0, 'git cherry com retorno nao zero tem de encerrar o passo com status != 0');
+    assert.match(r.stderr, /origin\/feature-quebrada/, 'o erro precisa citar o ref que nao pode ser comparado');
+    assert.doesNotMatch(
+      r.resumo,
+      /feature-quebrada/,
+      'branch impossivel de comparar nao pode ser publicada como patch-equivalente',
+    );
+  } finally {
+    await rm(r.raiz, { recursive: true, force: true });
   }
 });

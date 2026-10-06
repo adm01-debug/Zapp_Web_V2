@@ -73,6 +73,24 @@ Ao abrir, o TALK ME apresenta uma tela dedicada com seletor de departamento, bus
 | Suíte global | 4.526 testes aprovados e 40 pendentes; o comando termina com erro por dois timers antigos de `useSendProduct`, fora dos arquivos deste trabalho. |
 | Lint global | Reproduz a linha-base histórica de 949 ocorrências fora do escopo; nenhum novo erro foi introduzido. |
 
+## Dimensões de fechamento: orçamento, piloto, humano e observação
+
+Código publicado e operação validada são evidências distintas. Cada dimensão abaixo é registrada em separado; onde não há dado individual, a ausência fica explícita e não é suprida por contagem de testes nem por registro de deploy.
+
+| Dimensão | Requisito | Evidência existente | Situação |
+|---|---|---|---|
+| BASELINE | Orçamento com condições declaradas | Consulta equivalente no banco canônico, antes do índice dedicado, sobre a base vigente em 30/09/2026. | Condições registradas. |
+| BASELINE | Orçamento com amostra declarada | 33 atendimentos elegíveis no departamento observado. | Amostra registrada. |
+| BASELINE | Orçamento com métrica declarada | Execução única observada em aproximadamente 2,3 ms antes do índice dedicado. | Métrica pontual registrada; não é p95. |
+| P95 | p95 de leitura/claim | Nenhuma série de latência foi coletada. | Ausente: p95 de leitura e de claim não medidos. |
+| PILOT | Piloto com público declarado | Nenhum piloto foi executado. | Ausente: público não definido; não executar piloto com clientes sem autorização específica. |
+| PILOT | Piloto com critério declarado | Nenhum piloto foi executado. | Ausente: critério de sucesso não definido. |
+| PILOT | Piloto com resultado declarado | Nenhum piloto foi executado. | Ausente: resultado não registrado. |
+| HUMAN | Homologação nominal | A revisão visual local usou dados sintéticos e navegadores locais; não houve aceite por pessoa nomeada. | Ausente: homologação nominal não registrada. |
+| OBSERVATION | Janela de observação registrada | A faixa 091–100 registra a publicação, não um período de operação acompanhada. | Ausente: janela de observação não registrada. |
+
+A amostra de 33 itens, a navegação sintética com 500 itens e o registro da faixa 091–100 durante a publicação comprovam implementação e deploy, não operação validada. Enquanto P95, PILOT, HUMAN e OBSERVATION seguirem sem evidência individual, permanecem pendências explícitas de fechamento operacional.
+
 ## Rastreabilidade das 100 etapas
 
 | Faixa | Entrega comprovada |
@@ -86,7 +104,7 @@ Ao abrir, o TALK ME apresenta uma tela dedicada com seletor de departamento, bus
 | 061–070 | Arquivos organizados, shader assíncrono, botão no local correto, badge, entrada, saída, preservação do Inbox, seletor e disponibilidade concluídos. |
 | 071–080 | Estrutura da tela, carrossel manual, dados reais, mídia, paginação, teclado, toque, aceite e reconciliação concluídos. |
 | 081–090 | Matriz sintética, concorrência real, autorização, fluxos, acessibilidade, responsividade, desempenho, regressões e revisão visual executados. |
-| 091–100 | PR, flag, ordem de release, aplicação canônica, validação online, observabilidade e reversão são registrados no PR e nos sistemas de GitHub, Vercel e Supabase durante a publicação. |
+| 091–100 | PR, flag, ordem de release, aplicação canônica e reversão foram registrados no PR e nos sistemas de GitHub, Vercel e Supabase durante a publicação. O registro da publicação não equivale a observabilidade medida: P95, PILOT, HUMAN e OBSERVATION seguem sem evidência individual (ver “Dimensões de fechamento”). |
 
 ## Critérios de operação
 

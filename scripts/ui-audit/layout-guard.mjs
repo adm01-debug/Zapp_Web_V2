@@ -63,23 +63,63 @@ function* walkTsx(dir) {
   }
 }
 
+function hasUtility(className, utility) {
+  return className.split(/\s+/).some((token) => {
+    const normalized = token.replace(/^!/, "");
+    return normalized === utility
+      || normalized.endsWith(`:${utility}`)
+      || normalized.endsWith(`:!${utility}`);
+  });
+}
+
 const ANTI_PATTERNS = [
   {
     name: "overflow-y-auto at root",
-    test: (cn) => /\boverflow-y-auto\b/.test(cn) || /\boverflow-auto\b/.test(cn),
+    test: (cn) => hasUtility(cn, "overflow-y-auto") || hasUtility(cn, "overflow-auto"),
     message: "View root must NOT own the scroll. Only ViewContainer scrolls.",
   },
   {
     name: "h-full without w-full/flex-1",
-    test: (cn) => /\bh-full\b/.test(cn) && !/\bw-full\b/.test(cn) && !/\bflex-1\b/.test(cn),
+    test: (cn) => hasUtility(cn, "h-full") && !hasUtility(cn, "w-full") && !hasUtility(cn, "flex-1"),
     message: "h-full without w-full or flex-1 — will size to content width.",
   },
   {
     name: "p-6 duplicate padding",
-    test: (cn) => /\bp-6\b/.test(cn),
+    test: (cn) => hasUtility(cn, "p-6"),
     message: "p-6 at view root duplicates ViewContainer's --layout-gutter padding.",
   },
 ];
+
+function resolveLocalModule(fromFile, specifier) {
+  if (!specifier.startsWith(".")) return null;
+  const base = path.resolve(path.dirname(fromFile), specifier);
+  const candidates = path.extname(base)
+    ? [base]
+    : [base + ".tsx", base + ".ts", path.join(base, "index.tsx"), path.join(base, "index.ts")];
+  return candidates.find((candidate) => existsSync(candidate) && statSync(candidate).isFile()) ?? null;
+}
+
+/** Segue reexports locais ate a implementacao real da view roteada. */
+function loadAuditableView(file, seen = new Set()) {
+  if (seen.has(file)) return { source: "", roots: [] };
+  seen.add(file);
+
+  let source;
+  try { source = readFileSync(file, "utf8"); } catch { return { source: "", roots: [] }; }
+  const roots = extractRootClassNames(source);
+  if (roots.length > 0) return { source, roots };
+
+  const targets = [];
+  for (const match of source.matchAll(/export\s*\{[^}]+\}\s*from\s*["']([^"']+)["']/gs)) {
+    const target = resolveLocalModule(file, match[1]);
+    if (target) targets.push(loadAuditableView(target, seen));
+  }
+
+  return {
+    source: [source, ...targets.map((target) => target.source)].join("\n"),
+    roots: targets.flatMap((target) => target.roots),
+  };
+}
 
 let violations = 0;
 let checked = 0;
@@ -96,8 +136,8 @@ for (const file of AUDITED) {
   if (/\.(test|spec|stories)\./.test(file)) continue;
   if (STANDALONE.test(file)) continue;
 
-  let source;
-  try { source = readFileSync(file, "utf8"); } catch { continue; }
+  const { source, roots } = loadAuditableView(file);
+  if (!source) continue;
 
   // Skip full-screen views
   if ([...FULL_SCREEN].some((name) =>
@@ -106,7 +146,6 @@ for (const file of AUDITED) {
     source.includes(`export default function ${name}`)
   )) continue;
 
-  const roots = extractRootClassNames(source);
   if (roots.length === 0) {
     // Arquivo roteado que o extrator nao conseguiu ler nao pode passar calado:
     // era assim que views com export default sumiam da auditoria.

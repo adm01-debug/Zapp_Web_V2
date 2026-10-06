@@ -1,6 +1,6 @@
 # PLANO — Telefonia (`?view=voip`): finalização da implantação (100 etapas) — 2026-09-29
 
-**Status:** EM EXECUÇÃO — **Fase 0** (T01–T08) e **Fase 1** (T09–T22) executadas; a Fase 1 fechou na PR **#1494** (aguarda o Joaquim). **T06 está aberto** (bloqueio de autenticação; diagnóstico de 02/10 na seção 11) e o **T11 foi desmarcado em 02/10** por falta da chamada real de aceite. A Fase 2 (T23–T32) tem especificação executável pronta e **não** foi iniciada. Atualizado em **02/10**.
+**Status:** EM EXECUÇÃO — **fases 0–7 executadas/fechadas** (na Fase 0 o **T06 foi resolvido em 03/10**, quando o POST de autenticação voltou a responder; na Fase 1 o **T11 segue pendente de evidência de chamada real**). A **Fase 8 (T75–T80) está em execução**, com **T75–T78 e T79–T80 ainda abertas no ledger** (apenas o T75 tem trabalho em branch própria, ainda não incorporado). Atualizado em **05/10**.
 **Origem:** `AUDITORIA_TELEFONIA_ESTADO_REAL_2026-09-29.md` (26 DONE · 18 PARCIAL · 56 AUSENTE sobre o plano de 26/09).
 **Sucede** `PLANO_MELHORIAS_TELEFONIA_100_ETAPAS_2026-09-26.md` (v1.0) e o ledger `TELEFONIA_STATUS.md` (CP0–CP2 fechados). **Este arquivo passa a ser o ledger vivo**: as fases 0–2 do plano anterior estão prontas e não voltam; tudo aqui é o que falta.
 **Base:** `main` @ `42f78881d` · banco com o contrato v2 aplicado (`20260926800000` + `900000` + `20260927100000`) · `src/lib/calls/` **com consumidores de produção desde o T10** — a medição "217 testes, 0 consumidores" é de 29/09 e não vale mais.
