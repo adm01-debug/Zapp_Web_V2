@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchCatalogSendReadiness, normalizeCatalogPhone } from '../useCatalogSendReadiness';
+import { renderHook, waitFor, act } from '@testing-library/react';
+import { createElement, type ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  fetchCatalogSendReadiness,
+  normalizeCatalogPhone,
+  useCatalogSendReadiness,
+  READINESS_UNAVAILABLE_REASON,
+} from '../useCatalogSendReadiness';
 
 type QueryResult = { data: unknown; error: unknown };
 
@@ -70,5 +78,79 @@ describe('fetchCatalogSendReadiness (CT-08)', () => {
   it('normaliza o telefone mantendo só os dígitos', () => {
     expect(normalizeCatalogPhone('+55 (41) 9 9999-8888')).toBe('5541999998888');
     expect(normalizeCatalogPhone('')).toBe('');
+  });
+});
+
+/**
+ * R2-MOD-008 — o estado devolvido pelo hook diferencia "indisponível" de
+ * "liberado". Antes, uma consulta rejeitada terminava com `checking: false`,
+ * `blocked: false` e `reason: null`: a pré-validação falhava ABERTA e o envio
+ * seguia sem nunca ter conferido conexão nem supressão.
+ */
+describe('useCatalogSendReadiness (CT-08 / R2-MOD-008)', () => {
+  let client: QueryClient;
+
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client }, children);
+
+  beforeEach(() => {
+    mockFrom.mockReset();
+    client = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } },
+    });
+  });
+
+  it('enquanto consulta, marca checking e não libera', async () => {
+    respond(CONNECTED, NOTHING_BLOCKED);
+
+    const { result } = renderHook(() => useCatalogSendReadiness(CONTACT), { wrapper });
+
+    expect(result.current.checking).toBe(true);
+    expect(result.current.blocked).toBe(false);
+
+    await waitFor(() => expect(result.current.checking).toBe(false));
+    expect(result.current.blocked).toBe(false);
+    expect(result.current.unavailable).toBe(false);
+  });
+
+  it('falha da consulta impede prosseguir, com motivo do retry disponível', async () => {
+    respond({ data: null, error: { message: 'rede fora' } }, NOTHING_BLOCKED);
+
+    const { result } = renderHook(() => useCatalogSendReadiness(CONTACT), { wrapper });
+
+    await waitFor(() => expect(result.current.unavailable).toBe(true));
+
+    // O defeito: aqui antes vinha blocked=false/reason=null (permissivo).
+    expect(result.current.blocked).toBe(true);
+    expect(result.current.reason).toBe(READINESS_UNAVAILABLE_REASON);
+    expect(result.current.reason).toMatch(/não foi possível verificar/i);
+    expect(result.current.reason).toMatch(/tente de novo/i);
+    expect(result.current.checking).toBe(false);
+  });
+
+  it('retry refaz a consulta e libera quando a verificação volta a responder', async () => {
+    respond({ data: null, error: { message: 'rede fora' } }, NOTHING_BLOCKED);
+
+    const { result } = renderHook(() => useCatalogSendReadiness(CONTACT), { wrapper });
+    await waitFor(() => expect(result.current.unavailable).toBe(true));
+
+    mockFrom.mockReset();
+    respond(CONNECTED, NOTHING_BLOCKED);
+
+    act(() => { result.current.retry(); });
+
+    await waitFor(() => expect(result.current.unavailable).toBe(false));
+    expect(mockFrom).toHaveBeenCalled();
+    expect(result.current.blocked).toBe(false);
+    expect(result.current.reason).toBeNull();
+  });
+
+  it('sem contato escolhido não consulta nada', () => {
+    const { result } = renderHook(() => useCatalogSendReadiness(null), { wrapper });
+
+    expect(mockFrom).not.toHaveBeenCalled();
+    expect(result.current.checking).toBe(false);
+    expect(result.current.blocked).toBe(false);
+    expect(result.current.unavailable).toBe(false);
   });
 });

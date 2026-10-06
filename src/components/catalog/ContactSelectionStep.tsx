@@ -37,6 +37,11 @@ interface ContactSelectionStepProps {
   sendBlockedReason?: string | null;
   /** CT-08 — checagem pré-envio em andamento: não dispara envio antes de saber. */
   checkingSendReadiness?: boolean;
+  /**
+   * R2-MOD-008 — a consulta de prontidão falhou (indisponível): repete a
+   * consulta. Quando presente, o aviso ganha o botão "Tentar de novo".
+   */
+  onRetrySendReadiness?: (() => void) | null;
   /** CT-46 — contador de mensagens do envio em andamento ("Enviando 2/4..."). */
   sendProgress?: SendProgress | null;
 }
@@ -97,6 +102,7 @@ export function ContactSelectionStep({
   selectedContact, onSelectContact,
   isSending, onBack, onSend,
   sendBlockedReason = null, checkingSendReadiness = false,
+  onRetrySendReadiness = null,
   sendProgress = null,
 }: ContactSelectionStepProps) {
   // CT-42 — "Enviados recentemente" vem de catalog_send_events (E56), não da
@@ -263,7 +269,13 @@ export function ContactSelectionStep({
 
       <div className="p-4 border-t space-y-2">
         {sendBlockedReason && (
-          <AlertCard tone="warning">{sendBlockedReason}</AlertCard>
+          <AlertCard
+            tone="warning"
+            actionLabel={onRetrySendReadiness ? 'Tentar de novo' : undefined}
+            onAction={onRetrySendReadiness ?? undefined}
+          >
+            {sendBlockedReason}
+          </AlertCard>
         )}
         <div className="flex items-center gap-2">
           {/* CT-68 — progresso do envio anunciado: o rótulo do botão muda a cada

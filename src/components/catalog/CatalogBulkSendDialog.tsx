@@ -28,6 +28,7 @@ import { formatPrice, ProductThumb, CATALOG_FOCUS_VISIBLE } from './catalogShare
 import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { logCatalogSendEvent } from '@/hooks/integrations/useCatalogContactSearch';
+import { useCatalogSendReadiness } from '@/hooks/integrations/useCatalogSendReadiness';
 import { cn } from '@/lib/utils';
 
 interface CatalogBulkSendDialogProps {
@@ -114,6 +115,11 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
 
   const { profile } = useAuth();
 
+  // R2-MOD-008 — o lote responde às MESMAS pré-condições do envio individual
+  // (conexão de WhatsApp ativa e contato fora da supressão). Antes o seletor do
+  // lote recebia os defaults e liberava o envio sem nunca checar nada.
+  const sendReadiness = useCatalogSendReadiness(step === 'selectContact' ? selectedContact : null);
+
   const handleClose = (v: boolean) => {
     onOpenChange(v);
     if (!v) {
@@ -127,6 +133,9 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
 
   const handleSendAll = async () => {
     if (!selectedContact) return;
+    // R2-MOD-008 — a checagem pré-envio é do mesmo fluxo do individual: sem
+    // resposta confiável (ou com bloqueio) o lote não começa nenhum envio.
+    if (sendReadiness.checking || sendReadiness.blocked) return;
     setStep('sending');
     setIsSendingFlag(true);
     setSentCount(0);
@@ -230,6 +239,9 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
             selectedContact={selectedContact}
             onSelectContact={setSelectedContact}
             isSending={isSendingFlag}
+            sendBlockedReason={sendReadiness.reason}
+            checkingSendReadiness={sendReadiness.checking}
+            onRetrySendReadiness={sendReadiness.unavailable ? sendReadiness.retry : null}
             onBack={() => setStep('review')}
             onSend={handleSendAll}
           />

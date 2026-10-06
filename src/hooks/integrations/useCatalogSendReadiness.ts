@@ -31,6 +31,15 @@ export interface SendReadiness {
 const NO_CONNECTION_REASON =
   'Nenhuma conexão de WhatsApp ativa. Reconecte a instância em Conexões para poder enviar.';
 
+/**
+ * R2-MOD-008 — a consulta de prontidão falhou: o estado é "indisponível", não
+ * "liberado". Enquanto não houver resposta confiável (conexão conectada e
+ * supressão conferida) o envio fica bloqueado, com retry explícito.
+ */
+export const READINESS_UNAVAILABLE_REASON =
+  'Não foi possível verificar as condições de envio (conexão de WhatsApp e lista de supressão). '
+  + 'O envio fica bloqueado até a verificação responder — tente de novo.';
+
 export const normalizeCatalogPhone = (phone: string): string => phone.replace(/\D/g, '');
 
 /** Consulta as duas condições e devolve o motivo do bloqueio (ou nada). */
@@ -78,6 +87,11 @@ export async function fetchCatalogSendReadiness(contact: SendReadinessContact): 
 /**
  * `contact` nulo = passo de contato ainda sem contato escolhido: não consulta
  * nada e não bloqueia (o botão já está desabilitado por falta de contato).
+ *
+ * R2-MOD-008 — o resultado é explícito em três estados: `checking` (ainda
+ * perguntando), `unavailable` (a consulta falhou: bloqueia e oferece `retry`)
+ * e liberado (`blocked: false`). Falha de consulta NUNCA libera o envio — sem
+ * resposta confiável o fluxo fica fechado, como no envio individual.
  */
 export function useCatalogSendReadiness(contact: SendReadinessContact | null) {
   const query = useQuery({
@@ -87,9 +101,18 @@ export function useCatalogSendReadiness(contact: SendReadinessContact | null) {
     queryFn: () => fetchCatalogSendReadiness(contact as SendReadinessContact),
   });
 
+  // `isError` no React Query v5 cobre exatamente a consulta rejeitada; um
+  // refetch reabre o estado `pending` (checking) e depois sucesso ou erro.
+  const unavailable = !!contact && query.isError;
+  const readiness = query.data ?? null;
+
   return {
-    checking: !!contact && query.isLoading,
-    blocked: query.data?.blocked ?? false,
-    reason: query.data?.reason ?? null,
+    checking: !!contact && query.isPending && !query.isError,
+    // Sem resposta confiável não se envia: indisponível vale como bloqueio.
+    blocked: unavailable ? true : readiness?.blocked ?? false,
+    reason: unavailable ? READINESS_UNAVAILABLE_REASON : readiness?.reason ?? null,
+    unavailable,
+    /** Repete a consulta depois de uma falha (mesma chave, mesmo contato). */
+    retry: () => { void query.refetch(); },
   };
 }
