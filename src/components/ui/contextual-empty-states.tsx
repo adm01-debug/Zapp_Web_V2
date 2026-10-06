@@ -8,7 +8,6 @@ export {
   ContactsEmptyState,
   QueuesEmptyState,
   AgentsEmptyState,
-  TagsEmptyState,
   SearchEmptyState,
   DashboardEmptyState,
   NotificationsEmptyState,

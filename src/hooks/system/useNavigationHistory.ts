@@ -33,18 +33,34 @@ const BREADCRUMB_DEPTH = 4;
 export const RESERVED_HASHES = new Set(['main-content', 'main-navigation', 'inbox-section', 'search-input']);
 
 /**
+ * Compatibilidade de rota (TRA-010/#178): ids de módulos REMOVIDOS que ainda
+ * podem viver em favorito, histórico ou link compartilhado. O id antigo resolve
+ * para a tela vigente equivalente em vez de cair no fallback do ViewRouter.
+ * `tags` → `contacts` (o modelo de etiqueta vigente é `contacts.tags`).
+ */
+export const LEGACY_VIEW_REDIRECTS: Readonly<Record<string, string>> = Object.freeze({
+  tags: 'contacts',
+});
+
+/** Resolve um id de view legado para a tela vigente (id desconhecido passa reto). */
+export function resolveLegacyView(viewId: string): string {
+  return LEGACY_VIEW_REDIRECTS[viewId] ?? viewId;
+}
+
+/**
  * Reads the active view from the URL.
  * Canonical format: ?view=<id>
  * Legacy compat: #<id> (hash) — migrated to ?view= on first load.
+ * Ids de módulos removidos passam por `resolveLegacyView`.
  */
 function getViewFromUrl(defaultView: string): string {
   const params = new URLSearchParams(window.location.search);
   const viewParam = params.get('view');
-  if (viewParam) return viewParam;
+  if (viewParam) return resolveLegacyView(viewParam);
 
   // Backward compat: hash-based deep links ("#inbox") before migration
   const hash = window.location.hash.replace('#', '');
-  if (hash && !RESERVED_HASHES.has(hash)) return hash;
+  if (hash && !RESERVED_HASHES.has(hash)) return resolveLegacyView(hash);
 
   return defaultView;
 }
@@ -164,18 +180,26 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     }
 
     // Migrate the URL: replace hash with ?view= query param
-    setViewParam(hash, true);
+    setViewParam(resolveLegacyView(hash), true);
 
     // Handle as a view change using the same logic as onPopState
     onPopState();
   }, [onPopState]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    // Compatibilidade de rota (TRA-010/#178): favorito/link antigo de módulo
+    // removido (?view=tags) é reescrito para a tela vigente SEM empilhar
+    // histórico — a URL fica coerente e o redirect não passa pelo fallback.
+    const rawView = params.get('view');
+    if (rawView) {
+      const resolved = resolveLegacyView(rawView);
+      if (resolved !== rawView) setViewParam(resolved, true);
+    }
     // One-time migration: if URL still uses hash (#inbox) with no ?view=, rewrite to ?view=inbox
     const hash = window.location.hash.replace('#', '');
-    const params = new URLSearchParams(window.location.search);
     if (hash && !RESERVED_HASHES.has(hash) && !params.get('view')) {
-      setViewParam(hash, true);
+      setViewParam(resolveLegacyView(hash), true);
     }
 
     window.addEventListener('popstate', onPopState);

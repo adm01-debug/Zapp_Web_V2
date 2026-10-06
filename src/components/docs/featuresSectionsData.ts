@@ -304,7 +304,8 @@ export const sections: FeatureSection[] = [
       "Evolution API (WhatsApp) — 60+ endpoints", "Evolution API — Webhook de recebimento",
       "Evolution API — Sync de dados", "WhatsApp Cloud API — Webhook",
       "Bitrix24 CRM (bidirecional)", "ElevenLabs (TTS)", "ElevenLabs (Scribe Token)",
-      "Mapbox (mapas)", "Lovable AI Gateway (IA sem API key)", "WebAuthn (passkeys)"
+      "Mapbox (mapas)", "Lovable AI Gateway (IA sem API key)", "WebAuthn (passkeys)",
+      "contact_tags_ext — tags de contato do banco externo CRM (contrato externo)"
     ]
   },
   {
@@ -334,10 +335,11 @@ export const sections: FeatureSection[] = [
     id: 33, title: "Banco de Dados", icon: Database, color: "text-info",
     items: [
       "profiles", "user_roles", "user_settings", "user_sessions", "user_devices",
-      "contacts", "contact_tags", "contact_notes", "messages", "message_reactions",
+      "contacts", "contacts.tags (array — modelo único de etiqueta)", "ai_conversation_tags",
+      "contact_notes", "messages", "message_reactions",
       "message_templates", "scheduled_messages", "whatsapp_connections", "whatsapp_groups",
       "whatsapp_templates", "business_hours", "away_messages", "queues", "queue_members",
-      "queue_goals", "tags", "sla_configurations", "conversation_sla", "conversation_analyses",
+      "queue_goals", "sla_configurations", "conversation_sla", "conversation_analyses",
       "goals_configurations", "agent_stats", "agent_achievements", "calls", "products",
       "client_wallet_rules", "audit_logs", "notifications", "login_attempts", "blocked_ips",
       "ip_whitelist", "blocked_countries", "allowed_countries", "geo_blocking_settings",
