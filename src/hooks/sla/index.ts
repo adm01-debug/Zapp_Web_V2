@@ -1,4 +1,5 @@
 // Barrel export for hooks/sla
+export * from './slaFirstResponse';
 export * from './useApplicableSLA';
 export * from './useSLACalculation';
 export * from './useSLAConfigurations';
