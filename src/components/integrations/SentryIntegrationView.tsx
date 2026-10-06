@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Bug, ShieldAlert, Activity, AlertTriangle, CheckCircle2, RefreshCw, TrendingUp, Clock } from 'lucide-react';
+import { Bug, FlaskConical } from 'lucide-react';
 
 interface SentryConfig {
   dsn: string;
@@ -18,24 +20,7 @@ interface SentryConfig {
   enableReplays: boolean;
 }
 
-interface MockError {
-  id: string;
-  title: string;
-  level: 'error' | 'warning' | 'info';
-  count: number;
-  lastSeen: string;
-  isResolved: boolean;
-}
-
-const mockErrors: MockError[] = [
-  { id: '1', title: 'TypeError: Cannot read properties of undefined', level: 'error', count: 23, lastSeen: '2 min atrás', isResolved: false },
-  { id: '2', title: 'NetworkError: Failed to fetch', level: 'error', count: 8, lastSeen: '15 min atrás', isResolved: false },
-  { id: '3', title: 'Warning: Each child should have a unique key', level: 'warning', count: 45, lastSeen: '1h atrás', isResolved: false },
-  { id: '4', title: 'RangeError: Maximum call stack exceeded', level: 'error', count: 2, lastSeen: '3h atrás', isResolved: true },
-];
-
 export function SentryIntegrationView() {
-  const [isConnected, setIsConnected] = useState(false);
   const [config, setConfig] = useState<SentryConfig>({
     dsn: '',
     environment: 'production',
@@ -44,30 +29,18 @@ export function SentryIntegrationView() {
     enablePerformance: true,
     enableReplays: false,
   });
-  const [errors, setErrors] = useState<MockError[]>(mockErrors);
 
+  // R2-API-047: não existe integração real com o Sentry nesta versão — nenhum SDK é inicializado,
+  // nenhum DSN é validado, nada é persistido e não há API de métricas consultada. Por isso a
+  // ativação é recusada (a tela nunca assume o estado "Ativo") e esta tela não apresenta
+  // estatísticas: números fixos de exemplo não podem aparecer como dados do ambiente.
   const handleConnect = () => {
     if (!config.dsn.trim()) {
       toast.error('Informe o DSN do Sentry');
       return;
     }
-    setIsConnected(true);
-    toast.success('Sentry conectado com sucesso!');
+    toast.error('Integração real com o Sentry ainda não está disponível');
   };
-
-  const resolveError = (id: string) => {
-    setErrors(prev => prev.map(e => e.id === id ? { ...e, isResolved: true } : e));
-    toast.success('Erro marcado como resolvido');
-  };
-
-  const levelColor = (level: string) => {
-    if (level === 'error') return 'text-destructive';
-    if (level === 'warning') return 'text-warning';
-    return 'text-info';
-  };
-
-  const unresolvedCount = errors.filter(e => !e.isResolved).length;
-  const totalEvents = errors.reduce((sum, e) => sum + e.count, 0);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -80,11 +53,22 @@ export function SentryIntegrationView() {
             <h1 className="font-display text-2xl font-bold text-foreground">Sentry Monitoring</h1>
             <p className="text-muted-foreground text-sm">Monitoramento de erros e performance</p>
           </div>
-          <Badge variant={isConnected ? 'default' : 'secondary'} className="ml-auto">
-            {isConnected ? 'Ativo' : 'Inativo'}
+          <Badge variant="warning" className="ml-auto">
+            Demonstração
           </Badge>
         </div>
       </motion.div>
+
+      <Alert className="border-warning/30 bg-warning/10">
+        <FlaskConical className="h-4 w-4 !text-warning" />
+        <AlertTitle className="text-warning">Funcionalidade em demonstração</AlertTitle>
+        <AlertDescription>
+          Esta tela mostra apenas como a configuração do Sentry seria preenchida — a integração real
+          (SDK, validação do DSN e API de métricas) ainda não foi implementada. Nenhum DSN é enviado,
+          nenhuma opção é salva e a ativação está bloqueada. Sem fonte real, esta tela também não exibe
+          estatísticas de erros nem de crash-free.
+        </AlertDescription>
+      </Alert>
 
       <Card className="border-secondary/30">
         <CardHeader>
@@ -118,68 +102,21 @@ export function SentryIntegrationView() {
               <Label className="text-xs">Session Replay</Label>
             </div>
           </div>
-          <Button onClick={handleConnect} style={{ background: 'var(--gradient-primary)' }}>
-            {isConnected ? <RefreshCw className="w-4 h-4 mr-2" /> : <Bug className="w-4 h-4 mr-2" />}
-            {isConnected ? 'Atualizar' : 'Ativar Monitoramento'}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="mt-auto inline-block" tabIndex={0} aria-disabled="true">
+                  <Button onClick={handleConnect} disabled style={{ background: 'var(--gradient-primary)' }}>
+                    <Bug className="w-4 h-4 mr-2" />
+                    Ativar Monitoramento
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Integração real com Sentry ainda não está disponível — em desenvolvimento.</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardContent>
       </Card>
-
-      {isConnected && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            <Card className="border-secondary/30">
-              <CardContent className="py-4 text-center">
-                <ShieldAlert className="w-6 h-6 mx-auto mb-1 text-destructive" />
-                <p className="text-2xl font-bold text-foreground">{unresolvedCount}</p>
-                <p className="text-xs text-muted-foreground">Não resolvidos</p>
-              </CardContent>
-            </Card>
-            <Card className="border-secondary/30">
-              <CardContent className="py-4 text-center">
-                <Activity className="w-6 h-6 mx-auto mb-1 text-primary" />
-                <p className="text-2xl font-bold text-foreground">{totalEvents}</p>
-                <p className="text-xs text-muted-foreground">Eventos totais</p>
-              </CardContent>
-            </Card>
-            <Card className="border-secondary/30">
-              <CardContent className="py-4 text-center">
-                <TrendingUp className="w-6 h-6 mx-auto mb-1 text-success" />
-                <p className="text-2xl font-bold text-foreground">99.2%</p>
-                <p className="text-xs text-muted-foreground">Crash-free</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Error List */}
-          <h2 className="font-semibold text-foreground">Issues Recentes</h2>
-          <div className="space-y-2">
-            {errors.map(err => (
-              <Card key={err.id} className={`border-secondary/30 ${err.isResolved ? 'opacity-50' : ''}`}>
-                <CardContent className="py-3 flex items-center gap-3">
-                  <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${levelColor(err.level)}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{err.title}</p>
-                    <div className="flex gap-3 text-xs text-muted-foreground">
-                      <span>{err.count}x</span>
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {err.lastSeen}</span>
-                    </div>
-                  </div>
-                  <Badge variant={err.level === 'error' ? 'destructive' : 'outline'} className="text-xs">{err.level}</Badge>
-                  {!err.isResolved ? (
-                    <Button size="sm" variant="ghost" onClick={() => resolveError(err.id)}>
-                      <CheckCircle2 className="w-3 h-3 mr-1" /> Resolver
-                    </Button>
-                  ) : (
-                    <Badge variant="outline" className="text-xs text-success">Resolvido</Badge>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 }
