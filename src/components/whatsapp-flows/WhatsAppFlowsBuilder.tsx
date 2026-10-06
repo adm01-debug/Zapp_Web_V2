@@ -101,8 +101,13 @@ export function WhatsAppFlowsBuilder() {
 
   const updateFlowScreens = async (screens: FlowScreen[]) => {
     if (!selectedFlow) return;
+    const flowId = selectedFlow.id;
     setSelectedFlow({ ...selectedFlow, screens });
-    await supabase.from('whatsapp_flows').update({ screens: screens as unknown as Json }).eq('id', selectedFlow.id);
+    // R2-API-050: mantém a lista em sincronia. Sem isto, reabrir o flow pelo card
+    // usava a cópia VELHA de `flows` e a edição seguinte gravava por cima do banco,
+    // apagando as telas salvas desde a primeira edição.
+    setFlows((prev) => prev.map((f) => (f.id === flowId ? { ...f, screens } : f)));
+    await supabase.from('whatsapp_flows').update({ screens: screens as unknown as Json }).eq('id', flowId);
   };
 
   const addScreen = () => {
@@ -118,7 +123,11 @@ export function WhatsAppFlowsBuilder() {
 
   const addComponent = (type: string) => {
     if (!selectedFlow) return;
-    const screens = [...selectedFlow.screens];
+    // Cópia imutável da tela editada: sem isto o splice/push mutava o array de
+    // `layout` compartilhado com o estado anterior (e com a lista `flows`).
+    const screens = selectedFlow.screens.map((s, i) =>
+      i === editingScreen ? { ...s, layout: [...s.layout] } : s,
+    );
     const newComp: FlowComponent = {
       id: crypto.randomUUID(), type: type as FlowComponent['type'],
       label: type === 'Footer' ? 'Enviar' : undefined,
@@ -134,8 +143,9 @@ export function WhatsAppFlowsBuilder() {
 
   const removeComponent = (compIdx: number) => {
     if (!selectedFlow) return;
-    const screens = [...selectedFlow.screens];
-    screens[editingScreen].layout.splice(compIdx, 1);
+    const screens = selectedFlow.screens.map((s, i) =>
+      i === editingScreen ? { ...s, layout: s.layout.filter((_, j) => j !== compIdx) } : s,
+    );
     void updateFlowScreens(screens);
   };
 
