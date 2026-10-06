@@ -535,14 +535,57 @@ async function atualizarOutbox(
 }
 
 /**
+ * Persiste o `event_id` de um pendente que só tem a ENTRADA — ANTES do envio.
+ *
+ * O PATCH é condicionado a `event_id=is.null`: isto é compare-and-swap NO
+ * BANCO, não consulta prévia. Só a primeira passada escreve a identidade; as
+ * seguintes reencontram a MESMA — e é por isso que o `ON CONFLICT` de
+ * `ai_usage_logs` absorve o reenvio em vez de criar uma segunda cobrança.
+ *
+ * Sem a linha de volta devolvida pelo `return=representation` (corrida perdida
+ * para outra passada, falha de rede ou HTTP de erro) a passada DESISTE do item
+ * sem enviar nada: mandar consumo sem identidade durável é o caminho da
+ * cobrança dupla, que é exatamente o defeito desta rodada.
+ *
+ * O filtro `event_id=is.null` também é o que impede o UNIQUE de
+ * `ai_usage_outbox.event_id` de ser violado: a identidade só é gravada na linha
+ * que ainda não tem nenhuma, e o valor é um uuid novo — não pode colidir com a
+ * outra linha da outbox.
+ */
+async function persistirEventIdNaOutbox(
+  url: string,
+  chave: string,
+  id: string,
+  eventId: string,
+): Promise<boolean> {
+  try {
+    const resposta = await fetch(
+      `${url}/rest/v1/ai_usage_outbox?id=eq.${encodeURIComponent(id)}&event_id=is.null`,
+      {
+        method: "PATCH",
+        headers: { ...cabecalhosRest(chave), Prefer: "return=representation" },
+        body: JSON.stringify({ event_id: eventId }),
+      },
+    );
+    if (!resposta.ok) return false;
+    const corpo = await resposta.text();
+    const parsed = JSON.parse(corpo === "" ? "[]" : corpo) as unknown;
+    return Array.isArray(parsed) && parsed.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Reprocessa a outbox de logs essenciais — a garantia de entrega.
  *
  * Lê os pendentes (`processed_at IS NULL`, mais antigos primeiro), reenvia a
  * linha pelo MESMO upsert por `event_id` e baixa o registro quando a entrega é
  * confirmada — inclusive quando a linha já existia (a restrição devolve `[]`:
  * é a prova de que reprocessar não duplica cobrança). Pendente com só a
- * `entrada` remonta a linha inteira (enriquecimento incluso) e recebe o
- * `event_id` que faltou. O que falhar segue na fila com `tentativas` +1.
+ * `entrada` GRAVA primeiro a identidade que faltou (`persistirEventIdNaOutbox`)
+ * e só então remonta a linha e envia — sem identidade durável, o item segue
+ * pendente sem envio. O que falhar segue na fila com `tentativas` +1.
  */
 export async function reprocessarOutboxDeLog(limite = 50): Promise<ResultadoReprocessamento> {
   const resultado: ResultadoReprocessamento = {
@@ -591,19 +634,31 @@ export async function reprocessarOutboxDeLog(limite = 50): Promise<ResultadoRepr
     const tentativas = Number(item.tentativas ?? 0);
 
     let linha = (payload.linha ?? null) as Record<string, unknown> | null;
+    let identidade = normalizeCorrelationId(item.event_id);
     if (linha === null && payload.entrada !== undefined && payload.entrada !== null) {
+      if (identidade === null) {
+        // Falhou ANTES de ter identidade: reserva uma e GRAVA na outbox antes
+        // de qualquer envio — a passada seguinte reencontra a MESMA, e o
+        // ON CONFLICT de ai_usage_logs absorve o reenvio.
+        const candidato = crypto.randomUUID();
+        if (!(await persistirEventIdNaOutbox(supabaseUrl, serviceRoleKey, id, candidato))) {
+          // Corrida perdida ou reserva que não gravou: NÃO se envia às cegas —
+          // sem identidade durável o reenvio viraria uma segunda cobrança.
+          resultado.pendentes += 1;
+          await atualizarOutbox(supabaseUrl, serviceRoleKey, id, { tentativas: tentativas + 1 });
+          continue;
+        }
+        identidade = candidato;
+      }
       try {
-        // O evento que falhou antes de ter identidade ganha uma agora; o que
-        // já tinha reencontra a MESMA identidade.
-        const evento = normalizeCorrelationId(item.event_id) ?? crypto.randomUUID();
-        linha = await montarLinhaDeConsumo(supabase, payload.entrada as AiUsageEntry, evento);
+        linha = await montarLinhaDeConsumo(supabase, payload.entrada as AiUsageEntry, identidade);
       } catch {
         linha = null;
       }
     }
     if (linha !== null) {
-      // A linha da outbox sempre nasce com o event_id do registro.
-      linha = { ...linha, event_id: normalizeCorrelationId(item.event_id) ?? linha.event_id ?? crypto.randomUUID() };
+      // O envio carrega SEMPRE a identidade já persistida na outbox.
+      linha = { ...linha, event_id: identidade ?? linha.event_id ?? crypto.randomUUID() };
     }
 
     let entregue = false;

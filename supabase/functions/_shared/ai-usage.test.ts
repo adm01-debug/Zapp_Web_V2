@@ -1036,6 +1036,10 @@ function stubBancoDeLog(opts: {
   posts?: Array<{ status: number; grava?: boolean }>;
   outboxStatus?: number;
   outboxPatchStatus?: number;
+  /** PATCH de RESERVA (`event_id=is.null`) devolve `[]`: corrida perdida. */
+  reservaVazia?: boolean;
+  /** PATCH de BAIXA (`processed_at`) responde 500: a fila não sai do pendente. */
+  baixaFalha?: boolean;
 } = {}) {
   const capturas: Captura[] = [];
   const tabela = new Map<string, Record<string, unknown>>();
@@ -1044,6 +1048,8 @@ function stubBancoDeLog(opts: {
   let posts = 0;
   const outboxStatus = opts.outboxStatus ?? 201;
   const outboxPatchStatus = opts.outboxPatchStatus ?? 200;
+  const reservaVazia = opts.reservaVazia ?? false;
+  const baixaFalha = opts.baixaFalha ?? false;
   const original = globalThis.fetch;
 
   const json = (valor: unknown, status = 200) =>
@@ -1099,8 +1105,26 @@ function stubBancoDeLog(opts: {
       return json(outbox.filter((r) => r.processed_at === null));
     }
     if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "PATCH") {
+      // PATCH de RESERVA de identidade (`event_id=is.null`): compare-and-swap.
+      if (url.includes("event_id=is.null")) {
+        if (reservaVazia) return json([]);
+        const alvo = url.match(/(?:[?&])id=eq\.([^&]+)/);
+        const casadas = outbox.filter(
+          (r) => r.event_id === null && (!alvo || r.id === decodeURIComponent(alvo[1])),
+        );
+        for (const r of casadas) Object.assign(r, corpo);
+        const querLinhas = String(
+          ((init?.headers ?? {}) as Record<string, unknown>).Prefer ??
+            ((init?.headers ?? {}) as Record<string, unknown>).prefer ?? "",
+        ).includes("return=representation");
+        return json(querLinhas ? casadas : []);
+      }
       if (outboxPatchStatus >= 300) {
         return json({ message: "reenfileiramento falhou" }, outboxPatchStatus);
+      }
+      // PATCH de BAIXA da fila (`processed_at`): pode falhar sem tocar a linha.
+      if (baixaFalha && corpo !== null && typeof corpo === "object" && "processed_at" in corpo) {
+        return json({ message: "baixa falhou" }, 500);
       }
       const porId = url.match(/(?:[?&])id=eq\.([^&]+)/);
       const porEvento = url.match(/event_id=eq\.([^&]+)/);
@@ -1535,6 +1559,101 @@ Deno.test("IA-TIMEOUT-001 conflito com falha no reenfileiramento emite marcador 
   } finally {
     stub.restaurar();
     espioes.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 pendente só com ENTRADA persiste o event_id na outbox ANTES do envio", async () => {
+  const restaurarEnv = stubEnv();
+  // A linha ENTRA no log, mas a BAIXA da fila falha (processed_at): o registro
+  // segue pendente e a passada seguinte reenvia o MESMO evento.
+  const stub = stubBancoDeLog({ posts: [{ status: 201 }], baixaFalha: true });
+
+  try {
+    stub.outbox.push({
+      id: "ob-entrada-1",
+      event_id: null,
+      tentativas: 1,
+      processed_at: null,
+      payload: { entrada: ENTRADA },
+      motivo: "pre_pos_insert:rng indisponivel",
+    });
+
+    const r1 = await reprocessarOutboxDeLog();
+    assertEquals(r1.lidos, 1);
+    assertEquals(r1.gravados, 1, "a entrada pendente é remontada e entregue ao log");
+    assertEquals(stub.tabela.size, 1);
+
+    // A IDENTIDADE precisa ter sido reservada na outbox ANTES do envio.
+    const reserva = stub.capturas.find(
+      (c) => c.metodo === "PATCH" && c.url.includes("/rest/v1/ai_usage_outbox") &&
+        c.url.includes("event_id=is.null"),
+    );
+    assert(reserva, "sem reserva condicional (event_id=is.null) do event_id não há identidade durável");
+    const eventIdReservado = (reserva.corpo as Record<string, unknown>).event_id;
+    assert(
+      typeof eventIdReservado === "string" && UUID_RE.test(eventIdReservado),
+      "a reserva grava um uuid do produtor, independente do conteúdo",
+    );
+    const primeiroPost = postsEmAiUsageLogs(stub.capturas)[0];
+    assertEquals(
+      (primeiroPost.corpo as Record<string, unknown>).event_id,
+      eventIdReservado,
+      "a linha enviada carrega a identidade RESERVADA",
+    );
+    assertEquals(
+      stub.outbox[0].event_id,
+      eventIdReservado,
+      "a identidade fica GRAVADA na outbox (não é um uuid gerado e descartado)",
+    );
+    assertEquals(stub.outbox[0].processed_at, null, "a baixa falhou: o registro segue pendente");
+
+    // 2ª passada: reencontra a MESMA identidade → o ON CONFLICT absorve o reenvio.
+    const r2 = await reprocessarOutboxDeLog();
+    assertEquals(r2.lidos, 1);
+    assertEquals(r2.jaExistiam, 1, "a 2ª passada reencontra o evento pelo event_id persistido");
+    assertEquals(stub.tabela.size, 1, "NÃO pode nascer uma segunda linha (cobrança dupla)");
+    const posts = postsEmAiUsageLogs(stub.capturas);
+    assertEquals(
+      (posts[posts.length - 1].corpo as Record<string, unknown>).event_id,
+      eventIdReservado,
+      "o 2º envio carrega o MESMO event_id — nunca um uuid novo",
+    );
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 reserva que não altera a linha nega o envio e mantém o pendente", async () => {
+  const restaurarEnv = stubEnv();
+  // PATCH de reserva devolve `[]` (corrida perdida ou reserva que não gravou):
+  // enviar sem identidade durável é o caminho da cobrança dupla.
+  const stub = stubBancoDeLog({ posts: [{ status: 201 }], reservaVazia: true });
+
+  try {
+    stub.outbox.push({
+      id: "ob-entrada-2",
+      event_id: null,
+      tentativas: 4,
+      processed_at: null,
+      payload: { entrada: ENTRADA },
+      motivo: "pre_pos_insert:rng indisponivel",
+    });
+
+    const r = await reprocessarOutboxDeLog();
+
+    assertEquals(
+      postsEmAiUsageLogs(stub.capturas).length,
+      0,
+      "sem identidade reservada NENHUM consumo é enviado — nunca às cegas",
+    );
+    assertEquals(r.pendentes, 1);
+    assertEquals(stub.outbox[0].event_id, null, "a linha segue sem identidade");
+    assertEquals(stub.outbox[0].tentativas, 5, "segue pendente, com tentativas incrementadas");
+    assertEquals(stub.outbox[0].processed_at, null, "não sai da fila sem entrega confirmada");
+  } finally {
+    stub.restaurar();
     restaurarEnv();
   }
 });
