@@ -6,9 +6,10 @@ import test from 'node:test';
 // TM-05 (#478): o E2E específico do TALK ME e os artefatos visuais não ficaram
 // rastreáveis no fechamento. O relatório de execução precisa dar um mapa
 // explícito entre cenário, teste, SHA e artefato, e registrar em linhas próprias
-// a AUSÊNCIA do spec E2E dedicado, do pacote antes/depois, do vídeo e do
-// storyboard -- sem cobrir isso com o total global de testes nem com a rodada de
-// autenticação (Playwright auth 18/18), que é uma evidência distinta.
+// cinco lacunas: spec E2E dedicado, pacote antes/depois, vídeo, storyboard e
+// teste durável da preservação do Inbox -- sem cobri-las com o total global de
+// testes nem com a rodada de autenticação (Playwright auth 18/18), que é uma
+// evidência distinta.
 //
 // A ausência não é falha a corrigir aqui (fixtures de produção são proibidas pela
 // regra R1); o que o cartão exige é que ela fique explícita e mapeada.
@@ -124,6 +125,8 @@ test('todo teste citado existe no disco e todo cenário mapeado tem SHA', () => 
 
 test('ausência do E2E dedicado e dos artefatos visuais fica explícita, sem virar contagem de testes', () => {
   const corpo = secaoRastreabilidade(relatorio);
+  assert.equal(LACUNAS.length, 5, 'guard deve declarar exatamente cinco lacunas');
+  assert.match(corpo, /cinco lacunas/u, 'relatório não declara a contagem exata de cinco lacunas');
   assert.match(corpo, /não é cobert[ao]/u, 'seção não declara que a contagem global não cobre a lacuna');
   for (const lacuna of LACUNAS) {
     assert.match(

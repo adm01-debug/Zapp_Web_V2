@@ -108,7 +108,7 @@ A amostra de 33 itens, a navegação sintética com 500 itens e o registro da fa
 
 ## Rastreabilidade E2E e artefatos visuais
 
-O fechamento do TALK ME é sustentado por testes duráveis de componente, de hook e de contrato SQL, além dos relatos de navegação local. Não foi localizado spec E2E dedicado do TALK ME, nem pacote durável antes/depois, vídeo ou storyboard no repositório. A tabela abaixo dá o mapeamento explícito entre cenário, teste, SHA e artefato; a ausência do E2E específico e dos artefatos visuais fica em linhas próprias e **não é coberta** pelo total global de testes.
+O fechamento do TALK ME é sustentado por testes duráveis de componente, de hook e de contrato SQL, além dos relatos de navegação local. As cinco lacunas rastreadas são: spec E2E dedicado do TALK ME, pacote durável antes/depois, vídeo, storyboard e teste durável da preservação do Inbox. A tabela abaixo dá o mapeamento explícito entre cenário, teste, SHA e artefato; cada uma dessas cinco lacunas fica em linha própria e **não é coberta** pelo total global de testes.
 
 O SHA de cada linha é o do último commit que fixou o conteúdo atual do teste citado na base de 06/10/2026 (`bf5e3c1ff4f16a6d0577f763906ea1f50d91bf68`); o artefato aponta onde a evidência fica registrada de forma durável.
 
