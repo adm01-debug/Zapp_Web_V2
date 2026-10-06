@@ -15,9 +15,19 @@
 --      RETURNS TABLE (mode text, instance_id text, has_api_key boolean), STABLE SECURITY DEFINER,
 --      exclusiva de admin/supervisor pela fonte CANONICA (public.is_admin_or_supervisor(auth.uid()));
 --      agente recebe `not_authorized`; a chave NUNCA aparece no retorno nem no erro.
---   2) set_department_whatsapp_config passa a registrar auditoria 'whatsapp_updated' (sem a chave);
---      o CHECK department_audit_logs_action_check ganha esse verbo (o vocabulario so e AMPLIADO:
---      os 12 verbos antigos seguem validos, inclusive nas linhas ja gravadas — testado com legado).
+--   2) set_department_whatsapp_config passa a usar a MESMA guarda da leitura
+--      (public.is_admin_or_supervisor(auth.uid()), fonte public.user_roles) no lugar de
+--      profiles.role: a autorizacao da LEITURA e da ESCRITA e uma so, decidida pelo mesmo dado.
+--      O unico uso que sobra de public.current_profile_id() na escrita e o ATOR da auditoria,
+--      nunca a decisao de autorizar.
+--   3) set_department_whatsapp_config passa a registrar auditoria 'whatsapp_updated' (sem a chave),
+--      e details.has_api_key mede o ESTADO ARMAZENADO depois do UPDATE (via RETURNING), nao o
+--      parametro recebido: chamada com p_api_key NULL num departamento que JA tem chave registra
+--      has_api_key = true (a chave continuou la), e nao false como media a versao anterior.
+--   4) as duas funcoes ficam com SET search_path = public, pg_temp.
+--   5) o CHECK department_audit_logs_action_check ganha o verbo 'whatsapp_updated' (o vocabulario so
+--      e AMPLIADO: os 12 verbos antigos seguem validos, inclusive nas linhas ja gravadas — testado
+--      com dado legado).
 --   get_department_whatsapp_credentials/_api_key continuam service_role-only (edge functions).
 --   A leitura/escrita das 2 colunas de segredo (whatsapp_api_key, whatsapp_instance_id) por
 --   `authenticated` ja esta fechada por 20260930530000 (REVOKE de TABELA em departments); este
@@ -25,7 +35,8 @@
 --
 -- FLUXOS que usam este contrato (prova: scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh):
 --   * aba de gestao do departamento (admin/supervisor) LE por get_department_whatsapp_config e
---     GRAVA por set_department_whatsapp_config — ambos sob a mesma autorizacao canonica;
+--     GRAVA por set_department_whatsapp_config — as DUAS sob a mesma guarda canonica
+--     public.is_admin_or_supervisor(auth.uid()); profiles.role nao decide nenhuma das pontas;
 --   * consumidores que precisam da chave bruta seguem em get_department_whatsapp_credentials
 --     (service_role), inalterado.
 --   Fica para o cartao da camada de tela (F62/F77) trocar o hook para a RPC nova; aqui entrega-se
@@ -64,7 +75,7 @@ ALTER TABLE public.department_audit_logs ADD CONSTRAINT department_audit_logs_ac
   'delete_department','create_department','update_role','kick_member','create_group','delete_group',
   'whatsapp_updated'));
 
--- 3) Escrita: mesma assinatura e mesma guarda; passa a auditar 'whatsapp_updated' SEM a chave.
+-- 3) Escrita: mesma assinatura; guarda IGUAL a da leitura; audita 'whatsapp_updated' SEM a chave.
 CREATE OR REPLACE FUNCTION public.set_department_whatsapp_config(
   p_department_id uuid,
   p_whatsapp_mode text,
@@ -73,21 +84,17 @@ CREATE OR REPLACE FUNCTION public.set_department_whatsapp_config(
 ) RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, pg_temp
 AS $function$
 DECLARE
-  v_profile_id uuid;
-  v_is_admin   boolean;
+  -- Ator da auditoria (nao e decisao de autorizacao: quem autoriza e public.is_admin_or_supervisor).
+  v_profile_id   uuid := public.current_profile_id();
+  -- Estado ARMAZENADO depois do UPDATE (nao o parametro recebido).
+  v_has_api_key  boolean;
 BEGIN
-  v_profile_id := public.current_profile_id();
-  IF v_profile_id IS NULL THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'not_authenticated');
-  END IF;
-
-  SELECT (role IN ('admin','supervisor')) INTO v_is_admin
-  FROM public.profiles WHERE id = v_profile_id;
-
-  IF NOT v_is_admin THEN
+  -- Guarda canonica: a MESMA da leitura e a mesma fonte (public.user_roles via
+  -- is_admin_or_supervisor). profiles.role nao autoriza nada aqui.
+  IF NOT public.is_admin_or_supervisor(auth.uid()) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'not_authorized');
   END IF;
 
@@ -101,19 +108,20 @@ BEGIN
     whatsapp_api_key     = COALESCE(p_api_key, whatsapp_api_key),
     whatsapp_instance_id = COALESCE(p_instance_id, whatsapp_instance_id),
     updated_at           = now()
-  WHERE id = p_department_id;
+  WHERE id = p_department_id
+  RETURNING (NULLIF(whatsapp_api_key, '') IS NOT NULL) INTO v_has_api_key;
 
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'error', 'department_not_found');
   END IF;
 
-  -- Auditoria sem a chave: guarda o modo e um booleano, nunca o segredo.
+  -- Auditoria sem a chave: guarda o modo e se existe chave ARMAZENADA, nunca o segredo.
   INSERT INTO public.department_audit_logs(department_id, action, profile_id, details)
   VALUES (
     p_department_id,
     'whatsapp_updated',
     v_profile_id,
-    jsonb_build_object('mode', p_whatsapp_mode, 'has_api_key', (p_api_key IS NOT NULL))
+    jsonb_build_object('mode', p_whatsapp_mode, 'has_api_key', COALESCE(v_has_api_key, false))
   );
 
   RETURN jsonb_build_object('ok', true);
