@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useCustomShortcuts } from './useCustomShortcuts';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
 interface GlobalShortcutAction {
   id: string;
@@ -34,7 +35,14 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
       toast.info('📥 Inbox', { duration: 1500 });
     },
     'go-to-dashboard': () => {
-      navigate('/');
+      // #447: só `navigate('/')` + toast anunciava Dashboard sem selecionar a
+      // view. A navegação canônica é o `navigateToView` — grava `?view=dashboard`
+      // e emite `zapp:navigate`, o evento que o shell e as instâncias de
+      // `useNavigationHistory` escutam para trocar a tela.
+      // Fora da raiz (/sla, /admin/roles) o `?view=` sozinho não levaria ao
+      // shell: volta para a raiz já com a view no caminho.
+      if (location.pathname !== '/') navigate('/?view=dashboard');
+      navigateToView('dashboard');
       toast.info('📊 Dashboard', { duration: 1500 });
     },
     'go-to-contacts': () => {
