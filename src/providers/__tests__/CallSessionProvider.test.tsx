@@ -18,6 +18,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CallSessionApi } from '../CallSessionProvider';
 import { useNavigationHistory } from '@/hooks/system/useNavigationHistory';
+import { haBloqueioRecarga, observarBloqueiosRecarga } from '@/lib/reload-blockers';
 
 /** O hook de SIP é o transporte — aqui ele é dublê, controlado pelo teste. */
 const h = vi.hoisted(() => ({
@@ -685,6 +686,121 @@ describe('T21 — o TIMEOUT do toque vive na máquina', () => {
       expect(vi.getTimerCount()).toBe(0);
     } finally {
       vi.useRealTimers();
+    }
+  });
+});
+
+/**
+ * t_16e9b473 — a chamada em andamento é uma SESSÃO CRÍTICA da política de recarga.
+ *
+ * O monitor de atualização distingue "aba apenas oculta" de "aba com trabalho
+ * ativo" por `haBloqueioRecarga()`. Sem esta declaração, ocultar a aba no meio de
+ * uma discagem/toque/chamada atendida recarregava a aplicação e derrubava a
+ * sessão SIP.
+ *
+ * O que este bloco trava:
+ *  - qualquer estado NÃO terminal (discagem, toque de saída, toque de entrada,
+ *    conectando, estabelecida) mantém `haBloqueioRecarga()` verdadeiro;
+ *  - `idle` inicial, estado terminal (`ended`) e desmontagem deixam falso;
+ *  - UM ÚNICO bloqueio por chamada: as transições internas entre estados não
+ *    terminais não liberam e re-registram (o que faria o estado agregado piscar
+ *    livre↔bloqueado e o monitor concluir que a aba pode ser recarregada).
+ */
+describe('t_16e9b473 — chamada ativa bloqueia a recarga automática', () => {
+  /** Dublê do motor num status/direção — o mesmo caminho que a UI usa. */
+  function motor(callStatus: string, callDirection: string | null = null) {
+    return sipDuble({
+      callStatus,
+      callDirection,
+      currentNumber: callDirection === 'inbound' ? '5511988887777' : '11999992048',
+    });
+  }
+
+  it('discagem, toque de saída e chamada estabelecida mantêm `haBloqueioRecarga()` verdadeiro', async () => {
+    const tela = montar();
+    // Estado inicial `idle`: nada a proteger ainda.
+    expect(texto('status')).toBe('idle');
+    expect(haBloqueioRecarga()).toBe(false);
+
+    // Discagem (`dialing`).
+    await clicarDiscar();
+    expect(texto('status')).toBe('dialing');
+    expect(haBloqueioRecarga()).toBe(true);
+
+    // Toque de saída (`ringing_out`).
+    h.value = motor('ringing', 'outbound');
+    remontar(tela, `/${VOIP_VIEW_SEARCH}`);
+    expect(texto('status')).toBe('ringing_out');
+    expect(haBloqueioRecarga()).toBe(true);
+
+    // Chamada estabelecida (`active`).
+    h.value = motor('active', 'outbound');
+    remontar(tela, `/${VOIP_VIEW_SEARCH}`);
+    expect(texto('status')).toBe('active');
+    expect(haBloqueioRecarga()).toBe(true);
+
+    // Encerramento terminal: a sessão deixou de ser crítica.
+    h.value = motor('ended', 'outbound');
+    remontar(tela, `/${VOIP_VIEW_SEARCH}`);
+    expect(texto('status')).toBe('ended');
+    expect(haBloqueioRecarga()).toBe(false);
+  });
+
+  it('toque de ENTRADA e conexão (`ringing_in` → `connecting`) também protegem', () => {
+    const tela = montar();
+    h.value = motor('ringing', 'inbound');
+    remontar(tela);
+    expect(texto('status')).toBe('ringing_in');
+    expect(haBloqueioRecarga()).toBe(true);
+
+    fireEvent.click(screen.getByText('aceitar'));
+    expect(texto('status')).toBe('connecting');
+    expect(haBloqueioRecarga()).toBe(true);
+
+    tela.unmount();
+    expect(haBloqueioRecarga()).toBe(false);
+  });
+
+  it('desmontagem do provider durante a chamada libera o bloqueio', async () => {
+    const tela = montar();
+    await clicarDiscar();
+    expect(haBloqueioRecarga()).toBe(true);
+
+    tela.unmount();
+
+    expect(haBloqueioRecarga()).toBe(false);
+  });
+
+  it('transições internas entre estados não terminais NÃO acumulam bloqueios', async () => {
+    const transicoes: boolean[] = [];
+    const parar = observarBloqueiosRecarga((bloqueado) => transicoes.push(bloqueado));
+    try {
+      const tela = montar();
+      expect(haBloqueioRecarga()).toBe(false);
+
+      // dialing → active passam por dois estados não terminais: uma única
+      // transição livre→bloqueado, sem liberar e re-registrar no meio.
+      await clicarDiscar();
+      expect(texto('status')).toBe('dialing');
+      h.value = motor('active', 'outbound');
+      remontar(tela, `/${VOIP_VIEW_SEARCH}`);
+      expect(texto('status')).toBe('active');
+      expect(haBloqueioRecarga()).toBe(true);
+      expect(transicoes).toEqual([true]);
+
+      // Encerrar pelo usuário libera UMA vez…
+      fireEvent.click(screen.getByText('desligar'));
+      expect(texto('status')).toBe('ended');
+      expect(haBloqueioRecarga()).toBe(false);
+
+      // …e a chamada seguinte volta a bloquear (o registro é por chamada).
+      await clicarDiscar();
+      expect(texto('status')).toBe('dialing');
+      expect(haBloqueioRecarga()).toBe(true);
+
+      expect(transicoes).toEqual([true, false, true]);
+    } finally {
+      parar();
     }
   });
 });

@@ -25,6 +25,7 @@ import {
   type CallSessionStatus,
 } from '@/lib/calls/session';
 import { onStartCall, type StartCallPayload } from '@/lib/calls/events';
+import { registrarBloqueioRecarga } from '@/lib/reload-blockers';
 
 /**
  * T10 — o provider ganha a máquina de estados canônica (`src/lib/calls/session.ts`).
@@ -274,6 +275,30 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
     }, RING_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, [session.status]);
+
+  /**
+   * t_16e9b473 — a chamada em andamento é uma SESSÃO CRÍTICA da política de
+   * recarga: enquanto a máquina está em QUALQUER estado não terminal (discando,
+   * tocando, conectando, atendida), ocultar a aba NÃO pode recarregar a
+   * aplicação — isso derrubaria a sessão de voz no meio.
+   *
+   * UM bloqueio por chamada, e não um por transição: a dependência é o booleano
+   * (e não `session.status`), então as passagens `dialing → ringing_out →
+   * active` mantêm o MESMO registro — o estado agregado do registro central não
+   * pisca livre↔bloqueado (o monitor de atualização leria esse piscar como "a
+   * aba pode ser recarregada").
+   *
+   * "Pode recarregar" é exatamente `idle` (nada em curso) ou terminal
+   * (`isTerminal`, o dono da lista de estados — a lista NÃO é repetida aqui): o
+   * cleanup do efeito libera no retorno a `idle`, no estado terminal e no
+   * unmount do provider.
+   */
+  const chamadaEmAndamento = session.status !== 'idle' && !isTerminal(session.status);
+
+  useEffect(() => {
+    if (!chamadaEmAndamento) return;
+    return registrarBloqueioRecarga('chamada-ativa');
+  }, [chamadaEmAndamento]);
 
   /**
    * T17 (D8): `true` enquanto o estado terminal veio do fim FRACO (o default do
