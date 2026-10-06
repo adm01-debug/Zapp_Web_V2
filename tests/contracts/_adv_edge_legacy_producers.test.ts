@@ -137,6 +137,10 @@
  *    reconcilia como tentativa sem cobrança de tokens). É arquivo de teste, não produz token
  *    legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
  *    varrido sobe, medido pela varredura depois do merge.
+ *  - 244: TRA-003 (05/10/2026) — `_shared/__tests__/evolution-connection-state.test.ts`
+ *    (prova Deno da classificação do estado GO e do efeito no health-check). É arquivo de teste,
+ *    não produz token legado: o mapa INVENTARIO e as 3 ocorrências seguem idênticos; só o total
+ *    varrido sobe, medido pela varredura depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -211,8 +215,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('243 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(243);
+  it('244 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(244);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
