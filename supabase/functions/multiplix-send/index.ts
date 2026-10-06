@@ -16,6 +16,7 @@ import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import {
   type MediaKind,
   type MessageKind,
+  type PersonalizeResult,
   newCorrelationId,
   normalizePhone,
   personalize,
@@ -416,13 +417,13 @@ export async function handleMultiplixSend(
         const { data: itemDetail, error: itemDetailError } = await supabase
           .from("multiplix_delivery_items")
           .select("id, recipient_id, block_id, attempt_count, status, " +
-            "recipient:multiplix_recipients!inner(id, destino_e164, company_name_snapshot, personalized_message), " +
+            "recipient:multiplix_recipients!inner(id, destino_e164, company_name_snapshot, personalized_message, variables_snapshot), " +
             "block:multiplix_blocks!inner(id, block_order, content)")
           .eq("id", item.item_id)
           .single();
         if (itemDetailError) throw new Error(`multiplix_item_detail_failed: ${itemDetailError.message}`);
         const recipient = (itemDetail as unknown as {
-          recipient: { id: string; destino_e164: string | null; company_name_snapshot: string | null; personalized_message: string | null };
+          recipient: { id: string; destino_e164: string | null; company_name_snapshot: string | null; personalized_message: string | null; variables_snapshot: Record<string, unknown> | null };
         }).recipient;
         const block = (itemDetail as unknown as {
           block: { id: string; block_order: number; content: Record<string, unknown> };
@@ -498,16 +499,27 @@ export async function handleMultiplixSend(
 
         let personalizedMsg: string = recipient.personalized_message ?? "";
         if (!personalizedMsg) {
-          let calculatedMessage: string;
+          // F48/MX06: as variaveis customizadas vem do snapshot congelado no
+          // confirm — o MESMO insumo que o validate (multiplix-dispatch/
+          // inspect.ts) alimenta ao personalize. Sem isso um campo aprovado na
+          // revisao viraria [variavel] ou skip no envio.
+          const variablesSnapshot = recipient.variables_snapshot;
+          const customValues: Record<string, string> = {};
+          if (variablesSnapshot && typeof variablesSnapshot === "object") {
+            for (const [key, value] of Object.entries(variablesSnapshot)) {
+              if (typeof value === "string") customValues[key] = value;
+            }
+          }
+          let resolution: PersonalizeResult;
           try {
             // F37: dialeto unificado do kernel — o nome da empresa entra por
             // contact.company, que e o campo consumido por {{empresa}}.
-            calculatedMessage = personalize(
+            resolution = personalize(
               dispatch.message_template,
               { company: recipient.company_name_snapshot },
-              {},
+              customValues,
               typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-            ).text;
+            );
           } catch (e) {
             const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
               p_item_id: item.item_id,
@@ -520,10 +532,31 @@ export async function handleMultiplixSend(
             processedCount++;
             continue;
           }
+          // MX06: o contrato do validate (campo ausente = exclusao) vale no
+          // envio. missing/unknown => 'skipped' com motivo nomeado e
+          // deterministico, ANTES do snapshot e de qualquer POST — nunca sai
+          // texto com lacuna ("") nem "[variavel]" para o cliente. O default
+          // explicito ({{chave|padrao}}) nao entra em missing/unknown e segue.
+          if (resolution.missing.length > 0 || resolution.unknown.length > 0) {
+            const motivo = [
+              ...resolution.missing.map((key) => `missing_variable:${key}`),
+              ...resolution.unknown.map((key) => `unknown_variable:${key}`),
+            ].sort().join(";");
+            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+              p_item_id: item.item_id,
+              p_claim_token: claim.claim_token,
+              p_status: "skipped",
+              p_error_message: motivo,
+            });
+            if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+            skippedCount++;
+            processedCount++;
+            continue;
+          }
           const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_item_message_snapshot", {
             p_item_id: item.item_id,
             p_claim_token: claim.claim_token,
-            p_personalized_message: calculatedMessage,
+            p_personalized_message: resolution.text,
           });
           if (snapshotError) throw new Error(`multiplix_message_snapshot_failed: ${snapshotError.message}`);
           personalizedMsg = snapshotMessage as string;

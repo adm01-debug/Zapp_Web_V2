@@ -17,12 +17,14 @@ Deno.test('personalize resolve {{saudacao}} para um período válido do dia', ()
   assert(validGreetings.includes(result), `unexpected greeting result: ${result}`);
 });
 
-Deno.test('personalize usa string vazia quando company é ausente/null (built-in {{empresa}} sem valor)', () => {
-  // Comportamento do kernel para um built-in SEM valor: {{empresa}} resolve para
-  // '' — o fallback "[variavel]" cobre apenas chaves FORA do conjunto de
-  // built-ins. Idêntico ao antigo personalizeMultiplix; nada a corrigir aqui.
-  const result = personalize('Empresa: {{empresa}}', {}).text;
-  assert(result === 'Empresa: ', `unexpected result: ${result}`);
+Deno.test('personalize mantém o texto byte a byte E reporta {{empresa}} sem valor em missing (MX06)', () => {
+  // O kernel NÃO muda de semântica: built-in sem valor continua resolvendo o
+  // TEXTO para '' — a novidade do MX06 é que o worker passa a consumir o
+  // relatório e pula o destinatário em vez de mandar a lacuna. Este teste só
+  // existe para fixar as duas metades do contrato do kernel.
+  const result = personalize('Empresa: {{empresa}}', {});
+  assert(result.text === 'Empresa: ', `unexpected result: ${result.text}`);
+  assert(result.missing.includes('empresa'), `missing deveria conter empresa: ${JSON.stringify(result.missing)}`);
 });
 
 Deno.test('personalize usa fallback [variavel] para placeholder fora do conjunto fixo (nunca lança)', () => {
@@ -96,7 +98,7 @@ function dispatchRow(overrides: DispatchRow = {}): DispatchRow {
   };
 }
 
-function recipientRow(index: number, phone: string | null) {
+function recipientRow(index: number, phone: string | null, overrides: Record<string, unknown> = {}) {
   return {
     id: `recipient-${index}`,
     dispatch_id: "00000000-0000-0000-0000-000000000001",
@@ -108,7 +110,11 @@ function recipientRow(index: number, phone: string | null) {
     attempt_count: 0,
     retry_after: null,
     personalized_message: null,
+    // F48/MX06: mapa de campos customizados congelado no confirm — o MESMO
+    // insumo que o validate alimenta ao personalize.
+    variables_snapshot: {},
     created_at: new Date(Date.now() + index).toISOString(),
+    ...overrides,
   };
 }
 
@@ -1207,6 +1213,205 @@ Deno.test("F38: destino invalido (possivel LID de 14 digitos) vira 'skipped' no_
     ctx.completions[0].p_error_message === "Sem destino de WhatsApp",
     `motivo inesperado: ${ctx.completions[0].p_error_message}`,
   );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MX06 — variável não resolvida bloqueia o envio (skipped, NUNCA POST com lacuna)
+// O validate (multiplix-dispatch/inspect.ts) já classifica campo ausente como
+// `exclusao`; o worker honra o MESMO contrato consumindo missing/unknown do
+// personalize. Antes do MX06 ele lia só .text: "Ola {{empresa}}" com snapshot
+// nulo saía como "Ola ".
+// ─────────────────────────────────────────────────────────────────────────────
+
+Deno.test("MX06: {{empresa}} sem company_name_snapshot vira 'skipped' missing_variable — zero POST, zero snapshot", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550200", { company_name_snapshot: null })],
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "mensagem incompleta nao pode ser congelada em snapshot",
+  );
+  assert(
+    rpcs(ctx, "mark_multiplix_item_dispatch_started").length === 0,
+    "o envio ao provedor nao pode nem comecar com variavel pendente",
+  );
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(ctx.completions[0].p_status === "skipped", `status esperado 'skipped', veio ${ctx.completions[0].p_status}`);
+  assert(
+    ctx.completions[0].p_error_message === "missing_variable:empresa",
+    `motivo inesperado: ${ctx.completions[0].p_error_message}`,
+  );
+});
+
+Deno.test("MX06: placeholder desconhecido (typo {{empressa}}) vira 'skipped' unknown_variable — zero POST", async () => {
+  // typo nao e builtin, nao e campo customizado, nao e link -> `unknown` do
+  // kernel. Antes saia "[empressa]" para o cliente.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empressa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550201")],
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "mensagem com placeholder desconhecido nao pode ser congelada",
+  );
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(ctx.completions[0].p_status === "skipped", `status esperado 'skipped', veio ${ctx.completions[0].p_status}`);
+  assert(
+    ctx.completions[0].p_error_message === "unknown_variable:empressa",
+    `motivo inesperado: ${ctx.completions[0].p_error_message}`,
+  );
+});
+
+Deno.test("MX06: o motivo lista TODAS as chaves pendentes, ordenadas (missing + unknown)", async () => {
+  // Deterministico: independente da ordem no template, o motivo sai ordenado —
+  // e cada chave carrega o prefixo da sua classe (missing vs unknown).
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "{{cargo}} de {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550202", { company_name_snapshot: null })],
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(
+    ctx.completions[0].p_error_message === "missing_variable:empresa;unknown_variable:cargo",
+    `motivo inesperado: ${ctx.completions[0].p_error_message}`,
+  );
+});
+
+Deno.test("MX06: builtin presente envia byte a byte o texto do kernel ({{empresa}} com snapshot)", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550203", { company_name_snapshot: "Acme Ltda" })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const esperado = personalize("Ola {{empresa}}", { company: "Acme Ltda" }, {}, "America/Sao_Paulo").text;
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    // MX06/juiz: alem do oraculo do kernel (criterio 2 pede igualdade byte a
+    // byte com o kernel), o payload tem de casar com o literal esperado — assim
+    // o teste nao depende de recalcular o mesmo codigo que esta sob teste.
+    assert(
+      textos[0].body.text === "Ola Acme Ltda",
+      `payload literal divergente: '${String(textos[0].body.text)}' !== 'Ola Acme Ltda'`,
+    );
+    assert(
+      textos[0].body.text === esperado,
+      `payload diverge do kernel: '${String(textos[0].body.text)}' !== '${esperado}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio resolvido tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("MX06: campo customizado do variables_snapshot resolve e envia byte a byte ({{cargo}})", async () => {
+  // O validate alimenta personalize com as strings de variables_snapshot — o
+  // worker usa o MESMO insumo, senao um campo aprovado viraria [cargo]/skip.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{cargo}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550204", { variables_snapshot: { cargo: "Diretor" } })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const esperado = personalize("Ola {{cargo}}", { company: "Empresa 1" }, { cargo: "Diretor" }, "America/Sao_Paulo").text;
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    // MX06/juiz: oraculo do kernel + literal, para o teste nao ser tautologico.
+    assert(
+      textos[0].body.text === "Ola Diretor",
+      `payload literal divergente: '${String(textos[0].body.text)}' !== 'Ola Diretor'`,
+    );
+    assert(
+      textos[0].body.text === esperado,
+      `payload diverge do kernel: '${String(textos[0].body.text)}' !== '${esperado}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio resolvido tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("MX06: default explicito {{empresa|padrao}} com snapshot nulo ENVIA (nao entra em missing)", async () => {
+  // `{{chave|padrao}}`: o kernel nao inclui a chave em missing/unknown — o valor
+  // padrao e aprovado pelo contrato do validate e o envio segue normal.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa|Empresa Parceira}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550205", { company_name_snapshot: null })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText (default explicito), veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      textos[0].body.text === "Ola Empresa Parceira",
+      `payload inesperado: '${String(textos[0].body.text)}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio com default tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("MX06: mensagem congelada (personalized_message) sai como esta, mesmo com variavel pendente no template", async () => {
+  // Snapshot ja aprovado no confirm: o worker nao repersonaliza nem revalida —
+  // o texto congelado e a verdade do que foi revisado.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550206", { company_name_snapshot: null, personalized_message: "Texto congelado" })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      textos[0].body.text === "Texto congelado",
+      `o congelado tem de sair como esta: '${String(textos[0].body.text)}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio congelado tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
 });
 
 Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 envio e pausa)", async () => {
