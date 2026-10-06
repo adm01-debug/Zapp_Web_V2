@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { useGlobalSearchData, type SearchResult } from './useGlobalSearchData';
+import { useGlobalSearchData, type SearchResult, type TagSuggestion } from './useGlobalSearchData';
 import { GlobalSearchFilters } from './search/GlobalSearchFilters';
 import { GlobalSearchResults } from './search/GlobalSearchResults';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -26,6 +26,20 @@ interface GlobalSearchProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectResult: (result: SearchResult) => void;
+}
+
+/** Um item alcançável pelas setas — na ordem em que a tela o renderiza. */
+type NavigationTarget =
+  | { kind: 'tag'; tag: TagSuggestion }
+  | { kind: 'action'; action: QuickAction }
+  | { kind: 'result'; result: SearchResult };
+
+/**
+ * Índice válido para a lista atual. Qualquer outra coisa — fora da faixa ou `NaN`
+ * (vindo de um total zero) — volta para o começo, em vez de deixar a navegação morta.
+ */
+function normalizeNavIndex(index: number, total: number): number {
+  return Number.isInteger(index) && index >= 0 && index < total ? index : 0;
 }
 
 export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearchProps) {
@@ -62,26 +76,56 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
     handleSearch(query);
   }, [handleSearch]);
 
+  const showActions = activeTypes.has('action') && filteredActions.length > 0 && (search.length === 0 || search.length >= 1);
+
+  // R2-INB-019: as setas percorrem UMA sequência — a mesma que a tela renderiza
+  // (tags sugeridas > ações rápidas > resultados). Antes o `total` era só
+  // `tagSuggestions.length`/`results.length`: com a lista vazia o módulo dava `NaN`
+  // e as ações rápidas visíveis ficavam fora da navegação e do Enter.
+  const navigationTargets = useMemo<NavigationTarget[]>(() => {
+    if (tagSuggestions.length > 0) return tagSuggestions.map((tag) => ({ kind: 'tag', tag }));
+    const targets: NavigationTarget[] = [];
+    if (showActions) filteredActions.forEach((action) => targets.push({ kind: 'action', action }));
+    results.forEach((result) => targets.push({ kind: 'result', result }));
+    return targets;
+  }, [tagSuggestions, showActions, filteredActions, results]);
+
+  // O `GlobalSearchResults` destaca pelo índice DELE: quantos alvos vêm antes dos resultados.
+  const resultsOffset = tagSuggestions.length > 0 ? 0 : showActions ? filteredActions.length : 0;
+
+  // A lista muda (chegada assíncrona de resultados, troca de filtro, tag escolhida) sem
+  // passar por `handleSearch`: o índice não pode sobrar fora dela.
+  useEffect(() => {
+    setSelectedIndex((prev) => normalizeNavIndex(prev, navigationTargets.length));
+  }, [navigationTargets.length, setSelectedIndex]);
+
   // Keyboard navigation
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      const total = tagSuggestions.length > 0 ? tagSuggestions.length : results.length;
-      if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex(p => (p + 1) % total); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex(p => (p - 1 + total) % total); }
-      else if (e.key === 'Enter' && total > 0) {
+      const total = navigationTargets.length;
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (tagSuggestions.length > 0) handleTagSelect(tagSuggestions[selectedIndex]);
-        else if (results[selectedIndex]) handleSelect(results[selectedIndex]);
+        if (total === 0) return;
+        setSelectedIndex((p) => (normalizeNavIndex(p, total) + 1) % total);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (total === 0) return;
+        setSelectedIndex((p) => (normalizeNavIndex(p, total) - 1 + total) % total);
+      } else if (e.key === 'Enter' && total > 0) {
+        e.preventDefault();
+        const target = navigationTargets[normalizeNavIndex(selectedIndex, total)];
+        if (target.kind === 'tag') handleTagSelect(target.tag);
+        else if (target.kind === 'action') target.action.action();
+        else handleSelect(target.result);
       } else if (e.key === 'Escape') onOpenChange(false);
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [open, results, tagSuggestions, selectedIndex, handleSelect, handleTagSelect, onOpenChange, setSelectedIndex]);
+  }, [open, navigationTargets, selectedIndex, handleSelect, handleTagSelect, onOpenChange, setSelectedIndex]);
 
   const activeFiltersCount = (activeTypes.size < 5 ? 1 : 0) + (dateFilter !== 'all' ? 1 : 0) + (selectedTags.length > 0 ? 1 : 0) + (mediaTypeFilter !== 'all' ? 1 : 0);
   const showHistory = search.length === 0 && history.length > 0 && tagSuggestions.length === 0;
-  const showActions = activeTypes.has('action') && filteredActions.length > 0 && (search.length === 0 || search.length >= 1);
 
   const handleClearFilters = useCallback(() => {
     resetFilters();
@@ -187,7 +231,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
                 <Zap className="h-3 w-3" /> Ações rápidas
               </div>
               {filteredActions.map((action, index) => (
-                <button key={action.id} onClick={() => action.action()} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 transition-colors ${!search && index === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50'}`}>
+                <button key={action.id} onClick={() => action.action()} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 transition-colors ${index === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50'}`}>
                   <div className="p-2 rounded-full bg-accent/10 text-accent">{action.icon}</div>
                   <div className="flex-1">
                     <span className="text-sm font-medium">{action.title}</span>
@@ -230,7 +274,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
             results={results}
             isLoading={isLoading}
             search={search}
-            selectedIndex={selectedIndex}
+            selectedIndex={selectedIndex - resultsOffset}
             hasTagSuggestions={tagSuggestions.length > 0}
             onSelect={handleSelect}
           />
