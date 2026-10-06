@@ -25,6 +25,7 @@ interface CampaignRow { [key: string]: unknown }
 
 interface ClientOpts {
   due?: CampaignRow[];
+  dueError?: string;
   paused?: CampaignRow[];
   connections?: Array<{ id: string; status: string | null }>;
   /** #121A: linha(s) de `talkx_settings` — `business_hours` chega como JSONB (objeto). */
@@ -51,7 +52,9 @@ function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
       if (table === "talkx_campaigns") {
         if (status === "scheduled") {
           ctx.dueQueries += 1;
-          return { data: opts.due ?? [], error: null };
+          return opts.dueError
+            ? { data: null, error: { message: opts.dueError } }
+            : { data: opts.due ?? [], error: null };
         }
         if (status === "paused") {
           ctx.pausedQueries += 1;
@@ -369,4 +372,30 @@ Deno.test("[#121A] retomada respeita o business_hours salvo (não usa o default 
   );
   assert(resDentro.status === 200, `esperado 200, recebido ${resDentro.status}`);
   assert(fetchDentro.posts.length === 1, `dentro do horário salvo deve retomar (${fetchDentro.posts.length} POST)`);
+});
+
+// --------------------------------------------------------------------------- R2-INF-016
+
+Deno.test("R2-INF-016: falha ao ler as campanhas agendadas → 500 sanitizado (sem detalhe do banco)", async () => {
+  const SEGREDO = "relation talkx_campaigns does not exist (sintetico)";
+  const linhas: string[] = [];
+  const originalError = console.error;
+  console.error = (...args: unknown[]) => { linhas.push(args.map((a) => String(a)).join(" ")); };
+  try {
+    const { client } = makeClient({ dueError: SEGREDO });
+    const res = await handleTalkxScheduler(
+      makeRequest({ cronSecret: TEST_CRON_SECRET }),
+      makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
+    );
+    assert(res.status === 500, `esperado 500, recebido ${res.status}`);
+    const texto = await res.text();
+    assert(!texto.includes(SEGREDO), `o corpo nao pode trazer o detalhe interno: ${texto}`);
+    assert(JSON.parse(texto).error === "Internal server error", `corpo inesperado: ${texto}`);
+    assert(
+      linhas.some((l) => l.includes(SEGREDO)),
+      `o detalhe interno precisa constar no log do servidor; capturado:\n${linhas.join("\n")}`,
+    );
+  } finally {
+    console.error = originalError;
+  }
 });

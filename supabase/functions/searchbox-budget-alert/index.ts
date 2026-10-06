@@ -6,13 +6,13 @@
 // Autorizacao: helper canonico _shared/cron-secret-auth.ts (x-cron-secret contra o env CRON_SECRET
 // desta funcao; o valor correspondente vive no Vault como searchbox_alert_cron_secret).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, requireEnv } from "../_shared/validation.ts";
+import { handleCors, internalErrorResponse, requireEnv } from "../_shared/validation.ts";
 import { unauthorizedResponse } from "../_shared/cron-secret-auth.ts";
 
 const DESTINATARIO = "adm01@promobrindes.com.br";
 const LIMITE = 400;   // das 500 gratis; o guarda do client degrada em 450
 
-Deno.serve(async (req: Request) => {
+export async function handleSearchboxBudgetAlert(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -31,7 +31,13 @@ Deno.serve(async (req: Request) => {
     .gte("dia", new Date(new Date().toISOString().slice(0, 7) + "-01").toISOString().slice(0, 10));
 
   if (error) {
-    return new Response(JSON.stringify({ ok: false, erro: error.message }), { status: 500 });
+    console.error(JSON.stringify({
+      level: "error",
+      fn: "searchbox-budget-alert",
+      msg: "Falha ao ler searchbox_usage_daily",
+      error: error.message,
+    }));
+    return internalErrorResponse(error, req);
   }
 
   const sessoes = (data ?? []).reduce((soma, linha) => soma + (linha.sessoes ?? 0), 0);
@@ -61,4 +67,8 @@ Deno.serve(async (req: Request) => {
     JSON.stringify({ ok: resposta.ok, enviado: resposta.ok, sessoes, status: resposta.status }),
     { status: resposta.ok ? 200 : 502 },
   );
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req: Request) => handleSearchboxBudgetAlert(req));
+}

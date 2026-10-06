@@ -25,9 +25,11 @@ const RAIZ_PADRAO = "supabase/functions";
 // `auth.admin.createUser` num 400). O que nao pode vazar e detalhe interno num 5xx, ou stack trace
 // em qualquer status. O alerta #13 era exatamente disso: err.message indo ao corpo da resposta.
 const PADROES = [
-  { nome: ".stack na resposta HTTP", re: /errorResponse\s*\([^;]*\.stack\b|JSON\.stringify\s*\([^;]*\.stack\b/ },
+  { nome: ".stack na resposta HTTP", re: /(?:errorResponse|jsonResponse|new\s+Response|JSON\.stringify)\s*\([\s\S]*?\.stack\b/ },
   { nome: ".message em resposta 5xx", re: /errorResponse\s*\([^,;]*\.message\s*,\s*5\d\d\b/ },
-  { nome: ".message em corpo 500", re: /status\s*:\s*5\d\d[\s\S]{0,120}?\b\w+\.message\b/ },
+  { nome: ".message em resposta 5xx", re: /jsonResponse\s*\([\s\S]*?\b(?:err|error|e|\w*Error)\.message\b[\s\S]{0,160}?,\s*5\d\d\b/ },
+  { nome: ".message em resposta 5xx", re: /new\s+Response\s*\([\s\S]*?\b(?:err|error|e|\w*Error)\.message\b[\s\S]*?\)\s*,\s*\{[\s\S]{0,240}?status\s*:\s*5\d\d\b/ },
+  { nome: ".message em resposta 5xx", re: /new\s+Response\s*\([\s\S]*?\)\s*,\s*\{[\s\S]{0,240}?status\s*:\s*5\d\d\b[\s\S]*?\b(?:err|error|e|\w*Error)\.message\b/ },
 ];
 
 /**
@@ -38,11 +40,20 @@ export function acharExposicoes(fonte, arquivo = "arquivo.ts") {
   const achados = [];
   const linhas = fonte.split("\n");
   for (let i = 0; i < linhas.length; i += 1) {
-    const linha = linhas[i];
-    const semEspaco = linha.trim();
+    const semEspaco = linhas[i].trim();
     if (semEspaco.startsWith("//") || semEspaco.startsWith("*") || semEspaco.startsWith("/*")) continue;
+    if (!/(?:errorResponse|jsonResponse|new\s+Response|JSON\.stringify)\s*\(/.test(linhas[i])) continue;
+
+    const blocoLinhas = [linhas[i]];
+    let parenteses = (linhas[i].match(/\(/g) ?? []).length - (linhas[i].match(/\)/g) ?? []).length;
+    for (let j = i + 1; j < linhas.length && j < i + 16 && parenteses > 0; j += 1) {
+      blocoLinhas.push(linhas[j]);
+      parenteses += (linhas[j].match(/\(/g) ?? []).length - (linhas[j].match(/\)/g) ?? []).length;
+    }
+
+    const bloco = blocoLinhas.join("\n");
     for (const { nome, re } of PADROES) {
-      if (re.test(linha)) achados.push({ arquivo, linha: i + 1, padrao: nome, trecho: semEspaco.slice(0, 120) });
+      if (re.test(bloco)) achados.push({ arquivo, linha: i + 1, padrao: nome, trecho: semEspaco.slice(0, 120) });
     }
   }
   return achados;
