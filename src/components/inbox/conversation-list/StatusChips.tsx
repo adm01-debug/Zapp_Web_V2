@@ -22,13 +22,21 @@ const COUNTER_TONE: Record<ChipTab, { active: string; inactive: string }> = {
 };
 
 export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusChipsProps) {
-  const { user } = useAuth();
+  const { profile } = useAuth();
 
   const counts = useMemo(() => {
-    const userId = user?.id;
+    // R2-INB-056 (#349): `contact.assigned_to` guarda `profiles.id` (FK para
+    // public.profiles). A identidade do usuário logado que corresponde a ele é
+    // `profile.id` — NÃO `user.id`, que é o `auth.users.id` (UUID diferente,
+    // gerado em profiles.id por gen_random_uuid). Comparar com o auth id zerava
+    // o contador "Em atendimento" e o deixava fora de sincronia com o filtro da
+    // lista (useInboxFilters já usa profile.id).
+    const profileId = profile?.id;
     const openConversations = conversations.filter(c => c.messages.length > 0);
 
-    const attending = openConversations.filter(c => c.contact.assigned_to === userId);
+    const attending = openConversations.filter(
+      c => profileId != null && c.contact.assigned_to === profileId
+    );
     const waiting = openConversations.filter(c => !c.contact.assigned_to);
     const unread = openConversations.filter(c => {
       const unreadMessages = (c.contact as unknown as { unread_messages?: number }).unread_messages ?? 0;
@@ -43,7 +51,7 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
       waiting: waiting.length,
       resolved: resolved.length,
     };
-  }, [conversations, user?.id]);
+  }, [conversations, profile?.id]);
 
   const chips: { id: ChipTab; label: string; count: number }[] = [
     { id: 'all', label: 'Todas', count: counts.all },

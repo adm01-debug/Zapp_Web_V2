@@ -4,7 +4,10 @@ import { StatusChips } from '../conversation-list/StatusChips';
 import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 
 vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
+  // R2-INB-056: a identidade usada para comparar com `assigned_to` é profile.id
+  // (o mock antigo só trazia `user`, do auth). Aqui os dois são o mesmo valor
+  // porque o alvo deste arquivo é a contagem por chip, não a origem do id.
+  useAuth: () => ({ user: { id: 'user-1' }, profile: { id: 'user-1' } }),
 }));
 
 function makeConversation(overrides: Partial<ConversationWithMessages['contact']> & { hasMessages?: boolean; unreadCount?: number }): ConversationWithMessages {

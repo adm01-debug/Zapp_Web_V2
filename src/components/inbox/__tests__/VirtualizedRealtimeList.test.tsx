@@ -45,7 +45,9 @@ vi.mock('@tanstack/react-virtual', () => ({
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: CURRENT_USER_ID } }),
+  // R2-INB-056: CURRENT_USER_ID é o profiles.id do logado — a identidade agora
+  // vem de `profile` (o mock antigo trazia só `user`, do auth).
+  useAuth: () => ({ user: { id: CURRENT_USER_ID }, profile: { id: CURRENT_USER_ID } }),
 }));
 
 vi.mock('@/hooks/crm/useAgentsLite', () => ({

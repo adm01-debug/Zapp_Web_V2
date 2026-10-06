@@ -106,8 +106,13 @@ export function VirtualizedRealtimeList({
   onSnooze,
 }: VirtualizedRealtimeListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
-  const currentUserId = user?.id ?? null;
+  // R2-INB-056 (#349): `contact.assigned_to` guarda `profiles.id`; a identidade
+  // do usuário logado correspondente é `profile.id` (o `agentsMap` de
+  // useAgentsLite também é chaveado por profiles.id). Usar `user.id`
+  // (auth.users.id) nunca batia, e a linha da própria conversa mostrava o
+  // mini-avatar "Atendido por" com o próprio nome.
+  const { profile } = useAuth();
+  const currentUserId = profile?.id ?? null;
   const agentsMap = useAgentsLite();
   const { density } = useDensity();
   const itemHeight = ITEM_HEIGHT_BY_DENSITY[density];
