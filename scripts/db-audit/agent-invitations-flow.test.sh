@@ -305,6 +305,18 @@ OLD_ID="$(psql_sql "SELECT id FROM public.agent_invitations WHERE code = '$CODE_
 expect_value_as 'list_agent_invites marca o convite vencido como expired' '1' "$ADMIN" \
   "SELECT count(*) FROM public.list_agent_invites(50) WHERE id = '$OLD_ID' AND status = 'expired'"
 
+# convite vencido nao prende o e-mail para sempre: o reenvio entra e o velho vira terminal
+expect_value_as 'novo convite para e-mail com convite vencido e aceito' 'true' "$ADMIN" \
+  "SELECT public.create_agent_invite('outro@empresa.com', 'Outro', 'agent') ->> 'ok'"
+expect_value 'convite vencido foi para estado terminal' 'revoked' \
+  "SELECT status FROM public.agent_invitations WHERE id = '$OLD_ID'"
+expect_value 'indice unico nao tem duas linhas pending do mesmo e-mail' '1' \
+  "SELECT count(*) FROM public.agent_invitations WHERE email = 'outro@empresa.com' AND status = 'pending'"
+expect_value_as 'codigo do convite vencido/terminal continua recusado' 'invalid_or_expired_code' "$OTHER" \
+  "SELECT public.accept_agent_invite('$CODE_OLD') ->> 'error'"
+expect_value_as 'novo pendente valido segue recusando segundo convite' 'already_pending' "$ADMIN" \
+  "SELECT public.create_agent_invite('outro@empresa.com', 'Outro', 'agent') ->> 'error'"
+
 # --- leitura do estado: admin/supervisor sim, o resto nao ---
 expect_value_as 'admin ve os convites com estado' 't' "$ADMIN" \
   "SELECT count(*) > 0 FROM public.list_agent_invites(50) WHERE status IN ('pending', 'used', 'expired')"
