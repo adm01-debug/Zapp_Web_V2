@@ -75,14 +75,33 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
     return { bg: 'bg-success', text: 'text-success', glow: 'shadow-green-500/50' };
   }, [strengthPercent]);
 
+  // R2-AUTH-031: o veredito de vazamento so vale para a senha que gerou a
+  // consulta. Ao trocar de senha, zera na hora — padrao oficial do React de
+  // ajuste de estado durante a renderizacao (antes de qualquer efeito), sem
+  // esperar a proxima consulta responder. Senao a confirmacao/alerta da
+  // senha anterior continuaria na tela descrevendo um valor que ja mudou.
+  const [senhaDoVeredito, setSenhaDoVeredito] = useState(password);
+  if (senhaDoVeredito !== password) {
+    setSenhaDoVeredito(password);
+    setIsBreached(null);
+    setBreachCount(0);
+    setCheckingBreach(false);
+  }
+
   const isValid = metRequirements.length === requirements.length && isBreached !== true;
 
   // Check for breached passwords using HaveIBeenPwned API
   useEffect(() => {
+    // R2-AUTH-031: o cleanup cancela so o timer; uma consulta ja em voo
+    // continuaria resolvendo depois da troca de senha. geracaoAtiva fecha
+    // essa porta: resposta de geracao encerrada nao escreve veredito nem
+    // mexe no loading da consulta vigente, em qualquer ordem de resolucao.
+    let geracaoAtiva = true;
+
     if (!password || password.length < 8) {
-      setIsBreached(null);
-      setBreachCount(0);
-      return;
+      return () => {
+        geracaoAtiva = false;
+      };
     }
 
     const checkBreach = async () => {
@@ -96,14 +115,18 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
           headers: { 'Add-Padding': 'true' }
         });
 
+        if (!geracaoAtiva) return;
+
         if (!response.ok) {
           setIsBreached(null);
           return;
         }
 
         const text = await response.text();
+        if (!geracaoAtiva) return;
+
         const lines = text.split('\n');
-        
+
         for (const line of lines) {
           const [hashSuffix, count] = line.split(':');
           if (hashSuffix.trim() === suffix) {
@@ -112,19 +135,25 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
             return;
           }
         }
-        
+
         setIsBreached(false);
         setBreachCount(0);
       } catch (error) {
+        if (!geracaoAtiva) return;
         log.error('Error checking password breach:', error);
         setIsBreached(null);
       } finally {
-        setCheckingBreach(false);
+        if (geracaoAtiva) {
+          setCheckingBreach(false);
+        }
       }
     };
 
     const debounce = setTimeout(checkBreach, 500);
-    return () => clearTimeout(debounce);
+    return () => {
+      geracaoAtiva = false;
+      clearTimeout(debounce);
+    };
   }, [password]);
 
   // Notify parent of strength changes
