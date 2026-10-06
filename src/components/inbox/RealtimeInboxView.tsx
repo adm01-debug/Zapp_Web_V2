@@ -196,7 +196,10 @@ export function RealtimeInboxView() {
     if (result.contactId) inbox.handleSelectConversation(result.contactId);
   };
 
-  if (inbox.error) {
+  // R2-INB-015: com um cache válido a Inbox continua utilizável offline. A tela
+  // de erro global só substitui a UI quando NÃO há cache para sustentá-la —
+  // antes ela engolia o recorte em cache tão logo a carga falhava.
+  if (inbox.error && !inbox.usingCache) {
     return (
       <div className="flex items-center justify-center h-full bg-background">
         <div className="text-center p-8">
@@ -367,7 +370,17 @@ export function RealtimeInboxView() {
       </div>
 
       {inbox.usingCache && (
-        <div className="absolute top-0 left-0 right-0 z-50 bg-warning/90 text-warning-foreground text-xs text-center py-1.5 font-medium">🚧 Modo offline — exibindo dados em cache</div>
+        <div
+          data-testid="inbox-offline-cache-banner"
+          className="absolute top-0 left-0 right-0 z-50 bg-warning/90 text-warning-foreground text-xs text-center py-1.5 font-medium"
+        >
+          🚧 Modo offline — exibindo dados em cache
+          {/* R2-INB-015: identifica o recorte — a conversa ativa está mostrando
+              as mensagens guardadas no cache, não as carregadas ao vivo. */}
+          {inbox.selectedMessagesFromCache && (
+            <span data-testid="inbox-offline-cache-messages"> · mensagens da conversa vindas do cache</span>
+          )}
+        </div>
       )}
 
       {isMobile && inbox.pipContact && !inbox.selectedContactId && (
