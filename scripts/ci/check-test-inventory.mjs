@@ -56,6 +56,11 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // --- .test.sh — prova em container descartável (docker); passo de YAML a promover em
+  // db-guard.yml pelo dono do workflow (agente não edita workflow).
+  // R2-AUTH-015: convite de agente com destinatário, papel autorizado, expiração e uso único,
+  // com atribuição do papel decidida no servidor na aceitação.
+  'scripts/db-audit/agent-invitations-flow.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
