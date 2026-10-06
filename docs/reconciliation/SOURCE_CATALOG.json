@@ -234,14 +234,14 @@
     },
     {
       "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
-      "role": "SUPPORTING_DOCUMENT",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
       "plan_id": null,
       "sha256": "a9160fe5c2518e0f6cf65863656348dd7568e80c3694249b59d6dfaffb6fcd1d",
       "git_blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0"
     },
     {
       "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
-      "role": "SUPPORTING_DOCUMENT",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
       "plan_id": null,
       "sha256": "c666da6491af556d1d31bd959ebd939492742df8a0effd0c959db63ed9f1323f",
       "git_blob_sha": "a81f50f87747f3f3ae302441de527abfa36c2835"

@@ -2284,5 +2284,226 @@
       "reason": "Referência do README não localizada no baseline nem no histórico acessível. Nenhuma das50 etapas foi inventada."
     }
   ],
-  "note": "Registro de fontes e linhagens; quantidade de etapas não é backlog e não é certificação de produção."
+  "adjudicated_sources": 2,
+  "source_adjudications": [
+    {
+      "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "source_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0",
+      "sha256": "a9160fe5c2518e0f6cf65863656348dd7568e80c3694249b59d6dfaffb6fcd1d",
+      "task_headings": 6,
+      "requirement_ids": [
+        "CRM360-T1",
+        "CRM360-T2",
+        "CRM360-T3",
+        "CRM360-T4",
+        "CRM360-T5",
+        "CRM360-T6"
+      ],
+      "status": "ADJUDICATED_HISTORICAL_SOURCE_NOT_NEW_BACKLOG",
+      "adjudication_ref": "reaudit/2026-10-03/reports/root/omitted-source-adjudication.json",
+      "new_tasks_added_to_ledger": 0,
+      "automatic_execution_authorized": false,
+      "correspondence": [
+        {
+          "id": "CRM360-T1",
+          "status": "CURRENT_CONSUMER_PRESENT_REQUIRES_SUCCESSOR_ADJUDICATION",
+          "consumers": [
+            {
+              "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+              "line_start": 94,
+              "line_end": 104
+            }
+          ],
+          "adjudication": "Panel ativo dentro de Mais detalhes, protegido pelo gate CRM; a localização histórica mudou."
+        },
+        {
+          "id": "CRM360-T2",
+          "status": "CURRENT_CONSUMER_PRESENT_REQUIRES_SUCCESSOR_ADJUDICATION",
+          "consumers": [
+            {
+              "path": "src/components/contacts/ContactsView.tsx",
+              "line_start": 170,
+              "line_end": 180
+            }
+          ],
+          "adjudication": "Busca CRM integrada à tela de Contatos via ContactCRMDialog; planos posteriores divergem sobre o botão, sem dez tarefas novas presumidas."
+        },
+        {
+          "id": "CRM360-T3",
+          "status": "PARTIAL_OR_CHANGED_SCOPE",
+          "consumers": [
+            {
+              "path": "src/components/inbox/useGlobalSearchData.ts",
+              "line_start": 189,
+              "line_end": 218
+            },
+            {
+              "path": "src/components/inbox/useGlobalSearchData.ts",
+              "line_start": 241,
+              "line_end": 247
+            },
+            {
+              "path": "src/components/CommandPalette.tsx",
+              "line_start": 1,
+              "line_end": 139
+            }
+          ],
+          "adjudication": "GlobalSearch consulta CRM com gate de supervisor, deduplica telefone e só inclui vínculos locais; debounce300ms. CommandPalette ativo busca módulos. Reconciliar a intenção antiga de busca/importação."
+        },
+        {
+          "id": "CRM360-T4",
+          "status": "IMPLEMENTED_IN_SUPERSEDED_COMPONENT",
+          "consumers": [
+            {
+              "path": "src/components/inbox/chat/ChatHeader.tsx",
+              "line_start": 43,
+              "line_end": 55
+            },
+            {
+              "path": "src/components/inbox/chat/ChatHeader.tsx",
+              "line_start": 127,
+              "line_end": 129
+            },
+            {
+              "path": "src/components/inbox/ChatPanel.tsx",
+              "line_start": 244,
+              "line_end": 251
+            }
+          ],
+          "adjudication": "ChatHeader antigo contém CrmBadges, mas ChatPanel usa ChatPanelHeader. A presença do componente legado não certifica o header ativo."
+        },
+        {
+          "id": "CRM360-T5",
+          "status": "PARTIAL_OR_CHANGED_SCOPE",
+          "consumers": [
+            {
+              "path": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
+              "line_start": 140,
+              "line_end": 205
+            }
+          ],
+          "adjudication": "Header atual tem logo/nome/VIP; vendedor não aparece nesse header, podendo estar na ficha. Necessita sucessão explícita, não reaplicação cega do prompt."
+        },
+        {
+          "id": "CRM360-T6",
+          "status": "PARTIAL_OR_CHANGED_SCOPE",
+          "consumers": [
+            {
+              "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+              "line_start": 458,
+              "line_end": 467
+            }
+          ],
+          "adjudication": "Lista ativa mostra empresa do contato local; não há consulta CRM por linha nesse ponto. Badge CRM específico do prompt não está presente no trecho."
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+          "line_start": 44,
+          "line_end": 120,
+          "ref": "da307ba5626dce892f0b37cb6762463f55d14a96"
+        }
+      ],
+      "basis": "Prompt historico com seis tarefas explicitas. A adjudicacao de origem foi registrada no reaudit e nenhuma tarefa nova entra no ledger: cada cabecalho tem correspondencia com consumidor atual ou componente substituido. Requisitos historicos permanecem separados de trabalho novo."
+    },
+    {
+      "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+      "role": "DETAILED_REQUIREMENT_DECOMPOSITION_NOT_ADDITIONAL_TASKS",
+      "source_sha": "a81f50f87747f3f3ae302441de527abfa36c2835",
+      "sha256": "c666da6491af556d1d31bd959ebd939492742df8a0effd0c959db63ed9f1323f",
+      "task_headings": 4,
+      "requirement_ids": [
+        "INTEL-T1",
+        "INTEL-T2",
+        "INTEL-T3",
+        "INTEL-T4"
+      ],
+      "status": "ADJUDICATED_HISTORICAL_SOURCE_NOT_NEW_BACKLOG",
+      "adjudication_ref": "reaudit/2026-10-03/reports/root/omitted-source-adjudication.json",
+      "new_tasks_added_to_ledger": 0,
+      "automatic_execution_authorized": false,
+      "correspondence": [
+        {
+          "id": "INTEL-T1",
+          "status": "CURRENT_CONSUMER_PRESENT_REQUIRES_SUCCESSOR_ADJUDICATION",
+          "consumers": [
+            {
+              "path": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx",
+              "line_start": 99,
+              "line_end": 251
+            },
+            {
+              "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+              "line_start": 100,
+              "line_end": 104
+            }
+          ],
+          "adjudication": "Painel ativo possui gatilhos limitados a4, rapport condicional, fallback de horários, cores churn e DISC. QA visual e contrato de dados externos não foram executados."
+        },
+        {
+          "id": "INTEL-T2",
+          "status": "IMPLEMENTED_IN_SUPERSEDED_COMPONENT",
+          "consumers": [
+            {
+              "path": "src/components/inbox/chat/ChatHeader.tsx",
+              "line_start": 70,
+              "line_end": 99
+            },
+            {
+              "path": "src/components/inbox/ChatPanel.tsx",
+              "line_start": 244,
+              "line_end": 251
+            }
+          ],
+          "adjudication": "Brain, largura320, borda de risco e motion existem no ChatHeader legado; o header ativo é outro."
+        },
+        {
+          "id": "INTEL-T3",
+          "status": "PARTIAL_OR_CHANGED_SCOPE",
+          "consumers": [
+            {
+              "path": "src/components/inbox/CRMAutoSync.tsx",
+              "line_start": 98,
+              "line_end": 151
+            },
+            {
+              "path": "src/components/inbox/contact-details/ContactActionButtons.tsx",
+              "line_start": 30,
+              "line_end": 58
+            }
+          ],
+          "adjudication": "CRMSyncButton legado não tem consumidor ativo localizado. O sucessor CrmSyncMenuItem envia contato estável, mas não mostra badge persistente de último sync ou modo Sem CRM."
+        },
+        {
+          "id": "INTEL-T4",
+          "status": "PARTIAL_OR_CHANGED_SCOPE",
+          "consumers": [
+            {
+              "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+              "line_start": 439,
+              "line_end": 454
+            },
+            {
+              "path": "src/components/inbox/CRMAutoSync.tsx",
+              "line_start": 66,
+              "line_end": 90
+            }
+          ],
+          "adjudication": "Lista ativa usa ai_sentiment canônico PT-BR; header legado usa briefing.sentiment. O detector do CRMAutoSync não é uma prova de atualização em tempo real de ambos."
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+          "line_start": 25,
+          "line_end": 61,
+          "ref": "da307ba5626dce892f0b37cb6762463f55d14a96"
+        }
+      ],
+      "basis": "Prompt historico com quatro tarefas explicitas. A adjudicacao de origem foi registrada no reaudit e nenhuma tarefa nova entra no ledger: cada cabecalho tem correspondencia com consumidor atual ou componente substituido. Requisitos historicos permanecem separados de trabalho novo."
+    }
+  ],
+  "note": "Registro de fontes e linhagens; quantidade de etapas nao e backlog e nao e certificacao de producao. Fontes com tarefas explicitas fora dos planos resolvidos tem adjudicacao em source_adjudications, sem acrescentar tarefas ao ledger."
 }
