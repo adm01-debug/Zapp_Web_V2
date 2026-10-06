@@ -4,12 +4,16 @@ import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 
 import {
+  cobreComando,
+  comandoProtegido,
   manifestPolicyNames,
   policiesOn,
+  predicadoEfetivo,
   resolveEffectivePolicies,
   resolvePolicyState,
   snapshotDoManifest,
   tabelasComPolicyPosterior,
+  type ComandoRls,
 } from './helpers/rlsSchema';
 
 // ─── Guarda de integridade dos testes de RLS (item 166 / R2-GOV-003) ───
@@ -54,6 +58,18 @@ describe('Guarda: testes de RLS leem o schema real, nao um espelho', () => {
         /from\s+['"].*helpers\/rlsSchema['"]/.test(fonte) &&
           /resolveEffectivePolicies|resolvePolicyState/.test(fonte),
         `${nome} nao usa o resolvedor de migrations`,
+      ).toBe(true);
+    }
+  });
+
+  it('todo teste de RLS valida pelo ponto unico (predicado efetivo, FOR ALL incluido)', () => {
+    // Sem esta amarra um teste pode voltar a filtrar so `command === 'X'` e
+    // reabrir a brecha do FOR ALL sem ninguem perceber.
+    for (const nome of rlsTests) {
+      const fonte = readFileSync(join(TESTS_DIR, nome), 'utf8');
+      expect(
+        /cobreComando|predicadoEfetivo|comandoProtegido/.test(fonte),
+        `${nome} nao usa o ponto unico de validacao por comando`,
       ).toBe(true);
     }
   });
@@ -194,5 +210,60 @@ describe('Guarda: o resolvedor aplica CREATE/DROP/ALTER/drop dinamico', () => {
     expect(real.using).toMatch(/is_admin_or_supervisor/);
     expect(pior.using).toBe('true');
     expect(pior.using).not.toBe(real.using);
+  });
+});
+
+describe('Guarda: FOR ALL entra na validacao de cada comando (semantica do Postgres)', () => {
+  const ADMIN_OU_SUPERVISOR = /is_admin_or_supervisor\(\s*auth\.uid\(\)\s*\)/;
+  const COMANDOS: ComandoRls[] = ['SELECT', 'INSERT', 'UPDATE', 'DELETE'];
+
+  it('FOR ALL conta como cobertura dos quatro comandos', () => {
+    const fixture = [
+      {
+        name: '0001.sql',
+        sql: `CREATE POLICY "admins" ON public.t FOR ALL TO authenticated
+              USING (is_admin_or_supervisor(auth.uid()))
+              WITH CHECK (is_admin_or_supervisor(auth.uid()));`,
+      },
+    ];
+    const policies = policiesOn(resolvePolicyState(fixture), 't');
+    expect(policies).toHaveLength(1);
+    for (const comando of COMANDOS) {
+      expect(cobreComando(policies[0], comando)).toBe(true);
+      expect(comandoProtegido(policies, comando, ADMIN_OU_SUPERVISOR), comando).toBe(true);
+    }
+  });
+
+  it('reprova FOR ALL USING (true) mesmo com WITH CHECK de admin', () => {
+    // Regressivo: a validacao antiga olhava so o WITH CHECK e aceitava esse
+    // enfraquecimento — mas USING(true) ja abre SELECT, UPDATE e DELETE.
+    const fixture = [
+      {
+        name: '0001.sql',
+        sql: `CREATE POLICY "ruim" ON public.t FOR ALL TO authenticated
+              USING (true) WITH CHECK (is_admin_or_supervisor(auth.uid()));`,
+      },
+    ];
+    const policies = policiesOn(resolvePolicyState(fixture), 't');
+    for (const comando of ['SELECT', 'UPDATE', 'DELETE'] as ComandoRls[]) {
+      expect(predicadoEfetivo(policies[0], comando), comando).toBe('true');
+      expect(comandoProtegido(policies, comando, ADMIN_OU_SUPERVISOR), comando).toBe(false);
+    }
+    // O INSERT continua protegido pelo CHECK: a reprovacao vem do USING.
+    expect(comandoProtegido(policies, 'INSERT', ADMIN_OU_SUPERVISOR)).toBe(true);
+  });
+
+  it('FOR ALL sem WITH CHECK usa o proprio USING como CHECK efetivo', () => {
+    const fixture = [
+      {
+        name: '0001.sql',
+        sql: `CREATE POLICY "admins" ON public.t FOR ALL TO authenticated
+              USING (is_admin_or_supervisor(auth.uid()));`,
+      },
+    ];
+    const policies = policiesOn(resolvePolicyState(fixture), 't');
+    expect(policies[0].check).toBeNull();
+    expect(predicadoEfetivo(policies[0], 'INSERT')).toMatch(ADMIN_OU_SUPERVISOR);
+    expect(comandoProtegido(policies, 'INSERT', ADMIN_OU_SUPERVISOR)).toBe(true);
   });
 });

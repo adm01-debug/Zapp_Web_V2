@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
-  normSql,
+  cobreComando,
   paridadeDeNomes,
   policiesOn,
+  predicadoEfetivo,
   resolveEffectivePolicies,
 } from './helpers/rlsSchema';
 
@@ -37,10 +38,6 @@ const AGENTES_VISIVEIS = /get_visible_agent_ids\(\s*auth\.uid\(\)\s*\)/;
 const MEMBRO_DE_FILA = /queue_members[\s\S]*?is_active\s*=\s*true/;
 const PERFIL_DO_CHAMADOR = /profiles[\s\S]*?user_id\s*=\s*auth\.uid\(\)/;
 
-function usingDe(policies: ReturnType<typeof policiesOn>, comando: string): string[] {
-  return policies.filter((p) => p.command === comando).map((p) => p.using ?? '');
-}
-
 describe('RLS real: contacts (schema resolvido das migrations)', () => {
   const policies = policiesOn(ESTADO, 'contacts');
 
@@ -49,22 +46,23 @@ describe('RLS real: contacts (schema resolvido das migrations)', () => {
   });
 
   it('SELECT delega ao predicado canonico can_edit_contact (dono, fila ou admin)', () => {
-    const select = policies.filter((p) => p.command === 'SELECT');
+    const select = policies.filter((p) => cobreComando(p, 'SELECT'));
     expect(select.length).toBeGreaterThan(0);
     for (const p of select) {
       expect(p.roles).toContain('authenticated');
       // O predicado unico cobre admin/supervisor + assigned_to visivel +
       // membro ativo de fila — tudo via can_edit_contact, ponto unico da regra.
-      expect(p.using ?? '', p.name).toMatch(/can_edit_contact\(/);
-      expect(normSql(p.using), `${p.name} abriu SELECT para todos`).not.toBe('true');
+      const predicado = predicadoEfetivo(p, 'SELECT');
+      expect(predicado, p.name).toMatch(/can_edit_contact\(/);
+      expect(predicado, `${p.name} abriu SELECT para todos`).not.toBe('true');
     }
   });
 
   it('INSERT exige admin/supervisor OU auto-atribuicao (assigned_to = proprio perfil)', () => {
-    const insert = policies.filter((p) => p.command === 'INSERT');
+    const insert = policies.filter((p) => cobreComando(p, 'INSERT'));
     expect(insert.length).toBeGreaterThan(0);
     for (const p of insert) {
-      const check = p.check ?? '';
+      const check = predicadoEfetivo(p, 'INSERT');
       expect(check, p.name).toMatch(ADMIN_OU_SUPERVISOR);
       expect(check, p.name).toMatch(/assigned_to/);
       expect(check, p.name).toMatch(PERFIL_DO_CHAMADOR);
@@ -72,18 +70,19 @@ describe('RLS real: contacts (schema resolvido das migrations)', () => {
   });
 
   it('UPDATE usa o mesmo predicado canonico do SELECT', () => {
-    const update = usingDe(policies, 'UPDATE');
+    const update = policies.filter((p) => cobreComando(p, 'UPDATE'));
     expect(update.length).toBeGreaterThan(0);
-    for (const using of update) {
-      expect(using).toMatch(/can_edit_contact\(/);
+    for (const p of update) {
+      expect(predicadoEfetivo(p, 'UPDATE'), p.name).toMatch(/can_edit_contact\(/);
     }
   });
 
   it('nao existe policy de DELETE — exclusao e soft-delete via RPC can_edit_contact', () => {
     // O schema real nao tem DELETE policy em contacts: delete_contact() faz
     // UPDATE deleted_at com a mesma regra can_edit_contact. Se surgir uma
-    // policy de DELETE, este teste forca revisao consciente.
-    expect(usingDe(policies, 'DELETE')).toEqual([]);
+    // policy de DELETE — ou um FOR ALL que a cubra — este teste forca
+    // revisao consciente.
+    expect(policies.filter((p) => cobreComando(p, 'DELETE'))).toEqual([]);
   });
 });
 
@@ -95,24 +94,24 @@ describe('RLS real: messages (schema resolvido das migrations)', () => {
   });
 
   it('SELECT ve so mensagens de contatos visiveis (admin OU dono OU fila)', () => {
-    const select = policies.filter((p) => p.command === 'SELECT');
+    const select = policies.filter((p) => cobreComando(p, 'SELECT'));
     expect(select.length).toBeGreaterThan(0);
     for (const p of select) {
       expect(p.roles).toContain('authenticated');
-      const using = p.using ?? '';
+      const using = predicadoEfetivo(p, 'SELECT');
       // Os 3 ramos reais da visibilidade — remover qualquer um fica vermelho.
       expect(using, p.name).toMatch(ADMIN_OU_SUPERVISOR);
       expect(using, p.name).toMatch(AGENTES_VISIVEIS);
       expect(using, p.name).toMatch(MEMBRO_DE_FILA);
-      expect(normSql(using), `${p.name} abriu SELECT para todos`).not.toBe('true');
+      expect(using, `${p.name} abriu SELECT para todos`).not.toBe('true');
     }
   });
 
   it('INSERT exige contato visivel E agent_id do proprio perfil (ou admin)', () => {
-    const insert = policies.filter((p) => p.command === 'INSERT');
+    const insert = policies.filter((p) => cobreComando(p, 'INSERT'));
     expect(insert.length).toBeGreaterThan(0);
     for (const p of insert) {
-      const check = p.check ?? '';
+      const check = predicadoEfetivo(p, 'INSERT');
       // A brecha fechada pela migration 20260925120000: inserir mensagem em
       // contato que o agente nao ve. Sem o ramo de visibilidade, volta o IDOR.
       expect(check, p.name).toMatch(ADMIN_OU_SUPERVISOR);
@@ -120,17 +119,18 @@ describe('RLS real: messages (schema resolvido das migrations)', () => {
       expect(check, p.name).toMatch(PERFIL_DO_CHAMADOR);
       expect(check, p.name).toMatch(AGENTES_VISIVEIS);
       expect(check, p.name).toMatch(MEMBRO_DE_FILA);
-      expect(normSql(check), `${p.name} permite INSERT irrestrito`).not.toBe('true');
+      expect(check, `${p.name} permite INSERT irrestrito`).not.toBe('true');
     }
   });
 
   it('UPDATE tem paridade com SELECT (dono, fila ou admin)', () => {
-    const update = usingDe(policies, 'UPDATE');
+    const update = policies.filter((p) => cobreComando(p, 'UPDATE'));
     expect(update.length).toBeGreaterThan(0);
-    for (const using of update) {
-      expect(using).toMatch(AGENTES_VISIVEIS);
-      expect(using).toMatch(MEMBRO_DE_FILA);
-      expect(using).toMatch(ADMIN_OU_SUPERVISOR);
+    for (const p of update) {
+      const using = predicadoEfetivo(p, 'UPDATE');
+      expect(using, p.name).toMatch(AGENTES_VISIVEIS);
+      expect(using, p.name).toMatch(MEMBRO_DE_FILA);
+      expect(using, p.name).toMatch(ADMIN_OU_SUPERVISOR);
     }
   });
 });
