@@ -63,15 +63,18 @@ export function useResolvedStorageUrl(source: string, ttlSeconds = DEFAULT_TTL_S
     }
 
     lastRefreshAtRef.current = Date.now();
-    setState((current) => ({
-      source,
-      url: current.source === source ? current.url : '',
-      isLoading: true,
-      error: null,
-    }));
-    const pending = resolve()
+    // Só assume o estado quando ele ainda pertence a este `source`: um refresh disparado
+    // antes da troca de mídia não pode marcar "carregando"/zerar a mídia nova.
+    setState((current) => (current.source === source
+      ? { source, url: current.url, isLoading: true, error: null }
+      : current));
+    let pending: Promise<string | null> | null = null;
+    pending = resolve()
       .then((url) => {
-        setState({ source, url, isLoading: false, error: null });
+        // Resposta obsoleta (a mídia já trocou) é descartada sem tocar no estado atual.
+        setState((current) => (current.source === source
+          ? { source, url, isLoading: false, error: null }
+          : current));
         return url;
       })
       .catch((cause) => {
@@ -81,11 +84,14 @@ export function useResolvedStorageUrl(source: string, ttlSeconds = DEFAULT_TTL_S
           pathLength: reference.path.length,
           message: error.message,
         });
-        setState({ source, url: '', isLoading: false, error });
+        setState((current) => (current.source === source
+          ? { source, url: '', isLoading: false, error }
+          : current));
         return null;
       })
       .finally(() => {
-        refreshPromiseRef.current = null;
+        // Não limpa a trava de coalescência se outro refresh já assumiu o lugar.
+        if (refreshPromiseRef.current === pending) refreshPromiseRef.current = null;
       });
     refreshPromiseRef.current = pending;
     return pending;

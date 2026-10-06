@@ -89,4 +89,63 @@ describe('useResolvedStorageUrl', () => {
 
     expect(storageMocks.createSignedUrl).toHaveBeenCalledTimes(1);
   });
+
+  it('descarta o refresh antigo: a próxima mídia não fica sem URL nem presa em carregamento', async () => {
+    const pendentes: Array<{ resolver: (valor: unknown) => void }> = [];
+    storageMocks.createSignedUrl.mockImplementation(
+      () => new Promise((resolver) => { pendentes.push({ resolver }); })
+    );
+
+    const primeira = `${ORIGIN}/storage/v1/object/public/audio-messages/primeira.webm`;
+    const segunda = `${ORIGIN}/storage/v1/object/public/audio-messages/segunda.webm`;
+
+    const { result, rerender } = renderHook(
+      ({ src }: { src: string }) => useResolvedStorageUrl(src),
+      { initialProps: { src: primeira } }
+    );
+
+    // 1) a primeira mídia resolve normalmente
+    await act(async () => {
+      pendentes[0].resolver({
+        data: { signedUrl: `${ORIGIN}/storage/v1/object/sign/audio-messages/primeira.webm?token=primeira` },
+        error: null,
+      });
+    });
+    await waitFor(() => expect(result.current.url).toContain('token=primeira'));
+
+    // 2) o `onError` da mídia dispara um refresh que fica pendente
+    let refreshAntigo!: Promise<string | null>;
+    await act(async () => {
+      refreshAntigo = result.current.refresh();
+    });
+    expect(pendentes).toHaveLength(2);
+
+    // 3) o usuário navega para a próxima mídia
+    rerender({ src: segunda });
+    await waitFor(() => expect(pendentes).toHaveLength(3));
+
+    // 4) a próxima mídia resolve PRIMEIRO
+    await act(async () => {
+      pendentes[2].resolver({
+        data: { signedUrl: `${ORIGIN}/storage/v1/object/sign/audio-messages/segunda.webm?token=segunda` },
+        error: null,
+      });
+    });
+    await waitFor(() => expect(result.current.url).toContain('token=segunda'));
+    expect(result.current.isLoading).toBe(false);
+
+    // 5) só então a resposta do refresh ANTIGO chega (fora de ordem)
+    await act(async () => {
+      pendentes[1].resolver({
+        data: { signedUrl: `${ORIGIN}/storage/v1/object/sign/audio-messages/primeira.webm?token=primeira` },
+        error: null,
+      });
+      await refreshAntigo;
+    });
+
+    // A próxima mídia segue com URL válida e o carregamento terminou
+    expect(result.current.url).toContain('token=segunda');
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 });
