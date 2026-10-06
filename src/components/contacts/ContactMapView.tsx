@@ -28,6 +28,10 @@ interface ContactMapViewProps {
   onContactClick?: (id: string) => void;
 }
 
+/** Contato com coordenada própria (endereço confirmado) — vira pino, não bolha aproximada. */
+const hasCoordinates = (c: Contact): c is Contact & { latitude: number; longitude: number } =>
+  typeof c.latitude === 'number' && typeof c.longitude === 'number';
+
 const REGION_COLORS = [
   { icon: 'bg-primary/15', bar: 'bg-primary/40' },
   { icon: 'bg-info/15', bar: 'bg-info/40' },
@@ -53,9 +57,23 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
 
   const maxCount = regions[0]?.[1].length || 1;
 
+  // R2-AUTH-038 · item 262: o mapa plota LOCALIZAÇÃO FÍSICA e a legenda publica duas
+  // contagens exclusivas — "Endereço confirmado" (pino) e "Aproximado pelo DDD" (bolha).
+  // Por isso a bolha só leva quem NÃO tem coordenada própria: antes ela reusava `regions`
+  // (o agrupamento comercial, que tem todos) e o contato já pinado era contado de novo
+  // como aproximado. O cartão abaixo segue com o agrupamento comercial, sem filtro.
+  const mapRegions = useMemo(() => {
+    const byRegion = new Map<string, number>();
+    contacts.filter((c) => !hasCoordinates(c)).forEach((c) => {
+      const region = getRegionFromPhone(c.phone);
+      byRegion.set(region, (byRegion.get(region) ?? 0) + 1);
+    });
+    return Array.from(byRegion, ([region, count]) => ({ region, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [contacts]);
+
   const preciseContacts = useMemo<PreciseContactPoint[]>(() => contacts
-    .filter((c): c is Contact & { latitude: number; longitude: number } =>
-      typeof c.latitude === 'number' && typeof c.longitude === 'number')
+    .filter(hasCoordinates)
     .map((c) => ({ id: c.id, name: c.name, lat: c.latitude, lng: c.longitude })),
   [contacts]);
 
@@ -75,7 +93,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
 
       {/* Mapa por regiao do DDD */}
       <ContactRegionMap
-        regions={regions.map(([region, members]) => ({ region, count: members.length }))}
+        regions={mapRegions}
         preciseContacts={preciseContacts}
         selectedRegion={expandedRegion}
         onSelectRegion={(region) => setExpandedRegion((current) => (current === region ? null : region))}
