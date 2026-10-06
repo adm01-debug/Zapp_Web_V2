@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -126,6 +126,40 @@ test("resposta 500 montada à mão SEM detalhe interno não é achado", () => {
 test("resposta 4xx montada à mão com .message não é achado (convenção do repo)", () => {
   const achados = acharExposicoes("return new Response(JSON.stringify({ error: err.message }), { status: 400 });");
   assert.deepEqual(achados, []);
+});
+
+test("R2-INF-016: o conteúdo REAL dos dois arquivos citados está limpo — e a regressão deles é acusada", () => {
+  // Chamadas com o conteúdo de verdade lido do disco (não uma cópia feita à mão): prova que a
+  // guarda enxerga o arquivo real e que, se ele voltasse à forma antiga, a varredura reprovaria.
+  // Cada alvo mapeia a chamada sanitizante atual -> a forma que existia antes da correção.
+  const alvos = [
+    {
+      caminho: "supabase/functions/searchbox-budget-alert/index.ts",
+      atual: "return internalErrorResponse(error, req);",
+      antigo: "return new Response(JSON.stringify({ ok: false, erro: error.message }), { status: 500 });",
+    },
+    {
+      caminho: "supabase/functions/webhook-diagnostic/index.ts",
+      atual: "return internalErrorResponse(err, req);",
+      antigo: [
+        "return new Response(JSON.stringify({ error: err instanceof Error ? err.message : 'Unknown error' }), {",
+        "      status: 500,",
+        "    });",
+      ].join("\n"),
+    },
+  ];
+  for (const { caminho, atual, antigo } of alvos) {
+    const fonte = readFileSync(caminho, "utf8");
+    assert.ok(fonte.includes(atual), `${caminho} deveria chamar o helper sanitizante`);
+    assert.deepEqual(acharExposicoes(fonte, caminho), [], `${caminho} nao deveria expor detalhe interno`);
+    const comRegressao = fonte.replace(atual, antigo);
+    assert.notEqual(comRegressao, fonte, `${caminho}: a forma antiga precisa ser substituivel`);
+    assert.equal(
+      acharExposicoes(comRegressao, caminho).length,
+      1,
+      `${caminho}: a guarda deveria reprovar o arquivo REAL se ele voltasse a montar o 500 a mao`,
+    );
+  }
 });
 
 test("a varredura real dos edges passa (a correção de 28/09 se mantém)", () => {
