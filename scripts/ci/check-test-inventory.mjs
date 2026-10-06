@@ -38,6 +38,11 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-v23-draft-step.test.sh',
   'scripts/db-audit/talkx-v25-owner.test.sh',
   'scripts/db-audit/talkx-v26-template-version.test.sh',
+  // #126 (R3-DELTA-009): prova em container descartável que a purga LGPD (que grava
+  // updated_at) NAO vira "falha recente" (failure_rate_15m / outcome_unknown_24h) na saude do
+  // motor. Roda sozinho (docker postgres:17-alpine); o passo em db-guard.yml fica com o dono
+  // do workflow (agente nao edita workflow).
+  'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',
   // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
   // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
