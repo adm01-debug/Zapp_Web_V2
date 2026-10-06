@@ -1021,16 +1021,23 @@ export async function handleTalkxSend(
 
           const blacklistedBeforeBatch = state.blacklisted;
           let index = 0;
-          for (; index < processRows.length; index++) {
-            // Não começa destinatário novo se o tempo restante não cobre o
-            // typing_delay máximo + 25s de folga (timeout por envio).
-            if (remainingBudgetMs() < minNeededMs()) break;
-            const step = await runRecipient(state, processRows[index], customFieldsByContact);
-            if (step === "stop") break;
+          try {
+            for (; index < processRows.length; index++) {
+              // Não começa destinatário novo se o tempo restante não cobre o
+              // typing_delay máximo + 25s de folga (timeout por envio).
+              if (remainingBudgetMs() < minNeededMs()) break;
+              const step = await runRecipient(state, processRows[index], customFieldsByContact);
+              if (step === "stop") break;
+            }
+          } finally {
+            // X033: grava em lote, ao fim da passada, o log dos destinatários que
+            // ela processou (uma inserção por passada; best-effort).
+            // R3-DELTA-011: no `finally` para rodar TAMBÉM quando `runRecipient`
+            // lança num destinatário — a linha de log de quem já foi processado
+            // na passada não se perde com a exceção (o erro sobe igual, depois
+            // do flush; o `flushDeliveryLogs` é best-effort e nunca engole erro).
+            await flushDeliveryLogs(state);
           }
-          // X033: grava em lote, ao fim da passada, o log dos destinatários que
-          // ela processou (uma inserção por passada; best-effort).
-          await flushDeliveryLogs(state);
           // X025: ao FIM de cada lote, grava 1 evento AGREGADO quando houve
           // pulados por supressão. Antes o contador só existia em memória e a
           // timeline nunca registrava esses pulos.
