@@ -962,8 +962,6 @@ jobs:
         if: >-
           (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
           && inputs.migration_version == '20261004195051'
-        env:
-          DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
           BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT count(*)
