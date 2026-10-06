@@ -82,7 +82,15 @@ function responder(params: Record<string, unknown>): { data: QuarantineRecord[];
   }
   const count = rows.length;
   const limite = typeof params.limit === 'number' ? params.limit : 500;
-  return { data: rows.slice(0, limite), count };
+  const deslocamento = typeof params.offset === 'number' ? params.offset : 0;
+  return { data: rows.slice(deslocamento, deslocamento + limite), count };
+}
+
+/** Chamadas de LIBERAÇÃO: as que filtram por `message_id in (...)` do cache. */
+function chamadasDeLiberacoes(): Array<Record<string, unknown>> {
+  return chamadas.filter((c) =>
+    ((c.filters as Array<{ column: string }>) ?? []).some((f) => f.column === 'message_id'),
+  );
 }
 
 const mockProxy = vi.mocked(queryExternalProxy);
@@ -115,12 +123,9 @@ afterEach(() => {
 /** Drena microtasks (detectAdmin + tick + consulta de liberações) SEM avançar o relógio falso. */
 async function drenar() {
   await act(async () => {
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
+    // A consulta de liberações pode paginar (N páginas sequenciais): drenar
+    // fundo o bastante para o tick inteiro terminar antes de checar o estado.
+    for (let i = 0; i < 40; i += 1) await Promise.resolve();
   });
 }
 
@@ -377,5 +382,75 @@ describe('janela separada para liberações (t_6300082e)', () => {
     expect(new Set(filtroIds?.value as string[])).toEqual(new Set(['mx1', 'mx2']));
     expect(quarantineStore.get('mx1')?.decision).toBe('allowed');
     expect(quarantineStore.get('mx2')?.decision).toBe('whitelisted');
+  });
+});
+
+/**
+ * t_e062f638 — a consulta de liberações NÃO pode parar na 1ª página.
+ *
+ * Defeito medido: a consulta à parte usava um único `limit: 500` com ordem
+ * CRESCENTE. Com mais de 500 linhas de liberação para ids já cacheados, ela
+ * devolvia só as 500 MAIS ANTIGAS — a versão mais recente de um id e as
+ * liberações de outros ids ficavam de fora e a decisão antiga permanecia no
+ * cache para sempre. A correção pagina a consulta até esgotar o resultado e
+ * reconcilia, por `message_id`, a linha efetivamente mais recente.
+ */
+describe('paginação das liberações (t_e062f638)', () => {
+  it('cobre todos os ids cacheados e faz a versão mais recente vencer com >500 liberações', async () => {
+    // 1º tick: a janela de ATIVOS hidrata m1, m2 e m3 (todos `pending`).
+    linhas = [
+      { id: 'q1', message_id: 'm1', decision: 'pending', created_at: '2026-09-01T00:00:00.000Z' },
+      { id: 'q2', message_id: 'm2', decision: 'pending', created_at: '2026-09-01T00:00:01.000Z' },
+      { id: 'q3', message_id: 'm3', decision: 'pending', created_at: '2026-09-01T00:00:02.000Z' },
+    ];
+
+    montar();
+    await drenar();
+    expect(quarantineStore.get('m1')?.decision).toBe('pending');
+    expect(quarantineStore.get('m2')?.decision).toBe('pending');
+    expect(quarantineStore.get('m3')?.decision).toBe('pending');
+
+    chamadas = [];
+
+    // 2º tick: m1 acumula 600 versões de liberação; a ÚLTIMA (created_at e
+    // reviewed_at maiores) é `whitelisted` e todas as anteriores são `allowed`.
+    // m2 ganhou UMA liberação, mais recente que todas as de m1 — ou seja, além
+    // da 500ª linha. m3 continua pendente na origem.
+    const base = Date.parse('2026-09-05T00:00:00.000Z');
+    const versoesDeM1: QuarantineRecord[] = Array.from({ length: 600 }, (_, i) => {
+      const ts = new Date(base + i * 1000).toISOString();
+      return {
+        id: `v-${i}`,
+        message_id: 'm1',
+        decision: i === 599 ? 'whitelisted' : 'allowed',
+        created_at: ts,
+        reviewed_at: ts,
+      };
+    });
+    linhas = [
+      ...versoesDeM1,
+      {
+        id: 'rel-m2',
+        message_id: 'm2',
+        decision: 'allowed',
+        created_at: '2026-09-06T00:00:00.000Z',
+        reviewed_at: '2026-09-06T00:00:00.000Z',
+      },
+      { id: 'q3', message_id: 'm3', decision: 'pending', created_at: '2026-09-01T00:00:02.000Z' },
+    ];
+
+    await avancar(INTERVALO_MS);
+
+    // m1: a versão MAIS RECENTE (que cai fora de uma única página de 500) vence.
+    expect(quarantineStore.get('m1')?.decision).toBe('whitelisted');
+    // m2: liberado numa linha além da 500ª — sem paginação o cache nunca sairia de `pending`.
+    expect(quarantineStore.get('m2')?.decision).toBe('allowed');
+    // m3: continua ativo na origem e no cache.
+    expect(quarantineStore.get('m3')?.decision).toBe('pending');
+
+    // Prova da paginação: mais de uma chamada de liberação, cobrindo a 2ª página.
+    const liberacoesChamadas = chamadasDeLiberacoes();
+    expect(liberacoesChamadas.length).toBeGreaterThan(1);
+    expect(liberacoesChamadas.map((c) => c.offset ?? 0)).toContain(500);
   });
 });

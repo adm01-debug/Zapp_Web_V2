@@ -14,8 +14,15 @@ import { getLogger } from '@/lib/logger';
 const log = getLogger('QuarantineMonitor');
 
 const HYDRATE_LIMIT = 500;
+/** Tamanho de cada página da consulta de liberações (mesma janela do proxy). */
+const RELEASES_PAGE_SIZE = 500;
+/** Teto de páginas da consulta de liberações (trava de segurança, não laço infinito). */
+const RELEASES_MAX_PAGES = 200;
 const POLL_INTERVAL_MS = 30_000; // 30s — quarantine is rarely time-critical
 const TRANSIENT_BACKOFF_MAX_MS = 5 * 60_000; // teto do backoff de falha transitória
+
+const QUARANTINE_SELECT =
+  'id,message_id,decision,threat_name,threat_level,scan_engine,media_type,mime_type,created_at,reviewed_at';
 
 /**
  * Estados ATIVOS da janela principal (até HYDRATE_LIMIT, por created_at desc):
@@ -26,6 +33,73 @@ const TRANSIENT_BACKOFF_MAX_MS = 5 * 60_000; // teto do backoff de falha transit
  */
 const ACTIVE_DECISIONS = ['pending', 'deleted'];
 const RELEASED_DECISIONS = ['allowed', 'whitelisted'];
+
+/**
+ * Busca TODAS as liberações (`allowed`/`whitelisted`) dos ids já cacheados,
+ * PAGINANDO por `offset` até esgotar o resultado.
+ *
+ * Um único `limit: 500` deixava de fora justamente o que importa: ordenada por
+ * `created_at` crescente, a 1ª página traz as liberações MAIS ANTIGAS — a
+ * versão mais recente de um id e as liberações dos demais ids caíam fora da
+ * janela e a decisão antiga permanecia no cache para sempre (t_e062f638).
+ */
+async function fetchAllReleases(
+  cachedIds: string[],
+  isCancelled: () => boolean,
+): Promise<QuarantineRecord[]> {
+  const all: QuarantineRecord[] = [];
+  for (let page = 0; page < RELEASES_MAX_PAGES; page += 1) {
+    const res = await queryExternalProxy<QuarantineRecord>({
+      table: 'media_quarantine',
+      select: QUARANTINE_SELECT,
+      filters: [
+        { column: 'decision', operator: 'in', value: RELEASED_DECISIONS },
+        { column: 'message_id', operator: 'in', value: cachedIds },
+      ],
+      order: { column: 'created_at', ascending: true },
+      limit: RELEASES_PAGE_SIZE,
+      offset: all.length,
+      countMode: 'exact',
+    });
+    if (isCancelled()) return all;
+
+    const pageRows = Array.isArray(res.data) ? res.data : [];
+    all.push(...pageRows);
+
+    // Página incompleta = fim do resultado. Com `count`, para quando alcança o
+    // total; sem `count`, segue enquanto vierem páginas cheias (trava acima).
+    if (pageRows.length < RELEASES_PAGE_SIZE) break;
+    if (typeof res.count === 'number' && all.length >= res.count) break;
+  }
+  return all;
+}
+
+/**
+ * Chave de versão de um registro, para decidir qual linha de um mesmo
+ * `message_id` é a MAIS RECENTE: quando o admin decidiu (`reviewed_at`), quando
+ * a linha nasceu (`created_at`) e, por fim, o id — comparação lexicográfica de
+ * ISO 8601 (o separador mantém a ordem dos campos).
+ */
+function releaseVersionKey(r: QuarantineRecord): string {
+  return `${r.reviewed_at ?? ''}|${r.created_at ?? ''}|${r.id ?? ''}`;
+}
+
+/**
+ * Reduz as liberações a UMA linha por `message_id` — a efetivamente mais
+ * recente. Com versões repetidas do mesmo id, a ordem de chegada do servidor
+ * não basta: comparamos a versão explicitamente (t_e062f638).
+ */
+function latestReleasePerMessageId(rows: QuarantineRecord[]): QuarantineRecord[] {
+  const latest = new Map<string, QuarantineRecord>();
+  for (const r of rows) {
+    if (!r.message_id) continue;
+    const prev = latest.get(r.message_id);
+    if (!prev || releaseVersionKey(r) > releaseVersionKey(prev)) {
+      latest.set(r.message_id, r);
+    }
+  }
+  return [...latest.values()];
+}
 
 /**
  * Mounts a silent monitor that:
@@ -80,7 +154,7 @@ export function QuarantineMonitorProvider({ children }: { children: React.ReactN
       try {
         const res = await queryExternalProxy<QuarantineRecord>({
           table: 'media_quarantine',
-          select: 'id,message_id,decision,threat_name,threat_level,scan_engine,media_type,mime_type,created_at,reviewed_at',
+          select: QUARANTINE_SELECT,
           filters: [{ column: 'decision', operator: 'in', value: ACTIVE_DECISIONS }],
           order: { column: 'created_at', ascending: false },
           limit: HYDRATE_LIMIT,
@@ -104,20 +178,10 @@ export function QuarantineMonitorProvider({ children }: { children: React.ReactN
         const cachedIds = [...quarantineStore.getSnapshot().keys()];
         let releases: QuarantineRecord[] = [];
         if (cachedIds.length > 0) {
-          const relRes = await queryExternalProxy<QuarantineRecord>({
-            table: 'media_quarantine',
-            select: 'id,message_id,decision,threat_name,threat_level,scan_engine,media_type,mime_type,created_at,reviewed_at',
-            filters: [
-              { column: 'decision', operator: 'in', value: RELEASED_DECISIONS },
-              { column: 'message_id', operator: 'in', value: cachedIds },
-            ],
-            // Ordem crescente: `reconcile` grava na ordem recebida, então a
-            // linha de liberação MAIS RECENTE do message_id vence no cache.
-            order: { column: 'created_at', ascending: true },
-            limit: HYDRATE_LIMIT,
-          });
+          const allReleases = await fetchAllReleases(cachedIds, () => cancelled);
           if (cancelled) return;
-          releases = Array.isArray(relRes.data) ? relRes.data : [];
+          // Uma linha por `message_id` — a mais recente — vence no cache.
+          releases = latestReleasePerMessageId(allReleases);
         }
 
         // `count` (countMode: 'exact') diz se a janela de 500 foi truncada. Só
