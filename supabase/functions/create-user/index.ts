@@ -123,9 +123,26 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
     // R2-AUTH-016: o usuário já existe no GoTrue. Se QUALQUER escrita dependente
     // falhar, a resposta não pode ser sucesso — compensa apagando o usuário e
     // responde 500. Falha da própria compensação é logada e ainda responde erro.
+    // Só a conta Gmail criada NESTA requisição precisa ser removida antes do deleteUser
+    // (as demais tabelas cascateiam). Sem ela criada, não há o que desfazer.
+    let gmailAccountCreated = false;
+
     const failAndCompensate = async (msg: string, err: { message?: string } | null): Promise<Response> => {
       log.error(msg, { error: err?.message ?? String(err), userId: createdUserId });
       try {
+        // gmail_accounts_user_id_fkey e ON DELETE RESTRICT (migration 20260926240000):
+        // sem apagar a linha criada NESTA requisicao, o deleteUser do GoTrue falha com
+        // violacao de FK e o usuario fica orfao. A conta e recem-criada (sem threads,
+        // mensagens ou labels encadeados), entao remover essa linha nao perde dado.
+        const { error: gmailUndoError } = gmailAccountCreated
+          ? await adminClient
+            .from("gmail_accounts")
+            .delete()
+            .eq("user_id", createdUserId)
+          : { error: null };
+        if (gmailUndoError) {
+          log.error("Compensacao: falha ao remover a conta Gmail criada", { error: gmailUndoError.message, userId: createdUserId });
+        }
         const { error: delError } = await adminClient.auth.admin.deleteUser(createdUserId);
         if (delError) {
           log.error("Compensação falhou: usuário órfão no GoTrue", { error: delError.message, userId: createdUserId });
@@ -171,6 +188,7 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
           sync_status: "pending",
         });
       if (gmailError) return failAndCompensate("Falha ao vincular a conta Gmail", gmailError);
+      gmailAccountCreated = true;
 
       if (google_services && google_services.length > 0) {
         const serviceRows = google_services.map((svc: string) => ({

@@ -69,6 +69,7 @@ function fakeAdmin(opts: FakeAdminOpts = {}) {
           return Promise.resolve({ data: { user: { id: NEW_USER_ID } }, error: null });
         },
         deleteUser: (id: string) => {
+          calls.push("auth.admin.deleteUser");
           deleted.push(id);
           return Promise.resolve({ data: {}, error: opts.deleteUserError ?? null });
         },
@@ -89,6 +90,7 @@ function fakeAdmin(opts: FakeAdminOpts = {}) {
             : `${table}:insert`;
           return finish(key);
         },
+        delete: () => { op = "delete"; return builder; },
         eq: () => builder,
         single: () => finish(`${table}:select`, { role: "admin" }),
         then: (
@@ -118,7 +120,7 @@ function run(body: unknown, admin: CreateUserAdminClient): Promise<Response> {
   });
 }
 
-async function assertFalhaComCompensacao(res: Response, deleted: string[], cenario: string) {
+async function assertFalhaComCompensacao(res: Response, calls: string[], deleted: string[], cenario: string) {
   assert(res.status === 500, `${cenario}: esperado 500, veio ${res.status}`);
   const body = await res.json() as Record<string, unknown>;
   assert(body.success !== true, `${cenario}: corpo não pode trazer success:true — ${JSON.stringify(body)}`);
@@ -130,36 +132,50 @@ async function assertFalhaComCompensacao(res: Response, deleted: string[], cenar
 }
 
 Deno.test("R2-AUTH-016 (a): update de user_roles falha -> erro + deleteUser", async () => {
-  const { admin, deleted } = fakeAdmin({ failOn: { "user_roles:update": { message: "rls violada" } } });
+  const { admin, calls, deleted } = fakeAdmin({ failOn: { "user_roles:update": { message: "rls violada" } } });
   const res = await run({ ...BODY_BASE, role: "admin" }, admin);
-  await assertFalhaComCompensacao(res, deleted, "role");
+  await assertFalhaComCompensacao(res, calls, deleted, "role");
 });
 
 Deno.test("R2-AUTH-016 (b): update de profiles falha -> erro + deleteUser", async () => {
-  const { admin, deleted } = fakeAdmin({ failOn: { "profiles:update": { message: "coluna inexistente" } } });
+  const { admin, calls, deleted } = fakeAdmin({ failOn: { "profiles:update": { message: "coluna inexistente" } } });
   const res = await run({ ...BODY_BASE, nickname: "Nick" }, admin);
-  await assertFalhaComCompensacao(res, deleted, "perfil");
+  await assertFalhaComCompensacao(res, calls, deleted, "perfil");
 });
 
 Deno.test("R2-AUTH-016 (c): insert em gmail_accounts falha -> erro + deleteUser", async () => {
-  const { admin, deleted } = fakeAdmin({ failOn: { "gmail_accounts:insert": { message: "unique violada" } } });
+  const { admin, calls, deleted } = fakeAdmin({ failOn: { "gmail_accounts:insert": { message: "unique violada" } } });
   const res = await run({ ...BODY_BASE, gmail_email: "novo@gmail.com" }, admin);
-  await assertFalhaComCompensacao(res, deleted, "gmail");
+  await assertFalhaComCompensacao(res, calls, deleted, "gmail");
 });
 
 Deno.test("R2-AUTH-016 (d): insert google em user_service_accounts falha -> erro + deleteUser", async () => {
-  const { admin, deleted } = fakeAdmin({ failOn: { "user_service_accounts:google": { message: "fk inexistente" } } });
+  const { admin, calls, deleted } = fakeAdmin({ failOn: { "user_service_accounts:google": { message: "fk inexistente" } } });
   const res = await run(
     { ...BODY_BASE, gmail_email: "novo@gmail.com", google_services: ["google_sheets", "google_drive"] },
     admin,
   );
-  await assertFalhaComCompensacao(res, deleted, "google services");
+  await assertFalhaComCompensacao(res, calls, deleted, "google services");
+  // A conta Gmail foi criada nesta requisição e a FK gmail_accounts_user_id_fkey é
+  // ON DELETE RESTRICT (migration 20260926240000): sem removê-la antes, o deleteUser falharia.
+  const iGmailInsert = calls.indexOf("gmail_accounts:insert");
+  const iGmailUndo = calls.indexOf("gmail_accounts:delete");
+  const iDelUser = calls.indexOf("auth.admin.deleteUser");
+  assert(
+    iGmailInsert >= 0 && iGmailUndo > iGmailInsert && iDelUser > iGmailUndo,
+    `(d): esperado insert gmail -> delete gmail -> deleteUser, veio ${JSON.stringify(calls)}`,
+  );
 });
 
 Deno.test("R2-AUTH-016 (e): insert dropbox em user_service_accounts falha -> erro + deleteUser", async () => {
-  const { admin, deleted } = fakeAdmin({ failOn: { "user_service_accounts:dropbox": { message: "fk inexistente" } } });
+  const { admin, calls, deleted } = fakeAdmin({ failOn: { "user_service_accounts:dropbox": { message: "fk inexistente" } } });
   const res = await run({ ...BODY_BASE, dropbox_email: "novo@dropbox.com" }, admin);
-  await assertFalhaComCompensacao(res, deleted, "dropbox");
+  await assertFalhaComCompensacao(res, calls, deleted, "dropbox");
+  // Sem conta Gmail nesta requisição, a compensação não apaga linha nenhuma de gmail_accounts.
+  assert(
+    !calls.includes("gmail_accounts:delete"),
+    `(e): não havia conta Gmail a desfazer — ${JSON.stringify(calls)}`,
+  );
 });
 
 Deno.test("R2-AUTH-016 (f): caminho feliz -> 200 success:true e deleteUser NÃO chamado", async () => {
@@ -188,7 +204,7 @@ Deno.test("R2-AUTH-016 (f): caminho feliz -> 200 success:true e deleteUser NÃO 
 });
 
 Deno.test("R2-AUTH-016 (g): deleteUser de compensação falha -> ainda erro, nunca 200", async () => {
-  const { admin, deleted } = fakeAdmin({
+  const { admin, calls, deleted } = fakeAdmin({
     failOn: { "user_roles:update": { message: "rls violada" } },
     deleteUserError: { message: "GoTrue indisponível" },
   });
