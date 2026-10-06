@@ -128,22 +128,50 @@ function matchOptOutKeywordLocal(
 }
 
 /**
- * Resolve a palavra de opt-out do texto. Caminho normal: leitura cacheada das
+ * #190: contrato explícito da decisão de opt-out. Antes deste cartão a função
+ * devolvia `null` tanto para "não casou" quanto para "não conseguiu decidir" —
+ * os dois viravam atribuição. Agora `indeterminate` é um estado próprio e vira
+ * resolução pendente na outbox (`optout_resolve`); `not_evaluated` cobre os
+ * casos em que o opt-out nem é avaliado (fromMe, não-texto).
+ */
+export type OptOutResolution =
+  | { state: "matched"; keyword: string }
+  | { state: "not_matched" }
+  | { state: "indeterminate" }
+  | { state: "not_evaluated" };
+
+/**
+ * Resolve a decisão de opt-out do texto. Caminho normal: leitura cacheada das
  * palavras ativas. Quando ela não está disponível (leitura falhou), a RPC
- * autoritativa `talkx_match_optout` decide — "na dúvida, a RPC decide".
+ * autoritativa `talkx_match_optout` decide — "na dúvida, a RPC decide". Só
+ * quando as DUAS fontes falham o estado é `indeterminate` — nunca é tratado
+ * como "não casou".
  */
 async function resolveOptOutKeyword(
   supabase: EvolutionDbClient,
   text: string,
-): Promise<string | null> {
+): Promise<OptOutResolution> {
   const keywords = await loadOptOutKeywords(supabase);
-  if (keywords) return matchOptOutKeywordLocal(text, keywords);
-  const { data, error } = await supabase.rpc("talkx_match_optout", { p_text: text });
-  if (error) {
-    console.warn("[OPT-OUT] talkx_match_optout falhou:", error.message);
-    return null;
+  if (keywords) {
+    const hit = matchOptOutKeywordLocal(text, keywords);
+    return hit ? { state: "matched", keyword: hit } : { state: "not_matched" };
   }
-  return typeof data === "string" && data.length > 0 ? data : null;
+  try {
+    const { data, error } = await supabase.rpc("talkx_match_optout", { p_text: text });
+    if (error) {
+      console.warn("[OPT-OUT] talkx_match_optout falhou:", error.message);
+      return { state: "indeterminate" };
+    }
+    return typeof data === "string" && data.length > 0
+      ? { state: "matched", keyword: data }
+      : { state: "not_matched" };
+  } catch (err) {
+    console.warn(
+      "[OPT-OUT] Erro ao chamar talkx_match_optout:",
+      err instanceof Error ? err.message : String(err),
+    );
+    return { state: "indeterminate" };
+  }
 }
 
 /**
@@ -455,13 +483,14 @@ export async function handleIncomingMessage(
   // (a RPC grava mensagem + efeitos pendentes; a reentrega retoma o que faltou).
   // X030/X064: por palavra configurada (mesma normalizacao da RPC) OU botao/lista
   // `talkx_optout` — avaliado so para mensagem recebida (nunca a nossa).
-  const optOutKeyword = key.fromMe
-    ? null
+  const optOutResolution: OptOutResolution = key.fromMe
+    ? { state: "not_evaluated" }
     : interactiveResponseId === TALKX_OPTOUT_BUTTON_ID
-    ? TALKX_OPTOUT_BUTTON_ID
+    ? { state: "matched", keyword: TALKX_OPTOUT_BUTTON_ID }
     : messageType === 'text' && content
     ? await resolveOptOutKeyword(supabase, content)
-    : null;
+    : { state: "not_evaluated" };
+  const optOutKeyword = optOutResolution.state === "matched" ? optOutResolution.keyword : null;
   const quotedExternalId = extractQuotedExternalId(data);
 
   // Uma transacao (20260905050000 + outbox R2-API-006): contato find-or-create
@@ -477,6 +506,9 @@ export async function handleIncomingMessage(
     p_external_id: key.id,
     p_created_at: messageCreatedAt,
     p_from_me: key.fromMe === true,
+    // #190: decisão explícita — 'indeterminate' (leitura E RPC falharam) vira
+    // resolução pendente na outbox; 'not_evaluated' (fromMe/não-texto) vai NULL.
+    p_opt_out_decision: optOutResolution.state === "not_evaluated" ? null : optOutResolution.state,
     p_opt_out_keyword: optOutKeyword,
     p_quoted_external_id: quotedExternalId,
   });

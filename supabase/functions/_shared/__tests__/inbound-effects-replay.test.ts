@@ -164,6 +164,7 @@ Deno.test("R2-API-006: falha no drain é lançada; a reentrega drena e a supress
     const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
     for (const ingest of ingests) {
       assertEquals(ingest.args.p_opt_out_keyword, "pare", "a palavra entra no ingest em TODA entrega");
+      assertEquals(ingest.args.p_opt_out_decision, "matched", "a decisão 'matched' acompanha a palavra");
     }
     const drenagens = chamadas.filter((c) => c.nome === "drain_inbound_message_effects");
     assertEquals(drenagens.length, 3, "cada entrega drena — inclusive as de outcome duplicate");
@@ -199,6 +200,7 @@ Deno.test("R2-API-006: citação e palavra entram na mesma operação do ingest"
     const ingest = chamadas.find((c) => c.nome === "ingest_inbound_message")!;
     assertEquals(ingest.args.p_quoted_external_id, "EXT-QUOTED-1", "a citação (stanzaId) viaja no ingest");
     assertEquals(ingest.args.p_opt_out_keyword, null, "texto normal não vira opt-out");
+    assertEquals(ingest.args.p_opt_out_decision, "not_matched", "texto normal decide 'not_matched'");
     assertEquals(fetchCalls.length, 0, "sem supressão não há autoresposta");
   }));
 
@@ -218,8 +220,11 @@ Deno.test("R2-API-006 (#69 refazer): a direção viaja no ingest — fromMe=true
       "mensagem própria chega ao ingest marcada — sem p_from_me a RPC enfileira atribuição para a nossa própria mensagem");
     assertEquals(propria.args.p_opt_out_keyword, null,
       "opt-out nunca é avaliado para mensagem própria");
+    assertEquals(propria.args.p_opt_out_decision, null,
+      "mensagem própria não carrega decisão de opt-out (guarda p_from_me decide na RPC)");
     const recebida = ingests.find((c) => c.args.p_external_id === "3EB0ME2")!;
     assertEquals(recebida.args.p_from_me, false,
       "mensagem recebida informa p_from_me=false e continua enfileirando os efeitos");
+    assertEquals(recebida.args.p_opt_out_decision, "not_matched");
     assertEquals(fetchCalls.length, 0, "nenhuma autoresposta sai para mensagem própria");
   }));

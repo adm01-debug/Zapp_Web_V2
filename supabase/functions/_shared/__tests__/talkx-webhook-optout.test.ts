@@ -25,7 +25,7 @@
  *   scripts/db-audit/inbound-effects-replay.test.sh
  * Payloads GO anonimizados em fixture (sem telefone/CPF reais).
  */
-import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   handleIncomingMessage,
   resetOptOutKeywordCache,
@@ -37,6 +37,10 @@ type Chamada = { nome: string; args: Record<string, unknown> };
 
 interface FakeConfig {
   keywords?: Array<{ keyword: string; match_mode: string }>;
+  /** Quando setado, a leitura de talkx_optout_keywords falha (fonte indisponivel). */
+  keywordsError?: { code: string; message: string };
+  /** Retorno da RPC talkx_match_optout (fallback autoritativo). */
+  matchOptout?: { data?: unknown; error?: { code: string; message: string } };
   /** Retorno do drain por chamada (suppression_id ou status por reentrega). */
   drainResults?: Array<Record<string, unknown>>;
   autoreply?: unknown;
@@ -69,7 +73,13 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
   chain.single = chain.maybeSingle;
   chain.then = (resolve: (value: unknown) => unknown) => {
     cfg.leituras?.push(tabela);
-    if (tabela === "talkx_optout_keywords") return resolve({ data: cfg.keywords ?? SEED, error: null });
+    if (tabela === "talkx_optout_keywords") {
+      return resolve(
+        cfg.keywordsError
+          ? { data: null, error: cfg.keywordsError }
+          : { data: cfg.keywords ?? SEED, error: null },
+      );
+    }
     if (tabela === "talkx_recipients") return resolve({ data: [], error: null });
     return resolve({ data: [], error: null });
   };
@@ -102,6 +112,9 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
         const valor = seq[Math.min(drainIndex, seq.length - 1)];
         drainIndex += 1;
         return { data: valor, error: null };
+      }
+      if (nome === "talkx_match_optout") {
+        return { data: cfg.matchOptout?.data ?? null, error: cfg.matchOptout?.error ?? null };
       }
       if (nome === "get_instance_token") return { data: cfg.instanceToken ?? null, error: null };
       return { data: null, error: null };
@@ -190,6 +203,11 @@ Deno.test("X030: 'PARE' suprime 1x, responde com o setting e não atribui respos
 
     const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
     assertEquals(ingests.length, 1, "o ingest acontece uma vez");
+    assertEquals(
+      ingests[0].args.p_opt_out_decision,
+      "matched",
+      "o contrato de decisão viaja no ingest — 'matched' quando a palavra casa",
+    );
     assertEquals(
       ingests[0].args.p_opt_out_keyword,
       "pare",
@@ -347,6 +365,7 @@ Deno.test("X030: resposta que NÃO é opt-out continua sendo atribuída ao Talk 
     await handleIncomingMessage(supabase, "inst-go-x030-e", data, key, "http://localhost:54321", "svc");
 
     const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
+    assertEquals(ingests[0].args.p_opt_out_decision, "not_matched", "sem casamento o ingest recebe 'not_matched'");
     assertEquals(ingests[0].args.p_opt_out_keyword, null, "sem palavra de opt-out a RPC enfileira as respostas");
     assertEquals(ingests[0].args.p_phone, "5511000000000", "o telefone resolvido alimenta a atribuição por telefone");
     assertEquals(
@@ -355,6 +374,92 @@ Deno.test("X030: resposta que NÃO é opt-out continua sendo atribuída ao Talk 
       "a drenagem aplica a atribuição pendente",
     );
     assertEquals(fetchCalls.length, 0, "sem supressão não há autoresposta");
+  } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+Deno.test("X030/#190: falha na leitura E na RPC vira 'indeterminate' no ingest — nunca atribui resposta", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso();
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    const supabase = fakeSupabase(chamadas, {
+      keywordsError: { code: "57P01", message: "admin shutdown" },
+      matchOptout: { error: { code: "57P01", message: "admin shutdown" } },
+      // A fonte autoritativa segue fora do ar: a resolução fica pendente na
+      // outbox e a entrega falha para a Evolution reentregar.
+      drainResults: [drainOk({ pending_failed: 1 })],
+      autoreply: "MENSAGEM DO SETTING (fixture)",
+    });
+
+    const { data, key } = traduzir(goIncoming("PARE", "3EB0IND1"));
+    await assertRejects(
+      () => handleIncomingMessage(supabase, "inst-go-x030-ind", data, key, "http://localhost:54321", "svc"),
+      Error,
+      "pendente",
+      "resolução indeterminada não é engolida: a entrega falha e o produtor reenvia",
+    );
+
+    const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
+    assertEquals(ingests.length, 1, "o ingest acontece uma vez");
+    assertEquals(
+      ingests[0].args.p_opt_out_decision,
+      "indeterminate",
+      "falha nas duas fontes NÃO pode significar 'não casou': o ingest recebe 'indeterminate'",
+    );
+    assertEquals(ingests[0].args.p_opt_out_keyword, null, "sem decisão não há palavra casada");
+    assertEquals(
+      chamadas.some((c) => c.nome === "attribute_talkx_reply" || c.nome === "attribute_multiplix_item_reply"),
+      false,
+      "estado indeterminado não libera atribuição Talk X nem Multiplix",
+    );
+    assertEquals(fetchCalls.length, 0, "sem supressão não há autoresposta");
+  } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+Deno.test("X030/#190: leitura fora do ar e RPC autoritativa decide — 'matched' e 'not_matched'", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso();
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    const supabase = fakeSupabase(chamadas, {
+      keywordsError: { code: "57P01", message: "admin shutdown" },
+      // A RPC decide 'pare' para o primeiro texto e null para o segundo.
+      matchOptout: { data: "pare" },
+      drainResults: [drainOk({ suppression_id: "supp-ind", optout_status: "suppressed" })],
+      autoreply: "MENSAGEM DO SETTING (fixture)",
+      instanceToken: "token-inst-1",
+    });
+
+    const a = traduzir(goIncoming("PARE", "3EB0IND2"));
+    await handleIncomingMessage(supabase, "inst-go-x030-ind2", a.data, a.key, "http://localhost:54321", "svc");
+
+    const matchRpc = chamadas.filter((c) => c.nome === "talkx_match_optout");
+    assertEquals(matchRpc.length, 1, "leitura indisponível: a RPC autoritativa decide");
+    const ingest = chamadas.find((c) => c.nome === "ingest_inbound_message")!;
+    assertEquals(ingest.args.p_opt_out_decision, "matched");
+    assertEquals(ingest.args.p_opt_out_keyword, "pare", "a palavra decidida pela RPC viaja no ingest");
+    assertEquals(fetchCalls.length, 1, "supressão decidida pela RPC gera a confirmação uma vez");
+
+    // RPC decide "não casou": o estado vira not_matched (nunca indeterminate).
+    chamadas.length = 0;
+    const supabase2 = fakeSupabase(chamadas, {
+      keywordsError: { code: "57P01", message: "admin shutdown" },
+      matchOptout: { data: null },
+      drainResults: [drainOk()],
+    });
+    const b = traduzir(goIncoming("Quero saber mais", "3EB0IND3"));
+    await handleIncomingMessage(supabase2, "inst-go-x030-ind3", b.data, b.key, "http://localhost:54321", "svc");
+    const ingest2 = chamadas.find((c) => c.nome === "ingest_inbound_message")!;
+    assertEquals(ingest2.args.p_opt_out_decision, "not_matched", "RPC respondeu null: decisão é not_matched");
+    assertEquals(ingest2.args.p_opt_out_keyword, null);
   } finally {
     restaurarFetch();
     resetOptOutKeywordCache();
