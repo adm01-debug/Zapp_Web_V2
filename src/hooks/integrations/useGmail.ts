@@ -7,9 +7,10 @@ import { callGmailFunction } from '../gmail/gmailApi';
 import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
 import { normalizeEmailBase64 } from '@/lib/emailAttachments';
 import { chunkEmailIds, collectEmailPages } from '@/lib/emailPagination';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import {
   EMAIL_THREAD_DEFAULT_FILTERS, emailThreadPageCount, emailThreadPageRange, emailThreadQueryDescriptor,
-  emailThreadSearchOr, emailThreadSelectColumns, type EmailThreadListQuery,
+  emailThreadSearchOr, emailThreadSelectColumns, escapeLikeWildcards, type EmailThreadListQuery,
 } from '@/lib/emailThreadQuery';
 
 export { EMAIL_THREAD_DEFAULT_FILTERS, EMAIL_THREAD_PAGE_SIZE } from '@/lib/emailThreadQuery';
@@ -143,7 +144,19 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       if (descriptor.labelId) query = query.contains('label_ids', [descriptor.labelId]);
       if (descriptor.since) query = query.gte('last_message_at', descriptor.since);
       if (descriptor.hasAttachments) query = query.eq('email_messages.has_attachments', true);
-      if (descriptor.search) query = query.or(emailThreadSearchOr(descriptor.search));
+      if (descriptor.search) {
+        // O OR também casa contato pelo `contact_id` da própria thread — coluna,
+        // não join, então thread sem contato não é excluída. Os ids vêm de uma
+        // consulta à tabela de contatos com o mesmo termo saneado.
+        const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(descriptor.search)}%`);
+        const { data: contactRows, error: contactsError } = await supabase
+          .from('contacts')
+          .select('id')
+          .or(`name.ilike.${pattern},email.ilike.${pattern}`)
+          .limit(200);
+        if (contactsError) throw contactsError;
+        query = query.or(emailThreadSearchOr(descriptor.search, (contactRows ?? []).map(row => row.id)));
+      }
       const range = emailThreadPageRange(effectiveListQuery.page);
       const { data, error, count } = await query
         .order('last_message_at', { ascending: false })
@@ -153,7 +166,20 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       // O select é montado em runtime (o join de anexos é condicional), então o
       // supabase-js não consegue inferir a linha: a lista de colunas é a mesma do
       // caminho legado e o tipo é declarado aqui.
-      return { rows: (data ?? []) as unknown as EmailThread[], total: count ?? null };
+      const rows = (data ?? []) as unknown as EmailThread[];
+      // Mesmo preenchimento do caminho `full`, restrito aos ids da página.
+      const attachmentRows = await Promise.all(chunkEmailIds(rows.map(row => row.id)).map(async threadIds => {
+        const { data: flags, error: attachmentsError } = await supabase
+          .from('email_messages')
+          .select('thread_id')
+          .eq('gmail_account_id', activeAccount.id)
+          .eq('has_attachments', true)
+          .in('thread_id', threadIds);
+        if (attachmentsError) throw attachmentsError;
+        return flags || [];
+      }));
+      const withAttachments = new Set(attachmentRows.flat().map(row => row.thread_id));
+      return { rows: rows.map(row => ({ ...row, has_attachments: withAttachments.has(row.id) })), total: count ?? null };
     },
     enabled: !!activeAccount,
   });
@@ -163,15 +189,13 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
     queryKey: ['gmail-thread-counts', activeAccount?.id],
     queryFn: async () => {
       if (!activeAccount) return { total: 0, unread: 0 };
-      const [totalResult, unreadResult, starredResult] = await Promise.all([
+      const [totalResult, unreadResult] = await Promise.all([
         supabase.from('email_threads').select('id', { count: 'exact', head: true }).eq('gmail_account_id', activeAccount.id),
         supabase.from('email_threads').select('id', { count: 'exact', head: true }).eq('gmail_account_id', activeAccount.id).eq('is_unread', true),
-        supabase.from('email_threads').select('id', { count: 'exact', head: true }).eq('gmail_account_id', activeAccount.id).eq('is_starred', true),
       ]);
       if (totalResult.error) throw totalResult.error;
       if (unreadResult.error) throw unreadResult.error;
-      if (starredResult.error) throw starredResult.error;
-      return { total: totalResult.count ?? null, unread: unreadResult.count ?? null, starred: starredResult.count ?? null };
+      return { total: totalResult.count ?? null, unread: unreadResult.count ?? null };
     },
     enabled: !!activeAccount,
   });
@@ -396,8 +420,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
     threadsTotalCount: threadPage.total ?? threads.length,
     threadsPage: effectiveListQuery.page,
     threadsPageCount: emailThreadPageCount(threadPage.total),
-    accountThreadsTotalCount: exactThreadCounts?.total ?? null,
     unreadCount: exactThreadCounts?.unread ?? threads.filter(t => t.is_unread).length,
-    starredCount: exactThreadCounts?.starred ?? threads.filter(t => t.is_starred).length,
+    starredCount: threads.filter(t => t.is_starred).length,
   };
 }

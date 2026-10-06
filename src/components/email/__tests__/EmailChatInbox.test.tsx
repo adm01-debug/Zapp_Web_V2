@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
 
 const THREAD: EmailThread = {
@@ -16,21 +16,28 @@ const state = vi.hoisted(() => ({
   accounts: [{ id: 'account-1', email_address: 'admin@example.com', is_active: true }],
   activeAccount: { id: 'account-1', email_address: 'admin@example.com', is_active: true },
   threads: [] as EmailThread[],
+  threadsLoading: false,
+  threadsPageCount: 1,
+  /** O 3º argumento de cada chamada do hook — a consulta enviada ao servidor. */
+  listQueryCalls: [] as Array<{ page?: number; search?: string } | undefined>,
 }));
 
 vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock('@/hooks/integrations/useGmail', () => ({
-  useGmail: () => ({
-    ...state,
-    refetchAccounts: vi.fn(), connectGmail: { mutate: vi.fn(), isPending: false }, labels: [],
-    threadsLoading: false, threadsError: null, syncInbox: { mutate: vi.fn(), isPending: false },
-    syncLabels: { mutate: vi.fn(), isPending: false }, unreadCount: state.threads.filter(thread => thread.is_unread).length, threadsTotalCount: state.threads.length,
-    downloadAttachment: { mutate: vi.fn(), isPending: false },
-    subscribeToThreads: () => vi.fn(),
-  }),
+  useGmail: (_accountId?: string, _threadId?: string | null, listQuery?: { page?: number; search?: string }) => {
+    state.listQueryCalls.push(listQuery);
+    return {
+      ...state,
+      refetchAccounts: vi.fn(), connectGmail: { mutate: vi.fn(), isPending: false }, labels: [],
+      threadsError: null, syncInbox: { mutate: vi.fn(), isPending: false },
+      syncLabels: { mutate: vi.fn(), isPending: false }, unreadCount: state.threads.filter(thread => thread.is_unread).length, threadsTotalCount: state.threads.length,
+      downloadAttachment: { mutate: vi.fn(), isPending: false },
+      subscribeToThreads: () => vi.fn(),
+    };
+  },
 }));
 vi.mock('../EmailThreadList', () => ({
-  EmailThreadList: ({ threads, onSelectThread, onNewEmail }: { threads: EmailThread[]; onSelectThread: (thread: EmailThread) => void; onNewEmail: () => void }) => <div data-testid="thread-list"><button onClick={() => threads[0] && onSelectThread(threads[0])}>Selecionar primeira</button><button onClick={onNewEmail}>Compor pela lista</button></div>,
+  EmailThreadList: ({ threads, page, onSelectThread, onNewEmail, onPageChange }: { threads: EmailThread[]; page: number; onSelectThread: (thread: EmailThread) => void; onNewEmail: () => void; onPageChange?: (page: number) => void }) => <div data-testid="thread-list"><span data-testid="pagina-atual">{page}</span><button onClick={() => threads[0] && onSelectThread(threads[0])}>Selecionar primeira</button><button onClick={onNewEmail}>Compor pela lista</button><button onClick={() => onPageChange?.(3)}>Ir para página 3</button></div>,
 }));
 vi.mock('../EmailChatThread', () => ({ EmailChatThread: ({ accountId, onToggleDetails }: { accountId?: string; onToggleDetails?: () => void }) => <div data-testid="thread-account">{accountId}<button type="button" onClick={onToggleDetails}>Detalhes</button></div> }));
 vi.mock('../EmailContactPanel', () => ({ EmailContactPanel: () => <div data-testid="contact-panel" /> }));
@@ -46,6 +53,13 @@ describe('EmailChatInbox', () => {
     state.accounts = [{ id: 'account-1', email_address: 'admin@example.com', is_active: true }];
     state.activeAccount = { id: 'account-1', email_address: 'admin@example.com', is_active: true };
     state.threads = [];
+    state.threadsLoading = false;
+    state.threadsPageCount = 1;
+    state.listQueryCalls.length = 0;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('distingue carregamento de conta desconectada', () => {
@@ -113,5 +127,32 @@ describe('EmailChatInbox', () => {
     render(<EmailChatInbox embedded />);
     expect(screen.queryByText('Comunicação profissional, organizada como uma conversa.')).not.toBeInTheDocument();
     expect(screen.getByText('admin@example.com')).toBeInTheDocument();
+  });
+
+  it('volta para a página 1 quando a busca global muda', () => {
+    vi.useFakeTimers();
+    state.threads = [THREAD];
+    state.threadsPageCount = 5;
+    render(<EmailChatInbox />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ir para página 3' }));
+    expect(state.listQueryCalls[state.listQueryCalls.length - 1]?.page).toBe(3);
+
+    fireEvent.change(screen.getByLabelText('Busca global do Email'), { target: { value: 'fatura' } });
+    act(() => { vi.advanceTimersByTime(300); });
+
+    const ultima = state.listQueryCalls[state.listQueryCalls.length - 1];
+    expect(ultima?.page).toBe(1);
+    expect(ultima?.search).toBe('fatura');
+  });
+
+  it('nunca pede página fora do intervalo conhecido', () => {
+    state.threads = [THREAD];
+    state.threadsPageCount = 2;
+    render(<EmailChatInbox />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ir para página 3' }));
+
+    expect(state.listQueryCalls.every(call => (call?.page ?? 1) <= 2)).toBe(true);
+    expect(screen.getByTestId('pagina-atual')).toHaveTextContent('2');
   });
 });

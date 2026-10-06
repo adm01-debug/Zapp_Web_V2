@@ -95,11 +95,27 @@ export function emailThreadSearchTerm(search: string): string | null {
   return term === '' ? null : term;
 }
 
-export function emailThreadSearchOr(term: string): string {
-  const pattern = escapeOrFilterValue(`%${term}%`);
-  return ['subject', 'snippet', 'last_from_name', 'last_from_address']
-    .map(column => `${column}.ilike.${pattern}`)
-    .join(',');
+/**
+ * Escapa os curingas do `ilike` dentro do termo digitado (`%` e `_` viram literal),
+ * NESTA ordem: `\` primeiro para não re-escapar as contrabarras inseridas depois.
+ * Os `%` que o padrão adiciona nas pontas são os curingas intencionais e ficam fora
+ * desta função.
+ */
+export function escapeLikeWildcards(term: string): string {
+  return term.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
+/**
+ * Cláusula `.or()` da busca: colunas da própria `email_threads` mais, quando houver,
+ * os contatos que casaram o termo (`contact_id` é coluna da thread — não vira join,
+ * então thread sem contato não é excluída).
+ */
+export function emailThreadSearchOr(term: string, contactIds: readonly string[] = []): string {
+  const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(term)}%`);
+  const clauses = ['subject', 'snippet', 'last_from_name', 'last_from_address']
+    .map(column => `${column}.ilike.${pattern}`);
+  if (contactIds.length > 0) clauses.push(`contact_id.in.(${contactIds.join(',')})`);
+  return clauses.join(',');
 }
 
 export function emailThreadQueryDescriptor(filters: EmailThreadListFilters, now: Date = new Date()): EmailThreadQueryDescriptor {

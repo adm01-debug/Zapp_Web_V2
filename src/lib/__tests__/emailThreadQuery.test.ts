@@ -13,6 +13,7 @@ import {
   emailThreadSearchOr,
   emailThreadSearchTerm,
   emailThreadSelectColumns,
+  escapeLikeWildcards,
   hasActiveEmailThreadFilters,
   readEmailThreadFiltersFromUrl,
   writeEmailThreadFiltersToUrl,
@@ -64,6 +65,25 @@ describe('emailThreadQuery (OTH-005)', () => {
     expect(clause).toContain('subject.ilike."%maria%"');
     expect(clause).toContain('last_from_address.ilike."%maria%"');
     expect(clause.split(',')).toHaveLength(4);
+  });
+
+  it('inclui os contatos que casam a busca sem excluir thread sem contato', () => {
+    const clause = emailThreadSearchOr('maria', ['c1', 'c2']);
+    expect(clause).toContain('contact_id.in.(c1,c2)');
+    expect(clause).toContain('subject.ilike."%maria%"');
+    // Sem contato casado, o OR sai só com colunas da própria thread.
+    expect(emailThreadSearchOr('maria')).not.toContain('contact_id');
+    expect(emailThreadSearchOr('maria', [])).not.toContain('contact_id');
+  });
+
+  it('escapa os curingas % e _ do termo sem tocar nos % externos do ilike', () => {
+    expect(escapeLikeWildcards('50%')).toBe('50\\%');
+    expect(escapeLikeWildcards('a_b')).toBe('a\\_b');
+    expect(escapeLikeWildcards('a\\b')).toBe('a\\\\b');
+    // O % digitado vira \% (a saída dobra a contrabarra para o PostgREST); os %
+    // das pontas continuam curingas intencionais.
+    const clause = emailThreadSearchOr('50%_x');
+    expect(clause).toContain('subject.ilike."%50\\\\%\\\\_x%"');
   });
 
   it('o join de mensagens só entra no select quando o filtro de anexo está ligado', () => {

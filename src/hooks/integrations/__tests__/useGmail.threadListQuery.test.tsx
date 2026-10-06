@@ -46,15 +46,17 @@ type Records = { list: string[]; count: string[]; other: string[] };
 /**
  * Builder falso que registra cada chamada. A chamada de `select` decide o balde: as
  * contagens de cabeçalho (`select('id', { count, head })`) caem em `count`, a consulta
- * da lista em `list` — assim as asserções falam só da consulta paginada.
+ * da lista em `list` e o restante (lotes de anexo, contatos, marcadores) em `other` —
+ * assim as asserções falam só da consulta paginada. O `range` devolve a fatia pedida,
+ * como o servidor faria.
  */
-function makeRecordingChain(records: Records, rows: unknown[], total: number | null) {
+function makeRecordingChain(records: Records, table: string, rows: unknown[], total: number | null) {
   const payload = () => ({ data: rows, error: null, count: total });
-  let bucket: string[] = records.other;
+  let bucket: string[] = table === 'email_threads' ? records.list : records.other;
   const chain: Record<string, unknown> = {
     select: (columns: string, options?: unknown) => {
       const head = Boolean(options && (options as { head?: boolean }).head);
-      bucket = head ? records.count : records.list;
+      if (head) bucket = records.count;
       bucket.push(`select(${columns}${options ? `,${JSON.stringify(options)}` : ''})`);
       return chain;
     },
@@ -63,9 +65,16 @@ function makeRecordingChain(records: Records, rows: unknown[], total: number | n
     gte: (column: string, value: unknown) => { bucket.push(`gte(${column},${JSON.stringify(value)})`); return chain; },
     or: (filters: string) => { bucket.push(`or(${filters})`); return chain; },
     order: (column: string) => { bucket.push(`order(${column})`); return chain; },
-    in: () => Promise.resolve({ data: [], error: null }),
+    in: (column: string, ids: unknown[]) => {
+      bucket.push(`in(${column},${JSON.stringify(ids)})`);
+      const filtered = (rows as Array<Record<string, unknown>>).filter(row => ids.includes(row[column]));
+      return Promise.resolve({ data: filtered, error: null });
+    },
     maybeSingle: () => Promise.resolve({ data: null, error: null }),
-    range: (from: number, to: number) => { bucket.push(`range(${from},${to})`); return Promise.resolve(payload()); },
+    range: (from: number, to: number) => {
+      bucket.push(`range(${from},${to})`);
+      return Promise.resolve({ data: rows.slice(from, to + 1), error: null, count: total });
+    },
     limit: (value: number) => { bucket.push(`limit(${value})`); return Promise.resolve(payload()); },
   };
   chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve(payload()).then(resolve);
@@ -77,12 +86,24 @@ function createWrapper() {
   return ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client: qc }, children);
 }
 
-function setup(threads: unknown[]): Records {
+interface SetupOptions {
+  /** thread_ids que o lote de anexos (`email_messages` com `in`) devolve. */
+  attachmentThreadIds?: string[];
+  /** ids dos contatos que casam a busca (`contacts` com `or`+`limit`). */
+  contactIds?: string[];
+}
+
+function setup(threads: unknown[], options: SetupOptions = {}): Records {
   const records: Records = { list: [], count: [], other: [] };
   vi.mocked(callGmailFunction).mockResolvedValue({ accounts: [MOCK_ACCOUNT] });
-  vi.mocked(supabase.from).mockImplementation((table: string) =>
+  vi.mocked(supabase.from).mockImplementation((table: string) => {
+    const rows = table === 'email_threads' ? threads
+      : table === 'email_messages' ? (options.attachmentThreadIds ?? []).map(thread_id => ({ thread_id }))
+      : table === 'contacts' ? (options.contactIds ?? []).map(id => ({ id }))
+      : [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    makeRecordingChain(records, table === 'email_threads' ? threads : [], threads.length) as any);
+    return makeRecordingChain(records, table, rows, threads.length) as any;
+  });
   return records;
 }
 
@@ -100,7 +121,7 @@ describe('useGmail — consulta da lista de threads (OTH-005)', () => {
   });
 
   it('manda os filtros ao servidor e busca somente a página pedida', async () => {
-    const records = setup([makeThread('t1'), makeThread('t2')]);
+    const records = setup(Array.from({ length: 25 }, (_, index) => makeThread(`t${index + 1}`)));
     const query = {
       ...EMAIL_THREAD_DEFAULT_FILTERS, filter: 'unread' as const, labelId: 'INBOX', period: '7d' as const,
       search: 'maria', page: 2,
@@ -119,7 +140,10 @@ describe('useGmail — consulta da lista de threads (OTH-005)', () => {
     expect(ranges).toEqual([`range(${(2 - 1) * EMAIL_THREAD_PAGE_SIZE},${2 * EMAIL_THREAD_PAGE_SIZE - 1})`]);
     expect(records.list).not.toContain('range(0,999)');
     expect(records.list).not.toContain('limit(1000)');
-    expect(result.current.threads).toHaveLength(2);
+    // A página 2 de 25 threads traz as 5 últimas — a fatia do range, não o array todo.
+    expect(result.current.threads).toHaveLength(5);
+    // Contadores de cabeçalho: só total e não-lidos — sem consulta extra de favoritos.
+    expect(records.count.filter(entry => entry.startsWith('select('))).toHaveLength(2);
   });
 
   it('filtro de anexos é aplicado no join do servidor, não sobre a página', async () => {
@@ -139,5 +163,45 @@ describe('useGmail — consulta da lista de threads (OTH-005)', () => {
     expect(records.list).toContain(`range(0,${EMAIL_THREAD_PAGE_SIZE - 1})`);
     expect(result.current.threads).toHaveLength(1);
     expect(result.current.threadsTotalCount).toBe(1);
+  });
+
+  it('preenche has_attachments na página mesmo com o filtro de anexo desligado', async () => {
+    const threads = Array.from({ length: 25 }, (_, index) => makeThread(`t${index + 1}`));
+    // t2 está na página 1 e tem anexo; t22 tem anexo mas está fora da página.
+    const records = setup(threads, { attachmentThreadIds: ['t2', 't22'] });
+    const { result } = await renderList({ ...EMAIL_THREAD_DEFAULT_FILTERS, hasAttachments: false, page: 1 });
+
+    // O filtro continua desligado: nada de join nem eq de anexo na consulta da lista.
+    expect(records.list.some(entry => entry.includes('email_messages'))).toBe(false);
+    const byId = new Map(result.current.threads.map(thread => [thread.id, thread]));
+    expect(byId.get('t2')?.has_attachments).toBe(true);
+    expect(byId.get('t1')?.has_attachments).toBe(false);
+
+    // Um lote só, restrito aos 20 ids da página — nada de conta inteira nem N+1.
+    const lotes = records.other.filter(entry => entry.startsWith('in(thread_id,'));
+    expect(lotes).toHaveLength(1);
+    const ids = JSON.parse(lotes[0].slice('in(thread_id,'.length, -1)) as string[];
+    expect(ids).toHaveLength(EMAIL_THREAD_PAGE_SIZE);
+    expect(ids).toContain('t2');
+    expect(ids).not.toContain('t22');
+  });
+
+  it('a busca amplia o OR com os contatos que casam o termo', async () => {
+    const records = setup([makeThread('t1')], { contactIds: ['c1', 'c2'] });
+    await renderList({ ...EMAIL_THREAD_DEFAULT_FILTERS, search: 'maria', page: 1 });
+
+    const orDaLista = records.list.find(entry => entry.startsWith('or(') && entry.includes('subject.ilike'));
+    expect(orDaLista).toBeDefined();
+    expect(orDaLista).toContain('contact_id.in.(c1,c2)');
+    expect(orDaLista).toContain('subject.ilike');
+  });
+
+  it('sem contato casando a busca, o OR não ganha cláusula de contato', async () => {
+    const records = setup([makeThread('t1')], { contactIds: [] });
+    await renderList({ ...EMAIL_THREAD_DEFAULT_FILTERS, search: 'maria', page: 1 });
+
+    const orDaLista = records.list.find(entry => entry.startsWith('or(') && entry.includes('subject.ilike'));
+    expect(orDaLista).toBeDefined();
+    expect(orDaLista).not.toContain('contact_id');
   });
 });

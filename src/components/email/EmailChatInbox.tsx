@@ -42,6 +42,8 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
     const timer = setTimeout(() => setDebouncedGlobalSearch(globalSearchQuery), 300);
     return () => clearTimeout(timer);
   }, [globalSearchQuery]);
+  // Termo novo volta para a primeira página — a janela anterior era de outro resultado.
+  useEffect(() => { setPage(1); }, [debouncedGlobalSearch, setPage]);
   const listQuery = useMemo(
     () => ({ ...listState, search: (debouncedGlobalSearch || listState.search).trim() }),
     [debouncedGlobalSearch, listState],
@@ -51,6 +53,13 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
     threads, threadsLoading, threadsError, connectGmail, labels, syncInbox,
     syncLabels, unreadCount, threadsTotalCount, threadsPageCount, subscribeToThreads, requestedThread, downloadAttachment,
   } = useGmail(accountId, selectedThreadId, listQuery);
+  // A página pedida nunca passa do intervalo conhecido: no clique ela já é
+  // limitada a `Math.min(page, Math.max(1, threadsPageCount))` e, se o total
+  // encolher depois (realtime/filtro), este efeito refaz a consulta na última
+  // página. Enquanto carrega, o total é desconhecido e nada é mexido.
+  useEffect(() => {
+    if (!threadsLoading && page > threadsPageCount) setPage(threadsPageCount);
+  }, [threadsLoading, threadsPageCount, page, setPage]);
   const [showComposer, setShowComposer] = useState(false);
   const [composerTo, setComposerTo] = useState('');
   const [showDetails, setShowDetails] = useState(matchesWideDetailsLayout);
@@ -177,7 +186,7 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
 
       <div className="flex min-h-0 flex-1">
         <aside data-testid="email-thread-list" className={cn('w-full shrink-0 border-r border-border bg-inbox-panel md:w-[330px] xl:w-[370px]', selectedThread ? 'hidden md:flex md:flex-col' : 'flex flex-col')}>
-          <EmailThreadList threads={threads} totalCount={threadsTotalCount} page={page} pageCount={threadsPageCount} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} filters={filters} onFiltersChange={updateFilters} onSearchChange={setSearch} onResetFilters={resetFilters} onPageChange={setPage} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={() => setGlobalSearchQuery('')} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} />
+          <EmailThreadList threads={threads} totalCount={threadsTotalCount} page={page} pageCount={threadsPageCount} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} filters={filters} onFiltersChange={updateFilters} onSearchChange={setSearch} onResetFilters={resetFilters} onPageChange={next => setPage(threadsLoading ? next : Math.min(next, Math.max(1, threadsPageCount)))} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={() => setGlobalSearchQuery('')} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} />
         </aside>
         <section data-testid="email-conversation" aria-label="Conteúdo da conversa" className={cn('min-w-0 flex-1 flex-col bg-background', !selectedThread ? 'hidden md:flex' : 'flex')}>
           {selectedThread ? <EmailChatThread key={`${activeAccount.id}:${selectedThread.id}`} accountId={activeAccount.id} thread={selectedThread} labels={labels} onContextDataChange={handleThreadContextChange} onBack={() => navigateToThread(null, true)} onToggleDetails={toggleDetails} showDetailsButton /> : (
