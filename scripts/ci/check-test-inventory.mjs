@@ -44,6 +44,8 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // IA-131: prova DML em Postgres descartável; promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/ia131-audio-stt-openrouter.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
