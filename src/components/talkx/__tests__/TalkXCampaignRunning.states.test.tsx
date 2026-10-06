@@ -151,6 +151,16 @@ const RECIPIENT_ROW = {
   contacts: { name: 'Contato Retry X047', phone: '+5511999990000' },
 };
 
+const MESSAGE_ROW = {
+  id: 'r1',
+  status: 'sent',
+  personalized_message: 'Mensagem recuperada no retry X047',
+  sent_at: '2026-10-05T12:00:00.000Z',
+  delivered_at: null,
+  error_message: null,
+  contacts: { name: 'Contato Retry X047', phone: 'telefone-sintetico' },
+};
+
 describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () => {
   beforeEach(() => {
     state.campaignList = [mockCampaign];
@@ -215,6 +225,24 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     const select = screen.getByLabelText('Selecionar campanha') as HTMLSelectElement;
     expect(select.value).toBe('c1');
     expect(screen.getByRole('button', { name: 'Destinatários' }).className).toContain('border-primary');
+  });
+
+  it('erro nas mensagens: erro, e "Tentar novamente" refaz a consulta sem perder campanha e aba', async () => {
+    state.rows[100] = { data: null, error: { message: 'falha X047 — mensagens' } };
+
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Mensagens' }));
+
+    expect(await screen.findByText(/Não foi possível carregar as mensagens/)).toBeTruthy();
+    expect(screen.queryByText('Nenhum destinatário nesta campanha.')).toBeNull();
+
+    state.rows[100] = { data: [MESSAGE_ROW], error: null };
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    expect(await screen.findByText('Mensagem recuperada no retry X047')).toBeTruthy();
+    const select = screen.getByLabelText('Selecionar campanha') as HTMLSelectElement;
+    expect(select.value).toBe('c1');
+    expect(screen.getByRole('button', { name: 'Mensagens' }).className).toContain('border-primary');
   });
 
   it('erro no histórico de envios: a Visão Geral mostra o erro e NÃO o card vazio', async () => {
