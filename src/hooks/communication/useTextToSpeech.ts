@@ -24,6 +24,13 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  /**
+   * R2-INB-041 — cleanup do bind de volume (subscribers do store + ganho WebAudio) da
+   * fala vigente. Fica numa ref porque o `detach` devolvido por `attachMediaVolume` se
+   * perdia dentro de `onended`/`onerror`: parar a fala ou desmontar o painel descartava
+   * o Audio mantendo a inscrição dele no store global.
+   */
+  const detachRef = useRef<(() => void) | null>(null);
 
   // E — os dois effects que existiam aqui sincronizavam prop -> estado com `setState` sincrono
   // dentro do effect (regra react-hooks/set-state-in-effect: cascata de renders). Agora o valor
@@ -65,18 +72,39 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     onSpeedChange?.(clampedSpeed);
   }, [initialSpeed, onSpeedChange]);
 
-  const stop = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+  /**
+   * R2-INB-041 — solta a fala corrente de modo idempotente: pausa, desliga os handlers,
+   * executa o `detach` do bind de volume, revoga a URL e limpa as refs. Não mexe em estado
+   * React para poder rodar também no cleanup de unmount.
+   */
+  const releasePlayback = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.onplay = null;
+      audio.onended = null;
+      audio.onerror = null;
     }
+    audioRef.current = null;
+    detachRef.current?.();
+    detachRef.current = null;
     if (audioUrlRef.current) {
       URL.revokeObjectURL(audioUrlRef.current);
       audioUrlRef.current = null;
     }
+  }, []);
+
+  const stop = useCallback(() => {
+    releasePlayback();
     setIsPlaying(false);
     setCurrentMessageId(null);
-  }, []);
+  }, [releasePlayback]);
+
+  // R2-INB-041 — desmontar o painel descarta o player: solta o bind em vez de deixá-lo
+  // inscrito no store global (a reprodução em si já morre com o elemento).
+  useEffect(() => () => {
+    releasePlayback();
+  }, [releasePlayback]);
 
   const speak = useCallback(async (text: string, messageId?: string) => {
     // Stop any current playback
@@ -132,38 +160,40 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
       // E36 — o TTS toca no volume global, não no volume do sistema.
-      const detachMediaVolume = attachMediaVolume(audio);
-      
+      detachRef.current = attachMediaVolume(audio);
+
       // Set playback rate
       audio.playbackRate = speed;
 
-      audio.onplay = () => setIsPlaying(true);
-      audio.onended = () => {
-        detachMediaVolume();
+      // R2-INB-041 — ended e erro passam pelo MESMO caminho idempotente de liberação do
+      // bind. Só a fala vigente pode soltar o player: uma fala antiga que termina depois
+      // de outra assumir não pode derrubar o bind da que a substituiu.
+      const releaseOwnPlayback = () => {
+        if (audioRef.current !== audio) return;
+        releasePlayback();
         setIsPlaying(false);
         setCurrentMessageId(null);
-        if (audioUrlRef.current) {
-          URL.revokeObjectURL(audioUrlRef.current);
-          audioUrlRef.current = null;
-        }
       };
+
+      audio.onplay = () => setIsPlaying(true);
+      audio.onended = releaseOwnPlayback;
       audio.onerror = () => {
-        detachMediaVolume();
-        setIsPlaying(false);
-        setCurrentMessageId(null);
+        releaseOwnPlayback();
         toast.error('Erro ao reproduzir áudio');
       };
 
       await audio.play();
     } catch (error) {
       log.error('TTS error:', error);
+      // R2-INB-041 — falha ao tocar também descarta o player: solta o bind e a URL.
+      releasePlayback();
       const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar áudio';
       toast.error(errorMessage);
       setCurrentMessageId(null);
     } finally {
       setIsLoading(false);
     }
-  }, [voiceId, speed, useStreaming, stop]);
+  }, [voiceId, speed, useStreaming, stop, releasePlayback]);
 
   return {
     speak,
