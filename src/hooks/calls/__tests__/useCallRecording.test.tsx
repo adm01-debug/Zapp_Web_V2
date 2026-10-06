@@ -13,8 +13,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  * como gravacao valida se o hook nao olhasse o TAMANHO.
  *
  * Estes testes travam as duas pontas: corpo vazio NUNCA e gravacao, corpo com bytes continua
- * sendo. E travam tambem o limite deste cartao: transporte, headers, corpo da requisicao,
- * query string e streaming NAO mudam aqui (quem le os bytes e o que ja existia).
+ * sendo. A resposta JSON `{ url }`, que o player ja consumia, continua valendo como estava -
+ * o que muda aqui e so o corpo VAZIO. E travam tambem o limite deste cartao: transporte,
+ * headers, corpo da requisicao, query string e streaming NAO mudam aqui.
  *
  * Vermelho antes da correcao: o hook decidia a disponibilidade sem olhar o corpo, entao
  * `blob` nem existia no contrato (`undefined`) e o audio com bytes nunca virava gravacao valida.
@@ -91,6 +92,17 @@ describe('useCallRecording — corpo de audio vazio (TEL-RECORDING-001)', () => 
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it('a resposta JSON `{ url }` que o player ja consumia continua valendo', async () => {
+    functionsInvoke.mockResolvedValue({ data: { url: 'https://exemplo/g.mp3' }, error: null });
+
+    const { result } = renderHook(() => useCallRecording('c1', 'available'), { wrapper });
+
+    await waitFor(() => expect(result.current.disponivel).toBe(true));
+
+    expect(result.current.url).toBe('https://exemplo/g.mp3');
+    expect(result.current.blob).toBeNull();
   });
 
   it('chamada sem gravacao continua sem disparar requisicao', async () => {
