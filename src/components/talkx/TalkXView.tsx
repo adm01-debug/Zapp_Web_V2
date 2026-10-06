@@ -10,7 +10,7 @@ import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
-import { ModuleHeader, IconTile } from './talkxShared';
+import { ModuleHeader, IconTile, TalkXSkeletonRows } from './talkxShared';
 import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { TalkXHelp } from './TalkXHelp';
 import { TalkXOverview } from './TalkXOverview';
@@ -30,7 +30,7 @@ import type { WizardStep } from './useCampaignEditor';
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
 
 export default function TalkXView() {
-  const { campaigns, isLoading, isError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation } = useTalkX();
+  const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
   const { data: teamProfiles = [] } = useTeamProfiles();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
@@ -220,7 +220,17 @@ export default function TalkXView() {
       && localDraftRouteId !== wizardRoute.campaignId
       && isLoading;
     if (awaitingRoutedCampaign) {
-      return <div className="min-h-full w-full min-w-0 bg-background text-sm text-muted-foreground" role="status">Carregando campanha…</div>;
+      // X047 — enquanto a campanha roteada resolve, esqueleto com aria-busy
+      // (antes: um texto solto, que parecia carga infinita ou tela vazia).
+      return (
+        <div
+          className="min-h-full w-full min-w-0 bg-background p-6"
+          role="status" aria-live="polite" aria-busy="true" data-talkx-query="loading"
+        >
+          <span className="sr-only">Carregando conteúdo…</span>
+          <TalkXSkeletonRows rows={4} />
+        </div>
+      );
     }
     return (
       <div className="min-h-full w-full min-w-0 bg-background">
@@ -335,6 +345,7 @@ export default function TalkXView() {
         <TabsContent value="overview" className="mt-4">
           <TalkXOverview
             campaigns={campaigns} segments={segments} creators={creators} isLoading={isLoading}
+            isError={isError} error={campaignsError} onRetry={() => { void refetchCampaigns(); }}
             onNew={() => openNew()} onEdit={openEdit} onView={onView} onViewScheduled={openScheduled} onViewRunning={openRunning} onDuplicate={duplicateCampaign}
             onStart={(id) => { void startCampaign(id); }}
             onPause={async (id) => { try { await pauseCampaign(id); toast.info('Campanha pausada'); } catch { toast.error('Erro ao pausar'); } }}

@@ -11,7 +11,7 @@ import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
 import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
   TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard, TalkXConfirmDialog,
-  InsightCard,
+  InsightCard, TalkXQueryBoundary,
   fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES,
 } from './talkxShared';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
@@ -26,6 +26,10 @@ interface Props {
   segments: TalkXSegment[];
   creators: Record<string, string>;
   isLoading: boolean;
+  isError?: boolean;
+  error?: Error | null;
+  /** Refaz a consulta de campanhas ("Tentar novamente") sem mexer em filtros nem rota. */
+  onRetry?: () => void;
   onNew: () => void;
   onEdit: (c: TalkXCampaign) => void;
   onView: (c: TalkXCampaign) => void;
@@ -41,7 +45,7 @@ interface Props {
 
 const OBJ_COLOR: Record<string, 'blue' | 'green' | 'red' | 'violet' | 'amber'> = { vendas: 'green', engajamento: 'blue', reativacao: 'amber', relacionamento: 'violet', pesquisa: 'blue', institucional: 'red' };
 
-export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
+export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
   const saved = useMemo(() => loadFilters(), []);
   const { data: insights } = useTalkXInsights();
   const [search, setSearch] = useState('');
@@ -111,13 +115,30 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
 
   const toggleAll = () => setSelected((prev) => prev.size === pageItems.length ? new Set() : new Set(pageItems.map((c) => c.id)));
 
+  // X047 — a Visão geral passa pelo boundary de consulta: carregando -> erro ->
+  // vazio -> conteúdo. Com a consulta em erro a tela mostra o erro com retry
+  // (nunca o vazio), e o retry só refaz a consulta — filtros e rota ficam como estão.
   return (
+    <TalkXQueryBoundary
+      query={{ isLoading, isError, error }}
+      entity="campanhas"
+      onRetry={onRetry}
+      skeleton={
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4 min-w-0">
+          <div className="min-w-0 space-y-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
+              {Array.from({ length: 5 }).map((_, i) => <KpiCardSkeleton key={i} />)}
+            </div>
+            <div className="rounded-2xl bg-card border border-border/70 p-4"><TalkXSkeletonRows rows={5} /></div>
+          </div>
+        </div>
+      }
+      isEmpty={campaigns.length === 0}
+      empty={<div className="p-4"><TalkXEmptyState preset="emptyCampaigns" onAction={onNew} /></div>}
+    >
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
         {/* KPIs */}
-        {isLoading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">{Array.from({length:5}).map((_,i)=><KpiCardSkeleton key={i}/>)}</div>
-        ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
             <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={fmtInt(totals.total)}    bars={totals.bars} />
             <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={fmtInt(totals.active)} />
@@ -125,7 +146,6 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
             <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={totals.successRate===null?'—':`${totals.successRate}%`} />
             <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={fmtInt(totals.reached)} />
           </div>
-        )}
 
         {/* Filtros */}
         <FilterBarV2
@@ -195,13 +215,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
 
         {/* Tabela */}
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-          {isLoading ? (
-            <div className="p-4"><TalkXSkeletonRows rows={5} /></div>
-          ) : campaigns.length === 0 ? (
-            <div className="p-4">
-              <TalkXEmptyState preset="emptyCampaigns" onAction={onNew} />
-            </div>
-          ) : filtered.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="p-4"><TalkXFilteredEmptyState onClearFilters={clear} /></div>
           ) : layout === 'grid' ? (
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
@@ -344,6 +358,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, onNew,
         confirmLabel="Iniciar envio" cancelLabel="Cancelar"
       />
     </div>
+    </TalkXQueryBoundary>
   );
 }
 
