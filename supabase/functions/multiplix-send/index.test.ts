@@ -1,4 +1,5 @@
 import { handleMultiplixSend, personalize } from './index.ts';
+import { resolveBlockContent } from '../_shared/multiplix-content.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -143,6 +144,22 @@ interface MockOpts {
    * tem de seguir fail-closed (mata o fail-open do mutante M25). */
   suppressionRpcError?: boolean;
   blockContent?: Record<string, unknown>;
+  /** MX02: `block_type` do bloco devolvido no detalhe do item (default "text") */
+  blockType?: string;
+  /** MX02: `variables_snapshot` do destinatario (variaveis congeladas do item) */
+  variablesSnapshot?: Record<string, string>;
+  /** MX02: `multiplix_delivery_items.personalized_message` — snapshot DO ITEM */
+  itemPersonalizedMessage?: string | null;
+  /** F65: `multiplix_delivery_items.voice_asset_id` — ativo de voz DO ITEM (personalizado) */
+  itemVoiceAssetId?: string | null;
+  /** F65: `multiplix_blocks.asset_id` — ativo de voz compartilhado (same_audio) */
+  blockAssetId?: string | null;
+  /** F65: `personalization_mode` do bloco ("same_audio" consome o asset_id do bloco) */
+  blockPersonalizationMode?: string | null;
+  /** F65: linhas de `multiplix_voice_assets` por id (caminho no bucket + invalidated_at) */
+  voiceAssets?: Record<string, { caminho: string | null; invalidated_at?: string | null }>;
+  /** MX02/F70: a RPC que grava o snapshot falha (erro transitorio do banco) */
+  snapshotRpcError?: boolean;
   /** cota diaria restante da conexao (F17); null desliga a checagem */
   dailyRemaining?: number | null;
   /** F11a: reivindicacao que nao devolve token (lease de outro worker) */
@@ -158,6 +175,12 @@ interface MockCtx {
   limits: number[];
   completions: Array<Record<string, unknown>>;
   events: Array<Record<string, unknown>>;
+  /** MX02/F69: itens devolvidos a fila no backoff pre-dispatch */
+  reschedules: Array<Record<string, unknown>>;
+  /** MX02/F69: itens que estouraram o teto de tentativas (dead-letter do reschedule) */
+  deadLettered: Array<Record<string, unknown>>;
+  /** F65: chamadas ao sign do Storage (`createSignedUrl`) — bucket, path e ttl pedidos */
+  signCalls: Array<{ bucket: string; path: string; ttl: number }>;
   dispatch: DispatchRow | null;
   remaining: Array<ReturnType<typeof recipientRow>>;
   recipientSelects: number;
@@ -170,6 +193,9 @@ interface MockCtx {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
   let limit: number | null = null;
+  // F65: a busca do ativo de voz filtra por id (.eq) — o builder grava os filtros
+  // para a tabela devolver a linha CERTA (as demais ignoram, como antes).
+  const eqFilters: Array<[string, unknown]> = [];
   // F61: o worker grava o codigo cru do provedor na trilha de eventos. Sem capturar aqui,
   // o insert cairia no vazio e o teste passaria sem provar nada (teste decorativo).
   if (table === "multiplix_events") {
@@ -206,9 +232,35 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
           block_id: "block-1",
           attempt_count: alvo.attempt_count ?? 0,
           status: "sending",
-          recipient: alvo,
-          block: { id: "block-1", block_order: 0, content: opts.blockContent ?? {} },
+          // MX02: o snapshot da mensagem e do ITEM (um destinatario tem N itens),
+          // nao do recipient — ler o do recipient perderia os blocos 2..N.
+          personalized_message: opts.itemPersonalizedMessage ?? null,
+          // F65: o ativo de voz personalizado e do ITEM (um por destinatario) —
+          // same_audio lera o asset_id do BLOCO, compartilhado entre todos.
+          voice_asset_id: opts.itemVoiceAssetId ?? null,
+          recipient: { ...alvo, variables_snapshot: opts.variablesSnapshot ?? alvo.variables_snapshot ?? null },
+          // MX02: o conteudo do envio vem do BLOCO do item. O default espelha o
+          // template do disparo do mock, para o cenario legado "bloco == template".
+          block: {
+            id: "block-1",
+            block_order: 0,
+            block_type: opts.blockType ?? "text",
+            content: opts.blockContent ?? { text: opts.dispatch?.message_template ?? "Ola {{empresa}}" },
+            personalization_mode: opts.blockPersonalizationMode ?? null,
+            content_version: 1,
+            asset_id: opts.blockAssetId ?? null,
+          },
         },
+        error: null,
+      };
+    }
+    // F65: o ativo de voz e lido por id (select + eq + maybeSingle). Devolve a
+    // linha mockada para o id pedido; sem linha, null — o banco responderia vazio.
+    if (table === "multiplix_voice_assets") {
+      const idFilter = eqFilters.filter(([col]) => col === "id").pop()?.[1];
+      const row = idFilter === undefined ? null : (opts.voiceAssets?.[String(idFilter)] ?? null);
+      return {
+        data: row === null ? null : { id: String(idFilter), invalidated_at: null, ...row },
         error: null,
       };
     }
@@ -219,7 +271,9 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const b: Record<string, any> = {};
   const chain = () => b;
-  b.select = chain; b.eq = chain; b.in = chain; b.is = chain; b.or = chain;
+  b.select = chain; b.in = chain; b.is = chain; b.or = chain;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  b.eq = (col: string, val: unknown) => { eqFilters.push([col, val]); return b as any; };
   b.update = chain; b.insert = chain; b.order = chain; b.delete = chain;
   b.limit = (n: number) => { limit = n; ctx.limits.push(n); return b; };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -285,11 +339,21 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             });
           case "claim_multiplix_item":
             if (opts.claimReturnsNothing) return Promise.resolve({ data: [], error: null });
+            // Fiel ao banco (f32b §2): o claim INCREMENTA attempt_count do item —
+            // e o valor que o reschedule le para decidir o dead-letter em >= 3.
+            {
+              const claimedId = String(args.p_item_id).replace(/^item-/, "");
+              const row = ctx.remaining.find((r) => r.id === claimedId);
+              if (row) row.attempt_count = (row.attempt_count ?? 0) + 1;
+            }
             return Promise.resolve({ data: [{ claim_token: `claim-${String(args.p_item_id)}` }], error: null });
           case "persist_multiplix_item_message_snapshot":
             // Fiel ao banco: a RPC grava o texto e devolve a string personalizada. O stub
             // nao a implementava, entao devolvia undefined e o texto enviado era undefined
             // — invisivel enquanto o POST nao validava; o adaptador (F56) valida.
+            // MX02/F70: erro TRANSITORIO do RPC injetavel — prova que ele nao e engolido
+            // pelo catch da resolucao (que encerraria o item como 'failed').
+            if (opts.snapshotRpcError) return Promise.resolve({ data: null, error: new Error("snapshot write failed") });
             return Promise.resolve({ data: String(args.p_personalized_message ?? ""), error: null });
           case "complete_multiplix_item": {
             ctx.completions.push(args);
@@ -330,21 +394,22 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             return Promise.resolve({ data: { limit: 500, sent: 500 - remaining, remaining }, error: null });
           }
           case "reschedule_multiplix_item": {
-            // MX05: espelha o efeito REAL da RPC no banco - o item volta a fila
-            // (next_attempt_at) e a RPC e quem decide o dead letter pelo
-            // attempt_count persistido (>= 3). Sem tirar o item da fila o laco
-            // reprocessaria o MESMO item ate a rede de seguranca derrubar o teste.
-            const id = String(args.p_item_id).replace(/^item-/, "");
-            const alvo = ctx.remaining.find((r) => r.id === id);
-            const attempt = Number(alvo?.attempt_count ?? 0);
-            ctx.remaining = ctx.remaining.filter((r) => r.id !== id);
+            // Fiel ao banco (f32b §7): o reschedule NAO incrementa attempt_count
+            // (o claim ja subiu esta tentativa) e devolve dead_lettered em
+            // `attempt_count >= 3` — o item vira 'failed' e NUNCA volta a fila.
+            // Abaixo do teto ele volta com `next_attempt_at` no futuro; nas duas
+            // saidas ele sai da fila DESTA passada (sem isso o stub giraria o
+            // laco contra a fila).
+            ctx.reschedules.push(args);
+            const itemId = String(args.p_item_id).replace(/^item-/, "");
+            const row = ctx.remaining.find((r) => r.id === itemId);
+            const attempt = row?.attempt_count ?? 0;
+            ctx.remaining = ctx.remaining.filter((r) => r.id !== itemId);
             if (attempt >= 3) {
+              ctx.deadLettered.push(args);
               return Promise.resolve({ data: { action: "dead_lettered", attempt }, error: null });
             }
-            return Promise.resolve({
-              data: { action: "rescheduled", attempt: attempt + 1, retry_after: args.p_retry_after },
-              error: null,
-            });
+            return Promise.resolve({ data: { action: "rescheduled", attempt }, error: null });
           }
           default:
             return Promise.resolve({ data: true, error: null });
@@ -362,6 +427,24 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
       from(table: string) {
         return tableBuilder(table, opts, ctx);
       },
+      // F65: a URL enviada e ASSINADA pelo mecanismo privado (resolvePrivateBucketUrl
+      // -> storage.from(bucket).createSignedUrl). O stub devolve a forma real do
+      // Supabase e grava a chamada — o teste prova bucket e path pedidos.
+      storage: {
+        from(bucket: string) {
+          return {
+            createSignedUrl(path: string, ttl: number) {
+              ctx.signCalls.push({ bucket, path, ttl });
+              return Promise.resolve({
+                data: {
+                  signedUrl: `https://stub.supabase.co/storage/v1/object/sign/${bucket}/${path}?token=sig-teste`,
+                },
+                error: null,
+              });
+            },
+          };
+        },
+      },
     },
   };
 }
@@ -378,10 +461,13 @@ function newCtx(opts: MockOpts): MockCtx {
     events: [],
     limits: [],
     completions: [],
+    reschedules: [],
+    deadLettered: [],
     dispatch,
     remaining: [...(opts.recipients ?? [])],
     recipientSelects: 0,
     suppressionChecks: 0,
+    signCalls: [],
   };
 }
 
@@ -1121,20 +1207,25 @@ Deno.test("gap M25: erro na RPC de supressao nao libera envio (fail-closed)", as
   }
 });
 
-Deno.test("gap M32: dispatch com midia usa o endpoint de midia (nao sendText)", async () => {
+Deno.test("gap M32/MX02: item com midia no BLOCO usa o endpoint de midia (nao sendText)", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   // Sem flavor explicito o evoFetch traduz para EVOLUTION GO e, sem token de
   // instancia, devolve 400 sem chamar o provedor — o POST so e observavel em v2.
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
+    // MX02: o disparo global aponta para OUTRO arquivo — prova que o endpoint (e a
+    // midia) vem do bloco do item, nao de `dispatch.media_url/media_type`.
     dispatch: dispatchRow({
       status: "sending",
-      media_type: "image",
-      media_url: "https://exemplo.test/foto.png",
+      media_type: "document",
+      media_url: "https://exemplo.test/global.pdf",
       total_recipients: 1,
     }),
     recipients: [recipientRow(1, "5511955550004")],
+    // O ativo vive no bloco de ARQUIVO (`file`) — o mesmo contrato da previa.
+    blockType: "file",
+    blockContent: { media: { url: "https://exemplo.test/foto.png" } },
   };
   const ctx = newCtx(opts);
   // F56: o envio de midia passa pelo prepareMedia, que BUSCA o arquivo para detectar o
@@ -1151,7 +1242,12 @@ Deno.test("gap M32: dispatch com midia usa o endpoint de midia (nao sendText)", 
     );
     assert(
       posts.every((url) => !url.includes("sendText")),
-      `dispatch com midia nao pode usar sendText, veio: ${JSON.stringify(posts)}`,
+      `item com midia nao pode usar sendText, veio: ${JSON.stringify(posts)}`,
+    );
+    const corpoMidia = provider.posts.find((p) => p.url.includes("sendMedia"));
+    assert(
+      String(corpoMidia?.body.media).includes("foto.png"),
+      `a midia tem de ser a do bloco, saiu: ${String(corpoMidia?.body.media)}`,
     );
   } finally {
     provider.restore();
@@ -1393,7 +1489,9 @@ Deno.test("MX06: mensagem congelada (personalized_message) sai como esta, mesmo 
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
     dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa}}", total_recipients: 1 }),
-    recipients: [recipientRow(1, "5511955550206", { company_name_snapshot: null, personalized_message: "Texto congelado" })],
+    recipients: [recipientRow(1, "5511955550206", { company_name_snapshot: null })],
+    // MX02: o snapshot congelado e do ITEM (multiplix_delivery_items), nao do recipient.
+    itemPersonalizedMessage: "Texto congelado",
   };
   const ctx = newCtx(opts);
   const provider = stubProviderComMidia();
@@ -1446,21 +1544,28 @@ Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 en
   }
 });
 
-Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", async () => {
+Deno.test("F56/MX02: documento sai com o fileName, a url e a legenda do BLOCO (o PDF chega com nome)", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
+    // MX02: o disparo aponta para OUTRO arquivo (imagem sem nome). Se o worker
+    // ainda olhasse `dispatch.media_url/media_type`, sairia a imagem global — as
+    // asserções abaixo separam os dois caminhos.
     dispatch: dispatchRow({
       status: "sending",
-      media_type: "document",
-      media_url: "https://exemplo.test/contrato.pdf",
+      media_type: "image",
+      media_url: "https://exemplo.test/global.png",
       total_recipients: 1,
     }),
     recipients: [recipientRow(1, "5511955550008")],
-    // F33: o nome do arquivo vive no content do bloco, e e a unica fonte dele —
-    // a URL assinada do bucket nao preserva o nome.
-    blockContent: { media: { url: "https://exemplo.test/contrato.pdf", fileName: "Contrato Assinado.pdf" } },
+    // F33: url/caption/nome do arquivo vivem no content do bloco, e sao a unica
+    // fonte deles — a URL assinada do bucket nao preserva o nome.
+    blockType: "file",
+    blockContent: {
+      text: "Segue o contrato da {{empresa}}",
+      media: { url: "https://exemplo.test/contrato.pdf", caption: "Segue o contrato da {{empresa}}", file_name: "Contrato Assinado.pdf" },
+    },
   };
   const ctx = newCtx(opts);
   const provider = stubProviderComMidia();
@@ -1476,6 +1581,14 @@ Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", a
       midia[0].body.mediatype === "document",
       `tipo real (detectado nos bytes) esperado document, veio ${String(midia[0].body.mediatype)}`,
     );
+    assert(
+      String(midia[0].body.media).includes("contrato.pdf"),
+      `a midia tem de ser a do bloco, saiu: ${String(midia[0].body.media)}`,
+    );
+    assert(
+      midia[0].body.caption === "Segue o contrato da Empresa 1",
+      `a legenda tem de ser o texto do bloco personalizado, saiu: ${String(midia[0].body.caption)}`,
+    );
   } finally {
     provider.restore();
     if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
@@ -1483,18 +1596,16 @@ Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", a
   }
 });
 
-Deno.test("F56: audio do dispatch sai como PTT e avisa presenca 'recording'", async () => {
+Deno.test("F56/MX02: audio do BLOCO sai como PTT e avisa presenca 'recording'", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
-    dispatch: dispatchRow({
-      status: "sending",
-      media_type: "audio",
-      media_url: "https://exemplo.test/nota.ogg",
-      total_recipients: 1,
-    }),
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
     recipients: [recipientRow(1, "5511955550009")],
+    // MX02: o audio e do BLOCO (`audio_recorded`), nao mais do disparo global.
+    blockType: "audio_recorded",
+    blockContent: { media: { url: "https://exemplo.test/nota.ogg" } },
   };
   const ctx = newCtx(opts);
   const provider = stubProviderComMidia();
@@ -1855,4 +1966,494 @@ Deno.test("MX05: decisao dead_letter (sem retryAfter do kernel) nao agenda retry
     esperaMs >= 29_000 && esperaMs <= 31_000,
     `p_retry_after fora do 1o degrau de 30 s: ${String(reagendamentos[0].args.p_retry_after)} (${esperaMs}ms)`,
   );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MX02 (item 46/P1) — o worker envia o conteudo do BLOCO do item, e nao mais o
+// template/midia GLOBAIS do disparo. A previa (F48) e o worker compartilham o
+// resolvedor `_shared/multiplix-content.ts`; estes testes provam a paridade.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Provedor de sucesso que registra os corpos enviados (texto e midia). */
+async function runComClienteV2(opts: MockOpts) {
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const body = (await res.json()) as any;
+    return { ctx, provider, body };
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+}
+
+Deno.test("MX02: o texto enviado e o do BLOCO do item, nao o template global do disparo", async () => {
+  // Caso medido na auditoria: template global "GLOBAL {{empresa}}" x bloco
+  // "BLOCO CORRETO {{empresa}}" — o worker mandava "GLOBAL Empresa 1".
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550010")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+  };
+  const { provider } = await runComClienteV2(opts);
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    envios[0].body.text === "BLOCO CORRETO Empresa 1",
+    `o texto tem de sair do bloco; saiu: ${String(envios[0].body.text)}`,
+  );
+});
+
+Deno.test("MX02: o `variables_snapshot` do item entra na personalizacao (previa == envio)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550011")],
+    blockContent: { text: "Ola {{empresa}} — falar com {{cargo}}" },
+    variablesSnapshot: { cargo: "Diretor" },
+  };
+  const { provider } = await runComClienteV2(opts);
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    envios[0].body.text === "Ola Empresa 1 — falar com Diretor",
+    `variavel do item nao entrou no texto; saiu: ${String(envios[0].body.text)}`,
+  );
+});
+
+Deno.test("MX02: o snapshot do ITEM prevalece e nao e regravado", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550012")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+    itemPersonalizedMessage: "Mensagem congelada do item (bloco 2)",
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    envios[0].body.text === "Mensagem congelada do item (bloco 2)",
+    `o snapshot do item tem de prevalecer; saiu: ${String(envios[0].body.text)}`,
+  );
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "snapshot ja gravado nao pode ser regravado",
+  );
+});
+
+Deno.test("MX02/F69: bloco de voz sem ativo renderizado SEGURA o item (nao manda o template global)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550013")],
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}" } },
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(
+    provider.posts.length === 0,
+    `bloco de voz pendente nao pode gerar POST, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`,
+  );
+  const reschedules = ctx.reschedules;
+  assert(reschedules.length === 1, `esperava 1 devolucao a fila, houve ${reschedules.length}`);
+  assert(
+    String(reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+    `codigo nomeado esperado, veio: ${String(reschedules[0].p_error_message)}`,
+  );
+  assert(rpcs(ctx, "record_multiplix_item_sent").length === 0, "nada pode ser marcado como enviado");
+});
+
+Deno.test("MX02: bloco sem texto e sem midia nao vira POST (devolve o item com codigo nomeado)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550014")],
+    blockContent: {},
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(provider.posts.length === 0, `bloco vazio nao pode gerar POST, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  const reschedules = ctx.reschedules;
+  assert(reschedules.length === 1, `esperava 1 devolucao a fila, houve ${reschedules.length}`);
+  assert(
+    String(reschedules[0].p_error_message).includes("multiplix_block_empty_content"),
+    `codigo nomeado esperado, veio: ${String(reschedules[0].p_error_message)}`,
+  );
+});
+
+Deno.test("MX02: payload do worker == resolucao da previa para o MESMO bloco e destinatario", async () => {
+  const recipient = recipientRow(1, "5511955550015");
+  const content = {
+    text: "Segue o contrato da {{empresa}}",
+    media: { url: "https://exemplo.test/contrato.pdf", caption: "Segue o contrato da {{empresa}}", file_name: "Contrato Assinado.pdf" },
+  };
+  const block = {
+    id: "block-1",
+    block_order: 0,
+    block_type: "file",
+    content,
+    personalization_mode: null,
+    content_version: 1,
+    asset_id: null,
+  };
+  // A MESMA funcao que `handlePreview` chama para montar a previa (F48).
+  const previa = resolveBlockContent(block, recipient, "America/Sao_Paulo");
+
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipient],
+    blockType: "file",
+    blockContent: content,
+  };
+  const { provider } = await runComClienteV2(opts);
+  const midia = provider.posts.filter((p) => p.url.includes("sendMedia"));
+  assert(midia.length === 1, `esperava 1 POST de midia, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    midia[0].body.fileName === previa.asset?.file_name,
+    `nome do arquivo divergente da previa: envio=${String(midia[0].body.fileName)} previa=${String(previa.asset?.file_name)}`,
+  );
+  assert(
+    String(midia[0].body.media).includes(String(previa.asset?.url)),
+    `midia divergente da previa: envio=${String(midia[0].body.media)} previa=${String(previa.asset?.url)}`,
+  );
+  assert(
+    midia[0].body.caption === previa.text,
+    `texto divergente da previa: envio=${String(midia[0].body.caption)} previa=${previa.text}`,
+  );
+});
+
+Deno.test("MX02/F70: excecao na resolucao do bloco conclui SO o item como 'failed' e o lote continua", async () => {
+  // Prova do defeito corrigido: a resolucao do bloco rodava FORA de try/catch —
+  // uma excecao ali subia ao catch do handler, devolvia 500 e o item nem virava
+  // 'failed'. Aqui o `variables_snapshot` do item 1 lanca ao ser percorrido pelo
+  // resolvedor; o item 2 e normal e TEM de ser enviado na mesma passada.
+  const quebrado = recipientRow(1, "5511955550020");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (quebrado as any).variables_snapshot = new Proxy({}, {
+    ownKeys() {
+      throw new Error("variables_snapshot quebrado");
+    },
+  });
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 2 }),
+    recipients: [quebrado, recipientRow(2, "5511955550021")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+  };
+  const { ctx, provider } = await runComClienteV2(opts); // ja afirma resposta 200
+  const falhas = ctx.completions.filter((c) => String(c.p_item_id) === "item-recipient-1");
+  assert(falhas.length === 1, `esperava 1 conclusao do item 1, houve ${falhas.length}`);
+  assert(falhas[0].p_status === "failed", `item 1 tinha de virar 'failed', veio ${String(falhas[0].p_status)}`);
+  assert(
+    String(falhas[0].p_error_message).includes("multiplix_block_resolution_failed"),
+    `mensagem sem o codigo nomeado: ${String(falhas[0].p_error_message)}`,
+  );
+  assert(
+    String(falhas[0].p_error_message).includes("variables_snapshot quebrado"),
+    `mensagem sem o texto do erro original: ${String(falhas[0].p_error_message)}`,
+  );
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto (so o item 2), veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(envios[0].body.number === "5511955550021", `o POST tinha de ser do item 2; foi para ${String(envios[0].body.number)}`);
+  assert(envios[0].body.text === "BLOCO CORRETO Empresa 2", `texto do item 2 divergente: ${String(envios[0].body.text)}`);
+});
+
+Deno.test("MX02/F70: falha do RPC de snapshot NAO conclui o item como 'failed' (erro transitorio, retomavel)", async () => {
+  // A gravacao do snapshot e I/O (RPC), nao resolucao deterministica: uma falha
+  // TRANSITORIA ali tem de preservar o comportamento anterior a F70 — o erro sobe com
+  // o codigo proprio `multiplix_message_snapshot_failed` (o handler devolve 500 e o
+  // lease vence, permitindo retomada), NUNCA encerrar o item como 'failed' com o
+  // codigo enganoso do catch de resolucao (`multiplix_block_resolution_failed`).
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550024")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+    snapshotRpcError: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  // O codigo do erro nao aparece no corpo da resposta (o handler devolve 500 generico),
+  // entao a prova vem do log estruturado do proprio modulo.
+  const erros: string[] = [];
+  const consoleErrorOriginal = console.error;
+  console.error = (...args: unknown[]) => { erros.push(args.map((a) => String(a)).join(" ")); };
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  let status = 0;
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    status = res.status;
+  } finally {
+    console.error = consoleErrorOriginal;
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+
+  // 1) O item NAO pode ser encerrado: para o banco ele continua reivindicado e o lease
+  // vence (retomavel). Este e o assert que o codigo com a regressao viola.
+  const concluidos = ctx.completions.filter((c) => String(c.p_item_id) === "item-recipient-1");
+  assert(
+    concluidos.length === 0,
+    `item NAO pode ser concluido por falha transitoria do snapshot: ${JSON.stringify(concluidos)}`,
+  );
+  assert(
+    !ctx.completions.some((c) => String(c.p_status) === "failed"),
+    `nenhum item pode virar 'failed' aqui: ${JSON.stringify(ctx.completions)}`,
+  );
+  // 2) Comportamento anterior preservado: o erro derruba a invocacao (500) em vez de
+  // encerrar o item — o lease vence e o item volta para a fila.
+  assert(status === 500, `esperado 500 (retomavel), recebido ${status}`);
+  // 3) O codigo de erro e o proprio do snapshot, nunca o do catch de resolucao.
+  const log = erros.join("\n");
+  assert(
+    log.includes("multiplix_message_snapshot_failed"),
+    `o erro do snapshot tinha de subir com o codigo proprio; log: ${log}`,
+  );
+  assert(
+    !log.includes("multiplix_block_resolution_failed"),
+    `o catch da resolucao engoliu a falha do snapshot; log: ${log}`,
+  );
+  const tentativas = rpcs(ctx, "persist_multiplix_item_message_snapshot");
+  assert(tentativas.length === 1, `o snapshot tinha de ser tentado 1 vez, houve ${tentativas.length}`);
+  assert(
+    provider.posts.filter((p) => p.url.includes("/message/")).length === 0,
+    "nenhum POST de mensagem pode sair sem o snapshot gravado",
+  );
+  // Vermelho medido: com o index.ts do cherry-pick (RPC dentro do try), o log traz
+  // `multiplix_block_resolution_failed`, o item e concluido 'failed' e a resposta e 200.
+});
+
+Deno.test("MX02: o snapshot da mensagem e gravado NO ITEM, uma vez, antes do POST", async () => {
+  // A mensagem enviada ao provedor tem de ser a MESMA gravada em
+  // `multiplix_delivery_items.personalized_message` — o texto do BLOCO ja
+  // personalizado, nunca o template global.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550022")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  const snapshots = rpcs(ctx, "persist_multiplix_item_message_snapshot");
+  assert(snapshots.length === 1, `esperava 1 gravacao de snapshot, houve ${snapshots.length}`);
+  assert(snapshots[0].args.p_item_id === "item-recipient-1", `snapshot no item errado: ${String(snapshots[0].args.p_item_id)}`);
+  assert(
+    typeof snapshots[0].args.p_claim_token === "string" && (snapshots[0].args.p_claim_token as string).length > 0,
+    "snapshot tem de levar o claim_token do lease em maos",
+  );
+  assert(
+    snapshots[0].args.p_personalized_message === "BLOCO CORRETO Empresa 1",
+    `snapshot gravou texto divergente do bloco: ${String(snapshots[0].args.p_personalized_message)}`,
+  );
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(envios[0].body.text === snapshots[0].args.p_personalized_message, "o POST tem de levar o MESMO texto gravado no item");
+});
+
+Deno.test("MX02/F69: o reschedule de `multiplix_block_pending_media` respeita o teto de tentativas", async () => {
+  // attempt_count 2 + claim (que incrementa, f32b §2) = 3a tentativa: o
+  // reschedule responde dead_lettered (f32b §7) e o item vira 'failed' — nunca
+  // volta a fila nem gira de novo nesta passada.
+  const item = recipientRow(1, "5511955550023");
+  item.attempt_count = 2;
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [item],
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}" } },
+  };
+  const { ctx, provider, body } = await runComClienteV2(opts);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  assert(ctx.deadLettered.length === 1, `3a tentativa tinha de dead-letter, deadLettered=${ctx.deadLettered.length}`);
+  assert(rpcs(ctx, "claim_multiplix_item").length === 1, "o item foi reivindicado uma unica vez (sem giro)");
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(body.failed === 1, `body.failed esperado 1, veio ${JSON.stringify(body)}`);
+});
+
+Deno.test("MX02: o reschedule de `multiplix_block_empty_content` respeita o teto de tentativas", async () => {
+  // Mesmo desenho do teste de voz pendente, com bloco sem texto e sem midia:
+  // attempt_count 2 + claim = 3a tentativa -> dead_lettered, sem reenvio a fila.
+  const item = recipientRow(1, "5511955550024");
+  item.attempt_count = 2;
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [item],
+    blockContent: {},
+  };
+  const { ctx, provider, body } = await runComClienteV2(opts);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_empty_content"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  assert(ctx.deadLettered.length === 1, `3a tentativa tinha de dead-letter, deadLettered=${ctx.deadLettered.length}`);
+  assert(rpcs(ctx, "claim_multiplix_item").length === 1, "o item foi reivindicado uma unica vez (sem giro)");
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(body.failed === 1, `body.failed esperado 1, veio ${JSON.stringify(body)}`);
+});
+
+Deno.test("MX02/F69: abaixo do teto o item volta a fila com o backoff da tentativa", async () => {
+  // attempt_count 1 + claim = 2a tentativa (< 3): reschedule devolve
+  // `rescheduled` e o item sai da fila desta passada com next_attempt_at ~120s
+  // a frente (backoff da 2a tentativa: [30s, 120s, 600s]).
+  const item = recipientRow(1, "5511955550025");
+  item.attempt_count = 1;
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [item],
+    blockContent: {},
+  };
+  const antes = Date.now();
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(ctx.deadLettered.length === 0, `abaixo do teto nao pode dead-letter, deadLettered=${ctx.deadLettered.length}`);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_empty_content"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  const retryAfter = Date.parse(String(ctx.reschedules[0].p_retry_after));
+  assert(Number.isFinite(retryAfter), `p_retry_after invalido: ${String(ctx.reschedules[0].p_retry_after)}`);
+  const delta = retryAfter - antes;
+  assert(
+    delta >= 110_000 && delta <= 130_000,
+    `backoff da 2a tentativa tinha de ser ~120s, veio ${delta}ms`,
+  );
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+});
+
+// ---------------------------------------------------------------------------
+// t_4fe1 (F65) — bloco voice_ai com ativo JA renderizado ENVIA o audio: a URL
+// sai de multiplix_voice_assets.caminho, assinada pelo mecanismo privado
+// existente (resolvePrivateBucketUrl, bucket multiplix-voice), UMA vez — sem
+// reschedule e sem dead-letter. Antes o resolvedor devolvia url:null para todo
+// voice_ai e o item pronto girava na fila ate morrer.
+// ---------------------------------------------------------------------------
+
+Deno.test("F65: voice_ai personalizado (voice_asset_id do item) envia o audio assinado UMA vez, sem reschedule/dead_letter", async () => {
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
+  try {
+    const opts: MockOpts = {
+      cronVaultResult: TEST_CRON_SECRET,
+      dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+      recipients: [recipientRow(1, "5511955550030")],
+      blockType: "voice_ai",
+      blockContent: { voice: { script: "Roteiro da {{empresa}}", voice_id: "voz-1" } },
+      // Modo personalizado: o ativo e identificado pelo voice_asset_id do ITEM.
+      itemVoiceAssetId: "va-item-1",
+      voiceAssets: { "va-item-1": { caminho: "comercial/voz-item.ogg", invalidated_at: null } },
+    };
+    const { ctx, provider, body } = await runComClienteV2(opts);
+
+    const assinaturas = ctx.signCalls.filter((c) => c.bucket === "multiplix-voice");
+    assert(
+      assinaturas.length === 1,
+      `esperava 1 assinatura no bucket privado multiplix-voice, houve ${JSON.stringify(ctx.signCalls)}`,
+    );
+    assert(
+      assinaturas[0].path === "comercial/voz-item.ogg",
+      `o path assinado tem de ser o caminho do ativo: ${assinaturas[0].path}`,
+    );
+    const audios = provider.posts.filter((p) => p.url.includes("sendWhatsAppAudio"));
+    assert(audios.length === 1, `esperava 1 POST de audio, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      String(audios[0].body.audio).includes("/object/sign/multiplix-voice/comercial/voz-item.ogg"),
+      `o audio enviado tem de ser a URL ASSINADA do ativo, saiu: ${String(audios[0].body.audio)}`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio concluido tem de ser registrado");
+    assert(body.sent === 1, `body.sent esperado 1, veio ${JSON.stringify(body)}`);
+    assert(
+      ctx.reschedules.length === 0,
+      `ativo pronto nao pode voltar a fila, reschedules=${JSON.stringify(ctx.reschedules)}`,
+    );
+    assert(ctx.deadLettered.length === 0, `ativo pronto nao pode dead-letter, deadLettered=${ctx.deadLettered.length}`);
+    assert(
+      ctx.completions.every((c) => c.p_status !== "failed"),
+      `nenhuma conclusao 'failed' esperada: ${JSON.stringify(ctx.completions)}`,
+    );
+  } finally {
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+  }
+});
+
+Deno.test("F65: voice_ai same_audio usa o asset_id do BLOCO (nao do item) e envia o audio assinado", async () => {
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
+  try {
+    const opts: MockOpts = {
+      cronVaultResult: TEST_CRON_SECRET,
+      dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+      recipients: [recipientRow(1, "5511955550031")],
+      blockType: "voice_ai",
+      blockContent: { voice: { script: "Roteiro compartilhado", voice_id: "voz-1" } },
+      // same_audio: UM ativo para o disparo inteiro — o identificador mora no
+      // BLOCO (asset_id), nao no item (que aqui nem tem voice_asset_id).
+      blockPersonalizationMode: "same_audio",
+      blockAssetId: "va-shared-1",
+      voiceAssets: { "va-shared-1": { caminho: "comercial/voz-compartilhada.ogg", invalidated_at: null } },
+    };
+    const { ctx, provider, body } = await runComClienteV2(opts);
+
+    const assinaturas = ctx.signCalls.filter((c) => c.bucket === "multiplix-voice");
+    assert(
+      assinaturas.length === 1,
+      `esperava 1 assinatura no bucket privado multiplix-voice, houve ${JSON.stringify(ctx.signCalls)}`,
+    );
+    assert(
+      assinaturas[0].path === "comercial/voz-compartilhada.ogg",
+      `same_audio tem de assinar o caminho do ativo DO BLOCO: ${assinaturas[0].path}`,
+    );
+    const audios = provider.posts.filter((p) => p.url.includes("sendWhatsAppAudio"));
+    assert(audios.length === 1, `esperava 1 POST de audio, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      String(audios[0].body.audio).includes("/object/sign/multiplix-voice/comercial/voz-compartilhada.ogg"),
+      `o audio enviado tem de ser a URL ASSINADA do ativo compartilhado: ${String(audios[0].body.audio)}`,
+    );
+    assert(body.sent === 1, `body.sent esperado 1, veio ${JSON.stringify(body)}`);
+    assert(ctx.reschedules.length === 0, `ativo pronto nao pode voltar a fila: ${JSON.stringify(ctx.reschedules)}`);
+    assert(ctx.deadLettered.length === 0, `ativo pronto nao pode dead-letter: deadLettered=${ctx.deadLettered.length}`);
+  } finally {
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+  }
+});
+
+Deno.test("F65: voice_asset_id apontando ativo INVALIDADO segue pendente (multiplix_block_pending_media, zero POST)", async () => {
+  // A invalidacao (F45: roteiro mudou, ativo regerado) devolve o item a fila com
+  // o MESMO codigo do "sem ativo" — a ausencia REAL de ativo continua pendente.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550032")],
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}", voice_id: "voz-1" } },
+    itemVoiceAssetId: "va-item-1",
+    voiceAssets: { "va-item-1": { caminho: "comercial/voz-velha.ogg", invalidated_at: "2026-10-01T00:00:00Z" } },
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  assert(ctx.deadLettered.length === 0, `abaixo do teto nao pode dead-letter, deadLettered=${ctx.deadLettered.length}`);
 });

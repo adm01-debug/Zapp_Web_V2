@@ -44,9 +44,26 @@
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { errorResponse, jsonResponse } from '../../_shared/validation.ts';
 import { DispatchError, type ActionContext } from '../index.ts';
-import { DEFAULT_SCHEDULE_TIMEZONE } from '../../_shared/talkx-window.ts';
 import { MULTIPLIX_ELIGIBILITY_VALUES, type MultiplixEligibility } from '../../_shared/multiplix-eligibility.ts';
-import { eligibility, getGreeting, personalize } from '../../_shared/messaging/index.ts';
+import { eligibility, getGreeting } from '../../_shared/messaging/index.ts';
+// MX02 (item 46/P1): a resolucao de conteudo do bloco (texto + ativo) mora em
+// `_shared/multiplix-content.ts` e e a MESMA que o motor de envio usa. Este modulo
+// tinha a propria copia e o worker resolvia pelos campos GLOBAIS do disparo —
+// era essa divergencia que fazia a previa mostrar um texto e sair outro.
+import {
+  asString,
+  blockTextOf,
+  blocksForReview,
+  buildPreviewBlocks,
+  isBlockType,
+  isSharedAudio,
+  mediaCaptionOf,
+  renderForRecipient,
+  timezoneOf,
+  variablesOf,
+  voiceScriptOf,
+} from '../../_shared/multiplix-content.ts';
+import type { BlockType } from '../../_shared/multiplix-content.ts';
 
 // ---------------------------------------------------------------------------
 // Contratos de entrada
@@ -123,12 +140,6 @@ export interface RecipientRow {
   status?: unknown;
   variables_snapshot?: unknown;
 }
-
-const BLOCK_TYPES = ['text', 'voice_ai', 'audio_recorded', 'file'] as const;
-type BlockType = (typeof BLOCK_TYPES)[number];
-
-const MEDIA_KINDS = ['image', 'document', 'audio', 'video'] as const;
-type MediaKind = (typeof MEDIA_KINDS)[number];
 
 // ---------------------------------------------------------------------------
 // Leitura do banco + escopo (dono do disparo)
@@ -212,258 +223,6 @@ async function loadRecipientForDispatch(
   if (error) throw new DispatchError('MULTIPLIX_RECIPIENT_LOOKUP', error.message ?? 'recipient lookup failed', 502);
   if (!data) throw new DispatchError('multiplix_recipient_not_found', 'Destinatario nao encontrado', 404);
   return data;
-}
-
-// ---------------------------------------------------------------------------
-// Helpers de forma (jsonb `content`, tipos de bloco)
-// ---------------------------------------------------------------------------
-
-function asString(value: unknown): string | null {
-  return typeof value === 'string' && value.length > 0 ? value : null;
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-}
-
-function isBlockType(value: unknown): value is BlockType {
-  return typeof value === 'string' && (BLOCK_TYPES as readonly string[]).includes(value);
-}
-
-function contentOf(block: BlockRow): Record<string, unknown> {
-  return asRecord(block.content);
-}
-
-/** Roteiro de um bloco de voz (`content.voice.script`). */
-function voiceScriptOf(block: BlockRow): string | null {
-  const voice = asRecord(contentOf(block).voice);
-  return asString(voice.script);
-}
-
-function voiceIdOf(block: BlockRow): string | null {
-  const voice = asRecord(contentOf(block).voice);
-  return asString(voice.voice_id);
-}
-
-/** URL do ativo de midia (`content.media.url`). */
-function mediaUrlOf(block: BlockRow): string | null {
-  const media = asRecord(contentOf(block).media);
-  return asString(media.url);
-}
-
-function mediaCaptionOf(block: BlockRow): string | null {
-  const media = asRecord(contentOf(block).media);
-  return asString(media.caption);
-}
-
-/** Texto do bloco (`content.text`), quando houver. */
-function blockTextOf(block: BlockRow): string | null {
-  return asString(contentOf(block).text);
-}
-
-/**
- * Bloco `same_audio`: UM audio para todos os destinatarios. Nao pode carregar
- * placeholder nenhum — o audio e renderizado uma vez e o mesmo arquivo serve
- * para o disparo inteiro (F33/f32a `personalization_mode`).
- */
-function isSharedAudio(block: BlockRow): boolean {
-  const mode = asString(block.personalization_mode);
-  if (mode === 'same_audio') return true;
-  if (mode === 'personalized') return false;
-  // Sem modo explicito: bloco de voz com `asset_id` congelado e um ativo
-  // compartilhado; qualquer outro caso e personalizado.
-  return isVoiceBlock(block) && asString(block.asset_id) !== null;
-}
-
-function isVoiceBlock(block: BlockRow): boolean {
-  return block.block_type === 'voice_ai' || block.block_type === 'audio_recorded';
-}
-
-/** Tipo real do ativo a partir da URL (sem rede: so a extensao). */
-function mediaKindFromUrl(url: string | null): MediaKind {
-  if (!url) return 'document';
-  const path = url.split('?')[0].toLowerCase();
-  if (/\.(png|jpe?g|gif|webp|heic|avif)$/.test(path)) return 'image';
-  if (/\.(mp3|ogg|wav|flac|aac|m4a)$/.test(path)) return 'audio';
-  if (/\.(mp4|webm|mov|avi)$/.test(path)) return 'video';
-  return 'document';
-}
-
-/** `variables_snapshot` do destinatario, quando for um mapa de strings. */
-function variablesOf(recipient: RecipientRow | null | undefined): Record<string, string> {
-  const raw = asRecord(recipient?.variables_snapshot);
-  const out: Record<string, string> = {};
-  for (const [key, value] of Object.entries(raw)) {
-    if (typeof value === 'string') out[key] = value;
-  }
-  return out;
-}
-
-function timezoneOf(dispatch: DispatchRow): string {
-  return asString(dispatch.schedule_timezone) ?? DEFAULT_SCHEDULE_TIMEZONE;
-}
-
-/**
- * Blocos que participam da revisao. Sem blocos persistidos, cai no
- * `message_template` do disparo — o MESMO insumo que o worker atual
- * (`multiplix-send/index.ts`) usa, para o preview continuar fiel durante a
- * migracao para o modelo de blocos.
- */
-export function blocksForReview(blocks: BlockRow[], dispatch: DispatchRow): BlockRow[] {
-  if (blocks.length > 0) return blocks;
-  const template = asString(dispatch.message_template);
-  if (!template) return [];
-  const mediaUrl = asString(dispatch.media_url);
-  const mediaType = asString(dispatch.media_type);
-  const content: Record<string, unknown> = { text: template };
-  if (mediaUrl) content.media = { url: mediaUrl, caption: template };
-  return [{
-    id: 'dispatch-template',
-    block_order: 0,
-    block_type: mediaUrl ? 'file' : 'text',
-    content,
-    personalization_mode: 'personalized',
-    content_version: 1,
-    asset_id: null,
-  }];
-}
-
-// ---------------------------------------------------------------------------
-// F48 — personalizacao: a MESMA chamada do worker
-// ---------------------------------------------------------------------------
-
-/**
- * Renderiza um texto para um destinatario com a MESMA funcao e a MESMA ordem de
- * argumentos que o worker usa (`multiplix-send/index.ts`: `personalize(template,
- * { company }, customValues, timezone)`). O nome da empresa entra por
- * `contact.company` — o campo consumido por `{{empresa}}`.
- */
-export function renderForRecipient(
-  template: string,
-  companyName: unknown,
-  variables: Record<string, string>,
-  timezone: string,
-): string {
-  return personalize(template, { company: asString(companyName) }, variables, timezone).text;
-}
-
-/** Ativo exato do bloco (o que o worker enviaria). */
-export interface BlockAsset {
-  kind: 'voice' | 'audio' | MediaKind;
-  url: string | null;
-  caption: string | null;
-  file_name: string | null;
-  voice_id: string | null;
-  script: string | null;
-  asset_id: string | null;
-  /** `same_audio`: o MESMO arquivo serve para todos os destinatarios. */
-  shared: boolean;
-  /** `asset_id` presente: o ativo esta congelado (F45 invalida ao mudar roteiro). */
-  frozen: boolean;
-}
-
-function buildAsset(block: BlockRow, renderedCaption: string | null, script: string | null): BlockAsset | null {
-  const assetId = asString(block.asset_id);
-  const shared = isSharedAudio(block);
-
-  if (block.block_type === 'voice_ai') {
-    return {
-      kind: 'voice',
-      url: null,
-      caption: null,
-      file_name: null,
-      voice_id: voiceIdOf(block),
-      script,
-      asset_id: assetId,
-      shared,
-      frozen: assetId !== null,
-    };
-  }
-  if (block.block_type === 'audio_recorded') {
-    const url = mediaUrlOf(block);
-    return {
-      kind: 'audio',
-      url,
-      caption: null,
-      file_name: asString(asRecord(contentOf(block).media).file_name),
-      voice_id: null,
-      script: null,
-      asset_id: assetId,
-      shared,
-      frozen: assetId !== null,
-    };
-  }
-  if (block.block_type === 'file') {
-    const url = mediaUrlOf(block);
-    if (!url) return null;
-    return {
-      kind: mediaKindFromUrl(url),
-      url,
-      caption: renderedCaption,
-      file_name: asString(asRecord(contentOf(block).media).file_name),
-      voice_id: null,
-      script: null,
-      asset_id: assetId,
-      shared,
-      frozen: assetId !== null,
-    };
-  }
-  return null;
-}
-
-/** Bloco de preview: texto final + ativo exato. */
-export interface PreviewBlock {
-  block_id: string;
-  block_order: number | null;
-  block_type: BlockType;
-  personalization_mode: string | null;
-  content_version: number | null;
-  /** Texto final do bloco (ou o roteiro final, em bloco de voz). */
-  text: string;
-  asset: BlockAsset | null;
-}
-
-export function buildPreviewBlocks(
-  blocks: BlockRow[],
-  recipient: RecipientRow,
-  timezone: string,
-): PreviewBlock[] {
-  const company = recipient.company_name_snapshot;
-  const variables = variablesOf(recipient);
-
-  return blocks.map((block) => {
-    const type: BlockType = isBlockType(block.block_type) ? block.block_type : 'text';
-    const shared = isSharedAudio(block);
-    // Ativo compartilhado (same_audio) nao personaliza: renderiza uma vez, sem
-    // contato — o mesmo audio vale para o disparo inteiro.
-    const companyForBlock = shared ? null : company;
-    const variablesForBlock = shared ? {} : variables;
-
-    const template = type === 'voice_ai' || type === 'audio_recorded'
-      ? (type === 'voice_ai' ? voiceScriptOf(block) : null)
-      : (blockTextOf(block) ?? mediaCaptionOf(block) ?? '');
-
-    const text = template === null
-      ? ''
-      : renderForRecipient(template, companyForBlock, variablesForBlock, timezone);
-
-    const captionTemplate = mediaCaptionOf(block);
-    const caption = captionTemplate === null
-      ? null
-      : renderForRecipient(captionTemplate, companyForBlock, variablesForBlock, timezone);
-
-    return {
-      block_id: block.id,
-      block_order: typeof block.block_order === 'number' ? block.block_order : null,
-      block_type: type,
-      personalization_mode: asString(block.personalization_mode),
-      content_version: typeof block.content_version === 'number' ? block.content_version : null,
-      text,
-      asset: buildAsset(block, caption, type === 'voice_ai' ? text : null),
-    };
-  });
 }
 
 /**
@@ -579,7 +338,7 @@ function evaluatePlaceholder(
 ): PlaceholderReport {
   const key = rawKey.toLowerCase();
   // O que o kernel realmente produz para esta chave — a fonte da verdade.
-  const rendersTo = personalize(`{{${rawKey}}}`, { company: companyName }, variables, timezone).text;
+  const rendersTo = renderForRecipient(`{{${rawKey}}}`, companyName, variables, timezone);
 
   if (sharedAudio) {
     return {
