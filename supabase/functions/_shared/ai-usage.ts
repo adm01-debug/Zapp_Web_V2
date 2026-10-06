@@ -458,7 +458,14 @@ export interface LinhaDeConsumo {
 }
 
 /** Estados que significam "não houve chamada paga ao provedor". */
-const STATUS_SEM_CHAMADA = new Set(["denied", "skipped", "rate_limited", "budget_denied"]);
+const STATUS_SEM_CHAMADA = new Set([
+  "denied",
+  "skipped",
+  "rate_limited",
+  "budget_denied",
+  // IA-050: tentativa bloqueada pelo circuito aberto — o provedor nem foi chamado.
+  "circuit_open",
+]);
 
 /** A linha representa consumo REAL que deve entrar na conta? */
 export function contaParaQuota(linha: LinhaDeConsumo): { cobra: boolean; motivo: string } {
@@ -546,7 +553,9 @@ export function reconciliarConsumo(linhas: LinhaDeConsumo[]): ReconciliacaoDeCon
     totais.tentativas += 1;
 
     const status = (linha.status ?? "").toLowerCase();
-    if (status === "error") totais.falhas += 1;
+    // 'request_error' (IA-050) = erro HTTP do PEDIDO (4xx): a ação falhou e segue
+    // contada como falha aqui — o circuito é quem ignora (não é queda do provedor).
+    if (status === "error" || status === "request_error") totais.falhas += 1;
     else if (status === "cancelled") totais.cancelamentos += 1;
     else if (status === "success" || status === "fallback") totais.sucessos += 1;
 
