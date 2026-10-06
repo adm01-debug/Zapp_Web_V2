@@ -224,3 +224,184 @@ Deno.test("R2-API-001: envio direto de agente sem contato visível é negado (fa
     await fake.stop();
   }
 });
+
+// ─── R2-API-014 (P2) ────────────────────────────────────────────────────────
+// Falha ao ler a privacidade atual NÃO pode virar abertura dos outros campos.
+// Antes: GET /user/privacy falhando deixava `current = {}` e o merge fabricava
+// 'all' — o valor MAIS permissivo — para cada campo não enviado; uma
+// atualização parcial ampliava a visibilidade de seis campos que o operador
+// não tocou. Depois: na falha ou na dúvida o handler NEGA (5xx,
+// { error: true }) e ZERO escrita sai ao provedor; no sucesso, o merge carrega
+// exatamente os valores do snapshot.
+//
+// O fake-evolution genérico não serve aqui: ele responde 405 a GET. Este fake
+// específico controla a resposta do GET /user/privacy e registra toda escrita
+// (POST/PUT/DELETE) que o handler tentar fazer ao provedor.
+
+interface PrivacyFakeWrite {
+  method: string;
+  path: string;
+  body: Record<string, unknown>;
+}
+
+function createPrivacyFake(respondPrivacyGet: () => Response) {
+  const writes: PrivacyFakeWrite[] = [];
+  const server = Deno.serve(
+    { hostname: "127.0.0.1", port: 0, onListen() {} },
+    async (req) => {
+      const path = new URL(req.url).pathname;
+      if (req.method === "GET" && path === "/user/privacy") {
+        return respondPrivacyGet();
+      }
+      const raw = await req.text();
+      let body: Record<string, unknown> = {};
+      try {
+        const parsed = raw ? JSON.parse(raw) : {};
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          body = parsed as Record<string, unknown>;
+        }
+      } catch {
+        body = {};
+      }
+      writes.push({ method: req.method, path, body });
+      return new Response(JSON.stringify({ status: "success" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+  );
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("privacy-fake: esperava listener TCP");
+  return {
+    url: `http://127.0.0.1:${addr.port}`,
+    writes,
+    stop: () => server.shutdown(),
+  };
+}
+
+const PRIVACY_GET_SCENARIOS: Array<[string, () => Response]> = [
+  ["GET /user/privacy responde 503", () =>
+    new Response(JSON.stringify({ error: "provider_down" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    })],
+  ["GET /user/privacy responde 200 sem objeto `data`", () =>
+    new Response(JSON.stringify({ status: "ok" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })],
+  ["GET /user/privacy devolve snapshot sem todos os campos", () =>
+    new Response(JSON.stringify({ data: { ReadReceipts: "all", Profile: "contacts" } }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })],
+];
+
+for (const [label, respondGet] of PRIVACY_GET_SCENARIOS) {
+  Deno.test(`R2-API-014: update-privacy parcial com ${label} é negado e não escreve no provedor`, async () => {
+    const fake = createPrivacyFake(respondGet);
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+    try {
+      const res = await handleEvolutionApi(
+        controlRequest("update-privacy", { instanceName: "PRINCIPAL", readreceipts: "contacts" }),
+        {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+          supabase: makeServiceClient(),
+        },
+      );
+      const json = await res.json();
+      // Convenção do proxy: a negação sai como HTTP 200 e o erro vai no corpo
+      // (é esse shape que useEvolutionApiCore lê); o código real fica em `status`.
+      assertEquals(res.status, 200, `convenção do proxy: HTTP 200, veio ${res.status}`);
+      assert(json?.error === true, "resposta deve ser { error: true }");
+      assert(
+        Number(json?.status) >= 500,
+        `corpo deve trazer status >= 500 (veio ${json?.status})`,
+      );
+      assertEquals(
+        fake.writes.length,
+        0,
+        `leitura falhou/incompleta → nenhuma escrita pode sair ao provedor (veio ${JSON.stringify(fake.writes)})`,
+      );
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+Deno.test("R2-API-014: update-privacy com GET /user/privacy de corpo não-JSON é negado", async () => {
+  // 200 com corpo que não parseia: exercita o ramo `catch` do handler (não só o
+  // HTTP não-ok). Antes do fix o erro de parse era engolido, `current` ficava
+  // vazio e a escrita saía ao provedor com seis campos em 'all'.
+  const fake = createPrivacyFake(() =>
+    new Response("<html>boom</html>", { status: 200, headers: { "Content-Type": "text/html" } }));
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("update-privacy", { instanceName: "PRINCIPAL", readreceipts: "contacts" }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeServiceClient(),
+      },
+    );
+    const json = await res.json();
+    assertEquals(res.status, 200, `convenção do proxy: HTTP 200, veio ${res.status}`);
+    assert(json?.error === true, "resposta deve ser { error: true }");
+    assert(
+      Number(json?.status) >= 500,
+      `corpo deve trazer status >= 500 (veio ${json?.status})`,
+    );
+    assertEquals(fake.writes.length, 0, "leitura inválida → nenhuma escrita pode sair ao provedor");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2-API-014: update-privacy parcial mergeia com o snapshot lido — nenhum 'all' fabricado", async () => {
+  const snapshot = {
+    ReadReceipts: "all",
+    Profile: "none",
+    Status: "contacts",
+    Online: "none",
+    LastSeen: "contacts",
+    GroupAdd: "none",
+    CallAdd: "contacts",
+  };
+  const fake = createPrivacyFake(() =>
+    new Response(JSON.stringify({ data: snapshot }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("update-privacy", { instanceName: "PRINCIPAL", readreceipts: "contacts" }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeServiceClient(),
+      },
+    );
+    const json = await res.json();
+    assertEquals(res.status, 200, `merge com snapshot deve ser sucesso: ${JSON.stringify(json)}`);
+    assertEquals(fake.writes.length, 1, "exatamente uma escrita ao provedor");
+    const write = fake.writes[0];
+    assertEquals(write.method, "POST");
+    assertEquals(write.path, "/user/privacy");
+    // Cada campo não enviado carrega o valor EXATO do snapshot lido — campo
+    // algum pode sair 'all' se nem o operador nem o snapshot disseram 'all'.
+    assertEquals(write.body, {
+      readReceipts: "contacts", // enviado pelo operador
+      profile: "none",
+      status: "contacts",
+      online: "none",
+      lastSeen: "contacts",
+      groupAdd: "none",
+      callAdd: "contacts",
+    });
+  } finally {
+    await fake.stop();
+  }
+});

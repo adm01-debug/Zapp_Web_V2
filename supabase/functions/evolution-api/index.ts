@@ -911,16 +911,38 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'update-privacy') {
       // O GO exige os 7 campos no POST /user/privacy (parcial → 400). Faz GET
       // + merge para atualizar só o que veio, sem resetar o resto para 'all'.
+      // R2-API-014: na dúvida ou na falha, NEGAR — leitura que falha (rede,
+      // HTTP não-ok, corpo sem objeto `data`) ou snapshot sem algum campo
+      // negam a atualização e NENHUMA escrita sai ao provedor. O antigo
+      // fallback inventava 'all', o valor MAIS permissivo, e a atualização
+      // parcial abria campos que o operador não alterou.
+      // Convenção do proxy (_shared/evolution-api-proxy.ts): falha de provedor
+      // sai como HTTP 200 com { error: true, status, message } — é esse o corpo
+      // que useEvolutionApiCore lê para mostrar o toast; um status cru não-2xx
+      // perderia a mensagem e o operador veria só "non-2xx status code".
       if (isGoFlavor) {
         const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
-        let current: Record<string, unknown> = {};
+        const denyPrivacy = () => new Response(JSON.stringify({
+          error: true,
+          status: 502,
+          message: 'Não foi possível confirmar a privacidade atual da instância; a atualização foi negada para não alterar outros campos.',
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        let current: Record<string, unknown>;
         try {
-          const curRes = await fetch(`${evolutionApiUrl}/user/privacy`, { headers: { 'apikey': instToken } });
-          if (curRes.ok) { const curJson = await curRes.json(); if (curJson?.data && typeof curJson.data === 'object') current = curJson.data; }
-        } catch { /* merge best-effort; defaults abaixo seguram */ }
-        const pick = (v2Val: unknown, goCurrent: unknown) =>
-          (typeof v2Val === 'string' && v2Val) ? v2Val : ((typeof goCurrent === 'string' && goCurrent) ? goCurrent : 'all');
-        return await proxy(`/profile/updatePrivacySettings/${instance}`, 'PUT', {
+          const curRes = await fetch(`${evolutionApiUrl}/user/privacy`, {
+            headers: { 'apikey': instToken },
+            signal: AbortSignal.timeout(8000),
+          });
+          if (!curRes.ok) return denyPrivacy();
+          const curJson = await curRes.json();
+          if (!curJson?.data || typeof curJson.data !== 'object' || Array.isArray(curJson.data)) return denyPrivacy();
+          current = curJson.data as Record<string, unknown>;
+        } catch {
+          return denyPrivacy();
+        }
+        const pick = (v2Val: unknown, goCurrent: unknown): string | null =>
+          (typeof v2Val === 'string' && v2Val) ? v2Val : ((typeof goCurrent === 'string' && goCurrent) ? goCurrent : null);
+        const merged = {
           readreceipts: pick(body.readreceipts, current.ReadReceipts),
           profile: pick(body.profile, current.Profile),
           status: pick(body.status, current.Status),
@@ -928,7 +950,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
           last: pick(body.last, current.LastSeen),
           groupadd: pick(body.groupadd, current.GroupAdd),
           calladd: pick(body.calladd, current.CallAdd),
-        });
+        };
+        if (Object.values(merged).some((v) => v === null)) return denyPrivacy();
+        return await proxy(`/profile/updatePrivacySettings/${instance}`, 'PUT', merged);
       }
       return await proxy(`/profile/updatePrivacySettings/${instance}`, 'PUT', { readreceipts: body.readreceipts, profile: body.profile, status: body.status, online: body.online, last: body.last, groupadd: body.groupadd });
     }
