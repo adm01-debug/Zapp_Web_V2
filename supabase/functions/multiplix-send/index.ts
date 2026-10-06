@@ -292,21 +292,12 @@ export async function handleMultiplixSend(
     // disparo entrava em 'sending' com destinatarios pendentes e ZERO itens
     // processaveis — nada saia e nenhum erro aparecia ("sucesso" silencioso).
     //
-    // CAMINHO DE REPARO (auto-cura) — documentado e testado, como pediu o revisor
-    // da rodada 1. A conversao roda SEMPRE, inclusive quando o disparo JA estava
-    // em 'sending' sem fila, por dois motivos:
-    //   1. o disparo AGENDADO do composer tambem nasce sem bloco/item e quem liga
-    //      o start e o cron (`trigger_pending_multiplix_dispatches`, que transiciona
-    //      'scheduled' -> 'sending' e so entao chama este worker): aqui o disparo
-    //      chega em 'sending' e, sem a conversao, ele morreria em 'sending' com
-    //      zero itens — o MESMO defeito do item 45, agora no agendamento;
-    //   2. a conversao e idempotente e no-op quando ja ha item, entao a passada
-    //      normal do cron nao muda nada.
-    // EFEITO NO LOTE (pendencia registrada no cartao t_fd402dab para o dono):
-    // disparos legados/abandonados que ja estavam em 'sending' sem fila passam a
-    // enviar de fato na primeira passada do cron depois do deploy. Nao e envio sem
-    // decisao: destinatarios e texto vieram do proprio disparo (e a RPC recusa
-    // rascunho sem texto — `multiplix_legacy_empty_template`).
+    // O disparo AGENDADO do composer tambem nasce sem bloco/item. Nesse caminho o
+    // trigger `trigger_pending_multiplix_dispatches` acabou de transicionar
+    // 'scheduled' -> 'sending' antes de chamar este worker, por isso a conversao
+    // tambem precisa aceitar o estado 'sending'. Os disparos LEGADOS que ja estavam
+    // nesse estado quando a migration entrou foram pausados uma unica vez com
+    // `legacy_queue_unmaterialized`; eles so chegam aqui depois do clique Retomar.
     const { error: materializeError } = await supabase.rpc("multiplix_materialize_legacy_queue", {
       p_dispatch_id: dispatchId,
       p_correlation_id: uuidOrNull(correlationId),

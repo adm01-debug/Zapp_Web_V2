@@ -309,9 +309,55 @@ migration "20261002621230_f55_claimable_items_por_bloco.sql"
 # estava na cadeia deste harness — sem ela a trilha nao existiria e o teste provaria nada.
 migration "20261002671230_f60_conexao_capacidades_e_risco.sql"
 migration "20261003092707_f62b_leitura_janela_jsonb.sql"
+# MX01 (BACKLOG_VERIFICADO item 45): o estado legado perigoso precisa existir
+# ANTES da migration para provar o efeito de dados executado uma unica vez. Um
+# destinatario ja foi enviado pelo worker antigo; somente o pendente pode ganhar
+# item quando o operador clicar Retomar.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (
+  id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id
+) VALUES (
+  '30000000-0000-0000-0000-0000000000b1', 'MX01 legado anterior', 'Oi {{empresa}}',
+  'sending', '10000000-0000-0000-0000-00000000000a', 2,
+  '70000000-0000-0000-0000-000000000001'
+);
+INSERT INTO public.multiplix_recipients (
+  id, dispatch_id, company_id, company_name_snapshot, destino_e164, eligibility, status
+) VALUES
+  ('40000000-0000-0000-0000-0000000000b1', '30000000-0000-0000-0000-0000000000b1', '50000000-0000-0000-0000-0000000000b1', 'Pendente', '+551****0911', 'eligible', 'pending'),
+  ('40000000-0000-0000-0000-0000000000b2', '30000000-0000-0000-0000-0000000000b1', '50000000-0000-0000-0000-0000000000b2', 'Ja enviado', '+551****0912', 'eligible', 'sent');
+SQL
+
 # MX01 (BACKLOG_VERIFICADO item 45): a conversao explicita do rascunho legado —
-# a migration DESTA tarefa, exercida pelo bloco MX01 no fim do arquivo.
+# a migration DESTA tarefa, exercida pelos blocos MX01 no fim do arquivo.
 migration "20261005150259_mx01_legacy_queue_materialize.sql"
+
+mx_legado='30000000-0000-0000-0000-0000000000b1'
+mx_pendente='40000000-0000-0000-0000-0000000000b1'
+mx_enviado='40000000-0000-0000-0000-0000000000b2'
+
+# (MX01.R2.1) A migration pausa o legado em sending sem fila. Como a RPC recusa
+# materializar fora de sending, a passada automatica nao cria item nem envia.
+estado_legado="$(psql_test -Atqc "$service_session SELECT status::text || '|' || coalesce(pause_reason, '') || '|' || (paused_at IS NOT NULL)::text FROM public.multiplix_dispatches WHERE id='$mx_legado';" 2>&1 | tail -1)"
+[[ "$estado_legado" == 'paused|legacy_queue_unmaterialized|true' ]] \
+  || fail "MX01.R2.1: legado sem fila nao foi pausado pela migration (veio: $estado_legado)"
+sem_auto_cura="$(psql_test -Atqc "$service_session SELECT items_created, items_total, created FROM public.multiplix_materialize_legacy_queue('$mx_legado', NULL);" 2>&1 | tail -1)"
+[[ "$sem_auto_cura" == '0|0|f' ]] \
+  || fail "MX01.R2.1: dispatch pausado foi materializado automaticamente (veio: $sem_auto_cura)"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$mx_legado';")" == '0' ]] \
+  || fail 'MX01.R2.1: dispatch legado pausado ganhou item sem Retomar'
+
+# (MX01.R2.2/R2.3) O clique Retomar passa pela transicao real e so entao a RPC
+# materializa. O recipient sent nao ganha item; somente o pending entra na fila.
+psql_test -Atqc "$service_session SELECT * FROM public.transition_multiplix_dispatch('$mx_legado', 'start', NULL);" >/dev/null
+retomada="$(psql_test -Atqc "$service_session SELECT items_created, items_total, created FROM public.multiplix_materialize_legacy_queue('$mx_legado', NULL);" 2>&1 | tail -1)"
+[[ "$retomada" == '1|1|t' ]] \
+  || fail "MX01.R2.3: retomada manual nao materializou somente o pendente (veio: $retomada)"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE recipient_id='$mx_pendente';")" == '1' ]] \
+  || fail 'MX01.R2.3: recipient pending nao ganhou o item na retomada manual'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE recipient_id='$mx_enviado';")" == '0' ]] \
+  || fail 'MX01.R2.2: recipient ja sent ganhou item e poderia receber mensagem duplicada'
 
 
 # ── F57: fila POR ITEM (multiplix_delivery_items) ──────────────────────────────
@@ -821,6 +867,42 @@ saida_sem="$(psql_test -Atqc "$service_session SELECT items_created, items_total
 [[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$mx_sem_elegivel';")" == '0' ]] \
   || fail 'MX01.4: item nasceu para destinatario inelegivel'
 
+# (MX01.R2.4) O comando declarado no cabecalho como rollback e SQL executavel.
+# A transacao e revertida no fim para os demais testes continuarem vendo a RPC.
+psql_test >/dev/null <<'SQL'
+BEGIN;
+INSERT INTO public.multiplix_dispatches (
+  id, name, message_template, status, pause_reason, paused_at, created_by, total_recipients, whatsapp_connection_id
+) VALUES (
+  '30000000-0000-0000-0000-0000000000b9', 'MX01 rollback', 'Oi', 'paused',
+  'legacy_queue_unmaterialized', now(), '10000000-0000-0000-0000-00000000000a', 0,
+  '70000000-0000-0000-0000-000000000001'
+);
+UPDATE public.multiplix_dispatches AS d
+   SET status = 'sending', pause_reason = NULL, paused_at = NULL
+ WHERE d.status = 'paused'
+   AND d.pause_reason = 'legacy_queue_unmaterialized'
+   AND NOT EXISTS (
+     SELECT 1 FROM public.multiplix_delivery_items AS item WHERE item.dispatch_id = d.id
+   );
+DROP FUNCTION IF EXISTS public.multiplix_materialize_legacy_queue(uuid, uuid);
+DO $assert$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.multiplix_dispatches
+     WHERE id = '30000000-0000-0000-0000-0000000000b9'
+       AND status = 'sending' AND pause_reason IS NULL AND paused_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'MX01.R2.4: rollback nao restaurou o dispatch pausado';
+  END IF;
+  IF to_regprocedure('public.multiplix_materialize_legacy_queue(uuid,uuid)') IS NOT NULL THEN
+    RAISE EXCEPTION 'MX01.R2.4: rollback nao removeu a funcao';
+  END IF;
+END
+$assert$;
+ROLLBACK;
+SQL
 
-printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56)\n'
+
+printf 'PASS: MX01 pausa legado sem fila, nao materializa sem Retomar, exclui recipient sent e executa rollback; fila por item mantem claim, lease, pausa, cancel e outcome_unknown (F55/F56/F57)\n'
 

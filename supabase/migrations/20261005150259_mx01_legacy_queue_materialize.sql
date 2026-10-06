@@ -1,12 +1,8 @@
 -- mx01_legacy_queue_materialize
 -- versão 20261005150259 reservada para hermes-composer-materializa-fila-2610051151125f (hermes-db-migrar --nova)
 --
--- Rollback: DROP FUNCTION IF EXISTS public.multiplix_materialize_legacy_queue(uuid, uuid);
--- Rollback (efeito): apagar os itens materializados por esta conversao e o bloco 'legado'
---   criado por ela, no disparo afetado:
---     DELETE FROM public.multiplix_delivery_items WHERE dispatch_id = '<dispatch>';
---     DELETE FROM public.multiplix_blocks WHERE dispatch_id = '<dispatch>'::uuid AND content->>'text' = (SELECT message_template FROM public.multiplix_dispatches WHERE id = '<dispatch>');
---   (os itens sao reais e enviaveis; o DROP sozinho para de materializar novos rascunhos legados.)
+-- Rollback: UPDATE public.multiplix_dispatches AS d SET status = 'sending', pause_reason = NULL, paused_at = NULL WHERE d.status = 'paused' AND d.pause_reason = 'legacy_queue_unmaterialized' AND NOT EXISTS (SELECT 1 FROM public.multiplix_delivery_items AS item WHERE item.dispatch_id = d.id); DROP FUNCTION IF EXISTS public.multiplix_materialize_legacy_queue(uuid, uuid);
+-- Rollback honesto: mensagem enviada depois de uma retomada manual nao tem rollback.
 --
 -- MX01 (BACKLOG_VERIFICADO item 45 / achado MX01 da reconciliacao TALKX_MULTIPLIX):
 -- "Composer inicia rascunho sem materializar a fila por itens".
@@ -18,10 +14,11 @@
 -- entrava em 'sending' com destinatarios pendentes e ZERO itens processaveis —
 -- nada era enviado e nenhum erro aparecia ("sucesso" silencioso).
 --
--- Esta funcao e a CONVERSAO EXPLICITA E IDEMPOTENTE do rascunho legado. Ela e
--- chamada pelo worker (`supabase/functions/multiplix-send/index.ts`) depois da
--- transicao para 'sending' e ANTES do loop de envio — nunca se dispara sem a
--- fila materializada. A forma da fila e a MESMA do `multiplix_confirm_dispatch`
+-- Esta funcao e a CONVERSAO EXPLICITA E IDEMPOTENTE do rascunho legado. Antes
+-- de cria-la, a migration pausa todo legado que ja estava em 'sending' sem fila:
+-- ele so volta a 'sending' pelo clique Retomar no Monitor. O worker chama esta
+-- funcao depois da transicao manual e ANTES do loop de envio. A forma da fila e
+-- a MESMA do `multiplix_confirm_dispatch`
 -- (F51): um item por (destinatario elegivel x bloco), com a idempotencia vinda do
 -- `idempotency_key` gerado (UNIQUE), entao repetir a chamada nao duplica item.
 --
@@ -43,6 +40,20 @@
 -- Depende de: F30 (enum multiplix_item_status/eligibility), F31
 -- (dispatch_version, singu_contact_id), F32a (multiplix_delivery_items),
 -- F33 (multiplix_blocks.content), F34 (multiplix_events).
+
+-- Gate de seguranca do legado: a migration roda uma unica vez e transforma
+-- qualquer envio antigo sem fila em decisao explicita do operador. O predicado
+-- NOT EXISTS evita tocar disparos novos que ja possuem fila materializada.
+UPDATE public.multiplix_dispatches AS d
+   SET status = 'paused',
+       pause_reason = 'legacy_queue_unmaterialized',
+       paused_at = now()
+ WHERE d.status = 'sending'
+   AND NOT EXISTS (
+     SELECT 1
+       FROM public.multiplix_delivery_items AS item
+      WHERE item.dispatch_id = d.id
+   );
 
 CREATE FUNCTION public.multiplix_materialize_legacy_queue(
   p_dispatch_id uuid,
@@ -121,6 +132,7 @@ BEGIN
   SELECT count(*)::integer INTO v_eligible
     FROM public.multiplix_recipients AS r
    WHERE r.dispatch_id = p_dispatch_id
+     AND r.status = 'pending'
      AND r.eligibility IN ('eligible', 'media_pending', 'connection_unavailable', 'requires_template')
      AND (r.singu_contact_id IS NOT NULL OR r.destino_e164 IS NOT NULL);
 
@@ -132,6 +144,7 @@ BEGIN
     CROSS JOIN public.multiplix_blocks AS b
    WHERE r.dispatch_id = p_dispatch_id
      AND b.dispatch_id = p_dispatch_id
+     AND r.status = 'pending'
      AND r.eligibility IN ('eligible', 'media_pending', 'connection_unavailable', 'requires_template')
      AND (r.singu_contact_id IS NOT NULL OR r.destino_e164 IS NOT NULL)
   ON CONFLICT (idempotency_key) DO NOTHING;

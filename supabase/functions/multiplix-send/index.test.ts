@@ -811,18 +811,11 @@ Deno.test("MX01: falha na materializacao e fail-closed (nada sai)", async () => 
   }
 });
 
-Deno.test("MX01: disparo ja em 'sending' sem fila e reparado pela conversao (auto-cura documentada)", async () => {
-  // CAMINHO DE REPARO (auto-cura documentada a pedido do revisor): o composer cria
-  // o disparo por `multiplix_create_draft` (SOMENTE dispatches + recipients, sem
-  // bloco e sem item) e, quando ha `scheduled_at`, quem liga o start e o cron de
-  // agendamento (`trigger_pending_multiplix_dispatches`) — nesse caminho o worker
-  // recebe o disparo JA em 'sending'. Sem a conversao nada sairia e nenhum erro
-  // apareceria (o defeito do item 45) e o disparo AGENDADO morreria em 'sending'
-  // com zero itens. Este teste trava esse comportamento: a fila e materializada
-  // ANTES do claim mesmo com o disparo em 'sending'.
-  // EFEITO NO LOTE (pendencia registrada no cartao t_fd402dab para o dono):
-  // disparos legados/abandonados que ja estavam em 'sending' sem fila passam a
-  // enviar de fato na primeira passada do cron depois do deploy.
+Deno.test("MX01: disparo agendado recem-transicionado para 'sending' materializa antes do claim", async () => {
+  // O cron de agendamento transiciona scheduled -> sending antes de chamar a
+  // edge. Esse fluxo novo precisa materializar. O legado que ja estava em sending
+  // antes da migration e outro caso: a migration o pausa e o teste PostgreSQL
+  // prova que ele nao materializa ate a transicao manual de Retomar.
   const phones = ["5511900009003", "5511900009004"];
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
@@ -839,7 +832,7 @@ Deno.test("MX01: disparo ja em 'sending' sem fila e reparado pela conversao (aut
     const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
     const body = await res.json();
     const mat = ctx.rpcCalls.findIndex((call) => call.name === "multiplix_materialize_legacy_queue");
-    assert(mat >= 0, "disparo em 'sending' sem fila tem de ser convertido (caminho de reparo)");
+    assert(mat >= 0, "disparo agendado recem-transicionado tem de materializar a fila");
     const claim = ctx.rpcCalls.findIndex((call) => call.name === "list_multiplix_claimable_items");
     assert(claim > mat, "a fila tem de ser materializada ANTES da primeira reivindicacao de item");
     assert(res.status === 200, `esperado 200, recebido ${res.status}`);
