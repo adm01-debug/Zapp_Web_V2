@@ -341,8 +341,8 @@
     },
     {
       "path": "supabase/functions/ai-auto-tag/index.ts",
-      "bytes": 12894,
-      "sha256": "be14e7d9260590014232ff861ea9d56233b1fa5ade96eff96255ed6a7fcd26ab"
+      "bytes": 15640,
+      "sha256": "6104b3599d28b98e84a0f45bf0df447a1f7f44203b0342e36853049c3531004d"
     },
     {
       "path": "supabase/functions/ai-churn-analysis/index.ts",
@@ -651,8 +651,8 @@
     },
     {
       "path": "supabase/functions/recover-corrupted-audios/index.ts",
-      "bytes": 8971,
-      "sha256": "93a1fcbb27098e6279f0342fce8c652ca5546c4d7cf0b3f5fd2c11e76e79dd71"
+      "bytes": 10516,
+      "sha256": "ea8215b27b5f87f0ed3291417169d23a34adb542356c5f9f70b1af0c1a717bc0"
     },
     {
       "path": "supabase/functions/revoke-auth-sessions/index.ts",
@@ -696,8 +696,8 @@
     },
     {
       "path": "supabase/functions/talkx-report/index.ts",
-      "bytes": 11747,
-      "sha256": "8b2c6399dd8749d1db15d6527e310b87a49191ec51169840723e6030a6f812e7"
+      "bytes": 14928,
+      "sha256": "00499d505d140052e174f80095ccaa7c4a57e09a8db2d6e3ca9ad2041ef4b988"
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
@@ -741,8 +741,8 @@
     },
     {
       "path": "supabase/functions/webhook-diagnostic/index.ts",
-      "bytes": 11842,
-      "sha256": "01b204105b1ada6d7db6c83b3d9e4e9fc75833918323d7f68ccb5102d7d45aa8"
+      "bytes": 14422,
+      "sha256": "98846afab00287836af3d081af9ef2c377f72fd54a7f6e3a4f004317a7383a97"
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
@@ -755,7 +755,7 @@
       "name": "ai-auto-tag",
       "entrypoint": "supabase/functions/ai-auto-tag/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0b10cbdca30960e07f5aba81e03942d24b3cc797685049f9a5ffce95fe2c2922",
+      "source_sha256": "35307547edba6904d8a61d6e2472db3c3450f8de2f538c03501535844cd542d8",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1643,7 +1643,7 @@
       "name": "recover-corrupted-audios",
       "entrypoint": "supabase/functions/recover-corrupted-audios/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b51e6ac43d75c741618e23014fe4c4e4491c26749ecdc42557782c3fc1803c78",
+      "source_sha256": "5b9a12567608f4f7dbb93c94b805cb3121d37a53b6723babdc8812e7b451534e",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -1753,7 +1753,7 @@
       "name": "talkx-report",
       "entrypoint": "supabase/functions/talkx-report/index.ts",
       "verify_jwt": true,
-      "source_sha256": "794791d4d17d64540531c6274c88a3bb63a7ecce2b8981c9268e1939e5fb9d8c",
+      "source_sha256": "7028a2e5ae235590051c10a56c513b01918df1cbcaac7e33bb6690075b12db4c",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1871,7 +1871,7 @@
       "name": "webhook-diagnostic",
       "entrypoint": "supabase/functions/webhook-diagnostic/index.ts",
       "verify_jwt": true,
-      "source_sha256": "50c7cec2d6cc15728fd2d8aa2d7ed7af445a33c092b8f5c3b53ac4fc6ac9a71b",
+      "source_sha256": "6b0e9677fdb17556b53f59bf8c3d143206e8a288627e43e1cfbb2b98704177ac",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1899,5 +1899,5 @@
       ]
     }
   ],
-  "manifest_sha256": "1535a97816c3db58ab428946772234aa8c4db7e9b359aac9f6938dfde7115427"
+  "manifest_sha256": "140e5709b0a3a9a1f3189a5332d008b34e23b0b13bfa8731706b8e2dc2fe5b17"
 }
