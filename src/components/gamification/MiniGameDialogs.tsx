@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,12 @@ export function SpeedTypingGame({ isOpen, onClose, onComplete }: GameDialogProps
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isActive, setIsActive] = useState(false);
+  // Partida já concluída? Serve para o fim de jogo acontecer UMA vez por partida.
+  // O efeito do relógio depende de `onComplete`, e o pai recria essa função a
+  // cada render: sem a trava, todo re-render concluía a partida de novo — e o
+  // placar velho ia para o jogo seguinte já selecionado, que fechava sem ser
+  // jogado e ainda gravava o recorde dele.
+  const partidaEncerrada = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -30,11 +36,16 @@ export function SpeedTypingGame({ isOpen, onClose, onComplete }: GameDialogProps
   }, [isOpen]);
 
   useEffect(() => {
-    if (isActive && timeLeft > 0) {
+    if (!isOpen || !isActive) return;
+    if (timeLeft > 0) {
+      partidaEncerrada.current = false;
       const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
       return () => clearInterval(timer);
-    } else if (timeLeft === 0) { onComplete(score, Math.floor(score / 2)); }
-  }, [isActive, timeLeft, score, onComplete]);
+    }
+    if (partidaEncerrada.current) return;
+    partidaEncerrada.current = true;
+    onComplete(score, Math.floor(score / 2));
+  }, [isOpen, isActive, timeLeft, score, onComplete]);
 
   const handleInputChange = (value: string) => {
     setUserInput(value);
