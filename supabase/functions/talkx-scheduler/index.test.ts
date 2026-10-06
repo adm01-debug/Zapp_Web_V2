@@ -377,13 +377,24 @@ Deno.test("[#121A] retomada respeita o business_hours salvo (não usa o default 
 
 Deno.test("R2-INF-016: falha ao ler as campanhas agendadas → 500 sanitizado (sem detalhe do banco)", async () => {
   const SEGREDO = "relation talkx_campaigns does not exist (sintetico)";
-  const { client } = makeClient({ dueError: SEGREDO });
-  const res = await handleTalkxScheduler(
-    makeRequest({ cronSecret: TEST_CRON_SECRET }),
-    makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
-  );
-  assert(res.status === 500, `esperado 500, recebido ${res.status}`);
-  const texto = await res.text();
-  assert(!texto.includes(SEGREDO), `o corpo nao pode trazer o detalhe interno: ${texto}`);
-  assert(JSON.parse(texto).error === "Internal server error", `corpo inesperado: ${texto}`);
+  const linhas: string[] = [];
+  const originalError = console.error;
+  console.error = (...args: unknown[]) => { linhas.push(args.map((a) => String(a)).join(" ")); };
+  try {
+    const { client } = makeClient({ dueError: SEGREDO });
+    const res = await handleTalkxScheduler(
+      makeRequest({ cronSecret: TEST_CRON_SECRET }),
+      makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
+    );
+    assert(res.status === 500, `esperado 500, recebido ${res.status}`);
+    const texto = await res.text();
+    assert(!texto.includes(SEGREDO), `o corpo nao pode trazer o detalhe interno: ${texto}`);
+    assert(JSON.parse(texto).error === "Internal server error", `corpo inesperado: ${texto}`);
+    assert(
+      linhas.some((l) => l.includes(SEGREDO)),
+      `o detalhe interno precisa constar no log do servidor; capturado:\n${linhas.join("\n")}`,
+    );
+  } finally {
+    console.error = originalError;
+  }
 });
