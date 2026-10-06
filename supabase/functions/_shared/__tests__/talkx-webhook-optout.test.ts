@@ -12,7 +12,10 @@
  *   4. contato sem envio Talk X nos últimos 30 dias não gera nada;
  *   5. a mensagem de opt-out NÃO chama `attribute_talkx_reply`;
  *   6. resposta de botão/lista com id `talkx_optout` (X064) também é opt-out;
- *   7. as palavras ativas são lidas com cache (uma leitura serve vários eventos).
+ *   7. as palavras ativas são lidas com cache (uma leitura serve vários eventos);
+ *   8. R2-API-008 — a confirmação só é anunciada como enviada quando o provedor
+ *      ACEITA (HTTP 2xx); 4xx/5xx e queda de transporte não podem ser logadas
+ *      como envio bem-sucedido.
  *
  * Payloads GO anonimizados em fixture (sem telefone/CPF reais).
  */
@@ -137,14 +140,21 @@ function traduzir(payload: Record<string, unknown>) {
 const originalFetch = globalThis.fetch;
 let fetchCalls: Array<{ url: string; init: RequestInit }> = [];
 
-/** Substitui o fetch global para capturar a autoresposta sem rede. */
-function instalarFetchFalso(): void {
+/**
+ * Substitui o fetch global para capturar a autoresposta sem rede.
+ * `status` simula a resposta do provedor (2xx = aceita, 4xx/5xx = recusada);
+ * `falhaDeTransporte` simula queda/timeout (o fetch rejeita, sem resposta HTTP).
+ */
+function instalarFetchFalso(status = 200, falhaDeTransporte: string | null = null): void {
   fetchCalls = [];
   (globalThis as { fetch: typeof fetch }).fetch = ((url: unknown, init?: RequestInit) => {
     const u = typeof url === "string" ? url : url instanceof URL ? url.toString() : (url as Request).url;
     fetchCalls.push({ url: u, init: init ?? {} });
-    return Promise.resolve(new Response(JSON.stringify({ ok: true }), {
-      status: 200,
+    if (falhaDeTransporte) return Promise.reject(new Error(falhaDeTransporte));
+    return Promise.resolve(new Response(JSON.stringify(
+      status >= 400 ? { error: "provedor recusou (fixture)" } : { ok: true },
+    ), {
+      status,
       headers: { "Content-Type": "application/json" },
     }));
   }) as typeof fetch;
@@ -152,6 +162,30 @@ function instalarFetchFalso(): void {
 
 function restaurarFetch(): void {
   (globalThis as { fetch: typeof fetch }).fetch = originalFetch;
+}
+
+interface LogsCapturados {
+  linhas: string[];
+  texto: () => string;
+  restaurar: () => void;
+}
+
+/** Captura console.warn/console.error para ler o que a função ANUNCIA. */
+function coletarLogs(): LogsCapturados {
+  const linhas: string[] = [];
+  const originalWarn = console.warn;
+  const originalError = console.error;
+  const juntar = (...args: unknown[]) => args.map((a) => (a instanceof Error ? a.message : String(a))).join(" ");
+  console.warn = (...args: unknown[]) => { linhas.push(juntar(...args)); };
+  console.error = (...args: unknown[]) => { linhas.push(juntar(...args)); };
+  return {
+    linhas,
+    texto: () => linhas.join("\n"),
+    restaurar: () => {
+      console.warn = originalWarn;
+      console.error = originalError;
+    },
+  };
 }
 
 function prepararAmbiente(): void {
@@ -329,6 +363,110 @@ Deno.test("X030: resposta que NÃO é opt-out continua sendo atribuída ao Talk 
     assertEquals(atribuicoes[0].args.p_contact_id, "contact-1");
     assertEquals(atribuicoes[0].args.p_phone, "5511000000000");
   } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+Deno.test("R2-API-008: HTTP 500 do provedor NÃO é anunciado como confirmação enviada", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso(500);
+  const logs = coletarLogs();
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    const supabase = fakeSupabase(chamadas, {
+      keywords: SEED,
+      recentSend: [{ id: "recip-1" }],
+      suppressions: ["supp-1"],
+      autoreply: "MENSAGEM DO SETTING (fixture)",
+      instanceToken: "token-inst-1",
+    });
+
+    const { data, key } = traduzir(goIncoming("PARE", "3EB0HTTP500"));
+    await handleIncomingMessage(supabase, "inst-go-x030-http500", data, key, "http://localhost:54321", "svc");
+
+    assertEquals(fetchCalls.length, 1, "a tentativa de confirmação aconteceu");
+    assertEquals(
+      chamadas.filter((c) => c.nome === "talkx_suppress_contact").length,
+      1,
+      "a supressão continua valendo mesmo com a confirmação recusada pelo provedor",
+    );
+    const texto = logs.texto();
+    assertEquals(
+      texto.includes("Confirmacao enviada"),
+      false,
+      "HTTP 500 não pode ser anunciado como envio bem-sucedido",
+    );
+    assertEquals(/rejected/i.test(texto), true, "a recusa do provedor precisa ficar registrada");
+    assertEquals(texto.includes("500"), true, "o registro traz a evidência do provedor (status)");
+  } finally {
+    logs.restaurar();
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+Deno.test("R2-API-008: HTTP 200 do provedor É anunciado como confirmação enviada", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso(200);
+  const logs = coletarLogs();
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    const supabase = fakeSupabase(chamadas, {
+      keywords: SEED,
+      recentSend: [{ id: "recip-1" }],
+      suppressions: ["supp-1"],
+      autoreply: "MENSAGEM DO SETTING (fixture)",
+      instanceToken: "token-inst-1",
+    });
+
+    const { data, key } = traduzir(goIncoming("PARE", "3EB0HTTP200"));
+    await handleIncomingMessage(supabase, "inst-go-x030-http200", data, key, "http://localhost:54321", "svc");
+
+    const texto = logs.texto();
+    assertEquals(
+      texto.includes("Confirmacao enviada"),
+      true,
+      "2xx é aceite do provedor: a confirmação pode ser anunciada",
+    );
+    assertEquals(/accepted/i.test(texto), true, "o envio aceito é classificado como 'accepted'");
+  } finally {
+    logs.restaurar();
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+Deno.test("R2-API-008: queda de transporte não é anunciada como confirmação enviada", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso(200, "timeout simulado (fixture)");
+  const logs = coletarLogs();
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    const supabase = fakeSupabase(chamadas, {
+      keywords: SEED,
+      recentSend: [{ id: "recip-1" }],
+      suppressions: ["supp-1"],
+      autoreply: "MENSAGEM DO SETTING (fixture)",
+      instanceToken: "token-inst-1",
+    });
+
+    const { data, key } = traduzir(goIncoming("PARE", "3EB0NETERR"));
+    await handleIncomingMessage(supabase, "inst-go-x030-neterr", data, key, "http://localhost:54321", "svc");
+
+    assertEquals(fetchCalls.length, 1, "a tentativa de confirmação aconteceu");
+    const texto = logs.texto();
+    assertEquals(
+      texto.includes("Confirmacao enviada"),
+      false,
+      "sem resposta HTTP não dá para afirmar que a confirmação saiu",
+    );
+    assertEquals(/unknown/i.test(texto), true, "sem status do provedor o desfecho é classificado como 'unknown'");
+  } finally {
+    logs.restaurar();
     restaurarFetch();
     resetOptOutKeywordCache();
   }
