@@ -118,15 +118,23 @@ describe('useWhatsAppTemplates — aprovação oficial não é escolhida localme
     expect(eqMock).toHaveBeenCalledWith('id', 'tpl-1');
   });
 
-  it('rotula cada estado exibido como estado do cadastro local', () => {
-    for (const [valor, badge] of Object.entries(STATUS_BADGES)) {
-      expect(badge.label.toLowerCase(), `rótulo de "${valor}"`).toContain('local');
-      expect(badge.scope).toBe('local');
+  it('template aprovado vindo da tabela é exibido como estado local, não como selo oficial do provedor', async () => {
+    const result = await montarHook([{ ...templateArmazenado, status: 'approved' }]);
+
+    const exibido = result.current.templates[0];
+    expect(exibido.status).toBe('approved');
+
+    const badge = STATUS_BADGES[exibido.status];
+    expect(badge.scope).toBe('local');
+    expect(badge.label.toLowerCase()).toContain('local');
+    for (const [valor, info] of Object.entries(STATUS_BADGES)) {
+      expect(info.label.toLowerCase(), `rótulo de "${valor}"`).toContain('local');
+      expect(info.scope).toBe('local');
     }
   });
 
   it('o feedback do salvamento descreve que gravou localmente, sem afirmar submissão à aprovação', async () => {
-    const result = await montarHook();
+    const result = await montarHook([templateArmazenado]);
 
     act(() => {
       result.current.setEditingTemplate({
@@ -140,9 +148,24 @@ describe('useWhatsAppTemplates — aprovação oficial não é escolhida localme
       await result.current.handleSave();
     });
 
-    const chamadas = vi.mocked(toast.success).mock.calls;
-    const mensagem = String(chamadas[chamadas.length - 1]?.[0] ?? '');
-    expect(mensagem.toLowerCase()).toContain('local');
-    expect(mensagem).not.toMatch(/submetid|enviado para aprova|em an[áa]lise/i);
+    const mensagens = (): string[] =>
+      vi.mocked(toast.success).mock.calls.map((chamada) => String(chamada[0] ?? ''));
+    expect(mensagens().length).toBeGreaterThan(0);
+    for (const mensagem of mensagens()) {
+      expect(mensagem.toLowerCase()).toContain('local');
+      expect(mensagem).not.toMatch(/submetid|enviado para aprova|em an[áa]lise/i);
+    }
+
+    // a edição de um template existente também precisa dizer que gravou localmente
+    act(() => {
+      result.current.setEditingTemplate({ ...templateArmazenado, content: 'Olá {{1}}, texto novo' });
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    const ultima = mensagens()[mensagens().length - 1];
+    expect(ultima.toLowerCase()).toContain('local');
+    expect(ultima).not.toMatch(/submetid|enviado para aprova|em an[áa]lise/i);
   });
 });
