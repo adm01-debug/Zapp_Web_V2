@@ -33,7 +33,51 @@ export function cabecalhosDoAudio(
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, range" };
 
-export async function handleGetCallRecording(req: Request) {
+// ── Costura de injecao (item 62) ─────────────────────────────────────────────
+// O handler exportado recebe o que faz efeito (o cliente com o JWT do chamador e a busca
+// na origem) para o teste chamar o handler REAL com um `Request` e conferir status E corpo
+// — sem banco e sem provedor. Os valores reais sao montados no `depsReais`, dentro do
+// default, e nenhum deles e resolvido no import do modulo.
+
+export interface LinhaDaChamada {
+  id: string;
+  recording_status: string | null;
+  recording_url: string | null;
+}
+
+interface ConsultaDaChamada {
+  select(colunas: string): ConsultaDaChamada;
+  eq(coluna: string, valor: string): ConsultaDaChamada;
+  maybeSingle(): Promise<{ data: LinhaDaChamada | null; error: { message?: string } | null }>;
+}
+
+export interface ClienteDoChamador {
+  auth: {
+    getUser(): Promise<{ data: { user: { id: string } | null } | null; error: unknown }>;
+  };
+  from(tabela: string): ConsultaDaChamada;
+}
+
+export interface GetCallRecordingDeps {
+  /** Cliente com o JWT do chamador: quem decide o que ele pode ler e a RLS. */
+  clienteDoChamador(authHeader: string): ClienteDoChamador;
+  /** Busca a gravacao na origem, repassando o Range do cliente quando houver. */
+  buscarOrigem(url: string, range: string | null): Promise<Response>;
+}
+
+export const depsReais: GetCallRecordingDeps = {
+  clienteDoChamador: (authHeader) =>
+    createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_ANON_KEY"), {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    }) as unknown as ClienteDoChamador,
+  buscarOrigem: (url, range) => fetch(url, { headers: range ? { Range: range } : {} }),
+};
+
+export async function handleGetCallRecording(
+  req: Request,
+  deps: GetCallRecordingDeps = depsReais,
+): Promise<Response> {
   // (o Deno.serve fica no fim, sob import.meta.main: importar este modulo num teste
   //  nao pode subir um servidor na porta 8000.)
   const logger = new Logger("get-call-recording");
@@ -52,10 +96,7 @@ export async function handleGetCallRecording(req: Request) {
     if (!authHeader) return errorResponse("Unauthorized", 401, req);
 
     // Cliente com o JWT do usuario: quem decide o que ele pode ler e a RLS, nao esta funcao.
-    const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_ANON_KEY"), {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
+    const supabase = deps.clienteDoChamador(authHeader);
 
     const { data: usuario, error: erroAuth } = await supabase.auth.getUser();
     if (erroAuth || !usuario?.user) return errorResponse("Invalid or expired token", 401, req);
@@ -84,9 +125,7 @@ export async function handleGetCallRecording(req: Request) {
 
     // Repassa o Range do cliente: o <audio> pede pedaco e o provedor responde 206.
     const range = req.headers.get("Range");
-    const upstream = await fetch(chamada.recording_url, {
-      headers: range ? { Range: range } : {},
-    });
+    const upstream = await deps.buscarOrigem(chamada.recording_url, range);
 
     if (!upstream.ok && upstream.status !== 206) {
       logger.error("upstream da gravacao falhou", { status: upstream.status });
@@ -108,6 +147,5 @@ export async function handleGetCallRecording(req: Request) {
 }
 
 if (import.meta.main) {
-  Deno.serve(handleGetCallRecording);
+  Deno.serve((req) => handleGetCallRecording(req));
 }
-
