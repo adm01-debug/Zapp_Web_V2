@@ -252,7 +252,66 @@ export function paridadeDeNomes(
   };
 }
 
-/** Predicado normalizado para comparar com `true`/`false` literais. */
+/** `true` quando o primeiro `(` e o último `)` envolvem a expressão inteira. */
+function parensEnvolvemTudo(expr: string): boolean {
+  let profundidade = 0;
+  for (let i = 0; i < expr.length; i++) {
+    if (expr[i] === '(') profundidade++;
+    else if (expr[i] === ')') {
+      profundidade--;
+      if (profundidade === 0) return i === expr.length - 1;
+    }
+  }
+  return false;
+}
+
+/**
+ * Predicado normalizado para comparar com `true`/`false` literais.
+ * Remove só os parênteses que envolvem a expressão inteira — predicados
+ * terminados em `)`, como `f(auth.uid())`, não podem ser truncados.
+ */
 export function normSql(expr: string | null): string {
-  return (expr ?? '').replace(/\s+/g, ' ').replace(/^\(+|\)+$/g, '').trim().toLowerCase();
+  let e = (expr ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+  while (e.startsWith('(') && e.endsWith(')') && parensEnvolvemTudo(e)) {
+    e = e.slice(1, -1).trim();
+  }
+  return e;
+}
+
+export type ComandoRls = 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE';
+
+/** `true` quando a policy se aplica ao comando — `FOR ALL` cobre os quatro. */
+export function cobreComando(p: EffectivePolicy, comando: ComandoRls): boolean {
+  return p.command === 'ALL' || p.command === comando;
+}
+
+/**
+ * Predicado efetivo de uma policy para `comando`, na semântica do Postgres:
+ * SELECT/UPDATE/DELETE são filtrados pelo USING; INSERT é barrado pelo
+ * WITH CHECK — e `FOR ALL` sem WITH CHECK usa o próprio USING como CHECK.
+ * Predicado omitido vale 'true' (irrestrito).
+ */
+export function predicadoEfetivo(p: EffectivePolicy, comando: ComandoRls): string {
+  const bruto = comando === 'INSERT' ? (p.check ?? p.using) : p.using;
+  return normSql(bruto) || 'true';
+}
+
+/**
+ * `true` quando `comando` está protegido: existe ao menos uma policy que o
+ * cobre (`FOR ALL` conta) e toda policy cobridora tem predicado efetivo
+ * restrito (diferente de 'true') atendendo `exigencia`.
+ */
+export function comandoProtegido(
+  policies: EffectivePolicy[],
+  comando: ComandoRls,
+  exigencia: RegExp,
+): boolean {
+  const cobertura = policies.filter((p) => cobreComando(p, comando));
+  return (
+    cobertura.length > 0 &&
+    cobertura.every((p) => {
+      const efetivo = predicadoEfetivo(p, comando);
+      return efetivo !== 'true' && exigencia.test(efetivo);
+    })
+  );
 }
