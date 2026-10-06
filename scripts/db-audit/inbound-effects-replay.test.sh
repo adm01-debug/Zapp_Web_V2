@@ -324,4 +324,39 @@ expect_service 'C.10 segundo drain: nada pendente, nada reaplicado' 'true|true|0
 expect_value 'C.11 replied_at preenchido uma única vez (sem dupla atribuição)' '1|1' \
   "SELECT (SELECT count(*) FROM public.talkx_recipients WHERE id='b0000000-0000-0000-0000-0000000000c1' AND replied_at IS NOT NULL) || '|' || (SELECT count(*) FROM public.multiplix_delivery_items WHERE id='e0000000-0000-0000-0000-00000000000c' AND replied_at IS NOT NULL);"
 
+printf '\n============ BLOCO D — rollback executado ============\n'
+
+# O `-- Rollback:` do topo da migration e comentario por convencao: quem executa
+# e o TESTE. As linhas sao extraidas do arquivo real (prefixo `-- Rollback: ` na
+# primeira, `--           ` nas seguintes), viram um .sql e rodam no MESMO
+# Postgres descartavel — o corpo do rollback NAO e copiado a mao. O bloco fica
+# depois do C porque o C ainda exercita as assinaturas novas que o rollback tira.
+awk '
+  /^-- Rollback: / { sub(/^-- Rollback: /, ""); print; rb = 1; next }
+  rb && /^--           / { sub(/^--           /, ""); print; next }
+  rb { exit }
+' "$migration" > "$tmp_dir/rollback.sql"
+grep -q 'DROP TABLE IF EXISTS public.inbound_message_effects' "$tmp_dir/rollback.sql" \
+  || fail 'extracao do -- Rollback: incompleta (faltou o DROP TABLE final)'
+psql_file < "$tmp_dir/rollback.sql" >/dev/null
+
+expect_value 'D.1 assinatura antiga de 8 args existe de novo' 't' \
+  "SELECT to_regprocedure('public.ingest_inbound_message(uuid,text,text,text,text,text,text,timestamptz)') IS NOT NULL;"
+expect_service 'D.2 ingest de 8 args executa e grava como service_role' 'inserted' \
+  "SELECT outcome FROM public.ingest_inbound_message('$CONN','$PHONE','Fixture','mensagem pos-rollback','text',NULL,'MSG-D1',now());"
+expect_value 'D.3 corpo anterior de pe: a mensagem persistiu' '1' \
+  "SELECT count(*) FROM public.messages WHERE external_id='MSG-D1';"
+expect_service 'D.4 replay sequencial no corpo anterior devolve updated' 'updated' \
+  "SELECT outcome FROM public.ingest_inbound_message('$CONN','$PHONE','Fixture','mensagem pos-rollback','text',NULL,'MSG-D1',now());"
+expect_value 'D.5 EXECUTE da assinatura de 8 args so para service_role' 'true|false|false' \
+  "SELECT has_function_privilege('service_role','public.ingest_inbound_message(uuid,text,text,text,text,text,text,timestamptz)','EXECUTE') || '|' || has_function_privilege('authenticated','public.ingest_inbound_message(uuid,text,text,text,text,text,text,timestamptz)','EXECUTE') || '|' || has_function_privilege('anon','public.ingest_inbound_message(uuid,text,text,text,text,text,text,timestamptz)','EXECUTE');"
+expect_error 'D.6 authenticated nao executa a assinatura de 8 args' authenticated 'permission denied' \
+  "SELECT public.ingest_inbound_message('$CONN','$PHONE','Fixture','x','text',NULL,'MSG-D2',now());"
+expect_value 'D.7 COMMENT da assinatura de 8 args restaurado' 't' \
+  "SELECT obj_description('public.ingest_inbound_message(uuid,text,text,text,text,text,text,timestamptz)'::regprocedure, 'pg_proc') IS NOT NULL;"
+expect_value 'D.8 assinaturas novas (10/11 args) e o drain nao existem mais' 'true|true|true' \
+  "SELECT (to_regprocedure('public.ingest_inbound_message(uuid,text,text,text,text,text,text,timestamptz,text,text)') IS NULL) || '|' || (to_regprocedure('public.ingest_inbound_message(uuid,text,text,text,text,text,text,timestamptz,boolean,text,text)') IS NULL) || '|' || (to_regprocedure('public.drain_inbound_message_effects(uuid,text)') IS NULL);"
+expect_value 'D.9 tabela da outbox nao existe mais' 't' \
+  "SELECT to_regclass('public.inbound_message_effects') IS NULL;"
+
 printf '\n[OK] inbound-effects-replay: todos os checks passaram\n'
