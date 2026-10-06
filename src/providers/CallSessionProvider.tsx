@@ -116,8 +116,13 @@ const SEM_CODIGO_SIP = 0;
  * Quando a ação fiel não existe no estado atual, vale o equivalente VÁLIDO
  * (um dispatch inválido só renderia warn e deixaria o estado preso). Devolve
  * `null` quando não há o que encerrar (sessão ociosa), sem warn.
+ *
+ * R2-CALL-008 (#283): é a MESMA regra que o `useTerminoRemoto` usa para o
+ * desfecho que chega por Realtime — escolher o evento terminal à mão (o
+ * `HANGUP_REMOTE` cru) é inválido em `ringing_in` e a chamada ficava presa
+ * tocando. Exportada (e não duplicada) para os dois caminhos não divergirem.
  */
-function eventoDeFim(outcome: CallEndOutcome, status: CallSessionStatus): CallSessionEvent | null {
+export function eventoDeFim(outcome: CallEndOutcome, status: CallSessionStatus): CallSessionEvent | null {
   const code = outcome.sipCode ?? undefined;
 
   if (status === 'ringing_in') {
