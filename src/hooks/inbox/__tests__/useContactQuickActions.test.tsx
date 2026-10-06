@@ -4,8 +4,14 @@ import { useContactQuickActions } from '../useContactQuickActions';
 import type { ConversationContact } from '@/types/chat';
 
 const h = vi.hoisted(() => {
-  const state = { error: null as { message: string } | null };
-  const eq = vi.fn(() => Promise.resolve({ error: state.error }));
+  const state = { error: null as { message: string } | null, failNext: false };
+  const eq = vi.fn(() => {
+    if (state.failNext) {
+      state.failNext = false;
+      return Promise.resolve({ error: { message: 'check_violation' } });
+    }
+    return Promise.resolve({ error: state.error });
+  });
   const update = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ update }));
   const toast = Object.assign(vi.fn(), {
@@ -102,6 +108,23 @@ describe('useContactQuickActions', () => {
     await clickUndo();
     expect(h.update).toHaveBeenLastCalledWith({ conversation_status: 'pending' });
     await waitFor(() => expect(result.current.conversationStatus).toBe('pending'));
+  });
+
+  it('Desfazer de Arquivar com anterior waiting (FSM recusa archived→waiting): reabre como open e avisa sem toast.error', async () => {
+    const c = makeContact({ conversation_status: 'waiting' });
+    const { result } = renderHook(() => useContactQuickActions(c));
+    await act(async () => { await result.current.archive(); });
+    expect(h.update).toHaveBeenCalledWith({ conversation_status: 'archived' });
+
+    // A 1ª escrita do Desfazer (voltar para 'waiting') é recusada pelo FSM.
+    h.state.failNext = true;
+    await clickUndo();
+    await waitFor(() =>
+      expect(h.update).toHaveBeenLastCalledWith({ conversation_status: 'open' }),
+    );
+    expect(h.toast.info).toHaveBeenCalled();
+    expect(h.toast.error).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.conversationStatus).toBe('open'));
   });
 
   it('erro do banco vira toast.error, estado não muda e nenhum Desfazer é oferecido', async () => {
