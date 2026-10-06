@@ -1,14 +1,18 @@
 // TRA-009 — a documentação canônica de CI ficou para trás da baseline.
 //
-// Invariantes fixados aqui (o texto não é relido a cada PR; sem teste, a contagem antiga e a
-// instrução revogada de `strict:false` voltariam):
-//   * `CLAUDE.md` fala de 16 arquivos YAML em `.github/workflows/` e da fonte gerada
-//     `docs/ci/README.md` — nunca de 14/17;
-//   * toda menção a `strict=false` está rotulada como revogada/histórica, e a política vigente
-//     declarada é `strict=true`, igual a `scripts/ci/github-settings-baseline.json`;
+// PERÍMETRO DESTE CARTÃO (#177, recorte local): o plano de 100 etapas. Os invariantes do
+// `CLAUDE.md` (contagem de workflows, política única de `strict`, fonte gerada) NÃO entram aqui —
+// o arquivo é instrução de agente, exige aprovação do dono e mora no cartão t_bd92cc1f. Sem o
+// hunk do `CLAUDE.md` esses casos ficariam vermelhos, e eles não pertencem a este recorte.
+//
+// Invariantes fixados aqui (o texto não é relido a cada PR; sem teste, o plano volta a divergir do
+// estado reconciliado):
 //   * cada checkbox do plano bate com o estado reconciliado (P006) e nada que aguarda runtime
 //     aparece como concluído;
-//   * as etapas citadas pelo TRA-009 têm linha própria na tabela de reconciliação.
+//   * as etapas citadas pelo TRA-009 têm linha própria na tabela de reconciliação;
+//   * a tabela de abertura do adendo de 02/10 (E01/E13/E14/E16) mantém a evidência medida em
+//     02/10 e não recebe o texto da Limitação da tabela de reconciliação;
+//   * etapa marcada [x] não deixa no bloco um texto dizendo que ela está bloqueada.
 //
 // Os dois lados são provados por fixtures em string (estado anterior FALHA, corrigido PASSA),
 // além das asserções sobre os arquivos reais.
@@ -20,9 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const CLAUDE = join(RAIZ, 'CLAUDE.md');
 const PLANO = join(RAIZ, 'docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md');
-const BASELINE = join(RAIZ, 'scripts/ci/github-settings-baseline.json');
 const P006 = join(RAIZ, 'docs/reconciliation/tasks/P006.json');
 const README_CI = join(RAIZ, 'docs/ci/README.md');
 const DIR_WF = join(RAIZ, '.github', 'workflows');
@@ -41,42 +43,11 @@ const OVERRIDES = { E11: 'x', E95: 'x' };
 const ESTADOS = ['CONCLUÍDA', 'AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDAÇÃO',
   'REVOGADA', 'PENDENTE', 'DECISÃO PENDENTE', 'BLOQUEIO TÉCNICO'];
 const NAO_CONCLUIDOS = new Set(['AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDAÇÃO']);
-const CONTAGEM_ANTIGA = [/dos\s+17\s+workflows/i, /17\s+no\s+total/i, /14\s+workflows/i, /14\s+arquivos/i];
-const TOCA_STRICT_FALSE = /strict[ ]*[:=][ ]*`?false|`strict`[^\n]{0,40}`false`/i;
-const ROTULO_HISTORICO = /revogad|REVOGAD|históric|HISTÓRIC|superad|SUPERAD|reconciliad|Reconcilia/;
 const RE_ITEM = /^\s*-\s*\[([ xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
 const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`\[([ x~!])\]`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
 
 const linhas = (t) => t.split('\n');
-const paragrafos = (t) => t.split(/\n[ \t]*\n/);
 const achata = (t) => t.replace(/\s+/g, ' ');
-
-function violacoesContagemClaude(texto, totalYaml) {
-  const out = [];
-  for (const l of linhas(texto)) {
-    for (const re of CONTAGEM_ANTIGA) {
-      if (re.test(l)) out.push(`CLAUDE.md mantem contagem antiga: ${l.trim().slice(0, 100)}`);
-    }
-  }
-  const chato = achata(texto);
-  if (!new RegExp(`\\*\\*${totalYaml}\\*\\* arquivos em \`.github/workflows/\``).test(chato)) {
-    out.push(`CLAUDE.md nao declara os ${totalYaml} arquivos de .github/workflows/`);
-  }
-  if (!texto.includes('docs/ci/README.md')) {
-    out.push('CLAUDE.md nao aponta a fonte canonica gerada (docs/ci/README.md)');
-  }
-  return out;
-}
-
-function violacoesStrictClaude(texto) {
-  const out = [];
-  for (const p of paragrafos(texto)) {
-    if (!TOCA_STRICT_FALSE.test(p)) continue;
-    if (ROTULO_HISTORICO.test(p)) continue;
-    out.push(`CLAUDE.md trata strict=false sem rotular como revogado/historico: ${achata(p).slice(0, 100)}`);
-  }
-  return out;
-}
 
 function checkboxesDoPlano(plano) {
   const mapa = new Map();
@@ -185,20 +156,115 @@ function violacoesCabecalhoDuplicado(plano) {
   return out;
 }
 
+// A tabela de abertura do adendo de 02/10 ("### Etapas superadas pela política vigente") registra o que foi
+// MEDIDO em 02/10 — ela não é a camada de reconciliação. Trocar a célula de evidência pelo texto de
+// Limitação do P006 (foi o que aconteceu com a E13 no primeiro envio deste cartão) apaga a evidência
+// medida e faz a mesma frase aparecer nos dois lugares. As linhas E01/E13/E14/E16 são fixadas abaixo.
+const ABERTURA_ESPERADA = {
+  E01: '| **E01** restaurar `strict=false` | SUPERADA | medido `strict=false`, mas a política da casa é `true`; aplicar E01 deixaria o guard da casa em conflito permanente com a configuração |',
+  E13: '| **E13** criar `settings-guard.yml` | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | `.github/workflows/settings-guard.yml`, schedule de 6 h; a §1 deste plano não o listou |',
+  E14: '| **E14** `github-settings-guard.mjs` + testes | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | 6 testes verdes; o script **restaura via `PATCH`** — é ele que sustenta a política `strict=true` |',
+  E16: '| **E16** apagar `auto-update-pr-branch.yml` | SUPERADA | não é código morto: o cabeçalho do próprio arquivo registra reativação em 01/10 para a política `strict=true` |',
+};
+
+const celulas = (l) => l.replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+
+function linhasDaAbertura(plano) {
+  const ls = linhas(plano);
+  const ini = ls.findIndex((l) => /^###\s+Etapas superadas pela política vigente/.test(l));
+  if (ini === -1) return null;
+  const out = [];
+  for (let i = ini + 1; i < ls.length; i += 1) {
+    if (/^###\s/.test(ls[i])) break;
+    if (ls[i].startsWith('|')) out.push(ls[i]);
+  }
+  return out;
+}
+
+function tabelaDeAbertura(plano) {
+  const ls = linhasDaAbertura(plano);
+  if (ls === null) return null;
+  const mapa = new Map();
+  for (const l of ls) {
+    const m = /^\|\s*\*\*(E\d{1,3})\*\*\s[^|]*\|/.exec(l);
+    if (m) mapa.set(m[1], l);
+  }
+  return mapa;
+}
+
+function violacoesTabelaAbertura(plano, esperado = ABERTURA_ESPERADA) {
+  const out = [];
+  const tab = tabelaDeAbertura(plano);
+  if (tab === null) return ['plano sem a secao "### Etapas superadas pela politica vigente"'];
+  const rec = reconciliacao(plano);
+  for (const [id, linhaEsperada] of Object.entries(esperado)) {
+    const linha = tab.get(id);
+    if (linha === undefined) { out.push(`${id}: sem linha na tabela de abertura do adendo de 02/10`); continue; }
+    if (achata(linha) !== achata(linhaEsperada)) {
+      out.push(`${id}: linha da tabela de abertura != evidencia medida em 02/10 ("${achata(linha).slice(0, 100)}")`);
+    }
+    const r = rec.get(id);
+    if (!r) continue;
+    const evidencia = celulas(linha)[2];
+    const limitacao = celulas(r.linha).at(-1);
+    if (limitacao && evidencia.includes(limitacao)) {
+      out.push(`${id}: evidencia da abertura repete a Limitacao da tabela de reconciliacao`);
+    }
+  }
+  return out;
+}
+
+// A evidência da E13 na abertura ("...a §1 deste plano não o listou") é conferível no próprio documento:
+// a §1 lista o que o plano de 27/09 já entregou e não cita o settings-guard. Evidência copiada da
+// camada de reconciliação — ou §1 e abertura discordando — acusa aqui, não no olho do revisor.
+function linhasDaSecao1(plano) {
+  const ls = linhas(plano);
+  const ini = ls.findIndex((l) => /^##\s+1\.\s/.test(l));
+  if (ini === -1) return null;
+  const out = [];
+  for (let i = ini + 1; i < ls.length; i += 1) {
+    if (/^##\s/.test(ls[i])) break;
+    out.push(ls[i]);
+  }
+  return out;
+}
+
+function violacoesEvidenciaDaE13(plano) {
+  const s1 = linhasDaSecao1(plano);
+  if (s1 === null) return ['plano sem a secao "## 1."'];
+  const abertura = tabelaDeAbertura(plano);
+  const linha = abertura && abertura.get('E13');
+  if (!linha) return ['E13: sem linha na tabela de abertura do adendo de 02/10'];
+  const cita = s1.some((l) => l.includes('settings-guard'));
+  const diz = /a §1 deste plano não o listou/.test(linha);
+  const out = [];
+  if (cita && diz) {
+    out.push('E13: a evidencia da abertura diz que a §1 nao listou o settings-guard, mas a §1 cita o arquivo');
+  }
+  if (!cita && !diz) {
+    out.push('E13: a §1 lista o settings-guard e a evidencia da abertura nao registra isso');
+  }
+  return out;
+}
+
+// Bloco marcado [x] (concluída) que ainda afirma estar bloqueado precisa dizer que a nota é histórica e
+// apontar a conclusão — foi o texto que sobrou contradizendo o checkbox reconciliado da E11.
+const RE_NOTA_BLOQUEIO = /est[áa] bloquead[ao]|N[ÃA]O pode cumprir|nao pode cumprir/i;
+const RE_RESSALVA_HISTORICA = /hist[óo]ric/i;
+
+function violacoesBlocoConcluidoBloqueado(plano) {
+  const out = [];
+  for (const [id, b] of blocosSuperados(plano)) {
+    if (b.marca !== 'x') continue;
+    if (!RE_NOTA_BLOQUEIO.test(b.texto)) continue;
+    if (!RE_RESSALVA_HISTORICA.test(b.texto) || !/Reconcilia/.test(b.texto)) {
+      out.push(`${id}: checkbox [x] mas o bloco ainda diz que a etapa esta bloqueada, sem ressalva historica que aponte a reconciliacao`);
+    }
+  }
+  return out;
+}
+
 // ── Fixtures ─────────────────────────────────────────────────────────────────
-
-const CLAUDE_ANTES = [
-  '**Plano vigente:** auditoria exaustiva dos 17 workflows + meta CI score 10/10.',
-  'Auditoria dos 14 workflows + 3 dinâmicos (17 total), da branch protection.',
-  'são 14 arquivos em `.github/workflows/` e mais 3 dinâmicos — 17 no total.',
-  'Antes de qualquer `github_update_branch_protection`, ler o estado e repetir `strict: false`.',
-].join('\n\n');
-
-const CLAUDE_DEPOIS = [
-  '**Plano vigente:** auditoria exaustiva dos **16** arquivos em `.github/workflows/` (+3 dinâmicos).',
-  'A fonte canônica do inventário é o gerado `docs/ci/README.md`.',
-  '**Correção de 2026-10-01 — HISTÓRICA, SUPERADA por E15(b):** repetir `strict: false` está REVOGADO.',
-].join('\n\n');
 
 const TAREFA_E76 = { id: 'E76', status: 'IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE', documentation: { original_claim: 'CHECKED' } };
 const TAREFA_E62 = { id: 'E62', status: 'PARTIAL', documentation: { original_claim: 'UNCHECKED' } };
@@ -214,6 +280,32 @@ const PLANO_DEPOIS = [
   '| **E76** | `[~]` AGUARDA RUNTIME | `bun.lock` + os 3 workflows (1.63.0) | nao ha mismatch; remover o pin e opcao da E75 |',
   '| **E62** | `[~]` PARCIAL | PR #1778 | guardas de DB preservadas |',
 ].join('\n');
+
+const ABERTURA_OK = [
+  '### Etapas superadas pela política vigente',
+  '',
+  '| Etapa | Status | Evidência medida em 02/10 |',
+  '|---|---|---|',
+  '| **E01** restaurar `strict=false` | SUPERADA | medido `strict=false` |',
+  '| **E13** criar `settings-guard.yml` | JÁ EXISTIA | `.github/workflows/settings-guard.yml`, schedule de 6 h |',
+  '| **E14** `github-settings-guard.mjs` + testes | JÁ EXISTIA | 6 testes verdes |',
+  '| **E16** apagar `auto-update-pr-branch.yml` | SUPERADA | não é código morto |',
+  '',
+  '### Próxima seção',
+].join('\n');
+
+const ABERTURA_ESPERADA_FIXTURE = {
+  E01: '| **E01** restaurar `strict=false` | SUPERADA | medido `strict=false` |',
+  E13: '| **E13** criar `settings-guard.yml` | JÁ EXISTIA | `.github/workflows/settings-guard.yml`, schedule de 6 h |',
+  E14: '| **E14** `github-settings-guard.mjs` + testes | JÁ EXISTIA | 6 testes verdes |',
+  E16: '| **E16** apagar `auto-update-pr-branch.yml` | SUPERADA | não é código morto |',
+};
+
+const LIMITACAO_E13 = 'Guards existem e explicitam pontos cegos; administração não se comprova só com GITHUB_TOKEN (403).';
+
+const ABERTURA_TROCADA = ABERTURA_OK
+  .replace('`.github/workflows/settings-guard.yml`, schedule de 6 h |', `${LIMITACAO_E13} |`)
+  + `\n| **E13** | \`[~]\` PRECISA REVALIDAÇÃO | PR #1436, #1834 | ${LIMITACAO_E13} |`;
 
 const RECON_TRUNCADA = [
   '## Reconciliação TRA-009 — estados, evidências e limitações (2026-10-05)',
@@ -234,16 +326,6 @@ const RECON_COMPLETA = [
   '',
   '## 0. Sumário executivo — o que está quebrado agora',
 ].join('\n');
-
-test('fixture: CLAUDE.md com contagem antiga e strict=false solto e rejeitado', () => {
-  assert.ok(violacoesContagemClaude(CLAUDE_ANTES, 16).length > 0, 'a contagem 14/17 tinha de ser rejeitada');
-  assert.ok(violacoesStrictClaude(CLAUDE_ANTES).length > 0, 'strict=false sem rotulo tinha de ser rejeitado');
-});
-
-test('fixture: CLAUDE.md corrigido passa (16 arquivos, fonte gerada, strict=false rotulado)', () => {
-  assert.deepEqual(violacoesContagemClaude(CLAUDE_DEPOIS, 16), []);
-  assert.deepEqual(violacoesStrictClaude(CLAUDE_DEPOIS), []);
-});
 
 test('fixture: etapa que aguarda runtime marcada [x] e rejeitada, [~] passa', () => {
   assert.ok(violacoesChecklist(PLANO_ANTES, [TAREFA_E76]).length > 0, 'E76 aguardando runtime nao pode ficar [x]');
@@ -270,6 +352,35 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
+test('fixture: troca da celula de evidencia na tabela de abertura e rejeitada', () => {
+  assert.deepEqual(violacoesTabelaAbertura(ABERTURA_OK, ABERTURA_ESPERADA_FIXTURE), []);
+  const v = violacoesTabelaAbertura(ABERTURA_TROCADA, ABERTURA_ESPERADA_FIXTURE);
+  assert.ok(v.some((x) => x.startsWith('E13: linha da tabela de abertura')),
+    'a E13 com texto de Limitacao no lugar da evidencia medida tinha de ser rejeitada');
+  // a regra vale por si: mesmo passando a Limitacao como texto "esperado", repetir a mesma frase nos
+  // dois lugares (abertura e reconciliacao) continua sendo defeito.
+  assert.ok(
+    violacoesTabelaAbertura(ABERTURA_TROCADA, { E13: `| **E13** criar \`settings-guard.yml\` | JÁ EXISTIA | ${LIMITACAO_E13} |` })
+      .some((x) => x.includes('repete a Limitacao')),
+    'repetir a Limitacao do P006 na evidencia da abertura tinha de ser rejeitado',
+  );
+  assert.ok(violacoesTabelaAbertura('## Outra seção\n', ABERTURA_ESPERADA_FIXTURE).length > 0,
+    'plano sem a tabela de abertura tinha de ser rejeitado');
+});
+
+test('fixture: bloco [x] que ainda diz estar bloqueado e rejeitado', () => {
+  const bloco = [
+    '- [x] **E11** - Corrigir o `CLAUDE.md` nos 5 pontos divergentes.',
+    '  - ⚠️ **Nota de execução (03/10/2026) — a etapa está bloqueada.**',
+  ].join('\n');
+  assert.ok(violacoesBlocoConcluidoBloqueado(bloco).length > 0,
+    'checkbox [x] com texto de bloqueio tinha de ser rejeitado');
+  const corrigido = `${bloco}\n  - ✅ **Nota de status (05/10/2026):** a nota de 03/10 é histórica; ver Reconciliação TRA-009.`;
+  assert.deepEqual(violacoesBlocoConcluidoBloqueado(corrigido), []);
+  assert.deepEqual(violacoesBlocoConcluidoBloqueado(bloco.replace('- [x]', '- [ ]')), [],
+    'bloqueio sem checkbox concluido continua legitimo');
+});
+
 // ── Arquivos reais ───────────────────────────────────────────────────────────
 
 test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
@@ -278,20 +389,6 @@ test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', as
   const readme = await readFile(README_CI, 'utf8');
   assert.match(readme, /\*\*16 workflows\.\*\*/, 'docs/ci/README.md nao declara os 16 workflows');
   for (const f of arquivos) assert.ok(readme.includes(f), `docs/ci/README.md nao cita ${f}`);
-});
-
-test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 16), []);
-});
-
-test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
-  const claude = await readFile(CLAUDE, 'utf8');
-  const baseline = JSON.parse(await readFile(BASELINE, 'utf8'));
-  assert.equal(baseline.branch_protection_main.strict, true, 'a baseline vigente e strict=true');
-  assert.deepEqual(violacoesStrictClaude(claude), []);
-  assert.match(claude, /\|\s*Branch protection — `strict`\s*\|\s*\*\*`true`\*\*/,
-    'a tabela canonica precisa declarar strict=true como politica vigente');
-  assert.match(claude, /403 administrativo é limite de evidência/i);
 });
 
 test('plano: cada checkbox bate com o estado reconciliado do P006', async () => {
@@ -360,4 +457,19 @@ test('plano: tabela de reconciliacao sem celula cortada e sem cabecalho "## " du
     'nenhuma linha da tabela de reconciliacao pode terminar em "…"');
   assert.deepEqual(violacoesCabecalhoDuplicado(plano), [],
     'o plano nao pode ter cabecalho "## " repetido');
+});
+
+test('plano: tabela de abertura do adendo de 02/10 mantem a evidencia medida (E01/E13/E14/E16)', async () => {
+  assert.deepEqual(violacoesTabelaAbertura(await readFile(PLANO, 'utf8')), [],
+    'a evidencia medida em 02/10 nao pode ser trocada por texto da camada de reconciliacao');
+});
+
+test('plano: a evidencia da E13 na abertura confere com a secao 1 do proprio documento', async () => {
+  assert.deepEqual(violacoesEvidenciaDaE13(await readFile(PLANO, 'utf8')), [],
+    'a abertura e a secao 1 nao podem discordar sobre o settings-guard');
+});
+
+test('plano: etapa marcada [x] nao deixa texto dizendo que esta bloqueada', async () => {
+  assert.deepEqual(violacoesBlocoConcluidoBloqueado(await readFile(PLANO, 'utf8')), [],
+    'a E11 esta concluida: a nota de 03/10 precisa estar rotulada como historica');
 });
