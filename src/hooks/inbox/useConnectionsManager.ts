@@ -55,6 +55,16 @@ export function useConnectionsManager() {
   // descartado. Mesma convencao de useNavigationHistory.ts.
   const qrCodeDialogRef = useRef<QrCodeDialogState>(INITIAL_QR_STATE);
   useLayoutEffect(() => { qrCodeDialogRef.current = qrCodeDialog; }, [qrCodeDialog]);
+  // Identidade da abertura atual do dialogo de QR (R2-API-039): cada abertura,
+  // refresh ou fechamento grava de forma SINCRONA uma nova geracao e a conexao
+  // correspondente. Respostas e timers carregam a identidade em que nasceram e
+  // so alteram o estado enquanto ela ainda for a atual. Nao da para usar o
+  // espelho de estado (qrCodeDialogRef) no caminho de connect: ele so reflete
+  // a identidade depois do commit, e a resposta pode chegar antes.
+  const qrSessionRef = useRef<{ generation: number; connectionId: string }>({
+    generation: 0,
+    connectionId: '',
+  });
 
   // Rede de seguranca: se o dialog ficar em 'loading' (ex.: connect trava/demora,
   // ou o backend nao devolve QR) ele nunca mais sairia do spinner — nao ha else no
@@ -174,14 +184,27 @@ export function useConnectionsManager() {
     }
   };
 
-  const startStatusPolling = useCallback((instanceName: string, _connectionId: string) => {
+  // R2-API-039: cada tick carrega a identidade (conexao + geracao) em que
+  // nasceu. Antes de tocar no estado -- ou de zerar a referencia do intervalo --
+  // confirmamos que essa identidade ainda e a atual; sem isso o status "open"
+  // da conexao A marcava B como conectada e anulava o timer de B (polling
+  // zumbi mesmo depois de fechar o dialogo).
+  const startStatusPolling = useCallback((instanceName: string, connectionId: string, generation: number) => {
     if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
     const interval = setInterval(async () => {
       try {
         const result = await getInstanceStatus(instanceName);
+        const session = qrSessionRef.current;
+        if (session.generation !== generation || session.connectionId !== connectionId) {
+          // Resquicio de outra abertura: encerra este timer e nao mexe no
+          // estado nem na referencia do intervalo da geracao atual.
+          clearInterval(interval);
+          if (pollingIntervalRef.current === interval) pollingIntervalRef.current = null;
+          return;
+        }
         if (result?.state === 'open' || result?.status === 'connected') {
           clearInterval(interval);
-          pollingIntervalRef.current = null;
+          if (pollingIntervalRef.current === interval) pollingIntervalRef.current = null;
           setQrCodeDialog((prev) => ({ ...prev, status: 'connected', qrCode: null }));
           toast({ title: 'Conectado!', description: 'WhatsApp conectado com sucesso.' });
         }
@@ -197,6 +220,9 @@ export function useConnectionsManager() {
       toast({ title: 'Erro', description: 'Esta conexão não possui uma instância configurada.', variant: 'destructive' });
       return;
     }
+    // Nova identidade de abertura: invalida respostas/timers da anterior.
+    const generation = qrSessionRef.current.generation + 1;
+    qrSessionRef.current = { generation, connectionId: connection.id };
     setQrCodeDialog({
       open: true, connectionId: connection.id, connectionName: connection.name,
       qrCode: connection.qr_code,
@@ -205,11 +231,18 @@ export function useConnectionsManager() {
     if (connection.status !== 'connected') {
       try {
         const result = await connectInstance(connection.instance_id);
+        // O operador pode ter fechado o dialogo ou aberto outra conexao nesse
+        // meio-tempo: a resposta pertence a outra identidade (outra geracao ou
+        // outra conexao) e nao pode ir para o dialogo atual.
+        if (qrSessionRef.current.generation !== generation
+          || qrSessionRef.current.connectionId !== connection.id) return;
         if (result?.qrcode?.base64) {
           setQrCodeDialog((prev) => ({ ...prev, qrCode: result.qrcode.base64, status: 'pending' }));
         }
-        startStatusPolling(connection.instance_id, connection.id);
+        startStatusPolling(connection.instance_id, connection.id, generation);
       } catch (error: unknown) {
+        if (qrSessionRef.current.generation !== generation
+          || qrSessionRef.current.connectionId !== connection.id) return;
         setQrCodeDialog((prev) => ({
           ...prev, status: 'error',
           errorMessage: error instanceof Error ? error.message : 'Erro ao gerar QR Code',
@@ -221,9 +254,14 @@ export function useConnectionsManager() {
   const handleRefreshQrCode = async () => {
     const connection = connections.find((c) => c.id === qrCodeDialog.connectionId);
     if (!connection?.instance_id) return;
+    // Cada "Gerar novo codigo" abre uma nova identidade para a MESMA conexao.
+    const generation = qrSessionRef.current.generation + 1;
+    qrSessionRef.current = { generation, connectionId: connection.id };
     setQrCodeDialog((prev) => ({ ...prev, status: 'loading', qrCode: null }));
     try {
       const result = await connectInstance(connection.instance_id);
+      if (qrSessionRef.current.generation !== generation
+        || qrSessionRef.current.connectionId !== connection.id) return;
       if (result?.status === 'connected') {
         setQrCodeDialog((prev) => ({ ...prev, status: 'connected' }));
         return;
@@ -231,8 +269,10 @@ export function useConnectionsManager() {
       if (result?.qrcode?.base64) {
         setQrCodeDialog((prev) => ({ ...prev, qrCode: result.qrcode.base64, status: 'pending' }));
       }
-      startStatusPolling(connection.instance_id, connection.id);
+      startStatusPolling(connection.instance_id, connection.id, generation);
     } catch (error: unknown) {
+      if (qrSessionRef.current.generation !== generation
+        || qrSessionRef.current.connectionId !== connection.id) return;
       setQrCodeDialog((prev) => ({
         ...prev, status: 'error',
         errorMessage: error instanceof Error ? error.message : 'Erro ao atualizar QR Code',
@@ -312,6 +352,9 @@ export function useConnectionsManager() {
   };
 
   const closeQrDialog = () => {
+    // Fechar invalida a geracao atual: respostas pendentes de connect/status
+    // deixam de valer e o timer da propria geracao e encerrado (R2-API-039).
+    qrSessionRef.current = { generation: qrSessionRef.current.generation + 1, connectionId: '' };
     if (pollingIntervalRef.current) { clearInterval(pollingIntervalRef.current); pollingIntervalRef.current = null; }
     setQrCodeDialog(INITIAL_QR_STATE);
   };
