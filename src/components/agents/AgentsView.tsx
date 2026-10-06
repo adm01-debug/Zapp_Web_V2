@@ -149,7 +149,11 @@ export function AgentsView() {
             className="pl-9 bg-muted/20 border-border/30 focus:border-primary/50"
           />
         </div>
-        <Button variant="outline" className="border-secondary/30 hover:border-secondary/50 hover:bg-secondary/10">
+        <Button
+          variant="outline"
+          disabled
+          className="border-secondary/30 hover:border-secondary/50 hover:bg-secondary/10"
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filtrar
         </Button>
@@ -204,20 +208,25 @@ export function AgentsView() {
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-muted/30">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Ações do atendente ${agent.name}`}
+                            className="w-8 h-8 hover:bg-muted/30"
+                          >
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-card border-border/30">
-                          <DropdownMenuItem className="hover:bg-primary/10">
+                          <DropdownMenuItem disabled className="hover:bg-primary/10">
                             <Edit className="w-4 h-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="hover:bg-primary/10">
+                          <DropdownMenuItem disabled className="hover:bg-primary/10">
                             <Settings className="w-4 h-4 mr-2" />
                             Configurações
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive hover:bg-destructive/10">
+                          <DropdownMenuItem disabled className="text-destructive hover:bg-destructive/10">
                             <UserX className="w-4 h-4 mr-2" />
                             Desativar
                           </DropdownMenuItem>
