@@ -47,23 +47,31 @@ export const quarantineStore = {
     if (changed) refreshSnapshot();
   },
   /**
-   * Reconcilia o cache contra uma janela autoritativa de consulta (o poll do
-   * monitor). Diferente de `upsertMany`, que só acrescenta/atualiza o que
-   * chega, aqui o resultado é tratado como retrato do estado atual:
+   * Reconcilia o cache contra a janela autoritativa do poll do monitor:
+   * `records` traz os estados ATIVOS (`pending`/`deleted`) e `releases` as
+   * liberações (`allowed`/`whitelisted`) observadas para ids já cacheados.
+   * Diferente de `upsertMany`, que só acrescenta/atualiza o que chega, aqui o
+   * resultado é tratado como retrato do estado atual:
    *
-   *  - todo registro devolvido é gravado por ID, com a decisão e a versão
-   *    (`reviewed_at`) atuais — é o que faz uma liberação
-   *    (`pending`→`allowed`/`whitelisted`) sobrescrever a decisão antiga;
-   *  - quando a janela NÃO foi truncada (`truncated: false`), um registro do
-   *    cache que não voltou foi removido na origem e é descartado;
+   *  - todo registro devolvido (ativo ou liberação) é gravado por message_id,
+   *    com a decisão e a versão (`reviewed_at`) atuais — é o que faz uma
+   *    liberação (`pending`→`allowed`/`whitelisted`) sobrescrever a decisão
+   *    antiga;
+   *  - quando a janela de ativos NÃO foi truncada (`truncated: false`), um
+   *    registro do cache que não voltou nem como ativo nem como liberação foi
+   *    removido na origem e é descartado;
    *  - quando a janela FOI truncada pelo limite de linhas, a ausência é
    *    ambígua (o registro pode só ter saído da janela), então NADA é removido
    *    apenas por ausência — nunca inferimos liberação desse jeito.
    */
-  reconcile(records: QuarantineRecord[], opts: { truncated: boolean }) {
+  reconcile(
+    records: QuarantineRecord[],
+    releases: QuarantineRecord[],
+    opts: { truncated: boolean },
+  ) {
     const seen = new Set<string>();
     let changed = false;
-    for (const r of records) {
+    for (const r of [...records, ...releases]) {
       if (!r.message_id) continue;
       seen.add(r.message_id);
       const prev = byMessageId.get(r.message_id);
