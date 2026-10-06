@@ -137,6 +137,10 @@
  *    reconcilia como tentativa sem cobrança de tokens). É arquivo de teste, não produz token
  *    legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
  *    varrido sobe, medido pela varredura depois do merge.
+ *  - 244: TRA-003 (05/10/2026) — `_shared/__tests__/evolution-connection-state.test.ts`
+ *    (prova Deno da classificação do estado GO e do efeito no health-check). É arquivo de teste,
+ *    não produz token legado: o mapa INVENTARIO e as 3 ocorrências seguem idênticos; só o total
+ *    varrido sobe, medido pela varredura depois do merge.
  *
  * 06/10/2026 — o total de arquivos varridos deixa de ser pino EXATO e vira PISO
  * (`PISO_ARQUIVOS_VARRIDOS`). O histórico acima mostra por quê: em toda entrada o número subiu
