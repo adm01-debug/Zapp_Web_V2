@@ -26,7 +26,29 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
+  /**
+   * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor
+   * identidade antiga depois de logout ou troca de usuario. Guardamos a
+   * identidade vigente e a geracao da busca vigente; uma resposta so entra no
+   * estado se ainda pertencer as duas. Consultas que resolvem depois da
+   * transicao sao descartadas, em qualquer ordem de resolucao A/B.
+   */
+  const identidadeRef = useRef<string | null>(null);
+  const geracaoPerfilRef = useRef(0);
   const queryClient = useQueryClient();
+
+  /**
+   * Inicia/limpa a identidade vigente e invalida as buscas de perfil em voo.
+   * Repete a mesma identidade (ex.: TOKEN_REFRESHED) nao mexe em nada.
+   */
+  const definirIdentidade = useCallback((userId: string | null) => {
+    if (identidadeRef.current === userId) return;
+    identidadeRef.current = userId;
+    geracaoPerfilRef.current += 1;
+    // Identidade diferente: o perfil anterior nao pode continuar na tela e so a
+    // resposta da nova geracao pode repor um perfil.
+    setProfile(null);
+  }, []);
 
   /**
    * BUG-6 FIX: wrap fetchProfile in try/catch so errors don't leave
@@ -36,8 +58,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
    const fetchProfile = useCallback(async (userId: string) => {
      if (fetchingRef.current) return;
      fetchingRef.current = true;
+     const geracao = ++geracaoPerfilRef.current;
      try {
        const data = await AuthService.fetchProfile(userId);
+       // Descarta resposta de geracao encerrada ou de identidade que mudou
+       // enquanto a consulta estava em voo (logout / troca de usuario).
+       const respostaVigente =
+         geracaoPerfilRef.current === geracao && identidadeRef.current === userId;
+       if (!respostaVigente) return;
        if (data) setProfile(data);
      } catch (err) {
        log.error('[AuthProvider] Failed to fetch profile:', err);
@@ -69,9 +97,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         setUser(session?.user ?? null);
 
         if (session?.user) {
+          definirIdentidade(session.user.id);
           void fetchProfile(session.user.id);
         } else {
-          setProfile(null);
+          definirIdentidade(null);
         }
       } catch (err) {
         log.error('[BOOT] Error fetching session:', err);
@@ -99,9 +128,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
          * session always triggers a fresh profile fetch.
          */
         fetchingRef.current = false;
+        // R2-AUTH-005: zera o perfil da identidade anterior antes de buscar a nova.
+        definirIdentidade(session.user.id);
         void fetchProfile(session.user.id);
       } else {
-        setProfile(null);
+        definirIdentidade(null);
       }
 
       if (event === 'SIGNED_IN') {
@@ -143,7 +174,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('online', handleOnline);
     };
-  }, [fetchProfile, queryClient]);
+  }, [definirIdentidade, fetchProfile, queryClient]);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
@@ -169,6 +200,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        // reconcile if the server-side sign-out actually succeeded.
        log.error('[AuthProvider] signOut failed, clearing local state anyway:', err);
      } finally {
+       // R2-AUTH-005: invalida consulta de perfil em voo para que a resposta
+       // atrasada nao reponha a identidade que acabou de sair.
+       definirIdentidade(null);
        setProfile(null);
        setSession(null);
        setUser(null);
