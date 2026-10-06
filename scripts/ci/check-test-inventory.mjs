@@ -48,6 +48,10 @@ const ALLOWLIST = new Set([
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
   'scripts/db-audit/replay-classify.test.sh',
+  // IA-EGRESS-001 (item 20): prova em Postgres descartável que a configuração persistida de
+  // `ai_providers` passou a barrar endpoint/credencial inseguros (CHECK convalidado). Passo de
+  // db-guard.yml a promover pelo dono do workflow (agente não edita workflow).
+  'scripts/db-audit/ai-providers-endpoint-secret-binding.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
