@@ -5,7 +5,6 @@ import {
   jsonResponse,
   requireEnv,
   Logger,
-  enforceRateLimit,
   getClientIP,
   sanitizeString,
 } from "../_shared/validation.ts";
@@ -17,7 +16,8 @@ import {
 
 // Login server-side (ADR-006): o lockout e decidido aqui, para qualquer cliente.
 // 1. politica de rede (R2-AUTH-022) antes de qualquer efeito;
-// 2. conta travada -> 423 sem tocar no GoTrue;
+// 2. gate unico consume_login_gate: bloqueio ANTES de consumir contadores,
+//    rate limit por IP e por e-mail na mesma transacao -> 423/429;
 // 3. GoTrue recusa -> a falha e registrada (comprovada pelo proprio GoTrue) -> 401;
 // 4. GoTrue aceita -> tentativas zeradas -> 200 com a sessao; o front faz setSession.
 // verify_jwt = false: ainda nao existe sessao. Rate limit por IP e por e-mail.
@@ -25,6 +25,7 @@ import {
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@.]{2,63}$/;
 
 type LockRow = { is_locked: boolean; locked_until: string | null; attempts: number };
+type GateRow = LockRow & { allowed: boolean; remaining: number };
 
 function lockPayload(row: LockRow | null | undefined) {
   if (!row) return { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 };
@@ -66,18 +67,13 @@ export interface LoginAnonClient {
 export interface AuthLoginDeps {
   admin: NetworkPolicyRpcClient;
   anon: LoginAnonClient;
-  enforceRateLimit: (
-    key: string,
-    maxRequests: number,
-    windowMs: number,
-  ) => PromiseLike<{ allowed: boolean }>;
 }
 
 // Limites hardcoded atuais (fallback quando não há regra ativa de rate limit).
 const IP_LIMIT_DEFAULT_MAX = 10; // requisições por IP
 const IP_LIMIT_DEFAULT_WINDOW_SECONDS = 60; // 60_000 ms
 const EMAIL_LIMIT_MAX = 20; // requisições por e-mail (guarda de lockout por conta)
-const EMAIL_LIMIT_WINDOW_MS = 60_000;
+const EMAIL_LIMIT_WINDOW_SECONDS = 60;
 
 /** Código do erro da RPC para log (o `error` é `unknown` por contrato). */
 function rpcErrorCode(err: unknown): string | undefined {
@@ -111,42 +107,57 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     }
 
     const ip = getClientIP(req);
-    // Limite configurável de `auth-login` prevalece; fallback mantém os limites
-    // hardcoded atuais (via defaults passados à RPC).
-    const ipRl = await deps.enforceRateLimit(
-      `auth-login:${ip}`,
-      policy.rateLimitMaxRequests,
-      policy.rateLimitWindowSeconds * 1000,
-    );
-    if (!ipRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
+    // Corpo lido depois da política e antes do gate: corpo inválido conta só o
+    // IP (p_email=null), como o rate limit por IP que já corria antes do parse.
     let body: unknown;
+    let invalidBody: string | null = null;
     try {
       body = await req.json();
     } catch {
-      return errorResponse("Invalid JSON", 400, req);
+      invalidBody = "Invalid JSON";
     }
     const rec = (body ?? {}) as Record<string, unknown>;
 
-    const email = sanitizeString(rec.email, 254)?.toLowerCase();
-    if (!email || !EMAIL_RE.test(email)) return errorResponse("invalid email", 400, req);
-    const password = typeof rec.password === "string" ? rec.password : "";
-    if (!password || password.length > 256) return errorResponse("invalid password", 400, req);
+    let email: string | null = null;
+    if (!invalidBody) {
+      email = sanitizeString(rec.email, 254)?.toLowerCase() ?? null;
+      if (!email || !EMAIL_RE.test(email)) invalidBody = "invalid email";
+    }
+    const password = !invalidBody && typeof rec.password === "string" ? rec.password : "";
+    if (!invalidBody && (!password || password.length > 256)) invalidBody = "invalid password";
     const userAgent = sanitizeString(rec.userAgent ?? req.headers.get("user-agent"), 512) ?? null;
 
-    const emailRl = await deps.enforceRateLimit(`auth-login-email:${email}`, EMAIL_LIMIT_MAX, EMAIL_LIMIT_WINDOW_MS);
-    if (!emailRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
-
-    const { data: lockData, error: lockError } = await deps.admin.rpc("is_account_locked", { check_email: email });
-    if (lockError) {
-      log.error("is_account_locked failed", { code: rpcErrorCode(lockError) });
+    // Uma ida ao banco: a RPC decide bloqueio da conta ANTES de consumir
+    // contadores, depois aplica o teto de IP e o de e-mail na mesma transação.
+    // O limite configurável de `auth-login` prevalece; os defaults passados à
+    // política (10/60s) e o hardcoded de e-mail (20/60s) são os parâmetros.
+    const { data: gateData, error: gateError } = await deps.admin.rpc("consume_login_gate", {
+      p_email: invalidBody ? null : email,
+      p_ip: ip,
+      p_ip_max: policy.rateLimitMaxRequests,
+      p_ip_window_seconds: policy.rateLimitWindowSeconds,
+      p_email_max: EMAIL_LIMIT_MAX,
+      p_email_window_seconds: EMAIL_LIMIT_WINDOW_SECONDS,
+    });
+    if (gateError) {
+      log.error("consume_login_gate failed", { code: rpcErrorCode(gateError) });
       return errorResponse("Internal error", 500, req);
     }
-    const lockRow = (Array.isArray(lockData) ? lockData[0] : lockData) as LockRow | null;
-    if (lockRow?.is_locked) {
-      log.done(423, { attempts: lockRow.attempts });
-      return jsonResponse({ error: "Account locked", ...lockPayload(lockRow) }, 423, req);
+    const gateRow = (Array.isArray(gateData) ? gateData[0] : gateData) as GateRow | null;
+    if (!gateRow || typeof gateRow.allowed !== "boolean") {
+      log.error("consume_login_gate returned no row");
+      return errorResponse("Internal error", 500, req);
     }
+    if (gateRow.is_locked) {
+      log.done(423, { attempts: gateRow.attempts });
+      return jsonResponse({ error: "Account locked", ...lockPayload(gateRow) }, 423, req);
+    }
+    if (!gateRow.allowed) {
+      log.done(429, {});
+      return errorResponse("Rate limit exceeded", 429, req);
+    }
+    if (invalidBody || !email) return errorResponse(invalidBody ?? "invalid email", 400, req);
 
     const { data: signIn, error: signInError } = await deps.anon.auth.signInWithPassword({ email, password });
 
@@ -194,6 +205,6 @@ if (import.meta.main) {
     const anon = createClient(supabaseUrl, requireEnv("SUPABASE_ANON_KEY"), {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    return handleLogin(req, { admin, anon, enforceRateLimit });
+    return handleLogin(req, { admin, anon });
   });
 }
