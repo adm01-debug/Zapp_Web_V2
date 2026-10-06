@@ -257,4 +257,37 @@ describe('useChatSearch', () => {
     act(() => result.current.navigateDown());
     expect(result.current.activeIndex).toBe(0);
   });
+
+  // Regressão #322 (R2-INB-027): o filtro "Última interação" reconhece a sessão por gap > 4h,
+  // mas arredondava o início para a meia-noite e reintroduzia uma sessão antiga DO MESMO DIA.
+  it('last_interaction não reintroduz sessão antiga do mesmo dia', () => {
+    const messages: Message[] = [
+      makeMockMessage({ id: 's1a', content: 'sessão manhã', timestamp: new Date('2026-04-08T09:00:00') }),
+      makeMockMessage({ id: 's1b', content: 'sessão manhã', timestamp: new Date('2026-04-08T09:30:00') }),
+      makeMockMessage({ id: 's2a', content: 'sessão tarde', timestamp: new Date('2026-04-08T18:00:00') }),
+      makeMockMessage({ id: 's2b', content: 'sessão tarde', timestamp: new Date('2026-04-08T18:20:00') }),
+    ];
+
+    const { result } = renderHook(() => useChatSearch({ ...defaultOpts, messages }));
+
+    act(() => result.current.setDatePreset('last_interaction'));
+
+    const ids = result.current.results.map((r) => r.id).sort();
+    expect(ids).toEqual(['s2a', 's2b']);
+  });
+
+  it('last_interaction respeita sessão que atravessa a meia-noite', () => {
+    const messages: Message[] = [
+      makeMockMessage({ id: 'd1', content: 'ontem de manhã', timestamp: new Date('2026-04-07T10:00:00') }),
+      makeMockMessage({ id: 'n1', content: 'ontem à noite', timestamp: new Date('2026-04-07T23:00:00') }),
+      makeMockMessage({ id: 'n2', content: 'madrugada', timestamp: new Date('2026-04-08T01:00:00') }),
+    ];
+
+    const { result } = renderHook(() => useChatSearch({ ...defaultOpts, messages }));
+
+    act(() => result.current.setDatePreset('last_interaction'));
+
+    const ids = result.current.results.map((r) => r.id).sort();
+    expect(ids).toEqual(['n1', 'n2']);
+  });
 });
