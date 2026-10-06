@@ -50,6 +50,18 @@ export function useGroupsManager() {
     });
   };
 
+  // R2-API-061 (#233): ação contextual ("Enviar mensagem" no menu do card) precisa
+  // INCLUIR o grupo no público de forma idempotente. Um toggle retirava o grupo já
+  // selecionado dos destinatários. Aqui só há adição; nunca remoção.
+  const selectGroup = (groupId: string) => {
+    setSelectedGroups(prev => {
+      if (prev.has(groupId)) return prev;
+      const next = new Set(prev);
+      next.add(groupId);
+      return next;
+    });
+  };
+
   const selectAllGroups = () => {
     if (selectedGroups.size === filteredGroups.length) setSelectedGroups(new Set());
     else setSelectedGroups(new Set(filteredGroups.map(g => g.id)));
@@ -68,6 +80,6 @@ export function useGroupsManager() {
     handleDeleteGroup: actions.handleDeleteGroup,
     handleBroadcast: actions.handleBroadcast,
     handleCategoryChange: actions.handleCategoryChange,
-    toggleGroupSelection, selectAllGroups, getConnectionName,
+    toggleGroupSelection, selectGroup, selectAllGroups, getConnectionName,
   };
 }
