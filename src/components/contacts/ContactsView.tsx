@@ -140,6 +140,7 @@ export function ContactsView() {
         open={isBulkTagOpen} onOpenChange={setIsBulkTagOpen}
         contactIds={selectedIds} allTags={uniqueTags}
         onComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
+        onPartialComplete={(refused) => { setSelectedIds(refused); refetch(); invalidateContactAggregates(); }}
       />
 
       <ContactStatsCards
@@ -240,6 +241,7 @@ export function ContactsView() {
         selectedIds={selectedIds}
         onClearSelection={() => setSelectedIds([])}
         onActionComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
+        onPartialComplete={(refused) => { setSelectedIds(refused); refetch(); invalidateContactAggregates(); }}
         onCountersChanged={invalidateContactAggregates}
         availableTags={uniqueTags}
         canDeleteSelection={canDeleteSelection}
