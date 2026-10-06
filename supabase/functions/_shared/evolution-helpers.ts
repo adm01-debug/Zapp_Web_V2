@@ -1,7 +1,7 @@
 // Shared helpers for Evolution API webhook and sync functions
 import { evoFetch, extractAvatarUrl } from './evolution-send.ts';
 import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
-import type { EvolutionDbClient } from "./evolution-types.ts";
+import type { EvolutionDbClient, EvolutionDbError } from "./evolution-types.ts";
 
 export interface WebhookPayload {
   event: string;
@@ -194,6 +194,20 @@ export function invalidateConnectionCache(instance?: string): void {
   }
 }
 
+// Erro de consulta NAO e ausencia confirmada: nao entra no cache e derruba o
+// evento — a borda (evolution-webhook/index.ts) converte em HTTP 500 e a
+// Evolution reentrega. Cachear null aqui removia o isolamento por conexao por
+// ate 5 min (R2-API-004).
+export class ConnectionLookupError extends Error {
+  constructor(
+    public readonly instance: string,
+    public override readonly cause: EvolutionDbError,
+  ) {
+    super(`connection_lookup_failed: instance=${instance} (${cause.message})`);
+    this.name = 'ConnectionLookupError';
+  }
+}
+
 // deno-lint-ignore no-explicit-any
 export async function getConnectionByInstance(
   supabase: EvolutionDbClient,
@@ -206,11 +220,13 @@ export async function getConnectionByInstance(
     return cached.data;
   }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('whatsapp_connections')
     .select('id')
     .eq('instance_id', instance)
     .maybeSingle();
+
+  if (error) throw new ConnectionLookupError(instance, error);
 
   connectionCache.set(instance, {
     data: data as { id: string } | null,

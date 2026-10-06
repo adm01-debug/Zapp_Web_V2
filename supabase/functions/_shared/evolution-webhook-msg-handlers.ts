@@ -11,6 +11,9 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
   // Hoisted: mesmo instance em toda a chamada, evita refetch por entry e
   // permite escopar o dup-check abaixo por whatsapp_connection_id.
   const connection = await getConnectionByInstance(supabase, instance);
+  // Fail-closed: sem conexao nao ha escopo de isolamento — nenhuma mutacao pode
+  // sair (antes, o update abaixo saia GLOBAL por external_id, R2-API-004).
+  if (!connection) return;
 
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
@@ -28,7 +31,7 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
     // a linha errada e marcar a mensagem do contato como 'sent'.
     let dupCheckQuery = supabase.from('messages')
       .select('id, status').eq('external_id', externalId).eq('sender', 'agent');
-    if (connection?.id) dupCheckQuery = dupCheckQuery.eq('whatsapp_connection_id', connection.id);
+    dupCheckQuery = dupCheckQuery.eq('whatsapp_connection_id', connection.id);
     const { data: existingMessage } = await dupCheckQuery
       .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
@@ -44,7 +47,7 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
     if (!updatedMessageId) {
       const phone = normalizePhone(resolveEventJid(key, entry, baseData) ?? undefined);
 
-      if (connection?.id && phone) {
+      if (phone) {
         const contact = await getContactByPhone(supabase, phone, connection.id);
         if (contact?.id) {
           const msgPayload = entry.message || baseData.message;
@@ -84,6 +87,9 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
     'DELIVERY_ACK': 'delivered', 'READ': 'read', 'PLAYED': 'read', 'SERVER_ACK': 'sent', 'ERROR': 'failed',
   };
   const connection = await getConnectionByInstance(supabase, instance);
+  // Fail-closed (R2-API-004): sem conexao o recibo nao tem escopo de isolamento
+  // — qualquer update/upsert sairia GLOBAL por external_id.
+  if (!connection) return;
 
   for (const entry of toEventRecords(data, ['messages', 'updates', 'statuses'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
@@ -99,7 +105,7 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
       // comportamento antigo (linha mais recente da conexao).
       let currentMessageQuery = supabase.from('messages')
         .select('id, status').eq('external_id', key.id);
-      if (connection?.id) currentMessageQuery = currentMessageQuery.eq('whatsapp_connection_id', connection.id);
+      currentMessageQuery = currentMessageQuery.eq('whatsapp_connection_id', connection.id);
       if (typeof key.fromMe === 'boolean') {
         currentMessageQuery = currentMessageQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
       }
@@ -120,7 +126,7 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
       // (record_talkx_recipient_receipt) e idempotente: sem destinatario com esse
       // external_id devolve false e o log registra o nao-casamento.
       let talkxReceiptRecorded = false;
-      if ((newStatus === 'delivered' || newStatus === 'read') && connection?.id) {
+      if (newStatus === 'delivered' || newStatus === 'read') {
         const receiptEvent = newStatus === 'delivered' ? 'delivered' : 'read';
         const { data: receiptRecorded, error: receiptError } = await supabase.rpc('record_talkx_recipient_receipt', {
           p_external_id: key.id,
@@ -139,7 +145,7 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
 
       // Recibos do Multiplix continuam restritos a mensagem NOSSA (fromMe === true):
       // um recibo do contato nunca resolve destinatario nem item nosso.
-      if (newStatus === 'delivered' && key?.fromMe === true && connection?.id) {
+      if (newStatus === 'delivered' && key?.fromMe === true) {
         // O destinatario Multiplix e registro distinto do Talk X: roda sempre que o
         // Talk X nao confirmou (false ou erro) — um erro do TalkX nao prova que nao e
         // destinatario Multiplix. Mesmo padrao de idempotencia via RPC.
@@ -169,7 +175,7 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
         } else if (itemRecorded === true) {
           console.warn(`Multiplix item delivery acknowledged: ${key.id}`);
         }
-      } else if (newStatus === 'read' && key?.fromMe === true && connection?.id) {
+      } else if (newStatus === 'read' && key?.fromMe === true) {
         // F58: o READ resolve o ITEM da fila do Multiplix — um READ do provedor nunca marcava
         // read_at no ITEM do Multiplix. Mesmo encadeamento do delivered, com o evento
         // explicito; a RPC so eleva (item ja em 'read' devolve false, sem rebaixar).
@@ -194,14 +200,12 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
         // de mensagens LID nao resolvidas -- gerava ~500 orphans/hora (~12k/dia).
         // Agora: resolve o contato; sem contato, loga e continua sem inserir.
         let contactId: string | null = null;
-        if (connection?.id) {
-          const remoteJid = resolveEventJid(entry, baseData);
-          if (remoteJid) {
-            const phone = normalizePhone(remoteJid);
-            if (phone) {
-              const contact = await getContactByPhone(supabase, phone, connection.id);
-              contactId = contact?.id ?? null;
-            }
+        const remoteJid = resolveEventJid(entry, baseData);
+        if (remoteJid) {
+          const phone = normalizePhone(remoteJid);
+          if (phone) {
+            const contact = await getContactByPhone(supabase, phone, connection.id);
+            contactId = contact?.id ?? null;
           }
         }
 
@@ -214,7 +218,7 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
         await supabase.from('messages').upsert({
           content: '[Mensagem recebida]', message_type: 'text', sender: 'contact',
           external_id: key.id, status: newStatus, status_updated_at: now, created_at: now,
-          contact_id: contactId, whatsapp_connection_id: connection?.id ?? null,
+          contact_id: contactId, whatsapp_connection_id: connection.id,
         }, { ignoreDuplicates: true });
       }
     }
@@ -224,6 +228,9 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
 // deno-lint-ignore no-explicit-any
 export async function handleMessagesDelete(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
   const connection = await getConnectionByInstance(supabase, instance);
+  // Fail-closed (R2-API-004): sem conexao o delete sairia GLOBAL por
+  // external_id — e poderia marcar mensagem de OUTRA conexao como apagada.
+  if (!connection) return;
   for (const entry of toEventRecords(data, ['messages', 'keys'])) {
     const keySource = isRecord(entry.key)
       ? entry.key : (typeof entry.id === 'string' ? entry : null) ?? (isRecord(baseData.key) ? baseData.key : null);
@@ -238,7 +245,7 @@ export async function handleMessagesDelete(supabase: EvolutionDbClient, instance
     let deleteUpdateQuery = supabase.from('messages')
       .update({ is_deleted: true, status: 'deleted', status_updated_at: now })
       .eq('external_id', key.id);
-    if (connection?.id) deleteUpdateQuery = deleteUpdateQuery.eq('whatsapp_connection_id', connection.id);
+    deleteUpdateQuery = deleteUpdateQuery.eq('whatsapp_connection_id', connection.id);
     if (typeof key.fromMe === 'boolean') {
       deleteUpdateQuery = deleteUpdateQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
     }
@@ -247,7 +254,7 @@ export async function handleMessagesDelete(supabase: EvolutionDbClient, instance
     if (!updatedMessages?.length) {
       let contactId: string | null = null;
       const bestJid = resolveEventJid(key, entry, baseData);
-      if (connection?.id && bestJid) {
+      if (bestJid) {
         const phone = normalizePhone(bestJid);
         if (phone) { const contact = await getContactByPhone(supabase, phone, connection.id); contactId = contact?.id ?? null; }
       }
@@ -262,7 +269,7 @@ export async function handleMessagesDelete(supabase: EvolutionDbClient, instance
       await supabase.from('messages').upsert({
         content: '[Mensagem apagada]', message_type: 'text', sender: key.fromMe === true ? 'agent' : 'contact',
         external_id: key.id, status: 'deleted', is_deleted: true, status_updated_at: now,
-        created_at: now, contact_id: contactId, whatsapp_connection_id: connection?.id ?? null,
+        created_at: now, contact_id: contactId, whatsapp_connection_id: connection.id,
       }, { ignoreDuplicates: true });
     }
     console.log(`Message deleted: ${key.id}`);
