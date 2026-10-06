@@ -29,7 +29,8 @@
  *
  * Contrato (CONGELADO — consumido por outros módulos): os 7 estados, o mapa de
  * transições e os 6 wrappers `enqueueAiJob`/`claimAiJobs`/`heartbeatAiJob`/
- * `finishAiJob`/`reapAiJobs`/`cancelAiJob`, sobre as RPCs homônimas.
+ * `finishAiJob`/`reapAiJobs`/`cancelAiJob`, sobre as RPCs homônimas — mais o
+ * wrapper `markAiJobEffectStarted` (IA-202), aditivo, sobre a RPC homônima.
  *
  * Cliente/erro no padrão de `_shared/ai-usage.ts` e `_shared/ai-budget.ts`:
  * service role lido do ambiente (`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`),
@@ -487,6 +488,37 @@ export async function heartbeatAiJob(p: { id: string; leaseToken: string; leaseS
     throw infraError("heartbeatAiJob", "rpc", err);
   }
   return requireBooleanResult(data, "heartbeatAiJob");
+}
+
+/**
+ * Marca o início do EFEITO EXTERNO da tentativa (IA-202). Devolve `true` se marcado.
+ *
+ * O worker a chama ANTES de disparar o efeito de um kind cobrável: a RPC grava
+ * `ai_jobs.effect_started_at` somente se o MESMO token ainda detém o lease em
+ * 'running' (compare-and-swap no servidor). `false` NÃO é exceção: é LEASE
+ * PERDIDO / job fora de alcance — RESULTADO, e na dúvida o efeito NÃO executa.
+ * Idempotente no mesmo token. Falha de infraestrutura → `AiJobInfraError`.
+ */
+export async function markAiJobEffectStarted(p: { id: string; leaseToken: string }): Promise<boolean> {
+  if (typeof p !== "object" || p === null) {
+    throw new TypeError('markAiJobEffectStarted: "params" e obrigatorio.');
+  }
+  const id = requireNonEmptyString(p.id, "id", "markAiJobEffectStarted");
+  const leaseToken = requireNonEmptyString(p.leaseToken, "leaseToken", "markAiJobEffectStarted");
+
+  const client = requireServiceClient();
+  let data: unknown;
+  try {
+    const res = await client.rpc("mark_ai_job_effect_started", {
+      p_id: id,
+      p_lease_token: leaseToken,
+    });
+    if (res.error) throw res.error;
+    data = res.data;
+  } catch (err) {
+    throw infraError("markAiJobEffectStarted", "rpc", err);
+  }
+  return requireBooleanResult(data, "markAiJobEffectStarted");
 }
 
 /**
