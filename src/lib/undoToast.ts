@@ -25,25 +25,40 @@ interface UndoToastOptions {
  * ```
  */
 export function undoToast({ message, onUndo, delay = 5000, icon = '🗑️' }: UndoToastOptions) {
-  let undone = false;
+  let finalized = false;
 
-  toast(message, {
-    icon,
-    duration: delay,
-    action: {
-      label: 'Desfazer',
-      onClick: () => {
-        undone = true;
-        void onUndo();
-        toast.success('Ação desfeita', { duration: 2000, icon: '↩️' });
+  const show = () => {
+    toast(message, {
+      icon,
+      duration: delay,
+      action: {
+        label: 'Desfazer',
+        onClick: async () => {
+          // R2-MOD-053: SÓ anuncia o sucesso depois de `onUndo` resolver. Antes,
+          // o `void onUndo()` seguido de `toast.success` dizia "Ação desfeita"
+          // mesmo quando a reversão falhava (ou nem tinha gravado ainda). Se a
+          // reversão falhar, o item continua como estava: avisamos o erro e
+          // reoferecemos o Desfazer com o mesmo contexto.
+          try {
+            await onUndo();
+          } catch {
+            toast.error('Não foi possível desfazer. Tente novamente.', { duration: 4000 });
+            show();
+            return;
+          }
+          finalized = true;
+          toast.success('Ação desfeita', { duration: 2000, icon: '↩️' });
+        },
       },
-    },
-    onDismiss: () => {
-      if (!undone) {
-        // Action finalized — could emit analytics event here
-      }
-    },
-  });
+      onDismiss: () => {
+        if (!finalized) {
+          // Action finalized — could emit analytics event here
+        }
+      },
+    });
+  };
+
+  show();
 }
 
 /**

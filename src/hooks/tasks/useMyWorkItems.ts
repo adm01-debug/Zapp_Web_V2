@@ -486,6 +486,31 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
     onSettled: () => invalidate(),
   });
 
+  /**
+   * R2-MOD-053 — reverte cancelamento/conclusão ao snapshot capturado ANTES da
+   * ação. O trigger do banco zera `remind_at`/`notified_at` ao entrar em
+   * done/cancelled (20260928140000_tasks_unify_reminders_kanban.sql) e o patch de
+   * cancel/complete não os repõe; por isso o undo reescreve status, completed_at
+   * E o alarme a partir do item original. A escrita é conferida: erro do
+   * PostgREST/RLS E 0 linhas contam como falha (o RLS filtra sem lançar), então
+   * quem diz "Ação desfeita" só confirma depois deste await resolver.
+   */
+  const restoreSnapshot = async (item: WorkItem) => {
+    const { data, error } = await supabase
+      .from('conversation_tasks')
+      .update({
+        status: item.status,
+        completed_at: item.completed_at,
+        remind_at: item.remind_at,
+        notified_at: item.notified_at,
+      })
+      .eq('id', item.id)
+      .select('id');
+    if (error) throw error;
+    if (!data || data.length === 0) throw new Error('undo_no_rows');
+    invalidate();
+  };
+
   /** Cancelamento (D8): soft, com undo. `deleteItem` e alias disto. */
   const cancelMutation = useMutation({
     mutationFn: async (item: WorkItem) => {
@@ -511,13 +536,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
     await cancelMutation.mutateAsync(item);
     undoToast({
       message: 'Tarefa removida',
-      onUndo: async () => {
-        await supabase
-          .from('conversation_tasks')
-          .update({ status: item.status, completed_at: item.completed_at })
-          .eq('id', item.id);
-        invalidate();
-      },
+      onUndo: () => restoreSnapshot(item),
     });
   };
 
@@ -526,9 +545,9 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
     await moveMutation.mutateAsync({ item, to: 'done' });
     undoToast({
       message: 'Tarefa concluida',
-      onUndo: async () => {
-        await moveMutation.mutateAsync({ item: { ...item, status: 'done' }, to: 'todo' });
-      },
+      // Desfazer devolve ao estado EXATO de antes (todo/doing/waiting) e rearma
+      // o alarme — antes forçava 'todo' e perdia o lembrete.
+      onUndo: () => restoreSnapshot(item),
     });
   };
 
