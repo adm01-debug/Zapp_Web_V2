@@ -334,6 +334,17 @@ jobs:
           PUBLIC_POLICY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/scope-public-policies-authenticated.test.sh
 
+      # R2-AUTH-027 (backlog #252): a policy RESTRICTIVE "Block sensitive field changes
+      # by non-admins" preservava role/access_level/permissions/is_active e nao citava
+      # can_download — o dono do proprio perfil ligava o flag administrativo de download
+      # por PATCH em public.profiles. O passo roda a migration REAL da correcao sobre o
+      # estado real (migration base + SELECT policies), prova o DEFEITO no bloco ANTES,
+      # a recusa sob o papel authenticated no bloco DEPOIS e a mutacao no BLOCO C.
+      - name: Simular o flag administrativo de download em profiles (R2-AUTH-027)
+        env:
+          PROFILES_CAN_DOWNLOAD_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-can-download-authorization.test.sh
+
       - name: Simular permissao send_messages imposta na RPC de envio (L9)
         env:
           SEND_MESSAGES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
