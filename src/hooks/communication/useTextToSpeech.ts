@@ -24,6 +24,14 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  // Desligamento do ganho de volume (`attachMediaVolume`) do Audio vigente.
+  const detachVolumeRef = useRef<(() => void) | null>(null);
+  // R2-INB-040 — geração vigente do pedido de TTS. Toda resposta em voo só pode criar
+  // e tocar `Audio` enquanto ainda for a geração atual; parar, iniciar outra fala ou
+  // desmontar incrementa a geração e aborta o fetch pendente.
+  const requestIdRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
 
   // E — os dois effects que existiam aqui sincronizavam prop -> estado com `setState` sincrono
   // dentro do effect (regra react-hooks/set-state-in-effect: cascata de renders). Agora o valor
@@ -49,6 +57,49 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     }
   }, [initialSpeed]);
 
+  // R2-INB-040 — pausa e libera o Audio e a object URL da geração vigente. Não mexe em
+  // estado do React: também roda na desmontagem, quando não existe mais componente.
+  const releaseAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.onplay = null;
+      audio.onended = null;
+      audio.onerror = null;
+      audio.pause();
+      audio.currentTime = 0;
+      audioRef.current = null;
+    }
+    if (detachVolumeRef.current) {
+      detachVolumeRef.current();
+      detachVolumeRef.current = null;
+    }
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+    }
+  }, []);
+
+  // R2-INB-040 — invalida a geração vigente: o que estiver em voo não cria mais Audio
+  // (a resposta é descartada) e o pedido HTTP é abortado.
+  const invalidatePending = useCallback(() => {
+    requestIdRef.current += 1;
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+  }, []);
+
+  // R2-INB-040 — desmontar (a troca de conversa remonta o ChatPanel por `key`) invalida o
+  // pedido em voo e libera o Audio vigente: nada continua tocando depois do painel sair.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      invalidatePending();
+      releaseAudio();
+    };
+  }, [invalidatePending, releaseAudio]);
+
   const setVoiceId = useCallback((newVoiceId: string) => {
     setVoiceOverride({ valor: newVoiceId, base: initialVoiceId });
     onVoiceChange?.(newVoiceId);
@@ -66,20 +117,17 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   }, [initialSpeed, onSpeedChange]);
 
   const stop = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    if (audioUrlRef.current) {
-      URL.revokeObjectURL(audioUrlRef.current);
-      audioUrlRef.current = null;
-    }
+    invalidatePending();
+    releaseAudio();
+    if (!mountedRef.current) return;
+    setIsLoading(false);
     setIsPlaying(false);
     setCurrentMessageId(null);
-  }, []);
+  }, [invalidatePending, releaseAudio]);
 
   const speak = useCallback(async (text: string, messageId?: string) => {
-    // Stop any current playback
+    // Invalida a geração anterior (aborta o fetch em voo e libera o Audio) e assume a
+    // vigente. R2-INB-040: um pedido repetido não pode resultar em duas falas.
     stop();
 
     if (!text || text.trim() === '') {
@@ -97,6 +145,10 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       toast.error('Nenhum texto para reproduzir');
       return;
     }
+
+    const requestId = requestIdRef.current;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setIsLoading(true);
     setCurrentMessageId(messageId || null);
@@ -117,6 +169,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
             text: cleanText,
             voiceId
           }),
+          signal: controller.signal,
         }
       );
 
@@ -126,29 +179,32 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       }
 
       const audioBlob = await response.blob();
+
+      // R2-INB-040 — só a geração vigente, com o hook montado, cria e toca o Audio.
+      // A resposta de um pedido já invalidado (outro clique, stop ou desmontagem) morre aqui.
+      if (requestIdRef.current !== requestId || !mountedRef.current) return;
+
       const audioUrl = URL.createObjectURL(audioBlob);
       audioUrlRef.current = audioUrl;
 
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
       // E36 — o TTS toca no volume global, não no volume do sistema.
-      const detachMediaVolume = attachMediaVolume(audio);
-      
+      detachVolumeRef.current = attachMediaVolume(audio);
+
       // Set playback rate
       audio.playbackRate = speed;
 
       audio.onplay = () => setIsPlaying(true);
       audio.onended = () => {
-        detachMediaVolume();
+        if (requestIdRef.current !== requestId) return;
+        releaseAudio();
         setIsPlaying(false);
         setCurrentMessageId(null);
-        if (audioUrlRef.current) {
-          URL.revokeObjectURL(audioUrlRef.current);
-          audioUrlRef.current = null;
-        }
       };
       audio.onerror = () => {
-        detachMediaVolume();
+        if (requestIdRef.current !== requestId) return;
+        releaseAudio();
         setIsPlaying(false);
         setCurrentMessageId(null);
         toast.error('Erro ao reproduzir áudio');
@@ -156,14 +212,24 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
 
       await audio.play();
     } catch (error) {
+      // R2-INB-040 — abortar o pedido é cancelamento, não erro de reprodução:
+      // não reporta falha de uma fala que o usuário (ou a desmontagem) já descartou.
+      if (controller.signal.aborted) return;
       log.error('TTS error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar áudio';
-      toast.error(errorMessage);
-      setCurrentMessageId(null);
+      if (requestIdRef.current !== requestId) return;
+      releaseAudio();
+      if (mountedRef.current) {
+        const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar áudio';
+        toast.error(errorMessage);
+        setIsPlaying(false);
+        setCurrentMessageId(null);
+      }
     } finally {
-      setIsLoading(false);
+      if (abortRef.current === controller) abortRef.current = null;
+      // Só a geração vigente desliga o próprio loading: a obsoleta não mexe no estado.
+      if (requestIdRef.current === requestId && mountedRef.current) setIsLoading(false);
     }
-  }, [voiceId, speed, useStreaming, stop]);
+  }, [voiceId, speed, useStreaming, stop, releaseAudio]);
 
   return {
     speak,
