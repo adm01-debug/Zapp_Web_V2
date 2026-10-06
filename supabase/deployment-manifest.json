@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 74,
-    "source_file_count": 143,
+    "source_file_count": 144,
     "verify_jwt_true": 60,
     "verify_jwt_false": 14
   },
@@ -18,6 +18,11 @@
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
       "bytes": 4007,
       "sha256": "fff95328e31cf40c6b0776344a9432b78b4bfc8df16145835456d92e9cd5565a"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-audio-input.ts",
+      "bytes": 15411,
+      "sha256": "c4be250c20f38419c4e0b7158305114d0450622e6a2af910c815b2e57b40353a"
     },
     {
       "path": "supabase/functions/_shared/ai-auth.ts",
@@ -406,8 +411,8 @@
     },
     {
       "path": "supabase/functions/classify-audio-meme/index.ts",
-      "bytes": 3481,
-      "sha256": "a3d89d46f978d644b752deae3f56d5460a7ddedf54a3bf17d066ba52f4ee88ee"
+      "bytes": 10717,
+      "sha256": "c22819a0178a6b3126fcc6a405a8790db26203ea164a2d2435dadbcbdbd68f9b"
     },
     {
       "path": "supabase/functions/classify-emoji/index.ts",
@@ -1027,8 +1032,9 @@
       "name": "classify-audio-meme",
       "entrypoint": "supabase/functions/classify-audio-meme/index.ts",
       "verify_jwt": true,
-      "source_sha256": "67bca94a1967feb94d685eace7d0e07912a87911e0f1118d76c81b1f3db46233",
+      "source_sha256": "b4b2ad542c8380f01ff22f4c8e950c7f66fceba5f635477517ec37f03f9ed3a7",
       "source_files": [
+        "supabase/functions/_shared/ai-audio-input.ts",
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1040,6 +1046,7 @@
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/classify-audio-meme/index.ts"
       ]
@@ -1856,5 +1863,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d5d0aeaa19fde7940ddd73fe82a371c8bc7320ef715485afc99f124cd143840c"
+  "manifest_sha256": "00db3b4076ab2d829aaec9fd5c230fee0b7e6b90c8f81a3cd433687d70442cdb"
 }

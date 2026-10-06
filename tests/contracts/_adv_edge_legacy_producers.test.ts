@@ -137,6 +137,12 @@
  *    reconcilia como tentativa sem cobrança de tokens). É arquivo de teste, não produz token
  *    legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
  *    varrido sobe, medido pela varredura depois do merge.
+ *  - 244: IA-131 / IA-AUDIO-001 (06/10/2026) — `_shared/ai-audio-input.ts` (baixa o áudio
+ *    AUTORIZADO do Storage do projeto — identidade explícita do chamador, allowlist de bucket
+ *    e teto de tamanho — e o embute como parte `input_audio`, para o classificador de
+ *    áudio-meme OUVIR o som em vez de inferir pelo nome). O módulo NÃO produz token legado:
+ *    o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total varrido
+ *    sobe (243 → 244), medido pela varredura depois do merge.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -211,8 +217,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('243 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(243);
+  it('244 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBe(244);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
