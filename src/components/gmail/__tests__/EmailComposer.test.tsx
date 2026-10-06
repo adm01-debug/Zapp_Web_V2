@@ -95,6 +95,27 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
     expect(localStorage.getItem(key!)).toBeNull();
   });
 
+  it('mantém composição e rascunho local e avisa quando a exclusão remota é rejeitada', async () => {
+    const key = emailDraftSessionKey({ accountId: 'acc-discard-reject', mode: 'new' });
+    writeEmailDraftSession(key, {
+      draftId: 'draft-remote', to: 'cliente@example.com', cc: '', bcc: '', subject: 'Não perder', body: 'Conteúdo preservado',
+      isUsingHtml: false, attachmentNames: [], updatedAt: new Date().toISOString(),
+    });
+    deleteDraftMutateAsync.mockRejectedValueOnce(new Error('permission denied'));
+    const onClose = vi.fn();
+    render(<EmailComposer accountId="acc-discard-reject" mode="new" onClose={onClose} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Descartar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Descartar rascunho' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Rascunho remoto não descartado');
+    expect(alert).toHaveTextContent('permission denied');
+    expect(deleteDraftMutateAsync).toHaveBeenCalledWith('draft-remote');
+    expect(onClose).not.toHaveBeenCalled();
+    expect(localStorage.getItem(key!)).toContain('Não perder');
+    expect(screen.getByPlaceholderText('Assunto do email')).toHaveValue('Não perder');
+  });
+
   it('modo reply (inbound): Para = from_address, assunto = "Re: Orçamento"', () => {
     render(<EmailComposer mode="reply" replyTo={makeMessage()} onClose={vi.fn()} />);
     expect(screen.getByPlaceholderText('destinatario@email.com')).toHaveValue('cliente@exemplo.com');
