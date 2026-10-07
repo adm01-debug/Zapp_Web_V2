@@ -451,8 +451,7 @@ export async function handleIncomingMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  // R2-API-006/X064: efeitos viajam na MESMA transacao do ingest; `key.fromMe === true`
-  // (mesma expressao que vira p_from_me) devolve null ANTES de botao/lista ou texto.
+  // X064/R2-API-006: `key.fromMe === true` (mesma expressao de p_from_me) devolve null ANTES de botao/lista ou texto.
   let optOutKeyword: string | null = null;
   if (key.fromMe !== true) {
     optOutKeyword = interactiveResponseId === TALKX_OPTOUT_BUTTON_ID
@@ -463,7 +462,7 @@ export async function handleIncomingMessage(
   }
   const quotedExternalId = extractQuotedExternalId(data);
 
-  // Uma transacao (20260905050000 + outbox): contato + upsert idempotente + efeitos (opt-out OU respostas).
+  // Uma transacao: contato + upsert idempotente + efeitos (opt-out OU respostas).
   const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', {
     p_connection_id: connection.id,
     p_phone: phone,
@@ -479,7 +478,7 @@ export async function handleIncomingMessage(
   });
   if (txError) {
     console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone, messageType });
-    // R2-API-006: o erro vira 500 para a Evolution reentregar (engolir = mensagem perdida).
+    // R2-API-006: o erro vira 500 para a Evolution reentregar.
     throw new Error(`ingest_inbound_message falhou (${txError.code ?? 'sem_codigo'}): ${txError.message}`);
   }
   const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
