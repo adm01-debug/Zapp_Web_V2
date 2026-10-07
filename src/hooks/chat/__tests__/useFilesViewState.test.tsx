@@ -161,3 +161,94 @@ describe('useFilesViewState — sessao (memoria por <userId>:<contactId>)', () =
     expect(result.current.search).toBe('');
   });
 });
+
+describe('useFilesViewState — filtro por data (F03)', () => {
+  const FROM = new Date(2026, 2, 5);
+  const TO = new Date(2026, 2, 7);
+
+  it('o padrao e "Qualquer data", sem datas personalizadas', () => {
+    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+    expect(result.current.period).toBe('all');
+    expect(result.current.customFrom).toBeNull();
+    expect(result.current.customTo).toBeNull();
+  });
+
+  it('escolher um atalho guarda o periodo e limpa as datas personalizadas', () => {
+    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+
+    act(() => result.current.setPeriod('custom'));
+    act(() => result.current.setCustomFrom(FROM));
+    act(() => result.current.setCustomTo(TO));
+    expect(result.current.period).toBe('custom');
+    expect(result.current.customFrom).toEqual(FROM);
+
+    // Sair do personalizado (atalho "Hoje") nao pode deixar data velha presa no estado.
+    act(() => result.current.setPeriod('today'));
+    expect(result.current.period).toBe('today');
+    expect(result.current.customFrom).toBeNull();
+    expect(result.current.customTo).toBeNull();
+  });
+
+  it('clearPeriod volta para "Qualquer data" e zera as datas (o X do seletor)', () => {
+    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+    act(() => result.current.setPeriod('custom'));
+    act(() => result.current.setCustomFrom(FROM));
+    act(() => result.current.setCustomTo(TO));
+
+    act(() => result.current.clearPeriod());
+    expect(result.current.period).toBe('all');
+    expect(result.current.customFrom).toBeNull();
+    expect(result.current.customTo).toBeNull();
+  });
+
+  it('clearCustomDates zera SÓ as datas (o seletor chama isso ao trocar de atalho)', () => {
+    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+    act(() => result.current.setPeriod('custom'));
+    act(() => result.current.setCustomFrom(FROM));
+    act(() => result.current.setCustomTo(TO));
+
+    act(() => result.current.clearCustomDates());
+    expect(result.current.customFrom).toBeNull();
+    expect(result.current.customTo).toBeNull();
+    // O atalho escolhido continua de pé: era isso que a troca de atalho precisava preservar.
+    expect(result.current.period).toBe('custom');
+  });
+
+  it('o periodo NAO vai para o localStorage (e recorte de sessao, como ordem e tipo)', () => {
+    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+    act(() => result.current.setPeriod('7d'));
+
+    const stored = localStorage.getItem(filesViewStorageKey(USER));
+    if (stored) {
+      expect(stored).not.toContain('7d');
+      expect(JSON.parse(stored)).toEqual({ v: 1, viewMode: 'grid', columns: 4 });
+    }
+    expect(result.current.period).toBe('7d');
+  });
+
+  it('remontar no mesmo contato restaura o periodo; outro contato comeca em "Qualquer data"', () => {
+    const primeiro = renderHook(() => useFilesViewState(USER, CONTACT));
+    act(() => primeiro.result.current.setPeriod('30d'));
+    primeiro.unmount();
+
+    const remontado = renderHook(() => useFilesViewState(USER, CONTACT));
+    expect(remontado.result.current.period).toBe('30d');
+
+    const outroContato = renderHook(() => useFilesViewState(USER, 'contact-2'));
+    expect(outroContato.result.current.period).toBe('all');
+    expect(outroContato.result.current.customFrom).toBeNull();
+  });
+
+  it('trocar de contato com o hook montado zera o periodo', () => {
+    const { result, rerender } = renderHook(
+      ({ contactId }) => useFilesViewState(USER, contactId),
+      { initialProps: { contactId: CONTACT } },
+    );
+    act(() => result.current.setPeriod('custom'));
+    act(() => result.current.setCustomFrom(FROM));
+
+    rerender({ contactId: 'contact-9' });
+    expect(result.current.period).toBe('all');
+    expect(result.current.customFrom).toBeNull();
+  });
+});
