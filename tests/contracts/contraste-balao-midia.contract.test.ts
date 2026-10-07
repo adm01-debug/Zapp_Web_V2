@@ -15,6 +15,11 @@ import { describe, expect, it } from 'vitest';
 const LIMIAR_TEXTO = 4.5;
 const LIMIAR_UI = 3;
 
+/** Risco aceito (#184/VOL-03, PR #1582): no alto contraste ESCURO o par do próprio TEMA
+ *  (`--primary` 258 100% 65% contra `--primary-foreground` preto) dá 4,46:1 — 0,04 abaixo de
+ *  AA. Fechar exige mexer no token da paleta de acessibilidade, vetado com a skin (#1458). */
+const RESIDUO_TEMA_HC_ESCURO = { estado: 'escuro-alto-contraste', limiar: 4.45, valor: 4.456 };
+
 type Rgb = [number, number, number];
 
 function luminancia([r, g, b]: Rgb): number {
@@ -54,6 +59,10 @@ function tokensDoBloco(css: string, seletor: string): Record<string, Rgb> {
     const i = limpo.indexOf(seletor, pos);
     if (i < 0) break;
     pos = i + seletor.length;
+    // O seletor não pode ser o SUFIXO de outro: `.high-contrast` também é substring de
+    // `.dark.high-contrast`, e ler o bloco errado aqui media o alto contraste CLARO com os
+    // tokens do ESCURO (os dois estados davam o mesmo número).
+    if (i > 0 && /[.\w-]/.test(limpo[i - 1])) continue;
     const resto = limpo.slice(pos, pos + 80);
     const abreRel = resto.indexOf('{');
     if (abreRel < 0 || /[^\s,]/.test(resto.slice(0, abreRel))) continue;
@@ -147,14 +156,28 @@ describe('contraste AA — balão de áudio, overlay e slider (só classes do co
     expect(SLIDER).toContain('bg-background');
   });
 
+  it('o alto contraste CLARO mede os tokens dele, não os do escuro (substring)', () => {
+    // Com o bug o `alto-contraste` lia `.dark.high-contraste` e dava 4,46:1 nos dois estados.
+    expect(
+      razao(token(ESTADOS['alto-contraste'], 'primary'), token(ESTADOS['alto-contraste'], 'primary-foreground')),
+    ).toBeGreaterThanOrEqual(LIMIAR_TEXTO);
+    expect(
+      razao(
+        token(ESTADOS['escuro-alto-contraste'], 'primary'),
+        token(ESTADOS['escuro-alto-contraste'], 'primary-foreground'),
+      ),
+    ).toBeCloseTo(RESIDUO_TEMA_HC_ESCURO.valor, 2);
+  });
+
   for (const [estado, tokens] of Object.entries(ESTADOS)) {
     it(`${estado}: texto do balão enviado fecha o limiar do estado`, () => {
       // chip invertido: superfície = --primary-foreground, texto = --primary.
-      // No claro e no escuro o par do tema dá 4,83:1 (AA folgado, era 2,94:1).
-      // No alto contraste o próprio par do TEMA dá 4,46:1 — 0,04 abaixo de AA —, e fechar
-      // isso exige mexer no token, que está vetado; o teste pina o valor real para não
-      // piorar em silêncio, em vez de declarar AA que não existe.
-      const limiar = estado.includes('alto-contraste') ? 4.4 : LIMIAR_TEXTO;
+      // No claro e no escuro o par do tema dá 5,17:1 (AA folgado, era 2,94:1); no alto
+      // contraste CLARO dá 8,77:1. No alto contraste ESCURO o par do próprio TEMA dá 4,46:1
+      // — 0,04 abaixo de AA —, e fechar isso exige mexer no token, vetado pela decisão da skin
+      // (PR #1458) e registrado como risco aceito em #184/VOL-03 e no PR #1582; o teste pina o
+      // valor real para não piorar em silêncio, em vez de declarar AA que não existe.
+      const limiar = estado === RESIDUO_TEMA_HC_ESCURO.estado ? RESIDUO_TEMA_HC_ESCURO.limiar : LIMIAR_TEXTO;
       expect(
         razao(token(tokens, 'primary'), token(tokens, 'primary-foreground'))
       ).toBeGreaterThanOrEqual(limiar);

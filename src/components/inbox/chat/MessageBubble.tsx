@@ -302,7 +302,7 @@ export const MessageBubble = memo(function MessageBubble({
                   'flex items-center justify-end gap-1 mt-0.5 -mb-0.5',
                   (message.type === 'image' || message.type === 'video') && !message.content
                     ? 'absolute bottom-2 right-3 text-white drop-shadow-md'
-                    : isSent ? 'text-primary-foreground/60' : 'text-muted-foreground/70',
+                    : isSent ? 'text-primary-foreground' : 'text-muted-foreground',
                   (message.type === 'image' || message.type === 'video') && !message.content && 'px-3.5 pb-1'
                 )}>
                   {message.isEdited && <span className="text-[9px] italic mr-0.5">editada</span>}
