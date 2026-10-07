@@ -329,6 +329,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // E68
   const handleSaveRef = useRef<((mode?: 'draft' | 'schedule' | 'launch') => Promise<string | null>) | null>(null); // E68
   const autosaveInitialRef = useRef<string | null>(null); // E68: snapshot de abertura
+  // E73: snapshot corrente (lido por callbacks estáveis, fora do render) e
+  // indicador de alteração ainda não confirmada no servidor.
+  const autosaveFieldsRef = useRef('');
+  const pendingChangesRef = useRef(false);
+  const autosaveNameRef = useRef(name);
   const [audienceSource, setAudienceSource] = useState<AudienceSource>(campaign?.audience_source || (initial?.segmentId ? 'segment' : 'contacts'));
   const [segmentId, setSegmentId] = useState(campaign?.segment_id || initial?.segmentId || '');
   const [templateId, setTemplateId] = useState(campaign?.template_id || initial?.templateId || '');
@@ -749,6 +754,19 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     draft_step: step,
   }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, selectedContacts, segmentId, templateId, templateVersionId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
 
+  // E68/E73: snapshot dos campos que o autosave acompanha. Fica declarado antes
+  // de `persistSave` porque um save confirmado passa a ser o novo baseline.
+  const autosaveFields = JSON.stringify({
+    name, description, objective, messageTemplate, mediaUrl, hasMedia, mediaType,
+    audienceSource, segmentId, templateId, connectionId, owner, speedProfile,
+    typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
+    isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
+    audienceRules, contactSearch,
+    templateVersionId, // V26: versão do template aplicado (current_version_id; pode ser nula).
+    step, // V23: o passo do wizard entra no autosave — sair no passo 2 e reabrir volta ao passo 2.
+  });
+  const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
+
   /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
   const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
     setSaving(true);
@@ -775,6 +793,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       const id = savedDraft.campaignId;
       draftRevisionRef.current = savedDraft.revision;
       setDraftRevision(savedDraft.revision);
+      // E73: o rascunho deste snapshot já está no servidor — ele passa a ser o
+      // baseline do autosave. Só continua pendente o que mudou durante o save.
+      autosaveInitialRef.current = autosaveFields;
+      setPersistedAutosaveSnapshot(autosaveFields);
+      pendingChangesRef.current = autosaveFields !== autosaveFieldsRef.current;
       if (!persistedCampaignId) {
         // X025: os eventos 'created'/'updated' passaram a ser gravados pelo
         // trigger do servidor (X024). O cliente não escreve mais eventos de
@@ -809,7 +832,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegment, snapshotDraftAudience, startCampaign]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, autosaveFields, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegment, snapshotDraftAudience, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
@@ -831,23 +854,16 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     try { window.sessionStorage.removeItem(DRAFT_CREATION_KEY_STORAGE); } catch { /* storage is optional */ }
   }, [draftCampaignId]);
 
-  // E68: autosave debounce 3s -- dispara apenas apos mudanca real (nao na abertura)
-  const autosaveFields = JSON.stringify({
-    name, description, objective, messageTemplate, mediaUrl, hasMedia, mediaType,
-    audienceSource, segmentId, templateId, connectionId, owner, speedProfile,
-    typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
-    isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
-    audienceRules, contactSearch,
-    templateVersionId, // V26: versão do template aplicado (current_version_id; pode ser nula).
-    step, // V23: o passo do wizard entra no autosave — sair no passo 2 e reabrir volta ao passo 2.
-  });
-  const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
-
   useEffect(() => {
+    autosaveFieldsRef.current = autosaveFields;
+    autosaveNameRef.current = name;
     // Registrar snapshot inicial (abertura da campanha) para nao salvar antes de mudancas
-    if (autosaveInitialRef.current === null) { autosaveInitialRef.current = autosaveFields; return; }
+    if (autosaveInitialRef.current === null) { autosaveInitialRef.current = autosaveFields; pendingChangesRef.current = false; return; }
+    if (autosaveFields === autosaveInitialRef.current) { pendingChangesRef.current = false; return; } // sem mudanca
+    // E73: só existe saída a proteger enquanto a alteração não foi confirmada
+    // pelo servidor (antes o aviso dependia de ter nome/contato, mesmo salvos).
+    pendingChangesRef.current = true;
     if (!name.trim()) return;
-    if (autosaveFields === autosaveInitialRef.current) return; // sem mudanca
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(async () => {
       // handleSaveRef.current e sempre o callback mais recente (nao sofre de closure stale)
@@ -872,6 +888,31 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autosaveFields]); // name e intencional fora dos deps: snapshot inicial no useRef, nao re-trigger
+
+  /**
+   * E73: existe alteração digitada ainda não confirmada no servidor? Lido no
+   * momento do evento (ref), nunca do closure de um render antigo.
+   */
+  const hasUnsavedChanges = useCallback(() => pendingChangesRef.current, []);
+
+  /**
+   * E73: a navegação interna (Voltar, histórico do navegador, troca de rota)
+   * desmonta o wizard sem passar por `beforeunload`; o cleanup do autosave
+   * apenas cancelava o timer e a edição pendente dos últimos 3 s se perdia.
+   * Aqui a alteração pendente é gravada antes de o editor morrer. Falha de rede
+   * não bloqueia a saída (o aviso de erro é do próprio autosave).
+   */
+  const flushPendingAutosave = useCallback(async (): Promise<void> => {
+    if (autosaveTimerRef.current) { clearTimeout(autosaveTimerRef.current); autosaveTimerRef.current = null; }
+    if (!pendingChangesRef.current || !autosaveFieldsRef.current || !autosaveNameRef.current.trim()) return;
+    try {
+      await handleSaveRef.current?.('draft');
+    } catch { /* sair nunca pode ser bloqueado por uma falha de gravação */ }
+  }, []);
+
+  // E73: desmontar o wizard grava o que estava pendente (Voltar, botão do
+  // navegador e troca de rota seguem o mesmo contrato).
+  useEffect(() => () => { void flushPendingAutosave(); }, [flushPendingAutosave]);
 
   const retryAutosave = useCallback(async () => {
     setAutosaveStatus('saving');
@@ -918,6 +959,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     // V24 — regras de audiência (mesmo motor dos segmentos)
     audienceRules, setAudienceRules, addAudienceRule, updateAudienceRule, removeAudienceRule, setGroupMatch, audienceCount,
     lastAutosave, autosaveStatus, autosaveError, autosaveIsDirty, retryAutosave, // E68
+    hasUnsavedChanges, flushPendingAutosave, // E73: proteção da saída sem beforeunload
     scheduleTimezone, setScheduleTimezone: changeScheduleTimezone, scheduleConfigError, minimumScheduledAt, // E69
     mediaUrl, setMediaUrl, mediaType, setMediaType,
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
