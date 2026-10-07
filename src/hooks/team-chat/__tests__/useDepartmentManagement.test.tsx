@@ -2,13 +2,17 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * Regressão: a RPC `get_department_whatsapp_credentials` declara o parâmetro como
- * `p_department_id` (migrations e157/20260928550000). Chamar com `_department_id`
- * faz o PostgREST responder PGRST202 (função inexistente com esses argumentos) e a
- * tela de WhatsApp do departamento nunca carrega as credenciais.
+ * Regressão: a RPC do modo do WhatsApp declara o parâmetro como `p_department_id`
+ * (migration 20261005111312). Chamar com `_department_id` faz o PostgREST responder
+ * PGRST202 (função inexistente com esses argumentos) e a tela de WhatsApp do
+ * departamento nunca carrega o modo salvo.
+ *
+ * Antes de QA5-09 o alvo era `get_department_whatsapp_credentials`; essa RPC e
+ * service_role-only no banco (o usuario logado levava 42501) e devolve a chave da
+ * API, entao o alvo passou a ser `get_department_whatsapp_mode` (texto puro).
  */
 const f = vi.hoisted(() => ({
-  rpc: vi.fn(() => Promise.resolve({ data: { whatsapp_mode: 'none' }, error: null })),
+  rpc: vi.fn(() => Promise.resolve({ data: 'none', error: null })),
   captured: undefined as undefined | { queryFn: () => Promise<unknown> },
 }));
 
@@ -41,7 +45,7 @@ describe('useDepartmentWhatsAppCredentials — nome do parâmetro da RPC', () =>
     });
 
     expect(f.rpc).toHaveBeenCalledTimes(1);
-    expect(f.rpc).toHaveBeenCalledWith('get_department_whatsapp_credentials', {
+    expect(f.rpc).toHaveBeenCalledWith('get_department_whatsapp_mode', {
       p_department_id: 'dep-1',
     });
   });

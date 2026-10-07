@@ -846,3 +846,8 @@ jobs:
         env:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh
+
+      - name: Simular RPC de modo do WhatsApp do departamento (QA5-09)
+        env:
+          DEPARTMENT_WA_MODE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/department-whatsapp-mode-rpc.test.sh
