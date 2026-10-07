@@ -297,10 +297,23 @@ export function useConnectionsManager() {
     }
   };
 
+  // A troca de padrão é atômica no banco (RPC de t_ae0a55a6): uma chamada só
+  // desmarca o padrão antigo e marca o novo na mesma transação. Antes eram dois
+  // updates separados — se o segundo falhava, o front anunciava sucesso com a
+  // troca pela metade. Erro (ou ausência de confirmação) revalida o estado real,
+  // como em handleDelete — nunca sucesso mudo.
   const handleSetDefault = async (id: string) => {
-    await supabase.from('whatsapp_connections').update({ is_default: false }).neq('id', id);
-    await supabase.from('whatsapp_connections').update({ is_default: true }).eq('id', id);
-    setConnections(connections.map((conn) => ({ ...conn, is_default: conn.id === id })));
+    const { data, error } = await (supabase as any).rpc('set_default_whatsapp_connection', { p_connection_id: id }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (t_ae0a55a6), types.ts ainda não sincronizado
+    if (error || !data) {
+      toast({
+        title: 'Erro ao definir conexão padrão',
+        description: error?.message ?? 'A troca de conexão padrão não foi confirmada.',
+        variant: 'destructive',
+      });
+      await fetchConnections();
+      return;
+    }
+    setConnections((prev) => prev.map((conn) => ({ ...conn, is_default: conn.id === data })));
     toast({ title: 'Conexão padrão atualizada' });
   };
 
