@@ -9,6 +9,7 @@
  * a janela renderizada): ExternalProductCatalog.virtualizacao.test.tsx.
  */
 import { toastError } from './catalogMocks';
+import { useState } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -456,5 +457,56 @@ describe('ExternalProductCatalog — CT-25 (favoritar pelo card)', () => {
     expect(toggle).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'p9', name: 'Caneca Favorita', sku: 'SKU-P9' })
     );
+  });
+
+  // R2-MOD-009 — voltar para a 1ª página não consultava nada: o efeito de
+  // paginação só buscava com `page > 0`, então o rótulo ia para 1 e os produtos
+  // da página anterior ficavam na tela.
+  it('R2-MOD-009: voltar para a 1ª página emite a consulta (offset 0) e devolve os produtos da 1ª', async () => {
+    const TOTAL = 60;
+    const emitidos: number[] = [];
+    const fetchCategories = vi.fn();
+    const fetchSuppliers = vi.fn();
+    // Hook "com servidor": a página exibida é a que o próprio componente
+    // consultou (offset do último fetchProducts) — assim os cards provam a
+    // consulta, não só o número mostrado.
+    mockCatalog.mockImplementation(() => {
+      const [params, setParams] = useState<Record<string, unknown> | null>(null);
+      const fetchProducts = (p: Record<string, unknown> = {}) => {
+        emitidos.push(Number(p.offset ?? 0));
+        setParams(p);
+      };
+      const offset = Number(params?.offset ?? 0);
+      const limit = Number(params?.limit ?? 24);
+      const products = Array.from(
+        { length: Math.max(0, Math.min(limit, TOTAL - offset)) },
+        (_, i) => product(`p${offset + i + 1}`, `Produto ${offset + i + 1}`)
+      );
+      return {
+        ...baseCatalog(),
+        products,
+        totalProducts: TOTAL,
+        fetchProducts,
+        fetchCategories,
+        fetchSuppliers,
+      };
+    });
+
+    renderCatalog();
+    // assenta o debounce do mount (300ms) antes de navegar
+    await new Promise((r) => setTimeout(r, 350));
+    expect(screen.getByTestId('card-p1')).toBeInTheDocument();
+    expect(screen.queryByTestId('card-p25')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Próxima página'));
+    expect(await screen.findByTestId('card-p25')).toBeInTheDocument();
+    expect(screen.queryByTestId('card-p1')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Página anterior'));
+    // volta para a 1ª: busca de novo e mostra os mesmos ids do começo
+    expect(await screen.findByTestId('card-p1')).toBeInTheDocument();
+    expect(screen.queryByTestId('card-p25')).not.toBeInTheDocument();
+    // a consulta de retorno saiu: 2ª página (offset 24) e, depois, a 1ª (0)
+    expect(emitidos.slice(-2)).toEqual([24, 0]);
   });
 });

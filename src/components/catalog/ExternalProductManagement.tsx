@@ -535,12 +535,11 @@ export const ExternalProductManagement: React.FC = () => {
     return () => clearTimeout(t);
   }, [search, categoryId, supplierId, onlyInStock, lowStock, isFeatured, isNew, orderBy, ascending, advFilters, pageSize, fetchProducts, setPage]);
 
-  useEffect(() => {
-    if (page > 0) {
-      fetchProducts(buildFiltersRef.current());
-      gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [page, fetchProducts]);
+  // R2-MOD-009 — a consulta por página saiu do efeito que só buscava com
+  // `page > 0` e passou para o handler de `TalkXPagination`: o efeito ignorava
+  // a volta para a 1ª página (offset 0) e os produtos da página anterior
+  // ficavam na tela. Os demais `setPage(0)` (filtros, ordenação, tamanho de
+  // página) continuam cobertos pelo debounce acima.
 
   const totalPages = Math.ceil(totalProducts / pageSize);
   const hasFilters = search || categoryId !== 'all' || supplierId !== 'all' || onlyInStock || lowStock || isFeatured || isNew || advCount > 0;
@@ -1075,7 +1074,14 @@ export const ExternalProductManagement: React.FC = () => {
           page={page + 1}
           pageSize={pageSize}
           total={totalProducts}
-          onPage={(p) => setPage(p - 1)}
+          // R2-MOD-009 — a navegação emite a consulta da página clicada
+          // (inclusive a 1ª/offset 0): o efeito antigo só buscava com
+          // page > 0, então voltar deixava os produtos da página anterior.
+          onPage={(p) => {
+            setPage(p - 1);
+            fetchProducts(buildFiltersRef.current(p - 1));
+            gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
           onPageSize={(ps) => setPageSize(ps as PageSizeOption)}
           noun="produto"
         />

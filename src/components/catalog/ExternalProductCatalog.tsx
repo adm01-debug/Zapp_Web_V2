@@ -158,12 +158,14 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
 
   // `doFetch` muda de identidade a cada mudanca de filtro OU de `page` (o
   // useCallback acima lista os dois), e `isOpen` alterna ao abrir/fechar. Os
-  // efeitos abaixo so podem reagir ao proprio gatilho (abrir / filtro /
-  // pagina): se `doFetch` entrasse nas deps do efeito de filtros, paginar
-  // resetaria `page` para 0 de novo; se `isOpen` entrasse ali, abrir o dialog
-  // dispararia um fetch duplicado (o efeito de abertura ja buscou). Por isso
-  // os dois valores sao lidos via ref (sempre o ultimo valor), o que mantem
-  // os arrays de deps corretos sem eslint-disable.
+  // efeitos abaixo so podem reagir ao proprio gatilho (abrir / filtro): se
+  // `doFetch` entrasse nas deps do efeito de filtros, ele reexecutaria em
+  // loop; se `isOpen` entrasse ali, abrir o dialog dispararia um fetch
+  // duplicado (o efeito de abertura ja buscou). Por isso os dois valores sao
+  // lidos via ref (sempre o ultimo valor), o que mantem os arrays de deps
+  // corretos sem eslint-disable. R2-MOD-009 — a paginacao tambem le
+  // `doFetchRef` (o handler de `TalkXPagination` busca a pagina clicada): sem
+  // isso, voltar para a 1ª nao emitia consulta nenhuma.
   const doFetchRef = useRef(doFetch);
   const isOpenRef = useRef(isOpen);
   useEffect(() => {
@@ -192,10 +194,11 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     return () => clearTimeout(t);
   }, [search, categoryId, supplierId, onlyInStock]);
 
-  // Re-fetch on page change.
-  useEffect(() => {
-    if (isOpenRef.current && page > 0) doFetchRef.current();
-  }, [page]);
+  // R2-MOD-009 — a consulta por página saiu do efeito que só buscava com
+  // `page > 0` e passou para o handler de `TalkXPagination` (abaixo): o efeito
+  // ignorava a volta para a 1ª página (offset 0), então os produtos da página
+  // anterior ficavam na tela. Os demais `setPage(0)` (filtros e tamanho de
+  // página) já emitem a própria consulta logo depois.
 
   // CT-61 — mesmos atalhos da tela de Catálogo, válidos só com o dialog aberto
   // (o catálogo do chat fica montado mesmo fechado): `/` e Ctrl/Cmd+F focam a
@@ -709,8 +712,17 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                   page={page + 1}
                   pageSize={pageSize}
                   total={totalProducts}
-                  // trocar de página limpa a seleção (os ids antigos saem da tela)
-                  onPage={(p) => { setPage(p - 1); clearSelection(); }}
+                  // R2-MOD-009 — a navegação é a única fonte da consulta por
+                  // página: emitimos a busca da página clicada já aqui (offset
+                  // `(p-1)*pageSize`), inclusive ao voltar para a 1ª (offset 0),
+                  // que antes não consultava nada e deixava os produtos da
+                  // página anterior. `doFetchRef` traz os filtros atuais.
+                  onPage={(p) => {
+                    setPage(p - 1);
+                    // trocar de página limpa a seleção (os ids antigos saem da tela)
+                    clearSelection();
+                    doFetchRef.current({ offset: (p - 1) * pageSize });
+                  }}
                   onPageSize={handlePageSize}
                   noun="produtos"
                 />

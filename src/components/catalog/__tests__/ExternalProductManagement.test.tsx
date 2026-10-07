@@ -1,9 +1,14 @@
 import { toastError } from './catalogMocks';
+import { useCallback, useState } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductManagement } from '../ExternalProductManagement';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
+
+// jsdom não implementa scrollIntoView; a paginação chama ao trocar de página
+// (mesmo stub usado em CT25/CT68/CT69/TalkXTable).
+if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {};
 
 const mockProduct = (overrides: Partial<ExternalProduct> = {}): ExternalProduct => ({
   id: 'p1', name: 'Caneta Plástica Azul', description: null, short_description: 'Caneta azul',
@@ -607,6 +612,60 @@ describe('ExternalProductManagement', () => {
       expect(screen.getByText('Como usar o catálogo')).toBeInTheDocument();
       expect(screen.getByTestId('catalog-help-steps').querySelectorAll('li')).toHaveLength(5);
     });
+  });
+
+  // R2-MOD-009 — na gestão, o efeito de paginação só buscava com `page > 0`;
+  // voltar para a 1ª deixava os produtos da página anterior na grade.
+  it('R2-MOD-009: voltar para a 1ª página emite a consulta (offset 0) e devolve os produtos da 1ª', async () => {
+    const TOTAL = 60;
+    const emitidos: Array<Record<string, unknown>> = [];
+    // Identidades estáveis: a tela reexecuta efeitos que têm estas funções nas
+    // deps (o hook real as memoiza com useCallback).
+    const fetchCategories = vi.fn();
+    const fetchSuppliers = vi.fn();
+    // Hook "com servidor": a página exibida é a que o próprio componente
+    // consultou (offset do último fetchProducts) — os cards provam a consulta.
+    mockUseExternalCatalog.mockImplementation(() => {
+      const [params, setParams] = useState<Record<string, unknown> | null>(null);
+      const fetchProducts = useCallback((p: Record<string, unknown> = {}) => {
+        emitidos.push(p);
+        setParams(p);
+      }, []);
+      const offset = Number(params?.offset ?? 0);
+      const limit = Number(params?.limit ?? 24);
+      const products = Array.from(
+        { length: Math.max(0, Math.min(limit, TOTAL - offset)) },
+        (_, i) => mockProduct({ id: `p${offset + i + 1}`, name: `Produto ${offset + i + 1}`, sku: `SKU-${offset + i + 1}` })
+      );
+      return baseHookReturn({ products, totalProducts: TOTAL, fetchProducts, fetchCategories, fetchSuppliers });
+    });
+
+    // URL limpa: a leitura de `?page=`/`?tab=` no mount não pode herdar o que
+    // outros testes deste arquivo deixaram na history.
+    window.history.replaceState(null, '', '/');
+    try {
+      renderManagement();
+      await new Promise((r) => setTimeout(r, 350));
+      expect(screen.getByText('Produto 1')).toBeInTheDocument();
+      expect(screen.queryByText('Produto 25')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByLabelText('Próxima página'));
+      expect(await screen.findByText('Produto 25')).toBeInTheDocument();
+      expect(screen.queryByText('Produto 1')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByLabelText('Página anterior'));
+      // volta para a 1ª: busca de novo e mostra os mesmos produtos do começo
+      expect(await screen.findByText('Produto 1')).toBeInTheDocument();
+      expect(screen.queryByText('Produto 25')).not.toBeInTheDocument();
+      // a consulta de retorno saiu: 2ª página (offset 24) e, depois, a 1ª (0)
+      expect(emitidos.slice(-2).map((c) => c.offset)).toEqual([24, 0]);
+    } finally {
+      // o describe CT-70 (irmão deste) não tem beforeEach próprio: sem
+      // restaurar aqui, o hook falso vazaria para ele.
+      mockUseExternalCatalog.mockReset();
+      mockUseExternalCatalog.mockReturnValue(baseHookReturn());
+      window.history.replaceState(null, '', '/');
+    }
   });
 });
 
