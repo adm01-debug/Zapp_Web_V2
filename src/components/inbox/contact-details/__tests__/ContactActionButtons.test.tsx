@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { ContactActionButtons } from '../ContactActionButtons';
 
 vi.mock('sonner', () => ({
@@ -13,6 +14,12 @@ const navigateToView = vi.fn();
 let videoCallFlag = false;
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: (key: string, fallback = false) => (key === 'video_call' ? videoCallFlag : fallback) }));
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: (...args: unknown[]) => navigateToView(...args) }));
+vi.mock('@/components/ui/tooltip', () => ({
+  TooltipProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: ReactNode }) => <span data-testid="contact-action-tooltip">{children}</span>,
+}));
 
 const baseContact = { id: 'c1', name: 'Maria Silva', phone: '+5511999999999', email: 'maria@test.com' };
 const baseContactComAvatar = { ...baseContact, avatar: 'https://cdn.exemplo/maria.png' };
@@ -59,6 +66,15 @@ describe('ContactActionButtons', () => {
     expect(emailTile).toBeDisabled();
     fireEvent.click(emailTile!);
     expect(navigateToView).not.toHaveBeenCalled();
+  });
+
+  it('usa tooltip contextual no e-mail: Sem e-mail quando desabilitado e Abrir e-mail quando habilitado', () => {
+    const { rerender } = render(<ContactActionButtons contact={{ ...baseContact, email: undefined }} onStartCall={onStartCall} />);
+    expect(screen.getByText('Sem e-mail')).toBeInTheDocument();
+
+    rerender(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
+    expect(screen.getByText('Abrir e-mail')).toBeInTheDocument();
+    expect(screen.queryByText('Abrir email')).not.toBeInTheDocument();
   });
 
   it('clicar no e-mail abre o módulo de E-mail levando o contato (id + e-mail)', () => {
