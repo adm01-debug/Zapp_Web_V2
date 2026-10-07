@@ -80,7 +80,7 @@ Leitura: o recurso está ligado há 3 dias, foi tocado 10 vezes, e **não produz
 | P3 | Testes de UI mockam o hook inteiro (`LocationPicker.test.tsx`), e testes do hook mockam `searchLocation`/`mapboxGeocode`: é por isso que C2, C4, C5, C6 passam verdes. Nenhum teste de integração hook+UI real. | `LocationPicker.test.tsx:12-31` · `useAddressAutocomplete.test.tsx:15-31` |
 | P4 | **Zero E2E** cobrindo picker de localização, cadastro com endereço ou mapa de contatos (só `contact-form-email-duplicate.spec.ts` toca contatos). | `ls e2e/*.spec.ts` |
 | P5 | E28: sem prints desktop/360 px. E49: confirmação visual do envio nunca feita. E48: "48 h" fechado com ~31 h; reversão da flag nunca executada. | plano L263, L429–440 |
-| P6 | E50 item 2 cita `areas/mapa-localizacao-whatsapp.md` — arquivo não existe neste repo (memória externa); não verificável aqui. | `find . -name mapa-localizacao-whatsapp.md` → vazio |
+| P6 | E50 item 2 cita `areas/mapa-localizacao-whatsapp.md` — arquivo não existe neste repo (memória externa); não verificável aqui. | `find . -name mapa-localizacao-whatsapp.md` → vazio · **estado 2026-10-06:** o item do checklist do E50 que afirmava isso saiu de `[x]` e virou pendência aberta |
 | P7 | E33: delta de bundle (+386 B raw / +115 B gzip) só no corpo da PR #796; o repo tem orçamento (`performance-budget.json`: initial-js 340 KB, largest-chunk 550 KB; `ci.yml:228`) mas o número não foi registrado no plano. | PR #796 · `performance-budget.json` |
 | P8 | Docs in-app (`src/components/docs/featuresSectionsData.ts`) não mencionam autocomplete de endereço nem mapa de contatos com coordenada real. | grep "autocomplete\|Search Box" → 0 |
 | P9 | `docs/mapa/USO_SEARCHBOX.md` e Apêndice B param em 27/09 (8 sessões); hoje são 10. Nenhuma automação de leitura (é query manual). | — |
@@ -143,7 +143,7 @@ Legenda: **D** = done com evidência · **P** = parcial · o gap é o que falta 
 | E47 Termos reais | D | tabela do plano L411-418 | — |
 | E48 Ligar flag | **P** | `feature_flags` ao vivo | sem trilha; reversão nunca testada; cadastro fora da flag (C7) |
 | E49 Confirmação no navegador | **P** | evidência indireta (plano L437) | 0 envios por agente desde o rollout — nunca confirmado |
-| E50 Fechamento | **P** | `ARQUITETURA_BUSCA.md` | memória externa não verificável (P6); pendências reabertas por esta auditoria |
+| E50 Fechamento | **P** | `ARQUITETURA_BUSCA.md` | memória externa não verificável (P6); pendências reabertas por esta auditoria · **2026-10-06:** a evidência item a item passou a estar no E50 (aponta `arquivo:linha`/seção + comando) e o item 2 foi rebaixado a pendência aberta; a exclusão do ramo legado fica datada pelo commit `3d2b7d572` — sem afirmação de "imediata" |
 
 ---
 
