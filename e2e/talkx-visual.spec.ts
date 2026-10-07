@@ -9,6 +9,7 @@ import {
   fixturesComDados,
   fixturesVazias,
 } from './fixtures/talkx-demo';
+import type { TalkXDemoData } from './fixtures/talkx-demo';
 
 declare global {
   interface Window {
@@ -170,5 +171,205 @@ test.describe('contrato de crescimento das fixtures (X003)', () => {
     for (const slug of fixturesComDados()) {
       expect(fixtureDaTela(slug.slice(0, 2))).toBe(slug);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Coerência das fixtures da régua, por REGRA — não por olho.
+//
+// Fixture da régua é dado: se `campaign_id`/`segment_id` apontam para id que a
+// própria fixture não tem, se a métrica de uma campanha copia o número de
+// outra, ou se o mesmo contato aparece com dois telefones, a tela "cheia" do
+// mock passa a mentir e a régua fotografa uma mentira. Estas três checagens
+// percorrem CADA fixture e reprovam a incoerência pelo nome (arquivo, linha,
+// campo) em vez de deixar passar em silêncio.
+// ---------------------------------------------------------------------------
+
+type LinhaDemo = Record<string, unknown>;
+
+/** Campo de referência → coleção da MESMA fixture que precisa conter o id. */
+const REFERENCIA_INTERNA: Record<string, string> = {
+  campaign_id: 'talkx_campaigns',
+  segment_id: 'talkx_segments',
+  recipient_id: 'talkx_recipients',
+};
+
+/** Contadores da campanha: fecham entre si e com `talkx_campaign_metrics`. */
+const CONTADORES = [
+  'total_recipients',
+  'sent_count',
+  'failed_count',
+  'delivered_count',
+  'read_count',
+  'replied_count',
+  'outcome_unknown_count',
+] as const;
+
+function linhas(data: TalkXDemoData, tabela: string): LinhaDemo[] {
+  const valor = data[tabela];
+  return Array.isArray(valor) ? (valor as LinhaDemo[]) : [];
+}
+
+function idsDaTabela(data: TalkXDemoData, tabela: string): Set<string> {
+  const conjunto = new Set<string>();
+  for (const linha of linhas(data, tabela)) {
+    if (typeof linha.id === 'string' && linha.id) conjunto.add(linha.id);
+  }
+  return conjunto;
+}
+
+/** (a) referência (`campaign_id`/`segment_id`/`recipient_id`) para id inexistente. */
+function referenciasOrfas(data: TalkXDemoData): string[] {
+  const alvos = Object.entries(REFERENCIA_INTERNA).map(
+    ([campo, tabela]) => [campo, idsDaTabela(data, tabela)] as const,
+  );
+  const orfas: string[] = [];
+  for (const [tabela, valor] of Object.entries(data)) {
+    if (!Array.isArray(valor)) continue;
+    for (const bruto of valor) {
+      if (bruto === null || typeof bruto !== 'object') continue;
+      const linha = bruto as LinhaDemo;
+      for (const [campo, existentes] of alvos) {
+        const referencia = linha[campo];
+        if (typeof referencia === 'string' && referencia && !existentes.has(referencia)) {
+          orfas.push(
+            `${tabela}.${String(linha.id ?? '?')}: ${campo}="${referencia}" não existe em ${REFERENCIA_INTERNA[campo]}`,
+          );
+        }
+      }
+    }
+  }
+  return orfas;
+}
+
+/** (b) métrica que não bate com o contador da campanha, ou contador impossível. */
+function metricasIncoerentes(data: TalkXDemoData): string[] {
+  const campanhaPorId = new Map<string, LinhaDemo>();
+  for (const campanha of linhas(data, 'talkx_campaigns')) {
+    if (typeof campanha.id === 'string' && campanha.id) campanhaPorId.set(campanha.id, campanha);
+  }
+
+  const incoerencias: string[] = [];
+  for (const metrica of linhas(data, 'talkx_campaign_metrics')) {
+    const campanha =
+      typeof metrica.campaign_id === 'string' ? campanhaPorId.get(metrica.campaign_id) : undefined;
+    if (!campanha) continue; // campanha inexistente já é reprovada por referenciasOrfas
+    for (const campo of CONTADORES) {
+      if (campo in metrica && campo in campanha && Number(metrica[campo]) !== Number(campanha[campo])) {
+        incoerencias.push(
+          `campanha ${String(campanha.id)}: métrica ${campo}=${String(metrica[campo])} difere do contador ${String(campanha[campo])}`,
+        );
+      }
+    }
+  }
+
+  for (const campanha of linhas(data, 'talkx_campaigns')) {
+    const id = String(campanha.id);
+    const enviados = Number(campanha.sent_count);
+    const falhas = Number(campanha.failed_count);
+    const entregues = Number(campanha.delivered_count);
+    const lidas = Number(campanha.read_count);
+    const respondidas = Number(campanha.replied_count);
+    const destinatarios = Number(campanha.total_recipients);
+    if (entregues > enviados) incoerencias.push(`campanha ${id}: entregues ${entregues} > enviados ${enviados}`);
+    if (lidas > entregues) incoerencias.push(`campanha ${id}: lidas ${lidas} > entregues ${entregues}`);
+    if (respondidas > lidas) incoerencias.push(`campanha ${id}: respondidas ${respondidas} > lidas ${lidas}`);
+    if (enviados + falhas > destinatarios) {
+      incoerencias.push(`campanha ${id}: enviados+falhas ${enviados + falhas} > destinatários ${destinatarios}`);
+    }
+  }
+  return incoerencias;
+}
+
+/** (c) o mesmo contato com telefone diferente entre coleções da mesma fixture. */
+function telefonesDivergentes(data: TalkXDemoData): string[] {
+  const telefonePorContato = new Map<string, string>();
+  const divergencias: string[] = [];
+  for (const [tabela, valor] of Object.entries(data)) {
+    if (!Array.isArray(valor)) continue;
+    for (const bruto of valor) {
+      if (bruto === null || typeof bruto !== 'object') continue;
+      const linha = bruto as LinhaDemo;
+      const aninhado =
+        linha.contacts && typeof linha.contacts === 'object' ? (linha.contacts as LinhaDemo) : undefined;
+      const telefone = linha.phone ?? linha.phone_number ?? aninhado?.phone;
+      // Contato: a linha que aponta um contato (`contact_id`) ou a própria
+      // coleção `contacts`. `whatsapp_connections` não é contato e fica de fora.
+      const contato =
+        typeof linha.contact_id === 'string' && linha.contact_id
+          ? linha.contact_id
+          : tabela === 'contacts' && typeof linha.id === 'string' && linha.id
+            ? linha.id
+            : undefined;
+      if (typeof telefone !== 'string' || !telefone || !contato) continue;
+      const anterior = telefonePorContato.get(contato);
+      if (anterior === undefined) telefonePorContato.set(contato, telefone);
+      else if (anterior !== telefone) {
+        divergencias.push(
+          `contato ${contato}: telefone "${telefone}" em ${tabela} difere de "${anterior}"`,
+        );
+      }
+    }
+  }
+  return divergencias;
+}
+
+test.describe('coerência das fixtures da régua visual', () => {
+  // Percorre CADA fixture da régua. As ainda `{}` não têm coleção para
+  // referenciar; quem guarda a ausência é o contrato de crescimento (acima).
+  const slugs = fixturesComDados();
+  const problemas = (regra: (data: TalkXDemoData) => string[]) =>
+    slugs.flatMap((slug) => regra(loadDemoData(slug)).map((problema) => `${slug}: ${problema}`));
+
+  test('toda referência de campaign_id/segment_id/recipient_id existe na própria fixture', () => {
+    expect(problemas(referenciasOrfas)).toEqual([]);
+  });
+
+  test('as métricas batem com os contadores da campanha', () => {
+    expect(problemas(metricasIncoerentes)).toEqual([]);
+  });
+
+  test('o mesmo contato tem o mesmo telefone em todas as coleções', () => {
+    expect(problemas(telefonesDivergentes)).toEqual([]);
+  });
+
+  // As três regras acima ficam vazias numa fixture que não tem as coleções que
+  // elas conferem. Esta prova que elas MORDEM: dada uma fixture incoerente,
+  // cada regra reprova pelo campo e pela linha — assim, no dia em que a
+  // fixture da tela crescer, a checagem não passa por engano.
+  test('as três regras reprovam uma fixture incoerente', () => {
+    const incoerente = {
+      talkx_campaigns: [
+        {
+          id: 'camp-1',
+          total_recipients: 10,
+          sent_count: 8,
+          failed_count: 2,
+          delivered_count: 8,
+          read_count: 0,
+          replied_count: 0,
+          segment_id: 'seg-inexistente',
+        },
+      ],
+      talkx_segments: [{ id: 'seg-1' }],
+      talkx_campaign_metrics: [
+        { id: 'met-1', campaign_id: 'camp-1', sent_count: 3 },
+        { id: 'met-2', campaign_id: 'camp-inexistente', sent_count: 1 },
+      ],
+      talkx_recipients: [
+        { id: 'rec-1', campaign_id: 'camp-1', contact_id: 'contato-1', phone: '5511900000001' },
+      ],
+      contacts: [{ id: 'contato-1', phone: '5511900000001' }],
+      talkx_blacklist: [{ id: 'blk-1', contact_id: 'contato-1', contacts: { phone: '5511900000002' } }],
+    } satisfies TalkXDemoData;
+
+    expect(referenciasOrfas(incoerente)).toEqual([
+      expect.stringContaining('segment_id="seg-inexistente"'),
+      expect.stringContaining('campaign_id="camp-inexistente"'),
+    ]);
+    expect(metricasIncoerentes(incoerente)).toEqual([
+      expect.stringContaining('sent_count=3 difere do contador 8'),
+    ]);
+    expect(telefonesDivergentes(incoerente)).toEqual([expect.stringContaining('contato-1')]);
   });
 });
