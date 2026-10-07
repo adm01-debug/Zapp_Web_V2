@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -13,9 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from 'sonner';
 import { 
   MessageSquare, Plus, Settings, Trash2, CheckCircle, XCircle, 
-  Globe, Send, Instagram, MessagesSquare
+  Globe, Send, Instagram, MessagesSquare, AlertTriangle
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  descreverCadastroDeCanais,
+  descreverCaminhoDoCanal,
+} from '@/lib/omnichannel/execucaoDeCanais';
 const ChannelRoutingRules = lazy(() => import('./ChannelRoutingRules').then(m => ({ default: m.ChannelRoutingRules })));
 
 const channelConfig = {
@@ -111,7 +116,7 @@ export function OmnichannelManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['channel-connections'] });
-      toast.success('Canal adicionado! Configure as credenciais para ativá-lo.');
+      toast.success('Canal registrado como pendente. Ainda não há executor versionado para ativá-lo.');
       setShowAddDialog(false);
       setNewChannel({ name: '', channel_type: 'instagram' });
     },
@@ -199,7 +204,15 @@ export function OmnichannelManager() {
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* R2-API-065: cadastro de canais adicionais sem executor versionado.
+              O aviso é estático e independe do carregamento da lista. */}
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Cadastro sem executor</AlertTitle>
+            <AlertDescription>{descreverCadastroDeCanais()}</AlertDescription>
+          </Alert>
+
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Carregando canais...</div>
           ) : channels.length === 0 ? (
@@ -207,7 +220,7 @@ export function OmnichannelManager() {
               <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">Nenhum canal adicional configurado</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {whatsappSummary} Adicione Instagram, Telegram, Messenger, Web Chat ou Gmail.
+                {whatsappSummary} Adicione Instagram, Telegram, Messenger, Web Chat ou Gmail — o cadastro fica pendente até existir um executor.
               </p>
             </div>
           ) : (
@@ -228,11 +241,13 @@ export function OmnichannelManager() {
                     <div className="flex-1">
                       <p className="font-medium">{channel.name}</p>
                       <p className="text-sm text-muted-foreground">{cfg.label}</p>
+                      <p className="text-xs text-muted-foreground">{descreverCaminhoDoCanal(channel.channel_type)}</p>
                     </div>
                     {getStatusBadge(channel.status)}
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={`Remover canal ${channel.name}`}
                       onClick={() => deleteChannel.mutate(channel.id)}
                     >
                       <Trash2 className="w-4 h-4 text-destructive" />
