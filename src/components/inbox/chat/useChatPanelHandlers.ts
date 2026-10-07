@@ -297,8 +297,10 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       // Mesma dialog do header ("Encerrar Conversa" → close_conversation_atomic), igual ao /transfer.
       case 'resolve': openDialog('closeDialog'); break;
       case 'template': toast({ title: '📝 Templates', description: 'Use o botão de templates no input para selecionar.' }); break;
-      case 'note': toast({ title: '📝 Nota Privada', description: 'Funcionalidade de notas será aberta.' }); break;
-      case 'tag': toast({ title: subCommand === 'add' ? '🏷️ Adicionar Tag' : '🏷️ Remover Tag', description: subCommand === 'add' ? 'Selecione uma tag para adicionar.' : 'Selecione uma tag para remover.' }); break;
+      // R2-INB-021 (item 317): os cases 'note' e 'tag' saíram daqui junto com os
+      // comandos. Eles só limpavam o input e mostravam um aviso — a lista
+      // anunciava "adicionar nota" e "adicionar/remover tag" sem nenhum editor
+      // de nota ou seletor de tag atrás. Comando volta quando o destino existir.
       case 'priority': {
         if (!subCommand) break;
         const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' };
