@@ -507,6 +507,16 @@ jobs:
       - name: Provar escopo da audiencia Multiplix (F24)
         run: bash scripts/db-audit/multiplix-scope.test.sh
 
+      # R2-DB-003 (cartao t_c1431127): executa multiplix_resolve_recipients de
+      # verdade em PostgreSQL 17 descartavel — a funcao e extraida verbatim do
+      # arquivo versionado em _foreign/singu e as linhas fora do escopo/
+      # inativas precisam sair so com company_id + elegibilidade (metadados
+      # NULL). Empresa elegivel sai inteira.
+      - name: Simular redacao fora do escopo do resolve Multiplix (R2-DB-003)
+        env:
+          MULTIPLIX_RESOLVE_ESCOPO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-resolve-escopo.test.sh
+
       - name: Simular estados e audiencia canônicos do Talk X
         env:
           TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}

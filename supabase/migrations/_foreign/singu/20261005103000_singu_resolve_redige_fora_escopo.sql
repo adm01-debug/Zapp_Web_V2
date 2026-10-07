@@ -1,3 +1,50 @@
+-- R2-DB-003 (cartao t_891763fa, item 28 do BACKLOG_VERIFICADO, P1 seguranca):
+-- multiplix_resolve_recipients devolvia metadados de empresas fora do escopo.
+--
+-- O defeito: a RPC calcula `no_escopo` por empresa, mas quando
+-- `no_escopo = false` so ocultava `destino_e164` e `destino_origem`.
+-- `company_name`, `contact_id` (inclusive o do fallback que escolhe o PRIMEIRO
+-- contato da empresa, id que o chamador nem enviou), `empresa_papeis` e
+-- `last_interaction_at` seguiam na linha, e a edge multiplix-audience repassava
+-- tudo (spread) ao cliente autenticado — bastava mandar action=resolve com um
+-- UUID de outra carteira usando o proprio escopo legitimo assinado.
+--
+-- O contrato (decidido no cartao): quando `no_escopo` for falso OU a empresa
+-- estiver inativa, a projecao final devolve NULL em `contact_id`,
+-- `company_name`, `empresa_papeis` e `last_interaction_at`, alem do que ja era
+-- NULL (`destino_e164`, `destino_origem`). `company_id` fica (e o id que o
+-- proprio chamador enviou — eco, nao vazamento) e `elegibilidade` continua
+-- 'fora_do_escopo'/'destino_invalido' para a UI dizer "fora do escopo".
+--
+-- ORDEM DE APLICACAO (mesmo padrao do guard HMAC, 20261001160000):
+--   (1) este arquivo versionado -> (2) deploy da edge multiplix-audience do
+--   Zapp REDIGINDO a linha no ramo resolve (se o Singu ainda estiver na versao
+--   antiga, o Zapp nao vaza nada) -> (3) aplicar este arquivo no Singu ->
+--   (4) md5 de volta no README.
+-- A ordem nao e critica nos dois sentidos: a assinatura de ENTRADA nao muda
+-- (mesmos parametros e mesmo RETURNS TABLE — nenhuma coluna nova/removida), e
+-- a edge ja redige por conta propria desde o deploy de (2).
+--
+-- Por que nao ha DROP aqui: como em 20261001160000, CREATE OR REPLACE preserva
+-- owner e ACL ({postgres=X/postgres, service_role=X/postgres},
+-- anon/authenticated sem EXECUTE). RETURNS TABLE identico ao vigente.
+--
+-- Rollback:
+--   Reaplicar, no Singu, a definicao ANTERIOR de public.multiplix_resolve_recipients
+--   (unica funcao tocada por esta migration). O SQL real esta em
+--   supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql,
+--   do bloco que reabre a resolve ate o `$function$;` que o fecha:
+--     linhas 243 a 351 desse arquivo (109 linhas, a definicao inteira).
+--   Reexecutar esse trecho inteiro no Singu devolve o comportamento anterior.
+--   Extrair o trecho exato:
+--     sed -n '243,351p' supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql
+--   Conferencia do arquivo: md5 e826bc7a055b71d09f94d134cae37abb.
+--   Nada aqui muda ACL/owner (CREATE OR REPLACE puro), entao o rollback nao
+--   precisa de REVOKE/GRANT. Equivalente: reverter este arquivo pelo git e
+--   reaplicar o espelho anterior.
+
+BEGIN;
+
 CREATE OR REPLACE FUNCTION public.multiplix_resolve_recipients(p_company_ids uuid[] DEFAULT ARRAY[]::uuid[], p_contact_ids uuid[] DEFAULT ARRAY[]::uuid[], p_scope_permissions text[] DEFAULT ARRAY[]::text[], p_scope_vendedor_email text DEFAULT NULL::text)
  RETURNS TABLE(company_id uuid, contact_id uuid, company_name text, destino_e164 text, destino_origem text, elegibilidade text, empresa_papeis text[], last_interaction_at timestamp with time zone)
  LANGUAGE plpgsql
@@ -110,4 +157,6 @@ BEGIN
     CASE WHEN d.no_escopo AND d.ativa THEN d.last_interaction_at ELSE NULL END
   FROM destino d;
 END;
-$function$
+$function$;
+
+COMMIT;
