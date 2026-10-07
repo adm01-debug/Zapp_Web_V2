@@ -278,4 +278,26 @@ describe('useRealtimeDashboard — recorte de escopo nos eventos realtime', () =
     expect(result.current.messagesThisHour).toBe(10);
     expect(result.current.unreadMessages).toBe(3);
   });
+
+  it('ao desmontar, libera o realtime: remove o CANAL criado pelo hook e zera os temporizadores', async () => {
+    // DASH-095 (aceite de DASH-ACCEPTANCE-001): "nenhum recurso permanece ativo
+    // após desmontagem". O mock de removeChannel já existia neste arquivo, mas
+    // NENHUMA asserção o usava — a limpeza do canal nunca era provada. Aqui o
+    // hook é montado, o canal devolvido por supabase.channel é capturado, e a
+    // desmontagem tem de remover EXATAMENTE esse canal e derrubar os
+    // temporizadores que o hook criou.
+    const { unmount } = renderHook(() => useRealtimeDashboard());
+    await flushMicrotasks();
+
+    expect(mockChannel).toHaveBeenCalledTimes(1);
+    const canalDoHook = mockChannel.mock.results[0]?.value;
+    expect(canalDoHook).toBeTruthy();
+    // Recurso vivo enquanto montado: flush (4 s) + métricas (60 s) + refresh (5 min).
+    expect(vi.getTimerCount()).toBeGreaterThanOrEqual(3);
+
+    unmount();
+
+    expect(mockRemoveChannel).toHaveBeenCalledWith(canalDoHook);
+    expect(vi.getTimerCount()).toBe(0);
+  });
 });
