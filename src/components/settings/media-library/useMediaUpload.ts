@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { MediaType, MAX_UPLOAD_SIZE_BYTES, MAX_UPLOAD_SIZE_MB, getBucket } from './useMediaLibrary';
 import { convertAudioToMp3 } from '@/utils/audioToMp3';
+import { removeStoredObjectBestEffort } from '@/lib/storage_object_upload';
 
 const log = getLogger('useMediaUpload');
 
@@ -76,7 +77,14 @@ export function useMediaUpload(type: MediaType, onComplete: () => void) {
         if (type === 'audio_memes') insertData.audio_url = urlData.publicUrl;
         else insertData.image_url = urlData.publicUrl;
         const { error: insertError } = await (supabase as unknown as { from: (t: string) => { insert: (d: Record<string, unknown>) => Promise<{ error: unknown }> } }).from(type).insert(insertData);
-        if (!insertError) successCount++;
+        if (insertError) {
+          // O arquivo já subiu para o bucket; sem o registro que o referencie ele
+          // ficaria órfão. Remove o objeto enviado (best-effort) antes de seguir.
+          log.error(`Insert error for ${file.name}:`, insertError);
+          await removeStoredObjectBestEffort(bucket, storagePath);
+        } else {
+          successCount++;
+        }
       } catch (err) { log.error(`Unexpected error uploading ${file.name}:`, err); }
       setUploadProgress(Math.round(((i + 1) / sizedFiles.length) * 100));
     }
