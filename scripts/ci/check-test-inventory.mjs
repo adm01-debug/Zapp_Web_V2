@@ -44,6 +44,12 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // R2-INF-004 (item 94, P1): prova em PostgreSQL 17 descartável que o executor dos
+  // contratos de runtime entrega a prova JSON das três classes (SQL inline, SQL em
+  // arquivo e o contrato genérico do fallback), que o inventário de supabase/migrations
+  // está coberto e que shell disfarçado de SQL é recusado. Roda com `docker` local e
+  // ~40 s; o passo em db-guard.yml fica para o dono do workflow.
+  'scripts/db-audit/runtime-contract-runner.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.

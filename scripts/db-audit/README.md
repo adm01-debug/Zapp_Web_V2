@@ -27,6 +27,8 @@ container. Etapa 98 do plano: publicar aqui para nao perder de novo.
 | `catalog-manifest.test.sh` | Docker local | Executa os dois SQLs no PostgreSQL 17, desloca OIDs e simula mutacoes estruturais |
 | `gen-types.sh` | sim | Gera `types.ts` pela CLI pinada e normaliza o EOF de forma deterministica |
 | `gen-types.test.sh` | Shell local | Simula a CLI e prova que o gerador preserva linhas internas e deixa exatamente uma quebra de linha no EOF |
+| `run-runtime-contract.mjs` | sim | Executa o contrato de runtime da versao alvo: extrai SQL e flags do contrato declarado (`contracts/<versao>.sql`) e usa o contrato generico quando a versao nao tem contrato dedicado |
+| `runtime-contract-runner.test.sh` | Docker local | Prova em PostgreSQL 17 descartavel as tres classes de contrato (SQL inline, SQL em arquivo e generico), a cobertura do inventario de `supabase/migrations` e a recusa de shell disfarcado de SQL |
 
 ## Uso
 
@@ -45,6 +47,9 @@ bash scripts/db-audit/catalog-manifest.test.sh
 
 # integracao descartavel da reconciliacao do ledger (nao acessa banco oficial)
 bash scripts/db-audit/check-reconcile-ledger-drift.test.sh
+
+# prova descartavel do executor dos contratos de runtime (nao acessa banco oficial)
+bash scripts/db-audit/runtime-contract-runner.test.sh
 
 # comparar dois bancos estruturalmente
 psql "$ORIGEM_URL"  -X -v ON_ERROR_STOP=1 -At -f scripts/db-audit/manifest.sql > /tmp/src.json
