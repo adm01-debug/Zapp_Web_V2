@@ -14,6 +14,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, AlertCircle, Settings } from 'lucide-react';
 import { QueueCharts } from '@/components/queues/QueueCharts';
+import { EditQueueDialog, type QueueUpdates } from '@/components/queues/EditQueueDialog';
+import { QueueService } from '@/services/queue.service';
+import { toast } from 'sonner';
 import { QueueMetricsCards } from './queue-details/QueueMetricsCards';
 import { fetchQueueMetrics, type QueueMetrics } from './queue-details/queueMetrics';
 import { QueueContactsTable } from './queue-details/QueueContactsTable';
@@ -31,6 +34,7 @@ export default function QueueDetails() {
   const [contacts, setContacts] = useState<QueueContact[]>([]);
   const [metrics, setMetrics] = useState<QueueMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => { if (!authLoading && !user) navigate('/auth'); }, [user, authLoading, navigate]);
 
@@ -76,6 +80,19 @@ export default function QueueDetails() {
     }
   }, [id, user, fetchQueueData]);
 
+  // R2-QUE-006: o botão "Configurar" anunciava a edição da fila sem executá-la.
+  // A gravação usa o mesmo caminho de escrita (QueueService.updateQueue) do hook
+  // useQueues e só anuncia sucesso depois que a escrita é confirmada.
+  const handleUpdateQueue = async (queueId: string, updates: QueueUpdates) => {
+    const { error } = await QueueService.updateQueue(queueId, updates);
+    if (error) {
+      toast.error('Não foi possível atualizar a fila.');
+      throw error;
+    }
+    toast.success('Fila atualizada com sucesso.');
+    await fetchQueueData();
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background p-6 space-y-6"><AuroraBorealis /><FloatingParticles />
@@ -99,7 +116,13 @@ export default function QueueDetails() {
       <AuroraBorealis /><FloatingParticles />
       <PageHeader title={queue.name} subtitle={queue.description || undefined} showBack onBack={() => navigate('/')}
         breadcrumbs={[{ label: 'Filas', onClick: () => navigate('/'), href: '/' }, { label: queue.name }]}
-        actions={<Button variant="outline" size="sm" className="gap-2"><Settings className="w-4 h-4" />Configurar</Button>}
+        actions={<Button variant="outline" size="sm" className="gap-2" onClick={() => setEditDialogOpen(true)}><Settings className="w-4 h-4" />Configurar</Button>}
+      />
+      <EditQueueDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        queue={queue}
+        onSubmit={handleUpdateQueue}
       />
       <div className="p-6 space-y-6">
         {metrics && <QueueMetricsCards metrics={metrics} />}

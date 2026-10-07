@@ -11,6 +11,7 @@ import { Plus, Clock, BarChart3, AlertTriangle } from 'lucide-react';
 import { useQueues, QueueWithMembers } from '@/hooks/business/useQueues';
 import { useQueueGoals, QueueAlert } from '@/hooks/business/useQueueGoals';
 import { CreateQueueDialog } from './CreateQueueDialog';
+import { EditQueueDialog } from './EditQueueDialog';
 import { AddMemberDialog } from './AddMemberDialog';
 import { QueueGoalsDialog } from './QueueGoalsDialog';
 import { QueueAlertsDisplay } from './QueueAlertsDisplay';
@@ -18,9 +19,10 @@ import { QueueCard } from './QueueCard';
 
 export function QueuesView() {
   const navigate = useNavigate();
-  const { queues, loading, createQueue, deleteQueue, addMember, removeMember } = useQueues();
+  const { queues, loading, createQueue, updateQueue, deleteQueue, addMember, removeMember } = useQueues();
   const { goals } = useQueueGoals();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState<QueueWithMembers | null>(null);
@@ -85,6 +87,7 @@ export function QueuesView() {
             onAddMember={(q) => { setSelectedQueue(q); setAddMemberDialogOpen(true); }}
             onRemoveMember={(queueId, profileId) => removeMember(queueId, profileId)}
             onSetGoals={(q) => { setSelectedQueue(q); setGoalsDialogOpen(true); }}
+            onEdit={(q) => { setSelectedQueue(q); setEditDialogOpen(true); }}
             onDelete={(q) => { setQueueToDelete(q); setDeleteDialogOpen(true); }}
           />
         ))}
@@ -97,6 +100,7 @@ export function QueuesView() {
       </div>
 
       <CreateQueueDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} onSubmit={createQueue} />
+      {selectedQueue && <EditQueueDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} queue={selectedQueue} onSubmit={(id, updates) => updateQueue(id, updates)} />}
       {selectedQueue && <AddMemberDialog open={addMemberDialogOpen} onOpenChange={setAddMemberDialogOpen} queueId={selectedQueue.id} existingMemberIds={selectedQueue.members.map(m => m.profile_id)} onAddMember={(profileId) => addMember(selectedQueue.id, profileId)} />}
       {selectedQueue && <QueueGoalsDialog open={goalsDialogOpen} onOpenChange={setGoalsDialogOpen} queueId={selectedQueue.id} queueName={selectedQueue.name} queueColor={selectedQueue.color} />}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
