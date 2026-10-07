@@ -31,6 +31,12 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
    * o Audio mantendo a inscrição dele no store global.
    */
   const detachRef = useRef<(() => void) | null>(null);
+  // R2-INB-040 — geração vigente do pedido de TTS. Toda resposta em voo só pode criar
+  // e tocar `Audio` enquanto ainda for a geração atual; parar, iniciar outra fala ou
+  // desmontar incrementa a geração e aborta o fetch pendente.
+  const requestIdRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
 
   // E — os dois effects que existiam aqui sincronizavam prop -> estado com `setState` sincrono
   // dentro do effect (regra react-hooks/set-state-in-effect: cascata de renders). Agora o valor
@@ -81,6 +87,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     const audio = audioRef.current;
     if (audio) {
       audio.pause();
+      audio.currentTime = 0;
       audio.onplay = null;
       audio.onended = null;
       audio.onerror = null;
@@ -94,20 +101,39 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     }
   }, []);
 
+  // R2-INB-040 — invalida a geração vigente: o que estiver em voo não cria mais Audio
+  // (a resposta é descartada) e o pedido HTTP é abortado.
+  const invalidatePending = useCallback(() => {
+    requestIdRef.current += 1;
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+  }, []);
+
   const stop = useCallback(() => {
+    invalidatePending();
     releasePlayback();
+    if (!mountedRef.current) return;
+    setIsLoading(false);
     setIsPlaying(false);
     setCurrentMessageId(null);
-  }, [releasePlayback]);
+  }, [invalidatePending, releasePlayback]);
 
-  // R2-INB-041 — desmontar o painel descarta o player: solta o bind em vez de deixá-lo
-  // inscrito no store global (a reprodução em si já morre com o elemento).
-  useEffect(() => () => {
-    releasePlayback();
-  }, [releasePlayback]);
+  // R2-INB-040 + R2-INB-041 — desmontar o painel invalida o pedido em voo, aborta
+  // o fetch e libera o player/bind de volume. A troca de conversa remonta o ChatPanel por `key`.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      invalidatePending();
+      releasePlayback();
+    };
+  }, [invalidatePending, releasePlayback]);
 
   const speak = useCallback(async (text: string, messageId?: string) => {
-    // Stop any current playback
+    // Invalida a geração anterior (aborta o fetch em voo e libera o Audio) e assume a
+    // vigente. R2-INB-040: um pedido repetido não pode resultar em duas falas.
     stop();
 
     if (!text || text.trim() === '') {
@@ -125,6 +151,10 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       toast.error('Nenhum texto para reproduzir');
       return;
     }
+
+    const requestId = requestIdRef.current;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setIsLoading(true);
     setCurrentMessageId(messageId || null);
@@ -145,6 +175,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
             text: cleanText,
             voiceId
           }),
+          signal: controller.signal,
         }
       );
 
@@ -154,6 +185,11 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       }
 
       const audioBlob = await response.blob();
+
+      // R2-INB-040 — só a geração vigente, com o hook montado, cria e toca o Audio.
+      // A resposta de um pedido já invalidado (outro clique, stop ou desmontagem) morre aqui.
+      if (requestIdRef.current !== requestId || !mountedRef.current) return;
+
       const audioUrl = URL.createObjectURL(audioBlob);
       audioUrlRef.current = audioUrl;
 
@@ -169,29 +205,41 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       // bind. Só a fala vigente pode soltar o player: uma fala antiga que termina depois
       // de outra assumir não pode derrubar o bind da que a substituiu.
       const releaseOwnPlayback = () => {
-        if (audioRef.current !== audio) return;
+        if (requestIdRef.current !== requestId || audioRef.current !== audio || !mountedRef.current) return;
         releasePlayback();
         setIsPlaying(false);
         setCurrentMessageId(null);
       };
 
-      audio.onplay = () => setIsPlaying(true);
+      audio.onplay = () => {
+        if (requestIdRef.current === requestId && mountedRef.current) setIsPlaying(true);
+      };
       audio.onended = releaseOwnPlayback;
       audio.onerror = () => {
         releaseOwnPlayback();
-        toast.error('Erro ao reproduzir áudio');
+        if (requestIdRef.current === requestId && mountedRef.current) {
+          toast.error('Erro ao reproduzir áudio');
+        }
       };
 
       await audio.play();
     } catch (error) {
+      // R2-INB-040 — abortar o pedido é cancelamento, não erro de reprodução:
+      // não reporta falha de uma fala que o usuário (ou a desmontagem) já descartou.
+      if (controller.signal.aborted) return;
       log.error('TTS error:', error);
-      // R2-INB-041 — falha ao tocar também descarta o player: solta o bind e a URL.
+      if (requestIdRef.current !== requestId) return;
       releasePlayback();
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar áudio';
-      toast.error(errorMessage);
-      setCurrentMessageId(null);
+      if (mountedRef.current) {
+        const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar áudio';
+        toast.error(errorMessage);
+        setIsPlaying(false);
+        setCurrentMessageId(null);
+      }
     } finally {
-      setIsLoading(false);
+      if (abortRef.current === controller) abortRef.current = null;
+      // Só a geração vigente desliga o próprio loading: a obsoleta não mexe no estado.
+      if (requestIdRef.current === requestId && mountedRef.current) setIsLoading(false);
     }
   }, [voiceId, speed, useStreaming, stop, releasePlayback]);
 

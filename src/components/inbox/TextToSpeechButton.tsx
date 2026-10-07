@@ -27,13 +27,17 @@ export function TextToSpeechButton({
   const isThisPlaying = isPlaying && currentMessageId === messageId;
   const isThisLoading = isLoading && currentMessageId === messageId;
 
+  // R2-INB-040 — carregando ESTA mensagem o botão cancela a geração em curso; sem isso
+  // o clique chamava `speak` de novo e o mesmo texto ia duas vezes para a síntese.
   const handleClick = () => {
-    if (isThisPlaying) {
+    if (isThisPlaying || isThisLoading) {
       onStop();
     } else {
       onSpeak(text, messageId);
     }
   };
+
+  const label = isThisPlaying ? 'Parar leitura' : isThisLoading ? 'Cancelar leitura' : 'Ouvir mensagem';
 
   // Don't show for empty or media-only messages
   const cleanText = text
@@ -51,6 +55,7 @@ export function TextToSpeechButton({
         <Button
           variant="ghost"
           size="icon"
+          aria-label={label}
           className={cn(
             "h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity",
             (isThisPlaying || isThisLoading) && "opacity-100",
@@ -69,7 +74,7 @@ export function TextToSpeechButton({
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">
-        {isThisPlaying ? 'Parar' : 'Ouvir mensagem'}
+        {isThisPlaying ? 'Parar' : isThisLoading ? 'Cancelar' : 'Ouvir mensagem'}
       </TooltipContent>
     </Tooltip>
   );
