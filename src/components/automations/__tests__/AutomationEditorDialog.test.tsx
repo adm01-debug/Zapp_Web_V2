@@ -267,4 +267,44 @@ describe('AutomationEditorDialog (R2-MOD-002)', () => {
     ]);
     expect(mockToast.error).not.toHaveBeenCalled();
   });
+
+  it('#99: nova automação "Enviar Notificação" coleta a mensagem em vez de salvar ação vazia', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    renderDialog(null, onSave);
+
+    // O tipo é oferecido no seletor; o editor tem de oferecer o campo da chave
+    // `message`, que ACTION_CONFIG_OWNERS declara válida para send_notification.
+    fireEvent.change(screen.getByPlaceholderText(NOTE_NAME), { target: { value: 'Avisar equipe' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar Notificação' }));
+    fireEvent.change(screen.getByPlaceholderText(NOTE_MSG), { target: { value: 'Novo lead chegou' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
+
+    expect(payload.actions).toEqual([
+      { type: 'send_notification', config: { message: 'Novo lead chegou' } },
+    ]);
+    expect(mockToast.error).not.toHaveBeenCalled();
+  });
+
+  it('#99: editar a mensagem de uma notificação existente chega ao onSave sem perder os outros parâmetros', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const automation = buildAutomation({
+      actions: [{ type: 'send_notification', config: { message: 'Antigo', priority: 'high' } }],
+    });
+
+    renderDialog(automation, onSave);
+
+    fireEvent.change(screen.getByPlaceholderText(NOTE_MSG), { target: { value: 'Novo texto' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
+
+    expect(payload.actions).toEqual([
+      { type: 'send_notification', config: { message: 'Novo texto', priority: 'high' } },
+    ]);
+  });
 });

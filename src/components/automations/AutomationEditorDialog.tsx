@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { TRIGGER_TYPES, ACTION_TYPES, filterActionConfig } from './automationConstants';
+import { TRIGGER_TYPES, ACTION_TYPES, filterActionConfig, MESSAGE_ACTION_TYPES } from './automationConstants';
 import type { AutomationRow } from './useAutomations';
 
 interface AutomationEditorDialogProps {
@@ -40,7 +40,11 @@ function buildFirstAction(
   const [firstAction] = readActions(automation);
   const previousType = readString(firstAction?.type);
   let config: ActionRecord = { ...readConfig(firstAction) };
-  if (actionType === 'send_message') {
+  // `message` é chave declarada válida para send_message E send_notification
+  // (ACTION_CONFIG_OWNERS); o editor grava sempre o que o usuário digitou nesses
+  // dois tipos, e nunca em um tipo que não declara a chave (a troca de tipo
+  // depois filtra o que sobrou).
+  if (MESSAGE_ACTION_TYPES.includes(actionType)) {
     config.message = messageContent;
   }
   if (previousType !== actionType) {
@@ -74,6 +78,10 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
     return readString(readConfig(firstAction).message);
   });
   const [isSaving, setIsSaving] = useState(false);
+  // O campo de mensagem aparece para TODO tipo que declara a chave `message`
+  // (antes só send_message): send_notification era oferecido sem nenhum controle
+  // para a mensagem e salvava a ação com config vazia.
+  const editsMessage = MESSAGE_ACTION_TYPES.includes(actionType);
 
   // Mescla a primeira ação com a existente em vez de recriá-la, para não perder
   // parâmetros que o editor não expõe. Ao trocar o tipo, remove só chaves
@@ -143,7 +151,7 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
               </SelectContent>
             </Select>
           </div>
-          {actionType === 'send_message' && (
+          {editsMessage && (
             <div className="space-y-2">
               <Label>Mensagem</Label>
               <Input value={messageContent} onChange={(e) => setMessageContent(e.target.value)} placeholder="Digite a mensagem automática..." />
