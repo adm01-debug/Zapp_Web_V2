@@ -696,8 +696,8 @@
     },
     {
       "path": "supabase/functions/talkx-link/index.ts",
-      "bytes": 10504,
-      "sha256": "a59b1b67a392b3e347f1ddc975f32de2d5a0b3bd5618d580eb665fca7d048c15"
+      "bytes": 13427,
+      "sha256": "d2134d1f21770afd255fa333bcf2ae8a3c67611033777aeff284f666c25bc3c1"
     },
     {
       "path": "supabase/functions/talkx-report/index.ts",
@@ -1751,7 +1751,7 @@
       "name": "talkx-link",
       "entrypoint": "supabase/functions/talkx-link/index.ts",
       "verify_jwt": false,
-      "source_sha256": "a88f6763fccd646b9be2197ce7c8623b504b64ca0eec192a74bf463721aca35d",
+      "source_sha256": "cf9f2490a1cfab7eb0e774b0ea10c0ca652cfec6ccce46be27623abf70529970",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1908,5 +1908,5 @@
       ]
     }
   ],
-  "manifest_sha256": "b6321312131cb0a870a398d7d68f03d026be408746315cfd5dfbae71a87ae0d7"
+  "manifest_sha256": "02241ca18eea98bd8e3ba083e1f41330905c779971193db9cdf8719fa912fa84"
 }
