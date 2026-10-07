@@ -5,7 +5,7 @@ import { useGamificationMutations } from './mutations';
 import type { AgentStats, Achievement } from './types';
 
 // Re-export types and utilities for external consumers
-export type { AgentStats, Achievement } from './types';
+export type { AgentStats, Achievement, MiniGameXpCreditResult } from './types';
 export { ACHIEVEMENT_TYPES } from './types';
 export { calculateLevel, xpForNextLevel, levelProgress } from './levelUtils';
 

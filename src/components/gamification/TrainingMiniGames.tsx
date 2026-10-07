@@ -23,10 +23,10 @@ export function TrainingMiniGames({ onXPEarned }: TrainingMiniGamesProps) {
     return saved ? JSON.parse(saved) : {};
   });
   const { celebrate } = useCelebration();
-  const { addXp } = useAgentGamification();
-  // R2-AUTH-043: o XP mostrado no cartão é recompensa da conta — a conclusão
-  // credita esse valor de verdade. O diálogo publica a conclusão mais de uma
-  // vez (o efeito reexecuta a cada render), então o crédito é por partida.
+  const { creditMiniGameXp } = useAgentGamification();
+  // R2-AUTH-043: a conclusão credita de verdade o XP que a partida rendeu.
+  // O diálogo publica a conclusão mais de uma vez (o efeito reexecuta a cada
+  // render), então o crédito é por partida.
   const creditoDaPartida = useRef(false);
 
   const saveHighScore = (game: GameType, newScore: number) => {
@@ -40,7 +40,7 @@ export function TrainingMiniGames({ onXPEarned }: TrainingMiniGamesProps) {
     return false;
   };
 
-  const handleGameComplete = async (finalScore: number) => {
+  const handleGameComplete = async (finalScore: number, xpEarned: number) => {
     const game = GAMES.find(g => g.id === selectedGame);
     const isNewHighScore = saveHighScore(selectedGame!, finalScore);
     if (isNewHighScore) celebrate({ title: '🏆 Novo Recorde!', subtitle: `${finalScore} pontos!`, emoji: '🎮' });
@@ -50,14 +50,28 @@ export function TrainingMiniGames({ onXPEarned }: TrainingMiniGamesProps) {
     if (!game || creditoDaPartida.current) return;
     creditoDaPartida.current = true;
 
-    const xp = game.xpReward;
-    try {
-      const resultado = await addXp({ xp, reason: `Mini-game ${game.name}` });
-      onXPEarned?.(xp);
+    const xp = Math.max(0, Math.trunc(xpEarned || 0));
+    if (xp === 0) {
       toast({
         title: `🎮 ${game.name} Completo!`,
-        description: `Você ganhou ${xp} XP${isNewHighScore ? ' e bateu seu recorde!' : ''}` +
-          `${resultado?.leveledUp ? ` — Nível ${resultado.newLevel}!` : ''}`,
+        description: `Nenhum XP nesta partida (0 acertos não rende XP).${isNewHighScore ? ' Você bateu seu recorde!' : ''}`,
+      });
+      return;
+    }
+    try {
+      const resultado = await creditMiniGameXp({ gameId: game.id, xp });
+      if (!resultado.credited) {
+        toast({
+          title: 'Limite diário de mini-games atingido',
+          description: `Você já creditou ${resultado.maxPartidasDia} partidas de ${game.name} hoje. O XP volta amanhã.`,
+        });
+        return;
+      }
+      onXPEarned?.(resultado.xpCreditado);
+      toast({
+        title: `🎮 ${game.name} Completo!`,
+        description: `Você ganhou ${resultado.xpCreditado} XP${isNewHighScore ? ' e bateu seu recorde!' : ''}` +
+          `${resultado.leveledUp ? ` — Nível ${resultado.newLevel}!` : ''}`,
       });
     } catch (error) {
       log.error('Falha ao creditar o XP do mini-game:', error);
