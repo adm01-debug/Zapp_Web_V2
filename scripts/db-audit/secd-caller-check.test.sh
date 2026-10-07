@@ -11,9 +11,17 @@
 # Grupo B (sem chamador no app/edge/regra/visao): effective_role, fn_list_audio_meme_categories,
 #   is_country_allowed, is_country_blocked, is_ip_blocked, is_ip_whitelisted, notify_searchbox_budget ->
 #   EXECUTE de authenticated revogado; quem roda com poder de dono (cron/service_role/gatilho/DEFINER) segue.
-# Grupo C (app chama como o proprio usuario): search_knowledge_base passa a respeitar RLS (INVOKER);
-#   count_searchbox_sessions_this_month e is_within_business_hours exigem sessao com perfil;
-#   talkx_engine_window_open responde false fora de admin/supervisor.
+#   effective_role entra em B, NAO em A: nao e oraculo de identidade consultado com o id de outro usuario —
+#   nao tem chamador nenhum no repo (o gatilho sync_profile_role reimplementa a regra inline).
+# Grupo C (app chama como o proprio usuario): search_knowledge_base deixa de ser DEFINER (passa a rodar como o
+#   chamador e a respeitar a policy REAL "Authenticated can view knowledge base"); a troca e endurecimento, sem
+#   vazamento observavel hoje, porque o corpo da funcao ja filtra `is_published = true` e a policy faz o mesmo
+#   recorte para quem nao e admin. count_searchbox_sessions_this_month e is_within_business_hours exigem sessao
+#   com perfil; talkx_engine_window_open responde false fora de admin/supervisor.
+# Grupo D (anon): as 5 SECURITY DEFINER que continuam executaveis por `authenticated` (as de A e de C, menos
+#   search_knowledge_base, que virou INVOKER) tambem perdem EXECUTE de PUBLIC e anon. Sem isso o caminho anon
+#   dependeria so da guarda externa check-secdef-public-execute: com auth.uid() nulo o helper secd_caller_ok
+#   trata o chamador como contexto interno (cron/service_role/gatilho) e anon passaria pela checagem.
 
 set -Eeuo pipefail
 
@@ -63,6 +71,26 @@ expect_agent_error() { # <rotulo> <uid> <trecho> <sql>
   local label="$1" uid="$2" needle="$3" sql="$4" out
   set +e
   out="$(as_agent "$uid" "$sql")"
+  local status=$?
+  set -e
+  (( status != 0 )) || { printf '%s\n' "$out" >&2; fail "$label: deveria falhar, passou"; }
+  [[ "$out" == *"$needle"* ]] || { printf '%s\n' "$out" >&2; fail "$label: esperava '$needle' no erro"; }
+  ((passed += 1)); printf '[PASS] %s (bloqueado)\n' "$label"
+}
+# as_anon <sql> : roda como `anon` com o JWT que a API manda nesse papel (role=anon, sem `sub` -> auth.uid() nulo)
+as_anon() {
+  psql_sql "SET ROLE anon; SET request.jwt.claims = '{\"role\":\"anon\"}'; $1"
+}
+expect_anon_value() { # <rotulo> <esperado> <sql>
+  local label="$1" expected="$2" sql="$3" actual
+  actual="$(as_anon "$sql" | tail -n1)"
+  [[ "$actual" == "$expected" ]] || fail "$label: esperado '$expected', obtido '$actual'"
+  ((passed += 1)); printf '[PASS] %s\n' "$label"
+}
+expect_anon_error() { # <rotulo> <trecho> <sql>
+  local label="$1" needle="$2" sql="$3" out
+  set +e
+  out="$(as_anon "$sql")"
   local status=$?
   set -e
   (( status != 0 )) || { printf '%s\n' "$out" >&2; fail "$label: deveria falhar, passou"; }
@@ -119,16 +147,33 @@ CREATE TABLE public.notifications (id uuid PRIMARY KEY DEFAULT gen_random_uuid()
   message text, type text, metadata jsonb);
 CREATE TABLE public.searchbox_usage_daily (id serial PRIMARY KEY, dia date, sessoes integer);
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated, service_role;
-GRANT USAGE ON SCHEMA public, auth TO authenticated, service_role;
+-- `anon` existe na API: sem USAGE no schema a negativa seria de schema, nao de EXECUTE (e o grupo D nao provaria nada)
+GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
 GRANT CREATE ON SCHEMA public TO postgres;
 -- policies que as funcoes auxiliares do repo leem (nao e o objeto do cartao; so o suficiente p/ o modelo)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY profiles_self ON public.profiles FOR SELECT TO authenticated USING (user_id = auth.uid());
--- KB: leitura so do que e do proprio usuario — e o que separa DEFINER (vaza) de INVOKER (respeita)
+-- KB: as DUAS policies REAIS de producao (supabase/migrations/20260317222442_...sql:21-28), com o auxiliar
+-- que elas chamam — nada de policy ficticia tipo `kb_own`:
+--   "Admins can manage knowledge base"      FOR ALL    USING (public.is_admin_or_supervisor(auth.uid()))
+--   "Authenticated can view knowledge base" FOR SELECT USING (is_published = true OR public.is_admin_or_supervisor(auth.uid()))
+CREATE OR REPLACE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $f$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = _user_id AND role IN ('admin', 'supervisor')
+  )
+$f$;
 ALTER TABLE public.knowledge_base_articles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY kb_own ON public.knowledge_base_articles FOR SELECT TO authenticated USING (owner_user_id = auth.uid());
+CREATE POLICY "Admins can manage knowledge base" ON public.knowledge_base_articles
+  FOR ALL TO authenticated
+  USING (public.is_admin_or_supervisor(auth.uid()))
+  WITH CHECK (public.is_admin_or_supervisor(auth.uid()));
+CREATE POLICY "Authenticated can view knowledge base" ON public.knowledge_base_articles
+  FOR SELECT TO authenticated
+  USING (is_published = true OR public.is_admin_or_supervisor(auth.uid()));
 SQL
 
 # ── Estado ANTERIOR: as 13 com o corpo vivo de producao (04/10/2026), sem checagem do chamador ───────────
@@ -297,14 +342,15 @@ INSERT INTO public.geo_blocking_settings (mode) VALUES ('blacklist');
 INSERT INTO public.audio_memes (category) VALUES ('risada');
 INSERT INTO public.knowledge_base_articles (title, content, owner_user_id, is_published)
   VALUES ('Manual do agente', 'conteudo publico', '$AGENTE', true),
-         ('Playbook interno da diretoria', 'conteudo restrito', '$OUTRO', true);
+         ('Playbook interno da diretoria', 'conteudo restrito', '$OUTRO', true),
+         ('Rascunho interno', 'conteudo em rascunho', '$AGENTE', false);
 INSERT INTO public.business_hours (whatsapp_connection_id, day_of_week, is_open, open_time, close_time)
   VALUES ('$CONN', EXTRACT(DOW FROM now() AT TIME ZONE 'America/Sao_Paulo')::int, true, '00:00', '23:59');
 INSERT INTO public.talkx_campaigns (id, schedule_timezone) VALUES ('$CAMP', 'America/Sao_Paulo');
 SQL
 
 # ── VERMELHO: hoje, qualquer usuario logado le papel/permissao/config de outro e da casa ─────────────────
-expect_agent_value 'A1 (defeito) agente le papel de outro usuario'              "$AGENTE" 'admin'    "SELECT public.effective_role('$OUTRO')"
+expect_agent_value 'B6r (defeito) agente le o papel efetivo de qualquer usuario' "$AGENTE" 'admin'    "SELECT public.effective_role('$OUTRO')"
 expect_agent_value 'A2 (defeito) agente le permissao de outro usuario'          "$AGENTE" 't'        "SELECT public.user_has_permission('$OUTRO','send_messages')"
 expect_agent_value 'A3 (defeito) agente le vinculo de outro usuario no chat'    "$AGENTE" 't'        "SELECT public.is_team_conversation_member('$CHEFE','$CONV')"
 expect_agent_value 'B1 (defeito) agente le a config de IP bloqueado'            "$AGENTE" 't'        "SELECT public.is_ip_blocked('1.2.3.4')"
@@ -313,15 +359,28 @@ expect_agent_value 'B3 (defeito) agente le a lista de paises bloqueados'        
 expect_agent_value 'B4 (defeito) agente le a politica de pais'                  "$AGENTE" 'f'        "SELECT public.is_country_allowed('XX')"
 expect_agent_value 'B5 (defeito) agente lista categorias de memes'              "$AGENTE" 'risada'   "SELECT category FROM public.fn_list_audio_meme_categories() LIMIT 1"
 expect_agent_value 'C1 (defeito) agente le a janela de envio de outra campanha' "$AGENTE" 't'        "SELECT public.talkx_engine_window_open('$CAMP')"
-expect_agent_value 'C2 (defeito) DEFINER ignora a RLS da base de conhecimento'  "$AGENTE" '2'        "SELECT count(*) FROM public.search_knowledge_base('conteudo')"
+# KB: baseline, NAO defect — o corpo do DEFINER ja filtra is_published = true e a policy real faz o mesmo recorte
+# para quem nao e admin, entao DEFINER e INVOKER devolvem o mesmo (endurecimento sem vazamento observavel hoje).
+expect_agent_value 'C2 (baseline) DEFINER devolve as 2 publicadas'             "$AGENTE" '2'        "SELECT count(*) FROM public.search_knowledge_base('conteudo')"
+expect_agent_value 'C2b (baseline) DEFINER nao devolve a nao publicada'        "$AGENTE" '0'        "SELECT count(*) FROM public.search_knowledge_base('conteudo') WHERE title LIKE 'Rascunho%'"
 expect_agent_value 'C3 (defeito) agente sem perfil le o consumo do Searchbox'   "$PERFILESS" '1'    "SELECT public.count_searchbox_sessions_this_month()"
+expect_agent_value 'C4 (defeito) chamador sem perfil le o status de horario'    "$PERFILESS" 't'    "SELECT public.is_within_business_hours('$CONN')"
+# D) anon: hoje o EXECUTE nas 5 DEFINER restantes vem de PUBLIC (ACL padrao do CREATE FUNCTION) e a unica
+# barreira seria a guarda externa — nenhuma checagem do chamador barra anon, porque auth.uid() nulo entra
+# como "contexto interno" no secd_caller_ok.
+expect_anon_value 'D0 (defeito) anon executa as 5 DEFINER restantes' 'true' "SELECT bool_and(ok)::text FROM (VALUES
+     (public.user_has_permission('$OUTRO','send_messages')),
+     (public.is_team_conversation_member('$CHEFE','$CONV')),
+     (public.count_searchbox_sessions_this_month() = 1),
+     (public.is_within_business_hours('$CONN')),
+     (public.talkx_engine_window_open('$CAMP'))) AS t(ok)"
 
 # ── Verde: aplica a migration REAL (arquivo inteiro) ─────────────────────────────────────────────────────
 psql_file "$migration" >/dev/null
 printf '[PASS] migration 20261007004545 aplicada\n'; ((passed += 1))
 
 # A) oraculos de identidade: outro usuario nao; o proprio e o admin sim
-expect_agent_error 'A1 agente nao le o papel de outro usuario'        "$AGENTE" 'permission denied' "SELECT public.effective_role('$OUTRO')"
+expect_agent_error 'B6b papel efetivo de outro usuario tambem nega o agente' "$AGENTE" 'permission denied' "SELECT public.effective_role('$OUTRO')"
 expect_agent_error 'A2 agente nao le a permissao de outro usuario'    "$AGENTE" 'nao autorizada' "SELECT public.user_has_permission('$OUTRO','send_messages')"
 expect_agent_value 'A2b agente continua lendo a propria permissao'    "$AGENTE" 'f'     "SELECT public.user_has_permission('$AGENTE','send_messages')"
 expect_agent_value 'A2c admin continua lendo a permissao de outro'    "$CHEFE"  't'     "SELECT public.user_has_permission('$OUTRO','send_messages')"
@@ -348,9 +407,27 @@ expect_value 'B9 contextos internos (service_role) seguem com EXECUTE nas 7' 'tr
 # C) app chama como o proprio usuario: checagem sem quebrar o fluxo
 expect_agent_value 'C1 janela de envio nao e revelada ao agente (fail-closed)' "$AGENTE" 'f' "SELECT public.talkx_engine_window_open('$CAMP')"
 expect_agent_value 'C1b admin continua vendo a janela de envio'                "$CHEFE"  't' "SELECT public.talkx_engine_window_open('$CAMP')"
-expect_agent_value 'C2 base de conhecimento passa a respeitar a RLS'           "$AGENTE" '1' "SELECT count(*) FROM public.search_knowledge_base('conteudo')"
+# KB: a troca DEFINER->INVOKER e endurecimento — mesmo resultado, agora com a policy real valendo
+expect_agent_value 'C2 KB INVOKER segue devolvendo as 2 publicadas'            "$AGENTE" '2' "SELECT count(*) FROM public.search_knowledge_base('conteudo')"
+expect_agent_value 'C2b KB INVOKER segue escondendo a nao publicada'           "$AGENTE" '0' "SELECT count(*) FROM public.search_knowledge_base('conteudo') WHERE title LIKE 'Rascunho%'"
+expect_value 'C2c search_knowledge_base deixou de ser DEFINER (roda como o chamador)' 'false' \
+  "SELECT prosecdef::text FROM pg_proc WHERE oid = 'public.search_knowledge_base(text, integer)'::regprocedure"
 expect_agent_value 'C3 agente com perfil continua lendo o consumo do Searchbox' "$AGENTE" '1' "SELECT public.count_searchbox_sessions_this_month()"
 expect_agent_value 'C4 agente com perfil continua vendo o status de horario'    "$AGENTE" 't' "SELECT public.is_within_business_hours('$CONN')"
 expect_agent_error 'C5 chamador sem perfil e barrado no consumo do Searchbox'   "$PERFILESS" 'sem sessao de usuario' "SELECT public.count_searchbox_sessions_this_month()"
+expect_agent_error 'C5b chamador sem perfil e barrado no status de horario'     "$PERFILESS" 'sem sessao de usuario' "SELECT public.is_within_business_hours('$CONN')"
+
+# D) anon: EXECUTE revogado de PUBLIC e anon nas 5 DEFINER restantes (fechado no proprio definidor, sem
+#    depender da guarda externa); `authenticated` segue com EXECUTE porque sao RPC do app.
+expect_anon_error 'D1 anon nao executa user_has_permission'          'permission denied' "SELECT public.user_has_permission('$OUTRO','send_messages')"
+expect_anon_error 'D2 anon nao executa is_team_conversation_member'  'permission denied' "SELECT public.is_team_conversation_member('$CHEFE','$CONV')"
+expect_anon_error 'D3 anon nao executa count_searchbox_sessions_this_month' 'permission denied' "SELECT public.count_searchbox_sessions_this_month()"
+expect_anon_error 'D4 anon nao executa is_within_business_hours'     'permission denied' "SELECT public.is_within_business_hours('$CONN')"
+expect_anon_error 'D5 anon nao executa talkx_engine_window_open'     'permission denied' "SELECT public.talkx_engine_window_open('$CAMP')"
+expect_value 'D6 authenticated segue com EXECUTE nas 5 (fluxo do app intacto)' 'true' \
+  "SELECT bool_and(has_function_privilege('authenticated', p, 'EXECUTE'))::text FROM (VALUES
+     ('public.user_has_permission(uuid, text)'::regprocedure), ('public.is_team_conversation_member(uuid, uuid)'::regprocedure),
+     ('public.count_searchbox_sessions_this_month()'::regprocedure), ('public.is_within_business_hours(uuid)'::regprocedure),
+     ('public.talkx_engine_window_open(uuid)'::regprocedure)) AS t(p)"
 
 printf 'M-DB-05 (13 funcoes SEM checagem do chamador): %s cenarios aprovados.\n' "$passed"
