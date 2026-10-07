@@ -2,6 +2,9 @@
 -- qualquer usuario logado sem checagem do chamador (vazamento de papel/permissao/config; MAPA_BANCO secoes 2 e 7,
 -- retrato vivo 04/10/2026; nada tocava estes objetos desde entao).
 -- Rollback: GRANT EXECUTE ON FUNCTION public.effective_role(uuid) TO authenticated; GRANT EXECUTE ON FUNCTION public.fn_list_audio_meme_categories() TO authenticated; GRANT EXECUTE ON FUNCTION public.is_country_allowed(text) TO authenticated; GRANT EXECUTE ON FUNCTION public.is_country_blocked(text) TO authenticated; GRANT EXECUTE ON FUNCTION public.is_ip_blocked(text) TO authenticated; GRANT EXECUTE ON FUNCTION public.is_ip_whitelisted(text) TO authenticated; GRANT EXECUTE ON FUNCTION public.notify_searchbox_budget() TO authenticated; CREATE OR REPLACE FUNCTION public.user_has_permission(_user_id uuid, _permission_name text) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles ur JOIN public.role_permissions rp ON rp.role = ur.role JOIN public.permissions p ON p.id = rp.permission_id WHERE ur.user_id = _user_id AND p.name = _permission_name) $$; CREATE OR REPLACE FUNCTION public.is_team_conversation_member(_user_id uuid, _conversation_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT EXISTS (SELECT 1 FROM public.team_conversation_members tcm JOIN public.profiles p ON p.id = tcm.profile_id WHERE tcm.conversation_id = _conversation_id AND p.user_id = _user_id) $$; CREATE OR REPLACE FUNCTION public.search_knowledge_base(search_query text, max_results integer DEFAULT 5) RETURNS TABLE(id uuid, title text, content text, category text, tags text[], rank real) LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT a.id, a.title, a.content, a.category, a.tags, ts_rank(a.search_vector, websearch_to_tsquery('portuguese', search_query)) AS rank FROM public.knowledge_base_articles a WHERE a.is_published = true AND (a.search_vector @@ websearch_to_tsquery('portuguese', search_query) OR a.title ILIKE '%' || search_query || '%' OR a.content ILIKE '%' || search_query || '%') ORDER BY rank DESC LIMIT max_results $$; CREATE OR REPLACE FUNCTION public.count_searchbox_sessions_this_month() RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT count(*)::integer FROM public.audit_logs WHERE action = 'searchbox_session' AND created_at >= date_trunc('month', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo' $$; CREATE OR REPLACE FUNCTION public.is_within_business_hours(connection_id uuid) RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ DECLARE v_current_day INTEGER; v_current_time TIME; v_is_open BOOLEAN; v_open_at TIME; v_close_at TIME; BEGIN v_current_day := EXTRACT(DOW FROM now() AT TIME ZONE 'America/Sao_Paulo'); v_current_time := (now() AT TIME ZONE 'America/Sao_Paulo')::TIME; SELECT bh.is_open, bh.open_time, bh.close_time INTO v_is_open, v_open_at, v_close_at FROM business_hours bh WHERE bh.whatsapp_connection_id = connection_id AND bh.day_of_week = v_current_day; IF NOT FOUND THEN RETURN true; END IF; IF NOT v_is_open THEN RETURN false; END IF; RETURN v_current_time >= v_open_at AND v_current_time <= v_close_at; END $$; CREATE OR REPLACE FUNCTION public.talkx_engine_window_open(p_campaign_id uuid) RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public', 'pg_temp' AS $$ DECLARE v_tz text; v_start time; v_end time; v_bh_only boolean; v_local timestamp; v_min integer; v_bh jsonb; v_days jsonb; v_bstart text; v_bend text; v_bstart_min integer; v_bend_min integer; v_dow integer; BEGIN SELECT COALESCE(NULLIF(c.schedule_timezone, ''), 'America/Sao_Paulo'), c.send_window_start, c.send_window_end, COALESCE(c.business_hours_only, false) INTO v_tz, v_start, v_end, v_bh_only FROM public.talkx_campaigns AS c WHERE c.id = p_campaign_id; IF NOT FOUND THEN RETURN false; END IF; v_local := (now() AT TIME ZONE v_tz); v_min := EXTRACT(hour FROM v_local)::integer * 60 + EXTRACT(minute FROM v_local)::integer; IF v_start IS NOT NULL AND v_end IS NOT NULL THEN IF v_min < EXTRACT(hour FROM v_start)::integer * 60 + EXTRACT(minute FROM v_start)::integer OR v_min >= EXTRACT(hour FROM v_end)::integer * 60 + EXTRACT(minute FROM v_end)::integer THEN RETURN false; END IF; END IF; IF v_bh_only THEN SELECT s.value INTO v_bh FROM public.talkx_settings AS s WHERE s.key = 'business_hours'; v_days := COALESCE(v_bh -> 'days', '[1,2,3,4,5]'::jsonb); v_bstart := COALESCE(v_bh ->> 'start', '08:00'); v_bend := COALESCE(v_bh ->> 'end', '18:00'); v_dow := EXTRACT(dow FROM v_local)::integer; IF NOT (v_days @> to_jsonb(v_dow)) THEN RETURN false; END IF; v_bstart_min := split_part(v_bstart, ':', 1)::integer * 60 + split_part(v_bstart, ':', 2)::integer; v_bend_min := split_part(v_bend, ':', 1)::integer * 60 + split_part(v_bend, ':', 2)::integer; IF v_min < v_bstart_min OR v_min >= v_bend_min THEN RETURN false; END IF; END IF; RETURN true; END $$; DROP FUNCTION IF EXISTS public.secd_caller_ok(uuid, boolean);
+-- Rollback (nota, de proposito): anon/PUBLIC NAO voltam nas 5 DEFINER restantes (nao tinham EXECUTE antes — a
+-- 20260930490000 revogou PUBLIC de toda funcao de negocio de public) e, onde a migration revogou authenticated
+-- (as 7 de B), devolve-se so `authenticated`: o rollback desfaz a mudanca de COMPORTAMENTO, nao reabre a API.
 --
 -- ESTRATEGIA por grupo (as 13 de MAPA_BANCO secao 7; talkx_engine_cron_runs e M-DB-03, fora deste cartao):
 --   A) ORACULOS DE IDENTIDADE (papel/permissao/membership de OUTRO usuario): passam a exigir que o sujeito
@@ -17,9 +20,15 @@
 --      count_searchbox_sessions_this_month e is_within_business_hours exigem sessao com perfil;
 --      talkx_engine_window_open (lida pela view security_invoker talkx_engine_health) responde false a quem nao
 --      e admin/supervisor, sem erro (fail-closed, sem superficie de excecao para quem so le a view).
+--   D) ANON/PUBLIC: as 5 SECURITY DEFINER que continuam executaveis por `authenticated` (as de A e de C, menos
+--      search_knowledge_base, que virou INVOKER) recebem REVOKE EXECUTE explicito FROM PUBLIC, anon. Sem isso o
+--      caminho anon dependeria so da guarda externa check-secdef-public-execute — e o secd_caller_ok trata
+--      auth.uid() nulo como contexto interno (cron/service_role/gatilho), o que incluiria anon. No estado vivo
+--      e reafirmacao, no espirito do §1 da 20261001191230: a 20260930490000 ja revogou PUBLIC de toda funcao de
+--      negocio de public e a guarda passa hoje; o REVOKE escrito aqui e o que fecha um GRANT/overload novo.
 --
--- Nao mexe em anon/PUBLIC alem do que a guarda check-secdef-public-execute ja exige (hoje OK). Nenhuma escrita
--- de dado, nenhum GRANT novo. Prova: scripts/db-audit/secd-caller-check.test.sh (vermelho antes, verde depois).
+-- Nao altera anon/PUBLIC em nenhuma outra funcao. Nenhuma escrita de dado, nenhum GRANT novo.
+-- Prova: scripts/db-audit/secd-caller-check.test.sh (vermelho antes, verde depois).
 
 -- ---------------------------------------------------------------------------
 -- 0. Auxiliar de decisao do chamador. Nao e RPC: EXECUTE fechado por assinatura.
@@ -120,8 +129,11 @@ REVOKE EXECUTE ON FUNCTION public.notify_searchbox_budget() FROM PUBLIC, anon, a
 -- C) App chama como o proprio usuario: checagem explicita, sem revogar EXECUTE
 -- ---------------------------------------------------------------------------
 
--- C1. search_knowledge_base — a policy "Authenticated can view knowledge base" ja filtra is_published=true
--- (o corpo ja filtra igual). Mantida a regra, deixa de bypassar RLS: passa a rodar como o chamador.
+-- C1. search_knowledge_base — as policies REAIS de knowledge_base_articles (20260317222442:21-28) sao
+-- "Authenticated can view knowledge base" (FOR SELECT, USING is_published = true OR is_admin_or_supervisor(auth.uid()))
+-- e "Admins can manage knowledge base". O corpo da funcao ja filtra is_published = true — o mesmo recorte da policy
+-- para quem nao e admin: parar de bypassar a RLS e ENDURECIMENTO, sem vazamento observavel hoje (o teste prova
+-- antes/depois: 2 publicadas, 0 nao publicadas). O ganho e a policy valer no dia em que ficar mais restritiva.
 CREATE OR REPLACE FUNCTION public.search_knowledge_base(search_query text, max_results integer DEFAULT 5)
 RETURNS TABLE(id uuid, title text, content text, category text, tags text[], rank real)
 LANGUAGE sql
@@ -282,3 +294,16 @@ BEGIN
   RETURN true;
 END;
 $function$;
+
+-- ---------------------------------------------------------------------------
+-- D) Anon/PUBLIC nas 5 DEFINER que seguem executaveis por `authenticated`
+-- ---------------------------------------------------------------------------
+-- As 7 de B fecham `authenticated`; estas 5 sao RPC legitima do app (A e C), entao o EXECUTE de `authenticated`
+-- fica. O que nao pode existir e EXECUTE para PUBLIC/anon: com auth.uid() nulo o secd_caller_ok devolve true
+-- ("contexto interno"), entao anon passaria pela checagem e o unico anteparo seria a guarda externa. Regra do
+-- repo (scripts/db-audit/check-secdef-public-execute.sql): nenhuma SECURITY DEFINER de public com PUBLIC/anon.
+REVOKE EXECUTE ON FUNCTION public.user_has_permission(uuid, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_team_conversation_member(uuid, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.count_searchbox_sessions_this_month() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_within_business_hours(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.talkx_engine_window_open(uuid) FROM PUBLIC, anon;
