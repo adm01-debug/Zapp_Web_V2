@@ -22,6 +22,7 @@ export function useNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const isMountedRef = useRef(true);
 
@@ -36,22 +37,29 @@ export function useNotifications() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
       const typedData = (data || []) as Notification[];
       if (isMountedRef.current) {
         setNotifications(typedData);
         setUnreadCount(typedData.filter(n => !n.is_read).length);
+        setError(null);
       }
-    } catch (error) {
-      log.error('Error fetching notifications:', error);
+    } catch (err) {
+      log.error('Error fetching notifications:', err);
+      // Uma falha de consulta deixa de ser silenciosa: a lista anterior é
+      // conservada de propósito (não se apaga o que já foi confirmado) e o erro
+      // sobe para o consumidor separar "erro" de "ausência confirmada".
+      if (isMountedRef.current) {
+        setError(err instanceof Error ? err : new Error(String(err)));
+      }
     } finally {
       if (isMountedRef.current) {
         setLoading(false);
@@ -216,6 +224,7 @@ export function useNotifications() {
   return {
     notifications,
     loading,
+    error,
     unreadCount,
     markAsRead,
     markAllAsRead,
