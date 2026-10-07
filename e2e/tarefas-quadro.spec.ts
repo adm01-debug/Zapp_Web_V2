@@ -86,7 +86,21 @@ async function elevarTetoDeBoot(alvo: Page | BrowserContext): Promise<void> {
   }, TETO_DE_BOOT_MS);
 }
 
-/** Login pela tela — o mesmo fluxo de `e2e/auth.setup.ts`. */
+/**
+ * Login pela tela — o mesmo fluxo de `e2e/auth.setup.ts`.
+ *
+ * O login é fail-closed: se a edge `auth-login` não responde em 12 s
+ * (`AUTH_LOGIN_TIMEOUT_MS`, `src/lib/serverLogin.ts`), `auth.service.ts` mostra
+ * "Login temporariamente indisponível…" e NÃO cai no GoTrue direto (ADR-006). No banco
+ * LOCAL o caminho `/functions/v1` do conjunto custa segundos por chamada — medido nesta
+ * máquina para a MESMA `auth-login`: 4,7 s / 5,7 s / 6,5 s / 8,9 s / 11,5 s / 13,7 s
+ * contra 4 ms no contêiner da edge — então a distribuição cruza o teto de 12 s e a
+ * PRIMEIRA tentativa oscila por motivo de AMBIENTE, não de produto. O remédio é o do
+ * usuário: tentar de novo. Nada é afrouxado — o teste só segue quando a sidebar monta;
+ * credencial recusada continua falhando na primeira tentativa.
+ */
+const TENTATIVAS_DE_LOGIN = 3;
+
 async function entrar(page: Page, email: string, senha: string): Promise<void> {
   await page.goto('/auth');
   const abaEntrar = page.getByRole('tab', { name: /^entrar$/i });
@@ -96,15 +110,32 @@ async function entrar(page: Page, email: string, senha: string): Promise<void> {
   await expect(abaEntrar.or(falhaDeBoot).first()).toBeVisible({ timeout: 60_000 });
   await expect(falhaDeBoot, 'o app não montou (watchdog de boot do index.html)').toHaveCount(0);
   await abaEntrar.click();
-  await page.getByRole('textbox', { name: /e-?mail/i }).fill(email);
-  await page.locator('input[type="password"]').fill(senha);
-  await page.getByRole('button', { name: /^entrar$/i }).click();
 
-  // Espera o DESFECHO, não só o sucesso: sem isso um login recusado vira
-  // "timeout aguardando #main-navigation" e não diz nada sobre a causa.
   const shell = page.locator('#main-navigation');
-  const erroLogin = page.getByRole('alert').or(page.getByText(/inv[aá]lid|credenci|senha incorreta|e-?mail ou senha|erro ao entrar|tente novamente/i));
-  await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 60_000 });
+  const botaoEntrar = page.getByRole('button', { name: /^entrar$/i });
+  // Desfechos nomeados: lentidão da edge (o app avisa e o formulário volta) x recusa de
+  // credencial (falha na hora, sem retentativa) x sucesso (a sidebar monta).
+  const edgeLenta = page.getByText(/Login temporariamente indispon/i);
+  const recusaDeCredencial = page.getByText(/incorretos|senha incorreta|credenci|inv[aá]lid/i);
+
+  for (let tentativa = 1; tentativa <= TENTATIVAS_DE_LOGIN; tentativa += 1) {
+    // O app limpa o campo de senha depois de qualquer erro (useAuthForm), então toda
+    // tentativa preenche os dois campos de novo em vez de contar com o que ficou lá.
+    await page.getByRole('textbox', { name: /e-?mail/i }).fill(email);
+    await page.locator('input[type="password"]').fill(senha);
+    await expect(botaoEntrar).toBeEnabled({ timeout: 30_000 });
+    await botaoEntrar.click();
+
+    // Espera o DESFECHO, não só o sucesso: sem isso um login recusado vira
+    // "timeout aguardando #main-navigation" e não diz nada sobre a causa.
+    await expect(shell.or(edgeLenta).or(recusaDeCredencial).first()).toBeVisible({ timeout: 60_000 });
+    if (await shell.isVisible()) return;
+    await expect(recusaDeCredencial, 'login recusado por credencial (não é lentidão da edge)').toHaveCount(0);
+    if (tentativa === TENTATIVAS_DE_LOGIN) break;
+    // O aviso sai sozinho (Toaster com duration=4000): esperar ele sumir impede que a
+    // rodada seguinte leia a mensagem da anterior como se fosse a sua.
+    await expect(edgeLenta).toBeHidden({ timeout: 15_000 });
+  }
   await expect(shell, 'login não concluiu (a sidebar do app não montou)').toBeVisible();
 }
 
