@@ -215,6 +215,28 @@ SQL
   printf '%s' "$rc"
 }
 
+tenta_afeta() { # $1 = auth uid, $2 = statement com CTE (DELETE/UPDATE ... RETURNING) que devolve
+  # count(*) das linhas afetadas. Imprime o numero; 'rc=N' se o statement deu erro.
+  # Necessario porque DELETE/UPDATE barrados pela RLS saem com rc 0 sem tocar linha:
+  # so o RETURNING conta quantas linhas a escrita realmente atingiu.
+  local rc=0 err out
+  err="$(mktemp)"; out="$(mktemp)"
+  psql_test -v ON_ERROR_STOP=1 -q -At >"$out" 2>"$err" <<SQL || rc=$?
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claim.sub = '$1';
+$2
+ROLLBACK;
+SQL
+  last_err="$(tr -d '\r' <"$err" | grep -v '^NOTICE' | tr '\n' ' ')"
+  if [[ "$rc" == 0 ]]; then
+    grep -E '^[0-9]+$' "$out" | tail -1 || true
+  else
+    printf 'rc=%s' "$rc"
+  fi
+  rm -f "$err" "$out"
+}
+
 # ── red-first: o pre-estado reproduz o defeito ────────────────────────────────────────
 [[ "$(tenta "$U_AGENTE" "INSERT INTO public.message_reactions(message_id, user_id, contact_id, emoji) VALUES ('$M_AGENTE','$P_COLEGA',NULL,'🐍');")" == 0 ]] \
   || fail 'harness invalido: antes da correcao o INSERT com user_id de um colega deveria passar'
@@ -222,10 +244,16 @@ SQL
   || fail 'harness invalido: antes da correcao o INSERT com user_id NULL (reacao de Cliente) deveria passar'
 [[ "$(tenta "$U_AGENTE" "INSERT INTO public.message_reactions(message_id, user_id, contact_id, emoji) VALUES ('$M_AGENTE','$P_AGENTE','$C_COLEGA','🔥');")" == 0 ]] \
   || fail 'harness invalido: antes da correcao o INSERT gravando em contato alheio deveria passar'
+# DELETE/UPDATE sob RLS saem com rc 0 mesmo sem afetar linha: o vermelho so vale se provar
+# que a escrita do pre-estado realmente atingiu a reacao alheia (RETURNING conta 1).
 [[ "$(tenta "$U_AGENTE" "DELETE FROM public.message_reactions WHERE message_id = '$M_AGENTE' AND emoji = '😀';")" == 0 ]] \
   || fail 'harness invalido: antes da correcao o DELETE da reacao de outro autor deveria passar'
+[[ "$(tenta_afeta "$U_AGENTE" "WITH d AS (DELETE FROM public.message_reactions WHERE message_id = '$M_AGENTE' AND emoji = '😀' RETURNING 1) SELECT count(*) FROM d;")" == 1 ]] \
+  || fail 'harness invalido: antes da correcao o DELETE da reacao do colega deveria afetar 1 linha'
 [[ "$(tenta "$U_AGENTE" "UPDATE public.message_reactions SET emoji = '💀' WHERE message_id = '$M_AGENTE' AND emoji = '❤️';")" == 0 ]] \
   || fail 'harness invalido: antes da correcao o UPDATE da reacao de outro autor deveria passar'
+[[ "$(tenta_afeta "$U_AGENTE" "WITH u AS (UPDATE public.message_reactions SET emoji = '💀' WHERE message_id = '$M_AGENTE' AND emoji = '❤️' RETURNING 1) SELECT count(*) FROM u;")" == 1 ]] \
+  || fail 'harness invalido: antes da correcao o UPDATE da reacao do Cliente deveria afetar 1 linha'
 printf '[OK] red-first: o pre-estado (replay das migrations) deixa um atendente personificar colega/Cliente e mexer na reacao alheia.\n'
 
 # ── aplica a correcao (duas vezes: prova idempotencia/replay) ─────────────────────────
@@ -301,6 +329,21 @@ COMMIT;
 SQL
 )"
 [[ "$leitura" == 4 ]] || fail "G9: leitura da carteira mudou (esperado 4, veio '$leitura')"
+
+# G10 - DELETE legitimo da propria reacao: a policy de delete nao pode bloquear o dono.
+# Prova por contagem antes/depois (RETURNING do proprio DELETE tambem confirmaria).
+reacoes_antes="$(conta "message_id = '$M_AGENTE'")"
+psql_test -q >/dev/null <<SQL
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claim.sub = '$U_AGENTE';
+DELETE FROM public.message_reactions WHERE message_id = '$M_AGENTE' AND emoji = '🎉';
+COMMIT;
+SQL
+[[ "$(conta "message_id = '$M_AGENTE' AND emoji = '🎉' AND user_id = '$P_AGENTE'")" == 0 ]] \
+  || fail 'G10a: o atendente nao conseguiu apagar a propria reacao'
+[[ "$(conta "message_id = '$M_AGENTE'")" == $((reacoes_antes - 1)) ]] \
+  || fail 'G10b: a contagem nao caiu de 1 apos o DELETE da propria reacao'
 
 printf '[OK] verde: message_reactions so aceita a propria autoria; provedor (service_role) intacto.\n'
 printf 'PROVA_OK=1\n'
