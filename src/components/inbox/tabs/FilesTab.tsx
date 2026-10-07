@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } fro
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useContactMedia, type ContactMediaItem } from '@/hooks/chat/useContactMedia';
-import { useContactMediaCounts } from '@/hooks/chat/useContactMediaCounts';
+import { useContactMediaCounts, type ContactMediaCounts } from '@/hooks/chat/useContactMediaCounts';
 import { useFilesInfiniteScroll } from '@/hooks/chat/useFilesInfiniteScroll';
 import {
   columnsCapacity,
@@ -26,6 +26,9 @@ import { FilesContent } from './FilesContent';
 import { FilesSelectionBar } from './FilesSelectionBar';
 import { FileDetailContent, FileDetailPanel } from './FileDetailPanel';
 import { filterMediaItems, sortMediaItems } from './filesSort';
+import { buildPeriodRange, filterByPeriod } from '@/lib/filesPeriod';
+import { EmptyState } from '@/components/ui/empty-state';
+import { CalendarX2 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -85,6 +88,13 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
   // #144/OTH-002: erro na contagem nao pode virar "0" confirmado — vira "indisponivel" (—).
   const { counts, isError: countsError } = useContactMediaCounts(contactId);
 
+  // F05 (F01): o período escolhido vira o intervalo [de, até] no fuso do navegador. `null` =
+  // "Qualquer data" — nada muda em relação ao comportamento anterior ao filtro.
+  const periodRange = useMemo(
+    () => buildPeriodRange(view.period, view.customFrom, view.customTo),
+    [view.period, view.customFrom, view.customTo],
+  );
+
   const [selected, setSelected] = useState<ContactMediaItem | null>(null);
   const [previewItem, setPreviewItem] = useState<ContactMediaItem | null>(null);
   // Etapa 38: o diálogo de encaminhar recebe um ou N itens da seleção.
@@ -108,12 +118,78 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     }
   }, [fetchNextPage]);
 
+  // F05: com período ativo a lista (keyset `created_at desc`) pode terminar antes do início do
+  // período e esconder arquivos que estão nele. Enquanto o item mais antigo carregado ainda for
+  // mais novo que o início do período, busca as páginas antigas — com o MESMO teto do
+  // "Carregar tudo" — até passar do início ou acabarem as páginas.
+  const periodLoadRef = useRef<{ key: string; pages: number; lastId: string | null }>({
+    key: '',
+    pages: 0,
+    lastId: null,
+  });
+  const periodLoadKey = `${contactId}|${periodRange?.from ?? ''}|${periodRange?.to ?? ''}`;
+  const oldestLoadedTime = items.length === 0 ? null : new Date(items[items.length - 1].created_at).getTime();
+
+  useEffect(() => {
+    if (!periodRange || periodRange.from === null) return;
+    if (!hasMore || isFetchingNextPage) return;
+    const oldest = items[items.length - 1];
+    if (!oldest) return;
+    const oldestTime = new Date(oldest.created_at).getTime();
+    if (!Number.isFinite(oldestTime) || oldestTime < periodRange.from) return;
+
+    if (periodLoadRef.current.key !== periodLoadKey) {
+      periodLoadRef.current = { key: periodLoadKey, pages: 0, lastId: null };
+    }
+    const load = periodLoadRef.current;
+    if (load.lastId === oldest.id) return; // a página anterior não avançou: para de pedir
+    if (load.pages >= MAX_PAGES_TO_LOAD_ALL) return;
+    load.lastId = oldest.id;
+    load.pages += 1;
+    void fetchNextPage();
+  }, [periodRange, periodLoadKey, hasMore, isFetchingNextPage, items, fetchNextPage]);
+
+  // A varredura do período terminou quando não há mais páginas ou o item mais antigo carregado já
+  // passou do início do período. Só então dá para afirmar "nenhum arquivo neste período".
+  const periodFullyLoaded = periodRange === null
+    || periodRange.from === null
+    || !hasMore
+    || (oldestLoadedTime !== null && Number.isFinite(oldestLoadedTime) && oldestLoadedTime < periodRange.from);
+  const periodScanning = periodRange !== null && !periodFullyLoaded;
+
+  // F05: com período ativo o cabeçalho "N arquivos" e os chips saem do recorte CARREGADO (a RPC
+  // conta a conversa inteira, até o que está fora do período). Só o período entra nessas contas:
+  // tipo e busca continuam fora dos contadores, como sempre estiveram.
+  const periodItems = useMemo(
+    () => (periodRange ? filterByPeriod(items, periodRange) : null),
+    [items, periodRange],
+  );
+  const periodCounts = useMemo<ContactMediaCounts | null>(() => {
+    if (!periodItems) return null;
+    return {
+      all: periodItems.length,
+      image: periodItems.filter((item) => item.type === 'image').length,
+      video: periodItems.filter((item) => item.type === 'video').length,
+      audio: periodItems.filter((item) => item.type === 'audio').length,
+      document: periodItems.filter((item) => item.type === 'document').length,
+    };
+  }, [periodItems]);
+  const displayCounts = periodCounts ?? counts;
+  // Com período ativo a contagem é derivada dos itens carregados: erro de RPC não a atinge.
+  const displayCountsError = periodCounts ? false : countsError;
+
   // Etapa 43: filtro/ordenacao num modulo proprio (testavel) — "Maiores" põe tamanho
   // desconhecido no fim e desempata por data e id.
   const filtered = useMemo(
-    () => sortMediaItems(filterMediaItems(items, view.typeFilter, view.search), view.sort),
-    [items, view.typeFilter, view.search, view.sort],
+    () => sortMediaItems(filterMediaItems(items, view.typeFilter, view.search, periodRange), view.sort),
+    [items, view.typeFilter, view.search, periodRange, view.sort],
   );
+
+  // Enquanto a varredura do período não acabou e nada casou ainda, o recorte pode estar só nas
+  // primeiras páginas: mostra o carregamento do modo em vez de um vazio que ainda pode mudar.
+  const showSkeleton = isLoading || (periodScanning && filtered.length === 0);
+  const periodEmpty = !isLoading && !showSkeleton && !isError
+    && periodItems !== null && periodItems.length === 0;
 
   const visibleIds = useMemo(() => filtered.map((item) => item.id), [filtered]);
   const selection = useFilesSelection(visibleIds, contactId);
@@ -226,13 +302,13 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
             >
               {chip.label}
               <span className={cn('tabular-nums h-4 min-w-4 px-1 rounded text-3xs font-bold flex items-center justify-center', view.typeFilter === chip.id ? 'bg-white/15' : 'bg-muted')}>
-                {countsError ? '—' : counts[chip.id]}
+                {displayCountsError ? '—' : displayCounts[chip.id]}
               </span>
             </button>
           ))}
         </div>
-        <p className="ml-auto text-xs text-muted-foreground tabular-nums" title={countsError ? 'Contagem indisponível' : undefined}>
-          {countsError ? '—' : `${counts.all} ${counts.all === 1 ? 'arquivo' : 'arquivos'}`}
+        <p className="ml-auto text-xs text-muted-foreground tabular-nums" title={displayCountsError ? 'Contagem indisponível' : undefined} data-testid="files-total-count">
+          {displayCountsError ? '—' : `${displayCounts.all} ${displayCounts.all === 1 ? 'arquivo' : 'arquivos'}`}
         </p>
       </header>
 
@@ -257,6 +333,15 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
         onSearchChange={view.setSearch}
         sort={view.sort}
         onSortChange={view.setSort}
+        period={view.period}
+        onPeriodChange={view.setPeriod}
+        customFrom={view.customFrom}
+        customTo={view.customTo}
+        onCustomFromChange={(date) => view.setCustomFrom(date ?? null)}
+        onCustomToChange={(date) => view.setCustomTo(date ?? null)}
+        onClearCustom={view.clearCustomDates}
+        filteredCount={filtered.length}
+        totalCount={items.length}
         viewMode={view.viewMode}
         onViewModeChange={view.setViewMode}
         columns={view.columns}
@@ -285,29 +370,42 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
 
       <div ref={containerRef} className="flex gap-4 items-start" data-testid="files-area">
         <div className="flex-1 min-w-0">
-          <FilesContent
-            items={filtered}
-            viewMode={view.viewMode}
-            effectiveColumns={effective}
-            containerWidth={gridWidth}
-            contactName={contactName}
-            loading={isLoading}
-            selection={{ mode: selection.selectionMode, selectedIds: selection.selectedIds, toggle: selection.toggle }}
-            actions={{ onPreview: setPreviewItem, onOpenDetails: setSelected, onForward: (item) => openForward([item]), onRequestDelete: setDeleteTarget }}
-            sort={view.sort}
-            onSortChange={view.setSort}
-            selectedId={selected?.id ?? null}
-            hasMore={hasMore}
-            isFetchingNextPage={isFetchingNextPage}
-            onLoadMore={loadMore}
-            sentinelRef={sentinelRef}
-            search={view.search}
-            typeFilter={view.typeFilter}
-            onClearSearch={() => view.setSearch('')}
-            onClearFilter={() => view.setTypeFilter('all')}
-            isError={isError}
-            onRetry={refetch}
-          />
+          {periodEmpty ? (
+            /* F05: nada dentro do período escolhido — nem vazio real nem "sem resultado" da
+               busca, que continuam com as mensagens do FilesContent. */
+            <EmptyState
+              icon={CalendarX2}
+              title="Nenhum arquivo neste período"
+              description="Ajuste o período ou veja todos os arquivos da conversa."
+              actionLabel="Limpar período"
+              onAction={view.clearPeriod}
+              size="sm"
+            />
+          ) : (
+            <FilesContent
+              items={filtered}
+              viewMode={view.viewMode}
+              effectiveColumns={effective}
+              containerWidth={gridWidth}
+              contactName={contactName}
+              loading={showSkeleton}
+              selection={{ mode: selection.selectionMode, selectedIds: selection.selectedIds, toggle: selection.toggle }}
+              actions={{ onPreview: setPreviewItem, onOpenDetails: setSelected, onForward: (item) => openForward([item]), onRequestDelete: setDeleteTarget }}
+              sort={view.sort}
+              onSortChange={view.setSort}
+              selectedId={selected?.id ?? null}
+              hasMore={hasMore}
+              isFetchingNextPage={isFetchingNextPage}
+              onLoadMore={loadMore}
+              sentinelRef={sentinelRef}
+              search={view.search}
+              typeFilter={view.typeFilter}
+              onClearSearch={() => view.setSearch('')}
+              onClearFilter={() => view.setTypeFilter('all')}
+              isError={isError}
+              onRetry={refetch}
+            />
+          )}
         </div>
 
         {/* Etapa 31: lado a lado so com >= 1100 px — e nunca no lugar do painel do contato. */}

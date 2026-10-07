@@ -1,5 +1,6 @@
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import type { FilesSort, FilesTypeFilter } from '@/hooks/chat/useFilesViewState';
+import { filterByPeriod, type PeriodRange } from '@/lib/filesPeriod';
 
 /**
  * Filtro e ordenacao da aba Arquivos (etapas 23 e 43). Vive fora do componente para poder ser
@@ -43,12 +44,19 @@ export function sortMediaItems(items: ContactMediaItem[], sort: FilesSort): Cont
   return sorted;
 }
 
+/**
+ * Filtro do recorte (tipo + busca) e, quando o cartão do filtro por data passa o intervalo,
+ * também o recorte por DATA. O 4º parâmetro é OPCIONAL: sem ele o resultado é byte a byte o de
+ * antes (as chamadas existentes, e os testes delas, seguem valendo).
+ */
 export function filterMediaItems(
   items: ContactMediaItem[],
   typeFilter: FilesTypeFilter,
   search: string,
+  period?: PeriodRange | null,
 ): ContactMediaItem[] {
   let list = typeFilter === 'all' ? items : items.filter((item) => item.type === typeFilter);
+  if (period) list = filterByPeriod(list, period);
   const query = search.trim().toLowerCase();
   if (query) {
     list = list.filter(

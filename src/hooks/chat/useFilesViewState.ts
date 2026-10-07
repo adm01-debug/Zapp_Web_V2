@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { safeGetJSON, safeSetJSON } from '@/lib/safeStorage';
 import type { ContactMediaKind } from '@/hooks/chat/useContactMedia';
+import type { AnalysisPeriod } from '@/components/inbox/ai-tools/PeriodFilterSelector';
 
 /**
  * Estado de visualizacao da aba Arquivos (etapa 06 do plano de 50 etapas).
@@ -9,11 +10,13 @@ import type { ContactMediaKind } from '@/hooks/chat/useContactMedia';
  * Duas camadas com ciclos de vida diferentes, de proposito:
  * - `viewMode`/`columns` sao preferencia do operador -> `localStorage`, com sufixo do
  *   usuario (convencao da casa: `zapp.<area>.<pref>`), sanitizada na leitura.
- * - `sort`/`typeFilter`/`search` sao contexto da conversa -> memoria da sessao, num `Map`
- *   por `<userId>:<contactId>`, para sair ao Chat e voltar a Arquivos sem perder o recorte.
+ * - `sort`/`typeFilter`/`search`/`period` sao contexto da conversa -> memoria da sessao, num
+ *   `Map` por `<userId>:<contactId>`, para sair ao Chat e voltar a Arquivos sem perder o recorte.
  *   Recarregar a pagina zera; trocar de contato ou de usuario comeca limpo.
  *
  * A selecao (etapa 08) nunca entra aqui: nao e recorte de tela, e escolha do operador.
+ * O periodo do filtro por data (F03) entra exatamente como ordem/tipo/busca: so memoria de
+ * sessao, por conversa e por usuario.
  */
 
 export type FilesViewMode = 'grid' | 'list' | 'table';
@@ -40,12 +43,20 @@ export interface FilesViewSession {
   sort: FilesSort;
   typeFilter: FilesTypeFilter;
   search: string;
+  /** Filtro por data (F03): atalho do `PeriodFilterSelector` — `all` = Qualquer data. */
+  period: AnalysisPeriod;
+  /** Pontas do periodo personalizado (`period === 'custom'`); `null` = nao escolhida. */
+  customFrom: Date | null;
+  customTo: Date | null;
 }
 
 export const DEFAULT_FILES_VIEW_SESSION: FilesViewSession = {
   sort: 'recent',
   typeFilter: 'all',
   search: '',
+  period: 'all',
+  customFrom: null,
+  customTo: null,
 };
 
 export function filesViewStorageKey(userId: string): string {
@@ -111,11 +122,25 @@ interface FilesViewState {
   sort: FilesSort;
   typeFilter: FilesTypeFilter;
   search: string;
+  period: AnalysisPeriod;
+  customFrom: Date | null;
+  customTo: Date | null;
   setViewMode: (mode: FilesViewMode) => void;
   setColumns: (columns: FilesColumns) => void;
   setSort: (sort: FilesSort) => void;
   setTypeFilter: (filter: FilesTypeFilter) => void;
   setSearch: (search: string) => void;
+  /** Troca o atalho; ao sair de `custom` as datas personalizadas sao limpas (como na IA). */
+  setPeriod: (period: AnalysisPeriod) => void;
+  setCustomFrom: (date: Date | null) => void;
+  setCustomTo: (date: Date | null) => void;
+  /**
+   * Zera só as datas personalizadas (o `onClearCustom` do seletor, que ele chama junto com a
+   * troca de atalho). NÃO mexe no atalho — para voltar a "Qualquer data" use `clearPeriod`.
+   */
+  clearCustomDates: () => void;
+  /** Volta para "Qualquer data" e zera as datas (o botão do estado vazio). */
+  clearPeriod: () => void;
 }
 
 interface InternalState {
@@ -184,10 +209,29 @@ export function useFilesViewState(
     sort: state.session.sort,
     typeFilter: state.session.typeFilter,
     search: state.session.search,
+    period: state.session.period,
+    customFrom: state.session.customFrom,
+    customTo: state.session.customTo,
     setViewMode: useCallback((mode: FilesViewMode) => mergePrefs({ viewMode: mode }), [mergePrefs]),
     setColumns: useCallback((columns: FilesColumns) => mergePrefs({ columns }), [mergePrefs]),
     setSort: useCallback((sort: FilesSort) => mergeSession({ sort }), [mergeSession]),
     setTypeFilter: useCallback((typeFilter: FilesTypeFilter) => mergeSession({ typeFilter }), [mergeSession]),
     setSearch: useCallback((search: string) => mergeSession({ search }), [mergeSession]),
+    // Mesma regra do `usePeriodFilter` da IA: sair do personalizado limpa as datas escolhidas.
+    setPeriod: useCallback(
+      (period: AnalysisPeriod) =>
+        mergeSession(period === 'custom' ? { period } : { period, customFrom: null, customTo: null }),
+      [mergeSession],
+    ),
+    setCustomFrom: useCallback((date: Date | null) => mergeSession({ customFrom: date }), [mergeSession]),
+    setCustomTo: useCallback((date: Date | null) => mergeSession({ customTo: date }), [mergeSession]),
+    clearCustomDates: useCallback(
+      () => mergeSession({ customFrom: null, customTo: null }),
+      [mergeSession],
+    ),
+    clearPeriod: useCallback(
+      () => mergeSession({ period: 'all', customFrom: null, customTo: null }),
+      [mergeSession],
+    ),
   };
 }
