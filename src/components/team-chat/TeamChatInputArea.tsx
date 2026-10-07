@@ -31,7 +31,7 @@ interface TeamChatInputAreaProps {
   onSend: () => void;
   onCancelReply: () => void;
   onRecordToggle: () => void;
-  onAudioSend: (blob: Blob) => void;
+  onAudioSend: (blob: Blob) => void | Promise<boolean | void>;
   onSendSticker: (url: string) => void;
   onSendAudioMeme: (url: string) => void;
   onSendCustomEmoji: (url: string) => void;
