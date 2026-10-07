@@ -11257,6 +11257,22 @@ export type Database = {
           user_roles_list: string
         }[]
       }
+      get_inbox_contact_summaries: {
+        Args: { p_contact_ids: string[] }
+        Returns: {
+          contact_id: string
+          last_message_content: string
+          last_message_created_at: string
+          last_message_external_id: string
+          last_message_id: string
+          last_message_is_read: boolean
+          last_message_media_url: string
+          last_message_sender: string
+          last_message_status: string
+          last_message_type: string
+          unread_count: number
+        }[]
+      }
       get_instance_token: { Args: { p_instance_id: string }; Returns: string }
       get_last_message_dates: {
         Args: { contact_ids: string[] }
