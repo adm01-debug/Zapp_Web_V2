@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type BrowserContext, type Locator, type Page } from '@playwright/test';
 
 /**
  * Y10 — E2E de Tarefas e do modo Quadro (criar, editar, atribuir, mudar de coluna no
@@ -74,10 +74,33 @@ type Modo = keyof typeof MODO_DATA;
 // Helpers de tela (locators por papel/rótulo; nenhuma espera por tempo fixo)
 // ---------------------------------------------------------------------------
 
+/**
+ * Watchdog de boot do `index.html` (linhas 61-87): se o React não montar em 8 s ele
+ * APAGA o `#root` e escreve "⚠️ Falha ao inicializar o app". Com o dev server do Vite
+ * frio e a máquina ocupada (vários conjuntos rodando), o React 19 passa dos 8 s e o
+ * cenário morre esperando a aba de login — falha do AMBIENTE de teste, não do produto
+ * (medida em `.tmp/prova-rodada-1.log`, cenário "conclui e reabre a tarefa pela lista").
+ * Mesmo remédio de `talkx-visual.spec.ts:109-118`: eleva o teto ANTES de qualquer
+ * navegação. O default de produção (8 s) não muda — o ajuste vive só no navegador do teste.
+ */
+const TETO_DE_BOOT_MS = 60_000;
+
+async function elevarTetoDeBoot(alvo: Page | BrowserContext): Promise<void> {
+  await alvo.addInitScript((teto) => {
+    (window as unknown as { __BOOT_DEADLINE_MS?: number }).__BOOT_DEADLINE_MS = teto;
+  }, TETO_DE_BOOT_MS);
+}
+
 /** Login pela tela — o mesmo fluxo de `e2e/auth.setup.ts`. */
 async function entrar(page: Page, email: string, senha: string): Promise<void> {
   await page.goto('/auth');
-  await page.getByRole('tab', { name: /^entrar$/i }).click();
+  const abaEntrar = page.getByRole('tab', { name: /^entrar$/i });
+  const falhaDeBoot = page.getByRole('heading', { name: /Falha ao inicializar o app/ });
+  // Espera a TELA (e não o clique) e nomeia o desfecho: se o watchdog apagou o #root,
+  // o erro diz isso em vez de gastar os 120 s do teste "aguardando getByRole('tab')".
+  await expect(abaEntrar.or(falhaDeBoot).first()).toBeVisible({ timeout: 60_000 });
+  await expect(falhaDeBoot, 'o app não montou (watchdog de boot do index.html)').toHaveCount(0);
+  await abaEntrar.click();
   await page.getByRole('textbox', { name: /e-?mail/i }).fill(email);
   await page.locator('input[type="password"]').fill(senha);
   await page.getByRole('button', { name: /^entrar$/i }).click();
@@ -91,6 +114,7 @@ async function entrar(page: Page, email: string, senha: string): Promise<void> {
 }
 
 test.beforeEach(async ({ page }) => {
+  await elevarTetoDeBoot(page);
   const email = process.env.E2E_TEST_EMAIL;
   const senha = process.env.E2E_TEST_PASSWORD;
   test.skip(
@@ -489,6 +513,8 @@ test('estado vazio: sem resultado de filtro e conta sem tarefas', async ({ page,
   // zero num contexto próprio (sem sessão herdada).
   const senha = process.env.E2E_TEST_PASSWORD as string;
   const contexto = await browser.newContext();
+  // Contexto próprio: o teto de boot do `beforeEach` vale só para a `page` dele.
+  await elevarTetoDeBoot(contexto);
   const vazia = await contexto.newPage();
   try {
     await entrar(vazia, USUARIO_SEM_TAREFAS, senha);
