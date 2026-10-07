@@ -27,10 +27,39 @@ falhou() { echo "FALHOU: $*" >&2; exit 1; }
 # Perfil de prova (mesmo critério do teste .sql).
 PROFILE="$(echo 'SELECT profile_id FROM public.agent_stats LIMIT 1;' | scalar)"
 CRIOU_STATS=0
+CRIOU_PROFILE=0
 if [ -z "$PROFILE" ]; then
   PROFILE="$(echo 'SELECT id FROM public.profiles LIMIT 1;' | scalar)"
-  [ -n "$PROFILE" ] || falhou "nenhum profiles.id no banco local"
-  echo "INSERT INTO public.agent_stats (profile_id) VALUES ('$PROFILE');" | sql >/dev/null \
+  if [ -z "$PROFILE" ]; then
+    PROFILE="$(scalar <<'SQL'
+WITH novo_user AS (
+  INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, created_at, updated_at)
+  SELECT
+    gen_random_uuid(),
+    'authenticated',
+    'authenticated',
+    'mini-game-race-' || replace(gen_random_uuid()::text, '-', '') || '@example.invalid',
+    now(),
+    now(),
+    now()
+  RETURNING id, email
+), novo_profile AS (
+  INSERT INTO public.profiles (user_id, name, email, role)
+  SELECT u.id, 'Mini Game Race Test', u.email, 'agent'
+  FROM novo_user u
+  WHERE NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.user_id = u.id)
+  RETURNING id, user_id
+)
+SELECT COALESCE(
+  (SELECT id FROM novo_profile),
+  (SELECT p.id FROM public.profiles p JOIN novo_user u ON u.id = p.user_id)
+);
+SQL
+)"
+    [ -n "$PROFILE" ] || falhou "não consegui criar profile sintético"
+    CRIOU_PROFILE=1
+  fi
+  echo "INSERT INTO public.agent_stats (profile_id) VALUES ('$PROFILE') ON CONFLICT (profile_id) DO NOTHING;" | sql >/dev/null \
     || falhou "não consegui semear agent_stats"
   CRIOU_STATS=1
 fi
@@ -44,6 +73,10 @@ cleanup() {
     echo "DELETE FROM public.agent_stats WHERE profile_id = '$PROFILE';" | sql >/dev/null 2>&1
   else
     echo "UPDATE public.agent_stats SET xp = $XP0 WHERE profile_id = '$PROFILE';" | sql >/dev/null 2>&1
+  fi
+  if [ "${CRIOU_PROFILE:-0}" = 1 ]; then
+    echo "DELETE FROM auth.users u USING public.profiles p WHERE p.user_id = u.id AND p.id = '$PROFILE';" | sql >/dev/null 2>&1
+    echo "DELETE FROM public.profiles WHERE id = '$PROFILE';" | sql >/dev/null 2>&1
   fi
 }
 trap cleanup EXIT
