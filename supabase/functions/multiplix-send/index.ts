@@ -85,6 +85,14 @@ type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
 // imediato e proibido; quem decide o teto continua sendo a RPC.
 const RETRY_BACKOFF_MS: readonly number[] = [30_000, 120_000, 600_000];
 
+/** MX01: a coluna `multiplix_events.correlation_id` e uuid; `newCorrelationId`
+ * pode cair no formato `c-...` quando o runtime nao tem `crypto.randomUUID`.
+ * Nesse caso a trilha vai sem correlacao em vez de derrubar a materializacao. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function uuidOrNull(value: string | null | undefined): string | null {
+  return typeof value === "string" && UUID_RE.test(value) ? value : null;
+}
+
 // F25/MX09: permissao nomeada que o produto usa para liberar a ENTRADA no
 // Multiplix (nav/rota e criacao do PROPRIO disparo). A matriz F25 da `agent`
 // `multiplix.audience.customers.own` + `multiplix.dispatch.create`; sem aceitar
@@ -287,12 +295,37 @@ export async function handleMultiplixSend(
       return new Response(JSON.stringify({ ok: false, reason: windowStatus.reason, next_window: windowStatus.next_window }), { headers });
     }
 
+    // MX01: a transicao e soberana. Erro de start — inclusive
+    // `multiplix_dispatch_message_required` de rascunho sem texto — encerra aqui,
+    // ANTES de qualquer materializacao: nao existe caminho que enfileire item de
+    // um rascunho que o banco recusou iniciar.
     const { error: transitionError } = await supabase.rpc("transition_multiplix_dispatch", {
       p_dispatch_id: dispatchId,
       p_action: "start",
     });
     if (transitionError) {
       return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
+    }
+
+    // MX01: NUNCA disparar antes de materializar a fila por itens. O composer
+    // cria o disparo por `multiplix_create_draft` (SOMENTE dispatches +
+    // recipients) e chama este start em seguida; o worker consome exclusivamente
+    // `multiplix_delivery_items`. Sem a conversao abaixo o disparo entrava em
+    // 'sending' com destinatarios pendentes e ZERO itens processaveis.
+    //
+    // O disparo AGENDADO tambem nasce sem bloco/item. Nesse caminho o cron acabou
+    // de transicionar 'scheduled' -> 'sending' antes de chamar este worker. Os
+    // legados que ja estavam em 'sending' quando a migration entrou foram pausados
+    // uma unica vez com `legacy_queue_unmaterialized`; eles so chegam aqui depois
+    // do clique Retomar.
+    const { error: materializeError } = await supabase.rpc("multiplix_materialize_legacy_queue", {
+      p_dispatch_id: dispatchId,
+      p_correlation_id: uuidOrNull(correlationId),
+    });
+    if (materializeError) {
+      // Fail-closed: sem saber o estado da fila nao se envia nada. O cron
+      // reinvoca em ate 2 min e a proxima passada tenta de novo.
+      throw new Error(`multiplix_legacy_queue_materialize_failed: ${materializeError.message}`);
     }
 
     // F11a: cada passada reivindica no maximo MULTIPLIX_BATCH_SIZE (default 20)
