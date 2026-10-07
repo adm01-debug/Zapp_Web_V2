@@ -151,8 +151,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-helpers.ts",
-      "bytes": 18338,
-      "sha256": "56eddcfe54f466d28707177d4f8f7285618de9f7b94ec0867c9c05229360445d"
+      "bytes": 19194,
+      "sha256": "32f66be17a4cc176a888fba7ae19bf57bdbc75b733df0a282032bac14c0be736"
     },
     {
       "path": "supabase/functions/_shared/evolution-media.ts",
@@ -191,8 +191,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "bytes": 21046,
-      "sha256": "1340a173702dc58c24718501a1d3508f492a20ba360dfad386c87fbccf7bf4ec"
+      "bytes": 22181,
+      "sha256": "ab52008035ed09f9448ac58ee7f622504f0006e9b39b868fc8df8d787fdfbe31"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
@@ -1003,7 +1003,7 @@
       "name": "batch-fetch-avatars",
       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
       "verify_jwt": false,
-      "source_sha256": "904cd963f5641888a7cae9b1ea4ad0341cd451be8576bc842d036bb708c8441f",
+      "source_sha256": "b23d6d42a7a1734d8c258678c2533819a1602cfe7cd63f78dc052a167f34d58c",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/edge-boot.ts",
@@ -1344,7 +1344,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "c65e3b374c62558b3dd280630e18d5e9fb8db22ef4491c36d8a415897696b670",
+      "source_sha256": "0341b237ce41c447d40ae9e7b9f838e59e431887eb7f92af7735cabd923f8d88",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1541,7 +1541,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b2ee4677ea3bedd974493e39a4201d3c53338bdcb91ee2cdec9bf7a8bf0e50c4",
+      "source_sha256": "5aa3b747bf36b20ebebba4f7509bf1556625bb5e0e22c2b246030807c3efaa42",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1578,7 +1578,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "1ce9b7c8d859ad58f8f1f5bde33daf8ca867899ee1b9c0b58d725b2b23150a06",
+      "source_sha256": "20067a6a2e8c9df3f3fa312db23c43a244ad7b4d46525a3855c3ee477f76493b",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1780,7 +1780,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b58ed2cf98559834a08489417a1f70983c50f12131d1de447c802451f6798671",
+      "source_sha256": "cb7d92f26cd5e9765e95ddc6330d4df176694e2091d49f11a8f3959186e48972",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -1887,7 +1887,7 @@
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "0ad173ad633f269b3f43f8f0548fb9aee57492525c320e17e2ee05cc0640f4f5",
+      "source_sha256": "565291048101a520df27f70b158061aa8bcf6995e670fb234e63b565b1d1deb7",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
@@ -1901,5 +1901,5 @@
       ]
     }
   ],
-  "manifest_sha256": "60be5b7d26a4f00a3985b06bd43875aa70cbd59cce573c83e07ffed39b4b5786"
+  "manifest_sha256": "0d7bc6148268c27f7000f43f50d63406bf8a848f0dfe0610fa59d7a5f383f6ee"
 }
