@@ -49,6 +49,14 @@
 **I. Clique abre o episódio (S085–S094)** [wave 3] S085 contrato de navegação `openEpisode(alvo)` · S086 mensagem → Chat + rolar até a mensagem e destacar · S087 mensagem antiga fora da janela carregada: carregar até achar · S088 e-mail → módulo E-mail na conversa · S089 ligação → detalhe com gravação · S090 nota → aba Notas na nota · S091 tarefa → aba Tarefas na tarefa · S092 arquivo → pré-visualização · S093 proposta → SalesView · S094 transferência/atribuição/encerramento → painel de detalhes do evento.
 **J. Fechamento (S095–S100)** [wave 3 + Claude] S095 ~~exportar histórico~~ **CANCELADA (D11)**; no lugar: teste que garante que a aba NÃO oferece exportar/baixar/copiar a timeline e que o texto dos eventos não é arrastável como arquivo · S096 paginação por rolagem (sem teto de 500/200) · S097 teclado e leitor de tela (Enter abre, rótulo com categoria e autor) · S098 E2E (`e2e/journey.spec.ts`, novo) · S099 bundle ≤ 343 KB, tsc, lint, contratos, verificação visual na pré-visualização · S100 documentação (`docs/design/`) e registro de estado.
 
+
+## 4-B. Fase K — design avançado (aprovado pelo dono em 07/10; vem depois das 100 etapas)
+
+Cores SÓ as do sistema; efeitos só do pacote `motion/` (J05); reduzir movimento respeitado. Os cartões K editam a mesma timeline, por isso são **encadeados** (cada um depende do anterior integrado).
+
+- **K01** marcos maiores no trilho (primeira interação, encerramento, proposta ganha, reabertura) · **K02** separador "N dias sem contato" (> 3 dias) · **K03** setas de recebido/enviado, ligação perdida em destaque, borda lateral na cor da categoria e mini-ícone da categoria na foto · **K04** barra de filtros fixa no topo da rolagem, com etiquetas e contagem · **K05** faixa de saúde do relacionamento (Ativo / Morno / Esfriando / Inativo) · **K06** esqueleto de carga, estado vazio e estado de erro · **K07** mensagens agrupadas como balões ao expandir · **K08** filtros em folha deslizante no celular · **K09** dica com a data e hora completas · **K10** testes de ponta a ponta da fase K · **K11** documentação.
+- **Consistência no sistema** (itens 13 e 14 das sugestões): plano próprio `PLANO_CONSISTENCIA_DESIGN_SISTEMA_2026-10-07.md` (cartões Z01–Z03).
+
 ## 5. Cartões
 **Onda 1 (criada agora; arquivos novos, independentes):** **J05** [iris] peças de efeito sutil `src/components/inbox/tabs/journey/motion/` (D12) · **J01** [hugo] S009–S018 `src/lib/journey/model.ts` · **J02** [hugo] S043–S044 `src/lib/journey/periodRange.ts` · **J03** [hugo] S073–S083 `src/lib/journey/stats.ts` · **J04** [iris] S084 `JourneyStatsHero.tsx`.
 **Onda 2 (depois de J01–J04 integrados):** fontes e mapeadores (C, D), período e filtros (E, F), visual da timeline (G), ligação do hero ao `JourneyTab`.
@@ -62,3 +70,43 @@ Selo "Visualizada" da proposta (decidido pelo dono em 07/10: não há dado); **e
 
 ## 8. Estado de execução
 _A preencher._ Onda 1 criada em 07/10/2026.
+
+## Automação das ondas seguintes (programada em 07/10/2026)
+
+Todos os cartões abaixo **já estão escritos e programados** no motor de gatilhos (`~/arquitetura-v2/gatilhos/`): **cada um nasce sozinho** no quadro, para o perfil indicado, assim que os cartões de que depende estiverem **integrados** na branch do dia (não basta o agente terminar). O motor roda a cada 5 minutos (timer do usuário) e a cada ~30 minutos pelo lembrete do Claude; é idempotente. O painel **GATILHOS_07-10.md** na área de trabalho mostra o que já nasceu e o que ainda espera. As **verificações visuais** que só o Claude faz ficam no painel de pendências do Claude. Regras permanentes em todos: nenhuma informação sai do sistema, só cores do sistema, efeitos sutis com reduzir movimento, sem selo de canal/origem.
+
+### Journey — ondas 2 e 3
+
+| Cartão | Perfil | Nasce quando estiverem INTEGRADOS | O que faz |
+|---|---|---|---|
+| **J06** | hugo | J01 | Journey: linhas cruas e fontes de ligação e e-mail |
+| **J07** | hugo | J01, J06 | Journey: mapeadores de todas as fontes para eventos do histórico |
+| **J08** | hugo | J01, J02, J06, J07 | Journey: hook novo da timeline (período, tipo, usuários, paginação) |
+| **J09** | hugo | J01, R01 | Journey: resolver quem agiu (foto e nome) |
+| **J10** | iris | J01, J02, J05, R02 | Journey: barra de filtros (período, tipo e usuários) |
+| **J11** | iris | J01, J05, R02 | Journey: cartão do episódio e lista da timeline |
+| **J12** | iris | J03, J04, J08, J09, J10, J11 | Journey: ligar tudo na aba (hero, filtros, timeline, novo hook) |
+| **J13** | iris | J12 | Journey: clique abre o episódio — contrato e mensagens do chat |
+| **J14** | iris | J13 | Journey: clique abre a nota e a tarefa |
+| **J15** | iris | J13, F01, C04, R08 | Journey: clique abre o arquivo e a proposta |
+| **J16** | iris | J13, C03 | Journey: clique abre o e-mail e a ligação |
+| **J17** | iris | J13 | Journey: clique abre o detalhe de transferência, atribuição e encerramento |
+| **J18** | workertestes | J12 | Journey: testes de filtros, teclado e garantia de que nada sai do sistema |
+| **J19** | workertestes | J14, J15, J16, J17 | Journey: teste de ponta a ponta |
+| **J20** | vera | J19 | Journey: documentação |
+
+### Journey — fase K
+
+| Cartão | Perfil | Nasce quando estiverem INTEGRADOS | O que faz |
+|---|---|---|---|
+| **K01** | iris | J12 | Journey design: marcos no trilho |
+| **K02** | iris | K01 | Journey design: separador de silêncio |
+| **K03** | iris | K02 | Journey design: direção, ligação perdida, borda colorida e selo da categoria na foto |
+| **K04** | iris | K03 | Journey design: barra de filtros fixa no topo da rolagem |
+| **K05** | iris | K04 | Journey design: faixa de saúde do relacionamento |
+| **K06** | iris | K05 | Journey design: esqueleto, estado vazio e erro |
+| **K07** | iris | K06 | Journey design: mensagens agrupadas como balões |
+| **K08** | iris | K07 | Journey design: filtros em folha deslizante no celular |
+| **K09** | iris | K08 | Journey design: dica com a data e hora completas |
+| **K10** | workertestes | K09 | Journey design: testes de ponta a ponta da fase K |
+| **K11** | vera | K10 | Journey design: documentação da fase K |

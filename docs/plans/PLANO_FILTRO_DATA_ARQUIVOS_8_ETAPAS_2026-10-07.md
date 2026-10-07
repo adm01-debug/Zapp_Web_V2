@@ -26,3 +26,12 @@ Filtro por data em outras abas; salvar o período entre sessões; filtro no serv
 
 ## 5. Estado de execução
 _A preencher._
+
+## Automação das ondas seguintes (programada em 07/10/2026)
+
+Todos os cartões abaixo **já estão escritos e programados** no motor de gatilhos (`~/arquitetura-v2/gatilhos/`): **cada um nasce sozinho** no quadro, para o perfil indicado, assim que os cartões de que depende estiverem **integrados** na branch do dia (não basta o agente terminar). O motor roda a cada 5 minutos (timer do usuário) e a cada ~30 minutos pelo lembrete do Claude; é idempotente. O painel **GATILHOS_07-10.md** na área de trabalho mostra o que já nasceu e o que ainda espera. As **verificações visuais** que só o Claude faz ficam no painel de pendências do Claude. Regras permanentes em todos: nenhuma informação sai do sistema, só cores do sistema, efeitos sutis com reduzir movimento, sem selo de canal/origem.
+
+| Cartão | Perfil | Nasce quando estiverem INTEGRADOS | O que faz |
+|---|---|---|---|
+| **F07** | workertestes | F01 | Filtro de data em Arquivos: testes adversariais |
+| **F10** | vera | F01 | Filtro de data em Arquivos: documentação |

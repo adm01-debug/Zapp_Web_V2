@@ -57,3 +57,18 @@ Alterar a política de download; mudar o armazenamento dos arquivos; reconhecer 
 
 ## 9. Estado de execução
 _A preencher._ Onda 1 criada em 07/10/2026.
+
+## Automação das ondas seguintes (programada em 07/10/2026)
+
+Todos os cartões abaixo **já estão escritos e programados** no motor de gatilhos (`~/arquitetura-v2/gatilhos/`): **cada um nasce sozinho** no quadro, para o perfil indicado, assim que os cartões de que depende estiverem **integrados** na branch do dia (não basta o agente terminar). O motor roda a cada 5 minutos (timer do usuário) e a cada ~30 minutos pelo lembrete do Claude; é idempotente. O painel **GATILHOS_07-10.md** na área de trabalho mostra o que já nasceu e o que ainda espera. As **verificações visuais** que só o Claude faz ficam no painel de pendências do Claude. Regras permanentes em todos: nenhuma informação sai do sistema, só cores do sistema, efeitos sutis com reduzir movimento, sem selo de canal/origem.
+
+| Cartão | Perfil | Nasce quando estiverem INTEGRADOS | O que faz |
+|---|---|---|---|
+| **R11** | iris | R02 | Cartão de arquivo: remover o selo de canal do SenderAvatar |
+| **R04** | iris | R01, R02, R03, R11, A01, M02 | Cartão de arquivo: layout igual ao mockup (nome, tipo, tamanho, data, remetente) |
+| **R05** | iris | R04, M04 | Cartão de arquivo: play e duração dentro da miniatura (vídeo e áudio) |
+| **R06** | iris | R04 | Cartão de arquivo: Lista e Tabela com quem enviou |
+| **R07** | iris | R04 | Cartão de arquivo: painel de detalhes igual ao mockup |
+| **R08** | iris | R04, F01, C04 | Cartão de arquivo: cabeçalho, subtítulo e funil com filtro de remetente |
+| **R09** | workertestes | R04, R05, R06, R07, R08 | Cartão de arquivo: teste de ponta a ponta |
+| **R10** | vera | R04, R05, R06, R07, R08 | Cartão de arquivo: documentação |
