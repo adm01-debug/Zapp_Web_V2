@@ -1,30 +1,21 @@
 /**
  * X030 — contrato executável do OPT-OUT no webhook de mensagens.
  *
- * R2-API-006 (#69): os efeitos deixaram de ser chamadas soltas depois do
- * ingest — a palavra casada entra na MESMA chamada de `ingest_inbound_message`
- * (que registra a pendência na outbox na mesma transação) e
- * `drain_inbound_message_effects` aplica a supressão. Travado no contrato novo:
- *
- *   1. "PARE" casa em `talkx_optout_keywords` (mesma normalização da RPC) e a
- *      palavra chega ao ingest como `p_opt_out_keyword` (a campanha NÃO é
- *      resolvida na edge — sem `p_campaign_id` em lugar nenhum);
- *   2. a autoresposta sai UMA vez, pelo token da instância (`get_instance_token`)
- *      e com o texto de `talkx_settings.optout_autoreply`, só quando a drenagem
- *      devolve `suppression_id` novo;
- *   3. repetição (`already_suppressed`) NÃO reenvia a autoresposta;
+ * R2-API-006 (#69): a palavra casada viaja na MESMA chamada de `ingest_inbound_message`
+ * (pendência na outbox na mesma transação) e `drain_inbound_message_effects` aplica.
+ * Travado: (1) `p_opt_out_keyword` chega ao ingest, sem `p_campaign_id` na edge;
+ * (2) autoresposta UMA vez, pelo token da instância, só com `suppression_id` novo;
+ * (3) repetição NÃO reenvia a autoresposta;
  *   4. `no_recent_send` (gate de campanha em 30 dias, dentro da RPC) não gera
  *      autoresposta;
- *   5. opt-out NÃO vira resposta (a RPC só enfileira a supressão — a exclusão
- *      mútua é provada no SQL);
+ *   5. opt-out NÃO vira resposta (exclusão mútua provada no SQL);
  *   6. resposta de botão/lista com id `talkx_optout` (X064) também é opt-out;
  *   7. as palavras ativas são lidas com cache (uma leitura serve vários eventos);
  *   8. R2-API-008 — a confirmação só é anunciada como enviada quando o provedor
  *      ACEITA (HTTP 2xx); 4xx/5xx e queda de transporte não podem ser logadas
  *      como envio bem-sucedido.
  *
- * O SQL (pendência escrita com a mensagem, supressão aplicada e baixada numa
- * transação, idempotência) é provado na migration real em Postgres descartável:
+ * O SQL (pendência/outbox, supressão e idempotência) é provado na migration real:
  *   scripts/db-audit/inbound-effects-replay.test.sh
  * Payloads GO anonimizados em fixture (sem telefone/CPF reais).
  */
