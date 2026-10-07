@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_URL } from '@/config/supabase';
 import {
@@ -76,6 +76,10 @@ export function useResolvedStorageUrl(
     initialState(source, usableSeedUrl(seed)));
   const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
   const lastRefreshAtRef = useRef(0);
+  const activeIdentityRef = useRef({ source, seedUrl });
+  useLayoutEffect(() => {
+    activeIdentityRef.current = { source, seedUrl };
+  }, [source, seedUrl]);
   const activeState = state.source === source && state.seedUrl === seedUrl
     ? state
     : initialState(source, seedUrl);
@@ -93,22 +97,30 @@ export function useResolvedStorageUrl(
 
   const refresh = useCallback(async (): Promise<string | null> => {
     if (!reference) return source;
+    const isActiveRefresh = () => activeIdentityRef.current.source === source
+      && activeIdentityRef.current.seedUrl === seedUrl;
+    if (!isActiveRefresh()) return null;
     if (refreshPromiseRef.current) return refreshPromiseRef.current;
     if (Date.now() - lastRefreshAtRef.current < REFRESH_COOLDOWN_MS) {
       return null;
     }
 
     lastRefreshAtRef.current = Date.now();
-    setState((current) => ({
-      source,
-      seedUrl,
-      url: current.source === source && current.seedUrl === seedUrl ? current.url : '',
-      isLoading: true,
-      error: null,
-    }));
-    const pending = resolve()
+    setState((current) => (isActiveRefresh()
+      ? {
+        source,
+        seedUrl,
+        url: current.source === source && current.seedUrl === seedUrl ? current.url : '',
+        isLoading: true,
+        error: null,
+      }
+      : current));
+    let pending: Promise<string | null> | null = null;
+    pending = resolve()
       .then((url) => {
-        setState({ source, seedUrl, url, isLoading: false, error: null });
+        setState((current) => (isActiveRefresh()
+          ? { source, seedUrl, url, isLoading: false, error: null }
+          : current));
         return url;
       })
       .catch((cause) => {
@@ -118,11 +130,13 @@ export function useResolvedStorageUrl(
           pathLength: reference.path.length,
           message: error.message,
         });
-        setState({ source, seedUrl, url: '', isLoading: false, error });
+        setState((current) => (isActiveRefresh()
+          ? { source, seedUrl, url: '', isLoading: false, error }
+          : current));
         return null;
       })
       .finally(() => {
-        refreshPromiseRef.current = null;
+        if (refreshPromiseRef.current === pending) refreshPromiseRef.current = null;
       });
     refreshPromiseRef.current = pending;
     return pending;
