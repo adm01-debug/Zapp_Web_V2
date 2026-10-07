@@ -55,6 +55,10 @@ const ALLOWLIST = new Set([
   // modalidade declarada antes continua declarada quando o `audio_stt` entra. Passo de uma linha em
   // db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/ia131-audio-stt-cadeia.test.sh',
+  // R2-DB-021 / item 303 (P2): prova do modelo de autoria de message_reactions em
+  // container descartavel (docker); passo de YAML a promover em db-guard.yml pelo
+  // dono do workflow (agente não edita workflow).
+  'scripts/db-audit/message-reactions-author-model.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
