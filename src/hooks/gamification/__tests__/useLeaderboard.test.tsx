@@ -365,9 +365,17 @@ describe('useLeaderboard — atualização manual e realtime', () => {
   it('atualizar marca "atualizando" e refaz a consulta do período corrente', async () => {
     const { result } = await montar();
 
-    await act(async () => result.current.handleRefresh());
+    // Segura a RPC do refresh: o estado intermediário tem de aparecer ENQUANTO
+    // a consulta está em voo (não só o fim).
+    h.manual = true;
+    await act(async () => { void result.current.handleRefresh(); });
+
+    expect(result.current.isRefreshing).toBe(true);
     await waitFor(() => expect(h.rpcCalls.length).toBe(2));
     expect(h.rpcCalls[1].args).toEqual({ p_period: 'week', p_limit: 10 });
+    expect(h.pendentes).toHaveLength(1);
+
+    await responder(0, [linha()]);
     await waitFor(() => expect(result.current.isRefreshing).toBe(false));
   });
 

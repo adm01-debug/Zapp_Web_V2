@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
   ops: [] as Array<{ tipo: string; payload?: unknown; eq?: { col: string; val: unknown }; tabela: string }>,
   chamadas: [] as Array<{ tipo: string; valor?: unknown; opts?: unknown }>,
   leituras: 0,
+  ordens: [] as Array<{ col: string; opts?: unknown }>,
   freioEscrita: undefined as undefined | { release: () => void },
 }));
 
@@ -34,7 +35,7 @@ vi.mock('@/integrations/supabase/client', () => {
   };
   type Construtor = {
     select: () => Construtor;
-    order: () => Construtor;
+    order: (col: string, opts?: unknown) => Construtor;
     insert: (payload: unknown) => Promise<unknown>;
     update: (payload: unknown) => Cadeia;
     delete: () => Cadeia;
@@ -49,7 +50,7 @@ vi.mock('@/integrations/supabase/client', () => {
   const builder = (tabela: string) => {
     const b: Construtor = {
       select: () => b,
-      order: () => { h.leituras += 1; return b; },
+      order: (col: string, opts?: unknown) => { h.leituras += 1; h.ordens.push({ col, opts }); return b; },
       insert: (payload: unknown) => {
         h.ops.push({ tipo: 'insert', payload, tabela });
         return escrita();
@@ -123,6 +124,7 @@ function estado(rows: unknown[] = []) {
   h.ops = [];
   h.chamadas = [];
   h.leituras = 0;
+  h.ordens = [];
   h.freioEscrita = undefined;
   vi.clearAllMocks();
 }
@@ -157,6 +159,9 @@ describe('useScheduledReports — leitura', () => {
     expect(result.current.reports).toEqual([RELATORIO]);
     expect(result.current.isDialogOpen).toBe(false);
     expect(h.leituras).toBe(1);
+    // "do mais recente para o mais antigo" é a ordenação PEDIDA ao banco:
+    // coluna `created_at` em ordem decrescente (useScheduledReports.ts:54).
+    expect(h.ordens).toEqual([{ col: 'created_at', opts: { ascending: false } }]);
   });
 
   it('erro de leitura (RLS/rede) avisa o usuário e encerra o carregamento', async () => {
@@ -325,12 +330,16 @@ describe('useScheduledReports — gravação', () => {
   it('remover exclui a linha pedida e relê a lista', async () => {
     estado([RELATORIO]);
     const hook = await montar();
+    const leiturasAntes = h.leituras;
 
     await act(async () => { await hook.result.current.handleDelete('rel-1'); });
 
     const del = ultimaEscrita('delete');
     expect(del?.eq).toEqual({ col: 'id', val: 'rel-1' });
     expect(toastSuccess).toHaveBeenCalledWith('Relatório removido!');
+    // "relê a lista": a releitura é disparada depois do delete (handleDelete →
+    // fetchReports), então a leitura nova chega em um tick seguinte.
+    await waitFor(() => expect(h.leituras).toBeGreaterThan(leiturasAntes));
   });
 
   it('erro ao remover avisa o usuário', async () => {
