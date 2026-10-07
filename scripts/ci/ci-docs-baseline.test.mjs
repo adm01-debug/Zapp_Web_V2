@@ -1,17 +1,3 @@
-// TRA-009 — a documentação canônica de CI ficou para trás da baseline.
-//
-// Invariantes fixados aqui (o texto não é relido a cada PR; sem teste, a contagem antiga e a
-// instrução revogada de `strict:false` voltariam):
-//   * `CLAUDE.md` fala de 16 arquivos YAML em `.github/workflows/` e da fonte gerada
-//     `docs/ci/README.md` — nunca de 14/17;
-//   * toda menção a `strict=false` está rotulada como revogada/histórica, e a política vigente
-//     declarada é `strict=true`, igual a `scripts/ci/github-settings-baseline.json`;
-//   * cada checkbox do plano bate com o estado reconciliado (P006) e nada que aguarda runtime
-//     aparece como concluído;
-//   * as etapas citadas pelo TRA-009 têm linha própria na tabela de reconciliação.
-//
-// Os dois lados são provados por fixtures em string (estado anterior FALHA, corrigido PASSA),
-// além das asserções sobre os arquivos reais.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,12 +17,10 @@ const BUN_LOCK = join(RAIZ, 'bun.lock');
 
 const ETAPAS_TRA009 = ['E01', 'E11', 'E55', 'E56', 'E62', 'E76', 'E93', 'E95', 'E96'];
 
-// Estado auditado (P006) -> marca do checkbox no plano.
 const MARCA = {
   DONE_VERIFIED: 'x', IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE: '~', PARTIAL: '~', NEEDS_REVALIDATION: '~',
   SUPERSEDED: '!', NOT_IMPLEMENTED: ' ', PRODUCT_DECISION_REQUIRED: ' ', BLOCKED_TECHNICAL: ' ',
 };
-// Etapas que ESTA entrega concluiu depois da auditoria; cada override exige linha na tabela.
 const OVERRIDES = { E11: 'x', E95: 'x' };
 const ESTADOS = ['CONCLUÍDA', 'AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDAÇÃO',
   'REVOGADA', 'PENDENTE', 'DECISÃO PENDENTE', 'BLOQUEIO TÉCNICO'];
@@ -150,9 +134,6 @@ function blocosSuperados(plano) {
   return blocos;
 }
 
-// Fronteira da camada de reconciliacao (secao `## Reconciliação TRA-009`): as linhas de tabela
-// dentro dela sao a evidencia declarada de cada etapa. Celula cortada no meio ("verdade…") e
-// cabecalho `## ` repetido sao defeitos que o revisor ja recusou neste cartao.
 function linhasDaReconciliacao(plano) {
   const ls = linhas(plano);
   const ini = ls.findIndex((l) => /^##\s+Reconciliação TRA-009/.test(l));
@@ -184,8 +165,6 @@ function violacoesCabecalhoDuplicado(plano) {
   });
   return out;
 }
-
-// ── Fixtures ─────────────────────────────────────────────────────────────────
 
 const CLAUDE_ANTES = [
   '**Plano vigente:** auditoria exaustiva dos 17 workflows + meta CI score 10/10.',
@@ -269,8 +248,6 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
     'cabecalho "## " repetido tinha de ser rejeitado');
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
-
-// ── Arquivos reais ───────────────────────────────────────────────────────────
 
 test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
