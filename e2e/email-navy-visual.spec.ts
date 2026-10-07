@@ -406,6 +406,10 @@ test('editor WYSIWYG aplica formatação, link e histórico de desfazer sem exec
 test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis', async ({ page }) => {
   await page.setViewportSize({ width: 640, height: 720 });
   await abrirEmail(page);
+  // O zoom entra DEPOIS do boot (portão `abrirEmail`), e não por `addInitScript`: no init script o
+  // `<html>` ainda não existe (medido: `document.documentElement === null` → TypeError) e é o tema
+  // do app que grava o atributo `style` do `<html>` no boot, então um zoom aplicado antes dele
+  // seria perdido.
   await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nova mensagem' }).first()).toBeVisible();
@@ -413,6 +417,9 @@ test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis',
   await firstThreadButton.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Detalhes' })).toBeVisible();
+  // O zoom É o cenário da medição abaixo: se ele tiver se perdido (um reload disparado por chunk
+  // error repõe o app do zero), o overflow mediria uma tela sem 200% e passaria em falso.
+  expect(await page.evaluate(() => document.documentElement.style.fontSize)).toBe('200%');
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(2);
 });
