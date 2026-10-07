@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { CircleHelp, Loader2, Mail, Plus, RefreshCw, Search, Wifi } from 'lucide-react';
 import { useGmail } from '@/hooks/integrations/useGmail';
 import { useEmailThreadListQuery } from '@/hooks/email/useEmailThreadListQuery';
+import { useEmailThreadForContact } from '@/hooks/integrations/useEmailThreadForContact';
 import { EmailThreadList } from './EmailThreadList';
 import { EmailChatThread } from './EmailChatThread';
 import { EmailContactPanel } from './EmailContactPanel';
@@ -18,6 +19,27 @@ import { emailLoadErrorCopy } from '@/lib/emailErrorState';
 
 function matchesWideDetailsLayout(): boolean {
   return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1280px)').matches;
+}
+
+type EmailContactIntent = { contactId: string | null; to: string | null };
+
+/** Lê ?emailContact/?emailTo da URL; ?emailThread explícito suprime a intenção. */
+function readEmailContactIntent(): EmailContactIntent | null {
+  const params = new URLSearchParams(window.location.search);
+  const contactId = params.get('emailContact');
+  const to = params.get('emailTo');
+  if (!contactId && !to) return null;
+  if (params.get('emailThread')) return null;
+  return { contactId, to };
+}
+
+/** Remove emailContact/emailTo da entrada atual sem empilhar histórico. */
+function stripEmailContactParams(): void {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('emailContact');
+  url.searchParams.delete('emailTo');
+  const base = window.history.state && typeof window.history.state === 'object' ? window.history.state : {};
+  window.history.replaceState(base, '', url.href);
 }
 
 interface EmailChatInboxProps {
@@ -62,6 +84,9 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
   }, [threadsLoading, threadsPageCount, page, setPage]);
   const [showComposer, setShowComposer] = useState(false);
   const [composerTo, setComposerTo] = useState('');
+  // C03 — intenção vinda do painel do contato (?emailContact/?emailTo); só é
+  // consumida depois de haver conta Gmail ativa.
+  const [contactIntent, setContactIntent] = useState<EmailContactIntent | null>(readEmailContactIntent);
   const [showDetails, setShowDetails] = useState(matchesWideDetailsLayout);
   const [isWideDetailsLayout, setIsWideDetailsLayout] = useState(matchesWideDetailsLayout);
   const [threadContext, setThreadContext] = useState<{ accountId: string | null } & ThreadContextData>({ accountId: null, messages: [], attachments: [] });
@@ -69,6 +94,7 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
   // quando mensagens/anexos mudam de verdade. Uma arrow inline gravava um objeto novo a cada
   // render do pai, o que re-disparava o efeito do filho em ciclo.
   const activeAccountId = activeAccount?.id ?? null;
+  const contactThread = useEmailThreadForContact(activeAccountId, contactIntent?.contactId);
   const handleThreadContextChange = useCallback((data: ThreadContextData) => {
     if (!activeAccountId) return;
     setThreadContext(previous => (
@@ -97,14 +123,31 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
     return () => media.removeEventListener('change', update);
   }, []);
 
-  useEffect(() => {
-    const handlePopState = () => {
-      setSelectedThreadId(new URLSearchParams(window.location.search).get('emailThread'));
-      setThreadContext({ accountId: null, messages: [], attachments: [] });
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+  const syncEmailParamsFromUrl = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    setSelectedThreadId(params.get('emailThread'));
+    setThreadContext({ accountId: null, messages: [], attachments: [] });
+    const intent = readEmailContactIntent();
+    if (!intent && (params.has('emailContact') || params.has('emailTo'))) {
+      // ?emailThread explícito venceu — os parâmetros de contato são descartados.
+      stripEmailContactParams();
+    }
+    setContactIntent(intent);
   }, []);
+
+  useEffect(() => {
+    const onZappNavigate = (event: Event) => {
+      // Mesma view (navigateToView com a view já ativa usa replaceState, que não
+      // dispara popstate): a intenção de contato ainda precisa ser re-lida.
+      if ((event as CustomEvent<{ view?: string }>).detail?.view === 'email-chat') syncEmailParamsFromUrl();
+    };
+    window.addEventListener('popstate', syncEmailParamsFromUrl);
+    window.addEventListener('zapp:navigate', onZappNavigate);
+    return () => {
+      window.removeEventListener('popstate', syncEmailParamsFromUrl);
+      window.removeEventListener('zapp:navigate', onZappNavigate);
+    };
+  }, [syncEmailParamsFromUrl]);
 
   const navigateToThread = useCallback((threadId: string | null, replace = false) => {
     const url = new URL(window.location.href);
@@ -115,6 +158,43 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
     setThreadContext({ accountId: null, messages: [], attachments: [] });
     if (threadId) setShowDetails(matchesWideDetailsLayout());
   }, []);
+
+  // C03 — consome ?emailContact/?emailTo SÓ com conta Gmail ativa (sem conta a
+  // tela de conectar segue e os parâmetros ficam preservados até ela existir).
+  // Achou a conversa mais recente do contato → abre na mesma entrada; não achou
+  // (ou a consulta falhou) → compositor novo com o destinatário. Ao consumir, os
+  // parâmetros saem da URL para não reabrir no recarregar nem no voltar.
+  // Adiado p/ microtask: evita setState síncrono no corpo do effect
+  // (react-hooks/set-state-in-effect) — o estado muda em resposta a URL + consulta.
+  useEffect(() => {
+    let alive = true;
+    queueMicrotask(() => {
+      if (!alive) return;
+      const params = new URLSearchParams(window.location.search);
+      if ((params.has('emailContact') || params.has('emailTo')) && params.get('emailThread')) {
+        // ?emailThread explícito vence — os parâmetros de contato são descartados.
+        // (a intenção nunca fica setada nesse caso: o leitor suprime quando há thread)
+        stripEmailContactParams();
+        return;
+      }
+      if (!contactIntent || !activeAccount) return;
+      // A intenção só vale enquanto os parâmetros estão na URL: se uma navegação
+      // intermediária (ex.: abrir outra conversa) os removeu, não consome.
+      if (!params.has('emailContact') && !params.has('emailTo')) return;
+      if (contactIntent.contactId && contactThread.status === 'loading') return;
+
+      stripEmailContactParams();
+      const intent = contactIntent;
+      setContactIntent(null);
+      if (intent.contactId && contactThread.status === 'found' && contactThread.threadId) {
+        navigateToThread(contactThread.threadId, true);
+      } else {
+        setComposerTo(intent.to ?? '');
+        setShowComposer(true);
+      }
+    });
+    return () => { alive = false; };
+  }, [contactIntent, activeAccount, contactThread.status, contactThread.threadId, navigateToThread]);
 
   const toggleDetails = useCallback(() => {
     setShowDetails(open => {

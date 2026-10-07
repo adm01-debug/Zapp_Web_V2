@@ -93,6 +93,9 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
   }),
 }));
 
+vi.mock('@/hooks/integrations/useEmailThreadForContact', () => ({
+  useEmailThreadForContact: () => ({ status: 'none', threadId: null }),
+}));
 vi.mock('../EmailThreadList', () => ({
   EmailThreadList: ({ threads, onSelectThread }: { threads: EmailThread[]; onSelectThread: (thread: EmailThread) => void }) => {
     counters.inboxRenders += 1;

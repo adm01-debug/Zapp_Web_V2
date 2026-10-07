@@ -161,10 +161,17 @@ function getViewFromUrl(defaultView: string): string {
  * Writes the canonical view to the URL (?view=<id>), preserving skip-to-content
  * anchors. Single source of the URL rules: the hook and every non-hook call site
  * go through here, so the reserved-hash semantics cannot drift between them.
+ * `extraParams` grava (`string`) ou remove (`null`) query params na mesma entrada.
  */
-export function setViewParam(view: string, replace = false, entryId?: string): void {
+export function setViewParam(view: string, replace = false, entryId?: string, extraParams?: Record<string, string | null>): void {
   const url = new URL(window.location.href);
   url.searchParams.set('view', view);
+  if (extraParams) {
+    for (const [key, value] of Object.entries(extraParams)) {
+      if (value === null) url.searchParams.delete(key);
+      else url.searchParams.set(key, value);
+    }
+  }
   if (url.hash && !RESERVED_HASHES.has(url.hash.replace('#', ''))) {
     url.hash = '';
   }
@@ -181,6 +188,19 @@ export function setViewParam(view: string, replace = false, entryId?: string): v
   }
 }
 
+const UUID_PARAM_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EMAIL_PARAM_RE = /^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/;
+const EMAIL_TO_MAX_LENGTH = 254;
+
+/**
+ * Lista fixa de parâmetros extras aceitos por `navigateToView`: chave → saneador.
+ * Chave fora da lista é ignorada; saneador que devolve null descarta o valor.
+ */
+const NAV_PARAM_SANITIZERS: Record<string, (value: string) => string | null> = {
+  emailContact: value => (UUID_PARAM_RE.test(value) ? value : null),
+  emailTo: value => (value.length <= EMAIL_TO_MAX_LENGTH && EMAIL_PARAM_RE.test(value) ? value : null),
+};
+
 /**
  * Shared navigation helper for non-hook call sites (GlobalSearch, ContactActionButtons, etc.).
  * Updates the URL and dispatches a custom event so the hook pushes a new history entry
@@ -188,14 +208,28 @@ export function setViewParam(view: string, replace = false, entryId?: string): v
  *
  * Always calls setViewParam — when the view is already active it passes replace=true so
  * any stale non-reserved hash is cleaned via replaceState without adding a history entry.
+ *
+ * `params` (opcional) é saneado por NAV_PARAM_SANITIZERS e gravado na MESMA entrada.
+ * Uma intenção de e-mail de contato também limpa `emailThread` remanescente — a
+ * conversa de outro contexto não pode barrar o pedido novo (`?emailThread`
+ * explícito em deep link continua valendo porque não passa por aqui).
  */
-export function navigateToView(view: string): void {
+export function navigateToView(view: string, params?: Record<string, string>): void {
   const currentView = new URLSearchParams(window.location.search).get('view');
   const replace = currentView === view;
   // Só gera identidade quando empilha entrada nova: um replace (view já ativa)
   // não deve marcador — a entrada atual continua com a identidade dela.
   const entryId = replace ? undefined : createEntryId();
-  setViewParam(view, replace, entryId);
+  let extraParams: Record<string, string | null> | undefined;
+  if (params) {
+    extraParams = {};
+    for (const [key, value] of Object.entries(params)) {
+      const sanitized = NAV_PARAM_SANITIZERS[key]?.(value);
+      if (sanitized !== null && sanitized !== undefined) extraParams[key] = sanitized;
+    }
+    if (Object.keys(extraParams).length > 0) extraParams.emailThread = null;
+  }
+  setViewParam(view, replace, entryId, extraParams);
   window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view, entryId } }));
 }
 
