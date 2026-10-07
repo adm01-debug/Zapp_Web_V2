@@ -2,27 +2,55 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, sanitizeString, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 
-Deno.serve(async (req) => {
+export interface CreateUserCallerClient {
+  auth: {
+    getUser: () => PromiseLike<{ data: { user: { id: string } | null }; error: unknown }>;
+  };
+}
+
+export interface CreateUserAdminClient {
+  auth: {
+    admin: {
+      createUser: (attrs: {
+        email: string;
+        password: string;
+        email_confirm: boolean;
+        user_metadata: Record<string, unknown>;
+      }) => PromiseLike<{ data: { user: { id: string } | null }; error: { message: string } | null }>;
+    };
+  };
+  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from: (table: string) => any;
+}
+
+export interface CreateUserDeps {
+  env?: (name: string) => string;
+  checkRateLimit?: (key: string, maxRequests: number, windowMs: number) => { allowed: boolean };
+  caller?: CreateUserCallerClient;
+  admin?: CreateUserAdminClient;
+}
+
+export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps = {}): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("create-user");
+  const env = deps.env ?? requireEnv;
+  const rateLimit = deps.checkRateLimit ?? checkRateLimit;
 
   const ip = getClientIP(req);
-  const rl = checkRateLimit(`create-user:${ip}`, 5, 60_000);
+  const rl = rateLimit(`create-user:${ip}`, 5, 60_000);
   if (!rl.allowed) return errorResponse('Rate limit exceeded', 429, req);
 
   try {
-    const supabaseUrl = requireEnv("SUPABASE_URL");
-    const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       log.warn("Missing auth header");
       return errorResponse("Não autorizado", 401, req);
     }
 
-    const callerClient = createClient(supabaseUrl, requireEnv("SUPABASE_ANON_KEY"), {
+    const callerClient: CreateUserCallerClient = deps.caller ?? createClient(env("SUPABASE_URL"), env("SUPABASE_ANON_KEY"), {
       global: { headers: { Authorization: authHeader } },
     });
 
@@ -32,7 +60,7 @@ Deno.serve(async (req) => {
       return errorResponse("Não autorizado", 401, req);
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const adminClient: CreateUserAdminClient = deps.admin ?? createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"));
     const { data: roleData } = await adminClient
       .from("user_roles")
       .select("role")
@@ -154,4 +182,6 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: err instanceof Error ? err.message : String(err) });
     return internalErrorResponse(err, req);
   }
-});
+}
+
+if (import.meta.main) Deno.serve((req) => handleCreateUserRequest(req));

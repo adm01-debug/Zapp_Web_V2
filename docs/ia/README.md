@@ -65,3 +65,18 @@ produção. O deploy das Edge Functions **não** depende de aprovação: o merge
 de aprovação aparece).
 
 Continuação prevista: **Bloco 06 (IA-051..IA-060)**.
+
+### Bloco 06 — estado de IA-058: DESIGN_ONLY
+
+**IA-058 ([M] Alertar sobre consumo anômalo) não está implementada em operação.** O que existe
+é o **projeto** — [`PROJETO_IA058_ALERTAS_DE_CONSUMO_ANOMALO_2026-10-03.md`](../audits/PROJETO_IA058_ALERTAS_DE_CONSUMO_ANOMALO_2026-10-03.md),
+publicado em #1839 —, que fixa escopos, sinais, limiares, a identidade do incidente
+(deduplicação) e o formato do bloqueio por capacidade, para não projetar no vazio (F60, ledger
+de uso, preços versionados e limite por janela já medidos no repositório).
+
+**Estado: DESIGN_ONLY (projeto), distinto de runtime.**
+
+**Nenhum alerta e nenhum bloqueio de capacidade existem em operação por essa entrega:** o
+próprio documento declara que o mecanismo é futuro e que nada foi implementado nesta etapa.
+Contar o projeto como alerta disponível falsearia o estado do produto — a implementação do
+mecanismo é trabalho separado, ainda não realizado.

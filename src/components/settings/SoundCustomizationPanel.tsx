@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ElementType } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,48 +8,111 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Volume2, VolumeX, Bell, MessageSquare, AlertTriangle, Trophy, Clock, Moon, Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useUserSettings } from '@/hooks/system/useUserSettings';
 import { toast } from 'sonner';
 import { SoundCategoryCard } from './SoundCategoryCard';
+import {
+  useNotificationSettings,
+  type NotificationSettings,
+  type SoundTypeOption,
+} from '@/hooks/system/useNotificationSettings';
+import { previewSound } from '@/utils/notificationSounds';
 
-const SOUND_CATEGORIES = {
-  message: { label: 'Mensagens', icon: MessageSquare, description: 'Som para novas mensagens recebidas', sounds: [{ id: 'default', name: 'Padrão', description: 'Som clássico' }, { id: 'pop', name: 'Pop', description: 'Som leve' }, { id: 'chime', name: 'Chime', description: 'Melodioso' }, { id: 'ding', name: 'Ding', description: 'Curto' }, { id: 'bubble', name: 'Bubble', description: 'Bolha' }, { id: 'none', name: 'Silencioso', description: 'Sem som' }] },
-  mention: { label: 'Menções', icon: Bell, description: 'Som quando você é mencionado', sounds: [{ id: 'default', name: 'Padrão', description: 'Menção' }, { id: 'alert', name: 'Alerta', description: 'Atenção' }, { id: 'bell', name: 'Sino', description: 'Sino' }, { id: 'ping', name: 'Ping', description: 'Agudo' }, { id: 'none', name: 'Silencioso', description: 'Sem som' }] },
-  sla: { label: 'SLA', icon: AlertTriangle, description: 'Alertas de SLA próximo de vencer', sounds: [{ id: 'default', name: 'Padrão', description: 'Urgente' }, { id: 'urgent', name: 'Urgente', description: 'Alta prioridade' }, { id: 'warning', name: 'Aviso', description: 'Aviso' }, { id: 'alarm', name: 'Alarme', description: 'Intenso' }, { id: 'none', name: 'Silencioso', description: 'Sem som' }] },
-  goal: { label: 'Metas', icon: Trophy, description: 'Celebração ao atingir metas', sounds: [{ id: 'default', name: 'Padrão', description: 'Conquista' }, { id: 'fanfare', name: 'Fanfarra', description: 'Festivo' }, { id: 'achievement', name: 'Achievement', description: 'Épica' }, { id: 'levelup', name: 'Level Up', description: 'Evolução' }, { id: 'none', name: 'Silencioso', description: 'Sem som' }] },
-  transcription: { label: 'Transcrição', icon: Clock, description: 'Quando uma transcrição é concluída', sounds: [{ id: 'default', name: 'Padrão', description: 'Conclusão' }, { id: 'complete', name: 'Completo', description: 'Tarefa' }, { id: 'success', name: 'Sucesso', description: 'Positivo' }, { id: 'none', name: 'Silencioso', description: 'Sem som' }] },
+/**
+ * A aba Sons lê E grava pelo MESMO hook que os alertas usam
+ * (`useNotificationSettings` — useRealtimeNotifications, useSLANotifications,
+ * useGoalNotifications, useTranscriptionNotifications, useSentimentAlerts e o
+ * controle rápido SoundVolumeControl). Antes o painel instanciava um
+ * `useUserSettings()` próprio, nunca salvava, e o "Salvar Alterações" do
+ * SettingsView gravava outra cópia: a tela confirmava o que os alertas nunca
+ * aplicavam.
+ */
+
+/** Vocabulário FECHADO: o mesmo do banco (CHECK `user_settings_*_sound_type_valid`) e do player. */
+const CANONICAL_SOUNDS: { id: SoundTypeOption; name: string; description: string }[] = [
+  { id: 'beep', name: 'Beep', description: 'Som eletrônico clássico' },
+  { id: 'chime', name: 'Chime', description: 'Tom suave e harmonioso' },
+  { id: 'bell', name: 'Sino', description: 'Som de campainha' },
+  { id: 'alert', name: 'Alerta', description: 'Som mais chamativo' },
+  { id: 'soft', name: 'Suave', description: 'Notificação discreta' },
+];
+
+const CANONICAL_SOUND_IDS: string[] = CANONICAL_SOUNDS.map((s) => s.id);
+
+type CategoryKey = 'message' | 'mention' | 'sla' | 'goal' | 'transcription';
+
+/** Campo do hook canônico para cada categoria da tela (antes: `settings[`${cat}_sound_type`] as any`). */
+type SoundField =
+  | 'messageSoundType'
+  | 'mentionSoundType'
+  | 'slaSoundType'
+  | 'goalSoundType'
+  | 'transcriptionSoundType';
+
+const CATEGORY_SOUND_FIELD: Record<CategoryKey, SoundField> = {
+  message: 'messageSoundType',
+  mention: 'mentionSoundType',
+  sla: 'slaSoundType',
+  goal: 'goalSoundType',
+  transcription: 'transcriptionSoundType',
 };
 
-const playSoundPreview = (soundId: string) => {
-  const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  const ctx = new AudioCtx!();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain); gain.connect(ctx.destination);
-  const freqs: Record<string, number> = { default: 440, pop: 880, chime: 660, ding: 1000, bubble: 300, alert: 520, bell: 700, ping: 1200, urgent: 600, warning: 500, alarm: 800, fanfare: 550, achievement: 750, levelup: 900, complete: 480, success: 640 };
-  osc.frequency.setValueAtTime(freqs[soundId] || 440, ctx.currentTime);
-  osc.type = 'sine';
-  gain.gain.setValueAtTime(0.3, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-  osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5);
+interface CategoryConfig {
+  label: string;
+  icon: ElementType;
+  description: string;
+}
+
+const SOUND_CATEGORIES: Record<CategoryKey, CategoryConfig> = {
+  message: { label: 'Mensagens', icon: MessageSquare, description: 'Som para novas mensagens recebidas' },
+  mention: { label: 'Menções', icon: Bell, description: 'Som quando você é mencionado' },
+  sla: { label: 'SLA', icon: AlertTriangle, description: 'Alertas de SLA próximo de vencer' },
+  goal: { label: 'Metas', icon: Trophy, description: 'Celebração ao atingir metas' },
+  transcription: { label: 'Transcrição', icon: Clock, description: 'Quando uma transcrição é concluída' },
 };
+
+const temProprio = (obj: object, chave: string) => Object.prototype.hasOwnProperty.call(obj, chave);
+
+const isCategoryKey = (valor: string): valor is CategoryKey => temProprio(CATEGORY_SOUND_FIELD, valor);
+
+/** O que sai da tela para o banco: só o vocabulário canônico (nada de 'default', 'pop', 'none'). */
+const isSoundType = (valor: string): valor is SoundTypeOption =>
+  CANONICAL_SOUND_IDS.includes(valor);
 
 export function SoundCustomizationPanel() {
-  const { settings, updateSettings } = useUserSettings();
+  const { settings, updateSettings } = useNotificationSettings();
   const [playingSound, setPlayingSound] = useState<string | null>(null);
-  const [masterVolume, setMasterVolume] = useState(80);
+  // Guardado só para mostrar que o arquivo foi ENVIADO — enviado não é aplicado.
+  const [uploadedSoundPath, setUploadedSoundPath] = useState<string | null>(null);
+
+  /** Toca o som REAL (`previewSound`), no volume REAL dos alertas. Silêncio é o global. */
+  const playPreview = (categoria: string, soundId: SoundTypeOption) => {
+    if (!settings.soundEnabled) return;
+    previewSound(soundId, settings.soundVolume);
+    setPlayingSound(`${categoria}-${soundId}`);
+    setTimeout(() => setPlayingSound(null), 500);
+  };
+
+  /** Mapeia a categoria da tela para o campo do hook canônico e grava nele. */
+  const aplicarSom = (category: CategoryKey, soundId: SoundTypeOption) => {
+    const campo = CATEGORY_SOUND_FIELD[category];
+    const alteracao: Partial<NotificationSettings> = {};
+    alteracao[campo] = soundId;
+    updateSettings(alteracao);
+  };
 
   const handleSoundChange = (category: string, soundId: string) => {
-    updateSettings({ [`${category}_sound_type`]: soundId } as any);
-    if (soundId !== 'none') { playSoundPreview(soundId); setPlayingSound(`${category}-${soundId}`); setTimeout(() => setPlayingSound(null), 500); }
+    if (!isCategoryKey(category) || !isSoundType(soundId)) return;
+    // Grava na hora, no hook canônico: o alerta passa a tocar o som novo sem depender de "Salvar".
+    aplicarSom(category, soundId);
+    playPreview(category, soundId);
   };
 
   const handlePlayPreview = (category: string, soundId: string) => {
-    if (soundId === 'none') return;
-    playSoundPreview(soundId); setPlayingSound(`${category}-${soundId}`); setTimeout(() => setPlayingSound(null), 500);
+    if (!isSoundType(soundId)) return;
+    playPreview(category, soundId);
   };
 
-  const getSoundValue = (category: string): string => (settings[`${category}_sound_type` as keyof typeof settings] as string) || 'default';
+  const getSoundValue = (category: CategoryKey): SoundTypeOption => settings[CATEGORY_SOUND_FIELD[category]];
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,10 +120,13 @@ export function SoundCustomizationPanel() {
     if (file.size > 2 * 1024 * 1024) { toast.error('Arquivo muito grande. Máximo: 2MB'); return; }
     try {
       const { supabase } = await import('@/integrations/supabase/client');
-      const { error } = await supabase.storage.from('audio-messages').upload(`custom-sounds/${Date.now()}-${file.name}`, file);
+      const { data, error } = await supabase.storage.from('audio-messages').upload(`custom-sounds/${Date.now()}-${file.name}`, file);
       if (error) throw error;
-      toast.success('Som personalizado carregado!');
-    } catch { toast.error('Erro ao fazer upload do som'); }
+      // Guarda o caminho devolvido pelo storage para não se perder. O arquivo é enviado,
+      // NÃO vira preferência: os alertas tocam os 5 tipos do player (SOUND_CONFIGS).
+      setUploadedSoundPath(data?.path ?? null);
+      toast.success('Arquivo enviado.');
+    } catch { setUploadedSoundPath(null); toast.error('Erro ao fazer upload do som'); }
     e.target.value = '';
   };
 
@@ -73,29 +140,29 @@ export function SoundCustomizationPanel() {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {settings.sound_enabled ? <Volume2 className="w-5 h-5 text-primary" /> : <VolumeX className="w-5 h-5 text-muted-foreground" />}
+              {settings.soundEnabled ? <Volume2 className="w-5 h-5 text-primary" /> : <VolumeX className="w-5 h-5 text-muted-foreground" />}
               <div><Label className="text-base">Sons habilitados</Label><p className="text-sm text-muted-foreground">Ativa ou desativa todos os sons</p></div>
             </div>
-            <Switch checked={settings.sound_enabled} onCheckedChange={(checked) => updateSettings({ sound_enabled: checked })} />
+            <Switch aria-label="Sons habilitados" checked={settings.soundEnabled} onCheckedChange={(checked) => updateSettings({ soundEnabled: checked })} />
           </div>
           <AnimatePresence>
-            {settings.sound_enabled && (
+            {settings.soundEnabled && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-3">
-                <div className="flex items-center justify-between"><Label>Volume geral</Label><Badge variant="secondary">{masterVolume}%</Badge></div>
-                <Slider value={[masterVolume]} onValueChange={([v]) => setMasterVolume(v)} max={100} step={5} className="w-full" />
+                <div className="flex items-center justify-between"><Label>Volume geral</Label><Badge variant="secondary">{settings.soundVolume}%</Badge></div>
+                <Slider value={[settings.soundVolume]} onValueChange={([v]) => updateSettings({ soundVolume: v })} min={10} max={100} step={5} thumbLabel="Volume geral" className="w-full" />
               </motion.div>
             )}
           </AnimatePresence>
           <div className="pt-4 border-t border-border">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3"><Moon className="w-5 h-5 text-primary" /><div><Label className="text-base">Horário silencioso</Label><p className="text-sm text-muted-foreground">Silenciar sons em determinados horários</p></div></div>
-              <Switch checked={settings.quiet_hours_enabled} onCheckedChange={(checked) => updateSettings({ quiet_hours_enabled: checked })} />
+              <Switch aria-label="Horário silencioso" checked={settings.quietHoursEnabled} onCheckedChange={(checked) => updateSettings({ quietHoursEnabled: checked })} />
             </div>
             <AnimatePresence>
-              {settings.quiet_hours_enabled && (
+              {settings.quietHoursEnabled && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Início</Label><input type="time" value={settings.quiet_hours_start || '22:00'} onChange={(e) => updateSettings({ quiet_hours_start: e.target.value })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
-                  <div className="space-y-2"><Label>Término</Label><input type="time" value={settings.quiet_hours_end || '08:00'} onChange={(e) => updateSettings({ quiet_hours_end: e.target.value })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
+                  <div className="space-y-2"><Label>Início</Label><input type="time" aria-label="Início do horário silencioso" value={settings.quietHoursStart || '22:00'} onChange={(e) => updateSettings({ quietHoursStart: e.target.value })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
+                  <div className="space-y-2"><Label>Término</Label><input type="time" aria-label="Término do horário silencioso" value={settings.quietHoursEnd || '08:00'} onChange={(e) => updateSettings({ quietHoursEnd: e.target.value })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -104,8 +171,8 @@ export function SoundCustomizationPanel() {
       </Card>
 
       <div className="grid gap-4">
-        {Object.entries(SOUND_CATEGORIES).map(([key, cat]) => (
-          <SoundCategoryCard key={key} categoryKey={key} label={cat.label} description={cat.description} icon={cat.icon} sounds={cat.sounds} currentSound={getSoundValue(key)} isPlaying={!!playingSound?.startsWith(`${key}-`)} disabled={!settings.sound_enabled} onSoundChange={handleSoundChange} onPlayPreview={handlePlayPreview} />
+        {(Object.entries(SOUND_CATEGORIES) as [CategoryKey, CategoryConfig][]).map(([key, cat]) => (
+          <SoundCategoryCard key={key} categoryKey={key} label={cat.label} description={cat.description} icon={cat.icon} sounds={CANONICAL_SOUNDS} currentSound={getSoundValue(key)} isPlaying={!!playingSound?.startsWith(`${key}-`)} disabled={!settings.soundEnabled} onSoundChange={handleSoundChange} onPlayPreview={handlePlayPreview} />
         ))}
       </div>
 
@@ -116,6 +183,11 @@ export function SoundCustomizationPanel() {
           <p className="text-sm text-muted-foreground mb-4">Upload (.mp3, .wav, .ogg) — Máximo 2MB</p>
           <input type="file" accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg" className="hidden" id="custom-sound-upload" onChange={handleUpload} />
           <Button variant="outline" onClick={() => document.getElementById('custom-sound-upload')?.click()}><Upload className="w-4 h-4 mr-2" />Fazer Upload</Button>
+          {uploadedSoundPath && (
+            <p data-testid="custom-sound-status" role="status" className="text-xs text-muted-foreground mt-4">
+              Arquivo <strong>enviado</strong> ({uploadedSoundPath}) e guardado — mas ainda <strong>NÃO é aplicado aos alertas</strong>.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -45,6 +45,10 @@ export function useKnowledgeBaseSearch() {
   });
 
   const clear = useCallback(() => {
+    // Cancela o debounce que ainda não disparou: sem isso o temporizador antigo
+    // repõe em `debouncedQuery` o termo que o usuário acabou de apagar (#484).
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = undefined;
     setQuery('');
     setDebouncedQuery('');
   }, []);

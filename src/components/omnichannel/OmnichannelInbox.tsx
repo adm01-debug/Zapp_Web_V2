@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MessageSquare, Instagram, Send as SendIcon, Facebook, Mail, Globe, Filter, RefreshCw, Loader2, Search } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,14 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { EmailChatInbox } from '@/components/email/EmailChatInbox';
+import { RealtimeService } from '@/services/realtime.service';
+import { buildConversations, normalizeMessage } from '@/hooks/realtime/realtimeUtils';
+import { openContactChat } from '@/components/catalog/useSendProduct';
+import type {
+  ConversationContact,
+  ConversationWithMessages,
+  RealtimeMessage,
+} from '@/hooks/chat/useRealtimeMessages';
 
 type ChannelType = 'whatsapp' | 'instagram' | 'telegram' | 'messenger' | 'email' | 'webchat';
 
@@ -45,18 +53,6 @@ function getConnectionState(status: string | null | undefined): ConnectionState 
   return 'disconnected';
 }
 
-interface UnifiedMessage {
-  id: string;
-  contactName: string;
-  contactPhone: string;
-  channelType: ChannelType;
-  lastMessage: string;
-  timestamp: string;
-  unread: boolean;
-  status: string;
-  assignedTo: string | null;
-}
-
 const CHANNEL_CONFIG: Record<ChannelType, { icon: typeof MessageSquare; label: string; color: string }> = {
   whatsapp: { icon: MessageSquare, label: 'WhatsApp', color: 'text-success bg-success/10' },
   instagram: { icon: Instagram, label: 'Instagram', color: 'text-accent bg-accent/10' },
@@ -66,15 +62,97 @@ const CHANNEL_CONFIG: Record<ChannelType, { icon: typeof MessageSquare; label: s
   webchat: { icon: Globe, label: 'Webchat', color: 'text-secondary bg-secondary/10' },
 };
 
+// Rótulos de `contacts.conversation_status` (mesma tabela usada na aba Canais do CRM).
+const CONVERSATION_STATUS_LABEL: Record<string, string> = {
+  open: 'Aberta',
+  pending: 'Pendente',
+  waiting: 'Aguardando',
+  resolved: 'Resolvida',
+  closed: 'Encerrada',
+  archived: 'Arquivada',
+};
+
+// R2-API-064: a tela projetava cadastros (contacts, 200 por updated_at) como se fossem
+// conversas — sem última mensagem, sem não lidas e sem abrir a conversa; a busca era
+// local a essa amostra. Agora ela consome a projeção canônica de conversas e busca no
+// universo de contatos.
+const SEARCH_MIN_LENGTH = 2;
+const SEARCH_DEBOUNCE_MS = 300;
+const SEARCH_RESULT_LIMIT = 50;
+const SEARCH_MESSAGES_LIMIT = 500;
+
+// Mesma string na linha e no aria-label: com a página truncada o histórico é
+// desconhecido, nunca "zero não lidas".
+const HISTORY_NOT_LOADED_LABEL = 'Histórico não carregado';
+
+function toChannelType(value: string | null | undefined): ChannelType {
+  return value && value in CHANNEL_CONFIG ? (value as ChannelType) : 'whatsapp';
+}
+
+/**
+ * Busca no banco (universo autorizado de contatos) por nome ou telefone e reconstrói
+ * cada conversa com a última mensagem e as não lidas — a amostra carregada na tela não
+ * é o limite da busca.
+ */
+async function searchConversations(term: string): Promise<{
+  conversations: ConversationWithMessages[];
+  messagesTruncated: boolean;
+}> {
+  // `,` `(` `)` `%` `\` quebram a sintaxe do filtro `or=` do PostgREST.
+  const sanitized = term.replace(/[%,()\\]/g, ' ').trim();
+  if (sanitized.length < SEARCH_MIN_LENGTH) {
+    return { conversations: [], messagesTruncated: false };
+  }
+
+  const { data: contacts, error } = await supabase
+    .from('contacts')
+    .select('*')
+    .eq('is_lid_legacy', false)
+    .or(`name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%`)
+    .order('updated_at', { ascending: false })
+    .limit(SEARCH_RESULT_LIMIT);
+
+  if (error) throw error;
+
+  const contactRows = (contacts ?? []) as ConversationContact[];
+  if (contactRows.length === 0) {
+    return { conversations: [], messagesTruncated: false };
+  }
+
+  const { data: messages, error: messagesError } = await supabase
+    .from('messages')
+    .select('*')
+    .in('contact_id', contactRows.map((row) => row.id))
+    .order('created_at', { ascending: false })
+    .limit(SEARCH_MESSAGES_LIMIT);
+
+  if (messagesError) throw messagesError;
+
+  const messageRows = (messages ?? []) as RealtimeMessage[];
+  return {
+    conversations: buildConversations(contactRows, messageRows.map(normalizeMessage)),
+    messagesTruncated: messageRows.length >= SEARCH_MESSAGES_LIMIT,
+  };
+}
+
 export function OmnichannelInbox() {
   const [activeMainTab, setActiveMainTab] = useState<'channels' | 'email'>('channels');
-  const [messages, setMessages] = useState<UnifiedMessage[]>([]);
+  const [conversations, setConversations] = useState<ConversationWithMessages[]>([]);
+  // Guardamos o termo junto do resultado: o que a tela mostra é derivado (sem setState
+  // síncrono no efeito) e um resultado antigo nunca aparece como se fosse do termo atual.
+  const [searchResults, setSearchResults] = useState<{
+    term: string;
+    conversations: ConversationWithMessages[];
+    messagesTruncated: boolean;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeChannel, setActiveChannel] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [channelStats, setChannelStats] = useState<Record<string, number>>({});
   const [connections, setConnections] = useState<ChannelConnectionRow[]>([]);
   const [connectionsError, setConnectionsError] = useState(false);
+
+  const activeSearchTerm = search.trim().length >= SEARCH_MIN_LENGTH ? search.trim() : '';
 
   const loadConnections = async () => {
     const { data, error } = await supabase
@@ -92,35 +170,18 @@ export function OmnichannelInbox() {
     setConnections((data ?? []) as ChannelConnectionRow[]);
   };
 
-  const loadUnifiedInbox = async () => {
+  const loadConversations = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: contacts, error } = await supabase
-        .from('contacts')
-        .select('id, name, phone, channel_type, updated_at, assigned_to')
-        .eq('is_lid_legacy', false)
-        .order('updated_at', { ascending: false })
-        .limit(200);
-
-      if (error) throw error;
-
-      const unified: UnifiedMessage[] = (contacts || []).map(contact => ({
-        id: contact.id,
-        contactName: contact.name,
-        contactPhone: contact.phone,
-        channelType: (contact.channel_type as ChannelType) || 'whatsapp',
-        lastMessage: '',
-        timestamp: contact.updated_at,
-        unread: false,
-        status: 'open',
-        assignedTo: contact.assigned_to,
-      }));
-
-      setMessages(unified);
+      const projection = await RealtimeService.fetchInitialConversations();
+      // Stubs do webhook (LID legado) não são conversa e não entram na lista nem nas contagens.
+      const visible = projection.filter((conversation) => conversation.contact.is_lid_legacy !== true);
+      setConversations(visible);
 
       const stats: Record<string, number> = {};
-      unified.forEach(m => {
-        stats[m.channelType] = (stats[m.channelType] || 0) + 1;
+      visible.forEach((conversation) => {
+        const type = toChannelType(conversation.contact.channel_type);
+        stats[type] = (stats[type] || 0) + 1;
       });
       setChannelStats(stats);
     } catch (err) {
@@ -128,24 +189,53 @@ export function OmnichannelInbox() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const init = async () => {
       await loadConnections();
-      await loadUnifiedInbox();
+      await loadConversations();
     };
     void init();
-  }, []);
+  }, [loadConversations]);
 
-  const filteredMessages = messages.filter(m => {
-    if (activeChannel !== 'all' && m.channelType !== activeChannel) return false;
-    if (search) {
-      const s = search.toLowerCase();
-      return m.contactName.toLowerCase().includes(s) || m.contactPhone.includes(s);
-    }
-    return true;
-  });
+  // R2-API-064: a busca não pode ficar presa à amostra carregada — ela vai ao banco.
+  useEffect(() => {
+    const term = activeSearchTerm;
+    if (!term) return;
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          const results = await searchConversations(term);
+          if (!cancelled) setSearchResults({ term, ...results });
+        } catch (err) {
+          if (!cancelled) {
+            setSearchResults({ term, conversations: [], messagesTruncated: false });
+            toast.error('Erro ao buscar conversas');
+          }
+        }
+      })();
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [activeSearchTerm]);
+
+  const searchProjection =
+    activeSearchTerm.length > 0 && searchResults?.term === activeSearchTerm
+      ? searchResults.conversations
+      : null;
+  const searching = activeSearchTerm.length > 0 && searchProjection === null;
+  const hasServerSearch = searchProjection !== null;
+  const searchMessagesTruncated = hasServerSearch && searchResults?.messagesTruncated === true;
+  const displayedConversations = (searchProjection ?? conversations).filter(
+    (conversation) => activeChannel === 'all' || toChannelType(conversation.contact.channel_type) === activeChannel,
+  );
+  const searchTruncated = searchProjection !== null && searchProjection.length >= SEARCH_RESULT_LIMIT;
 
   const getChannelIcon = (type: ChannelType) => {
     const config = CHANNEL_CONFIG[type];
@@ -231,7 +321,7 @@ export function OmnichannelInbox() {
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={loadUnifiedInbox} disabled={loading} className="w-full sm:w-auto">
+              <Button variant="outline" size="sm" onClick={loadConversations} disabled={loading} className="w-full sm:w-auto">
                 <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
@@ -266,13 +356,17 @@ export function OmnichannelInbox() {
 
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
               <Input
                 placeholder="Buscar por nome ou telefone..."
+                aria-label="Buscar conversa por nome ou telefone"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-10"
               />
+              {searching && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" aria-hidden="true" />
+              )}
             </div>
 
             {/* Message List */}
@@ -281,7 +375,7 @@ export function OmnichannelInbox() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <MessageSquare className="w-5 h-5" />
-                    Conversas ({filteredMessages.length})
+                    Conversas ({displayedConversations.length})
                   </CardTitle>
                   {activeChannel !== 'all' && (
                     <Button variant="ghost" size="sm" onClick={() => setActiveChannel('all')}>
@@ -289,6 +383,11 @@ export function OmnichannelInbox() {
                     </Button>
                   )}
                 </div>
+                <CardDescription>
+                  {hasServerSearch
+                    ? `${displayedConversations.length} ${displayedConversations.length === 1 ? 'resultado' : 'resultados'} em todos os contatos${searchTruncated ? ` (exibindo os ${SEARCH_RESULT_LIMIT} primeiros)` : ''}.`
+                    : `Mostrando as ${conversations.length} conversas recentes. A busca procura em todos os contatos.`}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[500px]">
@@ -297,45 +396,87 @@ export function OmnichannelInbox() {
                       Array.from({ length: 8 }).map((_, i) => (
                         <div key={i} className="h-16 bg-muted/50 animate-pulse rounded-lg" />
                       ))
-                    ) : filteredMessages.length === 0 ? (
+                    ) : displayedConversations.length === 0 ? (
                       <div className="text-center py-12">
                         <Globe className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                        <p className="text-muted-foreground">Nenhuma conversa encontrada</p>
+                        <p className="text-muted-foreground">
+                          {hasServerSearch ? 'Nenhuma conversa encontrada para a busca' : 'Nenhuma conversa encontrada'}
+                        </p>
                       </div>
                     ) : (
-                      filteredMessages.map((msg) => (
-                        <motion.div
-                          key={msg.id}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                        >
-                          <div className="relative">
-                            <Avatar className="w-10 h-10">
-                              <AvatarFallback className="text-xs">
-                                {msg.contactName.substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="absolute -bottom-1 -right-1">
-                              {getChannelIcon(msg.channelType)}
+                      displayedConversations.map((conversation) => {
+                        const { contact: rowContact, lastMessage, unreadCount } = conversation;
+                        const channelType = toChannelType(rowContact.channel_type);
+                        const timestamp = lastMessage?.created_at ?? rowContact.updated_at ?? rowContact.created_at;
+                        const statusLabel = CONVERSATION_STATUS_LABEL[rowContact.conversation_status ?? ''] ?? null;
+                        const showStatus = Boolean(statusLabel) && rowContact.conversation_status !== 'open';
+                        // Com a página de mensagens truncada, unreadCount vem de um conjunto
+                        // cortado: é só um limite inferior quando há mensagens na página, e
+                        // desconhecido quando o contato não tem nenhuma mensagem nela.
+                        const unreadIsLowerBound =
+                          searchMessagesTruncated && Boolean(lastMessage) && unreadCount > 0;
+                        const unreadIsUnknown = searchMessagesTruncated && !lastMessage;
+                        const ariaUnread = unreadIsUnknown
+                          ? ` — ${HISTORY_NOT_LOADED_LABEL}`
+                          : unreadIsLowerBound
+                            ? ` — ao menos ${unreadCount} mensagens não lidas`
+                            : unreadCount > 0
+                              ? ` — ${unreadCount} mensagens não lidas`
+                              : '';
+                        const showUnreadBadge = searchMessagesTruncated
+                          ? unreadIsLowerBound
+                          : unreadCount > 0;
+                        return (
+                          <motion.button
+                            key={rowContact.id}
+                            type="button"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            onClick={() => openContactChat(rowContact.id)}
+                            aria-label={`Abrir conversa de ${rowContact.name}${ariaUnread}`}
+                            className="flex w-full items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          >
+                            <div className="relative">
+                              <Avatar className="w-10 h-10">
+                                <AvatarFallback className="text-xs">
+                                  {rowContact.name.substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="absolute -bottom-1 -right-1">
+                                {getChannelIcon(channelType)}
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <p className="font-medium text-sm truncate">{msg.contactName}</p>
-                              <span className="text-xs text-muted-foreground">
-                                {format(new Date(msg.timestamp), 'HH:mm', { locale: ptBR })}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="font-medium text-sm truncate">{rowContact.name}</p>
+                                <span className="text-xs text-muted-foreground shrink-0">
+                                  {format(new Date(timestamp), 'HH:mm', { locale: ptBR })}
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {lastMessage
+                                  ? lastMessage.content
+                                  : searchMessagesTruncated
+                                    ? `${HISTORY_NOT_LOADED_LABEL} — ${rowContact.phone}`
+                                    : `Sem mensagens ainda — ${rowContact.phone}`}
+                              </p>
+                            </div>
+                            {showStatus && (
+                              <Badge variant="secondary" className="shrink-0 text-2xs">
+                                {statusLabel}
+                              </Badge>
+                            )}
+                            {showUnreadBadge && (
+                              <span
+                                aria-hidden="true"
+                                className="shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-3xs font-medium text-primary-foreground"
+                              >
+                                {unreadIsLowerBound ? `>=${unreadCount}` : unreadCount > 99 ? '99+' : unreadCount}
                               </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {msg.contactPhone}
-                            </p>
-                          </div>
-                          {msg.unread && (
-                            <div className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />
-                          )}
-                        </motion.div>
-                      ))
+                            )}
+                          </motion.button>
+                        );
+                      })
                     )}
                   </div>
                 </ScrollArea>

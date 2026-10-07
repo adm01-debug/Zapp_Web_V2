@@ -15,8 +15,13 @@ const REALTIME_BASELINE_PATH = new URL('./realtime-publication-baseline.json', i
 // sistema (as duas raizes legitimas para a evidencia gerada). Fail-closed: fora
 // da raiz encerra com exit 2 (entrada invalida) sem tocar o banco.
 
-export function loadRealtimeBaseline() {
-  const baseline = JSON.parse(fs.readFileSync(REALTIME_BASELINE_PATH, 'utf8'));
+/**
+ * Contrato da baseline global da publicação (TC-014 / item #58). Exportado para a
+ * guarda de regressão poder provar que a forma reduzida da branch em quarentena
+ * (`team_chat_tables`, sem `schema_version`/`project_ref`/`tables`) é REJEITADA,
+ * sem precisar trocar o arquivo real.
+ */
+export function validarBaselineRealtime(baseline) {
   if (baseline.schema_version !== 1
     || baseline.project_ref !== 'tnnnlkbymytvtqngbbqh'
     || baseline.publication !== 'supabase_realtime'
@@ -29,6 +34,11 @@ export function loadRealtimeBaseline() {
     throw new Error('Invalid Realtime publication table list');
   }
   return tables.sort((a, b) => a.localeCompare(b));
+}
+
+export function loadRealtimeBaseline() {
+  const baseline = JSON.parse(fs.readFileSync(REALTIME_BASELINE_PATH, 'utf8'));
+  return validarBaselineRealtime(baseline);
 }
 
 /**

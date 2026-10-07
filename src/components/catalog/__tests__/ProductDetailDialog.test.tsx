@@ -389,3 +389,74 @@ describe('ProductDetailDialog — CT-36 navegação ‹ › entre produtos do re
     expect(screen.getByText('Primeiro')).toBeInTheDocument();
   });
 });
+
+describe('ProductDetailDialog — R2-MOD-047 indice da galeria ao navegar para produto com menos imagens', () => {
+  beforeEach(() => {
+    mockUseExternalProduct.mockReturnValue({ data: undefined, isFetching: false });
+  });
+
+  const comImagens = (id: string, name: string, images: string[], primary = 'https://x/a.jpg') =>
+    mockProduct({ id, name, images, primary_image_url: primary });
+
+  it('da 3a imagem de A para um produto com 1 imagem: cai no 1o quadro e nao aponta para indice inexistente', () => {
+    const a = comImagens('p1', 'Tres fotos', ['https://x/a.jpg', 'https://x/b.jpg', 'https://x/c.jpg']);
+    const b = comImagens('p2', 'Uma foto', [], 'https://x/so.jpg');
+
+    render(<ProductDetailDialog product={a} products={[a, b]} open onOpenChange={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText('Próxima imagem'));
+    fireEvent.click(screen.getByLabelText('Próxima imagem'));
+    expect(screen.getByText('3 / 3')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Próximo produto'));
+
+    // B tem 1 imagem: contador e setas nem existem; nenhum deles pode apontar
+    // para o indice herdado do produto anterior.
+    expect(screen.getByText('Uma foto')).toBeInTheDocument();
+    expect(screen.getByAltText('Uma foto')).toHaveAttribute('src', 'https://x/so.jpg');
+    expect(screen.queryByText(/^\d+ \/ \d+$/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Imagem anterior')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Próxima imagem')).not.toBeInTheDocument();
+  });
+
+  it('navegar para um produto com menos imagens recomeca no 1o quadro', () => {
+    const a = comImagens('p1', 'Tres fotos', ['https://x/a.jpg', 'https://x/b.jpg', 'https://x/c.jpg']);
+    const b = comImagens('p2', 'Duas fotos', ['https://x/b2.jpg'], 'https://x/a2.jpg');
+
+    render(<ProductDetailDialog product={a} products={[a, b]} open onOpenChange={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText('Próxima imagem'));
+    fireEvent.click(screen.getByLabelText('Próxima imagem'));
+    expect(screen.getByText('3 / 3')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Próximo produto'));
+
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Imagem anterior')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Próxima imagem'));
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+  });
+
+  it('produto completo chegando com menos imagens limita o indice ao conjunto atual', () => {
+    const { rerender } = render(
+      <ProductDetailDialog
+        product={comImagens('p1', 'Tres fotos', ['https://x/a.jpg', 'https://x/b.jpg', 'https://x/c.jpg'])}
+        open
+        onOpenChange={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByLabelText('Próxima imagem'));
+    fireEvent.click(screen.getByLabelText('Próxima imagem'));
+    expect(screen.getByText('3 / 3')).toBeInTheDocument();
+
+    rerender(
+      <ProductDetailDialog
+        product={comImagens('p1', 'Tres fotos', ['https://x/b.jpg'], 'https://x/a.jpg')}
+        open
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Próxima imagem')).not.toBeInTheDocument();
+  });
+});

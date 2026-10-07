@@ -8,16 +8,23 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { usePerformanceSnapshots } from '@/hooks/analytics/usePerformanceSnapshots';
 import { formatRelativeTime } from '@/lib/formatters';
 
+/**
+ * 'unknown' = a API de medição não existe no navegador (performance.memory e
+ * navigator.connection são só do Chromium). Métrica sem medição NÃO é "Bom":
+ * fica no denominador do score e não pode virar 0 MB / 0 ms / '4g'.
+ */
+type MetricStatus = 'good' | 'warning' | 'critical' | 'unknown';
+
 interface PerformanceMetric {
   name: string;
-  value: number;
+  value: number | null; // null = não medido (nunca um valor inventado)
   unit: string;
-  status: 'good' | 'warning' | 'critical';
+  status: MetricStatus;
 }
 
 export function PerformanceMonitor() {
   const [metrics, setMetrics] = useState<PerformanceMetric[]>([]);
-  const [localHistory, setLocalHistory] = useState<Array<{ time: string; fcp: number; memory: number }>>([]);
+  const [localHistory, setLocalHistory] = useState<Array<{ time: string; fcp: number; memory: number | null }>>([]);
   const [cacheStats, setCacheStats] = useState({ hits: 0, misses: 0, size: 0 });
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState('24');
@@ -30,15 +37,19 @@ export function PerformanceMonitor() {
     const fcp = perf.getEntriesByName('first-contentful-paint')[0];
     const fcpValue = fcp ? Math.round(fcp.startTime) : 0;
 
+    // performance.memory é só do Chromium: sem a API a memória NÃO foi medida.
+    // Antes o ausente virava "0 MB usados / 0%" — memória livre, métrica "Bom".
     const memInfo = (performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number } }).memory;
-    const memoryUsed = memInfo ? Math.round(memInfo.usedJSHeapSize / 1048576) : 0;
-    const memoryTotal = memInfo ? Math.round(memInfo.totalJSHeapSize / 1048576) : 256;
-    const memoryPercent = memInfo ? Math.round((memInfo.usedJSHeapSize / memInfo.totalJSHeapSize) * 100) : 0;
+    const memoryUsed = memInfo ? Math.round(memInfo.usedJSHeapSize / 1048576) : null;
+    const memoryTotal = memInfo ? Math.round(memInfo.totalJSHeapSize / 1048576) : null;
+    const memoryPercent = memInfo ? Math.round((memInfo.usedJSHeapSize / memInfo.totalJSHeapSize) * 100) : null;
 
     const domNodes = document.querySelectorAll('*').length;
-    const conn = (navigator as unknown as { connection?: { effectiveType: string; rtt: number } }).connection;
-    const networkType = conn?.effectiveType || '4g';
-    const rtt = conn?.rtt || 0;
+    // navigator.connection também é só do Chromium: sem effectiveType/rtt não há
+    // medição — os padrões '4g' e 0 ms davam a melhor nota possível ao ausente.
+    const conn = (navigator as unknown as { connection?: { effectiveType?: string; rtt?: number } }).connection;
+    const networkType = conn?.effectiveType ?? null;
+    const rtt = typeof conn?.rtt === 'number' ? conn.rtt : null;
 
     const pageLoadTime = nav ? Math.round(nav.loadEventEnd - nav.startTime) : 0;
     const domReady = nav ? Math.round(nav.domContentLoadedEventEnd - nav.startTime) : 0;
@@ -49,10 +60,25 @@ export function PerformanceMonitor() {
       { name: 'Page Load', value: pageLoadTime, unit: 'ms', status: pageLoadTime < 3000 ? 'good' : pageLoadTime < 5000 ? 'warning' : 'critical' },
       { name: 'DOM Ready', value: domReady, unit: 'ms', status: domReady < 2000 ? 'good' : domReady < 4000 ? 'warning' : 'critical' },
       { name: 'TTFB', value: ttfb, unit: 'ms', status: ttfb < 200 ? 'good' : ttfb < 500 ? 'warning' : 'critical' },
-      { name: 'Memória JS', value: memoryUsed, unit: `MB / ${memoryTotal}MB`, status: memoryPercent < 60 ? 'good' : memoryPercent < 80 ? 'warning' : 'critical' },
+      {
+        name: 'Memória JS',
+        value: memoryUsed,
+        unit: memoryUsed === null ? '' : `MB / ${memoryTotal}MB`,
+        status: memoryPercent === null ? 'unknown' : memoryPercent < 60 ? 'good' : memoryPercent < 80 ? 'warning' : 'critical',
+      },
       { name: 'DOM Nodes', value: domNodes, unit: 'nós', status: domNodes < 1500 ? 'good' : domNodes < 3000 ? 'warning' : 'critical' },
-      { name: 'RTT', value: rtt, unit: 'ms', status: rtt < 100 ? 'good' : rtt < 300 ? 'warning' : 'critical' },
-      { name: 'Conexão', value: networkType === '4g' ? 100 : networkType === '3g' ? 60 : 30, unit: networkType, status: networkType === '4g' ? 'good' : networkType === '3g' ? 'warning' : 'critical' },
+      {
+        name: 'RTT',
+        value: rtt,
+        unit: rtt === null ? '' : 'ms',
+        status: rtt === null ? 'unknown' : rtt < 100 ? 'good' : rtt < 300 ? 'warning' : 'critical',
+      },
+      {
+        name: 'Conexão',
+        value: networkType === null ? null : networkType === '4g' ? 100 : networkType === '3g' ? 60 : 30,
+        unit: networkType ?? '',
+        status: networkType === null ? 'unknown' : networkType === '4g' ? 'good' : networkType === '3g' ? 'warning' : 'critical',
+      },
     ];
 
     setMetrics(newMetrics);
@@ -96,13 +122,17 @@ export function PerformanceMonitor() {
     loadHistory(Number.parseInt(period));
   }, [loadHistory, period]);
 
+  // Score = % de métricas boas. Métrica sem medição ('unknown') permanece na
+  // conta e NÃO como "Bom": o ausente não infla o score para 100.
   const overallScore = Math.round((metrics.filter(m => m.status === 'good').length / Math.max(metrics.length, 1)) * 100);
+  const unmeasuredCount = metrics.filter(m => m.status === 'unknown').length;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'good': return <Badge className="bg-primary/10 text-primary border-primary/30 text-3xs">Bom</Badge>;
       case 'warning': return <Badge className="bg-warning/10 text-warning border-warning/30 text-3xs">Atenção</Badge>;
       case 'critical': return <Badge variant="destructive" className="text-3xs">Crítico</Badge>;
+      case 'unknown': return <Badge variant="secondary" className="text-3xs">N/D</Badge>;
       default: return null;
     }
   };
@@ -172,7 +202,7 @@ export function PerformanceMonitor() {
                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={overallScore >= 80 ? 'hsl(var(--primary))' : overallScore >= 50 ? 'hsl(40, 100%, 50%)' : 'hsl(var(--destructive))'} strokeWidth="3" strokeDasharray={`${overallScore}, 100`} />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl font-bold">{overallScore}</span>
+                <span className="text-2xl font-bold" data-testid="overall-score">{overallScore}</span>
               </div>
             </div>
             <div>
@@ -186,6 +216,11 @@ export function PerformanceMonitor() {
                 <Clock className="w-3 h-3 inline mr-1" />
                 {dbHistory.length} snapshots no período selecionado
               </p>
+              {unmeasuredCount > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {unmeasuredCount} métrica{unmeasuredCount === 1 ? '' : 's'} sem medição neste navegador
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -202,7 +237,7 @@ export function PerformanceMonitor() {
                   {getStatusBadge(metric.status)}
                 </div>
                 <p className={`text-xl font-bold ${getStatusColor(metric.status)}`}>
-                  {metric.value}
+                  {metric.value ?? '—'}
                   <span className="text-xs text-muted-foreground ml-1">{metric.unit}</span>
                 </p>
               </div>

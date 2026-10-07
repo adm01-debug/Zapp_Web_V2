@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('AIEnhanceButton');
@@ -40,21 +40,27 @@ interface AIEnhanceButtonProps {
 export function AIEnhanceButton({ inputValue, onInputChange, contactName }: AIEnhanceButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [originalMessage, setOriginalMessage] = useState<string | null>(null);
+  // Desfazer guarda o par (texto do clique, texto aplicado). O ref do rascunho
+  // vivo compara se o campo ainda contém exatamente o que a aplicação escreveu:
+  // nem a resposta atrasada nem o desfazer podem apagar uma edição mais nova
+  // (R2-INF-025).
+  const [desfazer, setDesfazer] = useState<{ original: string; aplicado: string } | null>(null);
+  const rascunhoAtual = useRef(inputValue);
+  useLayoutEffect(() => { rascunhoAtual.current = inputValue; }, [inputValue]);
 
   const handleEnhance = useCallback(async (tone: string) => {
-    if (!inputValue.trim()) {
+    const textoDoClique = inputValue;
+    if (!textoDoClique.trim()) {
       toast({ title: 'Digite uma mensagem primeiro', variant: 'destructive' });
       return;
     }
 
     setIsLoading(true);
     setIsOpen(false);
-    setOriginalMessage(inputValue);
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-enhance-message', {
-        body: { message: inputValue, tone, contactName },
+        body: { message: textoDoClique, tone, contactName },
       });
 
       if (error) throw error;
@@ -64,7 +70,17 @@ export function AIEnhanceButton({ inputValue, onInputChange, contactName }: AIEn
       }
 
       if (data?.enhanced) {
+        // Resposta de uma versão antiga do rascunho: descartar preserva a edição
+        // mais nova do mesmo rascunho.
+        if (rascunhoAtual.current !== textoDoClique) {
+          toast({
+            title: 'A mensagem mudou durante o aprimoramento',
+            description: 'O resultado antigo foi descartado para preservar sua edição.',
+          });
+          return;
+        }
         onInputChange(data.enhanced);
+        setDesfazer({ original: textoDoClique, aplicado: data.enhanced });
         toast({
           title: '✨ Mensagem aprimorada!',
           description: 'Clique em ↩ para desfazer',
@@ -72,7 +88,7 @@ export function AIEnhanceButton({ inputValue, onInputChange, contactName }: AIEn
       }
     } catch (err) {
       log.error('AI enhance error:', err);
-      setOriginalMessage(null);
+      setDesfazer(null);
       toast({
         title: 'Erro ao aprimorar mensagem',
         description: err instanceof Error ? err.message : 'Tente novamente',
@@ -81,21 +97,30 @@ export function AIEnhanceButton({ inputValue, onInputChange, contactName }: AIEn
     } finally {
       setIsLoading(false);
     }
-  }, [inputValue, onInputChange]);
+  }, [inputValue, onInputChange, contactName]);
 
   const handleUndo = useCallback(() => {
-    if (originalMessage !== null) {
-      onInputChange(originalMessage);
-      setOriginalMessage(null);
-      toast({ title: 'Mensagem original restaurada' });
+    if (!desfazer) return;
+    // O campo já foi editado depois do aprimoramento: restaurar o original aqui
+    // trocaria a edição nova por um rascunho anterior, então o desfazer é descartado.
+    if (rascunhoAtual.current !== desfazer.aplicado) {
+      setDesfazer(null);
+      toast({
+        title: 'A mensagem foi editada',
+        description: 'O desfazer foi descartado para não sobrescrever sua edição.',
+      });
+      return;
     }
-  }, [originalMessage, onInputChange]);
+    onInputChange(desfazer.original);
+    setDesfazer(null);
+    toast({ title: 'Mensagem original restaurada' });
+  }, [desfazer, onInputChange]);
 
   return (
     <div className="flex items-center gap-0.5">
       {/* Undo button */}
       <AnimatePresence>
-        {originalMessage !== null && !isLoading && (
+        {desfazer !== null && !isLoading && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

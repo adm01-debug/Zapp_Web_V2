@@ -25,17 +25,26 @@ interface NotesTabProps {
 function AddInline({ placeholder, withDueDate, onSave, onCancel }: {
   placeholder: string;
   withDueDate?: boolean;
-  onSave: (content: string, dueDate?: string | null) => void;
+  onSave: (content: string, dueDate?: string | null) => Promise<void>;
   onCancel: () => void;
 }) {
   const [value, setValue] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const submit = () => {
-    if (!value.trim()) return;
-    onSave(value.trim(), withDueDate && dueDate ? new Date(dueDate).toISOString() : null);
-    setValue('');
-    setDueDate('');
+  const submit = async () => {
+    if (!value.trim() || saving) return;
+    setSaving(true);
+    try {
+      await onSave(value.trim(), withDueDate && dueDate ? new Date(dueDate).toISOString() : null);
+      // Só depois da gravação confirmada o rascunho é descartado.
+      setValue('');
+      setDueDate('');
+    } catch {
+      // Gravação falhou: mantém o texto e o formulário aberto (o erro é avisado pelo hook).
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -49,7 +58,7 @@ function AddInline({ placeholder, withDueDate, onSave, onCancel }: {
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
-          if ((e.key === 'Enter' && e.ctrlKey) || (e.key === 'Enter' && !e.shiftKey && !withDueDate)) { e.preventDefault(); submit(); }
+          if ((e.key === 'Enter' && e.ctrlKey) || (e.key === 'Enter' && !e.shiftKey && !withDueDate)) { e.preventDefault(); void submit(); }
         }}
       />
       {withDueDate && (
@@ -57,7 +66,7 @@ function AddInline({ placeholder, withDueDate, onSave, onCancel }: {
       )}
       <div className="flex justify-end gap-2">
         <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel}>Cancelar</Button>
-        <Button size="sm" className="h-7 text-xs" disabled={!value.trim()} onClick={submit}>Salvar</Button>
+        <Button size="sm" className="h-7 text-xs" disabled={!value.trim() || saving} onClick={() => void submit()}>Salvar</Button>
       </div>
     </div>
   );
@@ -72,7 +81,7 @@ interface NoteCategoryCardProps {
   placeholder: string;
   withDueDate?: boolean;
   currentProfileId?: string;
-  onAdd: (content: string, category: ContactNoteCategory, dueDate?: string | null) => void;
+  onAdd: (content: string, category: ContactNoteCategory, dueDate?: string | null) => Promise<unknown> | void;
   onDelete: (id: string) => void;
   renderItem?: (note: ContactNote) => ReactNode;
 }
@@ -90,7 +99,12 @@ function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, wit
           placeholder={placeholder}
           withDueDate={withDueDate}
           onCancel={() => setAdding(false)}
-          onSave={(content, dueDate) => { onAdd(content, category, dueDate); setAdding(false); }}
+          onSave={async (content, dueDate) => {
+            // Fecha o editor só após a gravação confirmada: em caso de falha o AddInline
+            // mantém o rascunho e o formulário aberto.
+            await onAdd(content, category, dueDate);
+            setAdding(false);
+          }}
         />
       )}
 

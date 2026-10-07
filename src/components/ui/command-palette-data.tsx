@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Inbox, LayoutDashboard, Users, Phone, Zap, BarChart3, Shield, Settings,
-  Plus, Keyboard,
+  Keyboard,
 } from 'lucide-react';
 
 export type CommandCategory = 'navigation' | 'action' | 'search' | 'recent' | 'talkx';
@@ -36,10 +36,23 @@ export const defaultNavigationCommands: CommandItem[] = [
   { id: 'nav-settings', title: 'Configurações', description: 'Ajustar preferências', icon: <Settings className="h-4 w-4" />, category: 'navigation', keywords: ['preferências', 'ajustes', 'config'], shortcut: ['g', 's'] },
 ];
 
+// R2-INF-033 (#378): a paleta anunciava "Nova conversa" e "Respostas rápidas" no grupo
+// Ações sem executor nenhum — `executeCommand` (command-palette.tsx) só trata callback,
+// href ou id `nav-`, então escolher qualquer uma delas apenas fechava o diálogo, como se
+// o comando tivesse rodado. Nenhum dos dois fluxos tem gatilho global no app: o modal de
+// nova conversa vive no Inbox (RealtimeInboxView/useInboxUIState) e as respostas rápidas
+// vivem no painel de chat — quem abre cada um é a própria tela, não um evento. Por isso as
+// duas entradas saíram daqui em vez de continuar prometendo um efeito que não existe; se
+// um dia houver gatilho global, elas voltam já apontando para ele.
 export const defaultActionCommands: CommandItem[] = [
-  { id: 'action-new-chat', title: 'Nova conversa', description: 'Iniciar uma nova conversa', icon: <Plus className="h-4 w-4" />, category: 'action', keywords: ['criar', 'iniciar', 'novo'], shortcut: ['n'] },
-  { id: 'action-quick-reply', title: 'Respostas rápidas', description: 'Acessar templates de resposta', icon: <Zap className="h-4 w-4" />, category: 'action', keywords: ['template', 'atalho', 'rápida'] },
-  { id: 'action-keyboard', title: 'Atalhos de teclado', description: 'Ver todos os atalhos', icon: <Keyboard className="h-4 w-4" />, category: 'action', keywords: ['shortcuts', 'teclas'], shortcut: ['?'] },
+  {
+    id: 'action-keyboard', title: 'Atalhos de teclado', description: 'Ver todos os atalhos',
+    icon: <Keyboard className="h-4 w-4" />, category: 'action', keywords: ['shortcuts', 'teclas'],
+    shortcut: ['?'],
+    // Dispara o mesmo evento que o GlobalKeyboardProvider escuta (`show-shortcuts-help`,
+    // GlobalKeyboardProvider.tsx:83-84): abre o painel de ajuda real em vez de só fechar a paleta.
+    action: () => document.dispatchEvent(new CustomEvent('show-shortcuts-help')),
+  },
 ];
 
 // Fuzzy search helpers

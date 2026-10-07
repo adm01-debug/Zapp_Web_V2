@@ -41,6 +41,24 @@ export function useReactionMutations(
 
       const contactId = await resolveMessageContactId();
 
+      // R2-INB-032: o transporte vem ANTES da gravação local. A linha em
+      // `message_reactions` é a fonte dos badges e do `hasReacted` da tela, então
+      // só pode ser confirmada depois que a Evolution aceitou a reação. Na ordem
+      // antiga a rejeição do envio era engolida pelo catch, a mutation resolvia e
+      // a query era invalidada como se tivesse dado certo.
+      if (options?.instanceName && options?.contactJid && options?.externalId) {
+        await sendReaction(
+          options.instanceName,
+          {
+            remoteJid: options.contactJid,
+            fromMe: options.senderType === 'agent',
+            id: options.externalId,
+          },
+          emoji
+        );
+        log.info('Reaction sent via Evolution API', { emoji, messageId });
+      }
+
       const { data, error } = await supabase
         .from('message_reactions')
         .upsert(
@@ -51,23 +69,6 @@ export function useReactionMutations(
         .single();
 
       if (error) throw error;
-
-      if (options?.instanceName && options?.contactJid && options?.externalId) {
-        try {
-          await sendReaction(
-            options.instanceName,
-            {
-              remoteJid: options.contactJid,
-              fromMe: options.senderType === 'agent',
-              id: options.externalId,
-            },
-            emoji
-          );
-          log.info('Reaction sent via Evolution API', { emoji, messageId });
-        } catch (err) {
-          log.error('Failed to send reaction via Evolution API', err);
-        }
-      }
 
       return data;
     },
@@ -84,6 +85,23 @@ export function useReactionMutations(
     mutationFn: async (emoji: string) => {
       if (!profileId) throw new Error('Perfil não encontrado');
 
+      // R2-INB-032: mesma ordem do add — o transporte primeiro. Se a Evolution
+      // rejeitar o envio, o DELETE local não roda e a reação que já existia
+      // continua valendo (antes, o delete acontecia primeiro e a rejeição era
+      // engolida pelo catch).
+      if (options?.instanceName && options?.contactJid && options?.externalId) {
+        await sendReaction(
+          options.instanceName,
+          {
+            remoteJid: options.contactJid,
+            fromMe: options.senderType === 'agent',
+            id: options.externalId,
+          },
+          ''
+        );
+        log.info('Reaction removed via Evolution API', { emoji, messageId });
+      }
+
       const { error } = await supabase
         .from('message_reactions')
         .delete()
@@ -92,22 +110,6 @@ export function useReactionMutations(
         .eq('emoji', emoji);
 
       if (error) throw error;
-
-      if (options?.instanceName && options?.contactJid && options?.externalId) {
-        try {
-          await sendReaction(
-            options.instanceName,
-            {
-              remoteJid: options.contactJid,
-              fromMe: options.senderType === 'agent',
-              id: options.externalId,
-            },
-            ''
-          );
-        } catch (err) {
-          log.error('Failed to remove reaction via Evolution API', err);
-        }
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['message-reactions', messageId] });

@@ -47,6 +47,8 @@ vi.mock('@/integrations/supabase/client', () => ({
         eq: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+            // O monitor de SLA lê as violações paginadas (R2-MOD-074).
+            range: vi.fn().mockResolvedValue({ data: [], error: null }),
           }),
         }),
         or: vi.fn().mockResolvedValue({ data: [], error: null }),

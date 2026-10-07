@@ -30,11 +30,16 @@ export function AutomationsManager() {
     updateMutation.mutate({ id: automation.id, is_active: !automation.is_active } as Partial<AutomationRow> & { id: string });
   };
 
+  // R2-MOD-003 (#386): `mutate` é fire-and-forget — não devolve a confirmação da
+  // mutation, então o `await onSave(...)` do diálogo resolvia na hora e o editor
+  // fechava antes de o banco responder (o erro só aparecia depois, via toast).
+  // `mutateAsync` devolve a Promise da persistência: o diálogo só fecha quando ela
+  // resolve e continua aberto (com os campos) quando ela rejeita.
   const handleSave = async (data: Partial<AutomationRow>) => {
     if (editingAutomation) {
-      updateMutation.mutate({ id: editingAutomation.id, ...data });
+      await updateMutation.mutateAsync({ id: editingAutomation.id, ...data });
     } else {
-      createMutation.mutate({ ...data, created_by: user?.id });
+      await createMutation.mutateAsync({ ...data, created_by: user?.id });
     }
   };
 

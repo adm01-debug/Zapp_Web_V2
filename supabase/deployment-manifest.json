@@ -41,8 +41,8 @@
     },
     {
       "path": "supabase/functions/_shared/ai-conversation-pipeline.ts",
-      "bytes": 18971,
-      "sha256": "2aa5c9290cc859bed55c6271b3d4ba9f165e6d6ca845eadaab2dc59bf79dce0f"
+      "bytes": 22761,
+      "sha256": "98561132daebc2e15ddfafcc0f2e596f511745ce51ac28e8e83345d09452bc5d"
     },
     {
       "path": "supabase/functions/_shared/ai-generate.ts",
@@ -286,8 +286,8 @@
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
-      "bytes": 29665,
-      "sha256": "7fb6f10bf93306c84c7a4a84b68cb6e53f855e4aa04045dd1e8b96fead3c6cc7"
+      "bytes": 30212,
+      "sha256": "3b65e2545fa5bbdad645f338ac7d14d17063de5896ba9ff1438b094553d6557f"
     },
     {
       "path": "supabase/functions/_shared/secure-egress.ts",
@@ -356,13 +356,13 @@
     },
     {
       "path": "supabase/functions/ai-conversation-analysis/index.ts",
-      "bytes": 17120,
-      "sha256": "e4731a289d2c7129b40e2281248529e3ab0b26136173323fdf237d4a5347de92"
+      "bytes": 18466,
+      "sha256": "014b3a47877ca4ee32589b83afa741d31f6553a62daf7cf2ee657963e7535817"
     },
     {
       "path": "supabase/functions/ai-conversation-summary/index.ts",
-      "bytes": 14791,
-      "sha256": "cded06fb6964859231886daab87aad3e0f91d85bba1645c3849888c37dcca969"
+      "bytes": 16223,
+      "sha256": "2f3b40117f92bdedb8b9d2b5aceb77dfeecea81400c03edb18a38c1057912be2"
     },
     {
       "path": "supabase/functions/ai-enhance-message/index.ts",
@@ -446,8 +446,8 @@
     },
     {
       "path": "supabase/functions/create-user/index.ts",
-      "bytes": 5718,
-      "sha256": "13964c709aa7e697a533eae9419484a45c00fd4716354d3d5af0fbd3fdd7e173"
+      "bytes": 6805,
+      "sha256": "c71ea6f15b418566ecf319716f8e0e0229cc9ecee18b9dbc801ff3ac5b8b34b6"
     },
     {
       "path": "supabase/functions/crm-integration/index.ts",
@@ -566,8 +566,8 @@
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
-      "bytes": 11855,
-      "sha256": "b5d7c2d967fe5a1a09270643b5af13ee7b249a9f1f7437653b2b6598351763ca"
+      "bytes": 14267,
+      "sha256": "8066c5d97469b9addc02094f16093ec882f1c922f0e2cd0d2fec60943c7a50b0"
     },
     {
       "path": "supabase/functions/gmail-send/index.ts",
@@ -631,8 +631,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 56151,
-      "sha256": "1fa4529c78e6776f5b2ecf3a640147db4bc8aa511b413a63346e620a54696d6a"
+      "bytes": 58664,
+      "sha256": "414c0dd88c11ee5135102f06b3777510b4701816a35a3b78c8b7473882a3a259"
     },
     {
       "path": "supabase/functions/multiplix-voices/index.ts",
@@ -755,7 +755,7 @@
       "name": "ai-auto-tag",
       "entrypoint": "supabase/functions/ai-auto-tag/index.ts",
       "verify_jwt": true,
-      "source_sha256": "36f4a3f51b09186165e9cbe5d09e8adcbc7e35507dad9cabd7e182ec2062d246",
+      "source_sha256": "27f3d3c3a09dfe0f5040a7effefca12148121e3b7b78713d2767a86d473fcd02",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -780,7 +780,7 @@
       "name": "ai-churn-analysis",
       "entrypoint": "supabase/functions/ai-churn-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f0987667dfd42224e1a4d7cdd035c430d95789bf62d11ae81af6d16740758cfc",
+      "source_sha256": "4fd7b0ca02c3cdb47cdffbe5f29eef8926282c3c01502503fe0af9d0a5195893",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-guards.ts",
@@ -796,7 +796,7 @@
       "name": "ai-classify-tickets",
       "entrypoint": "supabase/functions/ai-classify-tickets/index.ts",
       "verify_jwt": true,
-      "source_sha256": "563fac6b1fe99bb35a76bb354d3132a800866f3bb9c4e4d25f57d03f770ced9e",
+      "source_sha256": "e4120d320f6268e64e9fce55dff75b44b5281366d49e3733b74404cc22e9953d",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-guards.ts",
@@ -812,7 +812,7 @@
       "name": "ai-conversation-analysis",
       "entrypoint": "supabase/functions/ai-conversation-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b4c5d3f769e370c459aa348fdbea3610e919691ce59cfb062423423fe4101e80",
+      "source_sha256": "d84742e63503888bc44f0f38bc228565209c3d65519ea0c00dfe44a9208be9d9",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -838,7 +838,7 @@
       "name": "ai-conversation-summary",
       "entrypoint": "supabase/functions/ai-conversation-summary/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c9b759af2f850adc3c687af79f9f4255eea84c72bfcd3c1db92f5c27d987b1ed",
+      "source_sha256": "f11c127a64680b8b1023eaedba8d99db6374c45a77e2c333ec880dfcd22f628e",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -864,7 +864,7 @@
       "name": "ai-enhance-message",
       "entrypoint": "supabase/functions/ai-enhance-message/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d83c1bf91ad86a714b8b7ef6d57f91707aece4850557d1801c7664e26f920fdf",
+      "source_sha256": "5c8c84e8a39df49cae79af6bddf671171d139e03f5d8b6b44bf54b1d4d975a64",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -911,7 +911,7 @@
       "name": "ai-proxy",
       "entrypoint": "supabase/functions/ai-proxy/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0ed0c41db31a07c2a5961748627f9b72e2ff3f0fde5967b17149e411e5c1a46a",
+      "source_sha256": "f8cb86bb7aee0f5f327d049e725769800e52c299ac5b8073e5b81c7d2096a120",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-guards.ts",
@@ -929,7 +929,7 @@
       "name": "ai-suggest-reply",
       "entrypoint": "supabase/functions/ai-suggest-reply/index.ts",
       "verify_jwt": true,
-      "source_sha256": "8c7e0ea871dfef1cd6111ddbb13e269dcce8655017764ae2f7c35f62826a266c",
+      "source_sha256": "8991b2208222e3524f66e0bee3f3c4c08f9c10367b3e4003078e821281c50099",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -952,7 +952,7 @@
       "name": "ai-transcribe-audio",
       "entrypoint": "supabase/functions/ai-transcribe-audio/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ed6fd4c6cd178e9bdf4497b9b8b60111752fae5addeac283939c3ded763e7efc",
+      "source_sha256": "5a3a875aaf275e1879d718b72a317bcb3819315ee6483a358b62fb9d9db0d45c",
       "source_files": [
         "supabase/functions/_shared/ai-audio-authz.ts",
         "supabase/functions/_shared/ai-auth.ts",
@@ -968,7 +968,7 @@
       "name": "approve-password-reset",
       "entrypoint": "supabase/functions/approve-password-reset/index.ts",
       "verify_jwt": true,
-      "source_sha256": "707cef0b7fe5c9f2b8843a7bee9958fe31ea6357a95d2625b596d49b4470cbca",
+      "source_sha256": "348830aab8cfa35c00ce82488e33657635177892f49d65b111817ce892901d1b",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1033,7 +1033,7 @@
       "name": "chatbot-l1",
       "entrypoint": "supabase/functions/chatbot-l1/index.ts",
       "verify_jwt": true,
-      "source_sha256": "78a8f646691db721554a95627d053f354435a263586fcc02b50e52fe9c06bfda",
+      "source_sha256": "a2236cbc747db8c0180e30a261d24fab554183b0985772baffff6070c2e0ca4d",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1057,7 +1057,7 @@
       "name": "classify-audio-meme",
       "entrypoint": "supabase/functions/classify-audio-meme/index.ts",
       "verify_jwt": true,
-      "source_sha256": "82df67719715496b35c587c43597c1a44dc69e884d221009f82bed03d52a6ea2",
+      "source_sha256": "95e3e4bca573f3ab1e3107fd7f691261d7091254fa359f1981c9a6782d4c1570",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -1079,7 +1079,7 @@
       "name": "classify-emoji",
       "entrypoint": "supabase/functions/classify-emoji/index.ts",
       "verify_jwt": true,
-      "source_sha256": "27e01216f98f520e94df2f3aad0312b68bec0b623631c7220ffdadb14994a467",
+      "source_sha256": "4aa1258c80489cdfe24df93ad58b0304efaa3f0d74d1b03b59dfeb927e2403f1",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -1103,7 +1103,7 @@
       "name": "classify-sticker",
       "entrypoint": "supabase/functions/classify-sticker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7af94f391e97de1abfc3840dbf0a4217d0eca287a4e8d4c54fd91c2c3dddbd98",
+      "source_sha256": "20a9534dd368d9dff06dbf3e391a5e82ad7b736439b72a1fc56b9b7daebd0731",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -1155,7 +1155,7 @@
       "name": "create-user",
       "entrypoint": "supabase/functions/create-user/index.ts",
       "verify_jwt": true,
-      "source_sha256": "fe9eb45bc65baa4079b655764e203abf88b56f0ad5a03aa3df6ceb1f4da0a984",
+      "source_sha256": "08fe926c272be2f357538db8dc607bf52b904d99237007a21a95cc06701099a0",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1190,7 +1190,7 @@
       "name": "detect-new-device",
       "entrypoint": "supabase/functions/detect-new-device/index.ts",
       "verify_jwt": true,
-      "source_sha256": "990662a6d933ecd7c03d1b7783bf8d001a11de80276d4d4725ccd726a55713bd",
+      "source_sha256": "1f2117bd9b1a1327e6858a8e2fe422c64dcaa6f2898c3e6761bbd3a4a50078d5",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1214,7 +1214,7 @@
       "name": "elevenlabs-dialogue",
       "entrypoint": "supabase/functions/elevenlabs-dialogue/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0a8aae487e48a3bd31294288459907fb760b017690eb53ff822e7bce4993e373",
+      "source_sha256": "8a732e9c47d21c5c8c30a45bc389d6877e8cee17bd0501e8a27b9725ec2b6607",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1237,7 +1237,7 @@
       "name": "elevenlabs-sfx",
       "entrypoint": "supabase/functions/elevenlabs-sfx/index.ts",
       "verify_jwt": true,
-      "source_sha256": "28131ebdf682a8e24f801fd557622793a72b239cf97d032ec7aa1b6f44624d02",
+      "source_sha256": "8385eaab7f24d2bd63729d32a272d40e6763178dca7ef4117e824ebd45c0427a",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1261,7 +1261,7 @@
       "name": "elevenlabs-tts",
       "entrypoint": "supabase/functions/elevenlabs-tts/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b61f430ea650b1950e1f7ba272c18585a47c6c36961fc3f4a2e106486a5e7f78",
+      "source_sha256": "1b1cb76d6dd3c8970d203c7b71523791c8b60ac6b5352e68b7d79b74a85add68",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1273,7 +1273,7 @@
       "name": "elevenlabs-tts-stream",
       "entrypoint": "supabase/functions/elevenlabs-tts-stream/index.ts",
       "verify_jwt": true,
-      "source_sha256": "33a53e713453deaa95098eaea23d7ed1fce7bc599611b7e954313edb869ee05f",
+      "source_sha256": "c509cd3926d9787c2544893f16c7849d2c58a5f6760867195b92ce1125f481b5",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1285,7 +1285,7 @@
       "name": "elevenlabs-voice-design",
       "entrypoint": "supabase/functions/elevenlabs-voice-design/index.ts",
       "verify_jwt": true,
-      "source_sha256": "20056455de8e845d1eb9418c3b45a89a9a35800fabf43e1e3e70487214bd3e3d",
+      "source_sha256": "b5a9a52e05e8d67a9e950b4574ec39b96ce4035afd1f749ecd0d70e251ba9d72",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1297,7 +1297,7 @@
       "name": "elevenlabs-webhook",
       "entrypoint": "supabase/functions/elevenlabs-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "188ff4cedd6d250e66a6fd44a33eea3e3635168b259029c7df620bb60a6266b4",
+      "source_sha256": "e6312e203237014c0a44217b5cbe669152f18361f9711e08e5c40f8fc1b9e423",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1344,7 +1344,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "0341b237ce41c447d40ae9e7b9f838e59e431887eb7f92af7735cabd923f8d88",
+      "source_sha256": "5ef0dabe44696b0fc110bdc8764c3793859e3c01ae350291be9c37f07d185e5b",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-go-adapter.ts",
@@ -1370,7 +1370,7 @@
       "name": "external-db-bridge",
       "entrypoint": "supabase/functions/external-db-bridge/index.ts",
       "verify_jwt": true,
-      "source_sha256": "eb0653b1a63ac174f23f38b9390b124d1a273e366700077668be79bb2a6f115e",
+      "source_sha256": "969b65280108ebb69cd85e89bd43bb45aeae2556ce84236b98f1814f00f346f9",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1450,7 +1450,7 @@
       "name": "gmail-oauth",
       "entrypoint": "supabase/functions/gmail-oauth/index.ts",
       "verify_jwt": true,
-      "source_sha256": "8907df018e2854193604bb28a28183afffdf0d529595148a010983f8d3d98496",
+      "source_sha256": "55c7a19a04e7e0f9b522bc730cb0681cbe87d46e55731a54e93f7cbc09bb987a",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1462,7 +1462,7 @@
       "name": "gmail-send",
       "entrypoint": "supabase/functions/gmail-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "966b7aa99ea73c3cfe6b5805371f19db20d543c7b4f9aa97899bb01c4470e77c",
+      "source_sha256": "90899696e81684c1a9b0d678cd022578b31f3ffb7aca4a8bbd6ff7f39466959b",
       "source_files": [
         "supabase/functions/_shared/gmail-mime.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1578,7 +1578,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "20067a6a2e8c9df3f3fa312db23c43a244ad7b4d46525a3855c3ee477f76493b",
+      "source_sha256": "b8b17de4cb63b1c24f0da1d8f7de85b67024c5137c82da93740ccf39d1c69f99",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1658,7 +1658,7 @@
       "name": "revoke-auth-sessions",
       "entrypoint": "supabase/functions/revoke-auth-sessions/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3471c092fd35fa8da18325248d434285b5b239265aaa99ea99fba31a71aae4df",
+      "source_sha256": "cc14fda51c2a3d47ab47c527f51897deaf5df557f40b669d3b61d3c175a8e1bf",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1682,7 +1682,7 @@
       "name": "send-email",
       "entrypoint": "supabase/functions/send-email/index.ts",
       "verify_jwt": true,
-      "source_sha256": "78931a48f43755f03ae85bee732a941d18d11a644cafe03e8c740fe7a4001bac",
+      "source_sha256": "3ec4e862a0a7152f1724079768ab7467241d5941d76d54636c0e7c2cc31347a6",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1694,7 +1694,7 @@
       "name": "send-rate-limit-alert",
       "entrypoint": "supabase/functions/send-rate-limit-alert/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4fa6e466a62b629e56a4883ca32b4f0c3a620cfcbe3e23210311e088122a658d",
+      "source_sha256": "7700343629fa787274a255f48483ef46597f1ac7e6df41f2664d1b92b4446cf2",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1706,7 +1706,7 @@
       "name": "send-scheduled-report",
       "entrypoint": "supabase/functions/send-scheduled-report/index.ts",
       "verify_jwt": true,
-      "source_sha256": "35918d3f872362dbad71e57d3d74d383b92a3207b6b3878d2426d2eb32ff7b69",
+      "source_sha256": "4a432cce4923c9cac8869940de1c73533265139d0fad0adc59aa8db8c13595e3",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1719,7 +1719,7 @@
       "name": "sentiment-alert",
       "entrypoint": "supabase/functions/sentiment-alert/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4cfd3522affcf1900ab72e2209d98354acc8a202785689ab56770084ac35adc5",
+      "source_sha256": "f20adac1568afb908f6c44a26994d1dd02c09fd9c133f9ee6beb3c1551548c47",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1860,7 +1860,7 @@
       "name": "webauthn",
       "entrypoint": "supabase/functions/webauthn/index.ts",
       "verify_jwt": true,
-      "source_sha256": "54dda9887058c8215a202a35611de24739654f5d8af1b79717c4a8698554db9a",
+      "source_sha256": "7bccadc32379a74a58a6d6e81c36550b3a0cd0d2b7fbe11cc3d579431dffa7d2",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1901,5 +1901,5 @@
       ]
     }
   ],
-  "manifest_sha256": "0d7bc6148268c27f7000f43f50d63406bf8a848f0dfe0610fa59d7a5f383f6ee"
+  "manifest_sha256": "38c8c7ae698360d0ed1eb659713d00fd418174bfc2eb9dae3afd809aaba773b2"
 }

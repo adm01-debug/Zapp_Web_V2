@@ -1,7 +1,16 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 
 export type Contact = Database['public']['Tables']['contacts']['Row'];
+
+type ContactNoteRow = Database['public']['Tables']['contact_notes']['Row'];
+
+/**
+ * Tamanho da página da leitura de notas (mesmo teto que o PostgREST aplica no
+ * projeto quando a consulta não tem `.range()`).
+ */
+export const CONTACT_NOTES_PAGE_SIZE = 1000;
 
 function windowChangePercent(current: number | null, previous: number | null): number | null {
   const curr = current ?? 0;
@@ -97,15 +106,28 @@ export class ContactService {
   }
 
   static async fetchNotes(contactId: string) {
-    const { data, error } = await supabase
-      .from('contact_notes')
-      .select(`id, contact_id, author_id, content, category, is_done, due_date, created_at, updated_at`)
-      .eq('contact_id', contactId)
-      .order('created_at', { ascending: false });
+    // Leitura PAGINADA: um `select()` sem `.range()` devolve só a primeira página
+    // (teto do projeto, 1000 linhas) e as notas do fim da lista sumiam em silêncio.
+    // A ordem `created_at desc` + `id desc` (chave única) é o que garante que a
+    // página seguinte continue de onde a anterior parou — sem duplicar nota nem
+    // pular a última linha de uma página empatada no mesmo instante.
+    const { rows: data, error } = await fetchAllRows<ContactNoteRow>(
+      (from, to) =>
+        supabase
+          .from('contact_notes')
+          .select(`id, contact_id, author_id, content, category, is_done, due_date, created_at, updated_at`)
+          .eq('contact_id', contactId)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(from, to),
+      { pageSize: CONTACT_NOTES_PAGE_SIZE },
+    );
 
-    if (error) throw error;
+    // Erro no meio da leitura: sobe em vez de devolver uma lista parcial como se
+    // fosse o conjunto inteiro de notas do contato.
+    if (error) throw new Error(error.message);
 
-    const authorIds = [...new Set(data?.map(n => n.author_id).filter(Boolean) || [])];
+    const authorIds = [...new Set((data || []).map(n => n.author_id).filter(Boolean))];
     let authors: { id: string, name: string | null, avatar_url: string | null }[] = [];
 
     if (authorIds.length > 0) {
@@ -129,7 +151,7 @@ export class ContactService {
     content: string,
     options?: { category?: string; dueDate?: string | null },
   ) {
-    return supabase
+    const { data, error } = await supabase
       .from('contact_notes')
       .insert({
         contact_id: contactId,
@@ -140,17 +162,25 @@ export class ContactService {
       })
       .select()
       .single();
+
+    // O PostgREST responde `{ data, error }` e NÃO rejeita a promise: sem este
+    // `throw` a mutation de quem chama cairia em `onSuccess` com a nota não salva.
+    if (error) throw error;
+    return data;
   }
 
    static async deleteNote(noteId: string) {
-     return supabase.from('contact_notes').delete().eq('id', noteId);
+     const { error } = await supabase.from('contact_notes').delete().eq('id', noteId);
+     if (error) throw error;
    }
 
    static async updateNote(
      noteId: string,
      updates: Partial<{ content: string; is_done: boolean; due_date: string | null }>,
    ) {
-     return supabase.from('contact_notes').update(updates).eq('id', noteId).select().single();
+     const { data, error } = await supabase.from('contact_notes').update(updates).eq('id', noteId).select().single();
+     if (error) throw error;
+     return data;
    }
  
    static async fetchCustomFields(contactId: string) {

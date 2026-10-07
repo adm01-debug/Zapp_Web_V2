@@ -59,7 +59,18 @@ export function CommandPalette({
     return result;
   }, [query, filteredCommands, searchResults]);
 
-  const allItems = React.useMemo(() => groupedCommands.flatMap(g => g.items), [groupedCommands]);
+  // Acesso rápido (busca vazia): é a lista que a tela exibe, então é a MESMA coleção que
+  // o teclado percorre — antes o listener só via `groupedCommands`, vazio sem consulta,
+  // e as setas/Enter anunciados não funcionavam nos cinco destinos exibidos (R2-INF-034).
+  const quickAccessItems = React.useMemo(
+    () => (query ? [] : defaultNavigationCommands.slice(0, 5)),
+    [query]
+  );
+
+  const allItems = React.useMemo(
+    () => (query ? groupedCommands.flatMap(g => g.items) : quickAccessItems),
+    [query, groupedCommands, quickAccessItems]
+  );
 
   const debouncedSearch = useDebounce(async (q: string) => {
     if (!onSearch || q.length < 2) { setSearchResults([]); return; }
@@ -143,7 +154,7 @@ export function CommandPalette({
               <div>
                 <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Star className="h-3 w-3" />Acesso rápido</span></div>
                 <div className="space-y-0.5">
-                  {defaultNavigationCommands.slice(0, 5).map((cmd, idx) => (
+                  {quickAccessItems.map((cmd, idx) => (
                     <button key={cmd.id} onClick={() => executeCommand(cmd)}
                       className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
                       <div className="flex items-center gap-3">

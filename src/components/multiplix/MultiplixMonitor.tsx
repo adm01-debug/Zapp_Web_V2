@@ -50,7 +50,16 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const [confirmResume, setConfirmResume] = useState(false);
 
   const { data: dispatch } = useMultiplixDispatch(dispatchId);
-  const { data: recipients = [] } = useMultiplixRecipients(dispatchId, statusFilter);
+  // R2-MOD-022: FALHA e VAZIO sao estados diferentes. O default `= []` engolia a
+  // rejeicao da consulta e a tela anunciava "Nenhum destinatario encontrado" numa
+  // leitura que falhou — o operador lia um disparo sem destinatarios onde havia erro.
+  const {
+    data: recipientsData,
+    isError: recipientsFailed,
+    error: recipientsError,
+  } = useMultiplixRecipients(dispatchId, statusFilter);
+  const recipients = recipientsData?.rows ?? [];
+  const recipientsTotal = recipientsData?.total ?? null;
   const action = useMultiplixDispatchAction();
 
   // total_recipients/sent_count/failed_count/outcome_unknown_count nao contam
@@ -181,12 +190,34 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
 
       <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-          <p className="text-sm font-bold text-foreground">Destinatários</p>
+          <p className="text-sm font-bold text-foreground">
+            Destinatários
+            {recipientsTotal !== null && (
+              <span className="ml-1.5 text-xs font-normal text-foreground-secondary tabular-nums">
+                {fmtInt(recipients.length)} de {fmtInt(recipientsTotal)}
+              </span>
+            )}
+          </p>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
+        {/* R2-MOD-022: a leitura que falhou aparece como FALHA — nunca como lista
+            vazia confirmada ("Nenhum destinatario encontrado"). */}
+        {recipientsFailed && (
+          <p className="flex items-center gap-1.5 px-4 py-2 text-2xs text-dash-red border-b border-dash-red/20 bg-dash-red/5">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>Não foi possível carregar os destinatários{recipientsError instanceof Error ? `: ${recipientsError.message}` : ''}. A lista abaixo pode estar incompleta.</span>
+          </p>
+        )}
+        {/* R2-MOD-022: teto de paginas atingido — a amostra e rotulada em vez de
+            passar por lista completa. */}
+        {recipientsData?.truncated && (
+          <p className="px-4 py-2 text-2xs text-dash-amber border-b border-dash-amber/20 bg-dash-amber/5">
+            Mostrando os primeiros {fmtInt(recipients.length)} destinatários (amostra do total, veja o filtro de status).
+          </p>
+        )}
         <div className="max-h-[480px] overflow-auto divide-y divide-border/40">
           {recipients.map((r) => {
             const sm = RECIPIENT_STATUS[r.status] ?? RECIPIENT_STATUS.pending;
@@ -201,7 +232,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
               </div>
             );
           })}
-          {recipients.length === 0 && <p className="text-center py-8 text-muted-foreground text-xs">Nenhum destinatário encontrado</p>}
+          {!recipientsFailed && recipients.length === 0 && <p className="text-center py-8 text-muted-foreground text-xs">Nenhum destinatário encontrado</p>}
         </div>
       </section>
 

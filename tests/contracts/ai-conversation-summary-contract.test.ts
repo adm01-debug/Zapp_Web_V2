@@ -150,10 +150,10 @@ describe('ai-conversation-summary — persistência atômica (IA-026/IA-027)', (
   });
 
   it('erro de persistência devolve 502 com mensagem clara (não warn + 200)', () => {
-    expect(source).toContain('const { data: persisted, error: persistError } = await supabase.rpc(');
-    const erro = source.indexOf('if (persistError)');
+    expect(source).toContain('persistConversationAnalysisGuarded(');
+    const erro = source.indexOf("outcome.kind === 'error'");
     expect(erro, 'não trata o erro da RPC').toBeGreaterThan(-1);
-    const bloco = source.slice(erro, source.indexOf('p_analyzed_at', erro));
+    const bloco = source.slice(erro, source.indexOf('analysisId = outcome.analysisId', erro));
     expect(bloco).toContain('502');
     expect(bloco).toMatch(/log\.error\(/);
     expect(source).not.toContain("log.warn(\"Failed to persist");

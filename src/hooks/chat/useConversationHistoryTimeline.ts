@@ -59,6 +59,13 @@ export interface RawTaskRow {
   id: string;
   title: string;
   status: string;
+  /**
+   * Carimbo de conclusão (`conversation_tasks.completed_at`). No modelo atual de tarefas
+   * (WorkItem) a conclusão é gravada junto do status `done` — e linhas legadas podem
+   * trazê-la com outro status. Opcional de propósito: as linhas antigas do banco e os
+   * testes puros não precisam carregar o campo.
+   */
+  completed_at?: string | null;
   created_at: string;
 }
 
@@ -103,6 +110,22 @@ const TRANSFER_TYPES = new Set(['transfer', 'queue_transfer', 'overload_reassign
 function truncate(text: string | null | undefined, max = 120): string | undefined {
   if (!text) return undefined;
   return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
+/**
+ * Status de conclusão no banco: `done` é o do modelo atual de tarefas (WorkItemStatus);
+ * `completed` fica por causa das linhas antigas gravadas antes da migração do modelo.
+ */
+const CONCLUDED_TASK_STATUSES = new Set(['done', 'completed']);
+
+/**
+ * Tarefa concluída quando o status é de conclusão OU quando há carimbo de conclusão
+ * (`completed_at`). O carimbo vale mesmo se a linha trouxer um status legado diferente —
+ * sem isso, tarefa já feita aparecia como "Pendente" no histórico da conversa.
+ */
+function isTaskConcluded(task: Pick<RawTaskRow, 'status' | 'completed_at'>): boolean {
+  if (task.completed_at) return true;
+  return CONCLUDED_TASK_STATUSES.has(task.status);
 }
 
 function averageResponseMinutes(messages: RawMessageRow[]): number | null {
@@ -192,7 +215,7 @@ export function buildTimeline(
     })),
     ...rows.tasks.map((t): TimelineEvent => ({
       id: `task-${t.id}`, at: t.created_at, kind: 'task', title: `Tarefa criada: ${t.title}`,
-      pill: t.status === 'completed' ? { label: 'Concluída', tone: 'success' } : { label: 'Pendente', tone: 'warning' },
+      pill: isTaskConcluded(t) ? { label: 'Concluída', tone: 'success' } : { label: 'Pendente', tone: 'warning' },
     })),
     ...rows.deals
       .filter((d) => d.created_at)
@@ -281,7 +304,7 @@ export function useConversationHistoryTimeline(
         .order('created_at', { ascending: false })
         .limit(200);
       const notesQuery = supabase.from('contact_notes').select('id, content, created_at').eq('contact_id', cid);
-      const tasksQuery = supabase.from('conversation_tasks').select('id, title, status, created_at').eq('contact_id', cid);
+      const tasksQuery = supabase.from('conversation_tasks').select('id, title, status, completed_at, created_at').eq('contact_id', cid);
       const dealsQuery = supabase.from('sales_deals').select('id, title, value, status, created_at').eq('contact_id', cid);
 
       const [messagesRes, eventsRes, notesRes, tasksRes, dealsRes] = await Promise.all([

@@ -169,7 +169,8 @@ describe('GroupsView', () => {
     const campo = await screen.findByPlaceholderText('Digite a mensagem para enviar a todos os grupos selecionados...');
     fireEvent.change(campo, { target: { value: 'Olá' } });
     fireEvent.click(screen.getByText('Enviar'));
-    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Enviado para 0 grupo(s), 1 falha(s)'); });
+    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Nenhum envio deu certo (1 falha(s)) — mensagem e seleção mantidas'); });
+    expect(toast.warning).toHaveBeenCalledTimes(1);
     expect(toast.success).not.toHaveBeenCalled();
   });
 });
