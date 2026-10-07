@@ -68,6 +68,10 @@ export const ALLOWLIST_NODE = new Set([
   'scripts/ui-audit/contacts-navy-header.unit.mjs',
   'scripts/ui-audit/layout-guard.unit.mjs',
   'scripts/ui-audit/view-container-padding.unit.mjs',
+  // R2-INF-010: prova o contrato da resposta do `mcp_exec` no runner da suite de banco
+  // (runner de verdade em child process, `fetch` stubbed); offline. A promoção a um bloco
+  // `run:` de ci.yml é do dono do workflow.
+  'scripts/db-tests/run-all.unit.mjs',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
