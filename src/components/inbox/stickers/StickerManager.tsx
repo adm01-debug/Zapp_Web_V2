@@ -83,8 +83,14 @@ export function StickerManager({ onSend, mode = 'manager' }: StickerManagerProps
     if (showFavorites) filtered = filtered.filter(s => s.is_favorite);
     if (category) filtered = filtered.filter(s => s.category === category);
     if (search) filtered = filtered.filter(s => s.name?.toLowerCase().includes(search.toLowerCase()));
+    // R2-INB-062: "Recentes" ordena pela recência real (`created_at`) em vez de
+    // só acender o destaque da barra. Cópia antes do sort para não reordenar o
+    // cache do react-query. Sem data vira a mais antiga.
+    if (showRecent) {
+      filtered = [...filtered].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+    }
     return filtered;
-  }, [stickers, search, category, showFavorites]);
+  }, [stickers, search, category, showFavorites, showRecent]);
 
   const favoriteCount = useMemo(() => stickers.filter(s => s.is_favorite).length, [stickers]);
 
@@ -152,7 +158,7 @@ export function StickerManager({ onSend, mode = 'manager' }: StickerManagerProps
             activeCategory={category}
             showFavorites={showFavorites}
             showRecent={showRecent}
-            onCategoryChange={setCategory}
+            onCategoryChange={(cat) => { setCategory(cat); setShowRecent(false); }}
             onToggleFavorites={() => setShowFavorites(!showFavorites)}
             onToggleRecent={() => setShowRecent(!showRecent)}
           />
