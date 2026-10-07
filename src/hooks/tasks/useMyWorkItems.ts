@@ -156,6 +156,7 @@ function toDbPatch(patch: Partial<WorkItemInput>): TaskUpdate {
   if (patch.title !== undefined)         out.title = patch.title;
   if (patch.description !== undefined)   out.description = patch.description;
   if (patch.priority !== undefined)      out.priority = patch.priority;
+  if (patch.contactId !== undefined)     out.contact_id = patch.contactId;
   if (patch.dueDate !== undefined)       out.due_date = patch.dueDate;
   if (patch.remindAt !== undefined)      out.remind_at = patch.remindAt;
   if (patch.waitingReason !== undefined) out.waiting_reason = patch.waitingReason;
@@ -168,6 +169,7 @@ function toItemPatch(patch: Partial<WorkItemInput>): Partial<WorkItem> {
   if (patch.title !== undefined)         out.title = patch.title;
   if (patch.description !== undefined)   out.description = patch.description;
   if (patch.priority !== undefined)      out.priority = patch.priority;
+  if (patch.contactId !== undefined)     out.contact_id = patch.contactId;
   if (patch.dueDate !== undefined)       out.due_date = patch.dueDate;
   if (patch.remindAt !== undefined)      out.remind_at = patch.remindAt;
   if (patch.waitingReason !== undefined) out.waiting_reason = patch.waitingReason;
