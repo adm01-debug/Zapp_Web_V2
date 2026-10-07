@@ -19,7 +19,20 @@
  * Idempotente: ids fixos + `on conflict`. Rodar duas vezes produz o mesmo estado.
  * Toda escrita dependente vai numa única transação; todo erro aborta com throw.
  */
+// O tsconfig do e2e carrega só os tipos do Node, e o seed usa o cliente SQL
+// transacional do Bun em runtime. A superfície usada fica declarada aqui (tipos
+// mínimos), para o typecheck do repo cobrir também este arquivo.
+type LinhasSql = Record<string, unknown>[];
+interface SqlTx {
+  (partes: TemplateStringsArray, ...valores: unknown[]): Promise<LinhasSql>;
+}
+interface SqlCliente extends SqlTx {
+  begin<T>(fn: (tx: SqlTx) => Promise<T>): Promise<T>;
+  end(): Promise<void>;
+}
+// @ts-expect-error — 'bun' é módulo de runtime; não há pacote de tipos no projeto.
 import { SQL } from 'bun';
+const abrirSql = SQL as unknown as (url: string) => SqlCliente;
 import { E2E_ARQUIVOS, caminhoObjeto, locatorObjeto } from './dados';
 
 function exigirEnv(nome: string): string {
@@ -69,7 +82,9 @@ async function uploadObjeto(caminho: string, corpo: Buffer, mimetype: string): P
       'content-type': mimetype,
       'x-upsert': 'true',
     },
-    body: corpo,
+    // `Buffer<ArrayBufferLike>` não casa com o BodyInit do lib DOM deste tsconfig
+    // (só na tipagem: em runtime o fetch do Bun aceita o Buffer direto).
+    body: corpo as unknown as BodyInit,
   });
   if (!res.ok) {
     throw new Error(`seed: upload ${caminho} falhou (${res.status}): ${await res.text()}`);
@@ -125,7 +140,7 @@ async function provarObjetoPrivadoComoUsuario(token: string, caminho: string, es
 }
 
 async function main() {
-  const db = new SQL(DB_URL);
+  const db = abrirSql(DB_URL);
   try {
     await db.begin(async (tx) => {
       await tx`
