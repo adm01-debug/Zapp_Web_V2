@@ -2,6 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/hooks/ui/use-toast';
+import { fetchAllRows, type PageResult } from '@/lib/fetchAllRows';
+
+export type ScheduledMessageStatus = 'pending' | 'sent' | 'failed' | 'cancelled';
 
 export interface ScheduledMessage {
   id: string;
@@ -10,7 +13,7 @@ export interface ScheduledMessage {
   message_type: string;
   media_url: string | null;
   scheduled_at: string;
-  status: 'pending' | 'sent' | 'failed' | 'cancelled';
+  status: ScheduledMessageStatus;
   sent_at: string | null;
   error_message: string | null;
   created_by: string | null;
@@ -19,25 +22,77 @@ export interface ScheduledMessage {
   updated_at: string;
 }
 
-export function useScheduledMessages(contactId?: string) {
+/**
+ * Faixa de tempo que a tela está exibindo (instantes ISO).
+ *
+ * A Agenda é um calendário: o que ela mostra é o pendente **do período visível**.
+ * Sem faixa a consulta varre a tabela inteira e a primeira página do PostgREST
+ * (teto de 1000 linhas) é ocupada por histórico — os agendamentos futuros somem
+ * da tela (R2-MOD-029).
+ */
+export interface ScheduledMessagesWindow {
+  /** Início da faixa (inclusive). Ausente = sem limite inferior. */
+  from?: string | null;
+  /** Fim da faixa (inclusive). Ausente = sem limite superior. */
+  to?: string | null;
+}
+
+/**
+ * Agendamentos do usuário. `messages` traz os **pendentes** — que é o que a
+ * Agenda exibe e o que ela pode revisar/cancelar.
+ *
+ * `isError`/`error`/`refetch` existem para a tela distinguir **falha de leitura**
+ * de **agenda vazia**: antes o erro ficava só no console e a tela anunciava
+ * "0 pendentes" com a mesma cara de um dia sem agendamento.
+ */
+export function useScheduledMessages(
+  contactId?: string,
+  faixa: ScheduledMessagesWindow = {},
+) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const from = faixa.from ?? null;
+  const to = faixa.to ?? null;
 
-  const { data: messages = [], isLoading } = useQuery({
-    queryKey: ['scheduled-messages', contactId],
-    queryFn: async () => {
-      let query = supabase
-        .from('scheduled_messages')
-        .select('*')
-        .order('scheduled_at', { ascending: true });
+  const {
+    data: messages = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['scheduled-messages', contactId ?? 'all', from ?? null, to ?? null],
+    queryFn: async (): Promise<ScheduledMessage[]> => {
+      const base = () => {
+        let query = supabase
+          .from('scheduled_messages')
+          .select('*')
+          // A Agenda só mostra pendente: pedir isso ao servidor é o que impede o
+          // histórico (enviado/cancelado) de ocupar o lugar dos futuros.
+          .eq('status', 'pending')
+          // Ordem determinística com desempate: a paginação por `range` precisa de
+          // chave estável, senão páginas repetem ou pulam linhas.
+          .order('scheduled_at', { ascending: true })
+          .order('id', { ascending: true });
 
-      if (contactId) {
-        query = query.eq('contact_id', contactId);
-      }
+        if (contactId) query = query.eq('contact_id', contactId);
+        if (from) query = query.gte('scheduled_at', from);
+        if (to) query = query.lte('scheduled_at', to);
+        return query;
+      };
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as ScheduledMessage[];
+      // Percorre TODAS as páginas: um mês com mais de 1000 pendentes não pode
+      // aparecer pela metade. O `select('*')` traz `status` como `string` (tipo
+      // gerado do banco) e o hook expõe a união — cast de transporte, como no
+      // resto do projeto.
+      const { rows, incomplete, error: readError } = await fetchAllRows<ScheduledMessage>(
+        (pageFrom, pageTo) =>
+          base().range(pageFrom, pageTo) as unknown as PromiseLike<PageResult<ScheduledMessage>>,
+      );
+      // Erro de leitura não vira lista vazia: a tela tem de saber que falhou.
+      if (readError) throw new Error(readError.message);
+      if (incomplete) throw new Error('Leitura incompleta dos agendamentos');
+      return rows;
     },
   });
 
@@ -99,6 +154,9 @@ export function useScheduledMessages(contactId?: string) {
   return {
     messages,
     isLoading,
+    isError,
+    error,
+    refetch,
     scheduleMessage: scheduleMutation.mutateAsync,
     cancelMessage: cancelMutation.mutateAsync,
     isScheduling: scheduleMutation.isPending,
