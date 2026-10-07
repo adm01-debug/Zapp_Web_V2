@@ -177,7 +177,7 @@ então esse caminho nunca foi executável por agente de qualquer forma.
 
 ## Auditoria e plano de correções (2026-09-16)
 
-**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 17 workflows + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
+**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 16 arquivos de `.github/workflows/` (+3 workflows dinâmicos) + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
 Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
 Estado dos achados após re-auditoria de 2026-09-17:
 - `messages` >75% dead tuples — **RESOLVIDO**: autovacuum executou em 2026-09-16 18:37; em
@@ -198,9 +198,10 @@ Estado dos achados após re-auditoria de 2026-09-17:
   vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
   `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
   threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
-  deleção, e os 6 required checks da seção abaixo.
+  deleção, e os 6 required checks da seção abaixo — consolidado na tabela canônica "Perímetro do GitHub".
 
-  **Correção de 2026-09-25 (auditoria de 5 agentes, achado do agente de cruzamento de PRs):**
+  **Correção de 2026-09-25 (auditoria de 5 agentes, achado do agente de cruzamento de PRs) — HISTÓRICA,
+  SUPERADA (b):**
   `required_status_checks.strict` estava **`false`** ao vivo naquele momento (confirmado via
   `github_get_branch_protection` em `main`), não `true` como as linhas acima e a seção "Fila de
   merge" abaixo afirmavam. Não determinado quando/por quem foi desligado — possivelmente mitigação
@@ -210,17 +211,21 @@ Estado dos achados após re-auditoria de 2026-09-17:
   não se aplica mais do jeito descrito abaixo. Confirmar o estado ao vivo antes de assumir qualquer
   um dos dois lados.
 
-  **Correção de 2026-09-27:** `strict` regrediu para `true` entre 25/09 e 27/09 — causa não
+  **Correção de 2026-09-27 — HISTÓRICA, SUPERADA (b):** `strict` regrediu para `true` entre 25/09 e 27/09 — causa não
   identificada (busca no repo confirma: nenhum workflow toca branch protection; foi uma sessão
   manual que chamou `github_update_branch_protection` sem preservar o campo). Descoberto ao
   tentar mergear PR #958: todos os 6 required checks verdes no HEAD SHA, mas o merge retornava
   405 "6 of 6 required status checks are expected". Restaurado para `false` com
   `github_update_branch_protection` (PUT completo; 6 contexts + `enforce_admins: true`
-  preservados; merge bem-sucedido em seguida). **Sintoma inconfundível de `strict=true`:**
+  preservados; merge bem-sucedido em seguida — naquele dia, sob a política então vigente; **hoje o
+  correto é manter `true`**). **Sintoma inconfundível de `strict=true` (diagnóstico, não instrução de
+  reversão):**
   merge retorna 405 "N of N expected" com CI totalmente verde — o diagnóstico correto é
   verificar `strict` ao vivo com `github_get_branch_protection`, não retentar o merge.
 
-  **Correção de 2026-10-01:** `strict` voltou a `true` pela terceira vez (sintoma idêntico ao de 27/09: PR #1375 com os 6 checks verdes e merge 405 "6 of 6 expected"; a `main` avançava a cada poucos minutos e a PR voltava a `BEHIND` antes de o CI de 6 min terminar). Restaurado para `false` com `github_update_required_status_checks` (PATCH só do campo — o PUT completo `github_update_branch_protection` devolveu 500 e não alterou nada). Autor da regressão **não identificável por API**: nenhum workflow nem script do repo toca branch protection (`grep` em `.github/`, `scripts/`), nada no `/workspace` da VPS, e conta do tipo `User` não tem audit log via API — o único registro é o **Security log** da conta (Settings → Security log, filtrar `protected_branch`), que só o Joaquim consegue abrir. Hipótese mais provável: alguma sessão fazendo PUT completo de proteção (todo PUT precisa mandar `strict` explicitamente) para mexer em outro campo. Antes de qualquer `github_update_branch_protection`, ler o estado com `github_get_branch_protection` e repetir `strict: false`.
+  **Correção de 2026-10-01 — HISTÓRICA, SUPERADA (b):** `strict` voltou a `true` pela terceira vez (sintoma idêntico ao de 27/09: PR #1375 com os 6 checks verdes e merge 405 "6 of 6 expected"; a `main` avançava a cada poucos minutos e a PR voltava a `BEHIND` antes de o CI de 6 min terminar). Restaurado para `false` com `github_update_required_status_checks` (PATCH só do campo — o PUT completo `github_update_branch_protection` devolveu 500 e não alterou nada). Autor da regressão **não identificável por API**: nenhum workflow nem script do repo toca branch protection (`grep` em `.github/`, `scripts/`), nada no `/workspace` da VPS, e conta do tipo `User` não tem audit log via API — o único registro é o **Security log** da conta (Settings → Security log, filtrar `protected_branch`), que só o Joaquim consegue abrir. Hipótese mais provável: alguma sessão fazendo PUT completo de proteção (todo PUT precisa mandar `strict` explicitamente) para mexer em outro campo. Antes de qualquer `github_update_branch_protection`, ler o estado com
+  `github_get_branch_protection`. **A instrução de repetir `strict: false` está REVOGADA** (E15(b), 02/10): a
+  política vigente é `strict=true`, é ela que o `settings-guard` restaura, e nenhum agente reintroduz `false`.
 
   **Correção estrutural posterior de 2026-10-01:** `required_status_checks.strict` voltou a ser **`true`** como
   política permanente. O repositório agora permite auto-merge e o workflow
@@ -231,17 +236,43 @@ Estado dos achados após re-auditoria de 2026-09-17:
   disponibilidade documentada pelo GitHub exige repositório público de organização ou organização
   com GitHub Enterprise Cloud para repositórios privados.
 
+## Perímetro do GitHub — estado canônico (2026-10-03)
+
+**Regra:** qualquer mudança nos campos abaixo atualiza **esta tabela** e `scripts/ci/github-settings-baseline.json`
+**no mesmo PR** — o `settings-guard` compara a realidade com o baseline e divergência é regressão. Fonte: API do
+GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
+
+| Campo | Estado canônico | Verificado por |
+|---|---|---|
+| Branch protection — required checks | **6**: `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` | `settings-guard` ⚠ |
+| Branch protection — `strict` | **`true`** (política vigente desde 01/10; a opção `strict=false` foi **revogada** em 02/10 — E15(b)) | `settings-guard` ⚠ |
+| Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
+| Branch protection — review obrigatório | nenhum (deliberado: vários agentes com auto-merge) | — |
+| Merge | `allow_squash_merge=true` · `allow_merge_commit=false` · `allow_rebase_merge=false` · `allow_auto_merge=true` · `delete_branch_on_merge=true` | `settings-guard` |
+| Squash | `squash_merge_commit_message=PR_BODY` · `squash_merge_commit_title=PR_TITLE` | `settings-guard` |
+| Environments | **7**: `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3) | `settings-guard` |
+| Secrets (escopos) | repo + `producao-ddl` · `producao-edge-functions` · `legacy-import-destrutivo` · `db-ledger-evidence` | `check-pr-workflow-secrets` |
+| Actions — `allowed_actions` | `selected` | `settings-guard` |
+| Actions — `sha_pinning_required` | `true` | `check-workflow-pins` |
+| GitHub Apps | **não auditado** — o token da sessão não lista instalações (E89 decide) | — |
+
+⚠ Os campos de branch protection são lidos com o `GITHUB_TOKEN` de workflow, que **não** tem o escopo
+`administration`: a API responde **403** e o guard marca o campo como **"NÃO VERIFICÁVEL"** — não como regressão.
+**403 administrativo é limite de evidência**, nunca confirmação de configuração errada.
+
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
-Auditoria dos 14 workflows + 3 dinâmicos (17 total), da branch protection, dos secrets e dos environments. O que passou a
+Auditoria dos 16 workflows + 3 dinâmicos (19 total), da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions):** são 14 arquivos em
-`.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
+**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 05/10/2026:** são **16**
+arquivos em `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `supabase-sync.yml`, `targeted-ledger-evidence.yml`,
-`types-sync.yml`), mais 3 workflows dinâmicos que não têm arquivo próprio no repo (Dependabot
-Updates, Dependency Graph, Copilot reviewer) — 17 no total. Plano completo em
+`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `settings-guard.yml`, `supabase-sync.yml`,
+`talkx-status-regen.yml`, `targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos
+que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **19 no
+total**. A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
+(`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
 **Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
@@ -250,13 +281,14 @@ Updates, Dependency Graph, Copilot reviewer) — 17 no total. Plano completo em
 sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
 (não bloqueia merge).
 
-**Environments com aprovação humana** (`required_reviewers`, branch policy restrita a branches
-protegidas) — os quatro já criados no repo; os dois primeiros passam a ser exigidos pelos
-workflows quando a PR #687 mergear: `producao-edge-functions` (deploy-functions.yml),
-`producao-ddl` (db-migrate.yml),
-`legacy-import-destrutivo` (supabase-sync.yml) e `db-ledger-evidence` (que existia só com
-`branch_policy`, portanto sem exigir aprovação de ninguém). Disparar qualquer um desses
-workflows agora pausa em `Waiting` até alguém aprovar na aba Actions.
+**Environments com gate de aprovação** (branch policy restrita a branches protegidas) — os quatro já
+criados no repo; os dois primeiros passam a ser exigidos pelos workflows quando a PR #687 mergear:
+`producao-edge-functions` (deploy-functions.yml), `producao-ddl` (db-migrate.yml),
+`legacy-import-destrutivo` (supabase-sync.yml) e `db-ledger-evidence` (que existia só com `branch_policy`).
+**`required_reviewers` é campo administrativo:** com o `GITHUB_TOKEN` de workflow a API devolve **403** e o
+guard marca "NÃO VERIFICÁVEL" (`docs/audits/e95-perimetro-github-2026-10-03.md`) — não presuma aprovação que
+não foi medida; a medição de 03/10 registrou `producao-edge-functions` **sem** revisor obrigatório.
+Disparar qualquer um desses workflows pausa em `Waiting` no environment configurado.
 
 **`supabase-sync.yml` está desarmado.** A única barreira era digitar o project-ref, que é público
 (está neste arquivo, num repo público). Agora exige, cumulativamente, aprovação no environment e o
@@ -288,15 +320,15 @@ mexer no parsing de `LEDGER_RETRY_DELAYS_MS`: `Number("")` é `0`, não `NaN`, e
 precisam ser descartadas **antes** do `Number()`, senão "vazio" vira um retry imediato em vez de
 nenhum.
 
-**Agendamentos sem colisão:** types-sync `49 5 * * 1`, db-live-guard `13 6 * * 1` (nesta ordem, o
-segundo compara o que o primeiro gera), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1`. Os dois
-primeiros rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
+**Agendamentos sem colisão:** types-sync `49 5 * * 1` (semanal), db-live-guard `13 6 * * *` (**diário**;
+não depende do types-sync para rodar), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1` e settings-guard
+`15 */6 * * *`. Os dois primeiros da lista original rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
 
 **Fila de merge (merge queue) é IMPOSSÍVEL neste repo — não tente de novo.** Em 25/09, com `strict`
-ligado (hoje está `false` ao vivo — ver correções em 25/09, 27/09 e 01/10 acima, seção "Branch protection sem `Contrato DB
-vivo`"), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
+ligado (`false` na medição daquele dia; **a política vigente é `true`** — ver a tabela canônica do
+perímetro do GitHub), e várias sessões mergeando, toda PR que não entra primeiro volta para `BEHIND`, o
 `auto-update-pr-branch` recria o head e o CI (~6 min) recomeça; em 25/09 três PRs verdes ficaram
 ~40 min nesse ciclo. A fila do GitHub resolveria isso, e os gatilhos `merge_group` já foram
 adicionados a `ci.yml`, `db-guard.yml` e `codeql.yml` (PR #712) — eles ficam lá, inertes e sem
