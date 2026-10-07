@@ -12,7 +12,7 @@ const BitrixBodySchema = z.object({
   entityId: z.string().max(100).optional(),
   data: z.record(z.unknown()).optional(),
   filters: z.record(z.unknown()).optional(),
-});
+}).strict();
 
 /**
  * R2-API-018 — classificacao unica das respostas do Bitrix REST.
@@ -67,6 +67,33 @@ function createdEntityId(data: unknown): number | null {
   return null;
 }
 
+/**
+ * Host do portal Bitrix configurado. A resposta pode nomear o host, mas nunca o
+ * caminho do webhook, porque o token do portal mora na URL.
+ */
+export function configuredPortalHost(webhookUrl: string | null | undefined): string | null {
+  if (typeof webhookUrl !== 'string' || webhookUrl.trim() === '') return null;
+  try {
+    const parsed = new URL(webhookUrl.trim());
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.host || null;
+  } catch {
+    return null;
+  }
+}
+
+function bitrixErrorResponse(message: string, status: number, portal: string, req: Request): Response {
+  const headers = getCorsHeaders(req);
+  const body = status >= 500 ? 'Internal server error' : message;
+  if (status >= 500) {
+    console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg: message, portal }));
+  }
+  return new Response(
+    JSON.stringify({ error: body, portal }),
+    { status, headers: { ...headers, 'Content-Type': 'application/json' } },
+  );
+}
+
 // Handler exportado (padrao das edges do repo): o teste chama ESTE handler com
 // um Request real; o servidor so sobe quando o arquivo roda como entrypoint.
 export async function handleBitrixApi(req: Request): Promise<Response> {
@@ -97,9 +124,16 @@ export async function handleBitrixApi(req: Request): Promise<Response> {
       return errorResponse("Unauthorized", 401, req);
     }
 
+    // O alvo do teste é SEMPRE o webhook configurado no servidor: nenhum campo
+    // do corpo escolhe o portal (o schema é .strict() e recusa webhookUrl/domain).
     const BITRIX_WEBHOOK_URL = Deno.env.get('BITRIX_WEBHOOK_URL');
+    const portal = configuredPortalHost(BITRIX_WEBHOOK_URL);
     if (!BITRIX_WEBHOOK_URL) {
       return errorResponse('Bitrix não configurado. Configure BITRIX_WEBHOOK_URL nas configurações', 400, req);
+    }
+    if (!portal) {
+      log.error('BITRIX_WEBHOOK_URL inválido', { error: 'url absoluta http(s) esperada' });
+      return errorResponse('BITRIX_WEBHOOK_URL inválido: informe a URL completa do webhook (https://<portal>.bitrix24.com.br/rest/1/<token>/)', 400, req);
     }
 
     const raw = await req.json().catch(() => null);
@@ -108,9 +142,11 @@ export async function handleBitrixApi(req: Request): Promise<Response> {
     const parsed = BitrixBodySchema.safeParse(raw);
     if (!parsed.success) {
       const errors = parsed.error.flatten();
-      const msg = Object.entries(errors.fieldErrors)
+      const fieldMsg = Object.entries(errors.fieldErrors)
         .map(([k, v]) => `${k}: ${(v as string[]).join(', ')}`)
         .join('; ');
+      const formMsg = (errors.formErrors ?? []).join('; ');
+      const msg = [fieldMsg, formMsg].filter(Boolean).join('; ');
       return errorResponse(msg || 'Validation error', 400, req);
     }
 
@@ -205,7 +241,7 @@ export async function handleBitrixApi(req: Request): Promise<Response> {
         const contacts = await classifyBitrixResponse(contactsResponse);
         if (!contacts.ok) {
           log.error('Bitrix error', { error: contacts.message, status: contacts.status });
-          return errorResponse(contacts.message, contacts.status, req);
+          return bitrixErrorResponse(contacts.message, contacts.status, portal, req);
         }
 
         // R2-API-018: erro por item nao pode sumir numa contagem menor. Cada
@@ -242,6 +278,7 @@ export async function handleBitrixApi(req: Request): Promise<Response> {
         log.done(200, { synced: syncResults.length, failed: failures.length });
         return jsonResponse({
           success: true,
+          portal,
           synced: syncResults.length,
           failed: failures.length,
           total: rows.length,
@@ -264,15 +301,15 @@ export async function handleBitrixApi(req: Request): Promise<Response> {
         const push = await classifyBitrixResponse(pushResponse);
         if (!push.ok) {
           log.error('Bitrix error', { error: push.message, status: push.status });
-          return errorResponse(push.message, push.status, req);
+          return bitrixErrorResponse(push.message, push.status, portal, req);
         }
         const bitrixId = createdEntityId(push.data);
         if (bitrixId === null) {
           log.error('Bitrix sem ID na criacao do contato');
-          return errorResponse('Bitrix nao confirmou o contato criado', 502, req);
+          return bitrixErrorResponse('Bitrix nao confirmou o contato criado', 502, portal, req);
         }
         log.done(200);
-        return jsonResponse({ success: true, bitrixId }, 200, req);
+        return jsonResponse({ success: true, portal, bitrixId }, 200, req);
       }
       case 'create_lead_from_conversation': {
         const leadResponse = await fetch(`${BITRIX_WEBHOOK_URL}/crm.lead.add`, {
@@ -293,15 +330,15 @@ export async function handleBitrixApi(req: Request): Promise<Response> {
         const lead = await classifyBitrixResponse(leadResponse);
         if (!lead.ok) {
           log.error('Bitrix error', { error: lead.message, status: lead.status });
-          return errorResponse(lead.message, lead.status, req);
+          return bitrixErrorResponse(lead.message, lead.status, portal, req);
         }
         const leadId = createdEntityId(lead.data);
         if (leadId === null) {
           log.error('Bitrix sem ID na criacao do lead');
-          return errorResponse('Bitrix nao confirmou o lead criado', 502, req);
+          return bitrixErrorResponse('Bitrix nao confirmou o lead criado', 502, portal, req);
         }
         log.done(200);
-        return jsonResponse({ success: true, leadId }, 200, req);
+        return jsonResponse({ success: true, portal, leadId }, 200, req);
       }
       default:
         return errorResponse('Ação não suportada', 400, req);
@@ -318,17 +355,17 @@ export async function handleBitrixApi(req: Request): Promise<Response> {
 
       if (!bitrix.ok) {
         log.error('Bitrix error', { error: bitrix.message, status: bitrix.status });
-        return errorResponse(bitrix.message, bitrix.status, req);
+        return bitrixErrorResponse(bitrix.message, bitrix.status, portal, req);
       }
 
       // R2-API-018: criacao so e sucesso com o ID devolvido pelo Bitrix.
       if (action === 'create' && createdEntityId(bitrix.data) === null) {
         log.error('Bitrix sem ID na criacao', { endpoint });
-        return errorResponse('Bitrix nao confirmou o registro criado', 502, req);
+        return bitrixErrorResponse('Bitrix nao confirmou o registro criado', 502, portal, req);
       }
 
       log.done(200);
-      return jsonResponse({ success: true, data: bitrix.data, total: bitrix.total }, 200, req);
+      return jsonResponse({ success: true, portal, data: bitrix.data, total: bitrix.total }, 200, req);
     }
 
     return errorResponse('Endpoint não definido', 400, req);

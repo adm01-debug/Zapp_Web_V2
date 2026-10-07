@@ -29,6 +29,7 @@ import { handleBitrixApi } from "./index.ts";
 const SUPABASE_URL = "https://local.supabase.test";
 const ANON_KEY = "anon-test-key";
 const BITRIX_URL = "https://portal.bitrix.test/rest/1/test-webhook";
+const BITRIX_HOST = new URL(BITRIX_URL).host;
 const ADMIN_ID = "00000000-0000-4000-8000-00000000000a";
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -99,6 +100,19 @@ function assertNoSuccess(label: string, result: { status: number; body: Record<s
 }
 
 configureEnv();
+
+async function withBitrixWebhook<T>(url: string | null, fn: () => Promise<T>): Promise<T> {
+  const previous = Deno.env.get("BITRIX_WEBHOOK_URL");
+  if (url === null) Deno.env.delete("BITRIX_WEBHOOK_URL");
+  else Deno.env.set("BITRIX_WEBHOOK_URL", url);
+  try {
+    return await fn();
+  } finally {
+    if (previous === undefined) Deno.env.delete("BITRIX_WEBHOOK_URL");
+    else Deno.env.set("BITRIX_WEBHOOK_URL", previous);
+  }
+}
+
 
 // ─── Envelope de erro em 200 ────────────────────────────────────────────────
 
@@ -276,6 +290,73 @@ Deno.test("R2-API-018: sync_contacts com erro do Bitrix não devolve sucesso", a
   try {
     const result = await callHandler({ action: "sync_contacts" });
     assertNoSuccess("sync_contacts com erro do provedor", result);
+  } finally {
+    fetchStub.restore();
+  }
+});
+
+// ─── R2-API-048: portal efetivamente testado ───────────────────────────────
+
+Deno.test("R2-API-048: resultado nomeia o portal configurado", async () => {
+  const fetchStub = installFetch(() => jsonResponse({ result: [{ ID: 1 }], total: 1 }));
+  try {
+    const result = await callHandler({ action: "list", entityType: "lead" });
+    if (result.status !== 200 || result.body.success !== true) throw new Error(`list: ${result.status} ${result.raw}`);
+    if (result.body.portal !== BITRIX_HOST) throw new Error(`portal testado ausente/incorreto: ${result.raw}`);
+    if (fetchStub.bitrixUrls.length !== 1 || !fetchStub.bitrixUrls[0].startsWith(`${BITRIX_URL}/`)) {
+      throw new Error(`endpoint inesperado: ${fetchStub.bitrixUrls.join(",")}`);
+    }
+  } finally {
+    fetchStub.restore();
+  }
+});
+
+Deno.test("R2-API-048: webhookUrl/domain do chamador são recusados sem fetch", async () => {
+  const fetchStub = installFetch(() => jsonResponse({ result: [{ ID: 99 }], total: 1 }));
+  try {
+    const result = await callHandler({
+      action: "list",
+      entityType: "lead",
+      webhookUrl: "https://portal-do-chamador.bitrix24.com.br/rest/1/token",
+      domain: "portal-do-chamador.bitrix24.com.br",
+    });
+    if (result.status !== 400) throw new Error(`esperava 400, veio ${result.status}: ${result.raw}`);
+    if (fetchStub.bitrixUrls.length !== 0) throw new Error(`não deveria chamar Bitrix: ${fetchStub.bitrixUrls.join(",")}`);
+    if (result.raw.includes("portal-do-chamador")) throw new Error(`resposta ecoou o portal do chamador: ${result.raw}`);
+  } finally {
+    fetchStub.restore();
+  }
+});
+
+Deno.test("R2-API-048: erro do provedor também nomeia o portal testado", async () => {
+  const fetchStub = installFetch(() => jsonResponse({
+    error: "INVALID_CREDENTIALS",
+    error_description: "Webhook inválido",
+  }));
+  try {
+    const result = await callHandler({ action: "list", entityType: "lead" });
+    assertNoSuccess("list erro provedor", result);
+    if (result.status !== 400) throw new Error(`esperava 400, veio ${result.status}`);
+    if (result.body.portal !== BITRIX_HOST) throw new Error(`erro sem portal testado: ${result.raw}`);
+  } finally {
+    fetchStub.restore();
+  }
+});
+
+Deno.test("R2-API-048: BITRIX_WEBHOOK_URL ausente ou inválida nega sem fetch", async () => {
+  const fetchStub = installFetch(() => jsonResponse({ result: [{ ID: 1 }], total: 1 }));
+  try {
+    await withBitrixWebhook(null, async () => {
+      const result = await callHandler({ action: "list", entityType: "lead" });
+      if (result.status !== 400) throw new Error(`sem URL deveria negar 400, veio ${result.status}: ${result.raw}`);
+      if (!String(result.body.error).includes("BITRIX_WEBHOOK_URL")) throw new Error(`erro não orienta configuração: ${result.raw}`);
+    });
+    await withBitrixWebhook("portal-sem-protocolo/rest/1/token", async () => {
+      const result = await callHandler({ action: "list", entityType: "lead" });
+      if (result.status !== 400) throw new Error(`URL inválida deveria negar 400, veio ${result.status}: ${result.raw}`);
+      if (!String(result.body.error).includes("BITRIX_WEBHOOK_URL")) throw new Error(`erro não identifica URL inválida: ${result.raw}`);
+    });
+    if (fetchStub.bitrixUrls.length !== 0) throw new Error(`não deveria chamar Bitrix: ${fetchStub.bitrixUrls.join(",")}`);
   } finally {
     fetchStub.restore();
   }
