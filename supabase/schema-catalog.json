@@ -2804,7 +2804,7 @@
         "notify_due_tasks()->integer|kind=f",
         "notify_searchbox_budget()->integer|kind=f",
         "pause_dispatches_for_connection(p_connection_id uuid, p_reason text)->integer|kind=f",
-        "persist_conversation_analysis(p_contact_id uuid, p_analysis jsonb, p_analyzed_at timestamp with time zone)->jsonb|kind=f",
+        "persist_conversation_analysis(p_contact_id uuid, p_analysis jsonb, p_analyzed_at timestamp with time zone, p_expected_projection_updated_at timestamp with time zone, p_should_project boolean)->jsonb|kind=f",
         "persist_multiplix_item_message_snapshot(p_item_id uuid, p_claim_token uuid, p_personalized_message text)->text|kind=f",
         "persist_multiplix_recipient_message_snapshot(p_recipient_id uuid, p_claim_token uuid, p_personalized_message text)->text|kind=f",
         "persist_sentiment_alert(p_analysis_id uuid, p_contact_id uuid, p_recipient_user_id uuid, p_notification_title text, p_notification_message text, p_details jsonb)->TABLE(notification_created boolean, audit_created boolean, duplicate boolean)|kind=f",

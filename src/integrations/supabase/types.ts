@@ -11728,7 +11728,13 @@ export type Database = {
         Returns: number
       }
       persist_conversation_analysis: {
-        Args: { p_analysis: Json; p_analyzed_at?: string; p_contact_id: string }
+        Args: {
+          p_analysis: Json
+          p_analyzed_at: string
+          p_contact_id: string
+          p_expected_projection_updated_at: string
+          p_should_project: boolean
+        }
         Returns: Json
       }
       persist_multiplix_item_message_snapshot: {
