@@ -42,6 +42,9 @@ interface FakeConfig {
   keywords?: Array<{ keyword: string; match_mode: string }>;
   /** Retorno do drain por chamada (suppression_id ou status por reentrega). */
   drainResults?: Array<Record<string, unknown>>;
+  recentSend?: Array<{ id: string }>;
+  /** Atalho da X030: cada entrada vira o retorno do drain (id = suppression_id novo, null = already_suppressed). */
+  suppressions?: Array<unknown>;
   autoreply?: unknown;
   instanceToken?: unknown;
   leituras?: string[];
@@ -73,7 +76,7 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
   chain.then = (resolve: (value: unknown) => unknown) => {
     cfg.leituras?.push(tabela);
     if (tabela === "talkx_optout_keywords") return resolve({ data: cfg.keywords ?? SEED, error: null });
-    if (tabela === "talkx_recipients") return resolve({ data: [], error: null });
+    if (tabela === "talkx_recipients") return resolve({ data: cfg.recentSend ?? [], error: null });
     return resolve({ data: [], error: null });
   };
   let ingestIndex = 0;
@@ -101,7 +104,8 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
         };
       }
       if (nome === "drain_inbound_message_effects") {
-        const seq = cfg.drainResults ?? [drainOk()];
+        const seq = cfg.drainResults ?? (cfg.suppressions ?? [null]).map((s) =>
+          drainOk(s ? { suppression_id: s, optout_status: "suppressed" } : { optout_status: "already_suppressed" }));
         const valor = seq[Math.min(drainIndex, seq.length - 1)];
         drainIndex += 1;
         return { data: valor, error: null };
@@ -415,9 +419,9 @@ Deno.test("R2-API-008: HTTP 500 do provedor NÃO é anunciado como confirmação
 
     assertEquals(fetchCalls.length, 1, "a tentativa de confirmação aconteceu");
     assertEquals(
-      chamadas.filter((c) => c.nome === "talkx_suppress_contact").length,
+      chamadas.filter((c) => c.nome === "drain_inbound_message_effects").length,
       1,
-      "a supressão continua valendo mesmo com a confirmação recusada pelo provedor",
+      "a supressão (aplicada pela drenagem) continua valendo mesmo com a confirmação recusada pelo provedor",
     );
     const texto = logs.texto();
     assertEquals(
