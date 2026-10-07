@@ -15,6 +15,11 @@ export type CanalDeSaida = 'voip' | 'whatsapp';
 
 const CHAVE_CANAL = 'tel:new-call-channel';
 
+/** Digitos que a escolha do contato joga no campo - mesma normalizacao usada para reconciliar o chip. */
+function digitosDoTelefone(telefone: string): string {
+  return telefone.replace(/[^0-9+]/g, '');
+}
+
 /** Canal lembrado entre visitas (T56) - a escolha do agente nao se perde ao navegar. */
 function canalInicial(): CanalDeSaida {
   try {
@@ -65,6 +70,13 @@ export function NewCallPanel() {
   const e164 = useMemo(() => normalizeE164BR(numero), [numero]);
   const formatado = useMemo(() => (e164 ? formatPhoneBR(e164) : ''), [e164]);
 
+  // T57/R2-MOD-016: o chip do contato so vale enquanto o numero exibido for o do contato
+  // escolhido. O teclado (T58) mexe em `numero` sem passar por `escolherContato`, entao a
+  // identidade e RECONCILIADA com o numero atual em vez de confiar no que ficou guardado:
+  // nenhum caminho (digitar, backspace, numero pendente) deixa o chip de A ao lado do
+  // destino B, e `ligar` manda o contato daqui - tela e discagem nunca discordam.
+  const contatoEfetivo = contato && digitosDoTelefone(contato.phone) === numero ? contato : null;
+
   const emChamada = session?.status === 'dialing' || session?.status === 'ringing_out' || session?.status === 'connecting' || session?.status === 'active';
   const reconectando = sipStatus === 'reconnecting';
   const numeroOk = Boolean(e164);
@@ -80,8 +92,7 @@ export function NewCallPanel() {
 
   const escolherContato = useCallback((c: ContatoEscolhido) => {
     setContato(c);
-    const so = c.phone.replace(/[^0-9+]/g, '');
-    setNumero(so);
+    setNumero(digitosDoTelefone(c.phone));
   }, []);
 
   // A discagem passa pelo mesmo caminho do clique-para-discar (T29) e do "Ligar de
@@ -94,9 +105,9 @@ export function NewCallPanel() {
       phone: e164,
       source: 'other',
       autoDial: true,
-      ...(contato ? { contactId: contato.id, name: contato.name } : {}),
+      ...(contatoEfetivo ? { contactId: contatoEfetivo.id, name: contatoEfetivo.name } : {}),
     });
-  }, [e164, canal, contato]);
+  }, [e164, canal, contatoEfetivo]);
 
   const rotulo = emChamada
     ? 'Cancelar'
@@ -152,7 +163,7 @@ export function NewCallPanel() {
         </div>
 
         {/* Contato (T57) */}
-        <ContactPicker selecionado={contato} onEscolher={escolherContato} onLimpar={() => setContato(null)} />
+        <ContactPicker selecionado={contatoEfetivo} onEscolher={escolherContato} onLimpar={() => setContato(null)} />
 
         {/* Numero (T59) */}
         <div className="w-full" data-testid="tel-number-display">
