@@ -12,6 +12,15 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
   // permite escopar o dup-check abaixo por whatsapp_connection_id.
   const connection = await getConnectionByInstance(supabase, instance);
 
+  // R2-API-004: sem conexão resolvida não há escopo por
+  // whatsapp_connection_id — e sem ele o dup-check abaixo casa por
+  // external_id/sender GLOBALMENTE, promovendo a 'sent' a mensagem de outra
+  // conexão. Falha de lookup ou instância sem conexão: não muta nada.
+  if (!connection?.id) {
+    console.warn(`send.message ignored -- instance ${instance} has no resolved connection`);
+    return;
+  }
+
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { remoteJid?: string; fromMe?: boolean; id?: string } | null;
@@ -84,6 +93,14 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
     'DELIVERY_ACK': 'delivered', 'READ': 'read', 'PLAYED': 'read', 'SERVER_ACK': 'sent', 'ERROR': 'failed',
   };
   const connection = await getConnectionByInstance(supabase, instance);
+
+  // R2-API-004: o lookup por external_id abaixo só é escopado por conexão
+  // quando ela existe; sem escopo, um recibo atingiria a linha homônima de
+  // outra conexão. Fail-closed: sem conexão resolvida, não muta.
+  if (!connection?.id) {
+    console.warn(`messages.update ignored -- instance ${instance} has no resolved connection`);
+    return;
+  }
 
   for (const entry of toEventRecords(data, ['messages', 'updates', 'statuses'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
@@ -250,6 +267,15 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
 // deno-lint-ignore no-explicit-any
 export async function handleMessagesDelete(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
   const connection = await getConnectionByInstance(supabase, instance);
+
+  // R2-API-004: o UPDATE de soft-delete abaixo só ganha o filtro de conexão
+  // quando ela existe; sem o filtro ele apaga por external_id em QUALQUER
+  // conexão. Fail-closed: sem conexão resolvida, não muta.
+  if (!connection?.id) {
+    console.warn(`messages.delete ignored -- instance ${instance} has no resolved connection`);
+    return;
+  }
+
   for (const entry of toEventRecords(data, ['messages', 'keys'])) {
     const keySource = isRecord(entry.key)
       ? entry.key : (typeof entry.id === 'string' ? entry : null) ?? (isRecord(baseData.key) ? baseData.key : null);

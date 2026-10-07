@@ -218,6 +218,9 @@ export function shouldUpdateStatus(currentStatus: string | null, newStatus: stri
 // Invalidation: call invalidateConnectionCache(instance) whenever a
 // connection.update or disconnect event is received (done in
 // evolution-webhook-handlers.ts → handleConnectionUpdate).
+//
+// R2-API-004: só AUSÊNCIA CONFIRMADA entra no cache. Erro de consulta é erro
+// — não "instância sem conexão".
 // ─────────────────────────────────────────────────────────────────────────────
 const CONNECTION_CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
 
@@ -249,12 +252,24 @@ export async function getConnectionByInstance(
     return cached.data;
   }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('whatsapp_connections')
     .select('id')
     .eq('instance_id', instance)
     .maybeSingle();
 
+  // R2-API-004: erro de consulta NÃO é ausência de conexão. Antes o erro era
+  // descartado e o `data` nulo que o PostgREST devolve junto dele entrava no
+  // cache por 5 min — a instância passava a responder "sem conexão" e os
+  // handlers que só escopam por whatsapp_connection_id QUANDO a conexão existe
+  // (send/update/delete) mutavam sem filtro. Aqui: não cacheia e propaga; o
+  // chamador (webhook) devolve 500 e o provedor reprocessa — fail-closed, e a
+  // próxima tentativa volta a consultar o banco.
+  if (error) {
+    throw new Error(`Falha ao resolver conexão da instância ${instance}: ${error.message}`);
+  }
+
+  // Ausência confirmada (sem erro) é resultado estável: pode ficar no cache.
   connectionCache.set(instance, {
     data: data as { id: string } | null,
     expiresAt: now + CONNECTION_CACHE_TTL_MS,
