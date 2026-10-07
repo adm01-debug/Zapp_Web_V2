@@ -552,6 +552,16 @@ jobs:
           TALKX_AUDIENCE_SNAPSHOT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-audience-snapshot.test.sh
 
+      # X057: varios segmentos por campanha — tabela/RLS/backfill/realtime
+      # (X057a) e o comportamento X057b: save grava a lista ordenada
+      # (segment_ids 1..10, 22023 nas recusas, segment_id = primeiro) e o
+      # snapshot une os segmentos em ordem, sem duplicar contato, carimbando
+      # o segment_id do primeiro segmento que o contem.
+      - name: Simular segmentos de campanha do Talk X (X057)
+        env:
+          TALKX_CAMPAIGN_SEGMENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-segments.test.sh
+
       # Auditoria: correção de DUAS regressões vivas por recriação de função —
       # save_talkx_campaign_draft perdeu template_version_id (V26) e
       # transition_talkx_campaign não gravava launched_by/launched_at no start

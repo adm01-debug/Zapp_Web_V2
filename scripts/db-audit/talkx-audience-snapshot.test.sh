@@ -21,6 +21,13 @@ set -euo pipefail
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migration_x016="$repo_root/supabase/migrations/20261002391230_talkx_audience_rpc.sql"
 migration_x017="$repo_root/supabase/migrations/20261002421230_talkx_audience_snapshot.sql"
+# X057b troca o caminho da origem 'segment': o snapshot passa a ler a lista
+# ordenada de talkx_campaign_segments (X057a) e carimba segment_id em cada
+# destinatario; o save liga a lista ao rascunho. X018 entra porque o save
+# vigente (X032+X057b) resolve o ritmo via talkx_resolve_speed_pace.
+migration_x018="$repo_root/supabase/migrations/20261002551230_talkx_limits_ritmo.sql"
+migration_x057a="$repo_root/supabase/migrations/20261002641230_talkx_v4_x057_segmentos.sql"
+migration_x057b="$repo_root/supabase/migrations/20261007095927_talkx_v4_x057b_segmentos_salvar_resolver.sql"
 postgres_image="${TALKX_AUDIENCE_SNAPSHOT_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-audience-snapshot-test-$$"
 test_password="talkx_audience_snapshot_test_only"
@@ -156,12 +163,26 @@ CREATE TABLE public.talkx_campaigns (
   worker_lease_expires_at timestamptz,
   started_at timestamptz,
   completed_at timestamptz,
+  -- X032: o save vigente (X057b) ja grava o carimbo de consentimento — as
+  -- colunas existem em producao quando a X057b chega.
+  legal_basis text,
+  consent_confirmed_by uuid,
+  consent_confirmed_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT statement_timestamp(),
   updated_at timestamptz NOT NULL DEFAULT statement_timestamp()
 );
 CREATE UNIQUE INDEX talkx_campaigns_created_by_draft_key
   ON public.talkx_campaigns (created_by, draft_creation_key)
   WHERE draft_creation_key IS NOT NULL;
+
+-- X018: talkx_resolve_speed_pace le os perfis de ritmo desta tabela.
+CREATE TABLE public.talkx_settings (
+  key text PRIMARY KEY,
+  value jsonb NOT NULL,
+  description text
+);
+-- X057a publica as duas tabelas em supabase_realtime.
+CREATE PUBLICATION supabase_realtime;
 
 CREATE TABLE public.contacts (
   id uuid PRIMARY KEY,
@@ -273,13 +294,19 @@ GRANT SELECT ON public.contacts TO authenticated, service_role;
 GRANT SELECT ON public.talkx_segments TO authenticated, service_role;
 SQL
 
-[[ -f "$migration_x016" ]] || fail "migration ausente: $migration_x016"
-[[ -f "$migration_x017" ]] || fail "migration ausente: $migration_x017"
+for m in "$migration_x016" "$migration_x017" "$migration_x018" "$migration_x057a" "$migration_x057b"; do
+  [[ -f "$m" ]] || fail "migration ausente: $m"
+done
 psql_test < "$migration_x016" >/dev/null
 psql_test < "$migration_x017" >/dev/null
-# Replayavel: uma segunda aplicacao nao pode falhar.
-psql_test < "$migration_x017" >/dev/null
-pass '(a) migration X017 aplica sobre a X016 e e replayavel'
+psql_test < "$migration_x018" >/dev/null
+# X057a cria talkx_campaign_segments + backfill: o rascunho de segmento da
+# fixture ganha 1 linha (position 1 = o segment_id legado).
+psql_test < "$migration_x057a" >/dev/null
+# X057b: snapshot passa a resolver pela tabela (ordem, uniao sem duplicar e
+# carimbo de segment_id); replayavel junto com a X017 (CREATE OR REPLACE).
+psql_test < "$migration_x057b" >/dev/null
+pass '(a) cadeia X016->X017->X018->X057a->X057b aplica sobre o schema minimo'
 
 [[ "$(psql_q "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='talkx_campaigns' AND column_name IN ('respect_suppression','audience_snapshot_at')")" == '2' ]] \
   || fail '(a) colunas respect_suppression/audience_snapshot_at ausentes'
@@ -316,7 +343,13 @@ snapshot_at="$(psql_q "SELECT audience_snapshot_at IS NOT NULL FROM public.talkx
 ids="$(psql_q "SELECT string_agg(contact_id::text, ',' ORDER BY contact_id) FROM public.talkx_recipients WHERE campaign_id='$campaign_segment'")"
 expected_ids='30000000-0000-0000-0000-000000000001,30000000-0000-0000-0000-000000000002,30000000-0000-0000-0000-000000000003,30000000-0000-0000-0000-000000000004,30000000-0000-0000-0000-000000000005,30000000-0000-0000-0000-000000000006'
 [[ "$ids" == "$expected_ids" ]] || fail "(b) destinatarios inesperados [obtido: $ids]"
-pass '(b) segmento com 6 elegiveis e 2 suprimidos (+1 excluido) -> 6 linhas e total_recipients=6'
+# X057b: a resolucao passa por talkx_campaign_segments e cada destinatario
+# carimba o segmento que o contem (aqui, o segmento legado do backfill).
+seg_rows="$(psql_q "SELECT count(*) FROM public.talkx_campaign_segments WHERE campaign_id='$campaign_segment' AND segment_id='$seg_acme' AND position=1")"
+[[ "$seg_rows" == '1' ]] || fail "(b) backfill da X057a deveria ter 1 linha para a campanha [obtido: $seg_rows]"
+seg_stamp="$(psql_q "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id='$campaign_segment' AND segment_id='$seg_acme'")"
+[[ "$seg_stamp" == '6' ]] || fail "(b) destinatarios deveriam carimbar segment_id do segmento [obtido: $seg_stamp]"
+pass '(b) segmento com 6 elegiveis e 2 suprimidos (+1 excluido) -> 6 linhas, total_recipients=6 e segment_id carimbado'
 
 # supervisor tambem gera o snapshot (segunda execucao substitui, sem duplicar).
 supervisor_eligible="$(psql_q "$supervisor_session SELECT public.snapshot_talkx_campaign_audience('$campaign_segment', 1) ->> 'eligible';")"
