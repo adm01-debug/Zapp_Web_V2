@@ -123,6 +123,11 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
   const limpar = () => {
     setTitle('');
     setDueDate(defaultDueDate ?? null);
+    // #424: a criação pode resolver DEPOIS de o dia ser trocado, e este closure
+    // guarda o padrão do dia A. Marcar `diaAplicado` com ele faz o ajuste de
+    // render abaixo reaplicar — já no dia B — o padrão vigente, em vez de
+    // devolver o prazo do dia anterior.
+    setDiaAplicado(defaultDueDate);
     setRemindAt(null);
     setPriority('medium');
     setEscolhido(null);
