@@ -27,8 +27,14 @@ const renderControl = () =>
     </TooltipProvider>,
   );
 
-/** O botão carrega o volume no `aria-label`, ex.: "Volume dos alertas: 70%". */
-const botao = () => screen.getByRole('button', { name: /Volume dos alertas|Sons de alerta mudos/ });
+/**
+ * O botão carrega o volume no `aria-label`, ex.: "Volume dos alertas: 70%".
+ * O `^` é necessário: os botões − / + do painel trazem o mesmo título no meio do
+ * rótulo ("Diminuir Volume dos alertas em 5%") e não são o gatilho.
+ */
+const botao = () => screen.getByRole('button', { name: /^(Volume dos alertas|Sons de alerta mudos)/ });
+/** A roda do mouse só ajusta com o painel ABERTO (B5) — e o painel abre no CLIQUE (D01). */
+const abrirPainel = () => fireEvent.click(botao());
 /** A roda do mouse é ouvida no <span> que embrulha o botão (rootRef). */
 const embalagem = () => botao().parentElement as HTMLElement;
 
@@ -44,20 +50,30 @@ describe('SoundVolumeControl — sobe e desce o volume dos alertas', () => {
     vi.useRealTimers();
   });
 
-  it('sobe o volume de 5 em 5 com a roda para cima', () => {
+  it('com o painel aberto, sobe o volume de 5 em 5 com a roda para cima', () => {
     renderControl();
+    abrirPainel();
     act(() => {
       embalagem().dispatchEvent(new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true }));
     });
     expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 75 });
   });
 
-  it('desce o volume de 5 em 5 com a roda para baixo', () => {
+  it('com o painel aberto, desce o volume de 5 em 5 com a roda para baixo', () => {
     renderControl();
+    abrirPainel();
     act(() => {
       embalagem().dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true }));
     });
     expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 65 });
+  });
+
+  it('com o painel FECHADO a roda não mexe no volume (B5 — rolar a sidebar não ajusta)', () => {
+    renderControl();
+    act(() => {
+      embalagem().dispatchEvent(new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true }));
+    });
+    expect(h.updateSettings).not.toHaveBeenCalled();
   });
 
   it('as setas ↑/↓ ajustam o volume com o foco no botão (e não em qualquer lugar)', () => {
@@ -77,6 +93,7 @@ describe('SoundVolumeControl — sobe e desce o volume dos alertas', () => {
   it('o volume para no mínimo 10 (não desce abaixo)', () => {
     h.settings.soundVolume = 10;
     renderControl();
+    abrirPainel();
     act(() => {
       embalagem().dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true }));
     });
@@ -86,15 +103,29 @@ describe('SoundVolumeControl — sobe e desce o volume dos alertas', () => {
   it('o volume para no máximo 100 (não sobe acima)', () => {
     h.settings.soundVolume = 100;
     renderControl();
+    abrirPainel();
     act(() => {
       embalagem().dispatchEvent(new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true }));
     });
     expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 100 });
   });
 
-  it('clique alterna o mudo (soundEnabled) — e não mexe no volume', () => {
+  it('o clique ABRE o painel e não mexe no volume nem no mudo (D01)', async () => {
     renderControl();
+
     fireEvent.click(botao());
+
+    expect(await screen.findByRole('slider', { name: 'Volume dos alertas' })).toBeInTheDocument();
+    expect(botao()).toHaveAttribute('aria-expanded', 'true');
+    expect(h.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it('o botão grande do painel alterna o mudo (o mudo rápido saiu do clique no ícone)', async () => {
+    renderControl();
+    abrirPainel();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Silenciar' }));
+
     expect(h.updateSettings).toHaveBeenCalledWith({ soundEnabled: false });
     expect(h.updateSettings).not.toHaveBeenCalledWith(expect.objectContaining({ soundVolume: expect.any(Number) }));
   });
