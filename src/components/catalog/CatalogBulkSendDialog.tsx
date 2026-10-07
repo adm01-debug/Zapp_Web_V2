@@ -24,7 +24,7 @@ import { buildMessage } from './sendProductUtils';
 import { useContactSearch, type ContactResult } from './useSendProduct';
 import { ContactSelectionStep } from './ContactSelectionStep';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { formatPrice, ProductThumb, CATALOG_FOCUS_VISIBLE } from './catalogShared';
+import { formatPrice, ProductThumb, CATALOG_FOCUS_VISIBLE, isSnapshotProduct, UNKNOWN_PRICE_LABEL } from './catalogShared';
 import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { logCatalogSendEvent } from '@/hooks/integrations/useCatalogContactSearch';
@@ -199,7 +199,8 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatPrice(p.sale_price)}</p>
+                      {/* R2-MOD-048 — favorito não tem preço salvo: nada de R$ 0,00. */}
+                      <p className="text-xs text-muted-foreground">{isSnapshotProduct(p) ? UNKNOWN_PRICE_LABEL : formatPrice(p.sale_price)}</p>
                     </div>
                     {p.is_stockout && (
                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-destructive/10 text-destructive border border-destructive/20">
