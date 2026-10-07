@@ -366,6 +366,35 @@ Deno.test("X030: resposta de botão com id 'talkx_optout' (X064) aciona o opt-ou
   }
 });
 
+Deno.test("X064/R2-API-006: botão talkx_optout em mensagem PRÓPRIA não vira opt-out", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso();
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    const supabase = fakeSupabase(chamadas, { keywords: SEED });
+    const payload = goButton("talkx_optout", "3EB0BTNOW");
+    const dados = payload.data as Record<string, unknown>;
+    dados.Info = { ...(dados.Info as Record<string, unknown>), IsFromMe: true };
+    const { data, key } = traduzir(payload);
+    await handleIncomingMessage(supabase, "inst-go-x030-own", data, key, "http://localhost:54321", "svc");
+
+    const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
+    assertEquals(key.fromMe, true, "o fixture é uma mensagem nossa");
+    assertEquals(ingests.length, 1);
+    assertEquals(ingests[0].args.p_from_me, true, "a direção chega ao ingest");
+    assertEquals(
+      ingests[0].args.p_opt_out_keyword,
+      null,
+      "mensagem própria nunca leva palavra de opt-out ao ingest, nem por botão talkx_optout",
+    );
+    assertEquals(fetchCalls.length, 0, "mensagem própria não dispara autoresposta");
+  } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
 Deno.test("X030: resposta que NÃO é opt-out continua sendo atribuída ao Talk X", async () => {
   resetOptOutKeywordCache();
   instalarFetchFalso();

@@ -453,15 +453,17 @@ export async function handleIncomingMessage(
 
   // R2-API-006: palavra de opt-out e citacao viajam na MESMA transacao do ingest
   // (a RPC grava mensagem + efeitos pendentes; a reentrega retoma o que faltou).
-  // X030/X064: por palavra configurada (mesma normalizacao da RPC) OU botao/lista
-  // `talkx_optout` — avaliado so para mensagem recebida (nunca a nossa).
-  const optOutKeyword = key.fromMe
-    ? null
-    : interactiveResponseId === TALKX_OPTOUT_BUTTON_ID
-    ? TALKX_OPTOUT_BUTTON_ID
-    : messageType === 'text' && content
-    ? await resolveOptOutKeyword(supabase, content)
-    : null;
+  // X030/X064: mensagem PROPRIA nunca e opt-out — `key.fromMe === true` (mesma
+  // expressao que vira p_from_me) devolve null ANTES de olhar botao/lista
+  // `talkx_optout` ou palavra de texto.
+  let optOutKeyword: string | null = null;
+  if (key.fromMe !== true) {
+    optOutKeyword = interactiveResponseId === TALKX_OPTOUT_BUTTON_ID
+      ? TALKX_OPTOUT_BUTTON_ID
+      : messageType === 'text' && content
+      ? await resolveOptOutKeyword(supabase, content)
+      : null;
+  }
   const quotedExternalId = extractQuotedExternalId(data);
 
   // Uma transacao (20260905050000 + outbox R2-API-006): contato find-or-create
