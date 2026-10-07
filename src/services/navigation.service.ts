@@ -54,8 +54,7 @@ export class NavigationService {
       { id: 'multiplix', icon: Send, label: 'Multiplix', permission: MULTIPLIX_DISPATCH_CREATE },
       { id: 'catalog', icon: Package, label: 'Catálogo', shortcut: 'Alt+A' },
       { id: 'voip', icon: PhoneCall, label: 'Telefonia', shortcut: 'Alt+T' },
-      { id: 'pipeline', icon: Kanban, label: 'Quadro', layout: 'full', shortcut: 'Alt+P' },
-      { id: 'tasks', icon: ListChecks, label: 'Tarefas', shortcut: 'Alt+K' },
+      { id: 'tasks', icon: ListChecks, label: 'Tarefas', layout: 'full', shortcut: 'Alt+K' },
       { id: 'achievements', icon: Trophy, label: 'Conquistas', shortcut: 'Alt+Q' },
       { id: 'dashboard', icon: BarChart3, label: 'Dashboard', shortcut: 'Alt+R' },
     ];
