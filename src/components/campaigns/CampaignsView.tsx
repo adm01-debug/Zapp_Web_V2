@@ -106,6 +106,7 @@ export function CampaignsView() {
             <SelectItem value="draft">Rascunho</SelectItem>
             <SelectItem value="scheduled">Agendada</SelectItem>
             <SelectItem value="sending">Enviando</SelectItem>
+            <SelectItem value="paused">Pausada</SelectItem>
             <SelectItem value="completed">Concluída</SelectItem>
             <SelectItem value="cancelled">Cancelada</SelectItem>
           </SelectContent>
@@ -172,6 +173,13 @@ export function CampaignsView() {
                                 <Pause className="w-4 h-4" />
                               </Button>
                             )}
+                            {campaign.status === 'paused' && (
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-success hover:text-success"
+                                disabled={updateCampaign.isPending}
+                                onClick={() => updateCampaign.mutate({ id: campaign.id, status: 'sending' })} aria-label="Retomar campanha">
+                                <Play className="w-4 h-4" />
+                              </Button>
+                            )}
                             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive"
                               onClick={() => deleteCampaign.mutate(campaign.id)} aria-label="Excluir campanha">
                               <Trash2 className="w-4 h-4" />
@@ -224,6 +232,13 @@ export function CampaignsView() {
                 <Suspense fallback={<div className="h-20 bg-muted/20 rounded-xl animate-pulse" />}>
                   <CampaignABTesting campaignId={selectedCampaign.id} />
                 </Suspense>
+                {selectedCampaign.status === 'paused' && (
+                  <Button className="w-full gap-2" disabled={updateCampaign.isPending}
+                    onClick={() => updateCampaign.mutate({ id: selectedCampaign.id, status: 'sending' })}>
+                    <Play className="w-4 h-4" />
+                    Retomar campanha
+                  </Button>
+                )}
               </div>
             </>
           )}
