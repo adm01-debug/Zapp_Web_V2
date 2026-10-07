@@ -9,8 +9,11 @@ import { useSearchParams } from 'react-router-dom';
  * o aceite pede ("reload mantem filtros").
  *
  * Defaults do plano: `7d | all | all | all | (vazio) | 1 | mine | (vazio)`.
- * `setFilter` reseta `page` para 1 SEMPRE que a chave nao e a propria `page`: mudar o
- * filtro e continuar na pagina 3 de um resultado que mudou de tamanho nao faz sentido.
+ * `setFilter` reseta `page` para 1 SEMPRE que a chave muda o RECORTE da lista (period,
+ * channel, dir, result, q, scope): continuar na pagina 3 de um resultado que mudou de
+ * tamanho nao faz sentido. `page` e `call` ficam de fora: `call` e o detalhe da linha
+ * selecionada, nao um filtro — resetar a pagina ali jogaria a lista de volta para a 1 e o
+ * detalhe (que sai de `historicos.rows` da pagina atual) sumiria (R2-MOD-014).
  * Voltar um filtro ao valor padrao APAGA o parametro, para a URL nao ficar suja.
  */
 export const FILTROS_PADRAO = {
@@ -66,7 +69,7 @@ export function useTelefoniaFilters(): {
           const texto = String(valor);
           if (!texto || texto === FILTROS_PADRAO[chave]) proximos.delete(chave);
           else proximos.set(chave, texto);
-          if (chave !== 'page') proximos.set('page', '1');
+          if (chave !== 'page' && chave !== 'call') proximos.set('page', '1');
           return proximos;
         },
         { replace: true },
