@@ -128,6 +128,8 @@ interface MockOpts {
   isAdminOrSupervisor?: boolean;
   /** resposta de user_has_permission('multiplix.dispatch.manage_all') (F06) */
   manageAll?: boolean;
+  /** resposta de user_has_permission('multiplix.dispatch.create') (F25/MX09) */
+  dispatchCreate?: boolean;
   /** perfil (profiles.id) do usuario do JWT — e o que casa com created_by */
   ownProfileId?: string;
   dispatch?: DispatchRow | null;
@@ -298,8 +300,14 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             return Promise.resolve({ data: opts.cronVaultResult ?? null, error: null });
           case "is_admin_or_supervisor":
             return Promise.resolve({ data: opts.isAdminOrSupervisor === true, error: null });
-          case "user_has_permission":
-            return Promise.resolve({ data: opts.manageAll === true, error: null });
+          case "user_has_permission": {
+            // F25/MX09: nomes de permissao diferentes decidem entradas
+            // diferentes — o stub responde pela permissao PEDIDA, em vez de um
+            // booleano unico, senao os dois gates nao seriam distinguiveis.
+            const requested = String(args._permission_name ?? "");
+            const granted = requested === "multiplix.dispatch.create" ? opts.dispatchCreate : opts.manageAll;
+            return Promise.resolve({ data: granted === true, error: null });
+          }
           case "transition_multiplix_dispatch": {
             // Espelha o efeito no estado do mock para o motor enxergar a
             // transicao seguinte (ex.: pause -> 'paused').
@@ -769,6 +777,46 @@ Deno.test("F06 (bug 01/10/2026): admin COM multiplix.dispatch.manage_all inicia 
     rpcs(ctx, "transition_multiplix_dispatch").some((call) => call.args.p_action === "start"),
     "esperava a transicao de start do disparo alheio com manage_all",
   );
+});
+
+// ------------------------------------------------------------- F25/MX09 (permissao)
+// O produto (F25) libera a ENTRADA no Multiplix pelo nome `multiplix.dispatch.create`
+// (nav/rota e criacao do proprio disparo) — matriz: `agent` = customers.own +
+// dispatch.create. O worker, porem, so aceitava admin/supervisor OU manage_all
+// antes de checar o dono, entao o papel minimo autorizado pelo front levava 403
+// ao iniciar o PROPRIO disparo. A permissao passa a abrir a entrada; o dono
+// continua sendo exigido por `canManageDispatch`.
+
+Deno.test("F25/MX09: JWT com multiplix.dispatch.create (sem admin/supervisor, sem manage_all) inicia o PROPRIO disparo → permitido", async () => {
+  const { ctx, status } = await runWithJwt(startRequestOpts({
+    authUser: { id: "user-agent-001" },
+    isAdminOrSupervisor: false,
+    manageAll: false,
+    dispatchCreate: true,
+    ownProfileId: "profile-me",
+    dispatch: dispatchRow({ status: "draft", created_by: "profile-me" }),
+  }));
+  assert(status === 200, `esperado 200 (dono com multiplix.dispatch.create), recebido ${status}`);
+  assert(
+    rpcs(ctx, "transition_multiplix_dispatch").some((call) => call.args.p_action === "start"),
+    "esperava a transicao de start do proprio disparo com multiplix.dispatch.create",
+  );
+});
+
+Deno.test("F25/MX09 (negado): JWT com multiplix.dispatch.create inicia disparo de OUTRO dono → 403 sem transicao", async () => {
+  // A permissao abre a ENTRADA, nunca o disparo alheio: sem manage_all o dono
+  // continua sendo exigido. Sem esta negacao, "aceitar dispatch.create" abriria
+  // o start de qualquer disparo para todo `agent`.
+  const { ctx, status } = await runWithJwt(startRequestOpts({
+    authUser: { id: "user-agent-002" },
+    isAdminOrSupervisor: false,
+    manageAll: false,
+    dispatchCreate: true,
+    ownProfileId: "profile-me",
+    dispatch: dispatchRow({ status: "draft", created_by: "profile-outro" }),
+  }));
+  assert(status === 403, `esperado 403 (disparo de outro dono), recebido ${status}`);
+  assert(rpcs(ctx, "transition_multiplix_dispatch").length === 0, "nao pode transicionar disparo de outro dono");
 });
 
 // ------------------------------------------------------------------- F09 (opt-out)

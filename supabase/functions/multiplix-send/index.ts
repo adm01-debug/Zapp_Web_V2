@@ -85,6 +85,14 @@ type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
 // imediato e proibido; quem decide o teto continua sendo a RPC.
 const RETRY_BACKOFF_MS: readonly number[] = [30_000, 120_000, 600_000];
 
+// F25/MX09: permissao nomeada que o produto usa para liberar a ENTRADA no
+// Multiplix (nav/rota e criacao do PROPRIO disparo). A matriz F25 da `agent`
+// `multiplix.audience.customers.own` + `multiplix.dispatch.create`; sem aceitar
+// essa permissao aqui, o papel minimo autorizado pelo front (que nao acumula
+// admin/supervisor nem manage_all) levava 403 ao iniciar o proprio disparo. Ela
+// abre a ENTRADA apenas: o dono continua exigido por `canManageDispatch`.
+const DISPATCH_CREATE_PERMISSION = "multiplix.dispatch.create";
+
 export async function handleMultiplixSend(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -120,6 +128,7 @@ export async function handleMultiplixSend(
     }
     let authUserId: string | null = null;
     let hasManageAll = false;
+    let hasDispatchCreate = false;
     if (!isCronAuth) {
       if (!authHeader?.startsWith("Bearer ")) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
@@ -153,7 +162,17 @@ export async function handleMultiplixSend(
           _user_id: user.id, _permission_name: "multiplix.dispatch.manage_all",
         });
         hasManageAll = !permissionError && manageAll === true;
-        if (isAdminOrSupervisor !== true && !hasManageAll) {
+        // F25/MX09: a permissao de ENTRADA do produto (`multiplix.dispatch.create`,
+        // que o `agent` recebe junto de `customers.own`) tambem abre a porta.
+        // Sem ela, o papel minimo autorizado pelo front levava 403 ao iniciar o
+        // PROPRIO disparo. O alcance continua limitado pelo DONO em
+        // `canManageDispatch` logo abaixo — a permissao abre a entrada, nao o
+        // disparo alheio (isso continua exigindo manage_all).
+        const { data: canCreate, error: createPermissionError } = await supabase.rpc("user_has_permission", {
+          _user_id: user.id, _permission_name: DISPATCH_CREATE_PERMISSION,
+        });
+        hasDispatchCreate = !createPermissionError && canCreate === true;
+        if (isAdminOrSupervisor !== true && !hasManageAll && !hasDispatchCreate) {
           return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
         }
       }
