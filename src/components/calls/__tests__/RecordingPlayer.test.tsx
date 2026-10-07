@@ -18,11 +18,13 @@ vi.mock('@/integrations/supabase/client', () => ({
 /**
  * TEL-RECORDING-001: o `RecordingPlayer` recebe a gravacao pelo `useCallRecording`. Neste arquivo
  * o hook e mockado SO para entregar os BYTES da Edge (`blob`) - o contrato que o hook passa a
- * expor - sem tocar no hook (ele tem cartao proprio). Sem override o mock DELEGA para o hook
- * real, entao os testes antigos (T67/VOL-02) continuam exercitando o caminho real de verdade.
+ * expor - sem tocar no hook (ele tem cartao proprio). O endereco do player vem dos BYTES: quem
+ * precisa de player renderizado entrega `blob`; a URL de origem nunca e usada como endereco.
+ * Sem override o mock DELEGA para o hook real, entao o c3 (T67) exercita o caminho real de
+ * ponta a ponta.
  */
 const gravacao = vi.hoisted(() => ({
-  atual: null as null | { disponivel: boolean; url: string | null; blob?: Blob | null },
+  atual: null as null | { disponivel: boolean; url?: string | null; blob?: Blob | null },
 }));
 
 vi.mock('@/hooks/calls/useCallRecording', async (importOriginal) => {
@@ -38,7 +40,7 @@ vi.mock('@/hooks/calls/useCallRecording', async (importOriginal) => {
 
 const renderPlayer = (ui: React.ReactElement) => {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+  return { qc, ...render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>) };
 };
 
 /**
@@ -59,6 +61,12 @@ const audioDoPlayer = (container: HTMLElement) => container.querySelector('audio
 
 const audioDaEdge = () => new Blob(['bytes-de-audio-mp3'], { type: 'audio/mpeg' });
 
+// Os icones lucide renderizam `xmlns="http://www.w3.org/2000/svg"` - namespace de SVG, nao
+// endereco de origem. Neutralizar ANTES de conferir deixa a assercao forte: o 'http' que
+// sobrar seria a URL de origem de verdade entrando no DOM (padrao de 951caf22e).
+const semXmlnsDosIcones = (html: string) =>
+  html.replace(/http:\/\/www\.w3\.org\/2000\/svg/g, '[svg-namespace]');
+
 describe('RecordingPlayer (T67)', () => {
   beforeEach(() => {
     gravacao.atual = null;
@@ -76,12 +84,21 @@ describe('RecordingPlayer (T67)', () => {
     expect(invoke).not.toHaveBeenCalled();
   });
 
-  it('com gravacao disponivel o player existe e pede o audio pela Edge (nunca pela URL)', async () => {
-    renderPlayer(<RecordingPlayer callId="c3" recordingStatus="available" />);
-    // D3 revisado em 29/09 (reconciliar com o Bitrix24): a Edge get-call-recording existe, entao
-    // o player deixa de devolver null e passa a buscar o audio - sem que a URL chegue ao front.
+  it('com gravacao disponivel pede o audio pela Edge e nunca renderiza a URL de origem', async () => {
+    const { qc } = renderPlayer(<RecordingPlayer callId="c3" recordingStatus="available" />);
+    // D3 revisado em 29/09 (reconciliar com o Bitrix24): a Edge get-call-recording existe, entao a
+    // busca do audio sai (o player nao inventa requisicao). O mock devolve so a URL de origem,
+    // SEM os BYTES: o player nao renderiza e a URL nunca chega ao DOM (falha fechada).
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('get-call-recording', expect.objectContaining({ body: { callId: 'c3' } })));
-    expect(JSON.stringify(document.body.innerHTML)).not.toContain('http');
+    // A resposta da Edge (url de origem SEM bytes) precisa ter ASSENTADO no cache antes de
+    // afirmar que nao ha player - conferir antes do assentamento era a corrida que fazia o
+    // teste passar por timing. Depois do flush deterministico o React ja rerenderizou.
+    await waitFor(() => expect(qc.getQueryState(['call-recording', 'c3'])?.status).toBe('success'));
+    await act(async () => { await Promise.resolve(); });
+    // Sem bytes locais o player nao renderiza (falha fechada) - e o innerHTML, com o xmlns
+    // dos icones neutralizado, nao pode conter nenhum 'http' (a URL de origem nao entra no DOM).
+    expect(screen.queryByTestId('tel-recording-player')).toBeNull();
+    expect(semXmlnsDosIcones(JSON.stringify(document.body.innerHTML))).not.toContain('http');
   });
 });
 
@@ -93,7 +110,8 @@ describe('RecordingPlayer (T67)', () => {
  */
 describe('RecordingPlayer (VOL-02) — a gravacao respeita o volume global', () => {
   beforeEach(() => {
-    gravacao.atual = null;
+    // So ha player com bytes locais: o override entrega o `blob` que a Edge devolve.
+    gravacao.atual = { disponivel: true, blob: audioDaEdge() };
     invoke.mockReset().mockResolvedValue({ data: { url: 'https://exemplo/g.mp3' }, error: null });
     act(() => {
       setVolume(DEFAULT_MEDIA_VOLUME_STATE.volume);
@@ -164,7 +182,7 @@ describe('RecordingPlayer (TEL-RECORDING-001) — ciclo do endereco blob', () =>
   const revogados = () => revokeObjectURL.mock.calls.map((c) => c[0] as string);
 
   it('c4: com os bytes da Edge o <audio> e o link de download usam o endereco local, nunca a URL de origem', async () => {
-    gravacao.atual = { disponivel: true, url: null, blob: audioDaEdge() };
+    gravacao.atual = { disponivel: true, url: 'https://exemplo/g.mp3', blob: audioDaEdge() };
 
     const { container } = renderPlayer(<RecordingPlayer callId="c4" recordingStatus="available" />);
     await screen.findByTestId('tel-recording-player');
