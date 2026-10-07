@@ -106,8 +106,12 @@ export function VirtualizedRealtimeList({
   onSnooze,
 }: VirtualizedRealtimeListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
-  const currentUserId = user?.id ?? null;
+  // R2-INB-056 (#349): o "sou eu?" da linha compara com public.profiles.id
+  // (dono da FK contacts.assigned_to e chave do agentsMap) — o auth.users.id de
+  // `user` é outro id e nunca casava, então a conversa atribuída a mim mesmo
+  // exibia meu próprio mini-avatar como se fosse de outro atendente.
+  const { profile } = useAuth();
+  const currentProfileId = profile?.id ?? null;
   const agentsMap = useAgentsLite();
   const { density } = useDensity();
   const itemHeight = ITEM_HEIGHT_BY_DENSITY[density];
@@ -246,7 +250,7 @@ export function VirtualizedRealtimeList({
               onFavorite={onFavorite}
               onSnooze={onSnooze}
               onArchive={onArchive}
-              currentUserId={currentUserId}
+              currentProfileId={currentProfileId}
               agentsMap={agentsMap}
               density={density}
             />
@@ -285,7 +289,8 @@ interface ConversationRowProps {
   onFavorite?: (contactId: string) => void;
   onSnooze?: (contactId: string, duration: string) => void;
   onArchive?: (contactId: string) => void;
-  currentUserId: string | null;
+  /** profiles.id do usuário logado (não o auth id) — ver R2-INB-056. */
+  currentProfileId: string | null;
   agentsMap: Map<string, AgentLite>;
   density: DensityMode;
 }
@@ -341,7 +346,7 @@ const ConversationRow = memo(({
   onFavorite,
   onSnooze,
   onArchive,
-  currentUserId,
+  currentProfileId,
   agentsMap,
   density,
 }: ConversationRowProps) => {
@@ -356,7 +361,7 @@ const ConversationRow = memo(({
   const channelType = conversation.contact.channel_type;
   const channelBadge = channelType && channelType !== 'whatsapp' ? CHANNEL_BADGE_CONFIG[channelType] : null;
   const assignedToId = conversation.contact.assigned_to;
-  const assignedAgent = assignedToId && assignedToId !== currentUserId ? agentsMap.get(assignedToId) : null;
+  const assignedAgent = assignedToId && assignedToId !== currentProfileId ? agentsMap.get(assignedToId) : null;
   // conversation_sla vem do embed do select (RealtimeService.fetchContacts:
   // '*, conversation_sla(...)'), presente em runtime mas ausente no tipo
   // genérico ContactRow (que so cobre as colunas da tabela contacts).
