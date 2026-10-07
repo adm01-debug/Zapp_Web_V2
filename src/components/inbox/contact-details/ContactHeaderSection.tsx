@@ -43,16 +43,19 @@ const getContactTypeBadge = (type: string) => {
 };
 
 interface ContactHeaderSectionProps {
-  contact: { id: string; name: string; phone: string; avatar?: string; email?: string };
+  contact: { id: string; name: string; phone: string; avatar?: string; email?: string; tags?: string[] | null };
   enrichedData: EnrichedContactData | null | undefined;
   conversation?: Conversation;
   onQuickAction?: (action: string) => void;
   isCompact?: boolean;
   hasExpandedSections?: boolean;
   onCollapseAll?: () => void;
+  /** Tags vivas do contato (contacts.tags) — mesma fonte que o botão "Marcar
+   *  VIP" grava via useContactQuickActions. Quando ausente, cai em contact.tags. */
+  tags?: string[] | null;
 }
 
-export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll }: ContactHeaderSectionProps) {
+export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll, tags }: ContactHeaderSectionProps) {
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
@@ -63,7 +66,10 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const { data: crmData } = useExternalContact360(crmIntegrationEnabled ? contact.id : undefined);
   const crmContact = crmData?.found ? crmData.contact : null;
   const crmCompany = crmData?.found ? crmData.company : null;
-  const isVip = crmContact ? crmContact.relationship_score >= 70 : false;
+  // O selo VIP lê a MESMA fonte que o botão grava — a tag 'VIP' em
+  // contacts.tags (case-insensitive, igual ao useContactQuickActions). Antes
+  // era decidido pelo relationship_score do CRM, fonte divergente (#241).
+  const isVip = (tags ?? contact.tags ?? []).some((t) => t.toLowerCase() === 'vip');
   const firstName = contact.name.trim().split(/\s+/)[0] || 'Sem nome';
   // Mesmo apelido (contacts.nickname) que a lista de conversas usa como nome
   // exibido (VirtualizedRealtimeList) — sem isso o mesmo contato mostrava um

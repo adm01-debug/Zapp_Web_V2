@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
-import type { ConversationContact, ConversationStatus } from '@/types/chat';
+import { useChatMediaSending } from '@/components/inbox/useChatMediaSending';
+import { useEvolutionApiCore } from '@/hooks/evolution/useEvolutionApiCore';
+import { useEvolutionIntegrations } from '@/hooks/evolution/useEvolutionIntegrations';
+import type { ConversationContact } from '@/types/chat';
 
 const VIP_TAG = 'VIP';
 const BLOCKED_TAG = 'Bloqueado';
@@ -16,41 +19,51 @@ const withoutTag = (tags: string[], tag: string) =>
   tags.filter((t) => t.toLowerCase() !== tag.toLowerCase());
 
 /**
- * Ações rápidas do painel "Detalhes do Contato" (#241): cada ação faz UMA
- * escrita em `contacts` e o estado local só muda depois do `error` nulo.
- * Erro do banco vira `toast.error` sem Desfazer; o Desfazer executa a
- * escrita reversa real (não outro toast).
+ * Ações rápidas do painel "Detalhes do Contato" (#241, decisão do dono de
+ * 06/10): o estado local só muda depois do `error` nulo; erro vira
+ * `toast.error` sem Desfazer; o Desfazer executa a reversão real.
  *
- * - VIP / Bloquear → tag canônica em `contacts.tags` (idempotente por caixa);
- * - Arquivar → `conversation_status = 'archived'` (a fila já exclui archived);
- * - Tags do painel → add/remove em `contacts.tags` preservando as existentes.
+ * - VIP → tag 'VIP' em `contacts.tags` (idempotente por caixa);
+ * - Bloquear → bloqueio REAL na Evolution (`update-block-status`, mesmo fluxo
+ *   de MessageContextActions) + tag 'Bloqueado' como marcador visual. Sem
+ *   instância resolvível não há escrita nenhuma; se a escrita da tag falhar
+ *   depois do bloqueio, o bloqueio é revertido para não ficar invisível;
+ * - Tags do painel → add/remove em `contacts.tags` preservando as existentes;
+ * - Arquivar NÃO fica aqui: a semântica única é `archiveContact` de
+ *   useConversationActions (zera `assigned_to`; o Desfazer restaura o valor
+ *   anterior real), delegada por ContactDetails.
  */
 export function useContactQuickActions(contact: ConversationContact) {
-  const [local, setLocal] = useState<{
-    id: string;
-    tags: string[];
-    status: ConversationStatus | null;
-  }>({ id: contact.id, tags: contact.tags ?? [], status: contact.conversation_status ?? null });
+  const [local, setLocal] = useState<{ id: string; tags: string[] }>({
+    id: contact.id,
+    tags: contact.tags ?? [],
+  });
 
   // Contato trocou: descarta o estado do anterior e adota os dados novos
   // (padrão "adjust state when props change" do React — roda no próprio
   // render, sem efeito e sem depender de identidade de array).
   const trocou = local.id !== contact.id;
   const tags = trocou ? (contact.tags ?? []) : local.tags;
-  const conversationStatus = trocou ? (contact.conversation_status ?? null) : local.status;
   if (trocou) {
-    setLocal({ id: contact.id, tags, status: conversationStatus });
+    setLocal({ id: contact.id, tags });
   }
 
-  // Refs espelham o estado para os callbacks assíncronos (o onUndo do toast
+  // A ref espelha o estado para os callbacks assíncronos (o onUndo do toast
   // dispara segundos depois) lerem o valor atual, não o da closure.
   const tagsRef = useRef(tags);
-  const statusRef = useRef(conversationStatus);
   useEffect(() => {
     tagsRef.current = tags;
-    statusRef.current = conversationStatus;
   });
   const contactId = contact.id;
+
+  // Bloquear usa o mesmo resolvedor de instância do envio de mídia
+  // (contacts.whatsapp_connection_id → whatsapp_connections.instance_id, com
+  // fallback para a conexão 'connected') e a mesma action da Evolution que o
+  // menu de mensagem usa para bloquear de verdade.
+  const { instanceName, resolveInstance } = useChatMediaSending(contact.id, contact.phone);
+  const { callApi, withToast } = useEvolutionApiCore();
+  const { updateBlockStatus } = useEvolutionIntegrations(callApi, withToast);
+  const blockBusyRef = useRef(false);
 
   const writeTags = async (next: string[], errorMsg: string): Promise<boolean> => {
     const { error } = await supabase.from('contacts').update({ tags: next }).eq('id', contactId);
@@ -77,84 +90,72 @@ export function useContactQuickActions(contact: ConversationContact) {
     await writeTags(tagsRef.current.filter((t) => t !== tag), `Erro ao remover a tag "${tag}"`);
   };
 
-  const flagTag = async (flag: 'vip' | 'block') => {
-    const tag = flag === 'vip' ? VIP_TAG : BLOCKED_TAG;
-    const spec = flag === 'vip'
-      ? { already: `${contact.name} já é VIP`, done: `${contact.name} marcado como VIP`, fail: 'Erro ao marcar contato como VIP', icon: '⭐' }
-      : { already: `${contact.name} já está bloqueado`, done: `${contact.name} bloqueado`, fail: 'Erro ao bloquear contato', icon: '🚫' };
-    if (hasTag(tagsRef.current, tag)) {
-      toast.info(spec.already);
+  const markVip = async () => {
+    if (hasTag(tagsRef.current, VIP_TAG)) {
+      toast.info(`${contact.name} já é VIP`);
       return;
     }
-    if (!(await writeTags([...tagsRef.current, tag], spec.fail))) return;
+    if (!(await writeTags([...tagsRef.current, VIP_TAG], 'Erro ao marcar contato como VIP'))) return;
     undoToast({
-      message: spec.done,
-      icon: spec.icon,
+      message: `${contact.name} marcado como VIP`,
+      icon: '⭐',
       onUndo: async () => {
-        await writeTags(withoutTag(tagsRef.current, tag), 'Erro ao desfazer a ação');
+        await writeTags(withoutTag(tagsRef.current, VIP_TAG), 'Erro ao desfazer a ação');
       },
     });
   };
 
-  const archive = async () => {
-    if (statusRef.current === 'archived') {
-      toast.info(`${contact.name} já está arquivado`);
+  const block = async () => {
+    if (hasTag(tagsRef.current, BLOCKED_TAG)) {
+      toast.info(`${contact.name} já está bloqueado`);
       return;
     }
-    const prev = statusRef.current;
-    const { error } = await supabase
-      .from('contacts')
-      .update({ conversation_status: 'archived' })
-      .eq('id', contactId);
-    if (error) {
-      toast.error('Erro ao arquivar contato');
-      return;
-    }
-    statusRef.current = 'archived';
-    setLocal((p) => ({ ...p, status: 'archived' }));
-    undoToast({
-      message: `${contact.name} arquivado`,
-      icon: '📦',
-      onUndo: async () => {
-        // contacts.conversation_status é NOT NULL: anterior nulo vira 'open'.
-        const restore: ConversationStatus = prev ?? 'open';
-        const { error: undoError } = await supabase
-          .from('contacts')
-          .update({ conversation_status: restore })
-          .eq('id', contactId);
-        let alvo: ConversationStatus = restore;
-        if (undoError) {
-          // O FSM do banco desarquiva só para 'open'/'pending'
-          // (archived → open|pending). Anterior waiting/resolved/closed é
-          // recusado: em vez de deixar o Desfazer sem efeito nenhum, reabre
-          // como Aberta e diz o porquê — nunca sucesso falso.
-          if (restore === 'open' || restore === 'pending') {
-            toast.error('Erro ao desarquivar contato');
-            return;
-          }
-          const { error: reabrirError } = await supabase
-            .from('contacts')
-            .update({ conversation_status: 'open' })
-            .eq('id', contactId);
-          if (reabrirError) {
-            toast.error('Erro ao desarquivar contato');
-            return;
-          }
-          alvo = 'open';
-          toast.info(`O banco não permite voltar de arquivado para "${restore}" — contato reaberto como Aberta.`);
+    // Dois cliques durante a resolução da instância não disparam bloqueio em
+    // duplicidade (a tag só aparece depois da escrita final).
+    if (blockBusyRef.current) return;
+    blockBusyRef.current = true;
+    try {
+      const digits = (contact.phone ?? '').replace(/\D/g, '');
+      const instance = instanceName || (await resolveInstance());
+      if (!instance || !digits) {
+        toast.error('Não foi possível bloquear: conexão WhatsApp não encontrada');
+        return;
+      }
+      const jid = `${digits}@s.whatsapp.net`;
+      try {
+        await updateBlockStatus(instance, jid, 'block');
+      } catch {
+        return; // o withToast já mostrou o erro; nada foi escrito em contacts
+      }
+      if (!(await writeTags([...tagsRef.current, BLOCKED_TAG], 'Erro ao bloquear contato'))) {
+        // O bloqueio real já foi aplicado na operadora; sem a tag ele ficaria
+        // invisível na tela — reverte para não deixar contato bloqueado sem marca.
+        try {
+          await updateBlockStatus(instance, jid, 'unblock');
+        } catch {
+          toast.error('A marcação falhou e o contato pode continuar bloqueado no WhatsApp.');
         }
-        statusRef.current = alvo;
-        setLocal((p) => ({ ...p, status: alvo }));
-      },
-    });
+        return;
+      }
+      undoToast({
+        message: `${contact.name} bloqueado`,
+        icon: '🚫',
+        onUndo: async () => {
+          // Se o desbloqueio falhar, o erro sobe para o undoToast reoferecer o
+          // Desfazer e a tag fica — ela continua marcando um bloqueio ativo.
+          await updateBlockStatus(instance, jid, 'unblock');
+          await writeTags(withoutTag(tagsRef.current, BLOCKED_TAG), 'Erro ao desfazer a ação');
+        },
+      });
+    } finally {
+      blockBusyRef.current = false;
+    }
   };
 
   return {
     tags,
-    conversationStatus,
-    markVip: () => flagTag('vip'),
-    block: () => flagTag('block'),
-    archive,
+    markVip,
+    block,
     addTag,
     removeTag,
   };

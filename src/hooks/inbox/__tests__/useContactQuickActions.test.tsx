@@ -4,26 +4,50 @@ import { useContactQuickActions } from '../useContactQuickActions';
 import type { ConversationContact } from '@/types/chat';
 
 const h = vi.hoisted(() => {
-  const state = { error: null as { message: string } | null, failNext: false };
+  const state = {
+    error: null as { message: string } | null,
+    failNextUpdate: false,
+    rows: {} as Record<string, unknown>,
+    invokeError: null as { message: string } | null,
+  };
   const eq = vi.fn(() => {
-    if (state.failNext) {
-      state.failNext = false;
+    if (state.failNextUpdate) {
+      state.failNextUpdate = false;
       return Promise.resolve({ error: { message: 'check_violation' } });
     }
     return Promise.resolve({ error: state.error });
   });
   const update = vi.fn(() => ({ eq }));
-  const from = vi.fn(() => ({ update }));
+  // Cadeia de select usada por useChatMediaSending/archiveContact:
+  // select(...) → eq(...) → { maybeSingle | single | limit → maybeSingle }
+  let currentTable = '';
+  const terminal = (): Record<string, unknown> => ({
+    maybeSingle: async () => ({ data: state.rows[currentTable] ?? null, error: null }),
+    single: async () => ({ data: state.rows[currentTable] ?? null, error: null }),
+    limit: () => terminal(),
+  });
+  const select = vi.fn(() => ({ eq: vi.fn(() => terminal()) }));
+  const from = vi.fn((table: string) => {
+    currentTable = table;
+    return { update, select };
+  });
+  // supabase.functions.invoke — fronteira real do useEvolutionApiCore.callApi
+  const invoke = vi.fn(async (_fn: string, _opts?: unknown) =>
+    state.invokeError
+      ? { data: null, error: state.invokeError }
+      : { data: { ok: true }, error: null });
   const toast = Object.assign(vi.fn(), {
     success: vi.fn(),
     error: vi.fn(),
     info: vi.fn(),
     warning: vi.fn(),
   });
-  return { state, eq, update, from, toast };
+  return { state, eq, update, select, from, invoke, toast };
 });
 
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: h.from } }));
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { from: h.from, functions: { invoke: h.invoke } },
+}));
 vi.mock('sonner', () => ({ toast: h.toast }));
 
 function makeContact(over: Partial<ConversationContact> = {}): ConversationContact {
@@ -44,13 +68,21 @@ async function clickUndo() {
   await act(async () => {
     call[1].action.onClick();
   });
-  await waitFor(() => expect(h.update.mock.calls.length).toBeGreaterThanOrEqual(2));
 }
+
+const invokeCalls = () =>
+  h.invoke.mock.calls.map((c) => (c[1] as { body: Record<string, unknown> }).body);
 
 describe('useContactQuickActions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     h.state.error = null;
+    h.state.failNextUpdate = false;
+    h.state.invokeError = null;
+    h.state.rows = {
+      contacts: { assigned_to: 'agent-9', whatsapp_connection_id: 'conn-1' },
+      whatsapp_connections: { instance_id: 'inst-1' },
+    };
   });
 
   it('markVip grava a tag VIP em contacts.tags com UMA escrita', async () => {
@@ -83,48 +115,91 @@ describe('useContactQuickActions', () => {
     await waitFor(() => expect(result.current.tags).toEqual([]));
   });
 
-  it('block grava a tag Bloqueado (idempotente) e o Desfazer a remove', async () => {
+  it('block bloqueia de verdade na Evolution (update-block-status) e grava a tag Bloqueado', async () => {
     const c = makeContact({ tags: [] });
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.block(); });
+    // A instância é resolvida pelo fluxo real (contacts.whatsapp_connection_id
+    // → whatsapp_connections.instance_id) e o bloqueio real vai para a edge.
+    expect(h.from).toHaveBeenCalledWith('whatsapp_connections');
+    expect(invokeCalls()).toContainEqual(
+      expect.objectContaining({
+        instanceName: 'inst-1',
+        number: '5511999999999@s.whatsapp.net',
+        status: 'block',
+      }),
+    );
     expect(h.update).toHaveBeenCalledWith({ tags: ['Bloqueado'] });
-    await clickUndo();
-    expect(h.update).toHaveBeenLastCalledWith({ tags: [] });
+    expect(result.current.tags).toEqual(['Bloqueado']);
+  });
 
-    vi.clearAllMocks();
-    const c2 = makeContact({ tags: ['Bloqueado'] });
-    const { result: again } = renderHook(() => useContactQuickActions(c2));
-    await act(async () => { await again.current.block(); });
+  it('o Desfazer do bloqueio chama unblock real na Evolution e remove a tag', async () => {
+    const c = makeContact({ tags: [] });
+    const { result } = renderHook(() => useContactQuickActions(c));
+    await act(async () => { await result.current.block(); });
+    await clickUndo();
+    await waitFor(() =>
+      expect(invokeCalls().map((b) => b.status)).toEqual(['block', 'unblock']),
+    );
+    expect(h.update).toHaveBeenLastCalledWith({ tags: [] });
+    await waitFor(() => expect(result.current.tags).toEqual([]));
+  });
+
+  it('block sem conexão resolvível: toast.error e nenhuma escrita nem chamada de bloqueio', async () => {
+    h.state.rows = {
+      contacts: { assigned_to: 'agent-9', whatsapp_connection_id: null },
+      whatsapp_connections: null, // nem a conexão do contato nem o fallback "connected"
+    };
+    const c = makeContact({ tags: [] });
+    const { result } = renderHook(() => useContactQuickActions(c));
+    await act(async () => { await result.current.block(); });
+    expect(h.invoke).not.toHaveBeenCalled();
+    expect(h.update).not.toHaveBeenCalled();
+    expect(h.toast.error).toHaveBeenCalled();
+    expect(result.current.tags).toEqual([]);
+  });
+
+  it('erro na chamada de bloqueio: não grava a tag nem oferece Desfazer', async () => {
+    h.state.invokeError = { message: 'edge 500' };
+    const c = makeContact({ tags: [] });
+    const { result } = renderHook(() => useContactQuickActions(c));
+    await act(async () => { await result.current.block(); });
+    expect(h.toast.error).toHaveBeenCalled();
+    expect(h.update).not.toHaveBeenCalled();
+    expect(h.toast).not.toHaveBeenCalled(); // nenhum undoToast
+    expect(result.current.tags).toEqual([]);
+  });
+
+  it('falha na escrita da tag após o bloqueio reverte o bloqueio real (não fica bloqueado invisível)', async () => {
+    h.state.failNextUpdate = true; // a escrita da tag em contacts falha
+    const c = makeContact({ tags: [] });
+    const { result } = renderHook(() => useContactQuickActions(c));
+    await act(async () => { await result.current.block(); });
+    await waitFor(() =>
+      expect(invokeCalls().map((b) => b.status)).toEqual(['block', 'unblock']),
+    );
+    expect(h.toast.error).toHaveBeenCalled();
+    expect(h.toast).not.toHaveBeenCalled(); // nenhum undoToast de sucesso
+    expect(result.current.tags).toEqual([]);
+  });
+
+  it('block é idempotente: tag Bloqueado já presente não chama Evolution nem escreve', async () => {
+    const c = makeContact({ tags: ['Bloqueado'] });
+    const { result } = renderHook(() => useContactQuickActions(c));
+    await act(async () => { await result.current.block(); });
+    expect(h.invoke).not.toHaveBeenCalled();
     expect(h.update).not.toHaveBeenCalled();
     expect(h.toast.info).toHaveBeenCalled();
   });
 
-  it('archive grava conversation_status archived e o Desfazer restaura o status anterior', async () => {
-    const c = makeContact({ conversation_status: 'pending' });
+  it('dois cliques de Bloquear concorrentes disparam uma única chamada de bloqueio', async () => {
+    const c = makeContact({ tags: [] });
     const { result } = renderHook(() => useContactQuickActions(c));
-    await act(async () => { await result.current.archive(); });
-    expect(h.update).toHaveBeenCalledWith({ conversation_status: 'archived' });
-    expect(result.current.conversationStatus).toBe('archived');
-    await clickUndo();
-    expect(h.update).toHaveBeenLastCalledWith({ conversation_status: 'pending' });
-    await waitFor(() => expect(result.current.conversationStatus).toBe('pending'));
-  });
-
-  it('Desfazer de Arquivar com anterior waiting (FSM recusa archived→waiting): reabre como open e avisa sem toast.error', async () => {
-    const c = makeContact({ conversation_status: 'waiting' });
-    const { result } = renderHook(() => useContactQuickActions(c));
-    await act(async () => { await result.current.archive(); });
-    expect(h.update).toHaveBeenCalledWith({ conversation_status: 'archived' });
-
-    // A 1ª escrita do Desfazer (voltar para 'waiting') é recusada pelo FSM.
-    h.state.failNext = true;
-    await clickUndo();
-    await waitFor(() =>
-      expect(h.update).toHaveBeenLastCalledWith({ conversation_status: 'open' }),
-    );
-    expect(h.toast.info).toHaveBeenCalled();
-    expect(h.toast.error).not.toHaveBeenCalled();
-    await waitFor(() => expect(result.current.conversationStatus).toBe('open'));
+    await act(async () => {
+      await Promise.all([result.current.block(), result.current.block()]);
+    });
+    expect(invokeCalls().filter((b) => b.status === 'block')).toHaveLength(1);
+    expect(h.update).toHaveBeenCalledTimes(1);
   });
 
   it('erro do banco vira toast.error, estado não muda e nenhum Desfazer é oferecido', async () => {

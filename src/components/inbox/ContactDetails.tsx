@@ -23,7 +23,7 @@ interface ContactDetailsProps {
 export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
   const { contact } = conversation;
   const { enrichedData, aiTags, slaInfo } = useContactEnrichedData(contact.id);
-  const { profileId } = useConversationActions();
+  const { archiveContact } = useConversationActions();
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showCompactHeader, setShowCompactHeader] = useState(false);
@@ -63,13 +63,14 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
 
   const quickActions = useContactQuickActions(contact);
 
-  // VIP/arquivar/bloquear gravam de verdade via useContactQuickActions (#241):
-  // uma escrita por ação, Desfazer faz a escrita reversa, erro vira toast.error.
+  // VIP/bloquear/tags gravam via useContactQuickActions; Arquivar delega ao
+  // archiveContact (semântica única: zera assigned_to e o Desfazer restaura o
+  // valor anterior real — decisão do dono em 06/10, cartão #241).
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'edit': setEditDialogOpen(true); break;
       case 'vip': void quickActions.markVip(); break;
-      case 'archive': void quickActions.archive(); break;
+      case 'archive': void archiveContact(contact.id); break;
       case 'block': void quickActions.block(); break;
     }
   };
@@ -101,7 +102,7 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
       <div className="flex-1 min-h-0 flex flex-col">
         <AnimatePresence>
           {showCompactHeader && (
-            <ContactHeaderSection contact={{ ...contact, avatar: contact.avatar ?? undefined, email: contact.email ?? undefined }} enrichedData={enrichedData} conversation={conversation} onQuickAction={handleQuickAction} isCompact />
+            <ContactHeaderSection contact={{ ...contact, avatar: contact.avatar ?? undefined, email: contact.email ?? undefined }} enrichedData={enrichedData} conversation={conversation} onQuickAction={handleQuickAction} isCompact tags={quickActions.tags} />
           )}
         </AnimatePresence>
 
@@ -109,6 +110,7 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
           contact={{ ...contact, avatar: contact.avatar ?? undefined, email: contact.email ?? undefined }} enrichedData={enrichedData} conversation={conversation}
           onQuickAction={handleQuickAction} hasExpandedSections={accordionValue.length > 0}
           onCollapseAll={() => { setAccordionValue([]); saveSidebarState([]); }}
+          tags={quickActions.tags}
         />
 
         <div ref={scrollRef} onScroll={handleScroll} className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
