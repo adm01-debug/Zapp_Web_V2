@@ -12,7 +12,11 @@
  *   arquivo e a rolagem pede várias de uma vez;
  * - cache LRU de 60 miniaturas por chave ESTÁVEL (o token da URL assinada não entra na
  *   chave: ele muda a cada renovação e nunca acertaria o cache);
- * - 25 MB de teto, 15 s de prazo e cancelamento por `AbortSignal`;
+ * - 25 MB de teto, 15 s de prazo e cancelamento por `AbortSignal`. O prazo não é um `setTimeout`
+ *   solto: cada execução abre um `AbortController` INTERNO que une o sinal do chamador ao relógio
+ *   de 15 s, e é esse sinal que o `fetch`, as checagens de aborto e o descarte do render obedecem.
+ *   Estourou o prazo, o download/o parse/o render param de verdade — nada segue rodando depois de
+ *   a vaga da fila voltar;
  * - PDF protegido por senha, corrompido, lento demais, grande demais, sem CORS ou com falha
  *   de rede devolve `null` — quem chama cai no ícone do arquivo.
  */
@@ -80,25 +84,62 @@ function carregarPdfjs() {
  * ------------------------------------------------------------------ */
 
 let emAndamento = 0;
-const espera: Array<() => void> = [];
+/** Quem não achou vaga na hora entra aqui, na ordem de chegada. */
+const espera: Array<{ assumir: () => void }> = [];
 
-function aguardarVaga(): Promise<void> {
+/**
+ * Pega uma vaga da fila (no máximo `PDF_THUMBNAIL_MAX_CONCORRENTES` de cada vez).
+ *
+ * Devolve `true` quando a vaga é desta chamada — e aí ela TEM de chamar `liberarVaga()` no fim.
+ * Devolve `false` quando o `sinal` do chamador aborta com a chamada ainda na fila: a entrada sai
+ * da fila na hora, não reserva vaga nenhuma (nada a liberar) e não espera uma vaga futura.
+ */
+function aguardarVaga(sinal?: AbortSignal): Promise<boolean> {
   if (emAndamento < PDF_THUMBNAIL_MAX_CONCORRENTES) {
     emAndamento += 1;
-    return Promise.resolve();
+    return Promise.resolve(true);
   }
-  return new Promise<void>((resolve) => {
-    espera.push(() => {
-      emAndamento += 1;
-      resolve();
-    });
+  return new Promise<boolean>((resolve) => {
+    let encerrado = false;
+    /** Ouvinte do abort do chamador; o `concluir` precisa removê-lo, por isso nasce antes. */
+    let aoAbortar: () => void = () => undefined;
+
+    const concluir = (assumiu: boolean) => {
+      if (encerrado) return;
+      encerrado = true;
+      sinal?.removeEventListener('abort', aoAbortar);
+      resolve(assumiu);
+    };
+
+    const entrada = {
+      /** A vaga passou direto para esta chamada: ela já está em andamento, nada a incrementar. */
+      assumir: () => concluir(true),
+    };
+
+    aoAbortar = () => {
+      // Sai da fila já: quem foi abortado não espera vaga futura nem ocupa vaga.
+      const indice = espera.indexOf(entrada);
+      if (indice >= 0) espera.splice(indice, 1);
+      concluir(false);
+    };
+
+    if (sinal?.aborted) {
+      concluir(false);
+      return;
+    }
+    espera.push(entrada);
+    sinal?.addEventListener('abort', aoAbortar);
   });
 }
 
+/** Devolve a vaga: passa direto para quem esperava (sem passar por zero) ou fecha a conta. */
 function liberarVaga(): void {
-  emAndamento -= 1;
   const proximo = espera.shift();
-  if (proximo) proximo();
+  if (proximo) {
+    proximo.assumir();
+    return;
+  }
+  emAndamento -= 1;
 }
 
 /* ------------------------------------------------------------------ *
@@ -296,20 +337,34 @@ async function renderizarPagina1(
   return canvasParaBlob(canvas);
 }
 
-async function processar(url: string, largura: number, sinal: AbortSignal | undefined): Promise<Blob | null> {
-  // `descarte` é preenchido conforme o trabalho avança; o vigia (prazo/abort) o chama para
+async function processar(
+  url: string,
+  largura: number,
+  sinalDoChamador: AbortSignal | undefined,
+): Promise<Blob | null> {
+  // Um `AbortController` INTERNO por execução: é o sinal dele que `fetch`, as checagens de aborto
+  // e o descarte do render observam. O vigia (prazo de 15 s OU abort do chamador) só dispara este
+  // controlador. Sem ele, o prazo estourava, a vaga voltava e o download/o parse/o render seguiam
+  // em segundo plano, fora da fila de 2.
+  const controlador = new AbortController();
+  const sinal = controlador.signal;
+
+  // `descarte` é preenchido conforme o trabalho avança; quem aborta o sinal interno o chama para
   // parar de verdade o que estiver em voo, em vez de só abandonar a resposta.
   const descarte: { atual: (() => void) | null } = { atual: null };
-  const vigia = criarVigia(sinal, () => descarte.atual?.());
+  const aoAbortar = () => descarte.atual?.();
+  sinal.addEventListener('abort', aoAbortar);
+
+  const vigia = criarVigia(sinalDoChamador, () => controlador.abort());
 
   const trabalho = (async (): Promise<Blob | null> => {
     try {
       const bytes = await baixarPdf(url, sinal);
       if (!bytes) return null;
-      if (sinal?.aborted) return null;
+      if (sinal.aborted) return null;
 
       const pdfjs = await carregarPdfjs();
-      if (sinal?.aborted) return null;
+      if (sinal.aborted) return null;
 
       const carga: TarefaCargaPdf = pdfjs.getDocument({ data: bytes, verbosity: 0 });
       // Registrado ANTES de esperar: se o prazo/abort chegar enquanto o PDF ainda carrega, o
@@ -319,7 +374,7 @@ async function processar(url: string, largura: number, sinal: AbortSignal | unde
       };
       try {
         const documento = await carga.promise;
-        if (sinal?.aborted) return null;
+        if (sinal.aborted) return null;
 
         // Só a página 1: um PDF de 500 páginas custa o mesmo que um de uma.
         return await renderizarPagina1(documento, largura, (descartar) => {
@@ -343,6 +398,7 @@ async function processar(url: string, largura: number, sinal: AbortSignal | unde
     return await Promise.race([trabalho, vigia.promessa]);
   } finally {
     vigia.limpar();
+    sinal.removeEventListener('abort', aoAbortar);
   }
 }
 
@@ -363,7 +419,8 @@ export async function renderPdfThumbnail(
   const doCache = lerDoCache(chave);
   if (doCache) return doCache;
 
-  await aguardarVaga();
+  // Abortou enquanto esperava: sai da fila sem pegar vaga nenhuma (nada a liberar depois).
+  if (!(await aguardarVaga(sinal))) return null;
   try {
     if (sinal?.aborted) return null;
     // A espera na fila pode ter sido longa: se outra chamada idêntica já renderizou, usa o cache.
