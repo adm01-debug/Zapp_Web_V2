@@ -10,12 +10,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wifi, WifiOff, RefreshCw, AlertTriangle, CheckCircle2, XCircle,
   Clock, MessageSquare, ArrowUpDown, Activity, Server, Database,
-  HardDrive, Zap, Bug, FileWarning, Loader2, Shield, HeartPulse, Send,
+  HardDrive, Zap, Bug, FileWarning, Loader2, Shield, ShieldAlert, HeartPulse, Send,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useDiagnosticsData, type SystemHealth } from '@/hooks/system/useDiagnosticsData';
+import { useDiagnosticsData, type HealthStatus, type SystemHealth } from '@/hooks/system/useDiagnosticsData';
 
 // ─── Helpers ───
 function StatusDot({ status }: { status: string }) {
@@ -28,11 +28,13 @@ function StatusDot({ status }: { status: string }) {
   );
 }
 
-function HealthBadge({ status }: { status: 'healthy' | 'degraded' | 'down' }) {
-  const config = {
+function HealthBadge({ status }: { status: HealthStatus }) {
+  const config: Record<HealthStatus, { label: string; icon: typeof CheckCircle2; className: string }> = {
     healthy: { label: 'Saudável', icon: CheckCircle2, className: 'bg-success/10 text-success border-success/20' },
     degraded: { label: 'Degradado', icon: AlertTriangle, className: 'bg-warning/10 text-warning border-warning/20' },
+    unauthorized: { label: 'Sem permissão', icon: ShieldAlert, className: 'bg-warning/10 text-warning border-warning/20' },
     down: { label: 'Fora do ar', icon: XCircle, className: 'bg-destructive/10 text-destructive border-destructive/20' },
+    unknown: { label: 'Não medido', icon: Activity, className: 'bg-muted/50 text-muted-foreground border-border' },
   };
   const c = config[status];
   return (
@@ -69,10 +71,19 @@ const SEVERITY_CONFIG = {
   critical: { icon: Bug, color: 'text-destructive', bg: 'bg-destructive/10', border: 'border-destructive/20' },
 };
 
+/** Detalhe por sinal: coleta falhada ou não executada não pode ser exibida como se
+ * a latência/canal tivessem sido medidos. */
+function failureDetail(status: HealthStatus, latency: number | null, service: string): string | null {
+  if (status === 'unauthorized') return `Coleta sem permissão no ${service}`;
+  if (status === 'down') return latency === null ? `Falha de coleta no ${service}` : `Latência crítica: ${latency}ms`;
+  if (status === 'unknown') return 'Não medido';
+  return null;
+}
+
 const HEALTH_ITEMS: Array<{ key: keyof Pick<SystemHealth, 'database' | 'storage' | 'realtime' | 'edgeFunctions'>; label: string; icon: React.ComponentType<{ className?: string }>; getDetail: (h: SystemHealth) => string }> = [
-  { key: 'database', label: 'Banco de Dados', icon: Database, getDetail: (h) => `Latência: ${h.dbLatency}ms · ${h.contactsCount} contatos · ${h.messagesCount} mensagens` },
-  { key: 'storage', label: 'Armazenamento', icon: HardDrive, getDetail: (h) => `Latência: ${h.storageLatency}ms` },
-  { key: 'realtime', label: 'Realtime', icon: Zap, getDetail: () => 'Canal de tempo real ativo' },
+  { key: 'database', label: 'Banco de Dados', icon: Database, getDetail: (h) => failureDetail(h.database, h.dbLatency, 'banco') ?? `Latência: ${h.dbLatency}ms · ${h.contactsCount} contatos · ${h.messagesCount} mensagens` },
+  { key: 'storage', label: 'Armazenamento', icon: HardDrive, getDetail: (h) => failureDetail(h.storage, h.storageLatency, 'Storage') ?? `Latência: ${h.storageLatency}ms` },
+  { key: 'realtime', label: 'Realtime', icon: Zap, getDetail: (h) => h.realtime === 'healthy' ? `Assinatura confirmada${h.realtimeCheckedAt ? ` às ${format(new Date(h.realtimeCheckedAt), 'HH:mm:ss', { locale: ptBR })}` : ''}` : (h.realtime === 'down' ? 'Falha ao assinar o canal' : 'Não medido') },
   { key: 'edgeFunctions', label: 'Backend Functions', icon: Server, getDetail: (h) => `${h.connectionsCount} conexão(ões) configurada(s)` },
 ];
 
@@ -122,7 +133,12 @@ export function DiagnosticsView() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-6 py-4 border-b border-border/30">
         <MetricCard icon={Wifi} label="Conexões ativas" value={`${connectedCount}/${connections.length}`} sub={connectedCount === connections.length ? 'Todas conectadas' : 'Atenção necessária'} />
         <MetricCard icon={Send} label="Taxa de entrega (24h)" value={`${messageDiag?.deliveryRate || 0}%`} sub={`${messageDiag?.failed || 0} falhas`} />
-        <MetricCard icon={Database} label="Latência do banco" value={`${health?.dbLatency || 0}ms`} sub={health?.database === 'healthy' ? 'Normal' : 'Lento'} />
+        <MetricCard
+          icon={Database}
+          label="Latência do banco"
+          value={health?.dbLatency != null ? `${health.dbLatency}ms` : '—'}
+          sub={health?.database === 'healthy' ? 'Normal' : health?.database === 'degraded' ? 'Lento' : health?.database === 'unauthorized' ? 'Sem permissão' : health?.database === 'down' ? 'Falha de coleta' : 'Sem medida'}
+        />
         <MetricCard icon={Bug} label="Problemas detectados" value={errorLogs.length} sub={errorCount > 0 ? `${errorCount} críticos` : 'Nenhum crítico'} />
       </div>
 
