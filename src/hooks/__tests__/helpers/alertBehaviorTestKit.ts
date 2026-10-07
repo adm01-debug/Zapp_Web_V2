@@ -11,7 +11,7 @@ export const playNotificationSound = vi.fn();
 export const showBrowserNotification = vi.fn();
 export const requestNotificationPermission = vi.fn();
 export const toast = vi.fn();
-export const sonnerToast = { error: vi.fn(), success: vi.fn() };
+export const sonnerToast = { error: vi.fn(), success: vi.fn(), info: vi.fn() };
 export const invoke = vi.fn();
 
 /** Resultado do dedupe de notificacoes; o teste pode desligar para cobrir o caminho silencioso. */
@@ -114,6 +114,7 @@ export function resetAlertKit() {
   showBrowserNotification.mockClear();
   invoke.mockClear();
   sonnerToast.error.mockClear();
+  sonnerToast.info.mockClear();
   dedupeResult.valor = true;
   callbacks.length = 0;
   settingsCfg.soundEnabled = true;
