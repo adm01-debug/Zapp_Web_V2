@@ -486,9 +486,18 @@ test('filtra por busca, prioridade, contato e alarme, e limpa', async ({ page })
 
 test('prazo de hoje: o cartão mostra "Hoje" e o KPI "Para hoje" sobe', async ({ page }) => {
   await abrirTarefas(page);
+  // O card do KPI existe desde o primeiro render com o valor 0 (`kpis(items)` com
+  // `items` ainda vazio — TasksKpiStrip.tsx:59-68) e recebe a contagem real no MESMO
+  // render em que a Lista desenha os cartões. Ler o "antes" antes disso dá 0 e a
+  // conta `antes + 1` vira mentira: espera a Lista sair do carregamento primeiro
+  // (flaky medido em .tmp/prova-rodada-1.log).
+  await expect(page.getByRole('article').or(page.getByText('Nada por aqui')).first()).toBeVisible({
+    timeout: 60_000,
+  });
   const paraHoje = kpi(page, 'Para hoje');
-  const antes = Number((await paraHoje.textContent())?.trim());
-  expect(Number.isFinite(antes)).toBe(true);
+  const bruto = ((await paraHoje.textContent()) ?? '').trim();
+  expect(bruto, 'KPI "Para hoje" ainda sem contagem').toMatch(/^\d+$/);
+  const antes = Number(bruto);
 
   const t = titulo('prazo-hoje');
   await criarTarefa(page, t, 'hoje');
