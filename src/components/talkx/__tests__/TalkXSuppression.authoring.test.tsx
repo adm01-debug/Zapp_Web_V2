@@ -27,7 +27,11 @@ vi.mock('@/integrations/supabase/client', () => {
     self.not = () => self;
     self.eq = () => self;
     self.maybeSingle = () => Promise.resolve({ data: { id: 'profile-1' }, error: null });
-    self.order = () => Promise.resolve({ data, error: null });
+    // #407: a busca de contato passou a mandar filtro ao servidor e a fechar a
+    // consulta com .order(...).limit(...) — o mock precisa aceitar o encadeamento.
+    self.order = () => Object.assign(Promise.resolve({ data, error: null }), {
+      limit: () => Promise.resolve({ data, error: null }),
+    });
     return self;
   };
   return {

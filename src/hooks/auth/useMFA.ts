@@ -142,22 +142,33 @@ export function useMFA() {
   };
 }
 
-// Leitura pura (react-query) para gates de UI: true/false quando carregou, undefined
-// enquanto carrega ou em erro (inclusive refetch que falhou) — quem consome trata
-// undefined como "nao incomodar". Invalidada por verifyTOTP/unenroll.
+// Leitura pura (react-query) dos fatores TOTP da sessao autenticada. E a fonte
+// COMPARTILHADA da UI de seguranca: distingue carregando (isLoading), erro de
+// leitura (isError) e "nenhum fator" (isSuccess com lista vazia) — sem confundir
+// ausencia com dado nao carregado. Invalidada por verifyTOTP/unenroll.
 export const MFA_TOTP_QUERY_KEY = ['mfa-verified-totp'] as const;
 
-export function useHasVerifiedTotp(enabled = true) {
-  const query = useQuery({
+export function useMfaFactors(enabled = true) {
+  return useQuery({
     queryKey: MFA_TOTP_QUERY_KEY,
     queryFn: async () => {
       const { data, error } = await supabase.auth.mfa.listFactors();
       if (error) throw error;
-      return (data?.totp ?? []).some((f) => f.status === 'verified');
+      return (data?.totp ?? []) as MFAFactor[];
     },
     enabled,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
-  return { ...query, data: query.isError ? undefined : query.data };
+}
+
+// Gate de UI derivado da mesma fonte: true/false quando carregou, undefined
+// enquanto carrega ou em erro (inclusive refetch que falhou) — quem consome trata
+// undefined como "nao incomodar". Invalidada por verifyTOTP/unenroll.
+export function useHasVerifiedTotp(enabled = true) {
+  const query = useMfaFactors(enabled);
+  return {
+    ...query,
+    data: query.isError ? undefined : query.data?.some((f) => f.status === 'verified'),
+  };
 }

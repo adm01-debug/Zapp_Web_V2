@@ -426,7 +426,7 @@ export function evaluateContextVersionSupersession(input: {
 }
 
 export type ContextRevalidationResult =
-  | { current: true; reason: null; currentVersion: null }
+  | { current: true; reason: null; currentVersion: string | null | undefined }
   | { current: false; reason: string; currentVersion: string | null };
 
 /**
@@ -449,11 +449,15 @@ export async function revalidateContextBeforeEffect(input: {
     return { current: false, reason: CONTACT_NOT_VISIBLE_REASON, currentVersion: null };
   }
 
-  let currentVersion: string | null = null;
+  let currentVersion: string | null;
   try {
     currentVersion = await input.loadCurrentVersion();
   } catch {
-    return { current: true, reason: null, currentVersion: null };
+    // Versão NÃO medida (`undefined`): a análise segue e é gravada, mas quem
+    // persiste NÃO pode tentar a projeção — sem a versão esperada a trava do
+    // banco não tem como decidir. `undefined` nunca é confundido com o `null`
+    // medido de "o contato ainda não tem projeção" (R2-INF-023/D5).
+    return { current: true, reason: null, currentVersion: undefined };
   }
 
   const evaluation = evaluateContextVersionSupersession({
@@ -464,7 +468,10 @@ export async function revalidateContextBeforeEffect(input: {
   if (evaluation.superseded) {
     return { current: false, reason: CONTEXT_SUPERSEDED_REASON, currentVersion: evaluation.current };
   }
-  return { current: true, reason: null, currentVersion: null };
+  // A versão medida vai junto (R2-INF-023/D2): é ela que a RPC compara, sob
+  // lock, com a versão vigente no commit — o snapshot em trânsito deixa de
+  // bastar para substituir uma projeção concorrente.
+  return { current: true, reason: null, currentVersion };
 }
 
 /**

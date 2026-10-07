@@ -282,6 +282,26 @@ describe('useMyWorkItems — Fase B', () => {
     expect(String(h.select.mock.calls[0][0])).toContain('contact:contacts!conversation_tasks_contact_id_fkey');
   });
 
+  it('update persiste e reflete o contato escolhido (contactId -> contact_id, #R2-MOD-049)', async () => {
+    const { result, qc } = setup([dbRow({ id: 't1', contact_id: 'c-ana' })]);
+    await ready({ result });
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    // A janela otimista é transitória (o `onSettled` refaz o fetch e repõe o
+    // embed do servidor), então se observa o updater aplicado ao estado anterior.
+    const patchOtimista = vi.spyOn(qc, 'setQueriesData');
+    await act(async () => { await result.current.update('t1', { contactId: 'c-bruno' }); });
+
+    // persistência: o UPDATE leva a coluna (antes da correção o DTO saía vazio).
+    expect(h.update).toHaveBeenCalledTimes(1);
+    expect(h.update.mock.calls[0][0]).toMatchObject({ contact_id: 'c-bruno' });
+
+    // cache otimista coerente com o que foi gravado.
+    const updaters = patchOtimista.mock.calls.map(([, u]) => u as (o: unknown) => unknown);
+    const antes = [dbRow({ id: 't1', contact_id: 'c-ana' }) as unknown as WorkItem];
+    expect(updaters.some((u) => JSON.stringify(u(antes)).includes('"contact_id":"c-bruno"'))).toBe(true);
+  });
+
   it('snooze e complete invalidam o badge (etapa 19: badge cai a 0)', async () => {
     const { result, qc } = setup([dbRow()]);
     await ready({ result });

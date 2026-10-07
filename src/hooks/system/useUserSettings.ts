@@ -171,11 +171,13 @@ export function useUserSettings() {
         auto_assignment_method: settings.auto_assignment_method,
         inactivity_timeout: settings.inactivity_timeout,
         auto_transcription_enabled: settings.auto_transcription_enabled,
-        sound_enabled: settings.sound_enabled,
         browser_notifications_enabled: settings.browser_notifications_enabled,
-        quiet_hours_enabled: settings.quiet_hours_enabled,
-        quiet_hours_start: settings.quiet_hours_start,
-        quiet_hours_end: settings.quiet_hours_end,
+        // As preferências de som (sound_enabled, quiet_hours_enabled,
+        // quiet_hours_start, quiet_hours_end) pertencem ao hook canônico
+        // useNotificationSettings — NÃO gravá-las aqui de novo. Como há várias
+        // instâncias deste hook na sessão, um upsert com o valor lido no mount
+        // sobrescreve o que o hook de notificações acabou de salvar e o botão
+        // "Salvar Alterações" passa a desfazer a configuração de alertas.
         theme: settings.theme,
         language: settings.language,
         compact_mode: settings.compact_mode,

@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { MFASettings } from '@/components/mfa/MFASettings';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useMFA } from '@/hooks/auth/useMFA';
+import { useMfaFactors } from '@/hooks/auth/useMFA';
 import { useReauthentication } from '@/hooks/auth/useReauthentication';
 import { ReauthDialog } from '@/components/auth/ReauthDialog';
 import { toast } from 'sonner';
@@ -29,7 +29,12 @@ interface SecuritySettingsPanelProps {
 
 export function SecuritySettingsPanel({ onSwitchTab }: SecuritySettingsPanelProps) {
   const { user } = useAuth();
-  const { isMFAEnabled, factors } = useMFA();
+  // Mesma fonte compartilhada do overview: a instância própria de useMFA nunca
+  // buscava os fatores e exibia 2FA como desativado mesmo com TOTP verificado.
+  const { data: factors, isLoading: mfaLoading, isError: mfaError } = useMfaFactors(!!user);
+  const verifiedFactors = (factors ?? []).filter(f => f.status === 'verified');
+  const isMFAEnabled = verifiedFactors.length > 0;
+  const mfaMeasured = !mfaLoading && !mfaError;
   const { 
     showReauthDialog, 
     pendingAction, 
@@ -46,10 +51,14 @@ export function SecuritySettingsPanel({ onSwitchTab }: SecuritySettingsPanelProp
     {
       icon: Smartphone,
       title: 'Autenticação em Dois Fatores (2FA)',
-      description: isMFAEnabled 
-        ? `${factors.filter(f => f.status === 'verified').length} método(s) configurado(s)` 
-        : 'Adicione uma camada extra de proteção',
-      status: isMFAEnabled ? 'enabled' : 'disabled',
+      description: mfaLoading
+        ? 'Verificando os métodos configurados…'
+        : mfaError
+          ? 'Não foi possível verificar os métodos configurados'
+          : isMFAEnabled
+            ? `${verifiedFactors.length} método(s) configurado(s)`
+            : 'Adicione uma camada extra de proteção',
+      status: mfaMeasured ? (isMFAEnabled ? 'enabled' : 'disabled') : 'info',
       action: () => {
         requireReauth('configure_mfa', async () => {
           setShowMFASettings(true);
@@ -144,19 +153,24 @@ export function SecuritySettingsPanel({ onSwitchTab }: SecuritySettingsPanelProp
           <div className="p-4 rounded-lg bg-muted/30 border border-border/50">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Nível de Segurança</span>
-              <Badge variant={isMFAEnabled ? 'default' : 'secondary'}>
-                {isMFAEnabled ? 'Alto' : 'Médio'}
+              <Badge variant={mfaMeasured && isMFAEnabled ? 'default' : 'secondary'}>
+                {mfaLoading ? 'Verificando…' : mfaError ? 'Indisponível' : isMFAEnabled ? 'Alto' : 'Médio'}
               </Badge>
             </div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: isMFAEnabled ? '100%' : '60%' }}
+                animate={{ width: mfaMeasured && isMFAEnabled ? '100%' : mfaMeasured ? '60%' : '0%' }}
                 transition={{ duration: 1, ease: 'easeOut' }}
                 className={`h-full rounded-full ${isMFAEnabled ? 'bg-success' : 'bg-warning'}`}
               />
             </div>
-            {!isMFAEnabled && (
+            {mfaError && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Não foi possível ler os métodos configurados; o nível não pôde ser medido
+              </p>
+            )}
+            {mfaMeasured && !isMFAEnabled && (
               <p className="text-xs text-muted-foreground mt-2">
                 Ative o 2FA para aumentar a segurança da sua conta
               </p>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('AIRewriteButton');
@@ -30,8 +30,15 @@ export function AIRewriteButton({ inputValue, onRewrite, contactName }: AIRewrit
   const [loadingTone, setLoadingTone] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
+  // Rascunho vivo: o campo continua editável enquanto a IA responde. O ref é
+  // sincronizado a cada commit (como em useConnectionsManager) para a resposta
+  // atrasada comparar contra o texto que está na tela agora (R2-INF-025).
+  const rascunhoAtual = useRef(inputValue);
+  useLayoutEffect(() => { rascunhoAtual.current = inputValue; }, [inputValue]);
+
   const handleRewrite = async (tone: string) => {
-    if (!inputValue.trim()) {
+    const textoDoClique = inputValue;
+    if (!textoDoClique.trim()) {
       toast.warning('Digite uma mensagem primeiro para reescrever com IA.');
       return;
     }
@@ -41,12 +48,18 @@ export function AIRewriteButton({ inputValue, onRewrite, contactName }: AIRewrit
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-enhance-message', {
-        body: { message: inputValue, tone, contactName },
+        body: { message: textoDoClique, tone, contactName },
       });
 
       if (error) throw error;
 
       if (data?.enhanced) {
+        // Resposta de uma versão antiga do rascunho: aplicar aqui apagaria a
+        // edição mais nova do mesmo rascunho, então o resultado é descartado.
+        if (rascunhoAtual.current !== textoDoClique) {
+          toast.warning('A mensagem mudou durante a reescrita. O resultado antigo foi descartado para preservar sua edição.');
+          return;
+        }
         onRewrite(data.enhanced);
         setIsOpen(false);
         toast.success('Mensagem reescrita com IA!');

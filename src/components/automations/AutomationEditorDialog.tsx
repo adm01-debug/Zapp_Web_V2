@@ -103,6 +103,10 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
         actions: actions as unknown as AutomationRow['actions'],
       });
       onOpenChange(false);
+    } catch {
+      // R2-MOD-003 (#386): a persistência falhou — o erro já é sinalizado pelo toast
+      // da mutation; aqui mantemos o diálogo aberto com os campos digitados e liberamos
+      // o botão no `finally` para o operador corrigir e reenviar.
     } finally { setIsSaving(false); }
   };
 

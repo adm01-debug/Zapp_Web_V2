@@ -73,8 +73,15 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     setSaving(true);
     try {
       const count = await countAudience(editingRules);
-      if (selected) await updateSegment.mutateAsync({ id: selected.id, name: editingName, description: editingDesc || null, rules: editingRules, estimated_count: count });
-      else await createSegment.mutateAsync({ name: editingName, description: editingDesc || null, rules: editingRules, estimated_count: count });
+      if (selected) {
+        // O rail de detalhe lê `selected`: guardar a linha devolvida pelo banco
+        // evita mostrar — e reabrir no construtor — a cópia que estava em tela
+        // antes de salvar.
+        const saved = await updateSegment.mutateAsync({ id: selected.id, name: editingName, description: editingDesc || null, rules: editingRules, estimated_count: count });
+        setSelected(saved);
+      } else {
+        await createSegment.mutateAsync({ name: editingName, description: editingDesc || null, rules: editingRules, estimated_count: count });
+      }
       setMode('list');
     } catch (e) {
       // Erro real do banco (RLS, rede) precisa chegar ao usuário.

@@ -94,6 +94,22 @@ function ImageGallery({
   const [idx, setIdx] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  /**
+   * R2-MOD-047 — o índice pertence ao produto/conjunto de imagens atual. Ao
+   * navegar ‹ › para um produto com menos imagens (ou quando o produto completo
+   * chega com menos fotos que a listagem), o `idx` herdado ficava fora do
+   * intervalo: contador "3 / 2", seta "Próxima" escondida mesmo havendo mais
+   * imagens e nenhuma miniatura ativa. Reinicia ao trocar de produto e limita
+   * ao conjunto atual quando ele encolhe — mesmo ajuste durante o render já
+   * usado no `focusToken`.
+   */
+  const [galleryId, setGalleryId] = useState(product.id);
+  if (galleryId !== product.id) {
+    setGalleryId(product.id);
+    setIdx(0);
+  } else if (images.length > 0 && idx > images.length - 1) {
+    setIdx(images.length - 1);
+  }
   const current = images[idx] ?? product.primary_image_url;
   const hasPrev = idx > 0;
   const hasNext = idx < images.length - 1;

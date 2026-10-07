@@ -449,11 +449,28 @@
 3. Registrar no apêndice B o custo real do primeiro mês.
 4. Fechar as pendências do plano que não forem feitas, com o motivo.
 
+**Evidência verificável (conferida item a item em 2026-10-06).** Cada linha diz o que foi conferido, onde (`arquivo:linha`, quando é arquivo vizinho) ou por qual âncora de seção, e o comando que reproduz. O que não tem prova neste repositório está declarado na seção seguinte — não fica dado como fechado.
+
+| Item do E50 | Evidência | Comando que reproduz |
+|---|---|---|
+| 1 · cascata de endpoints | `docs/mapa/ARQUITETURA_BUSCA.md:18` (`## Cascata de endpoints (por busca)`) | `grep -n '^## ' docs/mapa/ARQUITETURA_BUSCA.md` |
+| 1 · custo por sessão | `docs/mapa/ARQUITETURA_BUSCA.md:40` (`## Sessão (o que é cobrado)`) | idem |
+| 1 · flags — inclui a exclusão do ramo legado do picker | `docs/mapa/ARQUITETURA_BUSCA.md:85` (`## Feature flag (removida)`); o gate morto saiu pela migration `supabase/migrations/20260930210000_remove_orphan_searchbox_flag.sql` (`delete from public.feature_flags where key = 'mapa.searchbox-autocomplete'`) | `sed -n '85,90p' docs/mapa/ARQUITETURA_BUSCA.md` · `cat supabase/migrations/20260930210000_remove_orphan_searchbox_flag.sql` |
+| 1 · limites | `docs/mapa/ARQUITETURA_BUSCA.md:91` (`## Limites e custo`) | idem |
+| 3 · custo real do primeiro mês | neste arquivo, seção `## Apêndice B — fechamento do primeiro mês (E99, medido 2026-10-02)` | `grep -n 'Apêndice B' docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md` |
+| 4 · pendências explicadas | neste arquivo, seção "Pendências que ficam em aberto, com o motivo" (itens E48, E49 e as migrations duplicadas #862/#859) | `grep -n '^- \*\*E4[89]\*\*' docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md` |
+| (item 4b) exclusão do ramo legado do picker — o "ramo" que este fechamento tinha de comprovar | commit `3d2b7d572` — "chore(inbox): remove resíduos do ramo legado do picker (flag órfã, mock morto, doc) (#1294)", de 2026-09-30 12:54:56 -0300; a migration reserva a versão `20260930210000` no mesmo dia, às 12:42:11 -0300 (cabeçalho do próprio arquivo); o teste `src/components/inbox/__tests__/LocationPicker.test.tsx:452` ("a UI é ramo único — o ramo legado não voltou") impede o retorno do ramo | `git log -1 --format='%h %ad %s' --date=iso 3d2b7d572` · `head -3 supabase/migrations/20260930210000_remove_orphan_searchbox_flag.sql` · `grep -n 'ramo legado' src/components/inbox/__tests__/LocationPicker.test.tsx` |
+
+**O que NÃO tem prova verificável neste repositório (declarado aqui, não maquiado com afirmação genérica).**
+- **Item 2 — `areas/mapa-localizacao-whatsapp.md`**: é memória externa (vive no projeto, fora deste repositório). `find . -name mapa-localizacao-whatsapp.md` não devolve nada e nada neste repo confere o conteúdo dela. A auditoria de 2026-09-29 já registra o achado como **P6** (`docs/mapa/AUDITORIA_PLANO_50_ETAPAS_2026-09-29.md:83`). O item **sai de `[x]` e vira pendência aberta** (abaixo).
+- **"Exclusão imediata" do ramo**: o repositório prova **que** o ramo legado foi excluído e **quando o commit entrou** (`3d2b7d572`, 2026-09-30 12:54:56 -0300 — linha do item 4b acima). Não existe artefato, nas fontes deste repositório, que meça o intervalo entre a decisão de virar ramo único e a remoção (`git show --stat 3d2b7d572` traz só o doc, o teste e a migration — nenhum registro da decisão nem do intervalo), então este fechamento **não afirma "imediatamente"**: registra só os dois carimbos de tempo medidos (reserva da migration, 12:42:11, e o commit, 12:54:56, ambos de 2026-09-30) e nada além disso.
+
 Pendências que ficam em aberto, com o motivo:
+- **E50 item 2** (`areas/mapa-localizacao-whatsapp.md`, memória do projeto): rebaixado de `[x]` para `[ ]` em 2026-10-06. Motivo: o arquivo não existe neste repositório, então o fechamento não tinha como afirmar que ele foi atualizado; é o mesmo achado **P6** da auditoria de 2026-09-29 (`docs/mapa/AUDITORIA_PLANO_50_ETAPAS_2026-09-29.md:83`). Fecha quando o estado final estiver no arquivo do projeto e houver como conferir.
 - **E48** (48h de acompanhamento formal, teste de reversão): a flag foi ligada informalmente por outra sessão sem trilha de PR; não há 48h decorridas ainda no fechamento deste plano. Motivo de não fechar agora: forçar 48h de espera pararia o fechamento do plano por dois dias sem necessidade — os dados de uso até aqui (Apêndice B) já não mostram nenhum erro de Search Box.
 - **E49** (confirmação visual do envio no Inbox): automação de navegador disponível nesta sessão não completou o login em produção (ver detalhes na própria etapa). Coberto por evidência indireta forte (E47 + telemetria do balão), não pela confirmação visual pedida originalmente.
 - **Migrations duplicadas #862/#859** (E43): decisão de não consolidar, para não criar drift entre repo e produção — documentado, não é uma pendência de ação.
-**Checklist:** [x] arquitetura documentada (`docs/mapa/ARQUITETURA_BUSCA.md`) · [x] memória do projeto atualizada (`areas/mapa-localizacao-whatsapp.md`) · [x] custo real registrado (Apêndice B) · [x] pendências explicadas (acima)
+**Checklist:** [x] arquitetura documentada (`docs/mapa/ARQUITETURA_BUSCA.md:18,40,85,91`) · [ ] memória do projeto atualizada (`areas/mapa-localizacao-whatsapp.md`) — **não verificável neste repositório** (arquivo inexistente; achado P6 da auditoria): rebaixado a pendência em 2026-10-06 · [x] custo real registrado (seção `## Apêndice B — fechamento do primeiro mês`) · [x] pendências explicadas (lista acima + a do item 2) · [x] exclusão do ramo legado registrada com data medida (`3d2b7d572`) e sem afirmar "imediatamente"
 
 ---
 

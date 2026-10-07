@@ -47,6 +47,15 @@ export interface MultiplixListPayload<T> {
   total: number | null;
 }
 
+/** Lista de destinatarios entregue ao monitor, com a continuacao preservada. */
+export interface MultiplixRecipientList {
+  rows: MultiplixRecipientRow[];
+  /** Contagem exata no servidor (`meta.total`) ou `null` quando nao veio. */
+  total: number | null;
+  /** true quando o teto de paginas foi atingido e ainda havia mais linhas atras. */
+  truncated: boolean;
+}
+
 /**
  * Erro nomeado devolvido pela edge `multiplix-dispatch`.
  *
@@ -87,10 +96,10 @@ async function toMultiplixDispatchError(error: unknown): Promise<Error> {
  * `Authorization` e esta edge exige `requireAuth` (voltaria 401). Mesmo padrao
  * ja usado em `useMultiplixAudience` e `invokeMultiplixSend`.
  */
-export async function invokeMultiplixDispatch<T>(
+export async function invokeMultiplixDispatch(
   action: string,
   payload: Record<string, unknown> = {},
-): Promise<T> {
+): Promise<unknown> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Not authenticated');
   const response = await supabase.functions.invoke('multiplix-dispatch', {
@@ -98,19 +107,36 @@ export async function invokeMultiplixDispatch<T>(
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
   if (response.error) throw await toMultiplixDispatchError(response.error);
-  return (response.data as { data: T }).data;
+  // Devolve o corpo INTEIRO (`{ data, meta }`): o `meta.total` e a continuacao
+  // da lista — quem desembrulha e o `readMultiplixList`, que sabe ler o total
+  // do `data` ou do `meta`, em vez de jogar fora a contagem no caminho.
+  return response.data;
 }
 
 /**
  * Normaliza o `data` das acoes de lista. A edge devolve as linhas dentro de
- * `data` — como lista direta (`{ data: [...] }`) ou num envelope com a
- * contagem exata (`{ data: { rows|items|recipients|dispatches: [...], total } }`).
+ * `data` — como lista direta (`{ data: [...] }`), num envelope com a contagem
+ * exata (`{ data: { rows|items|recipients|dispatches: [...], total } }`) ou no
+ * envelope de transporte `{ data: rows, meta: { limit, offset, total } }`.
  * Nao inventamos campo: so lemos `total` quando ele e de fato um numero.
  */
 export function readMultiplixList<T>(data: unknown): MultiplixListPayload<T> {
   if (Array.isArray(data)) return { rows: data as T[], total: null };
   if (data && typeof data === 'object') {
     const obj = data as Record<string, unknown>;
+    // Envelope da edge: `{ data: rows|envelope, meta: { ..., total } }`. O total
+    // do `data` tem prioridade; o `meta.total` cobre a resposta real do
+    // `recipients.list`/`dispatch.list` (count exato via PostgREST).
+    if ('data' in obj) {
+      const inner = readMultiplixList<T>(obj.data);
+      if (inner.total !== null) return inner;
+      const meta = obj.meta;
+      const metaTotal = meta && typeof meta === 'object'
+        && typeof (meta as Record<string, unknown>).total === 'number'
+        ? (meta as Record<string, unknown>).total as number
+        : null;
+      return { rows: inner.rows, total: metaTotal };
+    }
     const key = (['rows', 'items', 'recipients', 'dispatches'] as const)
       .find((k) => Array.isArray(obj[k]));
     if (key) {
@@ -130,6 +156,13 @@ const DISPATCH_LIST_LIMIT = 50;
 const RECIPIENT_LIST_LIMIT = 500;
 /** Teto de linhas do fallback da contagem exata de `skipped`. */
 const RECIPIENT_COUNT_PAGE_LIMIT = 1000;
+/**
+ * Teto de paginas do monitor: 20 x 500 = 10 000 destinatarios por consulta.
+ * Sem teto, um servidor que ignore o `offset` e nao devolva `total` deixaria o
+ * laco eterno; ao atingir o teto a lista e marcada como amostra (nunca truncada
+ * em silencio).
+ */
+const RECIPIENT_MAX_PAGES = 20;
 
 export function useMultiplixDispatchesList() {
   return useQuery({
@@ -169,18 +202,44 @@ export function useMultiplixDispatch(dispatchId: string | null) {
   });
 }
 
+/**
+ * Destinatarios de um disparo, paginando PELO TOTAL do servidor.
+ *
+ * R2-MOD-022: pedir so `limit=500/offset=0` e devolver unicamente as linhas
+ * descartava a continuacao — um disparo com 501+ destinatarios nunca mostrava
+ * do 501 em diante, e o operador nao tinha como saber que havia mais. Aqui a
+ * pagina 1 sai (offset 0) e, enquanto ela vier CHEIA e o total conhecido nao
+ * tiver sido alcancado, a pagina seguinte e pedida; o teto de `RECIPIENT_MAX_PAGES`
+ * corta um servidor desobediente e marca `truncated` (a tela rotula a amostra).
+ */
 export function useMultiplixRecipients(dispatchId: string | null, statusFilter = 'all') {
   return useQuery({
     queryKey: ['multiplix-recipients', dispatchId, statusFilter],
-    queryFn: async () => {
-      const payload: Record<string, unknown> = {
-        dispatch_id: dispatchId,
-        limit: RECIPIENT_LIST_LIMIT,
-        offset: 0,
-      };
-      if (statusFilter !== 'all') payload.status = statusFilter;
-      const data = await invokeMultiplixDispatch('recipients.list', payload);
-      return readMultiplixList<MultiplixRecipientRow>(data).rows;
+    queryFn: async (): Promise<MultiplixRecipientList> => {
+      const rows: MultiplixRecipientRow[] = [];
+      let total: number | null = null;
+      let truncated = false;
+      for (let page = 0; ; page++) {
+        const payload: Record<string, unknown> = {
+          dispatch_id: dispatchId,
+          limit: RECIPIENT_LIST_LIMIT,
+          offset: page * RECIPIENT_LIST_LIMIT,
+        };
+        if (statusFilter !== 'all') payload.status = statusFilter;
+        const data = await invokeMultiplixDispatch('recipients.list', payload);
+        const parsed = readMultiplixList<MultiplixRecipientRow>(data);
+        if (parsed.total !== null) total = parsed.total;
+        rows.push(...parsed.rows);
+        // Ultima pagina (incompleta) ou total do servidor ja alcancado: para.
+        if (parsed.rows.length < RECIPIENT_LIST_LIMIT) break;
+        if (total !== null && rows.length >= total) break;
+        // Sem total e pagina sempre cheia: so o teto segura o laco.
+        if (page + 1 >= RECIPIENT_MAX_PAGES) {
+          truncated = true;
+          break;
+        }
+      }
+      return { rows, total, truncated };
     },
     enabled: !!dispatchId,
     refetchInterval: 5_000,

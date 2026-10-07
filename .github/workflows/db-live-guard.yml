@@ -198,6 +198,7 @@ jobs:
       # NAO e um .test.sh de proposito: esse caminho nao existe neste workflow, e teste
       # que ninguem executa da sensacao de cobertura sem cobrir nada.
       - name: Fixtures de E2E em producao (E85)
+        id: e2e-fixtures
         continue-on-error: true
         run: |
           set -o pipefail
@@ -313,128 +314,25 @@ jobs:
           set -o pipefail
           node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json 2>&1 | tee /tmp/step-runtime-config.log
 
-      # Une os 10 vereditos individuais (continue-on-error acima) num unico
+      # Une os 11 vereditos individuais (continue-on-error acima) num unico
       # resultado: falha o job se qualquer um falhou/foi pulado, escreve a
       # tabela no Job Summary (E59) e calcula uma assinatura estavel da causa
       # para o dedupe do alerta abaixo (E05/E06/E43/E44).
+      # R2-INF-021 (item 368 do BACKLOG_VERIFICADO): a lista de passos
+      # consolidados saiu do YAML para scripts/db-audit/consolidar-veredito.mjs,
+      # provado em consolidar-veredito.test.mjs. Escrita a mao aqui, ela ficou
+      # sem o check de fixtures de E2E (E85): o passo rodava com
+      # continue-on-error e SEM `id`, entao a falha dele nao entrava na tabela,
+      # na causa, no alerta nem na evidencia publicada. O contexto `steps`
+      # inteiro vai como STEPS_JSON e o script falha FECHADO quando um passo
+      # registrado nao aparece no job (sem `id:` ou sem executar).
       - name: Consolidar veredito do contrato vivo
         id: veredito
         if: always() && steps.credencial.outcome == 'success'
         env:
-          O_MIGRATIONS: ${{ steps.migrations.outcome }}
-          O_ACL_MCP_EXEC: ${{ steps.acl-mcp-exec.outcome }}
-          O_ACL_WEBHOOK: ${{ steps.acl-webhook.outcome }}
-          O_ACL_TALKX_METRICS: ${{ steps.acl-talkx-metrics.outcome }}
-          O_CONTRACT_TALKX_TRANSITION: ${{ steps.contract-talkx-transition.outcome }}
-          O_CATALOG: ${{ steps.catalog.outcome }}
-          O_MANIFEST: ${{ steps.manifest.outcome }}
-          O_TYPES: ${{ steps.types.outcome }}
-          O_TRIPLE_PARITY: ${{ steps.triple-parity.outcome }}
-          O_RUNTIME_CONFIG: ${{ steps.runtime-config.outcome }}
+          STEPS_JSON: ${{ toJSON(steps) }}
         run: |
-          set -uo pipefail
-          declare -A OUTCOMES=(
-            ["Comparar migrations com schema_migrations"]="$O_MIGRATIONS"
-            ["Verificar ACL e contrato de mcp_exec"]="$O_ACL_MCP_EXEC"
-            ["Verificar ACL da dead-letter queue de webhooks"]="$O_ACL_WEBHOOK"
-            ["Verificar security_invoker da view de metricas Talk X"]="$O_ACL_TALKX_METRICS"
-            ["Verificar contrato de transicao de campanha do Talk X"]="$O_CONTRACT_TALKX_TRANSITION"
-            ["Regenerar catalogo e comparar com o commitado"]="$O_CATALOG"
-            ["Regenerar manifesto e comparar com o commitado"]="$O_MANIFEST"
-            ["Verificar frescor do types.ts"]="$O_TYPES"
-            ["Paridade tripla (migrations, edges, grants)"]="$O_TRIPLE_PARITY"
-            ["Auditar configuracao runtime sem dados de clientes"]="$O_RUNTIME_CONFIG"
-          )
-          FALHAS=()
-          {
-            echo "## Contrato DB vivo — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo
-            echo "| Passo | Resultado |"
-            echo "|---|---|"
-          } >> "$GITHUB_STEP_SUMMARY"
-          for nome in "${!OUTCOMES[@]}"; do
-            resultado="${OUTCOMES[$nome]}"
-            if [ "$resultado" = "success" ]; then
-              echo "| $nome | ✅ |" >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "| $nome | ❌ ($resultado) |" >> "$GITHUB_STEP_SUMMARY"
-              FALHAS+=("$nome")
-            fi
-          done
-          if [ "${#FALHAS[@]}" -gt 0 ]; then
-            # E43: Anexar ao Job Summary as primeiras 20 linhas de cada passo que falhou.
-            declare -A STEP_LOGS=(
-              ["Comparar migrations com schema_migrations"]="/tmp/step-migrations.log"
-              ["Verificar ACL e contrato de mcp_exec"]="/tmp/step-acl-mcp-exec.log"
-              ["Verificar ACL da dead-letter queue de webhooks"]="/tmp/step-acl-webhook.log"
-              ["Verificar security_invoker da view de metricas Talk X"]="/tmp/step-acl-talkx-metrics.log"
-              ["Verificar contrato de transicao de campanha do Talk X"]="/tmp/step-contract-talkx-transition.log"
-              ["Regenerar catalogo e comparar com o commitado"]="/tmp/step-catalog.log"
-              ["Regenerar manifesto e comparar com o commitado"]="/tmp/step-manifest.log"
-              ["Verificar frescor do types.ts"]="/tmp/step-types.log"
-              ["Paridade tripla (migrations, edges, grants)"]="/tmp/step-triple-parity.log"
-              ["Auditar configuracao runtime sem dados de clientes"]="/tmp/step-runtime-config.log"
-            )
-            {
-              echo ""
-              echo "### Saída (primeiras 20 linhas por passo)"
-            } >> "$GITHUB_STEP_SUMMARY"
-            for falha in "${FALHAS[@]}"; do
-              log_file="${STEP_LOGS[$falha]:-}"
-              if [ -n "$log_file" ] && [ -f "$log_file" ]; then
-                {
-                  echo ""
-                  echo "#### \`$falha\`"
-                  echo '```'
-                  head -20 "$log_file" | sed -E \
-                    -e 's|postgres(ql)?://[^@[:space:]]+@[^[:space:]]+|postgres://***@***|g' \
-                    -e 's|password=[^[:space:]&]+|password=***|g'
-                  echo '```'
-                } >> "$GITHUB_STEP_SUMMARY"
-              fi
-            done
-            # E44: CAUSA = sha256 do passo mais à esquerda na ordem canônica
-            # migrations > catálogo > manifesto > types > grants > paridade.
-            # Hash estável do passo raiz, não do conjunto inteiro — falhas
-            # repetidas do mesmo passo raiz são suprimidas pelo dedupe.
-            declare -a CANONICAL_ROOT=(
-              "Comparar migrations com schema_migrations"
-              "Regenerar catalogo e comparar com o commitado"
-              "Regenerar manifesto e comparar com o commitado"
-              "Verificar frescor do types.ts"
-              "Verificar ACL e contrato de mcp_exec"
-              "Verificar ACL da dead-letter queue de webhooks"
-              "Verificar security_invoker da view de metricas Talk X"
-              "Verificar contrato de transicao de campanha do Talk X"
-              "Auditar configuracao runtime sem dados de clientes"
-              "Paridade tripla (migrations, edges, grants)"
-            )
-            ROOT_PASSO=""
-            for canonical_step in "${CANONICAL_ROOT[@]}"; do
-              for falha in "${FALHAS[@]}"; do
-                if [ "$canonical_step" = "$falha" ]; then
-                  ROOT_PASSO="$canonical_step"
-                  break 2
-                fi
-              done
-            done
-            [ -z "$ROOT_PASSO" ] && ROOT_PASSO="${FALHAS[0]}"
-            CAUSA=$(printf '%s' "$ROOT_PASSO" | sha256sum | cut -d' ' -f1)
-            # Conjunto completo (para deteccao de crescimento no dedupe — E44).
-            FALHAS_LISTA=$(printf '%s\n' "${FALHAS[@]}" | sort | tr '\n' ',' | sed 's/,$//')
-            echo "causa=$CAUSA" >> "$GITHUB_OUTPUT"
-            echo "falhas_lista=$FALHAS_LISTA" >> "$GITHUB_OUTPUT"
-            {
-              echo "passos<<EOF_PASSOS_DB_LIVE_GUARD"
-              printf -- '- %s\n' "${FALHAS[@]}"
-              echo "EOF_PASSOS_DB_LIVE_GUARD"
-            } >> "$GITHUB_OUTPUT"
-            echo "::error::Contrato vivo quebrado em: ${FALHAS[*]}"
-            exit 1
-          fi
-          echo "causa=" >> "$GITHUB_OUTPUT"
-          echo "falhas_lista=" >> "$GITHUB_OUTPUT"
-          echo "OK: todos os passos do contrato vivo passaram."
+          node scripts/db-audit/consolidar-veredito.mjs
 
       # Sem isto a quebra do contrato vivo e silenciosa: o workflow nao roda em
       # PR (por design), logo ninguem ve o vermelho a nao ser abrindo Actions.
@@ -449,6 +347,7 @@ jobs:
           CAUSA: ${{ steps.veredito.outputs.causa }}
           PASSOS: ${{ steps.veredito.outputs.passos }}
           FALHAS_LISTA: ${{ steps.veredito.outputs.falhas_lista }}
+          LOGS_FALHAS: ${{ steps.veredito.outputs.logs_falhas }}
         with:
           script: |  # NOSONAR(S2068): falso positivo — o único `password=` deste bloco é o PADRÃO DE REDAÇÃO de logs (linha 453: `.replace(/password=[^\s&"']+/gi, 'password=***')`), que existe justamente para APAGAR credencial dos snippets. Não há senha nem credencial hardcoded neste script.
             const fs = require('fs');
@@ -458,33 +357,22 @@ jobs:
             const falhasLista = process.env.FALHAS_LISTA || '';
             const currentFalhas = new Set(falhasLista.split(',').filter(Boolean));
             const marker = `<!-- causa:${causa} -->`;
-            // E43: incluir primeiras 20 linhas de cada passo que falhou.
-            const STEP_LOG_MAP = {
-              'Comparar migrations com schema_migrations': '/tmp/step-migrations.log',
-              'Verificar ACL e contrato de mcp_exec': '/tmp/step-acl-mcp-exec.log',
-              'Verificar ACL da dead-letter queue de webhooks': '/tmp/step-acl-webhook.log',
-              'Verificar security_invoker da view de metricas Talk X': '/tmp/step-acl-talkx-metrics.log',
-              'Verificar contrato de transicao de campanha do Talk X': '/tmp/step-contract-talkx-transition.log',
-              'Regenerar catalogo e comparar com o commitado': '/tmp/step-catalog.log',
-              'Regenerar manifesto e comparar com o commitado': '/tmp/step-manifest.log',
-              'Verificar frescor do types.ts': '/tmp/step-types.log',
-              'Paridade tripla (migrations, edges, grants)': '/tmp/step-triple-parity.log',
-              'Auditar configuracao runtime sem dados de clientes': '/tmp/step-runtime-config.log',
-            };
-            const failedSteps = passos.split('\n').filter(s => s.startsWith('- ')).map(s => s.slice(2));
+            // E43: incluir primeiras 20 linhas de cada passo que falhou. A lista
+            // passo->log vem do proprio veredito (LOGS_FALHAS). Manter aqui uma
+            // copia da lista foi o que deixou o check de fixtures de E2E (E85)
+            // fora da tabela e deste alerta (R2-INF-021).
+            let fichas = [];
+            try { fichas = JSON.parse(process.env.LOGS_FALHAS || '[]'); } catch {}
             const redact = t => t
               .replace(/postgres(?:ql)?:\/\/[^@\s]+@\S+/gi, 'postgres://***@***')
               .replace(/password=[^\s&"']+/gi, 'password=***');
             let logSection = '';
-            for (const step of failedSteps) {
-              const logFile = STEP_LOG_MAP[step];
-              if (logFile) {
-                try {
-                  const content = fs.readFileSync(logFile, 'utf8');
-                  const snippet = redact(content.split('\n').slice(0, 20).join('\n'));
-                  logSection += `\n**${step}:**\n\`\`\`\n${snippet}\n\`\`\`\n`;
-                } catch {}
-              }
+            for (const ficha of fichas) {
+              try {
+                const content = fs.readFileSync(ficha.log, 'utf8');
+                const snippet = redact(content.split('\n').slice(0, 20).join('\n'));
+                logSection += `\n**${ficha.nome}:**\n\`\`\`\n${snippet}\n\`\`\`\n`;
+              } catch {}
             }
             const body = [
               marker,
@@ -620,6 +508,7 @@ jobs:
             /tmp/step-acl-mcp-exec.log
             /tmp/step-acl-webhook.log
             /tmp/step-acl-talkx-metrics.log
+            /tmp/step-e2e-fixtures.log
             /tmp/step-contract-talkx-transition.log
             /tmp/step-catalog.log
             /tmp/step-manifest.log

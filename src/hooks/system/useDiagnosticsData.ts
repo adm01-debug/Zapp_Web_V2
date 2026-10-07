@@ -29,16 +29,89 @@ export interface MessageDiagnostic {
   }>;
 }
 
+export type HealthStatus = 'healthy' | 'degraded' | 'down' | 'unauthorized' | 'unknown';
+
 export interface SystemHealth {
-  database: 'healthy' | 'degraded' | 'down';
-  storage: 'healthy' | 'degraded' | 'down';
-  realtime: 'healthy' | 'degraded' | 'down';
-  edgeFunctions: 'healthy' | 'degraded' | 'down';
-  dbLatency: number;
-  storageLatency: number;
+  database: HealthStatus;
+  storage: HealthStatus;
+  realtime: HealthStatus;
+  edgeFunctions: HealthStatus;
+  dbLatency: number | null;
+  storageLatency: number | null;
+  realtimeCheckedAt: string | null;
   contactsCount: number;
   messagesCount: number;
   connectionsCount: number;
+}
+
+/** Sem ack do canal dentro desta janela, o Realtime fica "não medido" (nunca "saudável"). */
+const REALTIME_PROBE_TIMEOUT_MS = 5000;
+
+interface ProbeError {
+  code?: unknown;
+  statusCode?: unknown;
+  status?: unknown;
+  message?: unknown;
+}
+
+/** Falha de AUTORIZAÇÃO (JWT/RLS/permissão) não é a mesma coisa que serviço fora do ar:
+ * o operador precisa saber se a coleta foi barrada ou se o serviço não respondeu. */
+function isAuthorizationError(error: ProbeError | null): boolean {
+  if (!error) return false;
+  const code = String(error.code ?? error.statusCode ?? error.status ?? '');
+  if (code === '401' || code === '403' || code === '42501' || code === 'PGRST301') return true;
+  return /permission denied|unauthorized|not authorized|invalid jwt|insufficient privilege/i.test(String(error.message ?? ''));
+}
+
+/** Só a latência de uma coleta BEM-SUCEDIDA vira status: erro que volta rápido não é
+ * "saudável" — ele vira falha de coleta (down) ou falta de permissão (unauthorized). */
+function classifyHealth(
+  error: ProbeError | null,
+  latency: number | null,
+  healthyBelowMs: number,
+  degradedBelowMs: number,
+): HealthStatus {
+  if (error) return isAuthorizationError(error) ? 'unauthorized' : 'down';
+  if (latency === null) return 'unknown';
+  if (latency < healthyBelowMs) return 'healthy';
+  if (latency < degradedBelowMs) return 'degraded';
+  return 'down';
+}
+
+/** Realtime não se mede por latência de leitura: assina um canal e espera o ack do servidor.
+ * Sem ack no prazo, devolve "unknown" (não medido) em vez de "saudável". */
+async function probeRealtime(): Promise<{ status: HealthStatus; checkedAt: string | null }> {
+  let channel: ReturnType<typeof supabase.channel> | null = null;
+  try {
+    const opened = supabase.channel('diagnostics-realtime-probe');
+    channel = opened;
+    const status = await new Promise<HealthStatus>((resolve) => {
+      const timer = setTimeout(() => resolve('unknown'), REALTIME_PROBE_TIMEOUT_MS);
+      opened.subscribe((state) => {
+        if (state === 'SUBSCRIBED') {
+          clearTimeout(timer);
+          resolve('healthy');
+        } else if (state === 'CHANNEL_ERROR' || state === 'TIMED_OUT') {
+          clearTimeout(timer);
+          resolve('down');
+        } else if (state === 'CLOSED') {
+          clearTimeout(timer);
+          resolve('unknown');
+        }
+      }, REALTIME_PROBE_TIMEOUT_MS);
+    });
+    return { status, checkedAt: status === 'healthy' ? new Date().toISOString() : null };
+  } catch {
+    return { status: 'unknown', checkedAt: null };
+  } finally {
+    if (channel) {
+      try {
+        await supabase.removeChannel(channel);
+      } catch {
+        // canal já encerrado — nada a limpar
+      }
+    }
+  }
 }
 
 export interface ErrorLog {
@@ -136,17 +209,34 @@ export function useDiagnosticsData() {
 
   const fetchSystemHealth = async () => {
     const dbStart = performance.now();
-    const { count: contactsCount } = await supabase.from('contacts').select('*', { count: 'exact', head: true });
-    const dbLatency = Math.round(performance.now() - dbStart);
+    let contactsCount: number | null = null;
+    let dbError: ProbeError | null = null;
+    try {
+      const { count, error } = await supabase.from('contacts').select('*', { count: 'exact', head: true });
+      contactsCount = count ?? null;
+      dbError = error ?? null;
+    } catch (err) {
+      dbError = err as ProbeError;
+    }
+    // Latência só vale para coleta bem-sucedida; erro rápido não pode virar "healthy".
+    const dbLatency = dbError ? null : Math.round(performance.now() - dbStart);
 
     const storageStart = performance.now();
-    await supabase.storage.from('whatsapp-media').list('', { limit: 1 });
-    const storageLatency = Math.round(performance.now() - storageStart);
+    let storageError: ProbeError | null = null;
+    try {
+      const { error } = await supabase.storage.from('whatsapp-media').list('', { limit: 1 });
+      storageError = error ?? null;
+    } catch (err) {
+      storageError = err as ProbeError;
+    }
+    const storageLatency = storageError ? null : Math.round(performance.now() - storageStart);
 
     const { count: messagesCount } = await supabase.from('messages').select('*', { count: 'exact', head: true });
     const { count: connectionsCount } = await supabase.from('whatsapp_connections').select('*', { count: 'exact', head: true });
 
-    let edgeFunctionsStatus: 'healthy' | 'degraded' | 'down' = 'healthy';
+    const realtime = await probeRealtime();
+
+    let edgeFunctionsStatus: HealthStatus = 'healthy';
     try {
       const { error } = await supabase.functions.invoke('connection-health-check');
       if (error) edgeFunctionsStatus = 'degraded';
@@ -155,12 +245,13 @@ export function useDiagnosticsData() {
     }
 
     setHealth({
-      database: dbLatency < 500 ? 'healthy' : dbLatency < 2000 ? 'degraded' : 'down',
-      storage: storageLatency < 1000 ? 'healthy' : storageLatency < 3000 ? 'degraded' : 'down',
-      realtime: 'healthy',
+      database: classifyHealth(dbError, dbLatency, 500, 2000),
+      storage: classifyHealth(storageError, storageLatency, 1000, 3000),
+      realtime: realtime.status,
       edgeFunctions: edgeFunctionsStatus,
       dbLatency,
       storageLatency,
+      realtimeCheckedAt: realtime.checkedAt,
       contactsCount: contactsCount || 0,
       messagesCount: messagesCount || 0,
       connectionsCount: connectionsCount || 0,

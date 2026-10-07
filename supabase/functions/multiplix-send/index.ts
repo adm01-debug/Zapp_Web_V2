@@ -645,20 +645,45 @@ export async function handleMultiplixSend(
         // grande e PTT podem passar disso — e item com lease vencido volta para a fila (outro
         // worker pega) ou o sweeper fecha como outcome_unknown. A RPC so renova para o dono
         // vivo, entao o timer nao atrapalha quem legitimamente retomou o item.
+        // R2-API-013: o builder do supabase-js e THENABLE LAZY -- a requisicao so sai quando
+        // alguem consome a promessa. `void supabase.rpc(...)` criava o builder e NAO despachava
+        // nada, entao a renovacao prometida pelo comentario acima nunca acontecia e o lease de
+        // 90 s vencia calado. Agora cada tick CONSOME a renovacao, confere error/resultado e nao
+        // empilha heartbeats: um tick que chega com o anterior em voo e ignorado.
         let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+        let heartbeatInFlight = false;
         const stopHeartbeat = () => {
           if (heartbeatTimer !== undefined) {
             clearInterval(heartbeatTimer);
             heartbeatTimer = undefined;
           }
         };
-        heartbeatTimer = setInterval(() => {
-          void supabase.rpc("heartbeat_multiplix_item", {
-            p_item_id: item.item_id,
-            p_claim_token: claim.claim_token,
-            p_lease_seconds: 90,
-          });
-        }, 30_000);
+        const heartbeatOnce = async () => {
+          if (heartbeatInFlight) return;
+          heartbeatInFlight = true;
+          try {
+            const { data, error } = await supabase.rpc("heartbeat_multiplix_item", {
+              p_item_id: item.item_id,
+              p_claim_token: claim.claim_token,
+              p_lease_seconds: 90,
+            });
+            if (error) {
+              log.warn("multiplix_heartbeat_failed", { correlationId, itemId: item.item_id, error: error.message ?? String(error) });
+            } else if (data !== true) {
+              // false = a RPC NAO renovou (token/lease perdido: outro worker pode ter retomado o
+              // item pelo SKIP LOCKED). Nao derruba o envio em curso -- quem decide o destino do
+              // item continua sendo a RPC de conclusao --, mas o operador precisa enxergar que
+              // este item ficou sem lease proprio.
+              log.warn("multiplix_heartbeat_not_renewed", { correlationId, itemId: item.item_id });
+            }
+          } catch (e) {
+            // Renovacao e best-effort: rede caindo aqui nao pode derrubar o envio em curso.
+            log.warn("multiplix_heartbeat_failed", { correlationId, itemId: item.item_id, error: e instanceof Error ? e.message : String(e) });
+          } finally {
+            heartbeatInFlight = false;
+          }
+        };
+        heartbeatTimer = setInterval(() => { void heartbeatOnce(); }, 30_000);
         try {
           // t_4fe1 (F64/F65): bloco de voz com ativo JA renderizado nao e
           // pendencia — o arquivo mora em `multiplix_voice_assets.caminho`
@@ -757,7 +782,7 @@ export async function handleMultiplixSend(
             }
             // F55: esta saida devolve o item a fila (release), entao o timer perde a razao de
             // existir agora — a RPC ja recusaria o token a partir daqui de qualquer forma.
-            stopHeartbeat();
+            // O encerramento do timer acontece no finally deste bloco (R2-API-013).
             break passLoop;
           }
 
@@ -954,10 +979,16 @@ export async function handleMultiplixSend(
               }
             }
           }
-          stopHeartbeat();
         } catch (err) {
-          clearTimeout(sendTimeout);
+          // R2-API-013: o timer morre na ENTRADA do catch, junto do timeout do
+          // POST — antes do reagendamento/conclusao e do `await sleep(interval)`
+          // que precede o continue. O finally segue como rede de seguranca (a
+          // funcao e idempotente), mas so ele nao basta: ele roda DEPOIS do
+          // sleep, e um tick nessa janela renovava um item ja reagendado ou
+          // concluido, gerando RPC inutil e 'multiplix_heartbeat_not_renewed'
+          // falso.
           stopHeartbeat();
+          clearTimeout(sendTimeout);
           if (!providerPostAttempted) {
             const attemptSoFar = typeof item.attempt_count === "number" ? item.attempt_count : 0;
             const delayMs = RETRY_BACKOFF_MS[Math.min(attemptSoFar, RETRY_BACKOFF_MS.length - 1)];
@@ -990,6 +1021,11 @@ export async function handleMultiplixSend(
           const interval = randomBetween(dispatch.send_interval_min, dispatch.send_interval_max);
           await sleep(interval);
           continue;
+        } finally {
+          // R2-API-013: TODA saida do item passa por aqui -- sucesso, erro tratado, release com
+          // break e o opt-out tardio com continue (que antes pulava o stopHeartbeat e deixava o
+          // timer renovando um item ja concluido).
+          stopHeartbeat();
         }
 
         processedCount++;

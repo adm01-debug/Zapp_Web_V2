@@ -13,6 +13,8 @@ import {
   fetchInsightData,
   CLICK_SAMPLE_LIMIT,
   HOUR_MIN_SAMPLE,
+  METRIC_MIN_SENT,
+  TALKX_COMPLETED_STATUS,
   type InsightRaw,
 } from '@/hooks/integrations/useTalkXInsights';
 
@@ -224,5 +226,92 @@ describe('fetchInsightData — robustez das consultas (recusa #135)', () => {
     expect(raw.finishedCampaigns).toBe(500);
     expect(raw.lowClickCampaigns).toBe(500);
     expect(buildInsights(raw).find((i) => i.id === 'low-clicks')).toBeUndefined();
+  });
+});
+
+// ─── Cartão #223 (R2-API-049): métrica de engajamento, status vigente e erro ──
+// A prova comportamental (pelo hook público, com o MESMO teste vermelho no código
+// antigo) está em useTalkXInsights.engajamento.test.tsx. Aqui ficam as provas de
+// unidade que vieram do trabalho anterior, reconciliadas com a implementação
+// vigente do dia (denominador mínimo, desempate explícito, status 'completed',
+// erro de leitura que sobe em vez de virar "sem dado").
+describe('pickBestTemplate — métrica de engajamento e desempate (cartão #223)', () => {
+  it('4/10 (40%) vence 5/100 (5%) mesmo com menos respostas', () => {
+    expect(
+      pickBestTemplate([
+        { id: 'volume', campaign_name: 'Volume', replied_count: 5, sent_count: 100 },
+        { id: 'taxa', campaign_name: 'Taxa', replied_count: 4, sent_count: 10 },
+      ]),
+    ).toEqual({ name: 'Taxa', replyRate: 0.4, campaignId: 'taxa', sent: 10, replied: 4 });
+  });
+
+  it('respeita a amostra mínima de envios', () => {
+    expect(METRIC_MIN_SENT).toBe(10);
+    expect(
+      pickBestTemplate([{ id: 'a', campaign_name: 'A', replied_count: 9, sent_count: 9 }]),
+    ).toBeNull();
+    expect(
+      pickBestTemplate([{ id: 'a', campaign_name: 'A', replied_count: 1, sent_count: 10 }]),
+    ).toEqual({ name: 'A', replyRate: 0.1, campaignId: 'a', sent: 10, replied: 1 });
+  });
+
+  it('desempata por nº de respostas e depois por nº de envios (determinístico)', () => {
+    expect(
+      pickBestTemplate([
+        { id: 'poucos', campaign_name: 'Poucos', replied_count: 5, sent_count: 10 },
+        { id: 'muitos', campaign_name: 'Muitos', replied_count: 10, sent_count: 20 },
+      ]),
+    ).toEqual({ name: 'Muitos', replyRate: 0.5, campaignId: 'muitos', sent: 20, replied: 10 });
+  });
+
+  it('é determinístico para taxas iguais e mesmo tamanho (nome/id)', () => {
+    const rows = [
+      { id: 'z', campaign_name: 'Zeta', replied_count: 5, sent_count: 10 },
+      { id: 'a', campaign_name: 'Alfa', replied_count: 5, sent_count: 10 },
+    ];
+    expect(pickBestTemplate(rows)?.campaignId).toBe('a');
+    expect(pickBestTemplate([...rows].reverse())?.campaignId).toBe('a');
+  });
+
+  it('sem candidatos elegíveis devolve null (ausência real de dado)', () => {
+    expect(pickBestTemplate([])).toBeNull();
+    expect(
+      pickBestTemplate([{ id: 'a', campaign_name: 'A', replied_count: 0, sent_count: 50 }]),
+    ).toBeNull();
+  });
+});
+
+describe('fetchInsightData — conjunto coerente (cartão #223)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('cliques e enviados falam do mesmo conjunto: concluídas da janela, com amostra', async () => {
+    mockQueries({
+      talkx_recipients: [{ data: [], error: null }, { count: 40, error: null }],
+      talkx_campaign_metrics: [{ data: [], error: null }],
+      contacts: [{ count: 100, error: null }, { count: 10, error: null }],
+      talkx_link_clicks: [{ count: 1, error: null }],
+      talkx_link_clicks_join: [{ data: [], error: null }],
+      talkx_campaigns: [{ data: CONCLUIDAS, error: null }],
+    });
+
+    const raw = await fetchInsightData();
+
+    expect(TALKX_COMPLETED_STATUS).toBe('completed');
+    expect(raw.finishedCampaigns).toBe(3);
+    expect(raw.lowClickCampaigns).toBe(3);
+    expect(raw.avgClickRate).toBeCloseTo(1 / 40, 10);
+    expect(buildInsights(raw).find((i) => i.id === 'low-clicks')).toBeDefined();
+  });
+
+  it('propaga o erro em vez de devolver "sem dado"', async () => {
+    mockQueries({ talkx_campaign_metrics: [{ data: null, error: { message: 'relation does not exist' } }] });
+
+    await expect(fetchInsightData()).rejects.toThrow(/métricas de campanha/);
+  });
+
+  it('propaga erro também na leitura das campanhas concluídas', async () => {
+    mockQueries({ talkx_campaigns: [{ data: null, error: { message: 'permission denied' } }] });
+
+    await expect(fetchInsightData()).rejects.toThrow(/concluídas/);
   });
 });

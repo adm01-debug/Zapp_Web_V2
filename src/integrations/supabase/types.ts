@@ -9355,6 +9355,7 @@ export type Database = {
         Row: {
           alert_type: string
           created_at: string | null
+          dedupe_key: string | null
           dismissed_by: string | null
           id: string
           is_read: boolean | null
@@ -9365,6 +9366,7 @@ export type Database = {
         Insert: {
           alert_type?: string
           created_at?: string | null
+          dedupe_key?: string | null
           dismissed_by?: string | null
           id?: string
           is_read?: boolean | null
@@ -9375,6 +9377,7 @@ export type Database = {
         Update: {
           alert_type?: string
           created_at?: string | null
+          dedupe_key?: string | null
           dismissed_by?: string | null
           id?: string
           is_read?: boolean | null
@@ -11325,6 +11328,22 @@ export type Database = {
           profile_id: string
           profile_role_cached: string
           user_roles_list: string
+        }[]
+      }
+      get_inbox_contact_summaries: {
+        Args: { p_contact_ids: string[] }
+        Returns: {
+          contact_id: string
+          last_message_content: string
+          last_message_created_at: string
+          last_message_external_id: string
+          last_message_id: string
+          last_message_is_read: boolean
+          last_message_media_url: string
+          last_message_sender: string
+          last_message_status: string
+          last_message_type: string
+          unread_count: number
         }[]
       }
       get_instance_token: { Args: { p_instance_id: string }; Returns: string }

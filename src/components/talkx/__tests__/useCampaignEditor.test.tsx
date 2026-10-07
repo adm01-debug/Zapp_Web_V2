@@ -1,4 +1,5 @@
 import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /** Consulta registrada pelo mock de `useQuery` (o teste invoca o `queryFn`). */
@@ -940,5 +941,113 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     expect(confirmSpy).toHaveBeenCalledWith('Descartar alterações?');
     expect(onClose).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* E73 / R2-MOD-027 — sair do wizard antes do autosave não perde nada  */
+/* ------------------------------------------------------------------ */
+
+describe('useCampaignEditor — E73 (saída do wizard antes do autosave)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    f.create.mockResolvedValue({ id: 'draft-1' });
+    f.update.mockResolvedValue({});
+    f.saveDraft.mockClear();
+    f.replace.mockResolvedValue(1);
+    f.snapshot.mockResolvedValue({ eligible: 1, suppressed: 0, skipped_invalid: 0 });
+    f.start.mockResolvedValue(true);
+    f.log.mockResolvedValue({});
+    f.persistedRecipientIds = [];
+    f.templates = [];
+    f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
+    f.segments = [];
+    f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
+    f.queryCalls.length = 0;
+    f.resolveAudience.mockResolvedValue(f.contacts);
+    f.countAudience.mockResolvedValue(f.contacts.length);
+    window.sessionStorage.clear();
+    window.history.replaceState(null, '', '/');
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  /** Nome digitado no passo 1 do wizard real. */
+  const NAME_INPUT = /Lançamento Linha Office/i;
+
+  /** Deixa a Promise do flush pendente terminar (microtasks + timers zerados). */
+  async function flushMicrotasks() {
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+  }
+
+  it('desmontar o wizard antes dos 3 s do autosave grava a edição pendente', async () => {
+    // Caminho do histórico do navegador / troca de rota: o pai desmonta o
+    // wizard e nenhum beforeunload é disparado.
+    const { unmount } = render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText(NAME_INPUT), { target: { value: 'Campanha interrompida' } });
+
+    unmount();
+    await flushMicrotasks();
+
+    expect(f.saveDraft).toHaveBeenCalledTimes(1);
+    expect(f.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Campanha interrompida' }));
+  });
+
+  it('clicar Voltar antes do autosave grava a edição antes de o wizard sair de cena', async () => {
+    function ExitHarness() {
+      const [open, setOpen] = useState(true);
+      return open
+        ? <TalkXCampaignWizard campaign={null} onClose={() => setOpen(false)} />
+        : <p>Lista de campanhas</p>;
+    }
+    render(<ExitHarness />);
+    fireEvent.change(screen.getByPlaceholderText(NAME_INPUT), { target: { value: 'Campanha Voltar' } });
+
+    await act(async () => { screen.getByRole('button', { name: 'Voltar' }).click(); });
+    await flushMicrotasks();
+
+    expect(screen.getByText('Lista de campanhas')).toBeInTheDocument();
+    expect(f.saveDraft).toHaveBeenCalledTimes(1);
+    expect(f.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Campanha Voltar' }));
+  });
+
+  it('sair sem alteração pendente não cria rascunho nenhum', async () => {
+    const { unmount } = render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+
+    unmount();
+    await flushMicrotasks();
+
+    expect(f.saveDraft).not.toHaveBeenCalled();
+    expect(f.create).not.toHaveBeenCalled();
+  });
+
+  it('sair depois de o autosave confirmar não grava de novo', async () => {
+    const { unmount } = render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText(NAME_INPUT), { target: { value: 'Campanha salva' } });
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+    expect(f.saveDraft).toHaveBeenCalledTimes(1);
+
+    unmount();
+    await flushMicrotasks();
+
+    expect(f.saveDraft).toHaveBeenCalledTimes(1);
+    expect(f.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('o aviso de saída da aba só aparece com alteração realmente pendente', () => {
+    // Rascunho já salvo (com nome, responsável e conexão): abrir sem editar não
+    // deixa alteração pendente — o aviso antigo disparava só por ter nome/contato.
+    render(<TalkXCampaignWizard campaign={{ id: 'draft-1', name: 'Rascunho salvo', status: 'draft', owner: 'profile-1', whatsapp_connection_id: 'connection-1' } as never} onClose={vi.fn()} />);
+    const pristine = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(pristine);
+    expect(pristine.defaultPrevented).toBe(false);
+
+    // Qualquer edição ainda não confirmada passa a ser anunciada.
+    fireEvent.change(screen.getByPlaceholderText(NAME_INPUT), { target: { value: 'Rascunho salvo editado' } });
+    const dirty = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(dirty);
+    expect(dirty.defaultPrevented).toBe(true);
   });
 });

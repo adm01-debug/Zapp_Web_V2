@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
+import { useDebounce } from '@/hooks/performance/useTimingHooks';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, X, AlertTriangle } from 'lucide-react';
@@ -37,6 +39,11 @@ interface BlacklistEntry {
 
 const REASONS = ['Opt-out solicitado', 'Número inválido / bounce', 'Reclamação de spam', 'Sem permissão comercial', 'LGPD / revogação de consentimento', 'Bloqueio manual', 'Outro'];
 
+// Teto de contatos devolvidos na busca do modal (mesmo padrão do SLARuleFormDialog)
+// e espera antes de ir ao servidor, para não disparar uma consulta por tecla.
+const ADD_CONTACT_LIST_LIMIT = 50;
+const CONTACT_SEARCH_DEBOUNCE_MS = 300;
+
 export function TalkXSuppression() {
   const qc = useQueryClient();
   const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.suppression.filters', { origin: 'all', motivo: 'all' });
@@ -49,6 +56,7 @@ export function TalkXSuppression() {
   const [addCustomReason, setAddCustomReason] = useState('');
   const [addOrigin, setAddOrigin] = useState<'manual'|'lgpd'>('manual');
   const [contactSearch, setContactSearch] = useState('');
+  const debouncedContactSearch = useDebounce(contactSearch.trim(), CONTACT_SEARCH_DEBOUNCE_MS);
 
   const { data: blacklist = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['talkx-blacklist'],
@@ -64,9 +72,14 @@ export function TalkXSuppression() {
   });
 
   const { data: availableContacts = [] } = useQuery({
-    queryKey: ['contacts-for-blacklist'],
+    queryKey: ['contacts-for-blacklist', debouncedContactSearch],
     queryFn: async () => {
-      const { data } = await supabase.from('contacts').select('id, name, phone, company').not('phone', 'is', null).order('name');
+      let query = supabase.from('contacts').select('id, name, phone, company').not('phone', 'is', null);
+      if (debouncedContactSearch) {
+        const term = escapeOrFilterValue(`%${debouncedContactSearch}%`);
+        query = query.or(`name.ilike.${term},phone.ilike.${term}`);
+      }
+      const { data } = await query.order('name').limit(ADD_CONTACT_LIST_LIMIT);
       return data || [];
     },
     enabled: showAdd,
@@ -74,11 +87,6 @@ export function TalkXSuppression() {
 
   const blacklistedIds = useMemo(() => new Set(blacklist.map((b) => b.contact_id)), [blacklist]);
   const nonBlocked = useMemo(() => availableContacts.filter((c) => !blacklistedIds.has(c.id)), [availableContacts, blacklistedIds]);
-  const filteredAddContacts = useMemo(() => {
-    if (!contactSearch.trim()) return nonBlocked.slice(0, 50);
-    const q = contactSearch.toLowerCase();
-    return nonBlocked.filter((c) => c.name?.toLowerCase().includes(q) || c.phone?.includes(q)).slice(0, 50);
-  }, [nonBlocked, contactSearch]);
 
   const filtered = useMemo(() => {
     let r = blacklist;
@@ -225,8 +233,8 @@ export function TalkXSuppression() {
               <Label className="text-xs text-foreground-secondary">Buscar contato</Label>
               <Input value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} placeholder="Nome ou telefone…" className="mt-1.5 bg-input/40 border-border/70" />
               <div className="max-h-40 overflow-auto mt-2 rounded-lg border border-border/60 divide-y divide-border/50">
-                {filteredAddContacts.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">Nenhum contato encontrado</p>
-                  : filteredAddContacts.map((c) => (
+                {nonBlocked.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">Nenhum contato encontrado</p>
+                  : nonBlocked.map((c) => (
                     <button key={c.id} onClick={() => setAddContactId(c.id)} className={cn('w-full text-left px-3 py-2 text-sm transition-colors', addContactId === c.id ? 'bg-primary/10' : 'hover:bg-muted/50')}>
                       <span className="font-medium">{c.name}</span><span className="text-muted-foreground ml-2 text-xs">{c.phone}</span>
                     </button>

@@ -17,11 +17,12 @@
  * dias sob um "agora" conhecido.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { TasksAgendaMode } from '@/components/tasks/agenda/TasksAgendaMode';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
+import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 
 /** 01/10/2026 10:00 (horário local) — quinta-feira; offsets 2 (sáb) e 3 (dom) são o fim de semana. */
 const AGORA = new Date(2026, 9, 1, 10, 0, 0);
@@ -77,8 +78,9 @@ function makeItem(over: Partial<WorkItem>): WorkItem {
 function renderAgenda(
   items: WorkItem[],
   overdue: WorkItem[] = [],
-  opts: { isLoading?: boolean } = {},
+  opts: { isLoading?: boolean; onCreate?: (i: WorkItemInput) => Promise<void> } = {},
 ) {
+  const onCreate = opts.onCreate ?? vi.fn().mockResolvedValue(undefined);
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   render(
     <QueryClientProvider client={qc}>
@@ -87,7 +89,7 @@ function renderAgenda(
           items={items}
           overdue={overdue}
           isLoading={opts.isLoading ?? false}
-          onCreate={vi.fn().mockResolvedValue(undefined)}
+          onCreate={onCreate}
           onOpen={vi.fn()}
           onToggleDone={vi.fn()}
           onMoveTo={vi.fn()}
@@ -96,7 +98,12 @@ function renderAgenda(
       </TooltipProvider>
     </QueryClientProvider>,
   );
+  return onCreate;
 }
+
+/** `dd/MM` local de um ISO — o mesmo rótulo que o chip Data exibe. */
+const rotuloCurto = (iso: string): string =>
+  new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
 /** Botão da faixa do dia AGORA + offset, pelo rótulo acessível "N de outubro". */
 const botaoDoDia = (offset: number) =>
@@ -144,6 +151,40 @@ describe('TasksAgendaMode — etapa 88 (relógio fixo)', () => {
     expect(screen.getByText('Entregar amanhã')).toBeTruthy();
     expect(botaoDoDia(1).getAttribute('aria-current')).toBe('date');
     expect(botaoDoDia(0).getAttribute('aria-current')).toBeNull();
+  });
+
+  it('#424: trocar de dia com uma criação PENDENTE não devolve o prazo do dia anterior', async () => {
+    // A 1ª criação só resolve quando `resolverA` é chamado: assim o teste troca
+    // de dia exatamente na janela entre o Enter e a resposta do servidor.
+    let resolverA!: () => void;
+    const pendente = new Promise<void>((res) => { resolverA = res; });
+    const onCreate = vi.fn()
+      .mockImplementationOnce(() => pendente)
+      .mockResolvedValue(undefined);
+
+    renderAgenda([], [], { onCreate });
+
+    const campo = screen.getByTestId('quick-add-input') as HTMLInputElement;
+    fireEvent.change(campo, { target: { value: 'Primeira' } });
+    fireEvent.keyDown(campo, { key: 'Enter' });
+
+    // Troca para o dia seguinte enquanto a 1ª criação ainda está pendente.
+    fireEvent.click(botaoDoDia(1));
+    expect(screen.getByTestId('quick-add-chip-date').textContent).toContain(rotuloCurto(dia(1, 23, 59)));
+
+    // A 1ª criação resolve: o campo volta ao padrão VIGENTE (dia B), não ao dia A.
+    await act(async () => { resolverA(); await pendente; });
+    expect(screen.getByTestId('quick-add-chip-date').textContent).toContain(rotuloCurto(dia(1, 23, 59)));
+
+    fireEvent.change(screen.getByTestId('quick-add-input'), { target: { value: 'Segunda' } });
+    fireEvent.keyDown(screen.getByTestId('quick-add-input'), { key: 'Enter' });
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(2));
+    const segunda = onCreate.mock.calls[1][0];
+    expect(segunda.title).toBe('Segunda');
+    // O 2º create tem de sair no dia B (02/10), não no dia A (01/10).
+    expect(new Date(segunda.dueDate as string).getDate()).toBe(numeroDoDia(1));
+    expect(new Date(segunda.dueDate as string).getHours()).toBe(23);
   });
 
   it('o recorte é de 7 dias: o 7º dia entra, o 8º fica de fora', () => {
