@@ -1,18 +1,3 @@
-/**
- * X028 — contrato executável da ATRIBUIÇÃO DE RESPOSTA do Talk X.
- *
- * R2-API-006 (#69): os insumos (contato, telefone, citação) entram na MESMA chamada de
- * `ingest_inbound_message` (pendência na outbox na mesma transação);
- * `drain_inbound_message_effects` aplica `attribute_talkx_reply` no banco. Travado:
- *
- *   1. o telefone resolvido (`p_phone`) chega à RPC (atribuição por LID/duplicado);
- *   2. o handler AGUARDA a drenagem; 3. opt-out não enfileira resposta (exclusão mútua no SQL);
- *   4. `attributed=false` não é erro: o handler resolve normal.
- *
- * O SQL é provado na migration real em Postgres descartável:
- *   scripts/db-audit/inbound-effects-replay.test.sh
- * Payloads GO anonimizados em fixture (sem telefone/CPF reais).
- */
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { handleIncomingMessage } from "../evolution-webhook-messages.ts";
 import { translateGoPayload } from "../evolution-go-adapter.ts";
@@ -21,7 +6,6 @@ import type { EvolutionDbClient } from "../evolution-types.ts";
 type Chamada = { nome: string; args: Record<string, unknown> };
 type RpcHandler = (args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
 
-/** Mock chainable mínimo + thenable (consultas sem terminal resolvem vazio). */
 function fakeSupabase(chamadas: Chamada[], rpcHandlers: Record<string, RpcHandler>) {
   let tabela = "";
   const chain: Record<string, unknown> = {};
@@ -32,15 +16,10 @@ function fakeSupabase(chamadas: Chamada[], rpcHandlers: Record<string, RpcHandle
   chain.maybeSingle = async () =>
     tabela === "whatsapp_connections" ? { data: { id: "conn-1" }, error: null } : { data: null, error: null };
   chain.single = chain.maybeSingle;
-  // X030: as palavras de opt-out saíram do regex fixo e agora vêm de
-  // `talkx_optout_keywords`. O fixture devolve o seed da X029 para que "SAIR"
-  // continue sendo reconhecido como opt-out (e não conte como resposta).
   const SEED_KEYWORDS = [
     "sair", "parar", "pare", "stop", "cancelar",
     "remover", "descadastrar", "unsubscribe", "optout", "nao quero",
   ].map((keyword) => ({ keyword, match_mode: "exact" }));
-  // Consultas encadeadas sem terminal (ex.: gate de opt-out em talkx_recipients)
-  // resolvem lista vazia — nenhuma campanha recente no fixture.
   chain.then = (resolve: (value: unknown) => unknown) =>
     resolve(
       tabela === "talkx_optout_keywords"
@@ -60,7 +39,6 @@ function fakeSupabase(chamadas: Chamada[], rpcHandlers: Record<string, RpcHandle
   } as unknown as EvolutionDbClient;
 }
 
-/** Payload GO anonimizado de mensagem recebida (evento `message`). */
 function goIncomingMessage(texto: string, id = "3EB0REPLY"): Record<string, unknown> {
   return {
     event: "message",
@@ -131,7 +109,6 @@ Deno.test("X028: resposta de contato — o handler só resolve depois da drenage
       handlerResolveu = true;
     });
 
-  // Deixa o handler avançar até travar na RPC de drenagem.
   await new Promise((resolve) => setTimeout(resolve, 25));
 
   const drenagens = chamadas.filter((c) => c.nome === "drain_inbound_message_effects");
@@ -191,8 +168,5 @@ Deno.test("X028: resposta sem destinatário na janela não é erro (drenagem att
   const { data, key } = traduzirMensagem("Ainda tenho interesse", "3EB0NOMATCH");
   await handleIncomingMessage(supabase, "inst-x028-nomatch", data, key, "http://localhost:54321", "svc");
 
-  // O handler chama a drenagem; quando ela não casa, o retorno é falsy mas o
-  // webhook segue normalmente (a resposta do contato nunca falha por causa da
-  // atribuição).
   assertEquals(chamadas.filter((c) => c.nome === "drain_inbound_message_effects").length, 1);
 });

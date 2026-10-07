@@ -451,7 +451,6 @@ export async function handleIncomingMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  // X064/R2-API-006: `key.fromMe === true` (mesma expressao de p_from_me) devolve null ANTES de botao/lista ou texto.
   let optOutKeyword: string | null = null;
   if (key.fromMe !== true) {
     optOutKeyword = interactiveResponseId === TALKX_OPTOUT_BUTTON_ID
@@ -462,7 +461,6 @@ export async function handleIncomingMessage(
   }
   const quotedExternalId = extractQuotedExternalId(data);
 
-  // Uma transacao: contato + upsert idempotente + efeitos (opt-out OU respostas).
   const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', {
     p_connection_id: connection.id,
     p_phone: phone,
@@ -499,7 +497,6 @@ export async function handleIncomingMessage(
     }
   }
 
-  // R2-API-006: a drenagem roda em TODA entrega (ate 'duplicate'); falha fica pendente e erro/pendencia viram 500.
   const { data: drainData, error: drainErr } = await supabase.rpc('drain_inbound_message_effects', {
     p_connection_id: connection.id,
     p_external_id: key.id,
@@ -530,11 +527,9 @@ export async function handleIncomingMessage(
     }
   }
 
-  // E57/E59: confirmacao so com supressao NOVA (suppression_id nao-nulo); nunca duas vezes.
   if (drain?.suppression_id) {
     const resolvedPhone = phone ?? ((key.remoteJid ?? '').split('@')[0].replace(/\D/g, ''));
     console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist (' + optOutKeyword + ')');
-    // E59: texto de talkx_settings.optout_autoreply, pelo token da instancia (Vault).
     try {
       const evolutionUrl = Deno.env.get('EVOLUTION_API_URL')?.replace(/\/+$/, '');
       const evolutionKey = Deno.env.get('EVOLUTION_API_KEY') ?? '';
@@ -545,7 +540,6 @@ export async function handleIncomingMessage(
         if (!instanceToken) {
           console.warn('[OPT-OUT] Token da instancia ausente — confirmacao nao enviada (' + instance + ')');
         } else {
-          // R2-API-008: inspecionar o Response — 4xx/5xx nao pode virar "Confirmacao enviada".
           const resp = await evoFetch(evolutionUrl, evolutionKey, '/message/sendText/' + instance, {
             number: resolvedPhone,
             text: autoReply,
@@ -565,7 +559,6 @@ export async function handleIncomingMessage(
         }
       }
     } catch (notifErr) {
-      // R2-API-008: sem resposta HTTP (timeout/rede) o desfecho e `unknown`.
       console.warn(
         '[OPT-OUT] Confirmacao sem resposta do provedor (unknown):',
         notifErr instanceof Error ? notifErr.message : String(notifErr),
@@ -577,7 +570,6 @@ export async function handleIncomingMessage(
     console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', phone);
   }
 
-  // E88/F62: resultados das atribuicoes aplicadas pela drenagem (observabilidade).
   if (drain?.talkx_reply?.attributed === true) {
     console.warn(`[E88] Resposta atribuida (${drain.talkx_reply.attribution}): recipient=${drain.talkx_reply.recipient_id} campaign=${drain.talkx_reply.campaign_id}`);
   }

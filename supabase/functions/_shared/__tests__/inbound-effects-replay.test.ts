@@ -1,8 +1,3 @@
-/**
- * R2-API-006 (#69): toda entrega drena `drain_inbound_message_effects`; erro de ingest/drain e
- * LANCADO (500 -> reentrega); autoresposta so com suppression_id NOVO; direcao (fromMe) vai no
- * ingest. Atomicidade SQL provada em scripts/db-audit/inbound-effects-replay.test.sh
- */
 import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   handleIncomingMessage,
@@ -78,7 +73,6 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
   } as unknown as EvolutionDbClient;
 }
 
-/** Payload GO anonimizado; com `stanzaId` vira resposta citando envio nosso. */
 const goIncoming = (texto: string, id: string, stanzaId?: string, fromMe = false): Record<string, unknown> => ({
   event: "message",
   instanceName: "inst-go-r2-006",
@@ -144,20 +138,17 @@ Deno.test("R2-API-006: falha no drain é lançada; a reentrega drena e a supress
       ],
     });
 
-    // Entrega 1: erro de banco nao e engolido — a entrega falha e o reenvia.
     await assertRejects(
       () => entregar(supabase, "PARE", "3EB0FAIL"),
       Error,
       "drain_inbound_message_effects falhou",
     );
 
-    // Entrega 2: a linha pendente é drenada e a supressão sai UMA vez.
     await entregar(supabase, "PARE", "3EB0FAIL");
     assertEquals(fetchCalls.length, 1, "a reentrega confirma o opt-out recuperado uma única vez");
     const body = JSON.parse(String(fetchCalls[0].init.body)) as { text?: string };
     assertEquals(body.text, "MENSAGEM DO SETTING (fixture)");
 
-    // Entrega 3: supressão já aplicada — sem segunda confirmação.
     await entregar(supabase, "PARE", "3EB0FAIL");
 
     const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
@@ -205,9 +196,7 @@ Deno.test("R2-API-006 (#69 refazer): a direção viaja no ingest — fromMe=true
   comCenario(async (chamadas) => {
     const supabase = fakeSupabase(chamadas, {});
 
-    // IsFromMe=true: a RPC precisa da direcao para NAO enfileirar atribuicao.
     await entregar(supabase, "mensagem mandada por nós", "3EB0ME1", undefined, true);
-    // Recebida: direcao false, efeitos seguem valendo.
     await entregar(supabase, "mensagem mandada por nós", "3EB0ME2");
 
     const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");

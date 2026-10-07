@@ -1,24 +1,3 @@
-/**
- * X030 — contrato executável do OPT-OUT no webhook de mensagens.
- *
- * R2-API-006 (#69): a palavra casada viaja na MESMA chamada de `ingest_inbound_message`
- * (pendência na outbox na mesma transação) e `drain_inbound_message_effects` aplica.
- * Travado: (1) `p_opt_out_keyword` chega ao ingest, sem `p_campaign_id` na edge;
- * (2) autoresposta UMA vez, pelo token da instância, só com `suppression_id` novo;
- * (3) repetição NÃO reenvia a autoresposta;
- *   4. `no_recent_send` (gate de campanha em 30 dias, dentro da RPC) não gera
- *      autoresposta;
- *   5. opt-out NÃO vira resposta (exclusão mútua provada no SQL);
- *   6. resposta de botão/lista com id `talkx_optout` (X064) também é opt-out;
- *   7. as palavras ativas são lidas com cache (uma leitura serve vários eventos);
- *   8. R2-API-008 — a confirmação só é anunciada como enviada quando o provedor
- *      ACEITA (HTTP 2xx); 4xx/5xx e queda de transporte não podem ser logadas
- *      como envio bem-sucedido.
- *
- * O SQL (pendência/outbox, supressão e idempotência) é provado na migration real:
- *   scripts/db-audit/inbound-effects-replay.test.sh
- * Payloads GO anonimizados em fixture (sem telefone/CPF reais).
- */
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   handleIncomingMessage,
@@ -31,17 +10,14 @@ type Chamada = { nome: string; args: Record<string, unknown> };
 
 interface FakeConfig {
   keywords?: Array<{ keyword: string; match_mode: string }>;
-  /** Retorno do drain por chamada (suppression_id ou status por reentrega). */
   drainResults?: Array<Record<string, unknown>>;
   recentSend?: Array<{ id: string }>;
-  /** Atalho da X030: cada entrada vira o retorno do drain (id = suppression_id novo, null = already_suppressed). */
   suppressions?: Array<unknown>;
   autoreply?: unknown;
   instanceToken?: unknown;
   leituras?: string[];
 }
 
-/** Seed da X029 (todas `exact`). */
 const SEED = [
   "sair", "parar", "pare", "stop", "cancelar",
   "remover", "descadastrar", "unsubscribe", "optout", "nao quero",
@@ -107,7 +83,6 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
   } as unknown as EvolutionDbClient;
 }
 
-/** Payload GO anonimizado de mensagem recebida (evento `message`). */
 function goIncoming(texto: string, id = "3EB0X030"): Record<string, unknown> {
   return {
     event: "message",
@@ -126,7 +101,6 @@ function goIncoming(texto: string, id = "3EB0X030"): Record<string, unknown> {
   };
 }
 
-/** Payload GO de resposta de botão/lista (só o id selecionado, sem texto). */
 function goButton(idSelecionado: string, id = "3EB0BTN"): Record<string, unknown> {
   const payload = goIncoming("", id);
   (payload.data as Record<string, unknown>).Message = {
@@ -145,11 +119,6 @@ function traduzir(payload: Record<string, unknown>) {
 const originalFetch = globalThis.fetch;
 let fetchCalls: Array<{ url: string; init: RequestInit }> = [];
 
-/**
- * Substitui o fetch global para capturar a autoresposta sem rede.
- * `status` simula a resposta do provedor (2xx = aceita, 4xx/5xx = recusada);
- * `falhaDeTransporte` simula queda/timeout (o fetch rejeita, sem resposta HTTP).
- */
 function instalarFetchFalso(status = 200, falhaDeTransporte: string | null = null): void {
   fetchCalls = [];
   (globalThis as { fetch: typeof fetch }).fetch = ((url: unknown, init?: RequestInit) => {
@@ -175,7 +144,6 @@ interface LogsCapturados {
   restaurar: () => void;
 }
 
-/** Captura console.warn/console.error para ler o que a função ANUNCIA. */
 function coletarLogs(): LogsCapturados {
   const linhas: string[] = [];
   const originalWarn = console.warn;
@@ -301,8 +269,6 @@ Deno.test("X030: contato sem envio em 30 dias não gera supressão nem autorespo
     const chamadas: Chamada[] = [];
     const supabase = fakeSupabase(chamadas, {
       keywords: SEED,
-      // O gate de 30 dias é avaliado DENTRO de drain_inbound_message_effects;
-      // aqui o fixture reflete a decisão da RPC.
       drainResults: [drainOk({ optout_status: "no_recent_send" })],
       autoreply: "MENSAGEM DO SETTING (fixture)",
       instanceToken: "token-inst-1",
