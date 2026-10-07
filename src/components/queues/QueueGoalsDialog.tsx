@@ -53,8 +53,11 @@ export function QueueGoalsDialog({
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveGoal(queueId, formData);
-      onOpenChange(false);
+      // `saveGoal` confirma a gravacao: fecha o formulario so quando o banco
+      // aceitou. Numa recusa, o rascunho continua na tela para o usuario
+      // corrigir e tentar de novo (R2-QUE-005).
+      const saved = await saveGoal(queueId, formData);
+      if (saved) onOpenChange(false);
     } finally {
       setSaving(false);
     }
