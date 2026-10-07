@@ -7,7 +7,7 @@
 ## 1. Mockup × hoje (dia/2026-10-07)
 | Mockup (Histórico) | Hoje (Journey) | Lacuna |
 |---|---|---|
-| Título "Histórico da Conversa" + "Exportar histórico" | "Journey — estatísticas e toda a jornada…" sem exportar | exportar (sujeito à política de download) |
+| Título "Histórico da Conversa" + "Exportar histórico" | "Journey — estatísticas e toda a jornada…" sem exportar | **NÃO implementar a exportação** (decisão do dono: nenhuma informação sai do sistema); título fica "Journey" |
 | Período com calendário | `Select` fixo: 7 / 30 / 90 dias / Tudo (`PERIOD_OPTIONS`) | usar o `PeriodFilterSelector` da IA (atalhos + De/Até) |
 | Tipo de evento | `Select` com Todos, Mensagens, Notas, Tarefas, Transferências, Arquivos, Propostas | manter; incluir **E-mail** e **Telefone**; **filtro novo por usuário** |
 | 4 cartões com ícone colorido e tendência (+62 %, "mais rápido que a média") | 2 faixas: `ContactStatsStrip` (mensagens, tempo médio, atendimentos, CSAT) e `KpiStrip` (total, último contato, tempo médio, resoluções); texto cortado ("Tempo médio de respos…") | uma área só, mais dados, tendência, efeitos |
@@ -34,7 +34,7 @@
 - **D08.** Datas em português correto ("Hoje, 7 de outubro de 2026"), fuso do navegador.
 - **D09.** **Estatísticas:** uma área só: bloco "Do contato" (independe do período) e bloco "No período" com **tendência** contra o período anterior.
 - **D10.** **Clique:** mensagem → aba Chat na mensagem; e-mail → módulo E-mail na conversa (parâmetro `emailThread`, já existe); ligação → detalhe com gravação/duração; nota → aba Notas; tarefa → aba Tarefas; arquivo → pré-visualização; proposta → aba SalesView; transferência/atribuição/encerramento → painel de detalhes do evento.
-- **D11.** **Exportar histórico** só com `useDownloadPermission` permitido; bloqueado = cadeado e motivo.
+- **D11 (DECIDIDA pelo dono em 07/10).** **NÃO existe "Exportar histórico"**: nenhuma informação pode sair do sistema. O Journey não terá botão de exportar, baixar, copiar tudo, imprimir nem compartilhar a timeline; também não há menu ⋮ de exportação.
 - **D12.** Efeitos discretos (contagem animada, brilho no hover, traço do gráfico, esqueleto de carga) que **respeitam "reduzir movimento"**; gráficos em SVG próprio; a aba continua carregada sob demanda (fora do bundle inicial).
 
 ## 4. As 100 etapas
@@ -47,7 +47,7 @@
 **G. Visual da timeline (S061–S072)** [wave 2] S061 cartão do episódio com ícone colorido por categoria · S062 trilho/ponto na cor da categoria · S063 foto + nome de quem interagiu (reusa `SenderAvatar`) · S064 selos de status · S065 detalhes em linhas · S066 corrigir "De" maiúsculo nas datas · S067 corrigir localização/áudio/contato/sticker (D07) · S068 arquivo com nome, tipo e tamanho · S069 expandir mensagens agrupadas · S070 cabeçalho do dia "Hoje, 7 de outubro de 2026" · S071 modo claro/escuro e celular 390 px · S072 testes visuais.
 **H. Estatísticas do contato (S073–S084)** [J03 + J04 + wave 2] S073 função `computeJourneyStats` (pura) · S074 totais por categoria · S075 primeira e última interação · S076 tempo da 1ª resposta e médio, com tendência · S077 ligações: total, atendidas, perdidas, tempo falado · S078 e-mails: enviados, recebidos, sem resposta · S079 atendimentos, resoluções, reaberturas · S080 ranking de usuários que atenderam (top 3 com foto) · S081 tarefas abertas/concluídas/atrasadas, notas, arquivos, propostas (valor) · S082 CSAT · S083 série diária e horário/dia mais ativo · S084 componente `JourneyStatsHero` com efeitos (D12), esqueleto, tendência, sem texto cortado.
 **I. Clique abre o episódio (S085–S094)** [wave 3] S085 contrato de navegação `openEpisode(alvo)` · S086 mensagem → Chat + rolar até a mensagem e destacar · S087 mensagem antiga fora da janela carregada: carregar até achar · S088 e-mail → módulo E-mail na conversa · S089 ligação → detalhe com gravação · S090 nota → aba Notas na nota · S091 tarefa → aba Tarefas na tarefa · S092 arquivo → pré-visualização · S093 proposta → SalesView · S094 transferência/atribuição/encerramento → painel de detalhes do evento.
-**J. Fechamento (S095–S100)** [wave 3 + Claude] S095 exportar histórico com a política de download (D11) · S096 paginação por rolagem (sem teto de 500/200) · S097 teclado e leitor de tela (Enter abre, rótulo com categoria e autor) · S098 E2E (`e2e/journey.spec.ts`, novo) · S099 bundle ≤ 343 KB, tsc, lint, contratos, verificação visual na pré-visualização · S100 documentação (`docs/design/`) e registro de estado.
+**J. Fechamento (S095–S100)** [wave 3 + Claude] S095 ~~exportar histórico~~ **CANCELADA (D11)**; no lugar: teste que garante que a aba NÃO oferece exportar/baixar/copiar a timeline e que o texto dos eventos não é arrastável como arquivo · S096 paginação por rolagem (sem teto de 500/200) · S097 teclado e leitor de tela (Enter abre, rótulo com categoria e autor) · S098 E2E (`e2e/journey.spec.ts`, novo) · S099 bundle ≤ 343 KB, tsc, lint, contratos, verificação visual na pré-visualização · S100 documentação (`docs/design/`) e registro de estado.
 
 ## 5. Cartões
 **Onda 1 (criada agora; arquivos novos, independentes):** **J01** [hugo] S009–S018 `src/lib/journey/model.ts` · **J02** [hugo] S043–S044 `src/lib/journey/periodRange.ts` · **J03** [hugo] S073–S083 `src/lib/journey/stats.ts` · **J04** [iris] S084 `JourneyStatsHero.tsx`.
@@ -55,10 +55,10 @@
 **Onda 3 (depois da 2 e de F01/R-series integrados):** clique no episódio (I; mexe em ChatPanel/TasksTab/NotesTab/FilesTab), exportar, E2E, docs. **Claude:** A e J.
 
 ## 6. Perguntas ao dono
-1. ~~Nome da aba~~ **RESPONDIDA: continua Journey** (e o título interno da página também será "Journey"). 2. ~~Filtro de usuário~~ **RESPONDIDA: vários ao mesmo tempo** (D05). 3. ~~Selo "Visualizada" da proposta~~ **RESPONDIDA: fica de fora** (não há dado; o selo da proposta mostra só o status que já existe: aberta, ganha ou perdida). 4. **Exportar histórico**: em qual formato (CSV, PDF)? 5. Ações automáticas da **IA/robô** entram na timeline como "Sistema"?
+1. ~~Nome da aba~~ **RESPONDIDA: continua Journey** (e o título interno da página também será "Journey"). 2. ~~Filtro de usuário~~ **RESPONDIDA: vários ao mesmo tempo** (D05). 3. ~~Selo "Visualizada" da proposta~~ **RESPONDIDA: fica de fora** (não há dado; o selo da proposta mostra só o status que já existe: aberta, ganha ou perdida). 4. ~~Exportar histórico~~ **RESPONDIDA: NÃO exportar nada** (nenhuma informação sai do sistema; D11). 5. Ações automáticas da **IA/robô** entram na timeline como "Sistema"?
 
 ## 7. Fora de escopo
-Selo "Visualizada" da proposta (decidido pelo dono em 07/10: não há dado); Criar tabelas ou RPC sem aprovação; mudar o armazenamento; selo de canal/origem; editar eventos pela timeline.
+Selo "Visualizada" da proposta (decidido pelo dono em 07/10: não há dado); **exportar/baixar/imprimir/compartilhar o histórico (decidido pelo dono em 07/10)**; Criar tabelas ou RPC sem aprovação; mudar o armazenamento; selo de canal/origem; editar eventos pela timeline.
 
 ## 8. Estado de execução
 _A preencher._ Onda 1 criada em 07/10/2026.
