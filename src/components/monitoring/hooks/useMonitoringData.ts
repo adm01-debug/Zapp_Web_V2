@@ -38,6 +38,63 @@ function computeInstanceUptimes(logs: HealthLog[], now: Date): InstanceUptime[] 
   });
 }
 
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+
+function formatDayLabel(t: Date): string {
+  const dd = t.getDate().toString().padStart(2, '0');
+  const mm = (t.getMonth() + 1).toString().padStart(2, '0');
+  return `${dd}/${mm}`;
+}
+
+function startOfLocalDay(t: Date): Date {
+  const day = new Date(t);
+  day.setHours(0, 0, 0, 0);
+  return day;
+}
+
+function startOfLocalHour(t: Date): Date {
+  const hour = new Date(t);
+  hour.setMinutes(0, 0, 0);
+  return hour;
+}
+
+function addLocalDays(t: Date, days: number): Date {
+  const day = new Date(t);
+  day.setDate(day.getDate() + days);
+  return day;
+}
+
+function localDayIndex(firstDay: Date, value: Date): number {
+  return Math.round((startOfLocalDay(value).getTime() - firstDay.getTime()) / DAY_MS);
+}
+
+// R2-INF-028: a mensagem é agrupada por índice temporal e só depois rotulada.
+// Em '7d' os baldes são dias civis locais (hoje-6 ... hoje), não uma janela
+// deslizante now-7d. Em '24h' os baldes começam em hora cheia, para que o rótulo
+// "DD/MM HHh" represente exatamente a hora civil em que a mensagem caiu.
+function formatBucketLabel(startMs: number, period: TimePeriod, bucketSize: number): string {
+  const t = new Date(startMs);
+  const hh = t.getHours().toString().padStart(2, '0');
+  if (period === '7d') return formatDayLabel(t);
+  if (period === '24h') return `${formatDayLabel(t)} ${hh}h`;
+  if (bucketSize < 3600000) return `${hh}:${t.getMinutes().toString().padStart(2, '0')}`;
+  return `${hh}:00`;
+}
+
+function bucketWindow(now: Date, period: TimePeriod, bucketCount: number) {
+  if (period === '7d') {
+    const start = addLocalDays(startOfLocalDay(now), -(bucketCount - 1));
+    return { startMs: start.getTime(), bucketSize: DAY_MS };
+  }
+  if (period === '24h') {
+    const start = new Date(startOfLocalHour(now));
+    start.setHours(start.getHours() - (bucketCount - 1));
+    return { startMs: start.getTime(), bucketSize: HOUR_MS };
+  }
+  return { startMs: now.getTime() - periodMs[period], bucketSize: periodMs[period] / bucketCount };
+}
+
 function computeSparklines(logs: HealthLog[], msgs: { sender: string; created_at: string }[], now: Date, period: TimePeriod): SparklineData {
   const r: SparklineData = { messages: [], latency: [], uptime: [] };
   const ms = periodMs[period];
@@ -69,10 +126,13 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
     try {
       const now = new Date();
       const since = new Date(now.getTime() - periodMs[period]);
+      const bucketCountForPeriod = periodBuckets[period];
+      const messageWindow = bucketWindow(now, period, bucketCountForPeriod);
+      const messageSince = new Date(messageWindow.startMs);
       const [connRes, logsRes, msgRes] = await Promise.all([
         supabase.from('whatsapp_connections').select('id, instance_id, phone_number, status, health_status, health_response_ms, last_health_check, updated_at'),
         supabase.from('connection_health_logs').select('*').gte('checked_at', since.toISOString()).order('checked_at', { ascending: false }).limit(2000),
-        supabase.from('messages').select('sender, created_at').gte('created_at', since.toISOString()).order('created_at', { ascending: true }),
+        supabase.from('messages').select('sender, created_at').gte('created_at', messageSince.toISOString()).order('created_at', { ascending: true }),
       ]);
 
       if (connRes.data) { setConnections(connRes.data as ConnectionInfo[]); onConnectionsUpdate?.(connRes.data as ConnectionInfo[]); }
@@ -84,24 +144,29 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
       if (msgRes.data) {
         const incoming = msgRes.data.filter(m => m.sender === 'contact').length;
         const outgoing = msgRes.data.filter(m => m.sender === 'agent').length;
-        const bucketCount = periodBuckets[period];
-        const bucketSize = periodMs[period] / bucketCount;
-        const buckets: Record<string, { incoming: number; outgoing: number }> = {};
-        for (let i = bucketCount - 1; i >= 0; i--) {
-          const bTime = new Date(now.getTime() - i * bucketSize);
-          const key = period === '7d' || period === '24h'
-            ? `${bTime.getDate().toString().padStart(2, '0')}/${(bTime.getMonth() + 1).toString().padStart(2, '0')} ${bTime.getHours().toString().padStart(2, '0')}h`
-            : `${bTime.getHours().toString().padStart(2, '0')}:00`;
-          buckets[key] = { incoming: 0, outgoing: 0 };
-        }
+        const bucketCount = bucketCountForPeriod;
+        const { startMs: windowStart, bucketSize } = messageWindow;
+        const buckets = Array.from({ length: bucketCount }, () => ({ incoming: 0, outgoing: 0 }));
+        // R2-INF-028: agrupa por índice temporal e só depois formata o rótulo. A
+        // chave por hora civil colapsava os baldes de 10min (todos viravam a
+        // mesma "HH:00") e, em 7d, ignorava toda mensagem cuja hora fosse
+        // diferente da hora da âncora diária.
         msgRes.data.forEach(m => {
           const mTime = new Date(m.created_at);
-          const key = period === '7d' || period === '24h'
-            ? `${mTime.getDate().toString().padStart(2, '0')}/${(mTime.getMonth() + 1).toString().padStart(2, '0')} ${mTime.getHours().toString().padStart(2, '0')}h`
-            : `${mTime.getHours().toString().padStart(2, '0')}:00`;
-          if (buckets[key]) { if (m.sender === 'contact') buckets[key].incoming++; else buckets[key].outgoing++; }
+          const t = mTime.getTime();
+          if (Number.isNaN(t)) return;
+          let idx = period === '7d'
+            ? localDayIndex(new Date(windowStart), mTime)
+            : Math.floor((t - windowStart) / bucketSize);
+          if (idx < 0) return; // fora da janela consultada (a query já usa gte)
+          if (idx >= bucketCount) idx = bucketCount - 1; // borda direita: exatamente em `now`
+          if (m.sender === 'contact') buckets[idx].incoming++; else buckets[idx].outgoing++;
         });
-        setMessageStats({ incoming, outgoing, total: msgRes.data.length, hourlyData: Object.entries(buckets).map(([hour, d]) => ({ hour, ...d })) });
+        const hourlyData = buckets.map((d, i) => ({
+          hour: formatBucketLabel(windowStart + i * bucketSize, period, bucketSize),
+          ...d,
+        }));
+        setMessageStats({ incoming, outgoing, total: msgRes.data.length, hourlyData });
       }
       if (logsRes.data && msgRes.data) setSparklines(computeSparklines(logsRes.data, msgRes.data, now, period));
     } catch (err) {
