@@ -65,12 +65,25 @@ where not exists (
 -- aplicacao. Em base onde esta versao ja foi registrada no ledger, editar este arquivo NAO
 -- reexecuta o UPDATE; linha que permaneceu no path antigo exige passo operacional controlado
 -- ou uma migration nova.
-update public.messages
-   set media_url = replace(
-         media_url,
-         '/whatsapp-media/5b6f6f71-916f-4537-9638-647485aba7db/',
-         '/whatsapp-media/04dff4dc-c6b1-4283-ac22-bd8639804759/'
-       )
- where contact_id = '04dff4dc-c6b1-4283-ac22-bd8639804759'::uuid
-   and media_filename = 'e2e-files-tab.png'
-   and media_url like '%/whatsapp-media/5b6f6f71-916f-4537-9638-647485aba7db/%';
+-- O gatilho update_messages_updated_at e desligado so durante este backfill para o ajuste
+-- de locator nao parecer uma nova mensagem/edicao de conversa.
+do $$
+begin
+  execute 'alter table public.messages disable trigger update_messages_updated_at';
+
+  update public.messages
+     set media_url = replace(
+           media_url,
+           '/whatsapp-media/5b6f6f71-916f-4537-9638-647485aba7db/',
+           '/whatsapp-media/04dff4dc-c6b1-4283-ac22-bd8639804759/'
+         )
+   where contact_id = '04dff4dc-c6b1-4283-ac22-bd8639804759'::uuid
+     and media_filename = 'e2e-files-tab.png'
+     and media_url like '%/whatsapp-media/5b6f6f71-916f-4537-9638-647485aba7db/%';
+
+  execute 'alter table public.messages enable trigger update_messages_updated_at';
+exception
+  when others then
+    execute 'alter table public.messages enable trigger update_messages_updated_at';
+    raise;
+end $$;
