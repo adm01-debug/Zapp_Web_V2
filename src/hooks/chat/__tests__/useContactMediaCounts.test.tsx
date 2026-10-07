@@ -26,7 +26,7 @@ function createWrapper() {
   );
 }
 
-const COUNTS: Record<string, number> = { all: 56, image: 50, video: 2, audio: 3, document: 1 };
+const COUNTS: Record<string, number> = { all: 56, image: 50, video: 2, audio: 3, document: 1, sticker: 4 };
 
 /** Thenable no formato devolvido pelo supabase-js com `head: true` (so count). */
 function countThenable(key: string) {
@@ -39,7 +39,7 @@ function countThenable(key: string) {
 beforeEach(() => {
   vi.clearAllMocks();
   const byMessageType: Record<string, string> = {
-    image: 'image', video: 'video', document: 'document',
+    image: 'image', video: 'video', document: 'document', sticker: 'sticker',
   };
   const orResult = {
     ...countThenable('all'),
@@ -58,14 +58,22 @@ beforeEach(() => {
 });
 
 describe('useContactMediaCounts — contagem exata por tipo (etapa 42)', () => {
-  it('dispara 5 consultas `count: exact, head: true` em paralelo, uma por chip', async () => {
+  it('dispara 6 consultas `count: exact, head: true` em paralelo, uma por chip', async () => {
     const { result } = renderHook(() => useContactMediaCounts('c1'), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(mockFrom).toHaveBeenCalledTimes(5);
+    expect(mockFrom).toHaveBeenCalledTimes(6);
     expect(mockFrom).toHaveBeenCalledWith('messages');
     expect(selectSpy).toHaveBeenCalledWith('id', { count: 'exact', head: true });
-    expect(result.current.counts).toEqual({ all: 56, image: 50, video: 2, audio: 3, document: 1 });
+    expect(result.current.counts).toEqual({ all: 56, image: 50, video: 2, audio: 3, document: 1, sticker: 4 });
+  });
+
+  it('figurinha tem contagem própria por `message_type = sticker`', async () => {
+    const { result } = renderHook(() => useContactMediaCounts('c1'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(inMock).toHaveBeenCalledWith('message_type', ['sticker']);
+    // "Imagens" conta só `message_type = image`: a figurinha não entra nesse chip.
+    expect(inMock).toHaveBeenCalledWith('message_type', ['image']);
   });
 
   it('usa o mesmo filtro de apagadas da lista (etapa 09) — chip Todos bate com o badge', async () => {
@@ -83,7 +91,7 @@ describe('useContactMediaCounts — contagem exata por tipo (etapa 42)', () => {
   it('sem contactId nao consulta e devolve zero', () => {
     const { result } = renderHook(() => useContactMediaCounts(null), { wrapper: createWrapper() });
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.counts).toEqual({ all: 0, image: 0, video: 0, audio: 0, document: 0 });
+    expect(result.current.counts).toEqual({ all: 0, image: 0, video: 0, audio: 0, document: 0, sticker: 0 });
     expect(mockFrom).not.toHaveBeenCalled();
   });
 

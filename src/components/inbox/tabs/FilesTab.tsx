@@ -53,6 +53,7 @@ const MAX_PAGES_TO_LOAD_ALL = 500;
 const CHIPS: { id: FilesTypeFilter; label: string }[] = [
   { id: 'all', label: 'Todos' },
   { id: 'image', label: 'Imagens' },
+  { id: 'sticker', label: 'Figurinhas' },
   { id: 'video', label: 'Vídeos' },
   { id: 'audio', label: 'Áudios' },
   { id: 'document', label: 'Docs' },
@@ -176,7 +177,10 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
 
   const forwardMediaItems = useMemo<ForwardMediaItem[]>(
     () => forwardItems.map((item) => ({
-      id: item.id, url: item.url, type: item.type, filename: item.filename, caption: item.caption,
+      // Figurinha sai pelo transporte de imagem (como antes de existir o tipo próprio): o
+      // encaminhamento de mídia só conhece imagem/vídeo/áudio/documento.
+      id: item.id, url: item.url, type: item.type === 'sticker' ? 'image' : item.type,
+      filename: item.filename, caption: item.caption,
     })),
     [forwardItems],
   );
