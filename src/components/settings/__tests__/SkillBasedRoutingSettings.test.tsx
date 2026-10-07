@@ -96,10 +96,10 @@ async function prepararFormularioDeSkill(nomeDaSkill: string) {
   render(<SkillBasedRoutingSettings />, { wrapper });
 
   // A lista de agentes vem da query: só depois dela o seletor tem a opção "Ana".
-  const seletorAgente = await waitFor(() => comboComOpcao('Ana'));
+  const seletorAgente = await waitFor(() => comboComOpcao('Ana'), { timeout: ESPERA_ESTADO_REAL });
   fireEvent.change(seletorAgente, { target: { value: 'p1' } });
 
-  fireEvent.change(await screen.findByPlaceholderText('Nome da skill (ex: Inglês)'), {
+  fireEvent.change(await screen.findByPlaceholderText('Nome da skill (ex: Inglês)', undefined, { timeout: ESPERA_ESTADO_REAL }), {
     target: { value: nomeDaSkill },
   });
 
@@ -107,6 +107,18 @@ async function prepararFormularioDeSkill(nomeDaSkill: string) {
 }
 
 const skillGravada = () => h.inserts.find(i => i.table === 'agent_skills');
+
+/**
+ * Teto de espera das consultas assíncronas (`findBy*`/`waitFor`).
+ *
+ * O padrão do Testing Library é 1000 ms; com a máquina carregada a primeira
+ * espera (o seletor de agente, que só ganha a opção "Ana" depois da query de
+ * `profiles`) passa desse teto e o teste falhava por tempo, não por
+ * comportamento (medido 1438 ms sob carga no cartão). A espera continua sendo
+ * por ESTADO real: a mesma consulta, a mesma asserção, só com o teto explícito
+ * e dimensionado. Não é sleep — nada espera tempo fixo.
+ */
+const ESPERA_ESTADO_REAL = 5000;
 
 describe('SkillBasedRoutingSettings — seletor de proficiência (item 270)', () => {
   beforeEach(() => {
@@ -124,7 +136,7 @@ describe('SkillBasedRoutingSettings — seletor de proficiência (item 270)', ()
 
     fireEvent.click(screen.getByRole('button'));
 
-    await waitFor(() => expect(skillGravada()).toBeDefined());
+    await waitFor(() => expect(skillGravada()).toBeDefined(), { timeout: ESPERA_ESTADO_REAL });
     expect(skillGravada()!.payload).toMatchObject({
       profile_id: 'p1',
       skill_name: 'Inglês',
@@ -137,7 +149,7 @@ describe('SkillBasedRoutingSettings — seletor de proficiência (item 270)', ()
 
     fireEvent.click(screen.getByRole('button'));
 
-    await waitFor(() => expect(skillGravada()).toBeDefined());
+    await waitFor(() => expect(skillGravada()).toBeDefined(), { timeout: ESPERA_ESTADO_REAL });
     expect(skillGravada()!.payload).toMatchObject({
       skill_name: 'Espanhol',
       skill_level: 3,
