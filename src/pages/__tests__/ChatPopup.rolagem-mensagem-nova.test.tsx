@@ -62,6 +62,7 @@ afterAll(() => {
 });
 
 const CONTACT_ID = 'contato-rolagem-1';
+const ESPERA_CHAT_PANEL = { timeout: 5000 };
 
 const mocks = vi.hoisted(() => ({
   messages: {} as Record<string, unknown>,
@@ -239,7 +240,7 @@ function renderPopup() {
 function superficie() {
   // O ChatPanel entra por `lazy` no popup: a area de mensagens so existe depois
   // de a promessa resolver, entao a busca e assincrona.
-  return screen.findByRole('log', { name: /mensagens da conversa/i });
+  return screen.findByRole('log', { name: /mensagens da conversa/i }, ESPERA_CHAT_PANEL);
 }
 
 /** Altura da lista virtualizada = quantas linhas a area recebeu do popup. */
