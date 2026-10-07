@@ -101,7 +101,7 @@ vigente de `required_status_checks` é **`strict=true`** (E15(b), 02/10); a inst
 | Etapa | Estado reconciliado | Evidência verificável | Limitação declarada |
 |---|---|---|---|
 | **E01** restaurar `strict=false` | `[!]` **REVOGADA** | PR #1714 (mergeado em 02/10) e `scripts/ci/github-settings-baseline.json` (`"strict": true`) | Revogada por E15(b); `strict=false` conflitaria com o `settings-guard`. Não reexecutar. |
-| **E11** corrigir o `CLAUDE.md` nos 5 pontos | `[x]` **CONCLUÍDA** | `CLAUDE.md` (contagem 16/19, `strict` único, `required_reviewers`, cadência do guarda vivo) + `scripts/ci/ci-docs-baseline.test.mjs` | `required_reviewers` é administrativo (403 ao `GITHUB_TOKEN`); fica como intenção declarada. |
+| **E11** corrigir o `CLAUDE.md` nos 5 pontos | `[x]` **CONCLUÍDA** | `CLAUDE.md` (contagem 16/19, `strict` único, `required_reviewers`, cadência do guarda vivo) + `scripts/ci/ci-docs-baseline.unit.mjs` | `required_reviewers` é administrativo (403 ao `GITHUB_TOKEN`); fica como intenção declarada. |
 | **E55** `timeout-minutes` da atestação | `[x]` **CONCLUÍDA** | PR #1757 — `.github/workflows/deploy-functions.yml` - `scripts/edge-deploy/stable-inventory.unit.mjs` | A prova é o teste do `lastReason`; sem nova execução remota nesta reconciliação. |
 | **E56** regressão do log ANSI (`collect-remote.mjs`) | `[x]` **CONCLUÍDA** | PR #1754 — `scripts/edge-deploy/stable-inventory.unit.mjs` | Usa o log real do run 36852598923 já coletado; nenhum run novo. |
 | **E62** destino do `db-migrate.yml` | `[~]` **PARCIAL** | PR #1778 extraiu 12 contratos para `scripts/db-audit/run-runtime-contract.mjs`; hoje `.github/workflows/db-migrate.yml` tem **1479 linhas** | Meta de ~150 linhas não se atinge; as guardas de DB pós-apply ficam. |
