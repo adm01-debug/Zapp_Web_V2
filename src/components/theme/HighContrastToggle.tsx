@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { applyThemePreset, loadThemeConfig } from '@/components/settings/theme/presets';
 
 interface HighContrastContextType {
@@ -185,11 +186,21 @@ export const AccessibilitySettings = forwardRef<HTMLDivElement>((_, ref) => {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Configurações de acessibilidade">
-          <Contrast className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+      {/* S27 (B3): a dica segue o MESMO padrão do botão de tema vizinho na sidebar
+          (Sidebar.tsx): delayDuration 200, `side="right"` + `sideOffset={8}` para a dica
+          caber à direita com a sidebar recolhida. O `aria-label` abaixo não muda. */}
+      <Tooltip delayDuration={200}>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Configurações de acessibilidade">
+              <Contrast className="h-5 w-5" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8} className="text-xs">
+          Acessibilidade — alto contraste, menos movimento, texto grande
+        </TooltipContent>
+      </Tooltip>
       <DialogContent aria-describedby={undefined} className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
