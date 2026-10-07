@@ -36,9 +36,11 @@ const getSeverityColor = (severity: string) => {
 interface SecurityAlertsPanelProps {
   alerts: SecurityAlert[];
   loading: boolean;
+  /** Falha de leitura: indisponível, nunca "sem atividades suspeitas". */
+  error?: boolean;
 }
 
-export function SecurityAlertsPanel({ alerts, loading }: SecurityAlertsPanelProps) {
+export function SecurityAlertsPanel({ alerts, loading, error = false }: SecurityAlertsPanelProps) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
       <Card>
@@ -46,9 +48,15 @@ export function SecurityAlertsPanel({ alerts, loading }: SecurityAlertsPanelProp
           <CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5" />Alertas Recentes</CardTitle>
           <CardDescription>Atividades de segurança na sua conta</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent aria-live="polite">
           {loading ? (
             <div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <AlertTriangle className="w-12 h-12 text-warning mb-3" />
+              <h4 className="font-medium">Não foi possível carregar os alertas</h4>
+              <p className="text-sm text-muted-foreground">A leitura falhou — o estado da conta não pôde ser verificado agora</p>
+            </div>
           ) : alerts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <CheckCircle2 className="w-12 h-12 text-success mb-3" />
