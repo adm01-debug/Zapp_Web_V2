@@ -14,7 +14,8 @@
 #     a tarefa (notified_at volta a NULL), e os caminhos vizinhos seguem intactos: Adiar
 #     (notified_at explicito no patch), desfazer cancelamento/conclusao do R2-MOD-053 (que
 #     reescreve remind_at E notified_at do snapshot), UPDATE que nao lista remind_at (titulo,
-#     position/upsert de reordenacao) e o gatilho de estado.
+#     position/upsert de reordenacao) e o gatilho de estado — tudo com o gatilho de forja
+#     (trg_prevent_conversation_task_field_forgery) ATIVO no replay e provado vivo em B.31/B.32.
 #
 # Aplicar o arquivo do bloco B na mao nao vale: ele e lido do repo e aplicado por psql.
 
@@ -87,9 +88,11 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"; cleanup' EXIT INT TERM
 
 # ---------------------------------------------------------------------------------------------
-# Estado canonico ANTERIOR (espelha supabase/migrations/20260409014536, 20260928140000,
-# 20260930141000 e 20261003272707): tabela, auxiliares, RLS do dono, gatilhos de estado/assignee,
-# notify_due_tasks endurecido e o indice parcial do alarme pendente.
+# Estado canonico ANTERIOR (espelha supabase/migrations/20260409014536, 20260924110946,
+# 20260928140000, 20260930141000 e 20261003272707): tabela, auxiliares, RLS do dono, gatilhos de
+# estado/assignee E o de prevencao de forja (trg_prevent_conversation_task_field_forgery, que
+# dispara antes do rearme em UPDATE de authenticated), notify_due_tasks endurecido e o indice
+# parcial do alarme pendente.
 # ---------------------------------------------------------------------------------------------
 cat > "$tmp_dir/pre.sql" <<'SQL'
 CREATE ROLE anon NOLOGIN;
@@ -170,6 +173,45 @@ CREATE FUNCTION public.is_privileged_contact_caller() RETURNS boolean
   LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public', 'pg_temp'
   AS $$ SELECT coalesce(auth.role(), session_user) = ANY (ARRAY['service_role','postgres','supabase_admin']) $$;
 
+-- DUPLO DE TESTE DO REPLAY: a canonica is_contact_visible_to_user (20260909200000) consulta
+-- contacts, queue_members, get_visible_agent_ids e get_profile_id_for_user — tabelas que este
+-- replay NAO tem. A assinatura e a mesma; devolver `false` ja basta para o gatilho de forja
+-- abaixo exercitar o ramo do contact_id de verdade (a excecao so sai se a funcao negar a
+-- visibilidade — provado em B.31).
+CREATE FUNCTION public.is_contact_visible_to_user(_contact_id uuid, _user_id uuid)
+  RETURNS boolean
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp
+  AS $$ SELECT false $$;
+
+-- Corpo CANONICO do gatilho de forja (20260924110946, forma canonicalizada em
+-- 20261003272707:1126-1132). Replica fiel: e o gatilho que dispara antes do rearme em UPDATE
+-- de authenticated e precisa existir neste replay para que B.3-B.5 e B.15-B.17 valham com ele
+-- ativo; os dois ramos sao provados vivos em B.31/B.32.
+CREATE OR REPLACE FUNCTION public.prevent_conversation_task_field_forgery()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $f$
+BEGIN
+  IF NEW.contact_id IS DISTINCT FROM OLD.contact_id
+     AND NEW.contact_id IS NOT NULL
+     AND NOT public.is_contact_visible_to_user(NEW.contact_id, auth.uid())
+  THEN
+    RAISE EXCEPTION 'Sem permissao para atribuir este contato a task';
+  END IF;
+  IF (
+    NEW.assigned_to IS DISTINCT FROM OLD.assigned_to
+    OR NEW.created_by IS DISTINCT FROM OLD.created_by
+  )
+  AND NOT public.is_admin_or_supervisor(auth.uid())
+  THEN
+    RAISE EXCEPTION 'Sem permissao para alterar responsavel ou criador da task';
+  END IF;
+  RETURN NEW;
+END;
+$f$;
+
 CREATE FUNCTION public.update_updated_at_column() RETURNS trigger LANGUAGE plpgsql
   AS $$ BEGIN NEW.updated_at := now(); RETURN NEW; END $$;
 
@@ -238,7 +280,16 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.conversation_tasks TO authenticat
 GRANT SELECT ON public.profiles TO authenticated;
 GRANT EXECUTE ON FUNCTION public.notify_due_tasks() TO service_role;
 
--- Gatilhos canonicos da tabela.
+-- Gatilhos canonicos da tabela (a ordem de disparo e alfabetica pelo nome, nao esta).
+CREATE TRIGGER trg_prevent_conversation_task_field_forgery
+  BEFORE UPDATE ON public.conversation_tasks
+  FOR EACH ROW
+  WHEN (
+    NEW.contact_id IS DISTINCT FROM OLD.contact_id
+    OR NEW.assigned_to IS DISTINCT FROM OLD.assigned_to
+    OR NEW.created_by IS DISTINCT FROM OLD.created_by
+  )
+  EXECUTE FUNCTION public.prevent_conversation_task_field_forgery();
 CREATE TRIGGER update_conversation_tasks_updated_at
   BEFORE UPDATE ON public.conversation_tasks
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
@@ -359,10 +410,10 @@ expect_value 'B.12 preparo: a tarefa esta notificada (carimbo presente)' '1' \
 CARIMBO="$(psql_sql "SELECT notified_at FROM public.conversation_tasks WHERE id='$T3';" | tail -n1)"
 ALARME="$(psql_sql "SELECT remind_at FROM public.conversation_tasks WHERE id='$T3';" | tail -n1)"
 
-expect_ok_as 'B.13 ALICE conclui a tarefa (patch do move: status+completed_at+alarme zerado)' "$ALICE" \
+expect_ok_as 'B.13 ALICE conclui a tarefa (patch do move: so status+completed_at — UPDATE NAO lista remind_at nem notified_at)' "$ALICE" \
   "UPDATE public.conversation_tasks
-      SET status='done', completed_at=now(), remind_at=NULL, notified_at=NULL WHERE id='$T3';"
-expect_value 'B.14 o gatilho de estado segue zerando o alarme ao concluir' '2' \
+      SET status='done', completed_at=now() WHERE id='$T3';"
+expect_value 'B.14 o gatilho de estado zerou o alarme ao concluir (as duas colunas NULL por efeito DELE, nao do patch)' '2' \
   "SELECT (remind_at IS NULL)::int + (notified_at IS NULL)::int FROM public.conversation_tasks WHERE id='$T3';"
 
 expect_ok_as 'B.15 desfazer (R2-MOD-053) reescreve status+completed_at+remind_at+notified_at do snapshot' "$ALICE" \
@@ -419,6 +470,19 @@ expect_value 'B.30 o gatilho de rearme so olha a coluna remind_at e e BEFORE FOR
        AND NOT t.tgisinternal
        AND (t.tgtype & 2) = 2 AND (t.tgtype & 1) = 1 AND (t.tgtype & 16) = 16
        AND a.attname = 'remind_at';"
+
+# ---- trg_prevent_conversation_task_field_forgery ESTA ATIVO neste replay (criado no pre.sql):
+# todos os UPDATEs de authenticated acima ja passaram com ele ligado (o WHEN dele e falso para
+# quem nao toca contact_id/assigned_to/created_by). Aqui se prova que os DOIS ramos do corpo
+# canonico disparam de verdade — a excecao so sai se o gatilho existir e a funcao rodar.
+expect_error 'B.31 forja ATIVA: ALICE (agent) nao troca contact_id — ramo is_contact_visible_to_user disparou' \
+  'Sem permissao para atribuir este contato a task' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$ALICE',false);
+   UPDATE public.conversation_tasks SET contact_id='d0000000-0000-0000-0000-000000000001' WHERE id='$T2';"
+expect_error 'B.32 forja ATIVA: ALICE (agent) nao troca created_by — ramo is_admin_or_supervisor disparou' \
+  'Sem permissao para alterar responsavel ou criador da task' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$ALICE',false);
+   UPDATE public.conversation_tasks SET created_by='a0000000-0000-0000-0000-000000000002' WHERE id='$T2';"
 
 # ---- BLOCO C: o bloco de rollback do proprio arquivo e executado e o estado volta.
 printf '\n============ BLOCO C — rollback (bloco extraido da migration) ============\n'
