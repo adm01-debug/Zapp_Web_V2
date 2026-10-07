@@ -366,8 +366,8 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
         item={itemAberto}
         open={itemAberto !== null}
         onOpenChange={(o) => { if (!o) fecharSheet(); }}
-        onSave={(it, patch) => { void hook.update(it.id, patch); }}
-        onMove={(it, to, waitingReason) => { void move(it, to, waitingReason ? { waitingReason } : undefined); }}
+        onSave={(it, patch) => hook.update(it.id, patch)}
+        onMove={(it, to, waitingReason) => move(it, to, waitingReason ? { waitingReason } : undefined)}
         onSnooze={(it, minutes) => { void hook.snooze(it, minutes); }}
         onSetReminder={(it, iso) => { void hook.setReminder(it, iso); }}
         onCancel={(it) => { void hook.cancel(it); }}
