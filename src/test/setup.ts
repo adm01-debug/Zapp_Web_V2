@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 import { expect, vi } from "vitest";
+import { configure } from "@testing-library/react";
 // CT-67 — matcher de acessibilidade do axe (`expect(container).toHaveNoViolations()`)
 // disponível para TODA a suíte via `setupFiles` (vitest.config.ts). O matcher
 // vem de `vitest-axe/dist/matchers` e não do atalho público
@@ -125,3 +126,27 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
   }
   return (fetchReal as (i: unknown, n?: unknown) => Promise<Response>)(input, init);
 }) as typeof fetch;
+
+// ==========================================================================
+// TETO DE ESPERA DAS CONSULTAS ASSINCRONAS — determinismo sob carga.
+//
+// `findBy*`/`waitFor` do Testing Library esperam por condicao, mas com um teto
+// de 1000 ms (`asyncUtilTimeout`, o padrao da lib). Esse teto e medido no
+// RELOGIO DE PAREDE do processo: com a maquina carregada o worker do vitest fica
+// preemptado e o proprio trabalho que o teste espera (o `import()` dinamico do
+// `ChatPanel` por `lazy`, o efeito do React, o virtualizador de 1000 linhas)
+// passa de 1 s para resolver. Medido em 06/10/2026 na suite completa (715
+// arquivos, 23 workers, carga media 70-100): 5 arquivos reprovaram com esperas
+// de 1230 ms a 2145 ms — `ChatPopup.pagination`, `ChatPopup.messageBalloon`,
+// `ChatPopup.rolagem-mensagem-nova`, `CustomModalFocus` e
+// `SkillBasedRoutingSettings`. Todos com a mesma assinatura
+// (`waitForWrapper ... wait-for.js`), nenhum por ordem, relogio, animacao ou
+// rede: era o teto de 1 s contra uma maquina que nao responde em 1 s.
+//
+// Subir o teto NAO afrouxa assercao nenhuma: a condicao exigida e a mesma, muda
+// so o orcamento de tempo para ela aparecer. Um defeito de verdade continua
+// vermelho (demora ate o teto para estourar) e o teto segue abaixo do
+// `testTimeout: 15000` do vitest.config.ts, que e quem manda no limite do teste
+// inteiro — inclusive para o caso de um `waitFor` que nunca satisfaz.
+// ==========================================================================
+configure({ asyncUtilTimeout: 5000 });
