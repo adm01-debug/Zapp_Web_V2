@@ -6,7 +6,19 @@ type StateListener = (state: string) => void;
 const mockRegisterStateListeners: StateListener[] = [];
 // T15: as opções passadas ao `register` (para exercitar o `onReject` do 403).
 type RegisterOptions = { requestDelegate?: { onReject?: (response: { message: { statusCode: number } }) => void } };
+type Deferred<T = void> = { promise: Promise<T>; resolve: (value: T | PromiseLike<T>) => void; reject: (reason?: unknown) => void };
+function deferred<T = void>(): Deferred<T> {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
 const mockRegisterCalls: Array<RegisterOptions | undefined> = [];
+let startImpl: () => Promise<void> = () => Promise.resolve();
+let registerImpl: (options?: RegisterOptions) => Promise<void> = (options) => {
+  mockRegisterCalls.push(options);
+  return Promise.resolve();
+};
 const mockUaInstances: Array<{ start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; transport: { onDisconnect: (() => void) | null } }> = [];
 // R2-CALL-004: as instâncias de Registerer ficam acessíveis para simular erro de teardown.
 const mockRegistererInstances: Array<{ unregister: ReturnType<typeof vi.fn> }> = [];
@@ -21,7 +33,7 @@ vi.mock('sip.js', () => {
       }
       configuration = { uri: { host: 'test.server.com' } };
       transport: { onDisconnect: (() => void) | null } = { onDisconnect: null };
-      start = vi.fn().mockResolvedValue(undefined);
+      start = vi.fn(() => startImpl());
       stop = vi.fn().mockResolvedValue(undefined);
       constructor(options: { delegate?: { onInvite?: (invitation: unknown) => void } }) {
         lastDelegate = options.delegate;
@@ -32,7 +44,7 @@ vi.mock('sip.js', () => {
       stateChange = {
         addListener: (fn: StateListener) => { mockRegisterStateListeners.push(fn); },
       };
-      register = vi.fn((options?: RegisterOptions) => { mockRegisterCalls.push(options); return Promise.resolve(undefined); });
+      register = vi.fn((options?: RegisterOptions) => registerImpl(options));
       unregister = vi.fn().mockResolvedValue(undefined);
       constructor() { mockRegistererInstances.push(this as unknown as { unregister: ReturnType<typeof vi.fn> }); }
     },
@@ -70,6 +82,8 @@ describe('useSipConnection', () => {
     mockIsLeader.mockReturnValue(true);
     mockRegisterStateListeners.length = 0;
     mockRegisterCalls.length = 0;
+    startImpl = () => Promise.resolve();
+    registerImpl = (options) => { mockRegisterCalls.push(options); return Promise.resolve(); };
     mockUaInstances.length = 0;
     mockRegistererInstances.length = 0;
     lastDelegate = undefined;
@@ -253,6 +267,79 @@ describe('useSipConnection', () => {
     expect(mockUaInstances.length).toBe(1);
     expect(result.current.sipStatus).toBe('connecting');
   });
+
+
+
+  it('disconnect() durante start() resolvido para UA sem criar Registerer', async () => {
+    const start = deferred();
+    startImpl = () => start.promise;
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    await act(async () => { await result.current.disconnect(); });
+    const ua = mockUaInstances[0];
+
+    await act(async () => { start.resolve(); await pending; });
+
+    expect(ua.stop).toHaveBeenCalled();
+    expect(mockRegistererInstances.length).toBe(0);
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+  });
+
+  it('disconnect() durante register() resolvido limpa Registerer e UA sem publicar refs', async () => {
+    const reg = deferred();
+    registerImpl = (options) => { mockRegisterCalls.push(options); return reg.promise; };
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    await act(async () => { await result.current.disconnect(); });
+    const ua = mockUaInstances[0];
+    const registerer = mockRegistererInstances[0];
+
+    await act(async () => { reg.resolve(); await pending; });
+
+    expect(registerer.unregister).toHaveBeenCalled();
+    expect(ua.stop).toHaveBeenCalled();
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('disconnect() durante register() rejeitado limpa Registerer e UA sem sair de idle', async () => {
+    vi.useFakeTimers();
+    const reg = deferred();
+    registerImpl = (options) => { mockRegisterCalls.push(options); return reg.promise; };
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    expect(mockRegistererInstances.length).toBe(1);
+
+    await act(async () => { await result.current.disconnect(); });
+    const ua = mockUaInstances[0];
+    const registerer = mockRegistererInstances[0];
+    await act(async () => { reg.reject(new Error('register tardio falhou')); await pending; });
+
+    expect(registerer.unregister).toHaveBeenCalled();
+    expect(ua.stop).toHaveBeenCalled();
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+    expect(toast.error).not.toHaveBeenCalled();
+
+    act(() => { ua.transport.onDisconnect?.(); });
+    expect(result.current.sipStatus).toBe('idle');
+    expect(toast.info).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(60000); });
+    expect(mockUaInstances.length).toBe(1);
+    vi.useRealTimers();
+  });
+
   // === R2-CALL-004: o contrato desconectar -> reconectar nao pode reusar UA encerrado ===
 
   it('R2-CALL-004: connect -> disconnect -> connect cria um NOVO UserAgent', async () => {
