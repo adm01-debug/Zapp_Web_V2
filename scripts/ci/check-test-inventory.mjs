@@ -44,6 +44,10 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // R2-DB-021 / item 303 (P2): prova do modelo de autoria de message_reactions em
+  // container descartavel (docker); passo de YAML a promover em db-guard.yml pelo
+  // dono do workflow (agente não edita workflow).
+  'scripts/db-audit/message-reactions-author-model.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
