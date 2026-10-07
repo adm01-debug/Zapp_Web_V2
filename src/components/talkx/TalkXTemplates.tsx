@@ -31,7 +31,7 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
   const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate } = useTalkXTemplates();
   const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.templates.filters', { cat: 'all', st: 'all' });
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(8);
+  const [pageSize, setPageSize] = useState(8);
   const [mode, setMode] = useState<ViewMode>('list');
   const [editing, setEditing] = useState<TalkXTemplate | null>(null);
   const [deleting, setDeleting] = useState<TalkXTemplate | null>(null);
@@ -144,7 +144,7 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
           </div>
         )}
         </TalkXQueryBoundary>
-        {filtered.length > 0 && <TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={() => {}} noun="templates" />}
+        {filtered.length > 0 && <TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="templates" />}
       </div>
 
       <div className="space-y-4 min-w-0">
