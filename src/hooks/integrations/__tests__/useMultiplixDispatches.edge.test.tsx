@@ -107,7 +107,7 @@ describe('useMultiplixDispatches — leituras via edge `multiplix-dispatch`', ()
     expect(result.current.data).toEqual([DISPATCH_A]);
   });
 
-  it('useMultiplixDispatch localiza o disparo pelo id na lista da edge', async () => {
+  it('useMultiplixDispatch pede o disparo por id na edge (dispatch_id no payload)', async () => {
     functionsInvoke.mockResolvedValue({ data: { data: { dispatches: [DISPATCH_A, DISPATCH_B], total: 2 } }, error: null });
 
     const { result } = renderHook(() => useMultiplixDispatch('d2'), { wrapper: createWrapper() });
@@ -115,8 +115,26 @@ describe('useMultiplixDispatches — leituras via edge `multiplix-dispatch`', ()
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(DISPATCH_B);
     expect(functionsInvoke).toHaveBeenCalledWith('multiplix-dispatch', expect.objectContaining({
-      body: { action: 'dispatch.list', payload: { limit: 50, offset: 0 } },
+      body: { action: 'dispatch.list', payload: { limit: 50, offset: 0, dispatch_id: 'd2' } },
     }));
+  });
+
+  it('useMultiplixDispatch acha um disparo FORA dos 50 mais recentes (recorte por id)', async () => {
+    // A edge so devolve o alvo quando o `dispatch_id` viaja no payload: o
+    // recorte por id entra no MESMO WHERE do escopo de dono. Sem o filtro a
+    // resposta e a pagina dos 50 mais recentes, onde o alvo (antigo) nao esta.
+    const TARGET = { ...DISPATCH_A, id: 'd-antigo', name: 'Disparo antigo' } as MultiplixDispatch;
+    functionsInvoke.mockImplementation((_fn: string, options: { body: { payload: { dispatch_id?: string } } }) =>
+      Promise.resolve(
+        options.body.payload.dispatch_id === TARGET.id
+          ? { data: { data: { dispatches: [TARGET], total: 1 } }, error: null }
+          : { data: { data: { dispatches: [DISPATCH_A, DISPATCH_B], total: 50 } }, error: null },
+      ));
+
+    const { result } = renderHook(() => useMultiplixDispatch('d-antigo'), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(TARGET);
   });
 
   it('useMultiplixDispatch falha com erro nomeado quando o id nao esta na lista', async () => {
