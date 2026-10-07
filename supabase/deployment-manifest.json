@@ -751,8 +751,8 @@
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
-      "bytes": 11174,
-      "sha256": "ce0a201abc2e34c93fed483a05e33daef2cafac39508cd1aaad240856ef9221d"
+      "bytes": 11465,
+      "sha256": "5d4c2305b9eee8afd4e3b716ee04288d69c239b19d5988704c754502491821dc"
     }
   ],
   "functions": [
@@ -1894,7 +1894,7 @@
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "565291048101a520df27f70b158061aa8bcf6995e670fb234e63b565b1d1deb7",
+      "source_sha256": "5cc684a8593741d2cb237b0f5ceefad7f2054088b8029005b0ef28fb4615c5b7",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
@@ -1908,5 +1908,5 @@
       ]
     }
   ],
-  "manifest_sha256": "02241ca18eea98bd8e3ba083e1f41330905c779971193db9cdf8719fa912fa84"
+  "manifest_sha256": "433b18c299746e27a01b7659164c173e4f5ea525825df7ec4f429caefdb246c3"
 }
