@@ -258,7 +258,17 @@ export const MessageBubble = memo(function MessageBubble({
                             // #92A: copia a mídia recebida para o bucket `stickers`
                             // e insere SÓ a URL da cópia na biblioteca.
                             const copy = await copyReceivedStickerToLibrary(message.mediaUrl!, destination);
-                            const { error: insertError } = await supabase.from('stickers').insert({ name: `Recebida ${new Date().toLocaleDateString('pt-BR')}`, image_url: copy.url, category, is_favorite: false, use_count: 0 });
+                            // R2-INB-038: o insert pode falhar de duas formas — resolver com
+                            // { error } (PostgREST/RLS) ou REJEITAR a promessa (falha de
+                            // transporte). As duas têm de cair na mesma compensação, senão a
+                            // cópia publicada logo acima fica órfã no bucket.
+                            let insertError: Error | null = null;
+                            try {
+                              const { error } = await supabase.from('stickers').insert({ name: `Recebida ${new Date().toLocaleDateString('pt-BR')}`, image_url: copy.url, category, is_favorite: false, use_count: 0 });
+                              if (error) insertError = new Error(error.message);
+                            } catch (thrown) {
+                              insertError = thrown instanceof Error ? thrown : new Error(String(thrown));
+                            }
                             if (insertError) {
                               // compensa o objeto recém-publicado: sem INSERT ele ficaria órfão
                               try { await supabase.storage.from('stickers').remove([copy.storagePath]); }

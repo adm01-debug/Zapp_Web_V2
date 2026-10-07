@@ -282,6 +282,31 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
     );
   });
 
+  // R2-INB-038 (aceite 3): o insert pode REJEITAR a promessa, e não só resolver com
+  // { error }. Nos dois casos não pode haver toast de sucesso nem sobrar a cópia
+  // publicada no bucket.
+  it('insert REJEITADO (promessa) não anuncia sucesso e compensa o objeto publicado', async () => {
+    mocks.insert.mockRejectedValue(new Error('falha de transporte'));
+    renderBubble(makeMessage());
+
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
+
+    const [removedPaths] = mocks.remove.mock.calls[0];
+    const [uploadedPath] = mocks.upload.mock.calls[0];
+    expect(removedPaths).toEqual([uploadedPath]);
+    expect(String(uploadedPath)).not.toContain('whatsapp-media');
+
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: 'Erro ao salvar figurinha',
+      variant: 'destructive',
+    });
+    expect(mocks.toast).not.toHaveBeenCalledWith(
+      expect.objectContaining({ title: expect.stringContaining('✅') })
+    );
+  });
+
   it('falha ao baixar a mídia recebida: erro explícito, sem upload e sem INSERT', async () => {
     mocks.fetch.mockResolvedValue({ ok: false, status: 404, blob: async () => new Blob([]) });
     renderBubble(makeMessage());
