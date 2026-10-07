@@ -266,5 +266,54 @@ describe('ScheduleSettings — horário por conexão em business_hours (item 273
 
     await waitFor(() => expect(h.toasts.some(t => t.variant === 'destructive')).toBe(true));
     expect(h.toasts.some(t => t.title === 'Configurações salvas')).toBe(false);
+    // A falha mantém o rascunho: o que o usuário digitou continua na tela.
+    expect(valorDoCampo('Segunda-feira abertura')).toBe('11:00');
+  });
+
+  it('limpar o horário de um dia aberto bloqueia o salvar e mostra erro na tela', async () => {
+    renderSchedule();
+    await waitFor(() => comboComOpcao('Vendas'));
+    await waitFor(() => expect(valorDoCampo('Segunda-feira abertura')).toBe('09:00'));
+
+    // O usuário limpa a abertura de um dia ABERTO (o campo de hora aceita vazio).
+    fireEvent.change(screen.getByLabelText('Segunda-feira abertura'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: /Salvar Horários/i }));
+
+    // O salvar terminou: sem a validação o upsert inválido JÁ saiu; com ela o
+    // erro já está na tela. Só depois disso as duas provas são comparáveis.
+    await waitFor(() =>
+      expect(upsertsBusinessHours().length > 0 || screen.queryByRole('alert') !== null).toBe(true)
+    );
+
+    // NENHUM valor fora do contrato chega ao upsert de business_hours...
+    expect(upsertsBusinessHours()).toHaveLength(0);
+
+    // ...e o erro aparece na tela, apontando o dia aberto com horário em falta.
+    const erro = screen.getByRole('alert');
+    expect(erro).toHaveTextContent('Segunda-feira');
+    expect(erro).toHaveTextContent(/HH:MM/);
+    expect(h.toasts.some(t => t.title === 'Configurações salvas')).toBe(false);
+    expect(h.toasts.some(t => t.variant === 'destructive')).toBe(false);
+  });
+
+  it('salvar com sucesso zera o rascunho e a tela volta ao que veio do banco', async () => {
+    renderSchedule();
+    await waitFor(() => comboComOpcao('Vendas'));
+    await waitFor(() => expect(valorDoCampo('Segunda-feira abertura')).toBe('09:00'));
+
+    // Sábado não tem linha no banco: abre com horário e salva.
+    fireEvent.click(screen.getByRole('switch', { name: 'Sábado aberto' }));
+    fireEvent.change(screen.getByLabelText('Sábado abertura'), { target: { value: '10:30' } });
+    fireEvent.change(screen.getByLabelText('Sábado fechamento'), { target: { value: '15:00' } });
+    expect(screen.getByRole('switch', { name: 'Sábado aberto' })).toHaveAttribute('aria-checked', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: /Salvar Horários/i }));
+    await waitFor(() => expect(h.toasts.some(t => t.title === 'Configurações salvas')).toBe(true));
+
+    // Rascunho zerado: a tela recarrega do banco e o sábado volta fechado.
+    await waitFor(() =>
+      expect(screen.getByRole('switch', { name: 'Sábado aberto' })).toHaveAttribute('aria-checked', 'false')
+    );
+    expect(screen.queryByLabelText('Sábado abertura')).toBeNull();
   });
 });

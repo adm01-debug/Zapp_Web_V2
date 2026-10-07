@@ -54,6 +54,7 @@ export function ScheduleSettings() {
   const { connections, loading: isLoadingConnections } = useConnectionsManager();
   const [chosenConnectionId, setChosenConnectionId] = useState<string | null>(null);
   const [draftHours, setDraftHours] = useState<BusinessHour[] | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Padrão: a conexão marcada como `is_default`; sem nenhuma, a primeira da lista.
   const defaultConnection = connections.find((connection) => connection.is_default) ?? connections[0];
@@ -70,19 +71,43 @@ export function ScheduleSettings() {
 
   const handleConnectionChange = (connectionId: string) => {
     setDraftHours(null);
+    setSaveError(null);
     setChosenConnectionId(connectionId);
   };
 
   const updateHour = (dayOfWeek: number, field: keyof BusinessHour, value: string | boolean) => {
+    setSaveError(null);
     setDraftHours(hours.map((hour) => (hour.day_of_week === dayOfWeek ? { ...hour, [field]: value } : hour)));
   };
 
+  /**
+   * O upsert só aceita o contrato de `business_hours`: dia 0-6, `is_open`
+   * booleano e horários `HH:MM`. Dia aberto com horário vazio ou fora do
+   * padrão (o campo de hora deixa limpar o valor) é barrado aqui, antes de
+   * qualquer chamada ao banco.
+   */
+  const invalidOpenDay = hours.find(
+    (hour) => hour.is_open && (!TIME_PATTERN.test(hour.open_time) || !TIME_PATTERN.test(hour.close_time))
+  );
+
   const handleSave = async () => {
     if (!selectedConnectionId) return;
+    if (invalidOpenDay) {
+      const dia = DAYS_OF_WEEK.find((item) => item.value === invalidOpenDay.day_of_week);
+      setSaveError(
+        `Informe abertura e fechamento de ${dia?.label ?? `dia ${invalidOpenDay.day_of_week}`} no formato HH:MM (ex.: 09:00).`
+      );
+      return; // Nada é enviado ao banco.
+    }
+    setSaveError(null);
     try {
       await saveSettings(hours, awayMessage);
+      // `saveSettings` é `mutateAsync` (useBusinessHours): resolve no sucesso e
+      // rejeita no erro. No sucesso o rascunho é zerado para a tela voltar a
+      // refletir o que o banco devolveu; na falha ele fica como está.
+      setDraftHours(null);
     } catch {
-      // O hook já mostra a falha na tela (toast destrutivo); nada é confirmado aqui.
+      // O hook já mostra a falha na tela (toast destrutivo); o rascunho permanece.
     }
   };
 
@@ -182,6 +207,12 @@ export function ScheduleSettings() {
                   );
                 })}
               </div>
+
+              {saveError && (
+                <p role="alert" className="text-sm text-destructive">
+                  {saveError}
+                </p>
+              )}
 
               <Button
                 onClick={handleSave}
