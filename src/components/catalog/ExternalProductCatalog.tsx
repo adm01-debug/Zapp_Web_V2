@@ -380,13 +380,27 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
   };
 
-  /** CT-28 — "Favoritar N": favorita só quem ainda não é favorito. */
-  const handleFavoriteSelection = () => {
+  /** CT-28 / R2-MOD-043 — "Favoritar N": favorita só quem ainda não é favorito
+   * e só confirma depois da escrita (mesmo contrato da tela de Catálogo:
+   * `toggle` devolve o resultado de cada persistência). */
+  const handleFavoriteSelection = async () => {
     const toFavorite = selectedProducts.filter((p) => !isFavorite(p.id));
-    toFavorite.forEach((p) => {
-      void toggleFavorite({ id: p.id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
-    });
-    if (toFavorite.length > 0) toast.success(`${toFavorite.length} produto(s) adicionado(s) aos favoritos`);
+    if (toFavorite.length === 0) return;
+    // Cada persistência é avaliada sozinha: uma rejeição inesperada não marca
+    // as demais como falha (nada de erro quando parte já foi aplicada).
+    const results = await Promise.all(
+      toFavorite.map(async (p) => {
+        try {
+          return await toggleFavorite({ id: p.id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
+        } catch {
+          return false;
+        }
+      })
+    );
+    const saved = results.filter(Boolean).length;
+    const failed = toFavorite.length - saved;
+    if (saved > 0) toast.success(`${saved} produto(s) adicionado(s) aos favoritos`);
+    if (failed > 0) toast.error(`${failed} produto(s) não foram salvos nos favoritos. Tente novamente.`);
   };
 
   /** CT-28 — entra/sai do modo seleção (sair limpa a seleção). */

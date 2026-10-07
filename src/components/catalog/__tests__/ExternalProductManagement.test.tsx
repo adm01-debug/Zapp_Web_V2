@@ -1,7 +1,8 @@
 import { toastError } from './catalogMocks';
 import { useCallback, useState } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
+import { toast } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductManagement } from '../ExternalProductManagement';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
@@ -106,6 +107,7 @@ describe('ExternalProductManagement', () => {
     mockUseAuth.mockReset();
     mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
     toastError.mockReset();
+    vi.mocked(toast.success).mockClear();
     mockFavorites.mockReset();
     mockFavorites.mockReturnValue({
       favorites: [],
@@ -638,6 +640,65 @@ describe('ExternalProductManagement', () => {
 
       expect(toggle).toHaveBeenCalledTimes(1);
       expect(toggle).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1', name: 'Caneta Plástica Azul' }));
+    });
+
+    it('R2-MOD-043: "Favoritar N" só anuncia o sucesso depois de a escrita confirmar', async () => {
+      const pending: Array<(ok: boolean) => void> = [];
+      const toggle = vi.fn(() => new Promise<boolean>((resolve) => { pending.push(resolve); }));
+      mockFavorites.mockReturnValue({
+        favorites: [], favoriteIds: new Set<string>(), isFavorite: () => false,
+        isLoading: false, toggle,
+      });
+      renderManagement();
+
+      abrirBarra();
+      fireEvent.click(screen.getByRole('button', { name: 'Favoritar 2' }));
+
+      // A escrita segue pendente: nada de confirmação na tela ainda.
+      expect(toggle).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
+
+      await act(async () => { pending.forEach((resolve) => resolve(true)); });
+
+      await waitFor(() =>
+        expect(vi.mocked(toast.success)).toHaveBeenCalledWith('2 produto(s) adicionado(s) aos favoritos'),
+      );
+    });
+
+    it('R2-MOD-043: "Favoritar N" avisa quando a persistência falha, em vez de confirmar', async () => {
+      const toggle = vi.fn().mockResolvedValue(false);
+      mockFavorites.mockReturnValue({
+        favorites: [], favoriteIds: new Set<string>(), isFavorite: () => false,
+        isLoading: false, toggle,
+      });
+      renderManagement();
+
+      abrirBarra();
+      fireEvent.click(screen.getByRole('button', { name: 'Favoritar 2' }));
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith('2 produto(s) não foram salvos nos favoritos. Tente novamente.'),
+      );
+      expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
+    });
+
+    it('R2-MOD-043: anuncia só a quantidade que a escrita confirmou', async () => {
+      const toggle = vi.fn()
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
+      mockFavorites.mockReturnValue({
+        favorites: [], favoriteIds: new Set<string>(), isFavorite: () => false,
+        isLoading: false, toggle,
+      });
+      renderManagement();
+
+      abrirBarra();
+      fireEvent.click(screen.getByRole('button', { name: 'Favoritar 2' }));
+
+      await waitFor(() =>
+        expect(vi.mocked(toast.success)).toHaveBeenCalledWith('1 produto(s) adicionado(s) aos favoritos'),
+      );
+      expect(toastError).toHaveBeenCalledWith('1 produto(s) não foram salvos nos favoritos. Tente novamente.');
     });
   });
 
