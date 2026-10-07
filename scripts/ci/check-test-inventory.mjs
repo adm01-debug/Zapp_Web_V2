@@ -44,6 +44,9 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
+  // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
+  'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.

@@ -54,7 +54,7 @@
     },
     "20260927570000_talkx_e27_realtime_campaign_events.sql": {
       "categoria": "ordem-idempotencia",
-      "motivo": "relation 'talkx_campaign_events' is already member of publication. A imagem ja traz a publicacao supabase_realtime populada. Idempotencia, nao defeito."
+      "motivo": "relation 'talkx_campaign_events' is already member of publication. Causa MEDIDA (nao e a imagem): a irma duplicada 20260927500001_talkx_e27_realtime_campaign_events.sql declara o MESMO conjunto (as 3 tabelas do E27) e aplica antes; sozinha, esta migration aplica sem erro. A publicacao termina com as 3 tabelas do E27, entao nao ha intencao perdida nem migration nova a fazer - uma versao nova, aplicada depois, nao desfaz a falha do arquivo anterior. Prova: scripts/db-audit/talkx-e27-replay-divergence.test.sh. Decisao 20261001-114300-7eb1 (opcao 2: nao editar migration aplicada)."
     },
     "20260928200000_conversation_tasks_realtime_drift.sql": {
       "categoria": "ordem-idempotencia",
