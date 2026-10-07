@@ -1,0 +1,15 @@
+
+Running 10 tests using 1 worker
+
+[1/10] [chromium-authenticated] › e2e/files-tab.spec.ts:168:3 › aba Arquivos — prova local autenticada › carrega os 4 tipos de mídia privada com contagens reais do banco
+[2/10] [chromium-authenticated] › e2e/files-tab.spec.ts:199:3 › aba Arquivos — prova local autenticada › alterna Grid/Lista/Tabela e persiste a preferência em reload
+[3/10] [chromium-authenticated] › e2e/files-tab.spec.ts:225:3 › aba Arquivos — prova local autenticada › modo seleção: item individual, Selecionar todos no recorte e Esc sai
+[4/10] [chromium-authenticated] › e2e/files-tab.spec.ts:267:3 › aba Arquivos — prova local autenticada › painel de detalhes abre com metadados do arquivo e fecha
+[5/10] [chromium-authenticated] › e2e/files-tab.spec.ts:294:3 › aba Arquivos — prova local autenticada › preview abre, navega por teclado/botão e fecha com Esc
+[6/10] [chromium-authenticated] › e2e/files-tab.spec.ts:326:3 › aba Arquivos — prova local autenticada › ARIA: aba selecionada, chips com aria-pressed e nomes acessíveis
+[7/10] [chromium-authenticated] › e2e/files-tab.spec.ts:350:3 › aba Arquivos — prova local autenticada › contraste numérico >= 4.5 em claro, escuro e alto contraste
+[8/10] [chromium-authenticated] › e2e/files-tab.spec.ts:376:3 › aba Arquivos — prova local autenticada › paginação real: aviso do recorte carregado e Carregar tudo até o fim
+[9/10] [chromium-authenticated] › e2e/files-tab.spec.ts:403:3 › aba Arquivos — prova local autenticada › lista vazia: contato sem mídia e busca sem resultado
+[10/10] [chromium-authenticated] › e2e/files-tab.spec.ts:423:3 › aba Arquivos — prova local autenticada › reduce zera animações/transições do caminho da aba
+  10 passed (1.8m)
+EXIT=0
