@@ -249,6 +249,10 @@ expect_value_as 'A.1 (DEFEITO) 1o UPDATE do hook (`is_default=false`, id <> alvo
    ) SELECT count(*) FROM up;"
 expect_value 'A.2 (DEFEITO) ...e deixa ZERO conexao padrao (falha entre as duas operacoes)' '0' \
   "SELECT count(*) FROM public.whatsapp_connections WHERE is_default IS TRUE;"
+# O gatilho BEFORE UPDATE grava updated_at em TODA linha que o UPDATE toca (nao so
+# nas que mudam de valor). O 1o UPDATE do hook toca 3 linhas (todas menos o alvo).
+expect_value 'A.2b (DEFEITO) ...e o gatilho regravou updated_at em 3 linhas' '3' \
+  "SELECT count(*) FROM public.whatsapp_connections WHERE updated_at > '2020-01-04 00:00:00+00';"
 
 # O 2o update mira o alvo; se o alvo nao casa (id sumiu / digitado errado), PostgREST
 # devolve sucesso com 0 linhas e o hook toca o toast de sucesso mesmo assim.
@@ -280,6 +284,13 @@ expect_value 'B.5 efeito colateral: linhas intocadas preservam updated_at (C3/C4
   "SELECT count(*) FROM public.whatsapp_connections
     WHERE id IN ('$C3','$C4')
       AND updated_at IN ('2020-01-03 00:00:00+00','2020-01-04 00:00:00+00');"
+# A troca toca SO as duas linhas que de fato mudam de valor (a padrao anterior e o
+# alvo) — nao ha UPDATE em massa: o gatilho regrava updated_at em 2 linhas, contra 3
+# do caminho antigo (A.2b). Nenhuma outra linha da tabela e tocada.
+expect_value 'B.5b o gatilho regravou updated_at em exatamente 2 linhas (padrao antiga + alvo)' '2' \
+  "SELECT count(*) FROM public.whatsapp_connections
+    WHERE updated_at NOT IN ('2020-01-01 00:00:00+00','2020-01-02 00:00:00+00',
+                             '2020-01-03 00:00:00+00','2020-01-04 00:00:00+00');"
 
 expect_result_as 'B.6 idempotente: alvo que ja e padrao devolve o mesmo uuid' "$C2" "$ADM" \
   "SELECT public.set_default_whatsapp_connection('$C2');"
