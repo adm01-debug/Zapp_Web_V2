@@ -1,10 +1,10 @@
 # docs:
-#   gatilho: dispatch (manual)
+#   gatilho: push na main (supabase/functions/**, config.toml) e dispatch manual
 #   prova: as Edge Functions publicadas batem com o repo
 #   falha: o deploy aborta antes de publicar
 #   avisa: operador que disparou
 # =================================================
-# Deploy de Edge Functions - MANUAL (workflow_dispatch)
+# Deploy de Edge Functions - automatico na main (push) + manual (workflow_dispatch)
 # =================================================
 # Por que existe: ate 28/08/2026 as edge functions eram deployadas na mao.
 # Isso causou drift silencioso entre repo e producao: tres funcoes
@@ -12,8 +12,9 @@
 # com verify_jwt=false em producao sem estarem no config.toml, expostas na
 # internet executando com service_role.
 #
-# Por que MANUAL e nao em push: deploy automatico em main levaria commit
-# ruim direto para producao sem intervencao. Aqui voce escolhe a hora.
+# Historico: de 28/08 a 07/10/2026 foi SO manual (deploy automatico levaria commit ruim direto
+# para producao). Em 07/10/2026 o dono voltou o gatilho em push na main, filtrado por pasta; o
+# gate de producao e o merge na main com CI obrigatorio. O dispatch manual segue para rollback.
 #
 # O config.toml e a fonte da verdade do verify_jwt: qualquer funcao fora da
 # lista de excecoes volta a verify_jwt=true ao ser deployada.
@@ -24,6 +25,17 @@ name: Deploy Edge Functions
 run-name: Deploy Edge Functions (${{ inputs.function_name || 'all' }})
 
 on:
+  # 07/10/2026 (decisao do Joaquim): o deploy volta a ser AUTOMATICO apos o merge na main, so quando o
+  # que muda sao as edge functions ou o config.toml. O gate real continua sendo o CI obrigatorio da main
+  # (6 checks) + este job, que so publica a partir de refs/heads/main, valida destino/credencial, compara
+  # o digest local x remoto e aborta antes de publicar se algo falhar. O dispatch manual continua valendo
+  # (rollback com source_ref, uma funcao so, dry_run, rotate_secrets). No push, inputs vem vazio:
+  # escopo = TODAS (o CLI pula, sem bump de versao, a funcao cujo bundle ja bate com o publicado).
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/config.toml'
   workflow_dispatch:
     inputs:
       function_name:
