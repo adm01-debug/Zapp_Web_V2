@@ -16,7 +16,7 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
   // whatsapp_connection_id — e sem ele o dup-check abaixo casa por
   // external_id/sender GLOBALMENTE, promovendo a 'sent' a mensagem de outra
   // conexão. Falha de lookup ou instância sem conexão: não muta nada.
-  if (!connection) {
+  if (!connection?.id) {
     console.warn(`send.message ignored -- instance ${instance} has no resolved connection`);
     return;
   }
@@ -97,7 +97,7 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
   // R2-API-004: o lookup por external_id abaixo só é escopado por conexão
   // quando ela existe; sem escopo, um recibo atingiria a linha homônima de
   // outra conexão. Fail-closed: sem conexão resolvida, não muta.
-  if (!connection) {
+  if (!connection?.id) {
     console.warn(`messages.update ignored -- instance ${instance} has no resolved connection`);
     return;
   }
@@ -269,7 +269,7 @@ export async function handleMessagesDelete(supabase: EvolutionDbClient, instance
   // R2-API-004: o UPDATE de soft-delete abaixo só ganha o filtro de conexão
   // quando ela existe; sem o filtro ele apaga por external_id em QUALQUER
   // conexão. Fail-closed: sem conexão resolvida, não muta.
-  if (!connection) {
+  if (!connection?.id) {
     console.warn(`messages.delete ignored -- instance ${instance} has no resolved connection`);
     return;
   }
