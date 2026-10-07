@@ -43,6 +43,18 @@ test("corpo 500 montado à mão com .message é achado", () => {
   assert.equal(achados[0].padrao, ".message em resposta 5xx");
 });
 
+test("corpo 500 montado à mão com identificador específico é achado", () => {
+  const achados = acharExposicoes("return new Response(JSON.stringify({ error: schedErr.message }), { status: 500, headers });");
+  assert.equal(achados.length, 1, `esperava 1 achado, veio ${JSON.stringify(achados)}`);
+  assert.equal(achados[0].padrao, ".message em resposta 5xx");
+});
+
+test("objeto de corpo 500 com .message é achado mesmo fora de chamada Response", () => {
+  const achados = acharExposicoes("const r = { status: 500, message: err.message };");
+  assert.equal(achados.length, 1, `esperava 1 achado, veio ${JSON.stringify(achados)}`);
+  assert.equal(achados[0].padrao, ".message em resposta 5xx");
+});
+
 test("4xx com mensagem ao cliente NÃO é achado (convenção do repo)", () => {
   // Caso real de supabase/functions/create-user/index.ts:79 — o motivo do
   // auth.admin.createUser vai ao cliente num 400, e isso é intencional.

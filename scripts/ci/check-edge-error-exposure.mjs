@@ -27,10 +27,12 @@ const RAIZ_PADRAO = "supabase/functions";
 const PADROES = [
   { nome: ".stack na resposta HTTP", re: /(?:errorResponse|jsonResponse|new\s+Response|JSON\.stringify)\s*\([\s\S]*?\.stack\b/ },
   { nome: ".message em resposta 5xx", re: /errorResponse\s*\([^,;]*\.message\s*,\s*5\d\d\b/ },
-  { nome: ".message em resposta 5xx", re: /jsonResponse\s*\([\s\S]*?\b(?:err|error|e|\w*Error)\.message\b[\s\S]{0,160}?,\s*5\d\d\b/ },
-  { nome: ".message em resposta 5xx", re: /new\s+Response\s*\([\s\S]*?\b(?:err|error|e|\w*Error)\.message\b[\s\S]*?\)\s*,\s*\{[\s\S]{0,240}?status\s*:\s*5\d\d\b/ },
-  { nome: ".message em resposta 5xx", re: /new\s+Response\s*\([\s\S]*?\)\s*,\s*\{[\s\S]{0,240}?status\s*:\s*5\d\d\b[\s\S]*?\b(?:err|error|e|\w*Error)\.message\b/ },
+  { nome: ".message em resposta 5xx", re: /jsonResponse\s*\([\s\S]*?\b(?!input\b)\w+\.message\b[\s\S]{0,160}?,\s*5\d\d\b/ },
+  { nome: ".message em resposta 5xx", re: /new\s+Response\s*\([\s\S]*?\b(?!input\b)\w+\.message\b[\s\S]*?\)\s*,\s*\{[\s\S]{0,240}?status\s*:\s*5\d\d\b/ },
+  { nome: ".message em resposta 5xx", re: /new\s+Response\s*\([\s\S]*?\)\s*,\s*\{[\s\S]{0,240}?status\s*:\s*5\d\d\b[\s\S]*?\b(?!input\b)\w+\.message\b/ },
 ];
+
+const PADRAO_CORPO_500_LINHA = /\bstatus\s*:\s*5\d\d\b[^\n]*\b(?!input\b)\w+\.message\b/;
 
 /**
  * Devolve as exposições encontradas num fonte. Função pura — sem I/O, é o contrato dos testes.
@@ -42,6 +44,9 @@ export function acharExposicoes(fonte, arquivo = "arquivo.ts") {
   for (let i = 0; i < linhas.length; i += 1) {
     const semEspaco = linhas[i].trim();
     if (semEspaco.startsWith("//") || semEspaco.startsWith("*") || semEspaco.startsWith("/*")) continue;
+    if (PADRAO_CORPO_500_LINHA.test(linhas[i])) {
+      achados.push({ arquivo, linha: i + 1, padrao: ".message em resposta 5xx", trecho: semEspaco.slice(0, 120) });
+    }
     if (!/(?:errorResponse|jsonResponse|new\s+Response|JSON\.stringify)\s*\(/.test(linhas[i])) continue;
 
     const blocoLinhas = [linhas[i]];
