@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { StickerItem } from '@/components/inbox/stickers/StickerTypes';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
+import { log } from '@/lib/logger';
 
 export function usePersonalStickers() {
   const queryClient = useQueryClient();
@@ -93,9 +94,39 @@ export function usePersonalStickers() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['personal-stickers'] }); toast.success('Figurinha removida'); },
   });
 
-  const incrementUseCount = useCallback((sticker: StickerItem) => {
-    supabase.from('stickers').update({ use_count: sticker.use_count + 1 }).eq('id', sticker.id);
-  }, []);
+  // R2-API-055 (item 485): o contador de uso era escrito com o builder do PostgREST
+  // DESCARTADO — `supabase.from('stickers').update(...).eq(...)` sem consumo. O builder do
+  // supabase-js é THENABLE LAZY: a requisição só é despachada quando alguém consome a
+  // promessa (await/then). Montar a cadeia e jogá-la fora faz a figurinha ser enviada e o
+  // `use_count` NUNCA subir. Aqui a operação é CONSUMIDA e o erro é tratado:
+  //  - o evento contado é o ENVIO (PersonalStickers.handleSend chama uma vez por clique);
+  //  - `stickers.use_count` é nullable no banco e chega por cast — `?? 0` evita NaN;
+  //  - UPDATE de 0 linhas (RLS filtrou sem erro) NÃO é sucesso e não recarrega a lista;
+  //  - falha não fabrica contagem: nada é somado no cliente, o erro vai para o log.
+  const incrementUseCount = useCallback(async (sticker: StickerItem) => {
+    try {
+      const { data, error } = await supabase
+        .from('stickers')
+        .update({ use_count: (sticker.use_count ?? 0) + 1 })
+        .eq('id', sticker.id)
+        .select('id');
+      if (error) {
+        log.error('[PersonalStickers] falha ao registrar o uso da figurinha:', error);
+        return;
+      }
+      if (!data || data.length === 0) {
+        log.warn('[PersonalStickers] uso não contado: nenhuma linha de stickers atualizada:', sticker.id);
+        return;
+      }
+      // A lista recarrega com o contador novo; sem isso o próximo envio partia do valor
+      // carregado (velho) e gravava o mesmo número outra vez.
+      queryClient.invalidateQueries({ queryKey: ['personal-stickers'] });
+    } catch (error) {
+      // O envio já aconteceu: o contador é best-effort e o chamador é fire-and-forget.
+      // Resolver em vez de rejeitar evita uma Promise rejeitada solta no app.
+      log.error('[PersonalStickers] erro ao registrar o uso da figurinha:', error);
+    }
+  }, [queryClient]);
 
   return { profile, profileLoading, profileError, stickers, isLoading, uploading, fileInputRef, handleUpload, toggleFavorite, deleteSticker, incrementUseCount };
 }
