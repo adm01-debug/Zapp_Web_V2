@@ -288,6 +288,11 @@ async function loadRecipients(ctx: ActionContext, dispatchId: string): Promise<R
     // Pagina curta = fim do publico OU corte silencioso do PostgREST; a
     // comparacao com `expected` no fim do laco separa os dois casos.
     if (pageRows.length < RECIPIENTS_PAGE_SIZE) break;
+    // Total multiplo exato da pagina (1.000, 2.000...): a ultima pagina vem
+    // CHEIA, entao a regra acima nao dispara. Sem esta saida a proxima
+    // iteracao pede o range com offset == count, ao qual o PostgREST com
+    // count=exact responde 416 — que virava MULTIPLIX_RECIPIENTS_LOOKUP 502.
+    if (expected !== null && rows.length >= expected) break;
   }
 
   if (expected === null) {
