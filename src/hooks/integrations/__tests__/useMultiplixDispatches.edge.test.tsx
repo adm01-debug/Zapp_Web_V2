@@ -64,6 +64,18 @@ const RECIPIENT_1 = {
   personalized_message: null,
 } as unknown as MultiplixRecipientRow;
 
+function recipientRow(id: string): MultiplixRecipientRow {
+  return {
+    id,
+    company_name_snapshot: `Empresa ${id}`,
+    destino_e164: '+5511999999999',
+    status: 'pending',
+    sent_at: null,
+    error_message: null,
+    personalized_message: null,
+  } as unknown as MultiplixRecipientRow;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   authGetSession.mockResolvedValue({ data: { session: { access_token: 'tok-123' } } });
@@ -128,7 +140,7 @@ describe('useMultiplixDispatches — leituras via edge `multiplix-dispatch`', ()
       body: { action: 'recipients.list', payload: { dispatch_id: 'd1', limit: 500, offset: 0, status: 'sent' } },
       headers: { Authorization: 'Bearer tok-123' },
     });
-    expect(result.current.data).toEqual([RECIPIENT_1]);
+    expect(result.current.data?.rows).toEqual([RECIPIENT_1]);
   });
 
   it("useMultiplixRecipients nao envia status quando o filtro e 'all'", async () => {
@@ -178,5 +190,74 @@ describe('useMultiplixDispatches — leituras via edge `multiplix-dispatch`', ()
     expect(readMultiplixList([])).toEqual({ rows: [], total: null });
     expect(readMultiplixList({ rows: [1], total: 9 })).toEqual({ rows: [1], total: 9 });
     expect(() => readMultiplixList({ nope: true })).toThrow(/formato inesperado/);
+  });
+
+  // R2-MOD-022: a edge responde `{ data: rows, meta: { limit, offset, total } }` —
+  // o `total` (a continuacao) mora no `meta`. Se o hook so olhar o array, ele
+  // descarta o tamanho exato da lista e nao sabe se ha mais paginas.
+  it('readMultiplixList le o total do envelope meta da edge', () => {
+    expect(readMultiplixList({ data: [1], meta: { limit: 500, offset: 0, total: 42 } }))
+      .toEqual({ rows: [1], total: 42 });
+    // total explicito dentro de `data` vence o do `meta` (nao sobrescreve com lixo)
+    expect(readMultiplixList({ data: { recipients: [1], total: 7 }, meta: { total: 9 } }))
+      .toEqual({ rows: [1], total: 7 });
+    // sem total em lugar nenhum continua sendo null (nao se inventa contagem)
+    expect(readMultiplixList({ data: [1], meta: { limit: 500, offset: 0 } }))
+      .toEqual({ rows: [1], total: null });
+  });
+
+  // R2-MOD-022, aceite 1: "destinatario 501 e alcancavel e o total corresponde ao
+  // servidor". O hook pede a pagina 1 (offset 0, limite 500); como ela veio cheia e
+  // o total do servidor e 501, ele PEDE A PAGINA 2 em vez de devolver so o primeiro lote.
+  it('useMultiplixRecipients pagina ate o total e alcanca o destinatario 501', async () => {
+    const page1 = Array.from({ length: 500 }, (_, i) => recipientRow(`r${i + 1}`));
+    functionsInvoke
+      .mockResolvedValueOnce({ data: { data: page1, meta: { limit: 500, offset: 0, total: 501 } }, error: null })
+      .mockResolvedValueOnce({ data: { data: [recipientRow('r501')], meta: { limit: 500, offset: 500, total: 501 } }, error: null });
+
+    const { result } = renderHook(() => useMultiplixRecipients('d1'), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.total).toBe(501);
+    const rows = result.current.data?.rows ?? [];
+    expect(rows).toHaveLength(501);
+    expect(rows[rows.length - 1]?.id).toBe('r501');
+    expect(functionsInvoke).toHaveBeenCalledTimes(2);
+    expect(functionsInvoke).toHaveBeenNthCalledWith(2, 'multiplix-dispatch', {
+      body: { action: 'recipients.list', payload: { dispatch_id: 'd1', limit: 500, offset: 500 } },
+      headers: { Authorization: 'Bearer tok-123' },
+    });
+  });
+
+  // Guarda do outro lado: quando a pagina cheia JA fecha o total do servidor, nao
+  // se pede uma pagina a mais (e nao se mostra "carregando" sem fim).
+  it('useMultiplixRecipients nao pede pagina extra quando o total ja foi alcancado', async () => {
+    const page1 = Array.from({ length: 500 }, (_, i) => recipientRow(`r${i + 1}`));
+    functionsInvoke.mockResolvedValue({ data: { data: page1, meta: { limit: 500, offset: 0, total: 500 } }, error: null });
+
+    const { result } = renderHook(() => useMultiplixRecipients('d1'), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(functionsInvoke).toHaveBeenCalledTimes(1);
+    expect(result.current.data?.rows).toHaveLength(500);
+    expect(result.current.data?.truncated).toBe(false);
+  });
+
+  // A lista por status continua paginando pelo TOTAL do proprio status.
+  it('useMultiplixRecipients mantem o filtro de status em todas as paginas', async () => {
+    const page1 = Array.from({ length: 500 }, (_, i) => recipientRow(`f${i + 1}`));
+    functionsInvoke
+      .mockResolvedValueOnce({ data: { data: page1, meta: { limit: 500, offset: 0, total: 700 } }, error: null })
+      .mockResolvedValueOnce({ data: { data: [recipientRow('f501')], meta: { limit: 500, offset: 500, total: 700 } }, error: null });
+
+    const { result } = renderHook(() => useMultiplixRecipients('d1', 'failed'), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(functionsInvoke).toHaveBeenNthCalledWith(2, 'multiplix-dispatch', {
+      body: { action: 'recipients.list', payload: { dispatch_id: 'd1', limit: 500, offset: 500, status: 'failed' } },
+      headers: { Authorization: 'Bearer tok-123' },
+    });
+    expect(result.current.data?.rows).toHaveLength(501);
   });
 });
