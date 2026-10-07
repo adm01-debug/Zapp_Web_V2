@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Activity, CheckCircle, XCircle, AlertTriangle, Clock, Zap, TrendingUp, Sparkles, MinusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -47,13 +48,18 @@ function percentil(valores: number[], p: number): number | null {
 export function AIProviderHealthPanel() {
   const desde = subHours(new Date(), HORAS_DA_JANELA).toISOString();
 
-  const { data: recentLogs = [], isLoading } = useQuery({
+  // R2-API-043: a consulta NAO filtra por `function_name = 'ai-proxy'`. O
+  // roteador central (`generateWithRouting`) grava o nome da FUNCAO CHAMADORA
+  // em `ai_usage_logs.function_name` (voice-agent, ai-auto-tag, classify-*,
+  // chatbot-l1, ...); filtrar so por `ai-proxy` escondia a atividade real das
+  // funcoes modernas e fazia o painel declarar "nenhuma chamada observada".
+  // Painel "Saude dos Provedores": cobre TODAS as funcoes de IA do ledger.
+  const { data: recentLogs = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['ai-provider-health', HORAS_DA_JANELA],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ai_usage_logs')
         .select('*')
-        .eq('function_name', 'ai-proxy')
         // Janela REAL: sem o recorte, "ultimas 50" seria uma amostra sem periodo.
         .gte('created_at', desde)
         .order('created_at', { ascending: false })
@@ -175,6 +181,42 @@ export function AIProviderHealthPanel() {
     );
   }
 
+  // R2-API-043: erro de LEITURA nao pode se passar por "sem dados". Falha de
+  // consulta e amostra vazia sao afirmacoes diferentes — a primeira diz "nao
+  // consegui olhar", a segunda diz "olhei e nao havia nada".
+  if (isError) {
+    const mensagemDeErro = error instanceof Error ? error.message : String(error ?? '');
+    return (
+      <Card className="border-border/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Activity className="w-4 h-4 text-primary" />
+            Saúde dos Provedores
+            <Badge variant="outline" className="ml-auto text-xs font-normal">erro de leitura</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div role="alert" className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="p-3 rounded-2xl bg-destructive/10 mb-3">
+              <AlertTriangle className="w-8 h-8 text-destructive" />
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              Não foi possível ler o histórico de chamadas de IA
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-[360px]">
+              A leitura de <code>ai_usage_logs</code> falhou. Isto NÃO significa que não houve
+              chamadas — significa que não foi possível observá-las.
+              {mensagemDeErro && <> ({mensagemDeErro})</>}
+            </p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+              Tentar novamente
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Sem observacao nenhuma, o painel NAO mostra KPI: qualquer numero aqui seria
   // afirmacao sobre dado que nao existe — e "100%" era exatamente isso.
   if (total === 0) {
@@ -241,7 +283,7 @@ export function AIProviderHealthPanel() {
           {recentLogs[recentLogs.length - 1] && recentLogs[0] && (
             <> de {format(new Date(recentLogs[recentLogs.length - 1].created_at), 'dd/MM HH:mm', { locale: ptBR })} a {format(new Date(recentLogs[0].created_at), 'dd/MM HH:mm', { locale: ptBR })}</>
           )}
-          {' • '}amostra limitada às {50} mais recentes da janela
+          {' • '}amostra das {50} mais recentes da janela, de todas as funções de IA
           {semMedicaoDeDuracao > 0 && <> • {semMedicaoDeDuracao} sem medição de duração (não contadas como 0ms)</>}
           {recuperadasPorFallback > 0 && <> • {recuperadasPorFallback} atendidas por fallback contam como recuperação, não como erro</>}
         </p>
@@ -266,6 +308,10 @@ export function AIProviderHealthPanel() {
                 ) : (
                   <XCircle className="w-3 h-3 text-destructive shrink-0" />
                 )}
+                <span className="text-muted-foreground truncate max-w-[140px]">
+                  {log.function_name}
+                </span>
+                <span aria-hidden="true" className="text-muted-foreground shrink-0">·</span>
                 <span className="text-muted-foreground truncate flex-1">
                   {providerType}{isFallback && ' → fallback'}
                 </span>
