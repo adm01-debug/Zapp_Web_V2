@@ -10,16 +10,11 @@ import { expect, test, type BrowserContext, type Locator, type Page } from '@pla
  * credenciais do ambiente (`E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` — no local o wrapper
  * `zapp-e2e-local` aponta para o usuário do seed; na ausência delas o cenário é
  * pulado em vez de falhar por motivo obscuro). Ela NÃO usa o `storageState` de
- * `e2e/.auth/` nem depende do projeto `setup`: exige um projeto DESLOGADO que a
- * colete, no mesmo padrão de `chromium-mapa` e `chromium-talkx-launch`.
- *
- * PENDÊNCIA DE CONFIG (fora do escopo deste cartão, que só pode tocar este arquivo):
- * nenhum projeto do `playwright.config.ts` coleta este spec — o `testMatch` de cada um
- * o exclui (`npx playwright test e2e/tarefas-quadro.spec.ts --project=<existente>
- * --list` → `Error: No tests found.`) — e sem uma entrada própria o catch-all de sessão
- * salva o rodaria com o login de `e2e/.auth/`, o que a regra R1 proíbe. O spec está
- * provado verde contra o banco local; o que falta é a entrada de projeto dedicado
- * (ver o relato do cartão).
+ * `e2e/.auth/` nem depende do projeto `setup`: roda no projeto DESLOGADO
+ * `chromium-tarefas` do `playwright.config.ts`, que a coleta pelo `testMatch` próprio,
+ * no mesmo padrão de `chromium-mapa` e `chromium-talkx-launch`. O spec também entra no
+ * `testIgnore` do catch-all `chromium-authenticated`, para nunca ser pego pela sessão
+ * salva de `e2e/.auth/user.json` (regra R1 do CLAUDE.md §0).
  *
  * PROVA (por que cada cenário falha sem a tela funcionar): as asserções leem o
  * `aria-label` do cartão ("titulo, status[, prazo <data>]"), o texto das regiões com
