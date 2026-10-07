@@ -1,7 +1,7 @@
 // Shared helpers for Evolution API webhook and sync functions
 import { evoFetch, extractAvatarUrl } from './evolution-send.ts';
 import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
-import type { EvolutionDbClient } from "./evolution-types.ts";
+import type { EvolutionDbClient, EvolutionDbError } from "./evolution-types.ts";
 
 export interface WebhookPayload {
   event: string;
@@ -240,6 +240,20 @@ export function invalidateConnectionCache(instance?: string): void {
   }
 }
 
+// Erro de consulta NAO e ausencia confirmada: nao entra no cache e derruba o
+// evento — a borda (evolution-webhook/index.ts) converte em HTTP 500 e a
+// Evolution reentrega. Cachear null aqui removia o isolamento por conexao por
+// ate 5 min (R2-API-004).
+export class ConnectionLookupError extends Error {
+  constructor(
+    public readonly instance: string,
+    public override readonly cause: EvolutionDbError,
+  ) {
+    super(`Falha ao resolver conexão da instância ${instance}: connection_lookup_failed (${cause.message})`);
+    this.name = 'ConnectionLookupError';
+  }
+}
+
 // deno-lint-ignore no-explicit-any
 export async function getConnectionByInstance(
   supabase: EvolutionDbClient,
@@ -265,9 +279,7 @@ export async function getConnectionByInstance(
   // (send/update/delete) mutavam sem filtro. Aqui: não cacheia e propaga; o
   // chamador (webhook) devolve 500 e o provedor reprocessa — fail-closed, e a
   // próxima tentativa volta a consultar o banco.
-  if (error) {
-    throw new Error(`Falha ao resolver conexão da instância ${instance}: ${error.message}`);
-  }
+  if (error) throw new ConnectionLookupError(instance, error);
 
   // Ausência confirmada (sem erro) é resultado estável: pode ficar no cache.
   connectionCache.set(instance, {
