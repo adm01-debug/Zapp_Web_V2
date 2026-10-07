@@ -3,6 +3,8 @@
 // o canal de mesmo nome. Hooks com topico fixo montados em dois componentes ao
 // mesmo tempo (TalkXView > TalkXCampaignScheduled, QueuesView > QueueGoalsDialog,
 // DashboardView > AgentPerformancePanel) derrubavam a tela.
+// useRealtimeDashboard entrou na lista depois do achado DASH-REALTIME-001 (item
+// 37): `dashboard-realtime` tambem era topico fixo.
 // Usa o createClient REAL com WebSocket falso (sem rede).
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -24,6 +26,7 @@ vi.mock('@/integrations/supabase/client', async () => {
 import { useTalkX } from '@/hooks/integrations/useTalkX';
 import { useQueueGoals } from '@/hooks/business/useQueueGoals';
 import { useLeaderboard } from '@/hooks/gamification/useLeaderboard';
+import { useRealtimeDashboard } from '@/hooks/analytics/useRealtimeDashboard';
 
 class Boundary extends React.Component<{ children: React.ReactNode }, { err: string | null }> {
   state = { err: null as string | null };
@@ -42,6 +45,7 @@ const cases: Array<[string, () => unknown]> = [
   ['useTalkX', () => useTalkX()],
   ['useQueueGoals', () => useQueueGoals()],
   ['useLeaderboard', () => useLeaderboard()],
+  ['useRealtimeDashboard', () => useRealtimeDashboard()],
 ];
 
 describe('realtime: dois consumidores simultaneos do mesmo hook', () => {

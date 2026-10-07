@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 
 // ---------------------------------------------------------------------------
-// Mock do realtime: um único canal ('dashboard-realtime') recebe 3 `.on()`
-// (INSERT messages, INSERT contacts, UPDATE messages). Guardamos cada handler
-// pelo (tabela, evento) do filtro para disparar o evento certo no teste.
+// Mock do realtime: o canal do dashboard (tópico exclusivo por instância,
+// `uniqueRealtimeTopic`) recebe 3 `.on()` (INSERT messages, INSERT contacts,
+// UPDATE messages). Guardamos cada handler pelo (tabela, evento) do filtro para
+// disparar o evento certo no teste.
 // ---------------------------------------------------------------------------
 type RealtimePayload = {
   new: Record<string, unknown>;
