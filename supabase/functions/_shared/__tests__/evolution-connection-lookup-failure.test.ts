@@ -117,7 +117,7 @@ Deno.test("R2-API-004: erro de lookup não vira cache negativo — a próxima te
   await assertRejects(
     () => getConnectionByInstance(db.client, "inst-erro"),
     Error,
-    "Falha ao resolver conexão",
+    "connection_lookup_failed",
   );
 
   const segunda = await getConnectionByInstance(db.client, "inst-erro");
@@ -193,7 +193,7 @@ Deno.test("R2-API-004: erro de lookup dentro do handler propaga e não muta", as
   await assertRejects(
     () => handleMessagesDelete(db.client, "inst-erro", { messages: [{ key: { id: "3EB0ERR" } }] }, {}),
     Error,
-    "Falha ao resolver conexão",
+    "connection_lookup_failed",
   );
   assertEquals(db.mutacoes.length, 0, "o ramo de erro não pode seguir para a mutação");
 });
