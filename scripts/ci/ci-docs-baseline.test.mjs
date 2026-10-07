@@ -1,4 +1,3 @@
-
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
@@ -39,7 +38,7 @@ function violacoesContagemClaude(texto, totalYaml) {
   const out = [];
   for (const l of linhas(texto)) {
     for (const re of CONTAGEM_ANTIGA) {
-      if (re.test(l)) out.push(`CLAUDE.md mantem contagem antiga: ${l.trim().slice(0, 100)}`);
+      if (re.test(l)) out.push('contagem antiga');
     }
   }
   const chato = achata(texto);
@@ -47,7 +46,7 @@ function violacoesContagemClaude(texto, totalYaml) {
     out.push(`CLAUDE.md nao declara os ${totalYaml} arquivos de .github/workflows/`);
   }
   if (!texto.includes('docs/ci/README.md')) {
-    out.push('CLAUDE.md nao aponta a fonte canonica gerada (docs/ci/README.md)');
+    out.push('fonte canonica ausente');
   }
   return out;
 }
@@ -57,7 +56,7 @@ function violacoesStrictClaude(texto) {
   for (const p of paragrafos(texto)) {
     if (!TOCA_STRICT_FALSE.test(p)) continue;
     if (ROTULO_HISTORICO.test(p)) continue;
-    out.push(`CLAUDE.md trata strict=false sem rotular como revogado/historico: ${achata(p).slice(0, 100)}`);
+    out.push('strict=false sem rotulo');
   }
   return out;
 }
@@ -82,9 +81,9 @@ function violacoesChecklist(plano, tarefas, overrides = {}) {
   for (const t of tarefas) {
     const marca = mapa.get(t.id);
     if (marca === undefined) {
-      out.push(`${t.id}: sem checkbox no plano`);
+      out.push(`${t.id}: sem checkbox`);
     } else if (marca !== estadoEsperado(t, overrides)) {
-      out.push(`${t.id}: checkbox [${marca}] != [${estadoEsperado(t, overrides)}] para o estado ${t.status}`);
+      out.push(`${t.id}: checkbox divergente`);
     }
   }
   return out;
@@ -108,14 +107,14 @@ function violacoesReconciliacao(plano, tarefas, overrides = {}, etapasExigidas =
     if (estadoEsperado(t, overrides) !== declaradoOriginal) precisa.add(t.id);
   }
   for (const id of precisa) {
-    if (!rec.has(id)) out.push(`${id}: sem linha na tabela de reconciliacao`);
+    if (!rec.has(id)) out.push(`${id}: sem tabela`);
   }
   for (const [id, r] of rec) {
-    if (!ESTADOS.includes(r.estado)) out.push(`${id}: estado "${r.estado}" fora do vocabulario da tabela`);
-    if (NAO_CONCLUIDOS.has(r.estado) && r.marca === 'x') out.push(`${id}: estado "${r.estado}" nao pode estar marcado [x]`);
+    if (!ESTADOS.includes(r.estado)) out.push(`${id}: estado invalido`);
+    if (NAO_CONCLUIDOS.has(r.estado) && r.marca === 'x') out.push(`${id}: x invalido`);
     const t = tarefas.find((x) => x.id === id);
     if (t && r.marca !== estadoEsperado(t, overrides)) {
-      out.push(`${id}: tabela [${r.marca}] != [${estadoEsperado(t, overrides)}] do estado reconciliado`);
+      out.push(`${id}: tabela divergente`);
     }
   }
   return out;
@@ -151,7 +150,7 @@ function violacoesCelulaTruncada(plano) {
   if (tabela === null) return ['plano sem a secao "## Reconciliação TRA-009"'];
   return tabela
     .filter((l) => l.includes('…'))
-    .map((l) => `celula cortada com "…" na tabela de reconciliacao: ${l.trim().slice(0, 90)}`);
+    .map(() => 'celula cortada');
 }
 
 function violacoesCabecalhoDuplicado(plano) {
@@ -160,7 +159,7 @@ function violacoesCabecalhoDuplicado(plano) {
   linhas(plano).forEach((l, i) => {
     const m = /^##\s+(.+?)\s*$/.exec(l);
     if (!m) return;
-    if (vistos.has(m[1])) out.push(`cabecalho "## ${m[1]}" duplicado (linhas ${vistos.get(m[1]) + 1} e ${i + 1})`);
+    if (vistos.has(m[1])) out.push('cabecalho duplicado');
     else vistos.set(m[1], i);
   });
   return out;
@@ -215,8 +214,8 @@ const RECON_COMPLETA = [
 ].join('\n');
 
 test('fixture: CLAUDE.md com contagem antiga e strict=false solto e rejeitado', () => {
-  assert.ok(violacoesContagemClaude(CLAUDE_ANTES, 16).length > 0, 'a contagem 14/17 tinha de ser rejeitada');
-  assert.ok(violacoesStrictClaude(CLAUDE_ANTES).length > 0, 'strict=false sem rotulo tinha de ser rejeitado');
+  assert.ok(violacoesContagemClaude(CLAUDE_ANTES, 16).length > 0);
+  assert.ok(violacoesStrictClaude(CLAUDE_ANTES).length > 0);
 });
 
 test('fixture: CLAUDE.md corrigido passa (16 arquivos, fonte gerada, strict=false rotulado)', () => {
@@ -225,7 +224,7 @@ test('fixture: CLAUDE.md corrigido passa (16 arquivos, fonte gerada, strict=fals
 });
 
 test('fixture: etapa que aguarda runtime marcada [x] e rejeitada, [~] passa', () => {
-  assert.ok(violacoesChecklist(PLANO_ANTES, [TAREFA_E76]).length > 0, 'E76 aguardando runtime nao pode ficar [x]');
+  assert.ok(violacoesChecklist(PLANO_ANTES, [TAREFA_E76]).length > 0);
   assert.deepEqual(violacoesChecklist(PLANO_DEPOIS, [TAREFA_E76]), []);
   assert.deepEqual(violacoesChecklist(PLANO_DEPOIS, [TAREFA_E62]), []);
 });
@@ -239,22 +238,19 @@ test('fixture: discrepancia sem linha na tabela de reconciliacao e rejeitada', (
 });
 
 test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitados', () => {
-  assert.ok(violacoesCelulaTruncada(RECON_TRUNCADA).length > 0,
-    'celula cortada no meio tinha de ser rejeitada');
+  assert.ok(violacoesCelulaTruncada(RECON_TRUNCADA).length > 0);
   assert.deepEqual(violacoesCelulaTruncada(RECON_COMPLETA), []);
-  assert.deepEqual(violacoesCelulaTruncada(`${RECON_COMPLETA}\n\n## 0. Sumário executivo\n| x | outro… |`), [],
-    'a regra vale so para a tabela de reconciliacao, nao para o plano inteiro');
-  assert.ok(violacoesCabecalhoDuplicado('## 0. Sumário executivo\n## 0. Sumário executivo').length > 0,
-    'cabecalho "## " repetido tinha de ser rejeitado');
+  assert.deepEqual(violacoesCelulaTruncada(`${RECON_COMPLETA}\n\n## 0. Sumário executivo\n| x | outro… |`), []);
+  assert.ok(violacoesCabecalhoDuplicado('## 0. Sumário executivo\n## 0. Sumário executivo').length > 0);
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
 test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 16, 'o numero de workflows mudou: a documentacao precisa acompanhar');
+  assert.equal(arquivos.length, 16);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*16 workflows\.\*\*/, 'docs/ci/README.md nao declara os 16 workflows');
-  for (const f of arquivos) assert.ok(readme.includes(f), `docs/ci/README.md nao cita ${f}`);
+  assert.match(readme, /\*\*16 workflows\.\*\*/);
+  for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
 test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
@@ -264,17 +260,16 @@ test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
   const claude = await readFile(CLAUDE, 'utf8');
   const baseline = JSON.parse(await readFile(BASELINE, 'utf8'));
-  assert.equal(baseline.branch_protection_main.strict, true, 'a baseline vigente e strict=true');
+  assert.equal(baseline.branch_protection_main.strict, true);
   assert.deepEqual(violacoesStrictClaude(claude), []);
-  assert.match(claude, /\|\s*Branch protection — `strict`\s*\|\s*\*\*`true`\*\*/,
-    'a tabela canonica precisa declarar strict=true como politica vigente');
+  assert.match(claude, /\|\s*Branch protection — `strict`\s*\|\s*\*\*`true`\*\*/);
   assert.match(claude, /403 administrativo é limite de evidência/i);
 });
 
 test('plano: cada checkbox bate com o estado reconciliado do P006', async () => {
   const plano = await readFile(PLANO, 'utf8');
   const { tasks } = JSON.parse(await readFile(P006, 'utf8'));
-  assert.equal(tasks.length, 100, 'o plano de referencia tem 100 etapas');
+  assert.equal(tasks.length, 100);
   assert.deepEqual(violacoesChecklist(plano, tasks, OVERRIDES), []);
 });
 
@@ -287,8 +282,7 @@ test('plano: tabela de reconciliacao cobre as discrepancias e as etapas do TRA-0
 test('plano: nenhuma etapa superada pede reexecucao', async () => {
   for (const [id, b] of blocosSuperados(await readFile(PLANO, 'utf8'))) {
     if (b.marca !== '!') continue;
-    assert.match(b.texto, /SUPERAD|REVOGAD/i,
-      `${id} esta marcada como superada mas o corpo nao diz que nao deve ser reexecutada`);
+    assert.match(b.texto, /SUPERAD|REVOGAD/i);
   }
 });
 
@@ -296,10 +290,10 @@ test('plano: inventario atual e 16 YAML com fonte gerada', async () => {
   const plano = await readFile(PLANO, 'utf8');
   const chato = achata(plano);
   assert.match(chato, /\*\*16\*\* arquivos YAML em `\.github\/workflows\/`/);
-  assert.ok(plano.includes('docs/ci/README.md'), 'o plano precisa apontar a fonte gerada');
-  assert.ok(plano.includes('render-workflow-docs.mjs'), 'o plano precisa citar o gerador');
+  assert.ok(plano.includes('docs/ci/README.md'));
+  assert.ok(plano.includes('render-workflow-docs.mjs'));
   assert.match(chato, /403[^.]*limite de evidência/i);
-  for (const id of ETAPAS_TRA009) assert.ok(plano.includes(id), `o plano perdeu a etapa ${id}`);
+  for (const id of ETAPAS_TRA009) assert.ok(plano.includes(id));
 });
 
 test('E62/E76: os numeros citados conferem com o repositorio', async () => {
@@ -309,32 +303,29 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   const linhasDb = (await readFile(DB_MIGRATE, 'utf8')).split('\n');
   if (linhasDb.at(-1) === '') linhasDb.pop();
   const e62 = rec.get('E62');
-  assert.ok(e62, 'E62 precisa de linha na tabela');
-  assert.ok(e62.linha.includes(`${linhasDb.length} linhas`),
-    `E62 deve registrar o tamanho atual do db-migrate.yml (${linhasDb.length} linhas)`);
-  assert.match(e62.linha, /guardas de DB|pós-apply/i, 'E62 nao pode sugerir remover as guardas de DB');
+  assert.ok(e62);
+  assert.ok(e62.linha.includes(`${linhasDb.length} linhas`));
+  assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock), 'bun.lock precisa resolver playwright 1.63.0');
-  assert.ok(/playwright-core@1\.63\.0/.test(lock), 'bun.lock precisa resolver playwright-core 1.63.0');
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock), 'bun.lock precisa resolver @playwright/test 1.63.0');
+  assert.ok(/playwright@1\.63\.0/.test(lock));
+  assert.ok(/playwright-core@1\.63\.0/.test(lock));
+  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'), `${f} precisa pinar playwright@1.63.0`);
+    assert.ok(wf.includes('playwright@1.63.0'));
   }
   const e76 = rec.get('E76');
-  assert.ok(e76, 'E76 precisa de linha na tabela');
+  assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/, 'E76 deve registrar a versao 1.63.0');
-  assert.match(e76.linha, /não há mismatch/i, 'E76 deve registrar que nao ha mismatch de versao');
+  assert.match(e76.linha, /1\.63\.0/);
+  assert.match(e76.linha, /não há mismatch/i);
 });
 
 test('plano: tabela de reconciliacao sem celula cortada e sem cabecalho "## " duplicado', async () => {
   const plano = await readFile(PLANO, 'utf8');
-  assert.deepEqual(violacoesCelulaTruncada(plano), [],
-    'nenhuma linha da tabela de reconciliacao pode terminar em "…"');
-  assert.deepEqual(violacoesCabecalhoDuplicado(plano), [],
-    'o plano nao pode ter cabecalho "## " repetido');
+  assert.deepEqual(violacoesCelulaTruncada(plano), []);
+  assert.deepEqual(violacoesCabecalhoDuplicado(plano), []);
 });
