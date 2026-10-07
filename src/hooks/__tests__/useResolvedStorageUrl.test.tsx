@@ -90,6 +90,59 @@ describe('useResolvedStorageUrl', () => {
     expect(storageMocks.createSignedUrl).toHaveBeenCalledTimes(1);
   });
 
+  it('descarta o refresh antigo: a próxima mídia não fica sem URL nem presa em carregamento', async () => {
+    const pendentes: Array<{ resolver: (valor: unknown) => void }> = [];
+    storageMocks.createSignedUrl.mockImplementation(
+      () => new Promise((resolver) => { pendentes.push({ resolver }); })
+    );
+
+    const primeira = `${ORIGIN}/storage/v1/object/public/audio-messages/primeira.webm`;
+    const segunda = `${ORIGIN}/storage/v1/object/public/audio-messages/segunda.webm`;
+
+    const { result, rerender } = renderHook(
+      ({ src }: { src: string }) => useResolvedStorageUrl(src),
+      { initialProps: { src: primeira } }
+    );
+
+    await act(async () => {
+      pendentes[0].resolver({
+        data: { signedUrl: `${ORIGIN}/storage/v1/object/sign/audio-messages/primeira.webm?token=primeira` },
+        error: null,
+      });
+    });
+    await waitFor(() => expect(result.current.url).toContain('token=primeira'));
+
+    let refreshAntigo!: Promise<string | null>;
+    await act(async () => {
+      refreshAntigo = result.current.refresh();
+    });
+    expect(pendentes).toHaveLength(2);
+
+    rerender({ src: segunda });
+    await waitFor(() => expect(pendentes).toHaveLength(3));
+
+    await act(async () => {
+      pendentes[2].resolver({
+        data: { signedUrl: `${ORIGIN}/storage/v1/object/sign/audio-messages/segunda.webm?token=segunda` },
+        error: null,
+      });
+    });
+    await waitFor(() => expect(result.current.url).toContain('token=segunda'));
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => {
+      pendentes[1].resolver({
+        data: { signedUrl: `${ORIGIN}/storage/v1/object/sign/audio-messages/primeira.webm?token=primeira-refresh` },
+        error: null,
+      });
+      await refreshAntigo;
+    });
+
+    expect(result.current.url).toContain('token=segunda');
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
   /**
    * R2-INB-059: a assinatura em lote (etapa 10) entra como URL de leitura sem pedir outra ao
    * Storage, mas o locator continua com o hook — `refresh` assina de novo a partir dele, coisa
