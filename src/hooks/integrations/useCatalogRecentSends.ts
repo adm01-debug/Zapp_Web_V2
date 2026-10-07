@@ -7,7 +7,8 @@
  *    há mais de 30 dias continua vendo o próprio histórico.
  *  - mais enviados: agregação da janela de 30 dias, percorrida inteira
  *    por páginas — um teto fixo de linhas faria o ranking contar só os
- *    envios mais novos e subestimar as contagens.
+ *    envios mais novos e subestimar as contagens. Eventos `failed` (tentativa
+ *    em que NENHUMA mensagem chegou ao contato) ficam de fora do ranking.
  *
  * RLS: o SELECT de catalog_send_events já restringe a "meus próprios
  * eventos ou admin/supervisor" — a query não filtra por agent_id de
@@ -90,17 +91,24 @@ export function useCatalogRecentSends(recentLimit = 5) {
         const from = page * PAGE_SIZE;
         const { data, error } = await supabase
           .from('catalog_send_events')
-          .select('product_id, product_name')
+          .select('product_id, product_name, status')
           .gte('created_at', since)
           .order('created_at', { ascending: false })
           .range(from, from + PAGE_SIZE - 1);
         if (error) throw error;
         const rows = data || [];
         for (const e of rows) {
+          // R2-MOD-044 (item 413): `failed` é o envio em que TODAS as mensagens
+          // falharam — nada chegou ao contato (useSendProduct só marca `failed`
+          // quando `failed === total`). Não é um envio e não pode inflar o
+          // ranking. `sent` e `partial` contam: no parcial ao menos uma saiu.
+          if (e.status === 'failed') continue;
           const cur = counts.get(e.product_id);
           if (cur) cur.count += 1;
           else counts.set(e.product_id, { product_id: e.product_id, product_name: e.product_name, count: 1 });
         }
+        // O corte olha as linhas BUSCADAS, não as contadas: a paginação segue a
+        // varredura da janela, não o subconjunto que passou pelo filtro.
         if (rows.length < PAGE_SIZE) break;
       }
       return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, 3);

@@ -19,6 +19,12 @@ export const POS_CHAMADA_MS = 3000;
  * Tres segundos e um meio-termo explicito: tempo de ler o desfecho e apertar
  * "Ligar novamente", curto o bastante para nao segurar o painel quando o agente
  * so quer discar outro numero. "Fechar" encurta a espera (`RESET` na sessao).
+ *
+ * R2-AUTH-051: o relogio automatico NAO corre enquanto ha trabalho por salvar.
+ * Com anotacao digitada (ou uma gravacao em curso), fechar sozinho levaria
+ * embora o rascunho, que so existe no estado deste componente. Nesse caso o
+ * resumo fica na tela ate o agente salvar ou apertar "Fechar"; esvaziar o campo
+ * volta a contar os tres segundos.
  */
 export function PostCallSummary({ segundos }: { segundos: number }) {
   const sessao = useCallSession();
@@ -35,10 +41,16 @@ export function PostCallSummary({ segundos }: { segundos: number }) {
 
   const fechar = useCallback(() => sessao.dispatch({ type: 'RESET' }), [sessao]);
 
+  // R2-AUTH-051: enquanto ha anotacao nao salva (ou uma gravacao em curso), o
+  // fechamento automatico nao dispara — o rascunho so vive neste componente e
+  // um RESET o apagaria junto com o resumo.
+  const temTrabalhoPendente = anotacao.trim().length > 0 || salvando;
+
   useEffect(() => {
+    if (temTrabalhoPendente) return;
     const t = setTimeout(fechar, POS_CHAMADA_MS);
     return () => clearTimeout(t);
-  }, [fechar]);
+  }, [fechar, temTrabalhoPendente]);
 
   const salvar = useCallback(async () => {
     if (!idDaChamada || !anotacao.trim()) return;

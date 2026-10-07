@@ -3,8 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useDebounce } from '@/hooks/performance/useTimingHooks';
 import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
 import { getLogger } from '@/lib/logger';
+import { useNetworkStatus } from '@/hooks/system/useNetworkStatus';
 import {
   TalkMeConflictError,
+  TalkMeOfflineError,
+  TalkMeOutcomeUnknownError,
   type TalkMeClaimResult,
   type TalkMeQueue,
   type TalkMeWaitingContact,
@@ -16,6 +19,21 @@ const PAGE_SIZE = 50;
 const REALTIME_DEBOUNCE_MS = 350;
 const REALTIME_MAX_WAIT_MS = 2_000;
 const ELIGIBILITY_RECONCILE_INTERVAL_MS = 60_000;
+
+/**
+ * Envia o aceite e separa as duas famílias de erro: o servidor respondeu (erro
+ * estruturado, tratado por quem chamou) ou a resposta se perdeu no caminho
+ * (`TalkMeOutcomeUnknownError`). Sem `throwOnError`, a rejeição da promessa só
+ * acontece em falha de transporte/aborto — o servidor não chegou a responder.
+ */
+async function requestClaim(contactId: string) {
+  try {
+    return await supabase.rpc('talk_me_claim', { p_contact_id: contactId });
+  } catch (transportError) {
+    log.warn('Aceite TALK ME sem resposta do servidor; resultado desconhecido', transportError);
+    throw new TalkMeOutcomeUnknownError();
+  }
+}
 
 function mapQueue(row: {
   queue_id: string;
@@ -103,6 +121,13 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
   const eligibilityReconcileInFlightRef = useRef(false);
   const claimingRef = useRef(false);
   const wasOpenRef = useRef(isOpen);
+  const { isOnline } = useNetworkStatus();
+  const isOffline = !isOnline;
+  const isOfflineRef = useRef(isOffline);
+
+  useEffect(() => {
+    isOfflineRef.current = isOffline;
+  }, [isOffline]);
 
   useEffect(() => {
     itemsRef.current = items;
@@ -304,6 +329,18 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     };
   }, [enabled, isOpen, reconcileEligibility]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // Reconectar só reconsulta o estado (leitura). Nenhum aceite é enfileirado:
+    // depois de uma resposta perdida, assumir depende de confirmação explícita
+    // do atendente (etapa 060 — sem aceite automático ao recuperar conexão).
+    const handleOnline = () => {
+      void reconcileEligibility();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [reconcileEligibility]);
+
   useEffect(() => () => {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     refreshBurstStartedAtRef.current = null;
@@ -370,13 +407,21 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
 
   const claim = useCallback(async (contactId: string): Promise<TalkMeClaimResult> => {
     if (!enabled || claimingRef.current) throw new TalkMeConflictError();
+    if (isOfflineRef.current || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+      throw new TalkMeOfflineError();
+    }
     claimingRef.current = true;
     setClaimingContactId(contactId);
     try {
-      const { data, error } = await supabase.rpc('talk_me_claim', { p_contact_id: contactId });
+      const { data, error } = await requestClaim(contactId);
       if (error || !data?.[0]) {
         if (error?.message.includes('talk_me_unavailable')) throw new TalkMeConflictError();
-        throw error ?? new Error('Resposta de aceite inválida.');
+        // Erro estruturado do Postgres/PostgREST = o servidor respondeu e recusou:
+        // falha definitiva. Sem código, a resposta chegou corrompida/incompleta:
+        // o commit pode ter acontecido, então é resultado desconhecido.
+        if (error?.code) throw error;
+        log.warn('Aceite TALK ME sem corpo utilizável; resultado desconhecido', error);
+        throw new TalkMeOutcomeUnknownError();
       }
       const row = data[0];
       setItems((current) => {
@@ -422,6 +467,7 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     itemsError,
     loadMoreError,
     reconciling,
+    isOffline,
     totalCount,
     hasMore,
     loadMore: () => fetchWaiting(true),

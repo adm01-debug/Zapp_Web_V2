@@ -49,11 +49,17 @@ export function EvolutionDisconnectBanner() {
   const handleReconnect = async (conn: DisconnectedInstance) => {
     setReconnecting(conn.instance_id);
     try {
-      const { error } = await supabase.functions.invoke('evolution-api/instance/connect', {
+      const { data, error } = await supabase.functions.invoke('evolution-api/instance/connect', {
         method: 'POST',
         body: { instanceName: conn.instance_id },
       });
       if (error) throw error;
+      // R2-API-042: a Edge Function responde HTTP 200 também nas falhas LÓGICAS — o erro vem no
+      // CORPO (`{ error: true, message }`), não no campo `error` do invoke. Olhando só o
+      // transporte, o banner anunciava "Reconectando..." como se a solicitação tivesse sido aceita.
+      if (data?.error) {
+        throw new Error(typeof data.error === 'string' ? data.error : data.message ?? 'Falha ao reconectar');
+      }
       toast.success(`Reconectando ${conn.instance_id}... Escaneie o QR Code na tela de conexões.`);
     } catch {
       toast.error(`Erro ao reconectar ${conn.instance_id}`);

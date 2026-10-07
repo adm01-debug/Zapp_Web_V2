@@ -1,8 +1,8 @@
 {
   "budgets": {
     "initial-js": {
-      "maxKB": 341,
-      "description": "Max initial JS bundle (excluding lazy chunks). +1KB em 2026-10-01 para o gate de microfone do T17: o hook useMicrophoneGuard entra no grafo inicial porque useSipClient e montado pelo CallSessionProvider (medido 340,2 KB gzip, 0,2 KB acima do teto anterior de 340). A Fase 3 do plano de telefonia (ViewRouter sem voip:34) deve devolver esta folga quando o dialer sair do grafo inicial."
+      "maxKB": 343,
+      "description": "Max initial JS bundle (excluding lazy chunks). +1KB em 2026-10-01 para o gate de microfone do T17: o hook useMicrophoneGuard entra no grafo inicial porque useSipClient e montado pelo CallSessionProvider (medido 340,2 KB gzip, 0,2 KB acima do teto anterior de 340). A Fase 3 do plano de telefonia (ViewRouter sem voip:34) deve devolver esta folga quando o dialer sair do grafo inicial. +2KB em 2026-10-07 (341 -> 343) para o lote 06-07/10 da fabrica local: o grafo inicial recebeu correcoes legitimas (QuarantineMonitorProvider, useCustomShortcuts, reload-blockers, quarantineStore, deployment-update), medido 341,1 KB gzip contra 339,9 KB da main (+1,2 KB). Reduzir de volta ao carregar o monitor de quarentena sob demanda."
     },
     "initial-css": {
       "maxKB": 80,

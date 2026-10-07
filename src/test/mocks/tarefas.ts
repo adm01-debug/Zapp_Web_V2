@@ -82,7 +82,10 @@ export function resetSupabaseMock() {
   supabaseMock.from.mockImplementation(() => {
     const leitura = createQueryBuilder(selectResult.data ?? null, selectResult.error ?? null);
     ultimaLeitura = leitura;
-    const escrita = createQueryBuilder(null, writeResult.error ?? null);
+    // `data` na escrita é o que um `.update(...).select()` devolve (linhas
+    // afetadas) — é o que permite testar que uma reversão de 0 linhas não passa
+    // como sucesso (R2-MOD-053). Sem `.data` o padrão continua `null`.
+    const escrita = createQueryBuilder(writeResult.data ?? null, writeResult.error ?? null);
     return {
       select: (cols: string) => { supabaseMock.select(cols); return leitura; },
       insert: (row: unknown) => { supabaseMock.insert(row); return escrita; },

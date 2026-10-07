@@ -1,7 +1,9 @@
 # Plano de remoção — módulo "Etiquetas" (`view=tags`) — 100 etapas
 
-> Auditoria e plano de execução. **Nada foi removido ainda.** Estado do código em `main` @ 2026-09-27
-> e do banco `tnnnlkbymytvtqngbbqh` lido ao vivo na mesma data.
+> Auditoria e plano de execução. **Status: remoção executada** — as Fases 1–7 foram mergeadas e as
+> tabelas `tags`/`contact_tags` dropadas por `20260927410000_drop_legacy_tags_tables.sql`. O texto abaixo
+> é o plano original de 27/09 (código em `main` @ 2026-09-27 e banco real lido ao vivo na mesma data),
+> redigido quando nada havia sido removido.
 
 ---
 

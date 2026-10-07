@@ -52,7 +52,8 @@ const mouseEvent = { stopPropagation: vi.fn() } as unknown as React.MouseEvent;
  */
 function tableChain(table: string) {
   return {
-    select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) }),
+    // #344: a lista pagina o catálogo (`fetchAllRows` → `.order().order().range()`).
+    select: () => ({ order: () => ({ order: () => ({ range: () => Promise.resolve({ data: [], error: null }) }) }) }),
     delete: () => ({
       eq: (column: string, value: string) => {
         mocks.rowDeleteEq(table, column, value);

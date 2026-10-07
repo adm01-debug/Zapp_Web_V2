@@ -9,10 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tag, Plus, Minus, Loader2, Search } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { isWhatsAppTag, filterCustomTags, getTagDisplayName } from '@/lib/tags';
+import { applyContactTagChange, pendingIds } from '@/services/contact-bulk.service';
 
 interface ContactBulkTagDialogProps {
   open: boolean;
@@ -20,10 +20,12 @@ interface ContactBulkTagDialogProps {
   contactIds: string[];
   allTags: string[];
   onComplete: () => void;
+  /** Recusados pelo banco: o chamador mantém esses IDs selecionados. */
+  onPartialComplete?: (refusedIds: string[]) => void;
 }
 
 export function ContactBulkTagDialog({
-  open, onOpenChange, contactIds, allTags, onComplete,
+  open, onOpenChange, contactIds, allTags, onComplete, onPartialComplete,
 }: ContactBulkTagDialogProps) {
   const [mode, setMode] = useState<'add' | 'remove'>('add');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
@@ -59,32 +61,51 @@ export function ContactBulkTagDialog({
     if (safeSelected.length === 0) return;
     setSaving(true);
     try {
-      const { data: contacts } = await supabase
-        .from('contacts')
-        .select('id, tags')
-        .in('id', contactIds);
+      // R2-AUTH-013: a mutação devolve quem mudou, quem foi recusado e o que falhou.
+      // Antes o SELECT ignorava erro e o laço de UPDATE ignorava o retorno, então o
+      // toast anunciava `contactIds.length` mesmo com 0 linhas afetadas.
+      const outcome = await applyContactTagChange(
+        contactIds,
+        mode === 'add' ? { add: safeSelected } : { remove: safeSelected },
+      );
+      const refused = pendingIds(outcome);
 
-      if (!contacts) throw new Error('Erro ao buscar contatos');
-
-      for (const contact of contacts) {
-        const current = new Set(contact.tags || []);
-        if (mode === 'add') {
-          safeSelected.forEach(t => current.add(t));
-        } else {
-          safeSelected.forEach(t => current.delete(t));
-        }
-        await supabase
-          .from('contacts')
-          .update({ tags: [...current] })
-          .eq('id', contact.id);
+      if (outcome.succeeded.length === 0 && refused.length === 0) {
+        // Nada a mudar: todos já estavam no estado desejado (não é falha).
+        toast.success(
+          mode === 'add'
+            ? `As tags selecionadas já estavam nos ${contactIds.length} contatos`
+            : `As tags selecionadas já não estavam nos ${contactIds.length} contatos`,
+        );
+        onComplete();
+        onOpenChange(false);
+        setSelectedTags(new Set());
+        return;
       }
 
-      toast.success(
-        mode === 'add'
-          ? `${safeSelected.length} tag(s) adicionada(s) a ${contactIds.length} contatos`
-          : `${safeSelected.length} tag(s) removida(s) de ${contactIds.length} contatos`
-      );
-      onComplete();
+      if (outcome.succeeded.length === 0) {
+        // Erro do SDK ou recusa total: falha honesta, sem anunciar sucesso.
+        toast.error(
+          outcome.failed.length > 0
+            ? 'Erro ao atualizar tags. Nenhum contato foi alterado.'
+            : 'Nenhum contato foi atualizado. Verifique se você tem permissão.',
+        );
+        return;
+      }
+
+      if (refused.length > 0) {
+        toast.warning(`${outcome.succeeded.length} de ${contactIds.length} contatos atualizados`, {
+          description: 'Os demais não puderam ser atualizados (sem permissão ou sem alteração).',
+        });
+        onPartialComplete?.(refused);
+      } else {
+        toast.success(
+          mode === 'add'
+            ? `${safeSelected.length} tag(s) adicionada(s) a ${outcome.succeeded.length} contatos`
+            : `${safeSelected.length} tag(s) removida(s) de ${outcome.succeeded.length} contatos`,
+        );
+        onComplete();
+      }
       onOpenChange(false);
       setSelectedTags(new Set());
     } catch {

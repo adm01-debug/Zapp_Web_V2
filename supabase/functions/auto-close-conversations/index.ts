@@ -37,6 +37,13 @@ export interface AutoCloseInjected {
 
 type AuthzResult = { ok: true } | { ok: false; status: number; message: string };
 
+/** Texto curto do erro devolvido pelo PostgREST, para log e relatório. */
+function errorReason(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  const message = (err as { message?: unknown } | null)?.message;
+  return typeof message === "string" ? message : String(err);
+}
+
 /**
  * Autoriza o chamador: cron com `x-cron-secret` válido OU admin/supervisor por JWT.
  * Qualquer outra coisa devolve a negação (401/403) sem tocar o banco.
@@ -147,38 +154,56 @@ export async function handleAutoCloseConversations(
     }
 
     let closedCount = 0;
+    let failedCount = 0;
+    const failures: string[] = [];
 
     for (const contact of staleContacts) {
+      // R2-API-028: cada escrita é conferida. `closed` só sobe quando as três
+      // concluem — antes o laço somava encerramento ignorando o `error`.
+      const stepErrors: string[] = [];
+
       if (config.close_message) {
-        await supabase.from("messages").insert({
+        const { error: messageError } = await supabase.from("messages").insert({
           contact_id: contact.id,
           content: config.close_message,
           sender: "agent",
           message_type: "text",
         });
+        if (messageError) stepErrors.push(`message: ${errorReason(messageError)}`);
       }
 
-      await supabase.from("conversation_closures").insert({
+      const { error: closureError } = await supabase.from("conversation_closures").insert({
         contact_id: contact.id,
         close_reason: "inactivity",
         outcome: "auto_closed",
         notes: `Auto-closed after ${config.inactivity_hours}h of inactivity`,
       });
+      if (closureError) stepErrors.push(`closure: ${errorReason(closureError)}`);
 
-      await supabase
+      const { error: unassignError } = await supabase
         .from("contacts")
         .update({ assigned_to: null })
         .eq("id", contact.id);
+      if (unassignError) stepErrors.push(`unassign: ${errorReason(unassignError)}`);
+
+      if (stepErrors.length > 0) {
+        failedCount++;
+        failures.push(`${contact.id}: ${stepErrors.join("; ")}`);
+        log.error("Failed to auto-close conversation", { contactId: contact.id, errors: stepErrors });
+        continue;
+      }
 
       closedCount++;
     }
 
-    log.info(`Auto-closed ${closedCount} conversations`);
-    log.done(200, { closed: closedCount });
+    log.info(`Auto-closed ${closedCount} conversations`, { failed: failedCount });
+    log.done(200, { closed: closedCount, failed: failedCount });
 
     return jsonResponse({
       message: `Auto-closed ${closedCount} conversations`,
       closed: closedCount,
+      failed: failedCount,
+      errors: failures.slice(0, 10),
     }, 200, req);
   } catch (error) {
     log.error("Unexpected error", { error: error instanceof Error ? error.message : String(error) });

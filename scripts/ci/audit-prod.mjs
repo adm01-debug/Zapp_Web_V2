@@ -12,15 +12,37 @@
 //     vite › tinyglobby › fdir › picomatch
 //     high: Picomatch has a ReDoS ... - https://github.com/advisories/GHSA-...
 //
-// Uso: node scripts/ci/audit-prod.mjs [--level high|critical] [--input arquivo]
+// R2-INF-009: `bun audit` sai com 1 tanto para advisory quanto para falha de
+// registry, e o passo do CI neutraliza esse status. Por isso o gate NAO aceita
+// "texto que fala em vulnerability": exige o relatorio completo (linha de resumo
+// no formato do bun, com as contagens fechando com os advisories lidos) e falha
+// fechado para qualquer erro operacional — mesmo que a mensagem contenha a
+// palavra "vulnerability" (ex.: "Could not retrieve the vulnerability database").
+// O status do coletor chega pelo --status (gravado pelo CI), para crash/abort
+// nao passar como verde.
+//
+// Uso: node scripts/ci/audit-prod.mjs [--level high|critical] [--input arquivo] [--status arquivo]
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { resolverExecutavel } from "../lib/seguranca-processo.mjs";
 
 const SEVERITIES = ["low", "moderate", "high", "critical"];
+
+// `bun audit` usa 0 (nada no nivel) e 1 (advisory OU falha de registry: os dois
+// casos sao indistinguiveis pelo status, por isso o relatorio e' quem decide).
+const STATUS_COLETOR_VALIDOS = new Set([0, 1]);
+
+// Resumo que o bun 1.4.0 (versao pinada no CI) imprime — nada mais e' relatorio.
+const RESUMO_LIMPO = /^No vulnerabilities found(?: \(checked \d+ packages?\))?\.?$/iu;
+const RESUMO_CONTADO = /^(\d+)\s+vulnerabilit(?:y|ies)\s*\(([^)]*)\)\.?$/iu;
+// Erro operacional do coletor: o bun escreve "error: ..." no proprio fluxo.
+// A forma reconhecida como erro operacional e' exatamente uma linha iniciada
+// por "error:". O  anterior casava antes do hifen e confundia cabecalhos de
+// pacote como error-ex@1.2.3 (dados validos do relatorio) com erro operacional.
+const LINHA_ERRO = /^error:/iu;
 
 export function parseAuditText(text) {
   const findings = [];
@@ -70,12 +92,51 @@ export function evaluate(findings, prodDeps, minLevel = "high") {
   return blocking;
 }
 
+/**
+ * Diz se o texto e' um relatorio de audit COMPLETO (e nao um erro operacional
+ * que por acaso cita a palavra "vulnerability"). Sem resumo reconhecivel, ou com
+ * contagens que nao fecham, o gate falha fechado.
+ */
+export function validarRelatorio(text) {
+  const linhas = String(text ?? "")
+    .replace(/\r\n?/gu, "\n")
+    .split("\n")
+    .map((linha) => linha.trim())
+    .filter(Boolean);
+  const erro = linhas.find((linha) => LINHA_ERRO.test(linha));
+  if (erro) return { ok: false, motivo: `erro operacional do coletor: ${erro.slice(0, 300)}` };
+  if (linhas.some((linha) => RESUMO_LIMPO.test(linha))) return { ok: true, total: 0 };
+  const resumo = linhas.map((linha) => linha.match(RESUMO_CONTADO)).find(Boolean);
+  if (!resumo) return { ok: false, motivo: "saida sem a linha de resumo do bun audit (relatorio parcial ou falha operacional)" };
+  const total = Number(resumo[1]);
+  const contagens = [...resumo[2].matchAll(/(\d+)\s+(low|moderate|high|critical)/giu)].map((m) => Number(m[1]));
+  const soma = contagens.reduce((acc, numero) => acc + numero, 0);
+  if (contagens.length === 0 || soma !== total) {
+    return { ok: false, motivo: `resumo inconsistente: total ${total}, contagens [${contagens.join(", ")}]` };
+  }
+  return { ok: true, total };
+}
+
+/** Le o status preservado pelo CI. Ausente/ilegivel/fora de {0,1} e' falha operacional. */
+export function lerStatusColetor(arquivo, root) {
+  const caminho = path.resolve(root, arquivo);
+  if (!existsSync(caminho)) return { ok: false, motivo: `status do coletor ausente: ${arquivo}` };
+  const texto = readFileSync(caminho, "utf8").trim();
+  if (!/^\d+$/u.test(texto)) return { ok: false, motivo: `status do coletor ilegivel: ${texto.slice(0, 60) || "(vazio)"}` };
+  const codigo = Number(texto);
+  if (!STATUS_COLETOR_VALIDOS.has(codigo)) {
+    return { ok: false, motivo: `status ${codigo} do coletor nao e 0/1 (bun audit interrompido?)` };
+  }
+  return { ok: true, codigo };
+}
+
 function parseArgs(argv) {
-  const args = { level: "high", input: null, packageJson: "package.json" };
+  const args = { level: "high", input: null, packageJson: "package.json", status: null };
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === "--level") args.level = argv[++index];
     else if (argv[index] === "--input") args.input = argv[++index];
     else if (argv[index] === "--package-json") args.packageJson = argv[++index];
+    else if (argv[index] === "--status") args.status = argv[++index];
     else throw new Error(`Argumento desconhecido: ${argv[index]}`);
   }
   if (!SEVERITIES.includes(args.level)) throw new Error(`--level invalido: ${args.level}`);
@@ -90,9 +151,22 @@ export function main(argv = process.argv.slice(2), root = process.cwd()) {
   const pkg = JSON.parse(readFileSync(path.resolve(root, args.packageJson), "utf8"));
   const prodDeps = Object.keys(pkg.dependencies ?? {});
 
+  if (args.status) {
+    const status = lerStatusColetor(args.status, root);
+    if (!status.ok) {
+      console.error(`ERRO: ${status.motivo}`);
+      return 2;
+    }
+  }
+
   let text;
   if (args.input) {
-    text = readFileSync(path.resolve(root, args.input), "utf8");
+    const caminho = path.resolve(root, args.input);
+    if (!existsSync(caminho)) {
+      console.error(`ERRO: relatorio de audit ausente: ${args.input}`);
+      return 2;
+    }
+    text = readFileSync(caminho, "utf8");
   } else {
     let bunBin;
     try {
@@ -109,19 +183,24 @@ export function main(argv = process.argv.slice(2), root = process.cwd()) {
     text = `${run.stdout ?? ""}\n${run.stderr ?? ""}`;
   }
 
-  // bun audit sai com 1 tanto para advisory quanto para falha de registry: o que
-  // distingue e o relatorio. Sem a linha de resumo ("N vulnerabilities" / "No
-  // vulnerabilities found") a saida nao e um audit e o gate falha fechado.
-  if (!/\bvulnerabilit(y|ies)\b/i.test(text)) {
-    console.error("ERRO: saida do bun audit nao reconhecida como relatorio (falha operacional?):");
+  const relatorio = validarRelatorio(text);
+  if (!relatorio.ok) {
+    console.error(`ERRO: ${relatorio.motivo}`);
     console.error(text.trim().slice(0, 2000) || "(vazia)");
     return 2;
   }
 
   const findings = parseAuditText(text);
+  const advisories = findings.reduce((acc, finding) => acc + finding.advisories.length, 0);
+  if (advisories !== relatorio.total) {
+    console.error(
+      `ERRO: relatorio parcial — o resumo declara ${relatorio.total} vulnerabilidade(s), mas ${advisories} advisory(s) foram lidos.`,
+    );
+    return 2;
+  }
+
   const blocking = evaluate(findings, prodDeps, args.level);
-  const total = findings.length;
-  console.log(`bun audit: ${total} pacote(s) com advisory; ${prodDeps.length} dependencias de producao consideradas.`);
+  console.log(`bun audit: ${findings.length} pacote(s) com advisory; ${prodDeps.length} dependencias de producao consideradas.`);
   if (blocking.length === 0) {
     console.log(`OK: nenhuma advisory >= ${args.level} alcancavel por dependencia de producao.`);
     return 0;

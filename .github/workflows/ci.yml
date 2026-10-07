@@ -322,11 +322,19 @@ jobs:
 
       # Um unico "bun audit": o relatorio completo (inclui devDependencies) sai sempre,
       # e o gate bloqueante le o mesmo arquivo em vez de consultar o registry de novo.
+      # O status do coletor vai para audit-status.txt em vez de ser neutralizado com
+      # `|| true`: `bun audit` sai com 1 tanto para advisory quanto para falha de
+      # registry, e o gate confere o codigo E o relatorio (R2-INF-009).
       - name: 🔎 Audit completo (informativo, inclui devDependencies)
-        run: bun audit --audit-level=low 2>&1 | tee audit-report.txt || true
+        run: |
+          set -euo pipefail
+          status=0
+          bun audit --audit-level=low > audit-report.txt 2>&1 || status=$?
+          echo "$status" > audit-status.txt
+          cat audit-report.txt
 
       - name: 🔒 Audit bloqueante (HIGH/CRITICAL em dependencias de producao)
-        run: node scripts/ci/audit-prod.mjs --level high --input audit-report.txt
+        run: node scripts/ci/audit-prod.mjs --level high --input audit-report.txt --status audit-status.txt
 
       - name: 🔍 Detect secrets introduced in commits
         # v3 roda em Node 24. O action calcula o intervalo do evento e falha
@@ -370,8 +378,14 @@ jobs:
       # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
       # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
       # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
+      # chromium-mapa (E71/E72 picker, E73 cadastro, E74 mapa/pino) entra AQUI também:
+      # ele já roda no e2e-logado.yml (pós-merge), mas é deslogado — o projeto não
+      # declara `setup` nem `storageState`; as specs autenticam por sessão FALSA
+      # (installFakeSession) com REST/RPC e Mapbox mockados, logo executam sem secret
+      # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
+      # mapa (#463 / E75).
       - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
         env:
           CI: true
 

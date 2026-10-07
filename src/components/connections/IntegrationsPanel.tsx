@@ -81,18 +81,24 @@ function IntegrationForm({
               )}
             </div>
           ))}
-
-          <div className="flex gap-2">
-            <Button onClick={onSave} disabled={isLoading} className="flex-1">
-              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Salvar
-            </Button>
-            <Button variant="destructive" onClick={onDelete} disabled={isLoading}>
-              Remover
-            </Button>
-          </div>
         </>
       )}
+
+      {!values.enabled && (
+        <p className="text-sm text-muted-foreground">
+          Integração desativada. Use Salvar para registrar a desativação no provedor.
+        </p>
+      )}
+
+      <div className="flex gap-2">
+        <Button onClick={onSave} disabled={isLoading} className="flex-1">
+          {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          Salvar
+        </Button>
+        <Button variant="destructive" onClick={onDelete} disabled={isLoading}>
+          Remover
+        </Button>
+      </div>
     </div>
   );
 }

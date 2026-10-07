@@ -171,6 +171,10 @@ const CATALOG_STATS_TTL_MS = 60_000;
 export const RATE_LIMIT = 60;
 export const RATE_WINDOW_MS = 60_000;
 
+/** Janela do filtro "novos" (`is_new` em list_products): 30 dias, fronteira
+ * inclusiva (created_at >= corte). */
+const NEW_PRODUCT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
 /**
  * CT-19 (E26.3) — limite POR AÇÃO. `list_products` é a ação que abre a tela e
  * refaz a consulta a cada busca/página, por isso 120/min (o dobro das demais);
@@ -259,6 +263,9 @@ export interface CatalogHandlerDeps {
   localClient?: SupabaseClient;
   /** Substitui o client do catálogo externo (PROMOGIFTS_*). */
   extClient?: SupabaseClient;
+  /** Relógio injetável: o teste fixa o instante e prova o valor exato do
+   * corte de 30 dias do filtro `is_new` (fronteira inclusiva, UTC/ISO). */
+  now?: () => Date;
 }
 
 export async function promogiftsCatalogHandler(
@@ -350,6 +357,17 @@ export async function promogiftsCatalogHandler(
         price_min, price_max, color, material, has_engraving,
       } = paramsParse.data;
 
+      // Janela inclusiva de 30 dias do filtro "novos": o contrato público
+      // continua `is_new: true`, mas o predicado exige também
+      // created_at >= agora-30d — produto marcado como novo há mais de 30
+      // dias não deve aparecer no filtro new_30d (listagem e exportação).
+      // O corte é calculado UMA vez por requisição, em UTC/ISO, fora do
+      // buildProductsQuery: a consulta paginada e a contagem de fallback do
+      // PGRST103 usam exatamente o mesmo instante de corte.
+      const newProductsCutoffIso = new Date(
+        (deps.now?.() ?? new Date()).getTime() - NEW_PRODUCT_WINDOW_MS,
+      ).toISOString();
+
       // Categoria + descendentes: path e um caminho materializado por
       // uuid ("/pai/filho/"); o proprio id ja e prefixo do path dos filhos.
       // Resolvido uma unica vez antes de montar a query, pra reusar o mesmo
@@ -373,7 +391,7 @@ export async function promogiftsCatalogHandler(
           q = categoryIds && categoryIds.length > 0 ? q.in("category_id", categoryIds) : q.eq("category_id", category_id);
         }
         if (is_featured) q = q.eq("is_featured", true);
-        if (is_new) q = q.eq("is_new", true);
+        if (is_new) q = q.eq("is_new", true).gte("created_at", newProductsCutoffIso);
         if (is_bestseller) q = q.eq("is_bestseller", true);
         if (is_kit) q = q.eq("is_kit", true);
         if (allows_personalization) q = q.eq("allows_personalization", true);

@@ -208,15 +208,22 @@ export function useContactsCRUD() {
         if ('latitude' in contact) payload.latitude = toCoordinate(contact.latitude);
         if ('longitude' in contact) payload.longitude = toCoordinate(contact.longitude);
 
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('contacts')
           .update(payload)
-          .eq('id', contact.id);
+          .eq('id', contact.id)
+          .select('id');
         if (error) {
           if (error.code === '23505' && error.message?.includes('contacts_phone_unique')) {
             throw new Error('Já existe outro contato com este número de telefone.');
           }
           throw error;
+        }
+        // R2-AUTH-013: sem `.select('id')` o UPDATE sob RLS devolvia `error: null` com 0
+        // linhas (contato fora do alcance) e o fluxo anunciava "atualizado com sucesso".
+        // Agora 0 linhas afetadas é falha explícita.
+        if (!data || data.length === 0) {
+          throw new Error('Nenhum contato foi atualizado. Verifique se você tem permissão.');
         }
       },
       {

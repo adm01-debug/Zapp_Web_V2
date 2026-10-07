@@ -77,6 +77,45 @@ describe('sanitizeEmailHtml — imagens', () => {
     expect(attr(out, 'img', 'alt')).toContain('bloqueada por privacidade');
   });
 
+  it('bloqueia imagem com URL relativa ao protocolo (//host/...)', () => {
+    const out = sanitizeEmailHtml('<img src="//cdn.example.test/pixel.gif" alt="x">');
+    expect(attr(out, 'img', 'src')).toBeNull();
+    expect(attr(out, 'img', 'title')).toContain('bloqueada por privacidade');
+    expect(attr(out, 'img', 'loading')).toBe('lazy');
+    expect(attr(out, 'img', 'referrerpolicy')).toBe('no-referrer');
+  });
+
+  it('bloqueia URL relativa ao protocolo sem alt usando o placeholder padrão', () => {
+    const out = sanitizeEmailHtml('<img src="//cdn.example.test/pixel.gif">');
+    expect(attr(out, 'img', 'src')).toBeNull();
+    expect(attr(out, 'img', 'alt')).toContain('bloqueada por privacidade');
+  });
+
+  it('não trata caminho relativo local (sem host) como imagem externa', () => {
+    const out = sanitizeEmailHtml('<img src="/assets/logo.png" alt="logo">');
+    expect(attr(out, 'img', 'src')).toBe('/assets/logo.png');
+  });
+
+  it('bloqueia URL relativa ao protocolo com espaços de borda (o navegador ignora)', () => {
+    const out = sanitizeEmailHtml('<img src="  //cdn.example.test/pixel.gif">');
+    expect(attr(out, 'img', 'src')).toBeNull();
+  });
+
+  it('bloqueia URL relativa ao protocolo com TAB de borda (o navegador remove)', () => {
+    const out = sanitizeEmailHtml('<img src="\t//cdn.example.test/pixel.gif">');
+    expect(attr(out, 'img', 'src')).toBeNull();
+  });
+
+  it('bloqueia TAB no meio da URL que o navegador colapsa em //host', () => {
+    const out = sanitizeEmailHtml('<img src="/\t/host/pixel.gif">');
+    expect(attr(out, 'img', 'src')).toBeNull();
+  });
+
+  it('bloqueia esquema/maiúsculas mistas (HTTPS:// e CID:)', () => {
+    expect(attr(sanitizeEmailHtml('<img src="HTTPS://cdn.example.com/x.gif">'), 'img', 'src')).toBeNull();
+    expect(attr(sanitizeEmailHtml('<img src="CiD:logo">'), 'img', 'src')).toBeNull();
+  });
+
   it('remove src de data: URL > 32 KB e aplica alt de fallback quando não havia alt', () => {
     const bigData = 'data:image/png;base64,' + 'A'.repeat(33000);
     const out = sanitizeEmailHtml(`<img src="${bigData}">`);

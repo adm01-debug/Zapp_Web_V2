@@ -15,7 +15,11 @@ const { mockFrom, createSignedUrls, limitSpy, orMock, orderSpy, selectSpy } = vi
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (...args: unknown[]) => mockFrom(...args),
-    storage: { from: () => ({ createSignedUrls }) },
+    storage: {
+      from: (bucket: string) => ({
+        createSignedUrls: (paths: string[], ttl: number) => createSignedUrls(bucket, paths, ttl),
+      }),
+    },
   },
 }));
 
@@ -72,7 +76,7 @@ const chain = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  createSignedUrls.mockImplementation((paths: string[]) =>
+  createSignedUrls.mockImplementation((_bucket: string, paths: string[]) =>
     Promise.resolve({
       data: paths.map((path) => ({ path, signedUrl: `https://signed.test/${path}`, error: null })),
       error: null,
@@ -246,5 +250,109 @@ describe('classificador de nome (etapa 09)', () => {
   it('data invalida nao vira "Invalid Date"', () => {
     expect(shortDateTime('nao-e-data')).toBe('');
     expect(shortDateTime(null)).toBe('');
+  });
+});
+
+describe('#309 / R2-INB-012 - galeria nao diverge do contador (audio WebM)', () => {
+  it('audio WebM sem metadata nao vira video: listagem casa com o chip de Audio', async () => {
+    // Regressao do defeito: message_type='audio' + URL .webm, sem media_type/mimetype e sem ptt
+    // (o fallback por extensao classificava como video, enquanto o contador conta 'audio').
+    limitSpy.mockResolvedValueOnce({
+      data: [
+        {
+          ...mediaRow({ id: 'w1', media_url: 'https://x/storage/audio-messages/c1/voice.webm' }),
+          message_type: 'audio', media_type: null, media_mimetype: null,
+          media_filename: null, media_size: null, ptt: false,
+        },
+      ],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0].type).toBe('audio');
+  });
+});
+
+describe('R2-DB-022 B2 — mídia privada só por assinatura do path canônico (pós ACL)', () => {
+  const STORAGE = 'https://test.supabase.co';
+  const privateLocator = (bucket: string, path: string) =>
+    `${STORAGE}/storage/v1/object/public/${bucket}/${path}`;
+
+  it('assina por bucket com o path canônico (nunca a URL inteira) e mantém o locator durável no item', async () => {
+    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const calls = createSignedUrls.mock.calls.map(([bucket, paths, ttl]) => ({
+      bucket: bucket as string,
+      paths: paths as string[],
+      ttl: ttl as number,
+    }));
+    // Sem createSignedUrls (ou com outro path) este teste fica vermelho: é a prova de que a
+    // galeria só mostra mídia privada por assinatura.
+    expect(calls).toEqual(expect.arrayContaining([
+      { bucket: 'whatsapp-media', paths: ['image/3EB0E6947FC0A0ECAED14D_1790283276022.jpg'], ttl: 3600 },
+      { bucket: 'audio-messages', paths: ['audio/ptt-1.ogg'], ttl: 3600 },
+    ]));
+    for (const { paths } of calls) {
+      for (const path of paths) expect(path).not.toMatch(/^https?:/);
+    }
+
+    const byId = Object.fromEntries(result.current.items.map((i) => [i.id, i]));
+    // `url` continua sendo o locator durável (é o que o encaminhamento copia); quem exibe usa `signedUrl`.
+    expect(byId['5'].url).toBe(PRIVATE_IMAGE);
+    expect(byId['5'].signedUrl).toContain('image/3EB0E6947FC0A0ECAED14D_1790283276022.jpg');
+    expect(byId['5'].signedUrl).not.toBe(PRIVATE_IMAGE);
+  });
+
+  it('imagem, vídeo, áudio e documento privados saem todos com signedUrl do bucket certo', async () => {
+    const row = (id: string, media_url: string, extra: Record<string, unknown>) => ({
+      ...mediaRow({ id, media_url }), media_filename: null, media_size: null, ...extra,
+    });
+    limitSpy.mockResolvedValueOnce({
+      data: [
+        row('img', privateLocator('whatsapp-media', 'c1/imagem/foto.jpg'), { message_type: 'image', media_type: 'image/jpeg', media_mimetype: 'image/jpeg' }),
+        row('vid', privateLocator('whatsapp-media', 'c1/video/clipe.mp4'), { message_type: 'video', media_type: 'video/mp4', media_mimetype: 'video/mp4' }),
+        row('aud', privateLocator('audio-messages', 'c1/audio/voz.ogg'), { message_type: 'audio', media_type: 'audio/ogg', media_mimetype: 'audio/ogg' }),
+        row('doc', privateLocator('whatsapp-media', 'c1/documento/contrato.pdf'), { message_type: 'document', media_type: 'application/pdf', media_mimetype: 'application/pdf' }),
+      ],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const byId = Object.fromEntries(result.current.items.map((i) => [i.id, i]));
+    expect(byId['img'].type).toBe('image');
+    expect(byId['img'].signedUrl).toContain('c1/imagem/foto.jpg');
+    expect(byId['vid'].type).toBe('video');
+    expect(byId['vid'].signedUrl).toContain('c1/video/clipe.mp4');
+    expect(byId['aud'].type).toBe('audio');
+    expect(byId['aud'].signedUrl).toContain('c1/audio/voz.ogg');
+    expect(byId['doc'].type).toBe('document');
+    expect(byId['doc'].signedUrl).toContain('c1/documento/contrato.pdf');
+
+    // Dois pedidos no total: um por bucket privado (whatsapp-media com 3 paths, audio-messages com 1).
+    expect(createSignedUrls).toHaveBeenCalledTimes(2);
+    const whatsapp = createSignedUrls.mock.calls.find(([bucket]) => bucket === 'whatsapp-media');
+    expect((whatsapp?.[1] as string[]).sort()).toEqual([
+      'c1/documento/contrato.pdf', 'c1/imagem/foto.jpg', 'c1/video/clipe.mp4',
+    ]);
+  });
+
+  it('bucket divergente (público) não é assinado: nenhum pedido de assinatura para outro bucket', async () => {
+    limitSpy.mockResolvedValueOnce({
+      data: [mediaRow({ id: 'pub', media_url: privateLocator('stickers', 's1.png') })],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(createSignedUrls).not.toHaveBeenCalled();
+    expect(result.current.items[0].signedUrl).toBeUndefined();
+    expect(result.current.items[0].url).toBe(privateLocator('stickers', 's1.png'));
   });
 });

@@ -95,6 +95,27 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
     expect(localStorage.getItem(key!)).toBeNull();
   });
 
+  it('mantém composição e rascunho local e avisa quando a exclusão remota é rejeitada', async () => {
+    const key = emailDraftSessionKey({ accountId: 'acc-discard-reject', mode: 'new' });
+    writeEmailDraftSession(key, {
+      draftId: 'draft-remote', to: 'cliente@example.com', cc: '', bcc: '', subject: 'Não perder', body: 'Conteúdo preservado',
+      isUsingHtml: false, attachmentNames: [], updatedAt: new Date().toISOString(),
+    });
+    deleteDraftMutateAsync.mockRejectedValueOnce(new Error('permission denied'));
+    const onClose = vi.fn();
+    render(<EmailComposer accountId="acc-discard-reject" mode="new" onClose={onClose} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Descartar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Descartar rascunho' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Rascunho remoto não descartado');
+    expect(alert).toHaveTextContent('permission denied');
+    expect(deleteDraftMutateAsync).toHaveBeenCalledWith('draft-remote');
+    expect(onClose).not.toHaveBeenCalled();
+    expect(localStorage.getItem(key!)).toContain('Não perder');
+    expect(screen.getByPlaceholderText('Assunto do email')).toHaveValue('Não perder');
+  });
+
   it('modo reply (inbound): Para = from_address, assunto = "Re: Orçamento"', () => {
     render(<EmailComposer mode="reply" replyTo={makeMessage()} onClose={vi.fn()} />);
     expect(screen.getByPlaceholderText('destinatario@email.com')).toHaveValue('cliente@exemplo.com');
@@ -206,6 +227,65 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
     expect(sendEmailMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
       attachments: [{ filename: 'proposta.pdf', mimeType: 'application/pdf', content: 'AQID' }],
     }));
+  });
+
+  it('#286: inclui anexos originais que chegam depois da abertura do encaminhamento', async () => {
+    const attachment = {
+      id: 'att-late', email_message_id: 'm1', gmail_attachment_id: 'gmail-att-late',
+      filename: 'contrato.pdf', mime_type: 'application/pdf', size_bytes: 3,
+      created_at: '2026-10-02T12:00:00Z', gmail_message_id: 'g1',
+    } as EmailAttachment & { gmail_message_id: string };
+
+    const { rerender } = render(
+      <EmailComposer mode="forward" replyTo={makeMessage({ has_attachments: true })} forwardAttachments={[]} onClose={vi.fn()} />
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('Carregando anexos');
+
+    // Os metadados do anexo chegam na segunda consulta do thread (useGmail: threadAttachments).
+    rerender(
+      <EmailComposer mode="forward" replyTo={makeMessage({ has_attachments: true })} forwardAttachments={[attachment]} onClose={vi.fn()} />
+    );
+
+    expect(await screen.findByText('contrato.pdf')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('destinatario@email.com'), { target: { value: 'dest@email.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
+
+    await waitFor(() => expect(getAttachmentContent).toHaveBeenCalledWith(attachment));
+    expect(sendEmailMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      attachments: [{ filename: 'contrato.pdf', mimeType: 'application/pdf', content: 'AQID' }],
+    }));
+  });
+
+  it('#286: preserva a remoção explícita do anexo original quando novos anexos chegam depois', async () => {
+    const first = {
+      id: 'att-1', email_message_id: 'm1', gmail_attachment_id: 'gmail-att-1',
+      filename: 'proposta.pdf', mime_type: 'application/pdf', size_bytes: 3,
+      created_at: '2026-10-02T12:00:00Z', gmail_message_id: 'g1',
+    } as EmailAttachment & { gmail_message_id: string };
+    const second = {
+      id: 'att-2', email_message_id: 'm1', gmail_attachment_id: 'gmail-att-2',
+      filename: 'contrato.pdf', mime_type: 'application/pdf', size_bytes: 3,
+      created_at: '2026-10-02T12:00:00Z', gmail_message_id: 'g1',
+    } as EmailAttachment & { gmail_message_id: string };
+
+    const { rerender } = render(
+      <EmailComposer mode="forward" replyTo={makeMessage({ has_attachments: true })} forwardAttachments={[first]} onClose={vi.fn()} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Remover proposta.pdf' }));
+    expect(screen.queryByText('proposta.pdf')).not.toBeInTheDocument();
+
+    rerender(
+      <EmailComposer mode="forward" replyTo={makeMessage({ has_attachments: true })} forwardAttachments={[first, second]} onClose={vi.fn()} />
+    );
+
+    expect(await screen.findByText('contrato.pdf')).toBeInTheDocument();
+    expect(screen.queryByText('proposta.pdf')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('destinatario@email.com'), { target: { value: 'dest@email.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /enviar/i }));
+
+    await waitFor(() => expect(getAttachmentContent).toHaveBeenCalledWith(second));
+    expect(getAttachmentContent).not.toHaveBeenCalledWith(first);
   });
 
   it('bloqueia duplo clique desde o início da preparação do envio', async () => {

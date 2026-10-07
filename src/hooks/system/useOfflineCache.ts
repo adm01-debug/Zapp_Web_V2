@@ -96,9 +96,15 @@ export function useOfflineCache(conversations: ConversationWithMessages[], loadi
     }
   }, [conversations, loading]);
 
-  // Return cached data when offline and no live data
-  const effectiveData = isOffline && loading ? (cachedData || []) : conversations;
-  const usingCache = isOffline && loading && !!cachedData;
+  // R2-INB-015: o cache sustenta a leitura enquanto, offline, não houver dados
+  // vivos — inclusive DEPOIS que a carga termina. Antes o fallback só valia
+  // enquanto `loading` era true: quando a busca falhava sem conexão,
+  // `loading=false` zerava a lista e abandonava um cache ainda válido (o Inbox
+  // "aparecia e desaparecia"). A recuperação é explícita: quando os dados ao
+  // vivo chegam, eles reassumem a tela e `usingCache` volta a false.
+  const semDadosVivosOffline = isOffline && conversations.length === 0;
+  const effectiveData = semDadosVivosOffline ? (cachedData || conversations) : conversations;
+  const usingCache = semDadosVivosOffline && !!cachedData;
 
   const clearCache = useCallback(() => {
     localStorage.removeItem(CACHE_KEY);

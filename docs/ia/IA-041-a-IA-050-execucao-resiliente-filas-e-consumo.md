@@ -149,10 +149,17 @@ Migration `supabase/migrations/20261002411230_ia047_idempotencia_de_efeitos.sql`
 - **IA-050 (abrir circuito e degradar honestamente):** a **degradação honesta está entregue** — os códigos
   explícitos `429`/`402` são preservados na migração de voz e o `504/TIMEOUT` é distinguível de um `502`
   (IA-041), e a reserva de orçamento separa `denied` de `infrastructure_error` (IA-044). Já a **abertura de
-  circuito** (suspender provedores com falhas repetidas, limitar concorrência) **não foi entregue**:
+  circuito** (suspender provedores com falhas repetidas, limitar concorrência) **não foi entregue na série**:
   verificado por medição em 02/10/2026 — nenhum PR cita `IA-050` (`gh pr list --search IA-050` devolve lista
-  vazia) e não existe contagem de falhas nem suspensão por provedor em `supabase/functions/**`. Fica como
-  pendência declarada, não como etapa concluída.
+  vazia) e não existe contagem de falhas nem suspensão por provedor em `supabase/functions/**`.
+  **Retificação (05/10/2026, cartão `t_4e3bf2dc`):** a abertura de circuito foi implementada depois, em
+  `supabase/functions/_shared/ai-circuit.ts` + gate `admitAiProviderCall` no despacho de `ai-generate.ts`.
+  O estado é derivado do ledger `ai_usage_logs` (`metadata.provider_id`, falhas consecutivas na janela),
+  a meia-abertura admite uma sonda atômica por `edge_rate_limits`/`ai_rate_limit_hit` e o bloqueio devolve
+  `503/CIRCUIT_OPEN` explícito — provado por `supabase/functions/_shared/ai-circuit.test.ts`
+  (vermelho antes da correção, verde depois). Erros HTTP 4xx permanentes do pedido são classificados
+  como `request_error`: continuam auditados e reconciliados como falhas, sem alimentar o limiar do
+  circuito. Falhas transitórias do provedor continuam registradas como `error` e contam para o limiar.
 
 ### Auditoria — PRs #1609 e #1627
 
@@ -196,12 +203,14 @@ vazio) — declarado pela execução.
 - **A cobertura de testes de integração do Bloco 05 foi feita em PostgreSQL descartável (container), não
   em produção.** As provas 12/12 e 15/0 acima reproduzem o estado a partir da especificação num banco
   descartável; não são o banco canônico.
-- **IA-050 não entregue (declarado, não mascarado).** A abertura de circuito — suspender temporariamente
-  provedores com falhas repetidas — **não existe** como código no repositório. Medido em 02/10/2026:
-  `gh pr list --state all --search "IA-050"` devolve lista vazia (nenhum PR) e a busca em
-  `supabase/functions/**` por contagem de falhas/suspensão não encontra mecanismo algum (o único casamento é
-  a palavra "short-circuits" num comentário de `_shared/ai-guards.ts`). O que existe e foi verificado é a
-  degradação honesta: `429`/`402`/`504` explícitos e a separação `denied` × `infrastructure_error`.
+- **IA-050 não entregue na série (declarado, não mascarado) — fechado depois.** A abertura de circuito —
+  suspender temporariamente provedores com falhas repetidas — **não existia** como código no repositório.
+  Medido em 02/10/2026: `gh pr list --state all --search "IA-050"` devolve lista vazia (nenhum PR) e a busca
+  em `supabase/functions/**` por contagem de falhas/suspensão não encontra mecanismo algum (o único casamento
+  é a palavra "short-circuits" num comentário de `_shared/ai-guards.ts`). **Retificação (05/10/2026, cartão
+  `t_4e3bf2dc`):** o mecanismo foi implementado em `_shared/ai-circuit.ts` (limiar 5 falhas consecutivas,
+  janela 5 min, cooldown 60 s com sonda única atômica) e ligado no despacho de `ai-generate.ts`, com teste
+  `ai-circuit.test.ts` que prova abertura, bloqueio sem `fetch`, sonda única e reabertura no fracasso.
 - **O handler `ai.generate` do worker está DESLIGADO por padrão** (flag `AI_JOBS_ENABLE_AI_GENERATE`):
   sem a flag, o handler nem carrega a pilha de geração e o job termina `failed`. Os handlers registrados
   no worker são `ai_jobs.reap_expired`, `ai.generate` (atrás da flag) e `effect.reconcile`.

@@ -3,7 +3,7 @@ import { ClassifyStickerSchema, parseBody, validationErrorResponse } from "../_s
 import { requireAiIdentityOrService, type AiIdentity } from "../_shared/ai-auth.ts";
 import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { logAiUsage } from "../_shared/ai-usage.ts";
-import { AiImageInputError, toInlineImage, type InlineImage } from "../_shared/ai-image-input.ts";
+import { AiImageInputError, toInlineImage, type InlineImage, type StorageIdentity } from "../_shared/ai-image-input.ts";
 
 const STICKER_CATEGORIES = [
   'comemoração', 'riso', 'chorando', 'amor', 'raiva',
@@ -42,6 +42,22 @@ function bearerTokenDoPedido(req: Request): string {
 }
 
 /**
+ * Traduz a identidade autenticada da função para a identidade de download do
+ * Storage — dois ramos FECHADOS, sem credencial implícita nem emprestada:
+ *   - usuário: `{ kind: 'user', bearerToken }` — anon key + JWT do chamador; a
+ *     policy de `storage.objects` decide o que ele pode ler (biblioteca
+ *     compartilhada só passa quando a policy do objeto permite);
+ *   - serviço (webhook interno do WhatsApp): `{ kind: 'service' }` — service
+ *     role explícita, declarada assim de propósito. Nada aqui "promove" um
+ *     usuário a serviço nem carrega o bearer dele para o outro ramo.
+ */
+export function storageIdentityPara(identity: AiIdentity, bearerToken: string): StorageIdentity {
+  return identity.kind === 'user'
+    ? { kind: 'user', bearerToken }
+    : { kind: 'service' };
+}
+
+/**
  * Baixa a imagem no servidor sob a identidade do CHAMADOR — usuário: anon key +
  * JWT do pedido (a policy de `storage.objects` decide); serviço (webhook do
  * WhatsApp): service role explícita — e a devolve EMBUTIDA como data URL (o
@@ -57,12 +73,16 @@ async function embutirImagem(
 ): Promise<InlineImage | null> {
   try {
     return await toInlineImage(imageUrl, {
-      storageIdentity: identity.kind === 'user'
-        ? { kind: 'user', bearerToken }
-        : { kind: 'service' },
+      storageIdentity: storageIdentityPara(identity, bearerToken),
     });
   } catch (err) {
-    const motivo = err instanceof Error ? err.message : String(err);
+    // O `message` do AiImageInputError carrega `<bucket>/<path>` — locator de
+    // objeto privado que NÃO pode ir para o log. Registra-se o código tipado
+    // (estável) + os detalhes medidos de `detalhesDoErroDeImagem` (que já
+    // excluem bucket/path); bearer token nunca entra na mensagem do helper.
+    const motivo = err instanceof AiImageInputError
+      ? `imagem recusada na preparacao: ${err.code}`
+      : err instanceof Error ? err.message : String(err);
     await logAiUsage({
       functionName: FUNCTION_NAME,
       userId: identity.userId,
@@ -81,7 +101,13 @@ async function embutirImagem(
   }
 }
 
-Deno.serve(async (req) => {
+/**
+ * Handler real exportado para teste (`index.test.ts`). O `Deno.serve` continua
+ * no nível do módulo — o contrato vitest de visão captura o handler stubando
+ * `Deno.serve` na importação, então a chamada não pode ficar atrás de
+ * `import.meta.main` aqui.
+ */
+export async function handleClassifyStickerRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -184,4 +210,6 @@ Categorias: ${STICKER_CATEGORIES.join(', ')}`;
     log.error("Error", { error: motivo });
     return jsonResponse({ category: 'outros' }, 200, req);
   }
-});
+}
+
+Deno.serve(handleClassifyStickerRequest);

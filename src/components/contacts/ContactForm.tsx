@@ -24,6 +24,15 @@ const ADDRESS_SEARCH_TYPES = 'address,street,place';
 /** Regra 3 (item 5): campos cuja edição MANUAL pode invalidar a coordenada já gravada. */
 const CAMPOS_DE_ENDERECO = ['address', 'address_number', 'neighborhood', 'city', 'state', 'postal_code'];
 
+/**
+ * Assinatura do endereço que ESTÁ no formulário. Serve para amarrar cada resposta de geocoding ao
+ * endereço que a pediu (#263/R2-AUTH-039): `/forward` responde em ordem própria e o operador segue
+ * digitando — a resposta de um endereço que saiu de cena não pode valer para o endereço vigente.
+ */
+function assinaturaEndereco(values: ContactFormValues): string {
+  return CAMPOS_DE_ENDERECO.map((campo) => String(values[campo as keyof ContactFormValues] ?? '').trim()).join(' | ');
+}
+
 export interface ContactFormValues {
   name: string;
   nickname?: string | null;
@@ -143,6 +152,10 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
   // e este botão resolve: UMA busca no `/forward` com o endereço que está no formulário, sem passar
   // pelo autocomplete e sem reescrever o que o operador digitou (só a coordenada muda).
   const [recalculandoCoordenada, setRecalculandoCoordenada] = useState(false);
+  // #263/R2-AUTH-039: o endereço que está no formulário AGORA. Comparado com o endereço consultado
+  // quando a resposta chega — o ref acompanha o estado mais recente, sem closure velha.
+  const enderecoVigenteRef = useRef(assinaturaEndereco(values));
+  useEffect(() => { enderecoVigenteRef.current = assinaturaEndereco(values); }, [values]);
   const recalcularCoordenada = async () => {
     const alvo = [
       values.address,
@@ -155,6 +168,9 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
       .filter(Boolean)
       .join(', ');
     if (!alvo.trim() || recalculandoCoordenada) return;
+    // A busca fica amarrada ao endereço que a disparou: se o operador reescrever qualquer campo de
+    // endereço enquanto ela está em voo, a resposta perde a correspondência e é descartada (item 2).
+    const assinaturaConsultada = assinaturaEndereco(values);
     setRecalculandoCoordenada(true);
     try {
       const token = await getMapboxToken();
@@ -163,6 +179,10 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
       // Sem coordenada nova o aviso continua de pé — é melhor dizer "pode estar desatualizada" do
       // que apagar a coordenada antiga em cima de uma falha de rede.
       if (!place) return;
+      // O endereço mudou depois do clique: esta coordenada é do endereço anterior (ex.: busca de B
+      // respondendo quando o formulário já está em C). Não gravar e NÃO apagar o aviso — o aviso só
+      // sai quando a coordenada corresponde ao endereço vigente.
+      if (enderecoVigenteRef.current !== assinaturaConsultada) return;
       onChange('latitude', String(place.lat));
       onChange('longitude', String(place.lng));
       setCoordenadaPossivelmenteVelha(false);

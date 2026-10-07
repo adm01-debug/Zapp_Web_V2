@@ -101,8 +101,13 @@ vi.mock('@/hooks/communication/useCalls', () => ({
 
 // O alerta agora fala com a MÁQUINA da sessão: sem este mock o `useCallSession()`
 // lança 'useCallSession deve ser usado dentro de CallSessionProvider' e o render cai.
+// R2-CALL-006: o dublê também publica a sessão (a mesma que toca na tela — k1).
 vi.mock('@/providers/CallSessionProvider', () => ({
-  useCallSession: () => ({ accept: mockAccept, reject: mockReject }),
+  useCallSession: () => ({
+    accept: mockAccept,
+    reject: mockReject,
+    session: { status: 'ringing_in', sessionId: 'k1', answeredAt: null },
+  }),
 }));
 
 vi.mock('@/hooks/calls/useCallChannels', () => ({

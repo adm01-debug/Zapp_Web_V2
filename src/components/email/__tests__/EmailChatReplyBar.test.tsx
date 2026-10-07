@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ReactNode } from 'react';
 import type { EmailMessage } from '@/hooks/integrations/useGmail';
@@ -182,6 +182,47 @@ describe('EmailChatReplyBar', () => {
       fireEvent.change(textarea, { target: { value: 'Resposta' } });
       fireEvent.click(screen.getByRole('button', { name: /Enviar/i }));
       await waitFor(() => expect(onSent).toHaveBeenCalled());
+    });
+  });
+
+  // R2-COM-005 (item 287): a conclusão do envio não pode apagar o texto que o
+  // usuário digitou no meio do envio.
+  describe('conclusão do envio (R2-COM-005)', () => {
+    it('mantém o texto digitado durante o envio em voo', async () => {
+      let resolver: (value: unknown) => void = () => {};
+      replyMutateAsync.mockImplementationOnce(() => new Promise((resolve) => { resolver = resolve; }));
+      const onSent = vi.fn();
+      renderBar({ onSent });
+
+      const textarea = screen.getByPlaceholderText('Digite sua resposta...') as HTMLTextAreaElement;
+      fireEvent.change(textarea, { target: { value: 'Primeira resposta' } });
+      fireEvent.click(screen.getByRole('button', { name: /Enviar/i }));
+      await waitFor(() => expect(replyMutateAsync).toHaveBeenCalled());
+
+      // O usuário continua digitando enquanto o envio ainda está em voo.
+      fireEvent.change(textarea, { target: { value: 'Texto novo digitado durante o envio' } });
+
+      await act(async () => { resolver({}); });
+      await waitFor(() => expect(onSent).toHaveBeenCalled());
+
+      expect(textarea.value).toBe('Texto novo digitado durante o envio');
+    });
+
+    it('limpa o corpo quando nada foi alterado durante o envio', async () => {
+      let resolver: (value: unknown) => void = () => {};
+      replyMutateAsync.mockImplementationOnce(() => new Promise((resolve) => { resolver = resolve; }));
+      const onSent = vi.fn();
+      renderBar({ onSent });
+
+      const textarea = screen.getByPlaceholderText('Digite sua resposta...') as HTMLTextAreaElement;
+      fireEvent.change(textarea, { target: { value: 'Resposta enviada' } });
+      fireEvent.click(screen.getByRole('button', { name: /Enviar/i }));
+      await waitFor(() => expect(replyMutateAsync).toHaveBeenCalled());
+
+      await act(async () => { resolver({}); });
+      await waitFor(() => expect(onSent).toHaveBeenCalled());
+
+      expect(textarea.value).toBe('');
     });
   });
 

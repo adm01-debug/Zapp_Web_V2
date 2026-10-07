@@ -1,7 +1,43 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsDialogueSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
-Deno.serve(async (req) => {
+/**
+ * R2-API-024 (P2) — Diálogo ElevenLabs envia `script` e omite `inputs`.
+ *
+ * O contrato do provedor (POST /v1/text-to-dialogue) exige `inputs`, a lista de
+ * {text, voice_id}; o adaptador repassava o nome interno `script`, então a
+ * requisição nunca batia com o contrato e a geração não podia valer.
+ */
+
+/** Contrato do provedor: no máximo 10 voice_ids distintos por requisição. */
+export const MAX_DIALOGUE_VOICES = 10;
+/** Contrato do provedor: até 2.000 caracteres somados em `inputs[].text`. */
+export const MAX_DIALOGUE_CHARS = 2000;
+
+export interface DialogueLine {
+  voice_id: string;
+  text: string;
+}
+
+/** Traduz o contrato interno (`script`) para o do provedor (`inputs`). */
+export function toDialogueInputs(script: DialogueLine[]): Array<{ text: string; voice_id: string }> {
+  return script.map((line) => ({ text: line.text, voice_id: line.voice_id }));
+}
+
+/** Mensagem de recusa quando o script fura os limites agregados do provedor. */
+export function dialogueLimitError(script: DialogueLine[]): string | null {
+  const voices = new Set(script.map((line) => line.voice_id));
+  if (voices.size > MAX_DIALOGUE_VOICES) {
+    return `O provedor aceita no máximo ${MAX_DIALOGUE_VOICES} vozes distintas por diálogo (recebidas ${voices.size})`;
+  }
+  const totalChars = script.reduce((acc, line) => acc + line.text.length, 0);
+  if (totalChars > MAX_DIALOGUE_CHARS) {
+    return `O provedor aceita até ${MAX_DIALOGUE_CHARS} caracteres somados por diálogo (recebidos ${totalChars})`;
+  }
+  return null;
+}
+
+export async function handleElevenLabsDialogue(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -19,6 +55,12 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { script, languageCode } = parsed.data;
+
+    // Limites agregados do provedor: recusa ANTES do POST. Sem isso a
+    // requisição sai só para o provedor rejeitar (422) ou cortar a geração.
+    const limitError = dialogueLimitError(script);
+    if (limitError) return errorResponse(limitError, 400, req);
+
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
 
     log.info(`Generating dialogue with ${script.length} lines`);
@@ -33,7 +75,9 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           model_id: 'eleven_v3',
-          script,
+          // O provedor exige `inputs` ({text, voice_id}); `script` é o nome do
+          // contrato INTERNO e não existe do lado de fora.
+          inputs: toDialogueInputs(script),
           language_code: languageCode,
         }),
       }
@@ -59,4 +103,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: errorMessage });
     return errorResponse(errorMessage, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleElevenLabsDialogue);
+}

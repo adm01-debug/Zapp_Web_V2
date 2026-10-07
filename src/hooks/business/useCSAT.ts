@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,30 +56,33 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
     },
   });
 
-  const statsQuery = useQuery({
-    queryKey: ['csat-stats', period],
-    queryFn: async () => {
-      const surveys = surveysQuery.data || [];
-      if (surveys.length === 0) {
-        return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, trend: 0 } as CSATStats;
-      }
+  // R2-MOD-028: stats e DERIVADO do resultado atual de surveys (mesma fonte de
+  // verdade), nao uma query separada. Antes, stats era uma query com key estavel
+  // por periodo cujo queryFn lia surveysQuery.data: na invalidacao pos-submissao
+  // as duas queries refaziam juntas e stats podia recalcular sobre o array antigo,
+  // permanecendo no snapshot anterior depois de surveys ja trazer as avaliacoes
+  // novas (a key de stats nao mudava, entao nao havia novo recalculo). Derivando,
+  // media/total/distribuicao mudam sempre junto com a lista.
+  const stats = useMemo<CSATStats>(() => {
+    const surveys = surveysQuery.data || [];
+    if (surveys.length === 0) {
+      return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, trend: 0 };
+    }
 
-      const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      let sum = 0;
-      surveys.forEach(s => {
-        distribution[s.rating] = (distribution[s.rating] || 0) + 1;
-        sum += s.rating;
-      });
+    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let sum = 0;
+    surveys.forEach(s => {
+      distribution[s.rating] = (distribution[s.rating] || 0) + 1;
+      sum += s.rating;
+    });
 
-      return {
-        average: sum / surveys.length,
-        total: surveys.length,
-        distribution,
-        trend: 0,
-      } as CSATStats;
-    },
-    enabled: !!surveysQuery.data,
-  });
+    return {
+      average: sum / surveys.length,
+      total: surveys.length,
+      distribution,
+      trend: 0,
+    };
+  }, [surveysQuery.data]);
 
   const submitSurvey = useMutation<void, Error, { contact_id: string; agent_id?: string; rating: number; feedback?: string }>({
     mutationFn: async (data) => {
@@ -94,7 +98,6 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['csat-surveys'] });
-      queryClient.invalidateQueries({ queryKey: ['csat-stats'] });
       toast({ title: 'Avaliação enviada!', description: 'Obrigado pelo feedback.' });
     },
     onError: () => {
@@ -104,7 +107,7 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
 
   return {
     surveys: surveysQuery.data || [],
-    stats: statsQuery.data,
+    stats,
     isLoading: surveysQuery.isLoading,
     submitSurvey,
   };

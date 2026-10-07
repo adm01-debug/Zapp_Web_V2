@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { TalkMeQueueController } from '../useTalkMeQueue';
-import type { TalkMeWaitingContact } from '../types';
+import { TalkMeOutcomeUnknownError, type TalkMeWaitingContact } from '../types';
 
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
@@ -63,6 +63,7 @@ function controller(overrides: Partial<TalkMeQueueController> = {}): TalkMeQueue
     itemsError: null,
     loadMoreError: null,
     reconciling: false,
+    isOffline: false,
     searchPending: false,
     totalCount: 2,
     hasMore: false,
@@ -369,4 +370,75 @@ describe('TalkMeView', () => {
     expect(screen.getByTestId('talk-me-full-message')).toHaveTextContent('2 mensagens aguardando resposta neste atendimento.');
   });
 
+  it('informa estado recuperável e não fecha a tela quando o aceite fica incerto', async () => {
+    const claim = vi.fn(async () => { throw new TalkMeOutcomeUnknownError(); });
+    const { onAccepted, onOpenChange } = renderView(controller({ claim }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Aceitar e conversar' }));
+
+    expect(await screen.findByText(/Não conseguimos confirmar se este atendimento foi assumido/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Conferir aceite/ })).toBeEnabled();
+    expect(claim).toHaveBeenCalledWith('contact-1');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(onAccepted).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('reabre o mesmo atendimento quando a confirmação devolve o aceite perdido', async () => {
+    const claim = vi.fn()
+      .mockRejectedValueOnce(new TalkMeOutcomeUnknownError())
+      .mockResolvedValueOnce({
+        contactId: 'contact-1',
+        queueId: 'queue-1',
+        assignedTo: 'profile-1',
+        conversationStatus: 'open',
+        claimedAt: '2026-09-30T12:30:00.000Z',
+      });
+    const onAccepted = vi.fn(async () => undefined);
+    const { onOpenChange } = renderView(controller({ claim }), onAccepted);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Aceitar e conversar' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Conferir aceite/ }));
+
+    await waitFor(() => expect(onAccepted).toHaveBeenCalledWith('contact-1'));
+    expect(claim).toHaveBeenCalledTimes(2);
+    expect(claim.mock.calls[1]).toEqual(['contact-1']);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(toast.success).toHaveBeenCalled();
+    expect(screen.queryByText(/Não conseguimos confirmar se este atendimento foi assumido/)).not.toBeInTheDocument();
+  });
+
+  it('desabilita o aceite enquanto offline e não tenta a rede', async () => {
+    const claim = vi.fn();
+    renderView(controller({ isOffline: true, claim }));
+
+    const cta = screen.getByRole('button', { name: 'Aceitar e conversar' });
+    expect(cta).toBeDisabled();
+    expect(screen.getByText(/Você está offline/)).toBeInTheDocument();
+
+    fireEvent.click(cta);
+    expect(claim).not.toHaveBeenCalled();
+  });
+
+  it('impede a confirmação do aceite incerto enquanto offline', async () => {
+    const claim = vi.fn(async () => { throw new TalkMeOutcomeUnknownError(); });
+    const ctrl = controller({ claim });
+    const { rerender } = render(
+      <TooltipProvider>
+        <TalkMeView open onOpenChange={vi.fn()} controller={ctrl} onAccepted={vi.fn()} />
+      </TooltipProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Aceitar e conversar' }));
+    expect(await screen.findByRole('button', { name: /Conferir aceite/ })).toBeEnabled();
+
+    rerender(
+      <TooltipProvider>
+        <TalkMeView open onOpenChange={vi.fn()} controller={controller({ ...ctrl, isOffline: true })} onAccepted={vi.fn()} />
+      </TooltipProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Conferir aceite/ })).toBeDisabled());
+    expect(claim).toHaveBeenCalledTimes(1);
+  });
 });

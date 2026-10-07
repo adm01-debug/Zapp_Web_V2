@@ -6,7 +6,7 @@ const useSupabaseRealtime = vi.hoisted(() => vi.fn());
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc } }));
 vi.mock('@/hooks/realtime/useSupabaseRealtime', () => ({ useSupabaseRealtime }));
 
-import { TalkMeConflictError } from '../types';
+import { TalkMeConflictError, TalkMeOfflineError, TalkMeOutcomeUnknownError } from '../types';
 import { useTalkMeQueue } from '../useTalkMeQueue';
 
 const queueRows = [{
@@ -106,11 +106,16 @@ function setDocumentHidden(hidden: boolean) {
   Object.defineProperty(document, 'hidden', { configurable: true, value: hidden });
 }
 
+function setNavigatorOnline(online: boolean) {
+  Object.defineProperty(window.navigator, 'onLine', { configurable: true, get: () => online });
+}
+
 describe('useTalkMeQueue', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
     setDocumentHidden(false);
+    setNavigatorOnline(true);
     installRpcHandlers();
   });
 
@@ -590,5 +595,92 @@ describe('useTalkMeQueue', () => {
     expect(new Set(result.current.items.map((item) => item.contactId))).toHaveProperty('size', 500);
     expect(result.current.items[499]?.contactId).toBe('contact-500');
     expect(result.current.hasMore).toBe(false);
+  });
+
+  it('trata resposta perdida do aceite como resultado desconhecido, não como falha definitiva', async () => {
+    installRpcHandlers({ claim: () => Promise.reject(new TypeError('Failed to fetch')) });
+    const { result } = await renderLoadedQueue();
+
+    await act(async () => {
+      await expect(result.current.claim('contact-1')).rejects.toBeInstanceOf(TalkMeOutcomeUnknownError);
+    });
+
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.claimingContactId).toBeNull();
+  });
+
+  it('separa erro estruturado do servidor (definitivo) de resposta vazia (desconhecida)', async () => {
+    installRpcHandlers({
+      claim: () => Promise.resolve({ data: null, error: { message: 'permission denied', code: '42501' } }),
+    });
+    const { result } = await renderLoadedQueue();
+
+    await act(async () => {
+      await expect(result.current.claim('contact-1')).rejects.toMatchObject({ message: 'permission denied' });
+    });
+
+    installRpcHandlers({ claim: () => Promise.resolve({ data: null, error: null }) });
+    await act(async () => {
+      await expect(result.current.claim('contact-1')).rejects.toBeInstanceOf(TalkMeOutcomeUnknownError);
+    });
+    expect(result.current.items).toHaveLength(1);
+  });
+
+  it('reabre o mesmo atendimento quando a confirmação reusa a RPC idempotente', async () => {
+    let claimCall = 0;
+    installRpcHandlers({
+      claim: () => {
+        claimCall += 1;
+        return claimCall === 1
+          ? Promise.reject(new TypeError('Failed to fetch'))
+          : Promise.resolve({ data: claimRows, error: null });
+      },
+    });
+    const { result } = await renderLoadedQueue();
+
+    await act(async () => {
+      await expect(result.current.claim('contact-1')).rejects.toBeInstanceOf(TalkMeOutcomeUnknownError);
+    });
+    expect(result.current.items).toHaveLength(1);
+
+    let recovered;
+    await act(async () => { recovered = await result.current.claim('contact-1'); });
+
+    expect(recovered).toMatchObject({ contactId: 'contact-1', assignedTo: 'profile-1' });
+    expect(rpcCallCount(rpcNames.claim)).toBe(2);
+    expect(result.current.items).toHaveLength(0);
+  });
+
+  it('ao reconectar só reconsulta o estado: nenhum aceite automático é enfileirado', async () => {
+    const { result } = await renderLoadedQueue();
+    const claimCallsBefore = rpcCallCount(rpcNames.claim);
+    const queueCallsBefore = rpcCallCount(rpcNames.queues);
+    const waitingCallsBefore = rpcCallCount(rpcNames.waiting);
+
+    await act(async () => { window.dispatchEvent(new Event('online')); });
+
+    expect(rpcCallCount(rpcNames.claim)).toBe(claimCallsBefore);
+    await waitFor(() => expect(rpcCallCount(rpcNames.queues)).toBe(queueCallsBefore + 1));
+    await waitFor(() => expect(rpcCallCount(rpcNames.waiting)).toBe(waitingCallsBefore + 1));
+    expect(result.current.items).toHaveLength(1);
+  });
+
+  it('recusa o aceite offline antes de tocar a rede e expõe isOffline para o CTA', async () => {
+    setNavigatorOnline(false);
+    const { result } = renderHook(() => useTalkMeQueue(true));
+    await waitFor(() => expect(result.current.isOffline).toBe(true));
+
+    await act(async () => {
+      await expect(result.current.claim('contact-1')).rejects.toBeInstanceOf(TalkMeOfflineError);
+    });
+    expect(rpcCallCount(rpcNames.claim)).toBe(0);
+
+    await act(async () => {
+      setNavigatorOnline(true);
+      window.dispatchEvent(new Event('online'));
+    });
+    await waitFor(() => expect(result.current.isOffline).toBe(false));
+    await act(async () => { await result.current.claim('contact-1'); });
+    expect(rpcCallCount(rpcNames.claim)).toBe(1);
   });
 });

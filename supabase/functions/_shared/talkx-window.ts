@@ -17,6 +17,11 @@
  *   3. Falha ABERTA (permite envio) em janela malformada/vazia, em vez de
  *      fechada -- os minutos calculados comparados contra NaN nunca disparam
  *      a condicao de recusa, entao nenhuma das duas checagens rejeita.
+ *
+ * #121A (2026-10-06): `talkx_settings.business_hours` é JSONB — o banco devolve
+ * o OBJETO `{ start, end, tz, days }`, e a versão anterior só aceitava string
+ * JSON, então o sender ignorava o valor salvo (caía no default) e o scheduler
+ * nem lia a configuração. Ver parseBusinessHours/deliveryWindowStatus abaixo.
  */
 
 export const DEFAULT_SCHEDULE_TIMEZONE = "America/Sao_Paulo";
@@ -30,23 +35,100 @@ export type ScheduleGuardCampaign = {
 
 export type LocalClock = { hour: number; minute: number; weekday: number };
 
-// V20: horário comercial configurável — vem de talkx_settings.business_hours
-// (JSON {start,end,tz,days}); o default replica o 08:00–18:00 seg–sex anterior.
+/**
+ * V20/#121A: horário comercial configurável — vem de `talkx_settings.business_hours`.
+ *
+ * Contrato canônico (JSONB): `{ start: "HH:MM", end: "HH:MM", tz: <fuso IANA>,
+ * days: number[] de 0 a 6, 0 = domingo }`. String JSON é aceita apenas como
+ * compatibilidade.
+ *
+ * `invalid: true` marca valor PRESENTE e fora do contrato: quem decide FECHA a
+ * janela (não pode cair silenciosamente no default, que é o que acontecia antes
+ * quando o parse devolvia null).
+ */
 export type BusinessHours = {
-  start?: string;   // "08:00"
-  end?: string;     // "18:00"
-  days?: number[];  // [1..5] = seg..sex
+  start?: string;
+  end?: string;
+  tz?: string;
+  days?: number[];
+  invalid?: true;
+  invalidReason?: string;
 };
 
-export function parseBusinessHours(value: unknown): BusinessHours | null {
-  if (typeof value !== "string" || value.trim() === "") return null;
+/** Default histórico: 08:00–18:00, seg–sex, America/Sao_Paulo (usado na AUSÊNCIA da configuração). */
+export const DEFAULT_BUSINESS_HOURS_START = "08:00";
+export const DEFAULT_BUSINESS_HOURS_END = "18:00";
+export const DEFAULT_BUSINESS_HOURS_DAYS: readonly number[] = [1, 2, 3, 4, 5];
+
+const HHMM = /^([01][0-9]|2[0-3]):([0-5][0-9])$/;
+
+/** Minutos desde a meia-noite, ou null se não for "HH:MM" válido. */
+function minutesOfDay(value: unknown): number | null {
+  if (typeof value !== "string") return null;
+  const match = HHMM.exec(value.trim());
+  return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+}
+
+function isValidTimeZone(value: unknown): value is string {
+  if (typeof value !== "string" || value.trim() === "") return false;
   try {
-    const parsed = JSON.parse(value) as BusinessHours;
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed;
+    new Intl.DateTimeFormat("en-US", { timeZone: value.trim() });
+    return true;
   } catch {
-    return null;
+    return false;
   }
+}
+
+function invalidBusinessHours(reason: string): BusinessHours {
+  return { invalid: true, invalidReason: reason };
+}
+/**
+ * Valida um valor JÁ deserializado contra o contrato canônico. Devolve o objeto
+ * normalizado (start/end/tz/days preservados) ou a marca de inválido — NUNCA
+ * null: null é reservado para "não há configuração".
+ */
+function normalizeBusinessHours(value: unknown): BusinessHours {
+  if (value === null || value === undefined) return invalidBusinessHours("valor ausente");
+  if (typeof value !== "object" || Array.isArray(value)) return invalidBusinessHours("não é objeto");
+  const raw = value as Record<string, unknown>;
+  if (minutesOfDay(raw.start) === null) return invalidBusinessHours("start inválido (esperado HH:MM)");
+  if (minutesOfDay(raw.end) === null) return invalidBusinessHours("end inválido (esperado HH:MM)");
+  if (!Array.isArray(raw.days) || raw.days.length === 0) return invalidBusinessHours("days ausente ou vazio");
+  if (!raw.days.every((d) => Number.isInteger(d) && (d as number) >= 0 && (d as number) <= 6)) {
+    return invalidBusinessHours("days fora de 0..6");
+  }
+  if (raw.tz !== undefined && raw.tz !== null && !isValidTimeZone(raw.tz)) {
+    return invalidBusinessHours("tz não é um fuso IANA conhecido");
+  }
+  const normalized: BusinessHours = {
+    start: (raw.start as string).trim(),
+    end: (raw.end as string).trim(),
+    days: (raw.days as number[]).slice(),
+  };
+  if (typeof raw.tz === "string") normalized.tz = raw.tz.trim();
+  return normalized;
+}
+
+/**
+ * Lê `talkx_settings.business_hours`. Devolve:
+ *   - `null` → NÃO há configuração (ausente/vazia) → quem decide usa o default
+ *     08:00–18:00, seg–sex, America/Sao_Paulo;
+ *   - `{ invalid: true, invalidReason }` → configuração PRESENTE e fora do
+ *     contrato → quem decide FECHA a janela;
+ *   - objeto normalizado → `start`, `end`, `tz` e `days` preservados.
+ */
+export function parseBusinessHours(value: unknown): BusinessHours | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (text === "") return null; // string vazia = ausência da configuração
+    try {
+      return normalizeBusinessHours(JSON.parse(text)); // compatibilidade: JSON em texto
+    } catch {
+      return invalidBusinessHours("string não é JSON");
+    }
+  }
+  return normalizeBusinessHours(value);
 }
 
 export function localClockInTimezone(timeZone: string, now = new Date()): LocalClock | null {
@@ -72,11 +154,15 @@ export function localClockInTimezone(timeZone: string, now = new Date()): LocalC
     return null;
   }
 }
-
 /**
- * Retorna se o envio/retomada é permitido agora, no fuso da campanha.
- * Fecha (recusa) em qualquer entrada inválida: fuso desconhecido, ou
- * send_window_start/end presentes mas não-parseáveis como HH:MM.
+ * Retorna se o envio/retomada é permitido agora.
+ *   - `send_window_*` é avaliado no fuso da CAMPANHA (`schedule_timezone`) — sem mudança;
+ *   - `business_hours` (só quando a campanha é `business_hours_only`) é avaliado
+ *     no fuso PRÓPRIO da configuração (`tz`), com default America/Sao_Paulo
+ *     quando a configuração está ausente (#121A);
+ *   - fecha (recusa) em qualquer entrada inválida: fuso desconhecido,
+ *     send_window_start/end presentes mas não-parseáveis como HH:MM, ou
+ *     business_hours presente e fora do contrato.
  */
 export function deliveryWindowStatus(
   campaign: ScheduleGuardCampaign,
@@ -100,19 +186,36 @@ export function deliveryWindowStatus(
     }
   }
   if (campaign.business_hours_only) {
-    const bhStart = businessHours?.start ?? "08:00";
-    const bhEnd = businessHours?.end ?? "18:00";
-    const bhDays = businessHours?.days ?? [1, 2, 3, 4, 5];
-    const [bhStartHour, bhStartMinute] = bhStart.split(":").map(Number);
-    const [bhEndHour, bhEndMinute] = bhEnd.split(":").map(Number);
-    const bhStartMin = bhStartHour * 60 + bhStartMinute;
-    const bhEndMin = bhEndHour * 60 + bhEndMinute;
+    // #121A: presente e inválida FECHA — nunca cai no default silenciosamente.
+    if (businessHours?.invalid === true) {
+      return { allowed: false, reason: "invalid_business_hours" };
+    }
+    const config = businessHours ?? null;
+    const bhStart = config ? config.start : DEFAULT_BUSINESS_HOURS_START;
+    const bhEnd = config ? config.end : DEFAULT_BUSINESS_HOURS_END;
+    const bhDays = config ? config.days : DEFAULT_BUSINESS_HOURS_DAYS;
+    const bhStartMin = minutesOfDay(bhStart);
+    const bhEndMin = minutesOfDay(bhEnd);
+    if (bhStartMin === null || bhEndMin === null || !Array.isArray(bhDays) || bhDays.length === 0) {
+      return { allowed: false, reason: "invalid_business_hours" };
+    }
+    // Ausência usa America/Sao_Paulo; presença manda o tz da própria configuração.
+    const bhTimeZone = typeof config?.tz === "string" && config.tz.trim() !== ""
+      ? config.tz.trim()
+      : DEFAULT_SCHEDULE_TIMEZONE;
+    const bhClock = localClockInTimezone(bhTimeZone, now);
+    if (!bhClock) return { allowed: false, reason: "invalid_business_hours" };
+    const bhMinutes = bhClock.hour * 60 + bhClock.minute;
     if (
-      !bhDays.includes(clock.weekday) ||
-      currentMinutes < bhStartMin ||
-      currentMinutes >= bhEndMin
+      !bhDays.includes(bhClock.weekday) ||
+      bhMinutes < bhStartMin ||
+      bhMinutes >= bhEndMin
     ) {
-      return { allowed: false, reason: "outside_business_hours", next_window: bhStart };
+      return {
+        allowed: false,
+        reason: "outside_business_hours",
+        next_window: typeof bhStart === "string" ? bhStart : DEFAULT_BUSINESS_HOURS_START,
+      };
     }
   }
   return { allowed: true };

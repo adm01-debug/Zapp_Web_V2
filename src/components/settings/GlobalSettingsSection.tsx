@@ -4,7 +4,8 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Globe, Users, MessageCircle, RotateCcw } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Globe, Users, MessageCircle, RotateCcw, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { LanguageSelector } from '@/components/settings/LanguageSelector';
 
@@ -45,9 +46,9 @@ export function GlobalSettingsSection() {
   }
 
   const booleanSettings = [
-    { key: 'user_creation', label: 'Criação de Usuários', desc: 'Permite novos cadastros no sistema', icon: Users },
-    { key: 'check_msg_is_group', label: 'Mensagens de Grupo', desc: 'Processar mensagens de grupos WhatsApp', icon: MessageCircle },
-    { key: 'group_tickets_enabled', label: 'Tickets de Grupo', desc: 'Criar tickets automaticamente para grupos', icon: Globe },
+    { key: 'user_creation', label: 'Criação de Usuários', desc: 'Apenas registra a preferência em global_settings', icon: Users },
+    { key: 'check_msg_is_group', label: 'Mensagens de Grupo', desc: 'Apenas registra a preferência em global_settings', icon: MessageCircle },
+    { key: 'group_tickets_enabled', label: 'Tickets de Grupo', desc: 'Apenas registra a preferência em global_settings', icon: Globe },
   ];
 
   return (
@@ -67,6 +68,19 @@ export function GlobalSettingsSection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
+        <Alert className="border-warning/30 bg-warning/10">
+          <Info className="h-4 w-4 !text-warning" />
+          <AlertTitle className="text-warning">Configuração sem execução automática</AlertTitle>
+          <AlertDescription>
+            As quatro chaves abaixo (criação de usuários, mensagens de grupo, tickets de grupo e
+            reabertura automática em horas) são apenas registradas em global_settings. Nenhum fluxo
+            deste repositório as lê: não há porta de cadastro que consulte user_creation, nenhum
+            processamento de mensagem de grupo que consulte check_msg_is_group ou
+            group_tickets_enabled, e nenhuma rotina de reabertura que consulte auto_reopen_hours.
+            Os valores abaixo mostram o que está registrado, não um comportamento ativo.
+          </AlertDescription>
+        </Alert>
+
         {booleanSettings.map(({ key, label, desc, icon: Icon }) => (
           <div key={key} className="flex items-center justify-between p-3 rounded-lg border border-border/20 hover:bg-muted/10 transition-colors">
             <div className="flex items-center gap-3">
@@ -89,7 +103,7 @@ export function GlobalSettingsSection() {
             <Label className="text-sm font-medium">Reabertura Automática (horas)</Label>
           </div>
           <p className="text-xs text-muted-foreground">
-            Tempo após fechamento em que uma nova mensagem reabre a conversa automaticamente
+            Horas registradas; nenhuma rotina aplica este valor
           </p>
           <Input
             type="number"

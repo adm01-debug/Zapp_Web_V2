@@ -7,6 +7,11 @@
  * A correção faz a app se curar: recarrega na hora se a aba estiver escondida (ninguém é
  * interrompido) e, se estiver visível, avisa e recarrega no primeiro instante em que ela for
  * escondida (quem está escrevendo uma mensagem não perde o texto).
+ *
+ * Adiamento por bloqueio (06/10): "aba escondida" sozinha não basta. Enquanto houver edição ou
+ * sessão ativa (registro de bloqueios de recarga) a recarga automática espera — a versão nova
+ * fica pendente com o aviso na tela e a recarga acontece UMA vez quando o último bloqueio termina
+ * e a aba continua escondida.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
@@ -22,6 +27,7 @@ const toastInfo = vi.fn();
 vi.mock('sonner', () => ({ toast: { info: (...args: unknown[]) => toastInfo(...args) } }));
 
 const { decidirAcaoNaAtualizacao, startDeploymentUpdateMonitor } = await import('@/lib/deployment-update');
+const { registrarBloqueioRecarga } = await import('@/lib/reload-blockers');
 
 let visibilidade: DocumentVisibilityState = 'visible';
 
@@ -29,6 +35,15 @@ function definirVisibilidade(valor: DocumentVisibilityState) {
   visibilidade = valor;
   Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => visibilidade });
   document.dispatchEvent(new Event('visibilitychange'));
+}
+
+/** Bloqueios abertos no teste; devolvidos ao fim para nenhum teste herdar estado do outro. */
+const bloqueiosAbertos: Array<() => void> = [];
+
+function bloquear(motivo: string): () => void {
+  const limpar = registrarBloqueioRecarga(motivo);
+  bloqueiosAbertos.push(limpar);
+  return limpar;
 }
 
 beforeEach(() => {
@@ -44,6 +59,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  while (bloqueiosAbertos.length > 0) bloqueiosAbertos.pop()!();
 });
 
 describe('decidirAcaoNaAtualizacao', () => {
@@ -109,5 +125,88 @@ describe('startDeploymentUpdateMonitor', () => {
     expect(toastInfo).not.toHaveBeenCalled();
 
     parar();
+  });
+});
+
+describe('startDeploymentUpdateMonitor com bloqueio de recarga ativo', () => {
+  it('aba oculta com bloqueio ativo: NÃO recarrega e mantém o aviso na tela', async () => {
+    bloquear('mensagem-em-edicao');
+    definirVisibilidade('hidden');
+    const recarregar = vi.fn();
+    vi.useFakeTimers();
+    const parar = startDeploymentUpdateMonitor({ recarregar });
+
+    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(fetch).toHaveBeenCalled();
+    expect(recarregar).not.toHaveBeenCalled(); // recarregar agora perderia a edição
+    expect(toastInfo).toHaveBeenCalledTimes(1); // o aviso existente continua
+
+    parar();
+  });
+
+  it('último bloqueio termina com a aba oculta: recarrega exatamente uma vez', async () => {
+    const liberarEdicao = bloquear('mensagem-em-edicao');
+    const liberarChamada = bloquear('chamada-ativa');
+    definirVisibilidade('hidden');
+    const recarregar = vi.fn();
+    vi.useFakeTimers();
+    const parar = startDeploymentUpdateMonitor({ recarregar });
+
+    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(recarregar).not.toHaveBeenCalled();
+
+    liberarEdicao();
+    expect(recarregar).not.toHaveBeenCalled(); // ainda há bloqueio ativo
+
+    liberarChamada();
+    expect(recarregar).toHaveBeenCalledTimes(1); // último bloqueio terminou
+
+    liberarChamada(); // limpeza idempotente não pode recarregar de novo
+    definirVisibilidade('visible');
+    definirVisibilidade('hidden');
+    expect(recarregar).toHaveBeenCalledTimes(1);
+
+    parar();
+  });
+
+  it('aba visível com bloqueio: ocultar adia e liberar ainda oculta conclui a recarga', async () => {
+    const liberar = bloquear('mensagem-em-edicao');
+    const recarregar = vi.fn();
+    vi.useFakeTimers();
+    const parar = startDeploymentUpdateMonitor({ recarregar });
+
+    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(toastInfo).toHaveBeenCalledTimes(1); // avisa e espera
+    expect(recarregar).not.toHaveBeenCalled();
+
+    definirVisibilidade('hidden');
+    expect(recarregar).not.toHaveBeenCalled(); // o bloqueio ainda adia a recarga
+
+    liberar();
+    expect(recarregar).toHaveBeenCalledTimes(1); // tornou-se livre ainda oculta
+
+    parar();
+  });
+
+  it('parar() desarma o observador: liberar o bloqueio depois não recarrega', async () => {
+    const liberar = bloquear('mensagem-em-edicao');
+    definirVisibilidade('hidden');
+    const recarregar = vi.fn();
+    vi.useFakeTimers();
+    const parar = startDeploymentUpdateMonitor({ recarregar });
+
+    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(recarregar).not.toHaveBeenCalled();
+
+    parar(); // teardown: intervalos, listener de visibilidade e observador de bloqueios
+
+    liberar();
+    definirVisibilidade('hidden');
+    expect(recarregar).not.toHaveBeenCalled(); // nada dispara depois do teardown
   });
 });

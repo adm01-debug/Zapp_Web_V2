@@ -29,7 +29,10 @@ export function LGPDComplianceView() {
     setIsDeleting(true);
     try {
       // Create a deletion request (admin reviews)
-      await supabase.rpc('log_audit_event', {
+      // R2-AUTH-050: o rpc do supabase NÃO rejeita em erro do PostgREST — resolve com
+      // `{ error }`. Sem checar, a exclusão era confirmada ao usuário mesmo sem registro
+      // de auditoria (rastro LGPD perdido).
+      const { error: auditError } = await supabase.rpc('log_audit_event', {
         p_action: 'gdpr_deletion_request',
         p_entity_type: 'user',
         p_entity_id: user.id,
@@ -40,6 +43,8 @@ export function LGPDComplianceView() {
         },
         p_user_agent: navigator.userAgent,
       });
+
+      if (auditError) throw auditError;
 
       toast.success('Solicitação de exclusão registrada. Um administrador irá processar em até 30 dias.');
       setShowDeleteConfirm(false);

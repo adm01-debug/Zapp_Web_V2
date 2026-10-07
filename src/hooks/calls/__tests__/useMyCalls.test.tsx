@@ -57,13 +57,47 @@ describe('useMyCalls (T45)', () => {
     expect(args.p_limit).toBe(PAGE_SIZE);
   });
 
-  it('pagina fora do intervalo volta para a 1', async () => {
-    rpc.mockResolvedValue({ data: [{ id: 'a', total_count: 3 }], error: null });
+  // R2-MOD-015: a RPC usa `count(*) over ()`, entao uma pagina vazia NAO traz total
+  // nenhum (o offset invalido devolve zero linhas). A fixture antiga devolvia linha
+  // para qualquer offset e escondia o defeito: o hook anunciava "pagina 1" mas
+  // continuava com os dados vazios da pagina 99 (total 0) sem refazer a consulta.
+  it('pagina fora do intervalo refaz a consulta na pagina 1 e devolve os dados dela', async () => {
+    const pagina1 = [
+      { id: 'a', total_count: 3 },
+      { id: 'b', total_count: 3 },
+      { id: 'c', total_count: 3 },
+    ];
+    // Fixture fiel a RPC: so a pagina 1 (offset 0) tem linhas; qualquer offset alem
+    // do fim devolve zero linhas — e com elas vai embora o `total_count`.
+    const offsetsPedidos: number[] = [];
+    rpc.mockImplementation((_nome?: unknown, args?: Record<string, number>) => {
+      const offset = Number(args?.p_offset);
+      offsetsPedidos.push(offset);
+      return Promise.resolve({ data: offset === 0 ? pagina1 : [], error: null });
+    });
     const { result } = renderHook(() => useMyCalls({ ...base, page: 9 }), { wrapper });
-    await waitFor(() => expect(result.current.total).toBe(3));
+
+    // Sem a correcao, `rows` fica vazio (a resposta vazia do offset invalido) e
+    // `total` fica 0 — o historico parece vazio.
+    await waitFor(() => expect(result.current.rows).toHaveLength(3));
+    expect(result.current.total).toBe(3);
     expect(result.current.pages).toBe(1);
     expect(result.current.page).toBe(1);
     expect(result.current.paginaForaDoIntervalo).toBe(true);
+
+    // A consulta foi REFEITA: offset invalido primeiro, offset da pagina 1 depois.
+    expect(offsetsPedidos).toEqual([(9 - 1) * PAGE_SIZE, 0]);
+  });
+
+  it('pagina 1 vazia (fim real do historico) nao dispara segunda consulta', async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
+    const { result } = renderHook(() => useMyCalls({ ...base, page: 1 }), { wrapper });
+    await waitFor(() => expect(result.current.total).toBe(0));
+    expect(result.current.rows).toHaveLength(0);
+    expect(result.current.pages).toBe(1);
+    expect(result.current.page).toBe(1);
+    expect(result.current.paginaForaDoIntervalo).toBe(false);
+    expect(rpc).toHaveBeenCalledTimes(1);
   });
 
   // TEL-PERIOD-001: a RPC so interpreta NULL como "sem filtro". Mandar o literal

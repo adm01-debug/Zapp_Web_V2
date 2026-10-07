@@ -40,7 +40,9 @@ const VOICE_PRESETS = [
 ] as const;
 
 interface VoiceChangerPickerProps {
-  onSendAudio: (audioUrl: string) => void;
+  /** Pode ser síncrono ou assíncrono: o popover só fecha depois que o envio da
+      mensagem confirma o sucesso. */
+  onSendAudio: (audioUrl: string) => void | Promise<void>;
   disabled?: boolean;
 }
 
@@ -209,7 +211,10 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage.from('audio-memes').getPublicUrl(path);
-      onSendAudio(urlData.publicUrl);
+      // O envio da mensagem pode ser síncrono ou assíncrono e pode falhar. Só
+      // fecha o popover e limpa a prévia DEPOIS da confirmação de sucesso —
+      // assim uma falha preserva `transformedUrl` para o usuário tentar de novo.
+      await onSendAudio(urlData.publicUrl);
       setOpen(false);
       cleanup();
       toast.success('Áudio enviado! 🎤');

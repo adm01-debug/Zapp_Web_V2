@@ -195,13 +195,13 @@ export const useNotificationSettings = () => {
     }
   }, [user, queryClient]);
 
-  const resetSettings = useCallback(async () => {
-    if (!user) return;
+  const resetSettings = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
 
     queryClient.setQueryData([NOTIFICATION_SETTINGS_QUERY_KEY, user.id], DEFAULT_SETTINGS);
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('user_settings')
         .upsert({
           user_id: user.id,
@@ -222,9 +222,23 @@ export const useNotificationSettings = () => {
           transcription_sound_type: DEFAULT_SETTINGS.transcriptionSoundType,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
+
+      // O upsert do supabase-js devolve `{ error }` em vez de lançar: sem conferir aqui, o catch
+      // nunca disparava e o painel anunciava "restauradas ao padrão" com o banco intacto.
+      if (error) throw error;
     } catch (error) {
       log.warn('Failed to reset notification settings:', error);
+      // Desfaz o otimista: sem isto a tela continuava mostrando o padrão que o banco recusou.
+      queryClient.invalidateQueries({ queryKey: [NOTIFICATION_SETTINGS_QUERY_KEY, user.id] });
+      toast({
+        title: 'Não foi possível restaurar',
+        description: 'As preferências continuam como estavam. Tente novamente.',
+        variant: 'destructive',
+      });
+      return false;
     }
+
+    return true;
   }, [user, queryClient]);
 
   // Check if currently in quiet hours

@@ -85,8 +85,14 @@ function ThumbFallback({ icon: Icon, size, error = false }: {
 }
 
 function ThumbImage({ item, size }: { item: ContactMediaItem; size: FileThumbSize }) {
-  const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(item.signedUrl ? '' : item.url);
-  const src = item.signedUrl ?? resolvedUrl;
+  // Etapa 10 + R2-INB-059: o locator (`item.url`) fica SEMPRE com o resolver, para que uma
+  // assinatura em lote que falhe possa ser renovada; a URL em lote entra como semente e evita
+  // o pedido individual enquanto vale.
+  const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(item.url, undefined, {
+    signedUrl: item.signedUrl,
+    signedUrlExpiresAt: item.expiresAt,
+  });
+  const src = resolvedUrl || item.signedUrl || '';
   // Falha amarrada ao `src` que falhou: quando a URL muda (refresh bem-sucedido ou assinatura
   // em lote que chegou depois), o placeholder cai sozinho — sem efeito de reset.
   const [failedSrc, setFailedSrc] = useState<string | null>(null);

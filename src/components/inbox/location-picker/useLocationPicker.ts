@@ -53,6 +53,20 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   // Só a última busca/clique vale: a anterior é cancelada para não sobrescrever o resultado.
   const geoAbort = useRef<AbortController | null>(null);
 
+  // R2-INB-036: número da intenção mais nova do operador (clique no mapa, sugestão da lista,
+  // busca por texto, GPS). `getCurrentPosition` NÃO tem cancelamento — a resposta do aparelho
+  // chega de qualquer jeito, às vezes depois de o operador já ter escolhido outro ponto. Quem
+  // resolve tarde (o GPS é quem atrasa de verdade) carrega o número que tinha no começo e desiste
+  // se já não for o corrente: sem isso a resposta atrasada substituía o ponto marcado à mão e o
+  // "Enviar Localização" mandava a coordenada errada.
+  const intentSeq = useRef(0);
+  // Intenção do pedido de GPS mais novo — é ele que manda no spinner "Obtendo localização...".
+  const gpsIntent = useRef(0);
+  const nextIntent = useCallback(() => {
+    intentSeq.current += 1;
+    return intentSeq.current;
+  }, []);
+
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
@@ -73,10 +87,13 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   const [searchResults, setSearchResults] = useState<GeoSearchPlace[]>([]);
 
   const select = useCallback((location: SelectedLocation | null, origin: LocationOrigin) => {
+    // Escolha do operador é a intenção mais nova: invalida o GPS que ainda estiver voltando
+    // (R2-INB-036). Um `select` do próprio GPS não se invalida.
+    if (origin !== 'gps') nextIntent();
     selectedRef.current = location;
     setSelectedLocation(location);
     setSelectedOrigin(location ? origin : null);
-  }, []);
+  }, [nextIntent]);
 
   const nextGeoSignal = useCallback((): AbortSignal => {
     geoAbort.current?.abort();
@@ -116,6 +133,10 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
   }, []);
 
   const reverseGeocode = useCallback(async (lng: number, lat: number, origin: LocationOrigin) => {
+    // R2-INB-036: a intenção desta consulta. O reverso não tem como ser cancelado no meio (a
+    // consulta já saiu), então quem confere se ela ainda vale é esta marca: se o operador escolher
+    // outro ponto enquanto o endereço está em voo, a resposta dele não é mais aplicada.
+    const intent = intentSeq.current;
     // O endereço é opcional: sem token (ou sem resposta do Mapbox) a coordenada continua
     // valendo, senão o GPS "funciona" mas o botão Enviar nunca habilita. A consulta tem
     // timeout e cache no módulo: uma requisição pendurada não trava mais a seleção.
@@ -123,7 +144,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
     const signal = nextGeoSignal();
     setSearchResults([]);
     const place = await reverseGeocodePlace(lat, lng, mapboxToken);
-    if (signal.aborted) return;
+    if (signal.aborted || intent !== intentSeq.current) return;
     select(place ? { lat, lng, name: place.name, address: place.address } : { lat, lng }, origin);
   }, [mapboxToken, nextGeoSignal, select]);
 
@@ -172,7 +193,14 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
         pendingMarker.current = null;
         if (target) updateMarker(target[0], target[1]);
       });
-      map.current.on('click', async (e) => { const { lng, lat } = e.lngLat; updateMarker(lng, lat); await reverseGeocode(lng, lat, 'click'); });
+      map.current.on('click', async (e) => {
+        const { lng, lat } = e.lngLat;
+        // R2-INB-036: o clique é a intenção mais nova já aqui — a resposta do GPS que chegar
+        // enquanto o endereço deste ponto carrega não pode vencer o ponto que o operador marcou.
+        nextIntent();
+        updateMarker(lng, lat);
+        await reverseGeocode(lng, lat, 'click');
+      });
       // E31: centro do mapa alimenta o `proximity` do autocomplete enquanto o operador navega.
       map.current.on('moveend', () => { const c = map.current?.getCenter(); if (c) setMapCenter({ lng: c.lng, lat: c.lat }); });
     }).catch((err) => {
@@ -182,7 +210,7 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       setMapError(mapboxFailureMessage(kind));
     });
     return () => { cancelled = true; clearTimeout(watchdog); map.current?.remove(); map.current = null; marker.current = null; setIsMapLoaded(false); };
-  }, [mapNode, mapboxToken, open, activeTab, mapAttempt, updateMarker, reverseGeocode]);
+  }, [mapNode, mapboxToken, open, activeTab, mapAttempt, updateMarker, reverseGeocode, nextIntent]);
 
   // Fechar o picker descarta a coordenada pendente; um retry do mapa a preserva.
   useEffect(() => { if (!open) pendingMarker.current = null; }, [open]);
@@ -196,12 +224,32 @@ export function useLocationPicker(open: boolean, activeTab: 'map' | 'current') {
       setIsLoadingLocation(false);
       return;
     }
+    // R2-INB-036: este pedido é a intenção mais nova e o dono do spinner. A resposta só vale se,
+    // nesse meio-tempo, o operador não tiver escolhido outro ponto (clique, lista de sugestões,
+    // busca) nem pedido o GPS de novo. A resposta do aparelho não tem cancelamento: quem chega
+    // tarde simplesmente não é aplicado — nem o marcador, nem a seleção, nem o endereço.
+    const intent = nextIntent();
+    gpsIntent.current = intent;
     navigator.geolocation.getCurrentPosition(
-      async (position) => { const { latitude, longitude } = position.coords; setAgentPosition({ lng: longitude, lat: latitude }); updateMarker(longitude, latitude); await reverseGeocode(longitude, latitude, 'gps'); setIsLoadingLocation(false); },
-      (error) => { log.error('Error getting location:', error); toast({ title: 'Erro ao obter localização', description: 'Verifique se a permissão de localização está ativada.', variant: 'destructive' }); setIsLoadingLocation(false); },
+      async (position) => {
+        if (intent === intentSeq.current) {
+          const { latitude, longitude } = position.coords;
+          setAgentPosition({ lng: longitude, lat: latitude });
+          updateMarker(longitude, latitude);
+          await reverseGeocode(longitude, latitude, 'gps');
+        }
+        // Um pedido superado por outro pedido de GPS não desliga o "Obtendo localização..." do
+        // que ainda está em voo; superado por uma escolha manual, o spinner sai aqui mesmo.
+        if (intent === gpsIntent.current) setIsLoadingLocation(false);
+      },
+      (error) => {
+        log.error('Error getting location:', error);
+        toast({ title: 'Erro ao obter localização', description: 'Verifique se a permissão de localização está ativada.', variant: 'destructive' });
+        if (intent === gpsIntent.current) setIsLoadingLocation(false);
+      },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-  }, [updateMarker, reverseGeocode]);
+  }, [updateMarker, reverseGeocode, nextIntent]);
 
   /**
    * F2/E12: aceita o termo por parâmetro. O input do combobox (flag ligada) está ligado a

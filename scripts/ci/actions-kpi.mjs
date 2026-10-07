@@ -6,13 +6,20 @@
 // -- por isso a duracao sai da diferenca entre os dois carimbos, e nao do endpoint
 // de faturamento (que e a fonte "certa" mas nao existe aqui).
 //
-// O nucleo e puro de proposito: `agregar`, `maisLentos` e `tabela` nao tocam rede
-// nem disco, entao a conta e testavel com runs sinteticos. O CLI so busca, chama e
-// publica.
+// #365: a primeira versao lia UMA pagina de runs (`per_page=100`) e publicava o
+// ranking dos "5 jobs mais lentos" a partir de `maisLentos([])` -- nunca consultava
+// os jobs. Agora `coletarRuns` pagina ate a ultima pagina cair fora da janela, e
+// `coletarJobs` busca os jobs de cada run da janela antes de montar o ranking.
+//
+// O nucleo e puro de proposito: `agregar`, `maisLentos`, `paginaTemMais` e `tabela`
+// nao tocam rede nem disco, entao a conta e testavel com runs sinteticos. O CLI so
+// busca, chama e publica.
 import { appendFileSync } from 'node:fs';
 
 const CANCELADOS = new Set(['cancelled']);
 const FALHAS = new Set(['failure', 'timed_out', 'startup_failure']);
+const UM_DIA = 24 * 60 * 60 * 1000;
+const POR_PAGINA = 100; // teto da API do GitHub
 
 export function duracaoMinutos(run) {
   const inicio = Date.parse(run.run_started_at ?? '');
@@ -21,12 +28,17 @@ export function duracaoMinutos(run) {
   return (fim - inicio) / 60000;
 }
 
-export function agregar(runs, { janelaDias = 7, agora = Date.now() } = {}) {
-  const corte = agora - janelaDias * 24 * 60 * 60 * 1000;
-  const porWorkflow = new Map();
-  for (const run of runs ?? []) {
+export function runsNaJanela(runs, { janelaDias = 7, agora = Date.now() } = {}) {
+  const corte = agora - janelaDias * UM_DIA;
+  return (runs ?? []).filter((run) => {
     const inicio = Date.parse(run.run_started_at ?? '');
-    if (!Number.isFinite(inicio) || inicio < corte) continue;
+    return Number.isFinite(inicio) && inicio >= corte;
+  });
+}
+
+export function agregar(runs, { janelaDias = 7, agora = Date.now() } = {}) {
+  const porWorkflow = new Map();
+  for (const run of runsNaJanela(runs, { janelaDias, agora })) {
     const nome = run.name || run.workflow_id || '(sem nome)';
     const atual = porWorkflow.get(nome) ?? { workflow: nome, runs: 0, cancelados: 0, falhas: 0, minutos: 0 };
     atual.runs += 1;
@@ -44,6 +56,19 @@ export function agregar(runs, { janelaDias = 7, agora = Date.now() } = {}) {
     }))
     .sort((a, b) => b.runs - a.runs || b.minutos - a.minutos);
   return linhas;
+}
+
+// A API devolve os runs do mais novo para o mais antigo. Se a pagina veio cheia E o
+// run mais antigo dela ainda esta dentro da janela, pode haver run da janela na
+// pagina seguinte -- entao vale continuar. Pagina incompleta e' a ultima; pagina cujo
+// run mais antigo ja saiu da janela significa que a proxima so' teria coisa velha.
+export function paginaTemMais(pagina, { janelaDias = 7, agora = Date.now(), porPagina = POR_PAGINA } = {}) {
+  const runs = pagina ?? [];
+  if (runs.length < porPagina) return false;
+  const tempos = runs.map((r) => Date.parse(r.run_started_at ?? '')).filter(Number.isFinite);
+  if (!tempos.length) return false;
+  const maisAntigo = Math.min(...tempos);
+  return maisAntigo >= agora - janelaDias * UM_DIA;
 }
 
 export function maisLentos(jobs, { limite = 5 } = {}) {
@@ -85,6 +110,17 @@ export function tabelaLentos(lentos) {
   ].join('\n');
 }
 
+// Monta o corpo publicado (Job Summary + issue): tabela por workflow + ranking dos
+// jobs. Puro, para o teste provar que o ranking saem dos jobs reais e nao vazio.
+export function corpoDoKpi(runs, jobs, { janelaDias = 7, agora = Date.now(), titulo } = {}) {
+  const agregado = agregar(runs, { janelaDias, agora });
+  return [
+    tabela(agregado, { titulo: titulo ?? `KPI do GitHub Actions — ${janelaDias} dias` }),
+    '',
+    tabelaLentos(maisLentos(jobs, { limite: 5 })),
+  ].join('\n');
+}
+
 // ---------------------------------------------------------------- CLI
 const API = process.env.GITHUB_API_URL || 'https://api.github.com';
 const CABECALHOS = (token) => ({
@@ -101,6 +137,59 @@ async function pedir(caminho, token, { metodo = 'GET', corpo } = {}) {
   });
   if (!r.ok) throw new Error(`${metodo} ${caminho} -> ${r.status}`);
   return r.json();
+}
+
+// Pagina os runs ate cobrir a janela inteira. `pedir` e' injetavel para o teste
+// exercitar a paginacao sem rede. O teto de paginas e' so' uma trava anti-loop (100
+// paginas = 10k runs); a janela de 7 dias nunca chega perto disso.
+export async function coletarRuns({
+  repo,
+  token,
+  janelaDias = 7,
+  agora = Date.now(),
+  porPagina = POR_PAGINA,
+  maxPaginas = 100,
+  pedir: buscar = pedir,
+} = {}) {
+  const todos = [];
+  for (let pagina = 1; pagina <= maxPaginas; pagina += 1) {
+    const { workflow_runs: runs = [] } = await buscar(
+      `/repos/${repo}/actions/runs?per_page=${porPagina}&page=${pagina}`,
+      token,
+    );
+    todos.push(...runs);
+    if (!paginaTemMais(runs, { janelaDias, agora, porPagina })) {
+      if (pagina === maxPaginas && runs.length >= porPagina) {
+        console.error(`::warning::paginacao de runs parou no teto de ${maxPaginas} paginas`);
+      }
+      break;
+    }
+  }
+  return todos;
+}
+
+// Busca os jobs de cada run (paginando o proprio run, que tambem corta em 100) e
+// preenche `workflow_name` com o nome do run quando o endpoint de jobs nao o traz.
+export async function coletarJobs(
+  runs,
+  { repo, token, porPagina = POR_PAGINA, maxPaginas = 100, pedir: buscar = pedir } = {},
+) {
+  const jobs = [];
+  for (const run of runs ?? []) {
+    const id = run.id ?? run.run_id;
+    if (id === undefined || id === null) continue;
+    for (let pagina = 1; pagina <= maxPaginas; pagina += 1) {
+      const { jobs: paginaJobs = [] } = await buscar(
+        `/repos/${repo}/actions/runs/${id}/jobs?per_page=${porPagina}&page=${pagina}`,
+        token,
+      );
+      for (const job of paginaJobs) {
+        jobs.push({ ...job, workflow_name: job.workflow_name ?? run.name ?? '' });
+      }
+      if (paginaJobs.length < porPagina) break;
+    }
+  }
+  return jobs;
 }
 
 export async function publicarIssue({ repo, token, marca, corpo }) {
@@ -131,9 +220,9 @@ async function principal() {
     process.exit(2);
   }
   const janela = Number(process.env.JANELA_DIAS ?? 7);
-  const { workflow_runs: runs = [] } = await pedir(`/repos/${repo}/actions/runs?per_page=100`, token);
-  const agregado = agregar(runs, { janelaDias: janela });
-  const corpo = [tabela(agregado, { titulo: `KPI do GitHub Actions — ${janela} dias` }), '', tabelaLentos(maisLentos([]))].join('\n');
+  const runs = await coletarRuns({ repo, token, janelaDias: janela });
+  const jobs = await coletarJobs(runsNaJanela(runs, { janelaDias: janela }), { repo, token });
+  const corpo = corpoDoKpi(runs, jobs, { janelaDias: janela });
   console.log(corpo);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, corpo + '\n');
   const marca = `[kpi-actions] Semana de ${new Date().toISOString().slice(0, 10)}`;

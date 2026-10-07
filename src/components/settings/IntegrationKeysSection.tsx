@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Plug, Eye, EyeOff, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Plug, Eye, EyeOff, Save, Info, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface KeyField {
@@ -20,7 +21,7 @@ const INTEGRATION_KEYS: KeyField[] = [
   {
     key: 'elevenlabs_api_key',
     label: 'ElevenLabs API Key',
-    description: 'Chave para geração de voz (TTS), efeitos sonoros e conversão de voz',
+    description: 'Registro local da chave ElevenLabs; a usada pelas funções de voz é a variável de ambiente ELEVENLABS_API_KEY do servidor',
     placeholder: 'xi-...',
   },
 ];
@@ -83,6 +84,17 @@ export function IntegrationKeysSection() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
+        <Alert className="border-warning/30 bg-warning/10">
+          <Info className="h-4 w-4 !text-warning" />
+          <AlertTitle className="text-warning">Chave registrada não é a chave usada</AlertTitle>
+          <AlertDescription>
+            A autoridade efetiva da integração de voz é a variável de ambiente do servidor
+            ELEVENLABS_API_KEY, consumida pelas Edge Functions de voz. A chave salva nesta tela
+            fica apenas registrada em global_settings e não é consultada por nenhuma função deste
+            repositório.
+          </AlertDescription>
+        </Alert>
+
         {INTEGRATION_KEYS.map(({ key, label, description, placeholder }) => {
           const currentValue = getSetting(key);
           const isConfigured = !!currentValue && currentValue.trim() !== '';
@@ -96,9 +108,9 @@ export function IntegrationKeysSection() {
                 <div className="flex items-center gap-2">
                   <Label className="text-sm font-medium">{label}</Label>
                   {isConfigured ? (
-                    <Badge variant="outline" className="text-xs gap-1 text-success border-success/30">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Configurada
+                    <Badge variant="outline" className="text-xs gap-1 text-warning border-warning/30">
+                      <Info className="w-3 h-3" />
+                      Registrada (não usada pelo TTS)
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="text-xs gap-1 text-warning border-warning/30">

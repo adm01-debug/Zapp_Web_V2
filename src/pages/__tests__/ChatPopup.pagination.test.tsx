@@ -48,6 +48,19 @@ function medirLayout() {
 
 const CONTACT_ID = 'contato-popup-1';
 
+/**
+ * Teto de espera das consultas assíncronas (`findBy*`/`waitFor`).
+ *
+ * O padrão do Testing Library é 1000 ms e, com a máquina carregada, a montagem
+ * do caminho real `ChatPopup -> ChatPanel -> ChatMessagesArea` (1000 linhas
+ * virtualizadas) passa desse teto: o teste falhava por tempo, não por
+ * comportamento (`Unable to find role="button" ...`, medido entre 1101 ms e
+ * 1423 ms sob carga). A espera continua sendo por ESTADO real — a consulta é a
+ * mesma e a asserção não muda; só o teto fica explícito e dimensionado.
+ * Isto não é sleep: nada aqui espera tempo fixo.
+ */
+const ESPERA_ESTADO_REAL = 5000;
+
 const mocks = vi.hoisted(() => ({
   loadOlderMessages: vi.fn(async () => {}),
   /** Retorno controlado do `useMessages` (fachada do hook). */
@@ -249,7 +262,7 @@ describe('ChatPopup — histórico antigo alcançável (R2-INB-004)', () => {
   it('expõe o controle do histórico antigo quando o hook publica hasOlder', async () => {
     renderPopup();
 
-    const botao = await screen.findByRole('button', { name: CARREGAR });
+    const botao = await screen.findByRole('button', { name: CARREGAR }, { timeout: ESPERA_ESTADO_REAL });
     expect(botao).toBeEnabled();
     // A área de mensagens recebeu a 1ª página (1000 linhas), sem o controle de
     // "início do histórico": ainda há lote antigo por carregar.
@@ -261,7 +274,7 @@ describe('ChatPopup — histórico antigo alcançável (R2-INB-004)', () => {
     mocks.messages = useMessagesState({ hasOlder: false });
     renderPopup();
 
-    await screen.findByRole('log', { name: /mensagens da conversa/i });
+    await screen.findByRole('log', { name: /mensagens da conversa/i }, { timeout: ESPERA_ESTADO_REAL });
     expect(screen.queryByRole('button', { name: CARREGAR })).toBeNull();
     expect(screen.getByTestId('history-start')).toBeInTheDocument();
     expect(mocks.loadOlderMessages).not.toHaveBeenCalled();
@@ -270,7 +283,7 @@ describe('ChatPopup — histórico antigo alcançável (R2-INB-004)', () => {
   it('leva um clique a exatamente uma chamada e o loading do hook impede concorrência', async () => {
     const { rerender } = renderPopup();
 
-    const botao = await screen.findByRole('button', { name: CARREGAR });
+    const botao = await screen.findByRole('button', { name: CARREGAR }, { timeout: ESPERA_ESTADO_REAL });
     fireEvent.click(botao);
     expect(mocks.loadOlderMessages).toHaveBeenCalledTimes(1);
 
@@ -279,7 +292,7 @@ describe('ChatPopup — histórico antigo alcançável (R2-INB-004)', () => {
     mocks.messages = useMessagesState({ loadingOlder: true });
     rerender();
 
-    const emCarga = await screen.findByRole('button', { name: CARREGAR });
+    const emCarga = await screen.findByRole('button', { name: CARREGAR }, { timeout: ESPERA_ESTADO_REAL });
     expect(emCarga).toBeDisabled();
     expect(emCarga).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByTestId('older-loading-status')).toHaveTextContent(/carregando mensagens anteriores/i);
@@ -296,7 +309,7 @@ describe('ChatPopup — histórico antigo alcançável (R2-INB-004)', () => {
     try {
       const { rerender } = renderPopup();
 
-      fireEvent.click(await screen.findByRole('button', { name: CARREGAR }));
+      fireEvent.click(await screen.findByRole('button', { name: CARREGAR }, { timeout: ESPERA_ESTADO_REAL }));
       expect(mocks.loadOlderMessages).toHaveBeenCalledTimes(1);
 
       // O hook entrega o lote anterior e fecha o histórico (1005 no total).
@@ -308,7 +321,7 @@ describe('ChatPopup — histórico antigo alcançável (R2-INB-004)', () => {
 
       // Início do histórico anunciado de forma acessível, e a lista passou a ter a
       // conversa inteira (1005 linhas) — o lote antigo saiu do popup e chegou aqui.
-      await screen.findByTestId('history-start');
+      await screen.findByTestId('history-start', undefined, { timeout: ESPERA_ESTADO_REAL });
       expect(alturaDaLista()).toBe(TOTAL * ALTURA_ESTIMADA);
 
       // ...e a mensagem mais antiga (índice 0, fora da página inicial de 1000)
@@ -319,7 +332,7 @@ describe('ChatPopup — histórico antigo alcançável (R2-INB-004)', () => {
 
       await waitFor(() => {
         expect(document.querySelector(`[data-message-id="${MAIS_ANTIGA_ID}"]`)).not.toBeNull();
-      });
+      }, { timeout: ESPERA_ESTADO_REAL });
       expect(document.querySelector(`[data-message-id="${MAIS_ANTIGA_ID}"]`)?.textContent)
         .toBe('mensagem mais antiga');
     } finally {

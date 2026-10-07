@@ -24,6 +24,24 @@ interface AuditLog {
   created_at: string;
 }
 
+// Contrato compartilhado de ações e entidades de papel: todo evento de papel em
+// public.audit_logs começa com `role_` (audit_role_changes grava role_granted /
+// role_revoked / role_changed com entity_type='user_roles'; o provisionamento de
+// signup grava role_auto_provisioned / role_auto_provision_denied).
+export const ROLE_ACTION_PREFIX = 'role_';
+export const ROLE_FILTER_VALUE = 'role_events';
+// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo (cartao R2-AUTH-032)
+export const isRoleAction = (action: string) => action.startsWith(ROLE_ACTION_PREFIX);
+// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo (cartao R2-AUTH-032)
+export const isSensitiveAction = (action: string) =>
+  isRoleAction(action) || action.includes('delete') || action.includes('export') || action.includes('role_change');
+
+// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo (cartao R2-AUTH-032)
+export const ENTITY_TYPES_BY_FILTER: Record<string, string[]> = {
+  contact: ['contact'], message: ['message'], campaign: ['campaign'],
+  user: ['user', 'user_roles'], settings: ['settings'],
+};
+
 const ACTION_COLORS: Record<string, string> = {
   login: 'bg-success/10 text-success',
   logout: 'bg-muted text-muted-foreground',
@@ -65,11 +83,13 @@ export function AuditLogDashboard() {
       .order('created_at', { ascending: false })
       .limit(200);
 
-    if (actionFilter !== 'all') {
+    if (actionFilter === ROLE_FILTER_VALUE) {
+      query = query.like('action', ROLE_ACTION_PREFIX + '%');
+    } else if (actionFilter !== 'all') {
       query = query.eq('action', actionFilter);
     }
     if (entityFilter !== 'all') {
-      query = query.eq('entity_type', entityFilter);
+      query = query.in('entity_type', ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]);
     }
 
     const { data, error } = await query;
@@ -79,9 +99,7 @@ export function AuditLogDashboard() {
       const today = localDayKey(new Date());
       const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
       const uniqueUsers = new Set(data.map(l => l.user_id).filter(Boolean));
-      const suspicious = data.filter(l => 
-        l.action.includes('delete') || l.action.includes('role_change') || l.action.includes('export')
-      );
+      const suspicious = data.filter(l => isSensitiveAction(l.action));
       
       setStats({
         total: data.length,
@@ -180,6 +198,7 @@ export function AuditLogDashboard() {
                 <SelectItem value="update">Atualização</SelectItem>
                 <SelectItem value="delete">Exclusão</SelectItem>
                 <SelectItem value="export">Exportação</SelectItem>
+                <SelectItem value={ROLE_FILTER_VALUE}>Papéis (concessões e revogações)</SelectItem>
               </SelectContent>
             </Select>
             <Select value={entityFilter} onValueChange={setEntityFilter}>

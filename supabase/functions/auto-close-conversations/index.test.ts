@@ -29,6 +29,18 @@ interface ServiceCtx {
 interface ServiceOpts {
   config?: unknown;
   staleContacts?: unknown[];
+  /** Erro PostgREST devolvido pelo insert da tabela (valor fixo ou função da linha). */
+  insertErrors?: Record<string, unknown>;
+  /** Erro PostgREST devolvido pelo update da tabela (valor fixo ou função da linha). */
+  updateErrors?: Record<string, unknown>;
+}
+
+/** Permite injetar o erro por linha (ex.: só o 2º contato falha), como o PostgREST faz. */
+function resolveInjectedError(injected: unknown, row: Record<string, unknown>): unknown {
+  if (typeof injected === "function") {
+    return (injected as (r: Record<string, unknown>) => unknown)(row);
+  }
+  return injected ?? null;
 }
 
 /**
@@ -41,11 +53,13 @@ function makeServiceClient(opts: ServiceOpts = {}): { client: unknown; ctx: Serv
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function from(table: string): any {
     ctx.tables.push(table);
+    let mode: "select" | "insert" | "update" = "select";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const b: Record<string, any> = {};
     const chain = () => b;
     b.select = () => {
       ctx.selects.push(table);
+      mode = "select";
       return b;
     };
     b.eq = chain;
@@ -58,14 +72,22 @@ function makeServiceClient(opts: ServiceOpts = {}): { client: unknown; ctx: Serv
       Promise.resolve({ data: table === "auto_close_config" ? (opts.config ?? null) : null, error: null });
     b.insert = (row: Record<string, unknown>) => {
       ctx.inserts.push({ table, row });
-      return Promise.resolve({ data: null, error: null });
+      return Promise.resolve({ data: null, error: resolveInjectedError(opts.insertErrors?.[table], row) });
     };
     b.update = (row: Record<string, unknown>) => {
       ctx.updates.push({ table, row });
+      mode = "update";
       return b;
     };
     b.then = (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) => {
-      const value = table === "contacts" ? { data: opts.staleContacts ?? [], error: null } : { data: null, error: null };
+      let value: { data: unknown; error: unknown };
+      if (mode === "update") {
+        value = { data: null, error: resolveInjectedError(opts.updateErrors?.[table], {}) };
+      } else if (table === "contacts") {
+        value = { data: opts.staleContacts ?? [], error: null };
+      } else {
+        value = { data: null, error: null };
+      }
       return Promise.resolve(value).then(res, rej);
     };
     b.catch = (rej: (e: unknown) => unknown) => Promise.resolve().catch(rej);
@@ -223,4 +245,97 @@ Deno.test("R2-API-022: fluxo autorizado encerra conversas stale (mensagem + fech
   assert(ctx.inserts.some((i) => i.table === "messages"), "deve inserir a mensagem de fechamento");
   assert(ctx.inserts.some((i) => i.table === "conversation_closures"), "deve inserir o fechamento");
   assert(ctx.updates.some((u) => u.table === "contacts"), "deve desatribuir o contato");
+});
+
+// ------------------------------------------------- R2-API-028 / item #203
+//
+// O defeito: o laço ignorava o `error` das três escritas e somava `closed++`
+// de qualquer jeito — o relatório do cron anunciava encerramento que não
+// aconteceu. Agora só conta quando TODAS as escritas da conversa concluem.
+
+const CLOSABLE_CONFIG = {
+  is_enabled: true,
+  inactivity_hours: 24,
+  close_message: "Conversa encerrada por inatividade.",
+};
+const ONE_STALE = [{ id: "c-1", name: "Contato", phone: "+55", assigned_to: "p-1" }];
+
+function makeCloseRun(opts: { insertErrors?: Record<string, unknown>; updateErrors?: Record<string, unknown>; staleContacts?: unknown[] }) {
+  const { client, ctx } = makeServiceClient({
+    config: CLOSABLE_CONFIG,
+    staleContacts: opts.staleContacts ?? ONE_STALE,
+    insertErrors: opts.insertErrors,
+    updateErrors: opts.updateErrors,
+  });
+  return { client, ctx };
+}
+
+Deno.test("R2-API-028: mensagem de fechamento falha → NÃO conta encerramento", async () => {
+  const { client, ctx } = makeCloseRun({ insertErrors: { messages: { message: "insert denied" } } });
+  const res = await handleAutoCloseConversations(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ serviceClient: client, cronSecret: TEST_CRON_SECRET }),
+  );
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.closed === 0, `não pode contar encerramento: ${JSON.stringify(body)}`);
+  assert(body.failed === 1, `deve reportar 1 falha: ${JSON.stringify(body)}`);
+  assert(ctx.inserts.some((i) => i.table === "messages"), "a tentativa de mensagem tem de ter ocorrido");
+});
+
+Deno.test("R2-API-028: insert do fechamento falha (ex.: já fechado no dia) → NÃO conta encerramento", async () => {
+  const { client, ctx } = makeCloseRun({
+    insertErrors: { conversation_closures: { code: "23505", message: "duplicate key value violates unique constraint" } },
+  });
+  const res = await handleAutoCloseConversations(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ serviceClient: client, cronSecret: TEST_CRON_SECRET }),
+  );
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.closed === 0, `não pode contar encerramento: ${JSON.stringify(body)}`);
+  assert(body.failed === 1, `deve reportar 1 falha: ${JSON.stringify(body)}`);
+  assert(ctx.inserts.some((i) => i.table === "conversation_closures"), "a tentativa de fechamento tem de ter ocorrido");
+});
+
+Deno.test("R2-API-028: desatribuição falha → NÃO conta encerramento", async () => {
+  const { client, ctx } = makeCloseRun({ updateErrors: { contacts: { message: "update denied" } } });
+  const res = await handleAutoCloseConversations(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ serviceClient: client, cronSecret: TEST_CRON_SECRET }),
+  );
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.closed === 0, `não pode contar encerramento: ${JSON.stringify(body)}`);
+  assert(body.failed === 1, `deve reportar 1 falha: ${JSON.stringify(body)}`);
+  assert(ctx.updates.some((u) => u.table === "contacts"), "a tentativa de desatribuição tem de ter ocorrido");
+});
+
+Deno.test("R2-API-028: contagem é por conversa — 1 fecha, 1 falha", async () => {
+  const { client } = makeCloseRun({
+    staleContacts: [...ONE_STALE, { id: "c-2", name: "Outro", phone: "+55", assigned_to: "p-2" }],
+    insertErrors: {
+      conversation_closures: (row: Record<string, unknown>) =>
+        row.contact_id === "c-2" ? { message: "closure denied" } : null,
+    },
+  });
+  const res = await handleAutoCloseConversations(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ serviceClient: client, cronSecret: TEST_CRON_SECRET }),
+  );
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.closed === 1, `esperado closed:1, recebido ${JSON.stringify(body)}`);
+  assert(body.failed === 1, `esperado failed:1, recebido ${JSON.stringify(body)}`);
+});
+
+Deno.test("R2-API-028: conversa sem falha continua contando (guarda de regressão)", async () => {
+  const { client } = makeCloseRun({});
+  const res = await handleAutoCloseConversations(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ serviceClient: client, cronSecret: TEST_CRON_SECRET }),
+  );
+  const body = await res.json();
+  assert(body.closed === 1, `esperado closed:1, recebido ${JSON.stringify(body)}`);
+  assert(body.failed === 0, `esperado failed:0, recebido ${JSON.stringify(body)}`);
 });

@@ -1,4 +1,5 @@
-// Barrel export for hooks/business (12 hooks)
+// Barrel export for hooks/business (13 hooks)
+export * from './useAbandonmentRate';
 export * from './useBusinessHours';
 export * from './useBusinessHoursCheck';
 export * from './useCSAT';

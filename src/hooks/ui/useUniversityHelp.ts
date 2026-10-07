@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ToneKey, getTonePrompt } from '@/components/inbox/ai-tools/ToneSelector';
 import { usePeriodFilter } from '@/components/inbox/ai-tools/PeriodFilterSelector';
+import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
 
 interface ChatMessage {
   id: string;
@@ -29,10 +30,25 @@ export function useUniversityHelp(contactId: string, contactName: string | undef
   const [error, setError] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const lastCallRef = useRef(0);
+  // Requisições em voo: o spinner só sai quando a requisição vigente termina ou
+  // quando não sobrou nenhuma em voo (a resposta descartada ainda limpa o loading).
+  const inFlightRef = useRef(0);
 
   const normalized = useMemo(() => normalizeMessages(messages), [messages]);
 
   const periodFilter = usePeriodFilter(normalized, 'all');
+  const { analysisPeriod, customDateFrom, customDateTo } = periodFilter;
+
+  // IA-048 — identidade da requisição: contato + período ESCOLHIDO. Não deriva
+  // das mensagens vivas, senão uma mensagem nova invalidaria a resposta em voo.
+  const {
+    begin: beginRequest,
+    isCurrent: isRequestCurrent,
+    invalidate: invalidateRequests,
+  } = useAiRequestGeneration({
+    contactId,
+    periodKey: buildPeriodKey(analysisPeriod, customDateFrom, customDateTo),
+  });
 
   const recentMessages = useMemo(() => {
     return periodFilter.filteredMessages
@@ -67,6 +83,14 @@ export function useUniversityHelp(contactId: string, contactName: string | undef
     setError(null);
   }, [periodFilter.analysisPeriod, periodFilter.customDateFrom, periodFilter.customDateTo]);
 
+  // IA-048 — troca de contato/período descarta a resposta de IA em voo: a geração
+  // é invalidada antes que qualquer callback assíncrono pendente termine. Efeito
+  // sem `setState` (os resets de estado continuam nos dois efeitos acima): aqui só
+  // se marca a requisição em voo como obsoleta.
+  useEffect(() => {
+    invalidateRequests();
+  }, [contactId, analysisPeriod, customDateFrom, customDateTo, invalidateRequests]);
+
   const toggleMessage = useCallback((id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -96,6 +120,8 @@ export function useUniversityHelp(contactId: string, contactName: string | undef
       return;
     }
     lastCallRef.current = now;
+    const request = beginRequest();
+    inFlightRef.current += 1;
     setLoading(true);
     setResponse(null);
     setError(null);
@@ -114,8 +140,15 @@ export function useUniversityHelp(contactId: string, contactName: string | undef
             },
           ],
           model: 'google/gemini-3-flash-preview',
+          // IA-051 — o id do clique (IA-048) para o log de consumo do `ai-proxy`.
+          requestId: request.requestId,
         },
       });
+      // IA-048 — a resposta só vale se contato/período ainda forem os do clique.
+      // A checagem vem DEPOIS do await, que é onde a resposta chega: texto gerado
+      // para o período antigo não é aplicado nem dispara toast na tela atual.
+      if (!isRequestCurrent(request)) return;
+
       if (result.error) throw new Error(result.error.message || 'Erro na API');
       const content = result.data?.content || result.data?.choices?.[0]?.message?.content;
       if (content && content.trim().length > 0) {
@@ -125,13 +158,18 @@ export function useUniversityHelp(contactId: string, contactName: string | undef
         throw new Error('Resposta vazia da IA');
       }
     } catch (err) {
+      if (!isRequestCurrent(request)) return;
       const msg = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(msg);
       setResponse(null);
       toast.error('Falha ao gerar resposta. Tente novamente.');
+    } finally {
+      // O spinner (IA-048) só sai quando a requisição ainda é a vigente ou quando
+      // não sobrou nenhuma em voo: a resposta descartada não deixa o loading preso.
+      inFlightRef.current = Math.max(0, inFlightRef.current - 1);
+      if (isRequestCurrent(request) || inFlightRef.current === 0) setLoading(false);
     }
-    setLoading(false);
-  }, [selectedIds, selectedInOrder, selectedTone, contactName]);
+  }, [beginRequest, isRequestCurrent, selectedIds, selectedInOrder, selectedTone, contactName]);
 
   const handleRegenerate = useCallback(() => {
     setResponse(null);

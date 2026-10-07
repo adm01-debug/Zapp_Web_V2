@@ -89,4 +89,76 @@ describe('useResolvedStorageUrl', () => {
 
     expect(storageMocks.createSignedUrl).toHaveBeenCalledTimes(1);
   });
+
+  /**
+   * R2-INB-059: a assinatura em lote (etapa 10) entra como URL de leitura sem pedir outra ao
+   * Storage, mas o locator continua com o hook — `refresh` assina de novo a partir dele, coisa
+   * que o consumidor nao conseguia mais fazer quando entregava uma source vazia.
+   */
+  describe('assinatura em lote (R2-INB-059)', () => {
+    const LOCATOR = `${ORIGIN}/storage/v1/object/public/whatsapp-media/c/a.jpg`;
+    const BATCH = `${ORIGIN}/storage/v1/object/sign/whatsapp-media/c/a.jpg?token=batch`;
+
+    it('exibe a assinatura em lote sem pedir outra ao Storage', () => {
+      const { result } = renderHook(() =>
+        useResolvedStorageUrl(LOCATOR, undefined, {
+          signedUrl: BATCH,
+          signedUrlExpiresAt: Date.now() + 3_600_000,
+        }),
+      );
+
+      expect(result.current.url).toBe(BATCH);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBeNull();
+      expect(storageMocks.createSignedUrl).not.toHaveBeenCalled();
+    });
+
+    it('renova pelo locator quando a assinatura em lote falha', async () => {
+      const { result } = renderHook(() =>
+        useResolvedStorageUrl(LOCATOR, undefined, {
+          signedUrl: BATCH,
+          signedUrlExpiresAt: Date.now() + 3_600_000,
+        }),
+      );
+      expect(storageMocks.createSignedUrl).not.toHaveBeenCalled();
+
+      let renewed: string | null = null;
+      await act(async () => {
+        renewed = await result.current.refresh();
+      });
+
+      expect(storageMocks.createSignedUrl).toHaveBeenCalledTimes(1);
+      expect(storageMocks.createSignedUrl).toHaveBeenCalledWith('c/a.jpg', 3600);
+      expect(renewed).toContain('token=fresh');
+      expect(result.current.url).toContain('token=fresh');
+      expect(result.current.error).toBeNull();
+    });
+
+    it('assina na hora quando a assinatura em lote ja chegou expirada', async () => {
+      const { result } = renderHook(() =>
+        useResolvedStorageUrl(LOCATOR, undefined, {
+          signedUrl: BATCH,
+          signedUrlExpiresAt: Date.now() - 1,
+        }),
+      );
+
+      expect(result.current.isLoading).toBe(true);
+      await waitFor(() => expect(result.current.url).toContain('token=fresh'));
+      expect(storageMocks.createSignedUrl).toHaveBeenCalledWith('c/a.jpg', 3600);
+    });
+
+    it('adota a assinatura em lote reemitida pela consulta no lugar da antiga', () => {
+      const { result, rerender } = renderHook(
+        ({ signedUrl }: { signedUrl: string }) =>
+          useResolvedStorageUrl(LOCATOR, undefined, { signedUrl }),
+        { initialProps: { signedUrl: BATCH } },
+      );
+      expect(result.current.url).toBe(BATCH);
+
+      rerender({ signedUrl: `${ORIGIN}/storage/v1/object/sign/whatsapp-media/c/a.jpg?token=batch2` });
+
+      expect(result.current.url).toContain('token=batch2');
+      expect(storageMocks.createSignedUrl).not.toHaveBeenCalled();
+    });
+  });
 });

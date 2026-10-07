@@ -151,6 +151,12 @@ export function reducer(state: State, action: Action): State {
         // ele que explica por que não há sugestões. Fora da pausa, a tecla nova limpa o erro.
         error: state.blocked ? state.error : null,
         retrieveError: null,
+        // R2-INB-037: o `/retrieve` em voo pertence ao TERMO anterior — a troca o invalida (ver
+        // `selectionSeqRef` em `setQuery`), então o spinner dele não sobrevive: sem isto o item
+        // ficava "carregando" para sempre e um resultado novo com o MESMO `mapbox_id` (a Mapbox
+        // devolve o mesmo id para o mesmo lugar) herdava o spinner e virava clique morto — quem usa
+        // corta o clique repetido no item que está carregando.
+        retrievingId: null,
         // A3-06 (onda 2): o destaque pertence ao TERMO anterior — qualquer mudança de termo o
         // invalida. Sem isto, digitar sobre uma lista antiga deixava `highlightedIndex` vivo e o
         // Enter (LocationPicker.tsx:192) aplicava a sugestão invisível do termo antigo; o guard
@@ -412,6 +418,13 @@ export function useAddressAutocomplete(options: UseAddressAutocompleteOptions): 
     // A3-03 (onda 2): o termo mudou — a resposta do termo anterior não pode mais virar estado,
     // mesmo que ainda esteja em voo (o debounce de 300 ms é justamente essa janela).
     activeTermRef.current = null;
+    // R2-INB-037: o `/retrieve` também pertence ao TERMO, não só à lista — trocar o termo invalida
+    // a seleção em voo (mesmo guard do `clear()` A3-05 e do `enabled=false` A3-02). Antes só o
+    // destaque morria aqui: a resposta da sugestão A (escolhida antes da nova digitação) voltava com
+    // `seq` ainda válido, `select()` a devolvia e quem usa aplicava o endereço ANTIGO por cima do
+    // termo novo — e o `clear()` seguinte fechava a lista e apagava o que o operador estava
+    // digitando. A última intenção do operador (o termo novo) é quem vence.
+    selectionSeqRef.current += 1;
     // E28: apagar até menos de 3 caracteres também mata a consulta em voo — sem isso, a resposta
     // do termo antigo chegava depois e repovoava a lista sobre um campo que já está vazio.
     if (query.trim().length < MIN_QUERY_LENGTH) abortRef.current?.abort();

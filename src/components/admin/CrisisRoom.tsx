@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAgentPresenceMap } from '@/hooks/crm/useAgentPresence';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +9,8 @@ import { motion } from 'framer-motion';
 
 interface CrisisMetric {
   label: string;
-  value: number;
+  /** `null` = não medido (não é "zero medido"). */
+  value: number | null;
   threshold: number;
   unit: string;
   severity: 'ok' | 'warning' | 'critical';
@@ -19,28 +21,84 @@ export function CrisisRoom() {
   const [metrics, setMetrics] = useState<CrisisMetric[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCrisis, setIsCrisis] = useState(false);
+  // Presença real dos usuários (`agent_presence`, com heartbeat). Cadastro habilitado
+  // (`profiles.is_active`) é permissão de acesso, não presença — R2-AUTH-036/R2-MOD-030.
+  const presence = useAgentPresenceMap();
+
+  const onlineUserIds = useMemo(
+    () => new Set(
+      Object.entries(presence)
+        .filter(([, status]) => status === 'online')
+        .map(([userId]) => userId),
+    ),
+    [presence],
+  );
+  // Chave estável do conjunto online: o mapa de presença é recriado a cada recompute
+  // (stale/heartbeat), e sem isso o efeito refaria as consultas sem o conjunto mudar.
+  const onlineKey = [...onlineUserIds].sort().join(',');
 
   const loadMetrics = useCallback(async () => {
     setLoading(true);
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
-    const [unanswered, totalToday, activeAgents, breachedSLA] = await Promise.all([
-      supabase.from('messages').select('id', { count: 'exact', head: true })
+    const [inbound, replies, agentProfiles, breachedSLA] = await Promise.all([
+      // Mensagens RECEBIDAS na última hora (candidatas a pendência). `contact_id` vem
+      // junto porque a resposta é por conversa, não pelo volume recebido.
+      supabase.from('messages').select('id, contact_id, created_at')
         .eq('sender', 'contact').gte('created_at', oneHourAgo.toISOString()),
-      supabase.from('messages').select('id', { count: 'exact', head: true })
-        .gte('created_at', new Date(now.setHours(0, 0, 0, 0)).toISOString()),
-      supabase.from('profiles').select('id', { count: 'exact', head: true })
+      // Respostas do atendimento na mesma janela: qualquer resposta posterior à
+      // mensagem recebida tira aquela mensagem da pendência.
+      supabase.from('messages').select('contact_id, created_at')
+        .eq('sender', 'agent').gte('created_at', oneHourAgo.toISOString()),
+      // Contas habilitadas de atendimento (agente/supervisor/admin). É o universo de
+      // quem PODE estar online; presença entra pela tabela `agent_presence`.
+      supabase.from('profiles').select('user_id')
         .eq('is_active', true).in('role', ['agent', 'admin', 'supervisor']),
       supabase.from('conversation_sla').select('id', { count: 'exact', head: true })
         .eq('first_response_breached', true),
     ]);
 
-    const unansweredCount = unanswered.count || 0;
-    const totalCount = totalToday.count || 0;
-    const agentCount = activeAgents.count || 0;
+    const inboundRows = (inbound.data ?? []) as { id: string; contact_id: string | null; created_at: string }[];
+    const replyRows = (replies.data ?? []) as { contact_id: string | null; created_at: string }[];
+
+    // Última resposta do atendimento por conversa.
+    const lastReplyByContact = new Map<string, number>();
+    for (const reply of replyRows) {
+      if (!reply.contact_id) continue;
+      const repliedAt = Date.parse(reply.created_at);
+      const previous = lastReplyByContact.get(reply.contact_id);
+      if (previous == null || repliedAt > previous) lastReplyByContact.set(reply.contact_id, repliedAt);
+    }
+
+    // Só conta como "sem resposta" o que ainda não recebeu resposta posterior.
+    // Antes, todo `sender=contact` da hora entrava — mensagem já respondida inflava a crise.
+    const unansweredContacts = new Set<string>();
+    let unansweredCount = 0;
+    for (const message of inboundRows) {
+      const repliedAt = message.contact_id ? lastReplyByContact.get(message.contact_id) : undefined;
+      if (repliedAt != null && repliedAt > Date.parse(message.created_at)) continue;
+      unansweredCount += 1;
+      if (message.contact_id) unansweredContacts.add(message.contact_id);
+    }
+
+    // "Agentes ativos" = conta habilitada de atendimento COM presença online.
+    const enabledUserIds = new Set(
+      ((agentProfiles.data ?? []) as { user_id: string | null }[])
+        .map(p => p.user_id)
+        .filter((id): id is string => !!id),
+    );
+    const onlineIds = new Set(onlineKey ? onlineKey.split(',') : []);
+    const onlineAgentCount = [...onlineIds].filter(id => enabledUserIds.has(id)).length;
+
+    // Carga pendente por atendente: conversas sem resposta por agente ONLINE.
+    // Denominador era o cadastro habilitado (contas offline inflavam a "carga");
+    // sem ninguém online a razão não é medida — sai `null`, não zero.
+    const unansweredConversations = unansweredContacts.size;
+    const queueRatio = onlineAgentCount > 0
+      ? Math.round(unansweredConversations / onlineAgentCount)
+      : null;
     const slaBreached = breachedSLA.count || 0;
-    const queueRatio = agentCount > 0 ? Math.round(unansweredCount / agentCount) : unansweredCount;
 
     const buildMetrics: CrisisMetric[] = [
       {
@@ -56,7 +114,7 @@ export function CrisisRoom() {
         value: queueRatio,
         threshold: 10,
         unit: 'conv/agente',
-        severity: queueRatio > 15 ? 'critical' : queueRatio > 10 ? 'warning' : 'ok',
+        severity: queueRatio == null ? 'ok' : queueRatio > 15 ? 'critical' : queueRatio > 10 ? 'warning' : 'ok',
         icon: Users,
       },
       {
@@ -69,10 +127,10 @@ export function CrisisRoom() {
       },
       {
         label: 'Agentes ativos',
-        value: agentCount,
+        value: onlineAgentCount,
         threshold: 2,
         unit: 'online',
-        severity: agentCount < 2 ? 'critical' : agentCount < 4 ? 'warning' : 'ok',
+        severity: onlineAgentCount < 2 ? 'critical' : onlineAgentCount < 4 ? 'warning' : 'ok',
         icon: Users,
       },
     ];
@@ -80,7 +138,7 @@ export function CrisisRoom() {
     setMetrics(buildMetrics);
     setIsCrisis(buildMetrics.some(m => m.severity === 'critical'));
     setLoading(false);
-  }, []);
+  }, [onlineKey]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
@@ -141,7 +199,7 @@ export function CrisisRoom() {
                       </Badge>
                     </div>
                     <div>
-                      <p className={`text-3xl font-bold ${cfg.text}`}>{m.value}</p>
+                      <p className={`text-3xl font-bold ${cfg.text}`}>{m.value ?? '—'}</p>
                       <p className="text-3xs text-muted-foreground">{m.label}</p>
                     </div>
                     <div className="text-3xs text-muted-foreground">

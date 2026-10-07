@@ -27,7 +27,8 @@ const integrations = [
     description: 'Monitoramento de erros, performance e session replays em tempo real.',
     icon: Bug,
     color: 'bg-[hsl(255_35%_27%)]',
-    status: 'available' as const,
+    // R2-API-047: tela de demonstração — não há SDK, validação de DSN nem API de métricas reais.
+    status: 'demo' as const,
   },
   {
     id: 'bitrix24' as const,

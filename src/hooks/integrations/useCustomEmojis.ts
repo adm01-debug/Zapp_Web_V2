@@ -31,9 +31,21 @@ export function useCustomEmojis(open: boolean) {
   const [uploading, setUploading] = useState(false);
   const [pendingUpload, setPendingUpload] = useState<PendingEmojiUpload | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // R2-API-053: caminhos de Storage cuja remoção foi recusada depois de a linha já ter
+  // saído. Ficam registrados como etapa pendente e a limpeza é retomada na próxima leitura.
+  const pendingStorageRemovals = useRef<string[]>([]);
+
+  const flushPendingStorageRemovals = useCallback(async () => {
+    if (pendingStorageRemovals.current.length === 0) return;
+    const paths = pendingStorageRemovals.current;
+    pendingStorageRemovals.current = [];
+    const { error } = await supabase.storage.from('custom-emojis').remove(paths);
+    if (error) pendingStorageRemovals.current = [...paths, ...pendingStorageRemovals.current];
+  }, []);
 
   const fetchEmojis = useCallback(async () => {
     setLoading(true);
+    await flushPendingStorageRemovals();
     const { data, error } = await supabase
       .from('custom_emojis')
       .select('*')
@@ -41,7 +53,7 @@ export function useCustomEmojis(open: boolean) {
       .limit(500);
     if (!error && data) setEmojis(data as unknown as CustomEmoji[]);
     setLoading(false);
-  }, []);
+  }, [flushPendingStorageRemovals]);
 
   useEffect(() => {
     if (open) fetchEmojis();
@@ -127,23 +139,55 @@ export function useCustomEmojis(open: boolean) {
     e.stopPropagation();
     const newVal = !emoji.is_favorite;
     setEmojis(prev => prev.map(em => em.id === emoji.id ? { ...em, is_favorite: newVal } : em));
-    await supabase.from('custom_emojis').update({ is_favorite: newVal }).eq('id', emoji.id);
+    const { error } = await supabase.from('custom_emojis').update({ is_favorite: newVal }).eq('id', emoji.id);
+    if (error) {
+      // O estado otimista volta ao valor persistido; nada de sucesso silencioso.
+      setEmojis(prev => prev.map(em => em.id === emoji.id ? { ...em, is_favorite: emoji.is_favorite } : em));
+      toast.error('Não foi possível atualizar o favorito', { description: error.message });
+    }
   }, []);
 
   const handleCategoryChange = useCallback(async (emoji: CustomEmoji, newCategory: string) => {
+    const previousCategory = emoji.category;
     setEmojis(prev => prev.map(em => em.id === emoji.id ? { ...em, category: newCategory } : em));
-    await supabase.from('custom_emojis').update({ category: newCategory }).eq('id', emoji.id);
+    const { error } = await supabase.from('custom_emojis').update({ category: newCategory }).eq('id', emoji.id);
+    if (error) {
+      setEmojis(prev => prev.map(em => em.id === emoji.id ? { ...em, category: previousCategory } : em));
+      toast.error('Não foi possível alterar a categoria', { description: error.message });
+      return;
+    }
     toast.success(`Categoria alterada para "${CATEGORY_LABELS[newCategory]?.label || newCategory}"`);
   }, []);
 
   const handleDelete = useCallback(async (e: React.MouseEvent, emoji: CustomEmoji) => {
     e.stopPropagation();
+    const snapshot = emojis;
     setEmojis(prev => prev.filter(em => em.id !== emoji.id));
+
+    // 1) A linha é a referência durável: sai primeiro e é ela que decide o resultado.
+    const { error: deleteError } = await supabase.from('custom_emojis').delete().eq('id', emoji.id);
+    if (deleteError) {
+      setEmojis(snapshot);
+      toast.error('Não foi possível remover o emoji', { description: deleteError.message });
+      return;
+    }
+
+    // 2) O arquivo é a etapa de limpeza. Falha aqui deixa um órfão no Storage (nunca uma
+    // referência quebrada) e entra na fila de retomada — sem anunciar sucesso.
     const path = emoji.image_url.split('/custom-emojis/')[1];
-    if (path) await supabase.storage.from('custom-emojis').remove([path]);
-    await supabase.from('custom_emojis').delete().eq('id', emoji.id);
+    if (path) {
+      const { error: storageError } = await supabase.storage.from('custom-emojis').remove([path]);
+      if (storageError) {
+        pendingStorageRemovals.current.push(path);
+        toast.warning('Emoji removido, mas o arquivo não pôde ser apagado', {
+          description: 'A limpeza será tentada de novo na próxima vez que o seletor abrir.',
+        });
+        return;
+      }
+    }
+
     toast.success('Emoji removido');
-  }, []);
+  }, [emojis]);
 
   return {
     emojis, loading, uploading, pendingUpload, fileInputRef,

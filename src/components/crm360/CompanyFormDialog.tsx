@@ -93,12 +93,19 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSuccess }: Co
 
     try {
       if (isEdit && company?.id) {
-        await mutation.mutateAsync({
+        const gravadas = await mutation.mutateAsync({
           action: 'update',
           table: 'companies',
           data: payload,
           match: { id: company.id },
         });
+        // R2-AUTH-019: o gateway responde 200 com data=[] quando o UPDATE de um único
+        // id não atinge nenhuma linha (empresa removida entre abrir o form e salvar).
+        // Zero linhas não é sucesso: o diálogo continua aberto e o erro aparece.
+        if (!Array.isArray(gravadas) || gravadas.length !== 1) {
+          toast.error('A empresa não foi encontrada no CRM externo. Nenhuma alteração foi gravada.');
+          return;
+        }
         toast.success('Empresa atualizada com sucesso!');
       } else {
         await mutation.mutateAsync({

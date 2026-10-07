@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -13,9 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from 'sonner';
 import { 
   MessageSquare, Plus, Settings, Trash2, CheckCircle, XCircle, 
-  Globe, Send, Instagram, MessagesSquare
+  Globe, Send, Instagram, MessagesSquare, AlertTriangle
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  descreverCadastroDeCanais,
+  descreverCaminhoDoCanal,
+} from '@/lib/omnichannel/execucaoDeCanais';
 const ChannelRoutingRules = lazy(() => import('./ChannelRoutingRules').then(m => ({ default: m.ChannelRoutingRules })));
 
 const channelConfig = {
@@ -56,6 +61,40 @@ export function OmnichannelManager() {
     },
   });
 
+  // R2-API-063: a contagem WhatsApp era a constante 1. Agora vem da fonte
+  // autorizada (`whatsapp_connections_safe`), que distingue conexão operacional
+  // ('connected') de cadastro, com estado de carregamento/erro explícito.
+  const whatsappQuery = useQuery({
+    queryKey: ['whatsapp-connections-status'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('whatsapp_connections_safe')
+        .select('id, status');
+      if (error) throw error;
+      return (data ?? []) as { id: string | null; status: string | null }[];
+    },
+  });
+
+  const whatsappConnections = whatsappQuery.data ?? [];
+  const whatsappConnectedCount = whatsappConnections.filter((c) => c.status === 'connected').length;
+
+  const whatsappStatValue = (() => {
+    if (whatsappQuery.isLoading) return '…';
+    if (whatsappQuery.isError) return '—';
+    return String(whatsappConnectedCount);
+  })();
+
+  const whatsappSummary = (() => {
+    if (whatsappQuery.isLoading) return 'Verificando as conexões WhatsApp…';
+    if (whatsappQuery.isError) return 'Não foi possível verificar as conexões WhatsApp.';
+    if (whatsappConnectedCount === 1) return '1 conexão WhatsApp conectada.';
+    if (whatsappConnectedCount > 1) return `${whatsappConnectedCount} conexões WhatsApp conectadas.`;
+    return 'Nenhuma conexão WhatsApp conectada.';
+  })();
+
+  const statValue = (key: string) =>
+    key === 'whatsapp' ? whatsappStatValue : String(channels.filter((c) => c.channel_type === key).length);
+
   const addChannel = useMutation({
     mutationFn: async (channel: { name: string; channel_type: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -77,7 +116,7 @@ export function OmnichannelManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['channel-connections'] });
-      toast.success('Canal adicionado! Configure as credenciais para ativá-lo.');
+      toast.success('Canal registrado como pendente. Ainda não há executor versionado para ativá-lo.');
       setShowAddDialog(false);
       setNewChannel({ name: '', channel_type: 'instagram' });
     },
@@ -165,7 +204,15 @@ export function OmnichannelManager() {
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* R2-API-065: cadastro de canais adicionais sem executor versionado.
+              O aviso é estático e independe do carregamento da lista. */}
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Cadastro sem executor</AlertTitle>
+            <AlertDescription>{descreverCadastroDeCanais()}</AlertDescription>
+          </Alert>
+
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Carregando canais...</div>
           ) : channels.length === 0 ? (
@@ -173,7 +220,7 @@ export function OmnichannelManager() {
               <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">Nenhum canal adicional configurado</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Seus canais WhatsApp já estão ativos. Adicione Instagram, Telegram ou outros.
+                {whatsappSummary} Adicione Instagram, Telegram, Messenger, Web Chat ou Gmail — o cadastro fica pendente até existir um executor.
               </p>
             </div>
           ) : (
@@ -194,11 +241,13 @@ export function OmnichannelManager() {
                     <div className="flex-1">
                       <p className="font-medium">{channel.name}</p>
                       <p className="text-sm text-muted-foreground">{cfg.label}</p>
+                      <p className="text-xs text-muted-foreground">{descreverCaminhoDoCanal(channel.channel_type)}</p>
                     </div>
                     {getStatusBadge(channel.status)}
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={`Remover canal ${channel.name}`}
                       onClick={() => deleteChannel.mutate(channel.id)}
                     >
                       <Trash2 className="w-4 h-4 text-destructive" />
@@ -213,18 +262,21 @@ export function OmnichannelManager() {
 
       {/* Channel Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {Object.entries(channelConfig).map(([key, cfg]) => {
-          const count = key === 'whatsapp' ? 1 : channels.filter(c => c.channel_type === key).length;
-          return (
-            <Card key={key} className="border-border/50">
-              <CardContent className="p-4 text-center">
-                <cfg.icon className={`w-6 h-6 ${cfg.color} mx-auto mb-2`} />
-                <p className="text-xs text-muted-foreground">{cfg.label}</p>
-                <p className="text-lg font-bold">{count}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {Object.entries(channelConfig).map(([key, cfg]) => (
+          <Card key={key} className="border-border/50">
+            <CardContent className="p-4 text-center">
+              <cfg.icon className={`w-6 h-6 ${cfg.color} mx-auto mb-2`} />
+              <p className="text-xs text-muted-foreground">{cfg.label}</p>
+              <p
+                className="text-lg font-bold"
+                data-testid={`channel-count-${key}`}
+                title={key === 'whatsapp' && whatsappQuery.isError ? 'Não foi possível consultar as conexões WhatsApp' : undefined}
+              >
+                {statValue(key)}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Channel Routing Rules */}

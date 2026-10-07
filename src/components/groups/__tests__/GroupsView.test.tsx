@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const mockOrder = vi.hoisted(() => vi.fn());
 const mockInvoke = vi.hoisted(() => vi.fn());
+const mockUpsert = vi.hoisted(() => vi.fn());
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -10,7 +11,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       select: vi.fn().mockReturnValue({ order: mockOrder }),
       insert: vi.fn().mockResolvedValue({ error: null }),
       delete: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
-      upsert: vi.fn().mockResolvedValue({ error: null }),
+      upsert: mockUpsert,
     })),
     functions: { invoke: mockInvoke },
     channel: vi.fn().mockReturnValue({ on: vi.fn().mockReturnThis(), subscribe: vi.fn() }),
@@ -53,7 +54,7 @@ import { getLogger } from '@/lib/logger';
 const log = getLogger('GroupsView.test');
 
 describe('GroupsView', () => {
-  beforeEach(() => { vi.clearAllMocks(); mockOrder.mockResolvedValue({ data: [], error: null }); });
+  beforeEach(() => { vi.clearAllMocks(); mockOrder.mockResolvedValue({ data: [], error: null }); mockUpsert.mockResolvedValue({ error: null }); });
 
   it('renders the page title', async () => { render(<GroupsView />); expect(screen.getByText('Grupos WhatsApp')).toBeInTheDocument(); });
 
@@ -120,5 +121,55 @@ describe('GroupsView', () => {
     mockOrder.mockResolvedValueOnce({ data: [{ id: 'g1', group_id: '1@g.us', name: 'G1', description: null, participant_count: 5, avatar_url: null, is_admin: false, whatsapp_connection_id: null, created_at: '2025-01-01', updated_at: '2025-01-01' }], error: null }).mockResolvedValueOnce({ data: [], error: null });
     render(<GroupsView />);
     await waitFor(() => { expect(screen.getByText('Selecionar todos')).toBeInTheDocument(); });
+  });
+
+  // R2-API-042: a Edge Function responde 200 com a falha lógica no corpo (`data.error`).
+  // Sem a correção, a sincronização anuncia sucesso e o envio em massa conta enviado.
+  it('sync trata erro lógico da Evolution (data.error) como falha', async () => {
+    mockOrder
+      .mockResolvedValueOnce({ data: [], error: null })
+      .mockResolvedValueOnce({ data: [{ id: 'c1', name: 'WPP', phone_number: '5511', instance_id: 'inst-1' }], error: null });
+    mockOrder.mockResolvedValue({ data: [], error: null });
+    mockInvoke.mockResolvedValue({ data: { error: 'falha' }, error: null });
+    render(<GroupsView />);
+    await waitFor(() => expect(screen.getByText('Sincronizar')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Sincronizar'));
+    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Sincronização parcial: 0 grupos, 1 erro(s)'); });
+    expect(mockUpsert).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('sync não grava os grupos que vieram junto da recusa da Evolution', async () => {
+    mockOrder
+      .mockResolvedValueOnce({ data: [], error: null })
+      .mockResolvedValueOnce({ data: [{ id: 'c1', name: 'WPP', phone_number: '5511', instance_id: 'inst-1' }], error: null });
+    mockOrder.mockResolvedValue({ data: [], error: null });
+    // Forma real do proxy: 200 com { error: true, message } — aqui ainda trazendo grupos.
+    mockInvoke.mockResolvedValue({ data: { error: true, message: 'Instância desconectada', data: [{ id: '9@g.us', subject: 'Grupo Recusado' }] }, error: null });
+    render(<GroupsView />);
+    await waitFor(() => expect(screen.getByText('Sincronizar')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Sincronizar'));
+    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Sincronização parcial: 0 grupos, 1 erro(s)'); });
+    expect(mockUpsert).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('envio em massa trata erro lógico da Evolution (data.error) como falha', async () => {
+    const grupo = { id: 'g1', group_id: '1@g.us', name: 'Grupo Alvo', description: null, participant_count: 5, avatar_url: null, is_admin: false, whatsapp_connection_id: 'c1', created_at: '2025-01-01', updated_at: '2025-01-01' };
+    mockOrder
+      .mockResolvedValueOnce({ data: [grupo], error: null })
+      .mockResolvedValueOnce({ data: [{ id: 'c1', name: 'WPP', phone_number: '5511', instance_id: 'inst-1' }], error: null });
+    mockOrder.mockResolvedValue({ data: [grupo], error: null });
+    mockInvoke.mockResolvedValue({ data: { error: 'falha' }, error: null });
+    render(<GroupsView />);
+    await waitFor(() => expect(screen.getByText('Grupo Alvo')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Grupo Alvo'));
+    await waitFor(() => expect(screen.getByText('Enviar para 1 grupo(s)')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Enviar para 1 grupo(s)'));
+    const campo = await screen.findByPlaceholderText('Digite a mensagem para enviar a todos os grupos selecionados...');
+    fireEvent.change(campo, { target: { value: 'Olá' } });
+    fireEvent.click(screen.getByText('Enviar'));
+    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Enviado para 0 grupo(s), 1 falha(s)'); });
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Camera, Upload, Trash2, Star, Loader2, User, ImagePlus, Search } from 'lucide-react';
+import { Camera, Upload, Trash2, Star, Loader2, User, ImagePlus, Search, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePersonalStickers } from '@/hooks/integrations/usePersonalStickers';
@@ -15,7 +15,7 @@ import type { StickerItem } from './StickerTypes';
 interface PersonalStickersProps { onSend?: (stickerUrl: string) => void; }
 
 export function PersonalStickers({ onSend }: PersonalStickersProps) {
-  const { profile, stickers, isLoading, uploading, fileInputRef, handleUpload, toggleFavorite, deleteSticker, incrementUseCount } = usePersonalStickers();
+  const { profile, profileLoading, profileError, stickers, isLoading, uploading, fileInputRef, handleUpload, toggleFavorite, deleteSticker, incrementUseCount } = usePersonalStickers();
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<StickerItem | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -48,7 +48,13 @@ export function PersonalStickers({ onSend }: PersonalStickersProps) {
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar nas minhas figurinhas..." className="pl-9 h-8 text-sm" /></div>
         )}
 
-        {isLoading ? (
+        {profileError ? (
+          <div role="alert" className="flex flex-col items-center justify-center py-10 border-2 border-destructive/40 bg-destructive/5 rounded-xl text-center px-4">
+            <AlertCircle className="w-7 h-7 text-destructive mb-2" />
+            <p className="text-sm font-medium text-foreground">Não foi possível carregar sua pasta</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-xs">Sua identidade não pôde ser resolvida, então suas figurinhas não foram carregadas. Tente novamente em instantes.</p>
+          </div>
+        ) : (isLoading || profileLoading) ? (
           <div className="flex items-center justify-center py-10"><Loader2 className="w-6 h-6 text-muted-foreground animate-spin" /></div>
         ) : stickers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed border-border/50 rounded-xl cursor-pointer hover:border-primary/30 transition-colors" onClick={() => fileInputRef.current?.click()}>

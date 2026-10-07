@@ -20,6 +20,7 @@ const SCHEMA_VERSION = 2;
 const DEFAULT_BASELINE = "scripts/ci/typecheck-baseline.json";
 const COMMAND = "tsc -b --force";
 const MAX_REPORTED_ISSUES = 50;
+const MAX_COMPILER_SNIPPET = 500;
 
 function normalizeEol(value) {
   return String(value ?? "").replace(/\r\n?/gu, "\n");
@@ -222,6 +223,37 @@ export function compareBaseline(baseline, output, root = process.cwd()) {
   };
 }
 
+// Decide se a saida do compilador pode alimentar o ratchet. O tsc -b retorna
+// 0 (sem erros), 1 (erros+emit) ou 2 (erros+noEmit/allowImportingTsExtensions);
+// qualquer outro codigo e falha de CLI.
+//
+// Exit 0 e typecheck limpo — saida vazia inclusa — e sempre valido. Os exits 1
+// e 2 afirmam que o tsc ENCONTROU erro(s), entao so podem seguir se houver ao
+// menos um diagnostico parseavel. Sem essa guarda, uma falha do compilador com
+// saida nao reconhecida pelo padrao "arquivo(linha,coluna): error TS####"
+// (binario/config quebrado, ex.: "error TS5083: Cannot read file ...") produz
+// ZERO ocorrencias no parser: o ratchet anuncia "nenhum novo erro" e, com
+// --update-baseline, grava um baseline VAZIO — o falso zero. Falhar explicito
+// aqui (main retorna 2) preserva a divida conhecida e impede a sobrescrita.
+export function assertUsableCompilerResult(status, output, root = process.cwd()) {
+  if (status !== 0 && status !== 1 && status !== 2) {
+    throw new Error(`tsc -b falhou com exit ${status}: ${normalizeWhitespace(output)}`);
+  }
+
+  if (status === 0) return output;
+
+  if (parseTscOutput(output, root).length === 0) {
+    const snippet = normalizeWhitespace(output).slice(0, MAX_COMPILER_SNIPPET) || "(vazia)";
+    throw new Error(
+      `tsc -b saiu com exit ${status} sem nenhum diagnostico TypeScript parseavel ` +
+        `(esperado "arquivo(linha,coluna): error TS####: mensagem"). ` +
+        `O ratchet se recusa a tratar isso como zero erros. Saida do compilador: ${snippet}`,
+    );
+  }
+
+  return output;
+}
+
 function runTsc(root) {
   const tscEntry = path.join(root, "node_modules", "typescript", "bin", "tsc");
   if (!existsSync(tscEntry)) {
@@ -237,13 +269,10 @@ function runTsc(root) {
   });
 
   if (result.error) throw result.error;
-  // tsc -b retorna 0 (sem erros), 1 (erros+emit) ou 2 (erros+noEmit/allowImportingTsExtensions).
-  // Todos sao validos e processados pelo ratchet; outros codigos indicam falha de CLI.
-  if (result.status !== 0 && result.status !== 1 && result.status !== 2) {
-    throw new Error(`tsc -b falhou com exit ${result.status}: ${normalizeWhitespace(result.stderr)}`);
-  }
 
-  return `${result.stdout}\n${result.stderr}`;
+  // Exit 0 e sempre valido; exit 1/2 so vale com diagnostico parseavel — ver
+  // assertUsableCompilerResult, que barra o falso zero.
+  return assertUsableCompilerResult(result.status, `${result.stdout ?? ""}\n${result.stderr ?? ""}`, root);
 }
 
 function parseArguments(argv) {

@@ -16,10 +16,6 @@ export function AgentsEmptyState(props: { onInviteAgent?: () => void; onConfigur
   return <ContextualEmptyState context="agents" onPrimaryAction={props.onInviteAgent} onSecondaryAction={props.onConfigurePermissions} />;
 }
 
-export function TagsEmptyState(props: { onCreateTag?: () => void; onImportTags?: () => void }) {
-  return <ContextualEmptyState context="tags" onPrimaryAction={props.onCreateTag} onSecondaryAction={props.onImportTags} />;
-}
-
 export function SearchEmptyState(props: { query?: string; onClearFilters?: () => void; onAdvancedSearch?: () => void }) {
   return <ContextualEmptyState context="search" searchQuery={props.query} onPrimaryAction={props.onClearFilters} onSecondaryAction={props.onAdvancedSearch} />;
 }

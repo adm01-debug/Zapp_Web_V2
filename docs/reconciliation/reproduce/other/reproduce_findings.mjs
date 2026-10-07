@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
-import { collectCatalogExportRows } from './catalog_export_function.ts';
 import { readFileSync } from 'node:fs';
+import { attestProvenance, installNetworkBlock, sha256Of } from '../lib/source-provenance.mjs';
 const root=(process.env.RECONCILIATION_REPO || process.cwd());
+// Atesta HEAD e os hashes das fontes antes de ler ou executar qualquer coisa; recusa divergência.
+const pins=JSON.parse(readFileSync(new URL('./source-pins.json', import.meta.url),'utf8'));
+const provenance=attestProvenance({ root, pins });
+const network=installNetworkBlock(globalThis);
+const adaptedBytes=readFileSync(new URL('./catalog_export_function.ts', import.meta.url));
+const adapted_source_sha256={file:'catalog_export_function.ts',expected:'4691d46aa786cf6cf2d51d51ed1f804fa8bedeccb5fe8239dd429ea92493bb55',observed:sha256Of(adaptedBytes)};
+assert.equal(adapted_source_sha256.observed,adapted_source_sha256.expected,'harness-adapted code changed since the pinned extraction');
+const { collectCatalogExportRows } = await import('./catalog_export_function.ts');
 const selectedIds=new Set(['image-1','pdf-1']);
 const all=[{id:'image-1',type:'image'},{id:'pdf-1',type:'document'}];
 let filtered=all.filter(x=>x.type==='image');
@@ -37,7 +45,12 @@ const keys=[...actions.matchAll(/invalidateQueries\(\{ queryKey: (\w+)\(contactI
 assert.deepEqual(keys,['contactMediaKey','conversationTabCountsKey']);
 assert.ok(!keys.includes('contactMediaCountsKey'));
 console.log(JSON.stringify({
- baseline:'2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6',
+ baseline_commit:provenance.observed.head,
+ baseline_sha_expected:provenance.expected.baseline_sha,
+ provenance,
+ adapted_source_sha256,
+ network_requests:network.attempts.length,
+ network_attempts:network.attempts,
  method:'Exact selectedItems expression, export function and Gmail sync onSuccess callback extracted from source, deterministic fixtures; invalidation keys inspected statically. Does not execute React, Supabase SDK, network or database.',
  selection:{displayed_count:selectedIds.size,forwarded_count:selectedItems.length,forwarded:selectedItems.map(x=>x.id),omitted:['pdf-1']},
  selection_all_outside_filter:{displayed_count:selectedIds.size,forwarded_count:allOutsideItems.length,openForward_effect:'early return, as statically checked in FilesTab.tsx'},

@@ -156,14 +156,39 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
   }, [clearReconnectTimer]);
 
   const disconnect = useCallback(async () => {
+    // R2-CALL-004: a sessão encerrada sai das refs AQUI — inclusive quando o
+    // teardown estoura no meio (transporte já morto, unregister que rejeita).
+    // Sem isso `uaRef`/`registererRef` ficavam apontando para um UserAgent
+    // parado, e o próximo `connect` morria na guarda `if (uaRef.current) return`:
+    // a sequência desconectar -> reconectar terminava sem nova conexão.
+    reconnectAttemptsRef.current = MAX_RECONNECT_ATTEMPTS;
+    clearReconnectTimer();
+    const registerer = registererRef.current;
+    const ua = uaRef.current;
     try {
-      reconnectAttemptsRef.current = MAX_RECONNECT_ATTEMPTS;
-      clearReconnectTimer();
-      if (registererRef.current) await registererRef.current.unregister();
-      if (uaRef.current) { uaRef.current.transport.onDisconnect = () => {}; await uaRef.current.stop(); }
+      if (registerer) {
+        try {
+          await registerer.unregister();
+        } catch (err) {
+          log.error('SIP unregister error:', err);
+        }
+      }
+      if (ua) {
+        try {
+          ua.transport.onDisconnect = () => {};
+          await ua.stop();
+        } catch (err) {
+          log.error('SIP UserAgent stop error:', err);
+        }
+      }
+    } finally {
+      // Só o que ainda é a sessão encerrada sai (um connect que tenha corrido
+      // durante o teardown não perde o UA dele).
+      if (uaRef.current === ua) uaRef.current = null;
+      if (registererRef.current === registerer) registererRef.current = null;
       setSipStatus('idle');
       reconnectAttemptsRef.current = 0;
-    } catch (err) { log.error('SIP disconnect error:', err); }
+    }
   }, [clearReconnectTimer]);
 
   // T20: `setSipReason` sai daqui para o consumidor (useSipClient) marcar o

@@ -17,11 +17,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 import { isWhatsAppTag, filterCustomTags, getTagDisplayName } from '@/lib/tags';
+import { applyContactFieldUpdate, applyContactTagChange, pendingIds } from '@/services/contact-bulk.service';
 
 interface BulkActionsBarProps {
   selectedIds: string[];
   onClearSelection: () => void;
   onActionComplete: () => void;
+  /**
+   * Recusados pelo banco numa ação parcial: o chamador mantém esses IDs
+   * selecionados (em vez de limpar tudo como em `onActionComplete`).
+   */
+  onPartialComplete?: (refusedIds: string[]) => void;
   /** Chamado após operações em lote que mudam a quantidade ou o tipo dos contatos. */
   onCountersChanged?: () => void;
   availableTags?: string[];
@@ -54,6 +60,7 @@ export function BulkActionsBar({
   selectedIds,
   onClearSelection,
   onActionComplete,
+  onPartialComplete,
   onCountersChanged,
   availableTags = [],
   availableAgents = [],
@@ -79,69 +86,97 @@ export function BulkActionsBar({
     if (isWhatsAppTag(tag)) return;
     setIsProcessing(true);
     try {
-      // Add tag to each selected contact
-      const updates = selectedIds.map(id =>
-        supabase.from('contacts').select('tags').eq('id', id).single()
-      );
-      const results = await Promise.all(updates);
-      
-      const tagUpdates = results.map((r, i) => {
-        const currentTags = (r.data?.tags as string[]) || [];
-        if (!currentTags.includes(tag)) {
-          return supabase
-            .from('contacts')
-            .update({ tags: [...currentTags, tag] })
-            .eq('id', selectedIds[i]);
-        }
-        return null;
-      }).filter(Boolean);
+      // R2-AUTH-013: antes, `Promise.all` sobre SELECTs que devolvem `{error}` (nunca
+      // rejeitam) escondia a falha de leitura, `tags=[]` era fabricado e o UPDATE
+      // sobrescrevia as tags reais. Agora quem mudou/foi recusado/falhou é explícito.
+      const outcome = await applyContactTagChange(selectedIds, { add: [tag] });
+      const refused = pendingIds(outcome);
 
-      await Promise.all(tagUpdates);
-      toast.success(`Tag "${tag}" adicionada a ${count} contatos`);
-      onActionComplete();
+      if (outcome.succeeded.length === 0 && refused.length === 0) {
+        toast.success(`Tag "${tag}" já estava nos ${count} contatos selecionados`);
+        onActionComplete();
+        return;
+      }
+      if (outcome.succeeded.length === 0) {
+        toast.error('Erro ao adicionar tags. Nenhum contato foi alterado.');
+        return;
+      }
+      if (refused.length > 0) {
+        toast.warning(`${outcome.succeeded.length} de ${count} contatos receberam a tag "${tag}"`, {
+          description: 'Os demais não puderam ser atualizados (sem permissão ou sem alteração).',
+        });
+        onPartialComplete?.(refused);
+      } else {
+        toast.success(`Tag "${tag}" adicionada a ${outcome.succeeded.length} contatos`);
+        onActionComplete();
+      }
     } catch {
       toast.error('Erro ao adicionar tags');
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedIds, count, onActionComplete]);
+  }, [selectedIds, count, onActionComplete, onPartialComplete]);
 
   const handleBulkAssign = useCallback(async (agentId: string, agentName: string) => {
     setIsProcessing(true);
     try {
-      const { error } = await supabase
-        .from('contacts')
-        .update({ assigned_to: agentId })
-        .in('id', selectedIds);
+      const outcome = await applyContactFieldUpdate(selectedIds, { assigned_to: agentId });
+      const refused = pendingIds(outcome);
 
-      if (error) throw error;
-      toast.success(`${count} contatos atribuídos a ${agentName}`);
-      onActionComplete();
+      if (outcome.succeeded.length === 0) {
+        toast.error(
+          outcome.refused.length > 0 && refused.length === outcome.refused.length
+            ? 'Nenhum contato foi atribuído. Verifique se você tem permissão.'
+            : 'Erro ao atribuir contatos. Nenhum contato foi alterado.',
+        );
+        return;
+      }
+      if (refused.length > 0) {
+        toast.warning(`${outcome.succeeded.length} de ${count} contatos atribuídos a ${agentName}`, {
+          description: 'Os demais não puderam ser atribuídos (sem permissão).',
+        });
+        onPartialComplete?.(refused);
+      } else {
+        toast.success(`${count} contatos atribuídos a ${agentName}`);
+        onActionComplete();
+      }
     } catch {
       toast.error('Erro ao atribuir contatos');
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedIds, count, onActionComplete]);
+  }, [selectedIds, count, onActionComplete, onPartialComplete]);
 
   const handleBulkType = useCallback(async (contactType: string) => {
     setIsProcessing(true);
     try {
-      const { error } = await supabase
-        .from('contacts')
-        .update({ contact_type: contactType })
-        .in('id', selectedIds);
+      const outcome = await applyContactFieldUpdate(selectedIds, { contact_type: contactType });
+      const refused = pendingIds(outcome);
 
-      if (error) throw error;
-      toast.success(`${count} contatos atualizados para "${contactType}"`);
-      onActionComplete();
+      if (outcome.succeeded.length === 0) {
+        toast.error(
+          outcome.refused.length > 0 && refused.length === outcome.refused.length
+            ? 'Nenhum contato foi atualizado. Verifique se você tem permissão.'
+            : 'Erro ao atualizar tipo. Nenhum contato foi alterado.',
+        );
+        return;
+      }
+      if (refused.length > 0) {
+        toast.warning(`${outcome.succeeded.length} de ${count} contatos atualizados para "${contactType}"`, {
+          description: 'Os demais não puderam ser atualizados (sem permissão).',
+        });
+        onPartialComplete?.(refused);
+      } else {
+        toast.success(`${count} contatos atualizados para "${contactType}"`);
+        onActionComplete();
+      }
       onCountersChanged?.();
     } catch {
       toast.error('Erro ao atualizar tipo');
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedIds, count, onActionComplete, onCountersChanged]);
+  }, [selectedIds, count, onActionComplete, onPartialComplete, onCountersChanged]);
 
   const handleBulkDelete = useCallback(async () => {
     setIsProcessing(true);

@@ -13,9 +13,11 @@ type ContactRow = Database['public']['Tables']['contacts']['Row'];
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
+  AlertTriangle,
   Minus,
   Maximize2,
   Minimize2,
+  RefreshCw,
   X,
   MessageSquare,
 } from 'lucide-react';
@@ -30,36 +32,40 @@ const ChatPanel = lazy(() =>
   import('@/components/inbox/ChatPanel').then((m) => ({ default: m.ChatPanel }))
 );
 
-interface RawMessage {
-  id: string;
-  content: string;
+/**
+ * Entrada do popup: `useMessages` entrega `Message[]` já adaptado
+ * (`mapMessageRowToMessage`). As variantes cruas/antigas podem não trazer todos os
+ * campos derivados, então `timestamp`/`type` entram como opcionais aqui — e o
+ * restante (snake_case do banco) segue como fallback dos campos legados.
+ */
+type PopupMessage = Omit<Message, 'timestamp' | 'type'> & {
+  timestamp?: Date;
+  type?: Message['type'];
   message_type?: string;
-  sender: string;
-  agent_id?: string;
-  created_at: string;
-  status?: string;
-  is_read?: boolean;
-  media_url?: string;
-  transcription?: string;
-  transcription_status?: string;
-}
+  media_url?: string | null;
+  is_read?: boolean | null;
+  transcription_status?: string | null;
+};
 
-function mapToLegacyMessages(msgs: RawMessage[], contactId: string): Message[] {
+/**
+ * R2-INB-023: o popup tratava a lista do hook como linha crua (`RawMessage`) e
+ * remontava um objeto só com um subconjunto dos campos. Isso apagava o que o balão
+ * consome — `is_deleted` (placeholder de apagada), `location`, `isEdited`,
+ * `external_id` (ações realtime/edição/exclusão) e `link_preview`. Agora nada é
+ * descartado: espalhamos o próprio `Message` e só normalizamos os defaults.
+ */
+function mapToLegacyMessages(msgs: PopupMessage[], contactId: string): Message[] {
   return msgs.map((m) => ({
-    id: m.id,
-    conversationId: contactId,
-    content: m.content,
-    type: (m.message_type || 'text') as Message['type'],
-    sender: m.sender as Message['sender'],
-    agentId: m.agent_id || undefined,
-    timestamp: new Date(m.created_at),
-    status:
-      (m.status as Message['status'] | null) ||
-      (m.is_read ? 'read' : 'delivered'),
-    mediaUrl: m.media_url || undefined,
-    transcription: m.transcription || null,
-    transcriptionStatus:
-      (m.transcription_status as Message['transcriptionStatus']) || null,
+    ...m,
+    conversationId: m.conversationId ?? contactId,
+    timestamp: m.timestamp ?? new Date(m.created_at ?? 0),
+    type: (m.type ?? m.message_type ?? 'text') as Message['type'],
+    status: m.status ?? (m.is_read ? 'read' : 'delivered'),
+    mediaUrl: m.mediaUrl ?? m.media_url ?? undefined,
+    transcription: m.transcription ?? null,
+    transcriptionStatus: (m.transcriptionStatus ??
+      m.transcription_status ??
+      null) as Message['transcriptionStatus'],
   }));
 }
 
@@ -70,9 +76,14 @@ export default function ChatPopup() {
   const [isMaximized, setIsMaximized] = useState(false);
   // R2-INB-004: o contrato de paginação do hook (histórico antigo) tem de chegar
   // ao controle da área de mensagens — sem ele o popup fica preso na 1ª página.
+  // R2-INB-024: `error`/`refetch` do MESMO hook também são necessários — sem eles a
+  // falha de transporte/permissão na carga virava lista vazia, indistinguível de
+  // "contato sem histórico" e sem retry nesta janela.
   const {
     messages,
     loading: messagesLoading,
+    error: messagesError,
+    refetch: refetchMessages,
     hasOlder,
     loadingOlder,
     loadOlderMessages,
@@ -135,7 +146,7 @@ export default function ChatPopup() {
     : null;
 
   const legacyMessages = contactId
-    ? mapToLegacyMessages(messages as unknown as RawMessage[], contactId)
+    ? mapToLegacyMessages(messages, contactId)
     : [];
 
   const handleSendMessage = useCallback(
@@ -221,6 +232,26 @@ export default function ChatPopup() {
         </p>
         <Button variant="outline" size="sm" onClick={handleClose}>
           Fechar janela
+        </Button>
+      </div>
+    );
+  }
+
+  // ── Falha na carga das mensagens (R2-INB-024) ──
+  // O hook termina o `loading` mesmo quando a busca falha; sem este ramo a lista vazia
+  // passava por "conversa sem histórico". Só vale quando nada foi renderizado: uma falha
+  // do refetch silencioso não pode apagar as mensagens que já estão na tela.
+  if (messagesError && legacyMessages.length === 0) {
+    return (
+      <div role="alert" className="h-screen bg-background flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center">
+          <AlertTriangle className="w-6 h-6 text-destructive" />
+        </div>
+        <p className="text-sm font-medium text-foreground">Erro ao carregar as mensagens</p>
+        <p className="text-xs text-muted-foreground break-words">{messagesError}</p>
+        <Button variant="outline" size="sm" onClick={() => { void refetchMessages(); }}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Tentar novamente
         </Button>
       </div>
     );

@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
   MAX_TEAM_CHAT_FILE_SIZE,
   canCreateTeamConversation,
@@ -8,19 +8,70 @@ import {
   getTeamChatNotificationBody,
   shouldNotifyTeamMessage,
 } from '@/lib/teamChatRules';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
-const mutationsSrc = readFileSync(
-  join(__dirname, '..', '..', '..', 'hooks', 'team-chat', 'useTeamChatMutations.ts'),
-  'utf-8',
-);
+/**
+ * O bloco de autenticacao lia `useTeamChatMutations.ts` como TEXTO
+ * (`readFileSync` + `indexOf`) e comparava a posicao das strings. Isso nao
+ * exercita o hook: passa com o guard removido (a string ainda existe no
+ * arquivo) e quebra com qualquer reformatacao. Aqui a fronteira Supabase e
+ * dublada e o hook de producao e CHAMADO.
+ */
+const f = vi.hoisted(() => {
+  const inserts: Array<{ table: string; payload: Record<string, unknown> }> = [];
+  return { inserts, perfil: { id: 'eu', role: 'admin' } as { id: string; role: string } | null };
+});
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: (table: string) => {
+      const no: Record<string, unknown> = {};
+      no.insert = (payload: Record<string, unknown>) => {
+        f.inserts.push({ table, payload });
+        return { select: () => ({ single: () => Promise.resolve({ data: { id: 'msg-1' }, error: null }) }) };
+      };
+      no.update = () => no;
+      no.eq = () => no;
+      return no;
+    },
+  },
+}));
+
+vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: f.perfil }) }));
+
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
+
+import { useSendTeamMessage } from '@/hooks/team-chat/useTeamChatMutations';
 
 describe('Team Chat — autenticação', () => {
-  it('useSendTeamMessage valida auth antes do insert', () => {
-    const authIdx = mutationsSrc.indexOf("if (!profile) throw new Error('Not authenticated')");
-    const sendIdx = mutationsSrc.indexOf("from('team_messages').insert");
-    expect(authIdx).toBeGreaterThanOrEqual(0);
-    expect(sendIdx).toBeGreaterThanOrEqual(0);
-    expect(authIdx).toBeLessThan(sendIdx);
+  beforeEach(() => {
+    f.inserts.length = 0;
+  });
+
+  it('useSendTeamMessage recusa o envio sem perfil e não chega ao banco', async () => {
+    f.perfil = null;
+    const { result } = renderHook(() => useSendTeamMessage(), { wrapper: TestQueryWrapper });
+
+    await act(async () => {
+      await expect(
+        result.current.mutateAsync({ conversationId: 'conversa', content: 'oi' }),
+      ).rejects.toThrow('Not authenticated');
+    });
+
+    expect(f.inserts).toEqual([]);
+  });
+
+  it('useSendTeamMessage grava a mensagem quando há perfil', async () => {
+    f.perfil = { id: 'eu', role: 'admin' };
+    const { result } = renderHook(() => useSendTeamMessage(), { wrapper: TestQueryWrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({ conversationId: 'conversa', content: 'oi' });
+    });
+
+    expect(f.inserts).toHaveLength(1);
+    expect(f.inserts[0].table).toBe('team_messages');
+    expect(f.inserts[0].payload.sender_id).toBe('eu');
   });
 });
 

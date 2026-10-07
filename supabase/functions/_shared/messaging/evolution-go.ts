@@ -103,6 +103,12 @@ export interface SendDeps {
    */
   flavor?: "go" | "v2";
   signal?: AbortSignal;
+  /**
+   * Prazo CURTO da presença humanizada (ms). A presença é um indicador
+   * "digitando", não um envio: não pode consumir o orçamento inteiro do
+   * chamador. Ausente = `PRESENCE_TIMEOUT_MS`.
+   */
+  presenceTimeoutMs?: number;
 }
 
 export interface SendResult {
@@ -205,8 +211,59 @@ function authHeaders(go: GoRoute, deps: SendDeps): Record<string, string> {
   return { "Content-Type": go.contentType ?? "application/json", apikey: deps.instanceToken };
 }
 
-/** Presença best-effort: nunca derruba o envio (mesmo contrato das edges atuais). */
+/**
+ * Prazo curto da presença humanizada (ms). É um indicador "digitando", não um
+ * envio: se o provedor não responde, a presença não pode segurar a mensagem —
+ * nem consumir o orçamento inteiro do chamador. O sinal dele continua mandando;
+ * este teto é só o limite SUPERIOR da etapa best-effort.
+ */
+export const PRESENCE_TIMEOUT_MS = 2_000;
+
+/** Erro de cancelamento no mesmo shape que o `fetch` abortado publica (nome `AbortError`). */
+function abortError(signal: AbortSignal): Error {
+  const reason = signal.reason;
+  if (reason instanceof Error) return reason;
+  const err = new Error("The operation was aborted.");
+  err.name = "AbortError";
+  return err;
+}
+
+/**
+ * Sinal da presença: o do chamador (orçamento total) combinado com o prazo
+ * curto da etapa — o primeiro que disparar cancela. Feito à mão (em vez de
+ * `AbortSignal.any`/`AbortSignal.timeout`) para o `dispose` CANCELAR o timer do
+ * prazo curto assim que a presença termina, sem deixar timer pendente.
+ */
+function boundedBy(deadlineMs: number, signal?: AbortSignal): { signal: AbortSignal; dispose: () => void } {
+  const ctrl = new AbortController();
+  const timer = setTimeout(
+    () => ctrl.abort(new DOMException("presence_timeout", "TimeoutError")),
+    deadlineMs,
+  );
+  const onAbort = () => ctrl.abort(signal?.reason);
+  if (signal) {
+    if (signal.aborted) ctrl.abort(signal.reason);
+    else signal.addEventListener("abort", onAbort, { once: true });
+  }
+  return {
+    signal: ctrl.signal,
+    dispose: () => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+    },
+  };
+}
+
+/**
+ * Presença best-effort: nunca derruba o envio (mesmo contrato das edges atuais)
+ * e nunca segura o envio além do prazo do chamador — o `AbortSignal` dele vai
+ * para o POST da presença e há um teto curto próprio (`PRESENCE_TIMEOUT_MS`).
+ * Falha (abort, timeout, 4xx, exceção) é engolida: a mensagem autorizada segue.
+ */
 async function postPresence(item: SendItem, presence: Presence, deps: SendDeps): Promise<void> {
+  // Sinal do chamador JÁ abortado: não inicia efeito novo — nem a presença.
+  if (deps.signal?.aborted) return;
+  const bound = boundedBy(deps.presenceTimeoutMs ?? PRESENCE_TIMEOUT_MS, deps.signal);
   try {
     const go = translateV2ToGo(`/chat/updatePresence/${item.instanceId}`, "POST", {
       number: item.to,
@@ -217,9 +274,12 @@ async function postPresence(item: SendItem, presence: Presence, deps: SendDeps):
       method: go.method,
       headers: authHeaders(go, deps),
       ...(go.method !== "GET" && go.body ? { body: JSON.stringify(go.body) } : {}),
+      signal: bound.signal,
     });
   } catch {
     /* presença é best-effort: segue para a mensagem */
+  } finally {
+    bound.dispose();
   }
 }
 
@@ -248,6 +308,11 @@ export async function send(item: SendItem, deps: SendDeps): Promise<SendResult> 
   if (!go) throw new MessagingError("unmapped_route", `rota GO não mapeada: ${plan.v2Path}`);
 
   await postPresence(item, presence, deps);
+
+  // O prazo do chamador pode ter vencido durante a presença (best-effort): ele
+  // manda. Sem esta checagem o envio ficaria pendente atrás da presença mesmo
+  // com o sinal já abortado — e a mensagem não pode sair depois do cancelamento.
+  if (deps.signal?.aborted) throw abortError(deps.signal);
 
   const response = await deps.fetch(`${deps.evolutionUrl}${go.path}`, {
     method: go.method,

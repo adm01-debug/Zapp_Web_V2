@@ -22,9 +22,23 @@ const md = readFileSync(arquivo, 'utf8'); // NOSONAR(S8707): 'arquivo' vem de re
 const blocks = md.split(/^### (?=E\d{2,3} · )/m).slice(1);
 const errors = [];
 const seen = new Set();
+
+// E54/RISCADO: tombstone estrutural (decisao de produto de 2026-09-24). O bloco
+// continua contando entre as 100 posicoes estaveis, mas so fica dispensado de
+// Objetivo, 10 sub-etapas e checklist quando combina, no MESMO bloco, o
+// cabecalho estrito `### E<id> · ~~<titulo>~~ (RISCADO)` e a linha
+// `**Status:** descartado em AAAA-MM-DD`. Marcador ou status isolados (ou
+// cabecalho sem titulo riscado, ou data invalida) nao criam excecao.
+const CABECALHO_TOMBSTONE = /^E\d{2,3} · ~~.+~~ \(RISCADO\)$/;
+const STATUS_DESCARTAVEL = /^\*\*Status:\*\* descartado em \d{4}-\d{2}-\d{2}/m;
+function ehTombstone(b) {
+  return CABECALHO_TOMBSTONE.test(b.split('\n', 1)[0]) && STATUS_DESCARTAVEL.test(b);
+}
+
 for (const b of blocks) {
   const id = b.match(/^E(\d{2,3})/)[1];
   seen.add(Number(id));
+  if (ehTombstone(b)) continue;
   const steps = b.split('**Checklist**')[0].match(/^\d{1,2}\. /gm) || [];
   if (steps.length !== 10) errors.push(`E${id}: ${steps.length} sub-etapas`);
   const nums = steps.map((s) => Number(s));

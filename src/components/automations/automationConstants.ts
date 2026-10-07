@@ -26,6 +26,12 @@ const ACTION_CONFIG_OWNERS: Record<string, string[]> = {
   priority: ['send_notification'],
 };
 
+// Tipos que este editor consegue configurar pelo campo de mensagem. Fonte única:
+// o dono da chave `message` é `ACTION_CONFIG_OWNERS.message` (mesma tabela que o
+// filtro usa), então o editor não inventa contrato novo — só deixa de esconder um
+// campo cuja chave já é declarada válida para o tipo escolhido.
+export const MESSAGE_ACTION_TYPES: string[] = ACTION_CONFIG_OWNERS.message;
+
 export function filterActionConfig(actionType: string, config: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(config).filter(([configKey]) => {
