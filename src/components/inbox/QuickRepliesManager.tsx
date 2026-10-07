@@ -30,15 +30,34 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<QuickReplyTemplate | null>(null);
 
-  const handleSelect = (template: QuickReplyTemplate) => {
-    incrementUseCount(template.id);
-    onSelect?.(template.content);
-    toast.success('Resposta copiada!');
+  const copyToClipboard = async (content: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(content);
+      return true;
+    } catch {
+      return false;
+    }
   };
 
-  const handleCopy = (content: string) => {
-    void navigator.clipboard.writeText(content);
-    toast.success('Copiado para a área de transferência!');
+  const handleSelect = async (template: QuickReplyTemplate) => {
+    incrementUseCount(template.id);
+    // Com Composer, o clique no corpo insere a resposta na mensagem.
+    if (onSelect) {
+      onSelect(template.content);
+      toast.success('Resposta inserida no chat!');
+      return;
+    }
+    // Sem Composer (ex.: Configurações → Mensagens) o corpo do card é a cópia:
+    // anuncia só depois de a escrita voltar.
+    const copied = await copyToClipboard(template.content);
+    if (copied) toast.success('Resposta copiada!');
+    else toast.error('Não foi possível copiar a resposta');
+  };
+
+  const handleCopy = async (content: string) => {
+    const copied = await copyToClipboard(content);
+    if (copied) toast.success('Copiado para a área de transferência!');
+    else toast.error('Não foi possível copiar para a área de transferência');
   };
 
   const displayedTemplates = useMemo(() => {
