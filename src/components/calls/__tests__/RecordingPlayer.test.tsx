@@ -11,8 +11,20 @@ import {
 } from '@/lib/mediaVolumeStore';
 
 const invoke = vi.fn();
+/**
+ * O mock do client devolve TAMBEM `auth.getSession` e `SUPABASE_ANON_KEY`: sem eles o
+ * `edgeAuthHeaders()` real (chamado pelo `useCallRecording` antes do `invoke`) quebra com
+ * `TypeError: Cannot read properties of undefined (reading 'getSession')` e o player nunca
+ * renderiza. Token sintetico - nenhuma credencial real entra no teste.
+ */
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } },
+  supabase: {
+    functions: { invoke: (...a: unknown[]) => invoke(...a) },
+    auth: {
+      getSession: async () => ({ data: { session: { access_token: 'jwt-do-usuario-teste' } } }),
+    },
+  },
+  SUPABASE_ANON_KEY: 'anon-key-do-teste',
 }));
 
 /**
