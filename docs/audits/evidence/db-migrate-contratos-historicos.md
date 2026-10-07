@@ -15,10 +15,19 @@ o arquivo e o braco de origem tem o mesmo `sha256`.
 ## Como reexecutar um contrato sob demanda
 
 ```bash
-node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "$(cat scripts/db-audit/contracts/<versao>.sql)"
+node scripts/db-audit/run-runtime-contract.mjs <versao>
 ```
 
-Em producao, o executor generico do workflow faz exatamente isso para a versao alvo.
+Em producao, o executor generico do workflow faz exatamente isso para a versao alvo: le o
+contrato declarado, EXTRAI dele o SQL e os flags do cliente (`-c "<sql>"` ou `-f <arquivo>`)
+e os entrega ao wrapper `psql-safe.mjs`. Versao sem contrato dedicado usa o contrato
+generico (`scripts/db-audit/generic-migration-runtime.sql`).
+
+> Correcao R2-INF-004 (06/10/2026): ate aqui esta secao mandava passar o **arquivo inteiro**
+> a `psql -c "$(cat ...)"`. O arquivo e o texto do braco do `case` -- shell, nao SQL --,
+> entao aquele comando (e o executor que o imitava) falhava com erro de sintaxe e a rota
+> nunca produzia a prova JSON. A extracao de SQL e o fallback generico foram provados em
+> PostgreSQL descartavel por `scripts/db-audit/runtime-contract-runner.test.sh`.
 
 ## Contratos
 
