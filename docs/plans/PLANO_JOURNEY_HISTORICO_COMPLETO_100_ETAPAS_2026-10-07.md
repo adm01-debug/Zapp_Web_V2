@@ -55,10 +55,10 @@
 **Onda 3 (depois da 2 e de F01/R-series integrados):** clique no episódio (I; mexe em ChatPanel/TasksTab/NotesTab/FilesTab), exportar, E2E, docs. **Claude:** A e J.
 
 ## 6. Perguntas ao dono
-1. ~~Nome da aba~~ **RESPONDIDA: continua Journey** (e o título interno da página também será "Journey"). 2. ~~Filtro de usuário~~ **RESPONDIDA: vários ao mesmo tempo** (D05). 3. O mockup mostra proposta "Visualizada": hoje **não há** esse dado; sem ele, o selo não aparece. 4. **Exportar histórico**: em qual formato (CSV, PDF)? 5. Ações automáticas da **IA/robô** entram na timeline como "Sistema"?
+1. ~~Nome da aba~~ **RESPONDIDA: continua Journey** (e o título interno da página também será "Journey"). 2. ~~Filtro de usuário~~ **RESPONDIDA: vários ao mesmo tempo** (D05). 3. ~~Selo "Visualizada" da proposta~~ **RESPONDIDA: fica de fora** (não há dado; o selo da proposta mostra só o status que já existe: aberta, ganha ou perdida). 4. **Exportar histórico**: em qual formato (CSV, PDF)? 5. Ações automáticas da **IA/robô** entram na timeline como "Sistema"?
 
 ## 7. Fora de escopo
-Criar tabelas ou RPC sem aprovação; mudar o armazenamento; selo de canal/origem; editar eventos pela timeline.
+Selo "Visualizada" da proposta (decidido pelo dono em 07/10: não há dado); Criar tabelas ou RPC sem aprovação; mudar o armazenamento; selo de canal/origem; editar eventos pela timeline.
 
 ## 8. Estado de execução
 _A preencher._ Onda 1 criada em 07/10/2026.
