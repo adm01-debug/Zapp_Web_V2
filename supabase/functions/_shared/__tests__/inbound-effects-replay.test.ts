@@ -1,8 +1,7 @@
 /**
- * R2-API-006 (#69): toda entrega drena `drain_inbound_message_effects`; erro de
- * ingest/drain e LANCADO (500 -> reentrega); autoresposta so com suppression_id
- * NOVO; direcao (fromMe) viaja no ingest. Atomicidade SQL provada em:
- *   scripts/db-audit/inbound-effects-replay.test.sh
+ * R2-API-006 (#69): toda entrega drena `drain_inbound_message_effects`; erro de ingest/drain e
+ * LANCADO (500 -> reentrega); autoresposta so com suppression_id NOVO; direcao (fromMe) vai no
+ * ingest. Atomicidade SQL provada em scripts/db-audit/inbound-effects-replay.test.sh
  */
 import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
@@ -145,7 +144,7 @@ Deno.test("R2-API-006: falha no drain é lançada; a reentrega drena e a supress
       ],
     });
 
-    // Entrega 1: o erro de banco nao e engolido — a entrega falha e o produtor reenvia.
+    // Entrega 1: erro de banco nao e engolido — a entrega falha e o reenvia.
     await assertRejects(
       () => entregar(supabase, "PARE", "3EB0FAIL"),
       Error,
