@@ -21,8 +21,9 @@
 --      (ON CONFLICT (direct_member_a, direct_member_b) WHERE type = 'direct');
 --   3. mantém a busca por MEMBROS para as linhas legadas gravadas sem par (criadas pelo corpo
 --      regredido), para não criar uma conversa nova ao lado de uma que já existe;
---   4. rejeita other_profile_id nulo (antes criaria uma linha com o par NULL).
--- Não altera dado, ACL, policy nem constraint: nenhum acesso é retirado e nada é apagado.
+--   4. mantém o INSERT de membros idempotente com ON CONFLICT (conversation_id, profile_id);
+--   5. rejeita other_profile_id nulo (antes criaria uma linha com o par NULL).
+-- Não altera dado, ACL, policy, papéis de membro nem constraint: nenhum acesso é retirado e nada é apagado.
 
 CREATE OR REPLACE FUNCTION public.find_or_create_direct_conversation(other_profile_id uuid)
 RETURNS uuid
@@ -100,8 +101,8 @@ BEGIN
     RAISE EXCEPTION 'direct_conversation_unavailable_for_pair';
   END IF;
 
-  INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role)
-  VALUES (v_conv_id, v_my_profile_id, 'owner'), (v_conv_id, other_profile_id, 'member')
+  INSERT INTO public.team_conversation_members (conversation_id, profile_id)
+  VALUES (v_conv_id, v_my_profile_id), (v_conv_id, other_profile_id)
   ON CONFLICT (conversation_id, profile_id) DO NOTHING;
 
   RETURN v_conv_id;

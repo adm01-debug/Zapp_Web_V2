@@ -11,9 +11,10 @@
 #             DIFERENTES e deixam DUAS conversas diretas, as duas com o par NULL.
 #             (É a "mutação": sem a correção, o BLOCO B não passa.)
 #   BLOCO B — migration aplicada: as mesmas duas transações devolvem o MESMO id, fica UMA
-#             conversa com os DOIS membros e o par ordenado gravado; os dois lados
-#             conseguem LER a conversa por RLS; legado sem par não duplica; self e
-#             other_profile_id nulo são rejeitados; a ACL não muda.
+#             conversa com os DOIS membros (ambos com member_role padrão 'member')
+#             e o par ordenado gravado; os dois lados conseguem LER a conversa por
+#             RLS; legado sem par não duplica; self e other_profile_id nulo são
+#             rejeitados; a ACL não muda.
 #   BLOCO C — idempotência e ROLLBACK: reaplica a migration; EXECUTA o bloco
 #             `-- Rollback:` extraído do próprio arquivo da migration e prova, pelo
 #             COMPORTAMENTO, que o corpo anterior voltou (a corrida duplica de novo);
@@ -265,33 +266,35 @@ expect_value 'B.5 ficou UMA única conversa direta' '1' \
   "SELECT count(*) FROM public.team_conversations WHERE type = 'direct';"
 expect_value 'B.6 ...com os DOIS membros' '2' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id = '$ID_B1';"
-expect_value 'B.7 o par ordenado canônico foi gravado (o índice único arbitra)' "$P_ATILA|$P_DORA" \
+expect_value 'B.7 ...e os dois membros mantêm o member_role padrão' 'member|member' \
+  "SELECT string_agg(member_role, '|' ORDER BY profile_id) FROM public.team_conversation_members WHERE conversation_id = '$ID_B1';"
+expect_value 'B.8 o par ordenado canônico foi gravado (o índice único arbitra)' "$P_ATILA|$P_DORA" \
   "SELECT direct_member_a::text || '|' || direct_member_b::text FROM public.team_conversations WHERE id = '$ID_B1';"
-expect_value_as 'B.8 ATILA lê a conversa devolvida sob RLS' "$ID_B1" \
+expect_value_as 'B.9 ATILA lê a conversa devolvida sob RLS' "$ID_B1" \
   "$JWT_ATILA" "SELECT id FROM public.team_conversations WHERE id = '$ID_B1';"
-expect_value_as 'B.9 DORA lê a MESMA conversa devolvida sob RLS' "$ID_B1" \
+expect_value_as 'B.10 DORA lê a MESMA conversa devolvida sob RLS' "$ID_B1" \
   "$JWT_DORA" "SELECT id FROM public.team_conversations WHERE id = '$ID_B1';"
-expect_value_as 'B.10 EVA (não participa) NÃO enxerga a conversa' '0' \
+expect_value_as 'B.11 EVA (não participa) NÃO enxerga a conversa' '0' \
   "$JWT_EVA" "SELECT count(*) FROM public.team_conversations WHERE id = '$ID_B1';"
 
-expect_value_as 'B.11 chamada seguinte (mesmo par, invertido) devolve o mesmo id' "$ID_B1" \
+expect_value_as 'B.12 chamada seguinte (mesmo par, invertido) devolve o mesmo id' "$ID_B1" \
   "$JWT_DORA" "SELECT public.find_or_create_direct_conversation('$P_ATILA');"
-expect_value 'B.12 e continua existindo UMA conversa' '1' \
+expect_value 'B.13 e continua existindo UMA conversa' '1' \
   "SELECT count(*) FROM public.team_conversations WHERE type = 'direct';"
 
 # Legado: linha direta criada pelo corpo regredido — par NULL, dois membros.
 psql_sql "INSERT INTO public.team_conversations (id, type, created_by) VALUES ('e0000000-0000-0000-0000-0000000000f1', 'direct', '$P_EVA');
-          INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('e0000000-0000-0000-0000-0000000000f1', '$P_EVA', 'owner'), ('e0000000-0000-0000-0000-0000000000f1', '$P_OTTO', 'member');" >/dev/null
-expect_value_as 'B.13 legado sem par: a RPC acha a conversa existente pelos membros' 'e0000000-0000-0000-0000-0000000000f1' \
+          INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('e0000000-0000-0000-0000-0000000000f1', '$P_EVA'), ('e0000000-0000-0000-0000-0000000000f1', '$P_OTTO');" >/dev/null
+expect_value_as 'B.14 legado sem par: a RPC acha a conversa existente pelos membros' 'e0000000-0000-0000-0000-0000000000f1' \
   "$JWT_EVA" "SELECT public.find_or_create_direct_conversation('$P_OTTO');"
-expect_value 'B.14 ...e não cria uma duplicata ao lado dela' '1' \
+expect_value 'B.15 ...e não cria uma duplicata ao lado dela' '1' \
   "SELECT count(*) FROM (SELECT c.id FROM public.team_conversations c JOIN public.team_conversation_members m ON m.conversation_id = c.id WHERE c.type = 'direct' AND m.profile_id IN ('$P_EVA', '$P_OTTO') GROUP BY c.id HAVING count(*) = 2) x;"
 
-expect_error_as 'B.15 conversa consigo mesmo é rejeitada' 'cannot_create_direct_with_self' \
+expect_error_as 'B.16 conversa consigo mesmo é rejeitada' 'cannot_create_direct_with_self' \
   "$JWT_ATILA" "SELECT public.find_or_create_direct_conversation('$P_ATILA');"
-expect_error_as 'B.16 other_profile_id nulo é rejeitado (não nasce linha com par NULL)' 'other_profile_id_required' \
+expect_error_as 'B.17 other_profile_id nulo é rejeitado (não nasce linha com par NULL)' 'other_profile_id_required' \
   "$JWT_ATILA" "SELECT public.find_or_create_direct_conversation(NULL);"
-expect_value 'B.17 as recusas não deixaram conversa direta a mais' '2' \
+expect_value 'B.18 as recusas não deixaram conversa direta a mais' '2' \
   "SELECT count(*) FROM public.team_conversations WHERE type = 'direct';"
 
 # ==================== BLOCO C — idempotência e rollback ====================
@@ -322,4 +325,4 @@ ID_D2="$(first_uuid "$tmp_dir/d2.txt")"
 [[ -n "$ID_D1" && -n "$ID_D2" && "$ID_D1" == "$ID_D2" ]] || fail "C.5 reaplicar a migration nao restaurou a correção ($ID_D1 != $ID_D2)"
 pass 'C.5 reaplicar a migration restaura a correção (mesmo id na corrida)'
 
-printf '\nPASS: TC-002 — o par ordenado de volta ao INSERT arbitrado pelo índice único faz duas transações concorrentes devolverem o MESMO id e deixarem UMA conversa com os DOIS membros; o rollback do próprio arquivo devolve o corpo anterior.\n'
+printf '\nPASS: TC-002 — o par ordenado de volta ao INSERT arbitrado pelo índice único faz duas transações concorrentes devolverem o MESMO id e deixarem UMA conversa com os DOIS membros usando o member_role padrão; o rollback do próprio arquivo devolve o corpo anterior.\n'
