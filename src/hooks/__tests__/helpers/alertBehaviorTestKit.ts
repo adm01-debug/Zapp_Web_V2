@@ -25,6 +25,7 @@ export const settingsCfg: Record<string, unknown> = {
   soundEnabled: true,
   browserNotifications: false,
   messageSoundType: 'chime',
+  newMessageSound: true,
   slaBreachSound: true,
   slaSoundType: 'alert',
   mentionSound: true,
@@ -116,6 +117,7 @@ export function resetAlertKit() {
   dedupeResult.valor = true;
   callbacks.length = 0;
   settingsCfg.soundEnabled = true;
+  settingsCfg.newMessageSound = true;
   settingsCfg.slaBreachSound = true;
   settingsCfg.mentionSound = true;
   settingsCfg.soundVolume = 55;

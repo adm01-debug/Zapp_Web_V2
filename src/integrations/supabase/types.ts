@@ -9149,14 +9149,17 @@ export type Database = {
           id: string
           inactivity_timeout: number | null
           language: string | null
+          mention_sound_enabled: boolean | null
           mention_sound_type: string | null
           message_sound_type: string | null
+          new_message_sound_enabled: boolean | null
           quiet_hours_enabled: boolean | null
           quiet_hours_end: string | null
           quiet_hours_start: string | null
           sentiment_alert_enabled: boolean | null
           sentiment_alert_threshold: number | null
           sentiment_consecutive_count: number | null
+          sla_breach_sound_enabled: boolean | null
           sla_sound_type: string | null
           sound_enabled: boolean | null
           sound_volume: number
@@ -9186,14 +9189,17 @@ export type Database = {
           id?: string
           inactivity_timeout?: number | null
           language?: string | null
+          mention_sound_enabled?: boolean | null
           mention_sound_type?: string | null
           message_sound_type?: string | null
+          new_message_sound_enabled?: boolean | null
           quiet_hours_enabled?: boolean | null
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
           sentiment_alert_enabled?: boolean | null
           sentiment_alert_threshold?: number | null
           sentiment_consecutive_count?: number | null
+          sla_breach_sound_enabled?: boolean | null
           sla_sound_type?: string | null
           sound_enabled?: boolean | null
           sound_volume?: number
@@ -9223,14 +9229,17 @@ export type Database = {
           id?: string
           inactivity_timeout?: number | null
           language?: string | null
+          mention_sound_enabled?: boolean | null
           mention_sound_type?: string | null
           message_sound_type?: string | null
+          new_message_sound_enabled?: boolean | null
           quiet_hours_enabled?: boolean | null
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
           sentiment_alert_enabled?: boolean | null
           sentiment_alert_threshold?: number | null
           sentiment_consecutive_count?: number | null
+          sla_breach_sound_enabled?: boolean | null
           sla_sound_type?: string | null
           sound_enabled?: boolean | null
           sound_volume?: number
