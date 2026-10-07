@@ -18,6 +18,12 @@ import { MessageBubble } from './MessageBubble';
 interface ChatMessagesAreaProps {
   messages: Message[];
   isContactTyping: boolean;
+  /**
+   * R2-INB-026: colega (agente) digitando na mesma conversa. Indicador separado do
+   * contato — quem digita é do time, não o usuário final; o rótulo exibido vem de
+   * `typingUserName`, nunca do nome do contato.
+   */
+  isColleagueTyping?: boolean;
   typingUserName: string;
   ttsLoading: boolean;
   ttsPlaying: boolean;
@@ -81,7 +87,7 @@ function isNearBottom(el: HTMLElement): boolean {
 }
 
 export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ 
-  messages, isContactTyping, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
+  messages, isContactTyping, isColleagueTyping = false, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
   instanceName, conversationId, contactJid, contactAvatar, onSpeak, onStop, onReply, onForward, onCopy,
   onScrollToMessage, onInteractiveButtonClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
   hasOlderMessages, loadingOlderMessages, onLoadOlderMessages,
@@ -378,7 +384,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
       </div>
 
       <div className="flex justify-start pl-10 mt-4">
-        <TypingIndicator isVisible={isContactTyping} userName={typingUserName} />
+        <TypingIndicator isVisible={isContactTyping || isColleagueTyping} userName={typingUserName} />
       </div>
     </div>
   );
