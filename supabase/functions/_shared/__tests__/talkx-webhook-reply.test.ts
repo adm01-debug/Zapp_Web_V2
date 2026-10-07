@@ -1,19 +1,13 @@
 /**
  * X028 — contrato executável da ATRIBUIÇÃO DE RESPOSTA do Talk X.
  *
- * R2-API-006 (#69): a atribuição deixou de ser chamada solta depois do
- * ingest — os insumos (contato, telefone, citação) entram na MESMA chamada de
- * `ingest_inbound_message` (pendência na outbox na mesma transação) e
- * `drain_inbound_message_effects` aplica `attribute_talkx_reply` no banco.
- * Travado no contrato novo:
+ * R2-API-006 (#69): os insumos (contato, telefone, citação) entram na MESMA chamada de
+ * `ingest_inbound_message` (pendência na outbox na mesma transação);
+ * `drain_inbound_message_effects` aplica `attribute_talkx_reply` no banco. Travado:
  *
- *   1. a resposta do contato leva o telefone resolvido (`p_phone`) até a RPC
- *      de ingest — sem ele, a atribuição por telefone (LID/duplicado) não casa;
- *   2. o handler AGUARDA a drenagem: só resolve depois que os efeitos
- *      pendentes terminam;
- *   3. mensagem de opt-out não enfileira resposta (`p_opt_out_keyword` vai
- *      preenchido — a exclusão mútua é provada no SQL);
- *   4. RPC atribuindo `attributed=false` não é erro: o handler resolve normal.
+ *   1. o telefone resolvido (`p_phone`) chega à RPC (atribuição por LID/duplicado);
+ *   2. o handler AGUARDA a drenagem; 3. opt-out não enfileira resposta (exclusão mútua no SQL);
+ *   4. `attributed=false` não é erro: o handler resolve normal.
  *
  * O SQL é provado na migration real em Postgres descartável:
  *   scripts/db-audit/inbound-effects-replay.test.sh
