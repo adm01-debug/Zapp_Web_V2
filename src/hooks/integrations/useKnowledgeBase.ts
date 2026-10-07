@@ -63,9 +63,16 @@ export function useKnowledgeBase() {
   }, [fetchData]);
 
   const deleteArticle = useCallback(async (id: string) => {
-    await supabase.from('knowledge_base_articles').delete().eq('id', id);
+    // R2-API-053: o DELETE era descartado e a remoção era anunciada mesmo com error.
+    // O sucesso só sai depois do aceite da persistência.
+    const { error } = await supabase.from('knowledge_base_articles').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'Erro ao remover artigo', description: error.message, variant: 'destructive' });
+      return false;
+    }
     toast({ title: 'Artigo removido' });
     fetchData();
+    return true;
   }, [fetchData]);
 
   const uploadFile = useCallback(async (file: File) => {

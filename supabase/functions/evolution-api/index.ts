@@ -4,6 +4,14 @@ import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from 
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
+// R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
+import {
+  qrFromV2Connect,
+  resolveEvolutionFlavor,
+  resolveSessionApiKey,
+  resolveSessionRoute,
+  sessionStateFromV2,
+} from "../_shared/evolution-session-routes.ts";
 
 /** Dependências injetáveis nos testes (mesma forma das edges com guard). */
 export interface EvolutionApiDeps {
@@ -460,6 +468,41 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'list-instances') return await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET');
 
     if (action === 'connect') {
+      // R2-API-015: o ciclo de sessão escolhe rota, método e credencial pelo
+      // flavor. O bloco abaixo é o fluxo do GO (webhook reafirmado no connect,
+      // poll de /instance/qr, recriação de sessão órfã) — rotas nativas do GO,
+      // sem instância no path. O v2 usa /instance/connect/{instance} e devolve
+      // o pareamento no PRÓPRIO corpo.
+      if (!isGoFlavor) {
+        const route = resolveSessionRoute('v2', 'connect', instance);
+        const response = await fetch(`${evolutionApiUrl}${route.path}`, {
+          method: route.method,
+          headers: {
+            'apikey': resolveSessionApiKey(route, Deno.env.get('EVOLUTION_INSTANCE_TOKEN'), evolutionApiKey),
+            'Content-Type': 'application/json',
+          },
+        });
+        let data: { message?: unknown; [k: string]: unknown } = {};
+        try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from v2 */ }
+        if (!response.ok) {
+          return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao conectar instância na Evolution API v2.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        // v2 devolve o QR no corpo do connect ({ base64, code, pairingCode,
+        // count }) e { instance: { state: 'open' } } quando a sessão já está
+        // aberta (nada a parear).
+        const qr = qrFromV2Connect(data);
+        if (qr) {
+          await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
+          return new Response(JSON.stringify({ ...data, status: 'qr_pending', qrcode: qr }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        if (sessionStateFromV2(data) === 'open') {
+          await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
+          return new Response(JSON.stringify({ ...data, status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        // Mesma convenção dos outros ramos: 200 com error:true (o front lê
+        // error/message; um 409 cru cairia no ramo de erro de rede).
+        return new Response(JSON.stringify({ error: true, status: 409, message: 'A Evolution API v2 respondeu ao connect sem QR Code e sem sessão aberta. Verifique a instância e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
       // NUNCA body vazio: o GO persiste webhook/subscribe do body — {} apagaria
       // o webhook da instância e derrubaria a entrega de eventos (o guard
@@ -469,7 +512,8 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         subscribe: ['ALL'], immediate: true,
         webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook`,
       });
-      const response = await fetch(`${evolutionApiUrl}/instance/connect`, { method: 'POST', headers: { 'apikey': instToken, 'Content-Type': 'application/json' }, body: connectBody });
+      const goConnectRoute = resolveSessionRoute('go', 'connect', instance);
+      const response = await fetch(`${evolutionApiUrl}${goConnectRoute.path}`, { method: goConnectRoute.method, headers: { 'apikey': resolveSessionApiKey(goConnectRoute, instToken, evolutionApiKey), 'Content-Type': 'application/json' }, body: connectBody });
       if (!response.ok) {
         let errData: { message?: unknown } = {};
         try { const _t = await response.text(); errData = JSON.parse(_t); } catch { /* non-JSON */ }
@@ -649,8 +693,15 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     }
 
     if (action === 'status') {
-      const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
-      const response = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
+      // R2-API-015: rota, método e credencial pelo flavor — o GO identifica a
+      // instância pela credencial (/instance/status) e o v2 pelo nome no path
+      // (/instance/connectionState/{instance}), autenticado pela chave global.
+      const flavor = resolveEvolutionFlavor(Deno.env.get('EVOLUTION_API_FLAVOR'));
+      const route = resolveSessionRoute(flavor, 'status', instance);
+      const response = await fetch(`${evolutionApiUrl}${route.path}`, {
+        method: route.method,
+        headers: { 'apikey': resolveSessionApiKey(route, Deno.env.get('EVOLUTION_INSTANCE_TOKEN'), evolutionApiKey) },
+      });
       // Resposta de /instance/status. A GO manda `data` aninhado e nem sempre concorda
       // entre loggedIn/connected/State; o DTO mantém o índice aberto porque o payload varia.
       let data: {
@@ -663,6 +714,10 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         [k: string]: unknown;
       } = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+      // R2-API-015: o /instance/connectionState do v2 devolve { instance: { state } }
+      // e não tem os flags LoggedIn/Connected do GO — normaliza para o mesmo
+      // `state` que o resto da ação já lê (só 'open' é sessão aberta).
+      if (flavor === 'v2') data.state = sessionStateFromV2(data);
       // Requer loggedIn E connected para mapear 'open'; '||' nao '??' porque
       // loggedIn:false nao pode curto-circuitar o fallback por State (a GO
       // manda os dois e nem sempre concordam). Estado 'Reconnecting' tem
@@ -703,7 +758,14 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'restart-instance') return await proxy(`/instance/restart/${instance}`, 'PUT');
 
     if (action === 'disconnect') {
-      const response = await fetch(`${evolutionApiUrl}/instance/logout`, { method: 'DELETE', headers: { 'apikey': Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey } });
+      // R2-API-015: logout pelo flavor — GO em /instance/logout (instância pela
+      // credencial) com o token da instância; v2 em /instance/logout/{instance}
+      // com a chave global.
+      const route = resolveSessionRoute(resolveEvolutionFlavor(Deno.env.get('EVOLUTION_API_FLAVOR')), 'disconnect', instance);
+      const response = await fetch(`${evolutionApiUrl}${route.path}`, {
+        method: route.method,
+        headers: { 'apikey': resolveSessionApiKey(route, Deno.env.get('EVOLUTION_INSTANCE_TOKEN'), evolutionApiKey) },
+      });
       let data: { message?: unknown; [k: string]: unknown } = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao desconectar instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -849,16 +911,38 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'update-privacy') {
       // O GO exige os 7 campos no POST /user/privacy (parcial → 400). Faz GET
       // + merge para atualizar só o que veio, sem resetar o resto para 'all'.
+      // R2-API-014: na dúvida ou na falha, NEGAR — leitura que falha (rede,
+      // HTTP não-ok, corpo sem objeto `data`) ou snapshot sem algum campo
+      // negam a atualização e NENHUMA escrita sai ao provedor. O antigo
+      // fallback inventava 'all', o valor MAIS permissivo, e a atualização
+      // parcial abria campos que o operador não alterou.
+      // Convenção do proxy (_shared/evolution-api-proxy.ts): falha de provedor
+      // sai como HTTP 200 com { error: true, status, message } — é esse o corpo
+      // que useEvolutionApiCore lê para mostrar o toast; um status cru não-2xx
+      // perderia a mensagem e o operador veria só "non-2xx status code".
       if (isGoFlavor) {
         const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
-        let current: Record<string, unknown> = {};
+        const denyPrivacy = () => new Response(JSON.stringify({
+          error: true,
+          status: 502,
+          message: 'Não foi possível confirmar a privacidade atual da instância; a atualização foi negada para não alterar outros campos.',
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        let current: Record<string, unknown>;
         try {
-          const curRes = await fetch(`${evolutionApiUrl}/user/privacy`, { headers: { 'apikey': instToken } });
-          if (curRes.ok) { const curJson = await curRes.json(); if (curJson?.data && typeof curJson.data === 'object') current = curJson.data; }
-        } catch { /* merge best-effort; defaults abaixo seguram */ }
-        const pick = (v2Val: unknown, goCurrent: unknown) =>
-          (typeof v2Val === 'string' && v2Val) ? v2Val : ((typeof goCurrent === 'string' && goCurrent) ? goCurrent : 'all');
-        return await proxy(`/profile/updatePrivacySettings/${instance}`, 'PUT', {
+          const curRes = await fetch(`${evolutionApiUrl}/user/privacy`, {
+            headers: { 'apikey': instToken },
+            signal: AbortSignal.timeout(8000),
+          });
+          if (!curRes.ok) return denyPrivacy();
+          const curJson = await curRes.json();
+          if (!curJson?.data || typeof curJson.data !== 'object' || Array.isArray(curJson.data)) return denyPrivacy();
+          current = curJson.data as Record<string, unknown>;
+        } catch {
+          return denyPrivacy();
+        }
+        const pick = (v2Val: unknown, goCurrent: unknown): string | null =>
+          (typeof v2Val === 'string' && v2Val) ? v2Val : ((typeof goCurrent === 'string' && goCurrent) ? goCurrent : null);
+        const merged = {
           readreceipts: pick(body.readreceipts, current.ReadReceipts),
           profile: pick(body.profile, current.Profile),
           status: pick(body.status, current.Status),
@@ -866,7 +950,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
           last: pick(body.last, current.LastSeen),
           groupadd: pick(body.groupadd, current.GroupAdd),
           calladd: pick(body.calladd, current.CallAdd),
-        });
+        };
+        if (Object.values(merged).some((v) => v === null)) return denyPrivacy();
+        return await proxy(`/profile/updatePrivacySettings/${instance}`, 'PUT', merged);
       }
       return await proxy(`/profile/updatePrivacySettings/${instance}`, 'PUT', { readreceipts: body.readreceipts, profile: body.profile, status: body.status, online: body.online, last: body.last, groupadd: body.groupadd });
     }

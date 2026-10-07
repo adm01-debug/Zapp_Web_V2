@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('PerformanceSnapshots');
@@ -57,6 +57,7 @@ export function usePerformanceSnapshots() {
 
   const loadHistory = useCallback(async (hours = 24) => {
     setLoading(true);
+    lastRangeHoursRef.current = hours;
     try {
       const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
@@ -75,16 +76,35 @@ export function usePerformanceSnapshots() {
     }
   }, []);
 
+  // Última janela (em horas) pedida por loadHistory: a recarga após limpar os
+  // snapshots antigos reusa o período selecionado em vez de voltar ao padrão.
+  // Declarado depois de loadHistory de propósito: o ref só é lido/escrito
+  // quando os callbacks rodam, já com a renderização concluída.
+  const lastRangeHoursRef = useRef(24);
+
   const clearOldSnapshots = useCallback(async () => {
     try {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      await supabase
+      // O cliente do Supabase resolve a Promise com `{ error }` em erro de
+      // PostgREST/RLS (não lança): sem inspecionar o retorno, o hook anunciava
+      // remoção mesmo com o DELETE recusado. Zero linhas também não é remoção.
+      const { data, error } = await supabase
         .from('performance_snapshots')
         .delete()
-        .lt('created_at', sevenDaysAgo);
-      toast.success('Dados antigos removidos');
-      await loadHistory();
+        .lt('created_at', sevenDaysAgo)
+        .select('id');
+      if (error) throw error;
+
+      const removidos = data?.length ?? 0;
+      if (removidos > 0) {
+        toast.success('Dados antigos removidos');
+      } else {
+        toast.success('Nenhum snapshot antigo para remover');
+      }
+      await loadHistory(lastRangeHoursRef.current);
     } catch (err) {
+      // Preserva o histórico exibido e avisa que a limpeza NÃO foi confirmada.
+      log.warn('Failed to clear old performance snapshots:', err);
       toast.error('Erro ao limpar dados');
     }
   }, [loadHistory]);

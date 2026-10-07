@@ -23,7 +23,16 @@ export function createQueryBuilder(resolvedData: unknown = [], resolvedError: un
     in: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
-    range: vi.fn().mockReturnThis(),
+    // `.range(from, to)` espelha o PostgREST numa LEITURA paginada: devolve a
+    // fatia `[from, to]` de `resolvedData`. Sem isso o mock repetia o resultado
+    // inteiro a cada pagina e uma leitura paginada (`fetchAllRows`) nunca
+    // terminava de verdade — justamente a condicao que o teto de linhas do
+    // PostgREST cria e que a paginacao existe para contornar.
+    range: vi.fn((from: number, to: number) =>
+      Array.isArray(resolvedData)
+        ? Object.assign(Promise.resolve({ data: resolvedData.slice(from, to + 1), error: resolvedError }), builder)
+        : builder
+    ),
     single: vi.fn().mockResolvedValue(result),
     maybeSingle: vi.fn().mockResolvedValue(result),
   });

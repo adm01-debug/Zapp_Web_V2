@@ -17,9 +17,9 @@
  *  - IA-040: campo `test` — destino fixo por `provider_id`, fallback desligado, modelo
  *    efetivo de `resolveModel`, timeout por chamada e classificação própria da falha.
  */
-import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
 import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
-import { logAiUsageDetached, extractTokenUsage, extractUserIdFromRequest, medirStream } from "../_shared/ai-usage.ts";
+import { logAiUsageDetached, extractTokenUsage, extractUserIdFromRequest, medirStream, registrarConsumoDeDiagnostico } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { callLovableAI, callOpenAICompatible, callCustomWebhook, withRetry } from "../_shared/ai-providers.ts";
 import {
@@ -64,6 +64,16 @@ const AiProxySchema = z.object({
 
 /** Teto de tempo por chamada no modo teste (IA-040). */
 const TEST_TIMEOUT_MS = 15_000;
+
+/**
+ * Conteúdo do diagnóstico é FIXO no servidor (R2-API-032): o cliente não
+ * escolhe o que se mede — um `test:true` com messages/tools/model do corpo
+ * virava chamada paga de graça. O modelo sai de `resolveModel(provider, null)`
+ * e o orçamento tem teto próprio; para os tipos sem corpo de config
+ * (lovable_ai, custom_webhook) o teto é este conteúdo fixo + TEST_TIMEOUT_MS.
+ */
+const DIAGNOSTIC_MESSAGES: ProxyMessage[] = [{ role: "user", content: "ping" }];
+const DIAGNOSTIC_MAX_TOKENS = 32;
 
 /** Mensagem no formato aceito pelos helpers de chamada (`_shared/ai-providers.ts`). */
 type ProxyMessage = { role: string; content: unknown };
@@ -275,6 +285,8 @@ interface DispatchOptions {
   responseFormat?: unknown;
   /** Teto de tempo por chamada (modo teste). Ausente = comportamento atual do helper. */
   timeoutMs?: number;
+  /** Orçamento de saída do diagnóstico (R2-API-032). Ausente = sem teto próprio. */
+  maxTokens?: number;
 }
 
 /** Só manda `options` ao helper quando há teto: sem ele a chamada é a de hoje. */
@@ -309,6 +321,9 @@ function dispatchProvider(
       if (!provider.api_endpoint) throw new ProviderConfigError("Endpoint da API nao configurado para este provedor.");
       const apiKey = requireProviderSecret(provider.api_key_secret_name);
       const config = chatProviderConfig(provider.config, options.responseFormat);
+      // R2-API-032: o orçamento do diagnóstico é decidido pelo servidor — entra
+      // DEPOIS do filtro para que um max_tokens do painel não o derrube.
+      if (typeof options.maxTokens === "number") config["max_tokens"] = options.maxTokens;
       return () => callOpenAICompatible({
         endpoint: provider.api_endpoint!, apiKey, messages,
         model: model ?? undefined, tools, toolChoice, stream, config,
@@ -352,13 +367,48 @@ async function runProviderTest(params: {
   stream: boolean;
   responseFormat: unknown;
   need: AiCapabilityNeed;
+  /** Identidade do chamador autenticado — vai para o log de consumo (R2-API-032). */
+  userId: string;
+  /** Mesmo requestId do fluxo normal (IA-051), para o consumo do diagnóstico não quebrar o contrato. */
+  requestId?: string | null;
 }): Promise<Response> {
   const startTime = Date.now();
   const { req, log, provider, model } = params;
 
+  /**
+   * R2-API-032 — ponto ÚNICO de registro do diagnóstico. A chamada ao provedor
+   * é paga mesmo em modo teste: sair sem gravar virava consumo invisível. É
+   * chamado em TODA saída (sucesso e falha) com finalidade própria
+   * (`provider_test`), identidade do chamador e destino fixo — nunca se
+   * confunde com geração operacional.
+   */
+  const registrarConsumo = async (resultado: {
+    ok: boolean;
+    code: TestCode | null;
+    inputTokens?: number;
+    outputTokens?: number;
+    usageUnknown?: boolean;
+  }): Promise<void> => {
+    await registrarConsumoDeDiagnostico({
+      userId: params.userId,
+      providerId: provider.id,
+      providerType: provider.provider_type,
+      providerName: provider.name,
+      model,
+      ok: resultado.ok,
+      code: resultado.code,
+      inputTokens: resultado.inputTokens,
+      outputTokens: resultado.outputTokens,
+      usageUnknown: resultado.usageUnknown,
+      durationMs: Date.now() - startTime,
+      requestId: params.requestId ?? null,
+    });
+  };
+
   /** Falha do diagnóstico: sempre com o provedor testado identificado no corpo. */
-  const fail = (code: TestCode, status: number, detail: string): Response => {
+  const fail = async (code: TestCode, status: number, detail: string): Promise<Response> => {
     log.warn('Provider test failed', { code, provider: provider.name, status, detail });
+    await registrarConsumo({ ok: false, code, usageUnknown: true });
     return jsonResponse({
       ok: false,
       code,
@@ -384,6 +434,7 @@ async function runProviderTest(params: {
     callFn = dispatchProvider(provider, model, params.messages, params.tools, params.toolChoice, params.stream, {
       responseFormat: params.responseFormat,
       timeoutMs: TEST_TIMEOUT_MS,
+      maxTokens: DIAGNOSTIC_MAX_TOKENS,
     });
   } catch (configErr) {
     if (configErr instanceof ProviderConfigError) {
@@ -413,6 +464,7 @@ async function runProviderTest(params: {
   if (params.stream) {
     // Streaming não traz JSON de uso: a validação é o evento ter chegado.
     if (body.trim() === '') return fail('CONTRACT', 400, 'Resposta vazia do provedor.');
+    await registrarConsumo({ ok: true, code: null, usageUnknown: true });
     log.done(200, { provider: provider.name, test: true, streaming: true });
     return jsonResponse({
       ok: true,
@@ -436,6 +488,7 @@ async function runProviderTest(params: {
   }
 
   const { inputTokens, outputTokens } = extractTokenUsage(data);
+  await registrarConsumo({ ok: true, code: null, inputTokens, outputTokens });
   log.done(200, { provider: provider.name, test: true, tokens: inputTokens + outputTokens });
   // O corpo do sucesso carrega o provedor TESTADO — nunca o de outro serviço.
   return jsonResponse({
@@ -480,21 +533,41 @@ async function isTestRequest(req: Request): Promise<boolean> {
   }
 }
 
-Deno.serve(async (req) => {
+/**
+ * R2-API-032 — o diagnóstico de provedor exige papel de administrador ou
+ * supervisor. Antes, bastava `test: true` no corpo para pular TODA a guarda e
+ * fazer chamada paga sem cota nem registro.
+ *
+ * Falha FECHADA: erro na RPC nunca libera — 503, e nenhum fetch ao provedor.
+ */
+async function exigirDiagnosticoAutorizado(req: Request, userId: string): Promise<Response | null> {
+  try {
+    const chamador = await createAuthedClient(req);
+    const { data, error } = await chamador.rpc("is_admin_or_supervisor", { _user_id: userId });
+    if (error) throw error;
+    if (data !== true) return errorResponse("O diagnostico de provedor e restrito a administradores e supervisores.", 403, req);
+    return null;
+  } catch (_err) {
+    return errorResponse("Nao foi possivel confirmar a permissao para o diagnostico.", 503, req);
+  }
+}
+
+export async function handleAiProxy(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
   const authCheck = await requireAuth(req);
   if (authCheck instanceof Response) return authCheck;
   const __uid = (authCheck as { userId: string }).userId;
-  // IA-040: em modo teste a cota do usuário NÃO pode influenciar o resultado — o teste é
-  // diagnóstico e não consome credito; se `enforceAiGuards` rodasse aqui, uma cota diária
-  // estourada devolveria 429 e o painel mostraria 'Falha no teste (CONTRACT)' em vez do
-  // diagnóstico real do provedor. Rate-limit por IP, auth e CORS seguem valendo, e para
-  // requisições comuns o guard roda exatamente como antes (mesma ordem/status).
-  if (!(await isTestRequest(req))) {
-    const __guard = await enforceAiGuards({ functionName: "ai-proxy", userId: __uid, req });
-    if (__guard) return __guard;
-  }
+  // IA-040/R2-API-032: o modo teste não roda `enforceAiGuards` (uma cota estourada
+  // devolveria 429 e o painel mostraria falha genérica em vez do diagnóstico real),
+  // mas isso NUNCA foi licença para chamada livre: o diagnóstico agora exige papel
+  // de admin/supervisor via RPC, com falha FECHADA. Para requisições comuns o
+  // guard roda exatamente como antes (mesma ordem/status).
+  const pedidoDeDiagnostico = await isTestRequest(req);
+  const guarda = pedidoDeDiagnostico
+    ? await exigirDiagnosticoAutorizado(req, __uid)
+    : await enforceAiGuards({ functionName: "ai-proxy", userId: __uid, req });
+  if (guarda) return guarda;
 
   const log = new Logger("ai-proxy");
   const userId = extractUserIdFromRequest(req);
@@ -577,13 +650,26 @@ Deno.serve(async (req) => {
     const providerType = provider.provider_type;
     const providerName = provider.name;
 
-    // IA-040: modo teste sai ANTES do fallback e sem gravar ai_usage_logs — diagnóstico
-    // não consome a cota diária do usuário (que mudaria o resultado do próprio teste).
+    // IA-040: modo teste sai ANTES do fallback, com destino fixo. R2-API-032:
+    // conteúdo/modelo/orçamento são do SERVIDOR (o cliente não escolhe o que se
+    // mede) e o consumo real é registrado com finalidade própria dentro de
+    // `runProviderTest` — diagnóstico continua fora da cota diária do guard,
+    // mas nunca mais sem registro.
     if (isTest) {
       return await runProviderTest({
-        req, log, provider, model: routing.model, messages: chatMessages,
-        tools, toolChoice: tool_choice, stream: streamRequested,
-        responseFormat: response_format, need,
+        req, log, provider, model: resolveModel(provider, null).model,
+        messages: DIAGNOSTIC_MESSAGES,
+        tools: undefined, toolChoice: undefined, stream: streamRequested,
+        responseFormat: undefined,
+        need: capabilityNeedFromBody({
+          messages: DIAGNOSTIC_MESSAGES,
+          tools: undefined,
+          tool_choice: undefined,
+          stream: streamRequested,
+          response_format: undefined,
+        }),
+        userId: __uid,
+        requestId,
       });
     }
 
@@ -835,4 +921,6 @@ Deno.serve(async (req) => {
     log.error("Proxy error", { error: error instanceof Error ? error.message : String(error) });
     return errorResponse(error instanceof Error ? error.message : 'Unknown error', 500, req);
   }
-});
+}
+
+if (import.meta.main) Deno.serve(handleAiProxy);

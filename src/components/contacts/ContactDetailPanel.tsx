@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,8 @@ import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCata
 // `catalog_send_events` filtrando por `contact_id`. Reusa o hook da aba
 // "Enviados" (CT-57); o filtro SÓ estreita, a RLS por agente segue valendo.
 import { useCatalogSendHistory } from '@/hooks/integrations/useCatalogSendHistory';
+import { ContactService } from '@/services/contact.service';
+import { Skeleton } from '@/components/ui/skeleton';
 interface ContactDetail {
   id: string;
   name: string;
@@ -49,8 +52,53 @@ interface ContactDetailPanelProps<T extends ContactDetail> {
   onClose: () => void;
   onOpenChat: (id: string) => void;
   onEdit: (contact: T) => void;
-  messageCount?: number;
-  lastMessageAt?: string | null;
+}
+
+/** Atividade de um contato: nº de mensagens + data da última (ou `null` = sem mensagens). */
+export interface ContactActivity {
+  messageCount: number;
+  lastMessageAt: string | null;
+}
+
+/**
+ * Atividade canônica de UM contato, consultada pelo próprio painel.
+ *
+ * #253 (R2-AUTH-028): o painel mostrava "0 Mensagens" e "Inativo" porque
+ * recebia `messageCount`/`lastMessageAt` por props que o único consumidor de
+ * produção (`ContactsView`) nunca fornecia — a ausência da prop era exibida
+ * como ausência de atividade. Aqui o painel busca a MESMA fonte do resto do
+ * app, sem depender de prop opcional:
+ *  - contagem: `ContactService.fetchStats` (a consulta da aba Resumo);
+ *  - última mensagem: RPC `get_last_message_dates` (a que enriquece a lista).
+ *
+ * `isLoading`/`isError` sobem para o painel distinguir carregando,
+ * indisponível e zero confirmado — nunca inventar zero.
+ */
+function useContactActivity(contactId: string | null | undefined) {
+  const { data: stats, isLoading: statsLoading, isError: statsError } = useQuery({
+    queryKey: ['contact-activity-stats', contactId],
+    enabled: !!contactId,
+    staleTime: 30_000,
+    queryFn: () => ContactService.fetchStats(contactId as string),
+  });
+
+  const { data: lastMessageAt, isLoading: lastLoading, isError: lastError } = useQuery({
+    queryKey: ['contact-activity-last-message', contactId],
+    enabled: !!contactId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await ContactService.getLastMessageDates([contactId as string]);
+      if (error) throw error;
+      return data?.[0]?.last_message_at ?? null;
+    },
+  });
+
+  const data: ContactActivity | undefined =
+    stats && lastMessageAt !== undefined
+      ? { messageCount: stats.totalMessages, lastMessageAt }
+      : undefined;
+
+  return { data, isLoading: statsLoading || lastLoading, isError: statsError || lastError };
 }
 
 const SEND_STATUS_LABEL: Record<string, string> = {
@@ -120,8 +168,11 @@ export function ContactCatalogSendHistory({ contactId }: { contactId: string }) 
 }
 
 export function ContactDetailPanel<T extends ContactDetail>({
-  contact, onClose, onOpenChat, onEdit, messageCount = 0, lastMessageAt,
+  contact, onClose, onOpenChat, onEdit,
 }: ContactDetailPanelProps<T>) {
+  const activity = useContactActivity(contact?.id);
+  const activityReady = !!activity.data && !activity.isError;
+
   useEffect(() => {
     if (!contact) return;
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -199,12 +250,32 @@ export function ContactDetailPanel<T extends ContactDetail>({
               </Badge>
             </div>
 
-            <ContactEngagementScore
-              messageCount={messageCount}
-              lastMessageAt={lastMessageAt}
-              createdAt={contact.created_at}
-              size="md"
-            />
+            {/* Engajamento só é calculado quando a atividade é conhecida: sem
+                os insumos (nº de mensagens + última), o painel não afirma
+                "Inativo" — mostra carregando ou indisponível. (#253) */}
+            {activity.isLoading ? (
+              <div
+                data-testid="engagement-loading"
+                role="status"
+                className="h-8 w-28 rounded-full bg-muted/40 animate-pulse"
+                aria-label="Carregando atividade do contato"
+              />
+            ) : activityReady ? (
+              <ContactEngagementScore
+                messageCount={activity.data!.messageCount}
+                lastMessageAt={activity.data!.lastMessageAt}
+                createdAt={contact.created_at}
+                size="md"
+              />
+            ) : (
+              <span
+                data-testid="engagement-unavailable"
+                title="Não foi possível carregar a atividade deste contato"
+                className="text-xs text-muted-foreground"
+              >
+                Atividade indisponível
+              </span>
+            )}
           </div>
 
           {/* Quick Actions — CT-51: é AQUI o ponto de extensão das ações do
@@ -303,23 +374,37 @@ export function ContactDetailPanel<T extends ContactDetail>({
               </div>
             )}
 
-            {/* Activity Summary */}
-            <div>
+            {/* Activity Summary — reflete carregando/indisponível/valor real
+                em vez de afirmar "0"/"—" enquanto o dado não é conhecido. (#253) */}
+            <div
+              data-testid="activity-summary"
+              data-state={activity.isLoading ? 'loading' : activityReady ? 'ready' : 'unavailable'}
+            >
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
                 <Clock className="w-3 h-3" />
                 Atividade
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
-                  <p className="text-lg font-bold text-foreground">{messageCount}</p>
+                  {activity.isLoading ? (
+                    <Skeleton className="h-6 w-12 mx-auto" data-testid="activity-count-loading" />
+                  ) : (
+                    <p className="text-lg font-bold text-foreground" data-testid="activity-message-count">
+                      {activityReady ? activity.data!.messageCount : '—'}
+                    </p>
+                  )}
                   <p className="text-caption">Mensagens</p>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
-                  <p className="text-sm font-medium text-foreground">
-                    {lastMessageAt
-                      ? format(new Date(lastMessageAt), 'dd/MM', { locale: ptBR })
-                      : '—'}
-                  </p>
+                  {activity.isLoading ? (
+                    <Skeleton className="h-4 w-10 mx-auto" data-testid="activity-last-loading" />
+                  ) : (
+                    <p className="text-sm font-medium text-foreground" data-testid="activity-last-message">
+                      {activityReady && activity.data!.lastMessageAt
+                        ? format(new Date(activity.data!.lastMessageAt), 'dd/MM', { locale: ptBR })
+                        : '—'}
+                    </p>
+                  )}
                   <p className="text-caption">Última msg</p>
                 </div>
               </div>

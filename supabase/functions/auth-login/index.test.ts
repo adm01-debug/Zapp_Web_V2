@@ -55,7 +55,7 @@ function fakeAdmin(policy: { data: unknown; error: unknown }, extra: Record<stri
 }
 
 /** Fake do client anônimo: registra cada tentativa de signIn e devolve o scriptado. */
-function fakeAnon(result: { data: { session: typeof SESSION | null; user: { id: string } | null }; error: { status?: number } | null } = {
+function fakeAnon(result: { data: { session: typeof SESSION | null; user: { id: string } | null }; error: { status?: number; name?: string } | null } = {
   data: { session: SESSION, user: { id: "u1" } },
   error: null,
 }) {
@@ -66,6 +66,20 @@ function fakeAnon(result: { data: { session: typeof SESSION | null; user: { id: 
       signInWithPassword(creds: { email: string; password: string }) {
         calls.push(creds);
         return Promise.resolve(result);
+      },
+    },
+  };
+}
+
+/** Fake do client anônimo cuja chamada REJEITA (falha de transporte que lança). */
+function fakeAnonReject(err: Error) {
+  const calls: Array<{ email: string; password: string }> = [];
+  return {
+    calls,
+    auth: {
+      signInWithPassword(creds: { email: string; password: string }) {
+        calls.push(creds);
+        return Promise.reject(err);
       },
     },
   };
@@ -255,4 +269,95 @@ Deno.test("falha no signIn registra tentativa e devolve 401", async () => {
   assertEquals((await res.json()).error, "Invalid login credentials");
   assertEquals(anon.calls.length, 1);
   assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), true);
+});
+
+// ── R2-AUTH-021: indisponibilidade do Auth NÃO é tentativa de senha incorreta ──
+// Só a recusa de credenciais (4xx != 429) conta tentativa. 5xx, 429, falha de
+// transporte (resolvida ou rejeitada) e resposta sem sessão nem erro são
+// indisponibilidade: 503 genérico e login_attempts intocado.
+
+function allowedAdmin() {
+  return fakeAdmin(
+    { data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null },
+    { is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null } },
+  );
+}
+
+Deno.test("GoTrue indisponível (503) responde 503 e NÃO registra tentativa", async () => {
+  const admin = allowedAdmin();
+  const anon = fakeAnon({ data: { session: null, user: null }, error: { status: 503 } });
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 503);
+  assertEquals((await res.json()).error, "Internal server error");
+  assertEquals(anon.calls.length, 1);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+});
+
+Deno.test("rate limit do GoTrue (429) responde 503 e NÃO registra tentativa", async () => {
+  const admin = allowedAdmin();
+  const anon = fakeAnon({ data: { session: null, user: null }, error: { status: 429 } });
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 503);
+  assertEquals(anon.calls.length, 1);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+});
+
+Deno.test("AuthRetryableFetchError responde 503 e NÃO registra tentativa", async () => {
+  const admin = allowedAdmin();
+  const anon = fakeAnon({
+    data: { session: null, user: null },
+    error: { name: "AuthRetryableFetchError" },
+  });
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 503);
+  assertEquals(anon.calls.length, 1);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+});
+
+Deno.test("falha de transporte que REJEITA a promise responde 503 e NÃO registra tentativa", async () => {
+  const admin = allowedAdmin();
+  const anon = fakeAnonReject(new Error("fetch failed"));
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 503);
+  assertEquals(anon.calls.length, 1);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+});
+
+Deno.test("resposta sem sessão e sem erro responde 503 e NÃO registra tentativa", async () => {
+  const admin = allowedAdmin();
+  const anon = fakeAnon({ data: { session: null, user: null }, error: null });
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 503);
+  assertEquals(anon.calls.length, 1);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
 });

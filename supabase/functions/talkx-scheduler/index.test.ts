@@ -27,6 +27,8 @@ interface ClientOpts {
   due?: CampaignRow[];
   paused?: CampaignRow[];
   connections?: Array<{ id: string; status: string | null }>;
+  /** #121A: linha(s) de `talkx_settings` — `business_hours` chega como JSONB (objeto). */
+  settings?: Array<{ key: string; value: unknown }>;
 }
 
 interface ClientCtx {
@@ -58,6 +60,8 @@ function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
         return { data: [], error: null };
       }
       if (table === "whatsapp_connections") return { data: opts.connections ?? [], error: null };
+      // #121A: o scheduler lê talkx_settings.business_hours (JSONB) antes de retomar
+      if (table === "talkx_settings") return { data: opts.settings ?? [], error: null };
       if (table === "talkx_campaign_events") return { data: null, error: null };
       return { data: null, error: null };
     };
@@ -317,4 +321,52 @@ Deno.test("X025: retomada automática NÃO grava evento próprio (a transição 
   const body = await res.json();
   assert(body.resumed === 1, `esperado resumed:1, recebido ${body.resumed}`);
   assert(ctx.events.length === 0, `o scheduler não pode gravar evento (gravou ${ctx.events.length})`);
+});
+
+// ── #121A: o scheduler lê talkx_settings.business_hours antes de retomar ─────
+
+Deno.test("[#121A] retomada respeita o business_hours salvo (não usa o default às cegas)", async () => {
+  // NOW = sexta 2026-10-02 12:00 UTC; a campanha só tem horário comercial.
+  const paused = [
+    pausedRow("c-bh", {
+      pause_reason: "business_hours",
+      business_hours_only: true,
+      send_window_start: null,
+      send_window_end: null,
+    }),
+  ];
+
+  // 15:00–17:00 em UTC → 12:00 está FORA → não retoma. Antes o scheduler ignorava
+  // a configuração, caía no default 08:00–18:00 e retomava a campanha.
+  const fora = makeClient({
+    paused,
+    settings: [{ key: "business_hours", value: { start: "15:00", end: "17:00", tz: "UTC", days: [1, 2, 3, 4, 5] } }],
+  });
+  const fetchFora = makeFetch();
+  const resFora = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client: fora.client, fetch: fetchFora.impl, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  assert(resFora.status === 200, `esperado 200, recebido ${resFora.status}`);
+  const bodyFora = await resFora.json();
+  assert(
+    fetchFora.posts.length === 0,
+    `fora do horário salvo não pode retomar (houve ${fetchFora.posts.length} POST)`,
+  );
+  // Sem nenhuma retomada o handler responde o resumo "nada devido" (sem `resumed`);
+  // o que importa aqui é não ter havido POST: a campanha NÃO foi retomada.
+  assert(bodyFora.success === true, `esperado success:true, recebido ${JSON.stringify(bodyFora)}`);
+
+  // 08:00–18:00 em UTC → 12:00 está DENTRO → retoma (prova que leu a configuração)
+  const dentro = makeClient({
+    paused,
+    settings: [{ key: "business_hours", value: { start: "08:00", end: "18:00", tz: "UTC", days: [1, 2, 3, 4, 5] } }],
+  });
+  const fetchDentro = makeFetch();
+  const resDentro = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client: dentro.client, fetch: fetchDentro.impl, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  assert(resDentro.status === 200, `esperado 200, recebido ${resDentro.status}`);
+  assert(fetchDentro.posts.length === 1, `dentro do horário salvo deve retomar (${fetchDentro.posts.length} POST)`);
 });

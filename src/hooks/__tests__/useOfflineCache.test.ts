@@ -123,3 +123,62 @@ describe('useOfflineCache', () => {
     expect(result.current.isOffline).toBe(false);
   });
 });
+
+/**
+ * R2-INB-015 (#311) — cache offline válido era abandonado assim que a carga
+ * falhava. O fallback só existia enquanto `loading` era true; sem conexão a
+ * busca falha e `loading=false` zerava a lista, descartando um cache ainda
+ * válido ("aparece e desaparece") e deixando a conversa selecionada vazia.
+ * Os testes abaixo fixam o contrato: cache offline sustenta a leitura inclusive
+ * DEPOIS que a carga termina, e os dados ao vivo o substituem (recuperação
+ * explícita).
+ */
+describe('useOfflineCache — o cache offline sobrevive à falha de carga (R2-INB-015)', () => {
+  function seedValidCache(id: string) {
+    localStorage.setItem('offline_conversations', JSON.stringify({ data: [makeConversation(id)], timestamp: Date.now() }));
+  }
+
+  it('usa o cache offline depois que a carga termina (loading=false, sem dados ao vivo)', () => {
+    seedValidCache('c1');
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+
+    const { result } = renderHook(() => useOfflineCache([], false));
+
+    expect(result.current.isOffline).toBe(true);
+    expect(result.current.conversations).toHaveLength(1);
+    expect(result.current.conversations[0].contact.id).toBe('c1');
+    expect(result.current.usingCache).toBe(true);
+  });
+
+  it('não abandona o cache quando a carga falhou e a lista ao vivo veio vazia', () => {
+    seedValidCache('c9');
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+
+    const { result } = renderHook(() => useOfflineCache([], false));
+
+    // O ponteiro tem de continuar apontando para o cache: antes o array caía para [].
+    expect(result.current.conversations).not.toBeNull();
+    expect(result.current.conversations[0]).toMatchObject({ contact: { id: 'c9' } });
+  });
+
+  it('dados ao vivo reassumem a tela offline (recuperação explícita, sem cache)', () => {
+    seedValidCache('cache-1');
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const aoVivo = [makeConversation('vivo-1')];
+
+    const { result } = renderHook(() => useOfflineCache(aoVivo, false));
+
+    expect(result.current.conversations).toBe(aoVivo);
+    expect(result.current.usingCache).toBe(false);
+  });
+
+  it('nunca usa o cache quando está online, mesmo com a lista vazia', () => {
+    seedValidCache('c1');
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+
+    const { result } = renderHook(() => useOfflineCache([], false));
+
+    expect(result.current.conversations).toEqual([]);
+    expect(result.current.usingCache).toBe(false);
+  });
+});

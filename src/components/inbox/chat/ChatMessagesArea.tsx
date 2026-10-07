@@ -55,6 +55,13 @@ interface ChatMessagesAreaProps {
 }
 
 export interface ChatMessagesAreaRef {
+  /**
+   * Rola ate o fim. P2 #320 (R2-INB-025): so quando o usuario esta acompanhando
+   * a conversa — quem rolou para ler o historico nao e arrastado de volta por
+   * mensagem nova nem pelo indicador de digitacao. A posicao e a do ultimo
+   * evento de rolagem, entao "chegou mensagem e eu estava no fim" continua
+   * rolando (a leitura acontece antes de a mensagem entrar no DOM).
+   */
   scrollToBottom: () => void;
   registerMessageRef: (messageId: string, el: HTMLDivElement | null) => void;
   scrollToMessage: (messageId: string) => void;
@@ -63,6 +70,15 @@ export interface ChatMessagesAreaRef {
 /** Bloco do topo da lista. As duas variantes (carregar / inicio) tem a MESMA
  *  altura minima para que a troca de uma pela outra nao empurre as mensagens. */
 const OLDER_ROW_CLASS = 'flex min-h-[2.75rem] items-center justify-center py-1';
+
+/** P2 #320 (R2-INB-025): distancia do fim (px) que ainda conta como "seguindo a
+ *  conversa". Dentro dela a lista acompanha o fim; acima dela o usuario esta
+ *  lendo e nada pode mover o scroll. Mesmo limite do painel de equipe. */
+const BOTTOM_FOLLOW_THRESHOLD_PX = 100;
+
+function isNearBottom(el: HTMLElement): boolean {
+  return el.scrollHeight - el.scrollTop - el.clientHeight <= BOTTOM_FOLLOW_THRESHOLD_PX;
+}
 
 export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ 
   messages, isContactTyping, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
@@ -75,6 +91,18 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   // Bloco de itens virtualizados: e a origem das coordenadas de `virtualizer.*`.
   const listRef = useRef<HTMLDivElement>(null);
+
+  // P2 #320 (R2-INB-025): posicao em que o usuario parou, atualizada no evento de
+  // rolagem. A leitura e feita no evento (e nao no efeito que acompanha mensagem
+  // nova) porque quando o efeito roda a mensagem nova ja entrou no DOM e ja
+  // empurrou o fim para longe — o usuario que estava no fim apareceria como
+  // "lendo o historico" e a lista deixaria de acompanhar a conversa.
+  const isNearBottomRef = useRef(true);
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    isNearBottomRef.current = isNearBottom(el);
+  }, []);
 
   const handleMessageDeleted = useCallback(async (messageId: string) => {
     try {
@@ -202,6 +230,10 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   useImperativeHandle(ref, () => ({
     scrollToBottom: () => {
       if (!scrollContainerRef.current || messages.length === 0) return;
+      // P2 #320 (R2-INB-025): mensagem nova e indicador de digitacao so levam a
+      // lista ao fim se o usuario ja estava nele. Quem rolou para ler o
+      // historico fica onde esta.
+      if (!isNearBottomRef.current) return;
       // behavior:'smooth' nao existe na API do @tanstack/react-virtual v3.x
       virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
     },
@@ -248,7 +280,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   const showHistoryStart = hasOlderMessages === false && messages.length > 0;
 
   return (
-    <div ref={scrollContainerRef} role="log" aria-label="Mensagens da conversa" aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-transparent relative">
+    <div ref={scrollContainerRef} onScroll={handleScroll} role="log" aria-label="Mensagens da conversa" aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-transparent relative">
       {showLoadOlder && (
         <div className={cn(OLDER_ROW_CLASS, 'sticky top-0 z-10')} data-testid="older-messages-control">
           <button

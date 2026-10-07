@@ -12,7 +12,21 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn().mockImplementation((table: string) => {
       if (table === 'profiles') return { select: () => ({ order: () => Promise.resolve({ data: profiles, error: null }) }) };
-      if (table === 'contacts') return { select: () => ({ not: () => Promise.resolve({ data: [], error: null }) }) };
+      if (table === 'contacts') {
+        // Consulta paginada (fetchAllRows): o mock precisa ser encadeável até resolver.
+        const semConversasAbertas: Array<{ assigned_to: string | null }> = [];
+        const q: Record<string, unknown> = {
+          select: () => q,
+          not: () => q,
+          eq: () => q,
+          is: () => q,
+          order: () => q,
+          range: () => q,
+          then: (resolve: (v: unknown) => unknown) =>
+            Promise.resolve(resolve({ data: semConversasAbertas, error: null })),
+        };
+        return q;
+      }
       return { select: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }) };
     }),
   },

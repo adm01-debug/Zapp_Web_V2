@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { loadRolesWithProfiles } from './loadRolesWithProfiles';
 
 type RoleType = 'admin' | 'supervisor' | 'agent' | 'special_agent';
 
@@ -15,9 +16,26 @@ export interface UserWithRole {
   };
 }
 
+/**
+ * O carregador lança o erro do PostgREST, que NÃO é instância de `Error` (é um
+ * objeto com `message`). Sem ler esse campo, a mensagem exibida ficaria genérica.
+ */
+function mensagemDoErro(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const msg = (error as { message?: unknown }).message;
+    if (typeof msg === 'string' && msg) return msg;
+  }
+  return 'Não foi possível carregar as roles.';
+}
+
 export function useRolesPageState() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+  // R2-AUTH-035: a falha do carregador não pode virar lista vazia — isso comunica
+  // "nenhum usuário" quando na verdade a consulta quebrou. O erro fica explícito
+  // e a página troca os cartões de roles por um estado de falha com nova tentativa.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState('');
@@ -28,20 +46,20 @@ export function useRolesPageState() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select(`id, user_id, role, profiles!user_roles_user_id_fkey (name, email, avatar_url)`)
-      .order('role');
-
-    if (!error && data) {
-      setUsers(data.map(u => ({
-        id: u.id,
-        user_id: u.user_id,
-        role: u.role as RoleType,
-        profile: Array.isArray(u.profiles) ? u.profiles[0] : u.profiles
+    try {
+      const roles = await loadRolesWithProfiles();
+      setUsers(roles.map((role) => ({
+        id: role.id,
+        user_id: role.user_id,
+        role: role.role,
+        profile: role.profile,
       })));
+      setLoadError(null);
+    } catch (error) {
+      setLoadError(mensagemDoErro(error));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchAvailableUsers = async () => {
@@ -87,7 +105,8 @@ export function useRolesPageState() {
   }), [filteredUsers]);
 
   return {
-    users, loading, search, setSearch, showAddDialog, setShowAddDialog,
+    users, loading, loadError, retryLoad: fetchUsers,
+    search, setSearch, showAddDialog, setShowAddDialog,
     selectedUser, setSelectedUser, selectedRole, setSelectedRole,
     availableUsers, userToRemove, setUserToRemove, updating,
     handleAddRole, handleRemoveRole, groupedUsers,

@@ -60,16 +60,23 @@ export async function pickVariant(
     .eq('template_id', templateId);
   if (varErr) throw new Error(`variant_lookup_failed: ${varErr.message}`);
   if (!variants || variants.length === 0) return null;
-  const total = variants.reduce((s: number, v: { weight: number }) => s + v.weight, 0);
-  if (!(total > 0)) return variants[variants.length - 1];
+  // #483: a consulta não tem ORDER BY, então a ORDEM devolvida pelo Postgres é
+  // indefinida (muda com o plano e com o reposicionamento físico da tupla após
+  // um UPDATE). O acumulado de pesos abaixo é sensível a essa ordem: sem
+  // normalizar, o MESMO destinatário cairia em variantes diferentes conforme a
+  // ordem devolvida. Ordenamos por `id` (único) antes de acumular, para que a
+  // decisão A/B dependa só do hash do destinatário.
+  const ordered = [...variants].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const total = ordered.reduce((s: number, v: { weight: number }) => s + v.weight, 0);
+  if (!(total > 0)) return ordered[ordered.length - 1];
   // Hash do id (não random): determinístico e sem viés de ordem das variantes.
   const roll = stableVariantHash(recipientId) % total;
   let acc = 0;
-  for (const v of variants) {
+  for (const v of ordered) {
     acc += v.weight;
     if (roll < acc) return v;
   }
-  return variants[variants.length - 1];
+  return ordered[ordered.length - 1];
 }
 
 export interface ProcessRecipientContact {

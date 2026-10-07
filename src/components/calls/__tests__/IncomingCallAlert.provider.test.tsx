@@ -58,8 +58,14 @@ vi.mock('@/hooks/communication/useCalls', () => ({
 }));
 
 // A MÁQUINA da sessão é quem decide o desfecho do VoIP (`reject()` → `declined`).
+// R2-CALL-006: o alerta também lê o estado terminal dela, então o dublê publica a
+// sessão que está tocando na tela — `ringing_in` na mesma linha do chamado (k1).
 vi.mock('@/providers/CallSessionProvider', () => ({
-  useCallSession: () => ({ accept: mockAccept, reject: mockReject }),
+  useCallSession: () => ({
+    accept: mockAccept,
+    reject: mockReject,
+    session: { status: 'ringing_in', sessionId: 'k1', answeredAt: null },
+  }),
 }));
 
 vi.mock('@/hooks/calls/useCallChannels', () => ({

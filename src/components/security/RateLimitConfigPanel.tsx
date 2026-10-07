@@ -1,3 +1,5 @@
+// Painel admin de rate limiting. Invariante do salvar (R2-AUTH-023): o conjunto novo é
+// gravado ANTES de o antigo ser removido — um erro no INSERT não pode esvaziar a tabela.
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Save, Plus, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
@@ -6,8 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -18,20 +18,23 @@ interface RateLimitRule {
   max_requests: number;
   window_seconds: number;
   is_active: boolean;
-  action: 'block' | 'throttle' | 'alert';
 }
 
 const DEFAULT_RULES: Omit<RateLimitRule, 'id'>[] = [
-  { name: 'Login', endpoint: '/auth/login', max_requests: 5, window_seconds: 300, is_active: true, action: 'block' },
-  { name: 'API Geral', endpoint: '/api/*', max_requests: 100, window_seconds: 60, is_active: true, action: 'throttle' },
-  { name: 'Mensagens', endpoint: '/messages/send', max_requests: 30, window_seconds: 60, is_active: true, action: 'throttle' },
-  { name: 'Webhooks', endpoint: '/webhooks/*', max_requests: 500, window_seconds: 60, is_active: true, action: 'alert' },
-  { name: 'Exportação', endpoint: '/export/*', max_requests: 5, window_seconds: 3600, is_active: true, action: 'block' },
+  { name: 'Login', endpoint: '/auth/login', max_requests: 5, window_seconds: 300, is_active: true },
+  { name: 'API Geral', endpoint: '/api/*', max_requests: 100, window_seconds: 60, is_active: true },
+  { name: 'Mensagens', endpoint: '/messages/send', max_requests: 30, window_seconds: 60, is_active: true },
+  { name: 'Webhooks', endpoint: '/webhooks/*', max_requests: 500, window_seconds: 60, is_active: true },
+  { name: 'Exportação', endpoint: '/export/*', max_requests: 5, window_seconds: 3600, is_active: true },
 ];
 
 export function RateLimitConfigPanel() {
   const [rules, setRules] = useState<RateLimitRule[]>([]);
+  // Ids das linhas que estão gravadas hoje no banco. É o único conjunto que o
+  // salvar pode remover: sem isso, uma leitura falha viraria "remover tudo".
+  const [persistedIds, setPersistedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const fetchRules = useCallback(async () => {
@@ -41,7 +44,13 @@ export function RateLimitConfigPanel() {
       .select('*')
       .order('created_at', { ascending: true });
 
-    if (!error && data && data.length > 0) {
+    if (error) {
+      // R2-AUTH-023: sem saber o que já está gravado, salvar substituiria (ou
+      // duplicaria) a configuração do admin — o painel bloqueia o salvamento.
+      setRules([]);
+      setPersistedIds([]);
+      setLoadError(true);
+    } else if (data && data.length > 0) {
       setRules(data.map(r => ({
         id: r.id,
         name: r.name || r.endpoint_pattern,
@@ -49,11 +58,14 @@ export function RateLimitConfigPanel() {
         max_requests: r.max_requests,
         window_seconds: r.window_seconds,
         is_active: r.is_active ?? true,
-        action: 'block' as RateLimitRule['action'],
       })));
+      setPersistedIds(data.map(r => r.id));
+      setLoadError(false);
     } else {
       // Initialize with defaults
       setRules(DEFAULT_RULES.map((r, i) => ({ ...r, id: `temp-${i}` })));
+      setPersistedIds([]);
+      setLoadError(false);
     }
     setLoading(false);
   }, []);
@@ -75,7 +87,6 @@ export function RateLimitConfigPanel() {
       max_requests: 60,
       window_seconds: 60,
       is_active: true,
-      action: 'throttle',
     }]);
   };
 
@@ -84,38 +95,75 @@ export function RateLimitConfigPanel() {
   };
 
   const saveRules = async () => {
+    const invalid = rules.find(r =>
+      r.name.trim() === '' ||
+      r.endpoint.trim() === '' ||
+      r.max_requests < 1 ||
+      r.window_seconds < 1
+    );
+    if (invalid) {
+      toast.error('Preencha nome, endpoint, máximo de requisições e janela antes de salvar');
+      return;
+    }
+
     setSaving(true);
     try {
-      // Delete existing rules
-      await supabase.from('rate_limit_configs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-
-      // Insert updated rules
       const toInsert = rules.map(r => ({
-        name: r.name,
-        endpoint_pattern: r.endpoint,
+        name: r.name.trim(),
+        endpoint_pattern: r.endpoint.trim(),
         max_requests: r.max_requests,
         window_seconds: r.window_seconds,
         is_active: r.is_active,
       }));
 
-      const { error } = await supabase.from('rate_limit_configs').insert(toInsert);
-      if (error) throw error;
+      // R2-AUTH-023: grava o conjunto novo ANTES de remover o antigo. Antes era
+      // DELETE global → INSERT: um erro no INSERT (RLS, rede, validação) deixava
+      // a tabela sem nenhuma regra e o admin perdia a configuração inteira.
+      const { data: inserted, error: insertError } = await supabase
+        .from('rate_limit_configs')
+        .insert(toInsert)
+        .select('id');
+
+      if (insertError) throw insertError;
+
+      // Só agora remove o conjunto anterior — e só as linhas que foram lidas do
+      // banco (as `temp-*` são locais e não existem na tabela).
+      if (persistedIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('rate_limit_configs')
+          .delete()
+          .in('id', persistedIds);
+
+        if (deleteError) {
+          // Desfaz o conjunto recém-gravado: melhor voltar ao anterior do que
+          // deixar as duas versões acumuladas na tabela.
+          const insertedIds = ((inserted ?? []) as Array<{ id: string }>)
+            .map(row => row.id)
+            .filter(Boolean);
+          if (insertedIds.length > 0) {
+            const { error: rollbackError } = await supabase
+              .from('rate_limit_configs')
+              .delete()
+              .in('id', insertedIds);
+            if (rollbackError) {
+              // O desfazer também falhou: os dois conjuntos seguem gravados e é
+              // isso que o refetch do catch põe na tela. O aviso diz o que houve.
+              toast.error('Erro ao salvar regras: o conjunto anterior e o novo ficaram gravados, revise a lista');
+            }
+          }
+          throw deleteError;
+        }
+      }
 
       toast.success('Regras de rate limit salvas!');
       await fetchRules();
-    } catch (err) {
+    } catch {
       toast.error('Erro ao salvar regras');
+      // A tela tem de mostrar o que ficou gravado de fato (inclusive se a
+      // limpeza do conjunto recém-gravado também falhou).
+      await fetchRules();
     } finally {
       setSaving(false);
-    }
-  };
-
-  const getActionBadge = (action: string) => {
-    switch (action) {
-      case 'block': return <Badge variant="destructive">Bloquear</Badge>;
-      case 'throttle': return <Badge className="bg-warning/10 text-warning border-warning/30">Limitar</Badge>;
-      case 'alert': return <Badge variant="outline">Alertar</Badge>;
-      default: return null;
     }
   };
 
@@ -124,6 +172,33 @@ export function RateLimitConfigPanel() {
       <Card>
         <CardContent className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              Rate Limiting Granular
+            </CardTitle>
+            <CardDescription>
+              Configure limites de requisições por endpoint
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center gap-3 py-12">
+          <AlertTriangle className="w-6 h-6 text-destructive" />
+          <p className="text-sm text-muted-foreground text-center">
+            Não foi possível carregar as regras. Salvar neste estado apagaria a configuração atual.
+          </p>
+          <Button variant="outline" size="sm" onClick={fetchRules}>
+            Tentar novamente
+          </Button>
         </CardContent>
       </Card>
     );
@@ -180,14 +255,13 @@ export function RateLimitConfigPanel() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {getActionBadge(rule.action)}
                   <Button variant="ghost" size="icon" onClick={() => removeRule(rule.id)}>
                     <Trash2 className="w-4 h-4 text-destructive" />
                   </Button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div>
                   <Label className="text-xs text-muted-foreground">Endpoint</Label>
                   <Input
@@ -213,22 +287,6 @@ export function RateLimitConfigPanel() {
                     onChange={(e) => updateRule(rule.id, { window_seconds: Number.parseInt(e.target.value) || 60 })}
                     className="h-8 text-xs"
                   />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Ação</Label>
-                  <Select
-                    value={rule.action}
-                    onValueChange={(v) => updateRule(rule.id, { action: v as RateLimitRule['action'] })}
-                  >
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="block">Bloquear</SelectItem>
-                      <SelectItem value="throttle">Limitar</SelectItem>
-                      <SelectItem value="alert">Alertar</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 

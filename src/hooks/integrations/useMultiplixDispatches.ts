@@ -251,15 +251,42 @@ export interface CreateMultiplixDispatchResult {
   created: boolean;
 }
 
+/**
+ * Identidade do pedido de criacao: os campos que definem QUAL disparo este
+ * pedido cria. `startNow`/`confirmOverLimit` ficam de fora de proposito — eles
+ * dizem o que fazer DEPOIS de criar, nao qual disparo e.
+ */
+function dispatchRequestIdentity(input: CreateMultiplixDispatchInput): string {
+  return JSON.stringify([
+    input.name,
+    input.messageTemplate,
+    input.scheduledAt ?? null,
+    input.companyIds,
+    input.contactIds ?? [],
+  ]);
+}
+
 export function useCreateMultiplixDispatch() {
-  // A chave de idempotencia tem de sobreviver ao duplo clique: a RPC e
-  // idempotente por client_request_id, nao por conteudo — duas chaves geram dois
-  // disparos. Fica viva enquanto a tentativa esta em voo e e liberada no fim.
-  const clientRequestIdRef = useRef<string | null>(null);
+  // A chave de idempotencia tem de sobreviver ao duplo clique E a uma falha de
+  // resposta: a RPC `multiplix_create_draft` e idempotente por
+  // client_request_id, nao por conteudo — duas chaves geram dois disparos.
+  //
+  // Antes, o `onSettled` zerava a chave tambem no ERRO. Se o servidor criava o
+  // disparo e a resposta se perdia (rede/timeout/5xx depois do commit), o
+  // reenvio do mesmo pedido gerava chave nova e criava um SEGUNDO disparo. Agora
+  // a chave so e liberada no SUCESSO; enquanto a tentativa nao confirmar, o
+  // reenvio do MESMO pedido reusa a chave e a RPC devolve o disparo ja criado
+  // (created=false). Se o pedido muda (nome/mensagem/publico/agendamento), e
+  // outro disparo e a chave e trocada — senao a RPC devolveria o antigo,
+  // silenciosamente, como se o novo tivesse sido criado.
+  const attemptRef = useRef<{ key: string; identity: string } | null>(null);
   return useMutation({
     mutationFn: async (input: CreateMultiplixDispatchInput): Promise<CreateMultiplixDispatchResult> => {
-      if (!clientRequestIdRef.current) clientRequestIdRef.current = crypto.randomUUID();
-      const clientRequestId = clientRequestIdRef.current;
+      const identity = dispatchRequestIdentity(input);
+      if (!attemptRef.current || attemptRef.current.identity !== identity) {
+        attemptRef.current = { key: crypto.randomUUID(), identity };
+      }
+      const clientRequestId = attemptRef.current.key;
       // F08: a criacao vive no servidor. A edge multiplix-audience re-resolve o
       // publico no Singu com o escopo do JWT e chama a RPC transacional
       // multiplix_create_draft (dispatch + destinatarios numa transacao,
@@ -298,10 +325,12 @@ export function useCreateMultiplixDispatch() {
 
       return { id: dispatchId, recipientCount: draft.recipient_count, created: draft.created };
     },
-    // Libera a chave so DEPOIS que a criacao terminou: duas chamadas simultaneas
-    // (duplo clique) compartilham a chave e viram UM disparo; um novo disparo
-    // depois disso recebe chave nova.
-    onSettled: () => { clientRequestIdRef.current = null; },
+    // Libera a chave so no SUCESSO: duas chamadas simultaneas (duplo clique)
+    // compartilham a chave e viram UM disparo, e um reenvio depois de uma falha
+    // de resposta reaproveita a MESMA chave (a RPC devolve o disparo ja criado
+    // em vez de criar outro). Um disparo novo, ou um pedido com outro conteudo,
+    // recebe chave nova.
+    onSuccess: () => { attemptRef.current = null; },
   });
 }
 

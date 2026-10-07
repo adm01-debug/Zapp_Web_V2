@@ -101,3 +101,114 @@ Deno.test("alerta: segredo correto + blocked → grava security_alerts, blocked_
   assert(mock.fromCalls.includes("blocked_ips"), "blocked_ips deveria ser gravado (blocked=true)");
   assert(mock.fromCalls.includes("notifications"), "notifications deveria ser gravado (admin presente)");
 });
+
+// ── R2-API-057 — alerta/notificação não podem afirmar bloqueio que não persistiu ──
+//
+// Defeito: com blocked=true, a gravação em `blocked_ips` falha, mas o
+// security_alert e a notification são enviados afirmando que o IP foi
+// bloqueado (o IP segue liberado). Mock que CAPTURA o payload de cada escrita
+// para conferir o texto realmente gravado pelo handler real.
+function captureMock(opts: { admins?: unknown[]; blockError?: { message: string } | null } = {}) {
+  const inserts: Record<string, unknown[]> = {};
+  const fromCalls: string[] = [];
+  const record = (table: string, payload: unknown) => {
+    (inserts[table] ??= []).push(payload);
+  };
+  const builder = (table: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const b: any = {
+      insert: (payload: unknown) => {
+        record(table, payload);
+        return Promise.resolve({ data: null, error: null });
+      },
+      upsert: (payload: unknown) => {
+        record(table, payload);
+        const error = table === "blocked_ips" ? (opts.blockError ?? null) : null;
+        return Promise.resolve({ data: null, error });
+      },
+      select: () => b,
+      eq: () => b,
+      then: (resolve: (v: unknown) => void) => resolve({ data: opts.admins ?? [], error: null }),
+    };
+    return b;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase: any = {
+    from: (table: string) => {
+      fromCalls.push(table);
+      return builder(table);
+    },
+  };
+  return { supabase, fromCalls, inserts };
+}
+
+function blockedPost() {
+  return makePost({
+    headers: { "X-Internal-Secret": "segredo" },
+    body: { ip_address: "203.0.113.7", endpoint: "/api/teste", request_count: 99, blocked: true },
+  });
+}
+
+Deno.test("R2-API-057: blocked=true + falha em blocked_ips → alerta e notificação NÃO afirmam bloqueio", async () => {
+  const mock = captureMock({
+    admins: [{ user_id: crypto.randomUUID() }],
+    blockError: { message: "permission denied for table blocked_ips" },
+  });
+  const res = await handleRateLimitAlert(blockedPost(), {
+    supabase: mock.supabase,
+    internalSecret: "segredo",
+  });
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+
+  // O alerta de segurança continua registrado — mas sem afirmar bloqueio.
+  const alerts = mock.inserts["security_alerts"] ?? [];
+  assert(alerts.length === 1, `security_alerts deveria receber 1 registro: ${alerts.length}`);
+  const alert = alerts[0] as Record<string, unknown>;
+  assert(
+    alert.alert_type === "rate_limit_warning",
+    `alert_type não pode ser rate_limit_blocked com a gravação falha: ${JSON.stringify(alert.alert_type)}`,
+  );
+  assert(
+    !String(alert.title).toLowerCase().includes("bloqueado"),
+    `título do alerta não pode afirmar bloqueio: ${JSON.stringify(alert.title)}`,
+  );
+  assert(
+    !String(alert.description).includes("O IP foi bloqueado"),
+    `descrição do alerta não pode afirmar bloqueio: ${JSON.stringify(alert.description)}`,
+  );
+
+  // A notificação aos admins continua — mas sem dizer que o IP foi bloqueado.
+  const notifs = mock.inserts["notifications"] ?? [];
+  assert(notifs.length === 1, `notifications deveria receber 1 lote: ${notifs.length}`);
+  const batch = notifs[0] as Array<Record<string, unknown>>;
+  assert(batch.length === 1, `lote de notifications deveria ter 1 item: ${batch.length}`);
+  assert(
+    batch[0].title !== "IP Bloqueado",
+    `notificação não pode dizer 'IP Bloqueado' quando a gravação falha: ${JSON.stringify(batch.map((n) => n.title))}`,
+  );
+});
+
+Deno.test("R2-API-057: blocked=true + gravação OK → alerta e notificação AFIRMAM o bloqueio", async () => {
+  const mock = captureMock({ admins: [{ user_id: crypto.randomUUID() }], blockError: null });
+  const res = await handleRateLimitAlert(blockedPost(), {
+    supabase: mock.supabase,
+    internalSecret: "segredo",
+  });
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+
+  const alert = (mock.inserts["security_alerts"] ?? [])[0] as Record<string, unknown>;
+  assert(
+    alert.alert_type === "rate_limit_blocked",
+    `alert_type deveria ser rate_limit_blocked com a gravação OK: ${JSON.stringify(alert?.alert_type)}`,
+  );
+  assert(
+    String(alert.description).includes("O IP foi bloqueado"),
+    `descrição deveria afirmar bloqueio quando persistiu: ${JSON.stringify(alert?.description)}`,
+  );
+
+  const batch = (mock.inserts["notifications"] ?? [])[0] as Array<Record<string, unknown>>;
+  assert(
+    batch[0].title === "IP Bloqueado",
+    `notificação deveria dizer 'IP Bloqueado' quando persistiu: ${JSON.stringify(batch.map((n) => n.title))}`,
+  );
+});

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 const log = getLogger('RealtimeDashboard');
 
@@ -152,11 +153,21 @@ export function useRealtimeDashboard(filters: RealtimeDashboardScope = {}) {
       }
 
       // Get active conversations (contacts with messages in last hour)
+      // Ordem determinística ANTES do corte: sem `.order()`, o PostgREST
+      // devolve um subconjunto ARBITRÁRIO das linhas pedidas e a contagem de
+      // conversas ativas oscilava entre refreshes (mesma janela, número
+      // diferente). Com `created_at` DESC e `id` como desempate, o corte de
+      // 5000 é sempre "as 5000 mais recentes" — reprodutível.
+      // E26: o corte continua (mitigação do cap do PostgREST; o fix definitivo
+      // é a RPC do E24/E25, que não é deste cartão).
       let consultaAtivos = supabase
         .from('messages')
         .select('contact_id')
         .gte('created_at', hourAgo.toISOString())
-        .not('contact_id', 'is', null).limit(5000); // E26: cap PostgREST 1000 linhas — mitigação, fix definitivo é RPC (E24/E25)
+        .not('contact_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(5000);
       if (agentId) consultaAtivos = consultaAtivos.eq('agent_id', agentId);
 
       const { data: activeContacts, error: erroAtivos } = await consultaAtivos;
@@ -215,8 +226,14 @@ export function useRealtimeDashboard(filters: RealtimeDashboardScope = {}) {
 
     fetchInitialData();
 
+    // Tópico exclusivo por instância: `supabase.channel('dashboard-realtime')`
+    // devolve o MESMO canal quando o nome se repete e, desde a realtime-js
+    // 2.101, `.on()` em canal já inscrito lança ("cannot add postgres_changes
+    // callbacks ... after subscribe()") — dois consumidores simultâneos do hook
+    // derrubavam a tela. Mesmo tratamento de useLeaderboard/useQueueGoals (ver
+    // src/hooks/__tests__/realtimeSharedTopic.test.tsx).
     const channel = supabase
-      .channel('dashboard-realtime')
+      .channel(uniqueRealtimeTopic('dashboard-realtime'))
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },

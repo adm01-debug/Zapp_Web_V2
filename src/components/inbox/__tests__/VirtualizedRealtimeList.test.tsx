@@ -23,7 +23,13 @@ import type { ReactNode, ComponentProps } from 'react';
 import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import type { AgentLite } from '@/hooks/crm/useAgentsLite';
 
-const CURRENT_USER_ID = 'me-profile-id';
+// R2-INB-056 (#349): o usuário logado tem DOIS ids distintos — o do auth
+// (auth.users.id, exposto em `user`) e o do perfil (public.profiles.id, alvo da
+// FK contacts.assigned_to). O mock dá valores DIFERENTES aos dois, como no
+// runtime: um mock com o mesmo valor nos dois papéis esconderia o defeito
+// (badge de responsável comparando o id errado).
+const AUTH_USER_ID = 'me-auth-user-id';
+const CURRENT_PROFILE_ID = 'me-profile-id';
 const OTHER_AGENT_ID = 'colleague-profile-id';
 
 let agentsMapMock: Map<string, AgentLite> = new Map();
@@ -45,7 +51,7 @@ vi.mock('@tanstack/react-virtual', () => ({
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: CURRENT_USER_ID } }),
+  useAuth: () => ({ user: { id: AUTH_USER_ID }, profile: { id: CURRENT_PROFILE_ID } }),
 }));
 
 vi.mock('@/hooks/crm/useAgentsLite', () => ({
@@ -174,10 +180,17 @@ describe('VirtualizedRealtimeList — badge de canal e mini-avatar do atendente'
     expect(badges.length).toBe(1);
   });
 
-  it('esconde o mini-avatar quando a conversa é do próprio usuário logado', () => {
-    agentsMapMock = new Map([[OTHER_AGENT_ID, { id: OTHER_AGENT_ID, name: 'Colega Um', avatar_url: null }]]);
+  it('esconde o mini-avatar quando a conversa é do próprio usuário logado (compara com o profile.id, não com o auth id — #349)', () => {
+    // O agentsMap contém o PRÓPRIO perfil logado: sem isso, a linha "minha"
+    // não acharia entrada no mapa e não renderizaria avatar nem com o defeito,
+    // escondendo a prova. Com o mock comparando auth id × profile id, a linha
+    // atribuída a mim entra como "de outra pessoa" e mostra um avatar a mais.
+    agentsMapMock = new Map([
+      [CURRENT_PROFILE_ID, { id: CURRENT_PROFILE_ID, name: 'Eu Mesmo', avatar_url: null }],
+      [OTHER_AGENT_ID, { id: OTHER_AGENT_ID, name: 'Colega Um', avatar_url: null }],
+    ]);
     const conversations = [
-      makeConversation({ id: 'mine', assigned_to: CURRENT_USER_ID }),
+      makeConversation({ id: 'mine', assigned_to: CURRENT_PROFILE_ID }),
       makeConversation({ id: 'unassigned', assigned_to: null }),
       makeConversation({ id: 'colleague', assigned_to: OTHER_AGENT_ID }),
     ];
@@ -323,5 +336,61 @@ describe('VirtualizedRealtimeList — prazo granular de SLA por conversa (R2-SLA
 
     expect(mocks.useApplicableSLA).not.toHaveBeenCalled();
     expect(mocks.slaIndicator).not.toHaveBeenCalled();
+  });
+});
+
+describe('VirtualizedRealtimeList — prioridade de não lidas definida pelos filtros (R2-INB-028)', () => {
+  // Defeito: o componente reordenava TODA a entrada por timestamp antes de
+  // agrupar, desfazendo o "não lidas primeiro" calculado em useInboxFilters
+  // (regra implementada uma única vez, no hook). Os testes montam a lista já na
+  // ordem que o filtro entrega e exigem que ela sobreviva à renderização: a não
+  // lida MAIS ANTIGA tem de ficar acima da lida MAIS NOVA do mesmo grupo.
+  function comMensagem(
+    id: string,
+    name: string,
+    ultimaMensagemEm: string,
+    unreadCount: number
+  ): ConversationWithMessages {
+    const conversation = makeConversation({ id, name });
+    conversation.lastMessage = {
+      id: `m-${id}`,
+      content: `ultima mensagem de ${id}`,
+      created_at: ultimaMensagemEm,
+      sender: 'contact',
+    } as unknown as ConversationWithMessages['lastMessage'];
+    conversation.unreadCount = unreadCount;
+    return conversation;
+  }
+
+  function linhasRenderizadas(): string[] {
+    return screen.getAllByTestId('conversation-item').map((el) => el.textContent ?? '');
+  }
+
+  it('no mesmo grupo de data, a não lida antiga fica acima da lida nova', () => {
+    // Datas fora de hoje/ontem: as duas caem em "Mais antigas", então só a
+    // prioridade de não lidas pode inverter a ordem temporal (a antiga é a não lida).
+    const naoLidaAntiga = comMensagem('nao-lida', 'AlfaNaoLida Contato', '2026-08-01T10:00:00Z', 2);
+    const lidaNova = comMensagem('lida', 'BetaLida Contato', '2026-08-05T10:00:00Z', 0);
+
+    renderList([naoLidaAntiga, lidaNova]);
+
+    const linhas = linhasRenderizadas();
+    expect(linhas).toHaveLength(2);
+    expect(linhas[0]).toContain('AlfaNaoLida');
+    expect(linhas[1]).toContain('BetaLida');
+  });
+
+  it('dentro das Fixadas, a não lida antiga também fica acima da lida nova', () => {
+    const naoLidaAntiga = comMensagem('pin-nao-lida', 'GamaNaoLida Contato', '2026-08-01T10:00:00Z', 4);
+    const lidaNova = comMensagem('pin-lida', 'DeltaLida Contato', '2026-08-05T10:00:00Z', 0);
+
+    renderList([naoLidaAntiga, lidaNova], {
+      pinnedIds: new Set([naoLidaAntiga.contact.id, lidaNova.contact.id]),
+    });
+
+    const linhas = linhasRenderizadas();
+    expect(linhas).toHaveLength(2);
+    expect(linhas[0]).toContain('GamaNaoLida');
+    expect(linhas[1]).toContain('DeltaLida');
   });
 });

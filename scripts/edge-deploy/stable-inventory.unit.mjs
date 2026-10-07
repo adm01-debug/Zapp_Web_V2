@@ -27,38 +27,64 @@ test('late bundle changes reset stable streak even without changed source', asyn
   assert.equal(result.verification.samples.length, 9);
   assert.equal(result.functions[0].remote_version, 3);
 });
-test('inventario identico ao baseline atesta pelo digest (deploy sem mudanca de bundle)', async () => {
-  // Mudanca de contrato (01/10/2026, run 36852598923): o CLI pula o deploy de uma
-  // funcao cujo bundle bate byte a byte com o publicado e NAO bumpa version. Antes
-  // exigiamos o sinal do log do CLI (knownUnchanged); quando o CLI passou a escrever
-  // "No change found" no stderr, o arquivo de unchanged vinha vazio, a lista nao
-  // chegava e a atestacao queimava 144 amostras (~24 min) para falhar. Agora o
-  // digest remoto identico ao baseline e o proprio sinal de "nada a publicar".
-  const result = await simulate([before.functions]);
-  assert.equal(result.function_count, manifest.functions.length);
-  assert.deepEqual(
-    [...result.verification.accepted_without_version_bump].sort((a, b) => a.localeCompare(b)),
-    before.functions.map(fn => fn.slug).sort((a, b) => a.localeCompare(b)),
+test('inventario identico ao baseline SEM prova de no-op do deploy nao atesta (R2-INF-017)', async () => {
+  // Prova do defeito corrigido neste cartao: tres amostras identicas ao baseline
+  // por 60 s bastavam para atestar, mas um inventario ainda nao atualizado
+  // satisfaz o mesmo ramo -- 73 versoes antigas foram aceitas aos 60 s num run
+  // cuja atualizacao so apareceria aos 70 s. Digest igual ao baseline sem o
+  // sinal de "No change found" do proprio passo de deploy nunca e aceite: o laco
+  // segue, esgota as tentativas e a falha nomeia a funcao.
+  await assert.rejects(
+    simulate([before.functions], { maxAttempts: 8, intervalMs: 10_000, minimumObservationMs: 60_000, consecutiveSamples: 3 }),
+    (err) => {
+      assert.match(err.message, /did not stabilize after 8 attempts/);
+      assert.ok(err.message.includes(rows[0].slug),
+        'a exaustao tem de nomear a funcao retida no inventario anterior');
+      return true;
+    },
   );
 });
-test('funcao sinalizada pelo deploy como "No change found" nao exige bump de versao', async () => {
+test('funcao sinalizada pelo deploy como "No change found" com digest estavel atesta sem bump de versao', async () => {
   // rows[0] fica na MESMA versao/digest do baseline (o CLI pulou por bundle
-  // identico); as demais seguem bumpadas como em "rows". O sinal do log
-  // (knownUnchanged) continua valido e agora e redundante com a aceitacao por
-  // digest -- ver o teste da contradicao logo abaixo.
+  // identico) e o passo de deploy a reportou como no-op (knownUnchanged); as
+  // demais seguem bumpadas como em "rows". E o UNICO caminho de aceite por
+  // digest: a prova de no-op do proprio deploy e exigida (R2-INF-017).
   const skipped = rows.map((fn, i) => (i === 0 ? { ...fn, version: 1 } : fn));
   const result = await simulate([skipped], { knownUnchanged: [rows[0].slug] });
   assert.equal(result.functions.find((fn) => fn.name === rows[0].slug).remote_version, 1);
   assert.equal(result.function_count, manifest.functions.length);
-});
-test('sem sinalizacao do CLI, o digest remoto igual ao baseline atesta (o log nao e mais a unica fonte)', async () => {
-  // Cenario real do run 36852598923: o CLI escreveu "No change found" no stderr,
-  // o arquivo de unchanged saiu vazio e a funcao ficou na mesma versao/digest.
-  // O digest identico ao baseline e o sinal suficiente para atestar.
-  const skipped = rows.map((fn, i) => (i === 0 ? { ...fn, version: 1 } : fn));
-  const result = await simulate([skipped]);
-  assert.equal(result.functions.find((fn) => fn.name === rows[0].slug).remote_version, 1);
   assert.deepEqual(result.verification.accepted_without_version_bump, [rows[0].slug]);
+  assert.equal(result.verification.source_to_bundle_equivalence_proven, false);
+});
+test('sem sinalizacao do CLI, o digest remoto igual ao baseline NAO atesta e a exaustao nomeia a funcao', async () => {
+  // O que mudou neste cartao (R2-INF-017): o digest identico ao baseline sozinho
+  // nao prova que o deploy selecionado apareceu -- o inventario pre-deploy
+  // repetido satisfaz o mesmo ramo. Sem o slug em knownUnchanged, a funcao fica
+  // no laco ate a exaustao, com a causa nomeando a funcao.
+  const skipped = rows.map((fn, i) => (i === 0 ? { ...fn, version: 1 } : fn));
+  await assert.rejects(
+    simulate([skipped], { maxAttempts: 8 }),
+    (err) => {
+      assert.match(err.message, /did not stabilize after 8 attempts/);
+      assert.match(err.message, /lastReason=Selected deployment not yet observed/);
+      assert.ok(err.message.includes(rows[0].slug), 'lastReason nomeia a funcao sem prova de no-op');
+      return true;
+    },
+  );
+});
+test('baseline sem versao (E08) atesta pelo id e registra o aceite explicito no artefato', async () => {
+  // E08 (run 36560547941): a API devolveu versao invalida no pre-deploy, entao o
+  // baseline de rows[0] fica sem versao verificavel. A funcao continua aceita
+  // pelo id que bate (nao regride), mas o aceite deixa de ser silencioso: o slug
+  // vai para accepted_without_version_baseline, nao para accepted_without_version_bump.
+  const beforeSemVersao = inventorySnapshot(
+    rows.map((fn, i) => (i === 0 ? { ...fn, version: 0 } : { ...fn, version: 1 })),
+    CANONICAL_PROJECT,
+  );
+  const result = await simulate([rows], { before: beforeSemVersao });
+  assert.equal(result.function_count, manifest.functions.length);
+  assert.deepEqual(result.verification.accepted_without_version_baseline, [rows[0].slug]);
+  assert.deepEqual(result.verification.accepted_without_version_bump, []);
 });
 test('contradicao: CLI reportou sem mudanca e o digest remoto mudou desde o baseline falha na primeira amostra com a causa real', async () => {
   // O CLI disse que pulou a funcao, mas o bundle remoto mudou desde o baseline:

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchAllRows, type PageResult } from '@/lib/fetchAllRows';
 import { log } from '@/lib/logger';
-import { startOfDay, subDays, format, startOfHour, eachDayOfInterval, eachHourOfInterval, startOfToday, differenceInDays } from 'date-fns';
+import { startOfDay, subDays, format, startOfHour, eachDayOfInterval, eachHourOfInterval, startOfToday, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface DailyData {
@@ -114,44 +114,49 @@ export function useQueueAnalytics(queueId: string, dateRange: DateRange): QueueA
     });
 
     // For longer periods, group by week or show fewer data points
-    const totalDays = differenceInDays(range.to, range.from) + 1;
+    const totalDays = days.length;
     const showEveryNth = totalDays > 14 ? Math.ceil(totalDays / 14) : 1;
 
-    return days
-      .filter((_, index) => index % showEveryNth === 0 || index === days.length - 1)
-      .map(date => {
-        const dayStart = startOfDay(date);
-        const dayEnd = new Date(dayStart);
-        dayEnd.setDate(dayEnd.getDate() + showEveryNth);
+    // R2-QUE-004: os pontos são intervalos CONSECUTIVOS e EXCLUSIVOS, limitados ao fim do período —
+    // cada ponto vai do seu dia até o dia em que começa o próximo e o último termina no dia seguinte
+    // ao término selecionado. Antes o último índice era somado à seleção e recebia uma janela inteira,
+    // então o dia final entrava em dois pontos: em 30 dias o bucket de 28/01 já cobria 28–30 e o bucket
+    // de 30/01 repetia o dia 30 (mensagens, novos e resolvidos contados duas vezes).
+    const buckets = days.filter((_, index) => index % showEveryNth === 0);
 
-        // Count messages for this period
-        const periodMessages = messages.filter(m => {
-          const msgDate = new Date(m.created_at);
-          return msgDate >= dayStart && msgDate < dayEnd;
-        });
+    return buckets.map((date, index) => {
+      const dayStart = startOfDay(date);
+      const nextBucket = buckets[index + 1];
+      const dayEnd = nextBucket ? startOfDay(nextBucket) : addDays(startOfDay(range.to), 1);
 
-        // Count new contacts for this period
-        const newContacts = contacts.filter(c => {
-          const contactDate = new Date(c.created_at);
-          return contactDate >= dayStart && contactDate < dayEnd;
-        });
-
-        // Resolvidos do período vêm do status canônico `resolved` e do timestamp de mudança de
-        // status — atribuição (assigned_to) não é resolução, nem a data de criação é a de resolução.
-        const resolvedContacts = contacts.filter(c => {
-          if (c.conversation_status !== 'resolved' || !c.conversation_status_changed_at) return false;
-          const resolvedAt = new Date(c.conversation_status_changed_at);
-          return resolvedAt >= dayStart && resolvedAt < dayEnd;
-        });
-
-        return {
-          day: format(date, totalDays > 14 ? 'dd/MM' : 'EEE', { locale: ptBR }),
-          date: format(date, 'yyyy-MM-dd'),
-          mensagens: periodMessages.length,
-          resolvidos: resolvedContacts.length,
-          novos: newContacts.length,
-        };
+      // Count messages for this period
+      const periodMessages = messages.filter(m => {
+        const msgDate = new Date(m.created_at);
+        return msgDate >= dayStart && msgDate < dayEnd;
       });
+
+      // Count new contacts for this period
+      const newContacts = contacts.filter(c => {
+        const contactDate = new Date(c.created_at);
+        return contactDate >= dayStart && contactDate < dayEnd;
+      });
+
+      // Resolvidos do período vêm do status canônico `resolved` e do timestamp de mudança de
+      // status — atribuição (assigned_to) não é resolução, nem a data de criação é a de resolução.
+      const resolvedContacts = contacts.filter(c => {
+        if (c.conversation_status !== 'resolved' || !c.conversation_status_changed_at) return false;
+        const resolvedAt = new Date(c.conversation_status_changed_at);
+        return resolvedAt >= dayStart && resolvedAt < dayEnd;
+      });
+
+      return {
+        day: format(date, totalDays > 14 ? 'dd/MM' : 'EEE', { locale: ptBR }),
+        date: format(date, 'yyyy-MM-dd'),
+        mensagens: periodMessages.length,
+        resolvidos: resolvedContacts.length,
+        novos: newContacts.length,
+      };
+    });
   };
 
   const processHourlyData = (

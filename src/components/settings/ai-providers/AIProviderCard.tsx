@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import type { AIProvider } from './types';
 import { PROVIDER_LABELS, USE_FOR_OPTIONS } from './types';
+import { formatPurposeList } from './deletionImpact';
 
 interface AIProviderCardProps {
   provider: AIProvider;
@@ -20,9 +21,23 @@ interface AIProviderCardProps {
   onEdit: (p: AIProvider) => void;
   onDelete: (id: string) => void;
   index: number;
+  /**
+   * R2-API-046: finalidades que ficariam SEM provedor ativo+padrão se este
+   * provedor fosse removido (`purposesLosingDefaultProvider`). Vazio significa
+   * que a remoção não deixa buraco no roteamento.
+   */
+  affectedPurposes?: string[];
 }
 
-export function AIProviderCard({ provider: p, testing, onTest, onEdit, onDelete, index }: AIProviderCardProps) {
+export function AIProviderCard({
+  provider: p,
+  testing,
+  onTest,
+  onEdit,
+  onDelete,
+  index,
+  affectedPurposes = [],
+}: AIProviderCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const meta = PROVIDER_LABELS[p.provider_type] || PROVIDER_LABELS.custom_agent;
   const Icon = meta.icon;
@@ -131,8 +146,20 @@ export function AIProviderCard({ provider: p, testing, onTest, onEdit, onDelete,
           <AlertDialogHeader>
             <AlertDialogTitle>Remover "{p.name}"?</AlertDialogTitle>
             <AlertDialogDescription>
-              Essa ação é irreversível. As funcionalidades que usam este provedor serão
-              automaticamente redirecionadas para o provedor padrão (Lovable AI).
+              {affectedPurposes.length > 0 ? (
+                <>
+                  Essa ação é irreversível. Não há redirecionamento automático: este é o
+                  único provedor ativo e padrão para {formatPurposeList(affectedPurposes)}.
+                  Depois de remover, essas finalidades ficam sem provedor e as chamadas de
+                  IA falham com erro de roteamento até que outro provedor seja definido
+                  como padrão para elas.
+                </>
+              ) : (
+                <>
+                  Essa ação é irreversível. Nenhuma finalidade ficará sem provedor ativo e
+                  padrão por causa desta remoção.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

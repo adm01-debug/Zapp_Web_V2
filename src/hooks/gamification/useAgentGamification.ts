@@ -66,7 +66,12 @@ export const useAgentGamification = () => {
   return {
     stats: statsQuery.data,
     achievements: achievementsQuery.data || [],
-    isLoading: statsQuery.isLoading || achievementsQuery.isLoading,
+    isLoading: profileQuery.isLoading || statsQuery.isLoading || achievementsQuery.isLoading,
+    // R2-AUTH-042 (#266): quem exibe o resultado precisa distinguir "erro" de
+    // "conta sem conquistas". Sem isError os dois casos chegam como lista vazia
+    // e a tela mostra ausência onde houve falha de leitura.
+    isError: profileQuery.isError || statsQuery.isError || achievementsQuery.isError,
+    error: profileQuery.error ?? statsQuery.error ?? achievementsQuery.error,
     profileId,
     ...mutations,
   };

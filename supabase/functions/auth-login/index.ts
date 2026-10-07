@@ -18,8 +18,10 @@ import {
 // Login server-side (ADR-006): o lockout e decidido aqui, para qualquer cliente.
 // 1. politica de rede (R2-AUTH-022) antes de qualquer efeito;
 // 2. conta travada -> 423 sem tocar no GoTrue;
-// 3. GoTrue recusa -> a falha e registrada (comprovada pelo proprio GoTrue) -> 401;
-// 4. GoTrue aceita -> tentativas zeradas -> 200 com a sessao; o front faz setSession.
+// 3. GoTrue recusa credenciais (4xx != 429) -> a falha e registrada -> 401;
+// 4. GoTrue indisponivel (5xx, 429, transporte, sem sessao sem erro) -> 503 SEM
+//    registrar tentativa (R2-AUTH-021): outage do provedor nao conta no lockout;
+// 5. GoTrue aceita -> tentativas zeradas -> 200 com a sessao; o front faz setSession.
 // verify_jwt = false: ainda nao existe sessao. Rate limit por IP e por e-mail.
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@.]{2,63}$/;
@@ -58,7 +60,7 @@ export interface LoginAnonClient {
   auth: {
     signInWithPassword: (creds: { email: string; password: string }) => PromiseLike<{
       data: { session: LoginSession | null; user: { id: string } | null };
-      error: { status?: number } | null;
+      error: { status?: number; name?: string } | null;
     }>;
   };
 }
@@ -78,6 +80,16 @@ const IP_LIMIT_DEFAULT_MAX = 10; // requisições por IP
 const IP_LIMIT_DEFAULT_WINDOW_SECONDS = 60; // 60_000 ms
 const EMAIL_LIMIT_MAX = 20; // requisições por e-mail (guarda de lockout por conta)
 const EMAIL_LIMIT_WINDOW_MS = 60_000;
+
+// R2-AUTH-021: tentativa so conta quando ha PROVA de recusa de credenciais —
+// erro 4xx que nao seja 429. Todo o resto (5xx, 429, status ausente/0,
+// AuthRetryableFetchError, erro nulo sem sessao) e indisponibilidade do
+// provedor e nao pode alimentar o lockout.
+function isCredentialRefusal(err: { status?: number; name?: string } | null): boolean {
+  if (!err || err.name === "AuthRetryableFetchError") return false;
+  const status = err.status;
+  return typeof status === "number" && status >= 400 && status < 500 && status !== 429;
+}
 
 /** Código do erro da RPC para log (o `error` é `unknown` por contrato). */
 function rpcErrorCode(err: unknown): string | undefined {
@@ -148,9 +160,24 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
       return jsonResponse({ error: "Account locked", ...lockPayload(lockRow) }, 423, req);
     }
 
-    const { data: signIn, error: signInError } = await deps.anon.auth.signInWithPassword({ email, password });
+    // Falha de transporte que LANCA (rejeita a promise) vira 503 aqui, sem
+    // registrar tentativa; o catch externo segue para o resto.
+    let signIn: { session: LoginSession | null; user: { id: string } | null };
+    let signInError: { status?: number; name?: string } | null;
+    try {
+      ({ data: signIn, error: signInError } = await deps.anon.auth.signInWithPassword({ email, password }));
+    } catch {
+      log.warn("auth unavailable", { reason: "transport" });
+      log.done(503, { reason: "transport" });
+      return errorResponse("Auth service unavailable", 503, req);
+    }
 
-    if (signInError || !signIn.session) {
+    if (signInError || !signIn?.session) {
+      if (!isCredentialRefusal(signInError)) {
+        log.warn("auth unavailable", { status: signInError?.status, name: signInError?.name });
+        log.done(503, { status: signInError?.status });
+        return errorResponse("Auth service unavailable", 503, req);
+      }
       const { data: recData, error: recError } = await deps.admin.rpc("record_failed_login", {
         p_email: email,
         p_ip_address: ip === "unknown" ? null : ip,

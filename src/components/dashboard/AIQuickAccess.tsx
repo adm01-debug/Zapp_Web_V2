@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cpu, FileText, Bell, ArrowRight, ChevronRight, Clock, Lightbulb, TrendingUp, TrendingDown } from 'lucide-react';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { classifySentiment, type SentimentClass } from '@/lib/sentiment-classes';
 import { AI_FEATURES, useAIFeatureNavigation } from './aiFeatures';
 import { useAIStats } from '@/hooks/analytics/useAIStats';
 import { useActiveAIProvider } from '@/hooks/analytics/useActiveAIProvider';
+import { useRecentAnalyses, useAIInsights, type InsightPeriod } from '@/hooks/analytics/useRecentAnalyses';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { DashboardCard, SectionHeader, VerTodasButton, Pill, CardSelect } from './overview/DashboardCard';
 
@@ -28,11 +31,25 @@ const FEATURE_TILE: Record<string, string> = {
   trends: 'bg-dash-tile-amber',
 };
 
-const INSIGHT_PERIODS = [
+const INSIGHT_PERIODS: { value: InsightPeriod; label: string }[] = [
   { value: '24h', label: 'Últimas 24 horas' },
   { value: '7d', label: 'Últimos 7 dias' },
   { value: '30d', label: 'Últimos 30 dias' },
 ];
+
+const SENTIMENT_RESULT_LABEL: Record<SentimentClass, string> = {
+  positivo: 'Positivo', neutro: 'Neutro', negativo: 'Negativo',
+};
+const SENTIMENT_RESULT_TONE: Record<SentimentClass, 'success' | 'muted' | 'danger'> = {
+  positivo: 'success', neutro: 'muted', negativo: 'danger',
+};
+
+function SentimentResult({ sentiment }: { sentiment: unknown }) {
+  const sentimentClass = classifySentiment(sentiment);
+  return sentimentClass
+    ? <Pill label={SENTIMENT_RESULT_LABEL[sentimentClass]} tone={SENTIMENT_RESULT_TONE[sentimentClass]} />
+    : <span className="text-muted-foreground">—</span>;
+}
 
 function TrendText({ trend, label }: { trend?: { direction: 'up' | 'down' | 'stable'; percentage: number }; label: string }) {
   if (!trend || trend.direction === 'stable') return <p className="text-xs text-muted-foreground">{label}</p>;
@@ -53,7 +70,11 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
   const handleFeatureClick = useAIFeatureNavigation();
   const { data: aiStats } = useAIStats(30);
   const { data: provider } = useActiveAIProvider();
-  const [insightPeriod, setInsightPeriod] = useState('24h');
+  const [insightPeriod, setInsightPeriod] = useState<InsightPeriod>('24h');
+  // DASH-CONTROLS-001: os dois cards da linha final leem conversation_analyses —
+  // a lista recente e os insights mudam quando o período selecionado muda.
+  const { data: recentAnalyses = [] } = useRecentAnalyses(5);
+  const { data: insights } = useAIInsights(insightPeriod);
 
   const totalAnalyses = aiStats?.totalAnalyses ?? 0;
   const analysesTrend = aiStats?.trends.analyses;
@@ -156,21 +177,60 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
           <div className="rounded-lg bg-muted/20 border border-border/40 px-4 h-10 grid grid-cols-[2fr_1.4fr_1fr_0.8fr_auto] items-center text-xs font-semibold text-muted-foreground">
             <span>Conversa</span><span>Tipo de análise</span><span>Resultado</span><span>Data</span><span className="w-6" />
           </div>
-          <div className="py-10 flex flex-col items-center text-muted-foreground gap-2">
-            <Clock className="w-10 h-10 opacity-30" />
-            <p className="text-sm font-medium text-foreground">Nenhuma análise recente</p>
-            <p className="text-xs">As análises aparecerão aqui assim que forem processadas</p>
-          </div>
+          {recentAnalyses.length === 0 ? (
+            <div className="py-10 flex flex-col items-center text-muted-foreground gap-2">
+              <Clock className="w-10 h-10 opacity-30" />
+              <p className="text-sm font-medium text-foreground">Nenhuma análise recente</p>
+              <p className="text-xs">As análises aparecerão aqui assim que forem processadas</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border/40">
+              {recentAnalyses.map(a => (
+                <div key={a.id} className="grid grid-cols-[2fr_1.4fr_1fr_0.8fr_auto] items-center px-4 py-3 text-[13px]">
+                  <span className="truncate text-foreground font-medium">{a.contactName}</span>
+                  <span className="text-muted-foreground">Análise de conversa</span>
+                  <span><SentimentResult sentiment={a.sentiment} /></span>
+                  <span className="text-muted-foreground tabular-nums">{format(new Date(a.createdAt), 'dd/MM HH:mm')}</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+              ))}
+            </div>
+          )}
         </DashboardCard>
         <DashboardCard testid="ai-insights-card" variant="comfortable">
           <SectionHeader icon={Lightbulb} title="Insights de IA" subtitle="Principais insights do período" tileSize={44} size="lg"
-            right={<CardSelect value={insightPeriod} onValueChange={setInsightPeriod} options={INSIGHT_PERIODS} testid="ai-insights-period" />}
+            right={<CardSelect value={insightPeriod} onValueChange={(v) => setInsightPeriod(v as InsightPeriod)} options={INSIGHT_PERIODS} testid="ai-insights-period" />}
           />
-          <div className="py-10 flex flex-col items-center text-muted-foreground gap-2">
-            <Lightbulb className="w-9 h-9 opacity-30" />
-            <p className="text-sm font-medium text-foreground">Sem insights ainda</p>
-            <p className="text-xs text-center">Os insights aparecem quando há análises suficientes no período</p>
-          </div>
+          {!insights || insights.total === 0 ? (
+            <div className="py-10 flex flex-col items-center text-muted-foreground gap-2">
+              <Lightbulb className="w-9 h-9 opacity-30" />
+              <p className="text-sm font-medium text-foreground">Sem insights ainda</p>
+              <p className="text-xs text-center">Os insights aparecem quando há análises suficientes no período</p>
+            </div>
+          ) : (
+            <ul className="space-y-2.5 text-[13px]">
+              <li className="flex items-center justify-between gap-2">
+                <span className="text-muted-foreground">Análises no período</span>
+                <span className="font-semibold text-foreground tabular-nums">{insights.total}</span>
+              </li>
+              <li className="flex items-center justify-between gap-2">
+                <span className="text-muted-foreground">Com sentimento negativo</span>
+                <span className={cn('font-semibold tabular-nums', insights.negativePct > 30 ? 'text-dash-red' : 'text-foreground')}>{insights.negativePct}%</span>
+              </li>
+              {insights.topNegativeDepartment && (
+                <li className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Fila com mais negativas</span>
+                  <span className="font-semibold text-foreground truncate">{insights.topNegativeDepartment}</span>
+                </li>
+              )}
+              {insights.avgSentimentScore !== null && (
+                <li className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Nota média de sentimento</span>
+                  <span className="font-semibold text-foreground tabular-nums">{Math.round(insights.avgSentimentScore)}</span>
+                </li>
+              )}
+            </ul>
+          )}
         </DashboardCard>
       </div>
     </div>

@@ -17,6 +17,17 @@ interface UseMessagesOptions {
 
 const MESSAGES_PAGE_SIZE = 1000;
 
+/**
+ * #310 (R2-INB-013): entrada do overlay de realtime com a geracao em que foi escrita.
+ * O overlay existe para preservar o que o snapshot NAO viu — INSERT/UPDATE/DELETE ocorridos
+ * DURANTE a consulta. Sem a geracao ele vencia qualquer leitura posterior, entao um
+ * `delivered`/conteudo antigo reintroduzido pelo overlay sobrevivia ao refetch autoritativo.
+ */
+interface RealtimeOverlayEntry {
+  message: Message | null;
+  generation: number;
+}
+
 export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -29,7 +40,10 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   const activeContactIdRef = useRef<string | null>(contactId);
   const requestGenerationRef = useRef(0);
   const loadingOlderRef = useRef(false);
-  const realtimeOverlayRef = useRef<Map<string, Message | null>>(new Map());
+  const realtimeOverlayRef = useRef<Map<string, RealtimeOverlayEntry>>(new Map());
+  // Relogio logico do overlay: cada escrita recebe a geracao corrente. O fetch guarda a geracao do
+  // instante em que comecou e so aplica entradas POSTERIORES a ela (ver reconciliacao abaixo).
+  const overlayGenerationRef = useRef(0);
   const loadedContactIdRef = useRef<string | null>(null);
 
   // Track mount state to prevent setState after unmount
@@ -50,10 +64,20 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     [queryClient],
   );
 
+  // #310: toda escrita no overlay carimba a geracao corrente — e o que permite separar
+  // "evento anterior ao snapshot" (perde para ele) de "evento ocorrido durante o fetch" (vence).
+  const writeOverlay = useCallback((id: string, message: Message | null) => {
+    overlayGenerationRef.current += 1;
+    realtimeOverlayRef.current.set(id, { message, generation: overlayGenerationRef.current });
+  }, []);
+
   // Fetch messages for contact
   const fetchMessages = useCallback(async () => {
     const requestedContactId = contactId;
     const generation = ++requestGenerationRef.current;
+    // #310: geracao do overlay no inicio da consulta. Entradas com geracao <= esta sao anteriores
+    // ao snapshot (a leitura ja as ve) e perdem para ele.
+    const overlayGenerationAtStart = overlayGenerationRef.current;
     if (!requestedContactId) {
       if (mountedRef.current) {
         setMessages([]);
@@ -92,8 +116,11 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
             for (const message of current) if (timeOf(message) < oldestInSnapshot) merged.set(message.id, message);
           }
           for (const message of snapshot) merged.set(message.id, message);
-          for (const [id, message] of realtimeOverlayRef.current) {
-            if (message) merged.set(id, message);
+          for (const [id, entry] of realtimeOverlayRef.current) {
+            // #310 (R2-INB-013): so eventos ocorridos DURANTE esta consulta vencem o snapshot;
+            // reaplicar um evento anterior reintroduziria estado ja ultrapassado.
+            if (entry.generation <= overlayGenerationAtStart) continue;
+            if (entry.message) merged.set(id, entry.message);
             else merged.delete(id);
           }
           return [...merged.values()].sort((a, b) => timeOf(a) - timeOf(b));
@@ -167,7 +194,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
       // Only add if it's for the current contact and not already present
       if (newMessage.contact_id === contactId) {
-        realtimeOverlayRef.current.set(newMessage.id, newMessage);
+        writeOverlay(newMessage.id, newMessage);
         setMessages((prev) => {
           if (prev.some((m) => m.id === newMessage.id)) {
             return prev;
@@ -185,7 +212,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
         }
       }
     },
-    [contactId, invalidateMediaAggregates]
+    [contactId, invalidateMediaAggregates, writeOverlay]
   );
 
   // Handle message update from realtime
@@ -195,7 +222,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       const updatedMessage = mapMessageRowToMessage(newRow);
 
       if (updatedMessage.contact_id === contactId) {
-        realtimeOverlayRef.current.set(updatedMessage.id, updatedMessage);
+        writeOverlay(updatedMessage.id, updatedMessage);
         setMessages((prev) =>
           prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m))
         );
@@ -218,7 +245,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
         }
       }
     },
-    [contactId, invalidateMediaAggregates]
+    [contactId, invalidateMediaAggregates, writeOverlay]
   );
 
   // Handle message delete from realtime
@@ -227,7 +254,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       const deletedMessage = payload.old as MessageRow;
 
       if (deletedMessage.contact_id === contactId) {
-        realtimeOverlayRef.current.set(deletedMessage.id, null);
+        writeOverlay(deletedMessage.id, null);
         setMessages((prev) => prev.filter((m) => m.id !== deletedMessage.id));
 
         // #144/OTH-002: um DELETE remoto de midia tambem muda chips/badge/galeria.
@@ -236,7 +263,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
         }
       }
     },
-    [contactId, invalidateMediaAggregates]
+    [contactId, invalidateMediaAggregates, writeOverlay]
   );
 
   // Fetch on contact change
@@ -283,30 +310,30 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
   // Add a message optimistically
   const addMessage = useCallback((message: Message) => {
-    realtimeOverlayRef.current.set(message.id, message);
+    writeOverlay(message.id, message);
     setMessages((prev) => {
       if (prev.some((m) => m.id === message.id)) {
         return prev;
       }
       return [...prev, message];
     });
-  }, []);
+  }, [writeOverlay]);
 
   // Update a message optimistically
   const updateMessage = useCallback((messageId: string, updates: Partial<Message>) => {
     setMessages((prev) => prev.map((message) => {
       if (message.id !== messageId) return message;
       const updated = { ...message, ...updates };
-      realtimeOverlayRef.current.set(messageId, updated);
+      writeOverlay(messageId, updated);
       return updated;
     }));
-  }, []);
+  }, [writeOverlay]);
 
   // Remove a message optimistically
   const removeMessage = useCallback((messageId: string) => {
-    realtimeOverlayRef.current.set(messageId, null);
+    writeOverlay(messageId, null);
     setMessages((prev) => prev.filter((m) => m.id !== messageId));
-  }, []);
+  }, [writeOverlay]);
 
   return {
     messages,

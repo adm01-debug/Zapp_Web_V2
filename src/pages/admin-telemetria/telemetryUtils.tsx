@@ -27,6 +27,46 @@ export function getSeverityBadge(severity: string) {
   }
 }
 
+/**
+ * R2-INF-040: `rows = []` NÃO é sinal de "sistema com bom desempenho".
+ *
+ * O `queryFn` lança o erro do SDK, mas a página precisa separar o que a tela sabe sobre a
+ * CONSULTA (carregando, falhou, vazio, com dados) do que ela conclui sobre o BANCO. Sem
+ * isso, a falha de leitura chegava à tabela como lista vazia e a tela anunciava bom
+ * desempenho justo quando não havia conseguido medir nada.
+ *
+ * `stale` é a falha de REFETCH: já havia dados bons em cache e a nova leitura falhou. A
+ * tela segue mostrando os últimos números (com aviso de defasagem) em vez de apagá-los ou
+ * de apresentá-los como leitura fresca.
+ *
+ * `loading` vence a ordem: na primeira carga não existe nem medição nem erro concluído.
+ */
+export type TelemetryViewState = 'loading' | 'error' | 'stale' | 'empty' | 'data';
+
+export function telemetryViewState({
+  isLoading,
+  isError,
+  rowCount,
+}: {
+  isLoading: boolean;
+  isError: boolean;
+  rowCount: number;
+}): TelemetryViewState {
+  if (isLoading) return 'loading';
+  if (isError) return rowCount > 0 ? 'stale' : 'error';
+  return rowCount > 0 ? 'data' : 'empty';
+}
+
+/** Detalhe técnico da falha de leitura (para o admin), nunca uma conclusão de saúde. */
+export function telemetryReadFailureDetail(error: unknown): string {
+  if (typeof error === 'string' && error) return error;
+  if (error && typeof error === 'object') {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message) return message;
+  }
+  return 'A leitura não retornou o detalhe do erro.';
+}
+
 export function computeTopOffenders(rows: { rpc_name: string | null; table_name: string | null; duration_ms: number }[]) {
   const tableStats = new Map<string, { count: number; totalMs: number; maxMs: number }>();
   for (const r of rows) {

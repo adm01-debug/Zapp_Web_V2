@@ -9,6 +9,9 @@ const db = vi.hoisted(() => ({
   updates: [] as { payload: Record<string, unknown>; filter: [string, unknown] }[],
   tagsById: {} as Record<string, string[]>,
   updateError: null as unknown,
+  selectError: null as unknown,
+  /** IDs (dentre os filtrados) que o UPDATE devolve como afetados. `null` = todos; `[]` = 0 linhas (RLS). */
+  affectedIds: null as string[] | null,
 }));
 
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), warning: vi.fn() }));
@@ -18,15 +21,28 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     rpc: db.rpc,
     from: () => ({
-      select: () => ({
-        eq: (_col: string, id: string) => ({
-          single: async (): Promise<Result> => ({ data: { tags: db.tagsById[id] ?? [] }, error: null }),
+      select: (_cols: string) => ({
+        // applyContactTagChange: `select('id, tags').in('id', ids)`
+        in: async (_col: string, ids: string[]): Promise<Result> => ({
+          data: ids.map((id) => ({ id, tags: db.tagsById[id] ?? [] })),
+          error: db.selectError,
         }),
       }),
       update: (payload: Record<string, unknown>) => {
-        const record = (filter: [string, unknown]): Promise<Result> => {
+        const record = (filter: [string, unknown]) => {
           db.updates.push({ payload, filter });
-          return Promise.resolve({ error: db.updateError });
+          const ids = Array.isArray(filter[1]) ? (filter[1] as string[]) : [filter[1] as string];
+          const affected = db.affectedIds
+            ? ids.filter((id) => db.affectedIds!.includes(id))
+            : ids;
+          return {
+            // `.select('id')` do UPDATE devolve as linhas afetadas; sem isso o
+            // PostgREST não distingue "mudou" de "0 linhas" (o defeito do cartão).
+            select: async (): Promise<Result> => ({
+              data: affected.map((id) => ({ id })),
+              error: db.updateError,
+            }),
+          };
         };
         return {
           eq: (col: string, value: unknown) => record([col, value]),
@@ -64,6 +80,8 @@ describe('BulkActionsBar — ações em lote (etapa 81)', () => {
     db.updates = [];
     db.tagsById = {};
     db.updateError = null;
+    db.selectError = null;
+    db.affectedIds = null;
   });
 
   it('não renderiza sem seleção', () => {
@@ -127,6 +145,89 @@ describe('BulkActionsBar — ações em lote (etapa 81)', () => {
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Nenhum contato foi excluído. Verifique se você tem permissão.'));
     expect(props.onClearSelection).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+});
+
+describe('BulkActionsBar — feedback fiel em erro e lote parcial (R2-AUTH-013)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.updates = [];
+    db.tagsById = {};
+    db.updateError = null;
+    db.selectError = null;
+    db.affectedIds = null;
+  });
+
+  it('Atribuir parcial: avisa quantos de fato mudaram e mantém os recusados selecionados', async () => {
+    db.affectedIds = ['a'];
+    const onPartialComplete = vi.fn();
+    const props = setup({ onPartialComplete });
+    pick(/Atribuir/, 'Bia');
+
+    await waitFor(() => expect(onPartialComplete).toHaveBeenCalledWith(['b']));
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.warning).toHaveBeenCalledWith('1 de 2 contatos atribuídos a Bia', expect.anything());
+    expect(props.onActionComplete).not.toHaveBeenCalled();
+  });
+
+  it('Atribuir com 0 linhas afetadas (RLS) é falha: não anuncia sucesso', async () => {
+    db.affectedIds = [];
+    setup();
+    pick(/Atribuir/, 'Bia');
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Nenhum contato foi atribuído. Verifique se você tem permissão.'));
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('Atribuir com erro do SDK é falha: não anuncia sucesso', async () => {
+    db.updateError = { message: 'permission denied' };
+    setup();
+    pick(/Atribuir/, 'Bia');
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao atribuir contatos. Nenhum contato foi alterado.'));
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('Tipo parcial: avisa e atualiza os contadores sem anunciar sucesso total', async () => {
+    db.affectedIds = ['a'];
+    const props = setup({ canChangeType: true });
+    pick(/Tipo/, 'Fornecedor');
+
+    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith('1 de 2 contatos atualizados para "fornecedor"', expect.anything()));
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(props.onCountersChanged).toHaveBeenCalled();
+  });
+
+  it('Tag com falha de leitura: reporta erro e NÃO sobrescreve as tags com lista vazia', async () => {
+    db.selectError = { message: 'permission denied' };
+    setup();
+    pick(/^Tag$/, 'vip');
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao adicionar tags. Nenhum contato foi alterado.'));
+    expect(db.updates).toEqual([]);
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('Tag parcial: avisa quantos receberam a tag e mantém os recusados selecionados', async () => {
+    db.tagsById = { a: [], b: [] };
+    db.affectedIds = ['a'];
+    const onPartialComplete = vi.fn();
+    setup({ onPartialComplete });
+    pick(/^Tag$/, 'vip');
+
+    await waitFor(() => expect(onPartialComplete).toHaveBeenCalledWith(['b']));
+    expect(toast.warning).toHaveBeenCalledWith('1 de 2 contatos receberam a tag "vip"', expect.anything());
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('Tag com 0 linhas afetadas é falha: não anuncia sucesso', async () => {
+    db.tagsById = { a: [], b: [] };
+    db.affectedIds = [];
+    setup();
+    pick(/^Tag$/, 'vip');
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao adicionar tags. Nenhum contato foi alterado.'));
     expect(toast.success).not.toHaveBeenCalled();
   });
 });

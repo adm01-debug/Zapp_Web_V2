@@ -79,8 +79,6 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
   const nearBottomRef = useRef(true);
   const previousMessageCountRef = useRef(0);
   const [hasNewMessagesBelow, setHasNewMessagesBelow] = useState(false);
-  const [previewAttachment, setPreviewAttachment] = useState<(typeof threadAttachments)[number] | null>(null);
-  const [previewContent, setPreviewContent] = useState<string | null>(null);
   const messagesErrorCopy = useMemo(() => emailLoadErrorCopy(messagesError), [messagesError]);
 
   useEffect(() => {
@@ -210,17 +208,34 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
     onBack();
   }, [modifyThreadLabels, onBack, thread.gmail_thread_id]);
 
+  // R2-COM-002: a seleção e os bytes são o MESMO estado — a prévia é uma chave só. A
+  // continuação assíncrona só aplica o resultado (bytes ou falha) se o anexo ainda for o
+  // selecionado: a resposta (ou o erro) de um anexo anterior, ou de uma prévia já fechada,
+  // é descartada em vez de sobrescrever a seleção atual.
+  const [attachmentPreview, setAttachmentPreview] = useState<{
+    attachment: (typeof threadAttachments)[number];
+    contentBase64: string | null;
+    falhou: boolean;
+  } | null>(null);
+
+  const closeAttachmentPreview = useCallback(() => setAttachmentPreview(null), []);
+
   const openAttachmentPreview = useCallback(async (attachment: (typeof threadAttachments)[number], gmailMessageId: string) => {
-    setPreviewAttachment(attachment);
-    setPreviewContent(null);
+    setAttachmentPreview({ attachment, contentBase64: null, falhou: false });
     try {
       const content = await getAttachmentContent({ ...attachment, gmail_message_id: gmailMessageId });
-      setPreviewContent(content);
+      setAttachmentPreview(current => (current?.attachment.id === attachment.id ? { ...current, contentBase64: content } : current));
     } catch {
-      setPreviewAttachment(null);
-      toast.error('Não foi possível abrir a prévia deste anexo.');
+      // Erro tardio de outra seleção não fecha a prévia do anexo atual.
+      setAttachmentPreview(current => (current?.attachment.id === attachment.id ? { ...current, falhou: true } : current));
     }
   }, [getAttachmentContent]);
+
+  // A falha fecha a prévia e vira aviso com o commit já aplicado (nunca no meio do render).
+  const previewFalhou = attachmentPreview?.falhou ?? false;
+  useEffect(() => {
+    if (previewFalhou) toast.error('Não foi possível abrir a prévia deste anexo.');
+  }, [previewFalhou]);
 
   return (
     <TooltipProvider>
@@ -407,7 +422,12 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
             onSent={() => setShowComposer(false)}
           />
         )}
-        <EmailAttachmentPreviewDialog open={Boolean(previewAttachment)} onOpenChange={open => { if (!open) { setPreviewAttachment(null); setPreviewContent(null); } }} attachment={previewAttachment} contentBase64={previewContent} />
+        <EmailAttachmentPreviewDialog
+          open={Boolean(attachmentPreview && !attachmentPreview.falhou)}
+          onOpenChange={open => { if (!open) closeAttachmentPreview(); }}
+          attachment={attachmentPreview?.attachment ?? null}
+          contentBase64={attachmentPreview?.contentBase64 ?? null}
+        />
       </div>
     </TooltipProvider>
   );

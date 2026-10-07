@@ -11,6 +11,7 @@ import { getFileCategory, formatFileSize, getFileExtension, WHATSAPP_FILE_TYPES 
 import { VideoFullscreen } from './VideoFullscreen';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 
 function getFileIcon(fileName: string, mimeType?: string) {
   const extension = getFileExtension(fileName).toLowerCase();
@@ -33,11 +34,21 @@ interface DocumentPreviewProps {
 
 export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPreviewProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const { canDownload } = useDownloadPermission();
   const extension = getFileExtension(fileName).toUpperCase();
   // Resolve signed URL so documents remain accessible when the bucket is private.
   const { url: resolvedUrl, isLoading: isResolvingUrl } = useResolvedStorageUrl(url);
 
   const handleDownload = async () => {
+    // R2-INB-031: o download de documento obedece ao mesmo controle do perfil que o
+    // caminho de imagem (`profiles.can_download`); sem permissão, nem fetch nem anchor.
+    if (!canDownload) {
+      const { toast: toastFn } = await import('sonner');
+      toastFn.error('🔒 Download bloqueado por política de segurança', {
+        description: 'O download de arquivos está desabilitado para proteção de dados. Solicite permissão ao administrador.',
+      });
+      return;
+    }
     if (isDownloading || !resolvedUrl) return;
     setIsDownloading(true);
     try {
@@ -91,9 +102,12 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
         whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
         onClick={(e) => { e.stopPropagation(); void handleDownload(); }}
         disabled={isDownloading || isResolvingUrl || !resolvedUrl}
+        aria-label={canDownload ? `Baixar ${fileName}` : 'Download bloqueado por política de segurança'}
+        title={canDownload ? `Baixar ${fileName}` : 'Download bloqueado por política de segurança'}
         className={cn(
           "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-          isSent ? "bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground" : "bg-primary/10 hover:bg-primary/20 text-primary"
+          isSent ? "bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground" : "bg-primary/10 hover:bg-primary/20 text-primary",
+          !canDownload && "opacity-60 cursor-not-allowed"
         )}
       >
         {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}

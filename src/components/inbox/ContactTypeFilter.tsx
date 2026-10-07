@@ -27,7 +27,7 @@ export interface FilterOption {
 }
 
 const isGroup = (phone: string | null | undefined) =>
-  /^\d+-\d+$/.test((phone || '').replace(/\D/g, ''));
+  /^\d+-\d+$/.test((phone || '').replace(/[^\d-]/g, '')); // R2-INB-055: não apagar o hífen do JID de grupo
 
 export const FILTER_OPTIONS: FilterOption[] = [
   {

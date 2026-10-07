@@ -227,3 +227,61 @@ describe('forwardMediaMessages — etapa 38: retry não repete o que já foi env
     expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('R2-DB-022 B2 — encaminhamento copia para o path do contato de destino (pós ACL)', () => {
+  it('origem de OUTRO contato: copia o path canônico para a pasta de cada destino e envia o locator copiado', async () => {
+    const origem = locator('whatsapp-media', 'contato-A/9f1c/IMG-2023.jpg');
+    const result = await forwardMediaMessages(
+      [item({ id: 'i1', url: origem, filename: 'IMG-2023.jpg' })],
+      [{ id: 'contato-B', type: 'contact' }, { id: 'contato-C', type: 'contact' }],
+    );
+
+    expect(result.sent).toBe(2);
+    const copyCalls = mocks.copy.mock.calls as [string, string][];
+    expect(copyCalls).toHaveLength(2);
+    // A origem é sempre o path canônico do objeto (sem host, sem query) e o destino é a pasta do destino.
+    expect(copyCalls.map(([from]) => from)).toEqual([
+      'contato-A/9f1c/IMG-2023.jpg',
+      'contato-A/9f1c/IMG-2023.jpg',
+    ]);
+    expect(copyCalls[0][1].startsWith('contato-B/')).toBe(true);
+    expect(copyCalls[1][1].startsWith('contato-C/')).toBe(true);
+
+    // O envio nunca reusa o locator do contato de origem.
+    mocks.sendOutboundMessage.mock.calls.forEach(([payload], index) => {
+      const destino = copyCalls[index][1];
+      expect(payload.mediaUrl).toBe(locator('whatsapp-media', destino));
+      expect(payload.mediaUrl).not.toContain('contato-A/');
+      expect(payload.contactId).toBe(index === 0 ? 'contato-B' : 'contato-C');
+    });
+  });
+
+  it('origem em URL assinada antiga (token na query) copia pelo path canônico, sem o token', async () => {
+    const assinada = `${SUPABASE_URL}/storage/v1/object/sign/audio-messages/contato-A/audio/voz.ogg?token=expirado`;
+    const result = await forwardMediaMessages(
+      [item({ id: 'a1', type: 'audio', filename: 'voz.ogg', url: assinada })],
+      [{ id: 'contato-B', type: 'contact' }],
+    );
+
+    expect(result.sent).toBe(1);
+    expect(mocks.copy).toHaveBeenCalledWith('contato-A/audio/voz.ogg', expect.stringMatching(/^contato-B\//));
+    const payload = mocks.sendOutboundMessage.mock.calls[0][0];
+    expect(payload.mediaUrl).toContain('/storage/v1/object/public/audio-messages/contato-B/');
+    expect(payload.mediaUrl).not.toContain('expirado');
+    expect(payload.mediaUrl).not.toContain('contato-A/');
+    expect(payload.messageType).toBe('audio');
+  });
+
+  it('bucket divergente do contrato (público) não é encaminhado: nada de cópia a partir de outro bucket', async () => {
+    const result = await forwardMediaMessages(
+      [item({ id: 'b1', url: locator('stickers', 'contato-A/s1.png') })],
+      [{ id: 'contato-B', type: 'contact' }],
+    );
+
+    expect(result.nonForwardable).toHaveLength(1);
+    expect(result.nonForwardable[0].itemId).toBe('b1');
+    expect(result.nonForwardable[0].reason).toMatch(/bucket privado/);
+    expect(mocks.copy).not.toHaveBeenCalled();
+    expect(mocks.sendOutboundMessage).not.toHaveBeenCalled();
+  });
+});

@@ -19,6 +19,16 @@
 
 import { deliveryWindowStatus, type ScheduleGuardCampaign } from "./talkx-window.ts";
 
+/**
+ * #121A: o horário comercial configurado (`talkx_settings.business_hours`) entra
+ * na política EXPLICITAMENTE — o scheduler lê a MESMA configuração que o
+ * talkx-send usa para pausar. O tipo é derivado do próprio helper
+ * (Parameters<>) para manter intacta a linha de import que a guarda de
+ * regressão de fuso verifica em
+ * scripts/db-audit/talkx-schedule-timezone-contract.test.mjs.
+ */
+export type BusinessHoursSetting = Parameters<typeof deliveryWindowStatus>[2];
+
 /** Motivos que autorizam retomada automática. Qualquer outro valor (texto livre
  *  do usuário, nulo, motivo desconhecido) significa pausa manual/diagnóstica e
  *  NUNCA é retomado por robô. */
@@ -87,6 +97,7 @@ export function selectResumableCampaigns(
   rows: PausedCampaignRow[],
   connectionStatus: (campaign: PausedCampaignRow) => string | null,
   now = new Date(),
+  businessHours: BusinessHoursSetting = null,
 ): ResumeDecision[] {
   return rows.map((campaign) => {
     const pauseReason = typeof campaign.pause_reason === "string" ? campaign.pause_reason : "";
@@ -126,7 +137,13 @@ export function selectResumableCampaigns(
       // cai para a checagem de janela abaixo
     }
 
-    if (!deliveryWindowStatus(campaign, now).allowed) {
+    // #121A: a janela é reavaliada com a configuração REAL de horário comercial,
+    // quando ela existe (o scheduler lê `talkx_settings.business_hours` e passa
+    // aqui). Sem configuração, o helper aplica o default 08:00–18:00.
+    const windowAllowed = businessHours
+      ? deliveryWindowStatus(campaign, now, businessHours).allowed
+      : deliveryWindowStatus(campaign, now).allowed;
+    if (!windowAllowed) {
       return { ...base, resume: false, because: "ainda fora da janela de envio" };
     }
 

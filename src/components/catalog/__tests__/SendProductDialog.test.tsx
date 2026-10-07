@@ -133,8 +133,9 @@ describe('SendProductDialog — Fase 7 (E72-E75 parcial)', () => {
     }));
     renderDialog({ product: mockProduct({ variants, primary_image_url: null }) });
 
-    // Todas as 11 fotos comecam selecionadas (comportamento pre-existente);
-    // desmarca todas para testar a trava do 11o clique com um estado limpo.
+    // R2-MOD-011 — o dialog agora abre com no máximo MAX_IMAGES fotos marcadas
+    // (10 de 11, teto aplicado na seleção inicial); desmarca todas para testar
+    // a trava do 11o clique a partir de um estado limpo.
     fireEvent.click(screen.getByRole('button', { name: 'Desmarcar todas' }));
     expect(screen.getByText('0 de 11 fotos selecionadas')).toBeInTheDocument();
 
@@ -543,5 +544,83 @@ describe('SendProductDialog — CT-37 (PhonePreview reutilizável, zero cor lite
     expect(fonte.match(/#[0-9a-fA-F]{6}\b/g)).toBeNull();
     expect(fonte).not.toMatch(/\bbg-white\b/);
     expect(fonte).not.toMatch(/\btext-white\b/);
+  });
+});
+
+/**
+ * R2-MOD-011 — "Limite de dez imagens não é aplicado à seleção inicial ou ao
+ * envio". O teto (MAX_IMAGES = 10) travava só o toggle e o "Adicionar fotos";
+ * a seleção inicial e o reset marcavam TODAS as fotos e o comando de envio não
+ * revalidava o tamanho. Aceite do relatório de auditoria:
+ *   1. produto com 11+ imagens abre com no máximo dez selecionadas e explica a
+ *      limitação;
+ *   2. o comando final recusa qualquer estado acima do limite.
+ * O teto do "Adicionar fotos" e o do 11º clique (E72) seguem cobertos nos
+ * testes acima.
+ */
+describe('SendProductDialog — R2-MOD-011 (limite de dez fotos na seleção inicial e no envio)', () => {
+  const CONTACT = { id: 'c1', name: 'Tomaz', phone: '5511949600474', avatar_url: null };
+
+  const elevenPhotos = () => Array.from({ length: 11 }, (_, i) => mockVariant({
+    id: `v${i}`, sku: `SKU-${i}`, color_name: `Cor ${i}`, selected_thumbnail: `https://x/img-${i}.jpg`,
+  }));
+
+  const productWithElevenPhotos = () => mockProduct({ variants: elevenPhotos(), primary_image_url: null });
+
+  beforeEach(() => {
+    setupDialogMocks();
+    sessionStorage.clear();
+  });
+
+  it('abre com no máximo dez fotos selecionadas e explica a limitação (aceite 1)', () => {
+    renderDialog({ product: productWithElevenPhotos() });
+
+    // Antes: "11 de 11 fotos selecionadas" (todas as fotos marcadas na abertura).
+    expect(screen.getByText('10 de 11 fotos selecionadas')).toBeInTheDocument();
+    expect(screen.getByText(/Limite de 10 fotos por envio: as 10 primeiras já vêm selecionadas\./)).toBeInTheDocument();
+  });
+
+  it('aplica o teto também no reset da seleção (troca de modo produto/variação)', () => {
+    renderDialog({ product: productWithElevenPhotos() });
+
+    fireEvent.click(screen.getByRole('button', { name: /Variação Específica/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Produto Completo/i }));
+
+    // Antes: o reset remarcava as 11 fotos ("11 de 11"); agora volta ao teto.
+    expect(screen.getByText('10 de 11 fotos selecionadas')).toBeInTheDocument();
+  });
+
+  it('o comando final recusa enviar quando a seleção está acima do limite (aceite 2)', () => {
+    renderDialog({ product: productWithElevenPhotos() });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Desmarcar todas' }));
+    expect(screen.getByText('0 de 11 fotos selecionadas')).toBeInTheDocument();
+    // "Selecionar todas" marca as fotos visíveis de uma vez: é o caminho que
+    // pode levar a seleção a 11 (fora do título deste cartão). O comando final
+    // é quem revalida o teto.
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar todas' }));
+    expect(screen.getByText('11 de 11 fotos selecionadas')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Selecionar Contato/i }));
+
+    // Antes: avançava para o passo do contato com as 11 fotos.
+    expect(screen.queryByRole('heading', { name: /Selecionar Contato/i })).not.toBeInTheDocument();
+    expect(mockToast.error).toHaveBeenCalledWith('Limite de 10 fotos por envio', expect.objectContaining({ description: expect.any(String) }));
+  });
+
+  it('o envio direto (contato preset) também recusa acima do limite (aceite 2)', async () => {
+    renderDialog({ product: productWithElevenPhotos(), presetContact: CONTACT });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Desmarcar todas' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar todas' }));
+    expect(screen.getByText('11 de 11 fotos selecionadas')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Enviar para Tomaz/i }));
+
+    // Antes: disparava o envio das 11 fotos sem aviso.
+    await waitFor(() => {
+      expect(mockToast.error).toHaveBeenCalledWith('Limite de 10 fotos por envio', expect.objectContaining({ description: expect.any(String) }));
+    });
+    expect(mockSendOutboundMessage).not.toHaveBeenCalled();
   });
 });

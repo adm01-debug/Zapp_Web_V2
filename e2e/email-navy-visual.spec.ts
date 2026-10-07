@@ -28,6 +28,41 @@ interface AxeViolationResult {
   }>;
 }
 
+/**
+ * Confirma que o tema pedido já está APLICADO no documento antes de medir contraste.
+ *
+ * A classe em `<html>` não é prova suficiente: `applyThemePreset` grava os tokens do preset
+ * como variáveis INLINE no próprio `<html>` (vencem `.light`/`.dark`) e a troca de tema anima
+ * as cores por 0,3 s. Medido nesta task, com a espera fixa de 400 ms removida: o WebKit leu
+ * `rgb(14, 14, 16)` (fundo do tema escuro) e valores INTERPOLADOS (`rgb(88, 88, 90)`,
+ * `rgb(138, 138, 140)`) na iteração do tema claro — a superfície animando contra uma sonda
+ * recém-criada, que já estava no valor final. Aqui esperamos o CSS RESOLVIDO do `body` (fundo
+ * e texto, que é o que o axe lê) ficar coerente com o modo pedido e a classe global de
+ * transição sair; nenhuma espera fixa sobrou no lugar disso.
+ */
+async function waitForAppliedTheme(page: import('@playwright/test').Page, mode: 'light' | 'dark') {
+  await page.waitForFunction((esperado: 'light' | 'dark') => {
+    const luminancia = (cor: string) => {
+      const [r, g, b] = (cor.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+      const linear = (v: number) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+      return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+    };
+    const amostra = (className: string) => {
+      const probe = document.createElement('div');
+      probe.className = className;
+      document.body.appendChild(probe);
+      const cor = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return cor;
+    };
+    const estavel = !document.documentElement.classList.contains('theme-transitioning')
+      && !document.body.classList.contains('theme-transitioning');
+    const fundo = luminancia(amostra('bg-background'));
+    const texto = luminancia(getComputedStyle(document.body).color);
+    return estavel && (esperado === 'light' ? fundo > 0.5 && texto < 0.5 : fundo < 0.5 && texto > 0.5);
+  }, mode);
+}
+
 test.beforeEach(async ({ page }, testInfo) => {
   await page.addInitScript(() => { (window as Window & { __BOOT_DEADLINE_MS?: number }).__BOOT_DEADLINE_MS = 60000; });
   await mockEmailNavy(page, {
@@ -76,8 +111,12 @@ test('workspace do Email não introduz violações axe', async ({ page }) => {
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
     const axe = (window as unknown as Window & {
-      axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> };
+      axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult>; _running?: boolean };
     }).axe;
+    // O app roda @axe-core/react em DEV sobre a MESMA instancia global `window.axe` desta
+    // spec: esperar a instancia ficar livre no mesmo frame que dispara o nosso run evita o
+    // "Axe is already running" intermitente, sem mexer em nenhuma assercao.
+    while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
     const result = await axe.run('.email-workspace', {
       rules: {
         'color-contrast': { enabled: true },
@@ -103,7 +142,13 @@ test('superfícies do Email herdam os mesmos tokens do sistema em claro e escuro
     const themeToggle = page.getByRole('button', { name: mode === 'light' ? 'Modo claro' : 'Modo escuro' });
     if (await themeToggle.count()) await themeToggle.click();
     await expect(page.locator('html')).toHaveClass(new RegExp(`(?:^|\\s)${mode}(?:\\s|$)`));
-    await page.waitForTimeout(400); // aguarda a transição global de tema (300 ms)
+    // Confirma o tema ANTES de medir: sem isso a leitura pegava a troca em andamento (classe
+    // ja do tema novo, tokens inline ainda do anterior ou cores interpoladas pela animacao).
+    await waitForAppliedTheme(page, mode);
+    // Reaplica o congelamento dentro do modo: `html.theme-transitioning *` (mais especifico)
+    // vence o `*` de freezeVisualTransitions durante a troca; congelar de novo depois que os
+    // tokens assentaram evita que o axe leia cor interpolada.
+    await freezeVisualTransitions(page);
 
     const colors = await page.evaluate(() => {
       const resolveBackground = (className: string) => {
@@ -233,7 +278,16 @@ test('painel CRM completo preserva ações, acessibilidade e fechamento em 320 p
     }, { message: 'o botão Fechar detalhes precisa caber nos 320 px', timeout: 5000 })
     .toBe(true);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
-  const violations = await page.evaluate(async () => (await (window as unknown as Window & { axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult> } }).axe.run('[role="dialog"]', {})).violations.map(violation => violation.id));
+  const violations = await page.evaluate(async () => {
+    const axe = (window as unknown as Window & {
+      axe: { run: (target: string, options: Record<string, unknown>) => Promise<AxeViolationResult>; _running?: boolean };
+    }).axe;
+    // O app roda @axe-core/react em DEV sobre a MESMA instancia global `window.axe` desta
+    // spec: esperar a instancia ficar livre no mesmo frame que dispara o nosso run evita o
+    // "Axe is already running" intermitente, sem mexer em nenhuma assercao.
+    while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
+    return (await axe.run('[role="dialog"]', {})).violations.map(violation => violation.id);
+  });
   expect(violations).toEqual([]);
 });
 
@@ -381,7 +435,11 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
   await freezeVisualTransitions(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
-    const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult> } }).axe;
+    const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult>; _running?: boolean } }).axe;
+    // O app roda @axe-core/react em DEV sobre a MESMA instancia global `window.axe` desta
+    // spec: esperar a instancia ficar livre no mesmo frame que dispara o nosso run evita o
+    // "Axe is already running" intermitente, sem mexer em nenhuma assercao.
+    while (axe._running) await new Promise(resolve => setTimeout(resolve, 25));
     return (await axe.run('.email-workspace')).violations.map(item => ({
       id: item.id,
       impact: item.impact,

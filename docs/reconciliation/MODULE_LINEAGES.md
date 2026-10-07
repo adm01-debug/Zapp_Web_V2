@@ -67,6 +67,15 @@ As 62 fontes resolvidas possuem identidade independente. A tabela preserva plano
 | [P061](tasks/P061.json) | docs/HANDOFF_EVOLUTION_SECURITY_2026-04-12.md | 10 | HISTORICAL_BASELINE_CLAIMS | 0 | 10 |
 | [P062](tasks/P062.json) | external/Plano_Dashboard_100_Etapas_2026-09-30.md | 100 | CURRENT_EXTERNAL_REFERENCE | 100 | 0 |
 
+## Fontes com tarefas explícitas fora dos planos
+
+Duas fontes catalogadas declaram tarefas explícitas (`### TAREFA n`) sem serem planos resolvidos. A enumeração física do catálogo já continha esses arquivos; o que faltava era a adjudicação de origem. A correspondência com consumidores e decisões atuais está em [PLAN_REGISTRY.json](PLAN_REGISTRY.json) (`source_adjudications`) e a comparação de origem está conservada em [omitted-source-adjudication.json](reaudit/2026-10-03/reports/root/omitted-source-adjudication.json). Nenhuma tarefa nova entra no ledger: parte vive em consumidores atuais e parte em componentes substituídos.
+
+| Fonte | Tarefas explícitas | Estado |
+| --- | --- | --- |
+| docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md | 6 (CRM360-T1..T6) | ADJUDICATED_HISTORICAL_SOURCE_NOT_NEW_BACKLOG |
+| docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md | 4 (INTEL-T1..T4) | ADJUDICATED_HISTORICAL_SOURCE_NOT_NEW_BACKLOG |
+
 ## Regras de leitura
 
 `HISTORICAL_SUPERSEDED` identifica sucessor documentado; `HISTORICAL_DESIGN_REFERENCE` conserva contexto sem certificar cada aceite; `OVERLAPPING_CURRENT_REFERENCES` marca autoridade conflitante, em especial Team Chat F/TC. `ARCHITECTURE_DECISION_REQUIRED` preserva a proposta Banco Único sem mudar o alvo canônico. Fontes fora de main conservam branch/ref e entregas posteriores separadas.

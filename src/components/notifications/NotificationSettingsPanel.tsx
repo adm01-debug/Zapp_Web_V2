@@ -33,8 +33,11 @@ export function NotificationSettingsPanel() {
     });
   };
 
-  const handleReset = () => {
-    resetSettings();
+  const handleReset = async () => {
+    // O hook confirma com o banco antes de dar sucesso: se o upsert falhar ele já mostra o erro
+    // e devolve `false` — anunciar "resetadas" aqui era mentira e o padrão não era gravado.
+    const sucesso = await resetSettings();
+    if (!sucesso) return;
     toast({ title: '🔄 Configurações resetadas', description: 'As preferências de notificação foram restauradas ao padrão.' });
   };
 

@@ -34,11 +34,17 @@ export const TEMPLATE_LANGUAGES = [
   { value: 'es', label: 'Español' },
 ];
 
-export const STATUS_BADGES: Record<string, { label: string; className: string; iconName: string }> = {
-  approved: { label: 'Aprovado', className: 'bg-success/20 text-success', iconName: 'CheckCircle2' },
-  pending: { label: 'Pendente', className: 'bg-warning/20 text-warning', iconName: 'Clock' },
-  rejected: { label: 'Rejeitado', className: 'bg-destructive/20 text-destructive', iconName: 'XCircle' },
-  draft: { label: 'Rascunho', className: 'bg-muted text-muted-foreground', iconName: 'FileText' },
+// R2-MOD-067: `whatsapp_templates.status` é o estado do CADASTRO LOCAL. O formulário
+// não define aprovação oficial; todo rótulo diz que o estado é local porque hoje não há
+// fluxo neste repositório que grave retorno da Meta nesta tabela para comprovar
+// "Aprovado" como selo oficial do WhatsApp Business API.
+export const TEMPLATE_STATUS_SCOPE = 'local' as const;
+
+export const STATUS_BADGES: Record<string, { label: string; className: string; iconName: string; scope: typeof TEMPLATE_STATUS_SCOPE }> = {
+  approved: { label: 'Aprovado (local)', className: 'bg-success/20 text-success', iconName: 'CheckCircle2', scope: TEMPLATE_STATUS_SCOPE },
+  pending: { label: 'Pendente (local)', className: 'bg-warning/20 text-warning', iconName: 'Clock', scope: TEMPLATE_STATUS_SCOPE },
+  rejected: { label: 'Rejeitado (local)', className: 'bg-destructive/20 text-destructive', iconName: 'XCircle', scope: TEMPLATE_STATUS_SCOPE },
+  draft: { label: 'Rascunho local', className: 'bg-muted text-muted-foreground', iconName: 'FileText', scope: TEMPLATE_STATUS_SCOPE },
 };
 
 export const EMPTY_TEMPLATE: Partial<WhatsAppTemplate> = {
@@ -90,6 +96,11 @@ export function useWhatsAppTemplates() {
     }
     setIsSaving(true);
     try {
+      // R2-MOD-067: o formulário NÃO define o estado de aprovação. `status` é estado
+      // local guardado na tabela; hoje não há fluxo neste repositório que grave retorno da
+      // Meta neste campo. Por isso ele não entra no payload: cadastro novo nasce como
+      // rascunho local e a edição preserva o valor guardado, em vez de aceitar
+      // "approved" escolhido na tela.
       const templateData = {
         name: editingTemplate.name.trim().toLowerCase().replace(/\s+/g, '_'),
         category: editingTemplate.category || 'utility',
@@ -99,17 +110,16 @@ export function useWhatsAppTemplates() {
         footer_text: editingTemplate.footer_text?.trim() || null,
         buttons: (editingTemplate.buttons || []) as unknown as Record<string, never>,
         variables: editingTemplate.variables || [],
-        status: editingTemplate.status || 'draft',
         created_by: user?.id || null,
       };
       if (editingTemplate.id) {
         const { error } = await supabase.from('whatsapp_templates').update(templateData).eq('id', editingTemplate.id);
         if (error) throw error;
-        toast.success('Template atualizado!');
+        toast.success('Template salvo localmente. A aprovação oficial não é alterada por este formulário.');
       } else {
-        const { error } = await supabase.from('whatsapp_templates').insert(templateData);
+        const { error } = await supabase.from('whatsapp_templates').insert({ ...templateData, status: 'draft' });
         if (error) throw error;
-        toast.success('Template criado!');
+        toast.success('Rascunho local salvo. O status de aprovação não é definido por este formulário.');
       }
       setIsDialogOpen(false);
       setEditingTemplate(EMPTY_TEMPLATE);

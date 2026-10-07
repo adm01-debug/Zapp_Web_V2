@@ -41,7 +41,10 @@ export function InstanceSettingsDialog({ open, onOpenChange, instanceName, conne
 
   const [settingsData, setSettingsData] = useState<Record<string, boolean | string>>({ rejectCall: false, msgCall: '', groupsIgnore: false, alwaysOnline: false, readMessages: false, readStatus: false, syncFullHistory: false });
   const [profile, setProfile] = useState({ name: '', status: '', pictureUrl: '' });
-  const [privacy, setPrivacy] = useState<Record<string, string>>({ readreceipts: 'all', profile: 'all', status: 'contacts', online: 'all', last: 'contacts', groupadd: 'contacts' });
+  // R2-API-040: o rascunho guarda SÓ os campos que o operador escolheu. Nada de
+  // valor local servindo de "configuração atual" — campo intocado fica fora do
+  // payload e o provedor mantém o que já estava lá (merge no backend).
+  const [privacy, setPrivacy] = useState<Record<string, string>>({});
   const [labels, setLabels] = useState<{ id: string; name: string; color: string }[]>([]);
   const [loadingTab, setLoadingTab] = useState('');
 
@@ -64,6 +67,22 @@ export function InstanceSettingsDialog({ open, onOpenChange, instanceName, conne
       loadProfile();
     }
   }, [open, instanceName, loadSettings, loadProfile]);
+
+  useEffect(() => {
+    // O rascunho de privacidade pertence à conexão aberta: trocar de instância (ou
+    // reabrir o diálogo) descarta o que foi escolhido antes, para não enviar valor
+    // de uma conta para outra (R2-API-040).
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- limpeza de rascunho local na troca de instância, sem estado derivado de props para sincronizar.
+    setPrivacy({});
+  }, [open, instanceName]);
+
+  /** Só entra no rascunho o campo que o operador escolheu; "Manter atual" (vazio) sai dele. */
+  const handlePrivacyChange = (key: string, value: string) => {
+    setPrivacy((prev) => {
+      if (!value) { const resto = { ...prev }; delete resto[key]; return resto; }
+      return { ...prev, [key]: value };
+    });
+  };
 
   const loadLabels = async () => {
     setLoadingTab('labels');
@@ -109,8 +128,12 @@ export function InstanceSettingsDialog({ open, onOpenChange, instanceName, conne
           </TabsContent>
 
           <TabsContent value="privacy">
-            <PrivacyTabContent privacy={privacy} privacyItems={PRIVACY_ITEMS} privacyOptions={PRIVACY_OPTIONS} onChange={(k, v) => setPrivacy(p => ({ ...p, [k]: v }))}
-              onSave={async () => { try { await updatePrivacySettings({ instanceName, ...privacy }); toast.success('Privacidade atualizada!'); } catch { toast.error('Erro ao atualizar'); } }} isLoading={isLoading} />
+            <PrivacyTabContent privacy={privacy} privacyItems={PRIVACY_ITEMS} privacyOptions={PRIVACY_OPTIONS} onChange={handlePrivacyChange}
+              onSave={async () => {
+                // Nada alterado → nada é enviado: sem padrão local sobrescrevendo a conta.
+                if (Object.keys(privacy).length === 0) return;
+                try { await updatePrivacySettings({ instanceName, ...privacy }); setPrivacy({}); toast.success('Privacidade atualizada!'); } catch { toast.error('Erro ao atualizar'); }
+              }} isLoading={isLoading} />
           </TabsContent>
 
           <TabsContent value="labels"><LabelsTabContent labels={labels} loading={loadingTab === 'labels'} /></TabsContent>

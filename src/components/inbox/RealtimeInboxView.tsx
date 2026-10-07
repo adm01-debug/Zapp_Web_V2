@@ -91,9 +91,15 @@ function focarQuickAdd(tentativas = 20): void {
 export function RealtimeInboxView() {
   const isMobile = useIsMobile();
   const inbox = useRealtimeInbox();
-  const inboxFilters = useInboxFilters({ conversations: inbox.cachedConversations, profileId: inbox.profile?.id });
-  const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const conversationActions = useConversationActions();
+  // `snoozedIds` entra no filtro para a lista ativa suspender a conversa adiada e
+  // retomá-la no vencimento do prazo (R2-INB-029).
+  const inboxFilters = useInboxFilters({
+    conversations: inbox.cachedConversations,
+    profileId: inbox.profile?.id,
+    snoozedIds: conversationActions.snoozedIds,
+  });
+  const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const [talkMeOpen, setTalkMeOpen] = useState(false);
   const talkMeEnabled = useFeatureFlag('inbox.talk-me', false);
   const talkMe = useTalkMeQueue(talkMeOpen, talkMeEnabled);
@@ -196,7 +202,10 @@ export function RealtimeInboxView() {
     if (result.contactId) inbox.handleSelectConversation(result.contactId);
   };
 
-  if (inbox.error) {
+  // R2-INB-015: com um cache válido a Inbox continua utilizável offline. A tela
+  // de erro global só substitui a UI quando NÃO há cache para sustentá-la —
+  // antes ela engolia o recorte em cache tão logo a carga falhava.
+  if (inbox.error && !inbox.usingCache) {
     return (
       <div className="flex items-center justify-center h-full bg-background">
         <div className="text-center p-8">
@@ -286,7 +295,20 @@ export function RealtimeInboxView() {
                     />
                   ) : null}
                 />
-                {inbox.selectedContactId && inbox.selectedMessagesLoading ? <ChatFallback /> : (
+                {/* R2-INB-024: a carga das mensagens desta conversa falhou. O `loading` do
+                    hook termina mesmo no erro, então sem este ramo o painel caía no ChatPanel
+                    com zero mensagens — ilegível como "falha" e igual a um contato sem histórico,
+                    sem caminho de retry. O retry é o refetch DESTA consulta, não da lista global. */}
+                {inbox.selectedMessagesError && inbox.legacyMessages.length === 0 ? (
+                  <div role="alert" className="flex-1 flex items-center justify-center p-8">
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4"><WifiOff className="w-8 h-8 text-destructive" /></div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar as mensagens</h3>
+                      <p className="text-muted-foreground text-sm mb-4 break-words">{inbox.selectedMessagesError}</p>
+                      <Button onClick={() => { void inbox.refetchSelectedMessages(); }} variant="outline"><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button>
+                    </div>
+                  </div>
+                ) : inbox.selectedContactId && inbox.selectedMessagesLoading ? <ChatFallback /> : (
                   <ConversationTabContent
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
@@ -367,7 +389,17 @@ export function RealtimeInboxView() {
       </div>
 
       {inbox.usingCache && (
-        <div className="absolute top-0 left-0 right-0 z-50 bg-warning/90 text-warning-foreground text-xs text-center py-1.5 font-medium">🚧 Modo offline — exibindo dados em cache</div>
+        <div
+          data-testid="inbox-offline-cache-banner"
+          className="absolute top-0 left-0 right-0 z-50 bg-warning/90 text-warning-foreground text-xs text-center py-1.5 font-medium"
+        >
+          🚧 Modo offline — exibindo dados em cache
+          {/* R2-INB-015: identifica o recorte — a conversa ativa está mostrando
+              as mensagens guardadas no cache, não as carregadas ao vivo. */}
+          {inbox.selectedMessagesFromCache && (
+            <span data-testid="inbox-offline-cache-messages"> · mensagens da conversa vindas do cache</span>
+          )}
+        </div>
       )}
 
       {isMobile && inbox.pipContact && !inbox.selectedContactId && (

@@ -1,5 +1,5 @@
 import {
-  ArrowRight, CheckCircle, FileText, StickyNote, Tag, AlertTriangle,
+  ArrowRight, CheckCircle, FileText, AlertTriangle,
   Users, Clock, Star, Archive, Bell, Zap, MessageSquare, Package,
 } from 'lucide-react';
 
@@ -19,8 +19,11 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   { id: 'transfer', command: '/transfer', label: 'Transferir', description: 'Transferir conversa para outro agente ou fila', icon: ArrowRight, category: 'actions', color: 'text-info', shortcut: 'T', subCommands: [{ id: 'agent', label: 'Para Agente', value: 'agent' }, { id: 'queue', label: 'Para Fila', value: 'queue' }] },
   { id: 'resolve', command: '/resolve', label: 'Resolver', description: 'Marcar conversa como resolvida', icon: CheckCircle, category: 'actions', color: 'text-success', shortcut: 'R' },
   { id: 'template', command: '/template', label: 'Template', description: 'Inserir um template de mensagem', icon: FileText, category: 'templates', color: 'text-primary', shortcut: 'M' },
-  { id: 'note', command: '/note', label: 'Nota', description: 'Adicionar nota privada à conversa', icon: StickyNote, category: 'notes', color: 'text-warning', shortcut: 'N' },
-  { id: 'tag', command: '/tag', label: 'Tag', description: 'Adicionar ou remover tags', icon: Tag, category: 'tags', color: 'text-info', shortcut: 'G', subCommands: [{ id: 'add', label: 'Adicionar Tag', value: 'add' }, { id: 'remove', label: 'Remover Tag', value: 'remove' }] },
+  // R2-INB-021 (item 317): /note e /tag saíram da lista. Eles só limpavam o
+  // input e mostravam um aviso (não abriam editor de nota nem seletor de tag),
+  // então a lista anunciava uma operação que não existia. Só voltam quando o
+  // destino por trás existir (nota: aba Notas preparada para receber o comando;
+  // tag: seletor de tags dentro do chat).
   { id: 'priority', command: '/priority', label: 'Prioridade', description: 'Definir prioridade da conversa', icon: AlertTriangle, category: 'priority', color: 'text-warning', shortcut: 'P', subCommands: [{ id: 'high', label: '🔴 Alta', value: 'high' }, { id: 'medium', label: '🟡 Média', value: 'medium' }, { id: 'low', label: '🟢 Baixa', value: 'low' }] },
   { id: 'assign', command: '/assign', label: 'Atribuir', description: 'Atribuir conversa a um agente', icon: Users, category: 'actions', color: 'text-primary', shortcut: 'A' },
   { id: 'snooze', command: '/snooze', label: 'Adiar', description: 'Adiar conversa para depois', icon: Clock, category: 'actions', color: 'text-muted-foreground', shortcut: 'S', subCommands: [{ id: '1h', label: 'Em 1 hora', value: '1h' }, { id: '3h', label: 'Em 3 horas', value: '3h' }, { id: 'tomorrow', label: 'Amanhã', value: 'tomorrow' }, { id: 'nextweek', label: 'Próxima semana', value: 'nextweek' }] },

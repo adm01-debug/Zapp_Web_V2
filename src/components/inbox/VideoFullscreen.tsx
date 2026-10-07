@@ -100,6 +100,14 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
         onClick={(e) => e.stopPropagation()}
         onLoadedMetadata={() => { if (videoRef.current) videoRef.current.playbackRate = playbackRate; }}
         className="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl"
+        // VOL-04 — fallback do iOS. `crossOrigin="anonymous"` deixa o elemento CORS-limpo para o
+        // `createMediaElementSource` do caminho WebAudio (no iOS `element.volume` é read-only e o
+        // app cai no GainNode); sem ele a URL assinada cross-origin lança SecurityError, o catch de
+        // mediaVolumeElement.ts o engole e o controle de volume vira um no-op silencioso.
+        // `playsInline` impede o iOS de sequestrar o vídeo para o player nativo — é o que mantém o
+        // `MediaVolumeControl` do app visível e operante.
+        crossOrigin="anonymous"
+        playsInline
       />
     </motion.div>,
     document.body,

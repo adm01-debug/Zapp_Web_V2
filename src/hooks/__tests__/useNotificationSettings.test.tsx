@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
@@ -362,6 +362,58 @@ describe('useNotificationSettings', () => {
       const result = await carregar();
 
       expect(result.current.isQuietHours()).toBe(true);
+    });
+  });
+
+  // ========== RESET: FALHA DO BANCO NÃO PODE VIRAR SUCESSO ==========
+  // O upsert do supabase-js devolve `{ error }` em vez de lançar. O `resetSettings` não
+  // conferia esse erro: o `catch` nunca disparava, o cache ficava no padrão que o banco recusou
+  // gravar e o painel anunciava "restauradas ao padrão". Aqui a falha tem de voltar ao valor
+  // gravado (rollback) e sinalizar o insucesso para quem chamou.
+  describe('reset com o banco recusando', () => {
+    const carregar = async () => {
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      return result;
+    };
+
+    it('banco rejeita: o otimista aparece e é desfeito, com aviso ao usuário', async () => {
+      // Upsert pendente: controlando a ordem dá para ver o otimista ANTES da recusa do banco.
+      let recusar!: (resultado: { error: unknown }) => void;
+      const upsert = vi.fn().mockImplementation(
+        () => new Promise<{ error: unknown }>((resolve) => { recusar = resolve; }),
+      );
+      mockFrom.mockReturnValue(montarCadeia({ sound_enabled: true, sound_volume: 45 }, upsert));
+      const result = await carregar();
+      expect(result.current.settings.soundVolume).toBe(45); // valor gravado no banco
+
+      let promessa!: Promise<boolean>;
+      await act(async () => { promessa = result.current.resetSettings(); });
+      await waitFor(() => expect(result.current.settings.soundVolume).toBe(70)); // otimista
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        recusar({ error: new Error('RLS recusou o upsert') });
+        ok = await promessa;
+      });
+
+      expect(ok).toBe(false); // o painel só anuncia sucesso quando volta `true`
+      expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
+      // sem o rollback a tela ficava com o padrão (70) que o banco recusou gravar
+      await waitFor(() => expect(result.current.settings.soundVolume).toBe(45));
+    });
+
+    it('banco grava: confirma o reset e deixa o padrão no cache', async () => {
+      const upsert = vi.fn().mockResolvedValue({ error: null });
+      mockFrom.mockReturnValue(montarCadeia({ sound_enabled: true, sound_volume: 45 }, upsert));
+      const result = await carregar();
+
+      let ok: boolean | undefined;
+      await act(async () => { ok = await result.current.resetSettings(); });
+
+      expect(ok).toBe(true);
+      expect(upsert.mock.calls[0][0]).toMatchObject({ user_id: 'u1', sound_volume: 70 });
+      await waitFor(() => expect(result.current.settings.soundVolume).toBe(70));
     });
   });
 });

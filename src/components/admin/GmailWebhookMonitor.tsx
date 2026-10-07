@@ -24,32 +24,51 @@ interface ThreadStats {
   unread: number;
 }
 
+function describeError(err: unknown): string {
+  if (err && typeof err === 'object' && 'message' in err) {
+    const message = String((err as { message?: unknown }).message ?? '').trim();
+    if (message) return message;
+  }
+  return 'Falha ao consultar os dados do Gmail';
+}
+
 export function GmailWebhookMonitor() {
   const [accounts, setAccounts] = useState<GmailAccount[]>([]);
-  const [stats, setStats] = useState<ThreadStats>({ total: 0, unread: 0 });
+  // `null` = desconhecido. Zero real (consulta bem-sucedida sem threads) e
+  // "nao consegui perguntar" precisam ser estados diferentes (R2-API-059).
+  const [stats, setStats] = useState<ThreadStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastLoadedAt, setLastLoadedAt] = useState<number | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: gmailAccounts } = await supabase
+      const { data: gmailAccounts, error: accountsError } = await supabase
         .rpc('get_own_gmail_accounts');
-
-      setAccounts((gmailAccounts || []).map(a => ({ ...a, history_id: null })) as GmailAccount[]);
+      if (accountsError) throw accountsError;
 
       // Get thread stats
-      const { count: totalThreads } = await supabase
+      const { count: totalThreads, error: totalError } = await supabase
         .from('email_threads')
         .select('*', { count: 'exact', head: true });
+      if (totalError) throw totalError;
 
-      const { count: unreadThreads } = await supabase
+      const { count: unreadThreads, error: unreadError } = await supabase
         .from('email_threads')
         .select('*', { count: 'exact', head: true })
         .eq('is_unread', true);
+      if (unreadError) throw unreadError;
 
-      setStats({ total: totalThreads || 0, unread: unreadThreads || 0 });
+      // As tres consultas passaram: so aqui o estado e publicado. Erro em
+      // qualquer uma delas nao pode sobrescrever o ultimo dado bom com zero.
+      setAccounts((gmailAccounts || []).map(a => ({ ...a, history_id: null })) as GmailAccount[]);
+      setStats({ total: totalThreads ?? 0, unread: unreadThreads ?? 0 });
+      setError(null);
+      setLastLoadedAt(Date.now());
     } catch (err) {
       log.warn('Failed to load Gmail data:', err);
+      setError(describeError(err));
     } finally {
       setLoading(false);
     }
@@ -79,6 +98,9 @@ export function GmailWebhookMonitor() {
     return `${Math.floor(hours / 24)}d atrás`;
   };
 
+  const hasError = Boolean(error);
+  const staleWithData = hasError && lastLoadedAt !== null;
+
   return (
     <div className="space-y-6 w-full min-w-0">
       {/* Header */}
@@ -95,30 +117,48 @@ export function GmailWebhookMonitor() {
         </Button>
       </div>
 
+      {/* Falha de consulta: estado explicito, com o ultimo dado bom preservado */}
+      {hasError && (
+        <div role="alert" className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+          <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-destructive">Não foi possível consultar os dados do Gmail</p>
+            <p className="text-xs text-muted-foreground">
+              {staleWithData
+                ? 'Os números abaixo são do último carregamento bem-sucedido e podem estar desatualizados.'
+                : 'Nenhum dado foi carregado ainda — os campos abaixo aparecem como desconhecidos, não como zero.'}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" className="h-8 text-xs shrink-0" onClick={loadData} disabled={loading}>
+            <RefreshCw className={`w-3 h-3 mr-1 ${loading ? 'animate-spin' : ''}`} /> Tentar de novo
+          </Button>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-4 pb-4 text-center">
-            <p className="text-2xl font-bold text-primary">{accounts.length}</p>
+            <p className="text-2xl font-bold text-primary">{stats ? accounts.length : '—'}</p>
             <p className="text-xs text-muted-foreground">Contas Gmail</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4 text-center">
-            <p className="text-2xl font-bold text-success">{accounts.filter(a => a.is_active).length}</p>
+            <p className="text-2xl font-bold text-success">{stats ? accounts.filter(a => a.is_active).length : '—'}</p>
             <p className="text-xs text-muted-foreground">Ativas</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-            <p className="text-xs text-muted-foreground">Threads Totais</p>
+            <p className="text-2xl font-bold text-foreground">{stats ? stats.total : '—'}</p>
+            <p className="text-xs text-muted-foreground">Threads Totais{staleWithData ? ' (desatualizado)' : ''}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4 text-center">
-            <p className="text-2xl font-bold text-warning">{stats.unread}</p>
-            <p className="text-xs text-muted-foreground">Não Lidos</p>
+            <p className="text-2xl font-bold text-warning">{stats ? stats.unread : '—'}</p>
+            <p className="text-xs text-muted-foreground">Não Lidos{staleWithData ? ' (desatualizado)' : ''}</p>
           </CardContent>
         </Card>
       </div>
@@ -130,9 +170,17 @@ export function GmailWebhookMonitor() {
         </CardHeader>
         <CardContent>
           {accounts.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Nenhuma conta Gmail conectada. Configure em Integrações → Gmail.
-            </p>
+            hasError ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Status das contas indisponível: a consulta falhou. Isso não significa que não há conta Gmail conectada.
+              </p>
+            ) : loading ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Carregando contas...</p>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Nenhuma conta Gmail conectada. Configure em Integrações → Gmail.
+              </p>
+            )
           ) : (
             <div className="space-y-3">
               {accounts.map(account => (

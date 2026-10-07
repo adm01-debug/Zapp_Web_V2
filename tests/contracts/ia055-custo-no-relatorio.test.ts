@@ -81,7 +81,13 @@ describe('IA-055 — o cliente nao faz conta de custo', () => {
   it('o hook busca o custo no servidor e nao multiplica preco localmente', () => {
     expect(HOOK).toMatch(/rpc as unknown as/);
     expect(HOOK).toMatch(/'ai_usage_cost_summary'/);
-    expect(HOOK).toMatch(/p_since:\s*since/);
+    // O p_since do CUSTO tem de ser a janela relativa, ancorado na PROPRIA RPC do
+    // custo: o regex antigo (/p_since:\s*since/) casava com o `p_since` do resumo
+    // (ai_usage_summary) e teria passado mesmo se o custo perdesse o seu p_since.
+    // O #264 (cartao 26100607191443) trocou o `since` memoizado na montagem por
+    // `janelaAtual()`, que recalcula o limite a cada atualizacao; a garantia do
+    // contrato e a mesma (a janela vai para o servidor), so a forma mudou.
+    expect(HOOK).toMatch(/ai_usage_cost_summary',\s*\{[\s\S]{0,160}?p_since:\s*janelaAtual\(\)/);
     // a RPC do CUSTO pede a janela inteira (p_until nulo), ancorado na propria RPC
     expect(HOOK).toMatch(/ai_usage_cost_summary',\s*\{[\s\S]{0,140}?p_until:\s*null/);
     // invariante: nenhum preco entra no cliente

@@ -280,16 +280,14 @@ export function useFileUploadLogic(opts: {
   }, [handleExternalFile, processFilesToQueue]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const validation = validateFile(file);
-    let preview: string | undefined;
-    if (validation.valid && (validation.category === 'image' || file.type === 'application/pdf')) preview = URL.createObjectURL(file);
-    setFilePreview({ file, validation, preview });
-    setCaption('');
-    setIsDialogOpen(true);
+    // O input nativo e `multiple`: aproveita TODOS os arquivos escolhidos pelo mesmo
+    // pipeline do drag/paste/chip (`handleExternalFiles`). Antes so `files[0]` entrava
+    // no preview/envio e o resto era descartado em silencio (R2-INB-011).
+    const files = Array.from(e.target.files ?? []);
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, []);
+    if (files.length === 0) return;
+    handleExternalFiles(files);
+  }, [handleExternalFiles]);
 
   const removeFromQueue = useCallback((id: string) => {
     setFileQueue(prev => {

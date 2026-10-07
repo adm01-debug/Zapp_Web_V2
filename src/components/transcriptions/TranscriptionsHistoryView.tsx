@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mic, Search, Calendar, X, RefreshCw } from 'lucide-react';
+import { Mic, Search, Calendar, X, RefreshCw, AlertTriangle } from 'lucide-react';
 import { isToday, isThisWeek, isThisMonth } from 'date-fns';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { TranscriptionContactGroup } from './TranscriptionContactGroup';
 
 interface TranscriptionRecord {
@@ -23,26 +24,53 @@ type DateFilter = 'all' | 'today' | 'week' | 'month';
 export function TranscriptionsHistoryView() {
   const [transcriptions, setTranscriptions] = useState<TranscriptionRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [incomplete, setIncomplete] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [expandedContacts, setExpandedContacts] = useState<Set<string>>(new Set());
 
   const fetchTranscriptions = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select(`id, content, transcription, media_url, created_at, contact_id, contacts!inner (id, name, phone, avatar_url)`)
-        .eq('message_type', 'audio')
-        .not('transcription', 'is', null)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      setTranscriptions((data || []).map((item: any) => ({
-        id: item.id, content: item.content, transcription: item.transcription, media_url: item.media_url,
-        created_at: item.created_at, contact_id: item.contact_id,
+      // #438 (R2-MOD-077): um `select()` sem `range` devolve só a PRIMEIRA página (teto do
+      // PostgREST). "Todo período", a busca e o agrupamento valem sobre o que foi lido — por
+      // isso a leitura percorre TODAS as páginas; a ordem por `created_at` + `id` (chave
+      // única) mantém a varredura estável, sem duplicar nem omitir registros na virada de
+      // página. Falha de leitura é explícita: nunca reapresentada como "nenhuma transcrição".
+      const { rows, incomplete: truncated, error } = await fetchAllRows<{
+        id: string; content: string; transcription: string | null; media_url: string | null;
+        created_at: string; contact_id: string | null;
+        contacts: { id: string; name: string; phone: string; avatar_url: string | null } | null;
+      }>(
+        (from, to) => supabase
+          .from('messages')
+          .select(`id, content, transcription, media_url, created_at, contact_id, contacts!inner (id, name, phone, avatar_url)`)
+          .eq('message_type', 'audio')
+          .not('transcription', 'is', null)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: true })
+          .range(from, to),
+      );
+      if (error) {
+        log.error('Error fetching transcriptions:', error);
+        setLoadError(error.message);
+        setIncomplete(true);
+      } else {
+        setIncomplete(truncated);
+      }
+      setTranscriptions(rows.map((item) => ({
+        id: item.id, content: item.content, transcription: item.transcription ?? '', media_url: item.media_url,
+        created_at: item.created_at, contact_id: item.contact_id ?? '',
         contact_name: item.contacts?.name || 'Desconhecido', contact_phone: item.contacts?.phone || '', contact_avatar: item.contacts?.avatar_url || null,
       })));
-    } catch (error) { log.error('Error fetching transcriptions:', error); }
+    } catch (error) {
+      log.error('Error fetching transcriptions:', error);
+      setLoadError(error instanceof Error ? error.message : 'Falha ao carregar as transcrições');
+      setIncomplete(true);
+      setTranscriptions([]);
+    }
     finally { setLoading(false); }
   };
 
@@ -129,10 +157,23 @@ export function TranscriptionsHistoryView() {
         </div>
       </motion.div>
 
+      {incomplete && (
+        <div className="relative z-10 flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          Exibindo um recorte das transcrições — a leitura não cobriu todo o período.
+          {loadError ? ` (${loadError})` : ''}
+        </div>
+      )}
+
       <div>
         <div className="space-y-4 relative z-10 pr-4">
           <AnimatePresence>
-            {Object.keys(groupedByContact).length === 0 ? (
+            {loadError && transcriptions.length === 0 ? (
+              <EmptyState icon={Mic} title="Não foi possível carregar as transcrições"
+                description="A consulta falhou — isso não significa que não existam transcrições. Tente carregar de novo."
+                secondaryActionLabel="Tentar de novo" onSecondaryAction={() => { void fetchTranscriptions(); }}
+              />
+            ) : Object.keys(groupedByContact).length === 0 ? (
               <EmptyState icon={Mic} title={searchQuery ? 'Nenhum resultado encontrado' : 'Nenhuma transcrição ainda'}
                 description={searchQuery ? 'Tente ajustar os termos da busca ou filtros' : 'Transcrições de áudios aparecerão aqui automaticamente'}
                 illustration="transcriptions" secondaryActionLabel={searchQuery ? 'Limpar busca' : undefined} onSecondaryAction={searchQuery ? () => setSearchQuery('') : undefined}

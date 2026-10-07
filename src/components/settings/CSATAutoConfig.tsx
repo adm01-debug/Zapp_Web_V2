@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/ui/use-toast';
 import { MessageSquareHeart, Clock, Send, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/auth/useAuth';
+
+const DEFAULT_MESSAGE_TEMPLATE = 'Olá {name}! Como foi seu atendimento? Avalie de 1 a 5 ⭐\n\n1️⃣ Péssimo\n2️⃣ Ruim\n3️⃣ Regular\n4️⃣ Bom\n5️⃣ Excelente';
 
 export function CSATAutoConfig() {
   const { profile } = useAuth();
@@ -34,18 +36,25 @@ export function CSATAutoConfig() {
 
   const [isEnabled, setIsEnabled] = useState(config?.is_enabled ?? false);
   const [delayMinutes, setDelayMinutes] = useState(config?.delay_minutes ?? 5);
-  const [template, setTemplate] = useState(config?.message_template ?? 'Olá {name}! Como foi seu atendimento? Avalie de 1 a 5 ⭐\n\n1️⃣ Péssimo\n2️⃣ Ruim\n3️⃣ Regular\n4️⃣ Bom\n5️⃣ Excelente');
+  const [template, setTemplate] = useState(config?.message_template ?? DEFAULT_MESSAGE_TEMPLATE);
   const [connectionId, setConnectionId] = useState(config?.whatsapp_connection_id ?? '');
 
-  // Sync state when data loads
-  useState(() => {
-    if (config) {
-      setIsEnabled(config.is_enabled ?? false);
-      setDelayMinutes(config.delay_minutes ?? 5);
-      setTemplate(config.message_template ?? '');
-      setConnectionId(config.whatsapp_connection_id ?? '');
-    }
-  });
+  // R2-AUTH-045 (item 269): a configuração carregada tem de chegar ao formulário.
+  // Antes isto era um inicializador de useState, que só roda na PRIMEIRA renderização
+  // — quando a query ainda não voltou (`config` indefinido). O formulário ficava nos
+  // padrões e o "Salvar" sobrescrevia a configuração salva. A sincronização acontece
+  // quando a linha carregada muda de identidade (id + updated_at), para um refetch
+  // com os mesmos dados não apagar edição ainda não salva.
+  const configKey = config?.id ? `${config.id}:${config.updated_at ?? ''}` : null;
+  const syncedKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!config || !configKey || syncedKeyRef.current === configKey) return;
+    syncedKeyRef.current = configKey;
+    setIsEnabled(config.is_enabled ?? false);
+    setDelayMinutes(config.delay_minutes ?? 5);
+    setTemplate(config.message_template ?? DEFAULT_MESSAGE_TEMPLATE);
+    setConnectionId(config.whatsapp_connection_id ?? '');
+  }, [config, configKey]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {

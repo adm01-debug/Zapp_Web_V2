@@ -13,6 +13,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface Note {
   id: string;
@@ -28,6 +29,8 @@ interface ContactNotesProps {
 }
 
 export function ContactNotes({ contactId, className }: ContactNotesProps) {
+  const { profile } = useAuth();
+  const currentProfileId = profile?.id ?? null;
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState('');
@@ -107,16 +110,34 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
   };
 
   const handleDelete = async (noteId: string) => {
-    const { error } = await supabase
+    // A policy `contact_notes_delete_policy` (migration
+    // 20260909200000_harden_inbox_contact_authorization.sql) só apaga a nota cujo
+    // author_id é o perfil do usuário logado. Para nota de colega o RLS filtra a
+    // linha: o DELETE volta SEM erro e SEM representação — por isso o pedido de
+    // volta (`select('id')`) e a confirmação antes de mexer na tela.
+    const { data, error } = await supabase
       .from('contact_notes')
       .delete()
-      .eq('id', noteId);
+      .eq('id', noteId)
+      .select('id');
 
     if (error) {
       toast.error('Erro ao excluir nota');
       return;
     }
+
     if (!isMountedRef.current) return;
+
+    if (!data || data.length === 0) {
+      // Zero linhas = nada foi apagado (nota de outro autor ou já removida):
+      // recusa explícita, sem tirar da lista o que o banco preservou.
+      toast.error('Não foi possível excluir a nota', {
+        description: 'A nota é de outro autor ou já não existe. A lista foi atualizada.',
+      });
+      void fetchNotes();
+      return;
+    }
+
     setNotes(prev => prev.filter(n => n.id !== noteId));
     toast.success('Nota excluída');
   };
@@ -211,13 +232,20 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                   </span>
                 </div>
                 <p className="text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed">{note.content}</p>
-                <Button
-                  variant="ghost" size="icon"
-                  className="absolute top-2 right-2 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive"
-                  onClick={() => handleDelete(note.id)}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
+                {/* Capacidade de exclusão vem do dado real da nota: a policy de DELETE
+                    só alcança a nota do próprio autor. Sem perfil carregado, não
+                    oferece a ação (mesma regra da aba Notas do inbox). */}
+                {note.author_id === currentProfileId && (
+                  <Button
+                    variant="ghost" size="icon"
+                    aria-label="Excluir nota"
+                    title="Excluir nota"
+                    className="absolute top-2 right-2 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive"
+                    onClick={() => handleDelete(note.id)}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                )}
               </motion.div>
             );
           })}

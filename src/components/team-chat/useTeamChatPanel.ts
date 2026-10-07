@@ -70,10 +70,13 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const reactions = useTeamMessageReactions(conversation.id);
 
   const { settings, isLoading: settingsLoading } = useUserSettings();
+  // TC-007: a fonte única do mute é a membership (`team_conversation_members.is_muted`) —
+  // exatamente onde `useToggleMuteConversation` grava. Antes a leitura vinha de
+  // `user_settings.muted_conversations`, então o estado exibido não refletia o banco.
   const isMuted = useMemo(() => {
-    const muted = (settings as unknown as Record<string, unknown>)?.muted_conversations as string[] | undefined;
-    return Array.isArray(muted) && muted.includes(conversation.id);
-  }, [settings, conversation.id]);
+    const me = conversation.members?.find(m => m.profile_id === profile?.id);
+    return !!me?.is_muted;
+  }, [conversation.members, profile?.id]);
 
   const canTransfer = useMemo(() => {
     const r = (profile as { role?: string } | null)?.role;

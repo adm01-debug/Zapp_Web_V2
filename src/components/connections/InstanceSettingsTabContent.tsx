@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -57,17 +58,26 @@ interface PrivacyTabProps {
 }
 
 export function PrivacyTabContent({ privacy, privacyItems, privacyOptions, onChange, onSave, isLoading }: PrivacyTabProps) {
+  const idBase = useId();
+  // Sem campo alterado não há o que salvar: o editor nunca reenvia o valor local
+  // por cima da configuração atual da conta (R2-API-040).
+  const semAlteracoes = Object.keys(privacy).length === 0;
   return (
     <div className="space-y-4 mt-4">
-      {privacyItems.map(({ key, label }) => (
-        <div key={key} className="flex items-center justify-between p-3 rounded-lg border border-border/20">
-          <Label className="text-sm">{label}</Label>
-          <select value={privacy[key]} onChange={(e) => onChange(key, e.target.value)} className="text-sm bg-background border border-border rounded-md px-2 py-1">
-            {privacyOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-          </select>
-        </div>
-      ))}
-      <Button onClick={onSave} disabled={isLoading} className="w-full">
+      <p className="text-xs text-muted-foreground">Deixe em “Manter atual” o que você não quer alterar.</p>
+      {privacyItems.map(({ key, label }) => {
+        const id = `${idBase}-${key}`;
+        return (
+          <div key={key} className="flex items-center justify-between p-3 rounded-lg border border-border/20">
+            <Label htmlFor={id} className="text-sm">{label}</Label>
+            <select id={id} value={privacy[key] ?? ''} onChange={(e) => onChange(key, e.target.value)} className="text-sm bg-background border border-border rounded-md px-2 py-1">
+              <option value="">Manter atual</option>
+              {privacyOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+          </div>
+        );
+      })}
+      <Button onClick={onSave} disabled={isLoading || semAlteracoes} className="w-full">
         {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Salvar Privacidade
       </Button>
     </div>

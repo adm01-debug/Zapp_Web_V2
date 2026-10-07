@@ -329,3 +329,99 @@ describe('useQueueAnalytics — paginação integral', () => {
     expect(messagesFilters.some((filter) => filter.method === 'in')).toBe(false);
   });
 });
+
+// R2-QUE-004 (item 451) — o agrupamento de períodos longos contava o último dia duas vezes.
+type PontoDiario = { day: string; date: string; mensagens: number; resolvidos: number; novos: number };
+const somarPontos = (pontos: PontoDiario[], campo: keyof PontoDiario) =>
+  pontos.reduce((total, ponto) => total + Number(ponto[campo]), 0);
+
+describe('useQueueAnalytics — R2-QUE-004 janelas do agrupamento diário', () => {
+  const at = (month: number, day: number, hour: number, minute = 0) =>
+    new Date(2024, month - 1, day, hour, minute, 0, 0).toISOString();
+  const fimDoDia = (month: number, day: number) => new Date(2024, month - 1, day, 23, 59, 59, 999);
+  const contato = (id: string, createdAt: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    assigned_to: null,
+    created_at: createdAt,
+    conversation_status: 'open',
+    conversation_status_changed_at: null,
+    ...extra,
+  });
+
+  it('30 dias: o último dia entra em um único ponto (mensagens, novos e resolvidos)', async () => {
+    const range = { from: new Date(2024, 0, 1), to: fimDoDia(1, 30) };
+    mockQueueData(
+      [
+        contato('c-primeiro', at(1, 1, 10)),
+        contato('c-penultimo', at(1, 29, 9)),
+        contato('c-ultimo', at(1, 30, 15), {
+          assigned_to: 'p1',
+          conversation_status: 'resolved',
+          conversation_status_changed_at: at(1, 30, 15),
+        }),
+      ],
+      [
+        { id: 'm1', contact_id: 'c-primeiro', sender: 'contact', agent_id: null, created_at: at(1, 1, 10) },
+        { id: 'm28', contact_id: 'c-primeiro', sender: 'contact', agent_id: null, created_at: at(1, 28, 23) },
+        { id: 'm29', contact_id: 'c-primeiro', sender: 'contact', agent_id: null, created_at: at(1, 29, 0, 30) },
+        { id: 'm30', contact_id: 'c-ultimo', sender: 'contact', agent_id: null, created_at: at(1, 30, 12) },
+      ],
+    );
+
+    const { result } = renderHook(() => useQueueAnalytics('q1', range));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // 4 mensagens, 3 contatos criados e 1 resolução no período: cada registro conta uma vez só.
+    expect(somarPontos(result.current.dailyData, 'mensagens')).toBe(4);
+    expect(somarPontos(result.current.dailyData, 'novos')).toBe(3);
+    expect(somarPontos(result.current.dailyData, 'resolvidos')).toBe(1);
+
+    // O último ponto cobre 28–30/01 (salto de 3 dias) e nada é contado depois dele.
+    const ultimo = result.current.dailyData[result.current.dailyData.length - 1];
+    expect(ultimo.date).toBe('2024-01-28');
+    expect(ultimo).toMatchObject({ mensagens: 3, novos: 2, resolvidos: 1 });
+  });
+
+  it('90 dias: o último dia entra em um único ponto', async () => {
+    const range = { from: new Date(2024, 0, 1), to: fimDoDia(3, 30) };
+    mockQueueData(
+      [contato('c-primeiro', at(1, 1, 8))],
+      [
+        { id: 'm-primeiro', contact_id: 'c-primeiro', sender: 'contact', agent_id: null, created_at: at(1, 1, 8) },
+        { id: 'm-88', contact_id: 'c-primeiro', sender: 'contact', agent_id: null, created_at: at(3, 28, 10) },
+        { id: 'm-89', contact_id: 'c-primeiro', sender: 'contact', agent_id: null, created_at: at(3, 29, 10) },
+        { id: 'm-90', contact_id: 'c-primeiro', sender: 'contact', agent_id: null, created_at: at(3, 30, 10) },
+      ],
+    );
+
+    const { result } = renderHook(() => useQueueAnalytics('q1', range));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(somarPontos(result.current.dailyData, 'mensagens')).toBe(4);
+    const ultimo = result.current.dailyData[result.current.dailyData.length - 1];
+    expect(ultimo.date).toBe('2024-03-25');
+    expect(ultimo.mensagens).toBe(3);
+  });
+
+  it('15 dias: intervalos consecutivos, sem sobreposição e sem buraco', async () => {
+    const range = { from: new Date(2024, 0, 1), to: fimDoDia(1, 15) };
+    mockQueueData(
+      [contato('c-primeiro', at(1, 1, 8)), contato('c-ultimo', at(1, 15, 9))],
+      [
+        { id: 'm1', contact_id: 'c-primeiro', sender: 'contact', agent_id: null, created_at: at(1, 1, 8) },
+        { id: 'm13', contact_id: 'c-primeiro', sender: 'contact', agent_id: null, created_at: at(1, 13, 23) },
+        { id: 'm14', contact_id: 'c-primeiro', sender: 'contact', agent_id: null, created_at: at(1, 14, 0, 30) },
+        { id: 'm15', contact_id: 'c-ultimo', sender: 'contact', agent_id: null, created_at: at(1, 15, 12) },
+      ],
+    );
+
+    const { result } = renderHook(() => useQueueAnalytics('q1', range));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(somarPontos(result.current.dailyData, 'mensagens')).toBe(4);
+    expect(somarPontos(result.current.dailyData, 'novos')).toBe(2);
+    const ultimo = result.current.dailyData[result.current.dailyData.length - 1];
+    expect(ultimo.date).toBe('2024-01-15');
+    expect(ultimo.mensagens).toBe(1);
+  });
+});

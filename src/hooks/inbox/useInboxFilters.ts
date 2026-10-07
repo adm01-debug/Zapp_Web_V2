@@ -11,9 +11,12 @@ import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 interface UseInboxFiltersProps {
   conversations: ConversationWithMessages[];
   profileId: string | undefined;
+  // Contatos adiados (R2-INB-029): a lista ativa não mostra conversa adiada e a
+  // retomada acontece quando o conjunto encolhe no vencimento do prazo.
+  snoozedIds?: Set<string>;
 }
 
-export function useInboxFilters({ conversations, profileId }: UseInboxFiltersProps) {
+export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInboxFiltersProps) {
   const fsmEnabled = useFeatureFlag('inbox.status-fsm', false);
   const [chipTab, setChipTabState] = useState<ChipTab>('attending');
   const [mainTab, setMainTab] = useState<MainTab>('open');
@@ -74,6 +77,13 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
 
   const filteredConversations = useMemo(() => {
     let result = conversations.filter(c => c && c.contact && c.contact.id);
+
+    // Adiamento (R2-INB-029): conversa adiada sai da listagem até o prazo vencer.
+    // `snoozedIds` só traz os adiamentos ainda vigentes — no vencimento o hook de
+    // origem a remove do conjunto e ela volta a aparecer sem recarregar a lista.
+    if (snoozedIds && snoozedIds.size > 0) {
+      result = result.filter(c => !snoozedIds.has(c.contact.id));
+    }
 
     // Tab-based filtering
     if (mainTab === 'open') {
@@ -174,7 +184,7 @@ export function useInboxFilters({ conversations, profileId }: UseInboxFiltersPro
     });
 
     return result;
-  }, [conversations, search, filters, mainTab, subTab, chipTab, showAll, selectedQueueId, selectedContactType, profileId, fsmEnabled]);
+  }, [conversations, search, filters, mainTab, subTab, chipTab, showAll, selectedQueueId, selectedContactType, profileId, fsmEnabled, snoozedIds]);
 
   return {
     chipTab, setChipTab,

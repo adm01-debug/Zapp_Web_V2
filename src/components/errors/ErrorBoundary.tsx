@@ -128,7 +128,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
-      if (this.props.fallback) {
+      // Presenca da prop, nao veracidade: `fallback={null}` (e `fallback={false}`)
+      // e o pedido explicito de NAO renderizar nada — usado em App.tsx para
+      // retirar um overlay que quebrou sem derrubar o app. Com `if
+      // (this.props.fallback)` o null era tratado como "sem fallback" e a tela
+      // global de erro tomava o lugar do overlay. (#383 / R2-INF-041)
+      if (this.props.fallback !== undefined) {
         return this.props.fallback;
       }
 

@@ -545,16 +545,35 @@ export async function handleIncomingMessage(
               if (!instanceToken) {
                 console.warn('[OPT-OUT] Token da instancia ausente — confirmacao nao enviada (' + instance + ')');
               } else {
-                await evoFetch(evolutionUrl, evolutionKey, '/message/sendText/' + instance, {
+                // R2-API-008: o Response do evoFetch precisa ser inspecionado antes de
+                // anunciar envio. Um 4xx/5xx não pode virar "Confirmacao enviada" no log:
+                // o contato não recebeu nada. O timeout cobre a espera pela resposta e o
+                // corpo é consumido para o registro (evidência do provedor).
+                const resp = await evoFetch(evolutionUrl, evolutionKey, '/message/sendText/' + instance, {
                   number: resolvedPhone,
                   text: autoReply,
                   delay: 500,
-                }, undefined, undefined, undefined, instanceToken);
-                console.warn('[OPT-OUT] Confirmacao enviada para', resolvedPhone);
+                }, undefined, undefined, AbortSignal.timeout(15000), instanceToken);
+                if (resp.ok) {
+                  console.warn(
+                    '[OPT-OUT] Confirmacao enviada (accepted, status ' + resp.status + ') para ' + resolvedPhone,
+                  );
+                } else {
+                  const detalhe = (await resp.text().catch(() => '')).slice(0, 200);
+                  console.warn(
+                    '[OPT-OUT] Confirmacao RECUSADA pelo provedor (rejected, status ' + resp.status + ') para ' +
+                      resolvedPhone + (detalhe ? ' — ' + detalhe : ''),
+                  );
+                }
               }
             }
           } catch (notifErr) {
-            console.warn('[OPT-OUT] Falha ao enviar confirmacao:', notifErr instanceof Error ? notifErr.message : String(notifErr));
+            // R2-API-008: sem resposta HTTP (timeout, DNS, rede) o desfecho é `unknown`
+            // — não dá para afirmar que a confirmação saiu.
+            console.warn(
+              '[OPT-OUT] Confirmacao sem resposta do provedor (unknown):',
+              notifErr instanceof Error ? notifErr.message : String(notifErr),
+            );
           }
         } else if (!suppErr) {
           console.warn('[OPT-OUT] ' + resolvedPhone + ' ja suprimido (idempotente): confirmacao nao reenviada');

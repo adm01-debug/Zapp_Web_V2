@@ -1,7 +1,7 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsVoiceDesignPreviewSchema, ElevenLabsVoiceDesignCreateSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
-Deno.serve(async (req) => {
+export async function handleVoiceDesignRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -70,20 +70,20 @@ Deno.serve(async (req) => {
       return jsonResponse(data, 200, req);
     }
 
-    // List available voices
-    log.info("Listing voices");
-    const response = await fetch('https://api.elevenlabs.io/v1/voices', {
-      headers: { 'xi-api-key': ELEVENLABS_API_KEY },
-    });
-
-    if (!response.ok) throw new Error(`List voices error: ${response.status}`);
-
-    const data = await response.json();
-    log.done(200);
-    return jsonResponse(data, 200, req);
+    // R2-MOD-070: este endpoint só executa 'preview' e 'create'. Antes, qualquer action
+    // fora do contrato — inclusive a `action: 'generate'` que a tela do laboratório de voz
+    // enviava — caía neste ponto e era atendida com a LISTAGEM de vozes do provedor (200,
+    // sem áudio): o usuário recebia "Voz gerada com sucesso!" de uma geração que nunca foi
+    // pedida ao provedor. O que não está no contrato é NEGADO, nunca convertido em leitura.
+    log.warn("Unsupported action rejected", { actionType: typeof action });
+    return errorResponse('Unsupported action. Allowed actions: preview, create', 400, req);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     log.error("Unhandled error", { error: errorMessage });
     return errorResponse(errorMessage, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleVoiceDesignRequest);
+}

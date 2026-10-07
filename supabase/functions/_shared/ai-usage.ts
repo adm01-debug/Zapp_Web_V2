@@ -284,6 +284,51 @@ export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
   }
 }
 
+/**
+ * R2-API-032 — consumo REAL do diagnóstico de provedor do `ai-proxy` (`test: true`).
+ *
+ * O diagnóstico chama o provedor DE VERDADE (chamada paga) só para verificar
+ * conectividade; por isso o consumo tem de ser registrado mesmo ficando fora da
+ * cota diária do guard. A linha leva finalidade PRÓPRIA (`provider_test`) e o
+ * `provider_id` efetivamente testado — nunca se confunde com geração
+ * operacional. `usageUnknown` preserva o tri-estado da IA-053: quando o stream
+ * ou a falha impedem a medição, os tokens vão NULL, nunca zero.
+ */
+export async function registrarConsumoDeDiagnostico(diag: {
+  userId?: string | null;
+  providerId?: string | null;
+  providerType?: string | null;
+  providerName?: string | null;
+  model?: string | null;
+  ok: boolean;
+  code?: string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  usageUnknown?: boolean;
+  durationMs: number;
+  requestId?: string | null;
+}): Promise<void> {
+  await logAiUsageDetached({
+    functionName: 'ai-proxy',
+    userId: diag.userId ?? null,
+    providerId: diag.providerId ?? null,
+    providerType: diag.providerType ?? null,
+    providerName: diag.providerName ?? null,
+    purpose: 'provider_test',
+    modality: 'text',
+    modelRequested: null,
+    model: diag.model ?? null,
+    inputTokens: diag.inputTokens ?? undefined,
+    outputTokens: diag.outputTokens ?? undefined,
+    usageUnknown: diag.usageUnknown,
+    durationMs: diag.durationMs,
+    status: diag.ok ? 'success' : 'error',
+    errorMessage: diag.ok ? null : (diag.code ?? null),
+    requestId: diag.requestId ?? null,
+    metadata: { provider_test: true, test_code: diag.code ?? null },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // IA-053 — streaming: medir o que dá para medir e DECLARAR o que não deu
 // ---------------------------------------------------------------------------
@@ -458,7 +503,14 @@ export interface LinhaDeConsumo {
 }
 
 /** Estados que significam "não houve chamada paga ao provedor". */
-const STATUS_SEM_CHAMADA = new Set(["denied", "skipped", "rate_limited", "budget_denied"]);
+const STATUS_SEM_CHAMADA = new Set([
+  "denied",
+  "skipped",
+  "rate_limited",
+  "budget_denied",
+  // IA-050: tentativa bloqueada pelo circuito aberto — o provedor nem foi chamado.
+  "circuit_open",
+]);
 
 /** A linha representa consumo REAL que deve entrar na conta? */
 export function contaParaQuota(linha: LinhaDeConsumo): { cobra: boolean; motivo: string } {
@@ -546,7 +598,9 @@ export function reconciliarConsumo(linhas: LinhaDeConsumo[]): ReconciliacaoDeCon
     totais.tentativas += 1;
 
     const status = (linha.status ?? "").toLowerCase();
-    if (status === "error") totais.falhas += 1;
+    // 'request_error' (IA-050) = erro HTTP do PEDIDO (4xx): a ação falhou e segue
+    // contada como falha aqui — o circuito é quem ignora (não é queda do provedor).
+    if (status === "error" || status === "request_error") totais.falhas += 1;
     else if (status === "cancelled") totais.cancelamentos += 1;
     else if (status === "success" || status === "fallback") totais.sucessos += 1;
 

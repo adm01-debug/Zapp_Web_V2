@@ -63,6 +63,15 @@ const MAX_MESSAGE_LENGTH = 2000;
 const MAX_IMAGES = 10;
 const DRAFT_DEBOUNCE_MS = 500;
 
+/**
+ * R2-MOD-011 — teto de fotos aplicado na ENTRADA da seleção (estado inicial e
+ * reset). O toggle e o "Adicionar fotos" já travavam em MAX_IMAGES, mas a
+ * seleção inicial (e o reset ao trocar modo/cor) marcava TODAS as fotos: um
+ * produto com 11+ imagens abria acima do limite anunciado.
+ */
+const capImageUrls = (images: { url: string }[]): string[] =>
+  images.slice(0, MAX_IMAGES).map((i) => i.url);
+
 /** E77 — rascunho de mensagem personalizada não enviada, por produto. */
 interface SendDraft {
   template: MessageTemplate;
@@ -221,13 +230,21 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   // duas useState comparadas no proprio corpo do render, no padrao
   // documentado em https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes.
   const baseImagesKey = baseImages.map((i) => i.url).join('|');
-  const [selectedImages, setSelectedImages] = useState<Set<string>>(() => new Set(baseImages.map((i) => i.url)));
+  const [selectedImages, setSelectedImages] = useState<Set<string>>(() => new Set(capImageUrls(baseImages)));
   const [prevVisibleImagesKey, setPrevVisibleImagesKey] = useState(baseImagesKey);
   if (prevVisibleImagesKey !== baseImagesKey) {
     setPrevVisibleImagesKey(baseImagesKey);
-    setSelectedImages(new Set(baseImages.map((i) => i.url)));
+    setSelectedImages(new Set(capImageUrls(baseImages)));
     setExtraImages([]);
   }
+
+  // R2-MOD-011 — com o teto aplicado na entrada, "todas" passa a significar "o
+  // máximo possível" (min entre as fotos visíveis e MAX_IMAGES). Sem isso, um
+  // produto com 11+ fotos nunca igualaria visibleImages.length e o atalho de um
+  // clique para desmarcar tudo sumiria da tela. O `>=` também cobre o estado
+  // acima do teto (11 marcadas de 11 visíveis), onde "Desmarcar todas" continua
+  // sendo o rótulo correto do botão.
+  const allSelectableSelected = selectedImages.size >= Math.min(visibleImages.length, MAX_IMAGES);
 
   // CT-45 — a mensagem (do modelo ou editada à mão) é personalizada com o
   // contato selecionado: {{nome}}/{{empresa}} resolvem aqui e o preview
@@ -253,6 +270,20 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
       return;
     }
     setSelectedImages((prev) => { const next = new Set(prev); next.add(url); return next; });
+  };
+
+  /**
+   * R2-MOD-011 — guarda do COMANDO FINAL: recusa (com aviso) qualquer envio
+   * acima de MAX_IMAGES fotos e devolve `false` para o chamador abortar. Sem
+   * isso, um estado acima do limite (inicial ou restaurado) virava envio real
+   * de 11+ imagens.
+   */
+  const refuseAboveImageLimit = (count: number): boolean => {
+    if (count <= MAX_IMAGES) return true;
+    toast.error(`Limite de ${MAX_IMAGES} fotos por envio`, {
+      description: `Você selecionou ${count} fotos. Desmarque ${count - MAX_IMAGES} para enviar.`,
+    });
+    return false;
   };
 
   // CT-39 — acrescenta as fotos das variantes não selecionadas ao picker e já as
@@ -322,6 +353,10 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
   const handleSend = () => {
     const imgs = Array.from(selectedImages);
+    // R2-MOD-011 — o comando final revalida o teto: um estado acima do limite
+    // (ex.: "Selecionar todas" com mais de 10 fotos visíveis) não pode virar
+    // envio de 11+ imagens.
+    if (!refuseAboveImageLimit(imgs.length)) return;
     if (onConfirmSend) { onConfirmSend(message, imgs); onOpenChange(false); }
     else { setStep('selectContact'); resetContactSelection(); }
   };
@@ -372,10 +407,14 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
   const handleSendToContact = async () => {
     if (!selectedContact) { toast.error('Selecione um contato'); return; }
+    // R2-MOD-011 — mesmo teto do handleSend: o envio direto (contato preset ou
+    // passo do contato) também recusa estado acima do limite.
+    const imgs = Array.from(selectedImages);
+    if (!refuseAboveImageLimit(imgs.length)) return;
     await sendProductToContact(
       selectedContact,
       message,
-      Array.from(selectedImages),
+      imgs,
       {
         id: fullProduct.id,
         name: fullProduct.name,
@@ -509,11 +548,19 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                             Adicionar fotos
                           </Button>
                         )}
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => selectedImages.size === visibleImages.length ? setSelectedImages(new Set()) : setSelectedImages(new Set(visibleImages.map((i) => i.url)))}>
-                          {selectedImages.size === visibleImages.length ? 'Desmarcar todas' : 'Selecionar todas'}
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => allSelectableSelected ? setSelectedImages(new Set()) : setSelectedImages(new Set(visibleImages.map((i) => i.url)))}>
+                          {allSelectableSelected ? 'Desmarcar todas' : 'Selecionar todas'}
                         </Button>
                       </div>
                     </div>
+                    {/* R2-MOD-011 — quando o produto tem mais fotos que o teto, a
+                        seleção inicial fica truncada: a tela precisa explicar o
+                        porquê (não é uma seleção "incompleta" silenciosa). */}
+                    {baseImages.length > MAX_IMAGES && (
+                      <p className="text-xs text-muted-foreground">
+                        Limite de {MAX_IMAGES} fotos por envio: as {MAX_IMAGES} primeiras já vêm selecionadas.
+                      </p>
+                    )}
                     <div className="flex gap-2 flex-wrap">
                       {visibleImages.map((img) => (
                         <button key={img.url} onClick={() => toggleImage(img.url)} className={cn('relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all', selectedImages.has(img.url) ? 'border-primary ring-2 ring-primary/30' : 'border-border/50 opacity-60 hover:opacity-100', CATALOG_FOCUS_VISIBLE)}>

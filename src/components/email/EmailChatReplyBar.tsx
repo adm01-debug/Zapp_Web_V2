@@ -94,6 +94,12 @@ export function EmailChatReplyBar({
     }
 
     sendLockRef.current = true;
+    // R2-COM-005: fotografa o que está sendo enviado. Ao concluir, só limpa o campo que
+    // o usuário NÃO alterou durante o envio — o texto digitado no meio do envio (ou um
+    // novo destinatário/anexo) permanece no editor, nada é descartado em silêncio.
+    const sentBody = body;
+    const sentTo = to;
+    const sentAttachments = attachments;
     try {
       // Convert attachments to base64
       const base64Attachments = await Promise.all(attachments.map(fileToEmailAttachment));
@@ -127,9 +133,9 @@ export function EmailChatReplyBar({
         });
       }
 
-      setBody('');
-      setTo('');
-      setAttachments([]);
+      setBody((prev) => (prev === sentBody ? '' : prev));
+      setTo((prev) => (prev === sentTo ? '' : prev));
+      setAttachments((prev) => (prev === sentAttachments ? [] : prev));
       onSent?.();
     } catch (err) {
       log.error('Unexpected error in EmailChatReplyBar:', err);

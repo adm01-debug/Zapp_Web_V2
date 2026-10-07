@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   updatePayloads: [] as Record<string, unknown>[],
   insertPayloads: [] as Record<string, unknown>[],
   updateError: null as null | { code?: string; message?: string },
+  /** Linhas que o UPDATE devolve em `.select('id')` (default: a linha editada). */
+  updateRows: [{ id: 'c1' }] as { id: string }[],
   getById: vi.fn(),
   refetch: vi.fn(),
   setShowLegacy: vi.fn(),
@@ -28,7 +30,13 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: () => ({
       update: (payload: Record<string, unknown>) => {
         mocks.updatePayloads.push(payload);
-        return { eq: async () => ({ error: mocks.updateError }) };
+        return {
+          // R2-AUTH-013: o UPDATE agora pede `.select('id')` para saber quantas
+          // linhas mudaram. 0 linhas = recusa do RLS (o defeito anunciava sucesso).
+          eq: () => ({
+            select: async () => ({ data: mocks.updateRows, error: mocks.updateError }),
+          }),
+        };
       },
       insert: (payload: Record<string, unknown>) => {
         mocks.insertPayloads.push(payload);
@@ -126,6 +134,7 @@ describe('useContactsCRUD — edição não apaga endereço (C1)', () => {
     mocks.updatePayloads = [];
     mocks.insertPayloads = [];
     mocks.updateError = null;
+    mocks.updateRows = [{ id: 'c1' }];
     mocks.getById.mockReset();
     mocks.refetch.mockReset();
     mocks.warning.mockReset();
@@ -389,5 +398,41 @@ describe('useContactsCRUD — delete_contact devolvendo null (regressão P0 da e
 
     expect(mocks.refetch).toHaveBeenCalled();
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contacts-kpi'] });
+  });
+});
+
+describe('useContactsCRUD — edição com 0 linhas afetadas é falha (R2-AUTH-013)', () => {
+  beforeEach(() => {
+    mocks.updatePayloads = [];
+    mocks.updateError = null;
+    mocks.updateRows = [];
+    mocks.getById.mockReset();
+    mocks.getById.mockResolvedValue({ data: FULL_ROW, error: null });
+    mocks.refetch.mockReset();
+    mocks.invalidateQueries.mockReset();
+    mocks.callOnSuccess = true;
+  });
+
+  it('UPDATE sem linhas afetadas (RLS) lança em vez de anunciar sucesso', async () => {
+    const hook = mountHook();
+    await act(async () => {
+      await hook.result.current.openEditDialog(LIST_ROW as never);
+    });
+    await act(async () => {
+      hook.result.current.handleEditContactChange('name', 'Fulano Editado');
+    });
+
+    let caught: unknown;
+    await act(async () => {
+      try {
+        await hook.result.current.handleEditContact();
+      } catch (error) {
+        caught = error;
+      }
+    });
+
+    expect(caught).toBeInstanceOf(Error);
+    expect((caught as Error).message).toBe('Nenhum contato foi atualizado. Verifique se você tem permissão.');
+    expect(mocks.refetch).not.toHaveBeenCalled();
   });
 });

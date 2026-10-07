@@ -9,6 +9,9 @@
  */
 
 const LAMEJS_URL = '/vendor/lamejs-1.2.1.min.js';
+const LAMEJS_SCRIPT_SELECTOR = 'script[data-lamejs="1"]';
+/** Teto de espera do carregamento — sem evento, a conversão não fica pendurada. */
+export const LAMEJS_LOAD_TIMEOUT_MS = 15000;
 const MP3_BITRATE = 128;
 const MP3_SAMPLE_RATE = 44100;
 /** Duração máxima aceitável — acima disso o MP3 estouraria limites práticos. */
@@ -34,39 +37,65 @@ interface LamejsModule {
 let lamejsCache: LamejsModule | null = null;
 let lamejsLoadPromise: Promise<LamejsModule> | null = null;
 
+function readLamejsGlobal(): LamejsModule | null {
+  const w = window as unknown as { lamejs?: LamejsModule };
+  return w.lamejs ?? null;
+}
+
+/**
+ * Uma tentativa efetiva de carregamento: elemento novo, listeners próprios e prazo.
+ * Qualquer elemento de tentativa anterior — inclusive o que já falhou — sai do
+ * documento: sem um evento novo, reaproveitá-lo significaria esperar para sempre.
+ */
+function startLamejsLoad(): Promise<LamejsModule> {
+  return new Promise<void>((resolve, reject) => {
+    document.querySelectorAll<HTMLScriptElement>(LAMEJS_SCRIPT_SELECTOR).forEach((el) => el.remove());
+
+    const s = document.createElement('script');
+    // Listeners fora no primeiro evento: nada de listener órfão num elemento encerrado.
+    const detach = () => {
+      s.removeEventListener('load', onLoad);
+      s.removeEventListener('error', onError);
+    };
+    // Sem evento algum (rede pendurada, script removido por terceiro): o prazo
+    // encerra a espera e devolve resultado discriminado ao chamador.
+    const timer = setTimeout(() => {
+      detach();
+      s.remove();
+      reject(new Error(`Timeout ao carregar lamejs (${LAMEJS_LOAD_TIMEOUT_MS}ms)`));
+    }, LAMEJS_LOAD_TIMEOUT_MS);
+    const onLoad = () => { clearTimeout(timer); detach(); resolve(); };
+    const onError = () => { clearTimeout(timer); detach(); s.remove(); reject(new Error('Falha ao carregar lamejs')); };
+
+    s.src = LAMEJS_URL;
+    s.async = true;
+    s.dataset.lamejs = '1';
+    s.addEventListener('load', onLoad);
+    s.addEventListener('error', onError);
+    document.head.appendChild(s);
+  }).then(() => {
+    const ctx = readLamejsGlobal();
+    if (!ctx) throw new Error('lamejs não disponível após load');
+    lamejsCache = ctx;
+    return lamejsCache;
+  });
+}
+
 /** Carrega lamejs uma única vez por sessão (script tag + Promise compartilhada). */
 function loadLamejs(): Promise<LamejsModule> {
   if (lamejsCache) return Promise.resolve(lamejsCache);
+  // Global já presente (script carregado por outro caminho): usa sem nova tag.
+  const fromGlobal = readLamejsGlobal();
+  if (fromGlobal) {
+    lamejsCache = fromGlobal;
+    return Promise.resolve(fromGlobal);
+  }
   // Promise compartilhada: chamadas concorrentes aguardam o MESMO load — sem
   // listeners órfãos em script cujo evento 'load' já disparou (race que travava o upload).
   if (!lamejsLoadPromise) {
-    lamejsLoadPromise = new Promise<void>((resolve, reject) => {
-      const existing = document.querySelector<HTMLScriptElement>(`script[data-lamejs="1"]`);
-      const attach = (s: HTMLScriptElement) => {
-        s.addEventListener('load', () => resolve());
-        s.addEventListener('error', () => reject(new Error('Falha ao carregar lamejs')));
-      };
-      if (existing) {
-        // Script já terminou de carregar? O evento 'load' não dispara mais —
-        // resolve imediatamente se o global já existe, senão anexa listeners.
-        const w = window as unknown as { lamejs?: LamejsModule };
-        if (w.lamejs) { resolve(); return; }
-        attach(existing);
-        return;
-      }
-      const s = document.createElement('script');
-      s.src = LAMEJS_URL;
-      s.async = true;
-      s.dataset.lamejs = '1';
-      attach(s);
-      document.head.appendChild(s);
-    }).then(() => {
-      const ctx = window as unknown as { lamejs?: LamejsModule };
-      if (!ctx.lamejs) throw new Error('lamejs não disponível após load');
-      lamejsCache = ctx.lamejs;
-      return lamejsCache;
-    }).catch((err) => {
-      // permite retry em falha (não deixa a promise rejeitada em cache)
+    lamejsLoadPromise = startLamejsLoad().catch((err) => {
+      // Permite retry: não deixa promessa rejeitada em cache. A tentativa
+      // seguinte cria um carregamento novo (startLamejsLoad).
       lamejsLoadPromise = null;
       throw err;
     });

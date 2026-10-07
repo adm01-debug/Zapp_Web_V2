@@ -22,9 +22,23 @@ interface UndoableActionState {
   timeRemaining: number;
 }
 
+interface PendingOperation {
+  /** Identidade da operação. O aviso só age se ainda for o dono de pendingActionRef. */
+  id: number;
+  undoAction: () => Promise<void>;
+  onCommit?: () => void;
+  /** Id do toast devolvido pelo sonner, para dispensar o aviso encerrado. */
+  toastId: string | number;
+}
+
 /**
  * Hook for actions with temporal undo capability
  * Shows a toast with undo button for specified duration before committing
+ *
+ * R2-PLAT-007: um execute NUNCA reaproveita o undo de outro. Ao começar uma
+ * operação nova, a anterior é encerrada explicitamente (aviso dispensado e
+ * `onCommit` chamado) e cada aviso guarda a identidade da sua operação — o
+ * clique de um aviso antigo não pode reverter a operação seguinte.
  */
 export function useUndoableAction<T>() {
   const [state, setState] = useState<UndoableActionState>({
@@ -35,10 +49,33 @@ export function useUndoableAction<T>() {
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pendingActionRef = useRef<{
-    undoAction: () => Promise<void>;
-    onCommit?: () => void;
-  } | null>(null);
+  const pendingActionRef = useRef<PendingOperation | null>(null);
+  const nextOperationIdRef = useRef(0);
+
+  const stopTimers = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Encerra a operação pendente: limpa os timers, invalida a identidade (o
+   * callback do aviso antigo passa a não fazer nada) e, quando `commit`,
+   * dispensa o aviso e chama o `onCommit` da operação encerrada.
+   */
+  const endPendingOperation = useCallback((commit: boolean) => {
+    const pending = pendingActionRef.current;
+    pendingActionRef.current = null;
+    stopTimers();
+    if (!pending) return;
+    toast.dismiss(pending.toastId);
+    if (commit) pending.onCommit?.();
+  }, [stopTimers]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -58,9 +95,9 @@ export function useUndoableAction<T>() {
       onCommit,
     } = options;
 
-    // Clear any existing pending action
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    // R2-PLAT-007: encerra o undo anterior (aviso dispensado + commit) antes de
+    // iniciar esta operação, para que aviso antigo e operação nova não se misturem.
+    endPendingOperation(true);
 
     setState({
       isPending: true,
@@ -72,34 +109,28 @@ export function useUndoableAction<T>() {
       // Execute the action immediately (optimistic)
       const result = await action();
 
-      // Store undo action
-      pendingActionRef.current = { undoAction, onCommit };
-
-      // Countdown interval
-      const startTime = Date.now();
-      intervalRef.current = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, Math.ceil((undoDuration - elapsed) / 1000));
-        setState(prev => ({ ...prev, timeRemaining: remaining }));
-      }, 100);
+      const operationId = ++nextOperationIdRef.current;
 
       // Show toast with undo button
-      toast.success(successMessage, {
+      const toastId = toast.success(successMessage, {
         duration: undoDuration,
         action: {
           label: 'Desfazer',
           onClick: async () => {
-            // Cancel commit
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            if (intervalRef.current) clearInterval(intervalRef.current);
+            const pending = pendingActionRef.current;
+            // Só desfaz se este aviso ainda for o dono da operação pendente:
+            // o clique de um aviso já encerrado não opera sobre outra operação.
+            if (!pending || pending.id !== operationId) return;
+
+            pendingActionRef.current = null;
+            stopTimers();
 
             try {
-              await pendingActionRef.current?.undoAction();
+              await pending.undoAction();
               toast.success(undoMessage);
             } catch (error) {
               toast.error('Erro ao desfazer ação');
             } finally {
-              pendingActionRef.current = null;
               setState({
                 isPending: false,
                 canUndo: false,
@@ -110,13 +141,24 @@ export function useUndoableAction<T>() {
         },
       });
 
+      // Store this operation's undo binding (identity + its own callbacks)
+      pendingActionRef.current = { id: operationId, undoAction, onCommit, toastId };
+
+      // Countdown interval
+      const startTime = Date.now();
+      intervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, Math.ceil((undoDuration - elapsed) / 1000));
+        setState(prev => ({ ...prev, timeRemaining: remaining }));
+      }, 100);
+
       // Set timeout to commit action
       timeoutRef.current = setTimeout(() => {
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        
-        pendingActionRef.current?.onCommit?.();
+        stopTimers();
+        const pending = pendingActionRef.current;
         pendingActionRef.current = null;
-        
+        pending?.onCommit?.();
+
         setState({
           isPending: false,
           canUndo: false,
@@ -126,7 +168,8 @@ export function useUndoableAction<T>() {
 
       return result;
     } catch (error) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      stopTimers();
+      pendingActionRef.current = null;
       setState({
         isPending: false,
         canUndo: false,
@@ -134,28 +177,28 @@ export function useUndoableAction<T>() {
       });
       throw error;
     }
-  }, []);
+  }, [endPendingOperation, stopTimers]);
 
   const cancelPendingAction = useCallback(async () => {
-    if (!pendingActionRef.current) return;
+    const pending = pendingActionRef.current;
+    if (!pending) return;
 
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    pendingActionRef.current = null;
+    stopTimers();
 
     try {
-      await pendingActionRef.current.undoAction();
+      await pending.undoAction();
       toast.success('Ação desfeita');
     } catch (error) {
       toast.error('Erro ao desfazer ação');
     } finally {
-      pendingActionRef.current = null;
       setState({
         isPending: false,
         canUndo: false,
         timeRemaining: 0,
       });
     }
-  }, []);
+  }, [stopTimers]);
 
   return {
     execute,

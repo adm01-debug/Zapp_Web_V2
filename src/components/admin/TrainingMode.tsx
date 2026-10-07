@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { secureRandomFloat } from '../../lib/secureRandom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +44,67 @@ const SCENARIOS = [
     'Se fizerem um preço melhor, fechamos agora.',
   ]},
 ];
+
+/**
+ * Avaliação do Modo Treinamento: a nota sai do que o atendente ESCREVEU.
+ *
+ * Antes esta nota era sorteada (`Math.random()`, depois `secureRandomFloat()`) e o
+ * número era gravado em `training_sessions.score` com um feedback falando em "boa
+ * empatia e resolução" — avaliação de desempenho que não media nada (R2-AUTH-037).
+ *
+ * Agora cada resposta do atendente é medida em três critérios observáveis no texto e a
+ * nota é a fração de critérios atendidos, na mesma faixa 40..100 que a tela já usava.
+ * Mesmo texto => mesma nota. É uma heurística de texto (não há modelo de linguagem
+ * aqui), e o feedback diz exatamente qual critério faltou.
+ */
+const CRITERIOS_TREINAMENTO = ['detalhe', 'acao', 'empatia'] as const;
+type CriterioTreinamento = (typeof CRITERIOS_TREINAMENTO)[number];
+
+const FALTAS: Record<CriterioTreinamento, string> = {
+  detalhe: 'detalhar mais a resposta',
+  acao: 'declarar o próximo passo',
+  empatia: 'reconhecer a situação do cliente',
+};
+
+/** Resposta desenvolvida (não monossílabo). */
+const MIN_DETALHE = 60;
+/** Assume o caso e diz o que vai fazer. */
+const RE_ACAO = /\b(vou|irei|vamos|encaminh\w*|verific\w*|resolv\w*|solucion\w*|providenci\w*|ajust\w*|chec\w*|analis\w*)\b/i;
+/** Reconhece a situação do cliente. */
+const RE_EMPATIA = /\b(entendo|entendi|compreendo|compreendi|desculpe|desculpa|sinto muito|lamento|imagino)\b/i;
+
+function criteriosAtendidos(resposta: string): CriterioTreinamento[] {
+  const texto = resposta.trim();
+  const atendidos: CriterioTreinamento[] = [];
+  if (texto.length >= MIN_DETALHE) atendidos.push('detalhe');
+  if (RE_ACAO.test(texto)) atendidos.push('acao');
+  if (RE_EMPATIA.test(texto)) atendidos.push('empatia');
+  return atendidos;
+}
+
+function listar(itens: string[]): string {
+  if (itens.length === 1) return itens[0];
+  return `${itens.slice(0, -1).join(', ')} e ${itens[itens.length - 1]}`;
+}
+
+function avaliarTreinamento(respostasDoAtendente: string[]): { score: number; feedback: string } {
+  if (respostasDoAtendente.length === 0) {
+    return { score: 40, feedback: 'Nenhuma resposta do atendente foi registrada nesta sessão.' };
+  }
+
+  const total = CRITERIOS_TREINAMENTO.length * respostasDoAtendente.length;
+  const atendidos = respostasDoAtendente.reduce((soma, r) => soma + criteriosAtendidos(r).length, 0);
+  const score = Math.min(100, Math.max(40, 40 + Math.round((60 * atendidos) / total)));
+
+  if (score >= 80) {
+    return { score, feedback: 'Excelente! Respostas completas, com empatia e próximo passo claro.' };
+  }
+
+  const faltando = CRITERIOS_TREINAMENTO.filter(c => !respostasDoAtendente.every(r => criteriosAtendidos(r).includes(c)))
+    .map(c => FALTAS[c]);
+  const prefixo = score >= 60 ? 'Bom, mas faltou' : 'Precisa melhorar: faltou';
+  return { score, feedback: `${prefixo} ${listar(faltando)}.` };
+}
 
 export function TrainingMode() {
   const [activeSession, setActiveSession] = useState<string | null>(null);
@@ -125,14 +185,12 @@ export function TrainingMode() {
 
     // Complete if all steps done
     if (customerStep >= scenario.customerScript.length) {
-      // Nota simulada: inteiro 40..100, gravado em `training_sessions.score`.
-      // O formato (inteiro na faixa, decidido pelo clamp) nao muda; a fonte deixa
-      // de ser o PRNG previsivel (S2245).
-      const finalScore = Math.min(100, Math.max(40, 60 + Math.round(secureRandomFloat() * 40)));
+      // Nota do treinamento: vem das respostas que o atendente escreveu (critérios em
+      // `avaliarTreinamento`), inteiro na faixa 40..100, gravado em
+      // `training_sessions.score` — nada de sorteio (R2-AUTH-037).
+      const respostasDoAtendente = newMessages.filter(m => m.role === 'agent').map(m => m.content);
+      const { score: finalScore, feedback: fb } = avaliarTreinamento(respostasDoAtendente);
       setScore(finalScore);
-      const fb = finalScore >= 80 ? 'Excelente! Boa empatia e resolução.' :
-        finalScore >= 60 ? 'Bom, mas poderia ser mais proativo.' :
-        'Precisa melhorar a abordagem e tempo de resposta.';
       setFeedback(fb);
 
       await supabase.from('training_sessions').update({

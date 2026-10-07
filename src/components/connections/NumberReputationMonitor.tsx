@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Shield, TrendingUp, TrendingDown, AlertTriangle, Flame, Thermometer, BarChart3 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Shield, TrendingUp, TrendingDown, AlertTriangle, Flame, Thermometer, BarChart3, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -54,11 +55,17 @@ export function NumberReputationMonitor() {
   }, [loadData]);
 
   const startWarmup = async (id: string) => {
-    await supabase.from('number_reputation').update({
+    const { error } = await supabase.from('number_reputation').update({
       warmup_status: 'active',
       warmup_day: 1,
       daily_limit: 20,
     }).eq('id', id);
+
+    if (error) {
+      toast.error('Não foi possível iniciar o aquecimento');
+      return;
+    }
+
     toast.success('Aquecimento iniciado');
     loadData();
   };
@@ -94,6 +101,17 @@ export function NumberReputationMonitor() {
         </div>
       </div>
 
+      <Alert className="border-warning/30 bg-warning/10">
+        <Info className="h-4 w-4 !text-warning" />
+        <AlertTitle className="text-warning">Configuração sem execução automática</AlertTitle>
+        <AlertDescription>
+          O aquecimento e o limite diário são apenas registrados em number_reputation. Ainda não há um
+          motor de envio que aplique estas configurações automaticamente — nenhum contador é renovado, o
+          dia de aquecimento não avança e nenhum envio é recusado por estourar o limite. Os valores
+          abaixo mostram o que está configurado, não uma operação em andamento.
+        </AlertDescription>
+      </Alert>
+
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1,2,3].map(i => <div key={i} className="h-40 bg-muted/20 rounded-xl animate-pulse" />)}
@@ -102,7 +120,7 @@ export function NumberReputationMonitor() {
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             <Shield className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
-            <p>Nenhum dado de reputação. Os dados são populados automaticamente.</p>
+            <p>Nenhum dado de reputação registrado.</p>
           </CardContent>
         </Card>
       ) : (
@@ -155,7 +173,7 @@ export function NumberReputationMonitor() {
                   {rep.daily_limit && (
                     <div className="space-y-1">
                       <div className="flex justify-between text-3xs text-muted-foreground">
-                        <span>Limite diário</span>
+                        <span>Limite diário (configurado)</span>
                         <span>{rep.messages_sent_today}/{rep.daily_limit}</span>
                       </div>
                       <div className="w-full h-1.5 bg-muted/30 rounded-full overflow-hidden">
