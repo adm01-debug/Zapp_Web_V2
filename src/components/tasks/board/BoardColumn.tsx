@@ -53,7 +53,16 @@ export function BoardColumn({
     : visibleItems.length > 0 ? String(visibleItems.length) : '';
 
   return (
-    <div className="flex flex-col shrink-0 min-w-[232px] xl:min-w-[260px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start">
+    // E16: as colunas DIVIDEM a largura do trilho (`flex-1`) com um piso legível de 200px.
+    // Antes eram fixas em 232px (260px no `xl`): as cinco somavam 1348px e não cabiam nem
+    // em 1440 (1440 − sidebar 256 − gutter 72 = 1112px), o que forçava rolagem horizontal
+    // com as colunas já espremidas. Abaixo de 5×200 + 4×12 = 1048px de trilho o flexbox
+    // não encolhe mais e o `overflow-x-auto` + snap do trilho assume: é o carrossel da
+    // tela estreita, com as setas/‹› e os dots conduzindo a coluna visível.
+    <div
+      data-board-column={status}
+      className="flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"
+    >
       {/* cabeçalho sticky */}
       <div className={[
         'flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur',
