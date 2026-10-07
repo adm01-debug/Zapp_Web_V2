@@ -26,7 +26,7 @@ import { FilesContent } from './FilesContent';
 import { FilesSelectionBar } from './FilesSelectionBar';
 import { FileDetailContent, FileDetailPanel } from './FileDetailPanel';
 import { filterMediaItems, sortMediaItems } from './filesSort';
-import { buildPeriodRange, filterByPeriod } from '@/lib/filesPeriod';
+import { buildPeriodRange, filterByPeriod, type PeriodRange } from '@/lib/filesPeriod';
 import { EmptyState } from '@/components/ui/empty-state';
 import { CalendarX2 } from 'lucide-react';
 import {
@@ -50,8 +50,25 @@ const SIDE_BY_SIDE_MIN_WIDTH = 1100;
 const DETAIL_PANEL_WIDTH = 260;
 const DETAIL_PANEL_GAP = 16;
 
-/** Teto de seguranca do "Carregar tudo": 500 paginas de 60 = 30 mil itens numa conversa. */
-const MAX_PAGES_TO_LOAD_ALL = 500;
+/**
+ * Teto de seguranca do "Carregar tudo" — e da varredura automatica do periodo (F05): 500 paginas
+ * de 60 = 30 mil itens numa conversa. Exportado para o teste poder provar que a varredura termina
+ * quando o teto e atingido sem nenhum item que case (refazer 1).
+ */
+export const MAX_PAGES_TO_LOAD_ALL = 500;
+
+/**
+ * A varredura do periodo pode parar quando o item MAIS ANTIGO carregado ja cruzou o limite que
+ * interessa: a lista e `created_at desc`, entao tudo abaixo dele esta do outro lado.
+ * - com "De" (`from`), tudo que vem abaixo de `from` esta fora do recorte;
+ * - sem "De" — periodo personalizado so com "Ate" (`from === null` e `to` definido) — o recorte e
+ *   `[.., to]`: parar ANTES de cruzar `to` esconderia os arquivos antigos que casam (refazer 1).
+ */
+function periodScanReachedBoundary(range: PeriodRange | null, oldestLoadedTime: number | null): boolean {
+  if (!range || oldestLoadedTime === null || !Number.isFinite(oldestLoadedTime)) return false;
+  if (range.from !== null) return oldestLoadedTime < range.from;
+  return range.to !== null && oldestLoadedTime <= range.to;
+}
 
 const CHIPS: { id: FilesTypeFilter; label: string }[] = [
   { id: 'all', label: 'Todos' },
@@ -117,43 +134,61 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     }
   }, [fetchNextPage]);
 
-  // F05: com período ativo a lista (keyset `created_at desc`) pode terminar antes do início do
-  // período e esconder arquivos que estão nele. Enquanto o item mais antigo carregado ainda for
-  // mais novo que o início do período, busca as páginas antigas — com o MESMO teto do
-  // "Carregar tudo" — até passar do início ou acabarem as páginas.
+  // F05: com periodo ativo a lista (keyset `created_at desc`) pode terminar antes do inicio do
+  // periodo — ou, no periodo personalizado so com "Ate", comecar DEPOIS do fim dele — e esconder
+  // arquivos que estao nele. Enquanto o item mais antigo carregado nao cruzar o limite que
+  // interessa, busca as paginas antigas — com o MESMO teto do "Carregar tudo" — ate cruzar,
+  // acabarem as paginas ou bater o teto.
   const periodLoadRef = useRef<{ key: string; pages: number; lastId: string | null }>({
     key: '',
     pages: 0,
     lastId: null,
   });
+  // Refazer 1: espelho do ref acima para o RENDER. O contador da varredura vive no ref (leitura
+  // sincrona dentro do efeito) e o efeito nao pode chamar `setState` direto, entao o espelho e
+  // atualizado quando cada pagina CHEGA (`then`), que e quando o teto passa a valer de verdade.
+  const [scannedPages, setScannedPages] = useState<{ key: string; pages: number }>({ key: '', pages: 0 });
   const periodLoadKey = `${contactId}|${periodRange?.from ?? ''}|${periodRange?.to ?? ''}`;
   const oldestLoadedTime = items.length === 0 ? null : new Date(items[items.length - 1].created_at).getTime();
+  const periodScannedPages = scannedPages.key === periodLoadKey ? scannedPages.pages : 0;
+
+  const registrarPaginaVarrida = useCallback((key: string) => {
+    setScannedPages((current) => ({ key, pages: (current.key === key ? current.pages : 0) + 1 }));
+  }, []);
 
   useEffect(() => {
-    if (!periodRange || periodRange.from === null) return;
+    if (!periodRange) return;
     if (!hasMore || isFetchingNextPage) return;
     const oldest = items[items.length - 1];
     if (!oldest) return;
     const oldestTime = new Date(oldest.created_at).getTime();
-    if (!Number.isFinite(oldestTime) || oldestTime < periodRange.from) return;
+    if (!Number.isFinite(oldestTime)) return;
+    // Nao cruzou o limite ainda: pode haver arquivo do periodo em pagina mais antiga. Com so
+    // "Ate" isso e a REGRA (as primeiras paginas podem ser todas posteriores ao `to`), nao excecao.
+    if (periodScanReachedBoundary(periodRange, oldestTime)) return;
 
     if (periodLoadRef.current.key !== periodLoadKey) {
       periodLoadRef.current = { key: periodLoadKey, pages: 0, lastId: null };
     }
     const load = periodLoadRef.current;
-    if (load.lastId === oldest.id) return; // a página anterior não avançou: para de pedir
+    if (load.lastId === oldest.id) return; // a pagina anterior nao avancou: para de pedir
     if (load.pages >= MAX_PAGES_TO_LOAD_ALL) return;
     load.lastId = oldest.id;
     load.pages += 1;
-    void fetchNextPage();
-  }, [periodRange, periodLoadKey, hasMore, isFetchingNextPage, items, fetchNextPage]);
+    const pageKey = periodLoadKey;
+    void fetchNextPage().then(
+      () => registrarPaginaVarrida(pageKey),
+      () => registrarPaginaVarrida(pageKey),
+    );
+  }, [periodRange, periodLoadKey, hasMore, isFetchingNextPage, items, fetchNextPage, registrarPaginaVarrida]);
 
-  // A varredura do período terminou quando não há mais páginas ou o item mais antigo carregado já
-  // passou do início do período. Só então dá para afirmar "nenhum arquivo neste período".
+  // A varredura terminou quando: nao ha mais paginas; o item mais antigo carregado ja cruzou o
+  // limite do periodo; ou o teto de paginas foi atingido. So entao da para afirmar "nenhum arquivo
+  // neste periodo" — sem o teto aqui a tela ficaria em skeleton para sempre (refazer 1).
   const periodFullyLoaded = periodRange === null
-    || periodRange.from === null
     || !hasMore
-    || (oldestLoadedTime !== null && Number.isFinite(oldestLoadedTime) && oldestLoadedTime < periodRange.from);
+    || periodScanReachedBoundary(periodRange, oldestLoadedTime)
+    || periodScannedPages >= MAX_PAGES_TO_LOAD_ALL;
   const periodScanning = periodRange !== null && !periodFullyLoaded;
 
   // F05: com período ativo o cabeçalho "N arquivos" e os chips saem do recorte CARREGADO (a RPC
