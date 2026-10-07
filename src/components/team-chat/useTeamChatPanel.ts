@@ -280,7 +280,9 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   // R2-INB-058 (#350-B): o chamador precisa saber se o áudio foi enviado.
   // `undefined` era lido como sucesso pelo TextToAudioButton, que descartava a
-  // prévia. Agora todo caminho devolve boolean: true SÓ após a mutação confirmar.
+  // prévia. Agora todo caminho devolve boolean: `true` SÓ após a mutação confirmar;
+  // quando `handleAudioSend` devolve `false` ou rejeita, o TextToAudioButton PRESERVA
+  // a prévia do áudio gerado e só a descarta no envio confirmado com `true`.
   const handleAudioSend = useCallback(async (blob: Blob): Promise<boolean> => {
     if (!profile?.id) return false;
     try {
