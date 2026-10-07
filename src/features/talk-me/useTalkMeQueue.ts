@@ -9,6 +9,7 @@ import {
   TalkMeOfflineError,
   TalkMeOutcomeUnknownError,
   type TalkMeClaimResult,
+  type TalkMePendingMessage,
   type TalkMeQueue,
   type TalkMeWaitingContact,
 } from './types';
@@ -90,6 +91,26 @@ function mapWaitingContact(row: {
     lastMessageAt: row.last_message_at,
     totalCount: Number(row.total_count),
     position: Number(row.queue_position),
+  };
+}
+
+function mapPendingMessage(row: {
+  message_id: string;
+  sender: string;
+  content: string;
+  message_type: string;
+  media_url: string | null;
+  caption: string | null;
+  created_at: string;
+}): TalkMePendingMessage {
+  return {
+    messageId: row.message_id,
+    sender: row.sender,
+    content: row.content,
+    messageType: row.message_type,
+    mediaUrl: row.media_url,
+    caption: row.caption,
+    createdAt: row.created_at,
   };
 }
 
@@ -443,6 +464,18 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     }
   }, [enabled, fetchQueues]);
 
+  const fetchPendingMessages = useCallback(async (contactId: string): Promise<TalkMePendingMessage[]> => {
+    if (!enabled) return [];
+    const { data, error } = await supabase.rpc('talk_me_list_pending_messages', {
+      p_contact_id: contactId,
+    });
+    if (error) {
+      log.error('Falha ao consultar histórico pendente TALK ME', error);
+      throw error;
+    }
+    return (data ?? []).map(mapPendingMessage);
+  }, [enabled]);
+
   const selectedQueue = useMemo(
     () => queues.find((queue) => queue.queueId === selectedQueueId) ?? null,
     [queues, selectedQueueId],
@@ -473,6 +506,7 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     loadMore: () => fetchWaiting(true),
     refresh: async () => { await Promise.all([fetchQueues(), reconcileLoadedPages()]); },
     claim,
+    fetchPendingMessages,
   };
 }
 
