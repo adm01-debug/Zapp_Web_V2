@@ -278,8 +278,13 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     void navigator.clipboard.writeText(content).then(() => toast.success('Copiado!'));
   }, []);
 
-  const handleAudioSend = useCallback(async (blob: Blob) => {
-    if (!profile?.id) return;
+  // #350 — `handleAudioSend` sinaliza o RESULTADO ao chamador: `true` só depois do envio
+  // confirmado e `false` em qualquer falha (sem profile, upload sem locator, rejeição do
+  // envio). Antes a função resolvia `undefined` no sucesso e na falha, e o
+  // `TextToAudioButton` (que descarta a prévia do áudio gerado só quando o envio devolve
+  // `false` ou rejeita) não tinha como ver a diferença — a prévia sumia mesmo em falha.
+  const handleAudioSend = useCallback(async (blob: Blob): Promise<boolean> => {
+    if (!profile?.id) return false;
     try {
       const locator = await uploadTeamMedia({
         profileId: profile.id,
@@ -289,7 +294,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         contentType: 'audio/webm',
         upsert: false,
       });
-      if (!locator) return;
+      if (!locator) return false;
       await sendMutation.mutateAsync({
         conversationId: conversation.id,
         content: '🎤 Mensagem de áudio',
@@ -297,9 +302,11 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         mediaBucket: locator.mediaBucket,
         mediaType: 'audio',
       });
+      return true;
     } catch (err) {
       log.error('Erro ao enviar áudio', err);
       toast.error('Erro ao enviar áudio');
+      return false;
     }
   }, [profile, conversation.id, sendMutation]);
 
