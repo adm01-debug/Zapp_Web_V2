@@ -132,7 +132,6 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E17** | `[~]` PARCIAL | PR #1439 | Debounce só na PR #1439, ausente da main, e a proposta sai sem requeue; corrigir a semântica antes. |
 | **E18** | `[~]` PARCIAL | PR #1439 | Negação de paths está só na #1439, ainda aberta; a main segue disparando pelos diretórios amplos. |
 | **E22** | `[~]` PARCIAL | sem PR associado | Sem label automerge-ok e sem auto-merge habilitado no passo seguinte da create-pull-request. |
-| **E24** | `[~]` PARCIAL | sem PR associado | e2e-logado não aponta environment e lê a service role do secrets context; o escopo não foi lido. |
 | **E26** | `[~]` PARCIAL | sem PR associado | Consumidores ainda referenciam DESTINO_URL; privilégios do usuário do secret não foram consultados. |
 | **E27** | `[~]` AGUARDA RUNTIME | PR #1442, #1790 | Guard local confirma ausência de segredo privilegiado nos gatilhos não confiáveis do Talk X. |
 | **E29** | `[~]` AGUARDA RUNTIME | PR #1447 | db-migrate endurece o TLS e usa SUPABASE_DB_URL por env; contrato local passou. |
@@ -141,8 +140,6 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E33** | `[~]` AGUARDA RUNTIME | PR #1727 | O estado atual do alerta Code Scanning #13 não foi consultado; não confundir #13 com issue. |
 | **E35** | `[~]` PARCIAL | sem PR associado | Tabela canônica/CLAUDE segue pendente; revalidar a configuração antes de alterá-la. |
 | **E37** | `[~]` PRECISA REVALIDAÇÃO | sem PR associado | GET atual não expôs security_and_analysis; não afirmar enabled/disabled sem fonte administrativa. |
-| **E38** | `[~]` PRECISA REVALIDAÇÃO | sem PR associado | Sem usos no código ou workflows pesquisados; a coleção de nomes de secrets não foi acessada. |
-| **E39** | `[~]` PRECISA REVALIDAÇÃO | PR #1433, #1744 | Exclusão efetiva do secret não foi reconsultada; os workflows usam project ref literal/env. |
 | **E40** | `[~]` AGUARDA RUNTIME | PR #1446, #1744 | Os quatro workflows-alvo falham fora da main e os contratos locais passaram; types-sync tem job if. |
 | **E41** | `[~]` AGUARDA RUNTIME | PR #1483 | Não há glob supabase/** abrangendo somente changes de edge. |
 | **E42** | `[~]` AGUARDA RUNTIME | PR #1483 | Grupo de concorrência próprio do schedule entrou depois, na E52. |
@@ -547,7 +544,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   binário), listar e rodar `bun pm trust <pkg>` explícito. Verificação: `bun run build` e `bun run test` verdes com
   `--ignore-scripts`.
   > **Medido 02/10: os 16 workflows instalam com `--frozen-lockfile --ignore-scripts` (nenhuma ocorrencia sem as flags, em bun/npm/pnpm/yarn/deno). O achado de seguranca da etapa estava fechado.**
-- [~] **E24** · A+B · G-09 · Mover `SUPABASE_SERVICE_ROLE_KEY` para um environment `e2e-producao` (sem revisor, branch
+- [ ] **E24** · A+B · G-09 · Mover `SUPABASE_SERVICE_ROLE_KEY` para um environment `e2e-producao` (sem revisor, branch
   policy `main`) e apontar o job `e2e-logado` para ele; apagar do nível repo. Verificação: `GET /actions/secrets` sem a
   chave; `GET /environments/e2e-producao/secrets` com ela; run verde.
 - [ ] **E25** · C+D ⚠️ · G-09 · Substituir o `curl DELETE` com service_role por uma RPC `e2e_cleanup_conversation_closures()`
@@ -613,10 +610,10 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [~] **E37** · A · G-39 · Ligar `secret_scanning_validity_checks` (grátis em público). Verificação: `GET /repos` →
   `enabled`.
   > **VIVA e da classe A (Joaquim): `secret_scanning_validity_checks` esta **disabled**; `secret_scanning` e `push_protection` estao `enabled`.**
-- [~] **E38** · A · G-21 · Apagar `VITE_CLIENTES_SUPABASE_URL` e `VITE_CLIENTES_SUPABASE_ANON_KEY` do repo (0 usos).
+- [x] **E38** · A · G-21 · Apagar `VITE_CLIENTES_SUPABASE_URL` e `VITE_CLIENTES_SUPABASE_ANON_KEY` do repo (0 usos).
   Verificação: `GET /actions/secrets` → 15.
   > **Medido 02/10 pela API: 14 secrets no repositorio e nenhum `VITE_CLIENTES_*` entre eles - os dois alvos da etapa nao existem mais.**
-- [~] **E39** · B · G-30 · `SUPABASE_PROJECT_REF`: trocar o secret por `env: PROJECT_REF: tnnnlkbymytvtqngbbqh` no
+- [x] **E39** · B · G-30 · `SUPABASE_PROJECT_REF`: trocar o secret por `env: PROJECT_REF: tnnnlkbymytvtqngbbqh` no
   topo dos 4 workflows (valor público; já literal em 4 lugares) e manter a asserção de igualdade. Apagar o secret.
   Verificação: logs mostram a URL da função legível; `deploy-functions` ✅.
   > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** Nenhum workflow de `origin/main` usa `secrets.SUPABASE_PROJECT_REF`: os pontos viraram `env:` com o valor literal do project ref e a assercao de igualdade continua no lugar. O secret **nao existe mais** (a API lista 14 secrets, nenhum de project ref). A 1a medicao leu a arvore de trabalho defasada.**
