@@ -7,7 +7,6 @@ import {
   Users,
   Megaphone,
   Bot,
-  Kanban,
   BarChart3,
   Plug,
   Inbox,
@@ -66,13 +65,6 @@ const emptyStateConfigs = {
     description: 'Automatize o atendimento criando fluxos de chatbot inteligentes.',
     actionLabel: 'Criar Fluxo',
     gradient: 'from-primary/20 to-secondary/20',
-  },
-  pipeline: {
-    icon: Kanban,
-    title: 'Pipeline vazio',
-    description: 'Gerencie suas oportunidades de venda movendo deals entre etapas.',
-    actionLabel: 'Criar Deal',
-    gradient: 'from-success/20 to-primary/20',
   },
   reports: {
     icon: BarChart3,
