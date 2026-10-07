@@ -53,20 +53,34 @@ export function EmailChatReplyBar({
     mode,
     threadId,
   }), [activeAccount?.user_id, mode, resolvedAccountId, threadId]);
-  const [restoredDraft] = useState(() => readEmailDraftSession(draftStorageKey));
-
-  const [body, setBody] = useState(() => restoredDraft?.body ?? '');
-  const [to, setTo] = useState(() => restoredDraft?.to ?? '');
+  const [body, setBody] = useState('');
+  const [to, setTo] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [newSubject, setNewSubject] = useState(() => restoredDraft?.subject ?? ''); // E26
-  const [missingAttachmentNames, setMissingAttachmentNames] = useState<string[]>(() => restoredDraft?.attachmentNames ?? []);
+  const [newSubject, setNewSubject] = useState(''); // E26
+  const [missingAttachmentNames, setMissingAttachmentNames] = useState<string[]>([]);
+  // 288: a chave do rascunho depende de props e de dado assíncrono (threadId, mode, activeAccount?.user_id),
+  // então o estado é reidratado SEMPRE que ela muda — inclusive com o componente montado (troca de conversa,
+  // de modo ou de conta). `hydratedKey` marca a chave que o estado em mãos representa; o ajuste é feito
+  // durante o render (padrão do React para "resetar estado quando a prop muda"), então NENHUM efeito desta
+  // renderização chega a ver o rascunho da conversa anterior com a chave nova.
+  const [hydratedKey, setHydratedKey] = useState<string | null>(null);
   const latestDraftStateRef = useRef({
-    body: restoredDraft?.body ?? '',
-    to: restoredDraft?.to ?? '',
+    body: '',
+    to: '',
     attachments: [] as File[],
-    newSubject: restoredDraft?.subject ?? '',
-    missingAttachmentNames: restoredDraft?.attachmentNames ?? [],
+    newSubject: '',
+    missingAttachmentNames: [] as string[],
   });
+
+  if (hydratedKey !== draftStorageKey) {
+    const restoredDraft = readEmailDraftSession(draftStorageKey);
+    setHydratedKey(draftStorageKey);
+    setBody(restoredDraft?.body ?? '');
+    setTo(restoredDraft?.to ?? '');
+    setNewSubject(restoredDraft?.subject ?? '');
+    setMissingAttachmentNames(restoredDraft?.attachmentNames ?? []);
+    setAttachments([]);
+  }
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendLockRef = useRef(false);
@@ -85,6 +99,10 @@ export function EmailChatReplyBar({
   useEffect(() => {
     latestDraftStateRef.current = { body, to, attachments, newSubject, missingAttachmentNames };
     if (!draftStorageKey) return;
+    // 288: só grava/apaga quando o estado em mãos pertence à chave atual (já reidratado para ela). Sem
+    // isto, a passada em que a chave muda gravaria o rascunho da conversa anterior na chave nova — ou
+    // apagaria o rascunho já salvo dela.
+    if (hydratedKey !== draftStorageKey) return;
 
     const hasContent = Boolean(body.trim() || to.trim() || newSubject.trim() || attachments.length || missingAttachmentNames.length);
     if (!hasContent) {
@@ -102,7 +120,7 @@ export function EmailChatReplyBar({
       attachmentNames: attachments.length ? attachments.map(file => file.name) : missingAttachmentNames,
       updatedAt: new Date().toISOString(),
     });
-  }, [attachments, body, draftStorageKey, missingAttachmentNames, newSubject, to]);
+  }, [attachments, body, draftStorageKey, hydratedKey, missingAttachmentNames, newSubject, to]);
 
   const handleAddFiles = useCallback((files: FileList | null) => {
     if (!files) return;
@@ -146,6 +164,9 @@ export function EmailChatReplyBar({
     const sentAttachments = attachments;
     const sentSubject = newSubject;
     const sentMissingAttachmentNames = missingAttachmentNames;
+    // 288: a chave é capturada junto com o que foi enviado. Se o usuário trocar de conversa durante a
+    // mutation, a limpeza remove a chave DESTE envio, nunca o rascunho da conversa que ele abriu depois.
+    const sentDraftKey = draftStorageKey;
     try {
       // Convert attachments to base64
       const base64Attachments = await Promise.all(attachments.map(fileToEmailAttachment));
@@ -191,7 +212,7 @@ export function EmailChatReplyBar({
       setAttachments((prev) => (prev === sentAttachments ? [] : prev));
       setNewSubject((prev) => (prev === sentSubject ? '' : prev));
       setMissingAttachmentNames((prev) => (prev === sentMissingAttachmentNames ? [] : prev));
-      if (shouldRemoveDraft) removeEmailDraftSession(draftStorageKey);
+      if (shouldRemoveDraft) removeEmailDraftSession(sentDraftKey);
       onSent?.();
     } catch (err) {
       log.error('Unexpected error in EmailChatReplyBar:', err);

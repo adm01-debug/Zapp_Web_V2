@@ -6,19 +6,21 @@ import type { EmailMessage } from '@/hooks/integrations/useGmail';
 const { sendMutateAsync, replyMutateAsync, gmailMock } = vi.hoisted(() => ({
   sendMutateAsync: vi.fn().mockResolvedValue({}),
   replyMutateAsync: vi.fn().mockResolvedValue({}),
-  gmailMock: { userId: 'user-1' },
+  gmailMock: { userId: 'user-1' as string | undefined, hasAccount: true },
 }));
 
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({
     sendEmail: { mutateAsync: sendMutateAsync, isPending: false },
     replyEmail: { mutateAsync: replyMutateAsync, isPending: false },
-    activeAccount: {
-      id: 'acc1',
-      user_id: gmailMock.userId,
-      email_address: 'user@example.com',
-      is_active: true,
-    },
+    activeAccount: gmailMock.hasAccount
+      ? {
+          id: 'acc1',
+          user_id: gmailMock.userId,
+          email_address: 'user@example.com',
+          is_active: true,
+        }
+      : undefined,
   }),
 }));
 
@@ -62,8 +64,8 @@ const INBOUND_MSG: EmailMessage = {
   created_at: '2026-09-06T00:00:00Z',
 };
 
-function renderBar(threadId: string, onSent = vi.fn()) {
-  return render(
+function barProps(threadId: string, onSent = vi.fn()) {
+  return (
     <EmailChatReplyBar
       accountId="acc1"
       threadId={threadId}
@@ -72,8 +74,12 @@ function renderBar(threadId: string, onSent = vi.fn()) {
       mode="reply"
       onModeChange={vi.fn()}
       onSent={onSent}
-    />,
+    />
   );
+}
+
+function renderBar(threadId: string, onSent = vi.fn()) {
+  return render(barProps(threadId, onSent));
 }
 
 function bodyTextarea() {
@@ -96,6 +102,7 @@ describe('EmailChatReplyBar — rascunho da resposta rápida', () => {
     sendMutateAsync.mockResolvedValue({});
     replyMutateAsync.mockResolvedValue({});
     gmailMock.userId = 'user-1';
+    gmailMock.hasAccount = true;
   });
 
   it('ida e volta entre duas threads restaura o rascunho de cada uma', () => {
@@ -201,5 +208,50 @@ describe('EmailChatReplyBar — rascunho da resposta rápida', () => {
 
     renderBar('thread-A');
     expect(bodyTextarea().value).toBe('');
+  });
+
+  it('troca de conversa sem desmontar: reidrata o rascunho de cada thread e não sobrescreve nenhum', () => {
+    const view = renderBar('thread-A');
+    fireEvent.change(bodyTextarea(), { target: { value: 'Rascunho da A' } });
+
+    view.rerender(barProps('thread-B'));
+    expect(bodyTextarea().value).toBe('');
+
+    fireEvent.change(bodyTextarea(), { target: { value: 'Rascunho da B' } });
+
+    view.rerender(barProps('thread-A'));
+    expect(bodyTextarea().value).toBe('Rascunho da A');
+
+    view.rerender(barProps('thread-B'));
+    expect(bodyTextarea().value).toBe('Rascunho da B');
+
+    const gravados = draftKeys()
+      .sort()
+      .map((key) => JSON.parse(localStorage.getItem(key) as string).body);
+    expect(gravados).toEqual(['Rascunho da A', 'Rascunho da B']);
+  });
+
+  it('conta resolvida depois do primeiro render: restaura o rascunho salvo em vez de apagá-lo', () => {
+    const chaveDefinitiva = 'zapp-email-draft-v2:user-1:acc1:reply:thread-A:latest';
+    localStorage.setItem(chaveDefinitiva, JSON.stringify({
+      to: '',
+      cc: '',
+      bcc: '',
+      subject: '',
+      body: 'Rascunho salvo da conta',
+      isUsingHtml: false,
+      attachmentNames: [],
+      updatedAt: new Date().toISOString(),
+    }));
+
+    gmailMock.hasAccount = false; // conta ainda não resolvida: a chave usa o accountId como reserva
+    const view = renderBar('thread-A');
+    expect(bodyTextarea().value).toBe('');
+
+    gmailMock.hasAccount = true; // a conta resolve e a chave vira a definitiva
+    view.rerender(barProps('thread-A'));
+
+    expect(localStorage.getItem(chaveDefinitiva)).not.toBeNull();
+    expect(bodyTextarea().value).toBe('Rascunho salvo da conta');
   });
 });
