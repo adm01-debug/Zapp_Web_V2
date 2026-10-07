@@ -320,6 +320,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
           {mode === 'board' && (
             <TasksBoardMode
               byStatus={byStatus}
+              byStatusFull={byStatusReal}
               isLoading={isLoading}
               doingCount={doingReal}
               onMove={moverComAviso}

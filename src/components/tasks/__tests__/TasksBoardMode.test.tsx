@@ -19,6 +19,8 @@
 import { describe, it, expect } from 'vitest';
 import type { DropResult } from '@hello-pangea/dnd';
 import { resolveDragEnd } from '@/components/tasks/board/resolveDragEnd';
+import { applyFilters, bucketByStatus } from '@/hooks/tasks/workItemAggregates';
+import type { TasksFilters } from '@/hooks/tasks/workItemFilters';
 import { KANBAN_COLUMNS, type WorkItem, type WorkItemStatus } from '@/hooks/tasks/workItem.types';
 // Fixture do banco (mesmo shape) — o harness já existe para não duplicar dados.
 import { makeTaskRow } from '@/test/mocks/tarefas';
@@ -216,5 +218,92 @@ describe('resolveDragEnd — decisão do arrasto do Quadro (etapa 87)', () => {
     );
 
     expect(decisao).toEqual({ action: 'blocked', reason: 'invalid_transition' });
+  });
+
+  // ---------------------------------------------------------------------------
+  // R2-MOD-055 (#423) — arrasto entre colunas FILTRADAS
+  // ---------------------------------------------------------------------------
+  // Com filtro ativo o Quadro mostra um RECORTE da coluna, mas a ordem é
+  // persistida na coluna COMPLETA (`persistPositions` usa `bucketByStatus(items)`
+  // do hook, sem filtro). O `destination.index` que a lib de DnD entrega é a
+  // posição entre os cartões VISÍVEIS: entregá-lo cru reinsere o item na mesma
+  // posição da lista completa e, depois do refetch, a tarefa aparece onde o
+  // usuário NÃO soltou. O resolver passa a traduzir o índice pelo vizinho visível.
+  const FILTRO_URGENTE: TasksFilters = { q: '', prio: 'urgent', contact: null, alarm: false, done: true };
+
+  /**
+   * Espelha o `persistPositions` do hook: reinsere o item no índice da coluna de
+   * destino (lista COMPLETA) e devolve as linhas `{ id, position }` do upsert.
+   */
+  function persistirPosicoes(
+    completas: Record<WorkItemStatus, WorkItem[]>,
+    item: WorkItem,
+    to: WorkItemStatus,
+    index: number,
+  ): WorkItem[] {
+    const alvo = [...(completas[to] ?? [])].filter(i => i.id !== item.id);
+    alvo.splice(Math.max(0, Math.min(index, alvo.length)), 0, { ...item, status: to });
+    const origem = [...(completas[item.status] ?? [])].filter(i => i.id !== item.id);
+    return [
+      ...alvo.map((it, idx) => ({ ...it, position: idx })),
+      ...origem.map((it, idx) => ({ ...it, position: idx })),
+    ];
+  }
+
+  it('11) arrasto entre colunas filtradas traduz o índice do recorte para a lista completa (#423)', () => {
+    const oculto = item({ id: 'oculto', status: 'todo', priority: 'low',    position: 0 });
+    const a      = item({ id: 'A',      status: 'todo', priority: 'urgent', position: 1 });
+    const b      = item({ id: 'B',      status: 'todo', priority: 'urgent', position: 2 });
+    const x      = item({ id: 'X',      status: 'doing', priority: 'urgent', position: 0 });
+
+    // Visível: [A, B] (o `oculto`, de prioridade baixa, fica fora do recorte).
+    const visiveis  = colunas({ todo: [a, b], doing: [x] });
+    const completas = colunas({ todo: [oculto, a, b], doing: [x] });
+
+    // X solto ENTRE A e B: no recorte o índice é 1; na coluna completa é 2.
+    const decisao = resolveDragEnd(drop('X', 'doing', 0, 'todo', 1), visiveis, undefined, completas);
+
+    expect(decisao).toMatchObject({ action: 'move', to: 'todo', opts: { index: 2 } });
+
+    // Solto DEPOIS de B (índice 2 = fim do recorte visível): ancora no fim da
+    // coluna completa (3), preservando o oculto que já estava lá.
+    expect(resolveDragEnd(drop('X', 'doing', 0, 'todo', 2), visiveis, undefined, completas))
+      .toMatchObject({ action: 'move', to: 'todo', opts: { index: 3 } });
+  });
+
+  it('12) integra o resolver com o payload de persistência: ordem visível A, X, B antes e depois (#423)', () => {
+    const oculto = item({ id: 'oculto', status: 'todo', priority: 'low',    position: 0 });
+    const a      = item({ id: 'A',      status: 'todo', priority: 'urgent', position: 1 });
+    const b      = item({ id: 'B',      status: 'todo', priority: 'urgent', position: 2 });
+    const x      = item({ id: 'X',      status: 'doing', priority: 'urgent', position: 0 });
+
+    const visiveis  = colunas({ todo: [a, b], doing: [x] });
+    const completas = colunas({ todo: [oculto, a, b], doing: [x] });
+
+    const decisao = resolveDragEnd(drop('X', 'doing', 0, 'todo', 1), visiveis, undefined, completas);
+    if (!decisao || decisao.action !== 'move') throw new Error('esperava um move');
+
+    // O que o Quadro gravou: as posições da coluna COMPLETA.
+    const escritas = persistirPosicoes(completas, decisao.item, decisao.to, decisao.opts.index);
+    expect(bucketByStatus(escritas).todo.map(i => i.id)).toEqual(['oculto', 'A', 'X', 'B']);
+
+    // O que o usuário vê de novo, com o MESMO filtro ativo (antes e depois do refetch).
+    const visivelDepois = bucketByStatus(applyFilters(escritas, FILTRO_URGENTE)).todo.map(i => i.id);
+    expect(visivelDepois).toEqual(['A', 'X', 'B']);
+  });
+
+  it('13) sem filtro a tradução é neutra: índice e ordem não mudam (#423)', () => {
+    const a = item({ id: 'A', status: 'todo', position: 0 });
+    const b = item({ id: 'B', status: 'todo', position: 1 });
+    const c = item({ id: 'C', status: 'todo', position: 2 });
+    const x = item({ id: 'X', status: 'doing', position: 0 });
+    // Sem recorte: visível e completa são a MESMA coluna.
+    const col = colunas({ todo: [a, b, c], doing: [x] });
+
+    // Meio e fim da lista: o índice entregue ao hook é o próprio índice do DnD.
+    expect(resolveDragEnd(drop('X', 'doing', 0, 'todo', 2), col, undefined, col))
+      .toMatchObject({ action: 'move', opts: { index: 2 } });
+    expect(resolveDragEnd(drop('X', 'doing', 0, 'todo', 3), col, undefined, col))
+      .toMatchObject({ action: 'move', opts: { index: 3 } });
   });
 });
