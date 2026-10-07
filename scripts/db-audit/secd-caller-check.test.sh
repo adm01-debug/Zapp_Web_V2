@@ -365,10 +365,11 @@ expect_agent_value 'C2 (baseline) DEFINER devolve as 2 publicadas'             "
 expect_agent_value 'C2b (baseline) DEFINER nao devolve a nao publicada'        "$AGENTE" '0'        "SELECT count(*) FROM public.search_knowledge_base('conteudo') WHERE title LIKE 'Rascunho%'"
 expect_agent_value 'C3 (defeito) agente sem perfil le o consumo do Searchbox'   "$PERFILESS" '1'    "SELECT public.count_searchbox_sessions_this_month()"
 expect_agent_value 'C4 (defeito) chamador sem perfil le o status de horario'    "$PERFILESS" 't'    "SELECT public.is_within_business_hours('$CONN')"
-# D) anon: hoje o EXECUTE nas 5 DEFINER restantes vem de PUBLIC (ACL padrao do CREATE FUNCTION) e a unica
-# barreira seria a guarda externa — nenhuma checagem do chamador barra anon, porque auth.uid() nulo entra
-# como "contexto interno" no secd_caller_ok.
-expect_anon_value 'D0 (defeito) anon executa as 5 DEFINER restantes' 'true' "SELECT bool_and(ok)::text FROM (VALUES
+# D) anon: este esqueleto modela o caso que o REVOKE fecha — funcao recem-criada/overload novo
+# com ACL padrao de CREATE FUNCTION herdada de PUBLIC. Nao afirma vazamento vivo: a 20260930490000 ja
+# revogou PUBLIC nas funcoes de negocio; aqui a prova mostra que, se PUBLIC/anon existir de novo,
+# auth.uid() nulo passaria pelo secd_caller_ok como "contexto interno".
+expect_anon_value 'D0 (ACL padrao nova) anon executa as 5 DEFINER restantes' 'true' "SELECT bool_and(ok)::text FROM (VALUES
      (public.user_has_permission('$OUTRO','send_messages')),
      (public.is_team_conversation_member('$CHEFE','$CONV')),
      (public.count_searchbox_sessions_this_month() = 1),
@@ -380,7 +381,6 @@ psql_file "$migration" >/dev/null
 printf '[PASS] migration 20261007004545 aplicada\n'; ((passed += 1))
 
 # A) oraculos de identidade: outro usuario nao; o proprio e o admin sim
-expect_agent_error 'B6b papel efetivo de outro usuario tambem nega o agente' "$AGENTE" 'permission denied' "SELECT public.effective_role('$OUTRO')"
 expect_agent_error 'A2 agente nao le a permissao de outro usuario'    "$AGENTE" 'nao autorizada' "SELECT public.user_has_permission('$OUTRO','send_messages')"
 expect_agent_value 'A2b agente continua lendo a propria permissao'    "$AGENTE" 'f'     "SELECT public.user_has_permission('$AGENTE','send_messages')"
 expect_agent_value 'A2c admin continua lendo a permissao de outro'    "$CHEFE"  't'     "SELECT public.user_has_permission('$OUTRO','send_messages')"
@@ -394,6 +394,7 @@ expect_agent_error 'B3 paises bloqueados nega o agente'                "$AGENTE"
 expect_agent_error 'B4 politica de pais nega o agente'                 "$AGENTE" 'permission denied' "SELECT public.is_country_allowed('XX')"
 expect_agent_error 'B5 categorias de memes nega o agente'              "$AGENTE" 'permission denied' "SELECT public.fn_list_audio_meme_categories()"
 expect_agent_error 'B6 papel efetivo nega o agente'                    "$AGENTE" 'permission denied' "SELECT public.effective_role('$AGENTE')"
+expect_agent_error 'B6b papel efetivo de outro usuario tambem nega o agente' "$AGENTE" 'permission denied' "SELECT public.effective_role('$OUTRO')"
 expect_agent_error 'B7 alerta de orcamento do Searchbox nega o agente' "$AGENTE" 'permission denied' "SELECT public.notify_searchbox_budget()"
 expect_value 'B8 helper de decisao do chamador nao e RPC' 'f' \
   "SELECT has_function_privilege('authenticated', 'public.secd_caller_ok(uuid, boolean)', 'EXECUTE')"
