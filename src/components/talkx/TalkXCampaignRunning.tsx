@@ -591,13 +591,16 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
 
   // P2: deriva somente de campanhas ativas; sai da view quando concluir/cancelar
   const campaign = useMemo(() => sending.find((c) => c.id === selectedId) ?? null, [sending, selectedId]);
-  // Auto-navegar de volta quando a campanha sair de sending/paused
-  const prevCampaignRef = React.useRef(campaign);
+  // Auto-navegar de volta quando a campanha sair de sending/paused.
+  // Transição em UM efeito só: o estado anterior é lido ANTES de a referência ser
+  // atualizada. Com dois efeitos separados a limpeza ficava morta — o primeiro gravava
+  // `campaign = null` na referência e o segundo, ao testar `prevCampaignRef.current !== null`,
+  // já encontrava `null` e nunca limpava seleção nem modais (R2-MOD-032).
+  const prevCampaignRef = React.useRef<TalkXCampaign | null>(campaign);
   React.useEffect(() => {
+    const prevCampaign = prevCampaignRef.current;
     prevCampaignRef.current = campaign;
-  }, [campaign]);
-  React.useEffect(() => {
-    if (selectedId && !sending.find((c) => c.id === selectedId) && prevCampaignRef.current !== null) {
+    if (prevCampaign !== null && selectedId && !sending.some((c) => c.id === selectedId)) {
       // Campanha saiu da lista ativa (concluiu ou foi cancelada remotamente).
       // Sem isso, um modal de acao (Pausar/Cancelar/Editar Limites) aberto no
       // momento da transicao ficava preso: a campanha some, os handlers fazem
@@ -608,7 +611,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
       setCancelOpen(false);
       setLimitsOpen(false);
     }
-  }, [sending, selectedId]);
+  }, [campaign, sending, selectedId]);
 
   // Histórico de envios para gráfico AreaChart (últimos 20 pontos por minuto)
   const { data: sentHistory, isLoading: historyLoading, isFetching: historyFetching, isError: historyIsError, error: historyError, refetch: refetchHistory } = useQuery({
