@@ -2,7 +2,7 @@ import { handleCors, jsonResponse, Logger } from "../_shared/validation.ts";
 import { ClassifyEmojiSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { requireAiIdentity } from "../_shared/ai-auth.ts";
 import { generateWithRouting } from "../_shared/ai-generate.ts";
-import { logAiUsage } from "../_shared/ai-usage.ts";
+import { extractAiRequestId, logAiUsage } from "../_shared/ai-usage.ts";
 import { AiImageInputError, toInlineImage, type InlineImage } from "../_shared/ai-image-input.ts";
 
 const EMOJI_CATEGORIES = [
@@ -80,6 +80,7 @@ async function embutirImagem(
   imageUrl: string,
   userId: string | null,
   bearerToken: string,
+  requestId: string | null,
 ): Promise<ResultadoDaImagem> {
   try {
     return {
@@ -93,6 +94,7 @@ async function embutirImagem(
     await logAiUsage({
       functionName: FUNCTION_NAME,
       userId,
+      requestId,
       status: 'error',
       errorMessage: motivo,
       // IA-052 — degradação registrada como rota: finalidade e modalidade são
@@ -111,7 +113,13 @@ async function embutirImagem(
   }
 }
 
-Deno.serve(async (req) => {
+/**
+ * Handler real exportado para teste (`index.test.ts`). O `Deno.serve` continua no
+ * nível do módulo: o contrato vitest de visão captura o handler stubando
+ * `Deno.serve` na importação, então a chamada não pode ficar atrás de
+ * `import.meta.main`. O teste Deno também stuba `Deno.serve` ao importar.
+ */
+export async function handleClassifyEmoji(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -121,6 +129,9 @@ Deno.serve(async (req) => {
   if (identity instanceof Response) return identity;
 
   const log = new Logger(FUNCTION_NAME);
+  // IA-051 — id do run enviado pelo cliente (`x-ai-request-id`): uuid ou null,
+  // nunca inventado (o registrador descarta o que não for uuid).
+  const requestId = extractAiRequestId(req);
 
   try {
     const parsed = parseBody(ClassifyEmojiSchema, await req.json());
@@ -134,6 +145,7 @@ Deno.serve(async (req) => {
       await logAiUsage({
         functionName: FUNCTION_NAME,
         userId: identity.userId,
+        requestId,
         status: 'error',
         errorMessage: 'image_url e file_name ausentes: nenhuma entrada para classificar.',
         // IA-052 — modalidade declarada mesmo sem provedor: a etapa é de visão.
@@ -155,7 +167,7 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
     // Sem image_url (só file_name) segue sem a parte de imagem, como hoje.
     let imagem: InlineImage | null = null;
     if (image_url) {
-      const preparo = await embutirImagem(image_url, identity.userId, bearerTokenDoPedido(req));
+      const preparo = await embutirImagem(image_url, identity.userId, bearerTokenDoPedido(req), requestId);
       if (!preparo.ok) {
         log.error("Falha ao preparar a imagem; degradando para 'outros' com motivo registrado");
         return jsonResponse({ category: 'outros', state: 'input_error', error_code: preparo.errorCode }, 200, req);
@@ -178,6 +190,7 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
       purpose: 'tagging',
       functionName: FUNCTION_NAME,
       userId: identity.userId,
+      requestId,
       messages: [{ role: 'user', content: contentParts }],
       need: { modality: 'vision' },
       extraBody: { max_tokens: 20 },
@@ -229,6 +242,7 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
     await logAiUsage({
       functionName: FUNCTION_NAME,
       userId: identity.userId,
+      requestId,
       status: 'error',
       errorMessage: motivo,
       // IA-052 — exceção fora dos caminhos tratados também declara a rota.
@@ -239,4 +253,6 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
     log.error("Error", { error: motivo });
     return jsonResponse({ category: 'outros', state: 'unexpected_error', error_code: 'UNEXPECTED' }, 200, req);
   }
-});
+}
+
+Deno.serve(handleClassifyEmoji);
