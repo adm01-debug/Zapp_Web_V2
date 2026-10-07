@@ -21,6 +21,13 @@ import { timingSafeEqual } from "../_shared/hmac-validation.ts";
  *     ANTES de confiar em ip_address/request_count/blocked ou escrever;
  *   - sem fallback permissivo.
  *
+ * R2-API-056 (P2) — alerta de rate limit não sobrescreve bloqueio permanente.
+ *
+ * Defeito fechado: o `upsert` incondicional em `blocked_ips` substituía uma
+ * linha administrativa permanente por bloqueio temporário de 15 min. A gravação
+ * agora cria com ON CONFLICT DO NOTHING e só estende linhas temporárias mais
+ * curtas por compare-and-swap (`is_permanent=false` + `expires_at < novo`).
+ *
  * R2-API-057 (P2) — alerta/notificação não afirmam bloqueio que não persistiu.
  *
  * Defeito fechado: o `security_alert` (e a `notification` aos admins) era
@@ -85,24 +92,50 @@ export async function handleRateLimitAlert(
     let blockedPersisted = false;
     if (blocked) {
       const blockDuration = 15;
-      const expiresAt = new Date(Date.now() + blockDuration * 60 * 1000);
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + blockDuration * 60 * 1000);
+      const expiresAtIso = expiresAt.toISOString();
+      const nowIso = now.toISOString();
+      const reason = `Rate limit exceeded: ${request_count} requests to ${endpoint}`;
 
-      const { error: blockError } = await supabaseClient
+      // R2-API-056: nunca sobrescrever uma linha existente de blocked_ips.
+      // (1) ON CONFLICT DO NOTHING cria o bloqueio temporário só quando o IP
+      // ainda não tem linha; bloqueio permanente/administrativo fica intacto.
+      const { error: insertError } = await supabaseClient
         .from("blocked_ips")
         .upsert({
           ip_address,
-          reason: `Rate limit exceeded: ${request_count} requests to ${endpoint}`,
-          blocked_at: new Date().toISOString(),
-          expires_at: expiresAt.toISOString(),
+          reason,
+          blocked_at: nowIso,
+          expires_at: expiresAtIso,
           is_permanent: false,
           request_count,
-          last_attempt_at: new Date().toISOString(),
-        }, { onConflict: "ip_address" });
+          last_attempt_at: nowIso,
+        }, { onConflict: "ip_address", ignoreDuplicates: true });
 
-      if (blockError) {
-        log.error("Error blocking IP", { error: blockError.message });
+      if (insertError) {
+        log.error("Error blocking IP", { error: insertError.message });
       } else {
-        blockedPersisted = true;
+        // (2) Compare-and-swap: só estende bloqueio temporário e mais curto.
+        // is_permanent=false exclui bloqueio permanente; expires_at NULL não
+        // casa o lt no Postgres; e prazo maior não é reduzido.
+        const { error: blockError } = await supabaseClient
+          .from("blocked_ips")
+          .update({
+            expires_at: expiresAtIso,
+            reason,
+            request_count,
+            last_attempt_at: nowIso,
+          })
+          .eq("ip_address", ip_address)
+          .eq("is_permanent", false)
+          .lt("expires_at", expiresAtIso);
+
+        if (blockError) {
+          log.error("Error blocking IP", { error: blockError.message });
+        } else {
+          blockedPersisted = true;
+        }
       }
     }
 
