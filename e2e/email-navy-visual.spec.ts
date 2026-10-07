@@ -429,6 +429,7 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.locator('html')).toHaveClass(/high-contrast/);
   await expect(page.locator('html')).toHaveClass(/reduced-motion/);
+  await waitForAppliedTheme(page, 'dark');
   await freezeVisualTransitions(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
