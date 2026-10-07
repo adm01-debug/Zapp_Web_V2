@@ -1,15 +1,8 @@
 #!/usr/bin/env bash
-# R2-API-006 (#69) — "Opt-out e atribuição podem se perder após o ingest, sem
-# recuperação no replay". Prova EXECUTANDO o SQL num Postgres descartável, com
-# papel de usuário (service_role/authenticated), nunca superusuário. As funções
-# são EXTRAÍDAS dos arquivos de migration do repositório — nada é cópia à mão.
-#
-#   BLOCO A — estado ANTERIOR (defeito): efeitos em chamadas soltas depois do
-#             ingest — falha só logada, sem registro nem retomada (perda).
-#   BLOCO B — migration 20261005224959_inbound_message_effects_outbox: pendências
-#             na outbox na mesma transação do ingest; drain aplica e baixa na
-#             mesma transação — o replay retoma só o incompleto e a falha fica
-#             em last_error.
+# R2-API-006 (#69): prova EXECUTANDO o SQL num Postgres descartavel, com papel de
+# usuario (service_role/authenticated); as funcoes sao EXTRAIDAS das migrations do
+# repositorio — nada e copia a mao.
+#   A — estado ANTERIOR (defeito) | B — migration + outbox/replay | C — direcao (fromMe).
 
 set -Eeuo pipefail
 
@@ -67,8 +60,7 @@ done
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"; cleanup' EXIT INT TERM
 
-# pre.sql — superfície mínima do Supabase (papéis, auth.*, tabelas que as RPCs
-# tocam). As funções são extraídas dos arquivos de migration reais logo abaixo.
+# pre.sql — superficie minima do Supabase (papeis, auth.*, tabelas que as RPCs tocam).
 cat > "$tmp_dir/pre.sql" <<'SQL'
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
@@ -194,16 +186,14 @@ printf '\n============ BLOCO A — estado ANTERIOR (defeito) ============\n'
 expect_service 'A.1 ingest antigo grava a mensagem' 'inserted' \
   "SELECT outcome FROM public.ingest_inbound_message('$CONN','$PHONE','Fixture','PARE','text',NULL,'MSG-A1',now());"
 
-# A falha real do efeito (CHECK de origin recusa o valor): hoje só loga — NADA
-# durável registra a pendência.
+# A falha real do efeito (CHECK de origin): hoje so loga, nada duravel registra.
 expect_error_service 'A.3 (DEFEITO) efeito falha após o ingest' \
   'talkx_blacklist_origin_check' \
   "SELECT public.talkx_suppress_contact('$CONTACT','$PHONE','Opt-out via mensagem: pare','opt_out','origem_que_nao_existe',NULL);"
 expect_value 'A.4 (DEFEITO) supressão não saiu e nada a retenta' '0' \
   "SELECT count(*) FROM public.talkx_blacklist;"
 
-# A atribuição também perde: a edge só atribuía no 'inserted', então no replay
-# 'updated' o replied_at segue NULL pra sempre.
+# A atribuicao tambem perde: a edge so atribuia no 'inserted'.
 expect_error_service 'A.5 (DEFEITO) atribuição falha na 1a entrega' \
   'invalid input syntax' \
   "SELECT public.attribute_talkx_reply('$CONTACT','$PHONE','nao-e-uuid');"
@@ -219,7 +209,7 @@ psql_file < "$migration" >/dev/null
 psql_file < "$tmp_dir/seed.sql" >/dev/null
 
 expect_service 'B.1 ingest novo grava a palavra na mesma chamada' 'inserted' \
-  "SELECT outcome FROM public.ingest_inbound_message('$CONN','$PHONE','Fixture','PARE','text',NULL,'MSG-B1',now(),'pare',NULL);"
+  "SELECT outcome FROM public.ingest_inbound_message('$CONN','$PHONE','Fixture','PARE','text',NULL,'MSG-B1',now(),false,'pare',NULL);"
 expect_value 'B.2 efeito pendente na MESMA transacao, sem resposta' 'optout_suppress|pare|0' \
   "SELECT (SELECT effect || '|' || (payload ->> 'keyword') FROM public.inbound_message_effects WHERE external_id='MSG-B1' AND applied_at IS NULL) || '|' || (SELECT count(*) FROM public.inbound_message_effects WHERE external_id='MSG-B1' AND effect <> 'optout_suppress');"
 expect_service 'B.4 drain aplica a supressao (id novo)' 't' \
@@ -231,19 +221,18 @@ expect_value 'B.7 consentimento revogado pelo auto_optout' 'revoked' \
 
 # Reentrega SEQUENCIAL ('updated'): outbox não reabre, supressão não repete.
 expect_service 'B.8 replay sequencial: updated; outbox nao reabre' 'updated|1|true' \
-  "SELECT (SELECT outcome FROM public.ingest_inbound_message('$CONN','$PHONE','Fixture','PARE','text',NULL,'MSG-B1',now(),'pare',NULL)) || '|' || (SELECT count(*) || '|' || bool_and(applied_at IS NOT NULL) FROM public.inbound_message_effects WHERE external_id='MSG-B1');"
+  "SELECT (SELECT outcome FROM public.ingest_inbound_message('$CONN','$PHONE','Fixture','PARE','text',NULL,'MSG-B1',now(),false,'pare',NULL)) || '|' || (SELECT count(*) || '|' || bool_and(applied_at IS NOT NULL) FROM public.inbound_message_effects WHERE external_id='MSG-B1');"
 expect_service 'B.10 re-drain sem supressao nova; supressao continua unica' 'true|1' \
   "SELECT (public.drain_inbound_message_effects('$CONN','MSG-B1') ->> 'suppression_id') IS NULL || '|' || (SELECT count(*) FROM public.talkx_blacklist WHERE contact_id='$CONTACT');"
 
-# Reentrega de CORRIDA: um psql em background segura a linha não-commitada; o
-# ingest real bloqueia no índice único e sai 'duplicate' com o id resolvido —
-# e MESMO ASSIM registra e retoma o efeito pendente.
+# Corrida: psql em background segura a linha; o ingest bloqueia no indice unico,
+# sai 'duplicate' com o id resolvido e MESMO ASSIM retoma o efeito pendente.
 docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
   -c "BEGIN; INSERT INTO public.messages(contact_id, whatsapp_connection_id, content, message_type, sender, external_id, status, created_at) VALUES ('$CONTACT2','$CONN','PARE','text','contact','MSG-BR','received',now()); SELECT pg_sleep(5); COMMIT;" >/dev/null 2>&1 &
 racer_pid=$!
 sleep 2
 expect_service 'B.12 corrida: duplicate resolve o id vencedor' 'duplicate|true' \
-  "SELECT outcome || '|' || (message_id IS NOT NULL) FROM public.ingest_inbound_message('$CONN','5533111223344','Outro','PARE','text',NULL,'MSG-BR',now(),'pare',NULL);"
+  "SELECT outcome || '|' || (message_id IS NOT NULL) FROM public.ingest_inbound_message('$CONN','5533111223344','Outro','PARE','text',NULL,'MSG-BR',now(),false,'pare',NULL);"
 wait "$racer_pid" 2>/dev/null || true
 expect_value 'B.13 efeito pendente registrado mesmo na corrida' 'optout_suppress' \
   "SELECT effect FROM public.inbound_message_effects WHERE external_id='MSG-BR' AND applied_at IS NULL;"
@@ -252,9 +241,8 @@ expect_service 'B.14 drain retoma o efeito da corrida' 't' \
 expect_value 'B.15 supressao recuperada uma unica vez' '1' \
   "SELECT count(*) FROM public.talkx_blacklist WHERE contact_id='$CONTACT2';"
 
-# Falha de banco no efeito: linha fica pendente com last_error; a reentrega
-# (re-drenagem) aplica UMA vez.
-as_service "SELECT outcome FROM public.ingest_inbound_message('$CONN','5544556677889','Fixture','STOP','text',NULL,'MSG-B4',now(),'stop',NULL);" >/dev/null
+# Falha de banco no efeito: fica pendente com last_error; a re-drenagem aplica UMA vez.
+as_service "SELECT outcome FROM public.ingest_inbound_message('$CONN','5544556677889','Fixture','STOP','text',NULL,'MSG-B4',now(),false,'stop',NULL);" >/dev/null
 psql_file < "$tmp_dir/fx_fail.sql" >/dev/null
 expect_service 'B.17 falha fica REGISTRADA (pendente), nao so logada' '1' \
   "SELECT (public.drain_inbound_message_effects('$CONN','MSG-B4') ->> 'pending_failed');"
@@ -266,15 +254,15 @@ expect_service 'B.20 re-drain aplica a supressao recuperada' 't' \
 expect_value 'B.21 supressao UMA unica vez apos a falha' '1|1|true|2' \
   "SELECT (SELECT count(*) FROM public.talkx_blacklist WHERE contact_id='$CONTACT3') || '|' || (SELECT count(*) FROM public.talkx_blacklist WHERE source_message_id IN (SELECT id FROM public.messages WHERE external_id='MSG-B4')) || '|' || (e.applied_at IS NOT NULL) || '|' || e.attempts FROM public.inbound_message_effects e WHERE e.external_id='MSG-B4';"
 
-# Atomicidade do ingest: falha no meio nao deixa mensagem nem efeito pendente.
+# Atomicidade: falha no meio nao deixa mensagem nem efeito pendente.
 expect_error_service 'B.22 falha do ingest aborta a transacao inteira' \
   'violates foreign key constraint' \
-  "SELECT public.ingest_inbound_message('99999999-9999-9999-9999-999999999999','$PHONE','Fixture','oi','text',NULL,'MSG-B5',now(),'pare',NULL);"
+  "SELECT public.ingest_inbound_message('99999999-9999-9999-9999-999999999999','$PHONE','Fixture','oi','text',NULL,'MSG-B5',now(),false,'pare',NULL);"
 expect_value 'B.23 nada ficou meio-escrito (sem mensagem/efeito)' '0|0' \
   "SELECT (SELECT count(*) FROM public.messages WHERE external_id='MSG-B5') || '|' || (SELECT count(*) FROM public.inbound_message_effects WHERE external_id='MSG-B5');"
 
 # Atribuicoes: resposta citando envio -> linked; re-drain nao conta duas vezes.
-as_service "SELECT outcome FROM public.ingest_inbound_message('$CONN','$PHONE','Fixture','tenho interesse','text',NULL,'MSG-B6',now(),NULL,'EXT-SEED');" >/dev/null
+as_service "SELECT outcome FROM public.ingest_inbound_message('$CONN','$PHONE','Fixture','tenho interesse','text',NULL,'MSG-B6',now(),false,NULL,'EXT-SEED');" >/dev/null
 expect_service 'B.25 drain atribui a resposta TalkX' 'true' \
   "SELECT (public.drain_inbound_message_effects('$CONN','MSG-B6') -> 'talkx_reply' ->> 'attributed');"
 expect_value 'B.26 replied_at com a mensagem certa' 't' \
@@ -284,8 +272,8 @@ expect_value 'B.27 item Multiplix atribuido por citacao' 'true|linked' \
 expect_service 'B.28 re-drain sem pendencia: nada reaplicado, nada duplicado' 'true|1|1' \
   "SELECT (public.drain_inbound_message_effects('$CONN','MSG-B6') ->> 'talkx_reply') IS NULL || '|' || (SELECT count(*) FROM public.talkx_recipients WHERE replied_at IS NOT NULL) || '|' || (SELECT count(*) FROM public.multiplix_delivery_items WHERE replied_at IS NOT NULL);"
 
-# Gate de 30 dias dentro da RPC: sem envio recente a pendência baixa sem suprimir.
-as_service "SELECT outcome FROM public.ingest_inbound_message('$CONN','5522901234567','Outro','PARE','text',NULL,'MSG-B7',now(),'pare',NULL);" >/dev/null
+# Gate de 30 dias na RPC: sem envio recente a pendencia baixa sem suprimir.
+as_service "SELECT outcome FROM public.ingest_inbound_message('$CONN','5522901234567','Outro','PARE','text',NULL,'MSG-B7',now(),false,'pare',NULL);" >/dev/null
 expect_service 'B.31 drain devolve no_recent_send e baixa a linha' 'no_recent_send' \
   "SELECT (public.drain_inbound_message_effects('$CONN','MSG-B7') ->> 'optout_status');"
 expect_value 'B.32 sem campanha recente nao suprime' '0|0' \
@@ -294,6 +282,46 @@ expect_value 'B.32 sem campanha recente nao suprime' '0|0' \
 expect_error 'B.33 authenticated nao drena efeitos' authenticated 'permission denied' \
   "SELECT public.drain_inbound_message_effects('$CONN','MSG-B1');"
 expect_value 'B.34 ingest nova e outbox negadas a authenticated/anon' 'false|false|false' \
-  "SELECT has_function_privilege('authenticated','public.ingest_inbound_message(uuid,text,text,text,text,text,text,timestamptz,text,text)','EXECUTE') || '|' || has_table_privilege('authenticated','public.inbound_message_effects','SELECT') || '|' || has_table_privilege('anon','public.inbound_message_effects','SELECT');"
+  "SELECT has_function_privilege('authenticated','public.ingest_inbound_message(uuid,text,text,text,text,text,text,timestamptz,boolean,text,text)','EXECUTE') || '|' || has_table_privilege('authenticated','public.inbound_message_effects','SELECT') || '|' || has_table_privilege('anon','public.inbound_message_effects','SELECT');"
+
+printf '\n============ BLOCO C — direção (fromMe) ============\n'
+
+# p_from_me=true: a mensagem e gravada, mas NENHUM efeito entra na outbox — a
+# guarda `if (!key.fromMe)` preservada no enfileiramento. (ingest e conferencia
+# em comandos separados: subconsulta no mesmo SELECT nao ve o que a RPC gravou.)
+expect_service 'C.1 mensagem própria grava a mensagem' 'inserted' \
+  "SELECT outcome FROM public.ingest_inbound_message('$CONN','5566998877000','Propria','oi, sou eu','text',NULL,'MSG-C1',now(),true,NULL,NULL);"
+expect_value 'C.2 mensagem própria não deixou efeito nenhum na outbox' '0' \
+  "SELECT count(*) FROM public.inbound_message_effects WHERE external_id='MSG-C1';"
+
+# Isca: campanha e item RECENTES para o mesmo telefone — sem a guarda, o drain
+# atribuiria a nossa propria mensagem como resposta.
+psql_sql "INSERT INTO public.talkx_campaigns (id) VALUES ('d0000000-0000-0000-0000-0000000000c1');
+INSERT INTO public.talkx_recipients (id, campaign_id, contact_id, sent_at) VALUES ('b0000000-0000-0000-0000-0000000000c1','d0000000-0000-0000-0000-0000000000c1',(SELECT id FROM public.contacts WHERE phone='5566998877000'),now() - interval '1 hour');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, destino_e164) VALUES ('e0000000-0000-0000-0000-0000000000c1','f0000000-0000-0000-0000-0000000000c1','+5566998877000');
+INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, external_id, sent_at) VALUES ('e0000000-0000-0000-0000-00000000000c','f0000000-0000-0000-0000-0000000000c1','e0000000-0000-0000-0000-0000000000c1','f0000000-0000-0000-0000-0000000000cc',1,'EXT-C1',now() - interval '1 hour');" >/dev/null
+
+expect_service 'C.3 drain da mensagem própria: efeitos nulos, 0 pendências' 'true|true|0' \
+  "SELECT ((d ->> 'talkx_reply') IS NULL) || '|' || ((d ->> 'multiplix_reply') IS NULL) || '|' || (d ->> 'pending_failed') FROM (SELECT public.drain_inbound_message_effects('$CONN','MSG-C1') d) t;"
+expect_value 'C.4 mensagem própria não preencheu replied_at em nada' '0|0' \
+  "SELECT (SELECT count(*) FROM public.talkx_recipients WHERE id='b0000000-0000-0000-0000-0000000000c1' AND replied_at IS NOT NULL) || '|' || (SELECT count(*) FROM public.multiplix_delivery_items WHERE id='e0000000-0000-0000-0000-00000000000c' AND replied_at IS NOT NULL);"
+
+# Palavra de opt-out numa mensagem PROPRIA — mesma guarda, 0 efeitos.
+expect_service 'C.5 mensagem própria com palavra de opt-out grava a mensagem' 'inserted' \
+  "SELECT outcome FROM public.ingest_inbound_message('$CONN','5566998877000','Propria','pare','text',NULL,'MSG-C2',now(),true,'pare',NULL);"
+expect_value 'C.6 mensagem própria com palavra de opt-out não criou efeito' '0' \
+  "SELECT count(*) FROM public.inbound_message_effects WHERE external_id='MSG-C2';"
+
+# Recebida (p_from_me=false): os dois efeitos; drain aplica uma vez e nao reaplica.
+expect_service 'C.7 recebida grava a mensagem' 'inserted' \
+  "SELECT outcome FROM public.ingest_inbound_message('$CONN','5566998877000','Propria','quero sim','text',NULL,'MSG-C3',now(),false,NULL,NULL);"
+expect_value 'C.8 recebida criou exatamente os dois efeitos pendentes' 'multiplix_reply|talkx_reply|2' \
+  "SELECT (SELECT string_agg(effect,'|' ORDER BY effect) FROM public.inbound_message_effects WHERE external_id='MSG-C3') || '|' || (SELECT count(*) FROM public.inbound_message_effects WHERE external_id='MSG-C3' AND applied_at IS NULL);"
+expect_service 'C.9 drain aplica os dois efeitos uma única vez' 'true|true|0' \
+  "SELECT (d -> 'talkx_reply' ->> 'attributed') || '|' || (d -> 'multiplix_reply' ->> 'attributed') || '|' || (d ->> 'pending_failed') FROM (SELECT public.drain_inbound_message_effects('$CONN','MSG-C3') d) t;"
+expect_service 'C.10 segundo drain: nada pendente, nada reaplicado' 'true|true|0' \
+  "SELECT ((d ->> 'talkx_reply') IS NULL) || '|' || ((d ->> 'multiplix_reply') IS NULL) || '|' || (d ->> 'pending_failed') FROM (SELECT public.drain_inbound_message_effects('$CONN','MSG-C3') d) t;"
+expect_value 'C.11 replied_at preenchido uma única vez (sem dupla atribuição)' '1|1' \
+  "SELECT (SELECT count(*) FROM public.talkx_recipients WHERE id='b0000000-0000-0000-0000-0000000000c1' AND replied_at IS NOT NULL) || '|' || (SELECT count(*) FROM public.multiplix_delivery_items WHERE id='e0000000-0000-0000-0000-00000000000c' AND replied_at IS NOT NULL);"
 
 printf '\n[OK] inbound-effects-replay: todos os checks passaram\n'
