@@ -48,6 +48,11 @@ const ALLOWLIST = new Set([
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
   'scripts/db-audit/replay-classify.test.sh',
+  // --- .test.sh — prova de ACL/RLS por papel da outbox de IA (t_6391050a), em postgres:17-alpine
+  // descartável com papéis reais. Registrar aqui é o passo que o agente PODE dar (não edita workflow):
+  // sem esta linha a guarda acusa o arquivo como órfão e o espelho do CI reprova o cartão.
+  // Promover para um passo de db-guard.yml (retry-disposable-postgres-test.sh) pelo dono do workflow.
+  'scripts/db-audit/ia-usage-outbox-behavior.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
