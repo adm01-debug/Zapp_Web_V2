@@ -40,7 +40,7 @@ S01 mapear os 6 botões e rótulos ✔ · S02 testar clique/clique longo/teclado
 **B. Interação do painel (S09–S24)** — cartão **Q01** [iris]
 S09 clique abre o painel · S10 painel mostra % grande · S11 botões −/+ de 5 % · S12 botão Silenciar/Ativar som com estado visível · S13 fecha ao clicar fora · S14 fecha com Esc · S15 devolve o foco ao botão ao fechar · S16 **toque: painel não fecha ao soltar** (B2) · S17 toque: slider arrastável e botões ≥ 44 px · S18 clique longo continua abrindo (compatível) · S19 tecla M e Enter funcionam com o painel fechado/aberto · S20 roda só com painel aberto (B5) · S21 painel ancorado sem cobrir vizinhos (B8) · S22 ícone reflete mudo/baixo/médio/alto · S23 ponto de atenção só quando mudo ou < 30 % · S24 teste de componente para cada item de S09–S23.
 
-**C. Dicas, rótulos e acessibilidade (S25–S32)** — cartões **Q01** (dica no botão) e **Q03** [hugo] (textos/lógica) e **Q04** [iris] (acessibilidade)
+**C. Dicas, rótulos e acessibilidade (S25–S32)** — cartões **Q01** (S25, S26, S30–S32), **Q03** (S28, S29) e **Q04** (S27)
 S25 dica no alto-falante · S26 dica no fone · S27 dica na acessibilidade (B3) · S28 `aria-label` do fone com % (B4) · S29 título do painel igual nos dois ("Volume dos alertas" / "Volume dos áudios e vídeos") · S30 slider com `aria-valuetext` ("70 por cento") · S31 painel com `role="dialog"`, rótulo e foco preso · S32 legenda do ponto azul na dica (B11).
 
 **D. Persistência e consistência (S33–S40)** — cartões **Q02** e **Q03** [hugo]
@@ -53,7 +53,7 @@ S41 janela de visualização do arquivo obedece (`MediaPreviewDialog`) · S42 pl
 S46 E2E (`e2e/quick-controls-volume.spec.ts`, novo) cobrindo B1–B5 · S47 verificação visual na pré-visualização: sidebar expandida e recolhida, claro e escuro, celular 390 px, toque · S48 auditoria de acessibilidade (teclado, leitor de tela, contraste) · S49 bundle inicial ≤ 343 KB, tsc, lint, contratos · S50 documentação (`docs/design/`) + registro de estado e decisões do dono.
 
 ## 4. Cartões e ordem
-**Onda 1 (arquivos independentes, criada agora):** **Q01** [iris] S09–S27 · **Q02** [hugo] S33–S35 · **Q03** [hugo] S28–S29, S36–S39 · **Q04** [iris] S27, S30–S32 (acessibilidade e textos dos 3 botões sem dica).
+**Onda 1 (arquivos independentes, criada agora):** **Q01** [iris] S09–S26 e S30–S32 (painel, dicas dos botões de volume, acessibilidade do painel) · **Q02** [hugo] S33–S35 (armazenamento por usuário e sincronia) · **Q03** [hugo] S28–S29 e S36–S39 (rótulos e gravação agrupada) · **Q04** [iris] S27 (dica do botão de acessibilidade).
 **Onda 2 (depois da integração):** **Q05** [workertestes] S46 · **Q06** [workertestes] S41–S44 · **Q07** [vera] S50.
 **Claude:** S05–S08, S45, S47–S49.
 
