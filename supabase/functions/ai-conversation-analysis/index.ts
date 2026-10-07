@@ -1,13 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
-import { AiConversationAnalysisSchema, CONTEXT_CONTRACT_VERSION, contextCancelledEnvelope, measureConversationContext, parseBody, revalidateContextBeforeEffect, validationErrorResponse } from "../_shared/schemas.ts";
+import { AiConversationAnalysisSchema, CONTEXT_CONTRACT_VERSION, CONTEXT_SUPERSEDED_REASON, contextCancelledEnvelope, measureConversationContext, parseBody, revalidateContextBeforeEffect, validationErrorResponse } from "../_shared/schemas.ts";
 import { normalizeSentiment, normalizeUrgency, urgencyToOperationalPriority } from "../_shared/ai-vocabulary.ts";
 import { normalizeScore } from "../_shared/ai-values.ts";
 import { ConversationAnalysisOutput, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { parseJsonObject } from "../_shared/ai-json.ts";
 import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
-import { CHURN_RISK_TOOL_SCHEMA, CONVERSATION_STATUS_TOOL_SCHEMA, KEY_POINTS_TOOL_SCHEMA, NEXT_STEPS_TOOL_SCHEMA, SENTIMENT_TOOL_SCHEMA, type ConversationToolDefinition, applyVocabularyConversion, buildConversationModelBody, buildConversationText, collectValueIssues, contractRejectionEvidence, conversationAnalysisRecord, conversationPersistFailureResponse, conversationRunResponse, loadContactProjectionVersion, loadContactPromptContext, noModelPayloadResponse, requestConversationModelJson, resolveVisibleContactId, summarizeContractIssues } from "../_shared/ai-conversation-pipeline.ts";
+import { CHURN_RISK_TOOL_SCHEMA, CONVERSATION_STATUS_TOOL_SCHEMA, KEY_POINTS_TOOL_SCHEMA, NEXT_STEPS_TOOL_SCHEMA, SENTIMENT_TOOL_SCHEMA, type ConversationToolDefinition, applyVocabularyConversion, buildConversationModelBody, buildConversationText, collectValueIssues, contractRejectionEvidence, conversationAnalysisRecord, conversationPersistFailureResponse, conversationRunResponse, loadContactProjectionVersion, loadContactPromptContext, noModelPayloadResponse, persistConversationAnalysisGuarded, projectionGuardArgs, requestConversationModelJson, resolveVisibleContactId, summarizeContractIssues } from "../_shared/ai-conversation-pipeline.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -250,31 +250,63 @@ Responda em português brasileiro.`;
         }), 200, req);
       }
 
+      if (revalidation.currentVersion === undefined) {
+        // Não é silêncio: a análise grava, mas a projeção fica DESLIGADA —
+        // sem a versão medida não existe versão esperada para a trava (D5).
+        log.warn("Versão do contato não medida; análise gravada sem projeção", {
+          requestId,
+          contactId: visibleContactId,
+        });
+      }
+
       // Uma única transação no banco: grava a análise COMPLETA e projeta no
-      // contato com trava de recência (IA-026/IA-027). Falha em qualquer etapa
-      // desfaz tudo — não existe estado em que a análise não gravou e o contato
-      // mudou, nem projeção sobrescrita por análise de período antigo.
-      const { data: persisted, error: persistError } = await supabase.rpc('persist_conversation_analysis', {
-        p_contact_id: visibleContactId,
-        p_analysis: conversationAnalysisRecord(analysis, {
-          sentiment_score: sentimentScore.value,
-          customer_satisfaction: customerSatisfaction.value,
-          message_count: messages.length,
-          agent_performance: analysis.agentPerformance ?? null,
-          churn_risk: analysis.churnRisk ?? null,
-          sales_opportunity: analysis.salesOpportunity ?? null,
-          analysis_version: CONTEXT_CONTRACT_VERSION,
-          period_days: periodDays ?? null,
-          coverage: contextBudget,
-          ai_priority: operationalPriority,
-        }),
-        p_analyzed_at: new Date().toISOString(),
+      // contato sob a trava de versão (R2-INF-023) — a versão medida na
+      // revalidação vai como `p_expected_projection_updated_at` e a comparação
+      // acontece ATÔMICAMENTE sob lock da linha. Se a projeção avançou entre a
+      // leitura e o commit, a RPC devolve `superseded` e NADA é gravado
+      // (IA-048: cancelado não persiste — nem a linha de análise).
+      const outcome = await persistConversationAnalysisGuarded({
+        rpc: (args) => supabase.rpc('persist_conversation_analysis', args),
+        args: {
+          p_contact_id: visibleContactId,
+          p_analysis: conversationAnalysisRecord(analysis, {
+            sentiment_score: sentimentScore.value,
+            customer_satisfaction: customerSatisfaction.value,
+            message_count: messages.length,
+            agent_performance: analysis.agentPerformance ?? null,
+            churn_risk: analysis.churnRisk ?? null,
+            sales_opportunity: analysis.salesOpportunity ?? null,
+            analysis_version: CONTEXT_CONTRACT_VERSION,
+            period_days: periodDays ?? null,
+            coverage: contextBudget,
+            ai_priority: operationalPriority,
+          }),
+          p_analyzed_at: new Date().toISOString(),
+          ...projectionGuardArgs(revalidation.currentVersion),
+        },
       });
 
-      if (persistError) {
+      if (outcome.kind === 'superseded') {
+        // A revalidação passou com um snapshot vigente, mas a projeção avançou
+        // antes do commit: mesma resposta canônica do cancelamento anterior.
+        log.info("Contexto superado no commit; análise não persistida", {
+          requestId,
+          reason: CONTEXT_SUPERSEDED_REASON,
+          currentVersion: outcome.currentVersion,
+        });
+        return jsonResponse(contextCancelledEnvelope({
+          capability: 'ai-conversation-analysis',
+          requestId,
+          context: contextBudget,
+          reason: CONTEXT_SUPERSEDED_REASON,
+          currentVersion: outcome.currentVersion,
+        }), 200, req);
+      }
+
+      if (outcome.kind === 'error') {
         log.error("Failed to persist conversation analysis", {
           contactId: visibleContactId,
-          error: persistError.message,
+          error: outcome.error.message,
         });
         return conversationPersistFailureResponse({
           capability: 'ai-conversation-analysis',
@@ -284,9 +316,8 @@ Responda em português brasileiro.`;
         });
       }
 
-      const persistedResult = persisted as { analysis_id?: string; projected?: boolean } | null;
-      analysisId = persistedResult?.analysis_id ?? null;
-      projected = persistedResult?.projected === true;
+      analysisId = outcome.analysisId;
+      projected = outcome.projected;
     }
 
     log.done(200, { analysisId, messageCount: messages.length, projected });

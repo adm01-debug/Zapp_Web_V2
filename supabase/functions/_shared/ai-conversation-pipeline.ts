@@ -504,3 +504,84 @@ export function applyVocabularyConversion(
   conversions.push({ field, from: target[field], to: match.value });
   target[field] = match.value;
 }
+
+// ─── Persistência com trava de versão (R2-INF-023) ───────────
+// A comparação "a projeção avançou entre a leitura e o commit?" ficou ATÔMICA
+// no banco: a RPC trava a linha do contato (`FOR UPDATE`) e só grava se a
+// versão corrente for exatamente a que a revalidação mediu. Por isso os dois
+// parâmetros novos são OBRIGATÓRIOS na assinatura — uma chamada sem eles nem
+// existe (a sobrecarga antiga foi DROPada; proteção opcional seria o defeito
+// de volta).
+
+/** Argumentos da RPC `persist_conversation_analysis` (assinatura com trava). */
+export type PersistConversationAnalysisArgs = {
+  p_contact_id: string;
+  p_analysis: Record<string, unknown>;
+  /** Timestamp de TÉRMINO do trabalho (telemetria/recência), gerado no handler. */
+  p_analyzed_at: string;
+  /** IDENTIDADE do contexto: versão medida na revalidação. `null` = medido,
+   *  o contato ainda não tinha projeção. */
+  p_expected_projection_updated_at: string | null;
+  /** `false` = versão não medida: a análise grava, a projeção NÃO é tentada. */
+  p_should_project: boolean;
+};
+
+/**
+ * Versão medida na revalidação → trava de versão da RPC.
+ *
+ * `undefined` ("não medido": a leitura imediatamente antes do efeito falhou)
+ * desliga SÓ a projeção — a análise continua sendo gravada — e nunca finge uma
+ * versão. `null` medido significa "o contato ainda não tem projeção" e é uma
+ * versão esperada legítima: se outra análise projetar antes do commit, a RPC
+ * devolve `superseded` igual.
+ */
+export function projectionGuardArgs(
+  expectedVersion: string | null | undefined,
+): Pick<PersistConversationAnalysisArgs, "p_expected_projection_updated_at" | "p_should_project"> {
+  if (expectedVersion === undefined) {
+    return { p_expected_projection_updated_at: null, p_should_project: false };
+  }
+  return { p_expected_projection_updated_at: expectedVersion, p_should_project: true };
+}
+
+/** Resultado da persistência, já traduzido para a decisão do handler. */
+export type PersistConversationAnalysisOutcome =
+  | { kind: "persisted"; analysisId: string | null; projected: boolean }
+  | { kind: "superseded"; currentVersion: string | null }
+  | { kind: "error"; error: { message?: string } };
+
+/**
+ * Chama a RPC `persist_conversation_analysis` e interpreta o resultado — o
+ * caminho ÚNICO dos dois handlers (R2-INF-023/D9), para a decisão de
+ * cancelamento não ser reimplementada em cada capacidade.
+ *
+ * `superseded` da RPC significa: a projeção avançou entre a leitura da
+ * revalidação e o commit. NADA foi gravado (nem a linha de análise — IA-048) e
+ * o handler deve responder o envelope `status:'cancelled'` canônico, nunca um
+ * 200 'ok' com `projected:false`.
+ *
+ * A `rpc` chega como thunk para o literal `persist_conversation_analysis`
+ * continuar legível no arquivo de cada capacidade; nos testes, um cliente falso
+ * captura o payload — o que vai para o banco é sempre ESTE objeto.
+ */
+export async function persistConversationAnalysisGuarded(input: {
+  rpc: (args: PersistConversationAnalysisArgs) => PromiseLike<{ data: unknown; error: unknown }>;
+  args: PersistConversationAnalysisArgs;
+}): Promise<PersistConversationAnalysisOutcome> {
+  const { data, error } = await input.rpc(input.args);
+  if (error) return { kind: "error", error: error as { message?: string } };
+  const result = data as {
+    analysis_id?: string | null;
+    projected?: boolean;
+    superseded?: boolean;
+    current_version?: string | null;
+  } | null;
+  if (result?.superseded === true) {
+    return { kind: "superseded", currentVersion: result.current_version ?? null };
+  }
+  return {
+    kind: "persisted",
+    analysisId: result?.analysis_id ?? null,
+    projected: result?.projected === true,
+  };
+}
