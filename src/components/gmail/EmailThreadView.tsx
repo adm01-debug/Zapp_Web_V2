@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { sanitizeEmailHtml } from '@/lib/emailHtml';
 import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useGmail, type EmailThread, type EmailMessage } from '@/hooks/integrations/useGmail';
 import { EmailComposer } from './EmailComposer';
+import { toast } from 'sonner';
 
 interface EmailThreadViewProps {
   thread: EmailThread;
@@ -154,7 +155,7 @@ function EmailMessageCard({ message, isLast }: { message: EmailMessage; isLast: 
 }
 
 export function EmailThreadView({ thread, onBack }: EmailThreadViewProps) {
-  const { threadMessages, messagesLoading, messagesError, refetchMessages, markAsRead, trashMessage, setSelectedThreadId } = useGmail();
+  const { threadMessages, messagesLoading, messagesError, refetchMessages, markAsRead, trashMessage, modifyThreadLabels, setSelectedThreadId } = useGmail();
   const [composerMode, setComposerMode] = useState<'reply' | 'reply-all' | 'forward' | null>(null);
 
   // Set selected thread to load messages
@@ -178,6 +179,19 @@ export function EmailThreadView({ thread, onBack }: EmailThreadViewProps) {
   const lastMessage = useMemo(() => {
     return threadMessages[threadMessages.length - 1];
   }, [threadMessages]);
+
+  // Arquiva a thread inteira (mesmo fluxo canônico do EmailChatThread): remove o
+  // rótulo INBOX e só então volta, para não navegar como se tivesse dado certo
+  // quando a mutação falha.
+  const handleArchive = useCallback(async () => {
+    try {
+      await modifyThreadLabels.mutateAsync({ thread_id: thread.gmail_thread_id, remove_labels: ['INBOX'] });
+    } catch {
+      toast.error('Não foi possível arquivar a conversa.');
+      return;
+    }
+    onBack();
+  }, [modifyThreadLabels, onBack, thread.gmail_thread_id]);
 
   return (
     <div className="flex flex-col h-full">
@@ -210,7 +224,14 @@ export function EmailThreadView({ thread, onBack }: EmailThreadViewProps) {
           <div className="flex items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label="Arquivar"
+                  onClick={() => void handleArchive()}
+                  disabled={modifyThreadLabels.isPending}
+                >
                   <Archive className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
