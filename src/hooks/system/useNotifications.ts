@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, createElement } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, createElement } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '../auth/useAuth';
@@ -22,8 +22,16 @@ export function useNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
   const isMountedRef = useRef(true);
+
+  // R2-PLAT-002 (#440): o contador é DERIVADO da lista reconciliada — a mesma que
+  // o popover renderiza — em vez de um estado à parte ajustado por delta em cada
+  // transição. Assim ele não diverge em leitura repetida, UPDATE remoto antes do
+  // retorno HTTP, INSERT lido/duplicado nem DELETE remoto.
+  const unreadCount = useMemo(
+    () => notifications.filter(n => !n.is_read).length,
+    [notifications]
+  );
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -48,7 +56,6 @@ export function useNotifications() {
       const typedData = (data || []) as Notification[];
       if (isMountedRef.current) {
         setNotifications(typedData);
-        setUnreadCount(typedData.filter(n => !n.is_read).length);
       }
     } catch (error) {
       log.error('Error fetching notifications:', error);
@@ -80,8 +87,13 @@ export function useNotifications() {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newNotification = payload.new as Notification;
-            setNotifications(prev => [newNotification, ...prev]);
-            setUnreadCount(prev => prev + 1);
+            // Um INSERT que repete um id já reconciliado é a mesma linha (ex.: o
+            // eco do próprio insert): substitui no lugar, não duplica na lista.
+            setNotifications(prev =>
+              prev.some(n => n.id === newNotification.id)
+                ? prev.map(n => (n.id === newNotification.id ? newNotification : n))
+                : [newNotification, ...prev]
+            );
             // Fase F (etapa 61): o alarme de tarefa chega em tempo real pelo
             // mesmo canal. Mostra o toast com as 3 ações do aviso. Sem som de
             // propósito — o app não tem padrão sonoro para alarme de tarefa.
@@ -93,11 +105,9 @@ export function useNotifications() {
             }
           } else if (payload.eventType === 'UPDATE') {
             const updatedNotification = payload.new as Notification;
-            setNotifications(prev => {
-              const updated = prev.map(n => n.id === updatedNotification.id ? updatedNotification : n);
-              setUnreadCount(updated.filter(n => !n.is_read).length);
-              return updated;
-            });
+            setNotifications(prev =>
+              prev.map(n => n.id === updatedNotification.id ? updatedNotification : n)
+            );
           } else if (payload.eventType === 'DELETE') {
             const deletedId = payload.old.id;
             setNotifications(prev => prev.filter(n => n.id !== deletedId));
@@ -123,7 +133,6 @@ export function useNotifications() {
       setNotifications(prev => 
         prev.map(n => n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n)
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       log.error('Error marking notification as read:', error);
     }
@@ -144,7 +153,6 @@ export function useNotifications() {
       setNotifications(prev => 
         prev.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
       );
-      setUnreadCount(0);
     } catch (error) {
       log.error('Error marking all as read:', error);
     }
@@ -152,8 +160,6 @@ export function useNotifications() {
 
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
-      const notification = notifications.find(n => n.id === notificationId);
-      
       const { error } = await supabase
         .from('notifications')
         .delete()
@@ -162,13 +168,10 @@ export function useNotifications() {
       if (error) throw error;
       
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      if (notification && !notification.is_read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
     } catch (error) {
       log.error('Error deleting notification:', error);
     }
-  }, [notifications]);
+  }, []);
 
   const clearAll = useCallback(async () => {
     if (!user) return;
@@ -182,7 +185,6 @@ export function useNotifications() {
       if (error) throw error;
       
       setNotifications([]);
-      setUnreadCount(0);
     } catch (error) {
       log.error('Error clearing notifications:', error);
     }
