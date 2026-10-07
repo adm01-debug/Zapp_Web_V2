@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
 
 /**
  * D3 (revisado por Joaquim em 29/09) = reconciliar com o Bitrix24 via `voximplant.statistic.get`,
@@ -34,7 +35,11 @@ export function useCallRecording(callId: string | null | undefined, recordingSta
     enabled: habilitado,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<GravacaoDaChamada> => {
-      const { data, error } = await supabase.functions.invoke('get-call-recording', { body: { callId } });
+      const { data, error } = await supabase.functions.invoke('get-call-recording', {
+        method: 'POST',
+        headers: { ...(await edgeAuthHeaders()), 'Content-Type': 'application/json' },
+        body: { callId },
+      });
       if (error) throw error;
       const url = (data as { url?: string } | null)?.url ?? null;
       return { disponivel: Boolean(url), url };
