@@ -5,6 +5,20 @@ import { mockEmailNavy } from './fixtures/email-navy';
 
 const output = join(import.meta.dirname, 'email-navy-visual');
 
+/**
+ * Orçamento do portão de boot das telas que entram por import dinâmico.
+ *
+ * O `beforeEach` abaixo já admite boot de até 60 s (`__BOOT_DEADLINE_MS`) porque, com o dev
+ * server frio e três projetos em paralelo, o Chromium falha o fetch do módulo da view
+ * (`TypeError: Failed to fetch dynamically imported module`). O `ErrorBoundaryWithRetry` do
+ * `ViewRouter` remonta a árvore com backoff de 1 s/2 s e a tela só aparece depois disso: no
+ * cartão pai `t_e1e535c1` (rodada 2, `chromium-email-navy`) o heading do Email apareceu aos
+ * 6,2 s e o default de 5 s do `expect` derrubou o teste. O que este arquivo mede é
+ * reflow/acessibilidade, não o tempo de boot. O valor fica abaixo do timeout de 30 s do teste
+ * para que uma falha real ainda produza o erro do `expect`, não "Test timeout exceeded".
+ */
+const ESPERA_BOOT_MS = 20_000;
+
 async function clearTransientToasts(page: import('@playwright/test').Page) {
   await page.locator('[data-sonner-toast]').evaluateAll(toasts => toasts.forEach(toast => toast.remove()));
 }
@@ -371,6 +385,10 @@ test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis',
   await page.setViewportSize({ width: 640, height: 720 });
   await page.goto('/?view=email-chat');
   await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+  // Portão de boot explícito (a view entra por import dinâmico, ver ESPERA_BOOT_MS): espera a
+  // tela existir COM o zoom já aplicado. Nenhuma asserção mudou — o heading e as ações
+  // essenciais seguem obrigatoriamente visíveis nas linhas abaixo.
+  await expect(page.getByTestId('email-workspace')).toBeVisible({ timeout: ESPERA_BOOT_MS });
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nova mensagem' }).first()).toBeVisible();
   const firstThreadButton = page.getByText('Preview deployment failed for departamento-pessoal-v3').first().locator('xpath=ancestor::button');
