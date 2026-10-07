@@ -123,7 +123,12 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   const [sendVariantColor, setSendVariantColor] = useState<string | undefined>(undefined);
   // CT-28 — seleção em massa da lista exibida (grade ou lista).
   const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // R2-MOD-010 — a seleção guarda o PRODUTO escolhido, não só o id: a barra
+  // anuncia `selectedById.size` e o envio/exportação precisam entregar
+  // exatamente esses produtos, inclusive os que saíram da tela por causa de um
+  // filtro, da busca ou do chip "Meus favoritos" (antes o payload era a
+  // interseção com a lista exibida e o número anunciado mentia).
+  const [selectedById, setSelectedById] = useState<Map<string, ExternalProduct>>(new Map());
   const [bulkSendOpen, setBulkSendOpen] = useState(false);
 
   const { favorites, isFavorite, toggle: toggleFavorite } = useCatalogFavorites();
@@ -321,36 +326,49 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     const p = displayedProducts.find((x) => x.id === id);
     if (p) void toggleFavorite({ id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
   }, [displayedProducts, toggleFavorite]);
-  const toggleSelect = (id: string) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
+  const toggleSelect = (id: string) => {
+    // O id chega de um card renderizado (portanto da lista exibida): é o
+    // produto dele que vira a "foto" guardada na seleção — o envio deixa de
+    // depender de o produto continuar na tela.
+    const product = displayedProducts.find((p) => p.id === id);
+    setSelectedById((prev) => {
+      const next = new Map(prev);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else if (product) next.set(id, product);
       return next;
     });
-  const clearSelection = () => setSelectedIds(new Set());
+  };
+  const clearSelection = () => setSelectedById(new Map());
   /**
    * R2-MOD-007 — encerra o envio em lote removendo da seleção só os produtos
    * concluídos; falhados/parciais continuam marcados para reenvio.
    */
   const removeFromSelection = (ids: string[]) => {
     if (ids.length === 0) return;
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
+    setSelectedById((prev) => {
+      const next = new Map(prev);
       ids.forEach((id) => next.delete(id));
       return next;
     });
   };
   const toggleSelectAll = () =>
-    setSelectedIds((prev) => {
-      const ids = displayedProducts.map((p) => p.id);
-      const allSelected = ids.length > 0 && ids.every((id) => prev.has(id));
-      const next = new Set(prev);
-      ids.forEach((id) => (allSelected ? next.delete(id) : next.add(id)));
+    setSelectedById((prev) => {
+      const allSelected = displayedProducts.length > 0 && displayedProducts.every((p) => prev.has(p.id));
+      const next = new Map(prev);
+      displayedProducts.forEach((p) => (allSelected ? next.delete(p.id) : next.set(p.id, p)));
       return next;
     });
-  const allPageSelected = displayedProducts.length > 0 && displayedProducts.every((p) => selectedIds.has(p.id));
-  const selectedProducts = displayedProducts.filter((p) => selectedIds.has(p.id));
+  const allPageSelected = displayedProducts.length > 0 && displayedProducts.every((p) => selectedById.has(p.id));
+  /**
+   * R2-MOD-010 — a seleção INTEIRA, na ordem em que foi marcada, e não a
+   * interseção com a lista exibida: é ela que o contador anuncia e que o envio
+   * em lote, o CSV e o "Favoritar N" consomem. Quando o produto volta à tela,
+   * vale o dado fresco dela (preço/nome/imagem); fora da tela, vale a foto
+   * guardada no momento da marcação.
+   */
+  const selectedProducts = Array.from(selectedById.values()).map(
+    (snapshot) => displayedProducts.find((p) => p.id === snapshot.id) ?? snapshot
+  );
 
   /** CT-28 — "Exportar seleção": CSV com exatamente os produtos escolhidos. */
   const handleExportSelection = () => {
@@ -560,7 +578,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                         onSend={handleSend}
                         isFavorite={isFavorite(product.id)}
                         onToggleFavorite={handleToggleFavorite}
-                        isSelected={selectedIds.has(product.id)}
+                        isSelected={selectedById.has(product.id)}
                         onToggleSelect={selectMode ? toggleSelect : undefined}
                       />
                     ))}
@@ -624,7 +642,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                               onSend={handleSend}
                               isFavorite={isFavorite(product.id)}
                               onToggleFavorite={handleToggleFavorite}
-                              isSelected={selectedIds.has(product.id)}
+                              isSelected={selectedById.has(product.id)}
                               onToggleSelect={selectMode ? toggleSelect : undefined}
                               // CT-72 — as 4 capas acima da dobra saem eager + fetchpriority=high.
                               priority={index < 4}
@@ -662,7 +680,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                           onSend={handleSend}
                           isFavorite={isFavorite(product.id)}
                           onToggleFavorite={handleToggleFavorite}
-                          isSelected={selectedIds.has(product.id)}
+                          isSelected={selectedById.has(product.id)}
                           onToggleSelect={selectMode ? toggleSelect : undefined}
                           // CT-72 — as 4 capas acima da dobra saem eager + fetchpriority=high.
                           priority={index < 4}
@@ -701,9 +719,9 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
 
             {/* CT-28 — barra de seleção em massa (grade e lista): só existe
                 enquanto há itens selecionados no modo seleção. */}
-            {selectMode && selectedIds.size > 0 && (
+            {selectMode && selectedById.size > 0 && (
               <CatalogBulkBar
-                count={selectedIds.size}
+                count={selectedById.size}
                 pageTotal={displayedProducts.length}
                 allPageSelected={allPageSelected}
                 onToggleSelectAll={toggleSelectAll}
