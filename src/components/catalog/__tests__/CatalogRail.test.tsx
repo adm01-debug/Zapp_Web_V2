@@ -219,6 +219,23 @@ describe('CatalogRail — CT-21 acoes rapidas', () => {
     expect(exportCatalogCsv).toHaveBeenCalledWith({ filterKey: 'in_stock', filters: { only_in_stock: true } });
   });
 
+  it('R2-MOD-041: exportFilter e exportFilters SOMAM (o filtro da listagem nao some)', async () => {
+    render(
+      <CatalogRail
+        stats={mockStats()}
+        exportFilter="in_stock"
+        exportFilters={{ search: 'caneta', category_id: 'cat1' }}
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByText('Exportar catálogo'));
+    });
+    expect(exportCatalogCsv).toHaveBeenCalledWith({
+      filterKey: 'in_stock',
+      filters: { only_in_stock: true, search: 'caneta', category_id: 'cat1' },
+    });
+  });
+
   it('Gerenciar no PromoGifts abre a URL publica em nova aba', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     render(<CatalogRail stats={mockStats()} />);

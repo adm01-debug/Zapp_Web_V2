@@ -477,14 +477,12 @@ export const ExternalProductManagement: React.FC = () => {
   const parentCategories = categories.filter((c) => !c.parent_id);
   const getSubcategories = (parentId: string) => categories.filter((c) => c.parent_id === parentId);
 
-  const buildFilters = useCallback((pageOverride?: number, sizeOverride?: number): Record<string, unknown> => {
-    const currentPage = pageOverride ?? page;
-    const currentSize = sizeOverride ?? pageSize;
-    const params: Record<string, unknown> = {
-      limit: currentSize,
-      offset: currentPage * currentSize,
-      only_in_stock: onlyInStock,
-    };
+  /** R2-MOD-041 — filtros ATIVOS da listagem, sem paginação nem ordenação:
+   * a única lista que a grade usa para consultar a edge e que o "Exportar
+   * catálogo" tem de respeitar. Manter uma fonte só evita o defeito voltar
+   * quando um filtro novo entrar na grade e o CSV continuar sem ele. */
+  const listingFilterParams = useCallback((): Record<string, unknown> => {
+    const params: Record<string, unknown> = {};
     if (search) params.search = search;
     if (categoryId !== 'all') params.category_id = categoryId;
     if (supplierId !== 'all') params.supplier_id = supplierId;
@@ -493,9 +491,6 @@ export const ExternalProductManagement: React.FC = () => {
     // CT-23 — estoque baixo (1..10 unidades), filtro que já existe na edge
     // (CatalogFilters.low_stock) e faltava nesta fiação.
     if (lowStock) params.low_stock = true;
-    const effectiveOrder = search ? orderBy : (orderBy === 'name' ? 'name' : orderBy);
-    params.order_by = effectiveOrder;
-    params.ascending = ascending;
     if (advFilters.isBestseller) params.is_bestseller = true;
     if (advFilters.priceMin) params.price_min = Number.parseFloat(advFilters.priceMin);
     if (advFilters.priceMax) params.price_max = Number.parseFloat(advFilters.priceMax);
@@ -504,7 +499,22 @@ export const ExternalProductManagement: React.FC = () => {
     if (advFilters.colors.length > 0) params.color = advFilters.colors;
     if (advFilters.materials.length > 0) params.material = advFilters.materials;
     return params;
-  }, [page, pageSize, search, categoryId, supplierId, onlyInStock, lowStock, isFeatured, isNew, orderBy, ascending, advFilters]);
+  }, [search, categoryId, supplierId, isFeatured, isNew, lowStock, advFilters]);
+
+  const buildFilters = useCallback((pageOverride?: number, sizeOverride?: number): Record<string, unknown> => {
+    const currentPage = pageOverride ?? page;
+    const currentSize = sizeOverride ?? pageSize;
+    const params: Record<string, unknown> = {
+      limit: currentSize,
+      offset: currentPage * currentSize,
+      only_in_stock: onlyInStock,
+      ...listingFilterParams(),
+    };
+    const effectiveOrder = search ? orderBy : (orderBy === 'name' ? 'name' : orderBy);
+    params.order_by = effectiveOrder;
+    params.ascending = ascending;
+    return params;
+  }, [page, pageSize, onlyInStock, search, orderBy, ascending, listingFilterParams]);
 
   // CT-62 — `buildFilters` muda de identidade a cada render (fecha sobre o
   // estado dos filtros); os efeitos abaixo o leem via ref para usar sempre a
@@ -608,6 +618,11 @@ export const ExternalProductManagement: React.FC = () => {
    * o builder do CSV sabe traduzir para a edge (filterKeyToEdgeParams). */
   const activeRailFilter: CatalogRailFilterKey | null =
     onlyInStock ? 'in_stock' : isFeatured ? 'featured' : isNew ? 'new_30d' : null;
+
+  /** R2-MOD-041 — filtros da listagem que o "Exportar catálogo" tem de levar
+   * junto com o do rail (busca, categoria, fornecedor, estoque baixo, preço,
+   * cor, material, bestseller). Mesma fonte da consulta da grade. */
+  const exportFilterParams = listingFilterParams();
 
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
   const [sendVariantColor, setSendVariantColor] = useState<string | undefined>(undefined);
@@ -997,6 +1012,7 @@ export const ExternalProductManagement: React.FC = () => {
               topSent={topSent}
               onOpenProduct={handleOpenProductFromRail}
               exportFilter={activeRailFilter}
+              exportFilters={exportFilterParams}
               onApplyLowStock={handleApplyLowStock}
             />
           </AccordionContent>
@@ -1157,6 +1173,7 @@ export const ExternalProductManagement: React.FC = () => {
         topSent={topSent}
         onOpenProduct={handleOpenProductFromRail}
         exportFilter={activeRailFilter}
+        exportFilters={exportFilterParams}
         onApplyLowStock={handleApplyLowStock}
       />
     </aside>
