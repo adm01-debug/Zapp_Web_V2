@@ -146,6 +146,26 @@ describe('useCatalogFavorites', () => {
     expect(fakeTable.some((r) => r.product_id === 'p3')).toBe(false);
   });
 
+  it('R2-MOD-043: toggle devolve o resultado da escrita ao chamador (true grava, false falha)', async () => {
+    const { result } = renderFavoritesHook();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let gravou: boolean | undefined;
+    await act(async () => {
+      gravou = await result.current.toggle({ id: 'p5', name: 'Caderno' });
+    });
+    expect(gravou).toBe(true);
+    expect(fakeTable.some((r) => r.product_id === 'p5')).toBe(true);
+
+    insertShouldFail = true;
+    let falhou: boolean | undefined;
+    await act(async () => {
+      falhou = await result.current.toggle({ id: 'p6', name: 'Grampeador' });
+    });
+    expect(falhou).toBe(false);
+    expect(fakeTable.some((r) => r.product_id === 'p6')).toBe(false);
+  });
+
   it('sem usuário logado, toggle não faz nada', async () => {
     const { supabase } = await import('@/integrations/supabase/client');
     (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({ data: { user: null } });

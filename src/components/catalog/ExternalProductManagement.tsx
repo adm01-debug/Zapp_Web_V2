@@ -440,14 +440,29 @@ export const ExternalProductManagement: React.FC = () => {
     toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
   }, [selectedProducts]);
 
-  /** CT-28 — "Favoritar N": favorita só os selecionados que ainda não são
-   * favoritos, com o mesmo `toggle` do hook de favoritos da tela. */
-  const handleFavoriteSelection = useCallback(() => {
+  /** CT-28 / R2-MOD-043 — "Favoritar N": favorita só os selecionados que ainda
+   * não são favoritos e só anuncia DEPOIS da escrita. `toggle` devolve o
+   * resultado de cada persistência, então o sucesso conta apenas o que o
+   * servidor confirmou e o que falhou vira aviso (os reprovados seguem
+   * selecionados para nova tentativa). */
+  const handleFavoriteSelection = useCallback(async () => {
     const toFavorite = selectedProducts.filter((p) => !isFav(p.id));
-    toFavorite.forEach((p) => {
-      void toggle({ id: p.id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
-    });
-    if (toFavorite.length > 0) toast.success(`${toFavorite.length} produto(s) adicionado(s) aos favoritos`);
+    if (toFavorite.length === 0) return;
+    // Cada persistência é avaliada sozinha: uma rejeição inesperada não marca
+    // as demais como falha (nada de erro quando parte já foi aplicada).
+    const results = await Promise.all(
+      toFavorite.map(async (p) => {
+        try {
+          return await toggle({ id: p.id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
+        } catch {
+          return false;
+        }
+      })
+    );
+    const saved = results.filter(Boolean).length;
+    const failed = toFavorite.length - saved;
+    if (saved > 0) toast.success(`${saved} produto(s) adicionado(s) aos favoritos`);
+    if (failed > 0) toast.error(`${failed} produto(s) não foram salvos nos favoritos. Tente novamente.`);
   }, [selectedProducts, isFav, toggle]);
 
   const [bulkSendOpen, setBulkSendOpen] = useState(false);
