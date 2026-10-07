@@ -131,7 +131,7 @@ export function SettingsView() {
 
         {isStaff && (
           <TabsContent value="schedule">
-            <ScheduleSettings settings={settings} updateSettings={updateSettings} toggleWorkDay={toggleWorkDay} />
+            <ScheduleSettings />
           </TabsContent>
         )}
 
