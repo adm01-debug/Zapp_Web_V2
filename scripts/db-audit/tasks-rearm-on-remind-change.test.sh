@@ -2,6 +2,12 @@
 # R2-MOD-052 / item 420 (P2) — "Reagendar alarme pelo Salvar nao rearma uma tarefa que ja foi
 # notificada".
 #
+# CAMINHO: o cartao autoriza `tests/db-audit/...`, mas essa pasta NAO existe neste repo (tests/ so
+# tem contracts/) e o canonico desta area e `scripts/db-audit/*.test.sh`: o E48 de
+# scripts/ci/check-test-inventory.mjs e o db-guard.yml varrem SO `scripts/db-audit`, e as outras
+# 192 provas de banco moram la. O arquivo fica no canonico (igual a rodada anterior do #420);
+# o desvio do caminho escrito no cartao esta explicado em comentario no Kanban (cartao t_ad35046e).
+#
 # Roda o MESMO roteiro no mesmo Postgres descartavel, em dois blocos:
 #
 #   BLOCO A — estado ATUAL (o defeito), fiel ao canonico: com o gatilho de estado
