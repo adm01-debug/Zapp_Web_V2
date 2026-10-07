@@ -18,10 +18,14 @@
 #     6. destinatario de campanha concluida ha 181 dias -> personalized_message e
 #        snapshots de midia nulos, contadores intactos;
 #     7. segunda execucao no mesmo dia -> 0 linhas afetadas (last_purge_at);
-#     8. talkx_blacklist intacta apos o expurgo.
+#     8. talkx_blacklist intacta apos o expurgo;
+#     11. R3-DELTA-008: com acervo vencido MAIOR que teto x lote, a 1a chamada
+#         retorna drained=false sem fechar o dia; a 2a continua sem skipped e drena o resto.
 #
 # A migration e encontrada pelo marcador interno 'talkx_x032_objetos_ausentes'
 # (sobrevive ao rename do hermes-db-migrar --nova); fallback para .tmp/x032.sql.
+# A prova de retencao em volume (item 11) fecha tambem sobre a versao DRENADA do expurgo,
+# encontrada pelo marcador interno 'talkx_r3delta008_laco_ausente'.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -31,6 +35,12 @@ if [[ -z "$migration" ]]; then
   migration="$repo_root/.tmp/x032.sql"
 fi
 [[ -f "$migration" ]] || { printf '[FALHA] migration X032 nao encontrada (marcador talkx_x032_objetos_ausentes)\n' >&2; exit 1; }
+
+# R3-DELTA-008: a retencao em volume so existe com a versao DRENADA do expurgo (lotes com
+# teto por chamada e drained=false ate acabar o acervo vencido). Sem ela o cenario de
+# volume/continuidade (item 11) tem de falhar.
+drain_migration="$(grep -rlF 'talkx_r3delta008_laco_ausente' "$repo_root/supabase/migrations" 2>/dev/null | grep -v '/_superseded/' | sort | tail -1 || true)"
+[[ -f "$drain_migration" ]] || { printf '[FALHA] migration do R3-DELTA-008 nao encontrada (marcador talkx_r3delta008_laco_ausente)\n' >&2; exit 1; }
 
 fail() { printf '[FALHA] %s\n' "$1" >&2; exit 1; }
 pass() { printf '[PASS] %s\n' "$1"; }
@@ -304,6 +314,12 @@ CREATE TABLE public.ai_jobs (
   created_at timestamptz NOT NULL DEFAULT now(),
   finished_at timestamptz
 );
+
+-- X033/R3-DELTA-008: o expurgo tambem drena o log de entrega por destinatario (30 dias).
+CREATE TABLE public.talkx_delivery_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 SQL
 
 psql_exec >/dev/null <<SQL
@@ -360,6 +376,10 @@ assert_has 'RED: purge_talkx_expired_data nao existe antes da X032' 'does not ex
 # ═════════════════════════════════════════════════════════════════════════════
 psql_exec < "$migration" >/dev/null || fail 'migration X032 nao aplicou (GREEN)'
 pass "migration X032 aplicada ($(basename "$migration"))"
+
+# R3-DELTA-008: a versao drenada do expurgo (lotes ate acabar o acervo vencido).
+psql_exec < "$drain_migration" >/dev/null || fail 'migration R3-DELTA-008 (drenagem) nao aplicou'
+pass "migration R3-DELTA-008 aplicada ($(basename "$drain_migration"))"
 
 col_ok="$(psql_val "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='talkx_campaigns' AND column_name IN ('consent_confirmed_by','consent_confirmed_at','legal_basis')")"
 assert_eq 'GREEN: 3 colunas de consentimento existem' '3' "$col_ok"
@@ -479,8 +499,89 @@ psql_raw "$admin_session SELECT campaign_id FROM public.save_talkx_campaign_draf
 saved_nocon="$(psql_val "SELECT (consent_confirmed_at IS NULL)::text FROM public.talkx_campaigns WHERE draft_creation_key = '$k2'")"
 assert_eq '9b. save sem confirmacao -> consent_confirmed_at nulo' 'true' "$saved_nocon"
 
+# ── 11) R3-DELTA-008: retencao EM VOLUME — teto por chamada + continuidade ───────────────
+# Simula um novo dia (o gate diario e por dia de calendario) e um acervo vencido MAIOR que
+# 10 lotes de p_limit (1205 > 10 x 100). A 1a chamada tem de fazer progresso, retornar
+# drained=false e NAO gravar last_purge_at; a 2a chamada do mesmo dia nao pode ser skipped
+# e deve continuar ate zerar o acervo. Com o defeito antigo, a 1a chamada drena tudo numa
+# unica transacao e/ou fecha o dia sem a chave drained=false.
+psql_val "DELETE FROM public.talkx_settings WHERE key = 'last_purge_at'" >/dev/null
+c_vol='d0000000-0000-0000-0000-0000000000a1'
+psql_val "INSERT INTO public.talkx_campaigns (id, name, message_template, status, created_by, total_recipients, sent_count, completed_at, updated_at) VALUES ('$c_vol', 'Volume', 'Oi', 'completed', '$profile_admin', 1205, 1205, now() - interval '181 days', now() - interval '181 days')" >/dev/null
+psql_exec >/dev/null <<SQL
+INSERT INTO public.talkx_recipients (id, campaign_id, contact_id, status, personalized_message)
+SELECT gen_random_uuid(), '$c_vol', '$contact_ok', 'sent', 'texto vencido ' || g
+  FROM generate_series(1, 1205) AS g;
+SQL
+vol_antes="$(psql_val "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id = '$c_vol' AND personalized_message IS NOT NULL")"
+assert_eq '11. cenario: 1205 vencidos (mais que 10 lotes de 100)' '1205' "$vol_antes"
+
+vol_run1="$(psql_val "$service_session SELECT public.purge_talkx_expired_data(100)")"
+assert_has '11. 1a chamada parcial -> skipped=false' '"skipped": false' "$vol_run1"
+assert_has '11. 1a chamada parcial -> drained=false' '"drained": false' "$vol_run1"
+vol_restante1="$(psql_val "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id = '$c_vol' AND (personalized_message IS NOT NULL OR media_url_snapshot IS NOT NULL OR media_type_snapshot IS NOT NULL)")"
+assert_eq '11. 1a chamada respeita teto e deixa 205 para continuar' '205' "$vol_restante1"
+last_after_partial="$(psql_val "SELECT count(*) FROM public.talkx_settings WHERE key = 'last_purge_at'")"
+assert_eq '11. chamada parcial nao fecha last_purge_at' '0' "$last_after_partial"
+
+vol_run2="$(psql_val "$service_session SELECT public.purge_talkx_expired_data(100)")"
+assert_has '11. 2a chamada do mesmo dia continua (nao skipped)' '"skipped": false' "$vol_run2"
+assert_has '11. 2a chamada drenou o restante -> drained=true' '"drained": true' "$vol_run2"
+vol_depois="$(psql_val "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id = '$c_vol' AND (personalized_message IS NOT NULL OR media_url_snapshot IS NOT NULL OR media_type_snapshot IS NOT NULL)")"
+assert_eq '11. depois da 2a chamada sobram 0 vencidos' '0' "$vol_depois"
+vol_second="$(psql_val "$service_session SELECT public.purge_talkx_expired_data(100)")"
+assert_has '11. o dia so fecha depois de drenar (3a chamada -> skipped)' '"skipped": true' "$vol_second"
+
+# Prova o caminho SKIP LOCKED: uma linha travada conta como candidata, mas nao afetada;
+# por isso a chamada retorna drained=false e nao fecha o dia prematuramente.
+psql_val "DELETE FROM public.talkx_settings WHERE key = 'last_purge_at'" >/dev/null
+c_lock='d0000000-0000-0000-0000-0000000000b1'
+r_lock='e0000000-0000-0000-0000-0000000000b1'
+psql_val "INSERT INTO public.talkx_campaigns (id, name, message_template, status, created_by, total_recipients, sent_count, completed_at, updated_at) VALUES ('$c_lock', 'Lock', 'Oi', 'completed', '$profile_admin', 3, 3, now() - interval '181 days', now() - interval '181 days')" >/dev/null
+psql_exec >/dev/null <<SQL
+INSERT INTO public.talkx_recipients (id, campaign_id, contact_id, status, personalized_message)
+VALUES
+  ('$r_lock', '$c_lock', '$contact_ok', 'sent', 'travado'),
+  ('e0000000-0000-0000-0000-0000000000b2', '$c_lock', '$contact_ok', 'sent', 'livre 1'),
+  ('e0000000-0000-0000-0000-0000000000b3', '$c_lock', '$contact_ok', 'sent', 'livre 2');
+SQL
+(
+  psql_exec <<SQL >/dev/null
+BEGIN;
+SELECT pg_advisory_lock(125008);
+UPDATE public.talkx_recipients SET personalized_message = personalized_message WHERE id = '$r_lock';
+SELECT pg_advisory_unlock(125008);
+SELECT pg_sleep(20);
+COMMIT;
+SQL
+) &
+lock_pid=$!
+lock_ready=false
+for _ in $(seq 1 40); do
+  got_lock="$(psql_val "SELECT pg_try_advisory_lock(125008)::text")"
+  if [[ "$got_lock" == 'true' ]]; then
+    psql_val "SELECT pg_advisory_unlock(125008)" >/dev/null
+    lock_ready=true
+    break
+  fi
+  sleep 0.25
+done
+[[ "$lock_ready" == true ]] || fail '11. lock fixture nao ficou pronto'
+locked_run="$(psql_val "$service_session SELECT public.purge_talkx_expired_data(10)")"
+assert_has '11. SKIP LOCKED parcial -> drained=false' '"drained": false' "$locked_run"
+lock_restante="$(psql_val "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id = '$c_lock' AND personalized_message IS NOT NULL")"
+assert_eq '11. SKIP LOCKED deixou somente a linha travada' '1' "$lock_restante"
+wait "$lock_pid"
+locked_run2="$(psql_val "$service_session SELECT public.purge_talkx_expired_data(10)")"
+assert_has '11. apos liberar lock, mesma data continua sem skipped' '"skipped": false' "$locked_run2"
+assert_has '11. apos liberar lock, drenou' '"drained": true' "$locked_run2"
+lock_restante2="$(psql_val "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id = '$c_lock' AND personalized_message IS NOT NULL")"
+assert_eq '11. apos liberar lock sobram 0 vencidos' '0' "$lock_restante2"
+
 # ── 10) idempotencia: reaplicar a migration nao quebra ───────────────────────
 psql_exec < "$migration" >/dev/null || fail 'migration X032 nao reaplicou (idempotencia)'
 pass 'migration X032 reaplicada sem erro (idempotencia)'
+psql_exec < "$drain_migration" >/dev/null || fail 'migration R3-DELTA-008 nao reaplicou (idempotencia)'
+pass 'migration R3-DELTA-008 reaplicada sem erro (idempotencia)'
 
-echo '[OK] Talk X X032: consentimento no lancamento (revoked fora da audiencia, strict opcional, start/agendar recusam sem confirmacao, opt-out automatico revoga) e expurgo por prazo 1x/dia (texto/midia, ua/ip_hash, teste, IA) sem tocar blacklist, contadores ou eventos.'
+echo '[OK] Talk X X032: consentimento no lancamento (revoked fora da audiencia, strict opcional, start/agendar recusam sem confirmacao, opt-out automatico revoga) e expurgo por prazo (texto/midia, ua/ip_hash, teste, IA) sem tocar blacklist, contadores ou eventos. R3-DELTA-008: expurgo tem teto por chamada, retorna drained=false quando parcial, continua no mesmo dia sem skipped e so fecha last_purge_at depois de drenar.'
