@@ -6,12 +6,9 @@
 --           -- 8 args: em supabase/migrations/20260905070000_ingest_lock_feature_flags_audit_rate_limit_cleanup.sql
 --           DROP TABLE IF EXISTS public.inbound_message_effects;
 --
--- R2-API-006 (#69): opt-out e atribuicao se perdiam apos o ingest (efeitos em
--- chamadas soltas, sem registro nem retomada no replay). Outbox duravel: UMA
--- linha por (conexao, external_id, efeito) gravada na MESMA transacao do ingest;
--- p_from_me (sem DEFAULT, 9o arg) devolve a protecao `if (!key.fromMe)` ao ponto
--- de enfileiramento. O drain aplica e baixa na mesma transacao; erro fica em
--- last_error e a reentrega retenta.
+-- R2-API-006 (#69): outbox duravel UMA linha por (conexao, external_id, efeito) na
+-- MESMA transacao do ingest; p_from_me (sem DEFAULT, 9o arg) devolve a protecao
+-- `!key.fromMe` ao enfileiramento; o drain aplica/baixa e erro fica em last_error.
 
 CREATE TABLE IF NOT EXISTS public.inbound_message_effects (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -35,8 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_inbound_message_effects_pending
 COMMENT ON TABLE public.inbound_message_effects IS
   'R2-API-006: outbox duravel dos efeitos do inbound (supressao de opt-out e atribuicoes TalkX/Multiplix). Gravada na mesma transacao do ingest; drenada por drain_inbound_message_effects em toda entrega.';
 
--- Sem policy => anon/authenticated nao acessam; service_role usa o grant
--- explicito (BYPASSRLS do papel).
+-- Sem policy: anon/authenticated nao acessam; service_role usa o grant explicito.
 ALTER TABLE public.inbound_message_effects ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.inbound_message_effects FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.inbound_message_effects TO service_role;
@@ -74,7 +70,7 @@ DECLARE
   v_status text;
   v_content text;
 BEGIN
-  -- Forma canonica: BR com 13 digitos e 9o digito vira a forma de 12; o resto fica como esta.
+  -- Forma canonica: BR com 13 digitos e 9o digito vira a forma de 12.
   v_canonical := CASE
     WHEN v_clean LIKE '55%' AND length(v_clean) = 13 AND substr(v_clean, 5, 1) = '9'
       THEN substr(v_clean, 1, 4) || substr(v_clean, 6)
@@ -152,11 +148,8 @@ BEGIN
     END IF;
   END IF;
 
-  -- R2-API-006: efeitos pendentes na mesma transacao do ingest (opt-out e
-  -- resposta mutuamente exclusivos; ON CONFLICT preserva a primeira entrega).
-  -- NOT p_from_me e o antigo `if (!key.fromMe)` da edge preservado no ponto de
-  -- enfileiramento: mensagem propria nao cria efeito nenhum (nem opt-out, nem
-  -- atribuicao) — a nossa mensagem nao e resposta de contato.
+  -- R2-API-006: efeitos na mesma transacao (opt-out e resposta exclusivos; ON CONFLICT preserva a 1a entrega).
+  -- NOT p_from_me: mensagem propria nao cria efeito nenhum (nem opt-out, nem atribuicao).
   IF v_message_id IS NOT NULL AND NOT p_from_me THEN
     IF p_opt_out_keyword IS NOT NULL THEN
       INSERT INTO public.inbound_message_effects (whatsapp_connection_id, external_id, effect, payload)
@@ -187,8 +180,7 @@ GRANT EXECUTE ON FUNCTION public.ingest_inbound_message(uuid, text, text, text, 
 
 COMMENT ON FUNCTION public.ingest_inbound_message(uuid, text, text, text, text, text, text, timestamptz, boolean, text, text) IS 'Transacao atomica do inbound: contato + upsert da mensagem + efeitos pendentes em inbound_message_effects (R2-API-006). p_from_me=true nao cria efeito (mensagem propria nao e resposta). outcome = inserted | updated | duplicate. So service_role.';
 
--- drain: aplica e baixa cada pendencia NA MESMA transacao (FOR UPDATE serializa
--- drenagens). Retorna suppression_id NOVO (autoresposta 1x).
+-- drain: aplica e baixa NA MESMA transacao (FOR UPDATE serializa); retorna suppression_id NOVO.
 CREATE OR REPLACE FUNCTION public.drain_inbound_message_effects(
   p_connection_id uuid,
   p_external_id text
@@ -243,8 +235,7 @@ BEGIN
                AND r.sent_at IS NOT NULL
                AND r.sent_at >= statement_timestamp() - interval '30 days'
           ) THEN
-            -- Mesmo contrato da edge: a campanha NAO e resolvida aqui — a RPC
-            -- herda a do envio mais recente (origem auto_optout).
+            -- A campanha NAO e resolvida aqui: a RPC herda a do envio mais recente.
             v_suppression_id := public.talkx_suppress_contact(
               (v_row.payload ->> 'contact_id')::uuid, v_row.payload ->> 'phone',
               'Opt-out via mensagem: ' || (v_row.payload ->> 'keyword'), 'opt_out', 'auto_optout',
@@ -273,8 +264,7 @@ BEGIN
          SET applied_at = statement_timestamp(), last_error = NULL
        WHERE id = v_row.id;
     EXCEPTION WHEN OTHERS THEN
-      -- Efeito e baixa desfazem juntos; tentativa e motivo ficam na linha
-      -- pendente para a proxima entrega.
+      -- Efeito e baixa desfazem juntos; tentativa/motivo ficam para a proxima entrega.
       v_failed := v_failed + 1;
       UPDATE public.inbound_message_effects SET last_error = SQLERRM WHERE id = v_row.id;
     END;
