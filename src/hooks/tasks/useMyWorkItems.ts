@@ -35,6 +35,7 @@ import { useQuery, useMutation, useQueryClient, type QueryKey } from '@tanstack/
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
+import { fetchAllRows, type PageResult } from '@/lib/fetchAllRows';
 import { secureRandomFloat } from '../../lib/secureRandom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import {
@@ -57,6 +58,9 @@ type TaskRow = Database['public']['Tables']['conversation_tasks']['Row'];
 
 /** Linha do banco com o contato embutido (`contact:contacts!fkey(...)`). */
 type TaskRowWithContact = TaskRow & { contact?: WorkItemContact | null };
+
+/** Colunas que o badge le (R2-MOD-054: contagem no cliente sobre a leitura completa). */
+type BadgeRow = Pick<TaskRow, 'id' | 'due_date' | 'remind_at' | 'notified_at' | 'status'>;
 
 /** Janela de `done` que a query sempre traz (B13); o recorte de 7d e local. */
 export const DONE_WINDOW_DAYS = 30;
@@ -198,24 +202,43 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
     queryFn: async (): Promise<WorkItem[]> => {
       if (!profileId) return [];
       const cutoff = new Date(Date.now() - DONE_WINDOW_DAYS * 86_400_000).toISOString();
-      let q = supabase
-        .from('conversation_tasks')
-        .select('*, contact:contacts!conversation_tasks_contact_id_fkey(id,name,phone,avatar_url)')
-        .eq('created_by', profileId)   // RLS tambem filtra, mas explicito e mais rapido
-        // B13: done so dos ultimos 30 dias; cancelled tratado logo abaixo.
-        // `completed_at.is.null` cobre linhas `done` legadas sem carimbo de
-        // conclusao (o trigger de estado so grava em UPDATE e o backfill de
-        // reminders inseriu `done` direto); sem isso ficariam invisiveis.
-        .or(`status.neq.done,completed_at.is.null,completed_at.gte.${cutoff}`)
-        .order('position', { ascending: true })
-        .order('created_at', { ascending: false });
+      // Construtor da consulta-base: uma vez por pagina (`.range()` muta o
+      // builder, entao cada pagina precisa do proprio filtro).
+      const base = () => {
+        let q = supabase
+          .from('conversation_tasks')
+          .select('*, contact:contacts!conversation_tasks_contact_id_fkey(id,name,phone,avatar_url)')
+          .eq('created_by', profileId)   // RLS tambem filtra, mas explicito e mais rapido
+          // B13: done so dos ultimos 30 dias; cancelled tratado logo abaixo.
+          // `completed_at.is.null` cobre linhas `done` legadas sem carimbo de
+          // conclusao (o trigger de estado so grava em UPDATE e o backfill de
+          // reminders inseriu `done` direto); sem isso ficariam invisiveis.
+          .or(`status.neq.done,completed_at.is.null,completed_at.gte.${cutoff}`)
+          .order('position', { ascending: true })
+          .order('created_at', { ascending: false })
+          // R2-MOD-054 — desempate unico para a paginacao ser estavel: sem uma
+          // chave unica no fim da ordenacao, linhas com mesma `position` e mesmo
+          // `created_at` podem repetir (ou pular) na virada de pagina.
+          .order('id', { ascending: true });
 
-      if (opts.contactId) q = q.eq('contact_id', opts.contactId);
-      if (!opts.includeCancelled) q = q.not('status', 'eq', 'cancelled');
+        if (opts.contactId) q = q.eq('contact_id', opts.contactId);
+        if (!opts.includeCancelled) q = q.not('status', 'eq', 'cancelled');
+        return q;
+      };
 
-      const { data, error } = await q;
-      if (error) throw error;
-      return ((data ?? []) as unknown as TaskRowWithContact[]).map(toWorkItem);
+      // R2-MOD-054 — leitura PAGINADA. Um `select` sem `range` devolve so a
+      // primeira pagina do PostgREST (teto do projeto: 1000 linhas). Busca,
+      // filtros, KPIs, deep link e a contagem real do cabecalho derivam TODOS
+      // deste array: o que passava do teto sumia em silencio. `fetchAllRows`
+      // percorre a fonte inteira por paginas e diz se a leitura ficou incompleta.
+      const { rows, incomplete, error } = await fetchAllRows<TaskRowWithContact>(
+        (from, to) => base().range(from, to) as unknown as PromiseLike<PageResult<TaskRowWithContact>>,
+      );
+      if (error) throw new Error(error.message);
+      // Nunca tratar leitura parcial como lista completa: sem isto, um teto de
+      // paginas ainda devolveria um lote truncado como se fosse o universo.
+      if (incomplete) throw new Error('Leitura de conversation_tasks incompleta');
+      return rows.map(toWorkItem);
     },
     enabled: !!profileId,
     staleTime: 30_000,
@@ -650,14 +673,22 @@ export function useMyWorkItemsBadgeInfo(): WorkItemsBadgeInfo {
     queryFn: async (): Promise<WorkItemsBadgeInfo> => {
       if (!profileId) return EMPTY_BADGE_INFO;
       const now = Date.now();
-      // Uma unica query e contagem no cliente (evita 2 round-trips).
-      const { data, error } = await supabase
-        .from('conversation_tasks')
-        .select('id,due_date,remind_at,notified_at,status')
-        .eq('created_by', profileId)
-        .not('status', 'in', '("done","cancelled")');
-      if (error) throw error;
-      const rows = (data ?? []) as Array<Pick<TaskRow, 'id' | 'due_date' | 'remind_at' | 'notified_at' | 'status'>>;
+      // R2-MOD-054 — o badge paga o MESMO teto do PostgREST: uma unica resposta
+      // cortava a contagem em 1000 linhas e o numero (e a cor) do item saiam
+      // sobre um lote parcial. A contagem segue no cliente, mas sobre a leitura
+      // COMPLETA (`fetchAllRows`), com `id` de desempate para a paginacao.
+      const { rows, incomplete, error } = await fetchAllRows<BadgeRow>(
+        (from, to) => supabase
+          .from('conversation_tasks')
+          .select('id,due_date,remind_at,notified_at,status')
+          .eq('created_by', profileId)
+          .not('status', 'in', '("done","cancelled")')
+          .order('id', { ascending: true })
+          .range(from, to) as unknown as PromiseLike<PageResult<BadgeRow>>,
+      );
+      if (error) throw new Error(error.message);
+      // Leitura parcial nunca vira "total": se nao cobriu tudo, e erro.
+      if (incomplete) throw new Error('Leitura de conversation_tasks incompleta (badge)');
 
       // Atrasadas: prazo vencido.
       const overdue = rows.filter((r) => r.due_date != null && new Date(r.due_date).getTime() < now).length;
