@@ -1,23 +1,37 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, Mic } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { RefreshCw, Mic, AlertTriangle } from 'lucide-react';
 import { AutoCloseSettings } from '@/components/settings/AutoCloseSettings';
+import { useGlobalSettings } from '@/hooks/system/useGlobalSettings';
 import { motion } from '@/components/ui/motion';
+import { toast } from 'sonner';
 
-interface AutomationSettingsProps {
-  settings: {
-    auto_assignment_enabled: boolean;
-    auto_assignment_method: string;
-    inactivity_timeout: number;
-    auto_transcription_enabled: boolean;
+// Contrato versionado real: `handleAudioTranscription`
+// (supabase/functions/_shared/evolution-webhook-messages.ts) le
+// `global_settings.auto_transcription_enabled` e transcreve sempre que o valor
+// for DIFERENTE de 'false'. A leitura do switch segue a mesma regra, senao a
+// tela mostraria um estado que o executor nao pratica.
+const CHAVE_TRANSCRICAO = 'auto_transcription_enabled';
+
+export function AutomationSettings() {
+  const { getSetting, updateSetting, isLoading } = useGlobalSettings();
+
+  const transcricaoLigada = getSetting(CHAVE_TRANSCRICAO) !== 'false';
+
+  const handleTranscricaoChange = async (ligada: boolean) => {
+    try {
+      await updateSetting(CHAVE_TRANSCRICAO, ligada ? 'true' : 'false');
+      toast.success('Transcrição automática atualizada');
+    } catch {
+      // A escrita falhou: nada muda de estado (o hook so atualiza apos o
+      // banco aceitar) e o usuario ve o erro, em vez de um "salvo" falso.
+      toast.error('Não foi possível salvar a transcrição automática. Tente novamente.');
+    }
   };
-  updateSettings: (updates: Partial<AutomationSettingsProps['settings']>) => void;
-}
 
-export function AutomationSettings({ settings, updateSettings }: AutomationSettingsProps) {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <Card className="border border-secondary/20 bg-card hover:border-secondary/30 transition-all">
@@ -26,44 +40,18 @@ export function AutomationSettings({ settings, updateSettings }: AutomationSetti
             <RefreshCw className="w-5 h-5 text-whatsapp" />
             Atribuição Automática
           </CardTitle>
-          <CardDescription>Configure como os chats são distribuídos entre os atendentes</CardDescription>
+          <CardDescription>Recurso não implementado neste sistema</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-base">Habilitar atribuição automática</Label>
-              <p className="text-sm text-muted-foreground">Distribui chats automaticamente entre os atendentes online</p>
-            </div>
-            <Switch
-              checked={settings.auto_assignment_enabled}
-              onCheckedChange={(checked) => updateSettings({ auto_assignment_enabled: checked })}
-            />
-          </div>
-
-          {settings.auto_assignment_enabled && (
-            <div className="space-y-2">
-              <Label>Método de distribuição</Label>
-              <Select value={settings.auto_assignment_method} onValueChange={(value) => updateSettings({ auto_assignment_method: value })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="roundrobin">Round-robin (sequencial)</SelectItem>
-                  <SelectItem value="random">Aleatório</SelectItem>
-                  <SelectItem value="least-busy">Menor carga</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label>Tempo de inatividade (minutos)</Label>
-            <p className="text-sm text-muted-foreground">Fechar chat automaticamente após inatividade</p>
-            <Input
-              type="number"
-              value={settings.inactivity_timeout}
-              onChange={(e) => updateSettings({ inactivity_timeout: Number.parseInt(e.target.value) || 0 })}
-              min={0} max={1440}
-            />
-          </div>
+        <CardContent>
+          <Alert className="border-warning/30 bg-warning/10">
+            <AlertTriangle className="h-4 w-4 !text-warning" />
+            <AlertTitle className="text-warning">Integração pendente</AlertTitle>
+            <AlertDescription>
+              A distribuição automática de chats entre atendentes não existe neste sistema: nenhum
+              executor versionado lê esta preferência, então nada é distribuído automaticamente e
+              nada é gravado aqui. O roteamento em uso hoje está na aba Roteamento.
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
 
@@ -76,23 +64,38 @@ export function AutomationSettings({ settings, updateSettings }: AutomationSetti
           <CardDescription>Configure a transcrição automática de mensagens de áudio</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-base">Transcrição automática</Label>
-              <p className="text-sm text-muted-foreground">Transcreve automaticamente áudios recebidos para texto</p>
+          {isLoading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-64" />
             </div>
-            <Switch
-              checked={settings.auto_transcription_enabled}
-              onCheckedChange={(checked) => updateSettings({ auto_transcription_enabled: checked })}
-            />
-          </div>
-          {settings.auto_transcription_enabled && (
-            <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-              💡 Os áudios serão transcritos automaticamente assim que chegarem, facilitando a busca e análise por IA.
-            </p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="auto-transcription-toggle" className="text-base">Transcrição automática</Label>
+                  <p className="text-sm text-muted-foreground">Transcreve automaticamente áudios recebidos para texto</p>
+                </div>
+                <Switch
+                  id="auto-transcription-toggle"
+                  aria-label="Transcrição automática"
+                  checked={transcricaoLigada}
+                  onCheckedChange={handleTranscricaoChange}
+                />
+              </div>
+              {transcricaoLigada && (
+                <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                  💡 Os áudios serão transcritos automaticamente assim que chegarem, facilitando a busca e análise por IA.
+                </p>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
+
+      <p className="mt-4 text-sm text-muted-foreground">
+        O fechamento automático por inatividade é definido no cartão Auto-fechamento de Conversas abaixo, que grava a configuração auto_close_config lida pelo executor.
+      </p>
 
       <div className="mt-4">
         <AutoCloseSettings />

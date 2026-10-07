@@ -146,7 +146,7 @@ export function SettingsView() {
 
         {isStaff && (
           <TabsContent value="automation">
-            <AutomationSettings settings={settings} updateSettings={updateSettings} />
+            <AutomationSettings />
           </TabsContent>
         )}
 
