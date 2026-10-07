@@ -255,8 +255,8 @@ jobs:
 
       # M-DB-05 / item 474: as 13 SECURITY DEFINER de public executaveis por qualquer
       # usuario logado sem checagem do chamador vazam papel/permissao/config. A prova
-      # aplica o arquivo inteiro da migration 20261007004545 no PostgreSQL descartavel e
-      # roda o rollback dela; a guarda acima (M-DB-02) so olha EXECUTE para PUBLIC/anon,
+      # aplica o arquivo inteiro da migration 20261007004545 no PostgreSQL descartavel;
+      # a guarda acima (M-DB-02) so olha EXECUTE para PUBLIC/anon,
       # que nao cobre `authenticated`.
       - name: Simular chamador ausente nas SECURITY DEFINER expostas
         env:
