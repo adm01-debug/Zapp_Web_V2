@@ -15,7 +15,7 @@ CREATE TABLE public.agent_mini_game_xp_daily (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT agent_mini_game_xp_daily_pkey PRIMARY KEY (profile_id, game_id, dia),
-  CONSTRAINT agent_mini_game_xp_daily_game_id_check CHECK (game_id ~ '^[a-z0-9][a-z0-9_-]{0,63}$'),
+  CONSTRAINT agent_mini_game_xp_daily_game_id_check CHECK (game_id IN ('speed-typing', 'quiz', 'response-match', 'emoji-decode')),
   CONSTRAINT agent_mini_game_xp_daily_partidas_check CHECK (partidas >= 0),
   CONSTRAINT agent_mini_game_xp_daily_xp_total_check CHECK (xp_total >= 0)
 );
@@ -59,6 +59,9 @@ BEGIN
   v_game_id := lower(btrim(coalesce(p_game_id, '')));
   IF v_game_id !~ '^[a-z0-9][a-z0-9_-]{0,63}$' THEN
     RAISE EXCEPTION 'p_game_id invalido: %', p_game_id;
+  END IF;
+  IF v_game_id NOT IN ('speed-typing', 'quiz', 'response-match', 'emoji-decode') THEN
+    RAISE EXCEPTION 'p_game_id desconhecido: %', p_game_id;
   END IF;
 
   IF p_xp IS NULL OR p_xp < 0 THEN
