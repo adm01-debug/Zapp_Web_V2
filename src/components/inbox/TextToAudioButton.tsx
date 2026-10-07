@@ -13,7 +13,10 @@ import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 
 interface TextToAudioButtonProps {
   inputValue: string;
-  onAudioReady: (blob: Blob) => void;
+  /** Envio do áudio gerado. Pode ser síncrono ou assíncrono; a falha se sinaliza
+   *  LANÇANDO/REJEITANDO ou devolvendo `false` (é assim que a ponte do inbox avisa).
+   *  Só o envio confirmado descarta a prévia. */
+  onAudioReady: (blob: Blob) => void | boolean | Promise<void | boolean>;
   disabled?: boolean;
 }
 
@@ -24,6 +27,7 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
   const [convertedBlob, setConvertedBlob] = useState<Blob | null>(null);
   const [convertedUrl, setConvertedUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const cleanup = useCallback(() => {
@@ -106,12 +110,24 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
     }
   };
 
-  const handleSendAudio = () => {
-    if (!convertedBlob) return;
-    onAudioReady(convertedBlob);
-    setOpen(false);
-    cleanup();
-    toast.success('Áudio enviado!');
+  const handleSendAudio = async () => {
+    if (!convertedBlob || isSending) return;
+    setIsSending(true);
+    try {
+      // #350 — o envio pode ser assíncrono: só fechamos o popover e limpamos a
+      // prévia DEPOIS da confirmação. Rejeição e retorno `false` (é assim que a
+      // ponte do inbox sinaliza falha) mantêm o áudio em tela para reenvio.
+      const enviado = await onAudioReady(convertedBlob);
+      if (enviado === false) return;
+      setOpen(false);
+      cleanup();
+      toast.success('Áudio enviado!');
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(`Erro ao enviar áudio: ${msg}`);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const togglePlayback = () => {
@@ -235,6 +251,7 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
                   size="icon"
                   className="w-8 h-8 text-foreground"
                   onClick={togglePlayback}
+                  aria-label={isPlaying ? 'Parar prévia' : 'Reproduzir prévia'}
                 >
                   {isPlaying ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                 </Button>
@@ -245,6 +262,7 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
                   size="sm"
                   className="h-7 text-xs bg-primary hover:bg-primary/90 gap-1"
                   onClick={handleSendAudio}
+                  disabled={isSending}
                 >
                   <Send className="w-3 h-3" />
                   Enviar Áudio
