@@ -161,7 +161,7 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
         <RailCard icon={FileText} title="Ações rápidas">
           <div className="space-y-2">
             <RailAction icon={Plus} title="Criar template" subtitle="Do zero ou com IA" onClick={openNew} />
-            <RailAction icon={Copy} color="violet" title="Duplicar template" subtitle="Baseado em um existente" onClick={() => selected ? openEdit(selected) : openNew()} />
+            <RailAction icon={Copy} color="violet" title="Duplicar template" subtitle="Baseado em um existente" onClick={() => selected ? duplicateTemplate.mutate(selected) : openNew()} />
 
           </div>
         </RailCard>
