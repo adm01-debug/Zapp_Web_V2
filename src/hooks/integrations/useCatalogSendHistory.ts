@@ -20,6 +20,7 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { CATALOG_EXPORT_BOM, esc } from '@/components/catalog/catalogExport';
+import { fetchAllRows, type PageResult } from '@/lib/fetchAllRows';
 import { supabase } from '@/integrations/supabase/client';
 import { CATALOG_SEND_EVENTS_KEY } from './useCatalogRecentSends';
 
@@ -42,12 +43,14 @@ export interface CatalogSendHistoryRow {
 }
 
 /**
- * Teto de linhas carregadas de uma vez. A aba pagina e filtra no cliente sobre
- * esse conjunto; o teto evita uma consulta sem limite. Envios acima dele ficam
- * fora do CSV — o recorte por período é a evolução natural quando o volume
- * justificar (não há filtro de data na v1).
+ * Tamanho de página da varredura do histórico (o mesmo teto de linhas por
+ * requisição usado no resto do módulo) e a trava contra laço infinito. O teto
+ * de páginas NÃO é um recorte de negócio: se ele for atingido a leitura é
+ * recusada logo abaixo, nunca devolvida pela metade como se fosse o histórico
+ * inteiro.
  */
-export const CATALOG_SEND_HISTORY_LIMIT = 500;
+const CATALOG_SEND_HISTORY_PAGE_SIZE = 1000;
+const CATALOG_SEND_HISTORY_MAX_PAGES = 100;
 
 /** O embed do PostgREST chega como objeto (FK many-to-one) mas os tipos
  * gerados admitem array; normaliza os dois casos. */
@@ -68,44 +71,63 @@ export interface UseCatalogSendHistoryOptions {
   contactId?: string | null;
 }
 
+/** Normaliza uma linha crua do PostgREST para o formato da tabela/CSV. */
+function toRow(r: Record<string, unknown>): CatalogSendHistoryRow {
+  return {
+    id: String(r.id),
+    product_id: String(r.product_id),
+    product_name: String(r.product_name),
+    product_sku: (r.product_sku as string | null) ?? null,
+    variant_label: (r.variant_label as string | null) ?? null,
+    contact_id: (r.contact_id as string | null) ?? null,
+    contact_name: embeddedName(r.contacts),
+    agent_id: (r.agent_id as string | null) ?? null,
+    agent_name: embeddedName(r.profiles),
+    template: (r.template as string | null) ?? null,
+    images_count: typeof r.images_count === 'number' ? r.images_count : null,
+    status: (r.status as string | null) ?? null,
+    created_at: String(r.created_at),
+  };
+}
+
 export function useCatalogSendHistory(options: UseCatalogSendHistoryOptions = {}) {
   // `null`/vazio = comportamento antigo (aba "Enviados": histórico completo).
   const contactId = options.contactId || null;
   const query = useQuery({
-    // Chave idêntica à de antes quando não há filtro (não invalida o cache da
-    // aba "Enviados"); ganha o sufixo do contato quando o filtro é usado.
+    // Chave própria do histórico COMPLETO: não reaproveita a chave antiga (que
+    // carregava só as 500 primeiras linhas), então a aba não herda cache velho.
     queryKey: contactId
-      ? [...CATALOG_SEND_EVENTS_KEY, 'history', 'contact', contactId, CATALOG_SEND_HISTORY_LIMIT]
-      : [...CATALOG_SEND_EVENTS_KEY, 'history', CATALOG_SEND_HISTORY_LIMIT],
+      ? [...CATALOG_SEND_EVENTS_KEY, 'history', 'contact', contactId, 'completo']
+      : [...CATALOG_SEND_EVENTS_KEY, 'history', 'completo'],
     queryFn: async (): Promise<CatalogSendHistoryRow[]> => {
-      let builder = supabase
-        .from('catalog_send_events')
-        .select(
-          'id, product_id, product_name, product_sku, variant_label, contact_id, agent_id, template, images_count, status, created_at, contacts(name), profiles!catalog_send_events_agent_id_fkey(name)',
-        )
-        .order('created_at', { ascending: false })
-        .limit(CATALOG_SEND_HISTORY_LIMIT);
-      if (contactId) builder = builder.eq('contact_id', contactId);
-      const { data, error } = await builder;
-      if (error) throw error;
-      return (data || []).map((r) => {
-        const row = r as unknown as Record<string, unknown>;
-        return {
-          id: String(row.id),
-          product_id: String(row.product_id),
-          product_name: String(row.product_name),
-          product_sku: (row.product_sku as string | null) ?? null,
-          variant_label: (row.variant_label as string | null) ?? null,
-          contact_id: (row.contact_id as string | null) ?? null,
-          contact_name: embeddedName(row.contacts),
-          agent_id: (row.agent_id as string | null) ?? null,
-          agent_name: embeddedName(row.profiles),
-          template: (row.template as string | null) ?? null,
-          images_count: typeof row.images_count === 'number' ? row.images_count : null,
-          status: (row.status as string | null) ?? null,
-          created_at: String(row.created_at),
-        };
-      });
+      // R2-MOD-042 (item 411): a consulta era `.limit(500)` sem total nem
+      // continuação — tudo além do 500º envio mais recente desaparecia da aba
+      // (a busca respondia "Nenhum envio com esses filtros" para um envio que
+      // existe e o CSV saía truncado). Agora a leitura percorre TODAS as
+      // páginas.
+      const { rows, incomplete, error } = await fetchAllRows<Record<string, unknown>>(
+        (from, to) => {
+          let builder = supabase
+            .from('catalog_send_events')
+            .select(
+              'id, product_id, product_name, product_sku, variant_label, contact_id, agent_id, template, images_count, status, created_at, contacts(name), profiles!catalog_send_events_agent_id_fkey(name)',
+            );
+          if (contactId) builder = builder.eq('contact_id', contactId);
+          return builder
+            .order('created_at', { ascending: false })
+            // O `id` fecha o desempate: sem uma chave única, a paginação por
+            // offset pularia ou repetiria linha quando dois eventos empatassem
+            // no `created_at`.
+            .order('id', { ascending: false })
+            .range(from, to) as unknown as PromiseLike<PageResult<Record<string, unknown>>>;
+        },
+        { pageSize: CATALOG_SEND_HISTORY_PAGE_SIZE, maxPages: CATALOG_SEND_HISTORY_MAX_PAGES },
+      );
+      if (error) throw new Error(`Falha ao ler o histórico de envios: ${error.message}`);
+      // Fail-closed: leitura parcial NÃO é publicada como se fosse o histórico
+      // inteiro (mesmo critério de queueMetrics/R2-MOD-018).
+      if (incomplete) throw new Error('A leitura do histórico de envios parou no teto de páginas; o recorte ficaria incompleto.');
+      return rows.map(toRow);
     },
     staleTime: 60 * 1000,
   });
