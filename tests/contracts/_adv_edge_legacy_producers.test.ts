@@ -248,10 +248,15 @@ describe('(c.2) DEFEITOS reais ainda presentes na árvore', () => {
     expect(src).not.toContain('parseJsonObject');
   });
 
-  it('ai-suggest-reply ainda FABRICA 3 sugestões quando o parse falha (200 com dado inventado)', () => {
+  it('ai-suggest-reply NÃO fabrica mais sugestões quando o parse falha (corrigido no item 370)', () => {
+    // O pin anterior CONGELAVA o defeito ("200 com dado inventado"). A saída do
+    // modelo passa a ser validada pelo contrato da capacidade: forma errada vira
+    // erro explícito (502 + envelope com a evidência), nunca 200 com frases fixas
+    // apresentadas como se o modelo as tivesse gerado.
     const src = readFileSync(resolve(ROOT, 'supabase/functions/ai-suggest-reply/index.ts'), 'utf8');
-    expect(src).toMatch(/catch \{[\s\S]{0,400}Entendi sua solicitação/);
-    expect(src).toMatch(/return jsonResponse\(suggestions, 200, req\)/);
+    expect(src).toMatch(/parseModelOutput\(SuggestedRepliesEnvelope/);
+    expect(src).not.toContain('Entendi sua solicitação');
+    expect(src).not.toMatch(/return jsonResponse\(suggestions, 200, req\)/);
   });
 
   it('crm-integration NÃO envia "neutral" inventado ao CRM (corrigido no PR-1)', () => {
