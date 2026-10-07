@@ -302,6 +302,8 @@ SQL
 migration "20261001231230_f32b_multiplix_item_queue_rpcs.sql"
 # F33 (Bloco C): `multiplix_blocks.content jsonb` — o confirm (F51) congela o HASH desse
 # conteudo e o worker trava o payload por bloco. Sem ela o confirm nao compila nesta cadeia.
+# A coluna tambem e exigida pela funcao MX01 (que escreve content ao criar o bloco do
+# rascunho legado) — sem ela MX01 nem compilava neste harness.
 migration "20261001241230_f33_multiplix_blocks_content.sql"
 migration "20261001251230_f34_multiplix_events_append_only.sql"
 # F51 (Bloco E): a RPC de CONFIRMACAO do disparo — revalida (F49), congela publico/blocos,
@@ -325,6 +327,57 @@ migration "20261002621230_f55_claimable_items_por_bloco.sql"
 # estava na cadeia deste harness — sem ela a trilha nao existiria e o teste provaria nada.
 migration "20261002671230_f60_conexao_capacidades_e_risco.sql"
 migration "20261003092707_f62b_leitura_janela_jsonb.sql"
+# MX01 (BACKLOG_VERIFICADO item 45): o estado legado perigoso precisa existir
+# ANTES da migration para provar o efeito de dados executado uma unica vez. Um
+# destinatario ja foi enviado pelo worker antigo; somente o pendente pode ganhar
+# item quando o operador clicar Retomar.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (
+  id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id, updated_at
+) VALUES (
+  '30000000-0000-0000-0000-0000000000b1', 'MX01 legado anterior', 'Oi {{empresa}}',
+  'sending', '10000000-0000-0000-0000-00000000000a', 2,
+  '70000000-0000-0000-0000-000000000001', '2026-10-01 12:00:00+00'::timestamptz
+);
+INSERT INTO public.multiplix_recipients (
+  id, dispatch_id, company_id, company_name_snapshot, destino_e164, eligibility, status
+) VALUES
+  ('40000000-0000-0000-0000-0000000000b1', '30000000-0000-0000-0000-0000000000b1', '50000000-0000-0000-0000-0000000000b1', 'Pendente', '+551****0911', 'eligible', 'pending'),
+  ('40000000-0000-0000-0000-0000000000b2', '30000000-0000-0000-0000-0000000000b1', '50000000-0000-0000-0000-0000000000b2', 'Ja enviado', '+551****0912', 'eligible', 'sent');
+SQL
+
+# MX01 (BACKLOG_VERIFICADO item 45): a conversao explicita do rascunho legado —
+# a migration DESTA tarefa, exercida pelos blocos MX01 no fim do arquivo.
+migration "20261005150259_mx01_legacy_queue_materialize.sql"
+
+mx_legado='30000000-0000-0000-0000-0000000000b1'
+mx_pendente='40000000-0000-0000-0000-0000000000b1'
+mx_enviado='40000000-0000-0000-0000-0000000000b2'
+
+# (MX01.R2.1) A migration pausa o legado em sending sem fila. Como a RPC recusa
+# materializar fora de sending, a passada automatica nao cria item nem envia.
+estado_legado="$(psql_test -Atqc "$service_session SELECT status::text || '|' || coalesce(pause_reason, '') || '|' || (paused_at IS NOT NULL)::text FROM public.multiplix_dispatches WHERE id='$mx_legado';" 2>&1 | tail -1)"
+[[ "$estado_legado" == 'paused|legacy_queue_unmaterialized|true' ]] \
+  || fail "MX01.R2.1: legado sem fila nao foi pausado pela migration (veio: $estado_legado)"
+updated_legado="$(psql_test -Atqc "$service_session SELECT updated_at = '2026-10-01 12:00:00+00'::timestamptz FROM public.multiplix_dispatches WHERE id='$mx_legado';" 2>&1 | tail -1)"
+[[ "$updated_legado" == 't' ]] || fail "MX01.R2.1: backfill regravou updated_at do legado (veio: $updated_legado)"
+sem_auto_cura="$(psql_test -Atqc "$service_session SELECT items_created, items_total, created FROM public.multiplix_materialize_legacy_queue('$mx_legado', NULL);" 2>&1 | tail -1)"
+[[ "$sem_auto_cura" == '0|0|f' ]] \
+  || fail "MX01.R2.1: dispatch pausado foi materializado automaticamente (veio: $sem_auto_cura)"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$mx_legado';")" == '0' ]] \
+  || fail 'MX01.R2.1: dispatch legado pausado ganhou item sem Retomar'
+
+# (MX01.R2.2/R2.3) O clique Retomar passa pela transicao real e so entao a RPC
+# materializa. O recipient sent nao ganha item; somente o pending entra na fila.
+psql_test -Atqc "$service_session SELECT * FROM public.transition_multiplix_dispatch('$mx_legado', 'start', NULL);" >/dev/null
+retomada="$(psql_test -Atqc "$service_session SELECT items_created, items_total, created FROM public.multiplix_materialize_legacy_queue('$mx_legado', NULL);" 2>&1 | tail -1)"
+[[ "$retomada" == '1|1|t' ]] \
+  || fail "MX01.R2.3: retomada manual nao materializou somente o pendente (veio: $retomada)"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE recipient_id='$mx_pendente';")" == '1' ]] \
+  || fail 'MX01.R2.3: recipient pending nao ganhou o item na retomada manual'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE recipient_id='$mx_enviado';")" == '0' ]] \
+  || fail 'MX01.R2.2: recipient ja sent ganhou item e poderia receber mensagem duplicada'
 
 
 # ── F57: fila POR ITEM (multiplix_delivery_items) ──────────────────────────────
@@ -759,7 +812,6 @@ r6="$(psql_test -Atqc "$service_session SELECT public.attribute_multiplix_item_r
   || fail "F62.6: contato diferente nao pode atribuir a este item (veio: $r6)"
 
 
-
 # ══ F89 (Bloco J) · CONFIRMA → DRENA → RECONCILIA contra o banco de teste ══════
 # Ate aqui o arquivo comecava com a fila JA materializada por INSERT direto: provava
 # claim/lease/pausa/cancel/sweep/escolha por bloco, mas NAO provava o caminho que
@@ -929,6 +981,124 @@ ack_nao="$(psql_test -Atqc "$service_session SELECT public.record_multiplix_item
   || fail 'F89.10: o ACK desconhecido mexeu no item ja reconciliado'
 
 
-printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56). E a INTEGRACAO da fila contra o banco: o confirm revalida e materializa um item por (apto x bloco) sem duplicar no 2o clique (nem enfileirar quem nao tem pessoa), a drenagem com fila aberta NAO conclui o disparo e o ACK reconcilia o item que estava em outcome_unknown (F89; a drenagem ATE a conclusao segue bloqueada por defeito 42804 da RPC — ver limite conhecido t_1ecff9cb neste arquivo)\n'
+# ==============================================================================
+# MX01 (cartao #45): materializacao do rascunho LEGADO recusa template vazio
+# ==============================================================================
+# A recusa da rodada 1 apontou que um rascunho sem texto virava bloco vazio e
+# gerava itens ENVIAVIES — mensagem em branco para contatos reais. A RPC agora
+# lanca 'multiplix_legacy_empty_template' (22023) ANTES de qualquer INSERT, e o
+# RAISE desfaz a funcao inteira: nao sobra nem bloco parcial.
+#
+# Fixture proprio: quatro disparos em 'sending' (estado exigido pela funcao) SEM
+# itens e SEM blocos — a forma real do rascunho legado do composer. O quarto tem
+# destinatarios mas NENHUM elegivel (suprimido + sem destino): cobre os dois
+# lados do predicado de aptidao.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id) VALUES
+  ('30000000-0000-0000-0000-0000000000a1', 'MX01 sem texto',     '',              'sending', '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001'),
+  ('30000000-0000-0000-0000-0000000000a2', 'MX01 so espacos',    '   ',           'sending', '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001'),
+  ('30000000-0000-0000-0000-0000000000a3', 'MX01 controle',      'Oi {{empresa}}','sending', '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001'),
+  ('30000000-0000-0000-0000-0000000000a4', 'MX01 sem elegiveis', 'Oi {{empresa}}','sending', '10000000-0000-0000-0000-00000000000a', 2, '70000000-0000-0000-0000-000000000001');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, destino_e164, eligibility, status) VALUES
+  ('40000000-0000-0000-0000-0000000000a1', '30000000-0000-0000-0000-0000000000a1', '50000000-0000-0000-0000-0000000000a1', '+5511900000901', 'eligible',       'pending'),
+  ('40000000-0000-0000-0000-0000000000a2', '30000000-0000-0000-0000-0000000000a2', '50000000-0000-0000-0000-0000000000a2', '+5511900000902', 'eligible',       'pending'),
+  ('40000000-0000-0000-0000-0000000000a3', '30000000-0000-0000-0000-0000000000a3', '50000000-0000-0000-0000-0000000000a3', '+5511900000903', 'eligible',       'pending'),
+  ('40000000-0000-0000-0000-0000000000a4', '30000000-0000-0000-0000-0000000000a4', '50000000-0000-0000-0000-0000000000a4', '+5511900000904', 'suppressed',     'pending'),
+  ('40000000-0000-0000-0000-0000000000a5', '30000000-0000-0000-0000-0000000000a4', '50000000-0000-0000-0000-0000000000a5', NULL,             'no_destination', 'pending');
+SQL
 
+mx_vazio='30000000-0000-0000-0000-0000000000a1'
+mx_espacos='30000000-0000-0000-0000-0000000000a2'
+mx_ok='30000000-0000-0000-0000-0000000000a3'
+mx_sem_elegivel='30000000-0000-0000-0000-0000000000a4'
+
+# (MX01.1) Template VAZIO com destinatario elegivel: a RPC lanca 22023
+# 'multiplix_legacy_empty_template' e nada e enfileirado — zero item E zero bloco.
+erro_vazio="$(psql_test -v VERBOSITY=verbose -Atqc "$service_session SELECT * FROM public.multiplix_materialize_legacy_queue('$mx_vazio', NULL);" 2>&1 || true)"
+[[ "$erro_vazio" == *22023* && "$erro_vazio" == *multiplix_legacy_empty_template* ]] \
+  || fail "MX01.1: template vazio nao lancou 22023 multiplix_legacy_empty_template (veio: $erro_vazio)"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$mx_vazio';")" == '0' ]] \
+  || fail 'MX01.1: a excecao deixou item enfileirado (o RAISE nao desfez o INSERT)'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_blocks WHERE dispatch_id='$mx_vazio';")" == '0' ]] \
+  || fail 'MX01.1: a excecao deixou um bloco vazio criado — mensagem em branco seria enviavel'
+
+# (MX01.2) So espacos vale como vazio (btrim) — mesmo 22023, mesma ausencia de efeito.
+erro_espacos="$(psql_test -v VERBOSITY=verbose -Atqc "$service_session SELECT * FROM public.multiplix_materialize_legacy_queue('$mx_espacos', NULL);" 2>&1 || true)"
+[[ "$erro_espacos" == *22023* && "$erro_espacos" == *multiplix_legacy_empty_template* ]] \
+  || fail "MX01.2: template so com espacos nao lancou 22023 multiplix_legacy_empty_template (veio: $erro_espacos)"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$mx_espacos';")" == '0' ]] \
+  || fail 'MX01.2: a excecao deixou item enfileirado'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_blocks WHERE dispatch_id='$mx_espacos';")" == '0' ]] \
+  || fail 'MX01.2: a excecao deixou bloco criado'
+
+# (MX01.3) Controle positivo: template valido cria UM bloco com o texto real e UM
+# item por destinatario elegivel; a segunda chamada e no-op (idempotency_key) —
+# nada e duplicado.
+saida="$(psql_test -Atqc "$service_session SELECT items_created, items_total, created FROM public.multiplix_materialize_legacy_queue('$mx_ok', NULL);" 2>&1 || true)"
+[[ "$saida" == '1|1|t' ]] \
+  || fail "MX01.3: materializacao valida devolveu '$saida' (esperava 1|1|t)"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_blocks WHERE dispatch_id='$mx_ok';")" == '1' ]] \
+  || fail 'MX01.3: o bloco do rascunho legado nao foi criado'
+[[ "$(psql_test -Atqc "SELECT content->>'text' FROM public.multiplix_blocks WHERE dispatch_id='$mx_ok';")" == 'Oi {{empresa}}' ]] \
+  || fail 'MX01.3: o bloco nao carrega o message_template real em content.text'
+segunda="$(psql_test -Atqc "$service_session SELECT items_created, items_total, created FROM public.multiplix_materialize_legacy_queue('$mx_ok', NULL);" 2>&1 || true)"
+[[ "$segunda" == '0|1|f' ]] \
+  || fail "MX01.3: segunda chamada nao foi no-op — devolveu '$segunda' (esperava 0|1|f)"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$mx_ok';")" == '1' ]] \
+  || fail 'MX01.3: a re-chamada duplicou item na fila (idempotency_key falhou)'
+
+# (MX01.4) Template valido SEM destinatario elegivel: converte o bloco (created=t)
+# com items_created=0 — nao quebra, e nao nasce item inenviavel.
+eventos_sem_antes="$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_events WHERE dispatch_id='$mx_sem_elegivel' AND kind='item_queued';")"
+saida_sem="$(psql_test -Atqc "$service_session SELECT items_created, items_total, created FROM public.multiplix_materialize_legacy_queue('$mx_sem_elegivel', NULL);" 2>&1 || true)"
+[[ "$saida_sem" == '0|0|t' ]] || fail "MX01.4: sem elegivel deveria devolver 0|0|t, veio '$saida_sem'"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$mx_sem_elegivel';")" == '0' ]] || fail 'MX01.4: item nasceu para destinatario inelegivel'
+eventos_sem_depois="$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_events WHERE dispatch_id='$mx_sem_elegivel' AND kind='item_queued';")"
+[[ "$eventos_sem_depois" == "$((eventos_sem_antes + 1))" ]] || fail "MX01.4: primeira materializacao sem elegivel deveria gravar somente o evento da conversao do bloco (antes=$eventos_sem_antes depois=$eventos_sem_depois)"
+segunda_sem="$(psql_test -Atqc "$service_session SELECT items_created, items_total, created FROM public.multiplix_materialize_legacy_queue('$mx_sem_elegivel', NULL);" 2>&1 || true)"
+[[ "$segunda_sem" == '0|0|f' ]] || fail "MX01.4: segunda chamada sem item/bloco novo deveria ser no-op, veio '$segunda_sem'"
+eventos_sem_final="$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_events WHERE dispatch_id='$mx_sem_elegivel' AND kind='item_queued';")"
+[[ "$eventos_sem_final" == "$eventos_sem_depois" ]] || fail "MX01.4: segunda chamada sem item apto gravou novo item_queued vazio (antes=$eventos_sem_depois depois=$eventos_sem_final)"
+
+# (MX01.R2.4) Executa exatamente o SQL declarado no cabecalho como rollback.
+# A transacao e revertida no fim para os demais testes continuarem vendo a RPC.
+rollback_line=''
+while IFS= read -r line; do
+  case "$line" in
+    '-- Rollback:'*) rollback_line="$line"; break ;;
+  esac
+done < "$migrations_dir/20261005150259_mx01_legacy_queue_materialize.sql"
+rollback_sql="${rollback_line#-- Rollback: }"
+[[ -n "$rollback_sql" && "$rollback_sql" != "$rollback_line" ]] \
+  || fail 'MX01.R2.4: cabecalho -- Rollback: ausente ou vazio'
+psql_test -v rollback_sql="$rollback_sql" >/dev/null <<'SQL'
+BEGIN;
+INSERT INTO public.multiplix_dispatches (
+  id, name, message_template, status, pause_reason, paused_at, created_by, total_recipients, whatsapp_connection_id
+) VALUES (
+  '30000000-0000-0000-0000-0000000000b9', 'MX01 rollback', 'Oi', 'paused',
+  'legacy_queue_unmaterialized', now(), '10000000-0000-0000-0000-00000000000a', 0,
+  '70000000-0000-0000-0000-000000000001'
+);
+:rollback_sql
+DO $assert$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.multiplix_dispatches
+     WHERE id = '30000000-0000-0000-0000-0000000000b9'
+       AND status = 'sending' AND pause_reason IS NULL AND paused_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'MX01.R2.4: rollback nao restaurou o dispatch pausado';
+  END IF;
+  IF to_regprocedure('public.multiplix_materialize_legacy_queue(uuid,uuid)') IS NOT NULL THEN
+    RAISE EXCEPTION 'MX01.R2.4: rollback nao removeu a funcao';
+  END IF;
+END
+$assert$;
+ROLLBACK;
+SQL
+
+
+printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56). E a INTEGRACAO da fila contra o banco: o confirm revalida e materializa um item por (apto x bloco) sem duplicar no 2o clique (nem enfileirar quem nao tem pessoa), a drenagem com fila aberta NAO conclui o disparo e o ACK reconcilia o item que estava em outcome_unknown (F89; a drenagem ATE a conclusao segue bloqueada por defeito 42804 da RPC — ver limite conhecido t_1ecff9cb neste arquivo). MX01 pausa legado sem fila preservando updated_at, nao materializa sem Retomar, exclui recipient sent, recusa template vazio/so-espacos (22023 multiplix_legacy_empty_template, sem bloco nem item orfao), evita item_queued vazio repetido e executa o rollback do cabecalho\n'
 

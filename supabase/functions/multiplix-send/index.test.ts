@@ -170,6 +170,16 @@ interface MockOpts {
   windowClosesAfterStart?: boolean;
   /** MX07: resposta da RPC get_instance_token (null = instância sem token cadastrado) */
   instanceToken?: string | null;
+  /** MX01: modelo do rascunho LEGADO do composer — o disparo tem destinatarios mas
+   * NENHUM item de fila ate `multiplix_materialize_legacy_queue` ser chamada. Era o
+   * estado real de `create_draft` + `start` (dispatches/recipients, sem itens). */
+  legacyQueue?: boolean;
+  /** MX01: a transicao 'start' devolve ERRO (ex.: rascunho sem texto ->
+   * multiplix_dispatch_message_required) — sem mudar o status do ctx. */
+  startTransitionError?: string;
+  /** MX01: a materializacao devolve ERRO (ex.:
+   * multiplix_legacy_empty_template) e a fila NAO nasce. */
+  materializeError?: string;
   /** R2-API-013: a RPC do heartbeat se comporta como o PostgrestBuilder do supabase-js --
    * builder THENABLE LAZY, que so despacha a requisicao quando alguem consome a promessa. */
   lazyHeartbeat?: boolean;
@@ -195,6 +205,8 @@ interface MockCtx {
   remaining: Array<ReturnType<typeof recipientRow>>;
   recipientSelects: number;
   suppressionChecks: number;
+  /** MX01: a fila legada so passa a existir depois da materializacao. */
+  legacyMaterialized: boolean;
   /** R2-API-013: builders de heartbeat CRIADOS (com o cliente lazy, criar nao despacha). */
   heartbeatBuilders: number;
   /** R2-API-013: builders de heartbeat CONSUMIDOS (.then/await) -- e o que renova o lease. */
@@ -324,6 +336,11 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             return Promise.resolve({ data: granted === true, error: null });
           }
           case "transition_multiplix_dispatch": {
+            // MX01: o 'start' pode ser RECUSADO pelo banco (ex.: rascunho sem
+            // texto -> multiplix_dispatch_message_required). Erro nao muda status.
+            if (args.p_action === "start" && opts.startTransitionError) {
+              return Promise.resolve({ data: null, error: { message: opts.startTransitionError } });
+            }
             // Espelha o efeito no estado do mock para o motor enxergar a
             // transicao seguinte (ex.: pause -> 'paused').
             if (ctx.dispatch && args.p_action === "pause") ctx.dispatch = { ...ctx.dispatch, status: "paused" };
@@ -343,6 +360,9 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             // assercoes do F11a (que sempre perguntaram "qual o tamanho do lote") continuam
             // valendo sem reescrita porque o stub registra o mesmo valor no mesmo lugar.
             ctx.limits.push(Number(args.p_limit ?? 20));
+            // MX01: rascunho legado nao tem item algum na fila — e o defeito que o
+            // cartao corrige. A fila so existe depois da conversao explicita.
+            if (opts.legacyQueue && !ctx.legacyMaterialized) return Promise.resolve({ data: [], error: null });
             ctx.recipientSelects++;
             if (ctx.recipientSelects > 12) throw new Error("laco do worker nao encerrou (selecoes repetidas)");
             // claimReturnsNothing e sobre o CLAIM, nao sobre a lista: a fila existe (o worker
@@ -417,6 +437,21 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             // rpcCalls — o teste confere se o worker pediu o da conexao selecionada).
             return Promise.resolve({
               data: opts.instanceToken === undefined ? "tok-instancia-teste" : opts.instanceToken,
+              error: null,
+            });
+          case "multiplix_materialize_legacy_queue":
+            // MX01: erro da materializacao NAO cria fila (fail-closed no worker).
+            if (opts.materializeError) {
+              return Promise.resolve({ data: null, error: { message: opts.materializeError } });
+            }
+            // MX01: a conversao do rascunho legado e quem cria a fila por itens.
+            ctx.legacyMaterialized = true;
+            return Promise.resolve({
+              data: [{
+                items_created: ctx.remaining.length,
+                items_total: ctx.remaining.length,
+                created: true,
+              }],
               error: null,
             });
           case "multiplix_connection_daily_usage": {
@@ -521,6 +556,7 @@ function newCtx(opts: MockOpts): MockCtx {
     remaining: [...(opts.recipients ?? [])],
     recipientSelects: 0,
     suppressionChecks: 0,
+    legacyMaterialized: false,
     signCalls: [],
     heartbeatBuilders: 0,
     heartbeatConsumed: 0,
@@ -867,6 +903,98 @@ Deno.test("F25/MX09 (negado): JWT com multiplix.dispatch.create inicia disparo d
   }));
   assert(status === 403, `esperado 403 (disparo de outro dono), recebido ${status}`);
   assert(rpcs(ctx, "transition_multiplix_dispatch").length === 0, "nao pode transicionar disparo de outro dono");
+});
+
+
+// ----------------------------------------------------------------- MX01 (item 45)
+
+Deno.test("MX01: start de rascunho legado materializa a fila por itens antes de reivindicar", async () => {
+  const phones = ["5511900000001", "5511900000002"];
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "draft", total_recipients: phones.length }),
+    recipients: phones.map((phone, i) => recipientRow(i, phone)),
+    suppressedPhones: phones,
+    legacyQueue: true,
+  };
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+  const body = await res.json();
+
+  const mat = ctx.rpcCalls.findIndex((call) => call.name === "multiplix_materialize_legacy_queue");
+  assert(mat >= 0, "esperava a materializacao da fila do rascunho legado (multiplix_materialize_legacy_queue)");
+  const claim = ctx.rpcCalls.findIndex((call) => call.name === "list_multiplix_claimable_items");
+  assert(claim > mat, "a fila tem de ser materializada ANTES da primeira reivindicacao de item");
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(body.skipped === phones.length, `esperava ${phones.length} itens drenados; veio ${body.skipped} (fila nao materializada)`);
+});
+
+Deno.test("MX01: rascunho legado SEM TEXTO nao materializa nada e nao envia (409 na transicao)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "draft", message_template: "", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511900009001")],
+    startTransitionError: "multiplix_dispatch_message_required",
+    legacyQueue: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 409, `esperado 409 (start recusado), recebido ${res.status}`);
+    assert(rpcs(ctx, "multiplix_materialize_legacy_queue").length === 0, "com o start recusado a materializacao NAO pode rodar — enfileiraria item de rascunho sem texto");
+    assert(rpcs(ctx, "list_multiplix_claimable_items").length === 0, "a fila nem pode ser consultada depois do 409");
+    assert(rpcs(ctx, "claim_multiplix_item").length === 0, "nenhum item pode ser reivindicado");
+    assert(provider.messagePosts() === 0, "nenhum POST ao provedor pode sair");
+  } finally {
+    provider.restore();
+  }
+});
+
+Deno.test("MX01: falha na materializacao e fail-closed (nada sai)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "draft", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511900009002")],
+    materializeError: "multiplix_legacy_empty_template",
+    legacyQueue: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 500, `esperado 500 (fail-closed), recebido ${res.status}`);
+    assert(rpcs(ctx, "claim_multiplix_item").length === 0, "nada pode ser reivindicado sem a fila materializada");
+    assert(provider.messagePosts() === 0, "falha de materializacao nao pode gerar POST ao provedor");
+  } finally {
+    provider.restore();
+  }
+});
+
+Deno.test("MX01: disparo agendado recem-transicionado para 'sending' materializa antes do claim", async () => {
+  const phones = ["5511900009003", "5511900009004"];
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: phones.length }),
+    recipients: phones.map((phone, i) => recipientRow(i + 1, phone)),
+    suppressedPhones: phones,
+    legacyQueue: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const body = await res.json();
+    const mat = ctx.rpcCalls.findIndex((call) => call.name === "multiplix_materialize_legacy_queue");
+    assert(mat >= 0, "disparo agendado recem-transicionado tem de materializar a fila");
+    const claim = ctx.rpcCalls.findIndex((call) => call.name === "list_multiplix_claimable_items");
+    assert(claim > mat, "a fila tem de ser materializada ANTES da primeira reivindicacao de item");
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    assert(body.skipped === phones.length, `a fila reparada tem de drenar os ${phones.length} itens; veio ${body.skipped}`);
+    assert(provider.messagePosts() === 0, "itens suprimidos nao podem gerar POST ao provedor");
+  } finally {
+    provider.restore();
+  }
 });
 
 // ------------------------------------------------------------------- F09 (opt-out)
