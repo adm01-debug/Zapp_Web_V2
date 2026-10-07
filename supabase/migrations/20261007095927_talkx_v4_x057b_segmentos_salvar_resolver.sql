@@ -144,7 +144,7 @@ BEGIN
       RAISE EXCEPTION 'invalid_talkx_campaign_draft' USING ERRCODE = '22023';
     ELSE
       BEGIN
-        SELECT array_agg(item.value::uuid ORDER BY item.ord)
+        SELECT COALESCE(array_agg(item.value::uuid ORDER BY item.ord), ARRAY[]::uuid[])
           INTO v_segment_ids
           FROM jsonb_array_elements_text(p_payload -> 'segment_ids')
                WITH ORDINALITY AS item(value, ord);

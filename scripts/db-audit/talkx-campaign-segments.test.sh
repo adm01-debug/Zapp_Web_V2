@@ -683,12 +683,16 @@ expect_error_code_as 'B.2 item nao-uuid -> 22023' '22023' authenticated "$admin_
   "SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-0000000000c3'::uuid, '{\"name\":\"Ruim\",$base_fields,\"audience_source\":\"segment\",\"segment_ids\":[\"$seg_a\",\"nao-e-uuid\"]}'::jsonb);"
 expect_error_code_as 'B.2 lista vazia com source segment -> 22023' '22023' authenticated "$admin_uid" \
   "SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-0000000000c4'::uuid, '{\"name\":\"Vazia\",$base_fields,\"audience_source\":\"segment\",\"segment_ids\":[]}'::jsonb);"
+expect_error_code_as 'B.2 lista vazia com segment_id legado -> 22023' '22023' authenticated "$admin_uid" \
+  "SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-0000000000c4'::uuid, '{\"name\":\"Vazia Legado\",$base_fields,\"audience_source\":\"segment\",\"segment_id\":\"$seg_a\",\"segment_ids\":[]}'::jsonb);"
+expect_value 'B.2 recusa de lista vazia com legada nao gravou campanha nem linhas' '0' \
+  "SELECT count(*) FROM public.talkx_campaigns c LEFT JOIN public.talkx_campaign_segments s ON s.campaign_id=c.id WHERE c.name='Vazia Legado'"
 expect_error_code_as 'B.2 lista em audience_source contacts -> 22023' '22023' authenticated "$admin_uid" \
   "SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-0000000000c5'::uuid, '{\"name\":\"Fora\",$base_fields,\"audience_source\":\"contacts\",\"segment_ids\":[\"$seg_a\"]}'::jsonb);"
 expect_error_code_as 'B.2 segment_ids nao-array -> 22023' '22023' authenticated "$admin_uid" \
   "SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-0000000000c6'::uuid, '{\"name\":\"Obj\",$base_fields,\"audience_source\":\"segment\",\"segment_ids\":{\"a\":1}}'::jsonb);"
 expect_value 'B.2 nenhuma das recusas gravou campanha' '0' \
-  "SELECT count(*) FROM public.talkx_campaigns WHERE name IN ('Onze B','Dup','Ruim','Vazia','Fora','Obj')"
+  "SELECT count(*) FROM public.talkx_campaigns WHERE name IN ('Onze B','Dup','Ruim','Vazia','Vazia Legado','Fora','Obj')"
 
 # limite 1..10: 10 segmentos passam (sA..sC + 7 fantasmas precisam existir p/ FK)
 for i in 1 2 3 4 5 6 7; do
