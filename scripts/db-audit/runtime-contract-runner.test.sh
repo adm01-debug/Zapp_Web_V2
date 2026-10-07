@@ -164,8 +164,16 @@ printf '\n== BLOCO C: versoes suportadas, cobertura do inventario e recusa de sh
 cd "$repo_root"
 node --input-type=module <<'NODE'
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
-import { extrairInvocacoes, resolverInvocacao, invocacoesDosContratos } from './scripts/db-audit/run-runtime-contract.mjs';
+import { readdirSync, readFileSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  extrairInvocacoes,
+  resolverInvocacao,
+  invocacoesDosContratos,
+  desfazerAspasDuplasBash,
+} from './scripts/db-audit/run-runtime-contract.mjs';
 
 // As versoes suportadas e o contrato de cada uma, conforme os rotulos do `case` que
 // originou os arquivos (E62). O agrupamento com `|` vale para todas as versoes dele.
@@ -249,6 +257,74 @@ recusa(
   'texto de shell sem SQL',
 );
 assert.throws(() => resolverInvocacao('abc'), /versao alvo invalida/);
+
+// O corpo do -c "..." e string bash entre aspas duplas, nao SQL literal: o
+// parser desfaz os escapes que o bash desfaz e recusa (fail-closed) o que o
+// bash reinterpretaria — expansao, crase solta e barra invertida fora dos 4
+// escapes que o bash define dentro de aspas duplas.
+const inlineDe = (corpo) =>
+  '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
+  `${corpo}\n` +
+  '              ")';
+{
+  // Oraculo: para bash, "SELECT 'a\"b', 'c\\d', '\$e'" entrega SELECT 'a"b', 'c\d', '$e'
+  const [inv] = extrairInvocacoes(
+    inlineDe(String.raw`SELECT 'a\"b', 'c\\d', '\$e'`),
+    '20260101000000',
+    'sintetico',
+  );
+  assert.equal(inv.sql, `SELECT 'a"b', 'c\\d', '$e'`, 'escapes \" \\ \$ tem de ser desfeitos');
+  assert.equal(
+    desfazerAspasDuplasBash('linha1\\\nlinha2', 'sintetico'),
+    'linha1linha2',
+    'continuacao de linha do bash (barra + newline) tem de sumir',
+  );
+}
+for (const corpo of [
+  'SELECT $A',
+  'SELECT $1',
+  'SELECT $_',
+  'SELECT 1 $$',
+  'SELECT $(id)',
+  'SELECT ${x}',
+  'SELECT `id`',
+  String.raw`SELECT 'a\nb'`,
+]) {
+  assert.throws(
+    () => extrairInvocacoes(inlineDe(corpo), '20260101000000', 'sintetico'),
+    /substituicao de shell|barra invertida/,
+    `expansao/escape proibido foi aceito: ${corpo}`,
+  );
+}
+console.log('[PASS] corpo do -c tratado como string bash: escapes desfeitos e $VAR/$$/$1/$_/$(/${/crase/barra recusados');
+
+// Prova individual dos 7 contratos inline: o SQL extraido tem de ser
+// EXATAMENTE o que o bash entrega ao psql — o corpo bruto do arquivo e
+// reprocessado por um bash de verdade (printf '%s' "<corpo>").
+for (const versao of [
+  '20260830170000',
+  '20260831120000',
+  '20260831150000',
+  '20260908180000',
+  '20260908220000',
+  '20260909120000',
+  '20260909180000',
+]) {
+  const texto = readFileSync(`scripts/db-audit/contracts/${versao}.sql`, 'utf8');
+  const [inv] = extrairInvocacoes(texto, versao, `${versao}.sql`);
+  assert.ok(inv.sql, `${versao}: contrato inline`);
+  // corpo bruto entre `-c "` e o ultimo `")`: o texto que o bash recebe
+  const corpoBruto = texto.slice(texto.indexOf('-c "') + 4, texto.lastIndexOf('")'));
+  const script = join(mkdtempSync(join(tmpdir(), 'oraculo-')), `${versao}.sh`);
+  writeFileSync(script, `printf '%s' "${corpoBruto}"\n`);
+  const bash = spawnSync('bash', [script], { encoding: 'utf8' });
+  assert.equal(bash.status, 0, `${versao}: bash ${bash.stderr}`);
+  // O bash entrega um \n a mais no inicio (a quebra depois de `-c "`):
+  // compara com trim dos dois lados.
+  assert.equal(inv.sql, bash.stdout.trim(), `versao ${versao}`);
+  console.log(`[PASS] ${versao}: o SQL extraido e o que o bash entrega ao psql`);
+}
+console.log('[PASS] os 7 contratos inline dedicados: o SQL extraido e exatamente o que o bash entrega ao psql');
 console.log('[PASS] shell disfarcado de SQL, forma nao declarada e versao invalida sao recusados');
 NODE
 

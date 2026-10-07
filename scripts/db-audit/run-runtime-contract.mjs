@@ -78,10 +78,49 @@ function validarFlags(tokens, origem) {
   return tokens;
 }
 
+// O corpo de -c "..." e uma string bash entre aspas duplas, nao SQL literal:
+// dentro dela o bash desfaz apenas \" \\ \$ \` e \<newline> (continuacao de
+// linha) e EXPANDE $VAR, $(...), ${...}, `...`. UMA passada caractere a
+// caractere reproduz o que o bash entrega ao psql e recusa (fail-closed) o que
+// ele reinterpretaria: expansao, crase solta e barra invertida fora dos 4
+// escapes. O `$` e examinado no texto BRUTO: `\$` e literal para o bash.
+export function desfazerAspasDuplasBash(corpo, origem) {
+  const texto = String(corpo);
+  const saida = [];
+  for (let i = 0; i < texto.length; i += 1) {
+    const c = texto[i];
+    if (c === '\\') {
+      const proximo = texto[i + 1];
+      if (proximo === '"' || proximo === '\\' || proximo === '$' || proximo === '`') {
+        saida.push(proximo);
+        i += 1;
+        continue;
+      }
+      if (proximo === '\n') {
+        i += 1; // continuacao de linha do bash: os dois somem
+        continue;
+      }
+      throw new Error(
+        `contrato ${origem}: -c " tem barra invertida que o bash nao trata como escape ("\\${proximo ?? ''}")`,
+      );
+    }
+    if (c === '`') {
+      throw new Error(`contrato ${origem}: o texto de -c tem substituicao de shell (crase); nao e SQL`);
+    }
+    if (c === '$' && /[A-Za-z0-9_$@*#?!({\[-]/.test(texto[i + 1] ?? '')) {
+      throw new Error(
+        `contrato ${origem}: o texto de -c tem substituicao de shell ("$${texto[i + 1]}..."); nao e SQL`,
+      );
+    }
+    saida.push(c);
+  }
+  return saida.join('');
+}
+
 function validarSql(sql, origem) {
-  const texto = String(sql).trim();
+  const texto = desfazerAspasDuplasBash(sql, origem).trim();
   if (!texto) throw new Error(`contrato ${origem}: -c sem SQL`);
-  if (/\$\(|\$\{|`|RUNTIME=/.test(texto)) {
+  if (/RUNTIME=/.test(texto)) {
     throw new Error(`contrato ${origem}: o texto de -c tem substituicao de shell; nao e SQL`);
   }
   if (!/^(WITH|SELECT|VALUES)\b/i.test(texto)) {
@@ -222,11 +261,11 @@ export function resolverInvocacao(versao, dir = CONTRATOS) {
   return { ...generico, generico: true };
 }
 
-function principal(argv) {
+export function principal(argv, { dir = CONTRATOS } = {}) {
   const versao = argv[2];
   let invocacao;
   try {
-    invocacao = resolverInvocacao(versao);
+    invocacao = resolverInvocacao(versao, dir);
   } catch (e) {
     console.error(`::error::${e.message}`);
     process.exit(2);
