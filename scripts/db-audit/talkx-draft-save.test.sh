@@ -22,6 +22,13 @@ migrations=(
   # Unificação owner × responsible_id (decisão 02/10): mantém responsible_id
   # (obsoleta) e a RPC passa a ler/gravar SÓ owner (vazio = o próprio ator).
   "$repo_root/supabase/migrations/20261002451230_talkx_owner_responsible_unify.sql"
+  # X018: o save vigente resolve o ritmo via talkx_resolve_speed_pace.
+  "$repo_root/supabase/migrations/20261002551230_talkx_limits_ritmo.sql"
+  # X057a: tabela talkx_campaign_segments (o save X057b a regrava junto com o
+  # rascunho).
+  "$repo_root/supabase/migrations/20261002641230_talkx_v4_x057_segmentos.sql"
+  # X057b: segment_ids no payload — lista ordenada 1..10 na mesma transacao.
+  "$repo_root/supabase/migrations/20261007095927_talkx_v4_x057b_segmentos_salvar_resolver.sql"
 )
 
 cleanup() { docker rm -f "$container_name" >/dev/null 2>&1 || true; }
@@ -155,13 +162,34 @@ ALTER TABLE public.talkx_campaigns
   ADD COLUMN IF NOT EXISTS worker_id text,
   ADD COLUMN IF NOT EXISTS worker_lease_expires_at timestamptz;
 
--- X014: objetos que a migration de role gates cria/ajusta.
-CREATE TABLE public.talkx_settings (key text PRIMARY KEY, value jsonb NOT NULL);
+-- X014: objetos que a migration de role gates cria/ajusta. A coluna
+-- description existe porque a X018 (limits_ritmo) insere com ela.
+CREATE TABLE public.talkx_settings (key text PRIMARY KEY, value jsonb NOT NULL, description text);
 CREATE TABLE public.talkx_blacklist (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
 CREATE TABLE public.talkx_links (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), campaign_id uuid);
 CREATE TABLE public.talkx_link_clicks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), link_id uuid);
 -- V26: FK de talkx_campaigns.template_version_id aponta para esta tabela.
 CREATE TABLE public.talkx_template_versions (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+
+-- X032: o save vigente (X057b) grava o carimbo de consentimento — as colunas
+-- existem em producao quando a X057b chega.
+ALTER TABLE public.talkx_campaigns
+  ADD COLUMN IF NOT EXISTS legal_basis text,
+  ADD COLUMN IF NOT EXISTS consent_confirmed_by uuid,
+  ADD COLUMN IF NOT EXISTS consent_confirmed_at timestamptz;
+
+-- X057a: alvo do ALTER (segment_id), da FK e da publicacao.
+CREATE TABLE public.talkx_segments (id uuid PRIMARY KEY);
+CREATE TABLE public.talkx_recipients (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id uuid NOT NULL REFERENCES public.talkx_campaigns(id) ON DELETE CASCADE,
+  contact_id uuid NOT NULL,
+  status text NOT NULL DEFAULT 'pending'
+);
+CREATE PUBLICATION supabase_realtime;
+INSERT INTO public.talkx_segments (id) VALUES
+  ('40000000-0000-0000-0000-0000000000a1'),
+  ('40000000-0000-0000-0000-0000000000a2');
 
 GRANT USAGE ON SCHEMA public, auth TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.talkx_campaigns TO authenticated;
@@ -288,4 +316,14 @@ psql_test -qc "UPDATE public.talkx_campaigns SET message_template = 'Olá' WHERE
 psql_test -qc "$owner_session UPDATE public.talkx_campaigns SET status='scheduled' WHERE id='$empty_campaign_id';" >/dev/null
 [[ "$(psql_test -Atqc "SELECT status FROM public.talkx_campaigns WHERE id='$empty_campaign_id'")" == 'scheduled' ]] || fail '(d) mensagem preenchida não liberou o agendamento'
 
-printf 'PASS: Talk X draft save enforces grants, active identity and live connection, recovers idempotent creates, scopes keys per actor, rejects divergent retries, fences stale writes, accepts draft without message, caps the message at 4096, records step/owner (responsible_id obsoleta) and blocks scheduling without message or media\n'
+# (e) X057b: rascunho com segment_ids grava a lista ordenada na mesma
+# transacao; o segment_id da campanha vira o primeiro da lista.
+seg_first="$(psql_test -Atqc "$owner_session SELECT campaign_id FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000024'::uuid, '{\"name\":\"Com segmentos\",\"message_template\":\"Ola\",\"objective\":\"vendas\",\"audience_source\":\"segment\",\"segment_ids\":[\"40000000-0000-0000-0000-0000000000a1\",\"40000000-0000-0000-0000-0000000000a2\"]}'::jsonb);")"
+[[ -n "$seg_first" ]] || fail '(e) rascunho com segment_ids nao criou'
+[[ "$(psql_test -Atqc "SELECT string_agg(position || ':' || segment_id, ',' ORDER BY position) FROM public.talkx_campaign_segments WHERE campaign_id='$seg_first'")" \
+   == '1:40000000-0000-0000-0000-0000000000a1,2:40000000-0000-0000-0000-0000000000a2' ]] \
+  || fail '(e) lista ordenada de segmentos nao foi gravada'
+[[ "$(psql_test -Atqc "SELECT segment_id FROM public.talkx_campaigns WHERE id='$seg_first'")" == '40000000-0000-0000-0000-0000000000a1' ]] \
+  || fail '(e) segment_id nao virou o primeiro da lista'
+
+printf 'PASS: Talk X draft save enforces grants, active identity and live connection, recovers idempotent creates, scopes keys per actor, rejects divergent retries, fences stale writes, accepts draft without message, caps the message at 4096, records step/owner (responsible_id obsoleta), blocks scheduling without message or media and persists the ordered segment list (X057b)\n'
