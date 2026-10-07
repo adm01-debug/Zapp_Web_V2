@@ -396,8 +396,8 @@
     },
     {
       "path": "supabase/functions/auth-login/index.ts",
-      "bytes": 7948,
-      "sha256": "39b4513f77d0631e62bee7d66a0c65570446cb1a8a486949d8eff73ca3a2a657"
+      "bytes": 9423,
+      "sha256": "6da8696cfc229391682bc6074d7275f61e5468aef44cdac6df24ed8b845eeeef"
     },
     {
       "path": "supabase/functions/auto-close-conversations/index.ts",
@@ -506,8 +506,8 @@
     },
     {
       "path": "supabase/functions/elevenlabs-voice-design/index.ts",
-      "bytes": 3762,
-      "sha256": "3fd91c69ada84609f87dfd4b34b5b9c183f514568ebf58ad59ae97966d4a17d6"
+      "bytes": 4142,
+      "sha256": "2fe04c84cf655b2f2229658c94afa8182e579356e71155b0ef5e3417e4ff441c"
     },
     {
       "path": "supabase/functions/elevenlabs-webhook/index.ts",
@@ -978,7 +978,7 @@
       "name": "auth-login",
       "entrypoint": "supabase/functions/auth-login/index.ts",
       "verify_jwt": false,
-      "source_sha256": "cab2a67d7d27c0d173f05c12e5d88b27ab2f930d4cd74d5541fb6b7fbdc24fab",
+      "source_sha256": "3154a77893ae5555c1a0b90433388638ef106fde7a123b30166816e0672ca20c",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/request-policy.ts",
@@ -1283,7 +1283,7 @@
       "name": "elevenlabs-voice-design",
       "entrypoint": "supabase/functions/elevenlabs-voice-design/index.ts",
       "verify_jwt": true,
-      "source_sha256": "da5b78e330c274333530415d620279d8dd039e2f6c47ff05c4246bd3c8de849a",
+      "source_sha256": "16b105156b92f6020cf863a34e4455fa726cfd16d08ed038a36cd999241f71ac",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1899,5 +1899,5 @@
       ]
     }
   ],
-  "manifest_sha256": "4944236889eb0fb33282a70cb602b9ac5030171c6fad42beaaf2e031a66a7cf9"
+  "manifest_sha256": "630a849c3a2f09f562c0f8926cd1a2d8b403d972a29e0367ad97f297b2cd649c"
 }
