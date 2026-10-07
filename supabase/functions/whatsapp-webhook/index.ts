@@ -25,8 +25,12 @@ const WhatsAppWebhookSchema = z.object({
           phone_number_id: z.string(),
         }).optional(),
         statuses: z.array(WhatsAppStatusSchema).optional(),
+        // `profile.name` NÃO é obrigatório no payload da Meta: sem ele o
+        // schema derrubava o lote inteiro para "Invalid payload format"
+        // (200 + warning) e a mensagem nunca era persistida. Sem nome, o
+        // push_name vira null e o RPC cai no telefone.
         contacts: z.array(z.object({
-          profile: z.object({ name: z.string() }).optional(),
+          profile: z.object({ name: z.string().optional() }).optional(),
         })).optional(),
         messages: z.array(z.object({
           id: z.string(),
