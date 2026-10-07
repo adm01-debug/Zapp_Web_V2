@@ -30,6 +30,14 @@ const GRUPOS = [
   { id: 'semHora', titulo: 'Sem hora' },
 ] as const;
 
+/**
+ * E15 — com `tasks` em `layout:'full'` o `ViewContainer` deixa de rolar e de
+ * aplicar `p-[var(--layout-gutter)]`. A raiz da Agenda repassa as MESMAS classes
+ * do container (scroller + gutter), nas duas raízes que o modo devolve, para a
+ * aparência não mudar.
+ */
+const GUTTER = 'overflow-y-auto p-[var(--layout-gutter)]';
+
 export function TasksAgendaMode({
   items, overdue, isLoading, onCreate, quickAddRef, onOpen, onToggleDone, onMoveTo, onDelete,
   doingCount, onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
@@ -42,7 +50,7 @@ export function TasksAgendaMode({
   const weeks     = weekBuckets(items, startDate);
 
   if (isLoading) {
-    return <div className="w-full min-w-0 space-y-2">{Array.from({ length: 4 }).map((_, i) => <WorkItemCardSkeleton key={i} />)}</div>;
+    return <div className={`${GUTTER} w-full min-w-0 space-y-2`}>{Array.from({ length: 4 }).map((_, i) => <WorkItemCardSkeleton key={i} />)}</div>;
   }
 
   const dayData = weeks[selectedDay] ?? { reminders: [], dueTasks: [] };
@@ -76,7 +84,7 @@ export function TasksAgendaMode({
   });
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-4">
+    <div className={`${GUTTER} flex w-full min-w-0 flex-col gap-4`}>
       {/* Atrasadas (expansível; colapsado por padrão quando passa de 3) */}
       {overdue.length > 0 && (
         <div id="agenda-atrasadas" className="min-w-0 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">

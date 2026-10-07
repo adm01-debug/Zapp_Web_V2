@@ -27,6 +27,14 @@ interface Props extends WorkItemCardActions {
   hasMounted: React.MutableRefObject<boolean>;
 }
 
+/**
+ * E15 — com `tasks` em `layout:'full'` o `ViewContainer` deixa de rolar e de
+ * aplicar `p-[var(--layout-gutter)]`. A raiz da Lista repassa as MESMAS classes
+ * do container (scroller + gutter), em TODAS as raízes que o modo devolve, para a
+ * aparência não mudar.
+ */
+const GUTTER = 'overflow-y-auto p-[var(--layout-gutter)]';
+
 interface SectionProps {
   title: string;
   items: WorkItem[];
@@ -161,7 +169,7 @@ export function TasksListMode({
 }: Props) {
   if (isLoading) {
     return (
-      <div className="w-full min-w-0 space-y-1.5">
+      <div className={`${GUTTER} w-full min-w-0 space-y-1.5`}>
         {Array.from({ length: 6 }).map((_, i) => <WorkItemCardSkeleton key={i} />)}
       </div>
     );
@@ -171,8 +179,18 @@ export function TasksListMode({
 
   if (total === 0 && byDue.done7d.length === 0 && byDue.doneOlder.length === 0) {
     const filtroAtivo = filtersActive ?? (searchQuery ?? '') !== '';
-    if (filtroAtivo) return <TasksEmptyState variant="filter" onClearFilter={onClearFilter} />;
-    return <TasksEmptyState variant="all" />;
+    if (filtroAtivo) {
+      return (
+        <div className={GUTTER}>
+          <TasksEmptyState variant="filter" onClearFilter={onClearFilter} />
+        </div>
+      );
+    }
+    return (
+      <div className={GUTTER}>
+        <TasksEmptyState variant="all" />
+      </div>
+    );
   }
 
   // Ações do card (Fase C2) num objeto só — evita repetir 7 props nas 6 seções.
@@ -181,7 +199,7 @@ export function TasksListMode({
   };
 
   return (
-    <div className="w-full min-w-0 space-y-6 pb-8">
+    <div className={`${GUTTER} w-full min-w-0 space-y-6`}>
       <Section title="Atrasadas"   items={byDue.overdue}   headingClass="text-destructive" defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Hoje"        items={byDue.today}     headingClass="text-warning"     defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Amanhã"     items={byDue.tomorrow}  defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
