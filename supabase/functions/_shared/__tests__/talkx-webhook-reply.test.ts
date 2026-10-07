@@ -1,14 +1,22 @@
 /**
  * X028 — contrato executável da ATRIBUIÇÃO DE RESPOSTA do Talk X.
  *
- * O que fica travado:
- *   1. uma resposta de contato chama a RPC `attribute_talkx_reply` com o
- *      `contact_id` E o telefone resolvido (`p_phone`) — sem o telefone, o
- *      contato que chegou por outro contact_id (LID/duplicado) não seria casado;
- *   2. o handler AGUARDA a RPC: só resolve depois que ela termina (antes era
- *      `void`, fire-and-forget, e o efeito podia se perder no congelamento);
- *   3. resposta que é palavra de opt-out não chama a atribuição.
+ * R2-API-006 (#69): a atribuição deixou de ser chamada solta depois do
+ * ingest — os insumos (contato, telefone, citação) entram na MESMA chamada de
+ * `ingest_inbound_message` (pendência na outbox na mesma transação) e
+ * `drain_inbound_message_effects` aplica `attribute_talkx_reply` no banco.
+ * Travado no contrato novo:
  *
+ *   1. a resposta do contato leva o telefone resolvido (`p_phone`) até a RPC
+ *      de ingest — sem ele, a atribuição por telefone (LID/duplicado) não casa;
+ *   2. o handler AGUARDA a drenagem: só resolve depois que os efeitos
+ *      pendentes terminam;
+ *   3. mensagem de opt-out não enfileira resposta (`p_opt_out_keyword` vai
+ *      preenchido — a exclusão mútua é provada no SQL);
+ *   4. RPC atribuindo `attributed=false` não é erro: o handler resolve normal.
+ *
+ * O SQL é provado na migration real em Postgres descartável:
+ *   scripts/db-audit/inbound-effects-replay.test.sh
  * Payloads GO anonimizados em fixture (sem telefone/CPF reais).
  */
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
@@ -89,6 +97,10 @@ function inboundResult() {
   };
 }
 
+const drainResult = (parcial: Record<string, unknown> = {}) => ({
+  suppression_id: null, optout_status: null, talkx_reply: null, multiplix_reply: null, pending_failed: 0, ...parcial,
+});
+
 function traduzirMensagem(texto: string, id = "3EB0REPLY") {
   const recebida = translateGoPayload(goIncomingMessage(texto, id));
   const data = recebida.data as Record<string, unknown>;
@@ -96,21 +108,23 @@ function traduzirMensagem(texto: string, id = "3EB0REPLY") {
   return { data, key };
 }
 
-Deno.test("X028: resposta de contato — o handler só resolve depois da RPC (await)", async () => {
+Deno.test("X028: resposta de contato — o handler só resolve depois da drenagem (await)", async () => {
   let release!: () => void;
   const gate = new Promise<void>((resolve) => {
     release = resolve;
   });
-  let atribuicaoConcluida = false;
+  let drenagemConcluida = false;
   const chamadas: Chamada[] = [];
 
   const supabase = fakeSupabase(chamadas, {
     ingest_inbound_message: async () => ({ data: [inboundResult()], error: null }),
-    attribute_talkx_reply: async () => {
+    drain_inbound_message_effects: async () => {
       await gate;
-      atribuicaoConcluida = true;
+      drenagemConcluida = true;
       return {
-        data: { attributed: true, attribution: "contact", recipient_id: "r1", campaign_id: "c1" },
+        data: drainResult({
+          talkx_reply: { attributed: true, attribution: "contact", recipient_id: "r1", campaign_id: "c1" },
+        }),
         error: null,
       };
     },
@@ -123,50 +137,59 @@ Deno.test("X028: resposta de contato — o handler só resolve depois da RPC (aw
       handlerResolveu = true;
     });
 
-  // Deixa o handler avançar até travar na RPC.
+  // Deixa o handler avançar até travar na RPC de drenagem.
   await new Promise((resolve) => setTimeout(resolve, 25));
 
-  const atribuicoes = chamadas.filter((c) => c.nome === "attribute_talkx_reply");
-  assertEquals(atribuicoes.length, 1, "attribute_talkx_reply deve ser chamada");
-  assertEquals(atribuicoes[0].args.p_contact_id, "contact-1");
-  assertEquals(atribuicoes[0].args.p_phone, "5511000000000", "o telefone resolvido vai em p_phone");
-  assertEquals(atribuicoes[0].args.p_message_id, "msg-1");
-  assertEquals(handlerResolveu, false, "o handler não pode resolver antes da RPC terminar");
+  const drenagens = chamadas.filter((c) => c.nome === "drain_inbound_message_effects");
+  assertEquals(drenagens.length, 1, "drain_inbound_message_effects deve ser chamada");
+  assertEquals(drenagens[0].args.p_external_id, "3EB0REPLY");
+  assertEquals(drenagens[0].args.p_connection_id, "conn-1");
+  assertEquals(handlerResolveu, false, "o handler não pode resolver antes da drenagem terminar");
+
+  const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
+  assertEquals(ingests[0].args.p_phone, "5511000000000", "o telefone resolvido alimenta a atribuição");
+  assertEquals(ingests[0].args.p_opt_out_keyword, null);
 
   release();
   await pendente;
-  assertEquals(handlerResolveu, true, "o handler resolve depois da RPC");
-  assertEquals(atribuicaoConcluida, true);
+  assertEquals(handlerResolveu, true, "o handler resolve depois da drenagem");
+  assertEquals(drenagemConcluida, true);
 });
 
-Deno.test("X028: mensagem de opt-out não chama a atribuição", async () => {
+Deno.test("X028: mensagem de opt-out não enfileira atribuição", async () => {
   const chamadas: Chamada[] = [];
   const supabase = fakeSupabase(chamadas, {
     ingest_inbound_message: async () => ({ data: [inboundResult()], error: null }),
-    attribute_talkx_reply: async () => ({ data: { attributed: true }, error: null }),
+    drain_inbound_message_effects: async () => ({
+      data: drainResult({ optout_status: "no_recent_send" }),
+      error: null,
+    }),
   });
 
   const { data, key } = traduzirMensagem("SAIR", "3EB0OPTOUT");
   await handleIncomingMessage(supabase, "inst-x028-optout", data, key, "http://localhost:54321", "svc");
 
+  const ingests = chamadas.filter((c) => c.nome === "ingest_inbound_message");
+  assertEquals(
+    ingests[0].args.p_opt_out_keyword,
+    "sair",
+    "a palavra de opt-out entra no ingest — a RPC enfileira SÓ a supressão",
+  );
   assertEquals(
     chamadas.some((c) => c.nome === "attribute_talkx_reply"),
     false,
     "opt-out não pode contar como resposta/engajamento",
   );
-  assertEquals(
-    chamadas.some((c) => c.nome === "talkx_suppress_contact"),
-    false,
-    "sem campanha recente no fixture não há supressão",
-  );
 });
 
-Deno.test("X028: resposta sem destinatário na janela não é erro (RPC attributed=false)", async () => {
+Deno.test("X028: resposta sem destinatário na janela não é erro (drenagem attributed=false)", async () => {
   const chamadas: Chamada[] = [];
   const supabase = fakeSupabase(chamadas, {
     ingest_inbound_message: async () => ({ data: [inboundResult()], error: null }),
-    attribute_talkx_reply: async () => ({
-      data: { attributed: false, attribution: null, reason: "no_recipient_in_window" },
+    drain_inbound_message_effects: async () => ({
+      data: drainResult({
+        talkx_reply: { attributed: false, attribution: null, reason: "no_recipient_in_window" },
+      }),
       error: null,
     }),
   });
@@ -174,7 +197,8 @@ Deno.test("X028: resposta sem destinatário na janela não é erro (RPC attribut
   const { data, key } = traduzirMensagem("Ainda tenho interesse", "3EB0NOMATCH");
   await handleIncomingMessage(supabase, "inst-x028-nomatch", data, key, "http://localhost:54321", "svc");
 
-  // O handler chama a RPC; quando ela não casa, o retorno é falsy mas o webhook
-  // segue normalmente (a resposta do contato nunca falha por causa da atribuição).
-  assertEquals(chamadas.filter((c) => c.nome === "attribute_talkx_reply").length, 1);
+  // O handler chama a drenagem; quando ela não casa, o retorno é falsy mas o
+  // webhook segue normalmente (a resposta do contato nunca falha por causa da
+  // atribuição).
+  assertEquals(chamadas.filter((c) => c.nome === "drain_inbound_message_effects").length, 1);
 });
