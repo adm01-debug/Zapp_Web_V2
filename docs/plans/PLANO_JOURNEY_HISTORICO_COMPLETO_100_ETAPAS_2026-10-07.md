@@ -26,7 +26,7 @@
 ## 3. Decisões (o dono pode reverter)
 - **D01.** Fases sem DDL: consultas do navegador por período e página; uma RPC no banco só com aprovação do dono (regra de banco canônico).
 - **D02.** **Categorias e cores** (cor + ícone + texto, nunca só cor): Mensagens **azul**; E-mail **laranja**; Telefone **verde**; Notas **violeta**; Tarefas **âmbar**; Transferências/Atribuições **turquesa**; Arquivos **céu**; Propostas **rosa**; Encerramento/Reabertura **cinza-ardósia**. Contraste AA nos dois temas.
-- **D03.** **Quem interagiu:** foto + nome; Cliente = foto do contato; atendente = foto dele; "Você" quando for o logado; automação/sistema = "Sistema" com ícone. **Sem selo de canal/origem** (mesma decisão do cartão de arquivo).
+- **D03 (reforçada em 07/10: ações da IA/robô entram como "Sistema").** **Quem interagiu:** foto + nome; Cliente = foto do contato; atendente = foto dele; "Você" quando for o logado; automação/sistema = "Sistema" com ícone. **Sem selo de canal/origem** (mesma decisão do cartão de arquivo).
 - **D04.** **Período:** o seletor da IA (atalhos Hoje, 3/7/14/30/90 dias, Qualquer data, calendário De/Até); padrão **Últimos 30 dias**; "Última interação" fica de fora.
 - **D05.** **Filtro de tipo** mantido (lista estendida); **filtro de usuário** novo, **de seleção MÚLTIPLA** (decidido pelo dono em 07/10): caixas de marcar com "Todos", "Cliente" e cada pessoa que aparece no histórico (com foto e contagem); marcar várias mostra os eventos de qualquer uma delas; nenhuma marcada = todos.
 - **D06.** **Agrupar** mensagens seguidas do mesmo autor (até 10 min) como hoje ("7 mensagens recebidas"), com expandir no próprio cartão; e-mails da mesma conversa também.
@@ -55,7 +55,7 @@
 **Onda 3 (depois da 2 e de F01/R-series integrados):** clique no episódio (I; mexe em ChatPanel/TasksTab/NotesTab/FilesTab), exportar, E2E, docs. **Claude:** A e J.
 
 ## 6. Perguntas ao dono
-1. ~~Nome da aba~~ **RESPONDIDA: continua Journey** (e o título interno da página também será "Journey"). 2. ~~Filtro de usuário~~ **RESPONDIDA: vários ao mesmo tempo** (D05). 3. ~~Selo "Visualizada" da proposta~~ **RESPONDIDA: fica de fora** (não há dado; o selo da proposta mostra só o status que já existe: aberta, ganha ou perdida). 4. ~~Exportar histórico~~ **RESPONDIDA: NÃO exportar nada** (nenhuma informação sai do sistema; D11). 5. Ações automáticas da **IA/robô** entram na timeline como "Sistema"?
+1. ~~Nome da aba~~ **RESPONDIDA: continua Journey** (e o título interno da página também será "Journey"). 2. ~~Filtro de usuário~~ **RESPONDIDA: vários ao mesmo tempo** (D05). 3. ~~Selo "Visualizada" da proposta~~ **RESPONDIDA: fica de fora** (não há dado; o selo da proposta mostra só o status que já existe: aberta, ganha ou perdida). 4. ~~Exportar histórico~~ **RESPONDIDA: NÃO exportar nada** (nenhuma informação sai do sistema; D11). 5. ~~Ações da IA/robô~~ **RESPONDIDA: entram na timeline como "Sistema"** (ícone de sistema, sem foto; filtro de usuário ganha a opção "Sistema"). **TODAS as 5 perguntas estão respondidas.**
 
 ## 7. Fora de escopo
 Selo "Visualizada" da proposta (decidido pelo dono em 07/10: não há dado); **exportar/baixar/imprimir/compartilhar o histórico (decidido pelo dono em 07/10)**; Criar tabelas ou RPC sem aprovação; mudar o armazenamento; selo de canal/origem; editar eventos pela timeline.
