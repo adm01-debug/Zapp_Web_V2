@@ -41,6 +41,9 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
     selectedLocation,
     selectedOrigin,
     chooseSearchResult, getCurrentLocation, searchLocation, reset, proximity,
+    // R2-INB-039: a busca manual (Enter sem destaque) já devolvia vários candidatos em
+    // `searchResults` — faltava a tela consumir o estado. `isSearching` é o carregamento dela.
+    searchResults, isSearching,
   } = useLocationPicker(open, activeTab);
 
   // Fase 2/3 do plano de busca (docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md): sugestão
@@ -55,6 +58,11 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
   });
   const [addressListOpen, setAddressListOpen] = useState(false);
   const addressComboRef = useRef<HTMLDivElement>(null);
+  // R2-INB-039: os candidatos da busca manual só valem para o termo que os produziu. Guardar esse
+  // termo é o que deixa a lista aparecer logo depois do Enter e devolver a vez ao autocomplete
+  // assim que o operador digita outra coisa — sem isso, uma lista velha ficaria por cima das
+  // sugestões do novo termo.
+  const [manualSearchTerm, setManualSearchTerm] = useState<string | null>(null);
   // E29 (M2): clique no mapa e GPS mudam `selectedLocation` pelo caminho antigo (reverseGeocode ->
   // select), sem passar pelo autocomplete. O termo tem de sumir SEMPRE — antes isso só acontecia
   // se a lista estivesse aberta, e o endereço antigo ficava escrito num campo que já apontava para
@@ -69,6 +77,8 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
     if (selectedLocation) {
       setAddressListOpen(false);
       autocomplete.clear();
+      // A escolha já foi aplicada: a lista da busca manual cumpriu o papel.
+      setManualSearchTerm(null);
     }
   }
 
@@ -81,6 +91,26 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [addressListOpen]);
+
+  // R2-INB-039 · E37: quando o autocomplete está pausado (429 / teto de custo) a própria lista
+  // orienta "use o Enter". Esse caminho usa o `/forward` do `searchLocation`, que já devolvia os
+  // candidatos — só ninguém os mostrava. Aqui eles entram no MESMO modelo de sugestões da lista
+  // (E32): o `/forward` já traz a coordenada, então escolher não gasta `/retrieve` (E15).
+  const termoDigitado = autocomplete.query.trim();
+  const manualSearchActive = manualSearchTerm !== null && manualSearchTerm === termoDigitado;
+  const manualPlaces = manualSearchActive ? searchResults : [];
+  const manualSuggestions: GeoSuggestion[] = manualPlaces.map((place, index) => ({
+    id: `manual-${index}-${place.lat},${place.lng}`,
+    name: place.name ?? place.address,
+    address: place.address,
+    kind: 'other',
+    coords: { lat: place.lat, lng: place.lng },
+  }));
+  // Com mais de um candidato quem escolhe é o operador — nada é aplicado sozinho.
+  const mostrandoManual = manualSuggestions.length > 0;
+  // A lista manual só ocupa o lugar do autocomplete quando tem o que mostrar (carregando ou
+  // candidatos) — Enter com o campo vazio não pode abrir uma caixa vazia só com a atribuição.
+  const manualListVisible = manualSearchActive && (isSearching || mostrandoManual);
 
   const handleSelectSuggestion = async (index: number) => {
     const suggestion = autocomplete.suggestions[index];
@@ -193,15 +223,24 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                         if (!proximo || !addressComboRef.current?.contains(proximo)) setAddressListOpen(false);
                       }}
                       onKeyDown={(e) => {
-                        autocomplete.onKeyDown(e);
+                        // Enquanto a lista visível é a da busca manual, o teclado não pode mexer no
+                        // destaque do autocomplete: o item destacado seria um item invisível e o
+                        // Enter aplicaria uma sugestão que o operador não vê (mesma classe do A3-06).
+                        if (!mostrandoManual) autocomplete.onKeyDown(e);
                         if (e.key === 'Escape') setAddressListOpen(false);
-                        if (e.key === 'Enter') {
+                        if (e.key === 'Enter' && !mostrandoManual) {
                           // Com sugestão destacada, mesmo caminho do clique (E46: antes o hook
                           // resolvia o /retrieve sozinho e o resultado nunca chegava até aqui).
                           // Sem destaque, cai na busca antiga (/forward) com o termo do combobox
                           // (E12/C2: o input da flag ligada nunca preenche `searchQuery`).
+                          // R2-INB-039: o termo fica guardado junto com o resultado — é o que
+                          // permite a lista abaixo mostrar os candidatos e voltar a dar lugar ao
+                          // autocomplete na próxima digitação.
                           if (autocomplete.highlightedIndex >= 0) void handleSelectSuggestion(autocomplete.highlightedIndex);
-                          else void searchLocation(autocomplete.query);
+                          else {
+                            setManualSearchTerm(autocomplete.query.trim());
+                            void searchLocation(autocomplete.query);
+                          }
                         }
                       }}
                       className="pl-9"
@@ -209,20 +248,34 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
                   </div>
                   {/* E23/E32: a lista é um componente só, e o que ela mostra vem do `status`
                       (nunca de `suggestions.length` — era assim que "Nada encontrado" aparecia em
-                      cima de falha e de pausa). */}
-                  {addressListOpen && autocomplete.status !== 'idle' && (
+                      cima de falha e de pausa). R2-INB-039: a fonte pode ser a busca manual (Enter
+                      sem destaque) — os candidatos do `/forward` já traziam coordenada e ficavam
+                      invisíveis. Enquanto ela está em curso, a lista mostra o carregamento dela. */}
+                  {addressListOpen && (autocomplete.status !== 'idle' || manualListVisible) && (
                     <SuggestionList
                       listboxId={ADDRESS_LISTBOX_ID}
-                      status={autocomplete.status}
+                      status={mostrandoManual ? 'ok' : manualListVisible ? 'loading' : autocomplete.status}
                       query={autocomplete.query}
-                      suggestions={autocomplete.suggestions}
-                      highlightedIndex={autocomplete.highlightedIndex}
-                      retrievingId={autocomplete.retrievingId}
-                      error={autocomplete.error}
-                      blocked={autocomplete.blocked}
-                      pausedUntil={autocomplete.pausedUntil}
-                      retrieveError={autocomplete.retrieveError}
-                      onSelect={(index) => { void handleSelectSuggestion(index); }}
+                      suggestions={mostrandoManual ? manualSuggestions : autocomplete.suggestions}
+                      highlightedIndex={mostrandoManual ? -1 : autocomplete.highlightedIndex}
+                      retrievingId={mostrandoManual ? null : autocomplete.retrievingId}
+                      error={mostrandoManual ? null : autocomplete.error}
+                      blocked={mostrandoManual ? null : autocomplete.blocked}
+                      pausedUntil={mostrandoManual ? null : autocomplete.pausedUntil}
+                      retrieveError={mostrandoManual ? null : autocomplete.retrieveError}
+                      onSelect={(index) => {
+                        // Candidato da busca manual: aplica só o escolhido, com a coordenada que o
+                        // `/forward` já devolveu (sem `/retrieve`, E15).
+                        if (mostrandoManual) {
+                          const place = manualPlaces[index];
+                          if (place) {
+                            setManualSearchTerm(null);
+                            chooseSearchResult(place);
+                          }
+                          return;
+                        }
+                        void handleSelectSuggestion(index);
+                      }}
                       onRetry={() => autocomplete.retrySuggest()}
                     />
                   )}
