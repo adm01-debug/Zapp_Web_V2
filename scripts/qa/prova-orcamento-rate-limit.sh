@@ -18,9 +18,13 @@
 #   export SUPABASE_ANON_KEY='<chave publicavel do projeto>'   # publica por desenho
 #   PROVA_PRODUCAO=sim bash scripts/qa/prova-orcamento-rate-limit.sh .tmp/prova-out
 #
-# NUNCA imprime senha nem token: a saida traz apenas o email da conta, os codigos
-# HTTP, o resultado da classificacao e (opcionalmente) o resumo lido do banco.
+# NUNCA imprime senha nem token e nenhuma credencial vai para argv de processo:
+# o corpo do login chega ao curl por stdin (--data-binary @-) e os cabecalhos
+# com credencial (apikey, Authorization) vao num arquivo de configuracao
+# privado do curl (--config). A resposta do Auth fica num diretorio temporario
+# apagado ao sair; no diretorio de saida so vai evidencia redigida, sem tokens.
 set -uo pipefail
+umask 077
 
 OUT="${1:?uso: prova-orcamento-rate-limit.sh <dir-de-saida>}"
 BASE="${ZAPP_SUPABASE_URL:-https://tnnnlkbymytvtqngbbqh.supabase.co}"
@@ -37,35 +41,56 @@ fi
 : "${ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_PASSWORD:?senha da conta COMPRAS ausente no ambiente}"
 
 mkdir -p "$OUT"
+chmod 700 "$OUT"
+
+# Diretorio privado de trabalho: tudo que carrega token (resposta do Auth e o
+# --config do curl) mora aqui e e' removido ao sair, inclusive em falha.
+PRIV="$(mktemp -d)"
+chmod 700 "$PRIV"
+limpar() { [[ -n "${PRIV:-}" ]] && rm -rf -- "$PRIV"; }
+trap limpar EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+CURL_CFG="$PRIV/curl.cfg"
+{
+  printf 'header = "apikey: %s"\n' "$SUPABASE_ANON_KEY"
+  printf 'header = "Content-Type: application/json"\n'
+} > "$CURL_CFG"
 
 echo "== PROVA DE ORCAMENTO E RATE LIMIT (producao) =="
 echo "BASE=$BASE  FUNCAO=$FUNCAO"
 
-# 1) Login no Supabase Auth do Zapp V2. O corpo vai por --data (nao por argv) e o
-#    token nunca e' ecoado.
-BODY=$(jq -nc --arg e "$ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_EMAIL" \
-              --arg p "$ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_PASSWORD" '{email:$e,password:$p}')
-LOGIN_HTTP=$(curl -sS -o "$OUT/login.json" -w '%{http_code}' \
-  -X POST "$BASE/auth/v1/token?grant_type=password" \
-  -H "apikey: $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' \
-  --data "$BODY")
+# 1) Login no Supabase Auth do Zapp V2. A senha sai do ambiente direto para o
+#    corpo (jq $ENV), que chega ao curl por stdin -- nunca por argv. A resposta
+#    completa do Auth fica em $PRIV; em $OUT vai so o resumo redigido.
+LOGIN_HTTP=$(jq -nc \
+  '{email:$ENV.ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_EMAIL, password:$ENV.ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_PASSWORD}' \
+  | curl -sS -o "$PRIV/login.json" -w '%{http_code}' \
+    -X POST "$BASE/auth/v1/token?grant_type=password" \
+    --config "$CURL_CFG" \
+    --data-binary @-)
 echo "LOGIN_HTTP=$LOGIN_HTTP  CONTA=$ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_EMAIL"
 
-JWT=$(jq -r '.access_token // empty' "$OUT/login.json")
+jq -c '{token_type,expires_in,error,error_code,error_description,msg}' \
+  "$PRIV/login.json" > "$OUT/login-resumo.json"
+
+JWT=$(jq -r '.access_token // empty' "$PRIV/login.json")
 if [[ -z "$JWT" ]]; then
   echo "ERRO: login nao devolveu access_token"
-  jq -c '{error,error_description,msg}' "$OUT/login.json" 2>/dev/null | head -c 300; echo
+  jq -c '{error,error_description,msg}' "$PRIV/login.json" 2>/dev/null | head -c 300; echo
   exit 1
 fi
 echo "JWT_OK=sim  (len=${#JWT}; valor nunca impresso)"
+
+printf 'header = "Authorization: Bearer %s"\n' "$JWT" >> "$CURL_CFG"
 
 # 2) Chamadas reais (3, para o rate limit ter o que contar)
 chamar() {
   local rotulo="$1" payload="$2" saida="$3" http
   http=$(curl -sS -o "$saida" -w '%{http_code}' \
     -X POST "$BASE/functions/v1/$FUNCAO" \
-    -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $JWT" \
-    -H 'Content-Type: application/json' --data "$payload")
+    --config "$CURL_CFG" --data "$payload")
   echo "${rotulo}_HTTP=$http  corpo=$(head -c 200 "$saida")"
 }
 
