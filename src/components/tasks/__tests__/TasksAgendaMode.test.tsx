@@ -80,7 +80,7 @@ function renderAgenda(
   opts: { isLoading?: boolean } = {},
 ) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  render(
+  return render(
     <QueryClientProvider client={qc}>
       <TooltipProvider>
         <TasksAgendaMode
@@ -189,5 +189,35 @@ describe('TasksAgendaMode — etapa 88 (relógio fixo)', () => {
     expect(document.querySelectorAll('.animate-shimmer')).toHaveLength(4);
     expect(screen.queryAllByTestId('work-item-card')).toHaveLength(0);
     expect(screen.queryByTestId('agenda-day-dots')).toBeNull();
+  });
+});
+
+/**
+ * E15 — o gutter que o `ViewContainer` aplicava à view `tasks` passa para a raiz
+ * do modo. Com `tasks` em `layout:'full'` o wrapper compartilhado deixa de rolar
+ * e de aplicar `p-[var(--layout-gutter)]`; a Agenda tem de continuar com o MESMO
+ * padding e o MESMO scroller, nas duas raízes que ela pode devolver (agenda
+ * montada e carregamento) — senão a faixa de dias e os cards colam na borda.
+ */
+describe('TasksAgendaMode — E15 (gutter repassado pela raiz)', () => {
+  const GUTTER = 'p-[var(--layout-gutter)]';
+
+  it('a raiz da agenda rola e aplica o gutter do container', () => {
+    const { container } = renderAgenda([]);
+
+    const raiz = container.firstElementChild as HTMLElement;
+    expect(raiz).toHaveClass('overflow-y-auto');
+    expect(raiz).toHaveClass(GUTTER);
+    // A agenda montada continua inteira: a faixa de 7 dias está lá dentro.
+    expect(screen.getAllByTestId('agenda-day-dots')).toHaveLength(7);
+  });
+
+  it('o carregamento também nasce com o gutter (os esqueletos não colam na borda)', () => {
+    const { container } = renderAgenda([], [], { isLoading: true });
+
+    const raiz = container.firstElementChild as HTMLElement;
+    expect(raiz).toHaveClass('overflow-y-auto');
+    expect(raiz).toHaveClass(GUTTER);
+    expect(container.querySelectorAll('.animate-shimmer')).toHaveLength(4);
   });
 });

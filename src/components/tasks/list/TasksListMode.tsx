@@ -27,6 +27,13 @@ interface Props extends WorkItemCardActions {
   hasMounted: React.MutableRefObject<boolean>;
 }
 
+/**
+ * E15 — com `tasks` em `layout:'full'`, a raiz de conteúdo da Lista assume o
+ * scroll e o gutter. Ela também preserva o `pb-8` que já existia no modo Lista,
+ * somando-o ao gutter inferior sem misturar `p-*` e `pb-*` no mesmo elemento.
+ */
+const CONTENT_GUTTER = 'overflow-y-auto px-[var(--layout-gutter)] pt-[var(--layout-gutter)] pb-[calc(var(--layout-gutter)+2rem)]';
+
 interface SectionProps {
   title: string;
   items: WorkItem[];
@@ -181,7 +188,7 @@ export function TasksListMode({
   };
 
   return (
-    <div className="w-full min-w-0 space-y-6 pb-8">
+    <div className={`${CONTENT_GUTTER} w-full min-w-0 space-y-6`}>
       <Section title="Atrasadas"   items={byDue.overdue}   headingClass="text-destructive" defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Hoje"        items={byDue.today}     headingClass="text-warning"     defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
       <Section title="Amanhã"     items={byDue.tomorrow}  defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />

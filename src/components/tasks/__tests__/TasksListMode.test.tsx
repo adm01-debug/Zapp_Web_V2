@@ -177,3 +177,56 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
     expect(screen.queryByText('Nada por aqui')).toBeNull();
   });
 });
+
+/**
+ * E15 — o gutter que o `ViewContainer` aplicava à view `tasks` passa para a raiz
+ * de conteúdo do modo. A Lista cheia já tinha `pb-8`; por isso, além do gutter
+ * de topo/laterais, precisa manter no fundo a soma `var(--layout-gutter) + 2rem`.
+ * As raízes de carregamento e vazio não tinham `pb-8` e não participam desse
+ * ajuste.
+ */
+describe('TasksListMode — E15 (gutter repassado pela raiz)', () => {
+  const GUTTER_X = 'px-[var(--layout-gutter)]';
+  const GUTTER_TOP = 'pt-[var(--layout-gutter)]';
+  const GUTTER_BOTTOM_EXTRA = 'pb-[calc(var(--layout-gutter)+2rem)]';
+
+  it('a raiz da lista rola, aplica o gutter do container e preserva o rodapé extra', () => {
+    const { container } = renderLista(buckets({ noDue: [item({ id: 'g1', title: 'Com gutter' })] }));
+
+    const raiz = container.firstElementChild as HTMLElement;
+    expect(raiz).toHaveClass('overflow-y-auto');
+    expect(raiz).toHaveClass(GUTTER_X);
+    expect(raiz).toHaveClass(GUTTER_TOP);
+    expect(raiz).toHaveClass(GUTTER_BOTTOM_EXTRA);
+    expect(raiz).not.toHaveClass('p-[var(--layout-gutter)]');
+    // O conteúdo continua dentro da área com gutter — nada sumiu da tela.
+    expect(screen.getByText('Com gutter')).toBeTruthy();
+  });
+
+  it('o carregamento continua sem o rodapé extra da lista cheia', () => {
+    const { container } = renderLista(buckets(), { isLoading: true });
+
+    const raiz = container.firstElementChild as HTMLElement;
+    expect(raiz).not.toHaveClass('overflow-y-auto');
+    expect(raiz).not.toHaveClass(GUTTER_X);
+    expect(raiz).not.toHaveClass(GUTTER_TOP);
+    expect(raiz).not.toHaveClass(GUTTER_BOTTOM_EXTRA);
+    expect(container.querySelectorAll('.animate-shimmer')).toHaveLength(6);
+  });
+
+  it('os dois vazios continuam sem wrapper de gutter da lista cheia', () => {
+    const { container } = renderLista(buckets());
+    const raizAll = container.firstElementChild as HTMLElement;
+    expect(raizAll).not.toHaveClass('overflow-y-auto');
+    expect(raizAll).not.toHaveClass(GUTTER_BOTTOM_EXTRA);
+    expect(screen.getByText('Nada por aqui')).toBeTruthy();
+
+    cleanup();
+
+    const { container: comFiltro } = renderLista(buckets(), { filtersActive: true });
+    const raizFiltro = comFiltro.firstElementChild as HTMLElement;
+    expect(raizFiltro).not.toHaveClass('overflow-y-auto');
+    expect(raizFiltro).not.toHaveClass(GUTTER_BOTTOM_EXTRA);
+    expect(screen.getByText('Nenhuma tarefa com esse filtro')).toBeTruthy();
+  });
+});
