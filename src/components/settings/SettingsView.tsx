@@ -35,7 +35,7 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 import { toast } from 'sonner';
 
 export function SettingsView() {
-  const { settings, isLoading, isSaving, updateSettings, saveSettings, toggleWorkDay } = useUserSettings();
+  const { settings, isLoading, isSaving, updateSettings, saveSettings } = useUserSettings();
   const { resetOnboarding } = useOnboarding();
   const { isAdmin, isSupervisor } = useUserRole();
   // Agent/special_agent so vem as 4 abas pessoais — o resto configura a
@@ -131,7 +131,7 @@ export function SettingsView() {
 
         {isStaff && (
           <TabsContent value="schedule">
-            <ScheduleSettings settings={settings} updateSettings={updateSettings} toggleWorkDay={toggleWorkDay} />
+            <ScheduleSettings />
           </TabsContent>
         )}
 
