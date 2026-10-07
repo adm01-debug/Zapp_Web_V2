@@ -1,8 +1,10 @@
 -- talkx_expurgo_drena_lotes
 -- Rollback: recriar public.purge_talkx_expired_data(integer) com o corpo vivo de
 --   20261004173439_talkx_tick_nao_aborta_no_expurgo.sql (um lote unico de p_limit linhas
---   por passo por chamada) e remover a chave 'drained' do retorno. Nada mais desta
---   migration precisa ser desfeito: ela so substitui a funcao e o COMMENT dela.
+--   por passo por chamada) e remover a chave 'drained' do retorno. Isso tambem desfaz a
+--   guarda de evento desta migration: o corpo anterior volta a gravar um evento
+--   talkx_lgpd_purge por execucao nao-skipped. Nada mais precisa ser desfeito: ela so
+--   substitui a funcao e o COMMENT dela.
 --
 -- R3-DELTA-008 (P2, area migrations). Defeito: o expurgo LGPD do Talk X fazia UM unico
 -- lote de p_limit linhas por passo e, em seguida, fechava o dia (last_purge_at). Com acervo
@@ -27,7 +29,10 @@
 --
 -- Contrato mantido: mesma assinatura purge_talkx_expired_data(integer), chaves antigas de
 -- retorno preservadas e nova chave 'drained' informa se o dia fechou; o evento
--- talkx_lgpd_purge continua sendo um por execucao, e continuam intactos talkx_blacklist,
+-- talkx_lgpd_purge continua sendo um por execucao COM PROGRESSO OU QUE FECHA O DIA — uma
+-- chamada bloqueada sem afetar nenhuma linha (linha travada persistente ou conflito
+-- permanente no passo 5) NAO grava evento, para o tick que reexecuta nao inchar
+-- talkx_campaign_events ate a linha destravar; e continuam intactos talkx_blacklist,
 -- contadores e eventos.
 --
 -- Classe: FUNCAO (CREATE OR REPLACE apenas). Idempotente/replayavel.
@@ -417,10 +422,16 @@ BEGIN
   END IF;
 
   -- Evento com as contagens (campanha nula => evento de entidade, respeita o target_check).
-  INSERT INTO public.talkx_campaign_events
-    (campaign_id, event_type, message, actor_id, entity_type, entity_id)
-  VALUES (NULL, 'note', v_counts::text, NULL, 'talkx_lgpd_purge', v_entity_id);
-  GET DIAGNOSTICS v_events = ROW_COUNT;
+  -- Chamada que nao drenou E nao afetou nenhuma linha (unico candidato travado por lock
+  -- persistente, ou passo 5 sempre em conflito) nao grava evento: o dia segue aberto e o
+  -- proximo tick reexecuta os passos ate destravar — um evento por tentativa vazia
+  -- inchara a tabela sem utilidade. Com progresso ou fechando o dia, grava normalmente.
+  IF v_drained OR (v_msg + v_clicks + v_test + v_ai + v_media + v_log) > 0 THEN
+    INSERT INTO public.talkx_campaign_events
+      (campaign_id, event_type, message, actor_id, entity_type, entity_id)
+    VALUES (NULL, 'note', v_counts::text, NULL, 'talkx_lgpd_purge', v_entity_id);
+    GET DIAGNOSTICS v_events = ROW_COUNT;
+  END IF;
 
   RETURN v_counts || jsonb_build_object('events', v_events);
 END;
@@ -432,7 +443,7 @@ GRANT EXECUTE ON FUNCTION public.purge_talkx_expired_data(integer)
   TO service_role;
 
 COMMENT ON FUNCTION public.purge_talkx_expired_data(integer) IS
-  'Talk X (X032 + X033 + M-DB-01 + R3-DELTA-008): expurgo LGPD por prazo. Roda em chamadas do dia ate drenar; cada chamada tem teto de 10 lotes por passo para nao abrir transacao gigante. So grava talkx_settings.last_purge_at quando todos os passos esvaziam; se ainda houver acervo retorna drained=false para a proxima chamada do mesmo dia continuar. Primeira execucao apos deploy pode anular/apagar/enfileirar em massa todo o acervo vencido acumulado, em chamadas sucessivas. Anula personalized_message/media snapshots, limpa ua/ip_hash, apaga linhas vencidas de teste, de IA e do talkx_delivery_log; objetos de talkx-media orfaos vao para talkx_storage_purge_queue — nunca DELETE em storage.objects. Nunca apaga talkx_blacklist, contadores nem eventos.';
+  'Talk X (X032 + X033 + M-DB-01 + R3-DELTA-008): expurgo LGPD por prazo. Roda em chamadas do dia ate drenar; cada chamada tem teto de 10 lotes por passo para nao abrir transacao gigante. So grava talkx_settings.last_purge_at quando todos os passos esvaziam; se ainda houver acervo retorna drained=false para a proxima chamada do mesmo dia continuar. Chamada que nao drenou e nao afetou nenhuma linha (lock persistente ou conflito permanente) nao grava evento talkx_lgpd_purge — o dia segue aberto e o proximo tick reexecuta. Primeira execucao apos deploy pode anular/apagar/enfileirar em massa todo o acervo vencido acumulado, em chamadas sucessivas. Anula personalized_message/media snapshots, limpa ua/ip_hash, apaga linhas vencidas de teste, de IA e do talkx_delivery_log; objetos de talkx-media orfaos vao para talkx_storage_purge_queue — nunca DELETE em storage.objects. Nunca apaga talkx_blacklist, contadores nem eventos.';
 
 -- ============================================================================
 -- Fail-closed: a funcao tem de continuar existindo com o laco de drenagem.
