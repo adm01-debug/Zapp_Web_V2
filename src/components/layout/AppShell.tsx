@@ -1,6 +1,6 @@
- import { Suspense, useCallback, forwardRef, lazy, useState, useMemo } from 'react';
+ import { Suspense, useCallback, forwardRef, lazy, useMemo } from 'react';
  import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
- import { VoiceCopilotFAB } from '@/components/layout/VoiceCopilotFAB';
+ import { VoiceActionBridge } from '@/components/layout/VoiceActionBridge';
 import { ActiveCallBar } from '@/components/calls/ActiveCallBar';
 import { LayoutProvider } from '@/contexts/LayoutContext';
 import { useViewTransition } from '@/hooks/ui/useViewTransition';
@@ -16,11 +16,7 @@ import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { useSwipeNavigation } from '@/hooks/ui/useSwipeNavigation';
 import { useZenMode } from '@/hooks/ui/useZenMode';
 import { useNavShortcuts } from '@/hooks/ui/useNavShortcuts';
-import { toast } from 'sonner';
- import { useVoiceAgent } from '@/hooks/voice/useVoiceAgent';
 import { useAgentPresenceJoin } from '@/hooks/crm/useAgentPresence';
-
-const LazyVoiceOverlay = lazy(() => import('@/components/voice/VoiceSearchOverlayConnected'));
 
 interface AppShellProps {
   currentView: string;
@@ -62,13 +58,11 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   const { isZen, toggleZen } = useZenMode();
   const showFloatingZenToggle = currentView === 'team-chat';
   const { startTransition } = useViewTransition();
-  const [voiceOpen, setVoiceOpen] = useState(false);
 
   const handleViewChange = useCallback((viewId: string) => {
     startTransition(() => setCurrentView(viewId));
   }, [startTransition, setCurrentView]);
 
-   const { handleVoiceAction } = useVoiceAgent(handleViewChange);
   const layoutContextValue = useMemo(
     () => ({ hidePageBreadcrumbs: !isMobile && !isZen, isZen, toggleZen }),
     [isMobile, isZen, toggleZen]
@@ -162,19 +156,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
       </div>
       </LayoutProvider>
 
-       {!isMobile && <VoiceCopilotFAB onClick={() => setVoiceOpen(true)} />}
-
-      {/* Voice Overlay (lazy loaded) */}
-      {voiceOpen && (
-        <Suspense fallback={null}>
-          <LazyVoiceOverlay
-            isOpen={voiceOpen}
-            onClose={() => setVoiceOpen(false)}
-            onAction={handleVoiceAction}
-            onError={(msg) => toast.error(msg)}
-          />
-        </Suspense>
-      )}
+       {!isMobile && <VoiceActionBridge onNavigate={handleViewChange} />}
 
     </div>
   );

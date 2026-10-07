@@ -23,6 +23,20 @@ vi.mock('sonner', () => ({
   toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
 }));
 
+// #253: o painel passou a consultar a atividade do contato por conta própria
+// (useContactActivity → ContactService). Aqui a atividade não é o objeto do
+// teste; o serviço é mockado para o painel não falar com a rede.
+vi.mock('@/services/contact.service', () => ({
+  ContactService: {
+    fetchStats: vi.fn().mockResolvedValue({
+      totalMessages: 0, avgResponseTimeMinutes: 0, totalConversations: 0,
+      messagesChangePercent: null, conversationsChangePercent: null,
+      csatAverage: null, csatCount: 0,
+    }),
+    getLastMessageDates: vi.fn().mockResolvedValue({ data: [], error: null }),
+  },
+}));
+
 // Filhos pesados do painel (falam direto com o supabase / animações): fora do
 // escopo do CT-51/52, então viram stubs para isolar o botão em teste.
 vi.mock('../ContactActivityTimeline', () => ({ ContactActivityTimeline: () => <div data-testid="timeline" /> }));
@@ -128,8 +142,6 @@ function renderPanel(contact: TestContact = makeContact()) {
         onClose={vi.fn()}
         onOpenChat={vi.fn()}
         onEdit={vi.fn()}
-        messageCount={0}
-        lastMessageAt={null}
       />
     </QueryClientProvider>,
   );

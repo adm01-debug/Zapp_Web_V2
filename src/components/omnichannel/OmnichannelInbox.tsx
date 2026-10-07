@@ -16,6 +16,35 @@ import { EmailChatInbox } from '@/components/email/EmailChatInbox';
 
 type ChannelType = 'whatsapp' | 'instagram' | 'telegram' | 'messenger' | 'email' | 'webchat';
 
+/** Linha de `channel_connections_safe` (view sem credenciais). */
+interface ChannelConnectionRow {
+  id: string;
+  name?: string | null;
+  channel_type?: string | null;
+  status?: string | null;
+  is_active?: boolean | null;
+}
+
+type ConnectionState = 'connected' | 'pending' | 'disconnected';
+
+/**
+ * R2-API-063: cadastro habilitado (`is_active`) NÃO é conexão operacional. Só
+ * `status === 'connected'` significa canal conectado; `pending_setup` é cadastro
+ * sem credenciais e precisa aparecer como pendente, nunca como conectado.
+ */
+function getConnectionState(status: string | null | undefined): ConnectionState {
+  if (status === 'connected') return 'connected';
+  if (
+    status === 'pending_setup' ||
+    status === 'pending' ||
+    status === 'connecting' ||
+    status === 'qr_pending'
+  ) {
+    return 'pending';
+  }
+  return 'disconnected';
+}
+
 interface UnifiedMessage {
   id: string;
   contactName: string;
@@ -44,15 +73,23 @@ export function OmnichannelInbox() {
   const [activeChannel, setActiveChannel] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [channelStats, setChannelStats] = useState<Record<string, number>>({});
-  const [connections, setConnections] = useState<Record<string, unknown>[]>([]);
+  const [connections, setConnections] = useState<ChannelConnectionRow[]>([]);
+  const [connectionsError, setConnectionsError] = useState(false);
 
   const loadConnections = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('channel_connections_safe')
       .select('*')
       .eq('is_active', true);
 
-    if (data) setConnections(data);
+    if (error) {
+      setConnectionsError(true);
+      setConnections([]);
+      return;
+    }
+
+    setConnectionsError(false);
+    setConnections((data ?? []) as ChannelConnectionRow[]);
   };
 
   const loadUnifiedInbox = async () => {
@@ -120,6 +157,44 @@ export function OmnichannelInbox() {
     );
   };
 
+  // R2-API-063: conectado = só status operacional; o resto é cadastro não-operacional.
+  const connectedConnections = connections.filter((conn) => getConnectionState(conn.status) === 'connected');
+  const nonConnectedConnections = connections.filter((conn) => getConnectionState(conn.status) !== 'connected');
+  const pendingConnectionsCount = nonConnectedConnections.filter(
+    (conn) => getConnectionState(conn.status) === 'pending',
+  ).length;
+
+  const renderConnectionBadge = (conn: ChannelConnectionRow) => {
+    const state = getConnectionState(conn.status);
+    const channelType = (conn.channel_type as ChannelType) || 'webchat';
+    const config = CHANNEL_CONFIG[channelType];
+    const label = conn.name || config?.label || channelType;
+
+    if (state === 'connected') {
+      return (
+        <Badge key={conn.id} variant="outline" className="gap-1" data-connection-state="connected">
+          {config && <config.icon className="w-3 h-3" />}
+          {label}
+          <span className="w-1.5 h-1.5 rounded-full bg-success ml-1" />
+        </Badge>
+      );
+    }
+
+    return (
+      <Badge
+        key={conn.id}
+        variant={state === 'pending' ? 'warning' : 'secondary'}
+        className="gap-1"
+        data-connection-state={state}
+      >
+        {config && <config.icon className="w-3 h-3" />}
+        {label}
+        <span className={`w-1.5 h-1.5 rounded-full ml-1 ${state === 'pending' ? 'bg-warning' : 'bg-destructive'}`} />
+        <span className="text-3xs">{state === 'pending' ? 'Pendente' : 'Desconectado'}</span>
+      </Badge>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Main Tabs: Channels | Email Chat */}
@@ -149,7 +224,10 @@ export function OmnichannelInbox() {
                 <div>
                   <h2 className="text-lg md:text-xl font-bold">Inbox Omnichannel</h2>
                   <p className="text-xs md:text-sm text-muted-foreground">
-                    Todas as conversas em um só lugar • {connections.length} canais conectados
+                    Todas as conversas em um só lugar • {connectedConnections.length}{' '}
+                    {connectedConnections.length === 1 ? 'canal conectado' : 'canais conectados'}
+                    {pendingConnectionsCount > 0 &&
+                      ` • ${pendingConnectionsCount} ${pendingConnectionsCount === 1 ? 'pendente' : 'pendentes'}`}
                   </p>
                 </div>
               </div>
@@ -264,31 +342,37 @@ export function OmnichannelInbox() {
               </CardContent>
             </Card>
 
-            {/* Connected Channels */}
+            {/* Connected Channels — só conexão operacional (R2-API-063) */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Canais Conectados</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {connections.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nenhum canal adicional conectado</p>
+                  {connectionsError ? (
+                    <p className="text-sm text-destructive">Não foi possível carregar os canais conectados.</p>
+                  ) : connectedConnections.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Nenhum canal conectado</p>
                   ) : (
-                    connections.map((conn) => {
-                      const channelType = (conn.channel_type as ChannelType) || 'webchat';
-                      const config = CHANNEL_CONFIG[channelType];
-                      return (
-                        <Badge key={conn.id as string} variant="outline" className="gap-1">
-                          {config && <config.icon className="w-3 h-3" />}
-                          {(conn.name as string) || config?.label || channelType}
-                          <span className="w-1.5 h-1.5 rounded-full bg-success ml-1" />
-                        </Badge>
-                      );
-                    })
+                    connectedConnections.map(renderConnectionBadge)
                   )}
                 </div>
               </CardContent>
             </Card>
+
+            {/* Cadastro não-operacional: pendente/desconectado nunca conta como conectado */}
+            {!connectionsError && nonConnectedConnections.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Canais Não Conectados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {nonConnectedConnections.map(renderConnectionBadge)}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 

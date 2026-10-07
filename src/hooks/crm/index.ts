@@ -1,6 +1,6 @@
 // Barrel export for hooks/crm
 // Import from this file instead of individual modules:
-//   import { useAgents, useTags, useContactNotes } from '@/hooks/crm'
+//   import { useAgents, useContactNotes, useContactStats } from '@/hooks/crm'
 export * from './useAdvancedContactSearch';
 export * from './useAgentReassignment';
 export * from './useAgents';

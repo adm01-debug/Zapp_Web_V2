@@ -20,6 +20,19 @@ import { timingSafeEqual } from "../_shared/hmac-validation.ts";
  *   - ausente/vazio/incorreto → 401, ANTES de criar o cliente service-role e
  *     ANTES de confiar em ip_address/request_count/blocked ou escrever;
  *   - sem fallback permissivo.
+ *
+ * R2-API-057 (P2) — alerta/notificação não afirmam bloqueio que não persistiu.
+ *
+ * Defeito fechado: o `security_alert` (e a `notification` aos admins) era
+ * montado a partir do `blocked` RECEBIDO, antes de gravar em `blocked_ips`.
+ * Quando o upsert em `blocked_ips` falhava, o erro só era registrado em log e
+ * as duas mensagens ainda afirmavam que o IP tinha sido bloqueado — o IP
+ * seguia liberado.
+ *
+ * Regra agora: a gravação em `blocked_ips` roda antes de montar as mensagens e
+ * o único estado que autoriza o texto a dizer "bloqueado" é `blockedPersisted`
+ * (upsert sem erro). Falha de gravação → o alerta/notificação registram o
+ * evento sem afirmar o bloqueio e marcam `blocked_persisted: false` no metadata.
  */
 
 export interface RateLimitAlertDeps {
@@ -64,26 +77,12 @@ export async function handleRateLimitAlert(
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { ip_address, endpoint, request_count, blocked } = parsed.data;
-    log.info(`Rate limit alert: IP ${ip_address} hit ${endpoint} ${request_count} times. Blocked: ${blocked}`);
 
-    const { error: alertError } = await supabaseClient
-      .from("security_alerts")
-      .insert({
-        alert_type: blocked ? "rate_limit_blocked" : "rate_limit_warning",
-        severity: blocked ? "high" : "medium",
-        title: blocked
-          ? `IP ${ip_address} bloqueado por Rate Limit`
-          : `Alerta de Rate Limit para IP ${ip_address}`,
-        description: `O IP ${ip_address} fez ${request_count} requisições para ${endpoint}. ${blocked ? "O IP foi bloqueado." : "Limite próximo."}`,
-        ip_address,
-        metadata: { endpoint, request_count, blocked, timestamp: new Date().toISOString() },
-      });
-
-    if (alertError) {
-      log.error("Error creating alert", { error: alertError.message });
-      throw alertError;
-    }
-
+    // ── R2-API-057: só afirmamos bloqueio quando ele de fato persistiu ──
+    // A gravação em `blocked_ips` roda ANTES de montar o alerta e a notificação.
+    // `blockedPersisted` é o único estado que autoriza o texto a dizer "bloqueado";
+    // se o upsert falhar, o IP segue liberado e o texto não pode afirmar o contrário.
+    let blockedPersisted = false;
     if (blocked) {
       const blockDuration = 15;
       const expiresAt = new Date(Date.now() + blockDuration * 60 * 1000);
@@ -100,7 +99,37 @@ export async function handleRateLimitAlert(
           last_attempt_at: new Date().toISOString(),
         }, { onConflict: "ip_address" });
 
-      if (blockError) log.error("Error blocking IP", { error: blockError.message });
+      if (blockError) {
+        log.error("Error blocking IP", { error: blockError.message });
+      } else {
+        blockedPersisted = true;
+      }
+    }
+
+    log.info(`Rate limit alert: IP ${ip_address} hit ${endpoint} ${request_count} times. Blocked: ${blockedPersisted}`);
+
+    const outcome = blockedPersisted
+      ? "O IP foi bloqueado."
+      : blocked
+        ? "Falha ao gravar o bloqueio; o IP segue liberado."
+        : "Limite próximo.";
+
+    const { error: alertError } = await supabaseClient
+      .from("security_alerts")
+      .insert({
+        alert_type: blockedPersisted ? "rate_limit_blocked" : "rate_limit_warning",
+        severity: blockedPersisted ? "high" : "medium",
+        title: blockedPersisted
+          ? `IP ${ip_address} bloqueado por Rate Limit`
+          : `Alerta de Rate Limit para IP ${ip_address}`,
+        description: `O IP ${ip_address} fez ${request_count} requisições para ${endpoint}. ${outcome}`,
+        ip_address,
+        metadata: { endpoint, request_count, blocked, blocked_persisted: blockedPersisted, timestamp: new Date().toISOString() },
+      });
+
+    if (alertError) {
+      log.error("Error creating alert", { error: alertError.message });
+      throw alertError;
     }
 
     const { data: admins } = await supabaseClient
@@ -112,9 +141,9 @@ export async function handleRateLimitAlert(
       const notifications = admins.map((admin: { user_id: string }) => ({
         user_id: admin.user_id,
         type: "security",
-        title: blocked ? "IP Bloqueado" : "Alerta de Rate Limit",
+        title: blockedPersisted ? "IP Bloqueado" : "Alerta de Rate Limit",
         message: `IP ${ip_address} - ${request_count} requisições para ${endpoint}`,
-        metadata: { ip_address, endpoint, request_count, blocked },
+        metadata: { ip_address, endpoint, request_count, blocked, blocked_persisted: blockedPersisted },
       }));
 
       await supabaseClient.from("notifications").insert(notifications);

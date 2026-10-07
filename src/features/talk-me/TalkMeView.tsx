@@ -36,7 +36,12 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { getInitials } from '@/lib/avatar-colors';
-import { TalkMeConflictError, type TalkMeWaitingContact } from './types';
+import {
+  TalkMeConflictError,
+  TalkMeOfflineError,
+  TalkMeOutcomeUnknownError,
+  type TalkMeWaitingContact,
+} from './types';
 import type { TalkMeQueueController } from './useTalkMeQueue';
 import './talk-me-layout.css';
 
@@ -239,6 +244,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     itemsError,
     loadMoreError,
     reconciling,
+    isOffline,
     searchPending,
     totalCount,
     hasMore,
@@ -379,17 +385,35 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     }
   }, [activeItem, reduceMotion]);
 
-  const handleClaim = useCallback(async () => {
-    if (!activeItem) return;
-    const contactId = activeItem.contactId;
+  const [recoverableClaim, setRecoverableClaim] = useState<string | null>(null);
+
+  const nameOf = useCallback(
+    (contactId: string) => items.find((item) => item.contactId === contactId)?.name ?? 'Contato',
+    [items],
+  );
+
+  const acceptContact = useCallback(async (contactId: string) => {
     try {
       await claim(contactId);
-      toast.success(`Atendimento de ${activeItem.name} assumido.`);
+      setRecoverableClaim(null);
+      toast.success(`Atendimento de ${nameOf(contactId)} assumido.`);
       onOpenChange(false);
     } catch (error) {
       if (error instanceof TalkMeConflictError) {
+        setRecoverableClaim(null);
         toast.info('Este atendimento acabou de ser assumido ou deixou a fila.');
         await refresh();
+        return;
+      }
+      if (error instanceof TalkMeOfflineError) {
+        toast.info('Sem conexão. O aceite fica disponível quando a rede voltar.');
+        return;
+      }
+      if (error instanceof TalkMeOutcomeUnknownError) {
+        // O commit pode ter acontecido no servidor. Guardamos o contato para a
+        // confirmação explícita — a RPC idempotente decide se reabrimos ou não.
+        setRecoverableClaim(contactId);
+        toast.info('Não conseguimos confirmar o aceite. Use "Conferir aceite" para confirmar.');
         return;
       }
       toast.error('Não foi possível assumir o atendimento. Tente novamente.');
@@ -400,7 +424,12 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     } catch {
       toast.error('Atendimento assumido, mas a conversa não abriu. Atualize o Inbox.');
     }
-  }, [activeItem, claim, onAccepted, onOpenChange, refresh]);
+  }, [claim, nameOf, onAccepted, onOpenChange, refresh]);
+
+  const handleClaim = useCallback(() => {
+    if (!activeItem) return Promise.resolve();
+    return acceptContact(activeItem.contactId);
+  }, [acceptContact, activeItem]);
 
   const toggleFullMessage = useCallback(() => {
     if (!activeItem) return;
@@ -408,6 +437,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   }, [activeItem]);
 
   const isClaiming = !!activeItem && claimingContactId === activeItem.contactId;
+  const isRecovering = !!recoverableClaim && claimingContactId === recoverableClaim;
   const showInitialLoading = queuesLoading || searchPending || (itemsLoading && items.length === 0);
 
   useEffect(() => {
@@ -600,11 +630,35 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                     )}
                   </div>
 
-                  <div className="mx-auto mt-1.5 flex w-full max-w-[360px] justify-center px-3">
+                  <div className="mx-auto mt-1.5 flex w-full max-w-[360px] flex-col items-center gap-2 px-3">
+                    {recoverableClaim && (
+                      <div role="status" className="w-full rounded-2xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-center text-xs text-amber-100">
+                        <p>
+                          Não conseguimos confirmar se este atendimento foi assumido. Se o aceite já foi registrado, nada se perdeu — confira antes de pegar outro contato.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void acceptContact(recoverableClaim)}
+                          disabled={isRecovering || isOffline}
+                          className="mt-2 h-8 rounded-full border-white/20 bg-transparent text-white"
+                        >
+                          {isRecovering
+                            ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin motion-reduce:animate-none" />
+                            : <RefreshCw className="mr-1.5 h-4 w-4" />}
+                          Conferir aceite
+                        </Button>
+                      </div>
+                    )}
+                    {isOffline && (
+                      <p role="status" className="text-center text-xs font-medium text-amber-200">
+                        Você está offline. O aceite fica indisponível até a conexão voltar.
+                      </p>
+                    )}
                     <Button
                       size="lg"
                       onClick={() => void handleClaim()}
-                      disabled={!activeItem || !!claimingContactId || itemsLoading || searchPending || reconciling}
+                      disabled={!activeItem || !!claimingContactId || itemsLoading || searchPending || reconciling || isOffline}
                       className="h-10 w-full rounded-full px-5 text-xs font-bold shadow-lg shadow-primary/20"
                     >
                       {isClaiming ? <Loader2 className="mr-2 h-5 w-5 animate-spin motion-reduce:animate-none" /> : <MessageCircleMore className="mr-2 h-5 w-5" />}

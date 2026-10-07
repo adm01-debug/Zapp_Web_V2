@@ -78,11 +78,14 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="flex items-center gap-2 mb-2">
+      <div data-testid="contact-analytics-header" className="flex items-center gap-2 mb-1">
         <BarChart3 className="w-5 h-5 text-primary" />
         <h2 className="text-lg font-bold text-foreground">Analytics de Contatos</h2>
-        <Badge variant="secondary" className="text-xs">{contacts.length} total</Badge>
+        <Badge variant="secondary" className="text-xs">{contacts.length} nesta página</Badge>
       </div>
+      <p role="note" className="text-2xs text-muted-foreground mb-2">
+        Contagem e agregados (tipos, empresas, tags e novos) consideram somente os contatos da página atual.
+      </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Type Distribution */}

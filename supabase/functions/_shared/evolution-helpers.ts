@@ -71,6 +71,10 @@ export function normalizePhone(rawJid?: string): string | null {
 // em remoteJidAlt via .find() por ordem de posicao, nao por confiabilidade.
 const isLidLengthDigits = (jid: string) => /^\+?\d{14,15}$/.test(jid);
 
+// JID de chat de grupo do WhatsApp (ex.: 120363421234567890@g.us).
+export const isGroupJid = (jid?: string | null): boolean =>
+  typeof jid === 'string' && jid.includes('@g.us');
+
 export function resolveBestJid(...candidates: Array<string | null | undefined>): string | null {
   const valid = candidates
     .map((candidate) => candidate?.trim())
@@ -87,7 +91,46 @@ export function resolveBestJid(...candidates: Array<string | null | undefined>):
     ?? null;
 }
 
+// Campos que identificam o CHAT de um evento (não o autor). O `participant`/
+// `sender` de uma mensagem de grupo aponta o autor DENTRO do grupo — nunca o chat.
+const CHAT_JID_FIELDS = ['remoteJid', 'remoteJidAlt', 'chatId', 'chatJid'] as const;
+
+// JID do chat do evento: primeiro campo de chat não-vazio entre os sources, na
+// ordem em que foram passados (o key/entry do evento vem primeiro; os demais são
+// o mesmo evento em outro embrulho). Olha o source e o `key` aninhado.
+function firstChatJid(sources: unknown[]): string | null {
+  for (const source of sources) {
+    const jid = eventChatJid(source);
+    if (jid) return jid;
+  }
+  return null;
+}
+
+function eventChatJid(source: unknown): string | null {
+  if (typeof source === 'string') return source.trim() || null;
+  if (!isRecord(source)) return null;
+  const holders: Record<string, unknown>[] = [];
+  if (isRecord(source.key)) holders.push(source.key);
+  holders.push(source);
+  for (const holder of holders) {
+    for (const field of CHAT_JID_FIELDS) {
+      const value = holder[field];
+      if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+  }
+  return null;
+}
+
 export function resolveEventJid(...sources: unknown[]): string | null {
+  // Classifica o CHAT do evento ANTES de resolver a identidade do autor.
+  // Num evento de grupo, o chat é o `remoteJid` (@g.us) e o `participant`/`sender`
+  // do key é o autor DENTRO do grupo — não um interlocutor 1:1. Sem separar os dois,
+  // resolveBestJid() prefere o telefone do participante e a mensagem do grupo entra
+  // no inbox direto dele (R2-API-005). Só campos de CHAT do próprio evento são
+  // olhados; um grupo citado no contextInfo de uma conversa direta não reclassifica.
+  const chatJid = firstChatJid(sources);
+  if (isGroupJid(chatJid)) return chatJid;
+
   const candidates: string[] = [];
   const seen = new Set<string>();
   const directFields = [
@@ -175,6 +218,9 @@ export function shouldUpdateStatus(currentStatus: string | null, newStatus: stri
 // Invalidation: call invalidateConnectionCache(instance) whenever a
 // connection.update or disconnect event is received (done in
 // evolution-webhook-handlers.ts → handleConnectionUpdate).
+//
+// R2-API-004: só AUSÊNCIA CONFIRMADA entra no cache. Erro de consulta é erro
+// — não "instância sem conexão".
 // ─────────────────────────────────────────────────────────────────────────────
 const CONNECTION_CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
 
@@ -206,12 +252,24 @@ export async function getConnectionByInstance(
     return cached.data;
   }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('whatsapp_connections')
     .select('id')
     .eq('instance_id', instance)
     .maybeSingle();
 
+  // R2-API-004: erro de consulta NÃO é ausência de conexão. Antes o erro era
+  // descartado e o `data` nulo que o PostgREST devolve junto dele entrava no
+  // cache por 5 min — a instância passava a responder "sem conexão" e os
+  // handlers que só escopam por whatsapp_connection_id QUANDO a conexão existe
+  // (send/update/delete) mutavam sem filtro. Aqui: não cacheia e propaga; o
+  // chamador (webhook) devolve 500 e o provedor reprocessa — fail-closed, e a
+  // próxima tentativa volta a consultar o banco.
+  if (error) {
+    throw new Error(`Falha ao resolver conexão da instância ${instance}: ${error.message}`);
+  }
+
+  // Ausência confirmada (sem erro) é resultado estável: pode ficar no cache.
   connectionCache.set(instance, {
     data: data as { id: string } | null,
     expiresAt: now + CONNECTION_CACHE_TTL_MS,
@@ -353,14 +411,33 @@ export async function persistProfilePicture(supabase: EvolutionDbClient, phone: 
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleReactionEvent(supabase: EvolutionDbClient, reactionMessage: Record<string, unknown>, actorFromMe: boolean) {
+export async function handleReactionEvent(supabase: EvolutionDbClient, instance: string, reactionMessage: Record<string, unknown>, actorFromMe: boolean) {
   const emoji = (reactionMessage.text as string) || '';
   const reactKey = reactionMessage.key as Record<string, unknown> | undefined;
   if (!reactKey?.id) return;
 
+  // Escopado por whatsapp_connection_id: o mesmo external_id existe em outras
+  // conexoes — sem o filtro a reacao caia na mensagem de outra conexao (e o
+  // maybeSingle estourava com multiplas linhas). Sem conexao resolvida nao ha
+  // escopo seguro: retorna (fail-closed). O delete/upsert em message_reactions
+  // fica escopado pelo message_id resolvido (a tabela nao tem coluna de conexao).
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection?.id) {
+    console.warn(`Reaction ignored -- instance ${instance} has no connection`);
+    return;
+  }
+
   const targetExternalId = reactKey.id as string;
-  const { data: targetMessage } = await supabase
-    .from('messages').select('id, contact_id').eq('external_id', targetExternalId).maybeSingle();
+  // order+limit(1): mesmo escopo do indice unico ux_messages_dedup
+  // (connection + external_id + sender quando key.fromMe vem no evento);
+  // o limit evita o maybeSingle estourar com duplicata concorrente.
+  let targetQuery = supabase.from('messages').select('id, contact_id')
+    .eq('external_id', targetExternalId).eq('whatsapp_connection_id', connection.id);
+  if (typeof reactKey.fromMe === 'boolean') {
+    targetQuery = targetQuery.eq('sender', reactKey.fromMe ? 'agent' : 'contact');
+  }
+  const { data: targetMessage } = await targetQuery
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (!targetMessage) { console.log(`Reaction target not found: ${targetExternalId}`); return; }
   // Stub sem contact_id (linha criada por recibo adiantado): o CHECK
   // reaction_author_check exige autor — reagir aqui só geraria 23514.

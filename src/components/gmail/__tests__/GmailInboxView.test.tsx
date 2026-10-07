@@ -88,8 +88,11 @@ vi.mock('@/components/gmail/ThreadListItem', () => ({
 // Mutable config to control mock values across tests
 const config: {
   activeAccount: GmailAccount | null;
+  accountsLoading: boolean;
+  accountsError: Error | null;
   threads: EmailThread[];
   threadsLoading: boolean;
+  threadsError: Error | null;
   unreadCount: number;
   starredCount: number;
   syncInboxPending: boolean;
@@ -103,8 +106,11 @@ const config: {
     last_error: null,
     created_at: '2026-09-04T00:00:00Z',
   },
+  accountsLoading: false,
+  accountsError: null,
   threads: [],
   threadsLoading: false,
+  threadsError: null,
   unreadCount: 0,
   starredCount: 0,
   syncInboxPending: false,
@@ -112,13 +118,20 @@ const config: {
 
 const syncInboxMutate = vi.fn();
 const subscribeToThreads = vi.fn(() => vi.fn());
+const refetchAccounts = vi.fn();
+const refetchThreads = vi.fn();
 
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({
     accounts: [],
     activeAccount: config.activeAccount,
+    accountsLoading: config.accountsLoading,
+    accountsError: config.accountsError,
+    refetchAccounts,
     threads: config.threads,
     threadsLoading: config.threadsLoading,
+    threadsError: config.threadsError,
+    refetchThreads,
     labels: [],
     unreadCount: config.unreadCount,
     starredCount: config.starredCount,
@@ -160,12 +173,17 @@ describe('GmailInboxView', () => {
       last_error: null,
       created_at: '2026-09-04T00:00:00Z',
     };
+    config.accountsLoading = false;
+    config.accountsError = null;
     config.threads = [];
     config.threadsLoading = false;
+    config.threadsError = null;
     config.unreadCount = 0;
     config.starredCount = 0;
     config.syncInboxPending = false;
     syncInboxMutate.mockClear();
+    refetchAccounts.mockClear();
+    refetchThreads.mockClear();
     subscribeToThreads.mockClear().mockReturnValue(vi.fn());
   });
 
@@ -251,5 +269,42 @@ describe('GmailInboxView', () => {
   it('subscribeToThreads é chamado no mount', () => {
     render(<GmailInboxView />);
     expect(subscribeToThreads).toHaveBeenCalled();
+  });
+
+  // R2-API-059: falha de consulta não é ausência de dado (conta desconectada ou inbox vazio).
+  it('falha na consulta de threads: mostra erro com recuperação e não "Inbox vazio"', () => {
+    config.threads = [];
+    config.threadsError = new Error('permission denied for table email_threads');
+    render(<GmailInboxView />);
+    expect(screen.getByText('Não foi possível carregar os emails')).toBeInTheDocument();
+    expect(screen.queryByText('Inbox vazio')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+    expect(refetchThreads).toHaveBeenCalledTimes(1);
+  });
+
+  it('threads em cache com consulta falhada: mantém a lista e avisa que está desatualizada', () => {
+    config.threads = [makeThread({ subject: 'Thread em cache' })];
+    config.threadsError = new Error('timeout');
+    render(<GmailInboxView />);
+    expect(screen.getByText('Thread em cache')).toBeInTheDocument();
+    expect(screen.getByText(/podem estar desatualizados/)).toBeInTheDocument();
+  });
+
+  it('falha na consulta de contas: não afirma "Gmail não conectado"', () => {
+    config.activeAccount = null;
+    config.accountsError = new Error('JWT expired');
+    render(<GmailInboxView />);
+    expect(screen.getByText('Não foi possível verificar suas contas Gmail')).toBeInTheDocument();
+    expect(screen.queryByText('Gmail não conectado')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+    expect(refetchAccounts).toHaveBeenCalledTimes(1);
+  });
+
+  it('consulta de contas em andamento: não afirma "Gmail não conectado"', () => {
+    config.activeAccount = null;
+    config.accountsLoading = true;
+    render(<GmailInboxView />);
+    expect(screen.getByText('Verificando conta Gmail...')).toBeInTheDocument();
+    expect(screen.queryByText('Gmail não conectado')).not.toBeInTheDocument();
   });
 });

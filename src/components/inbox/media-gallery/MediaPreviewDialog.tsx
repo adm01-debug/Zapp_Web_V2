@@ -113,7 +113,7 @@ export function MediaPreviewDialog({
           {isLoading && <span className="text-sm text-muted-foreground">Carregando mídia…</span>}
           {error && <Button variant="outline" onClick={() => { void refresh(); }}>Tentar novamente</Button>}
           {displayItem.type === 'image' && resolvedUrl && <img src={resolvedUrl} alt={displayName} onError={() => { void refresh(); }} className="max-w-full max-h-[70vh] object-contain" />}
-          {displayItem.type === 'video' && resolvedUrl && <video ref={videoRef} src={resolvedUrl} controls controlsList="nodownload" onError={() => { void refresh(); }} onContextMenu={(e) => e.preventDefault()} className="max-w-full max-h-[70vh]" />}
+          {displayItem.type === 'video' && resolvedUrl && <video ref={videoRef} src={resolvedUrl} controls controlsList="nodownload" onError={() => { void refresh(); }} onContextMenu={(e) => e.preventDefault()} className="max-w-full max-h-[70vh]" crossOrigin="anonymous" playsInline />}
           {displayItem.type === 'audio' && resolvedUrl && <div className="p-8"><audio ref={audioRef} src={resolvedUrl} controls controlsList="nodownload" onError={() => { void refresh(); }} className="w-full" /></div>}
           {displayItem.type === 'document' && (
             isPdf ? (

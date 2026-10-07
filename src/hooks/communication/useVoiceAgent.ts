@@ -12,6 +12,29 @@ const SESSION_START_TIMEOUT_MS = 8000;
 const ERROR_RESET_DELAY_MS = 5000;
 const AUTO_RESTART_DELAY_MS = 800;
 
+/**
+ * Espera a fala terminar, mas encerra na hora quando o comando é substituído (abort).
+ * Sem isso a execução antiga poderia ficar presa no await da fala que já foi interrompida.
+ */
+function waitForPlaybackOrAbort(playback: Promise<void>, signal: AbortSignal): Promise<void> {
+  if (signal.aborted) return Promise.resolve();
+
+  return new Promise<void>((resolve, reject) => {
+    const onAbort = () => resolve();
+    signal.addEventListener('abort', onAbort, { once: true });
+    playback.then(
+      () => {
+        signal.removeEventListener('abort', onAbort);
+        resolve();
+      },
+      (error) => {
+        signal.removeEventListener('abort', onAbort);
+        reject(error);
+      }
+    );
+  });
+}
+
 export type { VoiceAgentAction, VoiceAgentPhase };
 
 export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentReturn {
@@ -30,6 +53,8 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
   const errorResetRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const mountedRef = useRef(true);
   const processingAbortRef = useRef<AbortController | null>(null);
+  // R2-INB-048: identidade da geração vigente do comando de voz (o mais recente vence).
+  const generationRef = useRef(0);
   const connectingRef = useRef(false);
   const scribeRef = useRef<{ disconnect: () => void; isConnected: boolean } | null>(null);
 
@@ -76,10 +101,22 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
   }, []);
 
   const handleTranscript = useCallback(async (text: string) => {
+    // R2-INB-048: cada comando recebe uma geração própria. Só a geração vigente aplica ação, registra
+    // log de sucesso ou muda de fase — um comando antigo que conclua DEPOIS do mais recente não pode
+    // reverter navegação/estado. A fala do comando substituído é interrompida e libera seus recursos.
+    const generation = generationRef.current + 1;
+    generationRef.current = generation;
+
     // Abort any in-flight processing
     processingAbortRef.current?.abort();
     const abortCtrl = new AbortController();
     processingAbortRef.current = abortCtrl;
+    const isCurrent = () =>
+      generationRef.current === generation && !abortCtrl.signal.aborted && mountedRef.current;
+
+    const previousTts = ttsRef.current;
+    ttsRef.current = null;
+    previousTts?.stop();
 
     const startTime = Date.now();
     safeSetPhase('processing');
@@ -87,12 +124,14 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
 
     try {
       const authToken = await resolveAuthToken();
+      if (!isCurrent()) return;
+
       const result = await withRetry(() => {
         if (abortCtrl.signal.aborted) throw new Error('Aborted');
         return processVoiceTranscript(text, supabaseUrl, authToken);
       });
 
-      if (abortCtrl.signal.aborted || !mountedRef.current) return;
+      if (!isCurrent()) return;
 
       setAgentResponse(result.response);
       safeSetPhase('speaking');
@@ -100,12 +139,12 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       try {
         const tts = playTtsAudio(result.response, supabaseUrl, authToken);
         ttsRef.current = tts;
-        await tts.promise;
+        await waitForPlaybackOrAbort(tts.promise, abortCtrl.signal);
       } catch (ttsErr) {
         log.warn('TTS playback failed, continuing silently', ttsErr);
       }
 
-      if (!mountedRef.current) return;
+      if (!isCurrent()) return;
 
       logVoiceCommand({
         transcript: text,
@@ -125,7 +164,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
         }
       }, AUTO_RESTART_DELAY_MS);
     } catch (err) {
-      if (abortCtrl.signal.aborted || !mountedRef.current) return;
+      if (!isCurrent()) return;
 
       const msg = friendlyErrorMessage(err);
       log.error('Voice processing error:', err);

@@ -4,7 +4,7 @@
 // `evolution-go-routes.ts` (rota GO final), tudo com fetch injetado — sem rede.
 
 import { assertEquals, assert, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { capabilities, send, presenceForKind, MessagingError } from "../messaging/evolution-go.ts";
+import { capabilities, send, presenceForKind, MessagingError, PRESENCE_TIMEOUT_MS } from "../messaging/evolution-go.ts";
 import type { SendDeps, SendItem } from "../messaging/evolution-go.ts";
 
 type Fetcher = (url: string, options: RequestInit) => Promise<Response>;
@@ -254,4 +254,128 @@ Deno.test("F41 send propaga erro do provedor (ok=false, status e corpo preservad
   assertEquals(result.status, 400);
   assertEquals(result.messageId, undefined);
   assert(result.error, "erro deve ser reportado quando a resposta não confirma o envio");
+});
+
+// ── R2-API-031 / item 205 (P2): a presença NÃO pode segurar o envio além do prazo do chamador ──
+//
+// Defeito: `send` aguardava `postPresence` antes do POST da mensagem, e a presença
+// não recebia `deps.signal` nem tinha prazo próprio. Com o endpoint de presença
+// pendurado, o envio ficava parado além do `AbortSignal` do chamador — e o item
+// terminava em outcome_unknown sem nunca ter chegado ao POST da mensagem.
+
+const textoItem: SendItem = { kind: "text", to: "5511999999999", instanceId: "inst-a", text: "oi" };
+
+/**
+ * Fetcher em que a presença fica PENDURADA e a mensagem responde OK. Como um
+ * `fetch` de verdade, a presença só encerra quando o `signal` repassado a ela
+ * dispara; SEM sinal (o caminho do defeito) ela nunca resolve — é o que prova
+ * que o sinal do chamador chega ao POST da presença.
+ */
+function hangingPresenceFetcher() {
+  const seen = { presence: 0, message: 0, presenceSignal: null as AbortSignal | null };
+  const fetcher: Fetcher = (url, options) => {
+    if (url.includes("/message/presence")) {
+      seen.presence += 1;
+      const s = options.signal ?? null;
+      seen.presenceSignal = s;
+      if (!s) return new Promise<Response>(() => {});
+      return new Promise<Response>((_, reject) => {
+        if (s.aborted) return reject(new Error("aborted"));
+        s.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+      });
+    }
+    seen.message += 1;
+    return Promise.resolve(okResponse());
+  };
+  return { seen, fetcher };
+}
+
+/** Espera a promessa no máximo `ms`; nunca rejeita (devolve o veredito), sem deixar timer solto. */
+async function settleOrPending<T>(
+  p: Promise<T>,
+  ms: number,
+): Promise<{ status: "ok"; value: T } | { status: "err"; error: unknown } | { status: "pending" }> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      p.then((value) => ({ status: "ok" as const, value }), (error) => ({ status: "err" as const, error })),
+      new Promise<{ status: "pending" }>((resolve) => {
+        timer = setTimeout(() => resolve({ status: "pending" }), ms);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+Deno.test("P2 #205 presença pendente: o sinal do chamador encerra a espera e a mensagem não sai depois do cancelamento", async () => {
+  const ctrl = new AbortController();
+  const { seen, fetcher } = hangingPresenceFetcher();
+  // Orçamento da presença folgado de propósito: quem cancela aqui é o SINAL do chamador.
+  const envio = send(textoItem, { ...depsFor(fetcher), signal: ctrl.signal, presenceTimeoutMs: 5_000 });
+  // O chamador estoura o prazo (o mesmo que o AbortController de 20 s das edges faz).
+  setTimeout(() => ctrl.abort(), 20);
+
+  const veredito = await settleOrPending(envio, 500);
+
+  assert(
+    veredito.status !== "pending",
+    "a presença pendente segurou o envio além do prazo do chamador — send() nunca terminou",
+  );
+  assertEquals(veredito.status, "err");
+  if (veredito.status === "err") {
+    assertEquals((veredito.error as Error).name, "AbortError", "o cancelamento tem de sair como AbortError");
+  }
+  assertEquals(seen.presence, 1);
+  assert(seen.presenceSignal !== null, "o sinal do chamador tem de ser repassado ao POST da presença");
+  assertEquals(seen.message, 0, "não pode haver POST de mensagem depois do cancelamento");
+});
+
+Deno.test("P2 #205 presença pendurada e sem prazo do chamador: o teto curto da etapa deixa o envio autorizado seguir", async () => {
+  const { seen, fetcher } = hangingPresenceFetcher();
+  // Endpoint que ignora o cancelamento: só o prazo CURTO da presença encerra a etapa.
+  const envio = send(textoItem, { ...depsFor(fetcher), presenceTimeoutMs: 25 });
+
+  const veredito = await settleOrPending(envio, 1_000);
+
+  assert(veredito.status !== "pending", "sem teto, a presença pendurada segurou o envio");
+  assertEquals(veredito.status, "ok");
+  if (veredito.status === "ok") {
+    assertEquals(veredito.value.ok, true, "falha/pendência da presença não pode impedir um envio autorizado");
+  }
+  assertEquals(seen.presence, 1);
+  assertEquals(seen.message, 1, "o POST da mensagem tem de acontecer depois do teto curto da presença");
+});
+
+Deno.test("P2 #205 sinal já abortado não inicia efeito nenhum (nem presença, nem mensagem)", async () => {
+  const ctrl = new AbortController();
+  ctrl.abort();
+  const { calls, fetcher } = recordingFetcher();
+
+  let lancado: unknown;
+  try {
+    await send(textoItem, { ...depsFor(fetcher), signal: ctrl.signal });
+  } catch (e) {
+    lancado = e;
+  }
+
+  assert(lancado instanceof Error, "sinal já abortado tem de encerrar o envio, não resolvê-lo");
+  assertEquals((lancado as Error).name, "AbortError");
+  assertEquals(calls.length, 0, "nada pode ser enviado com o sinal já abortado");
+});
+
+Deno.test("P2 #205 sem override, o teto PADRÃO da presença deixa o envio seguir (não pendura)", async () => {
+  const { seen, fetcher } = hangingPresenceFetcher();
+  // Sem `presenceTimeoutMs`: exercita o PRESENCE_TIMEOUT_MS de produção pelo caminho real.
+  const veredito = await settleOrPending(send(textoItem, depsFor(fetcher)), 4_000);
+
+  assert(
+    veredito.status !== "pending",
+    `com o teto padrão (${PRESENCE_TIMEOUT_MS} ms) a presença pendurada segurou o envio`,
+  );
+  assertEquals(veredito.status, "ok");
+  if (veredito.status === "ok") {
+    assertEquals(veredito.value.ok, true, "o envio autorizado tem de sair com o teto padrão da presença");
+  }
+  assertEquals(seen.message, 1, "o POST da mensagem tem de acontecer depois do teto padrão da presença");
 });

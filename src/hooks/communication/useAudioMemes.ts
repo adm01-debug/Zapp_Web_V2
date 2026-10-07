@@ -37,6 +37,34 @@ export function useAudioMemes(open: boolean) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  /**
+   * R2-INB-041 — cleanup do bind de volume (subscribers do store + ganho WebAudio) do
+   * player de prévia vigente. É guardado numa ref porque o `detach` devolvido por
+   * `attachMediaVolume` se perdia dentro do `onended`: pausar, trocar de prévia,
+   * fechar o picker ou desmontar descartava o Audio mantendo a inscrição no store.
+   */
+  const detachPreviewRef = useRef<(() => void) | null>(null);
+
+  /**
+   * R2-INB-041 — solta o player de prévia corrente de modo idempotente: pausa, tira o
+   * handler e executa o `detach` (que remove listeners, a inscrição no store e o ganho).
+   * Não mexe em estado React para poder rodar também no cleanup de unmount.
+   */
+  const releasePreview = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.onended = null;
+    }
+    audioRef.current = null;
+    detachPreviewRef.current?.();
+    detachPreviewRef.current = null;
+  }, []);
+
+  const stopPreview = useCallback(() => {
+    releasePreview();
+    setPlayingId(null);
+  }, [releasePreview]);
 
   const fetchMemes = useCallback(async () => {
     setLoading(true);
@@ -57,28 +85,29 @@ export function useAudioMemes(open: boolean) {
     if (open) queueMicrotask(() => { if (active) fetchMemes(); });
     return () => {
       active = false;
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      // R2-INB-041 — fechar o picker ou desmontar descarta o player: solta o bind dele.
+      releasePreview();
     };
-  }, [open, fetchMemes]);
+  }, [open, fetchMemes, releasePreview]);
 
   const handlePreview = useCallback((meme: AudioMemeItem) => {
     if (playingId === meme.id) {
-      audioRef.current?.pause();
-      setPlayingId(null);
+      stopPreview();
       return;
     }
-    if (audioRef.current) audioRef.current.pause();
+    // R2-INB-041 — a prévia anterior sai de cena: solta o bind antes de criar a nova.
+    releasePreview();
     const audio = new Audio(meme.audio_url);
     // E36 — prévia do áudio meme é mídia de conversa: respeita o volume global.
     const detachMediaVolume = attachMediaVolume(audio);
-    audio.onended = () => { detachMediaVolume(); setPlayingId(null); };
+    detachPreviewRef.current = detachMediaVolume;
+    // R2-INB-041 — ended, pause, troca e unmount passam pelo MESMO caminho de liberação
+    // (idempotente), em vez de o detach viver só dentro deste handler.
+    audio.onended = () => stopPreview();
     void audio.play();
     audioRef.current = audio;
     setPlayingId(meme.id);
-  }, [playingId]);
+  }, [playingId, releasePreview, stopPreview]);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -182,13 +211,14 @@ export function useAudioMemes(open: boolean) {
   }, [pendingUpload]);
 
   const handleSend = useCallback(async (meme: AudioMemeItem, onSend: (url: string) => void, onClose: () => void) => {
-    if (audioRef.current) { audioRef.current.pause(); setPlayingId(null); }
+    // R2-INB-041 — enviar descarta a prévia: solta o bind dela, não só a pausa.
+    stopPreview();
     onSend(meme.audio_url);
     onClose();
     // Atomic increment via SECURITY DEFINER RPC (avoids race conditions on use_count)
     await supabase.rpc('fn_send_audio_meme', { p_meme_id: meme.id });
     setMemes(prev => prev.map(m => m.id === meme.id ? { ...m, use_count: (m.use_count || 0) + 1 } : m));
-  }, []);
+  }, [stopPreview]);
 
   const toggleFavorite = useCallback(async (e: React.MouseEvent, meme: AudioMemeItem) => {
     e.stopPropagation();
@@ -219,9 +249,10 @@ export function useAudioMemes(open: boolean) {
   }, []);
 
   const cleanup = useCallback(() => {
-    if (audioRef.current) { audioRef.current.pause(); setPlayingId(null); }
+    // R2-INB-041 — descartar o estado do picker também solta o bind do player.
+    stopPreview();
     setPendingUpload(null);
-  }, []);
+  }, [stopPreview]);
 
   return {
     memes, loading, uploading, playingId, pendingUpload,

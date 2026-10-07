@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { SUPABASE_URL } from '@/config/supabase';
 import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { toast } from 'sonner';
@@ -33,8 +34,25 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
 
   const fetchStickers = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('stickers').select('*').order('use_count', { ascending: false }).limit(1000);
-    if (!error && data) setStickers(data as StickerItem[]);
+    // #344 (R2-INB-051): um `select('*').limit(1000)` fixava o catálogo nas 1000 figurinhas mais
+    // usadas — busca, favoritas e categorias filtravam dentro desse recorte, sem caminho até o
+    // resto. A leitura percorre TODAS as páginas (`fetchAllRows`), com o `id` como desempate
+    // estável da ordenação por uso; se a leitura falhar, o catálogo anterior fica de pé em vez de
+    // virar uma lista menor sem aviso.
+    const { rows, error, incomplete } = await fetchAllRows<StickerItem>(async (from, to) => {
+      const { data, error: pageError } = await supabase
+        .from('stickers')
+        .select('*')
+        .order('use_count', { ascending: false })
+        .order('id')
+        .range(from, to);
+      return { data: (data as StickerItem[] | null) ?? null, error: pageError ?? null };
+    });
+    if (error) log.error('[StickerPicker] Falha ao carregar figurinhas:', error);
+    else {
+      if (incomplete) log.warn('[StickerPicker] Leitura parou no teto de páginas: catálogo carregado é uma amostra');
+      setStickers(rows);
+    }
     setLoading(false);
   }, []);
 

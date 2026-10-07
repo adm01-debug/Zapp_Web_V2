@@ -12,6 +12,7 @@ import { deveTocar, proximoToque, type EstadoDeToque } from '@/lib/calls/toqueDa
 import { useTerminoRemoto } from '@/hooks/calls/useTerminoRemoto';
 import { useAcoesDoAlerta } from '@/hooks/calls/useAcoesDoAlerta';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { useCallSession } from '@/providers/CallSessionProvider';
 import { cn } from '@/lib/utils';
 
 import { getLogger } from '@/lib/logger';
@@ -29,6 +30,17 @@ const log = getLogger('IncomingCallAlert');
  * `src/components/inbox/__tests__/MediaVolume.test.tsx` (E38–E41).
  */
 
+/**
+ * R2-CALL-006 (#282) — identidade do alerta em cena.
+ *
+ * O `callId` (a linha de `calls` do provedor) é a chave FORTE: é a mesma que o
+ * término remoto observa (`useTerminoRemoto`). Sem ele, o id da própria
+ * notificação ainda distingue um alerta do outro.
+ */
+function identidadeDaChamada(chamada: IncomingCall): string {
+  return chamada.callId || chamada.id;
+}
+
 export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   function IncomingCallAlert(_props, ref) {
   const { incomingCall, dismissCall } = useIncomingCallListener();
@@ -39,10 +51,39 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   // máquina da sessão. O componente não conhece nem um nem outro.
   const { atender, ignorar } = useAcoesDoAlerta();
   const { voip, whatsapp, rotuloLinhaWhatsApp } = useCallChannels();
+  // O provedor da sessão é a fonte única de "esta chamada acabou" (T28/R2-CALL-006).
+  const { session } = useCallSession();
   // T28: quando o outro lado desliga, a linha em `calls` encerra a sessao e o alerta
   // sai de cena sozinho (o listener para de entrega-la).
   useTerminoRemoto(incomingCall?.callId);
-  const [showDialog, setShowDialog] = useState(false);
+  /**
+   * R2-CALL-006 (#282): o estado "atendido" pertence à CHAMADA, não à tela. Um
+   * booleano solto sobrevivia ao fim da notificação e a ligação seguinte abria
+   * direto no diálogo da anterior — com `initialStatus="answered"`, sem nunca ter
+   * tocado. Guardar a identidade ATENDIDA faz o diálogo valer só enquanto ela
+   * ainda é a notificação em cena: outra ligação (ou nenhuma) cai no alerta.
+   */
+  const [chamadaAtendida, setChamadaAtendida] = useState<string | null>(null);
+  const identidadeEmCena = incomingCall ? identidadeDaChamada(incomingCall) : null;
+  const showDialog = identidadeEmCena !== null && chamadaAtendida === identidadeEmCena;
+
+  /**
+   * R2-CALL-006 (#282): quem sabe que a chamada acabou é o PROVEDOR. Sem
+   * acompanhar o estado terminal dele, a notificação ficava na tela (e o toque,
+   * alto) por uma ligação já encerrada — o listener só solta a notificação no
+   * dismiss do agente. Aqui: encerrada a MESMA chamada SEM ter sido atendida (o
+   * outro lado desligou/cancelou enquanto tocava), a notificação sai de cena. A
+   * chamada ATENDIDA continua com o diálogo, que mostra o próprio desfecho.
+   */
+  const encerradaSemAtender =
+    incomingCall?.callId != null
+    && session.sessionId === incomingCall.callId
+    && session.status === 'ended'
+    && session.answeredAt === null;
+
+  useEffect(() => {
+    if (encerradaSemAtender) dismissCall();
+  }, [encerradaSemAtender, dismissCall]);
   // O canal vem do próprio chamado: quem chega com `whatsapp_connection_id` é WhatsApp;
   // sem ele, a linha é a do VoIP.
   const canal = incomingCall?.whatsapp_connection_id ? 'whatsapp' : 'voip';
@@ -115,8 +156,9 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
     // O estado "atendido" só abre com o desfecho VÁLIDO da operação do canal
     // alvo (o id da notificação, não a sessão corrente): falhou a gravação local,
     // o alerta não finge que a chamada foi atendida.
+    const identidadeDaNotificacao = identidadeDaChamada(notificacao);
     void atender(notificacao).then((resultado) => {
-      if (resultado.ok) setShowDialog(true);
+      if (resultado.ok) setChamadaAtendida(identidadeDaNotificacao);
     });
   };
 
@@ -128,7 +170,7 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   };
 
   const handleDialogEnd = () => {
-    setShowDialog(false);
+    setChamadaAtendida(null);
     dismissCall();
   };
 

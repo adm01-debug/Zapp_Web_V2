@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, gmailFetch, reconcileEmailThreads, syncLabels, syncMessageIds, syncMessages } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, gmailFetch, reconcileEmailThreads, runGmailFullSync, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_RESOURCE_ID_RE = /^[0-9A-Za-z_-]{1,200}$/;
 
@@ -81,17 +81,11 @@ serve(async (req) => {
       case "sync-inbox": {
         await supabase.from("gmail_accounts").update({ sync_status: "syncing" }).eq("id", account.id);
         try {
-          const result = await syncMessages(supabase, account.id, accessToken, log, body.query || "in:inbox", body.maxResults || 50);
+          const result = await runGmailFullSync(supabase, account.id, accessToken, log, body.query || "in:inbox", body.maxResults || 50);
           if (result.failed > 0) {
-            await supabase.from("gmail_accounts").update({ sync_status: "error", last_sync_at: new Date().toISOString(), last_error: `${result.failed} mensagens falharam na sincronização` }).eq("id", account.id);
             log.done(207, { synced: result.synced, failed: result.failed });
             return jsonResponse({ success: false, ...result }, 207, req);
           }
-          const profileData = await gmailFetch(accessToken, "/profile");
-          await supabase.from("gmail_accounts").update({
-            sync_status: "synced", history_id: profileData.historyId,
-            last_sync_at: new Date().toISOString(), last_error: null,
-          }).eq("id", account.id);
           log.done(200, { synced: result.synced });
           return jsonResponse({ success: true, ...result }, 200, req);
         } catch (err: unknown) {

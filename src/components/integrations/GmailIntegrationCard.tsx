@@ -8,7 +8,16 @@ import { ptBR } from 'date-fns/locale';
 import { Loader2, RefreshCw } from 'lucide-react';
 
 export function GmailIntegrationCard() {
-  const { activeAccount, disconnectGmail, syncInbox, connectGmail } = useGmail();
+  const { activeAccount, accountsLoading, accountsError, refetchAccounts, disconnectGmail, syncInbox, connectGmail } = useGmail();
+
+  // R2-API-059: a lista de contas vazia so significa "desconectado" quando a
+  // consulta terminou bem. Enquanto carrega (ou quando falha) o cartao nao pode
+  // afirmar desconexao — o operador reconectaria uma conta que continua viva.
+  const checking = Boolean(accountsLoading) && !activeAccount;
+  const unavailable = Boolean(accountsError) && !activeAccount;
+  const stateLabel = activeAccount ? 'Conectado' : checking ? 'Verificando' : unavailable ? 'Indisponível' : 'Desconectado';
+  const description = activeAccount?.email_address
+    || (checking ? 'Verificando conta...' : unavailable ? 'Não foi possível verificar a conexão' : 'Não conectado');
 
   return (
     <Card className="border-secondary/30">
@@ -21,12 +30,12 @@ export function GmailIntegrationCard() {
             <div>
               <CardTitle className="text-base">Gmail</CardTitle>
               <CardDescription className="text-xs">
-                {activeAccount?.email_address || 'Não conectado'}
+                {description}
               </CardDescription>
             </div>
           </div>
-          <Badge variant={activeAccount ? 'default' : 'secondary'}>
-            {activeAccount ? 'Conectado' : 'Desconectado'}
+          <Badge variant={activeAccount ? 'default' : unavailable ? 'destructive' : 'secondary'}>
+            {stateLabel}
           </Badge>
         </div>
       </CardHeader>
@@ -42,6 +51,11 @@ export function GmailIntegrationCard() {
           )}
         </CardContent>
       )}
+      {!activeAccount && unavailable && (
+        <CardContent className="pb-2 text-xs text-destructive">
+          A consulta das contas falhou. A conta pode continuar conectada — tente verificar de novo antes de reconectar.
+        </CardContent>
+      )}
       <CardFooter className="gap-2 pt-0">
         {activeAccount ? (
           <>
@@ -54,6 +68,16 @@ export function GmailIntegrationCard() {
               Desconectar
             </Button>
           </>
+        ) : checking ? (
+          <Button size="sm" variant="outline" disabled>
+            <Loader2 className="w-3 h-3 animate-spin mr-1" />
+            Verificando
+          </Button>
+        ) : unavailable ? (
+          <Button size="sm" variant="outline" onClick={() => { void refetchAccounts?.(); }}>
+            <RefreshCw className="w-3 h-3 mr-1" />
+            Tentar de novo
+          </Button>
         ) : (
           <Button size="sm" onClick={() => connectGmail.mutate()} disabled={connectGmail.isPending}>
             {connectGmail.isPending && <Loader2 className="w-3 h-3 animate-spin mr-1" />}

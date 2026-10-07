@@ -146,6 +146,10 @@ export function useTalkX() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // R2-MOD-026: acumula os UPDATEs pendentes POR campanha. Um único timer
+  // global (com clearTimeout a cada evento) descartava a atualização da
+  // campanha anterior quando outra chegava dentro dos 500 ms.
+  const pendingUpdatesRef = useRef<Map<string, TalkXCampaign>>(new Map());
 
   const campaignsQuery = useQuery({
     queryKey: ['talkx-campaigns'],
@@ -169,13 +173,23 @@ export function useTalkX() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'talkx_campaigns' },
         (payload) => {
-          // Debounce 500ms para rajadas durante envio ativo
+          // Debounce 500ms para rajadas durante envio ativo. O acumulador é por
+          // id: um UPDATE de outra campanha não pode mais descartar o pendente.
+          const updated = payload.new as TalkXCampaign;
+          pendingUpdatesRef.current.set(updated.id, updated);
           if (debounceRef.current) clearTimeout(debounceRef.current);
           debounceRef.current = setTimeout(() => {
-            const updated = payload.new as TalkXCampaign;
+            debounceRef.current = null;
+            const pending = pendingUpdatesRef.current;
+            if (pending.size === 0) return;
+            // Novo mapa: eventos que chegarem durante o flush formam o próximo lote.
+            pendingUpdatesRef.current = new Map();
             queryClient.setQueryData<TalkXCampaign[]>(['talkx-campaigns'], (old) => {
               if (!old) return old;
-              return old.map((c) => c.id === updated.id ? { ...c, ...updated } : c);
+              return old.map((c) => {
+                const update = pending.get(c.id);
+                return update ? { ...c, ...update } : c;
+              });
             });
           }, 500);
         }
@@ -193,6 +207,8 @@ export function useTalkX() {
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+      pendingUpdatesRef.current = new Map();
       supabase.removeChannel(channel);
     };
   }, [queryClient]);

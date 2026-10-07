@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
@@ -7,6 +7,57 @@ import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
 
 const log = getLogger('TeamChatNotifications');
+
+/**
+ * TC-007 — estado global (por aba) da conversa de Team Chat em foco.
+ *
+ * O listener de notificações tem de viver no nível do app e não dentro de `TeamChatView`:
+ * do contrário, quem está em outra tela (ex.: Contatos) não recebe alerta nenhum. Como o
+ * listener é ÚNICO, a conversa em foco chega por este store — a view publica o id enquanto
+ * está montada e o limpa ao sair (o alerta volta a tocar).
+ *
+ * `getSnapshot` devolve um primitivo estável, requisito do `useSyncExternalStore`.
+ */
+type ActiveConversationListener = () => void;
+
+let activeConversationId: string | null = null;
+const activeConversationListeners = new Set<ActiveConversationListener>();
+
+export function getActiveTeamChatConversationId(): string | null {
+  return activeConversationId;
+}
+
+export function subscribeActiveTeamChatConversation(listener: ActiveConversationListener): () => void {
+  activeConversationListeners.add(listener);
+  return () => {
+    activeConversationListeners.delete(listener);
+  };
+}
+
+export function setActiveTeamChatConversation(conversationId: string | null): void {
+  if (activeConversationId === conversationId) return;
+  activeConversationId = conversationId;
+  activeConversationListeners.forEach((listener) => listener());
+}
+
+/** Publica (no mount/troca) e limpa (no unmount) a conversa que a view está exibindo. */
+export function useActiveTeamChatConversation(conversationId: string | null): void {
+  useEffect(() => {
+    setActiveTeamChatConversation(conversationId);
+    return () => {
+      setActiveTeamChatConversation(null);
+    };
+  }, [conversationId]);
+}
+
+/** Lê a conversa em foco. Consumido só pelo listener global. */
+export function useActiveTeamChatConversationId(): string | null {
+  return useSyncExternalStore(
+    subscribeActiveTeamChatConversation,
+    getActiveTeamChatConversationId,
+    () => null,
+  );
+}
 
 let audioCtx: AudioContext | null = null;
 const getCtx = () => {

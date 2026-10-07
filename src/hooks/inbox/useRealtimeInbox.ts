@@ -60,7 +60,12 @@ export function useRealtimeInbox() {
     enabled: !USE_EXTERNAL_DB && Boolean(selectedContactId),
   });
 
+  // R2-INB-024: `useMessages` termina o `loading` mesmo quando a busca falha e publica o
+  // motivo em `error`. Sem repassar esse `error`, a ponte só sabia dizer "não está carregando
+  // e não há mensagens" — o consumidor exibia conversa vazia para falha de transporte/permissão,
+  // indistinguível de um contato sem histórico e sem retry daquela consulta.
   const selectedMessagesLoading = USE_EXTERNAL_DB ? externalMsgs.loading : localMsgs.loading;
+  const selectedMessagesError = USE_EXTERNAL_DB ? externalMsgs.error : localMsgs.error;
   const refetchSelectedMessages = USE_EXTERNAL_DB ? externalMsgs.refetch : localMsgs.refetch;
 
   // Listen for open-contact-chat events
@@ -191,6 +196,18 @@ export function useRealtimeInbox() {
     [resolvedSelectedConversation]
   );
 
+  // R2-INB-015: recorte de mensagens que o cache guardou para a conversa ativa.
+  // Só é oferecido quando a lista ao vivo está vazia (offline) e o cache é a
+  // fonte em uso, e é identificado ao consumidor por `selectedMessagesFromCache`.
+  const cachedSelectedMessages = useMemo(
+    () => (usingCache ? (selectedConversation?.messages ?? []) : []),
+    [usingCache, selectedConversation]
+  );
+  const selectedMessagesFromCache = !USE_EXTERNAL_DB
+    && usingCache
+    && localMsgs.messages.length === 0
+    && cachedSelectedMessages.length > 0;
+
   const legacyMessages: Message[] = useMemo(() => {
     if (!selectedContactId) {
       return (resolvedSelectedConversation?.messages || [])
@@ -199,7 +216,17 @@ export function useRealtimeInbox() {
 
     // The local hook already returns the legacy UI model. Only Evolution and
     // conversation snapshots still expose raw database rows that need adapting.
-    if (!USE_EXTERNAL_DB) return localMsgs.messages;
+    if (!USE_EXTERNAL_DB) {
+      // R2-INB-015: offline o fetch do contato não completa e `localMsgs` fica
+      // vazio; o recorte guardado no cache da conversa selecionada entra no
+      // lugar do vazio. Nunca compete com mensagem ao vivo — assim que houver
+      // qualquer mensagem carregada, ela reassume (recuperação explícita).
+      if (selectedMessagesFromCache) {
+        return cachedSelectedMessages
+          .map((message) => mapRealtimeMessageToMessage(message, selectedContactId));
+      }
+      return localMsgs.messages;
+    }
     return externalMsgs.messages
       .map((message) => mapRealtimeMessageToMessage(message, selectedContactId));
   }, [
@@ -207,6 +234,8 @@ export function useRealtimeInbox() {
     resolvedSelectedConversation,
     localMsgs.messages,
     externalMsgs.messages,
+    selectedMessagesFromCache,
+    cachedSelectedMessages,
   ]);
 
    return {
@@ -215,8 +244,11 @@ export function useRealtimeInbox() {
      profile,
      toggleSound,
      conversations, cachedConversations, usingCache,
+     selectedMessagesFromCache,
      loading, error,
      selectedMessagesLoading,
+     selectedMessagesError,
+     refetchSelectedMessages,
      hasOlderMessages: !USE_EXTERNAL_DB && localMsgs.hasOlder,
      loadingOlderMessages: !USE_EXTERNAL_DB && localMsgs.loadingOlder,
      loadOlderMessages: !USE_EXTERNAL_DB ? localMsgs.loadOlderMessages : async () => {},

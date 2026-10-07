@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -196,4 +196,190 @@ test("main() falha (2) quando o baseline informado nao existe", () => {
     "--baseline", "/nonexistent/baseline-that-does-not-exist.json",
   ]);
   assert.equal(exitCode, 2);
+});
+
+// ---------------------------------------------------------------------------
+// Falso zero: o tsc sai com exit 1/2 mas a saida nao tem nenhum cabecalho
+// "arquivo(linha,coluna): error TS####" reconhecido pelo parser. Sem guarda o
+// ratchet entrega zero ocorrencias, anuncia sucesso e (com --update-baseline)
+// grava um baseline vazio. Estes testes provam a falha explicita.
+// ---------------------------------------------------------------------------
+
+// Cria um node_modules/typescript/bin/tsc de mentira que apenas escreve o que
+// pedimos e sai com o exit code pedido. runTsc o executa via node, exercitando
+// o caminho real (exit code -> parser -> main) sem depender do compilador.
+function fakeTsc(root, { status, stdout = "", stderr = "" }) {
+  const entryDir = path.join(root, "node_modules", "typescript", "bin");
+  mkdirSync(entryDir, { recursive: true });
+  const entry = path.join(entryDir, "tsc");
+  writeFileSync(
+    entry,
+    [
+      `process.stdout.write(${JSON.stringify(stdout)});`,
+      `process.stderr.write(${JSON.stringify(stderr)});`,
+      `process.exit(${status});`,
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  return entry;
+}
+
+function writeBaseline(filePath, issues) {
+  writeFileSync(
+    filePath,
+    `${JSON.stringify({ schemaVersion: 2, command: "tsc -b --force", issues }, null, 2)}\n`,
+    "utf8",
+  );
+}
+
+// Captura console.log/error para provar que o ratchet nao anuncia falso zero.
+function captureConsole(run) {
+  const logs = [];
+  const errors = [];
+  const originalLog = console.log;
+  const originalError = console.error;
+  console.log = (...args) => logs.push(args.join(" "));
+  console.error = (...args) => errors.push(args.join(" "));
+  try {
+    return { exitCode: run(), logs, errors };
+  } finally {
+    console.log = originalLog;
+    console.error = originalError;
+  }
+}
+
+test("main() falha (2) e nao sobrescreve o baseline quando o tsc falha sem diagnostico parseavel", () => {
+  const { root, cleanup } = fixture();
+  try {
+    // Saida tipica de falha do compilador (config/binario), SEM o cabecalho
+    // que o parser reconhece.
+    fakeTsc(root, {
+      status: 2,
+      stderr: "error TS5083: Cannot read file '/repo/tsconfig.app.json'.\n",
+    });
+    const baselinePath = path.join(root, "typecheck-baseline.json");
+    const originalBaseline = `${JSON.stringify(
+      {
+        schemaVersion: 2,
+        command: "tsc -b --force",
+        issues: [
+          {
+            file: "src/lib/audit.ts",
+            line: 31,
+            column: 7,
+            severity: "error",
+            code: "TS2322",
+            message: "erro legado que precisa sobreviver",
+            contextHash: null,
+          },
+        ],
+      },
+      null,
+      2,
+    )}\n`;
+    writeFileSync(baselinePath, originalBaseline, "utf8");
+
+    const { exitCode, logs, errors } = captureConsole(() =>
+      main(["--update-baseline", "--baseline", baselinePath, "--root", root]),
+    );
+
+    assert.equal(exitCode, 2, "sem diagnostico parseavel o ratchet deve falhar explicitamente");
+    assert.equal(
+      readFileSync(baselinePath, "utf8"),
+      originalBaseline,
+      "o baseline nao pode ser sobrescrito quando o compilador falha sem diagnostico",
+    );
+    assert.ok(
+      !logs.some((line) => /0 ocorrencias|OK: nenhum novo erro/u.test(line)),
+      "nao pode anunciar zero ocorrencias/erros",
+    );
+    assert.ok(
+      errors.some((line) => /ERRO no typecheck ratchet/u.test(line)),
+      "deve reportar o erro do ratchet",
+    );
+  } finally {
+    cleanup();
+  }
+});
+
+test("main() nao anuncia zero erros quando o tsc falha sem diagnostico parseavel (modo comparacao)", () => {
+  const { root, cleanup } = fixture();
+  try {
+    fakeTsc(root, { status: 1, stdout: "Failed to compile.\n" });
+    const baselinePath = path.join(root, "typecheck-baseline.json");
+    writeBaseline(baselinePath, []);
+
+    const { exitCode, logs, errors } = captureConsole(() =>
+      main(["--baseline", baselinePath, "--root", root]),
+    );
+
+    assert.equal(exitCode, 2, "exit 1 sem diagnostico parseavel deve falhar explicitamente");
+    assert.ok(
+      !logs.some((line) => /OK: nenhum novo erro/u.test(line)),
+      "nao pode anunciar sucesso sem nenhum diagnostico parseavel",
+    );
+    assert.ok(errors.some((line) => /ERRO no typecheck ratchet/u.test(line)));
+  } finally {
+    cleanup();
+  }
+});
+
+test("main() mantem exit 0 com saida vazia do compilador como typecheck limpo", () => {
+  const { root, cleanup } = fixture();
+  try {
+    fakeTsc(root, { status: 0 });
+    const baselinePath = path.join(root, "typecheck-baseline.json");
+    writeBaseline(baselinePath, []);
+
+    const { exitCode, logs } = captureConsole(() =>
+      main(["--baseline", baselinePath, "--root", root]),
+    );
+
+    assert.equal(exitCode, 0);
+    assert.ok(logs.some((line) => /OK: nenhum novo erro/u.test(line)));
+  } finally {
+    cleanup();
+  }
+});
+
+test("main() processa exit 2 com diagnostico parseavel (entrada valida do ratchet)", () => {
+  const { root, cleanup } = fixture();
+  try {
+    const output =
+      "src/lib/audit.ts(31,7): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.\n";
+    fakeTsc(root, { status: 2, stdout: output });
+    const baselinePath = path.join(root, "typecheck-baseline.json");
+    writeFileSync(baselinePath, `${JSON.stringify(createBaseline(output, root), null, 2)}\n`, "utf8");
+
+    const { exitCode, logs } = captureConsole(() =>
+      main(["--baseline", baselinePath, "--root", root]),
+    );
+
+    assert.equal(exitCode, 0);
+    assert.ok(logs.some((line) => /OK: nenhum novo erro/u.test(line)));
+  } finally {
+    cleanup();
+  }
+});
+
+test("main() acusa erro novo quando o tsc sai com exit 1 e ha diagnostico parseavel", () => {
+  const { root, cleanup } = fixture();
+  try {
+    fakeTsc(root, {
+      status: 1,
+      stdout: "src/novo.ts(1,1): error TS9999: erro novo que nao existia antes.\n",
+    });
+    const baselinePath = path.join(root, "typecheck-baseline.json");
+    writeBaseline(baselinePath, []);
+
+    const { exitCode, errors } = captureConsole(() =>
+      main(["--baseline", baselinePath, "--root", root]),
+    );
+
+    assert.equal(exitCode, 1);
+    assert.ok(errors.some((line) => /TS9999/u.test(line)));
+  } finally {
+    cleanup();
+  }
 });

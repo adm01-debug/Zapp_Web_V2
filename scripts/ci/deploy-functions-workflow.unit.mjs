@@ -82,6 +82,55 @@ test('timeout do job cobre a espera maxima do gate mais um deploy completo', asy
 });
 
 
+test('R2-INF-002: o artifact so sobe se a sanitizacao do log terminar com sucesso', () => {
+  // Re-pino R2-INF-002: redator e upload usavam always() de forma independente —
+  // se a redacao falhasse, o diretorio de evidencia subia para o storage do GitHub
+  // com o log bruto (que carrega access_token). Este teste prende o contrato do
+  // workflow: a versao publicavel sai de um diretorio SEPARADO e o upload exige o
+  // sucesso do passo do redator.
+  const inicioRedacao = workflow.indexOf('- name: Limpar segredos do log de deploy');
+  const inicioUpload = workflow.indexOf('- name: Arquivar manifesto, atestado e smokes');
+  assert.ok(inicioRedacao > 0 && inicioUpload > inicioRedacao, 'a sanitizacao tem de vir antes do upload');
+  const redacao = workflow.slice(inicioRedacao, inicioUpload);
+  const upload = workflow.slice(inicioUpload);
+
+  // (1) o redator tem id proprio e o upload exige que o passo dele tenha saido com sucesso
+  assert.match(redacao, /^        id: redigir_log$/m, 'o passo do redator precisa de id proprio');
+  assert.match(
+    upload,
+    /steps\.redigir_log\.outcome == 'success'/,
+    'o upload tem de exigir outcome success do redator (falha do redator = nenhum artifact)',
+  );
+
+  // (2) a versao publicada sai de um diretorio SEPARADO — o diretorio com o log bruto
+  // nunca pode ser o alvo do upload
+  assert.match(upload, /path: \$\{\{ runner\.temp \}\}\/edge-deployment-evidence-public\//);
+  assert.doesNotMatch(
+    upload,
+    /path: \$\{\{ runner\.temp \}\}\/edge-deployment-evidence\//,
+    'o diretorio com o log bruto nao pode ser publicado',
+  );
+
+  // (3) a logica de shell vive num script do repositorio, nao inline no passo: e' o
+  // arquivo que o teste de unidade executa de verdade (scripts/edge-deploy/
+  // preparar-artifact-deploy.unit.mjs). Passo de YAML com shell proprio nao seria
+  // exercitado por nenhum teste.
+  assert.match(
+    redacao,
+    /bash "\$RUNNER_TEMP\/edge-tooling\/scripts\/edge-deploy\/preparar-artifact-deploy\.sh"/,
+    'o passo tem de chamar o script testado, nao carregar shell inline',
+  );
+  assert.doesNotMatch(
+    redacao,
+    /node "\$RUNNER_TEMP\/edge-tooling\/scripts\/edge-deploy\/redigir-log\.mjs"/,
+    'o passo nao pode mais redigir o log do diretorio de evidencia (alvo do upload antigo)',
+  );
+
+  // (4) a base do redator e' explicita no passo e cobre o staging em $RUNNER_TEMP —
+  // sem isso o confinamento recusaria o caminho (exit 2) e o artifact sumiria em todo deploy
+  assert.match(redacao, /REDIGIR_LOG_BASE: \$\{\{ runner\.temp \}\}/, 'a base do redator tem de ser explicita no passo');
+});
+
 test('E55: o passo de atestacao tem teto proprio de 10 min', () => {
   // O job tem 100 min, mas a atestacao nao pode consumir esse orcamento: se a
   // Management API nao estabilizar, o passo falha com lastReason e o run nao

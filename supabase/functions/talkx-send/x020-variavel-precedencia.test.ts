@@ -79,3 +79,33 @@ Deno.test("X020: pickVariant é determinístico por hash estável do destinatár
   }
   assert(seen.size > 1, `50 destinatários distintos devem distribuir entre as variantes: ${JSON.stringify([...seen])}`);
 });
+
+Deno.test("X020/483: pickVariant não depende da ordem devolvida pelo banco", async () => {
+  // A consulta de variantes não tem ORDER BY: o Postgres pode devolver as
+  // linhas em qualquer ordem (basta o plano mudar, por exemplo depois de um
+  // UPDATE físico que reposiciona a tupla). A decisão A/B não pode mudar com isso.
+  const variants = [
+    { id: "v1", content: "Mensagem A", media_url: null, media_type: null, weight: 1 },
+    { id: "v2", content: "Mensagem B", media_url: null, media_type: null, weight: 1 },
+    { id: "v3", content: "Mensagem C", media_url: null, media_type: null, weight: 2 },
+  ];
+  const mockComOrdem = (rows: typeof variants) => ({
+    from: () => ({
+      select: () => ({
+        eq: () => Promise.resolve({ data: rows, error: null }),
+      }),
+    }),
+  });
+  const ordemA = mockComOrdem(variants);
+  const ordemB = mockComOrdem([...variants].reverse());
+  for (let i = 0; i < 40; i++) {
+    const recipientId = `recipient-${i}`;
+    const a = await pickVariant(ordemA as never, "tpl-1", recipientId);
+    const b = await pickVariant(ordemB as never, "tpl-1", recipientId);
+    assert(a !== null && b !== null, "deveria sortear uma variante");
+    assert(
+      a!.id === b!.id,
+      `ordem devolvida pelo banco não pode trocar a variante de ${recipientId}: ${a!.id} != ${b!.id}`,
+    );
+  }
+});

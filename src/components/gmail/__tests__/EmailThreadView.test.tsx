@@ -3,6 +3,7 @@ import { createElement } from 'react';
 import type { ReactNode } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { EmailThreadView } from '../EmailThreadView';
+import { toast } from 'sonner';
 import type { EmailThread, EmailMessage } from '@/hooks/integrations/useGmail';
 
 const ANIMATION_PROPS = new Set(['initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout']);
@@ -47,7 +48,15 @@ vi.mock('@/components/ui/tooltip', () => ({
 }));
 
 vi.mock('@/components/ui/GenericEmptyState', () => ({
-  GenericEmptyState: ({ title }: { title: ReactNode }) => <div data-testid="empty-state">{title}</div>,
+  GenericEmptyState: ({ title, description, actionLabel, onAction }: {
+    title: ReactNode; description?: ReactNode; actionLabel?: string; onAction?: () => void;
+  }) => (
+    <div data-testid="empty-state">
+      <span>{title}</span>
+      {description && <span>{description}</span>}
+      {actionLabel && onAction && <button onClick={onAction}>{actionLabel}</button>}
+    </div>
+  ),
 }));
 
 vi.mock('@/components/gmail/EmailComposer', () => ({
@@ -62,8 +71,13 @@ vi.mock('@/lib/emailHtml', () => ({
   sanitizeEmailHtml: (html: string) => html,
 }));
 
+vi.mock('sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
+
 vi.mock('lucide-react', () => ({
   ArrowLeft: () => <span data-testid="icon-arrow-left" />,
+  AlertTriangle: () => <span data-testid="icon-alert" />,
   Trash2: () => <span data-testid="icon-trash" />,
   Archive: () => <span data-testid="icon-archive" />,
   Loader2: () => <div data-testid="loader" />,
@@ -84,21 +98,28 @@ vi.mock('lucide-react', () => ({
 const setSelectedThreadId = vi.fn();
 const markAsReadMutate = vi.fn();
 const trashMessageMutate = vi.fn();
+const refetchMessages = vi.fn();
+const modifyThreadLabelsMutateAsync = vi.fn();
 
 const config: {
   threadMessages: EmailMessage[];
   messagesLoading: boolean;
+  messagesError: Error | null;
 } = {
   threadMessages: [],
   messagesLoading: false,
+  messagesError: null,
 };
 
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({
     threadMessages: config.threadMessages,
     messagesLoading: config.messagesLoading,
+    messagesError: config.messagesError,
+    refetchMessages,
     markAsRead: { mutate: markAsReadMutate },
     trashMessage: { mutate: trashMessageMutate },
+    modifyThreadLabels: { mutate: vi.fn(), mutateAsync: modifyThreadLabelsMutateAsync, isPending: false },
     setSelectedThreadId,
   }),
 }));
@@ -155,9 +176,13 @@ describe('EmailThreadView', () => {
   beforeEach(() => {
     config.threadMessages = [];
     config.messagesLoading = false;
+    config.messagesError = null;
+    refetchMessages.mockClear();
     setSelectedThreadId.mockClear();
     markAsReadMutate.mockClear();
     trashMessageMutate.mockClear();
+    modifyThreadLabelsMutateAsync.mockReset();
+    vi.mocked(toast.error).mockClear();
   });
 
   it('chama setSelectedThreadId com thread.id no mount', () => {
@@ -241,5 +266,64 @@ describe('EmailThreadView', () => {
     render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
     fireEvent.click(screen.getByTestId('icon-trash').closest('button')!);
     expect(trashMessageMutate).toHaveBeenCalledWith('gm-trash');
+  });
+
+  // R2-API-059: consulta fracassada e thread vazia são estados diferentes, com recuperação.
+  it('consulta de mensagens falhou: mostra erro com recuperação e não "Sem mensagens"', () => {
+    config.messagesError = new Error('permission denied for table email_messages');
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    expect(screen.getByText('Não foi possível carregar as mensagens')).toBeInTheDocument();
+    expect(screen.queryByText('Sem mensagens')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+    expect(refetchMessages).toHaveBeenCalledTimes(1);
+  });
+
+  it('consulta bem-sucedida sem mensagens: mantém o estado vazio com o texto de vazio', () => {
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    expect(screen.getByText('Sem mensagens')).toBeInTheDocument();
+    expect(screen.queryByText('Não foi possível carregar as mensagens')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tentar de novo' })).not.toBeInTheDocument();
+  });
+
+  it('consulta de mensagens falhou, mas há mensagens em cache: mantém as mensagens na tela', () => {
+    config.threadMessages = [makeMessage({ from_name: 'Remetente em cache' })];
+    config.messagesError = new Error('timeout');
+    render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
+    expect(screen.getByText('Remetente em cache')).toBeInTheDocument();
+    expect(screen.queryByText('Não foi possível carregar as mensagens')).not.toBeInTheDocument();
+  });
+
+  it('botão Arquivar remove o rótulo INBOX da thread inteira via modifyThreadLabels.mutateAsync', () => {
+    modifyThreadLabelsMutateAsync.mockResolvedValue({});
+    render(<EmailThreadView thread={makeThread({ gmail_thread_id: 'gt-arquivar' })} onBack={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText('Arquivar'));
+    expect(modifyThreadLabelsMutateAsync).toHaveBeenCalledWith({
+      thread_id: 'gt-arquivar',
+      remove_labels: ['INBOX'],
+    });
+  });
+
+  it('Arquivar só chama onBack depois de a mutação resolver', async () => {
+    let resolver: (value: unknown) => void = () => {};
+    modifyThreadLabelsMutateAsync.mockImplementationOnce(
+      () => new Promise((resolve) => { resolver = resolve; })
+    );
+    const onBack = vi.fn();
+    render(<EmailThreadView thread={makeThread()} onBack={onBack} />);
+    fireEvent.click(screen.getByLabelText('Arquivar'));
+    expect(modifyThreadLabelsMutateAsync).toHaveBeenCalled();
+    expect(onBack).not.toHaveBeenCalled();
+    resolver({});
+    await waitFor(() => expect(onBack).toHaveBeenCalledTimes(1));
+  });
+
+  it('uma rejeição no arquivamento não navega de volta como se tivesse funcionado', async () => {
+    modifyThreadLabelsMutateAsync.mockRejectedValueOnce(new Error('falha ao arquivar'));
+    const onBack = vi.fn();
+    render(<EmailThreadView thread={makeThread()} onBack={onBack} />);
+    fireEvent.click(screen.getByLabelText('Arquivar'));
+    await waitFor(() => expect(modifyThreadLabelsMutateAsync).toHaveBeenCalled());
+    expect(onBack).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('Não foi possível arquivar a conversa.');
   });
 });

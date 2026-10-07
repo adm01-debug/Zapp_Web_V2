@@ -217,3 +217,39 @@ Deno.test("business_hours retoma só dentro do horário comercial", () => {
   assert(tercaDeMadrugada.resume === false, "22:00 não é horário comercial");
   assert(tercaDeManha.resume === true, "10:00 é horário comercial");
 });
+
+// ── #121A: a retomada usa o horário comercial SALVO (JSONB de talkx_settings) ─
+
+Deno.test("[#121A] não retoma às 14:00 quando o business_hours salvo é 15:00–17:00", () => {
+  const rows: PausedCampaignRow[] = [
+    {
+      id: "comercial-1",
+      name: "Pausada pelo horário comercial",
+      pause_reason: "business_hours",
+      schedule_timezone: "UTC",
+      business_hours_only: true,
+    },
+  ];
+  // o que o banco guarda em talkx_settings.business_hours (objeto JSONB)
+  const salvo = { start: "15:00", end: "17:00", tz: "UTC", days: [1, 2, 3, 4, 5] };
+  const catorze = new Date("2026-09-29T14:00:00Z"); // terça 14:00 UTC
+
+  // a política recebe a configuração EXPLICITAMENTE → 14:00 está fora de 15:00–17:00
+  const [comConfig] = selectResumableCampaigns(rows, () => "connected", catorze, salvo);
+  assert(comConfig.resume === false, `14:00 fora de 15:00–17:00 não pode retomar: ${comConfig.because}`);
+
+  // dentro do horário salvo (16:00) retoma
+  const [dentro] = selectResumableCampaigns(rows, () => "connected", new Date("2026-09-29T16:00:00Z"), salvo);
+  assert(dentro.resume === true, `16:00 dentro de 15:00–17:00 deve retomar: ${dentro.because}`);
+
+  // AUSÊNCIA de configuração → default 08:00–18:00 → 14:00 retoma
+  const [semConfig] = selectResumableCampaigns(rows, () => "connected", catorze);
+  assert(semConfig.resume === true, `sem configuração vale o default 08:00–18:00: ${semConfig.because}`);
+
+  // PRESENTE e inválida → fecha a janela, nunca cai no default
+  const [invalida] = selectResumableCampaigns(rows, () => "connected", catorze, {
+    invalid: true,
+    invalidReason: "teste",
+  });
+  assert(invalida.resume === false, `configuração inválida não pode retomar: ${invalida.because}`);
+});

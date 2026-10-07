@@ -90,7 +90,9 @@ export function useChatSearch({
         }
         cutoff = new Date(sorted[i].timestamp);
       }
-      return { from: startOfDay(cutoff), to: null };
+      // Regressão #322: manter o início EXATO da última sessão (gap > 4h). Arredondar para
+      // startOfDay reintroduzia sessões antigas do mesmo dia (09h e 18h, por exemplo).
+      return { from: new Date(cutoff), to: null };
     }
     return getPresetRange(datePreset);
   }, [datePreset, customDateFrom, customDateTo, messages]);

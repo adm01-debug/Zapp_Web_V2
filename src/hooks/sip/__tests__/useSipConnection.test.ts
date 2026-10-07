@@ -8,6 +8,8 @@ const mockRegisterStateListeners: StateListener[] = [];
 type RegisterOptions = { requestDelegate?: { onReject?: (response: { message: { statusCode: number } }) => void } };
 const mockRegisterCalls: Array<RegisterOptions | undefined> = [];
 const mockUaInstances: Array<{ start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; transport: { onDisconnect: (() => void) | null } }> = [];
+// R2-CALL-004: as instâncias de Registerer ficam acessíveis para simular erro de teardown.
+const mockRegistererInstances: Array<{ unregister: ReturnType<typeof vi.fn> }> = [];
 let lastDelegate: { onInvite?: (invitation: unknown) => void } | undefined;
 
 vi.mock('sip.js', () => {
@@ -32,6 +34,7 @@ vi.mock('sip.js', () => {
       };
       register = vi.fn((options?: RegisterOptions) => { mockRegisterCalls.push(options); return Promise.resolve(undefined); });
       unregister = vi.fn().mockResolvedValue(undefined);
+      constructor() { mockRegistererInstances.push(this as unknown as { unregister: ReturnType<typeof vi.fn> }); }
     },
   };
 });
@@ -68,6 +71,7 @@ describe('useSipConnection', () => {
     mockRegisterStateListeners.length = 0;
     mockRegisterCalls.length = 0;
     mockUaInstances.length = 0;
+    mockRegistererInstances.length = 0;
     lastDelegate = undefined;
   });
 
@@ -248,5 +252,58 @@ describe('useSipConnection', () => {
 
     expect(mockUaInstances.length).toBe(1);
     expect(result.current.sipStatus).toBe('connecting');
+  });
+  // === R2-CALL-004: o contrato desconectar -> reconectar nao pode reusar UA encerrado ===
+
+  it('R2-CALL-004: connect -> disconnect -> connect cria um NOVO UserAgent', async () => {
+    const { result } = renderHook(() => useSipConnection());
+
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    expect(mockUaInstances.length).toBe(1);
+
+    await act(async () => { await result.current.disconnect(); });
+
+    // O UA parado tem de sair das refs: sem isso o `connect` abaixo morre na
+    // guarda `if (uaRef.current) return` e a linha nunca volta.
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+
+    expect(mockUaInstances.length).toBe(2);
+    expect(mockUaInstances[1].start).toHaveBeenCalledTimes(1);
+    // O UA novo e o que fica retido (e nao o encerrado).
+    expect(result.current.uaRef.current).toBe(mockUaInstances[1]);
+  });
+
+  it('R2-CALL-004: erro no teardown nao prende os refs (reconexao continua possivel)', async () => {
+    const { result } = renderHook(() => useSipConnection());
+
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    expect(mockUaInstances.length).toBe(1);
+    const oldOnDisconnect = mockUaInstances[0].transport.onDisconnect;
+
+    // unregister estoura durante a desconexao (ex.: transporte ja morto).
+    mockRegistererInstances[0].unregister.mockRejectedValueOnce(new Error('teardown boom'));
+
+    await act(async () => { await result.current.disconnect(); });
+
+    expect(mockUaInstances[0].stop).toHaveBeenCalledTimes(1);
+    expect(mockUaInstances[0].transport.onDisconnect).toEqual(expect.any(Function));
+    expect(mockUaInstances[0].transport.onDisconnect).not.toBe(oldOnDisconnect);
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+
+    expect(mockUaInstances.length).toBe(2);
   });
 });

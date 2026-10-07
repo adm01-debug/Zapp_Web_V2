@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react';
 
 /**
  * E67 — integração do **segundo consumidor** do combobox de endereço (o picker do Inbox),
@@ -256,5 +256,43 @@ describe('E67 · integração do picker de endereço (hook real, só fetch mocka
     expect(screen.getByRole('button', { name: 'Tentar novamente' })).toBeInTheDocument();
     // Limite de uso não é falha de rota: a tela não pode dizer "Falha ao buscar sugestões".
     expect(screen.queryByText(/Falha ao buscar sugestões/)).not.toBeInTheDocument();
+  });
+
+  // R2-INB-037: o `/retrieve` pertence ao TERMO, não só à lista. Escolher a sugestão A e digitar
+  // outro termo enquanto a resposta está em voo não pode aplicar o endereço antigo — era o que
+  // acontecia, e a aplicação de A ainda fechava a lista e limpava o termo novo que o operador
+  // estava digitando.
+  it('9) R2-INB-037: mudar o termo durante o /retrieve não aplica o endereço antigo nem interrompe a busca nova', async () => {
+    const { input, state } = await renderOnMapTab();
+    // O `/retrieve` da escolha fica PENDENTE — é exatamente a janela da corrida.
+    let responderRetrieve: (r: Resp) => void = () => {};
+    const retrieveEmVoo = new Promise<Resp>((r) => { responderRetrieve = r; });
+    h.fetch.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes('/search/searchbox/v1/suggest')) {
+        // O termo novo ("asdkjh") responde lista vazia — nada para escolher depois dele.
+        return Promise.resolve(jsonResponse(u.includes('asdkjh') ? suggestAsdkjh : suggestXbz));
+      }
+      if (u.includes('/search/searchbox/v1/retrieve/')) return retrieveEmVoo;
+      if (u.includes('/search/searchbox/v1/forward')) return Promise.resolve(jsonResponse(forwardAvenida));
+      throw new Error(`fetch inesperado: ${u}`);
+    });
+
+    digitar(input, 'xbz');
+    fireEvent.click(await screen.findByRole('option', { name: /XBZ\s*Brindes/ }));
+    await waitFor(() => expect(callsTo('/search/searchbox/v1/retrieve/')).toHaveLength(1));
+
+    // O input continua editável durante o retrieve: o operador muda para o termo B.
+    digitar(input, 'asdkjh');
+    expect(input).toHaveValue('asdkjh');
+
+    // A resposta do termo anterior chega DEPOIS da nova digitação.
+    await act(async () => { responderRetrieve(jsonResponse(retrieveXbz)); });
+
+    // O endereço antigo (XBZ) não pode ir para o mapa…
+    await waitFor(() => expect(state.chooseSearchResult).not.toHaveBeenCalled());
+    // …e a busca do termo novo segue de pé, com o termo do operador intacto.
+    expect(await screen.findByText(/Nada encontrado/)).toBeInTheDocument();
+    expect(input).toHaveValue('asdkjh');
   });
 });

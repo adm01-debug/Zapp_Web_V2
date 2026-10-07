@@ -40,6 +40,9 @@ export class Logger {
    * de campanha amarra `campaign_id`/`recipient_id`/`attempt` a cada log do
    * destinatário. Compartilha `fn`/`rid`/startTime do logger original, então a
    * janela de tempo e o request id não se perdem no filho.
+   *
+   * FIXO é literal: o contexto passado em cada chamada (`log.warn(msg, ctx)`)
+   * entra na linha, mas NÃO sobrescreve estas chaves — ver `log()`.
    */
   child(ctx: Record<string, unknown>): Logger {
     const derived = new Logger(this.fn, { ...this.bound, ...ctx });
@@ -55,8 +58,15 @@ export class Logger {
       rid: this.requestId,
       ms: Date.now() - this.startTime,
       msg: message,
-      ...this.bound,
+      // Ordem importa: o contexto FIXO do logger (X033 — campaign_id/
+      // recipient_id/attempt do destinatário) entra DEPOIS do contexto da
+      // chamada e não pode ser sobrescrito por ele. Com `...ctx` por último,
+      // o aviso de quarentena do motor TalkX (que repete `attempt` com o valor
+      // do banco, a tentativa anterior) apagava o `attempt` do logger filho e
+      // a linha saía com uma tentativa diferente das demais do MESMO
+      // destinatário (item 475 / R3-DELTA-012).
       ...ctx,
+      ...this.bound,
     };
     const serialized = JSON.stringify(entry);
     if (level === 'error') console.error(serialized);

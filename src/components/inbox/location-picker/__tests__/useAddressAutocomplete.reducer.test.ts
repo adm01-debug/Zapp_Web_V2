@@ -55,4 +55,21 @@ describe('useAddressAutocomplete · reducer (onda 2)', () => {
     // A lista persiste durante o debounce (padrão do E25/E27) — só o destaque é invalidado.
     expect(next.suggestions).toHaveLength(1);
   });
+
+  it('SET_QUERY descarta o /retrieve do TERMO anterior (R2-INB-037): o spinner e o erro do item não sobrevivem à troca', () => {
+    const sugestao: GeoSuggestion = { id: 'a', name: 'Rua A', address: 'Rua A, SP', kind: 'street' };
+    const comRetrieveEmVoo = {
+      ...initialState,
+      query: 'rua a',
+      suggestions: [sugestao],
+      retrievingId: 'a',
+      retrieveError: { id: 'a', kind: 'network' as const },
+    };
+    const next = reducer(comRetrieveEmVoo, { type: 'SET_QUERY', query: 'rua augusta 100' });
+    // A troca de termo invalida a seleção em voo (ver `selectionSeqRef` em `setQuery`); se o
+    // `retrievingId` ficasse de pé, um resultado novo com o MESMO mapbox_id herdaria o spinner e
+    // viraria clique morto (o consumidor corta o clique repetido no item que está "carregando").
+    expect(next.retrievingId).toBeNull();
+    expect(next.retrieveError).toBeNull();
+  });
 });

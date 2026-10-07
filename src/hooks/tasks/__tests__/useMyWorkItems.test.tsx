@@ -321,4 +321,100 @@ describe('useMyWorkItems — Fase B', () => {
     // cancelled fica de fora por padrao.
     expect(leitura?.not).toHaveBeenCalledWith('status', 'eq', 'cancelled');
   });
+
+  // --- R2-MOD-053: Desfazer (undo) tem de restaurar TODO o estado ------------
+  // O trigger do banco zera remind_at/notified_at ao entrar em done/cancelled
+  // (supabase/migrations/20260928140000_tasks_unify_reminders_kanban.sql). O
+  // undo precisa reescrever esses campos a partir do snapshot; sem isso o alarme
+  // some e o toast anuncia sucesso antes de a escrita confirmar.
+
+  /** `onUndo` da enesima chamada a `undoToast` (mensagem + callback). */
+  function undoDe(indice = 0): () => Promise<void> {
+    const arg = h.undoToast.mock.calls[indice][0] as { onUndo: () => Promise<void> };
+    return arg.onUndo;
+  }
+
+  it('cancelar e desfazer restaura status, carimbo e o alarme anterior (#421)', async () => {
+    const original = dbRow({
+      id: 't1',
+      status: 'todo',
+      remind_at: '2026-10-07T12:00:00.000Z',
+      notified_at: null,
+    });
+    const { result } = setup([original]);
+    await ready({ result });
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    setWriteResult({ data: [{ id: 't1' }], error: null });
+    await act(async () => { await result.current.cancel(result.current.items[0]); });
+
+    const undo = undoDe();
+    await act(async () => { await undo(); });
+
+    // calls[0] = cancelamento (status cancelled); calls[1] = reversao.
+    const patch = h.update.mock.calls[1][0] as Record<string, unknown>;
+    expect(patch).toMatchObject({
+      status: 'todo',
+      completed_at: null,
+      remind_at: '2026-10-07T12:00:00.000Z',
+      notified_at: null,
+    });
+  });
+
+  it('concluir e desfazer devolve ao estado anterior (doing) e restaura o alarme (#421)', async () => {
+    const original = dbRow({
+      id: 't1',
+      status: 'doing',
+      started_at: '2026-10-06T09:00:00.000Z',
+      remind_at: '2026-10-07T12:00:00.000Z',
+    });
+    const { result } = setup([original]);
+    await ready({ result });
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    setWriteResult({ data: [{ id: 't1' }], error: null });
+    await act(async () => { await result.current.complete(result.current.items[0]); });
+
+    const undo = undoDe();
+    await act(async () => { await undo(); });
+
+    // calls[0] = conclusao (status done); calls[1] = reversao ao estado anterior.
+    const patch = h.update.mock.calls[1][0] as Record<string, unknown>;
+    expect(patch).toMatchObject({
+      status: 'doing',
+      completed_at: null,
+      remind_at: '2026-10-07T12:00:00.000Z',
+    });
+  });
+
+  it('desfazer que nao afeta nenhuma linha falha em vez de passar como sucesso (#421)', async () => {
+    const original = dbRow({ id: 't1', status: 'todo', remind_at: '2026-10-07T12:00:00.000Z' });
+    const { result } = setup([original]);
+    await ready({ result });
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    await act(async () => { await result.current.cancel(result.current.items[0]); });
+    const undo = undoDe();
+
+    // RLS/where sem match: a escrita nao muda nada (0 linhas) mas nao lanca erro.
+    setWriteResult({ data: [], error: null });
+    await act(async () => {
+      await expect(undo()).rejects.toBeTruthy();
+    });
+  });
+
+  it('desfazer com erro do banco propaga a falha (nao passa como sucesso) (#421)', async () => {
+    const original = dbRow({ id: 't1', status: 'todo' });
+    const { result } = setup([original]);
+    await ready({ result });
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    await act(async () => { await result.current.cancel(result.current.items[0]); });
+    const undo = undoDe();
+
+    setWriteResult({ data: null, error: { message: 'permission denied', code: '42501' } });
+    await act(async () => {
+      await expect(undo()).rejects.toMatchObject({ message: 'permission denied' });
+    });
+  });
 });

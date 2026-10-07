@@ -54,11 +54,15 @@ export function useGlobalSettings() {
 
   const updateSetting = useCallback(async (key: string, value: string) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('global_settings')
         .update({ value })
-        .eq('key', key);
+        .eq('key', key)
+        .select('key');
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error('Nenhum registro de global_settings foi atualizado para a chave ' + key);
+      }
       setSettings(prev => prev.map(s => s.key === key ? { ...s, value } : s));
     } catch (err) {
       log.error('Error updating global setting:', err);

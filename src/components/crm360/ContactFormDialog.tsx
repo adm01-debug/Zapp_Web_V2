@@ -104,12 +104,19 @@ export function ContactFormDialog({ open, onOpenChange, contact, onSuccess }: Co
 
     try {
       if (isEdit && contact?.id) {
-        await mutation.mutateAsync({
+        const gravadas = await mutation.mutateAsync({
           action: 'update',
           table: 'contacts',
           data: payload,
           match: { id: contact.id },
         });
+        // R2-AUTH-019: o gateway responde 200 com data=[] quando o UPDATE de um único
+        // id não atinge nenhuma linha (contato removido entre abrir o form e salvar).
+        // Zero linhas não é sucesso: o diálogo continua aberto e o erro aparece.
+        if (!Array.isArray(gravadas) || gravadas.length !== 1) {
+          toast.error('O contato não foi encontrado no CRM externo. Nenhuma alteração foi gravada.');
+          return;
+        }
         toast.success('Contato atualizado com sucesso!');
       } else {
         await mutation.mutateAsync({

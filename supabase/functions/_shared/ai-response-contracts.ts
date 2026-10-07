@@ -113,11 +113,26 @@ export const SuggestedReplyItemSchema = z.object({
   type: z.string(),
   text: z.string().min(1),
   emoji: z.string().optional(),
+  // `source` é pedido pelo prompt (título do artigo da KB) e exibido pela
+  // interface. Sem a chave aqui, o parse o descartaria em silêncio e a fonte
+  // sumiria da tela — sem erro nenhum.
+  source: z.string().nullable().optional(),
 });
 
 export const SuggestedRepliesOutput = z
   .array(SuggestedReplyItemSchema)
   .length(3);
+
+/**
+ * Envelope que o modelo devolve para esta capacidade: `{ "suggestions": [ ... ] }`.
+ *
+ * O array é obrigatório, do tipo array e com EXATAMENTE 3 itens válidos: um
+ * `suggestions` ausente, em string/objeto, com quantidade diferente ou com texto
+ * vazio é REJEITADO aqui — não entra no render normal com forma errada.
+ */
+export const SuggestedRepliesEnvelope = z.object({
+  suggestions: SuggestedRepliesOutput,
+});
 
 // ─── Capacidade: auto-tag ────────────────────────────────────
 /** `ai-auto-tag` devolve tags com confiança em 0-1 (não 0-100). */

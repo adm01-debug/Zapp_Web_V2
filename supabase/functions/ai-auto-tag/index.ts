@@ -6,20 +6,54 @@ import {
 } from "../_shared/validation.ts";
 import { AiAutoTagSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
-import { generateWithRouting } from "../_shared/ai-generate.ts";
+import { generateWithRouting, type GenerateParams, type GenerateResult } from "../_shared/ai-generate.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { AutoTagOutput, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { normalizeSentiment, normalizeOperationalPriority } from "../_shared/ai-vocabulary.ts";
 import { normalizeScore } from "../_shared/ai-values.ts";
 import { parseJsonObject } from "../_shared/ai-json.ts";
 
-Deno.serve(async (req) => {
+/**
+ * Seam de teste (mesmo padrão das outras edge functions): tudo que o handler
+ * precisa do mundo externo (auth, guarda de uso, clientes Supabase, roteador de
+ * IA, rate limit e env) pode ser injetado. Em produção nada é passado e o
+ * handler usa as implementações reais — por isso o teste chama o handler REAL.
+ */
+export interface AiAutoTagDeps {
+  /** Client service_role (bypassa RLS) — o trabalho real. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase?: any;
+  /** Client de escopo do usuário, usado SÓ na checagem de visibilidade do contato. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  authedClient?: any;
+  /** Resolve a identidade do chamador (default: `requireAuth`). */
+  authorize?: (req: Request) => Promise<{ userId: string } | Response>;
+  /** Guarda de uso/cota de IA (default: `enforceAiGuards`). */
+  enforceGuards?: (
+    opts: { functionName: string; userId: string; req: Request },
+  ) => Promise<Response | null>;
+  /** Roteador de IA (default: `generateWithRouting`). */
+  generate?: (params: GenerateParams) => Promise<GenerateResult>;
+  /** Rate limit local por IP (default: `checkRateLimit`). */
+  rateLimit?: (key: string, max: number, windowMs: number) => { allowed: boolean };
+  /** IP do chamador (default: `getClientIP(req)`). */
+  clientIp?: string;
+  /** Leitura de env (default: `requireEnv`, que lança quando a chave falta). */
+  env?: (key: string) => string | undefined;
+}
+
+export async function handleAiAutoTag(
+  req: Request,
+  deps: AiAutoTagDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
-  const authCheck = await requireAuth(req);
+  const authorize = deps.authorize ?? requireAuth;
+  const authCheck = await authorize(req);
   if (authCheck instanceof Response) return authCheck;
   const __uid = (authCheck as { userId: string }).userId;
-  const __guard = await enforceAiGuards({ functionName: "ai-auto-tag", userId: __uid, req });
+  const guards = deps.enforceGuards ?? enforceAiGuards;
+  const __guard = await guards({ functionName: "ai-auto-tag", userId: __uid, req });
   if (__guard) return __guard;
 
 
@@ -27,8 +61,9 @@ Deno.serve(async (req) => {
   const userId = extractUserIdFromRequest(req);
 
   try {
-    const ip = getClientIP(req);
-    const { allowed } = checkRateLimit(`autotag:${ip}`, 20, 60_000);
+    const rateLimit = deps.rateLimit ?? checkRateLimit;
+    const ip = deps.clientIp ?? getClientIP(req);
+    const { allowed } = rateLimit(`autotag:${ip}`, 20, 60_000);
     if (!allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     const parsed = parseBody(AiAutoTagSchema, await req.json());
@@ -37,16 +72,17 @@ Deno.serve(async (req) => {
     const { contactId, messages: inputMessages } = parsed.data;
     let validContactId = contactId && isValidUUID(contactId) ? contactId : null;
 
-    const supabaseUrl = requireEnv("SUPABASE_URL");
-    const supabaseKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const env = deps.env ?? requireEnv;
+    const supabaseUrl = env("SUPABASE_URL") as string;
+    const supabaseKey = env("SUPABASE_SERVICE_ROLE_KEY") as string;
+    const supabase = deps.supabase ?? createClient(supabaseUrl, supabaseKey);
 
     if (validContactId) {
       // Este client roda com service_role (bypassa RLS). Sem esta checagem,
       // qualquer usuário autenticado poderia usar contactId de um contato que
       // não enxerga para ler resumo/sentimento (PII) e gravar tags/prioridade
       // nele — a RLS real de `contacts` é a fonte de verdade de visibilidade.
-      const authedClient = await createAuthedClient(req);
+      const authedClient = deps.authedClient ?? await createAuthedClient(req);
       const { data: visibleContact } = await authedClient
         .from('contacts')
         .select('id')
@@ -96,7 +132,11 @@ Deno.serve(async (req) => {
 
     log.info("Classifying conversation", { contactId: validContactId, msgCount: conversationMessages.length });
 
-    const { response, data } = await generateWithRouting({
+    // Despacho central (IA-032): o caminho PADRÃO chama `generateWithRouting`
+    // literalmente — o ratchet do aceite exige a chamada no fonte, não só o
+    // import. O seam `deps.generate` é só para o teste rodar o handler real
+    // offline.
+    const generateParams: GenerateParams = {
       purpose: 'tagging',
       functionName: 'ai-auto-tag',
       userId,
@@ -123,7 +163,12 @@ Responda APENAS em JSON:
         { role: "user", content: conversationText },
       ],
       temperature: 0.3,
-    });
+    };
+
+    const generate = deps.generate;
+    const { response, data } = generate
+      ? await generate(generateParams)
+      : await generateWithRouting(generateParams);
 
     if (!response.ok || !data) {
       if (response.status === 429) return errorResponse("Rate limit exceeded", 429, req);
@@ -181,10 +226,17 @@ Responda APENAS em JSON:
     }
 
     let tagsReplaced = false;
-    if (validContactId && tagPayload.length > 0) {
+    if (validContactId) {
       // Uma única transação no banco (IA-028): apaga SOMENTE as etiquetas de IA
       // e insere as novas, preservando etiqueta humana. O par anterior (delete
       // seguido de insert) não era atômico e ignorava {error} nos dois awaits.
+      //
+      // A chamada NÃO é condicionada a haver etiquetas: classificação VÁLIDA sem
+      // tags (R2-API-033) precisa LIMPAR as etiquetas de IA anteriores — o
+      // contrato da RPC é explícito ("Resultado vazio tem semântica explícita:
+      // LIMPA as etiquetas de IA"). Antes, `tagPayload.length > 0` pulava a RPC
+      // e as etiquetas antigas ficavam no contato, mentindo sobre a
+      // classificação atual.
       const { error: tagsError } = await supabase.rpc('replace_ai_conversation_tags', {
         p_contact_id: validContactId,
         p_tags: tagPayload,
@@ -307,4 +359,8 @@ Responda APENAS em JSON:
     log.error("Unhandled error", { error: error instanceof Error ? error.message : String(error) });
     return errorResponse(error instanceof Error ? error.message : "Unknown error", 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleAiAutoTag(req));
+}

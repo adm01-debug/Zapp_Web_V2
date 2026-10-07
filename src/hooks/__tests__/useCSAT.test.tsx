@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -13,6 +13,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/hooks/ui/use-toast', () => ({
   useToast: () => ({ toast: vi.fn() }),
+  toast: vi.fn(),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -93,5 +94,55 @@ describe('useCSAT', () => {
     });
 
     expect(result.current.surveys).toEqual([]);
+  });
+
+  // R2-MOD-028: as estatisticas nao podem ficar no snapshot anterior quando a
+  // releitura das avaliacoes chega depois da invalidacao pos-submissao.
+  it('atualiza media, total e distribuicao junto com a lista apos nova submissao', async () => {
+    const initial = [
+      { id: 's1', contact_id: 'c1', agent_id: 'a1', rating: 5, feedback: 'Great!', created_at: '2024-01-01' },
+      { id: 's2', contact_id: 'c2', agent_id: 'a1', rating: 3, feedback: null, created_at: '2024-01-02' },
+      { id: 's3', contact_id: 'c3', agent_id: 'a2', rating: 1, feedback: 'Bad', created_at: '2024-01-03' },
+    ];
+    // A submissao vira uma quarta avaliacao (rating 4): media, total e distribuicao
+    // mudam todos, entao qualquer snapshot velho fica evidente.
+    const updated = [
+      ...initial,
+      { id: 's4', contact_id: 'c4', agent_id: 'a2', rating: 4, feedback: 'ok', created_at: '2024-01-04' },
+    ];
+
+    let resolveSecond!: (value: { data: unknown; error: null }) => void;
+    const secondPromise = new Promise<{ data: unknown; error: null }>((resolve) => {
+      resolveSecond = resolve;
+    });
+    const pending: Array<Promise<{ data: unknown; error: null }>> = [
+      Promise.resolve({ data: initial, error: null }),
+      secondPromise,
+    ];
+
+    mockFrom.mockImplementation(() => ({
+      select: () => ({ gte: () => ({ order: () => pending.shift()! }) }),
+      insert: () => Promise.resolve({ error: null }),
+    }));
+
+    const { result } = renderHook(() => useCSAT(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.surveys).toHaveLength(3));
+    await waitFor(() => expect(result.current.stats?.total).toBe(3));
+    expect(result.current.stats?.average).toBeCloseTo(3);
+
+    act(() => {
+      result.current.submitSurvey.mutate({ contact_id: 'c4', rating: 4 });
+    });
+
+    // A releitura das avaliacoes fica pendente: e nesta janela que o snapshot
+    // antigo sobreviveria se stats fosse uma query separada de surveys.
+    await waitFor(() => expect(pending).toHaveLength(0));
+    resolveSecond({ data: updated, error: null });
+
+    await waitFor(() => expect(result.current.surveys).toHaveLength(4));
+    expect(result.current.stats?.total).toBe(4);
+    expect(result.current.stats?.average).toBeCloseTo(13 / 4);
+    expect(result.current.stats?.distribution[4]).toBe(1);
   });
 });

@@ -9,6 +9,7 @@ import { Loader2, Play, Music, Volume2, RefreshCw, Check, Wand2, Sparkles } from
 import { toast } from 'sonner';
 
 import { getLogger } from '@/lib/logger';
+import { removeStoredObjectBestEffort } from '@/lib/storage_object_upload';
 const log = getLogger('AIGenerateDialog');
 
 export function AIGenerateDialog({ open, onOpenChange, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; onSaved: () => void }) {
@@ -49,7 +50,11 @@ export function AIGenerateDialog({ open, onOpenChange, onSaved }: { open: boolea
       let aiCategory = 'outros';
       try { const { data: classifyData } = await supabase.functions.invoke('classify-audio-meme', { body: { audio_url: urlData.publicUrl, file_name: genPrompt } }); if (classifyData?.category) aiCategory = classifyData.category; } catch (err) { log.error('Unexpected error in AIGenerateDialog:', err); }
       const { error: insertError } = await supabase.from('audio_memes').insert({ name: genPrompt.substring(0, 80), audio_url: urlData.publicUrl, category: aiCategory, is_favorite: false, use_count: 0, uploaded_by: user?.id || null });
-      if (insertError) throw insertError;
+      if (insertError) {
+        // O MP3 já subiu para o bucket; sem o registro ele viraria órfão.
+        await removeStoredObjectBestEffort('audio-memes', storagePath);
+        throw insertError;
+      }
       toast.success(`Áudio salvo como "${aiCategory}"`); onOpenChange(false); setGenPrompt(''); setGenPreviewUrl(null); onSaved();
     } catch (err: unknown) { toast.error(err instanceof Error ? err.message : 'Erro ao salvar áudio'); } finally { setGenerating(false); }
   };

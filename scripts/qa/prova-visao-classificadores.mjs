@@ -9,6 +9,15 @@
  *   3. o consumo das duas chamadas aparece em `ai_usage_logs` — o aceite do
  *      IA-032/IA-033, que é acabar com as chamadas pagas invisíveis.
  *
+ * R2-INF-020 — o ponto 3 só vale por CORRELAÇÃO. Não basta "existirem duas
+ * linhas": é preciso um registro NOVO e válido para CADA uma das duas chamadas
+ * feitas AQUI. Por isso o provador tira uma foto dos registros existentes ANTES
+ * de chamar os classificadores (linha de base) e, depois, exige um registro que
+ * ainda não existia, na função certa, com status de sucesso e modelo do provedor
+ * de visão (Gemini). Registro ANTERIOR, duas linhas de UMA só função, ou leitura
+ * de consumo recusada (HTTP não-ok) NÃO aprovam: a leitura recusada deixa a
+ * prova INCONCLUSIVA, nunca "PROVA OK".
+ *
  * O QUE ELE NÃO FAZ: não usa service_role, não contorna autenticação e não
  * inventa credencial. Entra com o login de TESTE e usa o JWT do usuário,
  * exatamente como o app faz.
@@ -33,17 +42,18 @@
  * (configuração publicável do frontend), por isso podem ser lidos aqui.
  *
  * Saída: relatório em pt-BR. EXIT 0 só quando as duas classificações passam E o
- * consumo aparece registrado; EXIT 2 quando falta credencial; EXIT 1 quando a
- * prova roda mas falha.
+ * consumo de CADA chamada é correlacionado; EXIT 2 quando falta credencial;
+ * EXIT 1 quando a prova roda mas falha OU fica inconclusiva (ex.: sem permissão
+ * de leitura do consumo).
  */
 
 import { readFileSync, existsSync } from "node:fs";
 
 // jssecurity:S5145 — o corpo devolvido pelo Auth, a categoria devolvida pelas
-// edge functions e o resultado final entram no log em #123/#147/#182. Quebras de
-// linha / caracteres de controle são neutralizados para impedir que esse conteúdo
-// forje linhas de log. Valores normais (texto de uma linha, números) ficam iguais.
-// Mesmo helper de scripts/ci/github-settings-guard.mjs (consistência > solução nova).
+// edge functions, as linhas de consumo e o resultado final entram no log. Quebras
+// de linha / caracteres de controle são neutralizados para impedir que esse
+// conteúdo forje linhas de log. Valores normais (texto de uma linha, números)
+// ficam iguais. Mesmo helper de scripts/ci/github-settings-guard.mjs.
 const semQuebra = (valor) => String(valor).replace(/[\r\n\u0000-\u001f\u007f]/g, " ");
 
 // Figurinha REAL, existente no banco do projeto (storage público whatsapp-media).
@@ -138,9 +148,43 @@ if (SO_LOGIN) {
   process.exit(falhas === 0 ? 0 : 1);
 }
 
-// 2) Classificacao real
+// --- leitura do consumo (R2-INF-020) ---------------------------------------
+// Colunas reais da tabela (conferidas em _shared/ai-usage.ts): nao existe
+// `provider_id` — o provedor vai dentro de `metadata`. Pedir coluna inexistente
+// devolve HTTP 400. `id` é a chave que permite identificar registros NOVOS.
+const COLUNAS_CONSUMO = "id,function_name,model,status,error_message,metadata,created_at";
+
+async function lerConsumo() {
+  const desde = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const consulta = `${urlBase}/rest/v1/ai_usage_logs?select=${COLUNAS_CONSUMO}` +
+    `&created_at=gte.${encodeURIComponent(desde)}&order=created_at.desc&limit=100`;
+  const r = await fetch(consulta, { headers: cab(token) });
+  if (!r.ok) return { ok: false, status: r.status, linhas: [] };
+  let linhas = [];
+  try {
+    linhas = await r.json();
+  } catch {
+    linhas = [];
+  }
+  return { ok: true, status: r.status, linhas: Array.isArray(linhas) ? linhas : [] };
+}
+
+// 2) Linha de base do consumo — foto ANTES das chamadas.
+// Sem esta foto, um registro anterior (de outra execução, ou de uso normal do
+// app) apareceria como se fosse desta prova. Leitura recusada NÃO vira aviso:
+// sem permissão não há correlação possível, e a prova não poderá aprovar.
+console.log("2) Foto do consumo ANTES das chamadas (linha de base da correlação)");
+const baseConsumo = await lerConsumo();
+const idsAntes = baseConsumo.ok ? new Set(baseConsumo.linhas.map((l) => l.id)) : null;
+if (baseConsumo.ok) {
+  console.log(`  ${idsAntes.size} registro(s) de consumo já existente(s) na janela de 5 min (não contam para a prova)`);
+} else {
+  console.log(`  INCONCLUSIVA  HTTP ${baseConsumo.status} — sem permissão de leitura do consumo; a prova NÃO poderá aprovar.`);
+}
+
+// 3) Classificacao real
 async function classificar(fn, corpo, rotulo) {
-  console.log(`\n2) ${rotulo}`);
+  console.log(`\n3) ${rotulo}`);
   const r = await fetch(`${urlBase}/functions/v1/${fn}`, {
     method: "POST",
     headers: cab(token),
@@ -160,29 +204,40 @@ async function classificar(fn, corpo, rotulo) {
 const categoriaSticker = await classificar("classify-sticker", { image_url: STICKER_PADRAO }, "classify-sticker — figurinha REAL do banco");
 const categoriaEmoji = await classificar("classify-emoji", { image_url: EMOJI_PADRAO, file_name: "feliz.png" }, "classify-emoji — imagem de emoji");
 
-// 3) Consumo registrado (leitura pela API REST com o token do usuario)
-// Colunas reais da tabela (conferidas em _shared/ai-usage.ts): nao existe `provider_id`
-// — o provedor vai dentro de `metadata`. Pedir coluna inexistente devolve HTTP 400.
-console.log("\n3) Consumo em ai_usage_logs (a chamada paga deixou de ser invisivel)");
-const desde = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-const colunas = "function_name,model,status,error_message,metadata,created_at";
-const consulta = `${urlBase}/rest/v1/ai_usage_logs?select=${colunas}&created_at=gte.${encodeURIComponent(desde)}&order=created_at.desc&limit=20`;
-const rUso = await fetch(consulta, { headers: cab(token) });
-if (!rUso.ok) {
-  console.log(`  AVISO  HTTP ${rUso.status} — este usuario nao pode ler ai_usage_logs.`);
-  console.log("  O consumo precisa ser conferido pelo gateway de leitura do banco (a prova nao falha por isto).");
-} else {
-  const linhas = await rUso.json();
-  const minhas = linhas.filter((l) => ["classify-sticker", "classify-emoji"].includes(l.function_name));
-  console.log(`  linhas novas dos classificadores nos ultimos 5 min: ${minhas.length}`);
-  for (const l of minhas.slice(0, 6)) {
+// 4) Consumo registrado E CORRELACIONADO (R2-INF-020)
+// Só aprova o que é NOVO (não estava na foto) e válido (sucesso + provedor de
+// visão) para CADA classificador. Registro anterior, duas linhas de uma função
+// só, ou leitura de consumo recusada NÃO aprovam.
+console.log("\n4) Consumo em ai_usage_logs (correlacionado a ESTAS duas chamadas)");
+const usoDepois = await lerConsumo();
+if (!baseConsumo.ok || !usoDepois.ok) {
+  const status = !usoDepois.ok ? usoDepois.status : baseConsumo.status;
+  console.log(`  INCONCLUSIVA  HTTP ${status} — este usuário não pode ler ai_usage_logs.`);
+  console.log("  Sem a leitura do consumo não há como correlacionar as duas chamadas: a prova NÃO aprova.");
+  console.log("\n=== RESULTADO: PROVA INCONCLUSIVA ===");
+  console.log(`categorias: figurinha=${semQuebra(categoriaSticker)}  emoji=${semQuebra(categoriaEmoji)}`);
+  process.exit(1);
+}
+
+const novas = usoDepois.linhas.filter((l) => !idsAntes.has(l.id));
+console.log(`  registros de consumo NOVOS (não existiam antes das chamadas): ${novas.length}`);
+
+// Registro VALIDO: sucesso (a chamada paga aconteceu) e modelo do provedor de
+// visao (Gemini) — prova de que foi a rota de VISAO, nao a de texto.
+const registroValido = (l) =>
+  l.status === "success" && String(l.model || "").toLowerCase().includes("gemini");
+
+for (const [fn, rotulo] of [["classify-sticker", "figurinha"], ["classify-emoji", "emoji"]]) {
+  const minhas = novas.filter((l) => l.function_name === fn);
+  for (const l of minhas.slice(0, 4)) {
     const provedor = l.metadata?.provider_id ?? "(sem metadata.provider_id)";
-    console.log(`    ${l.created_at}  ${l.function_name}  status=${l.status}  model=${l.model ?? "(nulo)"}  provider=${provedor}  erro=${l.error_message ?? "-"}`);
+    console.log(
+      `    ${semQuebra(l.created_at)}  ${semQuebra(l.function_name)}  status=${semQuebra(l.status)}` +
+      `  model=${semQuebra(l.model ?? "(nulo)")}  provider=${semQuebra(provedor)}  erro=${semQuebra(l.error_message ?? "-")}`,
+    );
   }
-  ver(minhas.length >= 2, "as DUAS chamadas registradas em ai_usage_logs");
-  ver(minhas.some((l) => l.status === "success"), "ha registro de SUCESSO nos classificadores");
-  ver(minhas.some((l) => String(l.model || "").toLowerCase().includes("gemini")),
-    "alguma linha com modelo Gemini (prova de que foi o provedor de VISAO, nao o de texto)");
+  ver(minhas.some(registroValido),
+    `${fn} (${rotulo}): registro NOVO e válido — sucesso + modelo Gemini — correlacionado à chamada feita agora`);
 }
 
 console.log(`\n=== RESULTADO: ${falhas === 0 ? "PROVA OK" : `PROVA FALHOU (${falhas} verificacao(oes) vermelha(s))`} ===`);

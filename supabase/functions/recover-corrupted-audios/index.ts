@@ -125,24 +125,52 @@ export async function handleRecoverCorruptedAudios(
       return new Response(JSON.stringify({ done: true, message: "No more audios to process", offset }), { headers });
     }
 
-    const connId = messages[0].whatsapp_connection_id;
-    const { data: conn } = await supabase
-      .from("whatsapp_connections")
-      .select("instance_id")
-      .eq("id", connId)
-      .single();
-    // E20 (plano multi-conexão): sem instance_id não é seguro adivinhar a
-    // PRINCIPAL — buscaria a mídia na instância errada em vez de simplesmente
-    // falhar o lote (capturado pelo catch de baixo, mesmo padrão do resto do arquivo).
-    if (!conn?.instance_id) {
-      throw new Error(`Conexão ${connId} sem instance_id — não é seguro recuperar áudio sem saber a instância de origem.`);
-    }
-    const instanceName = conn.instance_id;
+    // R2-API-034 (#208): a instância de origem é POR MENSAGEM. O lote é paginado
+    // por created_at e pode misturar conexões; usar a instância da PRIMEIRA
+    // mensagem em todo o lote buscaria a mídia na instância errada para todas as
+    // demais. Resolvemos por `whatsapp_connection_id` com cache só de leitura
+    // (duas mensagens da mesma conexão = uma consulta).
+    const instanceByConnection = new Map<string, string>();
+    const resolveInstance = async (
+      connectionId: string | null | undefined,
+      messageRef: string,
+    ): Promise<string> => {
+      // E20 (plano multi-conexão): sem saber a conexão não é seguro adivinhar a
+      // PRINCIPAL — falha a mensagem em vez de buscar a mídia na instância errada.
+      if (!connectionId) {
+        throw new Error(`Mensagem ${messageRef} sem whatsapp_connection_id — não é seguro recuperar áudio sem saber a instância de origem.`);
+      }
+      const cached = instanceByConnection.get(connectionId);
+      if (cached) return cached;
+      const { data: conn } = await supabase
+        .from("whatsapp_connections")
+        .select("instance_id")
+        .eq("id", connectionId)
+        .single();
+      if (!conn?.instance_id) {
+        throw new Error(`Conexão ${connectionId} sem instance_id — não é seguro recuperar áudio sem saber a instância de origem.`);
+      }
+      instanceByConnection.set(connectionId, conn.instance_id);
+      return conn.instance_id;
+    };
 
     if (dry_run) {
+      const sample = messages.slice(0, 3);
+      const instances: Array<{ external_id: string | null; instance: string }> = [];
+      for (const m of sample) {
+        instances.push({
+          external_id: m.external_id,
+          instance: await resolveInstance(m.whatsapp_connection_id, m.external_id ?? m.id),
+        });
+      }
+      const distinct = [...new Set(instances.map((i) => i.instance))];
       return new Response(JSON.stringify({
-        dry_run: true, batch_size: messages.length, offset, instance: instanceName,
-        sample_ids: messages.slice(0, 3).map((m: { external_id: string | null }) => m.external_id),
+        dry_run: true, batch_size: messages.length, offset,
+        // `instance` segue preenchido quando o lote é de uma só conexão; em lote
+        // multi-conexão é null e quem manda é `instances` (uma por amostra).
+        instance: distinct.length === 1 ? distinct[0] : null,
+        instances,
+        sample_ids: sample.map((m: { external_id: string | null }) => m.external_id),
       }), { headers });
     }
 
@@ -161,7 +189,12 @@ export async function handleRecoverCorruptedAudios(
           } catch { /* proceed to re-download */ }
         }
 
-        const base64 = await getMediaBase64(evolutionUrl, evolutionKey, instanceName, msg.external_id!);
+        const base64 = await getMediaBase64(
+          evolutionUrl,
+          evolutionKey,
+          await resolveInstance(msg.whatsapp_connection_id, msg.external_id ?? msg.id),
+          msg.external_id!,
+        );
         if (!base64) { results.failed++; results.errors.push(`${msg.external_id}: no base64 from API`); continue; }
 
         const binaryStr = atob(base64);

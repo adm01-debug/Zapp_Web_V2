@@ -4,16 +4,22 @@
  *
  * Lê as etapas em docs/talkx/v4/etapas.json (campo `fecha`, o formato de máquina
  * designado "Base do placar" em v4/README.md), lê os elementos do mock em
- * docs/talkx/v4/inventario/*.md (IDs `T<tela>-<seq>` e estado inicial `Hoje`),
- * descobre as etapas concluídas pelos commits em `origin/main` cujo título contém
- * `(X<NNN>)` e gera docs/talkx/v4/STATUS.md.
+ * docs/talkx/v4/inventario/*.md (IDs `T<tela>-<seq>` e estado inicial `Hoje`) e a
+ * avaliação verificada em docs/reconciliation/tasks/P046.json, casada por ID
+ * `X<NNN>`; gera docs/talkx/v4/STATUS.md.
+ *
+ * Fonte de verdade do estado: a avaliação verificada de P046.json (entrada somente
+ * leitura). SOMENTE o estado `DONE_VERIFIED` significa etapa concluída. O marcador
+ * histórico — `(X<NNN>)` no título de um commit de `talkx` em `origin/main` — prova
+ * que houve uma entrega, NÃO que a etapa está concluída; por isso ele não entra na
+ * contagem (aparece apenas como nota informativa na saída padrão).
  *
  *   node scripts/talkx/v4-status.mjs                # gera STATUS.md
  *   node scripts/talkx/v4-status.mjs --check        # falha se STATUS.md divergir
- *   node scripts/talkx/v4-status.mjs --ref <ref>    # usa outra ref (padrão origin/main)
+ *   node scripts/talkx/v4-status.mjs --ref <ref>    # ref do histórico (padrão origin/main)
  *
  * Um elemento só conta como fechado quando o `Hoje` é `OK` OU todas as etapas que o
- * citam em `fecha` estão concluídas.
+ * citam em `fecha` estão `DONE_VERIFIED`.
  */
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -26,6 +32,23 @@ export const ROOT = join(__dirname, '..', '..');
 const ETAPAS_JSON = join(ROOT, 'docs/talkx/v4/etapas.json');
 const INVENTARIO_DIR = join(ROOT, 'docs/talkx/v4/inventario');
 const STATUS_PATH = join(ROOT, 'docs/talkx/v4/STATUS.md');
+/** Avaliação verificada do plano (fonte canônica do estado atual). Somente leitura. */
+export const P046_JSON = join(ROOT, 'docs/reconciliation/tasks/P046.json');
+
+/** Único estado que significa etapa concluída na avaliação verificada. */
+export const STATUS_CONCLUIDO = 'DONE_VERIFIED';
+
+/** Estados que a avaliação de P046.json pode declarar. Estado fora desta lista é erro. */
+const STATUS_VALIDOS = new Set([
+  'DONE_VERIFIED',
+  'VALIDATED_FAIL',
+  'IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE',
+  'PARTIAL',
+  'NOT_IMPLEMENTED',
+  'BLOCKED_EXTERNAL',
+  'OBSERVATION_WINDOW',
+  'HUMAN_ACCEPTANCE',
+]);
 
 /**
  * Fachada fina sobre o módulo compartilhado: caminho ABSOLUTO do `git`, resolvido
@@ -75,15 +98,81 @@ const TELA_NAMES = {
   17: 'Estados do sistema e modais',
 };
 
-/** Carrega as 200 etapas de etapas.json: [{id, fase, titulo, fecha[]}]. */
+/**
+ * Carrega as 200 etapas de etapas.json: [{id, fase, titulo, fecha[]}].
+ * Rejeita id fora do formato `X<NNN>` e id repetido (contagem silenciosamente errada).
+ */
 export function loadEtapas(jsonPath = ETAPAS_JSON) {
   const raw = readFileSync(jsonPath, 'utf8');
   const list = JSON.parse(raw);
   if (!Array.isArray(list)) throw new Error('etapas.json não é uma lista');
+  const seen = new Set();
   for (const e of list) {
     if (!/^X\d{3}$/.test(e.id)) throw new Error(`id de etapa inválido: ${e.id}`);
+    if (seen.has(e.id)) throw new Error(`id de etapa duplicado: ${e.id}`);
+    seen.add(e.id);
   }
   return list;
+}
+
+/**
+ * Carrega a avaliação verificada de P046.json como Map `id` → estado.
+ * Rejeita lista ausente, id fora do formato `X<NNN>`, id duplicado e estado
+ * desconhecido — qualquer um destes tornaria a contagem silenciosamente errada.
+ */
+export function loadAvaliacoes(jsonPath = P046_JSON) {
+  const raw = readFileSync(jsonPath, 'utf8');
+  const doc = JSON.parse(raw);
+  const tasks = doc && doc.tasks;
+  if (!Array.isArray(tasks)) throw new Error('P046.json não traz a lista `tasks`');
+  const byId = new Map();
+  for (const t of tasks) {
+    const id = t && t.id;
+    if (!/^X\d{3}$/.test(id)) throw new Error(`id de avaliação inválido: ${id}`);
+    if (byId.has(id)) throw new Error(`avaliação duplicada: ${id}`);
+    if (!STATUS_VALIDOS.has(t.status)) {
+      throw new Error(`estado de avaliação desconhecido em ${id}: ${t.status}`);
+    }
+    byId.set(id, t.status);
+  }
+  const esperado = doc.plan && doc.plan.expected_tasks;
+  if (Number.isInteger(esperado) && byId.size !== esperado) {
+    throw new Error(`P046.json traz ${byId.size} avaliações, esperado ${esperado}`);
+  }
+  return byId;
+}
+
+/**
+ * Casa 1:1 as etapas de etapas.json com as avaliações de P046.json por ID.
+ * Rejeita ID ausente (etapa sem avaliação) e ID desconhecido (avaliação sem etapa)
+ * em vez de produzir uma contagem incompleta em silêncio. Devolve Map `id` → estado.
+ */
+export function parearEtapas(etapas, avaliacoes) {
+  for (const e of etapas) {
+    if (!avaliacoes.has(e.id)) throw new Error(`avaliação ausente para a etapa: ${e.id}`);
+  }
+  const etapaIds = new Set(etapas.map((e) => e.id));
+  for (const id of avaliacoes.keys()) {
+    if (!etapaIds.has(id)) throw new Error(`avaliação desconhecida (sem etapa): ${id}`);
+  }
+  return new Map(etapas.map((e) => [e.id, avaliacoes.get(e.id)]));
+}
+
+/**
+ * Etapas concluídas = somente as avaliadas como `DONE_VERIFIED`.
+ * Marcador histórico de entrega não entra aqui: entrega não é conclusão verificada.
+ */
+export function verifiedDoneSteps(avaliacoes) {
+  const done = new Set();
+  for (const [id, status] of avaliacoes) {
+    if (status === STATUS_CONCLUIDO) done.add(id);
+  }
+  return done;
+}
+
+/** IDs com marcador histórico (commit `(X<NNN>)`) que NÃO estão `DONE_VERIFIED`. */
+export function historicoDivergente(historicoIds, doneSet) {
+  return [...historicoIds].filter((id) => !doneSet.has(id)).sort();
 }
 
 /** Carrega os elementos `T<tela>-<seq>` dos inventários A–G: [{id, tela, hoje}]. */
@@ -114,7 +203,8 @@ export function loadElementos(invDir = INVENTARIO_DIR) {
 }
 
 /**
- * Extrai os ids de etapa (`X<NNN>`) de uma lista de títulos de commit.
+ * Extrai os ids de etapa (`X<NNN>`) de uma lista de títulos de commit — marcador
+ * histórico de ENTREGA, não de conclusão.
  * Lança `etapa inexistente: X<NNN>` se o título referencia uma etapa desconhecida.
  */
 export function extractStepIds(titles, knownIds) {
@@ -146,7 +236,7 @@ export function gitLogTitles(ref, cwd = ROOT) {
   return out.split('\n').map((s) => s.trim()).filter(Boolean);
 }
 
-/** Etapas concluídas = ids extraídos dos commits em `ref` (padrão origin/main). */
+/** Marcadores históricos de entrega = ids extraídos dos commits em `ref` (padrão origin/main). */
 export function detectDoneSteps(ref, knownIds, cwd = ROOT) {
   return extractStepIds(gitLogTitles(ref, cwd), knownIds);
 }
@@ -179,7 +269,8 @@ export function computeStatus(etapas, elementos, doneSet) {
   const telas = new Map();
   for (const el of elementos) {
     const c = citing.get(el.id) || new Set();
-    // "fechado" exige OU Hoje=OK (já pronto) OU ao menos uma etapa que o cita E todas concluídas.
+    // "fechado" exige OU Hoje=OK (já pronto) OU ao menos uma etapa que o cita E todas elas
+    // em `doneSet` (que agora só traz `DONE_VERIFIED`).
     // Elemento sem etapa citante e Hoje≠OK (os 20 "excluídos") nunca conta como fechado.
     const fechado = el.hoje === 'OK' || (c.size > 0 && [...c].every((id) => doneSet.has(id)));
     if (!telas.has(el.tela)) telas.set(el.tela, { total: 0, fechados: 0 });
@@ -199,7 +290,12 @@ export function generateMarkdown(status) {
   L.push('# STATUS — Talk X · Plano V4 (placar)');
   L.push('');
   L.push('> Gerado por `scripts/talkx/v4-status.mjs`. Não editar à mão — o CI confere com `--check`.');
-  L.push('> Etapas concluídas = commits em `origin/main` cujo título contém `(X<NNN>)`.');
+  L.push(
+    '> Etapas concluídas = estado `DONE_VERIFIED` na avaliação verificada de `docs/reconciliation/tasks/P046.json`, casada por ID `X<NNN>`.',
+  );
+  L.push(
+    '> Marcador histórico (`(X<NNN>)` em título de commit) registra apenas que houve uma entrega: não equivale a conclusão.',
+  );
   L.push('');
   L.push('## Etapas concluídas');
   L.push('');
@@ -235,9 +331,20 @@ export function main(argv = process.argv.slice(2)) {
   const etapas = loadEtapas();
   const elementos = loadElementos();
   const knownIds = new Set(etapas.map((e) => e.id));
-  const doneSet = detectDoneSteps(ref, knownIds);
+
+  // Fonte de verdade: a avaliação verificada de P046.json, casada por ID.
+  const avaliacoes = parearEtapas(etapas, loadAvaliacoes());
+  const doneSet = verifiedDoneSteps(avaliacoes);
   const status = computeStatus(etapas, elementos, doneSet);
   const md = generateMarkdown(status);
+
+  // Diagnóstico: marcadores históricos de entrega que ainda NÃO são conclusão
+  // verificada. Não entram no placar (nem no STATUS.md) — só informam o operador.
+  const divergentes = historicoDivergente(detectDoneSteps(ref, knownIds), doneSet);
+  const nota =
+    divergentes.length > 0
+      ? ` (${divergentes.length} etapa(s) com marcador histórico sem \`DONE_VERIFIED\` — não contam como concluídas)`
+      : '';
 
   if (check) {
     const committed = readFileSync(STATUS_PATH, 'utf8');
@@ -248,14 +355,14 @@ export function main(argv = process.argv.slice(2)) {
       process.exit(1);
     }
     process.stdout.write(
-      `STATUS.md confere: ${status.doneCount}/200 etapas, ${status.fechadosTotal}/${status.elementosTotal} elementos.\n`,
+      `STATUS.md confere: ${status.doneCount}/200 etapas, ${status.fechadosTotal}/${status.elementosTotal} elementos.${nota}\n`,
     );
     return;
   }
 
   writeFileSync(STATUS_PATH, md);
   process.stdout.write(
-    `STATUS.md gerado: ${status.doneCount}/200 etapas, ${status.fechadosTotal}/${status.elementosTotal} elementos.\n`,
+    `STATUS.md gerado: ${status.doneCount}/200 etapas, ${status.fechadosTotal}/${status.elementosTotal} elementos.${nota}\n`,
   );
 }
 

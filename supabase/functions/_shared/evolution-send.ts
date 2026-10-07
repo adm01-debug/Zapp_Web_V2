@@ -4,6 +4,23 @@ import { translateV2ToGo } from "./evolution-go-routes.ts";
 
 type Fetcher = (url: string, options: RequestInit) => Promise<Response>;
 
+/**
+ * E15 (plano multi-conexão): nome da instância alvo, lido do path v2.
+ *
+ * Toda rota de instância do tradutor carrega o nome no ÚLTIMO segmento
+ * (`/message/sendText/{instancia}`, `/chat/updatePresence/{instancia}`,
+ * `/group/create/{instancia}`); o tradutor GO reduz a rota (`/send/text`) e o
+ * nome desaparece — é aqui, na escolha do `apikey`, que ele precisa ser lido de
+ * volta para não confundir a conexão escolhida com a padrão. Query string é
+ * descartada e barra final não cria segmento. Sem segmento (ex.: `/instance/qr`
+ * solto) devolve string vazia: rota sem dono comprovado.
+ */
+function instanceFromV2Path(v2Path: string): string {
+  const semQuery = (v2Path.split("?")[0] ?? "").trim();
+  const segmentos = semQuery.split("/").filter((segmento) => segmento.length > 0);
+  return segmentos.length > 0 ? segmentos[segmentos.length - 1] : "";
+}
+
 export async function evoFetch(
   evolutionUrl: string,
   evolutionKey: string,
@@ -12,11 +29,11 @@ export async function evoFetch(
   fetcher: Fetcher = (u, o) => fetch(u, o),
   v2Method = "POST",
   signal?: AbortSignal,
-  // E15 (plano multi-conexão): token da instância, resolvido pelo chamador
-  // (hoje ninguém resolve por instância ainda — isso chega com E16/E18/E19,
-  // depois que E09/E10 existirem no banco). Enquanto nenhum chamador passar
-  // isto, cai no fallback EVOLUTION_INSTANCE_TOKEN abaixo — comportamento
-  // idêntico ao de antes desta etapa.
+  // E15 (plano multi-conexão): token da instância, resolvido pelo chamador a
+  // partir da conexão do item (get_instance_token — E18/E19). Rota de instância
+  // sem ele só cai no fallback do env quando o nome no path é o da instância
+  // padrão; qualquer outra conexão falha fechado (400 `instance token ausente`)
+  // antes de qualquer rede, nunca com a credencial global.
   instanceToken?: string,
 ): Promise<Response> {
   let path = v2Path;
@@ -38,18 +55,35 @@ export async function evoFetch(
       finalBody = go.body;
       if (go.contentType) contentType = go.contentType;
       if (go.auth === "instance") {
-        const fallbackToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
         if (instanceToken) {
           apikey = instanceToken;
-        } else if (fallbackToken) {
-          console.error(`[Evolution GO] instanceToken não informado para rota de instância (${go.path}) — usando fallback EVOLUTION_INSTANCE_TOKEN (remover após E10/E21).`);
-          apikey = fallbackToken;
         } else {
-          // Nunca cair silenciosamente na key global (admin): ela não é a
-          // credencial da instância e a GO devolveria um 401 confuso.
-          return new Response(JSON.stringify({ error: "instance token ausente" }), {
-            status: 400, headers: { "Content-Type": "application/json" },
-          });
+          // E15 / TRA-002 (#18): `EVOLUTION_INSTANCE_TOKEN` é a credencial da
+          // instância PADRÃO. Aplicá-la a uma rota de OUTRA conexão (o nome no
+          // path v2 se perde na tradução) faz a GO selecionar a instância pela
+          // credencial — o envio da conexão B sairia pela conexão A. O fallback
+          // de transição só vale quando o nome no path é o da padrão
+          // (EVOLUTION_INSTANCE_NAME) e o env está configurado; fora disso a
+          // chamada morre aqui, ANTES de qualquer rede, sem a key global.
+          const alvo = instanceFromV2Path(v2Path);
+          const padrao = Deno.env.get("EVOLUTION_INSTANCE_NAME") ?? "";
+          const fallbackToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+          if (!alvo || !padrao || alvo !== padrao || !fallbackToken) {
+            console.error(
+              `[Evolution GO] instance token ausente para rota de instância (${go.path}): ` +
+                `alvo=${alvo || "(sem nome no path)"} padrao=${padrao || "(EVOLUTION_INSTANCE_NAME ausente)"} — ` +
+                `a credencial global da instância padrão NÃO é usada em outra conexão.`,
+            );
+            return new Response(JSON.stringify({ error: "instance token ausente" }), {
+              status: 400, headers: { "Content-Type": "application/json" },
+            });
+          }
+          // Log exigido pelo E21: o fallback é temporário (transição pre-E10) e
+          // some quando EVOLUTION_INSTANCE_TOKEN sair do ambiente.
+          console.warn(
+            `[Evolution GO] instance token fallback (EVOLUTION_INSTANCE_TOKEN) na instância padrão ${alvo} (${go.path}) — remover em E21.`,
+          );
+          apikey = fallbackToken;
         }
       }
     }

@@ -196,8 +196,13 @@ seja falha do run.
 
 O artefato é montado por `scripts/talkx/lado-a-lado.mjs --out <dir>`, que copia
 mock + captura para `<dir>/img/{mock,captura}` e gera `<dir>/index.html` lado a
-lado. No CI, `e2e-talkx.yml` roda o spec, monta a régua e sobe o HTML como
-artefato `regua-visual-talkx` (14 dias) — informativo, não bloqueia merge.
+lado. O `index.html` declara, tela por tela, o motivo de não haver captura —
+`sem dados ainda` (a fixture ainda é `{}`, contrato de crescimento), `sem
+componente no app` (13/14/15) ou `sem captura` (a fixture tem dados e a régua não
+mediu) — e resume a contagem no topo; captura de execução anterior com a fixture
+já esvaziada não é reexibida. No CI, `e2e-talkx.yml` roda o spec, monta a régua e
+sobe o HTML como artefato `regua-visual-talkx` (14 dias) — informativo, não
+bloqueia merge.
 
 ## Picker de localização (plano MAPA · E71)
 

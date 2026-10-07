@@ -6,6 +6,7 @@ import {
   Plug, ClipboardList, Palette, Database, Cloud,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { PUSH_NOTIFICATIONS_ENABLED, SERVICE_WORKER_ENABLED } from '@/config/service_worker';
 
 export interface FeatureSection {
   id: number;
@@ -304,7 +305,8 @@ export const sections: FeatureSection[] = [
       "Evolution API (WhatsApp) — 60+ endpoints", "Evolution API — Webhook de recebimento",
       "Evolution API — Sync de dados", "WhatsApp Cloud API — Webhook",
       "Bitrix24 CRM (bidirecional)", "ElevenLabs (TTS)", "ElevenLabs (Scribe Token)",
-      "Mapbox (mapas)", "Lovable AI Gateway (IA sem API key)", "WebAuthn (passkeys)"
+      "Mapbox (mapas)", "Lovable AI Gateway (IA sem API key)", "WebAuthn (passkeys)",
+      "contact_tags_ext — tags de contato do banco externo CRM (contrato externo)"
     ]
   },
   {
@@ -334,10 +336,11 @@ export const sections: FeatureSection[] = [
     id: 33, title: "Banco de Dados", icon: Database, color: "text-info",
     items: [
       "profiles", "user_roles", "user_settings", "user_sessions", "user_devices",
-      "contacts", "contact_tags", "contact_notes", "messages", "message_reactions",
+      "contacts", "contacts.tags (array — modelo único de etiqueta)", "ai_conversation_tags",
+      "contact_notes", "messages", "message_reactions",
       "message_templates", "scheduled_messages", "whatsapp_connections", "whatsapp_groups",
       "whatsapp_templates", "business_hours", "away_messages", "queues", "queue_members",
-      "queue_goals", "tags", "sla_configurations", "conversation_sla", "conversation_analyses",
+      "queue_goals", "sla_configurations", "conversation_sla", "conversation_analyses",
       "goals_configurations", "agent_stats", "agent_achievements", "calls", "products",
       "client_wallet_rules", "audit_logs", "notifications", "login_attempts", "blocked_ips",
       "ip_whitelist", "blocked_countries", "allowed_countries", "geo_blocking_settings",
@@ -373,3 +376,38 @@ export const sections: FeatureSection[] = [
 ];
 
 export const totalFeatures = sections.reduce((sum, s) => sum + s.items.length, 0);
+
+/**
+ * R2-GOV-002 — o catálogo acima é uma DECLARAÇÃO HISTÓRICA de produto (espelho de
+ * docs/COMPLETE_SYSTEM_FEATURES.md, 2026-03-15). Nem todo item levantado segue ativo:
+ * as capacidades que dependem de Service Worker/Push foram desligadas por decisão em
+ * `src/config/service_worker.ts` e os itens continuam listados. Em vez de repetir o ✅
+ * do documento, a tela pergunta o estado à configuração ativa do produto.
+ */
+export type FeatureState = 'active' | 'disabled';
+
+const FEATURE_GATES: Readonly<Record<string, () => boolean>> = {
+  'Push notifications (browser)': () => PUSH_NOTIFICATIONS_ENABLED,
+  'Configurações de push': () => PUSH_NOTIFICATIONS_ENABLED,
+  'Notificações de segurança push': () => PUSH_NOTIFICATIONS_ENABLED,
+  'Service Worker para push': () => PUSH_NOTIFICATIONS_ENABLED,
+  'Service Worker': () => SERVICE_WORKER_ENABLED,
+};
+
+export function featureState(item: string): FeatureState {
+  const gate = FEATURE_GATES[item];
+  if (!gate) return 'active';
+  return gate() ? 'active' : 'disabled';
+}
+
+export interface CatalogSummary {
+  total: number;
+  active: number;
+  disabled: number;
+}
+
+export function catalogSummary(): CatalogSummary {
+  const all = sections.flatMap((section) => section.items);
+  const disabled = all.filter((item) => featureState(item) === 'disabled').length;
+  return { total: all.length, active: all.length - disabled, disabled };
+}

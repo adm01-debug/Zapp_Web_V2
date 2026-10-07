@@ -6,7 +6,7 @@ import { TeamMemberDetails } from './TeamMemberDetails';
 import { NewConversationDialog } from './NewConversationDialog';
 import { MessageSquare, Users, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
+import { useActiveTeamChatConversation } from '@/hooks/chat/useTeamChatNotifications';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
@@ -16,8 +16,10 @@ export function TeamChatView() {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Enable differentiated notifications for team chat
-  useTeamChatNotifications(selectedId);
+  // TC-007: o listener de notificações é ÚNICO e global (montado em App.tsx); aqui a view
+  // só publica a conversa em foco para o listener suprimir o alerta dela — e limpa ao
+  // desmontar, para voltar a alertar quando o atendente sai da tela.
+  useActiveTeamChatConversation(selectedId);
 
   const selectedConversation = conversations.find(c => c.id === selectedId) || null;
 

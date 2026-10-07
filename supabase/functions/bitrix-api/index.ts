@@ -14,7 +14,62 @@ const BitrixBodySchema = z.object({
   filters: z.record(z.unknown()).optional(),
 });
 
-Deno.serve(async (req) => {
+/**
+ * R2-API-018 — classificacao unica das respostas do Bitrix REST.
+ *
+ * O Bitrix sinaliza rejeicao de negocio com HTTP 200 e envelope
+ * `{ error, error_description }`, e falha de infraestrutura com 4xx/5xx (muitas
+ * vezes com o mesmo envelope). Declarar sucesso sem olhar para isso fazia os
+ * ramos especiais de criacao devolverem `success: true` para uma criacao que o
+ * provedor recusou — e o front (`useBitrixApi`) so checa `result.success` para
+ * exibir o toast de criacao.
+ *
+ * Regra: HTTP nao-ok -> 502 (falha do provedor; a mensagem interna nao vai ao
+ * cliente porque `errorResponse` sanitiza 5xx); HTTP ok com envelope de erro ->
+ * 400 com a mensagem do provedor (mesma classificacao que o ramo generico ja
+ * usava); HTTP ok sem erro -> corpo devolvido a quem chamou.
+ */
+type BitrixCallResult =
+  | { ok: true; data: unknown; total: unknown }
+  | { ok: false; status: number; message: string };
+
+async function classifyBitrixResponse(response: Response): Promise<BitrixCallResult> {
+  const raw = await response.text().catch(() => '');
+  let body: Record<string, unknown> | null = null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      body = parsed as Record<string, unknown>;
+    }
+  } catch {
+    body = null;
+  }
+
+  if (!response.ok) {
+    return { ok: false, status: 502, message: `Bitrix respondeu HTTP ${response.status}` };
+  }
+  if (!body) {
+    return { ok: false, status: 502, message: 'Bitrix devolveu resposta ilegivel' };
+  }
+  if (typeof body.error === 'string' && body.error.length > 0) {
+    const description = typeof body.error_description === 'string' && body.error_description.length > 0
+      ? body.error_description
+      : body.error;
+    return { ok: false, status: 400, message: description };
+  }
+  return { ok: true, data: body.result, total: body.total };
+}
+
+/** ID devolvido pelo Bitrix numa criacao. Sem ID nao houve criacao a confirmar. */
+function createdEntityId(data: unknown): number | null {
+  if (typeof data === 'number' && Number.isInteger(data) && data > 0) return data;
+  if (typeof data === 'string' && /^\d+$/.test(data) && Number(data) > 0) return Number(data);
+  return null;
+}
+
+// Handler exportado (padrao das edges do repo): o teste chama ESTE handler com
+// um Request real; o servidor so sobe quando o arquivo roda como entrypoint.
+export async function handleBitrixApi(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -147,31 +202,51 @@ Deno.serve(async (req) => {
             select: ['ID', 'NAME', 'LAST_NAME', 'EMAIL', 'PHONE', 'COMPANY_ID', 'POST'],
           }),
         });
-        const contactsData = await contactsResponse.json();
-
-        if (contactsData.result) {
-          const syncResults = [];
-          for (const bitrixContact of contactsData.result) {
-            const phone = bitrixContact.PHONE?.[0]?.VALUE || '';
-            if (!phone) continue;
-            const { data: upsertedContact, error } = await supabase
-              .from('contacts')
-              .upsert({
-                phone: phone.replace(/\D/g, ''),
-                name: bitrixContact.NAME || 'Sem nome',
-                surname: bitrixContact.LAST_NAME,
-                email: bitrixContact.EMAIL?.[0]?.VALUE,
-                company: bitrixContact.COMPANY_ID,
-                job_title: bitrixContact.POST,
-                notes: `Bitrix ID: ${bitrixContact.ID}`,
-              }, { onConflict: 'phone', ignoreDuplicates: false })
-              .select().single();
-            if (!error) syncResults.push(upsertedContact);
-          }
-          log.done(200, { synced: syncResults.length });
-          return jsonResponse({ success: true, synced: syncResults.length, total: contactsData.result.length }, 200, req);
+        const contacts = await classifyBitrixResponse(contactsResponse);
+        if (!contacts.ok) {
+          log.error('Bitrix error', { error: contacts.message, status: contacts.status });
+          return errorResponse(contacts.message, contacts.status, req);
         }
-        break;
+
+        // R2-API-018: erro por item nao pode sumir numa contagem menor. Cada
+        // contato nao sincronizado sai em `failures` com razao sanitizada (a
+        // mensagem crua do banco fica so no log do servidor).
+        const rows = Array.isArray(contacts.data) ? contacts.data : [];
+        const syncResults = [];
+        const failures: Array<{ id: unknown; reason: string }> = [];
+        for (const bitrixContact of rows) {
+          const phone = bitrixContact.PHONE?.[0]?.VALUE || '';
+          if (!phone) {
+            failures.push({ id: bitrixContact.ID ?? null, reason: 'missing_phone' });
+            continue;
+          }
+          const { data: upsertedContact, error } = await supabase
+            .from('contacts')
+            .upsert({
+              phone: phone.replace(/\D/g, ''),
+              name: bitrixContact.NAME || 'Sem nome',
+              surname: bitrixContact.LAST_NAME,
+              email: bitrixContact.EMAIL?.[0]?.VALUE,
+              company: bitrixContact.COMPANY_ID,
+              job_title: bitrixContact.POST,
+              notes: `Bitrix ID: ${bitrixContact.ID}`,
+            }, { onConflict: 'phone', ignoreDuplicates: false })
+            .select().single();
+          if (error) {
+            log.error('sync_contacts: upsert falhou', { code: error.code, bitrixId: bitrixContact.ID });
+            failures.push({ id: bitrixContact.ID ?? null, reason: 'upsert_failed' });
+            continue;
+          }
+          syncResults.push(upsertedContact);
+        }
+        log.done(200, { synced: syncResults.length, failed: failures.length });
+        return jsonResponse({
+          success: true,
+          synced: syncResults.length,
+          failed: failures.length,
+          total: rows.length,
+          failures,
+        }, 200, req);
       }
       case 'push_contact': {
         const pushResponse = await fetch(`${BITRIX_WEBHOOK_URL}/crm.contact.add`, {
@@ -186,9 +261,18 @@ Deno.serve(async (req) => {
             },
           }),
         });
-        const pushData = await pushResponse.json();
+        const push = await classifyBitrixResponse(pushResponse);
+        if (!push.ok) {
+          log.error('Bitrix error', { error: push.message, status: push.status });
+          return errorResponse(push.message, push.status, req);
+        }
+        const bitrixId = createdEntityId(push.data);
+        if (bitrixId === null) {
+          log.error('Bitrix sem ID na criacao do contato');
+          return errorResponse('Bitrix nao confirmou o contato criado', 502, req);
+        }
         log.done(200);
-        return jsonResponse({ success: true, bitrixId: pushData.result }, 200, req);
+        return jsonResponse({ success: true, bitrixId }, 200, req);
       }
       case 'create_lead_from_conversation': {
         const leadResponse = await fetch(`${BITRIX_WEBHOOK_URL}/crm.lead.add`, {
@@ -206,9 +290,18 @@ Deno.serve(async (req) => {
             },
           }),
         });
-        const leadData = await leadResponse.json();
+        const lead = await classifyBitrixResponse(leadResponse);
+        if (!lead.ok) {
+          log.error('Bitrix error', { error: lead.message, status: lead.status });
+          return errorResponse(lead.message, lead.status, req);
+        }
+        const leadId = createdEntityId(lead.data);
+        if (leadId === null) {
+          log.error('Bitrix sem ID na criacao do lead');
+          return errorResponse('Bitrix nao confirmou o lead criado', 502, req);
+        }
         log.done(200);
-        return jsonResponse({ success: true, leadId: leadData.result }, 200, req);
+        return jsonResponse({ success: true, leadId }, 200, req);
       }
       default:
         return errorResponse('Ação não suportada', 400, req);
@@ -221,15 +314,21 @@ Deno.serve(async (req) => {
         headers: { 'Content-Type': 'application/json' },
         body: body ? JSON.stringify(body) : undefined,
       });
-      const responseData = await bitrixResponse.json();
+      const bitrix = await classifyBitrixResponse(bitrixResponse);
 
-      if (responseData.error) {
-        log.error('Bitrix error', { error: responseData.error });
-        return errorResponse(responseData.error_description || responseData.error, 400, req);
+      if (!bitrix.ok) {
+        log.error('Bitrix error', { error: bitrix.message, status: bitrix.status });
+        return errorResponse(bitrix.message, bitrix.status, req);
+      }
+
+      // R2-API-018: criacao so e sucesso com o ID devolvido pelo Bitrix.
+      if (action === 'create' && createdEntityId(bitrix.data) === null) {
+        log.error('Bitrix sem ID na criacao', { endpoint });
+        return errorResponse('Bitrix nao confirmou o registro criado', 502, req);
       }
 
       log.done(200);
-      return jsonResponse({ success: true, data: responseData.result, total: responseData.total }, 200, req);
+      return jsonResponse({ success: true, data: bitrix.data, total: bitrix.total }, 200, req);
     }
 
     return errorResponse('Endpoint não definido', 400, req);
@@ -238,4 +337,6 @@ Deno.serve(async (req) => {
     log.error('Unhandled error', { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) Deno.serve(handleBitrixApi);

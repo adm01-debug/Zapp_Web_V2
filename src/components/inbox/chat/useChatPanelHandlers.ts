@@ -280,8 +280,13 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const handleKeyDown = useCallback((e: React.KeyboardEvent, slashCommandsOpen: boolean) => {
     if (slashCommandsOpen && (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) return;
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-    if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); openDialog('globalSearch'); }
-    if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSetActiveTool('chatSearch'); }
+    // R2-INB-017 (item 313): o textarea é o dono de Ctrl/Cmd+F e Ctrl+K quando o evento nasce
+    // no composer. Sem consumir o evento (stopPropagation), o listener de window do ChatPanel
+    // repetia o Ctrl+F — dois toggles devolviam a busca ao estado anterior — e o listener de
+    // document (busca global da Inbox) abria um segundo painel no Ctrl+K. Consumido aqui, um
+    // pressionamento produz uma única ação; fora do composer, os listeners globais seguem donos.
+    if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); e.stopPropagation(); openDialog('globalSearch'); }
+    if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); handleSetActiveTool('chatSearch'); }
     if (e.key === 'Escape' && slashCommandsOpen) closeDialog('slashCommands');
   }, [handleSend, openDialog, closeDialog, handleSetActiveTool]);
 
@@ -292,8 +297,10 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       // Mesma dialog do header ("Encerrar Conversa" → close_conversation_atomic), igual ao /transfer.
       case 'resolve': openDialog('closeDialog'); break;
       case 'template': toast({ title: '📝 Templates', description: 'Use o botão de templates no input para selecionar.' }); break;
-      case 'note': toast({ title: '📝 Nota Privada', description: 'Funcionalidade de notas será aberta.' }); break;
-      case 'tag': toast({ title: subCommand === 'add' ? '🏷️ Adicionar Tag' : '🏷️ Remover Tag', description: subCommand === 'add' ? 'Selecione uma tag para adicionar.' : 'Selecione uma tag para remover.' }); break;
+      // R2-INB-021 (item 317): os cases 'note' e 'tag' saíram daqui junto com os
+      // comandos. Eles só limpavam o input e mostravam um aviso — a lista
+      // anunciava "adicionar nota" e "adicionar/remover tag" sem nenhum editor
+      // de nota ou seletor de tag atrás. Comando volta quando o destino existir.
       case 'priority': {
         if (!subCommand) break;
         const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' };

@@ -12,6 +12,15 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
   // permite escopar o dup-check abaixo por whatsapp_connection_id.
   const connection = await getConnectionByInstance(supabase, instance);
 
+  // R2-API-004: sem conexão resolvida não há escopo por
+  // whatsapp_connection_id — e sem ele o dup-check abaixo casa por
+  // external_id/sender GLOBALMENTE, promovendo a 'sent' a mensagem de outra
+  // conexão. Falha de lookup ou instância sem conexão: não muta nada.
+  if (!connection?.id) {
+    console.warn(`send.message ignored -- instance ${instance} has no resolved connection`);
+    return;
+  }
+
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { remoteJid?: string; fromMe?: boolean; id?: string } | null;
@@ -85,6 +94,14 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
   };
   const connection = await getConnectionByInstance(supabase, instance);
 
+  // R2-API-004: o lookup por external_id abaixo só é escopado por conexão
+  // quando ela existe; sem escopo, um recibo atingiria a linha homônima de
+  // outra conexão. Fail-closed: sem conexão resolvida, não muta.
+  if (!connection?.id) {
+    console.warn(`messages.update ignored -- instance ${instance} has no resolved connection`);
+    return;
+  }
+
   for (const entry of toEventRecords(data, ['messages', 'updates', 'statuses'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { id?: string; fromMe?: boolean } | null;
@@ -98,13 +115,37 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
       // key.fromMe quando o provedor manda o flag; sem ele, cai no
       // comportamento antigo (linha mais recente da conexao).
       let currentMessageQuery = supabase.from('messages')
-        .select('id, status').eq('external_id', key.id);
+        .select('id, status, sender').eq('external_id', key.id);
       if (connection?.id) currentMessageQuery = currentMessageQuery.eq('whatsapp_connection_id', connection.id);
       if (typeof key.fromMe === 'boolean') {
         currentMessageQuery = currentMessageQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
       }
-      const { data: currentMessage } = await currentMessageQuery
+      let { data: currentMessage } = await currentMessageQuery
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+      // GO receipt fix: no Evolution GO o adaptador infere key.fromMe por
+      // Chat === Sender, entao um recibo de mensagem NOSSA chega com
+      // fromMe === false e a busca primaria (sender='contact') erra a linha.
+      // Para delivered/read, a linha outbound existente com esse external_id
+      // NESTA conexao e a evidencia canonica de que o recibo e nosso — sem
+      // depender do flag inferido. Escopo estrito (external_id + conexao +
+      // sender='agent') impede um recibo inbound de tocar linha de outro id
+      // ou de outra conexao.
+      if (!currentMessage?.id && key?.fromMe === false && connection?.id &&
+          (newStatus === 'delivered' || newStatus === 'read')) {
+        const { data: outboundMessage } = await supabase.from('messages')
+          .select('id, status, sender')
+          .eq('external_id', key.id)
+          .eq('whatsapp_connection_id', connection.id)
+          .eq('sender', 'agent')
+          .order('created_at', { ascending: false }).limit(1).maybeSingle();
+        if (outboundMessage?.id) currentMessage = outboundMessage;
+      }
+
+      // O recibo e NOSSO quando o provedor disse (fromMe === true) ou quando a
+      // linha encontrada e outbound — evidencia canonica cobrindo o flag GO
+      // inferido errado e o recibo v2 sem flag.
+      const receiptIsOurs = key?.fromMe === true || currentMessage?.sender === 'agent';
 
       if (currentMessage?.id) {
         if (shouldUpdateStatus(currentMessage.status as string | null, newStatus)) {
@@ -137,9 +178,11 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
         }
       }
 
-      // Recibos do Multiplix continuam restritos a mensagem NOSSA (fromMe === true):
-      // um recibo do contato nunca resolve destinatario nem item nosso.
-      if (newStatus === 'delivered' && key?.fromMe === true && connection?.id) {
+      // Recibos do Multiplix continuam restritos a mensagem NOSSA — agora pela
+      // evidencia canonica (fromMe declarado ou linha outbound encontrada), nao
+      // pelo flag que o GO infere errado: um recibo do contato nunca resolve
+      // destinatario nem item nosso.
+      if (newStatus === 'delivered' && receiptIsOurs && connection?.id) {
         // O destinatario Multiplix e registro distinto do Talk X: roda sempre que o
         // Talk X nao confirmou (false ou erro) — um erro do TalkX nao prova que nao e
         // destinatario Multiplix. Mesmo padrao de idempotencia via RPC.
@@ -169,7 +212,7 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
         } else if (itemRecorded === true) {
           console.warn(`Multiplix item delivery acknowledged: ${key.id}`);
         }
-      } else if (newStatus === 'read' && key?.fromMe === true && connection?.id) {
+      } else if (newStatus === 'read' && receiptIsOurs && connection?.id) {
         // F58: o READ resolve o ITEM da fila do Multiplix — um READ do provedor nunca marcava
         // read_at no ITEM do Multiplix. Mesmo encadeamento do delivered, com o evento
         // explicito; a RPC so eleva (item ja em 'read' devolve false, sem rebaixar).
@@ -183,7 +226,7 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
         } else if (itemReadRecorded === true) {
           console.warn(`Multiplix item read acknowledged: ${key.id}`);
         }
-      } else if (key.fromMe === true) {
+      } else if (receiptIsOurs) {
         // Recibo de mensagem NOSSA que o frontend ainda nao estampou com
         // external_id (corrida envio x webhook): criar stub aqui duplicaria a
         // mensagem -- o eco send.message / o frontend resolvem em seguida.
@@ -224,6 +267,15 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
 // deno-lint-ignore no-explicit-any
 export async function handleMessagesDelete(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
   const connection = await getConnectionByInstance(supabase, instance);
+
+  // R2-API-004: o UPDATE de soft-delete abaixo só ganha o filtro de conexão
+  // quando ela existe; sem o filtro ele apaga por external_id em QUALQUER
+  // conexão. Fail-closed: sem conexão resolvida, não muta.
+  if (!connection?.id) {
+    console.warn(`messages.delete ignored -- instance ${instance} has no resolved connection`);
+    return;
+  }
+
   for (const entry of toEventRecords(data, ['messages', 'keys'])) {
     const keySource = isRecord(entry.key)
       ? entry.key : (typeof entry.id === 'string' ? entry : null) ?? (isRecord(baseData.key) ? baseData.key : null);
@@ -325,7 +377,8 @@ export async function handleMessagesSet(supabase: EvolutionDbClient, instance: s
 }
 
 // deno-lint-ignore no-explicit-any
-export async function handleMessagesEdited(supabase: EvolutionDbClient, data: unknown, baseData: Record<string, unknown>) {
+export async function handleMessagesEdited(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
+  const connection = await getConnectionByInstance(supabase, instance);
   for (const entry of toEventRecords(data, ['messages'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { id?: string } | null;
@@ -338,9 +391,17 @@ export async function handleMessagesEdited(supabase: EvolutionDbClient, data: un
 
     if (!editedContent) continue;
 
+    // Escopado por whatsapp_connection_id: o mesmo external_id existe em outras
+    // conexoes — sem o filtro a edicao gravava na mensagem de outra conexao.
+    // Sem conexao resolvida nao ha escopo seguro: pula (fail-closed).
+    if (!connection?.id) {
+      console.warn(`Edit event for ${key.id} skipped -- instance ${instance} has no connection`);
+      continue;
+    }
     // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle
     const { data: existing } = await supabase.from('messages').select('id')
-      .eq('external_id', key.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      .eq('external_id', key.id).eq('whatsapp_connection_id', connection.id)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (existing) {
       await supabase.from('messages').update({ content: editedContent, is_edited: true, updated_at: new Date().toISOString() }).eq('id', existing.id);
       console.log(`Message edited: ${key.id}`);

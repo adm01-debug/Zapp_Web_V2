@@ -48,10 +48,17 @@ test('E74: supabase-sync retem 7 dias e o log do deploy e redigido antes de subi
   assert.equal(/retention-days: 30/.test(deploy), false, 'nao pode sobrar retencao de 30 dias');
 
   // (3) a redacao roda ANTES do upload, sobre o log, com o valor vindo do ambiente
-  const posRedacao = deploy.indexOf('redigir-log.mjs');
+  // R2-INF-002: o shell do passo saiu do YAML para o script testado
+  // (scripts/edge-deploy/preparar-artifact-deploy.sh, exercitado por
+  // preparar-artifact-deploy.unit.mjs); o passo do workflow passa a chama-lo e a
+  // invocacao do redator (com o valor vindo do ambiente, nunca do codigo) passa a
+  // viver no script — conferida aqui para nao perder a propriedade.
+  const scriptRedator = ler('scripts/edge-deploy/preparar-artifact-deploy.sh');
+  const posRedacao = deploy.indexOf('preparar-artifact-deploy.sh');
   const posUpload = deploy.indexOf('Arquivar manifesto');
   assert.ok(posRedacao > 0, 'o passo de redacao tem de existir');
   assert.ok(posRedacao < posUpload, 'a redacao tem de vir antes do passo de arquivar');
-  assert.match(deploy, /--segredo-env=SUPABASE_ACCESS_TOKEN/, 'o valor tem de vir do ambiente, nunca do codigo');
+  assert.match(scriptRedator, /redigir-log\.mjs/, 'o redator tem de ser invocado');
+  assert.match(scriptRedator, /--segredo-env=SUPABASE_ACCESS_TOKEN/, 'o valor tem de vir do ambiente, nunca do codigo');
   assert.match(deploy, /deploy-output\.log/, 'a redacao tem de mirar o log do deploy');
 });

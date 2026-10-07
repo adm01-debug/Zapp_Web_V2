@@ -283,6 +283,68 @@ describe('tabLeaderStore', () => {
     expect(readLock()?.tabId).toBe(tabB.getSnapshot().tabId);
   });
 
+  /**
+   * R2-CALL-003 — a líder SUSPENSA pelo navegador retoma sem ceder à nova
+   * líder: o tick atrasado dela chama `renewLeadership()`, que regravava o
+   * lock com o tabId ANTIGO por cima do dono vigente — duas líderes ao mesmo
+   * tempo renovando o lock em alternância.
+   *
+   * "Suspender" aqui é `clearInterval` no tick de A (o navegador congela o
+   * timer); "retomar" é chamar o callback capturado à mão (o tick atrasado
+   * que o navegador entrega quando a aba volta). A correção faz o tick de
+   * renovação reler o lock: se outra aba assumiu, a retomada vira seguidora
+   * em vez de regravar por cima.
+   */
+  it('a líder suspensa retoma e NÃO retoma a liderança: vira seguidora da nova líder', async () => {
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+
+    // Guarda id E callback de cada intervalo: o id suspende a aba
+    // (clearInterval) e o callback a retoma (tick atrasado disparado à mão).
+    const ticks: Array<{ id: ReturnType<typeof setInterval>; callback: () => void }> = [];
+    const realSetInterval = globalThis.setInterval;
+    vi.spyOn(globalThis, 'setInterval').mockImplementation(((...args: Parameters<typeof setInterval>) => {
+      const id = realSetInterval(...args);
+      ticks.push({ id, callback: args[0] as () => void });
+      return id;
+    }) as typeof setInterval);
+
+    // A sobe, reivindica e vira líder; ticks[0] é o relógio dela.
+    const tabA = await freshStore();
+    tabA.subscribe(vi.fn());
+    tabA.claimLeadership();
+    vi.advanceTimersByTime(JITTER_MS);
+    expect(tabA.isLeader()).toBe(true);
+
+    // B sobe depois e vira seguidora de A; ticks[1] é o relógio dela.
+    const tabB = await freshStore();
+    tabB.subscribe(vi.fn());
+    tabB.claimLeadership();
+    vi.advanceTimersByTime(JITTER_MS);
+    expect(tabB.isLeader()).toBe(false);
+    expect(tabB.getSnapshot().leaderId).toBe(tabA.getSnapshot().tabId);
+    expect(ticks.length).toBeGreaterThanOrEqual(2);
+
+    // O navegador suspende A: o tick dela para de rodar, sem RELEASE.
+    clearInterval(ticks[0].id);
+
+    // O lock de A vence e B assume pelo caminho normal (TTL + releitura).
+    vi.advanceTimersByTime(TTL_MS + HEARTBEAT_MS);
+    expect(tabB.isLeader()).toBe(true);
+    const lockDaB = readLock();
+    expect(lockDaB?.tabId).toBe(tabB.getSnapshot().tabId);
+
+    // O navegador retoma A: o tick atrasado dela finalmente dispara.
+    ticks[0].callback();
+
+    // A NÃO retoma a liderança: vira seguidora de B e não regrava o lock.
+    expect(tabA.isLeader()).toBe(false);
+    expect(tabA.getSnapshot().role).toBe('follower');
+    expect(tabA.getSnapshot().leaderId).toBe(tabB.getSnapshot().tabId);
+    expect(readLock()?.tabId).toBe(tabB.getSnapshot().tabId);
+    expect(readLock()?.expiresAt).toBe(lockDaB?.expiresAt);
+    expect([tabA, tabB].filter((tab) => tab.isLeader())).toHaveLength(1);
+  });
+
   it('sorteia o jitter de boot por crypto.getRandomValues (nao por Math.random)', async () => {
     vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
     const store = await freshStore();

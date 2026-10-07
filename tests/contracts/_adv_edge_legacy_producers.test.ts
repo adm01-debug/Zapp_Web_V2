@@ -137,6 +137,17 @@
  *    reconcilia como tentativa sem cobrança de tokens). É arquivo de teste, não produz token
  *    legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
  *    varrido sobe, medido pela varredura depois do merge.
+ *
+ * 06/10/2026 — o total de arquivos varridos deixa de ser pino EXATO e vira PISO
+ * (`PISO_ARQUIVOS_VARRIDOS`). O histórico acima mostra por quê: em toda entrada o número subiu
+ * "de propósito" sem que o inventário mudasse, ou seja, o pino exato não guardava nada além de
+ * "ninguém criou arquivo". Na integração em lote ele virou ponto de colisão: cada entrega que
+ * cria um .ts em supabase/functions (quase sempre um teste) media base+1 isolada, mas duas
+ * entregas juntas mediam base+2 e nenhuma das duas trazia o número certo. O que protege contra
+ * produtor legado novo continua EXATO: o mapa INVENTARIO, a contagem de ocorrências (3) e a
+ * lista MIGRADAS. O piso mantém a única garantia útil do total: a varredura não encolheu nem
+ * passou a ler uma pasta vazia. Quem só cria arquivo sem token legado não precisa mais tocar
+ * neste teste; subir o piso é opcional e nunca é exigido por uma entrega.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -204,6 +215,9 @@ const MIGRADAS = [
   'supabase/functions/ai-conversation-summary/index.ts',
 ];
 
+/** Menor total já medido com este inventário; a varredura nunca pode cobrir menos que isso. */
+const PISO_ARQUIVOS_VARRIDOS = 243;
+
 const hits = scan();
 const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
   (acc[h.file] ??= []).push(h.id);
@@ -211,8 +225,8 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('243 arquivos .ts varridos e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBe(243);
+  it('a varredura cobre ao menos o piso de arquivos .ts e o inventário bate com o mapa pinado', () => {
+    expect(tsFiles(EDGE).length).toBeGreaterThanOrEqual(PISO_ARQUIVOS_VARRIDOS);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
@@ -234,10 +248,15 @@ describe('(c.2) DEFEITOS reais ainda presentes na árvore', () => {
     expect(src).not.toContain('parseJsonObject');
   });
 
-  it('ai-suggest-reply ainda FABRICA 3 sugestões quando o parse falha (200 com dado inventado)', () => {
+  it('ai-suggest-reply NÃO fabrica mais sugestões quando o parse falha (corrigido no item 370)', () => {
+    // O pin anterior CONGELAVA o defeito ("200 com dado inventado"). A saída do
+    // modelo passa a ser validada pelo contrato da capacidade: forma errada vira
+    // erro explícito (502 + envelope com a evidência), nunca 200 com frases fixas
+    // apresentadas como se o modelo as tivesse gerado.
     const src = readFileSync(resolve(ROOT, 'supabase/functions/ai-suggest-reply/index.ts'), 'utf8');
-    expect(src).toMatch(/catch \{[\s\S]{0,400}Entendi sua solicitação/);
-    expect(src).toMatch(/return jsonResponse\(suggestions, 200, req\)/);
+    expect(src).toMatch(/parseModelOutput\(SuggestedRepliesEnvelope/);
+    expect(src).not.toContain('Entendi sua solicitação');
+    expect(src).not.toMatch(/return jsonResponse\(suggestions, 200, req\)/);
   });
 
   it('crm-integration NÃO envia "neutral" inventado ao CRM (corrigido no PR-1)', () => {

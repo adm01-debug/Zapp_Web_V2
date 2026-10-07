@@ -188,17 +188,34 @@ export function useAuthForm() {
 
   const handlePasskeyLogin = async () => {
     const result = await authenticateWithPasskey(formData.email || undefined);
-    if (result.success && result.userEmail) {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: result.userEmail,
-        options: { shouldCreateUser: false },
-      });
-      if (!error) {
-        toast({ title: 'Autenticado com Passkey!', description: 'Redirecionando...' });
-        navigate('/');
-      } else {
-        toast({ title: 'Erro ao entrar com Passkey', description: error.message, variant: 'destructive' });
-      }
+    if (!result.success || !result.userId) {
+      toast({ title: 'Erro ao entrar com Passkey', description: 'A autenticação com a passkey não foi concluída.', variant: 'destructive' });
+      return;
+    }
+    if (!result.userEmail) {
+      toast({ title: 'Erro ao entrar com Passkey', description: 'Não foi possível identificar a conta para enviar o link de acesso.', variant: 'destructive' });
+      return;
+    }
+    const { error } = await supabase.auth.signInWithOtp({
+      email: result.userEmail,
+      options: { shouldCreateUser: false },
+    });
+    if (error) {
+      toast({ title: 'Erro ao entrar com Passkey', description: error.message, variant: 'destructive' });
+      return;
+    }
+    // signInWithOtp só ENVIA o link de acesso por e-mail — NÃO cria sessão.
+    // Anunciar "autenticado" e navegar aqui fazia o usuário ver o login
+    // concluído sem sessão nenhuma (a tela protegida o devolvia ao /auth).
+    // Só anuncia e navega quando existe sessão DE FATO e ela pertence ao
+    // usuário que a passkey validou: sessão de outra conta (login anterior,
+    // aparelho compartilhado) não prova este login.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id && session.user.id === result.userId) {
+      toast({ title: 'Autenticado com Passkey!', description: 'Redirecionando...' });
+      navigate('/');
+    } else {
+      toast({ title: 'Passkey verificada', description: 'Enviamos um link de acesso para o seu email. Abra o link para entrar.' });
     }
   };
 

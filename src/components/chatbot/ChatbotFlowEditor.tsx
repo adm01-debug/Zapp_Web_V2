@@ -4,11 +4,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, Save, Plus, Trash2, MessageSquare, Clock, ArrowRight, Bot, XCircle } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import { ArrowLeft, Save, Plus, Trash2, MessageSquare, Clock, ArrowRight, Bot, XCircle, GitBranch, Zap, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { StepProgress, Step } from '@/components/ui/step-progress';
 import { nodeTypes, AddNodeDialog, EditNodeDialog } from './ChatbotNodeDialogs';
+import {
+  EDGE_CONDITIONS, DEFAULT_CONDITION_OPERATOR, conditionOperatorLabel, findIncompleteNodes,
+} from './chatbotNodeConfig';
 
 const flowSteps: Step[] = [{ label: 'Início' }, { label: 'Nós' }, { label: 'Conexões' }, { label: 'Salvar' }];
 
@@ -24,6 +31,9 @@ export function ChatbotFlowEditor({ flow, onSave, onClose }: Props) {
   const [selectedNode, setSelectedNode] = useState<ChatbotNode | null>(null);
   const [showAddNode, setShowAddNode] = useState(false);
   const [editingNode, setEditingNode] = useState<ChatbotNode | null>(null);
+  // R2-MOD-069: só marca se o usuário CHEGOU a pedir para salvar; a lista de
+  // pendências é derivada do estado atual, então o aviso some ao completar o nó.
+  const [tentouSalvar, setTentouSalvar] = useState(false);
 
   const currentFlowStep = useMemo(() => {
     if (!nodes.some(n => n.type === 'start')) return 0;
@@ -32,10 +42,21 @@ export function ChatbotFlowEditor({ flow, onSave, onClose }: Props) {
     return 3;
   }, [nodes, edges]);
 
+  const incompletos = useMemo(() => findIncompleteNodes(nodes), [nodes]);
+  const mostrarErroSalvar = tentouSalvar && incompletos.length > 0;
+
   const addNode = useCallback((type: ChatbotNode['type']) => {
     const newNode: ChatbotNode = {
       id: `node-${Date.now()}`, type,
-      data: { label: nodeTypes[type]?.label || type, content: '', options: type === 'question' ? ['Opção 1', 'Opção 2'] : undefined, delaySeconds: type === 'delay' ? 5 : undefined },
+      data: {
+        label: nodeTypes[type]?.label || type,
+        content: '',
+        options: type === 'question' ? ['Opção 1', 'Opção 2'] : undefined,
+        condition: type === 'condition' ? { field: '', operator: DEFAULT_CONDITION_OPERATOR, value: '' } : undefined,
+        action: type === 'action' ? '' : undefined,
+        transferTo: type === 'transfer' ? '' : undefined,
+        delaySeconds: type === 'delay' ? 5 : undefined,
+      },
       position: { x: 250, y: nodes.length * 120 + 100 },
     };
     setNodes(prev => [...prev, newNode]);
@@ -50,6 +71,17 @@ export function ChatbotFlowEditor({ flow, onSave, onClose }: Props) {
   const removeNode = useCallback((nodeId: string) => { setNodes(prev => prev.filter(n => n.id !== nodeId)); setEdges(prev => prev.filter(e => e.source !== nodeId && e.target !== nodeId)); if (selectedNode?.id === nodeId) setSelectedNode(null); }, [selectedNode]);
   const connectNodes = useCallback((sourceId: string, targetId: string) => { if (sourceId === targetId) return; if (edges.some(e => e.source === sourceId && e.target === targetId)) return; setEdges(prev => [...prev, { id: `edge-${Date.now()}`, source: sourceId, target: targetId }]); }, [edges]);
   const removeEdge = useCallback((edgeId: string) => { setEdges(prev => prev.filter(e => e.id !== edgeId)); }, []);
+  const setEdgeCondition = useCallback((edgeId: string, condition: string) => { setEdges(prev => prev.map(e => e.id === edgeId ? { ...e, condition } : e)); }, []);
+
+  const handleSave = useCallback(() => {
+    if (findIncompleteNodes(nodes).length > 0) {
+      // Recusa sem descartar o rascunho: o usuário volta ao nó e completa o campo.
+      setTentouSalvar(true);
+      return;
+    }
+    setTentouSalvar(false);
+    onSave(nodes, edges);
+  }, [nodes, edges, onSave]);
 
   return (
     <div className="h-full flex flex-col">
@@ -64,9 +96,14 @@ export function ChatbotFlowEditor({ flow, onSave, onClose }: Props) {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setShowAddNode(true)} className="gap-2"><Plus className="w-4 h-4" /> Adicionar Nó</Button>
-            <Button onClick={() => onSave(nodes, edges)} className="gap-2"><Save className="w-4 h-4" /> Salvar</Button>
+            <Button onClick={handleSave} className="gap-2"><Save className="w-4 h-4" /> Salvar</Button>
           </div>
         </div>
+        {mostrarErroSalvar && (
+          <p role="alert" className="text-xs text-destructive">
+            Complete antes de salvar: {incompletos.map(({ node, missing }) => `${node.data.label} (${missing.join(', ')})`).join(' · ')}
+          </p>
+        )}
         <StepProgress steps={flowSteps} currentStep={currentFlowStep} className="px-2 pt-1" />
       </div>
 
@@ -98,6 +135,13 @@ export function ChatbotFlowEditor({ flow, onSave, onClose }: Props) {
                         </div>
                         {node.data.content && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{node.data.content}</p>}
                         {node.data.options && node.data.options.length > 0 && <div className="flex flex-wrap gap-1 mt-2">{node.data.options.map((opt, i) => <Badge key={i} variant="secondary" className="text-xs">{opt}</Badge>)}</div>}
+                        {node.data.condition && (node.data.condition.field || node.data.condition.value) && (
+                          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                            <GitBranch className="w-3 h-3" /> Se {node.data.condition.field} {conditionOperatorLabel(node.data.condition.operator)} {node.data.condition.value}
+                          </p>
+                        )}
+                        {node.data.action && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Zap className="w-3 h-3" /> Ação: {node.data.action}</p>}
+                        {node.data.transferTo && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Users className="w-3 h-3" /> Transferir para: {node.data.transferTo}</p>}
                         {node.data.delaySeconds && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> Aguardar {node.data.delaySeconds}s</p>}
                         {outEdges.length > 0 && (
                           <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
@@ -129,6 +173,28 @@ export function ChatbotFlowEditor({ flow, onSave, onClose }: Props) {
                 return <Button key={n.id} variant={isConnected ? "default" : "outline"} size="sm" className="w-full justify-start text-xs" onClick={() => { if (isConnected) { const edge = edges.find(e => e.source === selectedNode.id && e.target === n.id); if (edge) removeEdge(edge.id); } else connectNodes(selectedNode.id, n.id); }}><ArrowRight className="w-3 h-3 mr-1" />{n.data.label}</Button>;
               })}
             </div>
+            {selectedNode.type === 'condition' && edges.some(e => e.source === selectedNode.id) && (
+              <div className="mt-4 space-y-2">
+                <h3 className="font-semibold text-sm text-foreground">Ramo da condição:</h3>
+                {edges.filter(e => e.source === selectedNode.id).map(e => {
+                  const target = nodes.find(n => n.id === e.target);
+                  const alvo = target?.data.label || e.target;
+                  return (
+                    <div key={e.id} className="space-y-1">
+                      <Label className="text-xs">{alvo}</Label>
+                      <Select value={e.condition || ''} onValueChange={value => setEdgeCondition(e.id, value)}>
+                        <SelectTrigger aria-label={`Ramo da condição para ${alvo}`}><SelectValue placeholder="Escolha o ramo" /></SelectTrigger>
+                        <SelectContent>
+                          {EDGE_CONDITIONS.map(c => (
+                            <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

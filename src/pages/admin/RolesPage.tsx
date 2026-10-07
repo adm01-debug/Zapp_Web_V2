@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Shield, Users, UserPlus, Trash2, Search, Loader2, Crown, Eye, Headphones, Star } from 'lucide-react';
+import { Shield, Users, UserPlus, Trash2, Search, Loader2, Crown, Eye, Headphones, Star, AlertTriangle, RotateCw } from 'lucide-react';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useRolesPageState, type UserWithRole } from './useRolesPageState';
 import { PermissionMatrix } from '@/components/permissions/PermissionMatrix';
@@ -23,7 +23,7 @@ const ROLE_CONFIG = {
 export default function RolesPage() {
   const { isAdmin } = useUserRole();
   const {
-    loading, search, setSearch, showAddDialog, setShowAddDialog,
+    loading, loadError, retryLoad, search, setSearch, showAddDialog, setShowAddDialog,
     selectedUser, setSelectedUser, selectedRole, setSelectedRole,
     availableUsers, userToRemove, setUserToRemove, updating,
     handleAddRole, handleRemoveRole, groupedUsers,
@@ -73,6 +73,20 @@ export default function RolesPage() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
+          ) : loadError ? (
+            <Card className="border-destructive/40" role="alert">
+              <CardContent className="py-10 text-center space-y-3">
+                <AlertTriangle className="w-10 h-10 mx-auto text-destructive" />
+                <div>
+                  <p className="font-medium">Não foi possível carregar as roles</p>
+                  <p className="text-sm text-muted-foreground break-words">{loadError}</p>
+                </div>
+                <Button variant="outline" onClick={() => { void retryLoad(); }}>
+                  <RotateCw className="w-4 h-4 mr-2" />
+                  Tentar novamente
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-3">
               {Object.entries(ROLE_CONFIG).map(([role, config]) => {

@@ -106,8 +106,11 @@ export function useGlobalSearchData(open: boolean) {
       const addedMessageIds = new Set<string>();
 
       if (types.has('message') && (cleanQuery.length >= 2 || mediaType !== 'all')) {
+        const contactSelect = tags.length > 0
+          ? 'contacts!inner (id, name, surname, tags)'
+          : 'contacts:contact_id (id, name, surname)';
         let textQuery = supabase.from('messages')
-          .select(`id, content, message_type, created_at, contact_id, contacts:contact_id (id, name, surname)`)
+          .select(`id, content, message_type, created_at, contact_id, ${contactSelect}`)
           .order('created_at', { ascending: false }).limit(20);
 
         if (cleanQuery.length >= 2) {
@@ -123,43 +126,56 @@ export function useGlobalSearchData(open: boolean) {
 
         if (mediaType !== 'all' && mediaType !== 'link') textQuery = textQuery.eq('message_type', mediaType);
         if (dateStart) textQuery = textQuery.gte('created_at', dateStart.toISOString());
+        if (tags.length > 0) textQuery = textQuery.overlaps('contacts.tags', tags);
 
-        const { data: textMessages } = await textQuery;
-        textMessages?.forEach((msg) => {
-          const contact = msg.contacts as { id: string; name: string; surname: string | null } | null;
-          addedMessageIds.add(msg.id);
-          searchResults.push({
-            id: msg.id, type: 'message',
-            title: contact ? `Conversa com ${contact.name}${contact.surname ? ` ${contact.surname}` : ''}` : 'Mensagem',
-            preview: msg.content.length > 100 ? `${msg.content.substring(0, 100)}...` : msg.content,
-            timestamp: new Date(msg.created_at), contactId: msg.contact_id || undefined,
-            contactName: contact ? `${contact.name}${contact.surname ? ` ${contact.surname}` : ''}` : undefined,
-            messageType: msg.message_type,
+        const { data: textMessages, error: textError } = await textQuery;
+        if (textError) {
+          log.error('Search messages error:', textError);
+        } else {
+          textMessages?.forEach((msg) => {
+            const contact = msg.contacts as { id: string; name: string; surname: string | null } | null;
+            addedMessageIds.add(msg.id);
+            searchResults.push({
+              id: msg.id, type: 'message',
+              title: contact ? `Conversa com ${contact.name}${contact.surname ? ` ${contact.surname}` : ''}` : 'Mensagem',
+              preview: msg.content.length > 100 ? `${msg.content.substring(0, 100)}...` : msg.content,
+              timestamp: new Date(msg.created_at), contactId: msg.contact_id || undefined,
+              contactName: contact ? `${contact.name}${contact.surname ? ` ${contact.surname}` : ''}` : undefined,
+              messageType: msg.message_type,
+            });
           });
-        });
+        }
       }
 
       if (types.has('transcription') && cleanQuery.length >= 2) {
+        const contactSelect = tags.length > 0
+          ? 'contacts!inner (id, name, surname, tags)'
+          : 'contacts:contact_id (id, name, surname)';
         let audioQuery = supabase.from('messages')
-          .select(`id, content, transcription, message_type, created_at, contact_id, contacts:contact_id (id, name, surname)`)
+          .select(`id, content, transcription, message_type, created_at, contact_id, ${contactSelect}`)
           .not('transcription', 'is', null).ilike('transcription', `%${cleanQuery}%`)
           .order('created_at', { ascending: false }).limit(15);
         if (dateStart) audioQuery = audioQuery.gte('created_at', dateStart.toISOString());
+        if (tags.length > 0) audioQuery = audioQuery.overlaps('contacts.tags', tags);
 
-        const { data: audioMessages } = await audioQuery;
-        audioMessages?.forEach((msg) => {
-          if (addedMessageIds.has(msg.id)) return;
-          const contact = msg.contacts as { id: string; name: string; surname: string | null } | null;
-          const transcription = msg.transcription || '';
-          searchResults.push({
-            id: msg.id, type: 'transcription',
-            title: contact ? `Áudio de ${contact.name}${contact.surname ? ` ${contact.surname}` : ''}` : 'Áudio transcrito',
-            preview: transcription.length > 100 ? `${transcription.substring(0, 100)}...` : transcription,
-            timestamp: new Date(msg.created_at), contactId: msg.contact_id || undefined,
-            contactName: contact ? `${contact.name}${contact.surname ? ` ${contact.surname}` : ''}` : undefined,
-            messageType: msg.message_type,
+        const { data: audioMessages, error: audioError } = await audioQuery;
+        if (audioError) {
+          log.error('Search transcriptions error:', audioError);
+        } else {
+          audioMessages?.forEach((msg) => {
+            if (addedMessageIds.has(msg.id)) return;
+            const contact = msg.contacts as { id: string; name: string; surname: string | null } | null;
+            const transcription = msg.transcription || '';
+            searchResults.push({
+              id: msg.id, type: 'transcription',
+              title: contact ? `Áudio de ${contact.name}${contact.surname ? ` ${contact.surname}` : ''}` : 'Áudio transcrito',
+              preview: transcription.length > 100 ? `${transcription.substring(0, 100)}...` : transcription,
+              timestamp: new Date(msg.created_at), contactId: msg.contact_id || undefined,
+              contactName: contact ? `${contact.name}${contact.surname ? ` ${contact.surname}` : ''}` : undefined,
+              messageType: msg.message_type,
+            });
           });
-        });
+        }
       }
 
       if (types.has('contact')) {
@@ -168,14 +184,15 @@ export function useGlobalSearchData(open: boolean) {
           const q = escapeOrFilterValue(`%${cleanQuery}%`);
           contactQuery = contactQuery.or(`name.ilike.${q},surname.ilike.${q},phone.ilike.${q},email.ilike.${q}`);
         }
+        // A tag entra na CONSULTA, antes do `.limit(10)`: filtrar em JS depois do
+        // LIMIT devolvia zero quando o contato marcado era o 11º da ordem.
+        if (tags.length > 0) contactQuery = contactQuery.overlaps('tags', tags);
 
-        const { data: contacts } = await contactQuery.order('name', { ascending: true }).limit(10);
-        if (contacts) {
-          let filtered = contacts;
-          if (tags.length > 0) {
-            filtered = contacts.filter(c => c.tags && c.tags.some((tag: string) => tags.includes(tag)));
-          }
-          filtered.forEach((contact) => {
+        const { data: contacts, error: contactError } = await contactQuery.order('name', { ascending: true }).limit(10);
+        if (contactError) {
+          log.error('Search contacts error:', contactError);
+        } else {
+          contacts?.forEach((contact) => {
             searchResults.push({
               id: contact.id, type: 'contact',
               title: `${contact.name}${contact.surname ? ` ${contact.surname}` : ''}`,
@@ -198,10 +215,11 @@ export function useGlobalSearchData(open: boolean) {
             const externalIds = crmData.results
               .map((result) => result.contact_id)
               .filter((id): id is string => typeof id === 'string' && id.length > 0);
-            const { data: links } = externalIds.length
+            const { data: links, error: linksError } = externalIds.length
               ? await supabase.from('crm_contact_links')
                 .select('zapp_contact_id,external_contact_id').in('external_contact_id', externalIds)
-              : { data: [] };
+              : { data: [], error: null };
+            if (linksError) log.error('Search CRM links error:', linksError);
             const localByExternalId = new Map((links || []).map((link) => [link.external_contact_id, link.zapp_contact_id]));
             const localPhones = new Set(searchResults.filter(r => r.type === 'contact').map(r => r.preview.replace(/\D/g, '')));
             crmData.results.forEach((cr: Record<string, string | null>) => {

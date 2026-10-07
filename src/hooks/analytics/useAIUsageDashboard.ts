@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subHours, subDays } from 'date-fns';
@@ -104,15 +104,27 @@ export interface PontoDaSerie extends Record<string, number | string> {
   time: string;
 }
 
-function getTimeRange(filter: TimeFilter): Date {
+/**
+ * Limite inferior do filtro relativo, medido no relogio DO MOMENTO DA CONSULTA.
+ * `agora` e injetavel para que o mesmo instante alimente resumo, custos e lista do
+ * mesmo ciclo, sem calcular o relogio tres vezes.
+ */
+function getTimeRange(filter: TimeFilter, agora: Date = new Date()): Date {
   switch (filter) {
-    case '1h': return subHours(new Date(), 1);
-    case '6h': return subHours(new Date(), 6);
-    case '24h': return subDays(new Date(), 1);
-    case '7d': return subDays(new Date(), 7);
-    case '30d': return subDays(new Date(), 30);
+    case '1h': return subHours(agora, 1);
+    case '6h': return subHours(agora, 6);
+    case '24h': return subDays(agora, 1);
+    case '7d': return subDays(agora, 7);
+    case '30d': return subDays(agora, 30);
   }
 }
+
+/**
+ * R2-AUTH-040: por quanto de RELOGIO a mesma janela vale para resumo, custos e
+ * lista. As tres consultas partem juntas em cada ciclo, entao 1s cobre o ciclo
+ * inteiro sem nunca deixar a janela velha: o ciclo seguinte recalcula.
+ */
+const MESMO_CICLO_MS = 1_000;
 
 /** Mesmos baldes de antes (5/30/60/360 min), em segundos porque quem agrupa e o servidor. */
 function getBucketSeconds(filter: TimeFilter): number {
@@ -148,8 +160,27 @@ export function useAIUsageDashboard() {
   const [logsPage, setLogsPage] = useState(0);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('24h');
 
-  const since = useMemo(() => getTimeRange(timeFilter).toISOString(), [timeFilter]);
   const bucketSeconds = useMemo(() => getBucketSeconds(timeFilter), [timeFilter]);
+
+  // R2-AUTH-040: a janela pertence ao CICLO de atualizacao, nao a montagem do
+  // painel. Antes o limite inferior era memoizado por `timeFilter`, entao o
+  // polling de 30s e o botao Atualizar reenviavam o instante da abertura: com
+  // "Ultima 1h" escolhido as 12h, a busca das 13h ainda pedia `created_at >= 11h`
+  // e a janela crescia sob o mesmo rotulo. Agora cada consulta recalcula o limite
+  // pelo relogio atual, e as tres consultas do mesmo ciclo recebem o MESMO
+  // instante - renovacao sem divergencia entre os consumidores.
+  const janelaRef = useRef<{ filtro: TimeFilter; marca: number; desde: string } | null>(null);
+  const janelaAtual = (): string => {
+    const agora = new Date();
+    const marca = agora.getTime();
+    const vigente = janelaRef.current;
+    if (vigente && vigente.filtro === timeFilter && Math.abs(marca - vigente.marca) < MESMO_CICLO_MS) {
+      return vigente.desde;
+    }
+    const nova = { filtro: timeFilter, marca, desde: getTimeRange(timeFilter, agora).toISOString() };
+    janelaRef.current = nova;
+    return nova.desde;
+  };
 
   // (1) TOTAIS: agregados no servidor, sobre a JANELA INTEIRA. Nenhuma soma e
   // feita no cliente, entao nada depende de qual pagina esta visivel.
@@ -162,7 +193,7 @@ export function useAIUsageDashboard() {
         fn: string,
         args: Record<string, unknown>,
       ) => Promise<{ data: unknown; error: unknown }>)('ai_usage_summary', {
-        p_since: since,
+        p_since: janelaAtual(),
         p_until: null,
         p_bucket_seconds: bucketSeconds,
         p_top_functions: 50,
@@ -185,7 +216,7 @@ export function useAIUsageDashboard() {
         fn: string,
         args: Record<string, unknown>,
       ) => Promise<{ data: unknown; error: unknown }>)('ai_usage_cost_summary', {
-        p_since: since,
+        p_since: janelaAtual(),
         p_until: null,
         p_top_functions: 50,
       });
@@ -204,7 +235,7 @@ export function useAIUsageDashboard() {
       const { data, error, count } = await supabase
         .from('ai_usage_logs')
         .select('*', { count: 'exact' })
-        .gte('created_at', since)
+        .gte('created_at', janelaAtual())
         .order('created_at', { ascending: false })
         .range(de, de + LOGS_PER_PAGE - 1);
       if (error) throw error;

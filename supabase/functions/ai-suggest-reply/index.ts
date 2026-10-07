@@ -2,16 +2,40 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { AiSuggestReplySchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
-import { generateWithRouting } from "../_shared/ai-generate.ts";
+import { generateWithRouting, type GenerateParams, type GenerateResult } from "../_shared/ai-generate.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
+import { SuggestedRepliesEnvelope, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 
-Deno.serve(async (req) => {
+/**
+ * Seam de teste (mesmo padrão do `ai-auto-tag`): o handler exportado recebe os
+ * poucos pontos que o teste offline precisa substituir. Em produção nada é
+ * injetado e as implementações reais valem — por isso o teste chama o handler
+ * REAL. Sem este seam, o defeito de contrato do `ai-suggest-reply` não teria
+ * como ser provado sem provedor de IA e credencial de banco.
+ */
+export interface AiSuggestReplyDeps {
+  /** Resolve a identidade do chamador (default: `requireAuth`). */
+  authorize?: (req: Request) => Promise<{ userId: string } | Response>;
+  /** Guarda de uso/cota de IA (default: `enforceAiGuards`). */
+  enforceGuards?: (
+    opts: { functionName: string; userId: string; req: Request },
+  ) => Promise<Response | null>;
+  /** Roteador de IA (default: `generateWithRouting`). */
+  generate?: (params: GenerateParams) => Promise<GenerateResult>;
+}
+
+export async function handleAiSuggestReply(
+  req: Request,
+  deps: AiSuggestReplyDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
-  const authCheck = await requireAuth(req);
+  const authorize = deps.authorize ?? requireAuth;
+  const authCheck = await authorize(req);
   if (authCheck instanceof Response) return authCheck;
   const __uid = (authCheck as { userId: string }).userId;
-  const __guard = await enforceAiGuards({ functionName: "ai-suggest-reply", userId: __uid, req });
+  const guards = deps.enforceGuards ?? enforceAiGuards;
+  const __guard = await guards({ functionName: "ai-suggest-reply", userId: __uid, req });
   if (__guard) return __guard;
 
 
@@ -139,20 +163,27 @@ Responda APENAS em formato JSON com a seguinte estrutura:
         }))
       : [];
 
-    const { response, data } = await generateWithRouting({
+    // Despacho central (IA-032). O caminho PADRÃO chama `generateWithRouting`
+    // literalmente junto do `requestId`: o contrato de origem do IA-051 lê este
+    // bloco no fonte (o id do clique tem de chegar ao log de consumo). O seam
+    // `deps.generate` existe só para o teste rodar o handler real offline e
+    // recebe OS MESMOS parâmetros — não é um caminho diferente.
+    const generateParams: GenerateParams = {
       purpose: 'copilot',
       functionName: 'ai-suggest-reply',
       userId,
-      // IA-051 — o id do clique (IA-048) chega ao log de consumo: dá para ir do
-      // gasto de volta até a requisição que o originou, sem tocar no conteúdo.
-      requestId,
       system: systemPrompt,
       messages: [
         ...conversationHistory,
         { role: "user", content: "Gere 3 sugestões de resposta contextualizadas para a última mensagem do cliente." }
       ],
       temperature: 0.7,
-    });
+    };
+
+    const generate = deps.generate;
+    const { response, data } = generate
+      ? await generate({ ...generateParams, requestId })
+      : await generateWithRouting({ ...generateParams, requestId });
 
     if (!response.ok || !data) {
       if (response.status === 429) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
@@ -160,39 +191,62 @@ Responda APENAS em formato JSON com a seguinte estrutura:
       throw new Error(`AI gateway error [${response.status}]`);
     }
 
-    const content = (data as any).choices?.[0]?.message?.content;
+    // `any` saiu daqui: o campo do provedor é lido por tipo explícito (o valor
+    // continua tratado como `unknown` e só vira JSON depois do contrato).
+    const content = (data as { choices?: Array<{ message?: { content?: unknown } }> })
+      .choices?.[0]?.message?.content;
 
-    let suggestions;
+    // Recorte do primeiro `{` ao último `}` — EXATAMENTE o regex de antes (a
+    // migração para o helper canônico `_shared/ai-json.ts` é dívida pinada no
+    // ratchet `_adv_edge_legacy_producers` e não faz parte deste cartão). O que
+    // muda é o destino do recorte: ele passa a ser VALIDADO contra o contrato da
+    // capacidade antes de sair daqui.
+    let rawOutput: unknown = null;
     try {
       const jsonMatch = (content as string).match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        suggestions = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error("No JSON found in response");
-      }
+      if (jsonMatch) rawOutput = JSON.parse(jsonMatch[0]);
     } catch {
-      log.warn("Parse error, using fallback suggestions");
-      suggestions = {
-        suggestions: [
-          { type: "direct", text: "Entendi sua solicitação. Vou verificar isso para você.", emoji: "✓", source: null },
-          { type: "empathetic", text: "Compreendo sua situação. Estou aqui para ajudá-lo da melhor forma possível.", emoji: "💬", source: null },
-          { type: "followup", text: "Poderia me fornecer mais detalhes sobre isso?", emoji: "❓", source: null }
-        ]
-      };
+      rawOutput = null;
     }
+
+    // Contrato de saída da capacidade (IA-025): o envelope `{ suggestions: [...] }`
+    // e CADA sugestão são conferidos aqui (array, exatamente 3 itens, texto não
+    // vazio). Antes, JSON sintaticamente válido com forma errada seguia direto
+    // para a interface (o cliente só conferia `data.suggestions` truthy) e o
+    // parse que falhava devolvia três frases FABRICADAS como se fossem do modelo,
+    // com HTTP 200 — nenhum dos dois casos sinalizava degradação. Agora nada de
+    // forma errada entra no render normal: a resposta é erro explícito, com o
+    // motivo do contrato na evidência.
+    const validated = parseModelOutput(SuggestedRepliesEnvelope, rawOutput);
+    if (!validated.ok) {
+      log.warn("Model output rejected by contract", {
+        errors: validated.errors.map((issue) => `${issue.path}: ${issue.message}`).slice(0, 8),
+      });
+      return jsonResponse(buildAiEnvelope({
+        capability: 'ai-suggest-reply',
+        status: 'error',
+        error: 'A resposta do modelo não atende ao contrato das sugestões; nenhuma sugestão foi apresentada.',
+        evidence: { errors: validated.errors },
+      }), 502, req);
+    }
+
+    const suggestions = validated.data.suggestions;
 
     // IA-048: ecoa o identificador da requisição no corpo para o cliente descartar
     // com segurança uma resposta que já não pertence ao contexto atual. Não há
     // revalidação aqui: esta capacidade não tem efeito de servidor a proteger.
-    if (requestId && suggestions && typeof suggestions === 'object') {
-      (suggestions as Record<string, unknown>).requestId = requestId;
-    }
+    const body: { suggestions: typeof suggestions; requestId?: string } = { suggestions };
+    if (requestId) body.requestId = requestId;
 
     log.done(200);
-    return jsonResponse(suggestions, 200, req);
+    return jsonResponse(body, 200, req);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     log.error("Unhandled error", { error: errorMessage });
     return errorResponse(errorMessage, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleAiSuggestReply(req));
+}

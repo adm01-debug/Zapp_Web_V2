@@ -6,7 +6,9 @@ import DOMPurify from 'dompurify';
  *
  * Política:
  * - Imagens remotas e cid: bloqueadas por padrão para não acionar pixels de
- *   rastreamento; data: URL > 32KB também vira placeholder.
+ *   rastreamento; data: URL > 32KB também vira placeholder. URL relativa ao
+ *   protocolo (`//host/…`) é tratada como remota (o navegador resolve para o
+ *   esquema da página e dispara o rastreador).
  * - Links sempre externos e seguros (target=_blank + rel=noopener noreferrer).
  * - Dimensões fixas do remetente neutralizadas (somente '%' e 'auto' permitidos;
  *   px, em, rem, vh, vw, cm, calc etc. são todos removidos); comentários CSS removidos
@@ -69,7 +71,11 @@ function installHooks(p: PurifyInstance): void {
       node.setAttribute('loading', 'lazy');
       node.setAttribute('referrerpolicy', 'no-referrer');
       const src = node.getAttribute('src') || '';
-      if (/^(https?:|cid:)/i.test(src)) {
+      // O navegador descarta TAB/CR/LF de QUALQUER posição da URL e ignora
+      // espaços nas bordas (ex.: "\t//host/x" e "/\t/host" resolvem para remoto).
+      // Classificamos a origem sem nenhum espaço para que esses casos não escapem.
+      const normalizedSrc = src.replace(/\s/g, '');
+      if (normalizedSrc.startsWith('//') || /^(https?:|cid:)/i.test(normalizedSrc)) {
         node.removeAttribute('src');
         node.setAttribute('alt', node.getAttribute('alt') || '[imagem externa bloqueada por privacidade]');
         node.setAttribute('title', 'Imagem externa bloqueada por privacidade');

@@ -222,7 +222,9 @@ uma refatoração futura não quebre a separação em silêncio.
    à troca de aba.
 2. Áudio recebido **e** áudio enviado respondem ao controle. Idem vídeo, nas 5 superfícies da F3.
 3. Com mídia em mudo, os alertas do sistema (mensagem, menção, SLA, meta, chamada) continuam
-   audíveis no volume configurado em Notificações — provado por teste (E38–E40) e à mão (E49).
+   audíveis no volume configurado em Notificações — a fiação é provada por teste (E38–E40); a
+   audição real do alerta em aparelho **não foi medida** (a E49 fechada foi um run de UI, não uma
+   sessão ouvida — ver §7.4 e `docs/evidencias/plano-volume-50/e46-navegadores.md`).
 4. Nada do painel de Notificações muda de comportamento.
 5. Sem migration, sem edge function, sem secret novo.
 6. Sem dependência nova no `package.json`.
@@ -344,6 +346,15 @@ cross-origin o `createMediaElementSource` pode lançar, o `catch` cai num `eleme
   `e2e/reactions.spec.ts:84 › clicking a reaction badge toggles it off` (flake pré-existente, já
   citado na auditoria de 30/09). **O spec de volume passou em produção**, incluindo o caso do controle
   da sidebar que era flaky — é o deflake do E45 validado onde importa.
+
+  **Qualificação da prova (o que este run NÃO prova):** o `e2e-logado` prova só os controles de UI
+  registrados no spec — slider, persistência no reload, mudo e o `aria-label` do botão de alertas.
+  Ele **não** prova audição nem playback real: o caso que mede `<audio>.volume` segue `test.fixme`
+  (`e2e/media-volume.spec.ts:152`), porque o contato de fixture não tem mensagem de áudio — e
+  **nenhuma** fixture de áudio foi criada ou semeada (escrever a mensagem exigiria o tenant de
+  produção, não autorizado — §7.6, pendência 1). A metade audível do critério 3 (§4) fica, portanto,
+  **sem medição em aparelho**: só a fiação é provada por teste (E38–E40), e a audição real segue
+  PENDENTE em `docs/evidencias/plano-volume-50/e46-navegadores.md`.
 
 ### 7.5 E50 — persistência do volume dos ALERTAS
 

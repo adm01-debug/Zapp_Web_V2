@@ -1,6 +1,12 @@
 import { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 
 export interface NavigationEntry {
+  /**
+   * Identidade da entrada, gravada em `window.history.state[NAV_STATE_KEY]`.
+   * É o que permite reconciliar a travessia do navegador com a OCORRÊNCIA certa
+   * quando a mesma view aparece mais de uma vez no histórico (ex.: A,B,C,B,D).
+   */
+  id: string;
   viewId: string;
   timestamp: number;
 }
@@ -29,22 +35,86 @@ interface NavigationHistoryReturn {
 const MAX_HISTORY = 50;
 const BREADCRUMB_DEPTH = 4;
 
+/** Chave de `window.history.state` que guarda a identidade da entrada. */
+const NAV_STATE_KEY = 'zappNavId';
+
+let navEntrySeq = 0;
+
+/** Gera uma identidade única para a entrada (contador + tempo). */
+function createEntryId(): string {
+  navEntrySeq += 1;
+  return `nav-${Date.now().toString(36)}-${navEntrySeq}`;
+}
+
+/** Lê a identidade da entrada a partir de um `history.state`. */
+function readEntryId(state: unknown): string | null {
+  if (state && typeof state === 'object') {
+    const id = (state as Record<string, unknown>)[NAV_STATE_KEY];
+    if (typeof id === 'string' && id) return id;
+  }
+  return null;
+}
+
+/**
+ * Grava a identidade na entrada ATUAL do navegador sem tocar na URL. Usado
+ * quando a entrada foi criada fora do hook (ex.: `history.pushState` de outro
+ * provider) ou na carga inicial, para que ela também seja reconhecível.
+ */
+function bindEntryIdentity(entryId: string): void {
+  const base = window.history.state && typeof window.history.state === 'object'
+    ? (window.history.state as Record<string, unknown>)
+    : {};
+  window.history.replaceState({ ...base, [NAV_STATE_KEY]: entryId }, '', window.location.href);
+}
+
+/** Reconcilia a identidade recebida do navegador com a entrada correspondente. */
+function reconcileById(prev: NavigationState, entryId: string): NavigationState | null {
+  const idx = prev.entries.findIndex(entry => entry.id === entryId);
+  if (idx < 0) return null;
+  if (idx === prev.index) return prev;
+  return { ...prev, index: idx, previousView: prev.entries[prev.index]?.viewId ?? null };
+}
+
+/** Empilha a entrada a partir da posição atual, descartando o ramo seguinte. */
+function pushEntry(prev: NavigationState, entry: NavigationEntry): NavigationState {
+  const currentViewId = prev.entries[prev.index]?.viewId ?? null;
+  const truncated = prev.entries.slice(0, prev.index + 1);
+  const newEntries = [...truncated, entry].slice(-MAX_HISTORY);
+  return { entries: newEntries, index: newEntries.length - 1, previousView: currentViewId };
+}
+
 // Hashes that are NOT view IDs (e.g. skip-to-content anchors)
 export const RESERVED_HASHES = new Set(['main-content', 'main-navigation', 'inbox-section', 'search-input']);
+
+/**
+ * Compatibilidade de rota (TRA-010/#178): ids de módulos REMOVIDOS que ainda
+ * podem viver em favorito, histórico ou link compartilhado. O id antigo resolve
+ * para a tela vigente equivalente em vez de cair no fallback do ViewRouter.
+ * `tags` → `contacts` (o modelo de etiqueta vigente é `contacts.tags`).
+ */
+export const LEGACY_VIEW_REDIRECTS: Readonly<Record<string, string>> = Object.freeze({
+  tags: 'contacts',
+});
+
+/** Resolve um id de view legado para a tela vigente (id desconhecido passa reto). */
+export function resolveLegacyView(viewId: string): string {
+  return LEGACY_VIEW_REDIRECTS[viewId] ?? viewId;
+}
 
 /**
  * Reads the active view from the URL.
  * Canonical format: ?view=<id>
  * Legacy compat: #<id> (hash) — migrated to ?view= on first load.
+ * Ids de módulos removidos passam por `resolveLegacyView`.
  */
 function getViewFromUrl(defaultView: string): string {
   const params = new URLSearchParams(window.location.search);
   const viewParam = params.get('view');
-  if (viewParam) return viewParam;
+  if (viewParam) return resolveLegacyView(viewParam);
 
   // Backward compat: hash-based deep links ("#inbox") before migration
   const hash = window.location.hash.replace('#', '');
-  if (hash && !RESERVED_HASHES.has(hash)) return hash;
+  if (hash && !RESERVED_HASHES.has(hash)) return resolveLegacyView(hash);
 
   return defaultView;
 }
@@ -54,16 +124,22 @@ function getViewFromUrl(defaultView: string): string {
  * anchors. Single source of the URL rules: the hook and every non-hook call site
  * go through here, so the reserved-hash semantics cannot drift between them.
  */
-export function setViewParam(view: string, replace = false): void {
+export function setViewParam(view: string, replace = false, entryId?: string): void {
   const url = new URL(window.location.href);
   url.searchParams.set('view', view);
   if (url.hash && !RESERVED_HASHES.has(url.hash.replace('#', ''))) {
     url.hash = '';
   }
+  const base = window.history.state && typeof window.history.state === 'object'
+    ? (window.history.state as Record<string, unknown>)
+    : {};
+  const state = entryId
+    ? { ...base, [NAV_STATE_KEY]: entryId }
+    : (replace ? window.history.state : null);
   if (replace) {
-    window.history.replaceState(null, '', url.href);
+    window.history.replaceState(state, '', url.href);
   } else {
-    window.history.pushState(null, '', url.href);
+    window.history.pushState(state, '', url.href);
   }
 }
 
@@ -77,8 +153,12 @@ export function setViewParam(view: string, replace = false): void {
  */
 export function navigateToView(view: string): void {
   const currentView = new URLSearchParams(window.location.search).get('view');
-  setViewParam(view, currentView === view);
-  window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view } }));
+  const replace = currentView === view;
+  // Só gera identidade quando empilha entrada nova: um replace (view já ativa)
+  // não deve marcador — a entrada atual continua com a identidade dela.
+  const entryId = replace ? undefined : createEntryId();
+  setViewParam(view, replace, entryId);
+  window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view, entryId } }));
 }
 
 /**
@@ -93,7 +173,7 @@ export function navigateToView(view: string): void {
  */
 export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryReturn {
   const [state, setState] = useState<NavigationState>(() => ({
-    entries: [{ viewId: getViewFromUrl(defaultView), timestamp: Date.now() }],
+    entries: [{ id: createEntryId(), viewId: getViewFromUrl(defaultView), timestamp: Date.now() }],
     index: 0,
     previousView: null,
   }));
@@ -112,43 +192,59 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
 
   // Sync ?view= → state on browser back/forward. NOTA: pushState/replaceState NÃO
   // disparam popstate — navegação programática emite `zapp:navigate` (veja syncView).
-  const onPopState = useCallback(() => {
+  const onPopState = useCallback((event?: Event) => {
     const viewId = getViewFromUrl(defaultView);
+    // Identidade da entrada para onde o navegador foi. Sem `event` (ex.: hashchange)
+    // não há travessia a reconciliar — cai no caminho por view.
+    const targetId = event ? readEntryId((event as PopStateEvent).state) : null;
+    const fallbackId = createEntryId();
+
     setState(prev => {
       const currentViewId = prev.entries[prev.index]?.viewId;
-      if (viewId === currentViewId) return prev;
 
-      // Browser went back → find matching entry before current index
+      // 1) Reconciliar pela identidade da entrada: distingue duas ocorrências da
+      //    MESMA view (ex.: A,B,C,B,D — avançar de C para o B posterior é o índice 3,
+      //    não o índice 1). É o que o navegador realmente informa em `event.state`.
+      if (targetId) {
+        const reconciled = reconcileById(prev, targetId);
+        if (reconciled) return reconciled;
+      }
+
+      if (viewId === currentViewId) return prev;
+      // 2) Entrada estrangeira (sem identidade conhecida): procura para trás...
       for (let i = prev.index - 1; i >= 0; i--) {
         if (prev.entries[i].viewId === viewId) {
           return { ...prev, index: i, previousView: currentViewId ?? null };
         }
       }
-      // Browser went forward → find matching entry after current index
+      // ...e para frente.
       for (let i = prev.index + 1; i < prev.entries.length; i++) {
         if (prev.entries[i].viewId === viewId) {
           return { ...prev, index: i, previousView: currentViewId ?? null };
         }
       }
-      // Address bar / deep link → push new entry
-      const newEntry: NavigationEntry = { viewId, timestamp: Date.now() };
-      const truncated = prev.entries.slice(0, prev.index + 1);
-      const newEntries = [...truncated, newEntry].slice(-MAX_HISTORY);
-      return { entries: newEntries, index: newEntries.length - 1, previousView: currentViewId ?? null };
+      // 3) Address bar / deep link → push new entry
+      const newEntry: NavigationEntry = { id: fallbackId, viewId, timestamp: Date.now() };
+      return pushEntry(prev, newEntry);
     });
   }, [defaultView]);
 
   // Always push a new entry for zapp:navigate — never treated as back/forward traversal.
+  // Quando o emissor informa a identidade da entrada (syncView/navigateToView), a
+  // entrada é a MESMA nas instâncias paralelas: se ela já existe aqui, reconcilia
+  // em vez de empilhar de novo.
   const onZappNavigate = useCallback((e: Event) => {
-    const view = (e as CustomEvent<{ view: string }>).detail?.view;
+    const detail = (e as CustomEvent<{ view?: string; entryId?: string }>).detail;
+    const view = detail?.view;
     if (!view) return;
+    const entryId = detail?.entryId ?? createEntryId();
     setState(prev => {
       const currentViewId = prev.entries[prev.index]?.viewId;
+      const reconciled = reconcileById(prev, entryId);
+      if (reconciled) return reconciled;
       if (view === currentViewId) return prev;
-      const truncated = prev.entries.slice(0, prev.index + 1);
-      const newEntry: NavigationEntry = { viewId: view, timestamp: Date.now() };
-      const newEntries = [...truncated, newEntry].slice(-MAX_HISTORY);
-      return { entries: newEntries, index: newEntries.length - 1, previousView: currentViewId ?? null };
+      const newEntry: NavigationEntry = { id: entryId, viewId: view, timestamp: Date.now() };
+      return pushEntry(prev, newEntry);
     });
   }, []);
 
@@ -164,19 +260,33 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     }
 
     // Migrate the URL: replace hash with ?view= query param
-    setViewParam(hash, true);
+    setViewParam(resolveLegacyView(hash), true);
 
     // Handle as a view change using the same logic as onPopState
     onPopState();
   }, [onPopState]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    // Compatibilidade de rota (TRA-010/#178): favorito/link antigo de módulo
+    // removido (?view=tags) é reescrito para a tela vigente SEM empilhar
+    // histórico — a URL fica coerente e o redirect não passa pelo fallback.
+    const rawView = params.get('view');
+    if (rawView) {
+      const resolved = resolveLegacyView(rawView);
+      if (resolved !== rawView) setViewParam(resolved, true);
+    }
     // One-time migration: if URL still uses hash (#inbox) with no ?view=, rewrite to ?view=inbox
     const hash = window.location.hash.replace('#', '');
-    const params = new URLSearchParams(window.location.search);
     if (hash && !RESERVED_HASHES.has(hash) && !params.get('view')) {
-      setViewParam(hash, true);
+      setViewParam(resolveLegacyView(hash), true);
     }
+
+    // Vincula a identidade da entrada atual do navegador à entrada do histórico
+    // interno — inclusive após recarregar (o mapa em memória se refez, mas a
+    // travessia do navegador continua reconhecível).
+    const currentEntryId = stateRef.current.entries[stateRef.current.index]?.id;
+    if (currentEntryId) bindEntryIdentity(currentEntryId);
 
     window.addEventListener('popstate', onPopState);
     window.addEventListener('hashchange', onHashChange);
@@ -188,50 +298,54 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
     };
   }, [onPopState, onHashChange, onZappNavigate]);
 
-  const syncView = useCallback((viewId: string, replace = false) => {
-    setViewParam(viewId, replace);
+  const syncView = useCallback((viewId: string, replace = false, entryId?: string) => {
+    setViewParam(viewId, replace, entryId);
     // Fonte única de navegação: navigateTo/goBack/goForward emitem o evento,
     // para que instâncias paralelas do hook (ActiveCallBar) acompanhem a view.
-    window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view: viewId } }));
+    window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view: viewId, entryId } }));
   }, []);
 
   const navigateTo = useCallback((viewId: string) => {
     // Read current view from URL (updated synchronously by setViewParam) rather than stateRef,
     // which may be stale when goBack() + navigateTo() fire in the same synchronous tick.
     const currentViewId = new URLSearchParams(window.location.search).get('view') ?? defaultView;
+    if (currentViewId === viewId) return;
+    const entryId = createEntryId();
     setState(prev => {
       const cvid = prev.entries[prev.index]?.viewId;
       if (viewId === cvid) return prev;
-      const truncated = prev.entries.slice(0, prev.index + 1);
-      const newEntry: NavigationEntry = { viewId, timestamp: Date.now() };
-      const newEntries = [...truncated, newEntry].slice(-MAX_HISTORY);
-      return { entries: newEntries, index: newEntries.length - 1, previousView: cvid ?? null };
+      const newEntry: NavigationEntry = { id: entryId, viewId, timestamp: Date.now() };
+      return pushEntry(prev, newEntry);
     });
-    if (currentViewId !== viewId) syncView(viewId);
+    syncView(viewId, false, entryId);
   }, [syncView, defaultView]);
 
   const goBack = useCallback(() => {
     const { entries, index } = stateRef.current;
     if (index <= 0) return;
-    const targetView = entries[index - 1]?.viewId;
+    const target = entries[index - 1];
+    if (!target) return;
     setState(prev => {
       if (prev.index <= 0) return prev;
       const newIndex = prev.index - 1;
       return { ...prev, index: newIndex, previousView: prev.entries[prev.index]?.viewId ?? null };
     });
-    if (targetView) syncView(targetView, true);
+    // replace=true: a entrada ATUAL do navegador passa a representar a entrada de
+    // destino (mesma identidade), então voltar/avançar do navegador reconcile-a.
+    syncView(target.viewId, true, target.id);
   }, [syncView]);
 
   const goForward = useCallback(() => {
     const { entries, index } = stateRef.current;
     if (index >= entries.length - 1) return;
-    const targetView = entries[index + 1]?.viewId;
+    const target = entries[index + 1];
+    if (!target) return;
     setState(prev => {
       if (prev.index >= prev.entries.length - 1) return prev;
       const newIndex = prev.index + 1;
       return { ...prev, index: newIndex, previousView: prev.entries[prev.index]?.viewId ?? null };
     });
-    if (targetView) syncView(targetView, true);
+    syncView(target.viewId, true, target.id);
   }, [syncView]);
 
   const canGoBack = state.index > 0;

@@ -21,6 +21,7 @@ export function SkillBasedRoutingSettings() {
   const [selectedQueue, setSelectedQueue] = useState<string>('');
   const [newQueueSkill, setNewQueueSkill] = useState('');
   const [newQueueMinLevel, setNewQueueMinLevel] = useState(1);
+  const [newSkillLevel, setNewSkillLevel] = useState(3);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ['profiles-for-skills'],
@@ -173,7 +174,7 @@ export function SkillBasedRoutingSettings() {
                 <datalist id="skill-suggestions">
                   {SKILL_SUGGESTIONS.map(s => <option key={s} value={s} />)}
                 </datalist>
-                <Select defaultValue="3" onValueChange={v => {}}>
+                <Select value={String(newSkillLevel)} onValueChange={v => setNewSkillLevel(Number(v))}>
                   <SelectTrigger className="w-24">
                     <SelectValue />
                   </SelectTrigger>
@@ -187,7 +188,7 @@ export function SkillBasedRoutingSettings() {
                   size="sm"
                   onClick={() => {
                     if (newSkill.trim()) {
-                      addSkill.mutate({ profileId: selectedProfile, skillName: newSkill.trim(), level: 3 });
+                      addSkill.mutate({ profileId: selectedProfile, skillName: newSkill.trim(), level: newSkillLevel });
                     }
                   }}
                   disabled={!newSkill.trim()}

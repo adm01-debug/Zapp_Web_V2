@@ -82,15 +82,26 @@ export async function handleWebhookDiagnostic(req: Request, _injected?: WebhookD
       lastCheck: c.last_health_check,
     })) || [];
 
-    // 2. For each connection (or specified), check Evolution API directly
-    const instances = instanceName
-      ? [{ instance_id: instanceName }]
-      : (connections || []);
+    // 2. For each connection (or specified), check Evolution API directly.
+    // R2-API-037: a conexao e resolvida aqui, a partir do banco, e cada
+    // diagnostico roda ESCOPADO a ela. Quando o instanceName do corpo nao casa
+    // nenhuma linha, o fluxo e INDETERMINADO (nunca herda metrica global).
+    const allConnections: Array<Record<string, unknown>> = Array.isArray(connections) ? connections : [];
+    const instances: Array<{ instance_id: string; resolvedConnectionId: string | null }> = instanceName
+      ? [{
+          instance_id: String(instanceName),
+          resolvedConnectionId: (allConnections.find((c) => c.instance_id === instanceName)?.id as string | undefined) ?? null,
+        }]
+      : allConnections.map((c) => ({
+          instance_id: String(c.instance_id),
+          resolvedConnectionId: (c.id as string | undefined) ?? null,
+        }));
 
     const diagnostics = [];
 
     for (const conn of instances) {
       const diag: Record<string, unknown> = { instance: conn.instance_id };
+      diag.connectionResolved = conn.resolvedConnectionId !== null;
 
       // 2a. Check instance status - try multiple endpoints
       try {
@@ -104,8 +115,9 @@ export async function handleWebhookDiagnostic(req: Request, _injected?: WebhookD
         }
         // Fallback: use DB status if API unreachable
         if (state === 'unknown') {
-          const dbConn = (connections || []).find((c: Record<string, unknown>) => c.instance_id === conn.instance_id);
-          state = dbConn?.status === 'connected' ? 'open' : (dbConn?.status || 'unknown');
+          const dbConn = allConnections.find((c) => c.instance_id === conn.instance_id);
+          const dbStatus = dbConn?.status;
+          state = dbStatus === 'connected' ? 'open' : (typeof dbStatus === 'string' ? dbStatus : 'unknown');
         }
         diag.connectionState = state;
         diag.statusOk = state === 'open' || state === 'connected';
@@ -177,21 +189,55 @@ export async function handleWebhookDiagnostic(req: Request, _injected?: WebhookD
         diag.webhookSeverity = 'error';
       }
 
-      // 2c. Check recent message flow
+      // 2c. Check recent message flow — ESCOPADO a esta conexao (R2-API-037).
+      // A consulta antiga filtrava so created_at e contava as MESMAS linhas
+      // globais para toda instancia: o trafego de A virava "saude" de B. Agora
+      // cada agregado e filtrado por whatsapp_connection_id e contado pelo
+      // banco (count 'exact' + head), entao o numero reflete so esta conexao e
+      // nao depende do teto de linhas que o PostgREST devolve.
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { data: recentMsgs } = await supabase
-        .from('messages')
-        .select('sender, created_at')
-        .gte('created_at', oneHourAgo);
+      if (conn.resolvedConnectionId) {
+        const [incomingRes, outgoingRes] = await Promise.all([
+          supabase.from('messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('whatsapp_connection_id', conn.resolvedConnectionId)
+            .eq('sender', 'contact')
+            .gte('created_at', oneHourAgo),
+          supabase.from('messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('whatsapp_connection_id', conn.resolvedConnectionId)
+            .eq('sender', 'agent')
+            .gte('created_at', oneHourAgo),
+        ]);
 
-      const incoming = recentMsgs?.filter(m => m.sender === 'contact').length || 0;
-      const outgoing = recentMsgs?.filter(m => m.sender === 'agent').length || 0;
+        const incoming = incomingRes.count;
+        const outgoing = outgoingRes.count;
+        const flowError = incomingRes.error ?? outgoingRes.error;
 
-      diag.messageFlow = {
-        lastHour: { incoming, outgoing, total: (recentMsgs?.length || 0) },
-        incomingOk: incoming > 0,
-        flowHealth: incoming === 0 && outgoing > 0 ? 'outbound-only' : incoming === 0 ? 'no-traffic' : 'healthy',
-      };
+        if (flowError || typeof incoming !== 'number' || typeof outgoing !== 'number') {
+          // Falha de consulta NAO e "sem trafego": diagnostico indeterminado,
+          // sem inventar disponibilidade a partir de numero ausente.
+          diag.messageFlow = {
+            lastHour: { incoming: 0, outgoing: 0, total: 0 },
+            incomingOk: false, flowHealth: 'unknown', scope: 'query-failed',
+            error: flowError?.message ?? 'contagem indisponivel',
+          };
+        } else {
+          diag.messageFlow = {
+            lastHour: { incoming, outgoing, total: incoming + outgoing },
+            incomingOk: incoming > 0,
+            flowHealth: incoming === 0 && outgoing > 0 ? 'outbound-only' : incoming === 0 ? 'no-traffic' : 'healthy',
+            scope: 'connection',
+          };
+        }
+      } else {
+        // instanceName sem linha correspondente no banco: nao ha chave para
+        // escopar o fluxo. Diagnostico INDETERMINADO — nunca herda metrica global.
+        diag.messageFlow = {
+          lastHour: { incoming: 0, outgoing: 0, total: 0 },
+          incomingOk: false, flowHealth: 'unknown', scope: 'unresolved-connection',
+        };
+      }
 
       // 2d. Auto-fix if requested
       if (action === 'auto-fix' && (diag.webhookSeverity === 'critical' || diag.webhookSeverity === 'warning')) {

@@ -6,6 +6,26 @@ Nada aqui é estimativa: cada status aponta o PR/commit ou o `grep` que o susten
 
 Legenda: ✅ feito · 🟡 parcial · ❌ não feito · ⛔ avaliado e deliberadamente não feito (motivo na linha)
 
+## Atualização posterior — estado reconciliado (reconciliação LT-TYPE-01)
+
+> **Snapshot histórico, não o estado atual.** Tudo neste documento — o cabeçalho, o placar de
+> **47%**, a fila de PRs e a lista de **17 arquivos com gráficos pendentes** — é o retrato de
+> **24/09/2026** e vale apenas para aquele dia. As tabelas datadas foram preservadas como
+> histórico; não foram reescritas.
+
+A reconciliação documental **LT-TYPE-01** (`docs/reconciliation/FINDINGS.json`, categoria
+`DOCUMENTATION_STALE`) registra que as sete referências abertas em 24/09 já foram
+**integradas**: **#590, #593, #595, #596, #611, #801 e #1428**. A fila descrita em "Onde cada
+coisa está" e as pendências de F5 (etapa 62) foram resolvidas depois daquele retrato.
+
+Isto é reconciliação **documental**: `LT-TYPE-01` tem `proof_type: STATIC`,
+`production_verified: false` e o `scope_limit` explícito — "reconciliação documental; não é bug
+de runtime nem nova medição visual". Nenhuma tela foi remedida aqui: a correção é de texto,
+não uma nova medição nem uma validação visual.
+
+Etapas afetadas pelo achado: `fontes:8`, `fontes:21`, `fontes:62`, `fontes:95`, `fontes:98`.
+Base da reconciliação: `2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6`.
+
 ## Placar
 
 | Fase | ✅ | 🟡 | ❌ | ⛔ | Total |

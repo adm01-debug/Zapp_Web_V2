@@ -1,5 +1,6 @@
-import { useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
+import { useRef, forwardRef, useImperativeHandle, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { registrarBloqueioRecarga } from '@/lib/reload-blockers';
 import { Message } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -67,6 +68,18 @@ export const ChatMessageInput = forwardRef<ChatMessageInputRef, ChatMessageInput
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileUploaderRef = useRef<FileUploaderRef>(null);
   const isMobile = useIsMobile();
+
+  // Ha texto escrito e ainda nao enviado? Enquanto isso for verdade, um recarregamento
+  // silencioso da aba (monitor de versao com a aba oculta) apagaria a mensagem em edicao.
+  const mensagemEmEdicao = inputValue.trim().length > 0;
+
+  // A dependencia booleana garante UM unico bloqueio ativo por vez: trocar o texto de
+  // 'a' para 'ab' nao registra de novo, espacos em branco nao bloqueiam, e esvaziar o
+  // campo (ou desmontar o componente) libera o registro via cleanup.
+  useEffect(() => {
+    if (!mensagemEmEdicao) return;
+    return registrarBloqueioRecarga('mensagem-em-edicao');
+  }, [mensagemEmEdicao]);
 
   useImperativeHandle(ref, () => ({
     focus: () => textareaRef.current?.focus(),

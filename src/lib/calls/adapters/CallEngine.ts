@@ -328,6 +328,11 @@ export class CallEngine {
    */
   private encerrar(outcome: CallEndOutcome): void {
     const answeredAt = this.answeredAt;
+    // Instante do encerramento capturado AQUI, de forma sincrona: o `.then()`
+    // abaixo so roda quando o registro resolve e essa espera pode ser longa
+    // (gravacao no banco) — ler `Date.now()` la dentro somaria essa espera ao
+    // tempo de conversa.
+    const endedAt = Date.now();
     const callIdPromise = this.callIdPromise;
     this.callIdPromise = null;
     this.answeredAt = null;
@@ -352,7 +357,7 @@ export class CallEngine {
       void callIdPromise.then((id) => {
         if (id) {
           const talkSeconds = answeredAt
-            ? Math.max(0, Math.round((Date.now() - answeredAt.getTime()) / 1000))
+            ? Math.max(0, Math.round((endedAt - answeredAt.getTime()) / 1000))
             : null;
           this.sink.onFinished(id, talkSeconds, outcome);
         }
