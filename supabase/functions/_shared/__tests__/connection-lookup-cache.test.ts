@@ -17,6 +17,12 @@
  *       messages (nem com filtro de conexão, nem sem — P03);
  *   T7: regressão — com conexão, os três handlers mutam de novo e a query que
  *       escopa a operação carrega `whatsapp_connection_id`.
+ *   T8a/T8b/T8c: conexão RESOLVIDA mas SEM `id` segue fail-closed — send/update/
+ *       delete não mutam nada (a guarda de topo é `!connection?.id`, e não
+ *       `!connection`): sem `id` não existe filtro por whatsapp_connection_id, e
+ *       o payload sairia com o id indefinido;
+ *   T9: o erro de lookup no CAMINHO DO HANDLER também não entra no cache — a
+ *       chamada seguinte relê o banco e volta a mutar escopada.
  *
  * O cache é module-level: cada teste usa instância distinta e chama
  * invalidateConnectionCache() antes.
@@ -290,4 +296,101 @@ Deno.test("T7c: messages.delete com conexão muta E o update carrega whatsapp_co
     mutacaoEscopada,
     "a própria query de mutação precisa carregar o filtro whatsapp_connection_id (não pode sair global)",
   );
+});
+
+// ── Fail-closed: conexão resolvida SEM `id` (guarda `!connection?.id`) ──────
+
+Deno.test("T8a: send.message com conexão SEM id faz ZERO mutação", async () => {
+  invalidateConnectionCache();
+  const db = fakeDb({
+    conexao: [{ data: {}, error: null }],
+    // eco que CASA: se a guarda fosse `!connection`, o update sairia com
+    // eq('whatsapp_connection_id', undefined)
+    mensagens: { maybeSingle: { data: { id: "msg-t8s", status: "sending" }, error: null } },
+  });
+
+  await handleSendMessage(
+    db.client,
+    "inst-t8s",
+    { key: { id: "3EB0SEND08", fromMe: true, remoteJid: "5511999990002@s.whatsapp.net" } },
+    {},
+  );
+
+  assertEquals(
+    mutacoes(db, "messages").length,
+    0,
+    "conexão sem id não escopa por whatsapp_connection_id — o eco não pode mutar",
+  );
+});
+
+Deno.test("T8b: messages.update com conexão SEM id faz ZERO mutação", async () => {
+  invalidateConnectionCache();
+  const db = fakeDb({
+    conexao: [{ data: {}, error: null }],
+    mensagens: { maybeSingle: { data: { id: "msg-t8u", status: "sent" }, error: null } },
+  });
+
+  await handleMessagesUpdate(
+    db.client,
+    "inst-t8u",
+    { updates: [{ key: { id: "3EB0UPD08", fromMe: true }, status: "DELIVERY_ACK" }] },
+    {},
+  );
+
+  assertEquals(
+    mutacoes(db, "messages").length,
+    0,
+    "conexão sem id não escopa por whatsapp_connection_id — o recibo não pode mutar",
+  );
+});
+
+Deno.test("T8c: messages.delete com conexão SEM id faz ZERO mutação", async () => {
+  invalidateConnectionCache();
+  const db = fakeDb({
+    conexao: [{ data: {}, error: null }],
+    // linha que CASA com o delete: se a guarda fosse `!connection`, o update sairia
+    mensagens: { lista: { data: [{ id: "msg-t8d" }], error: null } },
+  });
+
+  await handleMessagesDelete(db.client, "inst-t8d", { keys: [{ id: "3EB0DEL08" }] }, {});
+
+  assertEquals(
+    mutacoes(db, "messages").length,
+    0,
+    "conexão sem id não escopa por whatsapp_connection_id — o soft-delete não pode mutar",
+  );
+});
+
+Deno.test("T9: erro de lookup no handler não vira cache negativo — a 2ª chamada relê e muta", async () => {
+  invalidateConnectionCache();
+  const db = fakeDb({
+    conexao: [
+      { data: null, error: { message: "pooler indisponível" } },
+      { data: { id: "conn-1" }, error: null },
+    ],
+    mensagens: { maybeSingle: { data: { id: "msg-t9", status: "sending" }, error: null } },
+  });
+
+  await assertRejects(
+    () =>
+      handleSendMessage(
+        db.client,
+        "inst-t9",
+        { key: { id: "3EB0SEND09", fromMe: true, remoteJid: "5511999990003@s.whatsapp.net" } },
+        {},
+      ),
+    Error,
+    "connection_lookup_failed",
+  );
+  assertEquals(mutacoes(db, "messages").length, 0, "o ramo de erro não pode seguir para a mutação");
+
+  await handleSendMessage(
+    db.client,
+    "inst-t9",
+    { key: { id: "3EB0SEND09", fromMe: true, remoteJid: "5511999990003@s.whatsapp.net" } },
+    {},
+  );
+
+  assertEquals(consultasConexao(db), 2, "o erro não pode ser memorizado: a 2ª chamada relê o banco");
+  assertEquals(mutacoes(db, "messages").length, 1, "com o banco de volta, o eco confirma a mensagem escopada");
 });
