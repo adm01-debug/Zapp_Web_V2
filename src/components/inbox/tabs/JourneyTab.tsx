@@ -144,6 +144,11 @@ export function JourneyTab({ contactId }: JourneyTabProps) {
                   {day.events.map((event) => {
                     const meta = KIND_META[event.kind];
                     const Icon = meta.icon;
+                    // R2-INB-035: tarefa concluída chega com pílula success; o ícone acompanha o tom
+                    // recebido em vez do tom de pendência fixo do kind (warning).
+                    const iconClassName = event.kind === 'task' && event.pill?.tone === 'success'
+                      ? 'bg-success/15 text-success'
+                      : meta.className;
                     return (
                       <div key={event.id} data-testid="timeline-event" className="relative flex items-start gap-3">
                         <span className="absolute -left-14 top-1 w-11 text-right text-xs text-muted-foreground shrink-0">
@@ -151,7 +156,7 @@ export function JourneyTab({ contactId }: JourneyTabProps) {
                         </span>
                         <span className="absolute left-[-1px] top-1.5 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-background" />
                         <div className="flex-1 rounded-xl border border-border bg-card p-3 flex items-center gap-3">
-                          <span className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', meta.className)}>
+                          <span className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', iconClassName)}>
                             <Icon className="w-4 h-4" />
                           </span>
                           <div className="min-w-0 flex-1">
