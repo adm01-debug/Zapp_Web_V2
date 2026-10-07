@@ -32,36 +32,40 @@ const ChatPanel = lazy(() =>
   import('@/components/inbox/ChatPanel').then((m) => ({ default: m.ChatPanel }))
 );
 
-interface RawMessage {
-  id: string;
-  content: string;
+/**
+ * Entrada do popup: `useMessages` entrega `Message[]` já adaptado
+ * (`mapMessageRowToMessage`). As variantes cruas/antigas podem não trazer todos os
+ * campos derivados, então `timestamp`/`type` entram como opcionais aqui — e o
+ * restante (snake_case do banco) segue como fallback dos campos legados.
+ */
+type PopupMessage = Omit<Message, 'timestamp' | 'type'> & {
+  timestamp?: Date;
+  type?: Message['type'];
   message_type?: string;
-  sender: string;
-  agent_id?: string;
-  created_at: string;
-  status?: string;
-  is_read?: boolean;
-  media_url?: string;
-  transcription?: string;
-  transcription_status?: string;
-}
+  media_url?: string | null;
+  is_read?: boolean | null;
+  transcription_status?: string | null;
+};
 
-function mapToLegacyMessages(msgs: RawMessage[], contactId: string): Message[] {
+/**
+ * R2-INB-023: o popup tratava a lista do hook como linha crua (`RawMessage`) e
+ * remontava um objeto só com um subconjunto dos campos. Isso apagava o que o balão
+ * consome — `is_deleted` (placeholder de apagada), `location`, `isEdited`,
+ * `external_id` (ações realtime/edição/exclusão) e `link_preview`. Agora nada é
+ * descartado: espalhamos o próprio `Message` e só normalizamos os defaults.
+ */
+function mapToLegacyMessages(msgs: PopupMessage[], contactId: string): Message[] {
   return msgs.map((m) => ({
-    id: m.id,
-    conversationId: contactId,
-    content: m.content,
-    type: (m.message_type || 'text') as Message['type'],
-    sender: m.sender as Message['sender'],
-    agentId: m.agent_id || undefined,
-    timestamp: new Date(m.created_at),
-    status:
-      (m.status as Message['status'] | null) ||
-      (m.is_read ? 'read' : 'delivered'),
-    mediaUrl: m.media_url || undefined,
-    transcription: m.transcription || null,
-    transcriptionStatus:
-      (m.transcription_status as Message['transcriptionStatus']) || null,
+    ...m,
+    conversationId: m.conversationId ?? contactId,
+    timestamp: m.timestamp ?? new Date(m.created_at ?? 0),
+    type: (m.type ?? m.message_type ?? 'text') as Message['type'],
+    status: m.status ?? (m.is_read ? 'read' : 'delivered'),
+    mediaUrl: m.mediaUrl ?? m.media_url ?? undefined,
+    transcription: m.transcription ?? null,
+    transcriptionStatus: (m.transcriptionStatus ??
+      m.transcription_status ??
+      null) as Message['transcriptionStatus'],
   }));
 }
 
@@ -142,7 +146,7 @@ export default function ChatPopup() {
     : null;
 
   const legacyMessages = contactId
-    ? mapToLegacyMessages(messages as unknown as RawMessage[], contactId)
+    ? mapToLegacyMessages(messages, contactId)
     : [];
 
   const handleSendMessage = useCallback(
