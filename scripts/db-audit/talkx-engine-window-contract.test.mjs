@@ -145,6 +145,14 @@ after(() => {
 
 const DIA = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 const FUSOS = [
+  // Cobertura completa dos offsets inteiros (sinal POSIX invertido em Etc/GMT):
+  // evita lacunas como UTC-1/-2 e UTC+6/+7, que deixavam B5 dependente da hora do CI.
+  'Etc/GMT-14', 'Etc/GMT-13', 'Etc/GMT-12', 'Etc/GMT-11', 'Etc/GMT-10',
+  'Etc/GMT-9', 'Etc/GMT-8', 'Etc/GMT-7', 'Etc/GMT-6', 'Etc/GMT-5',
+  'Etc/GMT-4', 'Etc/GMT-3', 'Etc/GMT-2', 'Etc/GMT-1', 'Etc/GMT',
+  'Etc/GMT+1', 'Etc/GMT+2', 'Etc/GMT+3', 'Etc/GMT+4', 'Etc/GMT+5',
+  'Etc/GMT+6', 'Etc/GMT+7', 'Etc/GMT+8', 'Etc/GMT+9', 'Etc/GMT+10',
+  'Etc/GMT+11', 'Etc/GMT+12',
   'Pacific/Auckland', 'Pacific/Chatham', 'Australia/Sydney', 'Asia/Tokyo',
   'Asia/Shanghai', 'Asia/Kolkata', 'Asia/Dubai', 'Europe/Moscow', 'Europe/Berlin',
   'Europe/London', 'UTC', 'Atlantic/Azores', 'America/Sao_Paulo',
@@ -176,6 +184,14 @@ function hhmm(totalMin) {
 function minDeHhmm(texto) {
   const [h, m] = texto.split(':').map(Number);
   return h * 60 + m;
+}
+
+function minDentroDaJanela(min, janela) {
+  const inicio = minDeHhmm(janela.inicio);
+  const fim = minDeHhmm(janela.fim);
+  if (inicio < fim) return min >= inicio && min < fim;
+  if (inicio > fim) return min >= inicio || min < fim;
+  return false;
 }
 
 /** Janela nao-ambigua (inicio<fim) que CONTEM min com ~2h de margem. */
@@ -259,8 +275,8 @@ test('A1: versao anterior mede business_hours no fuso da CAMPANHA (defeito do ca
   const akl = relogioEm('Pacific/Auckland', quando);
   const janelaUtc = janelaQueContem(utc.min);
   assert.ok(
-    akl.min < (utc.min - 180 + 1440) % 1440 || akl.min >= (utc.min + 180 + 1440) % 1440,
-    'pre-condicao: Auckland fora da janela de ~4h ao redor da hora UTC',
+    !minDentroDaJanela(akl.min, janelaUtc),
+    'pre-condicao: Auckland fora da janela UTC realmente gerada',
   );
   // bh valido com janela ao redor da hora UTC e tz proprio Auckland:
   // contrato (relogio Auckland, ~12h adiante) => 'f'; versao anterior (relogio
@@ -275,8 +291,10 @@ test('A1: versao anterior mede business_hours no fuso da CAMPANHA (defeito do ca
 });
 
 test('A2: versao anterior ignora tz invalido do business_hours e abre a janela', () => {
+  const utc = relogioEm('UTC', agora());
+  const janelaUtc = janelaQueContem(utc.min);
   definirBusinessHours({
-    start: '00:00', end: '23:59', tz: 'Marte/Olympus', days: [0, 1, 2, 3, 4, 5, 6],
+    start: janelaUtc.inicio, end: janelaUtc.fim, tz: 'Marte/Olympus', days: [utc.dia],
   });
   const id = criarCampanha({ tz: 'UTC', bhOnly: true });
   assert.equal(janela(id), 't',
@@ -364,8 +382,8 @@ test('B3: business_hours usa o tz PROPRIO do JSONB — vereditos divergentes ent
     tz: 'Pacific/Auckland', days: [utc.dia, akl.dia],
   };
   assert.ok(
-    !(akl.min >= (utc.min - 120 + 1440) % 1440 && akl.min < (utc.min + 120 + 1440) % 1440),
-    'pre-condicao: Auckland fora da janela de ~4h ao redor de UTC',
+    !minDentroDaJanela(akl.min, janelaUtc),
+    'pre-condicao: Auckland fora da janela UTC realmente gerada',
   );
   definirBusinessHours(bhFecha);
   const campanhaUtc = criarCampanha({ tz: 'UTC', bhOnly: true });
@@ -502,8 +520,8 @@ test('C1: rollback restaura corpo, GRANTs e comentario; reaplicar e idempotente'
   const akl = relogioEm('Pacific/Auckland', quando);
   const janelaUtc = janelaQueContem(utc.min);
   assert.ok(
-    !(akl.min >= (utc.min - 120 + 1440) % 1440 && akl.min < (utc.min + 120 + 1440) % 1440),
-    'pre-condicao: Auckland fora da janela ao redor de UTC',
+    !minDentroDaJanela(akl.min, janelaUtc),
+    'pre-condicao: Auckland fora da janela UTC realmente gerada',
   );
   definirBusinessHours({
     start: janelaUtc.inicio, end: janelaUtc.fim,

@@ -203,11 +203,13 @@ BEGIN
          OR EXISTS (
               SELECT 1
                 FROM jsonb_array_elements(v_days) AS dia
-               WHERE jsonb_typeof(dia.value) IS DISTINCT FROM 'number'
-                  OR (dia.value #>> '{}')::numeric < 0
-                  OR (dia.value #>> '{}')::numeric > 6
-                  OR (dia.value #>> '{}')::numeric
-                     <> trunc((dia.value #>> '{}')::numeric)
+               WHERE CASE
+                       WHEN jsonb_typeof(dia.value) IS DISTINCT FROM 'number' THEN true
+                       ELSE (dia.value #>> '{}')::numeric < 0
+                         OR (dia.value #>> '{}')::numeric > 6
+                         OR (dia.value #>> '{}')::numeric
+                            <> trunc((dia.value #>> '{}')::numeric)
+                     END
             ) THEN
         RETURN false;
       END IF;
