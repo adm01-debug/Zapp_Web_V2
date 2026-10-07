@@ -539,7 +539,7 @@ export async function handleIncomingMessage(
 
   // E57/E59: a confirmacao so sai quando a drenagem criou supressao NOVA
   // (suppression_id nao-nulo) — a autoresposta nunca sai duas vezes.
-  if (drain?.suppression_id) {
+  if (!key.fromMe && drain?.suppression_id) {
     const resolvedPhone = phone ?? ((key.remoteJid ?? '').split('@')[0].replace(/\D/g, ''));
     console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist (' + optOutKeyword + ')');
     // E59: mensagem de confirmacao. O texto vem de

@@ -1,8 +1,4 @@
-/**
- * X030 — opt-out no webhook: palavra configurada, botão/lista `talkx_optout`,
- * cache, autoresposta só em supressão nova e falha do provedor sem sucesso.
- * O SQL é provado em `scripts/db-audit/inbound-effects-replay.test.sh`.
- */
+/** X030 — opt-out no webhook; SQL provado em scripts/db-audit/inbound-effects-replay.test.sh. */
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   handleIncomingMessage,
@@ -15,10 +11,8 @@ type Chamada = { nome: string; args: Record<string, unknown> };
 
 interface FakeConfig {
   keywords?: Array<{ keyword: string; match_mode: string }>;
-  /** Retorno do drain por chamada (suppression_id ou status por reentrega). */
   drainResults?: Array<Record<string, unknown>>;
   recentSend?: Array<{ id: string }>;
-  /** Atalho da X030: cada entrada vira o retorno do drain (id = suppression_id novo, null = already_suppressed). */
   suppressions?: Array<unknown>;
   autoreply?: unknown;
   instanceToken?: unknown;
@@ -310,21 +304,28 @@ Deno.test("X030: contato sem envio em 30 dias não gera supressão nem autorespo
 });
 
 Deno.test("X030: talkx_optout respeita fromMe", async () => {
-  prepararAmbiente();
-  const recebida: Chamada[] = [];
-  let payload = goButton("talkx_optout", "3EB0BTN1");
-  let { data, key } = traduzir(payload);
-  await handleIncomingMessage(fakeSupabase(recebida, {}), "inst-go-x030-d", data, key, "http://localhost:54321", "svc");
-  assertEquals(recebida.find((c) => c.nome === "ingest_inbound_message")!.args.p_opt_out_keyword, "talkx_optout");
-
-  const propria: Chamada[] = [];
-  payload = goButton("talkx_optout", "3EB0BTN1-ME");
-  ((payload.data as Record<string, unknown>).Info as Record<string, unknown>).IsFromMe = true;
-  ({ data, key } = traduzir(payload));
-  await handleIncomingMessage(fakeSupabase(propria, {}), "inst-go-x030-d", data, key, "http://localhost:54321", "svc");
-  const args = propria.find((c) => c.nome === "ingest_inbound_message")!.args;
-  assertEquals(args.p_from_me, true);
-  assertEquals(args.p_opt_out_keyword, null);
+  resetOptOutKeywordCache(); instalarFetchFalso();
+  try { prepararAmbiente();
+    const cfg={drainResults:[drainOk({suppression_id:"supp-btn",optout_status:"suppressed"})],autoreply:"OK",instanceToken:"t"};
+    const rx:Chamada[]=[];
+    let p=goButton("talkx_optout","B");
+    let {data,key}=traduzir(p);
+    await handleIncomingMessage(fakeSupabase(rx,cfg),"i",data,key,"u","s");
+    assertEquals(rx.find((c)=>c.nome==="ingest_inbound_message")!.args.p_opt_out_keyword,"talkx_optout");
+    assertEquals(rx.filter((c)=>c.nome==="drain_inbound_message_effects").length,1);
+    assertEquals(fetchCalls.length,1);
+    assertEquals(rx.some((c)=>c.nome==="attribute_talkx_reply"),false);
+    instalarFetchFalso();
+    const me:Chamada[]=[];
+    p=goButton("talkx_optout","M");
+    ((p.data as Record<string,unknown>).Info as Record<string,unknown>).IsFromMe=true;
+    ({data,key}=traduzir(p));
+    await handleIncomingMessage(fakeSupabase(me,cfg),"i",data,key,"u","s");
+    const a=me.find((c)=>c.nome==="ingest_inbound_message")!.args;
+    assertEquals(a.p_from_me,true);
+    assertEquals(a.p_opt_out_keyword,null);
+    assertEquals(fetchCalls.length,0);
+  } finally { restaurarFetch(); resetOptOutKeywordCache(); }
 });
 
 Deno.test("X030: resposta que NÃO é opt-out continua sendo atribuída ao Talk X", async () => {
