@@ -85,7 +85,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `campaign_contacts` | Destinatários da campanha e estado do envio de cada um | ativo | `src/hooks/communication/useCampaigns.ts` |
 | `campaigns` | Campanhas de mensagem (conteúdo, mídia e configuração de disparo) | ativo | `src/components/campaigns/CampaignsView.tsx`, `src/components/campaigns/__tests__/CampaignCreateDialog.r2-mod-005.test.tsx`, `src/components/campaigns/__tests__/CampaignsView.audiencia.r2-mod-005.test.tsx` … |
 | `catalog_favorites` | Produtos do catálogo externo favoritados pelo usuário | ativo | `src/components/catalog/ExternalProductCatalog.tsx`, `src/components/catalog/__tests__/ExternalProductCatalog.test.tsx`, `src/components/catalog/catalogShared.tsx` … |
-| `catalog_rate_limit_hits` | Contadores de uso do catálogo por usuário e ação, em janela | roadmap | — |
+| `catalog_rate_limit_hits` | Contadores de uso do catálogo por usuário e ação, em janela | parcial | `scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh` |
 | `catalog_rate_limits` | Limite de uso do catálogo por usuário e ação | ativo | `supabase/functions/promogifts-catalog/index.ts` |
 | `catalog_send_events` | Histórico de envios de produto do catálogo por contato | ativo | `src/components/catalog/CatalogRail.tsx`, `src/components/catalog/ContactSelectionStep.tsx`, `src/components/catalog/ExternalProductCatalog.tsx` … |
 | `channel_connections` | Conexões de canal (WhatsApp e omnichannel): identidade, estado e credenciais | ativo | `src/components/omnichannel/OmnichannelManager.tsx`, `src/lib/omnichannel/execucaoDeCanais.ts`, `supabase/functions/whatsapp-webhook/index.test.ts` … |
