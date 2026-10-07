@@ -25,6 +25,13 @@ export interface UseMediaVolumeResult {
 /**
  * E06 — fonte única do volume de mídia para todos os players (D2).
  * O valor é global (E12): trocar de mensagem não zera nem recria o volume.
+ *
+ * Por usuário NO APARELHO (S33/D07): o persistido é
+ * `zapp.media.volume.<userId>` / `zapp.media.muted.<userId>`. A identidade é
+ * resolvida DENTRO do store, pela sessão que o `supabase-js` já mantém no
+ * `localStorage` — este hook não usa `useAuth` de propósito: players montam fora
+ * do `AuthProvider` (onde `useAuth` lança) e aqui ele é só o adaptador para
+ * `useSyncExternalStore`. Assinatura e formato do retorno não mudam.
  */
 export function useMediaVolume(): UseMediaVolumeResult {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot);
