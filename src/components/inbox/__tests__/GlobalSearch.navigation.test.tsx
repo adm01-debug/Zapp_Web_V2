@@ -64,11 +64,19 @@ function messageRow(id: string, content: string) {
   };
 }
 
-function renderSearch() {
+function renderSearch(options: { withNewConversation?: boolean } = {}) {
   const onOpenChange = vi.fn();
   const onSelectResult = vi.fn();
-  render(<GlobalSearch open onOpenChange={onOpenChange} onSelectResult={onSelectResult} />);
-  return { onOpenChange, onSelectResult };
+  const onNewConversation = options.withNewConversation ? vi.fn() : undefined;
+  render(
+    <GlobalSearch
+      open
+      onOpenChange={onOpenChange}
+      onSelectResult={onSelectResult}
+      onNewConversation={onNewConversation}
+    />,
+  );
+  return { onOpenChange, onSelectResult, onNewConversation };
 }
 
 const searchInput = () => screen.getByPlaceholderText(/Buscar mensagens/);
@@ -104,7 +112,7 @@ describe('GlobalSearch — navegação do R2-INB-019', () => {
   });
 
   it('percorre e aciona as ações rápidas com o teclado quando não há resultados', () => {
-    const { onOpenChange } = renderSearch();
+    const { onOpenChange } = renderSearch({ withNewConversation: true });
 
     expect(screen.getByText('Nova conversa')).toBeInTheDocument();
     expect(screen.getByText('Ir para Dashboard')).toBeInTheDocument();

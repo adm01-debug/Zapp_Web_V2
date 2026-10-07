@@ -221,7 +221,16 @@ export function RealtimeInboxView() {
   return (
     <div className="flex h-full min-h-0 w-full relative bg-background overflow-hidden">
       {inbox.globalSearchOpen && (
-        <Suspense fallback={null}><GlobalSearch open={inbox.globalSearchOpen} onOpenChange={inbox.setGlobalSearchOpen} onSelectResult={handleGlobalSearchResult} /></Suspense>
+        <Suspense fallback={null}>
+          <GlobalSearch
+            open={inbox.globalSearchOpen}
+            onOpenChange={inbox.setGlobalSearchOpen}
+            onSelectResult={handleGlobalSearchResult}
+            // R2-INB-018: a ação rápida tem de executar a intenção — abre o
+            // NewConversationModal desta tela em vez de só fechar a busca.
+            onNewConversation={() => inbox.setShowNewConversation(true)}
+          />
+        </Suspense>
       )}
 
       <NewMessageIndicator show={!!inbox.newMessageNotification} contactName={inbox.newMessageNotification?.contactName || ''} contactAvatar={inbox.newMessageNotification?.contactAvatar} message={inbox.newMessageNotification?.message || ''} onView={inbox.handleNotificationView} onDismiss={inbox.dismissNotification} />
