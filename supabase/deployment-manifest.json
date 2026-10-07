@@ -711,8 +711,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
-      "bytes": 27815,
-      "sha256": "c4206d0f6aa318afa4debdc2ac77cc2322318cc6e45792c00b0a694bcbf1a325"
+      "bytes": 28357,
+      "sha256": "449fad8332bb9501ee6a01aa6c65dc055ad225ae1e1b028ff0f87e60a909136b"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1780,7 +1780,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "40941e1bec38da51d167ea4ec4d35b38159219cfa009a7b0e5d56a105516b80b",
+      "source_sha256": "cf48f33094148bd4e2466283902dff3a88bea91ac2e195b0a4df6bbff0033adc",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -1901,5 +1901,5 @@
       ]
     }
   ],
-  "manifest_sha256": "0a70316861d9253ad2d4fbda438ae7136fd9e31d4297f712194176931a057cf0"
+  "manifest_sha256": "4bd1f95e500c936172f20112146124726e95abd0f2beba26fcfb092529be73ef"
 }
