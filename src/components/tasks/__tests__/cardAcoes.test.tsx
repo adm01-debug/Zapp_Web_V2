@@ -28,6 +28,7 @@ import { RemindChip } from '@/components/tasks/shared/RemindChip';
 import { MoveToMenu } from '@/components/tasks/board/MoveToMenu';
 import { WorkItemSheet } from '@/components/tasks/shared/WorkItemSheet';
 import { precisaMotivoDeEspera } from '@/hooks/tasks/workItemMachine';
+import { aceitaLembrete } from '@/components/tasks/shared/cardActions';
 import { TasksModule } from '@/components/tasks/TasksModule';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
 
@@ -195,6 +196,49 @@ describe('FASE C2 — 30: kebab do card com os 5 grupos', () => {
 
     expect(screen.getByRole('menuitem', { name: /Reabrir/ })).toBeTruthy();
     expect(screen.queryByRole('menuitem', { name: /^Concluir/ })).toBeNull();
+  });
+
+  // #425 / R2-MOD-057: o executor do alarme (`notify_due_tasks`) só seleciona
+  // `status NOT IN ('done','cancelled')`. O card não pode oferecer um adiamento
+  // que o executor descarta nem emitir o payload de snooze nesse estado.
+  it('em estado terminal o "Lembrar-me" fica desabilitado, não abre e não emite snooze', async () => {
+    const p = propsCard({ item: { ...base, status: 'done' } });
+    render(<WorkItemCard {...p} />);
+    await abrirMenu(screen.getByRole('button', { name: /mais ações|opções|menu/i }));
+
+    const lembrar = screen.getByRole('menuitem', { name: /Lembrar-me/ });
+    expect(lembrar.getAttribute('aria-disabled')).toBe('true');
+    expect(lembrar.getAttribute('title')).toMatch(/reabra/i);
+
+    lembrar.focus();
+    fireEvent.keyDown(lembrar, { key: 'ArrowRight', code: 'ArrowRight' });
+    fireEvent.click(lembrar);
+
+    expect(screen.queryByRole('menuitem', { name: '15 min' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Amanhã 9h' })).toBeNull();
+    expect(p.onSnooze).not.toHaveBeenCalled();
+  });
+
+  it('cancelada também perde o lembrete; em "todo" a ação segue liberada', async () => {
+    const cancelada = propsCard({ item: { ...base, status: 'cancelled' } });
+    const { unmount } = render(<WorkItemCard {...cancelada} />);
+    await abrirMenu(screen.getByRole('button', { name: /mais ações|opções|menu/i }));
+    expect(screen.getByRole('menuitem', { name: /Lembrar-me/ }).getAttribute('aria-disabled')).toBe('true');
+    expect(cancelada.onSnooze).not.toHaveBeenCalled();
+    unmount();
+
+    render(<WorkItemCard {...propsCard()} />);
+    await abrirMenu(screen.getByRole('button', { name: /mais ações|opções|menu/i }));
+    const lembrar = screen.getByRole('menuitem', { name: /Lembrar-me/ });
+    expect(lembrar.getAttribute('aria-disabled')).toBeNull();
+  });
+
+  it('a regra do card casa com a seleção do executor do alarme', () => {
+    expect(aceitaLembrete('done')).toBe(false);
+    expect(aceitaLembrete('cancelled')).toBe(false);
+    (['backlog', 'todo', 'doing', 'waiting'] as const).forEach((s) => {
+      expect(aceitaLembrete(s)).toBe(true);
+    });
   });
 
   it('com doingCount 3, "Fazendo" fica desabilitado com o texto de cheio', async () => {
