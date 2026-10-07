@@ -158,19 +158,15 @@ export function useUserSettings() {
 
     setIsSaving(true);
     try {
+      // Payload do upsert de `user_settings`: só os campos que continuam sendo POSSE deste hook.
+      // Os campos operacionais saíram daqui no cartão #273 — não os traga de volta:
+      //  - Horário (`business_hours_enabled`/`business_hours_start`/`business_hours_end`/`work_days`)
+      //    e Mensagens (`welcome_message`/`away_message`/`closing_message`) são POR CONEXÃO
+      //    (tabelas `business_hours` e `away_messages`);
+      //  - Automação (`auto_assignment_enabled`/`auto_assignment_method`/`inactivity_timeout` e
+      //    `auto_transcription_enabled`) é GLOBAL (`global_settings` / `auto_close_config`).
       const settingsData = {
         user_id: user.id,
-        business_hours_enabled: settings.business_hours_enabled,
-        business_hours_start: settings.business_hours_start,
-        business_hours_end: settings.business_hours_end,
-        work_days: settings.work_days,
-        welcome_message: settings.welcome_message,
-        away_message: settings.away_message,
-        closing_message: settings.closing_message,
-        auto_assignment_enabled: settings.auto_assignment_enabled,
-        auto_assignment_method: settings.auto_assignment_method,
-        inactivity_timeout: settings.inactivity_timeout,
-        auto_transcription_enabled: settings.auto_transcription_enabled,
         sound_enabled: settings.sound_enabled,
         browser_notifications_enabled: settings.browser_notifications_enabled,
         quiet_hours_enabled: settings.quiet_hours_enabled,
