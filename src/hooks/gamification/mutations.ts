@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { AgentStats } from './types';
+import type { AgentStats, MiniGameXpCreditResult } from './types';
 
 export function useGamificationMutations(profileId: string | undefined, _currentStats?: AgentStats | null) {
   const queryClient = useQueryClient();
@@ -86,8 +86,23 @@ export function useGamificationMutations(profileId: string | undefined, _current
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] }),
   });
 
+  const creditMiniGameXpMutation = useMutation({
+    mutationFn: async ({ gameId, xp }: { gameId: string; xp: number }) => {
+      if (!profileId) throw new Error('No profile ID');
+      const { data, error } = await supabase.rpc('credit_agent_mini_game_xp', {
+        p_profile_id: profileId,
+        p_game_id: gameId,
+        p_xp: xp,
+      });
+      if (error) throw error;
+      return data as unknown as MiniGameXpCreditResult;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] }),
+  });
+
   return {
     addXp: addXpMutation.mutateAsync,
+    creditMiniGameXp: creditMiniGameXpMutation.mutateAsync,
     grantAchievement: grantAchievementMutation.mutateAsync,
     updateStreak: updateStreakMutation.mutateAsync,
     incrementMessages: incrementMessagesMutation.mutateAsync,

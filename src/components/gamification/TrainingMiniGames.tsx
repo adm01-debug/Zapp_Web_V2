@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Gamepad2, Star, Trophy } from 'lucide-react';
 import { toast } from '@/hooks/ui/use-toast';
 import { useCelebration } from '@/components/effects/Confetti';
+import { useAgentGamification } from '@/hooks/gamification/useAgentGamification';
+import { log } from '@/lib/logger';
 import { GAMES, type GameType } from './miniGamesData';
 import { SpeedTypingGame, QuizGame, EmojiDecodeGame } from './MiniGameDialogs';
 
@@ -21,6 +23,11 @@ export function TrainingMiniGames({ onXPEarned }: TrainingMiniGamesProps) {
     return saved ? JSON.parse(saved) : {};
   });
   const { celebrate } = useCelebration();
+  const { creditMiniGameXp } = useAgentGamification();
+  // R2-AUTH-043: a conclusão credita de verdade o XP que a partida rendeu.
+  // O diálogo publica a conclusão mais de uma vez (o efeito reexecuta a cada
+  // render), então o crédito é por partida.
+  const creditoDaPartida = useRef(false);
 
   const saveHighScore = (game: GameType, newScore: number) => {
     const currentHigh = highScores[game] || 0;
@@ -33,14 +40,47 @@ export function TrainingMiniGames({ onXPEarned }: TrainingMiniGamesProps) {
     return false;
   };
 
-  const handleGameComplete = (finalScore: number, xpEarned: number) => {
+  const handleGameComplete = async (finalScore: number, xpEarned: number) => {
     const game = GAMES.find(g => g.id === selectedGame);
     const isNewHighScore = saveHighScore(selectedGame!, finalScore);
     if (isNewHighScore) celebrate({ title: '🏆 Novo Recorde!', subtitle: `${finalScore} pontos!`, emoji: '🎮' });
-    onXPEarned?.(xpEarned);
-    toast({ title: `🎮 ${game?.name} Completo!`, description: `Você ganhou ${xpEarned} XP${isNewHighScore ? ' e bateu seu recorde!' : ''}` });
     setIsPlaying(false);
     setScore(finalScore);
+    // Sem cartão correspondente (id sem diálogo) ou conclusão já creditada: nada a fazer.
+    if (!game || creditoDaPartida.current) return;
+    creditoDaPartida.current = true;
+
+    const xp = Math.max(0, Math.trunc(xpEarned || 0));
+    if (xp === 0) {
+      toast({
+        title: `🎮 ${game.name} Completo!`,
+        description: `Nenhum XP nesta partida (0 acertos não rende XP).${isNewHighScore ? ' Você bateu seu recorde!' : ''}`,
+      });
+      return;
+    }
+    try {
+      const resultado = await creditMiniGameXp({ gameId: game.id, xp });
+      if (!resultado.credited) {
+        toast({
+          title: 'Limite diário de mini-games atingido',
+          description: `Você já creditou ${resultado.maxPartidasDia} partidas de ${game.name} hoje. O XP volta amanhã.`,
+        });
+        return;
+      }
+      onXPEarned?.(resultado.xpCreditado);
+      toast({
+        title: `🎮 ${game.name} Completo!`,
+        description: `Você ganhou ${resultado.xpCreditado} XP${isNewHighScore ? ' e bateu seu recorde!' : ''}` +
+          `${resultado.leveledUp ? ` — Nível ${resultado.newLevel}!` : ''}`,
+      });
+    } catch (error) {
+      log.error('Falha ao creditar o XP do mini-game:', error);
+      toast({
+        variant: 'destructive',
+        title: 'XP não creditado',
+        description: `Os ${xp} XP de "${game.name}" não foram salvos na sua conta. Tente novamente.`,
+      });
+    }
   };
 
   return (
@@ -55,7 +95,7 @@ export function TrainingMiniGames({ onXPEarned }: TrainingMiniGamesProps) {
             const highScore = highScores[game.id] || 0;
             return (
               <motion.button key={game.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                onClick={() => { setSelectedGame(game.id); setIsPlaying(true); setScore(0); }}
+                onClick={() => { setSelectedGame(game.id); setIsPlaying(true); setScore(0); creditoDaPartida.current = false; }}
                 className="p-4 rounded-lg border hover:border-primary/50 text-left transition-colors">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-primary/10"><Icon className="h-6 w-6 text-primary" /></div>
