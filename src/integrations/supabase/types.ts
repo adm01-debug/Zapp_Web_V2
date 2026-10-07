@@ -9286,6 +9286,7 @@ export type Database = {
         Row: {
           alert_type: string
           created_at: string | null
+          dedupe_key: string | null
           dismissed_by: string | null
           id: string
           is_read: boolean | null
@@ -9296,6 +9297,7 @@ export type Database = {
         Insert: {
           alert_type?: string
           created_at?: string | null
+          dedupe_key?: string | null
           dismissed_by?: string | null
           id?: string
           is_read?: boolean | null
@@ -9306,6 +9308,7 @@ export type Database = {
         Update: {
           alert_type?: string
           created_at?: string | null
+          dedupe_key?: string | null
           dismissed_by?: string | null
           id?: string
           is_read?: boolean | null
