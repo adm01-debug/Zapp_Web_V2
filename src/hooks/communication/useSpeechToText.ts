@@ -107,13 +107,17 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}): SpeechToT
       }
     };
 
+    // Encerramento de sessão anterior (onend/onerror) não pode apagar o indicador
+    // da sessão vigente: se o ref já aponta para outro reconhecimento, este é velho.
     recognition.onend = () => {
+      if (recognitionRef.current !== recognition) return;
       setIsListening(false);
       onEndRef.current?.();
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onerror = (event: any) => {
+      if (recognitionRef.current !== recognition) return;
       log.warn('Speech recognition error:', event.error);
       setIsListening(false);
     };
