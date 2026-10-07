@@ -2,6 +2,9 @@
  * SendProductDialog — utility functions and message builders
  */
 import { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
+// R2-MOD-048 — snapshot de favorito (preço/estoque ausentes) não vira zero
+// real na mensagem.
+import { isSnapshotProduct } from './catalogShared';
 // CT-45 — a personalização da mensagem reusa os helpers do Talk X (mesmas
 // regras do envio real de campanha): {{nome}}/{{empresa}} resolvidos num
 // único passe contra o contato selecionado.
@@ -58,7 +61,16 @@ export function buildMessage(
   selectedVariant?: VariantGroup | null,
   contact?: MessageContact | null
 ): string {
+  /**
+   * R2-MOD-048 — snapshot de favorito não tem preço nem estoque: os zeros do
+   * preenchimento do tipo não podem virar "R$ 0,00"/"0 un." como se fossem
+   * dado comercial. Nesse caso as linhas de valor e estoque simplesmente não
+   * entram na mensagem (o envio normal hidrata o produto antes — ver
+   * SendProductDialog).
+   */
+  const semPrecoEstoque = isSnapshotProduct(product);
   const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.sale_price);
+  const priceLine = semPrecoEstoque ? null : `Valor: ${price}`;
 
   // CT-45 — com contato a saudação entra como placeholder {{nome}} (resolvido
   // no fim por personalizePreview); sem contato o fallback é "Olá!" e nenhum
@@ -71,11 +83,13 @@ export function buildMessage(
       ? `Cores disponíveis: ${product.colors.join(', ')}`
       : null;
 
-  const stockInfo = selectedVariant
-    ? `Estoque: ${selectedVariant.variants.reduce((s, v) => s + v.stock_quantity, 0)} un.`
-    : product.is_stockout
-      ? '⚠️ Sem estoque no momento'
-      : `Em estoque: ${product.stock_quantity} un.`;
+  const stockInfo = semPrecoEstoque
+    ? null
+    : selectedVariant
+      ? `Estoque: ${selectedVariant.variants.reduce((s, v) => s + v.stock_quantity, 0)} un.`
+      : product.is_stockout
+        ? '⚠️ Sem estoque no momento'
+        : `Em estoque: ${product.stock_quantity} un.`;
 
   let raw: string;
   switch (template) {
@@ -86,7 +100,7 @@ export function buildMessage(
         `*${product.name}*`,
         product.brand ? `Marca: ${product.brand}` : '',
         contact?.company ? `Empresa: {{empresa}}` : '',
-        `Valor: ${price}`,
+        priceLine,
         variantInfo || '',
         product.min_quantity ? `Quantidade mínima: ${product.min_quantity} unidades` : '',
         product.dimensions_display ? `Dimensões: ${product.dimensions_display}` : '',
@@ -105,11 +119,11 @@ export function buildMessage(
         `🔥 *OFERTA ESPECIAL* 🔥`, ``,
         `📦 *${product.name}*`,
         selectedVariant ? `🎨 Cor: *${selectedVariant.colorName}*` : '',
-        product.brand ? `🏷️ ${product.brand}` : '', `💰 *${price}*`,
+        product.brand ? `🏷️ ${product.brand}` : '', priceLine ? `💰 *${price}*` : '',
         !selectedVariant && product.colors?.length ? `🎨 ${product.colors.join(', ')}` : '',
         product.min_quantity ? `📋 A partir de ${product.min_quantity} un.` : '',
         product.allows_personalization ? `✅ Personalização disponível!` : '',
-        `✅ ${stockInfo}`, ``, `Aproveite! Estoque limitado 🚀`,
+        stockInfo ? `✅ ${stockInfo}` : '', ``, `Aproveite! Estoque limitado 🚀`,
       ].filter(Boolean).join('\n');
       break;
 
@@ -123,10 +137,10 @@ export function buildMessage(
         product.short_description || product.description
           ? (product.short_description || product.description || '').slice(0, 200) : '',
         ``,
-        product.brand ? `Marca: ${product.brand}` : '', `Valor: ${price}`,
+        product.brand ? `Marca: ${product.brand}` : '', priceLine || '',
         !selectedVariant && product.colors?.length ? `Cores: ${product.colors.join(', ')}` : '',
         product.allows_personalization ? `Dá pra personalizar! ✨` : '',
-        stockInfo.includes('⚠️') ? stockInfo : '', ``, `O que achou? 😉`,
+        stockInfo?.includes('⚠️') ? stockInfo : '', ``, `O que achou? 😉`,
       ].filter(Boolean).join('\n');
       break;
   }
