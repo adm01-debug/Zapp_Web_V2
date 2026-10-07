@@ -1,9 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { FilesTab } from '../FilesTab';
+import { FilesTab, MAX_PAGES_TO_LOAD_ALL } from '../FilesTab';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
-import { __resetFilesViewSession } from '@/hooks/chat/useFilesViewState';
+import {
+  __resetFilesViewSession,
+  filesViewSessionKey,
+  writeFilesViewSession,
+} from '@/hooks/chat/useFilesViewState';
 
 /**
  * Filtro por DATA na aba Arquivos (F05/F06) — componente REAL, com a lista vinda do
@@ -53,6 +57,8 @@ const DIA_MS = 24 * 60 * 60 * 1000;
 const AGORA = () => new Date().toISOString();
 /** Meio-dia local de N dias atrás: bem dentro do dia, longe de qualquer virada. */
 const diasAtras = (n: number) => new Date(Date.now() - n * DIA_MS).toISOString();
+/** Mesma coisa como `Date` — o "Até" do período personalizado é uma data, não um texto. */
+const diasAtrasData = (n: number) => new Date(Date.now() - n * DIA_MS);
 
 function item(overrides: Partial<ContactMediaItem> & { id: string }): ContactMediaItem {
   const filename = overrides.filename ?? `${overrides.id}.jpg`;
@@ -138,6 +144,23 @@ function clicarDia(indiceTabela: number, dia: number) {
   const alvo = celulas.find((celula) => celula.textContent === String(dia) && !celula.hasAttribute('disabled'));
   if (!alvo) throw new Error(`dia ${dia} não encontrado/enabled na tabela ${indiceTabela}`);
   fireEvent.click(alvo);
+}
+
+/**
+ * Refazer 1: semente da sessão da conversa com período personalizado de UMA ponta só — o MESMO
+ * estado que o calendário grava quando o operador escolhe apenas o "Até" (`period: 'custom'` com
+ * `customFrom: null`). Semear (em vez de clicar) mantém o teste independente do dia do mês: o
+ * "Até" fica sempre ANTES dos itens carregados, que é o cenário da recusa.
+ */
+function semearPeriodoSoAte(customTo: Date) {
+  writeFilesViewSession(filesViewSessionKey('user-1', 'contact-1'), {
+    sort: 'recent',
+    typeFilter: 'all',
+    search: '',
+    period: 'custom',
+    customFrom: null,
+    customTo,
+  });
 }
 
 describe('FilesTab — filtro por data (F05)', () => {
@@ -279,5 +302,76 @@ describe('FilesTab — filtro por data (F05)', () => {
     renderTab();
 
     expect(fetchNextPage).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Refazer 1 (recusa do revisor): com período personalizado SÓ com "Até" a lista `created_at desc`
+ * pode ter as primeiras páginas inteiras DEPOIS do limite `to`. Nesse caso a varredura do período
+ * tem de continuar carregando páginas antigas — e a tela não pode anunciar "Nenhum arquivo neste
+ * período" antes de a varredura terminar.
+ */
+describe('FilesTab — período personalizado só com "Até" (refazer 1)', () => {
+  it('carrega páginas antigas até cruzar o "Até" e só então para', async () => {
+    const fetchNextPage = vi.fn().mockResolvedValue({ hasNextPage: true });
+    usarMidia(
+      [
+        item({ id: 'nova-1', filename: 'nova-1.jpg' }),
+        item({ id: 'nova-2', filename: 'nova-2.jpg' }),
+      ],
+      { hasMore: true, fetchNextPage },
+    );
+    semearPeriodoSoAte(diasAtrasData(5));
+    const { container, rerenderTab } = renderTab();
+
+    // Os dois itens carregados são mais NOVOS que o "Até": nenhum casa, mas ainda há páginas.
+    expect(screen.queryByText('nova-1.jpg')).not.toBeInTheDocument();
+    // A recusa do revisor começava aqui: a tela anunciava vazio com páginas antigas ainda por vir.
+    expect(screen.queryByText('Nenhum arquivo neste período')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nenhum arquivo nesta conversa')).not.toBeInTheDocument();
+    // No lugar do vazio, a tela diz que está buscando (e o modo mostra o skeleton de carregamento —
+    // mesma prova de `FilesContent.test.tsx`: 6 cartões pulsando).
+    expect(screen.getByTestId('files-pagination-notice')).toHaveTextContent(/^Buscando entre os 2 carregados/);
+    expect(container.querySelectorAll('.animate-pulse').length).toBe(6);
+
+    // A recusa: a tela TEM de pedir a página antiga (antes o efeito parava no `from === null`).
+    await waitFor(() => expect(fetchNextPage).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('Nenhum arquivo neste período')).not.toBeInTheDocument();
+
+    // Chega a página antiga: o item que casa com o "Até" aparece e a varredura para de pedir.
+    media.items = [
+      ...media.items,
+      item({ id: 'antiga', filename: 'antiga.jpg', created_at: diasAtras(10) }),
+    ];
+    rerenderTab();
+    await waitFor(() => expect(screen.getByText('antiga.jpg')).toBeInTheDocument());
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Nenhum arquivo neste período')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.animate-pulse').length).toBe(0);
+  });
+
+  it('ao atingir o teto de páginas a varredura termina sem skeleton infinito', async () => {
+    // Cada página traz um item mais novo que o "Até" (o limite nunca é cruzado), então a varredura
+    // só pode parar no teto. A lista fica com UM item: o que este teste precisa do mock é "hasMore
+    // com o item mais antigo ainda DEPOIS do `to`", não o acúmulo de 30 mil itens de 500 páginas.
+    const fetchNextPage = vi.fn().mockResolvedValue({ hasNextPage: true });
+    usarMidia([item({ id: 'pagina-0', filename: 'nova.jpg' })], { hasMore: true, fetchNextPage });
+    semearPeriodoSoAte(diasAtrasData(5));
+    const { container, rerenderTab } = renderTab();
+
+    expect(screen.queryByText('Nenhum arquivo neste período')).not.toBeInTheDocument();
+    for (let pagina = 1; pagina <= MAX_PAGES_TO_LOAD_ALL + 2; pagina += 1) {
+      // Página N minutos mais antiga que a N-1 — e ainda assim dentro das últimas horas: segue
+      // mais nova que o "Até" (5 dias atrás), como as primeiras páginas da conversa real.
+      media.items = [item({ id: `pagina-${pagina}`, filename: 'nova.jpg', created_at: new Date(Date.now() - pagina * 60_000).toISOString() })];
+      rerenderTab();
+    }
+
+    // Teto atingido: a varredura para de pedir (não fica requisitando página para sempre)...
+    await waitFor(() => expect(fetchNextPage).toHaveBeenCalledTimes(MAX_PAGES_TO_LOAD_ALL));
+    // ...e a tela sai do skeleton: sem nada no período, mostra o aviso (nunca carregando para sempre).
+    await waitFor(() => expect(screen.getByText('Nenhum arquivo neste período')).toBeInTheDocument());
+    expect(container.querySelectorAll('.animate-pulse').length).toBe(0);
+    expect(fetchNextPage).toHaveBeenCalledTimes(MAX_PAGES_TO_LOAD_ALL);
   });
 });
