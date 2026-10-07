@@ -32,7 +32,7 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
     const profileId = profile?.id;
     const openConversations = conversations.filter(c => c.messages.length > 0);
 
-    const attending = openConversations.filter(c => c.contact.assigned_to === profileId);
+    const attending = openConversations.filter(c => profileId != null && c.contact.assigned_to === profileId);
     const waiting = openConversations.filter(c => !c.contact.assigned_to);
     const unread = openConversations.filter(c => {
       const unreadMessages = (c.contact as unknown as { unread_messages?: number }).unread_messages ?? 0;
