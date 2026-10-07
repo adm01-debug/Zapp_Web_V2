@@ -1,5 +1,7 @@
 -- ia131_audio_stt_openrouter
--- Rollback: update public.ai_providers set config = jsonb_set(coalesce(config, '{}'::jsonb), '{capabilities,modalities}', '["vision"]'::jsonb, true), updated_at = now() where id = 'f99209ea-294d-4124-b480-b3ecf60c9049';
+-- Rollback: remove so `audio_stt` de capabilities.modalities do provedor OpenRouter, preservando as demais modalidades e chaves (SQL abaixo).
+-- Rollback (SQL executável):
+--   update public.ai_providers set config = jsonb_set(coalesce(config, '{}'::jsonb), '{capabilities,modalities}', coalesce(config->'capabilities'->'modalities', '[]'::jsonb) - 'audio_stt', true), updated_at = now() where id = 'f99209ea-294d-4124-b480-b3ecf60c9049' and name = 'OpenRouter' and coalesce(config->'capabilities'->'modalities', '[]'::jsonb) ? 'audio_stt';
 
 -- IA-131 / IA-AUDIO-001 — habilita ANÁLISE DE ÁUDIO no provedor OpenRouter.
 --
@@ -16,19 +18,23 @@
 -- `google/gemini-3.8-flash` declara, na API de modelos do OpenRouter, entrada
 -- `[text, image, video, file, audio]` — o áudio entra pelo mesmo caminho.
 --
--- `jsonb_set` (e não `||`) para acrescentar `audio_stt` ao array EXISTENTE sem
--- apagar `headers` nem outras capacidades já declaradas; rodar duas vezes dá o
--- mesmo resultado (idempotente).
+-- `jsonb_set` atualiza somente `capabilities.modalities`: preserva modalidades
+-- existentes, chaves irmãs e chaves top-level; se `capabilities` não existir, a
+-- cria. O `WHERE` evita duplicar `audio_stt`, então rodar duas vezes é idempotente.
 --
 -- Classe: aditiva (DML com WHERE por id).
 
 update public.ai_providers
    set config = jsonb_set(
          coalesce(config, '{}'::jsonb),
-         '{capabilities,modalities}',
-         '["vision","audio_stt"]'::jsonb,
+         '{capabilities}',
+         coalesce(config->'capabilities', '{}'::jsonb) || jsonb_build_object(
+           'modalities',
+           coalesce(config->'capabilities'->'modalities', '[]'::jsonb) || '["audio_stt"]'::jsonb
+         ),
          true
        ),
        updated_at = now()
  where id = 'f99209ea-294d-4124-b480-b3ecf60c9049'
-   and name = 'OpenRouter';
+   and name = 'OpenRouter'
+   and not coalesce(config->'capabilities'->'modalities', '[]'::jsonb) ? 'audio_stt';
