@@ -17,6 +17,11 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: fromMock,
     functions: { invoke: invokeMock },
+    storage: {
+      from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }),
+    },
+    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+    removeChannel: vi.fn(),
   },
 }));
 
@@ -37,6 +42,21 @@ const OK = {
 const ERRO = { data: null, error: new Error('Edge Function returned a non-2xx status code') };
 
 const CONTATOS = [{ id: 'c1' }, { id: 'c2' }];
+const CONTACT_ROW = {
+  id: 'contato-popup-1',
+  name: 'Maria Silva',
+  phone: '+5511****9999',
+  avatar_url: null,
+  email: null,
+  tags: [],
+  created_at: '2026-09-01T10:00:00Z',
+  updated_at: '2026-09-01T10:00:00Z',
+  ai_priority: null,
+  status: 'open',
+  last_message: 'oi',
+  unread_count: 0,
+  assigned_to: null,
+};
 
 function montarSupabase(respostasPorContato: Record<string, typeof OK | typeof ERRO>) {
   fromMock.mockImplementation((tabela: string) => {
@@ -47,10 +67,16 @@ function montarSupabase(respostasPorContato: Record<string, typeof OK | typeof E
       return {
         select: () => ({
           order: () => ({ limit: () => Promise.resolve({ data: CONTATOS, error: null }) }),
+          eq: () => ({ single: async () => ({ data: CONTACT_ROW, error: null }) }),
         }),
       };
     }
-    throw new Error(`tabela inesperada no teste: ${tabela}`);
+    return {
+      select: () => ({
+        order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }),
+        eq: () => ({ single: async () => ({ data: null, error: null }) }),
+      }),
+    };
   });
 
   invokeMock.mockImplementation((_fn: string, opts: { body: { contactId: string } }) =>

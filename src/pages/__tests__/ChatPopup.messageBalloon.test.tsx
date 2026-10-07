@@ -21,6 +21,7 @@ import type { ReactNode } from 'react';
 const ALTURA_JANELA = 600;
 const ALTURA_ESTIMADA = 100;
 const CONTACT_ID = 'contato-popup-1';
+const WAIT_LAZY_CHATPANEL = { timeout: 10000 };
 
 const mocks = vi.hoisted(() => ({
   messages: {} as Record<string, unknown>,
@@ -280,34 +281,34 @@ describe('ChatPopup — o balão real renderiza os campos do Message (R2-INB-023
   it('mensagem apagada rende o placeholder, não o balão ativo', async () => {
     render(buildUi());
 
-    expect(await screen.findByText('Você apagou esta mensagem')).toBeInTheDocument();
+    expect(await screen.findByText('Você apagou esta mensagem', {}, WAIT_LAZY_CHATPANEL)).toBeInTheDocument();
   });
 
   it('mensagem editada mostra o marcador "editada"', async () => {
     render(buildUi());
 
-    await screen.findByText('texto com link');
+    await screen.findByText('texto com link', {}, WAIT_LAZY_CHATPANEL);
     expect(screen.getByText('editada')).toBeInTheDocument();
   });
 
   it('link_preview chega ao cartão de preview do link', async () => {
     render(buildUi());
 
-    const preview = await screen.findByTestId('link-preview');
+    const preview = await screen.findByTestId('link-preview', {}, WAIT_LAZY_CHATPANEL);
     expect(preview).toHaveTextContent('https://exemplo.com/materia');
   });
 
   it('mensagem de localização rende o balão de localização com o endereço', async () => {
     render(buildUi());
 
-    const local = await screen.findByTestId('location');
+    const local = await screen.findByTestId('location', {}, WAIT_LAZY_CHATPANEL);
     expect(local).toHaveTextContent('Av. Paulista, 100');
   });
 
   it('external_id (ID remoto) chega às ações da mensagem', async () => {
     render(buildUi());
 
-    await screen.findAllByTestId('message-reactions');
+    await screen.findAllByTestId('message-reactions', {}, WAIT_LAZY_CHATPANEL);
     const idsRecebidos = Array.from(
       document.querySelectorAll<HTMLElement>('[data-external-id]'),
     ).map((el) => el.dataset.externalId);

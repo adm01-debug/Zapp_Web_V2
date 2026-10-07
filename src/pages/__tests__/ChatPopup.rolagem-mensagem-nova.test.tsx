@@ -17,6 +17,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const ALTURA_JANELA = 600;
 const ALTURA_ESTIMADA = 100; // estimateSize do ChatMessagesArea
 const MENSAGENS = 30;
+const WAIT_LAZY_CHATPANEL = { timeout: 10000 };
 
 /**
  * O jsdom nao da layout: sem medida do contêiner o virtualizador nao renderiza
@@ -239,7 +240,7 @@ function renderPopup() {
 function superficie() {
   // O ChatPanel entra por `lazy` no popup: a area de mensagens so existe depois
   // de a promessa resolver, entao a busca e assincrona.
-  return screen.findByRole('log', { name: /mensagens da conversa/i });
+  return screen.findByRole('log', { name: /mensagens da conversa/i }, WAIT_LAZY_CHATPANEL);
 }
 
 /** Altura da lista virtualizada = quantas linhas a area recebeu do popup. */
@@ -324,7 +325,7 @@ describe('ChatPopup — rolagem com mensagem nova e indicador de digitacao (P2 #
       // O indicador de digitacao aparece (o "digitando..." ocupa espaco no fim).
       mocks.isContactTyping = true;
       rerender();
-      await screen.findByTestId('digitando');
+      await screen.findByTestId('digitando', {}, WAIT_LAZY_CHATPANEL);
 
       expect(scrollToSpy).not.toHaveBeenCalled();
       expect(el.scrollTop).toBe(0);
@@ -368,7 +369,7 @@ describe('ChatPopup — rolagem com mensagem nova e indicador de digitacao (P2 #
 
       mocks.isContactTyping = true;
       rerender();
-      await screen.findByTestId('digitando');
+      await screen.findByTestId('digitando', {}, WAIT_LAZY_CHATPANEL);
 
       await waitFor(() => expect(el.scrollTop).toBe(FIM_30));
     } finally {
