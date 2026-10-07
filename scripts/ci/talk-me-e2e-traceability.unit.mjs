@@ -9,7 +9,8 @@ import test from 'node:test';
 // cinco lacunas: spec E2E dedicado, pacote antes/depois, vídeo, storyboard e
 // teste durável da preservação do Inbox -- sem cobri-las com o total global de
 // testes nem com a rodada de autenticação (Playwright auth 18/18), que é uma
-// evidência distinta.
+// evidência distinta. A contagem é checada nos dois sentidos: o texto não pode
+// declarar outra quantidade e o mapa não pode ter linha "Ausente" a mais nem a menos.
 //
 // A ausência não é falha a corrigir aqui (fixtures de produção são proibidas pela
 // regra R1); o que o cartão exige é que ela fique explícita e mapeada.
@@ -127,6 +128,13 @@ test('ausência do E2E dedicado e dos artefatos visuais fica explícita, sem vir
   const corpo = secaoRastreabilidade(relatorio);
   assert.equal(LACUNAS.length, 5, 'guard deve declarar exatamente cinco lacunas');
   assert.match(corpo, /cinco lacunas/u, 'relatório não declara a contagem exata de cinco lacunas');
+  // Nenhuma outra contagem pode aparecer: a recusa de #478 foi exatamente a
+  // divergência entre um texto dizendo "oito" e cinco linhas no mapa.
+  assert.doesNotMatch(
+    corpo,
+    /\b(duas|três|tres|quatro|seis|sete|oito|nove|dez)\s+lacunas\b/iu,
+    'relatório declara contagem de lacunas diferente de cinco',
+  );
   assert.match(corpo, /não é cobert[ao]/u, 'seção não declara que a contagem global não cobre a lacuna');
   for (const lacuna of LACUNAS) {
     assert.match(
@@ -135,11 +143,21 @@ test('ausência do E2E dedicado e dos artefatos visuais fica explícita, sem vir
       `lacuna "${lacuna}" sem linha própria no mapa`,
     );
   }
-  const dados = linhasDaTabela(corpo).filter((celulas) =>
-    LACUNAS.some((lacuna) => celulas[0] === lacuna),
-  );
+  const linhas = linhasDaTabela(corpo);
+  const dados = linhas.filter((celulas) => LACUNAS.some((lacuna) => celulas[0] === lacuna));
   for (const celulas of dados) {
     assert.match(celulas.join(' | '), /Ausente/u, `lacuna "${celulas[0]}" não está marcada como Ausente`);
+  }
+  // A contagem do mapa tem de bater com LACUNAS nos dois sentidos: nenhuma linha
+  // "Ausente" a mais, nenhuma a menos. Sem isto, dizer "oito lacunas" no texto continuava passando com cinco linhas no mapa.
+  const ausentes = linhas.filter((celulas) => /Ausente/u.test(celulas[4] ?? ''));
+  assert.equal(
+    ausentes.length,
+    LACUNAS.length,
+    `mapa tem ${ausentes.length} linhas "Ausente", LACUNAS tem ${LACUNAS.length}`,
+  );
+  for (const celulas of ausentes) {
+    assert.ok(LACUNAS.includes(celulas[0]), `linha "Ausente" fora de LACUNAS: ${celulas[0]}`);
   }
 });
 
