@@ -260,4 +260,29 @@ describe('events — toStartCallPayload / isStartCallPayload', () => {
     expect(isStartCallPayload(null)).toBe(false);
     expect(isStartCallPayload(42)).toBe(false);
   });
+
+  it('C02 — `avatar` atravessa o contrato quando presente (cartão do contato mostra a foto)', () => {
+    const { recebidos, limpar } = assinar();
+
+    dispatchStartCall({ ...COMPLETO, avatar: 'https://img.test/ana.png' });
+
+    expect(recebidos).toHaveLength(1);
+    expect(recebidos[0].avatar).toBe('https://img.test/ana.png');
+    limpar();
+  });
+
+  it('C02 — a guarda é tolerante com `avatar`: ausente, `null` e string passam; lixo não derruba o pedido nem passa adiante', () => {
+    // Ausente e `null` (contato sem foto) são aceitos — o campo é cosmético.
+    expect(isStartCallPayload({ channel: 'voip', phone: PHONE, source: 'inbox' })).toBe(true);
+    expect(isStartCallPayload({ channel: 'voip', phone: PHONE, source: 'inbox', avatar: 'https://img.test/a.png' })).toBe(true);
+    expect(isStartCallPayload({ channel: 'voip', phone: PHONE, source: 'inbox', avatar: null })).toBe(true);
+    // Lixo (não-string) é filtrado pelo consumidor, mas não invalida o pedido.
+    const { recebidos, limpar } = assinar();
+    document.dispatchEvent(new CustomEvent(START_CALL_EVENT, {
+      detail: { channel: 'voip', phone: PHONE, source: 'inbox', avatar: 42 },
+    }));
+    expect(recebidos).toHaveLength(1);
+    expect(recebidos[0].avatar).toBe(42); // passa intacto; quem usa sanitiza
+    limpar();
+  });
 });
