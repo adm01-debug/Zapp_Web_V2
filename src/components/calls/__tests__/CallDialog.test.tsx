@@ -184,9 +184,11 @@ describe('CallDialog — aceite T21: abrir o diálogo NÃO insere em `calls`', (
   it('disca pelo provider e não toca em nenhum caminho de escrita da tabela `calls`', () => {
     montar();
 
-    // 1) A ligação saiu pelo provider, com o telefone do contato.
+    // 1) A ligação saiu pelo provider, com o telefone do contato — e SEM
+    //    navegar para a Telefonia (C02: `abrirDiscador:false`, o cartão do
+    //    contato disca ali mesmo).
     expect(mockDial).toHaveBeenCalledTimes(1);
-    expect(mockDial).toHaveBeenCalledWith(CONTATO.phone);
+    expect(mockDial).toHaveBeenCalledWith(CONTATO.phone, { abrirDiscador: false });
 
     // 2) Nenhum dos 4 métodos legados (os que escrevem em `calls`) foi chamado.
     expect(mockStartCall).not.toHaveBeenCalled();
@@ -236,6 +238,21 @@ describe('CallDialog — aceite T21: abrir o diálogo NÃO insere em `calls`', (
     montar({ direction: 'inbound' });
     expect(mockDial).not.toHaveBeenCalled();
     expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it('microfone negado (`dial` → false) fecha o diálogo em vez de ficar "Chamando..." eterno (C02)', async () => {
+    // A guarda do microfone (`garantirMicrofone`) recusou: o provider devolve
+    // `false` para o diálogo fechar. O motivo vai ao toast pela própria guarda
+    // (`useMicrophoneGuard`) — prova em `useSipClient.test.ts`.
+    mockDial.mockResolvedValue(false);
+    const { onEnd, onOpenChange } = montar();
+
+    await waitFor(() => {
+      expect(onEnd).toHaveBeenCalledTimes(1);
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+    // Não desligou chamada nenhuma: a recusa foi ANTES do DIAL existir.
+    expect(mockHangup).not.toHaveBeenCalled();
   });
 
   it('a fonte não volta a falar com `useCalls`/`startCall` nem a escrever na tabela', () => {

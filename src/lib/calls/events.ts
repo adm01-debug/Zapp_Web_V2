@@ -27,6 +27,12 @@ export interface StartCallPayload {
   phone: string;
   contactId?: string;
   name?: string;
+  /**
+   * C02 — foto do contato, quando a origem tem (o cartão da chamada de saída
+   * a mostra). Opcional e tolerante: a guarda não rejeita o pedido por causa
+   * dela — como `name`/`contactId`, o consumidor sanitiza ao usar.
+   */
+  avatar?: string;
   /** Linha WhatsApp da conversa (inbox). */
   connectionId?: string;
   source: StartCallSource;
@@ -37,10 +43,11 @@ export interface StartCallPayload {
   autoDial?: boolean;
 }
 
-/** Detail do evento legado `start-voip-call`: apenas telefone e nome. */
+/** Detail do evento legado `start-voip-call`: telefone, nome e (C02) avatar. */
 export interface LegacyStartCallDetail {
   phone?: unknown;
   name?: unknown;
+  avatar?: unknown;
 }
 
 export const START_CALL_EVENT = 'zapp:start-call';
@@ -68,6 +75,7 @@ export function toStartCallPayload(detail: unknown): StartCallPayload | null {
     autoDial: false,
   };
   if (typeof legado.name === 'string' && legado.name !== '') payload.name = legado.name;
+  if (typeof legado.avatar === 'string' && legado.avatar !== '') payload.avatar = legado.avatar;
   return payload;
 }
 
