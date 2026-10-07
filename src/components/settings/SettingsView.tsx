@@ -138,7 +138,7 @@ export function SettingsView() {
         {isStaff && (
           <TabsContent value="messages">
             <div className="space-y-6">
-              <MessagesSettings settings={settings} updateSettings={updateSettings} />
+              <MessagesSettings />
               <QuickRepliesManager compact={false} />
             </div>
           </TabsContent>
