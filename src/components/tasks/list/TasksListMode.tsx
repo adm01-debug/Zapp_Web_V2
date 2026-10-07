@@ -31,8 +31,12 @@ interface Props extends WorkItemCardActions {
  * E15 — com `tasks` em `layout:'full'`, a raiz de conteúdo da Lista assume o
  * scroll e o gutter. Ela também preserva o `pb-8` que já existia no modo Lista,
  * somando-o ao gutter inferior sem misturar `p-*` e `pb-*` no mesmo elemento.
+ * As raízes de carregamento e dos dois vazios (sem tarefa e com filtro) não
+ * tinham `pb-8`: elas recebem o mesmo scroller + gutter do container, sem o
+ * rodapé extra.
  */
 const CONTENT_GUTTER = 'overflow-y-auto px-[var(--layout-gutter)] pt-[var(--layout-gutter)] pb-[calc(var(--layout-gutter)+2rem)]';
+const GUTTER = 'overflow-y-auto p-[var(--layout-gutter)]';
 
 interface SectionProps {
   title: string;
@@ -168,7 +172,7 @@ export function TasksListMode({
 }: Props) {
   if (isLoading) {
     return (
-      <div className="w-full min-w-0 space-y-1.5">
+      <div className={`${GUTTER} w-full min-w-0 space-y-1.5`}>
         {Array.from({ length: 6 }).map((_, i) => <WorkItemCardSkeleton key={i} />)}
       </div>
     );
@@ -178,8 +182,14 @@ export function TasksListMode({
 
   if (total === 0 && byDue.done7d.length === 0 && byDue.doneOlder.length === 0) {
     const filtroAtivo = filtersActive ?? (searchQuery ?? '') !== '';
-    if (filtroAtivo) return <TasksEmptyState variant="filter" onClearFilter={onClearFilter} />;
-    return <TasksEmptyState variant="all" />;
+    // O vazio herda o mesmo scroller + gutter da Lista cheia, sem o rodapé extra.
+    return (
+      <div className={`${GUTTER} w-full min-w-0`}>
+        {filtroAtivo
+          ? <TasksEmptyState variant="filter" onClearFilter={onClearFilter} />
+          : <TasksEmptyState variant="all" />}
+      </div>
+    );
   }
 
   // Ações do card (Fase C2) num objeto só — evita repetir 7 props nas 6 seções.
