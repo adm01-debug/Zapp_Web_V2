@@ -1,47 +1,38 @@
-import { useState, useEffect, useCallback } from 'react';
+/**
+ * Painel de notificações do shell mobile (`MobileShell`).
+ *
+ * Antes ele desenhava um formato próprio de notificação e recebia uma lista
+ * local — o `MobileShell` guardava `useState<Notification[]>([])` e alimentava
+ * o painel (e o contador do sino) com lista vazia fixa. Agora ele consome o
+ * MESMO tipo e o MESMO item da central de notificações do desktop
+ * (`NotificationItem`, usado pelo `NotificationsPopover`), então a lista, o
+ * contador de não lidas e as 3 ações do alarme de tarefa (`reminder_due`) são
+ * os mesmos nas duas superfícies.
+ */
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, MessageSquare, UserPlus, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { X, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-
-export interface Notification {
-  id: string;
-  type: 'message' | 'assignment' | 'sla_warning' | 'resolved' | 'system';
-  title: string;
-  description: string;
-  timestamp: Date;
-  read: boolean;
-  contactName?: string;
-  contactAvatar?: string;
-}
+import { NotificationItem } from '@/components/notifications/NotificationItem';
+import type { Notification } from '@/hooks/system/useNotifications';
 
 interface NotificationsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   notifications: Notification[];
   onMarkAllRead: () => void;
-  onNotificationClick?: (notification: Notification) => void;
+  /** Marca uma notificação como lida (mesmo fluxo do popover do desktop). */
+  onMarkRead?: (id: string) => void;
 }
-
-const typeConfig: Record<Notification['type'], { icon: React.ComponentType<{ className?: string }>; color: string }> = {
-  message: { icon: MessageSquare, color: 'text-primary bg-primary/10' },
-  assignment: { icon: UserPlus, color: 'text-[hsl(var(--success))] bg-[hsl(var(--success)/0.1)]' },
-  sla_warning: { icon: AlertTriangle, color: 'text-destructive bg-destructive/10' },
-  resolved: { icon: CheckCircle, color: 'text-[hsl(var(--success))] bg-[hsl(var(--success)/0.1)]' },
-  system: { icon: Clock, color: 'text-muted-foreground bg-muted' },
-};
 
 export function NotificationsPanel({
   isOpen,
   onClose,
   notifications,
   onMarkAllRead,
-  onNotificationClick,
+  onMarkRead,
 }: NotificationsPanelProps) {
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   // Close on Escape
   useEffect(() => {
@@ -101,6 +92,7 @@ export function NotificationsPanel({
                   size="icon"
                   className="w-7 h-7 rounded-lg"
                   onClick={onClose}
+                  aria-label="Fechar notificações"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -121,50 +113,13 @@ export function NotificationsPanel({
                 </div>
               ) : (
                 <div className="divide-y divide-border">
-                  {notifications.map((notification) => {
-                    const config = typeConfig[notification.type];
-                    const Icon = config.icon;
-                    return (
-                      <motion.button
-                        key={notification.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        onClick={() => onNotificationClick?.(notification)}
-                        className={cn(
-                          'w-full flex items-start gap-3 px-4 py-3 text-left transition-colors touch-manipulation',
-                          !notification.read
-                            ? 'bg-primary/[0.03] hover:bg-primary/[0.06]'
-                            : 'hover:bg-muted/50'
-                        )}
-                      >
-                        {/* Icon */}
-                        <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5', config.color)}>
-                          <Icon className="w-4 h-4" />
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className={cn(
-                              'text-xs leading-tight',
-                              !notification.read ? 'font-semibold text-foreground' : 'font-medium text-foreground/80'
-                            )}>
-                              {notification.title}
-                            </p>
-                            {!notification.read && (
-                              <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                            )}
-                          </div>
-                          <p className="text-2xs text-muted-foreground mt-0.5 line-clamp-2">
-                            {notification.description}
-                          </p>
-                          <p className="text-3xs text-muted-foreground mt-1">
-                            {formatDistanceToNow(notification.timestamp, { addSuffix: true, locale: ptBR })}
-                          </p>
-                        </div>
-                      </motion.button>
-                    );
-                  })}
+                  {notifications.map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onMarkRead={onMarkRead}
+                    />
+                  ))}
                 </div>
               )}
             </div>

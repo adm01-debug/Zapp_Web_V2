@@ -98,7 +98,10 @@ export function NotificationItem({ notification, onMarkRead }: NotificationItemP
       type="button"
       onClick={() => onMarkRead?.(notification.id)}
       className={cn(
-        'w-full flex items-start gap-3 px-4 py-3 text-left transition-colors',
+        // `touch-manipulation`: o painel do shell mobile também usa este item
+        // (a linha era `touch-manipulation` antes de passar a usar o item
+        // compartilhado) — evita o atraso do duplo-toque para zoom no toque.
+        'w-full flex items-start gap-3 px-4 py-3 text-left transition-colors touch-manipulation',
         isUnread ? 'bg-primary/[0.03] hover:bg-primary/[0.06]' : 'hover:bg-muted/50'
       )}
     >

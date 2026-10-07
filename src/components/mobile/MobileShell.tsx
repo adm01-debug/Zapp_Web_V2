@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo } from 'react';
 import { MobileHeader } from '@/components/mobile/MobileHeader';
 import { MobileDrawerMenu } from '@/components/mobile/MobileDrawerMenu';
-import { NotificationsPanel, Notification } from '@/components/mobile/NotificationsPanel';
+import { NotificationsPanel } from '@/components/mobile/NotificationsPanel';
 import { MobileFAB } from '@/components/mobile/MobileFAB';
 import { BottomNavigation } from '@/components/ui/mobile-components';
 import { useKeyboardHeight } from '@/hooks/ui/useKeyboardHeight';
-import { MessageSquare, BarChart3, Users, MessagesSquare, Mail, Menu } from 'lucide-react';
+import { useNotifications } from '@/hooks/system/useNotifications';
+import { MessageSquare, Users, MessagesSquare, Mail, Menu } from 'lucide-react';
 
 interface MobileShellProps {
   currentView: string;
@@ -34,7 +35,9 @@ export function MobileShell({
 }: MobileShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  // Central de notificações real (mesmo hook do popover da sidebar): a lista e o
+  // contador do sino saem daqui, não de um estado local vazio.
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { isKeyboardOpen } = useKeyboardHeight();
 
   // R2-PLAT-010: o botão Buscar não tinha consumidor (o estado mobileSearchOpen
@@ -45,8 +48,8 @@ export function MobileShell({
   }, []);
 
   const handleMarkAllNotificationsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  }, []);
+    void markAllAsRead();
+  }, [markAllAsRead]);
 
   const navItemsWithBadge = useMemo(() => mobileNavItems.map((item) =>
     item.id === 'inbox' && unreadNotifications > 0
@@ -64,7 +67,7 @@ export function MobileShell({
         agentName={profile?.name || userEmail || 'Usuário'}
         agentAvatar={profile?.avatar_url || undefined}
         agentStatus="online"
-        unreadCount={unreadNotifications}
+        unreadCount={unreadCount}
       />
 
       <NotificationsPanel
@@ -72,10 +75,7 @@ export function MobileShell({
         onClose={() => setNotificationsOpen(false)}
         notifications={notifications}
         onMarkAllRead={handleMarkAllNotificationsRead}
-        onNotificationClick={(n) => {
-          setNotificationsOpen(false);
-          if (n.type === 'message' || n.type === 'assignment') setCurrentView('inbox');
-        }}
+        onMarkRead={(id) => void markAsRead(id)}
       />
 
       <MobileDrawerMenu
