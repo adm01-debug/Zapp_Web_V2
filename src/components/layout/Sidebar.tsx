@@ -19,6 +19,7 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 import { NavigationService } from '@/services/navigation.service';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { useMyWorkItemsBadgeInfo } from '@/hooks/tasks/useMyWorkItems';
+import { useUnreadEmailCount } from '@/hooks/gmail/useUnreadEmailCount';
 
 interface SidebarProps {
   currentView: string;
@@ -56,6 +57,15 @@ export const Sidebar = React.memo(function Sidebar({
     NavigationService.filterNavItems(primaryNav, roles, permissions),
     [roles, permissions]
   );
+
+  // U01: o item Email mostra a quantidade de conversas não lidas (todas as contas
+  // visíveis por RLS), igual ao selo do Chat. Sem acesso ao item na barra, o hook
+  // não consulta e não assina realtime — daí o `enabled`.
+  const canSeeEmailItem = useMemo(
+    () => filteredPrimaryNav.some(item => item.id === 'email-chat'),
+    [filteredPrimaryNav]
+  );
+  const emailUnread = useUnreadEmailCount(canSeeEmailItem);
 
   const filteredGroups = useMemo(() =>
     sidebarGroups.map(group => ({
@@ -133,7 +143,12 @@ export const Sidebar = React.memo(function Sidebar({
                   item={item}
                   currentView={currentView}
                   onViewChange={onViewChange}
-                  badge={item.id === 'inbox' ? inboxBadge : item.id === 'tasks' ? tasksBadgeInfo.count : undefined}
+                  badge={
+                    item.id === 'inbox' ? inboxBadge
+                      : item.id === 'tasks' ? tasksBadgeInfo.count
+                      : item.id === 'email-chat' ? emailUnread.count
+                      : undefined
+                  }
                   badgeVariant={
                     item.id === 'tasks' && !tasksBadgeInfo.hasOverdue ? 'warning' : 'destructive'
                   }
