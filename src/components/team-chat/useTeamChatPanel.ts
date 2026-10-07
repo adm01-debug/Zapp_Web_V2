@@ -281,8 +281,9 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // #350 — `handleAudioSend` sinaliza o RESULTADO ao chamador: `true` só depois do envio
   // confirmado e `false` em qualquer falha (sem profile, upload sem locator, rejeição do
   // envio). Antes a função resolvia `undefined` no sucesso e na falha, e o
-  // `TextToAudioButton` (que descarta a prévia do áudio gerado só quando o envio devolve
-  // `false` ou rejeita) não tinha como ver a diferença — a prévia sumia mesmo em falha.
+  // `TextToAudioButton` (que PRESERVA a prévia do áudio gerado quando o envio devolve
+  // `false` ou rejeita, e só a descarta no envio confirmado com `true`) não tinha como
+  // ver a diferença — a prévia sumia mesmo em falha.
   const handleAudioSend = useCallback(async (blob: Blob): Promise<boolean> => {
     if (!profile?.id) return false;
     try {
