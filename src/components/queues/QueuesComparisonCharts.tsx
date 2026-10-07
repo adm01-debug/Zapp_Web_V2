@@ -36,12 +36,15 @@ export function QueuesComparisonCharts({ queuesPerformance }: QueuesComparisonCh
   const maxAgents = Math.max(...queuesPerformance.map(q => q.agentsCount), 1);
   const maxAvgMessages = Math.max(...queuesPerformance.map(q => q.avgMessagesPerContact), 1);
 
+  // R2-QUE-008: a série do radar é identificada pelo ID da fila. Usar o NOME como
+  // chave fazia filas homônimas dividirem a MESMA coluna — a segunda sobrescrevia a
+  // primeira no objeto e as duas séries liam os mesmos valores.
   const radarData = [
-    { metric: 'Contatos', ...Object.fromEntries(queuesPerformance.map(q => [q.name, Math.round((q.totalContacts / maxContacts) * 100)])) },
-    { metric: 'Mensagens', ...Object.fromEntries(queuesPerformance.map(q => [q.name, Math.round((q.totalMessages / maxMessages) * 100)])) },
-    { metric: 'Atendentes', ...Object.fromEntries(queuesPerformance.map(q => [q.name, Math.round((q.agentsCount / maxAgents) * 100)])) },
-    { metric: 'Média Msgs', ...Object.fromEntries(queuesPerformance.map(q => [q.name, Math.round((q.avgMessagesPerContact / maxAvgMessages) * 100)])) },
-    { metric: 'Atribuídos', ...Object.fromEntries(queuesPerformance.map(q => [q.name, q.totalContacts > 0 ? Math.round((q.assignedContacts / q.totalContacts) * 100) : 0])) },
+    { metric: 'Contatos', ...Object.fromEntries(queuesPerformance.map(q => [q.id, Math.round((q.totalContacts / maxContacts) * 100)])) },
+    { metric: 'Mensagens', ...Object.fromEntries(queuesPerformance.map(q => [q.id, Math.round((q.totalMessages / maxMessages) * 100)])) },
+    { metric: 'Atendentes', ...Object.fromEntries(queuesPerformance.map(q => [q.id, Math.round((q.agentsCount / maxAgents) * 100)])) },
+    { metric: 'Média Msgs', ...Object.fromEntries(queuesPerformance.map(q => [q.id, Math.round((q.avgMessagesPerContact / maxAvgMessages) * 100)])) },
+    { metric: 'Atribuídos', ...Object.fromEntries(queuesPerformance.map(q => [q.id, q.totalContacts > 0 ? Math.round((q.assignedContacts / q.totalContacts) * 100) : 0])) },
   ];
 
   const tooltipStyle = {
@@ -90,7 +93,7 @@ export function QueuesComparisonCharts({ queuesPerformance }: QueuesComparisonCh
                 <PolarAngleAxis dataKey="metric" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={10} />
                 {queuesPerformance.slice(0, 4).map((queue) => (
-                  <Radar key={queue.id} name={queue.name} dataKey={queue.name} stroke={queue.color} fill={queue.color} fillOpacity={0.2} />
+                  <Radar key={queue.id} name={queue.name} dataKey={queue.id} stroke={queue.color} fill={queue.color} fillOpacity={0.2} />
                 ))}
                 <Legend />
                 <Tooltip contentStyle={tooltipStyle} />
