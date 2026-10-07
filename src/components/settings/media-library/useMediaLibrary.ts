@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { toast } from 'sonner';
 
 const log = getLogger('useMediaLibrary');
@@ -109,9 +110,23 @@ export function useMediaLibrary(type: MediaType) {
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from(type).select('*').order('created_at', { ascending: false }).limit(1000);
-      if (error) { log.error(`Error fetching ${type}:`, error); toast.error(`Erro ao carregar ${type === 'stickers' ? 'figurinhas' : type === 'audio_memes' ? 'áudios' : 'emojis'}`); }
-      setItems((data as MediaItem[]) || []);
+      // #344 (R2-INB-051): um `select('*').limit(1000)` fixava o catálogo na janela das 1000
+      // entradas mais novas — busca, categorias, favoritos e os contadores de StatsCards liam só
+      // esse recorte e nada na tela alcançava o resto. A leitura percorre TODAS as páginas
+      // (`fetchAllRows`), com o `id` como desempate estável da ordenação por data; o erro de
+      // leitura sobe pelo toast em vez de virar silenciosamente um catálogo menor.
+      const { rows, error, incomplete } = await fetchAllRows<MediaItem>(async (from, to) => {
+        const { data, error: pageError } = await supabase
+          .from(type)
+          .select('*')
+          .order('created_at', { ascending: false })
+          .order('id')
+          .range(from, to);
+        return { data: (data as MediaItem[] | null) ?? null, error: pageError ?? null };
+      });
+      if (error) { log.error(`Error fetching ${type}:`, error); toast.error(`Erro ao carregar ${type === 'stickers' ? 'figurinhas' : type === 'audio_memes' ? 'áudios' : 'emojis'}`); return; }
+      if (incomplete) log.warn(`Leitura de ${type} parou no teto de páginas: catálogo carregado é uma amostra`);
+      setItems(rows);
     } catch (err) { log.error(`Unexpected error fetching ${type}:`, err); setItems([]); }
     finally { setLoading(false); }
   }, [type]);

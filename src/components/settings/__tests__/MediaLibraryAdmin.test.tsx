@@ -86,6 +86,9 @@ function setupSupabaseQuery(data: unknown[] = [], error: unknown = null) {
     select: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockResolvedValue({ data, error }),
+    // #344: a biblioteca lê o catálogo paginando (`fetchAllRows` → `.range(from, to)`); com o
+    // dataset dos testes abaixo de uma página, a primeira chamada devolve tudo e a leitura para.
+    range: vi.fn().mockResolvedValue({ data, error }),
     insert: vi.fn().mockResolvedValue({ error: null }),
     eq: vi.fn().mockResolvedValue({ error: null }),
     in: vi.fn().mockResolvedValue({ error: null }),
@@ -182,10 +185,11 @@ describe('MediaLibraryAdmin', () => {
       });
     });
 
-    it('fetches with limit 1000', async () => {
+    it('lê o catálogo paginando, sem o teto fixo de 1000 (#344)', async () => {
       const chain = setupSupabaseQuery([]);
       render(<MediaLibraryAdmin />);
-      await waitFor(() => expect(chain.limit).toHaveBeenCalledWith(1000));
+      await waitFor(() => expect(chain.range).toHaveBeenCalledWith(0, 999));
+      expect(chain.limit).not.toHaveBeenCalled();
     });
 
     it('orders by created_at descending', async () => {
