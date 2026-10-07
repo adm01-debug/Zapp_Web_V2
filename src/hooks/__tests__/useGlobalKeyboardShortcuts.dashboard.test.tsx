@@ -33,12 +33,26 @@ function Sonda() {
   return <span data-testid="rota">{`${location.pathname}${location.search}`}</span>;
 }
 
-/** Eventos `zapp:navigate` emitidos — é o que sincroniza a view nas telas. */
+/**
+ * Eventos `zapp:navigate` emitidos — é o que sincroniza a view nas telas.
+ *
+ * O `detail` do evento é `{ view, entryId }` quando a navegação empilha entrada
+ * nova (`navigateToView` em `src/hooks/system/useNavigationHistory.ts`): a prova
+ * desta cartela é o CAMPO `view`, não a igualdade profunda do objeto inteiro —
+ * comparar o objeto todo reprovaria o evento por causa do `entryId` legítimo.
+ */
 function escutarNavegacao() {
-  const recebidos: Array<{ view?: string }> = [];
-  const handler = (e: Event) => recebidos.push((e as CustomEvent<{ view: string }>).detail);
+  const recebidos: Array<{ view?: string; entryId?: string }> = [];
+  const handler = (e: Event) =>
+    recebidos.push((e as CustomEvent<{ view?: string; entryId?: string }>).detail);
   window.addEventListener('zapp:navigate', handler);
-  return { recebidos, parar: () => window.removeEventListener('zapp:navigate', handler) };
+  /** As views pedidas pelos eventos recebidos: `detail.view` de cada um. */
+  const viewsPedidas = () => recebidos.map(d => d?.view);
+  return {
+    recebidos,
+    viewsPedidas,
+    parar: () => window.removeEventListener('zapp:navigate', handler),
+  };
 }
 
 function teclar(key: string, extra: KeyboardEventInit = {}) {
@@ -77,8 +91,9 @@ describe('#447 — Ctrl+2 seleciona a view dashboard', () => {
 
     // URL canônica do app (?view=<id>), não apenas a rota raiz.
     expect(viewDaUrl()).toBe('dashboard');
-    // Evento que o useNavigationHistory usa para sincronizar a view.
-    expect(nav.recebidos).toContainEqual({ view: 'dashboard' });
+    // Evento que o useNavigationHistory usa para sincronizar a view — a prova é o
+    // CAMPO `view` do detail (o mesmo detail legítimo traz `entryId` junto).
+    expect(nav.viewsPedidas()).toContain('dashboard');
     // O aviso continua acontecendo (e agora diz a verdade).
     expect(toast.info).toHaveBeenCalledWith('📊 Dashboard', { duration: 1500 });
   });
@@ -94,7 +109,7 @@ describe('#447 — Ctrl+2 seleciona a view dashboard', () => {
     teclar('2', { ctrlKey: true });
 
     expect(viewDaUrl()).toBe('dashboard');
-    expect(nav.recebidos).toContainEqual({ view: 'dashboard' });
+    expect(nav.viewsPedidas()).toContain('dashboard');
   });
 
   it('Ctrl+2 fora do shell (/sla) volta para a raiz já com ?view=dashboard', async () => {
@@ -115,7 +130,7 @@ describe('#447 — Ctrl+2 seleciona a view dashboard', () => {
       expect(window.location.search).toBe('?view=dashboard');
     });
     expect(screen.getByTestId('rota').textContent).toBe('/?view=dashboard');
-    expect(nav.recebidos).toContainEqual({ view: 'dashboard' });
+    expect(nav.viewsPedidas()).toContain('dashboard');
   });
 
   it('sem Ctrl o "2" não navega (o modificador continua obrigatório)', () => {
