@@ -298,18 +298,30 @@ function cabecalhosRest(serviceRoleKey: string): Record<string, string> {
   };
 }
 
+interface ResultadoInsertLogEssencial {
+  ok: boolean;
+  status: number;
+}
+
 async function inserirLinhaDeLog(
   url: string,
   chave: string,
   linha: Record<string, unknown>,
-): Promise<Response> {
-  const resposta = await fetch(`${url}/rest/v1/ai_usage_logs`, {
-    method: "POST",
-    headers: { ...cabecalhosRest(chave), Prefer: "return=minimal" },
-    body: JSON.stringify(linha),
-  });
-  try { await resposta.text(); } catch { /* corpo de erro pode nem existir */ }
-  return resposta;
+): Promise<ResultadoInsertLogEssencial> {
+  const supabase = createClient(url, chave);
+  const { error } = await supabase.from("ai_usage_logs").insert(linha);
+  if (!error) return { ok: true, status: 201 };
+
+  const statusBruto = (error as { status?: unknown; code?: unknown }).status ??
+    (error as { status?: unknown; code?: unknown }).code;
+  const status = Number(statusBruto);
+  return {
+    ok: false,
+    // Quando o dublê/cliente não expõe status HTTP, trate como transitório: o
+    // contrato do log essencial é não perder em silêncio e tentar antes da
+    // outbox, sem vazar uma chamada global de fetch nos contratos do roteador.
+    status: Number.isFinite(status) && status > 0 ? status : 503,
+  };
 }
 
 /** Há linha com esta `log_key`? Lança quando a própria checagem falha. */
