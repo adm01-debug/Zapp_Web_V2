@@ -4,15 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FilesLayoutPopover } from './FilesLayoutPopover';
+import { PeriodFilterSelector, type AnalysisPeriod } from '@/components/inbox/ai-tools/PeriodFilterSelector';
 import type { ColumnOption } from '@/hooks/chat/useFilesContainerColumns';
 import type { FilesColumns, FilesSort, FilesViewMode } from '@/hooks/chat/useFilesViewState';
 
 /**
- * Barra de ferramentas da aba Arquivos (etapa 11): busca, ordenacao, Selecionar e Layout.
+ * Barra de ferramentas da aba Arquivos (etapa 11): busca, ordenacao, filtro por DATA, Selecionar
+ * e Layout.
  *
  * `flex-wrap` em vez do limiar de 640 px do plano: o repo nao tem infra de container query
  * (G7) e o efeito que a etapa pede — nada de rolagem horizontal, o grupo desce para a linha
  * de baixo quando nao cabe — e o mesmo. A busca nunca encolhe abaixo de 220 px.
+ *
+ * O filtro por data (F04) reusa o MESMO seletor da aba IA, ao lado de "Maiores"; a unica
+ * diferenca e esconder "Ultima interacao", que nao faz sentido para arquivos.
  */
 
 const SORT_LABELS: Record<FilesSort, string> = {
@@ -27,6 +32,17 @@ interface FilesToolbarProps {
   onSearchChange: (value: string) => void;
   sort: FilesSort;
   onSortChange: (sort: FilesSort) => void;
+  period: AnalysisPeriod;
+  onPeriodChange: (period: AnalysisPeriod) => void;
+  customFrom: Date | null;
+  customTo: Date | null;
+  onCustomFromChange: (date: Date | undefined) => void;
+  onCustomToChange: (date: Date | undefined) => void;
+  /** Zera só as datas personalizadas — é o `onClearCustom` do seletor, não "limpar o período". */
+  onClearCustom: () => void;
+  /** Itens do recorte atual e do carregado — o contador do gatilho, como na IA. */
+  filteredCount: number;
+  totalCount: number;
   viewMode: FilesViewMode;
   onViewModeChange: (mode: FilesViewMode) => void;
   columns: FilesColumns;
@@ -42,6 +58,15 @@ export function FilesToolbar({
   onSearchChange,
   sort,
   onSortChange,
+  period,
+  onPeriodChange,
+  customFrom,
+  customTo,
+  onCustomFromChange,
+  onCustomToChange,
+  onClearCustom,
+  filteredCount,
+  totalCount,
   viewMode,
   onViewModeChange,
   columns,
@@ -76,6 +101,24 @@ export function FilesToolbar({
           ))}
         </SelectContent>
       </Select>
+
+      {/* F04: filtro por data (F05/F06) — mesmo seletor da aba IA, ao lado de "Maiores".
+          Largura mínima + `flex-1` (com teto) porque o gatilho e `w-full` e o rotulo longo
+          ("05/03/26 — 07/03/26") nao cabe fixo; `flex-wrap` da barra cuida do celular. */}
+      <div className="min-w-[180px] flex-1 max-w-[280px]" data-testid="files-period-filter">
+        <PeriodFilterSelector
+          period={period}
+          onPeriodChange={onPeriodChange}
+          customFrom={customFrom ?? undefined}
+          customTo={customTo ?? undefined}
+          onCustomFromChange={onCustomFromChange}
+          onCustomToChange={onCustomToChange}
+          onClearCustom={onClearCustom}
+          filteredCount={filteredCount}
+          totalCount={totalCount}
+          hiddenPeriods={['last_interaction']}
+        />
+      </div>
 
       <div className="flex items-center gap-2">
         <Button
