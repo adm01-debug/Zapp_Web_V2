@@ -34,11 +34,13 @@ export function usePerformanceSnapshots() {
     page_load: number;
     dom_ready: number;
     ttfb: number;
-    memory_used: number;
-    memory_total: number;
+    // As colunas de performance_snapshots são nullable: o que o navegador não
+    // mede é gravado como null, nunca como 0 MB / 0 ms / '4g' inventado (R2-INF-029).
+    memory_used: number | null;
+    memory_total: number | null;
     dom_nodes: number;
-    network_type: string;
-    rtt: number;
+    network_type: string | null;
+    rtt: number | null;
     overall_score: number;
   }) => {
     if (!profile?.id) return;
