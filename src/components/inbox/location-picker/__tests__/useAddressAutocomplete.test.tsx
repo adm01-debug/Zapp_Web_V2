@@ -892,6 +892,39 @@ describe('useAddressAutocomplete', () => {
     expect(result.current.retrieveError).toBeNull();
   });
 
+  it('R2-INB-037: trocar o termo durante o /retrieve invalida a seleção em voo — o endereço antigo não é aplicado', async () => {
+    h.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [suggestionA] });
+    let resolveRetrieve: (v: { ok: true; place: GeoSearchPlace }) => void = () => {};
+    h.retrievePlaceResult.mockImplementationOnce(() => new Promise((r) => { resolveRetrieve = r; }));
+
+    const { result } = setup();
+    act(() => { result.current.setQuery('rua a'); });
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(result.current.suggestions).toEqual([suggestionA]);
+
+    // O operador escolhe a sugestão A: o `/retrieve` dela fica em voo (o input NÃO é desabilitado
+    // durante o retrieve — é justamente essa janela que o achado descreve).
+    let escolhido: GeoSearchPlace | null = null;
+    const emVoo = (async () => {
+      await act(async () => { escolhido = await result.current.select(0); });
+    })();
+
+    // Antes da resposta chegar, ele digita um termo NOVO (quer procurar B).
+    act(() => { result.current.setQuery('rua b'); });
+
+    await act(async () => { resolveRetrieve({ ok: true, place: forwardA }); });
+    await emVoo;
+
+    // A resposta pertence ao TERMO anterior: não pode ser entregue ao consumidor, que a aplicaria
+    // por cima da busca nova (e o `clear()` seguinte apagaria o termo que o operador está digitando).
+    expect(escolhido).toBeNull();
+    expect(result.current.query).toBe('rua b');
+    expect(result.current.retrievingId).toBeNull();
+    expect(result.current.retrieveError).toBeNull();
+    // Sem seleção aplicada não há evento de escolha — a telemetria não pode dizer que A foi escolhida.
+    expect(h.logAudit).not.toHaveBeenCalledWith(expect.objectContaining({ action: 'searchbox_selected' }));
+  });
+
   it('A3-02: enabled=false (troca de aba) aborta o /suggest em voo e descarta a resposta', async () => {
     let resolveSuggest: (v: { ok: true; suggestions: GeoSuggestion[] }) => void = () => {};
     h.suggestPlaces.mockImplementationOnce(() => new Promise((r) => { resolveSuggest = r; }));
