@@ -81,7 +81,11 @@ describe('RecordingPlayer (T67)', () => {
     // D3 revisado em 29/09 (reconciliar com o Bitrix24): a Edge get-call-recording existe, entao
     // o player deixa de devolver null e passa a buscar o audio - sem que a URL chegue ao front.
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('get-call-recording', expect.objectContaining({ body: { callId: 'c3' } })));
-    expect(JSON.stringify(document.body.innerHTML)).not.toContain('http');
+    const htmlSemXmlnsSvg = JSON.stringify(document.body.innerHTML).replace(
+      /http:\/\/www\.w3\.org\/2000\/svg/g,
+      '[svg-namespace]',
+    );
+    expect(htmlSemXmlnsSvg).not.toContain('http');
   });
 });
 
