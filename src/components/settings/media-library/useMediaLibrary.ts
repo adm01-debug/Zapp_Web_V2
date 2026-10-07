@@ -176,20 +176,29 @@ export function useMediaLibrary(type: MediaType) {
     if (toReclassify.length === 0) return;
     setReclassifying(true);
     let updated = 0, errors = 0;
+    // Itens que falharam (classificador indisponível ou gravação recusada):
+    // continuam selecionados para o operador tentar de novo.
+    const failed = new Set<string>();
     const fnName = type === 'audio_memes' ? 'classify-audio-meme' : type === 'stickers' ? 'classify-sticker' : 'classify-emoji';
     for (const item of toReclassify) {
       try {
         const body = type === 'audio_memes' ? { audio_url: item.audio_url || '', file_name: item.name || '' } : { image_url: item.image_url || '' };
-        const { data } = await supabase.functions.invoke(fnName, { body });
+        const { data, error } = await supabase.functions.invoke(fnName, { body });
+        // R2-INB-053: quando a Edge Function falha, o cliente Supabase resolve o
+        // invoke com { data: null, error } em vez de lançar. Sem ler o `error`,
+        // a falha some (contava como "sem mudança") e a seleção era limpa.
+        if (error) { errors++; failed.add(item.id); continue; }
         if (data?.category && data.category !== item.category) {
-          const { error } = await supabase.from(type).update({ category: data.category }).eq('id', item.id);
-          if (!error) { setItems(prev => prev.map(i => i.id === item.id ? { ...i, category: data.category } : i)); updated++; }
-          else errors++;
+          const { error: updateError } = await supabase.from(type).update({ category: data.category }).eq('id', item.id);
+          if (!updateError) { setItems(prev => prev.map(i => i.id === item.id ? { ...i, category: data.category } : i)); updated++; }
+          else { errors++; failed.add(item.id); }
         }
-      } catch { errors++; }
+      } catch { errors++; failed.add(item.id); }
     }
     setReclassifying(false);
-    setSelected(new Set());
+    // Só os que falharam ficam selecionados; os demais (reclassificados ou já
+    // corretos) saem da seleção.
+    setSelected(failed);
     const msg = `${updated}/${toReclassify.length} itens reclassificados com IA`;
     if (errors > 0) { toast.info(`${msg} (${errors} erros)`); } else { toast.success(msg); }
   };
