@@ -24,11 +24,21 @@ Fatos da documentação oficial da Meta:
 - **Risco:** protocolo não oficial viola os termos do WhatsApp. O repositório registra um **bloqueio da Meta em 25/09/2026** (`PLANO_MULTI_CONEXAO_EVOLUTION_GO_50_ETAPAS`). Perder o número principal seria grave.
 - Esforço de tela: o front receberia PCM16 por WebSocket e teria de tocar/capturar áudio (AudioWorklet, reamostragem).
 
+
+## 3b. Caminho B': Wavoip (serviço pronto, mesma classe de risco do B)
+Fatos da documentação e do site da Wavoip (https://www.wavoip.com/ · https://wavoip.gitbook.io/api):
+- Serviço brasileiro de ligações pelo WhatsApp: **SDK em WebSocket** (`wavoip.startCall(...)`, ofertas de chamada recebida, chamada ativa com `stats` de RTT e perda de pacotes), **Webphone** embutível, **SIP** (tronco para PABX, FreePBX), **REST + webhooks + eventos SSE**, **gravação** e relatórios. Cada dispositivo escaneado faz **1 chamada simultânea**.
+- **Como liga o número:** "o processo de integração é igual a um WhatsApp Web" (QR code, aparelho vinculado) = **protocolo não oficial**. Alternativa "WhatsApp Externo": **compartilhar a sessão da nossa API (Baileys ou Evolution)**; a documentação diz que "toda a comunicação com os servidores do WhatsApp passa pela sua infraestrutura", mas **não diz o que é enviado à Wavoip** nem como é protegido.
+- **Planos:** Básico (1 chamada simultânea), Empresarial (10), Scale Up (30), todos com gravação, SIP, webphone, webhook; **preço em reais não estava publicado** nas páginas lidas; a comunidade cita plano Free (5 ligações/dia). Teste gratuito.
+- **Risco admitido pela própria Wavoip:** ligar para números sem conversa prévia "aumenta significativamente o risco de bloqueio"; manual de aquecimento (20 msgs/dia nos dias 1–3, 50 nos dias 4–7). O manual **não traz** aviso de que é não oficial nem declaração do WhatsApp.
+- **Não verificado:** se a ponte "Externo" funciona com a **Evolution GO** (a documentação cita Baileys e "Evolution"); onde passa o áudio; retenção das gravações; empresa/CNPJ/SLA; preços; conformidade com a LGPD.
+- **Avaliação:** troca o fork que teríamos de manter (caminho B) por um serviço mantido, com SDK/webphone/SIP prontos, mas **não elimina o risco de banimento** nem os termos do WhatsApp, e **coloca um terceiro no caminho do áudio e/ou da sessão**.
+
 ## 4. Caminho C — manter como está
 Eventos e "atenda no aparelho". Já existe; não liga pelo WhatsApp.
 
 ## 5. Recomendação
-**Caminho A em produção.** O caminho B só como laboratório, num **número reserva**, nunca no número principal. Antes de construir o A, o dono precisa confirmar no Business Manager: (1) o limite diário de mensagens do número (precisa ser ≥ 2.000 únicos); (2) se o número pode ir para a Cloud API ou se vale registrar um número novo só para ligações; (3) a tarifa em BRL.
+**Caminho A em produção.** Os caminhos B e B' (Wavoip) só como laboratório, num **número reserva**, nunca no número principal. A Wavoip é o laboratório mais rápido (teste gratuito, SDK pronto). Antes de construir o A, o dono precisa confirmar no Business Manager: (1) o limite diário de mensagens do número (precisa ser ≥ 2.000 únicos); (2) se o número pode ir para a Cloud API ou se vale registrar um número novo só para ligações; (3) a tarifa em BRL.
 
 ## Fontes
 - Meta, Calling API: https://developers.facebook.com/documentation/business-messaging/whatsapp/calling (e subpáginas `user-initiated-calls`, `business-initiated-calls`, `calling/pricing`).
