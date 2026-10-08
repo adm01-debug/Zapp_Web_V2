@@ -17,13 +17,12 @@
  * real é discado em nenhum caminho desta spec; o histórico vem da RPC `search_my_calls`
  * mockada (vazia e semeada).
  *
- * COMO RODAR (sem secrets, sem `setup` — mesmo padrão de `ct94-ui-429.spec.ts`): o spec é
- * novo e o projeto `chromium` só coleta `auth.spec.ts`; quem coleta um spec novo é o
- * projeto catch-all `chromium-authenticated`, cujo `setup` faz login REAL (proibido pela
- * guarda R1). A spec neutraliza o `storageState` do projeto no topo do arquivo e roda com
- * `--no-deps`, que pula o projeto `setup`:
+ * COMO RODAR (sem secrets, sem `setup`): o projeto dedicado `chromium-telefonia`
+ * (`playwright.config.ts`, com `storageState` VAZIO declarado no projeto) coleta esta spec —
+ * ele NÃO depende do projeto `setup` (login REAL, proibido pela guarda R1) nem de sessão
+ * salva, mesmo padrão deslogado de `chromium-mapa`/`chromium-onboarding-dispensar`:
  *
- *   npx playwright test e2e/telefonia.spec.ts --project=chromium-authenticated --no-deps
+ *   npx playwright test e2e/telefonia.spec.ts --project=chromium-telefonia
  */
 import { test, expect, type Page } from '@playwright/test';
 
