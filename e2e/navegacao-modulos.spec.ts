@@ -1026,6 +1026,9 @@ function relatarRodada(
  * o teste reprova.
  */
 test.beforeAll(async ({ request }) => {
+  // O default do Playwright para hooks e 30 s, e uma passada de aquecimento (74
+  // funcoes de ponta) leva mais que isso: o teto vai no proprio hook.
+  test.setTimeout(20 * 60_000);
   let ultimoErro: unknown;
   for (let passada = 1; passada <= 4; passada += 1) {
     try {
@@ -1039,7 +1042,7 @@ test.beforeAll(async ({ request }) => {
   throw ultimoErro;
   // O teto do próprio hook: o default do Playwright para hooks é 30 s, e uma
   // passada de aquecimento (74 funções de ponta) leva mais que isso.
-}, 20 * 60_000);
+});
 
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
