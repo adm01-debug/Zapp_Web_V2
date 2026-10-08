@@ -7,6 +7,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 import { sendOutboundMessage, sendRichOutboundMessage } from '../outbound-message.service';
+import { offlineSendQueue } from '@/lib/offlineQueue';
 
 describe('sendOutboundMessage', () => {
   beforeEach(() => {
@@ -93,6 +94,42 @@ describe('sendOutboundMessage', () => {
     }));
     expect(invoke).toHaveBeenCalledWith('message-delivery', {
       body: { messageId: '56bb3f25-ad35-40b9-adcd-d10f4a98752d' },
+    });
+  });
+
+  it('com a rede caída a mensagem espera na fila local e sai sozinha na reconexão (SL-070/025)', async () => {
+    await offlineSendQueue.clear();
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+    try {
+      await expect(sendOutboundMessage({ contactId: 'contato-fila', content: 'composta offline' })).resolves.toEqual({
+        id: '0c5d8df5-430d-4f46-8c0a-764be035116a', status: 'pending', externalId: null, idempotent: false,
+      });
+      // Nada saiu da aba: nem enqueue no servidor, nem despacho.
+      expect(rpc).not.toHaveBeenCalled();
+      expect(invoke).not.toHaveBeenCalled();
+      expect((await offlineSendQueue.list()).map((item) => item.content)).toEqual(['composta offline']);
+    } finally {
+      delete (navigator as unknown as Record<string, unknown>).onLine;
+    }
+
+    rpc.mockResolvedValue({
+      data: { id: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc', status: 'sending', external_id: null }, error: null,
+    });
+    invoke.mockResolvedValue({
+      data: { messageId: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc', status: 'sent', externalId: 'provider-fila', idempotent: false },
+      error: null,
+    });
+
+    window.dispatchEvent(new Event('online'));
+
+    await vi.waitFor(async () => expect(await offlineSendQueue.list()).toEqual([]));
+    // Sai com a MESMA chave estável: sem duplicar (item 024).
+    expect(rpc).toHaveBeenCalledWith('enqueue_outbound_message', expect.objectContaining({
+      p_client_message_id: '0c5d8df5-430d-4f46-8c0a-764be035116a',
+      p_content: 'composta offline',
+    }));
+    expect(invoke).toHaveBeenCalledWith('message-delivery', {
+      body: { messageId: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc' },
     });
   });
 });
