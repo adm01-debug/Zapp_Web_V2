@@ -9,11 +9,21 @@
 > e o plano de finalização reescreveu as etapas (CT-01..CT-100) com evidência por etapa.
 > **Não reabrir este arquivo**; ele fica como registro do escopo original e dos mocks.
 >
-> **Os 396 checkboxes abaixo NÃO foram marcados** (decisão do CT-99): o validador
-> `scripts/catalog/validate-plan.mjs` exige **≥ 3 itens `- [ ]` por bloco E** e cada bloco
-> tem **exatamente 4** — marcar mais de um por bloco **quebraria o validador**, que é
-> justamente o que o aceite do CT-99 manda preservar. A contradição de aceite está
-> registrada no `PLANO_FINALIZACAO_CATALOGO_100.md` §10 (CT-99).
+> **Os 396 checkboxes abaixo NÃO foram marcados** (decisão do CT-99, revista em 08/10/2026): este plano é
+> **registro histórico**. A reconciliação canônica de 03/10 o classificou `HISTORICAL_SUPERSEDED`
+> (`docs/reconciliation/tasks/P015.json`: 100/100 etapas, `original_claim: UNMARKED`; `MODULE_LINEAGES.md:21`)
+> e vale a regra do projeto: **checkbox não é fonte de verdade**. Marcar caixa por caixa "conforme o estado
+> real" seria a **alteração documental artificial** que o achado OTH-011 (`docs/reconciliation/FINDINGS.md:145`)
+> registra como proibida sem considerar a sucessão do plano — o estado real por etapa está no
+> `AUDITORIA_CATALOGO_2026-09-29.md` §3 (✅/◐/✗/⊘ com evidência) e no plano sucessor.
+>
+> A justificativa antes registrada aqui — uma trava de contagem no validador de checklist — **caducou** em
+> 05–06/10/2026: o parser passou a contar caixas marcadas (`fe6760cf1`) e a aceitar o tombstone da E54
+> (`d044ef986`). O gate está **verde**: `node scripts/catalog/validate-plan.mjs` →
+> `OK: 100 etapas × 10 sub-etapas × checklist` (EXIT=0), e o mesmo validador aceita uma cópia com as 396 caixas
+> marcadas (prova: `scripts/ci/catalog-ct99-docs.unit.mjs`). Marcar as caixas já não esbarra no validador — o
+> que as mantém abertas é a sucessão do plano, não o script. Revisão registrada no
+> `PLANO_FINALIZACAO_CATALOGO_100.md` §10 (CT-99).
 
 **Repo:** `adm01-debug/Zapp_Web_V2` · **main na geração:** `9c99b164` · **Deploy:** Vercel `zapp-web-v2.vercel.app/?view=catalog`
 **DB canônico:** Supabase Cloud `tnnnlkbymytvtqngbbqh` (MCP `SUPABASE - ZAPP WEB V2 - MCP`) · **DB externo (PromoGifts):** MCP `SUPABASE - GESTÃO DE PRODUTOS`

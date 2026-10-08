@@ -35,8 +35,9 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
    `SELECT supabase_migrations.reserve_migration_version('catalog-ct','CT-##')`. PRs de DDL aguardam Joaquim.
 4. Edge `promogifts-catalog`: mudança só entra em produção por `workflow_dispatch` do `deploy-functions.yml` +
    aprovação no environment `producao-edge-functions`. Merge ≠ deploy — a etapa só fecha com o deploy confirmado.
-5. Cada etapa tem aceite verificável (query, teste, grep ou comportamento em produção). O plano de 11/09 é
-   atualizado com os checkboxes das etapas equivalentes ao fechar cada bloco (CT-99).
+5. Cada etapa tem aceite verificável (query, teste, grep ou comportamento em produção). O plano de 11/09 **não** é
+   atualizado com checkboxes: ele é registro histórico (`HISTORICAL_SUPERSEDED`) e o estado real por etapa vive aqui
+   e no `AUDITORIA_CATALOGO_2026-09-29.md` §3 — decisão do CT-99, revista em 08/10/2026 (ver §10).
 
 ---
 
@@ -909,6 +910,16 @@ plano de 11/09) + leitura ao vivo dos bancos ZAPP e PromoGifts em 29/09.
   ANTES** desta etapa: `E54: 0 sub-etapas / checklist com 0 itens / sem Objetivo` (E54 é a etapa riscada/descartada em
   24/09, sem `Objetivo`/checklist), **EXIT=1** — o cabeçalho novo é *parse-neutral* (fica antes do primeiro bloco E e o
   validador o descarta) e a saída **não mudou** após a inserção. Detalhe na §10 (CT-99).
+  **↻ REVISTO — 2026-10-08 (SL-153): a contradição de 02/10 CADUCOU.** Os dois obstáculos foram corrigidos no
+  próprio código: o parser do validador passou a contar caixas marcadas (`fe6760cf1`, 05/10) e a aceitar o tombstone
+  da E54 (`d044ef986`, 06/10) — `node scripts/catalog/validate-plan.mjs` dá `OK: 100 etapas × 10 sub-etapas ×
+  checklist` (**EXIT=0**) no plano canônico e também numa cópia com as **396** caixas marcadas (prova:
+  `scripts/ci/catalog-ct99-docs.unit.mjs`). **A decisão de não marcar continua, com o fundamento correto:** o plano é
+  `HISTORICAL_SUPERSEDED` na reconciliação canônica (`docs/reconciliation/tasks/P015.json`, 100/100, `original_claim:
+  UNMARKED`) e marcar caixa por caixa seria a "alteração documental artificial" que o OTH-011
+  (`docs/reconciliation/FINDINGS.md:145`) proíbe. O cabeçalho do plano de 11/09 perdeu a justificativa caduca. O item
+  segue `- [ ]`: o aceite literal ("checkboxes marcados conforme o estado real") não se cumpre por decisão, e
+  forçá-lo seria fechar item por alteração artificial — mesma regra que mantém o CT-73 pendente.
 - [ ] **CT-100** — Release: tag `catalog-v1.0.0` + notas (do changelog), `HANDOFF_v1.md` (estado, pendências, comandos),
   branches `claude/feat-catalog-*` apagadas, CLAUDE.md com seção curta "Catálogo" (bancos, edge, fluxo de envio,
   regra "merge ≠ deploy da edge"). **Aceite:** tag existe; CLAUDE.md atualizado.
@@ -979,6 +990,24 @@ Isto é **divergência de aceite** (o item 2 do aceite — "validador passa" —
 E54, que é anterior e alheio a esta etapa), **não** uma tarefa não feita por preguiça: marcar os checkboxes do jeito pedido
 quebraria o validador, e consertar E54 (dar-lhe `Objetivo` + checklist) está **fora dos arquivos que este bloco pode tocar**
 (só o cabeçalho). Fica como dívida explícita para quem for rodar o `validate-plan.mjs` no CI.
+
+### CT-99 — re-medição (2026-10-08, SL-153): a contradição caducou
+
+O aceite de duas pontas medido na §10 acima (02/10) deixou de ter contradição — os dois obstáculos foram corrigidos
+no próprio código, medido na ponta do dia:
+
+| Fato medido | Evidência |
+|---|---|
+| O validador **passa** no plano canônico | `node scripts/catalog/validate-plan.mjs` → `etapas: 100/100 · blocos: 100`, `OK: 100 etapas × 10 sub-etapas × checklist`, **EXIT=0** |
+| O parser conta caixas **marcadas e não marcadas** (`[ ]`, `[x]`, `[X]`) desde 05/10 | `scripts/catalog/validate-plan.mjs` (regex `/^- \[[ xX]\] /gm`), commit `fe6760cf1`; casos em `scripts/catalog/validate-plan.test.mjs` |
+| O tombstone da E54 (etapa riscada) é dispensado de Objetivo, 10 sub-etapas e checklist desde 06/10 | commit `d044ef986`; caso "aceita o plano canonico com E54 como tombstone (regressao do defeito)" |
+| O validador aceita o plano com as **396** caixas marcadas | `scripts/ci/catalog-ct99-docs.unit.mjs` (monta a cópia marcada e roda o validador real) |
+| A reconciliação canônica classifica este plano como `HISTORICAL_SUPERSEDED`, 100/100, `original_claim: UNMARKED` | `docs/reconciliation/tasks/P015.json`; `docs/reconciliation/MODULE_LINEAGES.md:21` |
+
+**Efeito:** o que esta §10 mediu em 02/10 — aceite impossível por causa do validador — **não existe mais**. O
+cabeçalho do plano de 11/09 foi corrigido em 08/10 e o achado ficou travado por guarda própria
+(`catalog-ct99-docs.unit.mjs`). O que mantém as 396 caixas abertas é a sucessão do plano (OTH-011: marcar seria
+alteração documental artificial), não o script.
 
 ### CT-51 - o "header" do contato e o ponto de extensao (02/10/2026, bloco F)
 
@@ -1169,7 +1198,10 @@ Sem dependência do Joaquim, na sequência do lote anterior (CT-74/CT-73).
   a contagem do filtro não é legível no DOM nem na resposta da edge, e os nomes do plano (`new_or_recent`,
   `new_30d`) não existem no código.
 - **CT-99** segue não iniciado (o aceite é autocontraditório: `validate-plan.mjs:17` exige ≥3 `- [ ]` por bloco e
-  cada bloco tem exatamente 4 caixas — marcar conforme o estado real quebraria o validador).
+  cada bloco tem exatamente 4 caixas — marcar conforme o estado real quebraria o validador). ↻ **revisto em
+  08/10/2026:** os dois obstáculos foram corrigidos no validador (05–06/10) e o gate está verde — o que sustenta a
+  decisão de não marcar é a sucessão do plano (`HISTORICAL_SUPERSEDED`, `docs/reconciliation/tasks/P015.json`);
+  ver a re-medição na §10 (CT-99).
 - **Lição de medição (minha):** o primeiro teste do rate limit foi **sequencial** e as 61 chamadas passaram de 60 s,
   o que produziria um falso "o limite não funciona". Só o disparo em paralelo, com tempo medido, dá veredito.
 
