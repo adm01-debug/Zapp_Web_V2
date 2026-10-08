@@ -40,6 +40,10 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-v26-template-version.test.sh',
   // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
+  // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
+  // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
+  // docker descartável estiver disponível no runner do db-guard.yml.
+  'scripts/db-audit/reminders-migracao-identidade.test.sh',
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
