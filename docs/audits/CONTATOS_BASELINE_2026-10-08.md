@@ -1,0 +1,261 @@
+# Contatos — medição inicial do caminho até a conversa (CT-001)
+
+> **Não é um relatório de melhoria: são os números de ANTES.** A meta do plano
+> (`docs/plans/PLANO_CONTATOS_POR_JORNADA_2026-10-08.md`, jornada 1 · Achar) é
+> **3 cliques e 5 segundos** do módulo até a conversa com um cliente. Este documento
+> fixa o ponto de partida para os cartões seguintes compararem.
+
+- Gerado em: 2026-10-08T16:26:52.735Z
+- Commit medido: `c30eb4005`
+- Preview: `http://127.0.0.1:4173` — bundle de produção (`vite build`, com manifesto)
+- Roteiro: `node scripts/qa/contatos-jornada.cjs --repeticoes 3 --md docs/audits/CONTATOS_BASELINE_2026-10-08.md`
+- Rodadas: 3 por largura; a linha de referência é a **mediana em segundos** (o host é compartilhado entre agentes e uma rodada isolada pega pico de carga).
+
+## O que foi medido, e o que não foi
+
+Medido no navegador real (Chromium do Playwright), a partir do menu principal já
+carregado: clicar **Contatos** → digitar o termo na **busca** → clicar **Conversar**.
+"Conversa aberta" = Inbox aberta com o nome completo do contato-alvo na linha selecionada ou no ChatPanel.
+
+O roteiro roda com **sessão falsa e backend 100% mockado** (mesmo padrão dos projetos
+`chromium-contacts-visual` e `chromium-a11y` do `playwright.config.ts`): nada sai para o
+Supabase real — um guarda de rede barra e **registra** qualquer escape (o roteiro falha se
+houver um). WebSocket também é bloqueado.
+
+- **Limite 1 — a lista é uma fixture de 40 contatos**: o banco local tem
+  poucos contatos, então a lista de teste é controlada e o contato-alvo é achado pela
+  busca de verdade (mock da RPC `search_contacts` filtrado pelo termo enviado).
+- **Limite 2 — latência de banco real não entra**: as respostas são locais; os segundos
+  medem o custo do CLIENTE (montagem, chunks, troca de módulo), não a rede do Supabase.
+- **Limite 3 — fontes do Google barradas**: a medição é hermética, então o texto usa a
+  fonte de fallback; os erros de console de origem "externo" são esse efeito.
+- **Limite 4 — a conversa do alvo é mockada no mesmo caminho da Inbox**: o banco
+  local tem poucos contatos e não é usado aqui; a fixture serve a lista de contatos,
+  a RPC de busca e uma mensagem da conversa do contato-alvo. A coluna
+  "é a conversa do contato buscado?" precisa ficar "sim"; se ficar "não",
+  o roteiro registra falha e sai com EXIT 1.
+
+## Números de antes
+
+| Largura | Cliques | Segundos | Requisições | JS baixado no caminho | Chunk do módulo (build) | Busca: cards antes → depois | Erros do app | Achados de a11y |
+|---|---|---|---|---|---|---|---|---|
+| 390 px | 3 | 3.0 s | 67 | 290.8 KB | 138.3 KB (entrada) | 40 → 1 (filtrou: sim) | 1 | 159 |
+| 768 px | 2 | 2.0 s | 75 | 881.6 KB | 138.3 KB (entrada) | 40 → 1 (filtrou: sim) | 1 | 160 |
+| 1672 px | 2 | 2.0 s | 122 | 1139.9 KB | 138.3 KB (entrada) | 40 → 1 (filtrou: sim) | 1 | 160 |
+
+O **chunk do módulo (build)** é o arquivo do `ContactsView` no manifesto (o módulo
+como ele é baixado); as dependências estáticas somam 2220.7 KB no
+total. A coluna **JS baixado no caminho** é o que o navegador baixou de fato na janela
+medida (0 KB = já estava em cache/precarga — ver a seção do chunk do módulo).
+
+Meta do plano: **3 cliques e 5 segundos** — a comparação é com esta tabela.
+
+### Onde os segundos vão (por largura)
+
+| Largura | Como abriu o módulo | Abrir o módulo | Achar na busca | Abrir a conversa (total) | É a conversa do contato buscado? | Sinal que fechou a medição |
+|---|---|---|---|---|---|---|
+| 390 px | cabeçalho → painel do menu (celular) | 1.9 s | 2.5 s | 3.0 s | sim | painel da conversa (cabeçalho) |
+| 768 px | menu lateral (desktop) | 0.9 s | 1.5 s | 2.0 s | sim | linha selecionada |
+| 1672 px | menu lateral (desktop) | 0.9 s | 1.5 s | 2.0 s | sim | linha selecionada |
+
+Todas as rodadas (a linha de referência é a mediana em segundos):
+
+| Largura | Cliques | Segundos | Requisições | JS baixado | Conversa do alvo | Alvo encontrado em |
+|---|---|---|---|---|---|---|
+| 390 px · rodada 1 | 3 | 3.0 s | 67 | 290.8 KB | sim | painel da conversa (cabeçalho) |
+| 390 px · rodada 2 | 3 | 3.0 s | 68 | 290.8 KB | sim | painel da conversa (cabeçalho) |
+| 390 px · rodada 3 | 3 | 3.0 s | 69 | 290.8 KB | sim | painel da conversa (cabeçalho) |
+| 768 px · rodada 1 | 2 | 2.1 s | 109 | 886.3 KB | sim | linha selecionada |
+| 768 px · rodada 2 | 2 | 2.0 s | 69 | 350.5 KB | sim | linha selecionada |
+| 768 px · rodada 3 | 2 | 2.0 s | 75 | 881.6 KB | sim | linha selecionada |
+| 1672 px · rodada 1 | 2 | 2.0 s | 82 | 883.5 KB | sim | linha selecionada |
+| 1672 px · rodada 2 | 2 | 2.0 s | 122 | 1139.9 KB | sim | linha selecionada |
+| 1672 px · rodada 3 | 2 | 1.9 s | 86 | 981.6 KB | sim | linha selecionada |
+
+## Peso do chunk do módulo (do build)
+
+- Entrada: `assets/ContactsView-BXygLmVl.js` — 138.3 KB
+- Dependências estáticas (128): 2082.5 KB
+- **Total do módulo: 2220.7 KB**
+
+Maiores dependências:
+
+| Chunk | Bytes |
+|---|---|
+| `assets/vendor-charts-CL2qqn_3.js` | 447.8 KB |
+| `assets/vendor-ui-X_h-x61U.js` | 349.4 KB |
+| `assets/vendor-core-Cv0p2dBW.js` | 253.1 KB |
+| `assets/vendor-data-CCKDm4LC.js` | 238.6 KB |
+| `assets/index-DxtttfP6.js` | 214.2 KB |
+| `assets/dnd.esm-CuBffvSY.js` | 81.6 KB |
+| `assets/Index-C8lpgjq0.js` | 79.8 KB |
+| `assets/vendor-utils-CnXPeyNc.js` | 53.5 KB |
+| `assets/talkxShared-Drv9m_dG.js` | 40.2 KB |
+| `assets/Sidebar-vUa0Q7U8.js` | 36.3 KB |
+
+### O que o navegador baixou do módulo durante a janela medida
+
+| Largura | Arquivo do módulo | Já estava carregado antes de abrir? | Baixado no caminho? | Bytes (decodificado) |
+|---|---|---|---|---|
+| 390 px | `assets/ContactsView-BXygLmVl.js` | não | não | 0.0 KB |
+| 768 px | `assets/ContactsView-BXygLmVl.js` | não | não | 0.0 KB |
+| 1672 px | `assets/ContactsView-BXygLmVl.js` | não | não | 0.0 KB |
+
+## Requisições do caminho
+
+### 390 px — 67 requisição(ões)
+
+| Rota | Nº |
+|---|---|
+| `GET /rest/v1/contacts` | 6 |
+| `GET /auth/v1/user` | 5 |
+| `GET /rest/v1/profiles` | 5 |
+| `POST /rest/v1/rpc/search_contacts` | 2 |
+| `POST /rest/v1/rpc/get_last_message_dates` | 2 |
+| `POST /rest/v1/rpc/can_delete_contacts` | 2 |
+| `GET /rest/v1/queues` | 2 |
+| `GET /rest/v1/queue_members` | 2 |
+| `GET /rest/v1/messages` | 2 |
+| `POST /rest/v1/rpc/dashboard_kpi` | 1 |
+| `GET http://127.0.0.1:4173/assets/ContactsView-CK1ALO28.js` | 1 |
+| `GET http://127.0.0.1:4173/assets/useExternalContact360Batch-BfCaS65a.js` | 1 |
+| `GET http://127.0.0.1:4173/assets/grip-vertical-Sl2bCWM-.js` | 1 |
+| `GET http://127.0.0.1:4173/assets/shopping-bag-D4Ip9S-1.js` | 1 |
+| `GET http://127.0.0.1:4173/assets/square-pen-DpakNpu6.js` | 1 |
+
+### 768 px — 75 requisição(ões)
+
+| Rota | Nº |
+|---|---|
+| `GET /rest/v1/sla_rules` | 14 |
+| `GET /rest/v1/contacts` | 5 |
+| `POST /rest/v1/rpc/search_contacts` | 2 |
+| `POST /rest/v1/rpc/get_last_message_dates` | 2 |
+| `POST /rest/v1/rpc/can_delete_contacts` | 2 |
+| `GET /auth/v1/user` | 2 |
+| `GET /rest/v1/profiles` | 2 |
+| `GET /rest/v1/queues` | 2 |
+| `GET /rest/v1/queue_members` | 2 |
+| `GET /rest/v1/messages` | 2 |
+| `GET http://127.0.0.1:4173/assets/CompanyLogo-DOt7iXIy.js` | 1 |
+| `GET http://127.0.0.1:4173/assets/building-B-7KXzj5.js` | 1 |
+| `GET http://127.0.0.1:4173/assets/useContactNotes-_kiaRGKS.js` | 1 |
+| `GET http://127.0.0.1:4173/assets/contact.service--eIjlGSY.js` | 1 |
+| `POST /rest/v1/rpc/dashboard_kpi` | 1 |
+
+### 1672 px — 122 requisição(ões)
+
+| Rota | Nº |
+|---|---|
+| `GET /rest/v1/sla_rules` | 14 |
+| `GET /rest/v1/sla_configurations` | 14 |
+| `GET /rest/v1/contacts` | 5 |
+| `GET /auth/v1/user` | 4 |
+| `POST /rest/v1/rpc/search_contacts` | 2 |
+| `POST /rest/v1/rpc/get_last_message_dates` | 2 |
+| `POST /rest/v1/rpc/can_delete_contacts` | 2 |
+| `GET /rest/v1/profiles` | 2 |
+| `GET /rest/v1/queues` | 2 |
+| `GET /rest/v1/queue_members` | 2 |
+| `GET /rest/v1/messages` | 2 |
+| `GET http://127.0.0.1:4173/assets/RealtimeInboxView-5uhV5G-w.js` | 1 |
+| `GET http://127.0.0.1:4173/assets/alarm-clock-D7nQZXDS.js` | 1 |
+| `GET http://127.0.0.1:4173/assets/facebook-BH3bM7oo.js` | 1 |
+| `GET http://127.0.0.1:4173/assets/globe-UKjZEJoU.js` | 1 |
+
+## Erros de console e exceções
+
+Classificação: **app** = erro/warn do próprio código (é o que interessa); **mock** = falha
+de recurso do backend mockado (403 de escrita, 401 do JWT falso, recurso barrado) —
+esperado nesta medição; **externo** = fontes do Google barradas.
+
+### 390 px
+
+- erros do app: **1** · avisos do app: 0
+- erros do app DURANTE o caminho medido (o resto é do casco, antes de abrir Contatos): 0
+- falhas de recurso do mock: 18
+- fontes externas barradas: 1
+- exceções não tratadas: **0**
+  - `[2026-10-08T16:26:53.418Z] [ERROR] [RealtimeDashboard] [sid:1b58936f] Error fetching initial data: [Object, Object, Object, Object]`
+
+### 768 px
+
+- erros do app: **1** · avisos do app: 0
+- erros do app DURANTE o caminho medido (o resto é do casco, antes de abrir Contatos): 0
+- falhas de recurso do mock: 22
+- fontes externas barradas: 2
+- exceções não tratadas: **0**
+  - `[2026-10-08T16:27:14.792Z] [ERROR] [RealtimeDashboard] [sid:e39e292b] Error fetching initial data: [Object, Object, Object, Object]`
+
+### 1672 px
+
+- erros do app: **1** · avisos do app: 0
+- erros do app DURANTE o caminho medido (o resto é do casco, antes de abrir Contatos): 0
+- falhas de recurso do mock: 18
+- fontes externas barradas: 1
+- exceções não tratadas: **0**
+  - `[2026-10-08T16:27:23.029Z] [ERROR] [RealtimeDashboard] [sid:327a3c89] Error fetching initial data: [Object, Object, Object, Object]`
+
+## Achados de acessibilidade (tela do módulo)
+
+Escopo: a área do módulo (`#main-content`), com a busca e a lista carregadas — o casco
+(barra lateral, cabeçalho, painel de notificações) não é o objeto desta medição.
+
+Regras verificadas: fonte < 11 px, `<img>` sem `alt`, controle sem nome acessível, campo
+sem rótulo, alvo de toque < 24 px (WCAG 2.5.8), contraste abaixo de AA (4,5:1 normal / 3:1
+grande) e `id` duplicado.
+
+| Largura | Elementos | Fonte <11px | Img sem alt | Sem nome | Campo sem rótulo | Alvo <24px | Contraste baixo / não medido | Id duplicado |
+|---|---|---|---|---|---|---|---|---|
+| 390 px | 2029 | 0 | 0 | 42 | 1 | 111 | 4 / 0 | 1 |
+| 768 px | 2029 | 0 | 0 | 42 | 1 | 111 | 5 / 0 | 1 |
+| 1672 px | 2029 | 0 | 0 | 42 | 1 | 111 | 5 / 0 | 1 |
+
+Duas ressalvas para ler esta tabela:
+
+- **contraste** é calculado pela cor de texto contra o fundo opaco mais próximo — sem
+  considerar gradiente, imagem de fundo nem camada translúcida (alpha ≤ 0,5): esses casos
+  entram como "não medido", e um "1,00:1 (branco sobre branco)" é artefato dessa
+  simplificação, não achado. É uma aproximação de WCAG 1.4.3, não a medição do axe.
+- **alvo < 24 px** é o mínimo da WCAG 2.5.8; alvos inline (link no meio de um texto)
+  ficam fora. A referência de toque do projeto é 44 px, então 24 é o piso, não a meta.
+
+### Exemplos — 390 px
+
+- **campoSemRotulo** (1): `input[] Buscar por nome, telefone, email ou empresa…`
+- **semNomeAcessivel** (42): `button.peer inline-flex h-6 w-11 shrink-0 curso` · `button.peer shrink-0 border ring-offset-backgro` · `button.inline-flex items-center justify-center `
+- **alvoPequeno** (111): `BUTTON 18x18` · `Selecionar Ana Beatriz Souza 16x16` · `5511980001111 113x20`
+- **contrasteBaixo** (4): `4.38:1 (mín 4.5) "DF" [rgb(161, 89, 18) sobre rgb(250,230,209)]` · `4.38:1 (mín 4.5) "HA" [rgb(161, 89, 18) sobre rgb(250,230,209)]` · `4.38:1 (mín 4.5) "AB" [rgb(161, 89, 18) sobre rgb(250,230,209)]`
+- **idDuplicado** (1): `kpi-spark-area (3x)`
+
+### Exemplos — 768 px
+
+- **campoSemRotulo** (1): `input[] Buscar por nome, telefone, email ou empresa…`
+- **semNomeAcessivel** (42): `button.peer inline-flex h-6 w-11 shrink-0 curso` · `button.peer shrink-0 border ring-offset-backgro` · `button.inline-flex items-center justify-center `
+- **contrasteBaixo** (5): `1.00:1 (mín 4.5) "Cards" [rgb(255, 255, 255) sobre rgb(255,255,255)]` · `4.38:1 (mín 4.5) "DF" [rgb(161, 89, 18) sobre rgb(250,230,209)]` · `4.38:1 (mín 4.5) "HA" [rgb(161, 89, 18) sobre rgb(250,230,209)]`
+- **alvoPequeno** (111): `BUTTON 18x18` · `Selecionar Ana Beatriz Souza 16x16` · `5511980001111 113x20`
+- **idDuplicado** (1): `kpi-spark-area (3x)`
+
+### Exemplos — 1672 px
+
+- **campoSemRotulo** (1): `input[] Buscar por nome, telefone, email ou empresa…`
+- **semNomeAcessivel** (42): `button.peer inline-flex h-6 w-11 shrink-0 curso` · `button.peer shrink-0 border ring-offset-backgro` · `button.inline-flex items-center justify-center `
+- **contrasteBaixo** (5): `1.00:1 (mín 4.5) "Cards" [rgb(255, 255, 255) sobre rgb(255,255,255)]` · `4.38:1 (mín 4.5) "DF" [rgb(161, 89, 18) sobre rgb(250,230,209)]` · `4.38:1 (mín 4.5) "HA" [rgb(161, 89, 18) sobre rgb(250,230,209)]`
+- **alvoPequeno** (111): `BUTTON 18x18` · `Selecionar Ana Beatriz Souza 16x16` · `5511980001111 113x20`
+- **idDuplicado** (1): `kpi-spark-area (3x)`
+
+## Integridade da medição
+
+A guarda de rede é por **allowlist** (só a origem local passa). Toda requisição
+não-local ou é servida por um **mock** (a maior parte: o backend inteiro é mockado)
+ou é **barrada** pela guarda (Mapbox, fontes do Google, WebSocket). O que não estiver
+em nenhuma das duas contas é escape e derruba o roteiro (EXIT 1).
+
+| Largura | Não-local atendida por mock | Barrada pela guarda (backend real) | Outros hosts barrados | WebSocket bloqueado | Escapes |
+|---|---|---|---|---|---|
+| 390 px | 88 | 0 | 1 | 3 | 0 |
+| 768 px | 135 | 0 | 2 | 3 | 0 |
+| 1672 px | 112 | 0 | 1 | 2 | 0 |
+
+Falhas do roteiro: nenhuma.
+
