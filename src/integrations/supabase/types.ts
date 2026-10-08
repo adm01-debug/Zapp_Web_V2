@@ -11380,6 +11380,7 @@ export type Database = {
           avatar_url: string
           created_at: string
           department: string
+          department_id: string | null
           email: string
           id: string
           is_active: boolean
