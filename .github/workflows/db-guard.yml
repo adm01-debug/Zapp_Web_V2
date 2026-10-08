@@ -897,3 +897,19 @@ jobs:
         env:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh
+
+      # SL-045 (docs/runbooks/slo.md, passo 4): a view slo_inbound_latency_daily nao existia
+      # (grep slo_inbound em supabase/ = 0) e a ponta do INSERT tambem nao — messages guardava
+      # so o created_at do provedor, e updated_at/status_updated_at sao reescritos por UPDATE
+      # depois do INSERT. O passo aplica a migration real num PostgreSQL 17 descartavel e prova:
+      # lacuna antes (sem view e sem messages.received_at), p50/p95 por dia em ms so para
+      # sender='contact', dia no fuso America/Sao_Paulo, atraso negativo zerado, linha legada
+      # sem a ponta fora da medida, ACL fechada para anon, security_invoker mantendo a RLS de
+      # messages, migration idempotente e a linha -- Rollback: rodando de verdade.
+      # SKIP_DOCKER_SHIM="1": o teste cria os papeis anon/authenticated/service_role no proprio
+      # container; no shim (um cluster compartilhado) o CREATE ROLE colidiria entre suítes.
+      - name: Provar latência do inbound visível por dia (SLO — SL-045)
+        env:
+          SL045_SLO_INBOUND_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/slo-inbound-latency-daily.test.sh
