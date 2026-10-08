@@ -44,6 +44,10 @@ export default function TalkXView() {
   const [wizardInitial, setWizardInitial] = useState<{ segmentId?: string; templateId?: string } | undefined>();
   const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXWizardRoute(window.location.search).route);
   const [helpOpen, setHelpOpen] = useState(false);
+  // R2-MOD-039: o item "Novo template" do menu Templates navega para a aba de templates
+  // pedindo o editor VAZIO (antes chamava openNew, que é o wizard de campanha). O pedido
+  // é limpo quando a aba o atende, para não reabrir o editor sozinho depois.
+  const [templateStartNew, setTemplateStartNew] = useState(false);
   // A campaign just created locally may not have reached the campaigns query
   // yet. It is safe to keep the current editor alive, but a reload must still
   // resolve the ID from the canonical query before opening it.
@@ -92,8 +96,12 @@ export default function TalkXView() {
   // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
   useEffect(() => {
     const syncTab = () => {
-      setActiveTab(readTab(window.location.search));
+      const tab = readTab(window.location.search);
+      setActiveTab(tab);
       setActiveSub(readSub(window.location.search));
+      // R2-MOD-039: o pedido de "novo template" não sobrevive à saída da aba de templates;
+      // voltar pela Biblioteca mostra a lista, não o editor que ficou aberto.
+      if (tab !== 'templates') setTemplateStartNew(false);
     };
     window.addEventListener('popstate', syncTab);
     return () => window.removeEventListener('popstate', syncTab);
@@ -337,7 +345,7 @@ export default function TalkXView() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start">
                             <DropdownMenuItem onSelect={() => goTab('templates')}>Biblioteca</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => openNew()}>Novo template</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => { setTemplateStartNew(true); goTab('templates'); }}>Novo template</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
         </div>
@@ -358,7 +366,11 @@ export default function TalkXView() {
           <TalkXSegments onUseCampaign={(segmentId) => openNew({ segmentId })} />
         </TabsContent>
         <TabsContent value="templates" className="mt-4">
-          <TalkXTemplates onUseTemplate={(templateId) => openNew({ templateId })} />
+          <TalkXTemplates
+            onUseTemplate={(templateId) => openNew({ templateId })}
+            startNew={templateStartNew}
+            onStartNewHandled={() => setTemplateStartNew(false)}
+          />
         </TabsContent>
         <TabsContent value="suppression" className="mt-4">
           <TalkXSuppression />

@@ -30,6 +30,12 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
   const [sipReason, setSipReason] = useState<CapabilityReason | null>(null);
   const uaRef = useRef<UserAgent | null>(null);
   const registererRef = useRef<Registerer | null>(null);
+  // A tentativa em voo é marcada de forma SÍNCRONA no topo do connect, antes
+  // de qualquer espera — `uaRef` só é preenchido no fim, então sem este token
+  // dois connect() paralelos atravessam a guarda e criam dois registros da
+  // mesma linha. `disconnect` (e o unmount) invalidam a tentativa: ao resolver
+  // suas esperas, ela para o que chegou a criar sem publicar refs nem estado.
+  const attemptRef = useRef<{ cancelled: boolean } | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onIncomingInvitationRef = useRef(onIncomingInvitation);
@@ -41,6 +47,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
   const unmountedRef = useRef(false);
   useEffect(() => () => {
     unmountedRef.current = true;
+    if (attemptRef.current) attemptRef.current.cancelled = true;
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
@@ -67,19 +74,25 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
     }
     // T16: um UA por vez. Sem a guarda, dois cliques (ou um retry sobre um UA
     // vivo) criavam dois registros da MESMA linha — e o servidor devolvia 403.
-    if (uaRef.current) return;
+    // `attemptRef` cobre a janela que `uaRef` não cobre: a tentativa em voo.
+    if (uaRef.current || attemptRef.current) return;
+    const attempt = { cancelled: false };
+    attemptRef.current = attempt;
+    let ua: UserAgent | undefined;
+    let registerer: Registerer | undefined;
     try {
       clearReconnectTimer();
       setSipStatus('connecting');
       // sip.js só é baixado quando o usuário realmente tenta conectar — mantém
       // a lib (e seu vendor chunk) fora do bundle inicial do app.
       const { UserAgent, Registerer } = await import('sip.js');
+      if (attempt.cancelled) return;
       const wsPort = config.wsPort || 8089;
       const wsServer = `wss://${config.server}:${wsPort}/ws`;
       const uri = UserAgent.makeURI(`sip:${config.user}@${config.server}`);
       if (!uri) throw new Error('URI SIP inválida');
 
-      const ua = new UserAgent({
+      ua = new UserAgent({
         uri,
         transportOptions: { server: wsServer, traceSip: false },
         authorizationPassword: config.password,
@@ -92,6 +105,13 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
       });
 
       ua.transport.onDisconnect = () => {
+        // Transporte caiu com a tentativa ainda em voo: ela não pode mais
+        // publicar — a limpeza acontece quando as esperas dela resolverem, e
+        // o retry agendado abaixo encontra a guarda livre.
+        if (attemptRef.current === attempt) {
+          attempt.cancelled = true;
+          attemptRef.current = null;
+        }
         clearReconnectTimer();
         if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectAttemptsRef.current++;
@@ -116,11 +136,17 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
       };
 
       await ua.start();
-      const registerer = new Registerer(ua);
+      if (attempt.cancelled) {
+        ua.transport.onDisconnect = () => {};
+        try { await ua.stop(); } catch { /* transporte ja encerrado */ }
+        return;
+      }
+      registerer = new Registerer(ua);
       // T16: o REGISTER pode ser recusado (403) antes de `register()` resolver,
       // entao o motivo e guardado localmente para decidir o que fazer depois.
       let registroRecusado = false;
       registerer.stateChange.addListener((state) => {
+        if (attempt.cancelled) return;
         if (state === 'Registered') { setSipStatus('registered'); setSipReason(null); reconnectAttemptsRef.current = 0; toast.success('VoIP conectado!'); }
         else if (state === 'Unregistered' || state === 'Terminated') setSipStatus('idle');
       });
@@ -130,7 +156,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
           // atendendo em outro dispositivo (o servidor limita um ramal por vez).
           // Sem isso o agente via "Erro ao conectar VoIP" e não entendia nada.
           onReject: (response) => {
-            if (response.message.statusCode !== 403) return;
+            if (attempt.cancelled || response.message.statusCode !== 403) return;
             registroRecusado = true;
             setSipStatus('unavailable');
             setSipReason('line_in_use_other_user');
@@ -138,6 +164,12 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
           },
         },
       });
+      if (attempt.cancelled) {
+        ua.transport.onDisconnect = () => {};
+        try { await registerer.unregister(); } catch { /* REGISTER nunca saiu */ }
+        try { await ua.stop(); } catch { /* transporte ja encerrado */ }
+        return;
+      }
       // T16: num 403 nao deixo UA vivo: a guarda de `connect` transformaria o
       // botao "Conectar SIP" em botao morto depois que a linha fosse liberada.
       if (registroRecusado) {
@@ -148,10 +180,22 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
       registererRef.current = registerer;
     } catch (err: unknown) {
       log.error('SIP connection error:', err);
-      uaRef.current = null;
-      registererRef.current = null;
-      setSipStatus('unavailable');
-      toast.error(`Erro ao conectar VoIP: ${err instanceof Error ? err.message : 'Falha na conexão'}`);
+      // Tentativa cancelada: quem falou por último foi o `disconnect` (idle).
+      // Ela também NÃO pode mexer nos refs: o `start()` dela pode rejeitar
+      // DEPOIS de uma tentativa nova já ter publicado — zerar `uaRef` aqui
+      // apagaria a guarda de quem está de pé e liberaria um terceiro connect.
+      if (attempt.cancelled) {
+        if (ua) ua.transport.onDisconnect = () => {};
+        try { await registerer?.unregister(); } catch { /* REGISTER nunca saiu */ }
+        try { await ua?.stop(); } catch { /* transporte ja encerrado */ }
+      } else {
+        uaRef.current = null;
+        registererRef.current = null;
+        setSipStatus('unavailable');
+        toast.error(`Erro ao conectar VoIP: ${err instanceof Error ? err.message : 'Falha na conexão'}`);
+      }
+    } finally {
+      if (attemptRef.current === attempt) attemptRef.current = null;
     }
   }, [clearReconnectTimer]);
 
@@ -163,6 +207,11 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
     // a sequência desconectar -> reconectar terminava sem nova conexão.
     reconnectAttemptsRef.current = MAX_RECONNECT_ATTEMPTS;
     clearReconnectTimer();
+    // Invalida a tentativa em voo e já libera a guarda para um connect() novo.
+    if (attemptRef.current) {
+      attemptRef.current.cancelled = true;
+      attemptRef.current = null;
+    }
     const registerer = registererRef.current;
     const ua = uaRef.current;
     try {

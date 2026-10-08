@@ -139,7 +139,7 @@ export function PeriodSelector({ value, dateRange, onChange }: PeriodSelectorPro
                       mode="single"
                       selected={tempRange.from}
                       onSelect={(date) => setTempRange(prev => ({ ...prev, from: date }))}
-                      disabled={(date) => date > new Date()}
+                      disabled={(date) => date > new Date() || !!(tempRange.to && date > tempRange.to)}
                       initialFocus
                       className="p-3 pointer-events-auto"
                     />

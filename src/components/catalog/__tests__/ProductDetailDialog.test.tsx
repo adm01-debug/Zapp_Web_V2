@@ -74,6 +74,18 @@ describe('ProductDetailDialog — Fase 6 (galeria, SKU, rodapé)', () => {
     expect(screen.queryByLabelText('Imagem anterior')).not.toBeInTheDocument();
   });
 
+  // #430 — a galeria troca o `src` do MESMO <ProductThumb>: quando uma foto
+  // falhava, o erro grudava e a foto seguinte não aparecia mais.
+  it('#430 foto com erro nao trava a galeria: a proxima foto aparece', () => {
+    render(<ProductDetailDialog product={mockProduct()} open onOpenChange={vi.fn()} />);
+    const quebrada = screen.getByAltText('Caneta Bambu') as HTMLImageElement;
+    expect(quebrada.src).toBe('https://x/a.jpg');
+    fireEvent.error(quebrada);
+
+    fireEvent.click(screen.getByLabelText('Próxima imagem'));
+    expect((screen.getByAltText('Caneta Bambu') as HTMLImageElement).src).toBe('https://x/b.jpg');
+  });
+
   it('copiar SKU chama o clipboard com o SKU do produto (E61)', () => {
     render(<ProductDetailDialog product={mockProduct()} open onOpenChange={vi.fn()} />);
     fireEvent.click(screen.getByLabelText('Copiar SKU'));

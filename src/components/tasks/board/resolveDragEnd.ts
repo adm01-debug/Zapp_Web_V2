@@ -42,17 +42,45 @@ export type DragEndResolution =
   | { action: 'blocked'; reason: TransitionBlockReason };
 
 /**
+ * Traduz um índice do RECORTE visível para a posição na coluna COMPLETA.
+ *
+ * Com filtro ativo o Quadro desenha só um subconjunto da coluna, mas a ordem é
+ * gravada na coluna inteira (`persistPositions` do hook usa `bucketByStatus(items)`
+ * sem filtro). O índice que a lib de DnD entrega conta só os cartões VISÍVEIS;
+ * usá-lo cru reinsere o item na mesma posição da lista completa — o item cai
+ * antes de um oculto e aparece onde o usuário não soltou.
+ *
+ * A âncora é o vizinho visível: soltar ANTES do k-ésimo cartão visível coloca o
+ * item na posição completa desse cartão; soltar DEPOIS do último visível (índice
+ * `>= visiveis.length`, inclusive a coluna visível vazia) anexa no fim da coluna
+ * completa — os ocultos ficam onde estavam.
+ */
+export function indiceDeDestino(
+  visiveis: WorkItem[],
+  completas: WorkItem[],
+  indiceVisivel: number,
+): number {
+  if (indiceVisivel >= visiveis.length) return completas.length;
+  const vizinho = visiveis[indiceVisivel];
+  const naCompleta = vizinho ? completas.findIndex((i) => i.id === vizinho.id) : -1;
+  return naCompleta >= 0 ? naCompleta : Math.min(indiceVisivel, completas.length);
+}
+
+/**
  * Decide o que fazer com o resultado de um arrasto do Quadro.
  *
- * @param result     resultado do `onDragEnd` do `@hello-pangea/dnd`
- * @param byStatus   as 6 colunas visíveis (a origem do item sai daqui)
- * @param doingCount contagem REAL de "Fazendo" para a trava de WIP; sem ela,
- *                   cai na própria coluna visível (mesma regra da prop do Quadro)
+ * @param result       resultado do `onDragEnd` do `@hello-pangea/dnd`
+ * @param byStatus     as 6 colunas visíveis (a origem do item sai daqui)
+ * @param doingCount   contagem REAL de "Fazendo" para a trava de WIP; sem ela,
+ *                     cai na própria coluna visível (mesma regra da prop do Quadro)
+ * @param fullByStatus as colunas SEM o recorte do filtro (lista completa do hook);
+ *                     quando vem, o índice de destino é traduzido por ela (#423)
  */
 export function resolveDragEnd(
   result: DropResult,
   byStatus: Record<WorkItemStatus, WorkItem[]>,
   doingCount?: number,
+  fullByStatus?: Record<WorkItemStatus, WorkItem[]>,
 ): DragEndResolution | null {
   const { source, destination } = result;
   if (!destination) return null;
@@ -94,7 +122,11 @@ export function resolveDragEnd(
     to: toStatus,
     opts: {
       // O índice de destino vai junto para persistir a ordem das duas colunas.
-      index: destination.index,
+      // Com filtro (#423) ele é traduzido do recorte visível para a coluna
+      // completa — é nessa que o hook reinsere o item.
+      index: fullByStatus
+        ? indiceDeDestino(byStatus[toStatus] ?? [], fullByStatus[toStatus] ?? [], destination.index)
+        : destination.index,
       ...(toStatus === 'waiting' && item.waiting_reason
         ? { waitingReason: item.waiting_reason }
         : {}),

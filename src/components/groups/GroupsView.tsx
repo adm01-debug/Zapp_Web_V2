@@ -32,7 +32,7 @@ export function GroupsView() {
     groups, connections, search, setSearch, categoryFilter, setCategoryFilter,
     isLoading, isSyncing, selectedGroups, filteredGroups,
     handleAutoSync, handleAddGroup, handleDeleteGroup, handleBroadcast,
-    toggleGroupSelection, selectAllGroups, handleCategoryChange, getConnectionName,
+    toggleGroupSelection, selectGroup, selectAllGroups, handleCategoryChange, getConnectionName,
   } = useGroupsManager();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -237,7 +237,7 @@ export function GroupsView() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); toggleGroupSelection(group.id); setIsBroadcastOpen(true); }}>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); selectGroup(group.id); setIsBroadcastOpen(true); }}>
                             <MessageSquare className="w-4 h-4 mr-2" />Enviar mensagem
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); void navigator.clipboard.writeText(group.group_id); toast.success('ID copiado!'); }}>

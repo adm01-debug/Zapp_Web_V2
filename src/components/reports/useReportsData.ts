@@ -26,10 +26,14 @@ export function useReportsData() {
   // Recortes ancorados no fuso do app (America/Sao_Paulo), o mesmo que o servidor usa em
   // `in_last_days`: com o fuso do navegador o mesmo período recortava janelas diferentes para
   // pessoas em fusos diferentes e não batia com os números contados no banco.
+  // R2-MOD-017: os recortes são N dias de CALENDÁRIO com fronteiras compartilhadas. Antes o atual
+  // ia de `appDayStart(N)` ao fim de hoje = N+1 dias, enquanto o anterior tinha N: o comparativo
+  // somava janelas de duração diferente e a média (dividida por N) saía inflada — uma série
+  // uniforme de 70/dia aparecia como 80. O anterior encosta no atual, sem lacuna nem sobreposição.
   const dateRange = useMemo(() => {
     const days = Number.parseInt(period);
     return {
-      from: appDayStart(days),
+      from: appDayStart(days - 1),
       to: appDayEnd(0),
     };
   }, [period]);
@@ -37,8 +41,8 @@ export function useReportsData() {
   const previousDateRange = useMemo(() => {
     const days = Number.parseInt(period);
     return {
-      from: appDayStart(days * 2),
-      to: appDayEnd(days + 1),
+      from: appDayStart(days * 2 - 1),
+      to: appDayEnd(days),
     };
   }, [period]);
 
@@ -267,7 +271,7 @@ export function useReportsData() {
   return {
     period, setPeriod, selectedAgent, setSelectedAgent, selectedTag, setSelectedTag,
     compareEnabled, setCompareEnabled,
-    agents, tags, dateRange,
+    agents, tags, dateRange, previousDateRange,
     chartData, previousChartData, comparisonSummary, contactsChartData, stats,
     isLoading, isError, isIncomplete, error, getExportData,
   };

@@ -234,19 +234,72 @@ export function useAudioMemes(open: boolean) {
   }, []);
 
   const handleCategoryChange = useCallback(async (meme: AudioMemeItem, newCategory: string) => {
+    const categoriaAnterior = meme.category;
     setMemes(prev => prev.map(m => m.id === meme.id ? { ...m, category: newCategory } : m));
-    await supabase.from('audio_memes').update({ category: newCategory }).eq('id', meme.id);
+
+    // R2-INB-042 — a escrita só é sucesso com `error` nulo E ao menos 1 linha afetada: o
+    // `.select('id')` devolve as linhas que o RLS deixou passar, então `data` vazio/null é
+    // FALHA mesmo sem `error` (o RLS filtra sem devolver erro).
+    const { data: linhasAtualizadas, error } = await supabase
+      .from('audio_memes')
+      .update({ category: newCategory })
+      .eq('id', meme.id)
+      .select('id');
+
+    if (error || !linhasAtualizadas?.length) {
+      log.error('[AudioMeme] Falha ao alterar categoria:', error ?? 'nenhuma linha afetada (RLS?)');
+      // Reverte só este item; o meme continua disponível para uma nova tentativa.
+      setMemes(prev => prev.map(m => m.id === meme.id ? { ...m, category: categoriaAnterior } : m));
+      toast.error('Não foi possível alterar a categoria');
+      return;
+    }
+
     toast.success(`Categoria alterada`);
   }, []);
 
   const handleDelete = useCallback(async (e: React.MouseEvent, meme: AudioMemeItem) => {
     e.stopPropagation();
+    const posicaoAnterior = memes.findIndex(m => m.id === meme.id);
     setMemes(prev => prev.filter(m => m.id !== meme.id));
+
+    // R2-INB-042 — LINHA primeiro, objeto depois: se a linha não saiu (erro ou 0 linhas) o
+    // arquivo do bucket continua no lugar e o item volta à lista. Nunca deixamos uma linha
+    // apontando para um objeto já removido (o refetch devolveria uma entrada sem áudio).
+    const { data: linhasRemovidas, error: erroDaExclusao } = await supabase
+      .from('audio_memes')
+      .delete()
+      .eq('id', meme.id)
+      .select('id');
+
+    if (erroDaExclusao || !linhasRemovidas?.length) {
+      log.error('[AudioMeme] Falha ao excluir a linha:', erroDaExclusao ?? 'nenhuma linha afetada (RLS?)');
+      setMemes(prev => {
+        if (prev.some(m => m.id === meme.id)) return prev;
+        const restaurada = [...prev];
+        restaurada.splice(
+          posicaoAnterior < 0 ? restaurada.length : Math.min(posicaoAnterior, restaurada.length),
+          0,
+          meme,
+        );
+        return restaurada;
+      });
+      toast.error('Não foi possível remover o áudio meme');
+      return;
+    }
+
     const path = meme.audio_url.split('/audio-memes/')[1];
-    if (path) await supabase.storage.from('audio-memes').remove([path]);
-    await supabase.from('audio_memes').delete().eq('id', meme.id);
+    if (path) {
+      const { error: erroDoObjeto } = await supabase.storage.from('audio-memes').remove([path]);
+      if (erroDoObjeto) {
+        // A linha já saiu: não é sucesso pleno — o arquivo ficou órfão no bucket.
+        log.error('[AudioMeme] Objeto do bucket não removido (ficou órfão):', erroDoObjeto);
+        toast.error('O áudio saiu da lista, mas o arquivo não pôde ser apagado do armazenamento');
+        return;
+      }
+    }
+
     toast.success('Áudio meme removido');
-  }, []);
+  }, [memes]);
 
   const cleanup = useCallback(() => {
     // R2-INB-041 — descartar o estado do picker também solta o bind do player.

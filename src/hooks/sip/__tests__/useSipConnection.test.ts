@@ -9,8 +9,23 @@ type RegisterOptions = { requestDelegate?: { onReject?: (response: { message: { 
 const mockRegisterCalls: Array<RegisterOptions | undefined> = [];
 const mockUaInstances: Array<{ start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; transport: { onDisconnect: (() => void) | null } }> = [];
 // R2-CALL-004: as instâncias de Registerer ficam acessíveis para simular erro de teardown.
-const mockRegistererInstances: Array<{ unregister: ReturnType<typeof vi.fn> }> = [];
+const mockRegistererInstances: Array<{ register: ReturnType<typeof vi.fn>; unregister: ReturnType<typeof vi.fn> }> = [];
 let lastDelegate: { onInvite?: (invitation: unknown) => void } | undefined;
+
+// Corrida connect/disconnect: os testes trocam estas impls para segurar
+// `start()`/`register()` pendentes (deferred) e resolvê-los na hora certa.
+function deferred<T = void>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
+const defaultRegisterImpl = (options?: RegisterOptions) => {
+  mockRegisterCalls.push(options);
+  return Promise.resolve();
+};
+let startImpl: () => Promise<unknown> = () => Promise.resolve();
+let registerImpl: (options?: RegisterOptions) => Promise<unknown> = defaultRegisterImpl;
 
 vi.mock('sip.js', () => {
   return {
@@ -21,7 +36,7 @@ vi.mock('sip.js', () => {
       }
       configuration = { uri: { host: 'test.server.com' } };
       transport: { onDisconnect: (() => void) | null } = { onDisconnect: null };
-      start = vi.fn().mockResolvedValue(undefined);
+      start = vi.fn(() => startImpl());
       stop = vi.fn().mockResolvedValue(undefined);
       constructor(options: { delegate?: { onInvite?: (invitation: unknown) => void } }) {
         lastDelegate = options.delegate;
@@ -32,9 +47,9 @@ vi.mock('sip.js', () => {
       stateChange = {
         addListener: (fn: StateListener) => { mockRegisterStateListeners.push(fn); },
       };
-      register = vi.fn((options?: RegisterOptions) => { mockRegisterCalls.push(options); return Promise.resolve(undefined); });
+      register = vi.fn((options?: RegisterOptions) => registerImpl(options));
       unregister = vi.fn().mockResolvedValue(undefined);
-      constructor() { mockRegistererInstances.push(this as unknown as { unregister: ReturnType<typeof vi.fn> }); }
+      constructor() { mockRegistererInstances.push(this); }
     },
   };
 });
@@ -72,6 +87,8 @@ describe('useSipConnection', () => {
     mockRegisterCalls.length = 0;
     mockUaInstances.length = 0;
     mockRegistererInstances.length = 0;
+    startImpl = () => Promise.resolve();
+    registerImpl = defaultRegisterImpl;
     lastDelegate = undefined;
   });
 
@@ -215,6 +232,156 @@ describe('useSipConnection', () => {
     await act(async () => { vi.advanceTimersByTime(120000); });
     expect(mockUaInstances.length).toBe(uaCount);
     vi.useRealTimers();
+  });
+
+  // === Corrida connect/disconnect: uma única tentativa em voo ===
+
+  it('duas chamadas de connect() em paralelo criam um único UserAgent e um único Registerer', async () => {
+    const start = deferred();
+    startImpl = () => start.promise;
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let first!: Promise<void>;
+    await act(async () => { first = result.current.connect(config); });
+    expect(mockUaInstances.length).toBe(1);
+
+    let second!: Promise<void>;
+    await act(async () => { second = result.current.connect(config); });
+    await act(async () => { start.resolve(); await Promise.all([first, second]); });
+
+    expect(mockUaInstances.length).toBe(1);
+    expect(mockRegistererInstances.length).toBe(1);
+    expect(mockRegisterCalls.length).toBe(1);
+  });
+
+  it('disconnect() durante start() invalida a tentativa: refs nulos, estado idle e UA parado', async () => {
+    const start = deferred();
+    startImpl = () => start.promise;
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    expect(mockUaInstances.length).toBe(1);
+
+    await act(async () => { await result.current.disconnect(); });
+    expect(result.current.sipStatus).toBe('idle');
+
+    const ua = mockUaInstances[0];
+    await act(async () => { start.resolve(); await pending; });
+
+    expect(ua.stop).toHaveBeenCalled();
+    expect(mockRegistererInstances.length).toBe(0);
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+  });
+
+  it('disconnect() durante register() invalida a tentativa: refs nulos, estado idle e UA parado', async () => {
+    const reg = deferred();
+    registerImpl = (options) => { mockRegisterCalls.push(options); return reg.promise; };
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    expect(mockRegistererInstances.length).toBe(1);
+
+    await act(async () => { await result.current.disconnect(); });
+    expect(result.current.sipStatus).toBe('idle');
+
+    const ua = mockUaInstances[0];
+    const registerer = mockRegistererInstances[0];
+    await act(async () => { reg.resolve(); await pending; });
+
+    expect(registerer.unregister).toHaveBeenCalled();
+    expect(ua.stop).toHaveBeenCalled();
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+  });
+
+  it('disconnect() durante register() rejeitado limpa Registerer e UA sem sair de idle', async () => {
+    vi.useFakeTimers();
+    const reg = deferred();
+    registerImpl = (options) => { mockRegisterCalls.push(options); return reg.promise; };
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    expect(mockRegistererInstances.length).toBe(1);
+
+    await act(async () => { await result.current.disconnect(); });
+    const ua = mockUaInstances[0];
+    const registerer = mockRegistererInstances[0];
+    await act(async () => { reg.reject(new Error('register tardio falhou')); await pending; });
+
+    expect(registerer.unregister).toHaveBeenCalled();
+    expect(ua.stop).toHaveBeenCalled();
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('idle');
+    expect(toast.error).not.toHaveBeenCalled();
+
+    act(() => { ua.transport.onDisconnect?.(); });
+    expect(result.current.sipStatus).toBe('idle');
+    expect(toast.info).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(60000); });
+    expect(mockUaInstances.length).toBe(1);
+    vi.useRealTimers();
+  });
+
+  it('após um connect() invalidado por disconnect(), um novo connect() cria uma única tentativa válida', async () => {
+    const start = deferred();
+    startImpl = () => start.promise;
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    await act(async () => { await result.current.disconnect(); });
+    await act(async () => { start.resolve(); await pending; });
+    expect(result.current.uaRef.current).toBeNull();
+
+    await act(async () => { await result.current.connect(config); });
+
+    expect(mockUaInstances.length).toBe(2);
+    expect(mockRegistererInstances.length).toBe(1);
+    expect(result.current.uaRef.current).toBe(mockUaInstances[1]);
+    expect(result.current.sipStatus).toBe('connecting');
+  });
+
+  it('start() rejeitado de tentativa cancelada não apaga os refs do connect() novo', async () => {
+    const start = deferred();
+    startImpl = () => start.promise;
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.connect(config); });
+    expect(mockUaInstances.length).toBe(1);
+    await act(async () => { await result.current.disconnect(); });
+
+    startImpl = () => Promise.resolve();
+    await act(async () => { await result.current.connect(config); });
+    expect(result.current.uaRef.current).toBe(mockUaInstances[1]);
+
+    await act(async () => { start.reject(new Error('start tardio falhou')); await pending; });
+
+    expect(mockUaInstances[0].stop).toHaveBeenCalled();
+    expect(result.current.uaRef.current).toBe(mockUaInstances[1]);
+    expect(result.current.sipStatus).not.toBe('unavailable');
+  });
+
+  it('erro numa tentativa VÁLIDA continua virando "unavailable" (a guarda não engole o erro)', async () => {
+    startImpl = () => Promise.reject(new Error('transporte caiu'));
+    const { result } = renderHook(() => useSipConnection());
+    const config = { server: 'test.com', user: 'user1', password: 'pass' };
+
+    await act(async () => { await result.current.connect(config); });
+
+    expect(result.current.uaRef.current).toBeNull();
+    expect(result.current.sipStatus).toBe('unavailable');
+    expect(toast.error).toHaveBeenCalledWith('Erro ao conectar VoIP: transporte caiu');
   });
 
   // === T20: eleição de aba — só a líder registra ===

@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
-import { getCorsHeaders, handleCors } from '../_shared/validation.ts';
+import { getCorsHeaders, handleCors, internalErrorResponse } from '../_shared/validation.ts';
 import { decideControlAuthz } from '../_shared/evolution-control-authz.ts';
 
 export interface WebhookRecord {
@@ -303,10 +303,9 @@ export async function handleWebhookDiagnostic(req: Request, _injected?: WebhookD
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : 'Unknown error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // R2-INF-016: o corpo devolvia `err.message` cru num 500 montado à mão; o helper
+    // registra o erro no log do servidor e devolve "Internal server error" ao cliente.
+    return internalErrorResponse(err, req);
   }
 }
 

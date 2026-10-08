@@ -480,10 +480,16 @@ export function useCatalogFavorites() {
 
   const favoriteIds = new Set((favoritesQuery.data || []).map((f) => f.product_id));
 
+  /**
+   * R2-MOD-043 — `toggle` devolve o resultado da ESCRITA ao chamador: `true`
+   * quando o favorito ficou persistido, `false` quando não há usuário ou o
+   * insert/delete falhou (com o cache revertido). Sem isso, quem favorita em
+   * lote não tem como saber se a escrita passou e anuncia sucesso sem prova.
+   */
   const toggle = useCallback(
-    async (product: { id: string; name: string; sku?: string | null; primary_image_url?: string | null }) => {
+    async (product: { id: string; name: string; sku?: string | null; primary_image_url?: string | null }): Promise<boolean> => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) return false;
       const key = ['catalog-favorites'];
       const previous = queryClient.getQueryData<CatalogFavorite[]>(key) || [];
       const isFavorite = previous.some((f) => f.product_id === product.id);
@@ -499,6 +505,7 @@ export function useCatalogFavorites() {
         if (error) {
           queryClient.setQueryData(key, previous);
           log.error('Falha ao remover favorito:', error.message);
+          return false;
         }
       } else {
         const optimisticEntry: CatalogFavorite = {
@@ -520,9 +527,11 @@ export function useCatalogFavorites() {
         if (error) {
           queryClient.setQueryData(key, previous);
           log.error('Falha ao favoritar:', error.message);
+          return false;
         }
       }
       await queryClient.invalidateQueries({ queryKey: key });
+      return true;
     },
     [queryClient]
   );

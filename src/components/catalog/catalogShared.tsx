@@ -251,6 +251,21 @@ interface ProductThumbProps {
   sizes?: string;
 }
 
+interface ProductThumbState {
+  /** Fonte em uso agora (principal ou fallback); null = nenhuma sobrou, mostra o ícone. */
+  source: string | null;
+  stage: 'loading' | 'loaded' | 'error';
+}
+
+/** Estado inicial da cascata src -> fallbackSrc -> ícone. */
+function initialProductThumbState(
+  src: string | null | undefined,
+  fallbackSrc: string | null | undefined,
+): ProductThumbState {
+  const source = src ?? fallbackSrc ?? null;
+  return { source, stage: source ? 'loading' : 'error' };
+}
+
 /**
  * Imagem do card/galeria com skeleton até carregar, srcSet real do
  * Cloudflare Images (quando aplicável) e fallback em cascata
@@ -259,12 +274,20 @@ interface ProductThumbProps {
  * após esta etapa, mas outros pontos futuros podem precisar do fallback simples).
  */
 export function ProductThumb({ src, fallbackSrc, alt, ratio = 'square', priority, iconSize = 'w-8 h-8', sizes }: ProductThumbProps) {
-  const [stage, setStage] = useState<'loading' | 'loaded' | 'error-src' | 'error-fallback'>(
-    src ? 'loading' : fallbackSrc ? 'loading' : 'error-fallback'
-  );
-  const effectiveSrc = stage === 'error-src' ? fallbackSrc : src ?? fallbackSrc;
+  const [state, setState] = useState<ProductThumbState>(() => initialProductThumbState(src, fallbackSrc));
 
-  if (!effectiveSrc || stage === 'error-fallback') {
+  // #430 — ajuste de estado durante o render (mesmo padrão do ProductDetailDialog): a
+  // galeria troca o `src` do MESMO nó, então o ciclo precisa recomeçar na troca de foto,
+  // em vez de manter o erro da foto anterior.
+  const [shownSources, setShownSources] = useState({ src, fallbackSrc });
+  if (shownSources.src !== src || shownSources.fallbackSrc !== fallbackSrc) {
+    setShownSources({ src, fallbackSrc });
+    setState(initialProductThumbState(src, fallbackSrc));
+  }
+
+  const { source, stage } = state;
+
+  if (!source) {
     return (
       <div className={`w-full h-full flex items-center justify-center ${ratio === '4/3' ? 'aspect-[4/3]' : 'aspect-square'}`}>
         <Package className={`${iconSize} text-muted-foreground`} />
@@ -272,13 +295,13 @@ export function ProductThumb({ src, fallbackSrc, alt, ratio = 'square', priority
     );
   }
 
-  const srcSet = cfImagesSrcSet(effectiveSrc);
+  const srcSet = cfImagesSrcSet(source);
 
   return (
     <div className={`relative w-full h-full ${ratio === '4/3' ? 'aspect-[4/3]' : 'aspect-square'}`}>
       {stage === 'loading' && <div className="absolute inset-0 animate-pulse bg-muted/40" />}
       <img
-        src={effectiveSrc}
+        src={source}
         srcSet={srcSet ?? undefined}
         sizes={srcSet ? sizes ?? '(min-width: 1280px) 220px, (min-width: 768px) 33vw, 50vw' : undefined}
         alt={alt}
@@ -286,8 +309,17 @@ export function ProductThumb({ src, fallbackSrc, alt, ratio = 'square', priority
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
         fetchPriority={priority ? 'high' : undefined}
-        onLoad={() => setStage('loaded')}
-        onError={() => setStage((s) => (s === 'error-src' ? 'error-fallback' : 'error-src'))}
+        onLoad={() => setState((s) => (s.stage === 'loaded' ? s : { ...s, stage: 'loaded' }))}
+        onError={() =>
+          // #430 — erro na principal cai para o fallback e FICA nele (o `stage` antigo
+          // voltava a 'loaded' e o src revertia para a URL quebrada). Sem fallback, ou
+          // com fallback igual ao src, a cascata termina no ícone.
+          setState((s) =>
+            s.source === src && src && fallbackSrc && fallbackSrc !== src
+              ? { source: fallbackSrc, stage: 'loading' }
+              : { source: null, stage: 'error' }
+          )
+        }
       />
     </div>
   );

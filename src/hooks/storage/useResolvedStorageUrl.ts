@@ -99,16 +99,17 @@ export function useResolvedStorageUrl(
     }
 
     lastRefreshAtRef.current = Date.now();
-    setState((current) => ({
-      source,
-      seedUrl,
-      url: current.source === source && current.seedUrl === seedUrl ? current.url : '',
-      isLoading: true,
-      error: null,
-    }));
-    const pending = resolve()
+    const isCurrentRefreshState = (current: ResolvedStorageUrlState) =>
+      current.source === source && current.seedUrl === seedUrl;
+    setState((current) => (isCurrentRefreshState(current)
+      ? { source, seedUrl, url: current.url, isLoading: true, error: null }
+      : current));
+    let pending: Promise<string | null> | null = null;
+    pending = resolve()
       .then((url) => {
-        setState({ source, seedUrl, url, isLoading: false, error: null });
+        setState((current) => (isCurrentRefreshState(current)
+          ? { source, seedUrl, url, isLoading: false, error: null }
+          : current));
         return url;
       })
       .catch((cause) => {
@@ -118,11 +119,13 @@ export function useResolvedStorageUrl(
           pathLength: reference.path.length,
           message: error.message,
         });
-        setState({ source, seedUrl, url: '', isLoading: false, error });
+        setState((current) => (isCurrentRefreshState(current)
+          ? { source, seedUrl, url: '', isLoading: false, error }
+          : current));
         return null;
       })
       .finally(() => {
-        refreshPromiseRef.current = null;
+        if (refreshPromiseRef.current === pending) refreshPromiseRef.current = null;
       });
     refreshPromiseRef.current = pending;
     return pending;

@@ -29,7 +29,7 @@ vi.mock('@/lib/logger', () => ({
 const toastMock = vi.hoisted(() => vi.fn());
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: toastMock }));
 
-import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { useNotificationSettings, type NotificationSettings } from '@/hooks/system/useNotificationSettings';
 
 const createWrapper = () => {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -267,6 +267,87 @@ describe('useNotificationSettings', () => {
 
       expect(upsert).toHaveBeenCalledTimes(4);
       expect(toastMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // ========== CONTROLES DE EVENTO (newMessageSound / mentionSound / slaBreachSound) ==========
+  // Item 441 (R2-PLAT-003): os tres botoes de "Tipos de Notificacao" existiam SO no front — sem
+  // coluna, sem select, sem `dbUpdates` — e a leitura repunha o default. Desligar um deles nao
+  // chegava ao banco e, depois do F5, os tres voltavam habilitados. Estes testes pinam as QUATRO
+  // pontas de cada controle (select, leitura, gravacao e reset), com um update contendo SO o
+  // controle — que era exatamente o caso que nao chamava o banco.
+  describe('controles de evento persistidos', () => {
+    const CONTROLES: Array<{
+      campo: keyof NotificationSettings;
+      coluna: string;
+      desligado: Partial<NotificationSettings>;
+    }> = [
+      { campo: 'newMessageSound', coluna: 'new_message_sound_enabled', desligado: { newMessageSound: false } },
+      { campo: 'mentionSound', coluna: 'mention_sound_enabled', desligado: { mentionSound: false } },
+      { campo: 'slaBreachSound', coluna: 'sla_breach_sound_enabled', desligado: { slaBreachSound: false } },
+    ];
+
+    const comLinha = (data: unknown) => {
+      const cadeia = montarCadeia(data);
+      mockFrom.mockReturnValue(cadeia);
+      return cadeia;
+    };
+
+    const carregar = async () => {
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      return result;
+    };
+
+    it('pede as tres colunas no select', async () => {
+      const { select } = comLinha(null);
+      await carregar();
+
+      for (const { coluna } of CONTROLES) {
+        expect(select).toHaveBeenCalledWith(expect.stringContaining(coluna));
+      }
+    });
+
+    for (const { campo, coluna, desligado } of CONTROLES) {
+      it(`le ${campo} desligado no banco`, async () => {
+        comLinha({ sound_enabled: true, [coluna]: false });
+        const result = await carregar();
+
+        expect(result.current.settings[campo]).toBe(false);
+      });
+
+      it(`grava ${campo} no banco mesmo quando e o unico campo do update`, async () => {
+        const { upsert } = comLinha(null);
+        const result = await carregar();
+
+        await result.current.updateSettings(desligado);
+
+        expect(upsert).toHaveBeenCalledTimes(1);
+        expect(upsert.mock.calls[0][0]).toMatchObject({ user_id: 'u1', [coluna]: false });
+      });
+
+      it(`reset volta ${campo} para o default (true)`, async () => {
+        const { upsert } = comLinha({ sound_enabled: true, [coluna]: false });
+        const result = await carregar();
+
+        await result.current.resetSettings();
+
+        expect(upsert.mock.calls[0][0]).toMatchObject({ [coluna]: true });
+      });
+    }
+
+    it('coluna nula cai no default true (sem preferencia gravada == habilitado)', async () => {
+      comLinha({
+        sound_enabled: true,
+        new_message_sound_enabled: null,
+        mention_sound_enabled: null,
+        sla_breach_sound_enabled: null,
+      });
+      const result = await carregar();
+
+      expect(result.current.settings.newMessageSound).toBe(true);
+      expect(result.current.settings.mentionSound).toBe(true);
+      expect(result.current.settings.slaBreachSound).toBe(true);
     });
   });
 

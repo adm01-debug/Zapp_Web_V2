@@ -52,6 +52,8 @@ const sb = vi.hoisted(() => {
   type Registro = {
     tabela: string;
     countExact: boolean;
+    /** `head: true` = contagem de cabeçalho (sem linhas); a lista também usa count: exact. */
+    head: boolean;
     range: [number, number] | null;
     inTamanho: number | null;
     eqUnread: boolean;
@@ -63,12 +65,12 @@ const sb = vi.hoisted(() => {
     unread: 0,
   };
   const responder = (registro: Registro) => {
-    if (registro.tabela === 'email_threads' && registro.countExact) {
+    if (registro.tabela === 'email_threads' && registro.head) {
       return { data: null, error: null, count: registro.eqUnread ? estado.unread : estado.total };
     }
     if (registro.tabela === 'email_threads' && registro.range) {
       const [from, to] = registro.range;
-      return { data: estado.corpus.slice(from, to + 1), error: null };
+      return { data: estado.corpus.slice(from, to + 1), error: null, count: registro.countExact ? estado.total : null };
     }
     return { data: [], error: null };
   };
@@ -83,10 +85,11 @@ const sb = vi.hoisted(() => {
     then: (resolve: (valor: unknown) => unknown, reject?: (erro: unknown) => unknown) => Promise<unknown>;
   };
   const criarCadeia = (tabela: string) => {
-    const registro: Registro = { tabela, countExact: false, range: null, inTamanho: null, eqUnread: false };
+    const registro: Registro = { tabela, countExact: false, head: false, range: null, inTamanho: null, eqUnread: false };
     const cadeia: Cadeia = {
       select: (_colunas: string, opcoes?: { count?: string; head?: boolean }) => {
         if (opcoes?.count === 'exact') registro.countExact = true;
+        if (opcoes?.head) registro.head = true;
         return cadeia;
       },
       eq: (coluna: string, valor?: unknown) => {
@@ -120,7 +123,8 @@ const sb = vi.hoisted(() => {
 vi.mock('@/integrations/supabase/client', () => ({ supabase: sb.supabase }));
 vi.mock('@/hooks/gmail/gmailApi', () => ({ callGmailFunction: vi.fn() }));
 
-import { useGmail } from '@/hooks/integrations/useGmail';
+import { useGmail, EMAIL_THREAD_PAGE_SIZE } from '@/hooks/integrations/useGmail';
+import { EMAIL_THREAD_DEFAULT_FILTERS } from '@/lib/emailThreadQuery';
 import { callGmailFunction } from '@/hooks/gmail/gmailApi';
 
 /** Corpus de volume do EN-088: N threads sintéticas. */
@@ -144,6 +148,9 @@ const CONTA: GmailAccount = {
 const baseProps = {
   threadsLoading: false, labels: [], unreadCount: 0, selectedThreadId: null,
   activeAccountEmail: 'conta@promobrindes.com.br',
+  page: 1, pageCount: 1,
+  filters: EMAIL_THREAD_DEFAULT_FILTERS,
+  onFiltersChange: () => {}, onSearchChange: () => {}, onResetFilters: () => {}, onPageChange: () => {},
   onSelectThread: () => {}, onNewEmail: () => {}, onSync: () => {}, isSyncing: false,
 };
 
@@ -184,7 +191,9 @@ async function medirConsultasReais(total: number) {
 
   const { result, unmount } = renderHook(() => useGmail(), { wrapper });
   await waitFor(() => {
-    expect(result.current.threads).toHaveLength(total);
+    // OTH-005: a consulta padrão traz UMA página do servidor; o total continua
+    // vindo da contagem exata do mesmo filtro.
+    expect(result.current.threads).toHaveLength(Math.min(total, EMAIL_THREAD_PAGE_SIZE));
     expect(result.current.threadsTotalCount).toBe(5000);
   });
 
@@ -198,7 +207,7 @@ async function medirConsultasReais(total: number) {
     consultas: daCaixa.length,
     paginas: daCaixa.filter(r => r.tabela === 'email_threads' && r.range).length,
     lotes: daCaixa.filter(r => r.tabela === 'email_messages' && r.inTamanho !== null).length,
-    contadores: daCaixa.filter(r => r.tabela === 'email_threads' && r.countExact).length,
+    contadores: daCaixa.filter(r => r.tabela === 'email_threads' && r.head).length,
     carregadas,
   };
 }
@@ -252,8 +261,8 @@ describe('EN-088 — medição de volume, memória, consultas, iframes, listener
       `EN088 | consultas corpus=1000 paginas=${grande.paginas} lotes=${grande.lotes} contadores=${grande.contadores} consultas=${grande.consultas} carregadas=${grande.carregadas}`,
     );
 
-    expect(pequeno.carregadas).toBe(20);
-    expect(grande.carregadas).toBe(1000);
+    expect(pequeno.carregadas).toBe(EMAIL_THREAD_PAGE_SIZE);
+    expect(grande.carregadas).toBe(EMAIL_THREAD_PAGE_SIZE);
     // O total medido é, por construção, a decomposição das chamadas OBSERVADAS no
     // cliente mockado: páginas (`range`) + lotes de anexo (`in`) + contadores
     // `count: exact`. Nada é somado à mão — se o hook ganhar uma consulta por
@@ -265,9 +274,9 @@ describe('EN-088 — medição de volume, memória, consultas, iframes, listener
     expect(grande.paginas).toBeLessThanOrEqual(orcamentoPaginas(1000));
     expect(pequeno.lotes).toBeLessThanOrEqual(orcamentoLotes(20));
     expect(grande.lotes).toBeLessThanOrEqual(orcamentoLotes(1000));
-    // Os contadores exatos (total e não-lidos) são observados, não presumidos.
-    expect(pequeno.contadores).toBe(2);
-    expect(grande.contadores).toBe(2);
+    // O contador exato separado é só o de não-lidos; o total vem da consulta paginada.
+    expect(pequeno.contadores).toBe(1);
+    expect(grande.contadores).toBe(1);
     // Nenhum corpus chega perto de "1 consulta por thread".
     expect(pequeno.consultas).toBeLessThan(20);
     expect(grande.consultas).toBeLessThan(1000);
@@ -279,12 +288,14 @@ describe('EN-088 — medição de volume, memória, consultas, iframes, listener
     const bytesCorpus = new TextEncoder().encode(JSON.stringify(mil)).length;
     registrar(`EN088 | memoria corpus=1000 material_bytes=${bytesCorpus}`);
 
-    const pequeno = render(<EmailThreadList threads={vinte} {...baseProps} />);
+    // OTH-005: a lista é só apresentação — recebe a página que o servidor mandou
+    // (20 linhas), não o corpus inteiro; o recorte em memória deixou de existir.
+    const pequeno = render(<EmailThreadList threads={vinte.slice(0, EMAIL_THREAD_PAGE_SIZE)} totalCount={vinte.length} {...baseProps} />);
     const nosPequeno = pequeno.container.querySelectorAll('*').length;
     const linhasPequeno = linhasMontadas();
     pequeno.unmount();
 
-    const grande = render(<EmailThreadList threads={mil} {...baseProps} />);
+    const grande = render(<EmailThreadList threads={mil.slice(0, EMAIL_THREAD_PAGE_SIZE)} totalCount={mil.length} {...baseProps} />);
     const nosGrande = grande.container.querySelectorAll('*').length;
     const linhasGrande = linhasMontadas();
     registrar(`EN088 | memoria dom corpus=20   linhas=${linhasPequeno} nos=${nosPequeno}`);

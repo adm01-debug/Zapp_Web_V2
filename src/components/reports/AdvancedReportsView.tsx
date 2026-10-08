@@ -37,15 +37,10 @@ export function AdvancedReportsView() {
   const {
     period, setPeriod, selectedAgent, setSelectedAgent, selectedTag, setSelectedTag,
     compareEnabled, setCompareEnabled,
-    agents, tags, dateRange,
+    agents, tags, dateRange, previousDateRange,
     chartData, previousChartData, comparisonSummary, contactsChartData, stats,
     isLoading, isError, isIncomplete, error, getExportData,
   } = useReportsData();
-
-  const previousDateRange = {
-    from: new Date(dateRange.from.getTime() - (dateRange.to.getTime() - dateRange.from.getTime())),
-    to: new Date(dateRange.from.getTime() - 86400000),
-  };
 
   const summaryStats = [
     { label: 'Total de Mensagens', value: stats.totalMessages, prevValue: stats.prevTotalMessages, icon: MessageSquare, trend: stats.messagesTrend },

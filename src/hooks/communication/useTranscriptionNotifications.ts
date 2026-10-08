@@ -30,6 +30,11 @@ export function useTranscriptionNotifications(options: TranscriptionNotification
   useEffect(() => {
     if (!enabled || !settings.transcriptionNotificationEnabled) return;
 
+    // O handler do canal é assíncrono (espera a busca do contato). Sem este sinalizador, uma
+    // notificação já em voo seguia até o fim e alertava DEPOIS de o hook ser desativado/desmontado
+    // (o `removeChannel` do cleanup só fecha o canal; não cancela a continuação agendada).
+    let desativado = false;
+
     const channel = supabase
       .channel('transcription-notifications')
       .on(
@@ -40,6 +45,8 @@ export function useTranscriptionNotifications(options: TranscriptionNotification
           table: 'messages',
         },
         async (payload) => {
+          if (desativado) return;
+
           const newData = payload.new as { id: string; transcription_status?: string; transcription?: string; contact_id?: string };
           const oldData = payload.old as { transcription_status?: string } | undefined;
 
@@ -71,6 +78,10 @@ export function useTranscriptionNotifications(options: TranscriptionNotification
                 contactName = contact.name;
               }
             }
+
+            // A busca acima pode ter demorado: se o hook saiu de cena nesse meio-tempo, nada de
+            // toast/som/notificação — a notificação pendente é descartada.
+            if (desativado) return;
 
             // Truncate transcription for preview
             const transcriptionPreview = newData.transcription.length > 100
@@ -104,6 +115,7 @@ export function useTranscriptionNotifications(options: TranscriptionNotification
       .subscribe();
 
     return () => {
+      desativado = true;
       supabase.removeChannel(channel);
     };
   }, [enabled, showToast, playSound, showBrowserNotif, settings, isQuietHours, settings.transcriptionNotificationEnabled]);

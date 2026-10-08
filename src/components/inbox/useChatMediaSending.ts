@@ -5,6 +5,9 @@ import { normalizeMediaUrl } from '@/utils/normalizeMediaUrl';
 import { toast } from '@/hooks/ui/use-toast';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 
+/** Motivo único da recusa quando a conexão WhatsApp não resolve: mesmo texto no toast e na rejeição. */
+const CONEXAO_WHATSAPP_INDISPONIVEL = 'Conexão WhatsApp não disponível.';
+
 /**
  * Encapsulates WhatsApp instance resolution and media-message sending
  * (stickers, custom emojis, audio memes) to keep ChatPanel lean.
@@ -64,7 +67,7 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
   const ensureInstance = useCallback(async (): Promise<string | null> => {
     const resolved = instanceName || await resolveInstance();
     if (!resolved || !contactPhone) {
-      toast({ title: 'Erro', description: 'Conexão WhatsApp não disponível.' });
+      toast({ title: 'Erro', description: CONEXAO_WHATSAPP_INDISPONIVEL });
       return null;
     }
     return resolved;
@@ -116,9 +119,15 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
     }
   }, [ensureInstance, contactId]);
 
+  // R2-INB-058 (#350-A): o chamador do inbox (`onSendAudio` do VoiceChangerPicker/AudioMemePicker)
+  // faz `await onSendAudio(...)` dentro do próprio try e só entende REJEIÇÃO. Sair em silêncio
+  // quando a conexão não resolve (antes: `if (!inst) return;`) e engolir o erro do transporte
+  // (antes: `catch {}`) transformava a falha em sucesso — o popover fechava e a prévia era
+  // descartada sem a mensagem ter ido. Contrato: REJEITA em falha (depois do toast de erro) e
+  // resolve só quando o envio confirma.
   const handleSendAudioMeme = useCallback(async (audioUrl: string) => {
     const inst = await ensureInstance();
-    if (!inst) return;
+    if (!inst) throw new Error(CONEXAO_WHATSAPP_INDISPONIVEL);
 
     try {
       const normalizedAudioUrl = normalizeMediaUrl(audioUrl);
@@ -127,8 +136,9 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
         contactId, content: '[Áudio Meme]', messageType: 'audio', mediaUrl: normalizedAudioUrl,
       });
       toast({ title: '🔊 Áudio meme enviado!' });
-    } catch {
+    } catch (err) {
       toast({ title: 'Erro ao enviar áudio meme', variant: 'destructive' });
+      throw err;
     }
   }, [ensureInstance, contactId]);
 

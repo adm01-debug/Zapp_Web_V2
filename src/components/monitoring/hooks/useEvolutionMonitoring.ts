@@ -13,10 +13,11 @@ export function useEvolutionMonitoring() {
   const [countdown, setCountdown] = useState(30);
   const countdownRef = useRef(30);
   const periodRef = useRef(period);
-  periodRef.current = period;
+  // Mantém a ref com o período atual fora do render (react-hooks/refs).
+  useEffect(() => { periodRef.current = period; }, [period]);
 
   const { notificationsEnabled, soundEnabled, setSoundEnabled, requestNotifications, checkDisconnections } = useMonitoringNotifications();
-  const { connections, healthLogs, loading, messageStats, uptime, sparklines, instanceUptimes, fetchData: rawFetch } = useMonitoringData(checkDisconnections);
+  const { connections, healthLogs, availabilityLogs, healthLogsTruncated, loading, messageStats, uptime, sparklines, instanceUptimes, fetchData: rawFetch } = useMonitoringData(checkDisconnections);
 
   const fetchData = useCallback(async (p?: TimePeriod) => {
     await rawFetch(p || periodRef.current);
@@ -49,7 +50,7 @@ export function useEvolutionMonitoring() {
   const changePeriod = useCallback((p: TimePeriod) => { setPeriod(p); fetchData(p); }, [fetchData]);
 
   return {
-    connections, healthLogs, loading, messageStats, uptime,
+    connections, healthLogs, availabilityLogs, healthLogsTruncated, loading, messageStats, uptime,
     sparklines, instanceUptimes, notificationsEnabled, soundEnabled, setSoundEnabled, requestNotifications,
     period, changePeriod, autoRefresh, setAutoRefresh, countdown,
     ...actions, refetch: fetchData,

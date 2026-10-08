@@ -9,16 +9,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
 import { Mail, Search, RefreshCw, Pencil, Inbox, Star, Send as SendIcon, MailOpen, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import { useGmail, type EmailThread } from '@/hooks/integrations/useGmail';
+import { EMAIL_THREAD_DEFAULT_FILTERS } from '@/lib/emailThreadQuery';
 import { EmailThreadView } from './EmailThreadView';
 import { EmailComposer } from './EmailComposer';
 import { ThreadListItem } from './ThreadListItem';
 
 export default function GmailInboxView() {
+  // OTH-005: esta tela legada ainda filtra o conjunto completo em memoria (abas e busca
+  // local sobre o array); por isso pede o caminho `full` explicitamente.
   const {
     accounts, activeAccount, accountsLoading, accountsError, refetchAccounts,
     threads, threadsLoading, threadsError, refetchThreads,
     labels, syncInbox, unreadCount, starredCount, subscribeToThreads,
-  } = useGmail();
+  } = useGmail(undefined, null, { ...EMAIL_THREAD_DEFAULT_FILTERS, page: 1, full: true });
   const [selectedThread, setSelectedThread] = useState<EmailThread | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showComposer, setShowComposer] = useState(false);

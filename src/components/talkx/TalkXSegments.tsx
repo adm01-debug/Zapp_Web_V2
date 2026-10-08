@@ -30,7 +30,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [filterOrigin, setFilterOrigin] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(8);
+  const [pageSize, setPageSize] = useState(8);
   const [selected, setSelected] = useState<TalkXSegment | null>(null);
   const [mode, setMode] = useState<ViewMode>('list');
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
@@ -184,7 +184,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             </div>
           )}
           </TalkXQueryBoundary>
-          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={() => {}} noun="segmentos" /></div>}
+          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="segmentos" /></div>}
         </section>
       </div>
 

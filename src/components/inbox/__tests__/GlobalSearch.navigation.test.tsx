@@ -67,8 +67,11 @@ function messageRow(id: string, content: string) {
 function renderSearch() {
   const onOpenChange = vi.fn();
   const onSelectResult = vi.fn();
-  render(<GlobalSearch open onOpenChange={onOpenChange} onSelectResult={onSelectResult} />);
-  return { onOpenChange, onSelectResult };
+  const onNewConversation = vi.fn();
+  // R2-INB-018: ações que dependem do host só aparecem quando a operação real é
+  // fornecida. Este teste de navegação precisa de uma ação hospedada visível.
+  render(<GlobalSearch open onOpenChange={onOpenChange} onSelectResult={onSelectResult} onNewConversation={onNewConversation} />);
+  return { onOpenChange, onSelectResult, onNewConversation };
 }
 
 const searchInput = () => screen.getByPlaceholderText(/Buscar mensagens/);

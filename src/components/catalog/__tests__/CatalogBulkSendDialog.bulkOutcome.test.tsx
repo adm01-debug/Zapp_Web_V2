@@ -55,6 +55,15 @@ vi.mock('../ContactSelectionStep', () => ({
   ),
 }));
 
+// R2-MOD-008 — o diálogo do lote agora consome a MESMA pré-validação do envio
+// individual. Este teste é do resultado do lote: a verificação responde
+// "liberado" e fica fora do caminho (sem QueryClient montado).
+vi.mock('@/hooks/integrations/useCatalogSendReadiness', () => ({
+  useCatalogSendReadiness: () => ({
+    checking: false, blocked: false, reason: null, unavailable: false, retry: vi.fn(),
+  }),
+}));
+
 // A mensagem começa com o id do produto: assim o mock de sendOutboundMessage
 // distingue cada produto (imagem pelo mediaUrl, texto pelo content).
 vi.mock('../sendProductUtils', async (importOriginal) => {

@@ -10,6 +10,8 @@ import type { HealthLog } from './hooks/useEvolutionMonitoring';
 
 interface Props {
   healthLogs: HealthLog[];
+  /** Janela parcial: a consulta de health logs bateu o teto de registros. */
+  truncated?: boolean;
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -25,7 +27,7 @@ function getCellColor(ratio: number, total: number): string {
   return 'bg-destructive';
 }
 
-export function MonitoringAvailabilityHeatmap({ healthLogs }: Props) {
+export function MonitoringAvailabilityHeatmap({ healthLogs, truncated = false }: Props) {
   const { grid, overallUptime, dayLabels } = useMemo(() => {
     const now = new Date();
     const cells: { total: number; healthy: number; ratio: number; date: Date; hour: number }[][] = [];
@@ -62,7 +64,8 @@ export function MonitoringAvailabilityHeatmap({ healthLogs }: Props) {
 
     const totalAll = healthLogs.length;
     const healthyAll = healthLogs.filter(l => HEALTHY.includes(l.status)).length;
-    const up = totalAll > 0 ? Math.round((healthyAll / totalAll) * 1000) / 10 : 100;
+    // R2-INF-027: sem checks na janela não há disponibilidade a aprovar.
+    const up = totalAll > 0 ? Math.round((healthyAll / totalAll) * 1000) / 10 : null;
 
     return { grid: cells, overallUptime: up, dayLabels: labels };
   }, [healthLogs]);
@@ -76,18 +79,27 @@ export function MonitoringAvailabilityHeatmap({ healthLogs }: Props) {
               <CalendarDays className="w-4 h-4 text-primary" />
               Disponibilidade 7 Dias
             </CardTitle>
-            <CardDescription>Mapa de calor por hora — verde = operacional</CardDescription>
+            <CardDescription>
+              Mapa de calor por hora — verde = operacional
+              {truncated && <span className="text-amber-500"> · janela parcial (limite de registros de health check)</span>}
+            </CardDescription>
           </div>
-          <Badge
-            variant="outline"
-            className={cn(
-              'text-sm font-bold',
-              overallUptime >= 99 ? 'text-emerald-500 border-emerald-500/30' :
-              overallUptime >= 95 ? 'text-amber-500 border-amber-500/30' : 'text-destructive border-destructive/30'
-            )}
-          >
-            {overallUptime}% uptime
-          </Badge>
+          {overallUptime === null ? (
+            <Badge variant="outline" className="text-sm font-bold text-muted-foreground">
+              Sem dados
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className={cn(
+                'text-sm font-bold',
+                overallUptime >= 99 ? 'text-emerald-500 border-emerald-500/30' :
+                overallUptime >= 95 ? 'text-amber-500 border-amber-500/30' : 'text-destructive border-destructive/30'
+              )}
+            >
+              {overallUptime}% uptime
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent>

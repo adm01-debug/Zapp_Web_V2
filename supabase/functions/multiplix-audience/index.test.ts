@@ -1,11 +1,13 @@
 import {
   AUDIENCE_CACHE_TTL_MS,
   fetchAudienceList,
+  handleMultiplixAudienceRequest,
   mapResolvedRecipients,
   MULTIPLIX_OVER_POLICY_LIMIT,
   MULTIPLIX_RESOLVE_TRUNCATED,
   MultiplixPolicyLimitError,
   planResolveBatches,
+  redactResolvedRecipient,
   RESOLVE_POLICY_MAX_IDS,
   RESOLVE_RPC_MAX_ROWS,
   resolveRecipientsInBatches,
@@ -13,6 +15,7 @@ import {
   scopeSignaturePayload,
   signScope,
 } from './index.ts';
+import { EXPECTED_EXTERNAL_PROJECT_REF } from '../_shared/crm-integration-contract.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -477,4 +480,285 @@ Deno.test('F22: escopo diferente assina diferente (nao da para subir de agent pa
   const agent = await signScope(['customers_own'], null, SEGREDO_DE_TESTE, NOW_PARA_EXP_FIXO);
   const admin = await signScope(['admin'], null, SEGREDO_DE_TESTE, NOW_PARA_EXP_FIXO);
   assert(agent.hmac !== admin.hmac, 'escopos diferentes geraram o mesmo hmac');
+});
+
+// ---------------------------------------------------------------------------
+// R2-DB-003 (cartao t_891763fa): fora do escopo nao pode carregar metadados.
+//
+// multiplix_resolve_recipients ja calcula `no_escopo` por empresa, mas so
+// ocultava destino_e164/destino_origem — company_name, contact_id,
+// empresa_papeis e last_interaction_at seguiam na linha ate o cliente mesmo
+// com elegibilidade='fora_do_escopo'. A correcao e em duas camadas: a RPC
+// redige na fonte (espelho versionado em _foreign/singu) e a edge redige de
+// novo na fronteira PT->EN, para o periodo em que o Singu ainda roda a versao
+// antiga (ordem de deploy — mesmo motivo do cabecalho HMAC do F22).
+//
+// A prova de execucao real da funcao (banco descartavel, espelho extraido
+// verbatim e redacao conferida campo a campo com psql) fica em
+// scripts/db-audit/multiplix-resolve-escopo.test.sh — aqui nao se le o .sql
+// como texto.
+// ---------------------------------------------------------------------------
+
+Deno.test('R2-DB-003: fora_do_escopo sai so com company_id e elegibilidade', () => {
+  // Linha como a RPC ANTIGA ainda devolve (ate o Singu aplicar o arquivo novo):
+  // metadados preenchidos mesmo com elegibilidade='fora_do_escopo'. A edge tem
+  // de derrubar tudo, mesmo que a RPC ainda vaze.
+  const out = redactResolvedRecipient({
+    company_id: 'c-fora',
+    contact_id: 'ct-999',
+    company_name: 'Empresa de Outra Carteira',
+    destino_e164: '5511900000003',
+    destino_origem: 'contato_pessoa',
+    elegibilidade: 'fora_do_escopo',
+    empresa_papeis: ['customer'],
+    last_interaction_at: '2026-04-12T10:00:00.000Z',
+  });
+  const keys = Object.keys(out).sort();
+  assert(
+    keys.join(',') === 'company_id,elegibilidade',
+    `linha fora do escopo vazou campos: ${keys.join(',')}`,
+  );
+  assert(out.company_id === 'c-fora', `company_id e o eco do id enviado: ${out.company_id}`);
+  assert(
+    out.elegibilidade === 'out_of_scope',
+    `elegibilidade deveria sair traduzida para o enum EN: ${out.elegibilidade}`,
+  );
+  const serial = JSON.stringify(out);
+  for (const vazado of ['ct-999', 'Empresa de Outra Carteira', '5511900000003', 'customer', '2026-04-12']) {
+    assert(!serial.includes(vazado), `valor vazou na linha redigida: ${vazado}`);
+  }
+});
+
+Deno.test('R2-DB-003: destino_invalido tambem sai redigido (no_destination)', () => {
+  const out = redactResolvedRecipient({
+    company_id: 'c-inv',
+    contact_id: 'ct-1',
+    company_name: 'Inativa Ltda',
+    elegibilidade: 'destino_invalido',
+    empresa_papeis: ['supplier'],
+    last_interaction_at: '2026-01-01T00:00:00.000Z',
+  });
+  assert(out.elegibilidade === 'no_destination', `esperava no_destination, veio ${out.elegibilidade}`);
+  assert(
+    Object.keys(out).sort().join(',') === 'company_id,elegibilidade',
+    `linha invalida vazou campos: ${Object.keys(out).sort().join(',')}`,
+  );
+});
+
+Deno.test('R2-DB-003: elegibilidade desconhecida cai no fallback e sai redigida', () => {
+  const out = redactResolvedRecipient({
+    company_id: 'c-x',
+    company_name: 'X',
+    elegibilidade: 'valor_que_o_singu_nunca_mandou',
+  });
+  assert(out.elegibilidade === 'out_of_scope', `esperava out_of_scope, veio ${out.elegibilidade}`);
+  assert(
+    Object.keys(out).sort().join(',') === 'company_id,elegibilidade',
+    'linha com elegibilidade desconhecida vazou campos',
+  );
+});
+
+Deno.test('R2-DB-003: linha apta sai inteira — o composer precisa dos campos', () => {
+  const out = redactResolvedRecipient({
+    company_id: 'c-ok',
+    contact_id: 'ct-1',
+    company_name: 'Acme',
+    destino_e164: '5511900000001',
+    destino_origem: 'contato_pessoa',
+    elegibilidade: 'apto',
+    empresa_papeis: ['customer'],
+    last_interaction_at: '2026-04-12T10:00:00.000Z',
+  });
+  assert(out.elegibilidade === 'eligible', `esperava eligible, veio ${out.elegibilidade}`);
+  assert(out.company_name === 'Acme', `company_name sumiu: ${out.company_name}`);
+  assert(out.contact_id === 'ct-1', `contact_id sumiu: ${out.contact_id}`);
+  assert(out.destino_e164 === '5511900000001', `destino sumiu: ${out.destino_e164}`);
+  assert(
+    JSON.stringify(out.empresa_papeis) === JSON.stringify(['customer']),
+    `papeis sumiram: ${JSON.stringify(out.empresa_papeis)}`,
+  );
+  assert(out.last_interaction_at === '2026-04-12T10:00:00.000Z', 'last_interaction_at sumiu');
+});
+
+Deno.test('R2-DB-003: elegibilidade ausente segue o contrato antigo (eligible, sem redigir)', () => {
+  // O resolvedor antigo nao devolvia a coluna; a fronteira normaliza a ausencia
+  // para 'eligible' (mesma leitura do COALESCE(...,'apto') da RPC) e a linha
+  // passa inteira — redigir aqui quebraria o composer contra a versao antiga.
+  const out = redactResolvedRecipient({ company_id: 'c-1', company_name: 'Sem classificação' });
+  assert(out.elegibilidade === 'eligible', `esperava eligible, veio ${out.elegibilidade}`);
+  assert(out.company_name === 'Sem classificação', 'campo de linha elegivel sumiu');
+});
+
+// ---------------------------------------------------------------------------
+// R2-DB-003 pelo HANDLER (cartao t_c1431127): os testes acima exercitam o
+// helper redactResolvedRecipient isolado. Este dirige o fluxo REAL —
+// handleMultiplixAudienceRequest de ponta a ponta (requireAuth -> escopo por
+// is_admin/user_has_permission -> assinatura HMAC do escopo -> RPC ao Singu ->
+// resposta HTTP) — e asserta o CORPO devolvido ao cliente. O stub de
+// globalThis.fetch (mesmo padrao de multiplix-send/index.test.ts) finge ser o
+// GoTrue do Zapp, o PostgREST canonico e o Singu; o Singu devolve a linha
+// fora do escopo PREENCHIDA, como a versao velha da RPC fazia — e a resposta
+// ao cliente nao pode carregar nada alem de company_id + elegibilidade.
+// ---------------------------------------------------------------------------
+
+const SINGU_URL = `https://${EXPECTED_EXTERNAL_PROJECT_REF}.supabase.co`;
+const ZAPP_URL = 'https://zapp-test.supabase.co';
+const RESOLVE_USER_ID = 'user-resolve-handler-1';
+const RESOLVE_EMPRESA_APTA = '11111111-1111-4111-8111-111111111111';
+const RESOLVE_EMPRESA_FORA = '33333333-3333-4333-8333-333333333333';
+
+Deno.test('R2-DB-003 handler: resolve redige a linha fora do escopo na resposta ao cliente', async () => {
+  const envAnterior: Record<string, string | undefined> = {};
+  for (const k of [
+    'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY',
+    'EXTERNAL_SUPABASE_URL', 'EXTERNAL_SUPABASE_SERVICE_ROLE_KEY',
+    'MULTIPLIX_SCOPE_HMAC_SECRET',
+  ]) {
+    envAnterior[k] = Deno.env.get(k);
+  }
+  Deno.env.set('SUPABASE_URL', ZAPP_URL);
+  Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
+  Deno.env.set('SUPABASE_ANON_KEY', 'test-anon-key');
+  Deno.env.set('EXTERNAL_SUPABASE_URL', SINGU_URL);
+  // JWT no formato que isExpectedExternalServerKey exige (ref + service_role),
+  // mesmo padrao de crm-integration/index.test.ts.
+  const payloadExterno = btoa(JSON.stringify({ ref: EXPECTED_EXTERNAL_PROJECT_REF, role: 'service_role' }))
+    .replace(/=/g, '');
+  Deno.env.set('EXTERNAL_SUPABASE_SERVICE_ROLE_KEY', `header.${payloadExterno}.signature`);
+  Deno.env.set('MULTIPLIX_SCOPE_HMAC_SECRET', 'test-scope-secret');
+
+  // Linhas como o Singu VELHO devolve: a fora do escopo vem cheia de
+  // metadados (company_name/contact_id/empresa_papeis/last_interaction_at e
+  // ate destino). Se a edge repassar, e exatamente o vazamento do R2-DB-003.
+  const linhasSingu = [
+    {
+      company_id: RESOLVE_EMPRESA_APTA,
+      contact_id: 'ct-apta',
+      company_name: 'Empresa Apta',
+      destino_e164: '5511900000001',
+      destino_origem: 'contato_pessoa',
+      elegibilidade: 'apto',
+      empresa_papeis: ['customer'],
+      last_interaction_at: '2026-04-01T10:00:00+00:00',
+    },
+    {
+      company_id: RESOLVE_EMPRESA_FORA,
+      contact_id: 'ct-999',
+      company_name: 'Empresa de Outra Carteira',
+      destino_e164: '5511900000003',
+      destino_origem: 'contato_pessoa',
+      elegibilidade: 'fora_do_escopo',
+      empresa_papeis: ['supplier'],
+      last_interaction_at: '2026-04-02T10:00:00+00:00',
+    },
+  ];
+
+  const chamadasSingu: { args: Record<string, unknown>; hmac: string | null; exp: string | null }[] = [];
+  const fetchOriginal = globalThis.fetch;
+  const json = (body: unknown, headers: Record<string, string> = {}) =>
+    new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { 'content-type': 'application/json', ...headers },
+    });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.fetch = (async (input: any, init?: RequestInit) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : String(input?.url ?? input);
+    if (url.includes('/auth/v1/user')) {
+      // requireAuth: o Bearer do cliente resolve num usuario real.
+      return json({ id: RESOLVE_USER_ID, email: 'admin@zapp.test', role: 'authenticated' });
+    }
+    if (url.includes('/rest/v1/rpc/')) {
+      const rpc = url.split('/rest/v1/rpc/')[1].split('?')[0];
+      if (rpc === 'is_admin') return json(true);
+      if (rpc === 'user_has_permission') return json(true);
+      if (rpc === 'consume_rate_limit') return json({ allowed: true, remaining: 59 });
+      if (rpc === 'multiplix_resolve_recipients') {
+        const headers = new Headers(init?.headers);
+        chamadasSingu.push({
+          args: JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>,
+          hmac: headers.get('x-multiplix-scope-hmac'),
+          exp: headers.get('x-multiplix-scope-exp'),
+        });
+        // content-range como o PostgREST devolve com Prefer: count=exact —
+        // resolveRecipientsInBatches compara data.length com esse count.
+        return json(linhasSingu, { 'content-range': '0-1/2' });
+      }
+      return json(null);
+    }
+    return new Response('rota nao stubada', { status: 404 });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }) as any;
+
+  try {
+    const req = new Request('https://edge.test/multiplix-audience', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Authorization: 'Bearer jwt-do-cliente' },
+      body: JSON.stringify({
+        action: 'resolve',
+        params: { company_ids: [RESOLVE_EMPRESA_APTA, RESOLVE_EMPRESA_FORA] },
+      }),
+    });
+    const response = await handleMultiplixAudienceRequest(req);
+    assert(response.status === 200, `handler deveria responder 200, veio ${response.status}`);
+    const body = await response.json() as {
+      data: Array<Record<string, unknown>>;
+      meta: { record_count: number };
+    };
+    assert(Array.isArray(body.data), `data nao e array: ${JSON.stringify(body)}`);
+    assert(body.data.length === 2, `esperava 2 linhas, vieram ${body.data.length}`);
+    assert(body.meta.record_count === 2, `record_count inesperado: ${body.meta.record_count}`);
+
+    const apta = body.data.find((l) => l.company_id === RESOLVE_EMPRESA_APTA);
+    const fora = body.data.find((l) => l.company_id === RESOLVE_EMPRESA_FORA);
+    assert(apta, 'linha da empresa apta sumiu da resposta');
+    assert(fora, 'linha da empresa fora do escopo sumiu da resposta');
+
+    // Elegivel sai INTEIRA, com elegibilidade ja traduzida para o enum do banco.
+    assert(apta.elegibilidade === 'eligible', `elegibilidade inesperada: ${apta.elegibilidade}`);
+    assert(apta.company_name === 'Empresa Apta', `company_name sumiu: ${apta.company_name}`);
+    assert(apta.contact_id === 'ct-apta', `contact_id sumiu: ${apta.contact_id}`);
+    assert(apta.destino_e164 === '5511900000001', `destino_e164 sumiu: ${apta.destino_e164}`);
+    assert(apta.destino_origem === 'contato_pessoa', `destino_origem sumiu: ${apta.destino_origem}`);
+    assert(
+      JSON.stringify(apta.empresa_papeis) === JSON.stringify(['customer']),
+      `empresa_papeis sumiu: ${JSON.stringify(apta.empresa_papeis)}`,
+    );
+    assert(
+      apta.last_interaction_at === '2026-04-01T10:00:00+00:00',
+      `last_interaction_at sumiu: ${apta.last_interaction_at}`,
+    );
+
+    // Fora do escopo sai so com company_id (eco do id que o chamador mandou)
+    // e elegibilidade — NENHUM metadado da empresa pode chegar ao cliente.
+    const chavesFora = Object.keys(fora).sort();
+    assert(
+      chavesFora.join(',') === 'company_id,elegibilidade',
+      `linha fora do escopo vazou campos na resposta do handler: ${chavesFora.join(',')}`,
+    );
+    assert(fora.company_id === RESOLVE_EMPRESA_FORA, `company_id inesperado: ${fora.company_id}`);
+    assert(fora.elegibilidade === 'out_of_scope', `elegibilidade inesperada: ${fora.elegibilidade}`);
+
+    const serial = JSON.stringify(body);
+    for (const vazado of [
+      'ct-999', 'Empresa de Outra Carteira', '5511900000003', 'supplier', '2026-04-02',
+    ]) {
+      assert(!serial.includes(vazado), `valor vazou na resposta do handler: ${vazado}`);
+    }
+
+    // O fluxo real tambem precisa ter assinado o escopo e mandado o escopo do
+    // JWT (admin), nao nada vindo do corpo da requisicao.
+    assert(chamadasSingu.length === 1, `esperava 1 chamada a RPC do Singu, houve ${chamadasSingu.length}`);
+    const chamada = chamadasSingu[0];
+    assert(
+      JSON.stringify(chamada.args.p_scope_permissions) === JSON.stringify(['admin']),
+      `escopo enviado ao Singu inesperado: ${JSON.stringify(chamada.args.p_scope_permissions)}`,
+    );
+    assert(chamada.hmac && chamada.exp, 'assinatura HMAC do escopo nao foi para o Singu');
+  } finally {
+    globalThis.fetch = fetchOriginal;
+    for (const [k, v] of Object.entries(envAnterior)) {
+      if (v === undefined) Deno.env.delete(k);
+      else Deno.env.set(k, v);
+    }
+  }
 });

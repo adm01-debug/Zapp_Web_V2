@@ -25,21 +25,3 @@ export function resolveTransition(pathname: string): TransitionConfig {
     .sort((a, b) => b.length - a.length)[0];
   return match ? routeTransitions[match] : defaultTransition;
 }
-
-const STORAGE_KEY = 'zapp:reduce-motion';
-
-export function readReduceMotionPreference(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-export function writeReduceMotionPreference(value: boolean): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, value ? '1' : '0');
-  } catch {
-    /* ignore */
-  }
-}

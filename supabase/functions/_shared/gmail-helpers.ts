@@ -248,6 +248,21 @@ export async function syncMessages(supabase: SupabaseClient, accountId: string, 
   return { ...totals, pages };
 }
 
+export type GmailHistoryResetOutcome = "reset" | "conflict";
+
+// Reset do cursor por history 404 com compare-and-swap: só limpa se o
+// history_id da linha ainda for o que o chamador leu. 0 linhas = outro fluxo
+// já moveu o cursor → "conflict", sem sobrescrever o cursor novo.
+export async function resetGmailHistoryCursor(supabase: SupabaseClient, accountId: string, historyIdLido: string): Promise<GmailHistoryResetOutcome> {
+  const { data, error } = await supabase.from("gmail_accounts").update({
+    sync_status: "pending",
+    history_id: null,
+    last_error: "History ID expired - full resync needed",
+  }).eq("id", accountId).eq("history_id", historyIdLido).select("id");
+  if (error) throw new Error("Failed to reset Gmail history cursor");
+  return data && data.length > 0 ? "reset" : "conflict";
+}
+
 export async function runGmailFullSync(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = "in:inbox", maxResults = 50) {
   const result = await syncMessages(supabase, accountId, accessToken, log, query, maxResults);
   if (result.failed > 0) {

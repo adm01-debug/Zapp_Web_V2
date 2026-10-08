@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import {
   ChevronLeft, ChevronRight, MailX, Paperclip, X
 } from 'lucide-react';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
+import { EMAIL_THREAD_PAGE_SIZE, hasActiveEmailThreadFilters, type EmailThreadListFilters } from '@/lib/emailThreadQuery';
 import { cn } from '@/lib/utils';
 import { emailLoadErrorCopy } from '@/lib/emailErrorState';
 
@@ -36,12 +37,25 @@ function formatDate(dateStr: string): string {
 }
 
 interface EmailThreadListProps {
+  /**
+   * Página atual devolvida pelo servidor. OTH-005: a lista NÃO filtra nem recorta o
+   * array em memória — filtros e janela já vêm aplicados da consulta.
+   */
   threads: EmailThread[];
-  totalCount?: number;
+  /** Contagem exata do servidor para o filtro corrente (nunca "a página vira total"). */
+  totalCount: number;
+  page: number;
+  pageCount: number;
   threadsLoading: boolean;
   threadsError?: Error | null;
   labels: { id: string; name: string; gmail_label_id: string; label_type: string; unread_count: number }[];
   unreadCount: number;
+  filters: EmailThreadListFilters;
+  onFiltersChange: (patch: Partial<Omit<EmailThreadListFilters, 'search'>>) => void;
+  /** Busca digitada: a espera curta e a consulta ficam com quem manda a consulta. */
+  onSearchChange: (term: string) => void;
+  onResetFilters: () => void;
+  onPageChange: (page: number) => void;
   globalSearchQuery?: string;
   onClearGlobalSearch?: () => void;
   selectedThreadId: string | null;
@@ -53,64 +67,17 @@ interface EmailThreadListProps {
 }
 
 export function EmailThreadList({
-  threads, totalCount, threadsLoading, threadsError, labels, unreadCount, globalSearchQuery = '', onClearGlobalSearch,
+  threads, totalCount, page, pageCount, threadsLoading, threadsError, labels, unreadCount,
+  filters, onFiltersChange, onSearchChange, onResetFilters, onPageChange,
+  globalSearchQuery = '', onClearGlobalSearch,
   selectedThreadId, activeAccountEmail,
   onSelectThread, onNewEmail, onSync, isSyncing
 }: EmailThreadListProps) {
-  const initialParams = useMemo(() => new URLSearchParams(window.location.search), []);
-  const [searchQuery, setSearchQuery] = useState(() => initialParams.get('emailQuery') || '');
-  const [filter, setFilter] = useState(() => ['all', 'unread', 'starred'].includes(initialParams.get('emailFilter') || '') ? initialParams.get('emailFilter')! : 'all');
-  const [hasAttachmentFilter, setHasAttachmentFilter] = useState(() => initialParams.get('emailAttachment') === 'true' || initialParams.get('emailFilter') === 'has_attachment');
-  const [labelFilter, setLabelFilter] = useState(() => initialParams.get('emailLabel') || 'all');
-  const [periodFilter, setPeriodFilter] = useState(() => ['all', 'today', '7d', '30d'].includes(initialParams.get('emailPeriod') || '') ? initialParams.get('emailPeriod')! : 'all');
-  const [page, setPage] = useState(1);
-  const pageSize = 20;
-
-  const filteredThreads = useMemo(() => {
-    let result = threads;
-    if (filter === 'unread') result = result.filter(t => t.is_unread);
-    if (filter === 'starred') result = result.filter(t => t.is_starred);
-    if (hasAttachmentFilter) result = result.filter(t => t.has_attachments);
-    if (labelFilter !== 'all') {
-      result = result.filter(t => t.label_ids?.includes(labelFilter));
-    }
-    if (periodFilter !== 'all') {
-      const cutoff = new Date();
-      if (periodFilter === 'today') cutoff.setHours(0, 0, 0, 0);
-      else cutoff.setDate(cutoff.getDate() - Number.parseInt(periodFilter, 10));
-      result = result.filter(thread => new Date(thread.last_message_at).getTime() >= cutoff.getTime());
-    }
-    const effectiveSearch = (globalSearchQuery || searchQuery).trim();
-    if (effectiveSearch) {
-      const q = effectiveSearch.toLowerCase();
-      result = result.filter(t =>
-        t.subject?.toLowerCase().includes(q) ||
-        t.snippet?.toLowerCase().includes(q) ||
-        t.last_from_name?.toLowerCase().includes(q) ||
-        t.last_from_address?.toLowerCase().includes(q) ||
-        t.contact?.name?.toLowerCase().includes(q) ||
-        t.contact?.email?.toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [threads, filter, hasAttachmentFilter, labelFilter, periodFilter, searchQuery, globalSearchQuery]);
-  const pageCount = Math.max(1, Math.ceil(filteredThreads.length / pageSize));
-  const effectivePage = Math.min(page, pageCount);
-  const visibleThreads = filteredThreads.slice((effectivePage - 1) * pageSize, effectivePage * pageSize);
-  const hasActiveFilters = filter !== 'all' || hasAttachmentFilter || labelFilter !== 'all' || periodFilter !== 'all' || Boolean(searchQuery || globalSearchQuery);
-  const displayedTotal = hasActiveFilters ? filteredThreads.length : (totalCount ?? filteredThreads.length);
+  const { filter, hasAttachments, labelId, period, search } = filters;
+  const safePageCount = Number.isFinite(pageCount) && pageCount >= 1 ? Math.trunc(pageCount) : 1;
+  const effectivePage = Math.min(Math.max(1, page), safePageCount);
+  const hasActiveFilters = hasActiveEmailThreadFilters(filters) || Boolean(globalSearchQuery);
   const threadsErrorCopy = useMemo(() => emailLoadErrorCopy(threadsError), [threadsError]);
-
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const setOrDelete = (name: string, value: string, defaultValue: string) => value === defaultValue ? url.searchParams.delete(name) : url.searchParams.set(name, value);
-    setOrDelete('emailFilter', filter, 'all');
-    setOrDelete('emailAttachment', String(hasAttachmentFilter), 'false');
-    setOrDelete('emailLabel', labelFilter, 'all');
-    setOrDelete('emailPeriod', periodFilter, 'all');
-    setOrDelete('emailQuery', searchQuery.trim(), '');
-    window.history.replaceState(window.history.state, '', url);
-  }, [filter, hasAttachmentFilter, labelFilter, periodFilter, searchQuery]);
 
   return (
     <>
@@ -143,13 +110,13 @@ export function EmailThreadList({
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
               aria-label="Buscar nas conversas"
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Buscar..."
               className="h-8 border-input bg-input pl-8 text-sm text-foreground placeholder:text-muted-foreground"
             />
           </div>
-          <Select value={filter} onValueChange={value => { setFilter(value); setPage(1); }}>
+          <Select value={filter} onValueChange={value => onFiltersChange({ filter: value as EmailThreadListFilters['filter'] })}>
             <SelectTrigger aria-label="Filtrar conversas" className="h-8 w-[112px] border-input bg-input text-xs text-foreground">
               <SelectValue />
             </SelectTrigger>
@@ -162,7 +129,7 @@ export function EmailThreadList({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <Select value={labelFilter} onValueChange={value => { setLabelFilter(value); setPage(1); }}>
+          <Select value={labelId} onValueChange={value => onFiltersChange({ labelId: value })}>
             <SelectTrigger aria-label="Pasta ou marcador" className="h-7 min-w-[120px] flex-1 border-input bg-input text-3xs text-foreground"><SelectValue placeholder="Pasta/marcador" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os e-mails</SelectItem>
@@ -171,12 +138,12 @@ export function EmailThreadList({
               ))}
             </SelectContent>
           </Select>
-          <Button type="button" variant={hasAttachmentFilter ? 'default' : 'outline'} size="sm" aria-pressed={hasAttachmentFilter} className="h-7 shrink-0 px-2 text-3xs" onClick={() => { setHasAttachmentFilter(current => !current); setPage(1); }}><Paperclip className="mr-1 h-3 w-3" />Com anexo</Button>
-          <Select value={periodFilter} onValueChange={value => { setPeriodFilter(value); setPage(1); }}>
+          <Button type="button" variant={hasAttachments ? 'default' : 'outline'} size="sm" aria-pressed={hasAttachments} className="h-7 shrink-0 px-2 text-3xs" onClick={() => onFiltersChange({ hasAttachments: !hasAttachments })}><Paperclip className="mr-1 h-3 w-3" />Com anexo</Button>
+          <Select value={period} onValueChange={value => onFiltersChange({ period: value as EmailThreadListFilters['period'] })}>
             <SelectTrigger aria-label="Filtrar por período" className="h-7 w-[94px] shrink-0 border-input bg-input text-3xs text-foreground"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="all">Qualquer data</SelectItem><SelectItem value="today">Hoje</SelectItem><SelectItem value="7d">7 dias</SelectItem><SelectItem value="30d">30 dias</SelectItem></SelectContent>
           </Select>
-          {(filter !== 'all' || hasAttachmentFilter || labelFilter !== 'all' || periodFilter !== 'all' || searchQuery) && <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-3xs text-muted-foreground" onClick={() => { setSearchQuery(''); onClearGlobalSearch?.(); setFilter('all'); setHasAttachmentFilter(false); setLabelFilter('all'); setPeriodFilter('all'); setPage(1); }}><X className="mr-1 h-3 w-3" />Limpar</Button>}
+          {hasActiveFilters && <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-3xs text-muted-foreground" onClick={() => { onResetFilters(); onClearGlobalSearch?.(); }}><X className="mr-1 h-3 w-3" />Limpar</Button>}
         </div>
       </div>
 
@@ -203,22 +170,22 @@ export function EmailThreadList({
               </div>
             ))}
           </div>
-        ) : filteredThreads.length === 0 ? (
+        ) : threads.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground px-6">
-            {searchQuery || globalSearchQuery ? (
+            {search.trim() || globalSearchQuery ? (
               <>
                 <MailX className="w-12 h-12 mb-3 opacity-20" />
                 <p className="text-sm font-medium mb-1">Nenhum resultado</p>
                 <p className="text-xs text-center">Tente buscar por outro termo ou remova os filtros.</p>
-                <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={() => { setSearchQuery(''); onClearGlobalSearch?.(); setFilter('all'); setHasAttachmentFilter(false); setLabelFilter('all'); setPeriodFilter('all'); }}>
+                <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={() => { onResetFilters(); onClearGlobalSearch?.(); }}>
                   Limpar filtros
                 </Button>
               </>
-            ) : filter !== 'all' || hasAttachmentFilter || labelFilter !== 'all' || periodFilter !== 'all' ? (
+            ) : filter !== 'all' || hasAttachments || labelId !== 'all' || period !== 'all' ? (
               <>
                 <Inbox className="w-12 h-12 mb-3 opacity-20" />
                 <p className="text-sm font-medium mb-1">Nenhum email neste filtro</p>
-                <Button variant="outline" size="sm" className="mt-2 text-xs" onClick={() => { setFilter('all'); setHasAttachmentFilter(false); setLabelFilter('all'); setPeriodFilter('all'); }}>
+                <Button variant="outline" size="sm" className="mt-2 text-xs" onClick={() => { onResetFilters(); }}>
                   Ver todos
                 </Button>
               </>
@@ -234,7 +201,7 @@ export function EmailThreadList({
             )}
           </div>
         ) : (
-          visibleThreads.map(thread => (
+          threads.map(thread => (
             <ThreadItem
               key={thread.id}
               thread={thread}
@@ -249,10 +216,10 @@ export function EmailThreadList({
       <div className="flex shrink-0 items-center gap-1 border-t border-border bg-inbox-panel p-2 text-3xs text-muted-foreground">
         <Mail className="w-3 h-3" />
         <span className="truncate">{activeAccountEmail}</span>
-        <span className="ml-auto shrink-0">{filteredThreads.length === 0 ? 0 : (effectivePage - 1) * pageSize + 1}–{Math.min(effectivePage * pageSize, filteredThreads.length)} de {displayedTotal}</span>
-        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Página anterior" disabled={effectivePage <= 1} onClick={() => setPage(current => Math.max(1, current - 1))}><ChevronLeft className="h-3 w-3" /></Button>
-        <span aria-label={`Página ${effectivePage} de ${pageCount}`}>{effectivePage}/{pageCount}</span>
-        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Próxima página" disabled={effectivePage >= pageCount} onClick={() => setPage(current => Math.min(pageCount, current + 1))}><ChevronRight className="h-3 w-3" /></Button>
+        <span className="ml-auto shrink-0">{threads.length === 0 ? `0 de ${totalCount}` : `${(effectivePage - 1) * EMAIL_THREAD_PAGE_SIZE + 1}–${Math.min(effectivePage * EMAIL_THREAD_PAGE_SIZE, totalCount)} de ${totalCount}`}</span>
+        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Página anterior" disabled={effectivePage <= 1} onClick={() => onPageChange(effectivePage - 1)}><ChevronLeft className="h-3 w-3" /></Button>
+        <span aria-label={`Página ${effectivePage} de ${safePageCount}`}>{effectivePage}/{safePageCount}</span>
+        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Próxima página" disabled={effectivePage >= safePageCount} onClick={() => onPageChange(effectivePage + 1)}><ChevronRight className="h-3 w-3" /></Button>
       </div>
     </>
   );

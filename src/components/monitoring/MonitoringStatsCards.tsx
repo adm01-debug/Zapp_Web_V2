@@ -67,6 +67,8 @@ export function MonitoringStatsCards({ connections, messageStats, uptime, sparkl
 
   const allOnline = activeCount === connections.length && connections.length > 0;
   const hasIncoming = messageStats.incoming > 0;
+  // R2-INF-027: sem checks na janela não há uptime a exibir — neutro, nunca 100%.
+  const upPct = uptime.percentage;
 
   const stats = [
     {
@@ -82,14 +84,14 @@ export function MonitoringStatsCards({ connections, messageStats, uptime, sparkl
     },
     {
       icon: Shield,
-      iconColor: uptime.percentage >= 99 ? 'text-emerald-500' : uptime.percentage >= 95 ? 'text-amber-500' : 'text-destructive',
-      bgColor: uptime.percentage >= 99 ? 'bg-emerald-500/10' : uptime.percentage >= 95 ? 'bg-amber-500/10' : 'bg-destructive/10',
+      iconColor: upPct === null ? 'text-muted-foreground' : upPct >= 99 ? 'text-emerald-500' : upPct >= 95 ? 'text-amber-500' : 'text-destructive',
+      bgColor: upPct === null ? 'bg-muted/40' : upPct >= 99 ? 'bg-emerald-500/10' : upPct >= 95 ? 'bg-amber-500/10' : 'bg-destructive/10',
       label: 'Uptime 24h',
-      value: `${uptime.percentage}%`,
+      value: upPct === null ? '—' : `${upPct}%`,
       subtitle: uptime.totalChecks > 0 ? `${uptime.healthyChecks}/${uptime.totalChecks} checks OK` : 'Sem dados',
-      pulse: uptime.percentage >= 99,
+      pulse: upPct !== null && upPct >= 99,
       sparkline: sparklines.uptime,
-      sparkColor: uptime.percentage >= 95 ? 'text-emerald-500' : 'text-destructive',
+      sparkColor: upPct === null ? 'text-muted-foreground' : upPct >= 95 ? 'text-emerald-500' : 'text-destructive',
     },
     {
       icon: MessageSquare,

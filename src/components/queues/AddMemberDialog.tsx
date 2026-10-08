@@ -37,11 +37,13 @@ export function AddMemberDialog({
 }: AddMemberDialogProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
 
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const { data, error } = await supabase
         .from('profiles')
         .select('id, name, avatar_url, is_active')
@@ -52,6 +54,7 @@ export function AddMemberDialog({
       setProfiles((data || []) as Profile[]);
     } catch (err) {
       log.error('Error fetching profiles:', err);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -85,6 +88,13 @@ export function AddMemberDialog({
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : loadError ? (
+          <div role="alert" className="text-center py-8 space-y-3">
+            <p className="text-destructive">Não foi possível carregar os atendentes.</p>
+            <Button variant="outline" size="sm" onClick={() => { void fetchProfiles(); }}>
+              Tentar novamente
+            </Button>
           </div>
         ) : availableProfiles.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">

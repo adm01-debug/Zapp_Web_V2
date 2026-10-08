@@ -16,6 +16,10 @@ interface Props extends WorkItemCardActions {
   /** Fase F (auditoria): contagem REAL de "Fazendo" (lista não filtrada) — é ela
    *  que vale para a trava de WIP. Sem a prop, cai na própria coluna visível. */
   doingCount?: number;
+  /** R2-MOD-055 (#423): as colunas SEM o recorte do filtro (lista completa do
+   *  hook). Sem ela o arrasto usa o índice do recorte visível, que a persistência
+   *  reusa na coluna inteira — o item cai onde o usuário não soltou. */
+  byStatusFull?: Record<WorkItemStatus, WorkItem[]>;
   onMove: (item: WorkItem, to: WorkItemStatus, opts?: MoveOpts) => void;
   /** Etapa 29: o kebab/menu do card passa pelo portão do Aguardando. */
   onMoveTo?: (item: WorkItem, to: WorkItemStatus) => void;
@@ -36,7 +40,7 @@ function rotuloDaColuna(status: WorkItemStatus): string {
 
 
 export function TasksBoardMode({
-  byStatus, isLoading, doingCount, onMove, onMoveTo, onRequestWaitingReason, onReorder, onOpen, onDelete, onCreate,
+  byStatus, isLoading, doingCount, byStatusFull, onMove, onMoveTo, onRequestWaitingReason, onReorder, onOpen, onDelete, onCreate,
   onOpenContact, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
 }: Props) {
   const doingTotal = doingCount ?? byStatus.doing.length;
@@ -84,7 +88,7 @@ export function TasksBoardMode({
   // daqui para `resolveDragEnd` (função pura, em .ts); este handler só interpreta.
   const handleDragEnd = useCallback((result: DropResult) => {
     setDragSourceStatus(null);
-    const decisao = resolveDragEnd(result, byStatus, doingCount);
+    const decisao = resolveDragEnd(result, byStatus, doingCount, byStatusFull);
     if (!decisao) return;
     switch (decisao.action) {
       case 'reorder':
@@ -104,7 +108,7 @@ export function TasksBoardMode({
         onMove(decisao.item, decisao.to, decisao.opts);
         return;
     }
-  }, [byStatus, doingCount, onMove, onRequestWaitingReason, onReorder]);
+  }, [byStatus, byStatusFull, doingCount, onMove, onRequestWaitingReason, onReorder]);
 
   const ultimaColuna = BOARD_COLUMNS.length - 1;
 

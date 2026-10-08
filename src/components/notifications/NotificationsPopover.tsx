@@ -25,6 +25,7 @@ export function NotificationsPopover({ collapsed = false }: NotificationsPopover
   const trigger = (
     <button
       type="button"
+      data-tour="notifications"
       aria-label={unreadCount > 0 ? `Notificações (${unreadCount} não lidas)` : 'Notificações'}
       className={cn(
         'relative flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none',

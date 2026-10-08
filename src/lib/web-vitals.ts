@@ -109,16 +109,40 @@ export function initWebVitals() {
   } catch (e) { /* not supported */ }
 
   // CLS - Cumulative Layout Shift
-  // Accumulate across all batches; emit once on page hide, not per batch.
-  let clsValue = 0;
+  // Definição (web.dev/articles/cls): CLS é a MAIOR janela de sessão de shifts —
+  // shifts a menos de 1 s entre si e a menos de 5 s desde o primeiro da janela.
+  // Somar a sessão visível inteira inflava o valor quando os bursts eram
+  // separados por mais de 1 s (dois shifts de 0,06 a 2 s davam 0,12 em vez de 0,06).
+  let clsValue = 0;          // maior janela de sessão encerrada até agora
   let clsReported = false;
+  let clsSessionValue = 0;   // janela de sessão em andamento
+  let clsSessionFirst = 0;
+  let clsSessionLast = 0;
+  const resetCls = () => {
+    clsValue = 0;
+    clsReported = false;
+    clsSessionValue = 0;
+    clsSessionFirst = 0;
+    clsSessionLast = 0;
+  };
   try {
     if (PerformanceObserver.supportedEntryTypes.includes('layout-shift')) {
       const clsObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (!(entry as PerformanceEntry & { hadRecentInput?: boolean }).hadRecentInput) {
-            clsValue += (entry as PerformanceEntry & { value: number }).value;
+          const shift = entry as PerformanceEntry & { hadRecentInput?: boolean; value: number };
+          if (shift.hadRecentInput) continue;
+          const insideSession =
+            clsSessionValue > 0 &&
+            shift.startTime - clsSessionLast < 1000 &&
+            shift.startTime - clsSessionFirst < 5000;
+          if (insideSession) {
+            clsSessionValue += shift.value;
+          } else {
+            clsSessionValue = shift.value;
+            clsSessionFirst = shift.startTime;
           }
+          clsSessionLast = shift.startTime;
+          if (clsSessionValue > clsValue) clsValue = clsSessionValue;
         }
       });
       clsObserver.observe({ type: 'layout-shift', buffered: true });
@@ -126,14 +150,35 @@ export function initWebVitals() {
   } catch (e) { /* not supported */ }
 
   // INP - Interaction to Next Paint
-  // Track max across all interactions; emit once on page hide, not per event.
-  let inpMax = 0;
+  // Definição (web.dev/articles/inp): INP é o p98 das interações — uma interação
+  // por `interactionId` e, a cada 50 interações, a mais longa é descartada.
+  // O maior `duration` bruto superestimava a responsividade (50 interações com
+  // um pico de 1000 ms e a segunda de 160 ms davam 1000 em vez de 160).
+  const inpDurations = new Map<string, number>();
   let inpReported = false;
+  const resetInp = () => {
+    inpDurations.clear();
+    inpReported = false;
+  };
+  /** INP: descarta as `floor(n / 50)` interações mais longas e devolve a maior restante. */
+  const getInpValue = (): number => {
+    const durations = [...inpDurations.values()].sort((a, b) => b - a);
+    if (durations.length === 0) return 0;
+    return durations[Math.floor(durations.length / 50)] ?? 0;
+  };
   try {
     if (PerformanceObserver.supportedEntryTypes.includes('event')) {
       const inpObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.duration > inpMax) inpMax = entry.duration;
+          const interaction = entry as PerformanceEntry & { interactionId?: number };
+          // Eventos sem interactionId (ausente ou 0, como pointermove) não são interação.
+          if (!interaction.interactionId) continue;
+          // Cada interação conta uma vez; repetições do mesmo id ficam com a maior.
+          const key = `id:${interaction.interactionId}`;
+          const previous = inpDurations.get(key);
+          if (previous === undefined || entry.duration > previous) {
+            inpDurations.set(key, entry.duration);
+          }
         }
       });
       inpObserver.observe({ type: 'event', buffered: true, durationThreshold: 40 } as PerformanceObserverInit);
@@ -146,9 +191,12 @@ export function initWebVitals() {
       clsReported = true;
       onMetric({ name: 'CLS', value: clsValue, rating: getRating('CLS', clsValue), delta: clsValue, id: `cls-${Date.now()}` });
     }
-    if (!inpReported && inpMax > 0) {
-      inpReported = true;
-      onMetric({ name: 'INP', value: inpMax, rating: getRating('INP', inpMax), delta: inpMax, id: `inp-${Date.now()}` });
+    if (!inpReported) {
+      const inpValue = getInpValue();
+      if (inpValue > 0) {
+        inpReported = true;
+        onMetric({ name: 'INP', value: inpValue, rating: getRating('INP', inpValue), delta: inpValue, id: `inp-${Date.now()}` });
+      }
     }
   };
   // visibilitychange fires on document per spec; attach directly to avoid relying on bubbling.
@@ -157,10 +205,8 @@ export function initWebVitals() {
       flushAccumulated();
     } else {
       // BFCache restore — reset accumulators so the next hide cycle reports fresh data.
-      clsValue = 0;
-      clsReported = false;
-      inpMax = 0;
-      inpReported = false;
+      resetCls();
+      resetInp();
     }
   });
   addEventListener('pagehide', flushAccumulated);
