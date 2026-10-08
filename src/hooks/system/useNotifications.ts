@@ -18,12 +18,35 @@ export interface Notification {
   read_at: string | null;
 }
 
+interface NotificationsState {
+  userId: string | null;
+  items: Notification[];
+}
+
+interface NotificationErrorState {
+  userId: string | null;
+  error: Error | null;
+}
+
 export function useNotifications() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const userId = user?.id ?? null;
+  const [notificationsState, setNotificationsState] = useState<NotificationsState>({ userId: null, items: [] });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [errorState, setErrorState] = useState<NotificationErrorState>({ userId: null, error: null });
   const isMountedRef = useRef(true);
+  const activeUserIdRef = useRef<string | null>(userId);
+
+  const notifications = useMemo(
+    () => notificationsState.userId === userId ? notificationsState.items : [],
+    [notificationsState, userId]
+  );
+  const error = errorState.userId === userId ? errorState.error : null;
+  const visibleLoading = loading || (
+    Boolean(userId) &&
+    notificationsState.userId !== userId &&
+    errorState.userId !== userId
+  );
 
   // R2-PLAT-002 (#440): o contador é DERIVADO da lista reconciliada — a mesma que
   // o popover renderiza — em vez de um estado à parte ajustado por delta em cada
@@ -41,46 +64,57 @@ export function useNotifications() {
     };
   }, []);
 
+  useEffect(() => {
+    activeUserIdRef.current = userId;
+  }, [userId]);
+
   const fetchNotifications = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
+
+    const requestUserId = userId;
 
     try {
       const { data, error: fetchError } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', requestUserId)
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (fetchError) throw fetchError;
 
       const typedData = (data || []) as Notification[];
-      if (isMountedRef.current) {
-        setNotifications(typedData);
-        setError(null);
+      if (isMountedRef.current && activeUserIdRef.current === requestUserId) {
+        setNotificationsState({ userId: requestUserId, items: typedData });
+        setErrorState({ userId: requestUserId, error: null });
       }
     } catch (err) {
       log.error('Error fetching notifications:', err);
-      // Uma falha de consulta deixa de ser silenciosa: a lista anterior é
-      // conservada de propósito (não se apaga o que já foi confirmado) e o erro
-      // sobe para o consumidor separar "erro" de "ausência confirmada".
-      if (isMountedRef.current) {
-        setError(err instanceof Error ? err : new Error(String(err)));
+      // Uma falha de consulta deixa de ser silenciosa. A lista anterior só é
+      // exibida quando foi confirmada para o MESMO user.id da consulta; após
+      // troca de usuário o retorno do hook fica sem itens para não vazar outra sessão.
+      if (isMountedRef.current && activeUserIdRef.current === requestUserId) {
+        setErrorState({
+          userId: requestUserId,
+          error: err instanceof Error ? err : new Error(String(err)),
+        });
       }
     } finally {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && activeUserIdRef.current === requestUserId) {
         setLoading(false);
       }
     }
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
-    fetchNotifications();
+    queueMicrotask(() => {
+      void fetchNotifications();
+    });
   }, [fetchNotifications]);
 
   // Realtime subscription
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
     const channel = supabase
       .channel('notifications-changes')
@@ -90,18 +124,20 @@ export function useNotifications() {
           event: '*',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${user.id}`
+          filter: `user_id=eq.${userId}`
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newNotification = payload.new as Notification;
             // Um INSERT que repete um id já reconciliado é a mesma linha (ex.: o
             // eco do próprio insert): substitui no lugar, não duplica na lista.
-            setNotifications(prev =>
-              prev.some(n => n.id === newNotification.id)
-                ? prev.map(n => (n.id === newNotification.id ? newNotification : n))
-                : [newNotification, ...prev]
-            );
+            setNotificationsState(prev => {
+              const currentItems = prev.userId === userId ? prev.items : [];
+              const items = currentItems.some(n => n.id === newNotification.id)
+                ? currentItems.map(n => (n.id === newNotification.id ? newNotification : n))
+                : [newNotification, ...currentItems];
+              return { userId, items };
+            });
             // Fase F (etapa 61): o alarme de tarefa chega em tempo real pelo
             // mesmo canal. Mostra o toast com as 3 ações do aviso. Sem som de
             // propósito — o app não tem padrão sonoro para alarme de tarefa.
@@ -113,12 +149,18 @@ export function useNotifications() {
             }
           } else if (payload.eventType === 'UPDATE') {
             const updatedNotification = payload.new as Notification;
-            setNotifications(prev =>
-              prev.map(n => n.id === updatedNotification.id ? updatedNotification : n)
-            );
+            setNotificationsState(prev => ({
+              userId,
+              items: (prev.userId === userId ? prev.items : []).map(n =>
+                n.id === updatedNotification.id ? updatedNotification : n
+              ),
+            }));
           } else if (payload.eventType === 'DELETE') {
             const deletedId = payload.old.id;
-            setNotifications(prev => prev.filter(n => n.id !== deletedId));
+            setNotificationsState(prev => ({
+              userId,
+              items: (prev.userId === userId ? prev.items : []).filter(n => n.id !== deletedId),
+            }));
           }
         }
       )
@@ -127,7 +169,7 @@ export function useNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [userId]);
 
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
@@ -138,33 +180,37 @@ export function useNotifications() {
 
       if (error) throw error;
       
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n)
-      );
+      setNotificationsState(prev => ({
+        ...prev,
+        items: prev.items.map(n =>
+          n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
+        ),
+      }));
     } catch (error) {
       log.error('Error marking notification as read:', error);
     }
   }, []);
 
   const markAllAsRead = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     
     try {
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true, read_at: new Date().toISOString() })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('is_read', false);
 
       if (error) throw error;
       
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
-      );
+      setNotificationsState(prev => ({
+        ...prev,
+        items: prev.items.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() })),
+      }));
     } catch (error) {
       log.error('Error marking all as read:', error);
     }
-  }, [user]);
+  }, [userId]);
 
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
@@ -175,28 +221,31 @@ export function useNotifications() {
 
       if (error) throw error;
       
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setNotificationsState(prev => ({
+        ...prev,
+        items: prev.items.filter(n => n.id !== notificationId),
+      }));
     } catch (error) {
       log.error('Error deleting notification:', error);
     }
   }, []);
 
   const clearAll = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     
     try {
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
 
       if (error) throw error;
       
-      setNotifications([]);
+      setNotificationsState({ userId, items: [] });
     } catch (error) {
       log.error('Error clearing notifications:', error);
     }
-  }, [user]);
+  }, [userId]);
 
   const createNotification = useCallback(async (
     title: string,
@@ -204,13 +253,13 @@ export function useNotifications() {
     type: Notification['type'] = 'info',
     metadata: Json = {}
   ) => {
-    if (!user) return;
+    if (!userId) return;
     
     try {
       const { error } = await supabase
         .from('notifications')
         .insert([{
-          user_id: user.id,
+          user_id: userId,
           title,
           message,
           type,
@@ -221,11 +270,11 @@ export function useNotifications() {
     } catch (error) {
       log.error('Error creating notification:', error);
     }
-  }, [user]);
+  }, [userId]);
 
   return {
     notifications,
-    loading,
+    loading: visibleLoading,
     error,
     unreadCount,
     markAsRead,

@@ -4,16 +4,19 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mockFrom = vi.fn();
-const mockChannel = vi.fn().mockReturnValue({
-  on: vi.fn().mockReturnThis(),
-  subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
-});
+let realtimeCallback: ((payload: { eventType: 'INSERT' | 'UPDATE' | 'DELETE'; new?: unknown; old?: { id: string } }) => void) | undefined;
+const mockChannel = vi.fn(() => ({
+  on: vi.fn((_event: string, _filter: unknown, callback: NonNullable<typeof realtimeCallback>) => {
+    realtimeCallback = callback;
+    return { subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }) };
+  }),
+}));
 const mockRemoveChannel = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (...args: unknown[]) => mockFrom(...args),
-    channel: (...args: unknown[]) => mockChannel(...args),
+    channel: () => mockChannel(),
     removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
     auth: {
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
@@ -52,6 +55,7 @@ const mockNotifications = [
 describe('useNotifications', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    realtimeCallback = undefined;
     mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
@@ -116,7 +120,7 @@ describe('useNotifications', () => {
     expect(result.current.error).toBeInstanceOf(Error);
   });
 
-  it('conserva a lista anterior e expõe o erro quando a atualização falha', async () => {
+  it('atualização falha após uma lista carregada: conserva a lista do mesmo usuário e expõe o erro', async () => {
     const { result } = renderHook(() => useNotifications(), { wrapper: createWrapper() });
 
     await waitFor(() => {
@@ -124,8 +128,14 @@ describe('useNotifications', () => {
     });
     expect(result.current.notifications).toHaveLength(2);
     expect(result.current.error).toBeNull();
+    expect(realtimeCallback).toBeTypeOf('function');
 
-    // A consulta passa a falhar e a atualização é refeita.
+    await act(async () => {
+      realtimeCallback?.({ eventType: 'UPDATE', new: { ...mockNotifications[0], is_read: true } });
+    });
+
+    // A consulta passa a falhar e a atualização é refeita sem depender de trocar
+    // a identidade do objeto de auth com o mesmo user.id.
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({

@@ -10,7 +10,7 @@
  * estados: carregando, erro (com nova tentativa), vazio confirmado e lista.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -24,6 +24,11 @@ vi.mock('@/components/ui/popover', () => ({
 }));
 
 const auth = vi.hoisted(() => ({ user: { id: 'u1' } as { id: string } | null }));
+const realtime = vi.hoisted(() => ({
+  callback: undefined as
+    | ((payload: { eventType: 'INSERT' | 'UPDATE' | 'DELETE'; new?: unknown; old?: { id: string } }) => void)
+    | undefined,
+}));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: auth.user }),
@@ -46,7 +51,12 @@ vi.mock('@/integrations/supabase/client', () => ({
         eq: supa.eq,
       }),
     }),
-    channel: () => ({ on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }) }),
+    channel: () => ({
+      on: (_event: string, _filter: unknown, callback: NonNullable<typeof realtime.callback>) => {
+        realtime.callback = callback;
+        return { subscribe: () => ({ unsubscribe: () => {} }) };
+      },
+    }),
     removeChannel: () => {},
     auth: {
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
@@ -91,6 +101,7 @@ beforeEach(() => {
   supa.eq.mockReset();
   supa.eq.mockImplementation((_column: string, _value: string) => ({ order: () => ({ limit: supa.limit }) }));
   auth.user = { id: 'u1' };
+  realtime.callback = undefined;
 });
 
 describe('NotificationsPopover — R2-PLAT-005 (#443)', () => {
@@ -148,7 +159,7 @@ describe('NotificationsPopover — R2-PLAT-005 (#443)', () => {
     expect(screen.queryByText('Tudo em dia!')).toBeNull();
   });
 
-  it('atualização falha após uma lista carregada: conserva os itens e avisa que a atualização falhou', async () => {
+  it('troca de usuário seguida de falha: não mostra itens do usuário anterior', async () => {
     supa.limit
       .mockResolvedValueOnce({ data: [ITEM], error: null })
       .mockResolvedValue({ data: null, error: new Error('rede fora') });
@@ -157,16 +168,14 @@ describe('NotificationsPopover — R2-PLAT-005 (#443)', () => {
     const { rerender } = render(popoverUi(qc));
     expect(await screen.findByText('Título novo')).toBeInTheDocument();
 
-    // O mesmo user.id recebe um novo objeto de auth no mock; isso força
-    // a nova consulta sem transformar conservação de lista em vazamento entre usuários.
-    auth.user = { id: 'u1' };
+    auth.user = { id: 'u2' };
     rerender(popoverUi(qc));
 
-    expect(await screen.findByText(/não foi possível atualizar as notifica/i)).toBeInTheDocument();
-    expect(screen.getByText('Título novo')).toBeInTheDocument();
+    expect(await screen.findByText(/não foi possível carregar as notifica/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Título novo')).toBeNull());
     expect(supa.eq.mock.calls.filter(([column]) => column === 'user_id').map(([, id]) => id)).toEqual([
       'u1',
-      'u1',
+      'u2',
     ]);
   });
 });
