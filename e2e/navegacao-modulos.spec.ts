@@ -6,15 +6,16 @@ import { join } from 'node:path';
  * Y09 — Navegação por todos os módulos sem erro de console nem requisição falha.
  *
  * Abre CADA entrada que o papel do usuário sintético do conjunto local enxerga na
- * barra lateral — as 11 da navegação primária e 30 dos 31 itens das 5 seções
+ * barra lateral — as 11 da navegação primária e 29 dos 31 itens das 5 seções
  * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema) — e prova, módulo a
  * módulo, que a tela monta de verdade: título do documento, tela própria do módulo
  * (nunca "Acesso restrito", nunca o esqueleto de carregamento preso, nunca tela em
  * branco) e nenhum erro de console, exceção ou resposta >= 400.
- * O 31º item, 'CRM 360°', é admin-only (`src/services/navigation.service.ts:70`,
- * `roles: ADMIN_ONLY`) e o usuário do seed é supervisor: ele fica FORA da varredura
- * e a sua AUSÊNCIA é conferida de propósito (`conferirEntradasForaDoPapel`), para o
- * mapa de módulos não perder uma linha em silêncio.
+ * Dois dos 31 itens são admin-only — 'CRM 360°' (`src/services/navigation.service.ts:70`)
+ * e 'Admin' (`:121`), ambos com `roles: ADMIN_ONLY` — e o usuário do seed é
+ * supervisor: eles ficam FORA da varredura e a AUSÊNCIA é conferida de propósito
+ * (`conferirEntradasForaDoPapel`), para o mapa de módulos não perder linhas em
+ * silêncio.
  * Repete tudo no celular 390x844, pelo menu móvel. A busca global ("Buscar") entra
  * nas duas larguras.
  *
@@ -65,9 +66,10 @@ interface ItemNav {
   label: string;
   /**
    * Entrada que a barra lateral só mostra para ADMINISTRADOR
-   * (`src/services/navigation.service.ts:70`: `crm360` tem `roles: ADMIN_ONLY`).
-   * O usuário sintético do conjunto local é SUPERVISOR, então ela NÃO entra na
-   * varredura: entra na conferência de ausência (`conferirEntradasForaDoPapel`).
+   * (`src/services/navigation.service.ts`: `crm360` na linha 70 e `admin` na 121,
+   * os dois com `roles: ADMIN_ONLY`). O usuário sintético do conjunto local é
+   * SUPERVISOR, então ela NÃO entra na varredura: entra na conferência de ausência
+   * (`conferirEntradasForaDoPapel`).
    */
   somenteAdmin?: boolean;
 }
@@ -142,7 +144,7 @@ const SECOES: SecaoNav[] = [
       { id: 'agents', label: 'Equipe' },
       { id: 'security', label: 'Segurança' },
       { id: 'privacy', label: 'LGPD' },
-      { id: 'admin', label: 'Admin' },
+      { id: 'admin', label: 'Admin', somenteAdmin: true },
       { id: 'themes', label: 'Skins' },
       { id: 'docs', label: 'Documentação' },
       { id: 'settings', label: 'Configurações' },
@@ -1007,7 +1009,7 @@ function relatarRodada(
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('abre as 41 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
+  test('abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
     page,
     request,
   }) => {
@@ -1077,7 +1079,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 test.describe('Navegação por todos os módulos (celular 390x844)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('abre as 41 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
+  test('abre as 40 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
     request,
   }) => {
