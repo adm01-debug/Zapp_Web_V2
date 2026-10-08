@@ -126,34 +126,46 @@ function ThumbImage({ item, size }: { item: ContactMediaItem; size: FileThumbSiz
 function MediaTile({ item, size }: { item: ContactMediaItem; size: FileThumbSize }) {
   const boxRef = useRef<HTMLSpanElement>(null);
   const isVideo = item.type === 'video';
-  const inView = useInView(boxRef, isVideo && size === 'card');
+  // M02: o primeiro quadro do video vale para os tres tamanhos (cartao, linha e celula), e a
+  // zona de pre-carregamento tambem — em lista longa nenhum `<video>` fora da zona.
+  const inView = useInView(boxRef, isVideo);
   const [duration, setDuration] = useState<string | null>(null);
   const src = item.signedUrl ?? item.url;
-  const showVideo = isVideo && size === 'card' && inView && Boolean(src);
+  // Falha amarrada ao `src` que falhou (mesmo padrao da imagem): se a URL mudar, o fallback
+  // cai sozinho e o quadro volta — sem efeito de reset.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc !== null && failedSrc === src;
+  const showVideo = isVideo && inView && Boolean(src) && !failed;
+  // Selo de duracao onde ha espaco: cartao e linha. A celula de 32 px fica limpa.
+  const showDuration = duration !== null && size !== 'cell';
 
   return (
     <span ref={boxRef} className="relative flex h-full w-full items-center justify-center">
       {showVideo ? (
         <>
           {/* Nenhuma URL de poster derivada de `media_meta` (G14): so o primeiro frame do
-              proprio arquivo, quando ele entra na zona de pre-carregamento. */}
+              proprio arquivo, quando ele entra na zona de pre-carregamento. `#t=0.1` porque
+              sem o deslocamento alguns navegadores nao desenham o quadro de abertura. */}
           <video
-            src={src}
+            src={`${src}#t=0.1`}
             preload="metadata"
             muted
             playsInline
             className="h-full w-full object-cover"
+            onError={() => setFailedSrc(src)}
             onLoadedMetadata={(event) => {
               const seconds = event.currentTarget.duration;
               if (Number.isFinite(seconds) && seconds > 0) setDuration(formatDuration(seconds));
             }}
           />
-          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background/60">
-              <Play className="h-5 w-5" />
+          {size === 'card' && (
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background/60">
+                <Play className="h-5 w-5" />
+              </span>
             </span>
-          </span>
-          {duration && (
+          )}
+          {showDuration && (
             <span className="absolute bottom-1.5 right-1.5 rounded bg-background/80 px-1.5 py-0.5 text-2xs tabular-nums text-foreground">
               {duration}
             </span>
