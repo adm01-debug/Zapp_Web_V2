@@ -21,33 +21,46 @@
     "LCP": {
       "target": 2500,
       "poor": 4000,
-      "unit": "ms",
-      "rating": "good"
-    },
-    "FID": {
-      "target": 100,
-      "poor": 300,
+      "field": true,
       "unit": "ms",
       "rating": "good"
     },
     "INP": {
       "target": 200,
       "poor": 500,
+      "field": true,
       "unit": "ms",
       "rating": "good"
     },
     "CLS": {
       "target": 0.1,
       "poor": 0.25,
+      "field": true,
       "unit": "score",
       "rating": "good"
     },
     "TTFB": {
       "target": 800,
       "poor": 1800,
+      "field": true,
       "unit": "ms",
       "rating": "good"
+    },
+    "FCP": {
+      "target": 1800,
+      "poor": 3000,
+      "field": true,
+      "unit": "ms",
+      "rating": "good"
+    },
+    "FID": {
+      "target": 100,
+      "poor": 300,
+      "field": false,
+      "unit": "ms",
+      "rating": "good",
+      "note": "Metrica aposentada (substituida pelo INP): o Speed Insights NAO a publica (schema vercel.speed_insights, conferido em 08/10/2026), entao nao ha campo para comparar. Mantida enquanto src/lib/web-vitals.ts coletar first-input."
     }
   },
-  "notes": "Run 'npx vite-bundle-visualizer' to audit. Os alvos de Web Vitals desta seção sao LIDOS por src/lib/web-vitals.ts (secao 'target' = limite de good; 'poor' = limite de poor). Coleta real: Speed Insights da Vercel, instrumentado em src/lib/web-vitals.ts (initSpeedInsights)."
+  "notes": "Run 'npx vite-bundle-visualizer' to audit. Os alvos de Web Vitals desta secao sao LIDOS por src/lib/web-vitals.ts ('target' = limite de good; 'poor' = limite de poor). Coleta de campo: Speed Insights da Vercel. 'field': true = metrica que o campo publica; 'field': false = excecao DECLARADA, obriga 'note'. Contrato: tests/contracts/web-vitals-alvos.contract.test.ts; comparacao de 08/10/2026 em docs/audits/web-vitals-e36-2026-10-03.md."
 }
