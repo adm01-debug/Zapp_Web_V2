@@ -3953,7 +3953,7 @@
         "login_attempts.\"Only admins can delete login attempts\"": "a1938809b1ea63dd735fc4b848f1e837",
         "multiplix_voice_grants.\"Admins read every voice grant\"": "f8f0f3765f5fb7b2833be7afa578805d",
         "payment_links.\"Authenticated can insert payment links\"": "f8522aee1922d1c3656bf2aa50cddb05",
-        "profiles.\"Block sensitive field changes by non-admins\"": "1f37e0e3b53bd11289c70b94cd915f4c",
+        "profiles.\"Block sensitive field changes by non-admins\"": "bbba3850b6b6d0220b75b6d1f0d41d86",
         "queue_goals.\"Authenticated users can view queue goals\"": "f3affa41e6b7b3bc72205c7d07d207ca",
         "talkx_campaigns.\"Users can delete own draft campaigns\"": "470cc07aa9b3a10ab0c5d7e688c4a45e",
         "talkx_template_variants.talkx_template_variants_delete": "d2676d1c2a425b673eaae35868c9790c",
