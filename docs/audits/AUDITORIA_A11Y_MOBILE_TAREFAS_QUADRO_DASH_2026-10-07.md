@@ -83,8 +83,9 @@ Total: **36 medições completas** (9 telas × 4 combos) na rodada principal + *
 - **Arquivo provável / TODOS os caminhos do mesmo defeito** (`git grep`):
   - `src/components/dashboard/DashboardFilters.tsx:210` (`filter-queue`) e `:231` (`filter-agent`) — `<SelectTrigger>` sem `aria-label` (só `data-testid`);
   - `src/components/dashboard/overview/DashboardCard.tsx:162` — `<SelectTrigger data-testid={testid}>` (usado por `VolumeChart.tsx:82`, `TeamHighlightCard.tsx:36`, `CsatCard.tsx:37`, `SentimentTrendCard.tsx:26`);
-  - `src/components/tasks/shared/WorkItemSheet.tsx` — `<SelectTrigger data-testid="sheet-estado">` e `data-testid="sheet-contato"`;
-  - `src/components/reports/ReportFilters.tsx` e `src/components/dashboard/SentimentAlertsDashboard.tsx:23` (mesmo padrão de `SelectTrigger` sem rótulo) — **confirmar o arquivo exato da barra de Relatórios/Sentimento pela posição no DOM antes de editar**.
+  - `src/components/tasks/shared/WorkItemSheet.tsx:217` (`<SelectTrigger data-testid="sheet-estado">`) e `:277` (`data-testid="sheet-contato"`);
+  - `src/components/reports/AdvancedReportsView.tsx:70` (período) e `:76` (agente) — a tela de Relatórios é essa view (`src/pages/ViewRouter.tsx:58`: `'reports': Views.AdvancedReportsView`), e ela tem **exatamente 2** `SelectTrigger` (bate com os 2 nós medidos);
+  - `src/components/dashboard/SentimentAlertsDashboard.tsx:23` (`<SelectTrigger className="w-40">` com ícone de calendário) — a tela de Sentimento é essa view (`ViewRouter.tsx:57`) e ela tem **exatamente 1** `SelectTrigger`.
   - contraste com o que já está certo: `DashboardFilters.tsx:256` usa `aria-label="Atualizar"` — o mesmo padrão resolve aqui.
 - **Correção sugerida:** `aria-label` em cada `SelectTrigger` ("Filtrar por fila", "Filtrar por agente", "Período do gráfico", "Estado da tarefa", "Contato da tarefa", …). **Esforço: P**
 - **Depende do mock:** as **contagens** sim (quantos cartões de KPI renderizam); a ausência de nome, não.
@@ -104,7 +105,7 @@ Total: **36 medições completas** (9 telas × 4 combos) na rodada principal + *
   - Sentimento: **1 nó** por combo (4) → `.rounded-lg.hover\:border-secondary\/50.hover\:shadow-glow-secondary-sm:nth-child(3)` → `<button class="inline-flex items-ce...">`.
 - **Passos:** `?view=dashboard` → aba `Analytics`; `?view=sentiment` → barra de ferramentas do painel.
 - **Evidência (axe):** `#radix-_r_2n_-content-analytics > .rounded-2xl.text-card-foreground.bg-card > .s...` → `<button data-state="closed">`; e em Sentimento o seletor `.rounded-lg.hover\:border-secondary\/50...:nth-child(3)` → `<button class="inline-flex items-ce...">`.
-- **Arquivo provável (a confirmar no cartão de correção):** `src/components/dashboard/DemandPrediction.tsx:70-72` (`TooltipTrigger` que renderiza `<button data-state>` sem nome) e o botão de ícone de `src/components/sentiment/…` (mesma família de `.rounded-lg` + `hover:border-secondary/50` da barra de ferramentas). **Confirmar o `data-testid`/classe exata ao editar** — a amostra do axe traz o HTML mas não o `data-testid` deste nó.
+- **Arquivo provável:** `src/components/dashboard/DemandPrediction.tsx:70-72` (`TooltipTrigger` que renderiza `<button data-state>` sem nome) e `src/components/dashboard/SentimentAlertsDashboard.tsx:29` (`<Button variant="outline" size="icon" onClick={fetchData}><RefreshCw/></Button>` — a classe `variant="outline"` do `ui/button.tsx:15` é a do seletor `hover:border-secondary/50 hover:shadow-glow-secondary-sm` medido, e é o 3º filho da barra). **Confirmar o 1º nó** (o `<button data-state>` da aba Analytics) no cartão de correção: a amostra do axe traz o HTML mas não o `data-testid`.
 - **Correção sugerida:** `aria-label` no gatilho do tooltip e no botão de ícone da barra de Sentimento. **Esforço: P**
 - **Depende do mock:** sim para a existência (os widgets aparecem conforme o dado); a ausência de nome, não.
 
@@ -186,7 +187,7 @@ Total: **36 medições completas** (9 telas × 4 combos) na rodada principal + *
 - **WCAG:** 1.3.1 / 4.1.2 / 3.3.2 · **axe:** `label` [critical] — **4 nós** (1 por combo na ficha da tarefa)
 - **Passos:** `?view=pipeline` → clicar num cartão → ficha "Editar tarefa" → campo de descrição (textarea "Descrição").
 - **Evidência (axe):** `textarea[data-testid="sheet-descricao"]` → `<textarea class="flex min-h-[80px] w-…" rows="3">` — "Element does not have an implicit (wrapped) `<label>` / … explicit `<label>` / aria-label attribute does not exist".
-- **Arquivo provável:** `src/components/tasks/shared/WorkItemSheet.tsx` (textarea `data-testid="sheet-descricao"`)
+- **Arquivo provável:** `src/components/tasks/shared/WorkItemSheet.tsx:406` (textarea `data-testid="sheet-descricao"`, dentro do bloco "Descrição" a partir da linha 400)
 - **Correção sugerida:** `<Label htmlFor>` + `id` no textarea (ou `aria-label="Descrição da tarefa"`). **Esforço: P**
 - **Depende do mock:** não.
 
@@ -287,12 +288,13 @@ Achados **sem** ocorrência de axe, por serem de medição própria: **10** (alv
 
 ## 8. O que o cartão de correção deve considerar
 
-- Os **quatro P1** são todos **nome acessível** e se resolvem com `aria-label`/`id`+`htmlFor` em **7 arquivos**, um por defeito:
+- Os **quatro P1** são todos **nome acessível** e se resolvem com `aria-label`/`id`+`htmlFor` em **8 arquivos**, agrupados por defeito:
   1. `src/components/tasks/shared/ModeSwitcher.tsx` (01)
-  2. `src/components/dashboard/DashboardFilters.tsx` + `src/components/dashboard/overview/DashboardCard.tsx` + `src/components/tasks/shared/WorkItemSheet.tsx` + a barra de filtros de Relatórios/Sentimento (02 — 4 arquivos, **o mesmo defeito**)
-  3. `src/components/onboarding/OnboardingChecklist.tsx` (03)
-  4. `src/components/dashboard/DemandPrediction.tsx` + o botão de ícone da barra de Sentimento (04 — confirmar o 2º arquivo)
-  - cabem **1 ou 2 cartões**: 01+03 são `aria-label` de 1 linha; 02 é o mesmo `SelectTrigger` em 4 arquivos; 04 exige localizar 1 controle sem `data-testid` na amostra.
+  2. `src/components/dashboard/DashboardFilters.tsx` (:210, :231) + `src/components/dashboard/overview/DashboardCard.tsx` (:162) + `src/components/tasks/shared/WorkItemSheet.tsx` (:217, :277) + `src/components/reports/AdvancedReportsView.tsx` (:70, :76) + `src/components/dashboard/SentimentAlertsDashboard.tsx` (:23) — o mesmo `SelectTrigger` sem rótulo em 5 arquivos (02)
+  3. `src/components/onboarding/OnboardingChecklist.tsx` (:97, :98) (03)
+  4. `src/components/dashboard/DemandPrediction.tsx` (:70-72) + `src/components/dashboard/SentimentAlertsDashboard.tsx` (:29) (04 — o 1º nó da aba Analytics ainda precisa ser confirmado)
+  - cabem **1 ou 2 cartões**: 01+03 são `aria-label` de 1 linha; 02 é o mesmo `SelectTrigger` sem rótulo em 5 arquivos; 04 exige localizar 1 controle sem `data-testid` na amostra.
+  - o total de arquivos de PRODUTO a tocar nos quatro P1 é **8** (não há duplicata entre os achados; `SentimentAlertsDashboard.tsx` aparece em dois, por dois defeitos distintos — select e botão de ícone).
 - O **P2 de contraste (06)** é o maior volume (104 nós) e **não** é um P1 porque nenhum nó é de ação: a maior parte é texto de apoio (`--foreground-secondary`, token do `:root`) e badge sobre tinta. Exige decisão de token: `--primary-text` (8,06:1 sobre a tinta) e `--destructive-text` (6,54:1 sobre branco) **já existem** e resolvem quase tudo; `success`, `secondary` e `info` **não têm par de texto** no tema e precisam de decisão do Claude antes de abrir o cartão (nada de token novo). O `--foreground-secondary` sozinho responde pela maior fatia — trocar por `text-muted-foreground` no claro resolve sem criar token.
 - O `aria-valid-attr-value` (07) é o **mesmo defeito** que o Y14 registrou (`ContactTypeTabs.tsx` sem `TabsContent`): são **2 arquivos novos** (`ConversationHeatmap.tsx`, `CSATDashboard.tsx`) do mesmo padrão Radix `Tabs` sem painel. Vale um cartão que trate os 3 de uma vez.
 - O `aria-progressbar-name` (08) é 1 mudança no chamador (o `ui/progress.tsx` já repassa `{...props}`): passar `aria-label` em ~8 chamadores do grupo cobre Conquistas e todo o Dashboard.
