@@ -5,7 +5,7 @@ import { SUPABASE_URL } from '@/config/supabase';
 import { getMediaType, getFilename } from '@/components/inbox/media-gallery/mediaUtils';
 import { parseSupabaseStorageObjectUrl, PRIVATE_MEDIA_BUCKETS } from '@/lib/storage_object_reference';
 
-export type ContactMediaKind = 'image' | 'video' | 'audio' | 'document';
+export type ContactMediaKind = 'image' | 'video' | 'audio' | 'document' | 'sticker';
 
 /** `senderLabel` do atendente. Nunca "Você": a consulta nao traz o autor da mensagem. */
 export const AGENT_SENDER_LABEL = 'Atendente';
@@ -71,7 +71,7 @@ const SIGNED_URL_TTL_SECONDS = 3600;
 export const MEDIA_PAGE_SIZE = 60;
 const STORAGE_ORIGINS = [new URL(SUPABASE_URL).origin] as const;
 const TYPE_LABEL: Record<ContactMediaKind, string> = {
-  image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento',
+  image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento', sticker: 'Figurinha',
 };
 
 /**
@@ -142,6 +142,10 @@ function classify(
   url: string,
   ptt: boolean | null,
 ): ContactMediaKind {
+  // Figurinha tem tipo próprio no banco (`message_type = 'sticker'`, gravado pelo webhook) e
+  // decide ANTES do MIME e da extensão: ela chega como `image/webp` — ou sem MIME nenhum —
+  // e sem esta linha cairia em "Imagens" (484 figurinhas contra 3.600 imagens no banco real).
+  if (messageType === 'sticker') return 'sticker';
   const mt = mediaType || mimetype || '';
   if (mt.startsWith('image/')) return 'image';
   if (mt.startsWith('video/')) return 'video';

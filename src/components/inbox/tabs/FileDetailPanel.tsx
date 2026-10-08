@@ -50,7 +50,7 @@ export function FileDetailContent({ item, contactName, onClose, onRequestDelete 
       </div>
 
       <div className="aspect-square rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-        {item.type === 'image' && !hasError && displayUrl ? (
+        {(item.type === 'image' || item.type === 'sticker') && !hasError && displayUrl ? (
           <img src={displayUrl} alt={item.displayName} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
         ) : item.type === 'video' || item.type === 'audio' ? (
           <Play className="w-8 h-8 text-muted-foreground" />

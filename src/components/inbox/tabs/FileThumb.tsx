@@ -193,7 +193,8 @@ function DocumentTile({ item, size }: { item: ContactMediaItem; size: FileThumbS
 }
 
 function renderThumb(item: ContactMediaItem, size: FileThumbSize) {
-  if (item.type === 'image') return <ThumbImage item={item} size={size} />;
+  // Figurinha é imagem: usa a MESMA miniatura (`ThumbImage`), nunca o ícone de documento.
+  if (item.type === 'image' || item.type === 'sticker') return <ThumbImage item={item} size={size} />;
   if (item.type === 'video' || item.type === 'audio') return <MediaTile item={item} size={size} />;
   return <DocumentTile item={item} size={size} />;
 }
