@@ -170,6 +170,21 @@ test('CT-99 (fixture): paragrafo sem decisao registrada nao gera acusacao', () =
   assert.deepEqual(violacoesDaDecisao('', { aceitaMarcadas: true }), []);
 });
 
+test('CT-99 (mutacao): reintroduzir o motivo caduco no cabecalho REAL e acusado', () => {
+  // Prova por mutacao sobre o artefato real: o paragrafo da decisao do proprio
+  // plano recebe de volta a frase caduca e a regra tem de acusar.
+  const plano = readFileSync(PLANO, 'utf8');
+  const paragrafo = paragrafoDaDecisao(plano);
+  const mutado = `${paragrafo}\n> O validador exige **≥ 3 itens \`- [ ]\` por bloco E** — marcar mais de um por bloco quebraria o validador.`;
+  const aceitaMarcadas = validarPlano(marcarCaixas(plano)).status === 0;
+
+  const violacoes = violacoesDaDecisao(mutado, { aceitaMarcadas });
+  assert.ok(
+    violacoes.some((v) => /quebra o validador/.test(v)),
+    'a mutacao do cabecalho real com o motivo caduco tinha de ser acusada',
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Assercoes sobre o documento real.
 // ---------------------------------------------------------------------------
