@@ -7,7 +7,7 @@
 # ZAPP-WEB CI/CD Pipeline
 # =================================================
 # Triggered on: push to main, pull requests
-# Jobs: lint-and-typecheck, test, build, security, e2e
+# Jobs: lint-and-typecheck, edge-contracts, test, build, security, e2e
 # Runtime: bun (o repo usa bun.lock, nao package-lock.json)
 # =================================================
 
@@ -68,38 +68,11 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: 🦕 Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: '2.9.5'
-
-      - name: 🦕 Typecheck das Edge Functions (deno check)
-        run: >-
-          deno check --config scripts/ci/deno.json --frozen
-          supabase/functions/*/index.ts
-
-      # E49: glob substitui lista hardcoded de ~45 arquivos. Flags combinadas
-      # cobrem os três grupos anteriores (mídia, multiplix, contratos gerais).
-      - name: 🧪 Run executable Edge handler contracts
-        run: >-
-          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
-          $(git ls-files 'supabase/functions/**/*.test.ts')
-
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
           node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
           scripts/db-audit/crm-sync-outbox-contract.test.mjs
           scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs
-
-      - name: 🐹 Setup Go for egress-proxy contracts
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: '1.24.x'
-          cache-dependency-path: infrastructure/preview-egress-proxy/go.mod
-
-      - name: 🧪 Run pinned egress-proxy contracts
-        working-directory: infrastructure/preview-egress-proxy
-        run: go test ./...
 
       - name: 🔐 Verify immutable GitHub Action pins
         run: node scripts/ci/check-workflow-pins.mjs
@@ -196,6 +169,62 @@ jobs:
           # dos demais steps (e é no-op se o clone já for completo).
           git fetch origin main --unshallow --quiet
           node scripts/talkx/v4-status.mjs --check --ref origin/main
+
+  # ===========================================
+  # JOB 1B: Edge contracts (Deno + Go) — SL-026 / E70
+  # ===========================================
+  # E70 (auditoria de GitHub Actions, 2026-10-01): o contrato das Edge Functions
+  # (deno check + deno test) e o dos contratos do egress-proxy (Go) saem do
+  # `lint-and-typecheck` para este job. Aquele job e o required check
+  # `🔍 Lint & TypeCheck` (scripts/ci/github-settings-baseline.json): instalar Deno
+  # e Go dentro dele fazia TODA PR pagar esse setup antes do check obrigatorio
+  # responder, inclusive as PRs que nao tocam `supabase/functions/**` nem
+  # `infrastructure/preview-egress-proxy/**`. Verificacao da etapa: o job de lint
+  # volta a responder em menos de 90 s.
+  #
+  # Este job e DELIBERADAMENTE NAO required: enquanto durar a janela de observacao
+  # de 1 semana do plano (E100/SL-120 e que acrescenta o context aos required
+  # checks), falha aqui nao bloqueia merge. Por isso nenhum outro job declara
+  # `needs: edge-contracts` — a promocao e uma linha em `needs`, feita junto com a
+  # mudanca da branch protection, nao antes.
+  edge-contracts:
+    name: 🦕 Edge contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: 🦕 Typecheck das Edge Functions (deno check)
+        run: >-
+          deno check --config scripts/ci/deno.json --frozen
+          supabase/functions/*/index.ts
+
+      # E49: glob substitui lista hardcoded de ~45 arquivos. Flags combinadas
+      # cobrem os três grupos anteriores (mídia, multiplix, contratos gerais).
+      # O `deno.json` do repo usa `nodeModulesDir: none`, entao este job NAO precisa
+      # de `bun install` — e por isso cabe num job proprio, sem o lint.
+      - name: 🧪 Run executable Edge handler contracts
+        run: >-
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
+          $(git ls-files 'supabase/functions/**/*.test.ts')
+
+      - name: 🐹 Setup Go for egress-proxy contracts
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.24.x'
+          cache-dependency-path: infrastructure/preview-egress-proxy/go.mod
+
+      - name: 🧪 Run pinned egress-proxy contracts
+        working-directory: infrastructure/preview-egress-proxy
+        run: go test ./...
 
   # ===========================================
   # JOB 2: Unit Tests
