@@ -394,21 +394,37 @@ jobs:
             echo "::warning::Gate 3 bloqueou: objeto removido pelo sync ainda tem consumidor no codigo."
           fi
 
-      - name: Garantir label types-sync
+      - name: Garantir labels da PR de sync
         if: steps.diff.outputs.schema_changed == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            try {
-              await github.rest.issues.createLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+            // E22: o create-pull-request abaixo declara `labels: types-sync,automerge-ok`
+            // e a API recusa label que nao existe no repositorio — por isso as DUAS
+            // precisam existir ANTES do passo do PR. createLabel devolve 422 quando a
+            // label ja existe; esse e' o caminho normal, nao erro.
+            const labels = [
+              {
                 name: 'types-sync',
                 color: '0075ca',
                 description: 'Sincronizacao automatizada de artefatos do banco'
-              });
-            } catch (error) {
-              if (error.status !== 422) throw error;
+              },
+              {
+                name: 'automerge-ok',
+                color: '0e8a16',
+                description: 'PR de automacao autorizado a entrar sozinho quando os checks fecharem verdes'
+              }
+            ];
+            for (const label of labels) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ...label
+                });
+              } catch (error) {
+                if (error.status !== 422) throw error;
+              }
             }
 
       - name: Registrar falha dos gates
@@ -504,8 +520,9 @@ jobs:
             - baseline de grants alterado: `${{ steps.diff.outputs.grants_changed }}`
             - gates TypeScript, usage-guard e remoções: aprovados
 
-            Revisão humana e checks da PR continuam obrigatórios.
-          labels: types-sync
+            Checks obrigatórios da PR continuam valendo: com a label `automerge-ok`
+            (E22), o PR entra sozinho quando todos fecharem verdes.
+          labels: types-sync,automerge-ok
           add-paths: |
             src/integrations/supabase/types.ts
             supabase/schema-catalog.json
@@ -593,6 +610,25 @@ jobs:
             if (recusados.length > 0) {
               core.warning(`Nao foi possivel liberar ${recusados.length} run(s) com o GITHUB_TOKEN.`);
             }
+
+      # E22: o repositorio permite auto-merge desde 02/10 (E15(b)) e o PR de sync
+      # nasce com a label `automerge-ok`. Armar o auto-merge e' o que faz o PR
+      # entrar sozinho quando os 6 checks obrigatorios fecharem verdes — antes
+      # disto ele ficava aberto esperando alguem lembrar dele, e o
+      # `auto-update-pr-branch.yml` (que filtra `autoMergeRequest != null`) nunca
+      # encontrava PR nenhum (G-06).
+      #
+      # O passo NAO engole falha: auto-merge que nao arma e' falha real, e o PR
+      # seguir aberto em silencio e' exatamente o defeito que este cartao fecha.
+      # O caminho manual continua de pe: o PR fica verde e qualquer pessoa entra
+      # com ele pela interface.
+      - name: Armar auto-merge do PR de sincronizacao
+        if: steps.pull-request.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.TYPES_SYNC_PR_TOKEN || github.token }}
+        run: |
+          gh pr merge "${{ steps.pull-request.outputs.pull-request-number }}" --auto --squash --repo "${{ github.repository }}"
+          echo "::notice::PR #${{ steps.pull-request.outputs.pull-request-number }} armado: entra sozinho quando os checks fecharem verdes."
 
       - name: Job summary
         if: always()
