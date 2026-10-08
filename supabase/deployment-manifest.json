@@ -676,8 +676,8 @@
     },
     {
       "path": "supabase/functions/send-rate-limit-alert/index.ts",
-      "bytes": 6985,
-      "sha256": "688548e9afe39e6a2520e306ea3657134048a12bb6fe0b8d8ee426751a97319f"
+      "bytes": 8162,
+      "sha256": "1655d16f9215021070c01b1c2b681fb4c0089802e884206c3396cc8a7d5901dd"
     },
     {
       "path": "supabase/functions/send-scheduled-report/index.ts",
@@ -1701,7 +1701,7 @@
       "name": "send-rate-limit-alert",
       "entrypoint": "supabase/functions/send-rate-limit-alert/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7700343629fa787274a255f48483ef46597f1ac7e6df41f2664d1b92b4446cf2",
+      "source_sha256": "869175a1a2d4e5afe7c14ce31fe6f33a642d324eeed2040c8b6ff1fa4d6c3101",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/schemas.ts",
@@ -1908,5 +1908,5 @@
       ]
     }
   ],
-  "manifest_sha256": "e3bb7baaf30adde5804bb2c9e7a8b3c0d28075952097166aade03db3b56d96b7"
+  "manifest_sha256": "a0ac5cb1c94d455ec52703d845610305ca639688f75215b4fd363ed3925eafb3"
 }
