@@ -101,7 +101,7 @@ describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
     expect(p.onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it('25: Salvar só habilita com mudança, salva o patch e fecha', () => {
+  it('25: Salvar só habilita com mudança, salva o patch e fecha', async () => {
     const p = props();
     render(<WorkItemSheet {...p} />);
 
@@ -113,7 +113,9 @@ describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
 
     fireEvent.click(screen.getByTestId('sheet-salvar'));
     expect(p.onSave).toHaveBeenCalledWith(base, { title: 'Ligar amanhã' });
-    expect(p.onOpenChange).toHaveBeenCalledWith(false);
+    // R2-MOD-051: o Salvar agora aguarda a escrita, então o fechamento chega
+    // depois do await — a asserção síncrona antiga não valia mais.
+    await waitFor(() => expect(p.onOpenChange).toHaveBeenCalledWith(false));
   });
 
   it('24: após preencher o motivo, salvar leva o motivo pelo move', async () => {
@@ -412,5 +414,39 @@ describe('WorkItemSheet — R2-MOD-051 (salvar espera a escrita pendente)', () =
     await act(async () => { liberarMove(); });
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(base, { title: 'Ligar amanhã' }));
     await waitFor(() => expect(p.onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it('R2-MOD-051/3: falha na escrita mantém o Sheet aberto com o rascunho e avisa', async () => {
+    // O ramo de falha do Salvar: a promessa rejeita, então nada de fechar o
+    // Sheet nem de perder o que foi digitado — o usuário vê o aviso e retenta.
+    const onSave = vi.fn(() => Promise.reject(new Error('rede fora')));
+    const p = props({ onSave });
+    render(<WorkItemSheet {...p} />);
+
+    fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: 'Ligar amanhã' } });
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    expect(await screen.findByTestId('sheet-erro-salvar')).toHaveTextContent('Não foi possível salvar');
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+    expect((screen.getByTestId('sheet-titulo') as HTMLInputElement).value).toBe('Ligar amanhã');
+  });
+
+  it('R2-MOD-051/4: com a escrita em voo, um segundo clique não repete a gravação', async () => {
+    let liberar!: () => void;
+    const escrita = new Promise<void>((resolve) => { liberar = resolve; });
+    const onSave = vi.fn(() => escrita);
+    const p = props({ onSave });
+    render(<WorkItemSheet {...p} />);
+
+    fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: 'Ligar amanhã' } });
+    const salvar = screen.getByTestId('sheet-salvar') as HTMLButtonElement;
+    fireEvent.click(salvar);
+    fireEvent.click(salvar);
+
+    expect(onSave).toHaveBeenCalledTimes(1);
+
+    await act(async () => { liberar(); });
+    await waitFor(() => expect(p.onOpenChange).toHaveBeenCalledWith(false));
+    expect(onSave).toHaveBeenCalledTimes(1);
   });
 });
