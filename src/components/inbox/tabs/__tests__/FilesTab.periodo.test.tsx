@@ -86,7 +86,7 @@ interface MediaState {
 }
 
 let media: MediaState;
-let counts: { all: number; image: number; video: number; audio: number; document: number };
+let counts: { all: number; image: number; video: number; audio: number; document: number; sticker: number };
 
 function usarMidia(items: ContactMediaItem[], overrides: Partial<MediaState> = {}) {
   media = {
@@ -95,12 +95,14 @@ function usarMidia(items: ContactMediaItem[], overrides: Partial<MediaState> = {
     fetchNextPage: vi.fn().mockResolvedValue({ hasNextPage: false }),
     ...overrides,
   };
+  // Espelha `ContactMediaCounts` do hook real — inclusive `sticker`, o tipo próprio de figurinha.
   counts = {
     all: items.length,
     image: items.filter((i) => i.type === 'image').length,
     video: items.filter((i) => i.type === 'video').length,
     audio: items.filter((i) => i.type === 'audio').length,
     document: items.filter((i) => i.type === 'document').length,
+    sticker: items.filter((i) => i.type === 'sticker').length,
   };
 }
 
@@ -195,6 +197,31 @@ describe('FilesTab — filtro por data (F05)', () => {
     expect(screen.getByText('Imagens').closest('button')).toHaveTextContent(/^Imagens1$/);
     expect(screen.getByText('Docs').closest('button')).toHaveTextContent(/^Docs1$/);
     expect(gatilhoPeriodo()).toHaveTextContent('Últimos 7 dias');
+  });
+
+  /**
+   * Refazer 1 (recusa do Claude em 08/10): a `dia` tinha ganhado o tipo próprio `sticker`
+   * ("Figurinhas") e o recorte por período esquecia esse campo — o chip ficava sem número e o
+   * `ContactMediaCounts` incompleto derrubava o typecheck. Aqui a prova é de comportamento: com
+   * período ativo o chip "Figurinhas" conta os itens do RECORTE, não a conversa inteira (RPC).
+   */
+  it('o recorte por período conta as figurinhas (tipo próprio)', () => {
+    usarMidia([
+      item({ id: 'fig-nova', filename: 'figurinha-nova.webp', type: 'sticker' }),
+      item({ id: 'foto-hoje', filename: 'foto-hoje.jpg' }),
+      item({ id: 'fig-antiga', filename: 'figurinha-antiga.webp', type: 'sticker', created_at: diasAtras(20) }),
+    ]);
+    renderTab();
+
+    // Sem período: contagem da RPC (conversa inteira) — duas figurinhas.
+    expect(screen.getByText('Figurinhas').closest('button')).toHaveTextContent(/^Figurinhas2$/);
+
+    escolherAtalho('Últimos 7 dias');
+
+    // Com período: só a figurinha dentro do recorte entra na conta (e o total acompanha).
+    expect(screen.getByText('Figurinhas').closest('button')).toHaveTextContent(/^Figurinhas1$/);
+    expect(screen.getByText('Imagens').closest('button')).toHaveTextContent(/^Imagens1$/);
+    expect(screen.getByTestId('files-total-count')).toHaveTextContent('2 arquivos');
   });
 
   it('o período se combina com o tipo e com a busca', () => {

@@ -207,6 +207,9 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
       video: periodItems.filter((item) => item.type === 'video').length,
       audio: periodItems.filter((item) => item.type === 'audio').length,
       document: periodItems.filter((item) => item.type === 'document').length,
+      // Figurinhas: a dia atual tem o tipo próprio (chip "Figurinhas") e `ContactMediaCounts`
+      // passou a exigir `sticker`; sem esta linha o recorte por período derrubava o typecheck.
+      sticker: periodItems.filter((item) => item.type === 'sticker').length,
     };
   }, [periodItems]);
   const displayCounts = periodCounts ?? counts;
