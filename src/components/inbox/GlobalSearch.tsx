@@ -26,6 +26,14 @@ interface GlobalSearchProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectResult: (result: SearchResult) => void;
+  /**
+   * R2-INB-018: operação REAL do host para as ações rápidas que não são apenas
+   * navegação de view. A ação só entra no seletor quando o host oferece a
+   * operação — antes "Nova conversa" e "Respostas rápidas" existiam fixas e
+   * apenas fechavam a busca, sem abrir conversa nem gestão de respostas.
+   */
+  onNewConversation?: () => void;
+  onManageQuickReplies?: () => void;
 }
 
 /** Um item alcançável pelas setas — na ordem em que a tela o renderiza. */
@@ -42,7 +50,7 @@ function normalizeNavIndex(index: number, total: number): number {
   return Number.isInteger(index) && index >= 0 && index < total ? index : 0;
 }
 
-export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearchProps) {
+export function GlobalSearch({ open, onOpenChange, onSelectResult, onNewConversation, onManageQuickReplies }: GlobalSearchProps) {
   const {
     search, isLoading, results, setResults, selectedIndex, setSelectedIndex,
     allTags, tagSuggestions, selectedTags, activeTypes, dateFilter, setDateFilter,
@@ -51,13 +59,21 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
     toggleType, handleSearch, handleTagSelect, removeTag, resetFilters,
   } = useGlobalSearchData(open);
 
-  const quickActions: QuickAction[] = useMemo(() => [
-    { id: 'new-conversation', title: 'Nova conversa', description: 'Iniciar uma nova conversa', icon: <Plus className="h-4 w-4" />, action: () => onOpenChange(false), keywords: ['nova', 'novo', 'conversa', 'chat', 'iniciar', 'criar'] },
-    { id: 'go-inbox', title: 'Ir para Inbox', description: 'Abrir caixa de entrada', icon: <Inbox className="h-4 w-4" />, action: () => { onOpenChange(false); navigateToView('inbox'); }, keywords: ['inbox', 'caixa', 'entrada', 'mensagens'] },
-    { id: 'go-dashboard', title: 'Ir para Dashboard', description: 'Ver métricas e estatísticas', icon: <LayoutDashboard className="h-4 w-4" />, action: () => { onOpenChange(false); navigateToView('dashboard'); }, keywords: ['dashboard', 'métricas', 'estatísticas', 'painel'] },
-    { id: 'go-settings', title: 'Configurações', description: 'Ajustar preferências do sistema', icon: <Settings className="h-4 w-4" />, action: () => { onOpenChange(false); navigateToView('settings'); }, keywords: ['config', 'configurações', 'preferências', 'ajustes', 'settings'] },
-    { id: 'quick-reply', title: 'Respostas rápidas', description: 'Gerenciar templates de resposta', icon: <Zap className="h-4 w-4" />, action: () => onOpenChange(false), keywords: ['resposta', 'rápida', 'template', 'templates', 'atalho'] },
-  ], [onOpenChange]);
+  const quickActions: QuickAction[] = useMemo(() => {
+    const actions: QuickAction[] = [];
+    if (onNewConversation) {
+      actions.push({ id: 'new-conversation', title: 'Nova conversa', description: 'Iniciar uma nova conversa', icon: <Plus className="h-4 w-4" />, action: () => { onOpenChange(false); onNewConversation(); }, keywords: ['nova', 'novo', 'conversa', 'chat', 'iniciar', 'criar'] });
+    }
+    actions.push(
+      { id: 'go-inbox', title: 'Ir para Inbox', description: 'Abrir caixa de entrada', icon: <Inbox className="h-4 w-4" />, action: () => { onOpenChange(false); navigateToView('inbox'); }, keywords: ['inbox', 'caixa', 'entrada', 'mensagens'] },
+      { id: 'go-dashboard', title: 'Ir para Dashboard', description: 'Ver métricas e estatísticas', icon: <LayoutDashboard className="h-4 w-4" />, action: () => { onOpenChange(false); navigateToView('dashboard'); }, keywords: ['dashboard', 'métricas', 'estatísticas', 'painel'] },
+      { id: 'go-settings', title: 'Configurações', description: 'Ajustar preferências do sistema', icon: <Settings className="h-4 w-4" />, action: () => { onOpenChange(false); navigateToView('settings'); }, keywords: ['config', 'configurações', 'preferências', 'ajustes', 'settings'] },
+    );
+    if (onManageQuickReplies) {
+      actions.push({ id: 'quick-reply', title: 'Respostas rápidas', description: 'Gerenciar templates de resposta', icon: <Zap className="h-4 w-4" />, action: () => { onOpenChange(false); onManageQuickReplies(); }, keywords: ['resposta', 'rápida', 'template', 'templates', 'atalho'] });
+    }
+    return actions;
+  }, [onOpenChange, onNewConversation, onManageQuickReplies]);
 
   const filteredActions = useMemo(() => {
     if (!search || search.startsWith('#')) return quickActions;
