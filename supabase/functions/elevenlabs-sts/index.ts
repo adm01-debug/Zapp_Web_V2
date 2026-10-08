@@ -1,5 +1,6 @@
-import { handleCors, errorResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 
 /**
  * IA-122/IA-128 (Bloco 13 — Voz, transcrição, TTS e comandos).
@@ -132,6 +133,22 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
     const selectedModel = (modelId && modelId.length <= 100) ? modelId : 'eleven_multilingual_sts_v2';
 
     log.info("Converting audio", { size: audioFile.size, voiceId, model: selectedModel });
+
+    // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs.
+    const killSwitch = await evaluateAiKillSwitch({
+      functionName: "elevenlabs-sts",
+      providerType: "elevenlabs",
+    });
+    if (!killSwitch.allowed) {
+      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
+      // corpo por "Internal server error" e o consumidor perderia o código.
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+        503,
+        req,
+      );
+    }
 
     const apiFormData = new FormData();
     apiFormData.append('audio', audioFile);

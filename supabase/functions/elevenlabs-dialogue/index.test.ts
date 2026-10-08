@@ -113,7 +113,18 @@ const ROTA_PROFILES: Route = {
   match: "/rest/v1/profiles",
   make: () => jsonResp([{ id: "30000000-0000-0000-0000-00000000000c" }]),
 };
-const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_AUDIO, ROTA_LEDGER, ROTA_PROFILES];
+// IA-009 (SL-010b): o handler passou a ler `feature_flags` no servidor antes de
+// tocar a ElevenLabs; sem esta rota o stub respondia 599 e a leitura falhada
+// negava (503) — a trava fechada por padrão derrubaria o caminho de sempre.
+const ROTA_FLAGS: Route = {
+  match: "/rest/v1/feature_flags",
+  make: () =>
+    jsonResp([
+      { key: "ai.capability.voice", enabled: true },
+      { key: "ai.provider.elevenlabs", enabled: true },
+    ]),
+};
+const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_FLAGS, ROTA_AUDIO, ROTA_LEDGER, ROTA_PROFILES];
 
 function makeRequest(body: unknown, withAuth = true): Request {
   const headers: Record<string, string> = { "Content-Type": "application/json" };

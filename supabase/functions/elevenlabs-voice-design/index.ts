@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient, enforceRateLimit, isValidUUID } from "../_shared/validation.ts";
 import { ElevenLabsVoiceDesignPreviewSchema, ElevenLabsVoiceDesignCreateSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 
 export async function handleVoiceDesignRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
@@ -20,6 +21,23 @@ export async function handleVoiceDesignRequest(req: Request): Promise<Response> 
     const ELEVENLABS_API_KEY = requireEnv('ELEVENLABS_API_KEY');
     const body = await req.json();
     const action = body.action || 'preview';
+
+    // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs (qualquer
+    // que seja a action: preview e create gastam provedor).
+    const killSwitch = await evaluateAiKillSwitch({
+      functionName: "elevenlabs-voice-design",
+      providerType: "elevenlabs",
+    });
+    if (!killSwitch.allowed) {
+      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
+      // corpo por "Internal server error" e o consumidor perderia o código.
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+        503,
+        req,
+      );
+    }
 
     if (action === 'preview') {
       const parsed = parseBody(ElevenLabsVoiceDesignPreviewSchema, body);

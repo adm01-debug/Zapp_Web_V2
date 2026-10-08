@@ -1,6 +1,7 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsDialogueSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 
 /**
  * R2-API-024 (P2) — Diálogo ElevenLabs envia `script` e omite `inputs`.
@@ -61,6 +62,22 @@ export async function handleElevenLabsDialogue(req: Request): Promise<Response> 
     // requisição sai só para o provedor rejeitar (422) ou cortar a geração.
     const limitError = dialogueLimitError(script);
     if (limitError) return errorResponse(limitError, 400, req);
+
+    // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs.
+    const killSwitch = await evaluateAiKillSwitch({
+      functionName: "elevenlabs-dialogue",
+      providerType: "elevenlabs",
+    });
+    if (!killSwitch.allowed) {
+      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
+      // corpo por "Internal server error" e o consumidor perderia o código.
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+        503,
+        req,
+      );
+    }
 
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
 

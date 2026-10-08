@@ -3,8 +3,9 @@ import { ElevenLabsSFXSchema, parseBody, validationErrorResponse } from "../_sha
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 import { buildElevenLabsRequest } from "./request.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 
-Deno.serve(async (req) => {
+export async function handleElevenLabsSfx(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -22,6 +23,23 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { prompt, duration, mode } = parsed.data;
+
+    // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs.
+    const killSwitch = await evaluateAiKillSwitch({
+      functionName: "elevenlabs-sfx",
+      providerType: "elevenlabs",
+    });
+    if (!killSwitch.allowed) {
+      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
+      // corpo por "Internal server error" e o consumidor perderia o código.
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+        503,
+        req,
+      );
+    }
+
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
 
     const isMusic = mode === "music";
@@ -76,4 +94,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: err instanceof Error ? err.message : String(err) });
     return errorResponse("Internal server error", 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleElevenLabsSfx);
+}

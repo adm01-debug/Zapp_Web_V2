@@ -74,6 +74,17 @@ export const AI_CAPABILITY_BY_FUNCTION: Readonly<Record<string, string>> = Objec
   "ai-transcribe-audio": "transcribe_audio",
   "voice-agent": "voice",
   "chatbot-l1": "chatbot_l1",
+  // SL-010b: a família voz/áudio da ElevenLabs inteira responde à ÚNICA
+  // capacidade de voz do desenho (IA-009 §2.1, `ai.capability.voice`).
+  "elevenlabs-tts": "voice",
+  "elevenlabs-tts-stream": "voice",
+  "elevenlabs-sfx": "voice",
+  "elevenlabs-sts": "voice",
+  "elevenlabs-dialogue": "voice",
+  "elevenlabs-voice-design": "voice",
+  "voice-changer": "voice",
+  "elevenlabs-agent-token": "voice",
+  "elevenlabs-scribe-token": "voice",
 });
 
 /** Alvo de uma decisão de desligamento. */

@@ -82,6 +82,16 @@ function rotasDeAuth(
   const rotas: Route[] = [
     { match: '/auth/v1/user', body: { id: userId, aud: 'authenticated' } },
     { match: '/rest/v1/rpc/consume_rate_limit', body: [{ allowed: true, remaining: 4 }] },
+    // IA-009 (SL-010b): o handler passou a ler `feature_flags` no servidor antes
+    // de tocar a ElevenLabs; sem esta rota o stub respondia 599 e a leitura
+    // falhada negava (503) — a trava fechada por padrão derrubaria o caminho.
+    {
+      match: '/rest/v1/feature_flags',
+      body: [
+        { key: 'ai.capability.voice', enabled: true },
+        { key: 'ai.provider.elevenlabs', enabled: true },
+      ],
+    },
   ];
   rotas.push(
     papel.papelErro
