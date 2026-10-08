@@ -12,6 +12,4 @@ export {
   routeTransitions,
   defaultTransition,
   resolveTransition,
-  readReduceMotionPreference,
-  writeReduceMotionPreference,
 } from './transitionConfig';

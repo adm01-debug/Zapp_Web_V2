@@ -29,6 +29,8 @@ import { handleBitrixApi } from "./index.ts";
 const SUPABASE_URL = "https://local.supabase.test";
 const ANON_KEY = "anon-test-key";
 const BITRIX_URL = "https://portal.bitrix.test/rest/1/test-webhook";
+const BITRIX_PORTAL = "portal.bitrix.test";
+const SECONDARY_BITRIX_URL = "https://portal-b.bitrix.test/rest/1/other-webhook";
 const ADMIN_ID = "00000000-0000-4000-8000-00000000000a";
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -75,6 +77,18 @@ function configureEnv() {
   Deno.env.set("BITRIX_WEBHOOK_URL", BITRIX_URL);
 }
 
+async function withWebhookUrl(url: string | null, fn: () => Promise<void>) {
+  const previous = Deno.env.get("BITRIX_WEBHOOK_URL");
+  if (url === null) Deno.env.delete("BITRIX_WEBHOOK_URL");
+  else Deno.env.set("BITRIX_WEBHOOK_URL", url);
+  try {
+    await fn();
+  } finally {
+    if (previous === undefined) Deno.env.delete("BITRIX_WEBHOOK_URL");
+    else Deno.env.set("BITRIX_WEBHOOK_URL", previous);
+  }
+}
+
 async function callHandler(body: unknown) {
   const response = await handleBitrixApi(new Request("https://edge.test/bitrix-api", {
     method: "POST",
@@ -99,6 +113,74 @@ function assertNoSuccess(label: string, result: { status: number; body: Record<s
 }
 
 configureEnv();
+
+// ─── R2-API-048: portal testado é o configurado no servidor ────────────────
+
+Deno.test("R2-API-048: resposta de teste nomeia o portal configurado", async () => {
+  const fetchStub = installFetch(() => jsonResponse({ result: [{ ID: 1 }], total: 1 }));
+  try {
+    const result = await callHandler({ action: "list", entityType: "lead" });
+    if (result.status !== 200 || result.body.success !== true) throw new Error(`list: ${result.status} ${result.raw}`);
+    if (result.body.portal !== BITRIX_PORTAL) throw new Error(`portal efetivo ausente/incorreto: ${result.raw}`);
+    if (fetchStub.bitrixUrls.length !== 1 || !fetchStub.bitrixUrls[0].startsWith(`${BITRIX_URL}/`)) {
+      throw new Error(`alvo inesperado: ${fetchStub.bitrixUrls.join(",")}`);
+    }
+  } finally {
+    fetchStub.restore();
+  }
+});
+
+Deno.test("R2-API-048: webhookUrl/domain digitados na tela são recusados sem fetch", async () => {
+  const fetchStub = installFetch(() => jsonResponse({ result: [{ ID: 1 }], total: 1 }));
+  try {
+    const result = await callHandler({
+      action: "list",
+      entityType: "lead",
+      webhookUrl: SECONDARY_BITRIX_URL,
+      domain: "portal-b.bitrix.test",
+    });
+    if (result.status !== 400) throw new Error(`esperava 400, veio ${result.status}: ${result.raw}`);
+    if (fetchStub.bitrixUrls.length !== 0) throw new Error(`não podia consultar provedor: ${fetchStub.bitrixUrls.join(",")}`);
+    if (result.raw.includes("portal-b")) throw new Error(`resposta ecoou o portal digitado: ${result.raw}`);
+  } finally {
+    fetchStub.restore();
+  }
+});
+
+Deno.test("R2-API-048: erro do provedor também informa o portal testado", async () => {
+  const fetchStub = installFetch(() => jsonResponse({
+    error: "NO_CRM_PERMISSION",
+    error_description: "Permissão insuficiente",
+  }));
+  try {
+    const result = await callHandler({ action: "list", entityType: "lead" });
+    assertNoSuccess("list 200+erro", result);
+    if (result.status !== 400) throw new Error(`esperava 400, veio ${result.status}`);
+    if (result.body.portal !== BITRIX_PORTAL) throw new Error(`falha sem portal testado: ${result.raw}`);
+    if (!String(result.body.error).includes("Permissão insuficiente")) throw new Error(`erro do provedor não foi preservado: ${result.raw}`);
+  } finally {
+    fetchStub.restore();
+  }
+});
+
+Deno.test("R2-API-048: webhook ausente ou inválido nega sem tocar no provedor", async () => {
+  const fetchStub = installFetch(() => jsonResponse({ result: [{ ID: 1 }], total: 1 }));
+  try {
+    await withWebhookUrl(null, async () => {
+      const missing = await callHandler({ action: "list", entityType: "lead" });
+      if (missing.status !== 400) throw new Error(`sem config esperava 400, veio ${missing.status}: ${missing.raw}`);
+      if (!String(missing.body.error).includes("BITRIX_WEBHOOK_URL")) throw new Error(`erro não aponta a config ausente: ${missing.raw}`);
+    });
+    await withWebhookUrl("sem-esquema/rest/1/token", async () => {
+      const invalid = await callHandler({ action: "list", entityType: "lead" });
+      if (invalid.status !== 400) throw new Error(`config inválida esperava 400, veio ${invalid.status}: ${invalid.raw}`);
+      if (!String(invalid.body.error).includes("BITRIX_WEBHOOK_URL")) throw new Error(`erro não aponta a config inválida: ${invalid.raw}`);
+    });
+    if (fetchStub.bitrixUrls.length !== 0) throw new Error(`config inválida/ausente não podia consultar provedor: ${fetchStub.bitrixUrls.join(",")}`);
+  } finally {
+    fetchStub.restore();
+  }
+});
 
 // ─── Envelope de erro em 200 ────────────────────────────────────────────────
 

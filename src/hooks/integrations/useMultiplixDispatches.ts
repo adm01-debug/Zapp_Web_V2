@@ -182,14 +182,15 @@ export function useMultiplixDispatch(dispatchId: string | null) {
   return useQuery({
     queryKey: ['multiplix-dispatch', dispatchId],
     queryFn: async () => {
-      // Nao existe acao de "ler 1 por id" nesta etapa: usamos a lista (mesma
-      // ordenacao/limite da tela de disparos) e localizamos o alvo. O monitor
-      // abre a partir da lista de recentes ou do disparo recem-criado, entao o
-      // registro esta na primeira pagina; se a acao ganhar um filtro por id
-      // isto vira uma leitura direta.
+      // O id viaja no payload: a edge aplica o recorte (`dispatch_id`) no MESMO
+      // WHERE do escopo de dono e devolve o disparo mesmo que ele NAO esteja
+      // entre os `DISPATCH_LIST_LIMIT` mais recentes. Sem o filtro a resposta
+      // era so a primeira pagina de recentes e o monitor abria "Disparo nao
+      // encontrado" para qualquer disparo mais antigo.
       const data = await invokeMultiplixDispatch('dispatch.list', {
         limit: DISPATCH_LIST_LIMIT,
         offset: 0,
+        dispatch_id: dispatchId,
       });
       const found = readMultiplixList<MultiplixDispatch>(data).rows.find((d) => d.id === dispatchId);
       if (!found) {

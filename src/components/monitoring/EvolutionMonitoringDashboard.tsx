@@ -63,7 +63,7 @@ function LastUpdatedBadge() {
 
 export function EvolutionMonitoringDashboard() {
   const {
-    connections, healthLogs, loading, refreshing, webhookTest, webhookConfig,
+    connections, healthLogs, availabilityLogs, healthLogsTruncated, loading, refreshing, webhookTest, webhookConfig,
     messageStats, reconfiguring, diagnostic, diagnosing, uptime,
     sparklines, instanceUptimes, notificationsEnabled, soundEnabled, setSoundEnabled, requestNotifications,
     period, changePeriod, autoRefresh, setAutoRefresh, countdown,
@@ -238,9 +238,13 @@ export function EvolutionMonitoringDashboard() {
             <BarChart3 className="w-4 h-4" />SLA
             <Badge
               variant="outline"
-              className={cn('h-5 min-w-5 px-1 text-3xs rounded-full', uptime.percentage >= 99 ? 'text-emerald-500 border-emerald-500/30' : 'text-amber-500 border-amber-500/30')}
+              className={cn(
+                'h-5 min-w-5 px-1 text-3xs rounded-full',
+                uptime.percentage === null ? 'text-muted-foreground border-muted-foreground/30' :
+                uptime.percentage >= 99 ? 'text-emerald-500 border-emerald-500/30' : 'text-amber-500 border-amber-500/30'
+              )}
             >
-              {uptime.percentage}%
+              {uptime.percentage === null ? '—' : `${uptime.percentage}%`}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="heatmap" className="gap-1.5">
@@ -314,7 +318,7 @@ export function EvolutionMonitoringDashboard() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <MonitoringSLAPanel uptime={uptime} instanceUptimes={instanceUptimes} />
+              <MonitoringSLAPanel uptime={uptime} instanceUptimes={instanceUptimes} truncated={healthLogsTruncated} />
             </motion.div>
           </TabsContent>
 
@@ -325,7 +329,7 @@ export function EvolutionMonitoringDashboard() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <MonitoringAvailabilityHeatmap healthLogs={healthLogs} />
+              <MonitoringAvailabilityHeatmap healthLogs={availabilityLogs} truncated={healthLogsTruncated} />
             </motion.div>
           </TabsContent>
 

@@ -13,7 +13,6 @@ import {
   mapRealtimeConversationToConversation, 
   mapRealtimeMessageToMessage 
 } from '@/adapters/inboxAdapter';
-import { toast } from 'sonner';
 
 const log = getLogger('useRealtimeInbox');
 
@@ -173,20 +172,31 @@ export function useRealtimeInbox() {
     }
   }, [selectedContactId, sendMessage, refreshActiveConversation]);
 
-   // R2-INB-022: devolve `false` quando o upload/envio falha. Antes engolia o erro, então o popup
-   // não sabia da falha e fechava o gravador — descartando a gravação que poderia ser reenviada.
+   // R2-INB-022 (mantido) + R2-INB-058: o elo de baixo da cadeia do áudio precisa SINALIZAR a
+   // falha ao chamador. `handleSendAudio` REJEITA quando não há contato selecionado e quando
+   // `ChatService.uploadAudio`/`sendMessage` rejeita (preservando o erro original, mesmo que o
+   // refresh da conversa caia), e resolve `true` no sucesso — o valor que o `ChatPanel` lê para
+   // fechar o gravador. Antes ela resolvia `false`/saía em silêncio, então quem está acima não
+   // distinguia "áudio enviado" de "áudio descartado".
+   // Sem toast aqui: o aviso ao usuário é da camada de cima (`useChatPanelHandlers.handleAudioSend`
+   // / TextToAudioButton); duplicar faria o mesmo erro aparecer duas vezes.
    const handleSendAudio = useCallback(async (blob: Blob): Promise<boolean> => {
-     if (!selectedContactId) { toast.error('Selecione uma conversa primeiro'); return false; }
+     if (!selectedContactId) throw new Error('Selecione uma conversa primeiro');
      try {
        const audioObjectUrl = await ChatService.uploadAudio(selectedContactId, blob);
        await sendMessage(selectedContactId, '[Áudio]', 'audio', audioObjectUrl);
        return true;
      } catch (err) {
        log.error('Error in handleSendAudio:', err);
-       toast.error('Erro ao enviar áudio. Tente novamente.');
-       return false;
+       throw err;
      } finally {
-       await refreshActiveConversation();
+       // Falha do refresh não pode substituir o erro do transporte que está subindo
+       // (`throw err` acima) nem sugerir que o áudio não saiu quando ele saiu.
+       try {
+         await refreshActiveConversation();
+       } catch (refreshErr) {
+         log.warn('Audio send finished, but conversation refresh failed:', refreshErr);
+       }
      }
    }, [selectedContactId, sendMessage, refreshActiveConversation]);
 

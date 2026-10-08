@@ -86,8 +86,12 @@ BEGIN
       ORDER BY cph.is_primary DESC LIMIT 1
     ) cph ON true
   )
+  -- R2-DB-003: fora do escopo OU inativa => metadados redigidos (NULL), nao so
+  -- o destino. company_id fica (eco do chamador) e elegibilidade segue.
   SELECT
-    d.company_id, d.contact_id, d.company_name,
+    d.company_id,
+    CASE WHEN d.no_escopo AND d.ativa THEN d.contact_id ELSE NULL END,
+    CASE WHEN d.no_escopo AND d.ativa THEN d.company_name ELSE NULL END,
     CASE WHEN d.no_escopo AND d.ativa THEN d.destino_e164 ELSE NULL END,
     CASE WHEN d.no_escopo AND d.ativa THEN d.destino_origem ELSE NULL END,
     CASE
@@ -96,14 +100,14 @@ BEGIN
       WHEN d.destino_e164 IS NULL THEN 'destino_invalido'
       ELSE 'apto'
     END,
-    ARRAY(
+    CASE WHEN d.no_escopo AND d.ativa THEN ARRAY(
       SELECT v.papel FROM (VALUES
         ('supplier', d.is_supplier),
         ('carrier',  d.is_carrier),
         ('customer', d.is_customer)
       ) AS v(papel, ativo) WHERE v.ativo
-    ) AS empresa_papeis,
-    d.last_interaction_at
+    ) ELSE NULL END AS empresa_papeis,
+    CASE WHEN d.no_escopo AND d.ativa THEN d.last_interaction_at ELSE NULL END
   FROM destino d;
 END;
 $function$

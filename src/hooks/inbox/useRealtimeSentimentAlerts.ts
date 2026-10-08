@@ -9,6 +9,7 @@ import { getLogger } from '@/lib/logger';
 import { normalizeScore } from '@/lib/ai-values';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { claimNotificationEvent } from '@/lib/notificationDedupe';
+import { openContactChat } from '@/components/catalog/useSendProduct';
 
 const log = getLogger('SentimentAlerts');
 
@@ -56,13 +57,21 @@ export function useRealtimeSentimentAlerts() {
           : `Sentimento negativo detectado em ${consecutiveLow} análises consecutivas`,
         duration: 10000,
         action: {
-          label: 'Ver detalhes',
+          label: 'Ver conversa',
+          // R2-INB-064: o alerta global chegava em qualquer tela e a ação tentava
+          // clicar na aba "ai" do Dashboard — que só existe lá e apenas para
+          // staff —, então fora do Dashboard o clique não fazia nada. O destino
+          // agora é a conversa do contato alertado, pelo mesmo caminho do
+          // Catálogo e das chamadas.
           onClick: () => {
-            // Navigate to sentiment dashboard
-            const tabsList = document.querySelector('[value="ai"]');
-            if (tabsList) {
-              (tabsList as HTMLElement).click();
+            const contactId = details.contact_id;
+            if (!contactId) {
+              // Alerta sem identidade não tem conversa para abrir: avisar é
+              // melhor que um clique mudo.
+              toast.info('Este alerta não identifica o contato; abra a conversa pelo Chat.');
+              return;
             }
+            openContactChat(contactId);
           },
         },
       }

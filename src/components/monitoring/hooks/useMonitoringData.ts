@@ -2,24 +2,26 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
 import type { ConnectionInfo, HealthLog, MessageStats, UptimeInfo, SparklineData, InstanceUptime, TimePeriod } from './types';
-import { periodMs, periodBuckets, HEALTHY_STATUSES } from './types';
+import { periodMs, periodBuckets, HEALTHY_STATUSES, SLA_WINDOW_MS, AVAILABILITY_WINDOW_MS, HEALTH_LOGS_LIMIT } from './types';
 
 const log = getLogger('MonitoringData');
 
 function computeUptime(logs: HealthLog[], now: Date): UptimeInfo {
-  const dayAgo = new Date(now.getTime() - 86400000);
+  // R2-INF-027: o SLA é das últimas 24h, independente do período selecionado.
+  const dayAgo = new Date(now.getTime() - SLA_WINDOW_MS);
   const recent = logs.filter(l => new Date(l.checked_at) >= dayAgo);
   const healthy = recent.filter(l => HEALTHY_STATUSES.includes(l.status));
   const lastFail = recent.find(l => !HEALTHY_STATUSES.includes(l.status));
   return {
-    percentage: recent.length > 0 ? Math.round((healthy.length / recent.length) * 1000) / 10 : 100,
+    // Sem checks na janela não há SLA a aprovar: dado insuficiente (null), nunca 100%.
+    percentage: recent.length > 0 ? Math.round((healthy.length / recent.length) * 1000) / 10 : null,
     totalChecks: recent.length, healthyChecks: healthy.length,
     lastDowntime: lastFail?.checked_at || null,
   };
 }
 
 function computeInstanceUptimes(logs: HealthLog[], now: Date): InstanceUptime[] {
-  const dayAgo = new Date(now.getTime() - 86400000);
+  const dayAgo = new Date(now.getTime() - SLA_WINDOW_MS);
   const recent = logs.filter(l => new Date(l.checked_at) >= dayAgo);
   const map = new Map<string, HealthLog[]>();
   recent.forEach(l => map.set(l.instance_id, [...(map.get(l.instance_id) || []), l]));
@@ -59,9 +61,11 @@ function computeSparklines(logs: HealthLog[], msgs: { sender: string; created_at
 export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) => void) {
   const [connections, setConnections] = useState<ConnectionInfo[]>([]);
   const [healthLogs, setHealthLogs] = useState<HealthLog[]>([]);
+  const [availabilityLogs, setAvailabilityLogs] = useState<HealthLog[]>([]);
+  const [healthLogsTruncated, setHealthLogsTruncated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [messageStats, setMessageStats] = useState<MessageStats>({ incoming: 0, outgoing: 0, total: 0, hourlyData: [] });
-  const [uptime, setUptime] = useState<UptimeInfo>({ percentage: 0, totalChecks: 0, healthyChecks: 0, lastDowntime: null });
+  const [uptime, setUptime] = useState<UptimeInfo>({ percentage: null, totalChecks: 0, healthyChecks: 0, lastDowntime: null });
   const [sparklines, setSparklines] = useState<SparklineData>({ messages: [], latency: [], uptime: [] });
   const [instanceUptimes, setInstanceUptimes] = useState<InstanceUptime[]>([]);
 
@@ -69,17 +73,23 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
     try {
       const now = new Date();
       const since = new Date(now.getTime() - periodMs[period]);
+      // R2-INF-027: os health logs cobrem a maior janela anunciada (7 dias), para
+      // alimentar o SLA de 24h e o heatmap de 7 dias mesmo com seleção menor.
+      const logsSince = new Date(now.getTime() - AVAILABILITY_WINDOW_MS);
       const [connRes, logsRes, msgRes] = await Promise.all([
         supabase.from('whatsapp_connections').select('id, instance_id, phone_number, status, health_status, health_response_ms, last_health_check, updated_at'),
-        supabase.from('connection_health_logs').select('*').gte('checked_at', since.toISOString()).order('checked_at', { ascending: false }).limit(2000),
+        supabase.from('connection_health_logs').select('*').gte('checked_at', logsSince.toISOString()).order('checked_at', { ascending: false }).limit(HEALTH_LOGS_LIMIT),
         supabase.from('messages').select('sender, created_at').gte('created_at', since.toISOString()).order('created_at', { ascending: true }),
       ]);
 
       if (connRes.data) { setConnections(connRes.data as ConnectionInfo[]); onConnectionsUpdate?.(connRes.data as ConnectionInfo[]); }
       if (logsRes.data) {
-        setHealthLogs(logsRes.data);
-        setUptime(computeUptime(logsRes.data, now));
-        setInstanceUptimes(computeInstanceUptimes(logsRes.data, now));
+        const logs = logsRes.data as HealthLog[];
+        setAvailabilityLogs(logs);
+        setHealthLogsTruncated(logs.length >= HEALTH_LOGS_LIMIT);
+        setHealthLogs(logs.filter(l => new Date(l.checked_at) >= since));
+        setUptime(computeUptime(logs, now));
+        setInstanceUptimes(computeInstanceUptimes(logs, now));
       }
       if (msgRes.data) {
         const incoming = msgRes.data.filter(m => m.sender === 'contact').length;
@@ -111,5 +121,5 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
     }
   }, [onConnectionsUpdate]);
 
-  return { connections, healthLogs, loading, messageStats, uptime, sparklines, instanceUptimes, fetchData };
+  return { connections, healthLogs, availabilityLogs, healthLogsTruncated, loading, messageStats, uptime, sparklines, instanceUptimes, fetchData };
 }

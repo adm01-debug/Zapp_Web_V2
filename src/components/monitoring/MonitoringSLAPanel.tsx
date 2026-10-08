@@ -11,39 +11,49 @@ import type { InstanceUptime, UptimeInfo } from './hooks/useEvolutionMonitoring'
 interface Props {
   uptime: UptimeInfo;
   instanceUptimes: InstanceUptime[];
+  /** Janela parcial: a consulta de health logs bateu o teto de registros. */
+  truncated?: boolean;
 }
 
 const SLA_TARGET = 99.5;
 
-function SLAGauge({ value, target }: { value: number; target: number }) {
-  const met = value >= target;
+function SLAGauge({ value, target }: { value: number | null; target: number }) {
+  // R2-INF-027: sem checks na janela não há SLA a aprovar — "Sem dados", nunca "Atingido".
+  const unknown = value === null;
+  const met = !unknown && value >= target;
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">SLA Global</span>
-        <Badge variant={met ? 'default' : 'destructive'} className="text-xs">
-          {met ? '✅ Atingido' : '⚠️ Abaixo da meta'}
-        </Badge>
+        {unknown ? (
+          <Badge variant="outline" className="text-xs text-muted-foreground">
+            Sem dados
+          </Badge>
+        ) : (
+          <Badge variant={met ? 'default' : 'destructive'} className="text-xs">
+            {met ? '✅ Atingido' : '⚠️ Abaixo da meta'}
+          </Badge>
+        )}
       </div>
       <div className="flex items-end gap-3">
         <motion.span
-          className={cn('text-4xl font-bold tabular-nums', met ? 'text-emerald-500' : 'text-destructive')}
+          className={cn('text-4xl font-bold tabular-nums', unknown ? 'text-muted-foreground' : met ? 'text-emerald-500' : 'text-destructive')}
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
         >
-          {value}%
+          {unknown ? '—' : `${value}%`}
         </motion.span>
         <span className="text-sm text-muted-foreground mb-1">meta: {target}%</span>
       </div>
       <Progress
-        value={Math.min(value, 100)}
-        className={cn('h-2', met ? '[&>div]:bg-emerald-500' : '[&>div]:bg-destructive')}
+        value={unknown ? 0 : Math.min(value, 100)}
+        className={cn('h-2', unknown ? '[&>div]:bg-muted-foreground' : met ? '[&>div]:bg-emerald-500' : '[&>div]:bg-destructive')}
       />
     </div>
   );
 }
 
-export function MonitoringSLAPanel({ uptime, instanceUptimes }: Props) {
+export function MonitoringSLAPanel({ uptime, instanceUptimes, truncated = false }: Props) {
   return (
     <div className="space-y-4">
       <Card>
@@ -52,7 +62,10 @@ export function MonitoringSLAPanel({ uptime, instanceUptimes }: Props) {
             <Shield className="w-4 h-4 text-primary" />
             SLA & Métricas de Disponibilidade
           </CardTitle>
-          <CardDescription>Uptime global e por instância nas últimas 24 horas</CardDescription>
+          <CardDescription>
+            Uptime global e por instância nas últimas 24 horas
+            {truncated && <span className="text-amber-500"> · janela parcial (limite de registros de health check)</span>}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <SLAGauge value={uptime.percentage} target={SLA_TARGET} />

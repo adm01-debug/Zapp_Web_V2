@@ -6,6 +6,7 @@ import { showBrowserNotification, requestNotificationPermission } from '@/utils/
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { log } from '@/lib/logger';
 import { claimNotificationEvent } from '@/lib/notificationDedupe';
+import { openContactChat } from '@/components/catalog/useSendProduct';
 
 interface SentimentAlertData {
   contactId: string;
@@ -64,9 +65,11 @@ export function useSentimentAlerts() {
               duration: 10000,
               action: {
                 label: 'Ver conversa',
-                onClick: () => {
-                  log.debug('Navigate to conversation:', contactId);
-                },
+                // R2-INB-064: a ação tem de ABRIR a conversa do contato alertado —
+                // antes só registrava `contactId` no log. `openContactChat` é o
+                // mesmo caminho do Catálogo e das chamadas: troca a view para o
+                // Chat e seleciona o contato alertado (que pode não ser o atual).
+                onClick: () => openContactChat(contactId),
               },
             }
           );

@@ -90,6 +90,11 @@ function mapDbToSettings(data: Record<string, unknown>): NotificationSettings {
     quietHoursStart: (data.quiet_hours_start as string) ?? DEFAULT_SETTINGS.quietHoursStart,
     quietHoursEnd: (data.quiet_hours_end as string) ?? DEFAULT_SETTINGS.quietHoursEnd,
     browserNotifications: (data.browser_notifications_enabled as boolean) ?? DEFAULT_SETTINGS.browserNotifications,
+    // Os três controles de evento da seção "Tipos de Notificação" (item 441/R2-PLAT-003). Sem
+    // estas linhas a leitura repunha o default e o botão desligado voltava ligado no reload.
+    newMessageSound: (data.new_message_sound_enabled as boolean) ?? DEFAULT_SETTINGS.newMessageSound,
+    mentionSound: (data.mention_sound_enabled as boolean) ?? DEFAULT_SETTINGS.mentionSound,
+    slaBreachSound: (data.sla_breach_sound_enabled as boolean) ?? DEFAULT_SETTINGS.slaBreachSound,
     sentimentAlertEnabled: (data.sentiment_alert_enabled as boolean) ?? DEFAULT_SETTINGS.sentimentAlertEnabled,
     sentimentAlertThreshold: (data.sentiment_alert_threshold as number) ?? DEFAULT_SETTINGS.sentimentAlertThreshold,
     sentimentConsecutiveCount: (data.sentiment_consecutive_count as number) ?? DEFAULT_SETTINGS.sentimentConsecutiveCount,
@@ -114,7 +119,7 @@ export const useNotificationSettings = () => {
 
       const { data, error } = await supabase
         .from('user_settings')
-        .select('sound_enabled, sound_volume, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, browser_notifications_enabled, sentiment_alert_enabled, sentiment_alert_threshold, sentiment_consecutive_count, transcription_notification_enabled, message_sound_type, mention_sound_type, sla_sound_type, goal_sound_type, transcription_sound_type')
+        .select('sound_enabled, sound_volume, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, browser_notifications_enabled, new_message_sound_enabled, mention_sound_enabled, sla_breach_sound_enabled, sentiment_alert_enabled, sentiment_alert_threshold, sentiment_consecutive_count, transcription_notification_enabled, message_sound_type, mention_sound_type, sla_sound_type, goal_sound_type, transcription_sound_type')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -156,6 +161,9 @@ export const useNotificationSettings = () => {
       if ('quietHoursStart' in updates) dbUpdates.quiet_hours_start = updates.quietHoursStart;
       if ('quietHoursEnd' in updates) dbUpdates.quiet_hours_end = updates.quietHoursEnd;
       if ('browserNotifications' in updates) dbUpdates.browser_notifications_enabled = updates.browserNotifications;
+      if ('newMessageSound' in updates) dbUpdates.new_message_sound_enabled = updates.newMessageSound;
+      if ('mentionSound' in updates) dbUpdates.mention_sound_enabled = updates.mentionSound;
+      if ('slaBreachSound' in updates) dbUpdates.sla_breach_sound_enabled = updates.slaBreachSound;
       if ('sentimentAlertEnabled' in updates) dbUpdates.sentiment_alert_enabled = updates.sentimentAlertEnabled;
       if ('sentimentAlertThreshold' in updates) dbUpdates.sentiment_alert_threshold = updates.sentimentAlertThreshold;
       if ('sentimentConsecutiveCount' in updates) dbUpdates.sentiment_consecutive_count = updates.sentimentConsecutiveCount;
@@ -211,6 +219,9 @@ export const useNotificationSettings = () => {
           quiet_hours_start: DEFAULT_SETTINGS.quietHoursStart,
           quiet_hours_end: DEFAULT_SETTINGS.quietHoursEnd,
           browser_notifications_enabled: DEFAULT_SETTINGS.browserNotifications,
+          new_message_sound_enabled: DEFAULT_SETTINGS.newMessageSound,
+          mention_sound_enabled: DEFAULT_SETTINGS.mentionSound,
+          sla_breach_sound_enabled: DEFAULT_SETTINGS.slaBreachSound,
           sentiment_alert_enabled: DEFAULT_SETTINGS.sentimentAlertEnabled,
           sentiment_alert_threshold: DEFAULT_SETTINGS.sentimentAlertThreshold,
           transcription_notification_enabled: DEFAULT_SETTINGS.transcriptionNotificationEnabled,

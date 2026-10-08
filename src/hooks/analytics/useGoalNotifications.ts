@@ -134,12 +134,54 @@ export function useGoalNotifications() {
               current = count || 0;
               break;
             }
+            case 'contacts_handled': {
+              // Mesmo cálculo do painel (useGoalsDashboard): contatos atribuídos
+              // ao perfil no período.
+              const { count, error } = await supabase
+                .from('contacts')
+                .select('*', { count: 'exact', head: true })
+                .eq('assigned_to', profile.id)
+                .gte('created_at', start.toISOString())
+                .lte('created_at', end.toISOString());
+              if (error) throw error;
+              current = count || 0;
+              break;
+            }
+            case 'resolution_rate': {
+              // Mesmo cálculo do painel (useGoalsDashboard): percentual de
+              // conversas analisadas com status 'resolvido' no período.
+              const { count: total, error: totalError } = await supabase
+                .from('conversation_analyses')
+                .select('*', { count: 'exact', head: true })
+                .eq('analyzed_by', profile.id)
+                .gte('created_at', start.toISOString())
+                .lte('created_at', end.toISOString());
+              if (totalError) throw totalError;
+
+              const { count: resolved, error: resolvedError } = await supabase
+                .from('conversation_analyses')
+                .select('*', { count: 'exact', head: true })
+                .eq('analyzed_by', profile.id)
+                .eq('status', 'resolvido')
+                .gte('created_at', start.toISOString())
+                .lte('created_at', end.toISOString());
+              if (resolvedError) throw resolvedError;
+
+              current = total && total > 0 ? Math.round(((resolved || 0) / total) * 100) : 0;
+              break;
+            }
             case 'response_time':
               current = agentStats?.avg_response_time_seconds || 0;
               break;
             case 'satisfaction':
               current = agentStats?.customer_satisfaction_score || 0;
               break;
+            default:
+              // Tipo sem cálculo conhecido: não tratar como progresso zero
+              // silencioso (isso compararia 0 >= target e nunca notificaria sem
+              // deixar rastro). Registra e segue para a próxima meta.
+              log.warn(`Goal type "${goal.goal_type}" sem cálculo de progresso; notificação de conquista ignorada.`);
+              continue;
           }
 
           const achievedKey = `${goal.id}-${period}-${start.toISOString().split('T')[0]}`;
@@ -209,6 +251,10 @@ function getGoalLabel(goalType: string): string {
       return 'Mensagens enviadas';
     case 'conversations_resolved':
       return 'Conversas resolvidas';
+    case 'contacts_handled':
+      return 'Contatos atendidos';
+    case 'resolution_rate':
+      return 'Taxa de resolução';
     case 'response_time':
       return 'Tempo de resposta';
     case 'satisfaction':

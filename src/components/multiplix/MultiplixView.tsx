@@ -172,8 +172,12 @@ export default function MultiplixView() {
       {(dispatches.data?.length ?? 0) > 0 && (
         <div className="rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] p-4">
           <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5"><ListChecks className="w-4 h-4" />Disparos recentes</p>
-          <div className="divide-y divide-border/40">
-            {dispatches.data!.slice(0, 8).map((d) => (
+          {/* Lista TODOS os disparos que a edge devolveu (ate o limite do fetch),
+              com rolagem. Antes o `slice(0, 8)` escondia do 9o em diante: o dado
+              vinha do servidor e nao tinha nenhum caminho de clique para o
+              monitor. */}
+          <div className="divide-y divide-border/40 max-h-[360px] overflow-auto">
+            {dispatches.data!.map((d) => (
               <button
                 key={d.id}
                 type="button"

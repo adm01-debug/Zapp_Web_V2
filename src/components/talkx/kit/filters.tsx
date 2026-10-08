@@ -113,26 +113,33 @@ export function TalkXFilterBar({
           </button>
         )}
 
-        {/* período: chip com calendário + popover */}
-        <div className='relative'>
-          <button type='button' aria-label='Período' aria-expanded={periodOpen}
-            onClick={() => setPeriodOpen((o) => !o)}
-            className='h-9 px-3 rounded-lg text-xs font-medium bg-input/40 border border-border/70 inline-flex items-center gap-1.5'>
-            <Calendar className='w-3.5 h-3.5 text-muted-foreground' />
-            <span>{periodLabel}</span>
-          </button>
-          {periodOpen && (
-            <div role='menu' className='absolute z-30 mt-1 left-0 min-w-[180px] rounded-lg border border-border/70 bg-popover p-1 shadow-md'>
-              {PERIOD_OPTIONS.map((o) => (
-                <button key={o.value} type='button' role='menuitem'
-                  onClick={() => { setPeriodOpen(false); onPeriodChange?.(o.value, resolvePeriodRange(o.value)); }}
-                  className='w-full text-left px-3 py-1.5 rounded-md text-xs hover:bg-primary/10'>
-                  {o.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* período: chip com calendário + popover.
+            R2-MOD-059: o menu só aparece quando a tela liga um consumidor
+            (`onPeriodChange`). Sem ele o cabeçalho prometia um recorte por data que
+            não existia — o clique fechava o popover, o rótulo continuava "Todo o
+            período" e os dados não mudavam. Nenhuma das telas do Talk X passa o
+            consumidor, então o controle mentiroso não é oferecido. */}
+        {onPeriodChange && (
+          <div className='relative'>
+            <button type='button' aria-label='Período' aria-expanded={periodOpen}
+              onClick={() => setPeriodOpen((o) => !o)}
+              className='h-9 px-3 rounded-lg text-xs font-medium bg-input/40 border border-border/70 inline-flex items-center gap-1.5'>
+              <Calendar className='w-3.5 h-3.5 text-muted-foreground' />
+              <span>{periodLabel}</span>
+            </button>
+            {periodOpen && (
+              <div role='menu' className='absolute z-30 mt-1 left-0 min-w-[180px] rounded-lg border border-border/70 bg-popover p-1 shadow-md'>
+                {PERIOD_OPTIONS.map((o) => (
+                  <button key={o.value} type='button' role='menuitem'
+                    onClick={() => { setPeriodOpen(false); onPeriodChange(o.value, resolvePeriodRange(o.value)); }}
+                    className='w-full text-left px-3 py-1.5 rounded-md text-xs hover:bg-primary/10'>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Limpar filtros: SEMPRE visível, desabilitado sem filtro ativo */}
         <button type='button' onClick={onClear} disabled={!hasActive}
@@ -171,8 +178,8 @@ export function TalkXFilterBar({
               {fd.label}: {label} <X className='w-3 h-3' />
             </button>
           ))}
-          {periodAtivo && (
-            <button type='button' onClick={() => onPeriodChange?.(null, null)}
+          {periodAtivo && onPeriodChange && (
+            <button type='button' onClick={() => onPeriodChange(null, null)}
               className='inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-3xs'>
               {periodLabel} <X className='w-3 h-3' />
             </button>

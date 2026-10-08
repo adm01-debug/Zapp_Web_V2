@@ -7,6 +7,14 @@ import { callGmailFunction } from '../gmail/gmailApi';
 import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
 import { normalizeEmailBase64 } from '@/lib/emailAttachments';
 import { chunkEmailIds, collectEmailPages } from '@/lib/emailPagination';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
+import {
+  EMAIL_THREAD_DEFAULT_FILTERS, emailThreadPageCount, emailThreadPageRange, emailThreadQueryDescriptor,
+  emailThreadSearchOr, emailThreadSelectColumns, escapeLikeWildcards, type EmailThreadListQuery,
+} from '@/lib/emailThreadQuery';
+
+export { EMAIL_THREAD_DEFAULT_FILTERS, EMAIL_THREAD_PAGE_SIZE } from '@/lib/emailThreadQuery';
+export type { EmailThreadListFilters, EmailThreadListQuery, EmailThreadStateFilter, EmailThreadPeriodFilter } from '@/lib/emailThreadQuery';
 
 // Re-export types
 export type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
@@ -17,6 +25,13 @@ import type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLab
 // (R2-COM-001: EmailChatThread re-emitia o contexto e alimentava o ciclo de atualização do painel).
 const EMPTY_MESSAGES: EmailMessage[] = [];
 const EMPTY_ATTACHMENTS: EmailAttachment[] = [];
+
+/**
+ * OTH-005: o caminho padrão da lista busca UMA página no servidor. O consumidor legado
+ * que ainda precisa do conjunto inteiro em memória pede `full: true` (GmailInboxView).
+ */
+const DEFAULT_THREAD_LIST_QUERY: EmailThreadListQuery = { ...EMAIL_THREAD_DEFAULT_FILTERS, page: 1 };
+const EMPTY_THREAD_PAGE: { rows: EmailThread[]; total: number | null } = { rows: [], total: null };
 
 /**
  * Origin view for the OAuth return trip. The canonical URL is ?view=<id>; the
@@ -31,7 +46,7 @@ function getOAuthReturnView(): string {
   return 'integrations';
 }
 
-export function useGmail(accountId?: string, requestedThreadId?: string | null) {
+export function useGmail(accountId?: string, requestedThreadId?: string | null, listQuery?: EmailThreadListQuery) {
   const queryClient = useQueryClient();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
 
@@ -81,49 +96,106 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-accounts'] }); invalidateThreadData(); toast.success('Gmail desconectado'); },
   });
 
-  const { data: threads = [], isLoading: threadsLoading, error: threadsError, refetch: refetchThreads } = useQuery({
-    queryKey: ['gmail-threads', activeAccount?.id],
+  const effectiveListQuery = listQuery ?? DEFAULT_THREAD_LIST_QUERY;
+
+  const { data: threadPage = EMPTY_THREAD_PAGE, isLoading: threadsLoading, error: threadsError, refetch: refetchThreads } = useQuery({
+    queryKey: ['gmail-threads', activeAccount?.id, effectiveListQuery],
     queryFn: async () => {
-      if (!activeAccount) return [];
-      const rows = await collectEmailPages<EmailThread>(async (from, to) => {
-        const { data, error } = await supabase
-          .from('email_threads')
-          .select('*, contact:contacts(id, name, email, avatar_url, phone, company, job_title, tags)')
-          .eq('gmail_account_id', activeAccount.id)
-          .order('last_message_at', { ascending: false })
-          .order('id', { ascending: false })
-          .range(from, to);
-        if (error) throw error;
-        return (data || []) as EmailThread[];
-      });
-      if (rows.length === 0) return rows;
+      if (!activeAccount) return EMPTY_THREAD_PAGE;
+
+      // Caminho legado (opt-in): o consumidor enxerga o conjunto completo e filtra em
+      // memória. Mantido só para telas que ainda não migraram para a página do servidor.
+      if (effectiveListQuery.full) {
+        const rows = await collectEmailPages<EmailThread>(async (from, to) => {
+          const { data, error } = await supabase
+            .from('email_threads')
+            .select('*, contact:contacts(id, name, email, avatar_url, phone, company, job_title, tags)')
+            .eq('gmail_account_id', activeAccount.id)
+            .order('last_message_at', { ascending: false })
+            .order('id', { ascending: false })
+            .range(from, to);
+          if (error) throw error;
+          return (data || []) as EmailThread[];
+        });
+        if (rows.length === 0) return { rows, total: 0 };
+        const attachmentRows = await Promise.all(chunkEmailIds(rows.map(row => row.id)).map(async threadIds => {
+          const { data, error } = await supabase
+            .from('email_messages')
+            .select('thread_id')
+            .eq('gmail_account_id', activeAccount.id)
+            .eq('has_attachments', true)
+            .in('thread_id', threadIds);
+          if (error) throw error;
+          return data || [];
+        }));
+        const withAttachments = new Set(attachmentRows.flat().map(row => row.thread_id));
+        return { rows: rows.map(row => ({ ...row, has_attachments: withAttachments.has(row.id) })), total: rows.length };
+      }
+
+      // OTH-005: estado, pasta/marcador, período, anexos e busca vão ao servidor, antes
+      // da paginação; a resposta traz só a janela pedida e a contagem exata do filtro.
+      const descriptor = emailThreadQueryDescriptor(effectiveListQuery);
+      let query = supabase
+        .from('email_threads')
+        .select(emailThreadSelectColumns(effectiveListQuery), { count: 'exact' })
+        .eq('gmail_account_id', activeAccount.id);
+      if (descriptor.isUnread) query = query.eq('is_unread', true);
+      if (descriptor.isStarred) query = query.eq('is_starred', true);
+      if (descriptor.labelId) query = query.contains('label_ids', [descriptor.labelId]);
+      if (descriptor.since) query = query.gte('last_message_at', descriptor.since);
+      if (descriptor.hasAttachments) query = query.eq('email_messages.has_attachments', true);
+      if (descriptor.search) {
+        // O OR também casa contato pelo `contact_id` da própria thread — coluna,
+        // não join, então thread sem contato não é excluída. Os ids vêm de uma
+        // consulta à tabela de contatos com o mesmo termo saneado.
+        const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(descriptor.search)}%`);
+        const { data: contactRows, error: contactsError } = await supabase
+          .from('contacts')
+          .select('id')
+          .or(`name.ilike.${pattern},email.ilike.${pattern}`)
+          .limit(200);
+        if (contactsError) throw contactsError;
+        query = query.or(emailThreadSearchOr(descriptor.search, (contactRows ?? []).map(row => row.id)));
+      }
+      const range = emailThreadPageRange(effectiveListQuery.page);
+      const { data, error, count } = await query
+        .order('last_message_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(range.from, range.to);
+      if (error) throw error;
+      // O select é montado em runtime (o join de anexos é condicional), então o
+      // supabase-js não consegue inferir a linha: a lista de colunas é a mesma do
+      // caminho legado e o tipo é declarado aqui.
+      const rows = (data ?? []) as unknown as EmailThread[];
+      // Mesmo preenchimento do caminho `full`, restrito aos ids da página.
       const attachmentRows = await Promise.all(chunkEmailIds(rows.map(row => row.id)).map(async threadIds => {
-        const { data, error } = await supabase
+        const { data: flags, error: attachmentsError } = await supabase
           .from('email_messages')
           .select('thread_id')
           .eq('gmail_account_id', activeAccount.id)
           .eq('has_attachments', true)
           .in('thread_id', threadIds);
-        if (error) throw error;
-        return data || [];
+        if (attachmentsError) throw attachmentsError;
+        return flags || [];
       }));
       const withAttachments = new Set(attachmentRows.flat().map(row => row.thread_id));
-      return rows.map(row => ({ ...row, has_attachments: withAttachments.has(row.id) }));
+      return { rows: rows.map(row => ({ ...row, has_attachments: withAttachments.has(row.id) })), total: count ?? null };
     },
     enabled: !!activeAccount,
   });
+  const threads = threadPage.rows;
 
   const { data: exactThreadCounts } = useQuery({
     queryKey: ['gmail-thread-counts', activeAccount?.id],
     queryFn: async () => {
-      if (!activeAccount) return { total: 0, unread: 0 };
-      const [totalResult, unreadResult] = await Promise.all([
-        supabase.from('email_threads').select('id', { count: 'exact', head: true }).eq('gmail_account_id', activeAccount.id),
-        supabase.from('email_threads').select('id', { count: 'exact', head: true }).eq('gmail_account_id', activeAccount.id).eq('is_unread', true),
-      ]);
-      if (totalResult.error) throw totalResult.error;
+      if (!activeAccount) return { unread: 0 };
+      const unreadResult = await supabase
+        .from('email_threads')
+        .select('id', { count: 'exact', head: true })
+        .eq('gmail_account_id', activeAccount.id)
+        .eq('is_unread', true);
       if (unreadResult.error) throw unreadResult.error;
-      return { total: totalResult.count ?? null, unread: unreadResult.count ?? null };
+      return { unread: unreadResult.count ?? null };
     },
     enabled: !!activeAccount,
   });
@@ -374,7 +446,8 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null) 
     threadMessages, messagesLoading, messagesError, refetchMessages, threadAttachments, labels,
     syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, trashThread, modifyLabels, modifyThreadLabels, saveDraft, deleteDraft, downloadAttachment, getAttachmentContent,
     subscribeToThreads,
-    threadsTotalCount: exactThreadCounts?.total ?? threads.length,
+    threadsTotalCount: threadPage.total ?? threads.length,
+    threadsPageCount: emailThreadPageCount(threadPage.total),
     unreadCount: exactThreadCounts?.unread ?? threads.filter(t => t.is_unread).length,
     starredCount: threads.filter(t => t.is_starred).length,
   };

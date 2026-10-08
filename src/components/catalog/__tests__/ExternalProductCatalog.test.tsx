@@ -9,8 +9,10 @@
  * a janela renderizada): ExternalProductCatalog.virtualizacao.test.tsx.
  */
 import { toastError } from './catalogMocks';
+import { useState } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { toast } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductCatalog } from '../ExternalProductCatalog';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
@@ -35,6 +37,7 @@ vi.mock('../CatalogProductCard', () => ({
     sizes,
     isFavorite,
     onToggleFavorite,
+    onToggleSelect,
   }: {
     product: ExternalProduct;
     onSend?: (p: ExternalProduct) => void;
@@ -43,6 +46,7 @@ vi.mock('../CatalogProductCard', () => ({
     sizes?: string;
     isFavorite?: boolean;
     onToggleFavorite?: (id: string) => void;
+    onToggleSelect?: (id: string) => void;
   }) => (
     <div
       data-testid={`card-${product.id}`}
@@ -54,6 +58,9 @@ vi.mock('../CatalogProductCard', () => ({
       <span>{product.name}</span>
       <button type="button" onClick={() => onSend?.(product)}>Enviar</button>
       <button type="button" onClick={() => onToggleFavorite?.(product.id)}>Favoritar</button>
+      {onToggleSelect && (
+        <button type="button" onClick={() => onToggleSelect(product.id)}>Sel</button>
+      )}
     </div>
   ),
   CatalogProductCardSkeleton: ({ mode }: { mode?: string }) => (
@@ -119,6 +126,7 @@ beforeEach(() => {
   mockCatalog.mockReset();
   mockFavorites.mockReset();
   toastError.mockReset();
+  vi.mocked(toast.success).mockClear();
   mockCatalog.mockReturnValue(baseCatalog());
   mockFavorites.mockReturnValue({
     favorites: [FAVORITE],
@@ -456,5 +464,103 @@ describe('ExternalProductCatalog — CT-25 (favoritar pelo card)', () => {
     expect(toggle).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'p9', name: 'Caneca Favorita', sku: 'SKU-P9' })
     );
+  });
+
+  // R2-MOD-009 — voltar para a 1ª página não consultava nada: o efeito de
+  // paginação só buscava com `page > 0`, então o rótulo ia para 1 e os produtos
+  // da página anterior ficavam na tela.
+  it('R2-MOD-009: voltar para a 1ª página emite a consulta (offset 0) e devolve os produtos da 1ª', async () => {
+    const TOTAL = 60;
+    const emitidos: number[] = [];
+    const fetchCategories = vi.fn();
+    const fetchSuppliers = vi.fn();
+    // Hook "com servidor": a página exibida é a que o próprio componente
+    // consultou (offset do último fetchProducts) — assim os cards provam a
+    // consulta, não só o número mostrado.
+    mockCatalog.mockImplementation(() => {
+      const [params, setParams] = useState<Record<string, unknown> | null>(null);
+      const fetchProducts = (p: Record<string, unknown> = {}) => {
+        emitidos.push(Number(p.offset ?? 0));
+        setParams(p);
+      };
+      const offset = Number(params?.offset ?? 0);
+      const limit = Number(params?.limit ?? 24);
+      const products = Array.from(
+        { length: Math.max(0, Math.min(limit, TOTAL - offset)) },
+        (_, i) => product(`p${offset + i + 1}`, `Produto ${offset + i + 1}`)
+      );
+      return {
+        ...baseCatalog(),
+        products,
+        totalProducts: TOTAL,
+        fetchProducts,
+        fetchCategories,
+        fetchSuppliers,
+      };
+    });
+
+    renderCatalog();
+    // assenta o debounce do mount (300ms) antes de navegar
+    await new Promise((r) => setTimeout(r, 350));
+    expect(screen.getByTestId('card-p1')).toBeInTheDocument();
+    expect(screen.queryByTestId('card-p25')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Próxima página'));
+    expect(await screen.findByTestId('card-p25')).toBeInTheDocument();
+    expect(screen.queryByTestId('card-p1')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Página anterior'));
+    // volta para a 1ª: busca de novo e mostra os mesmos ids do começo
+    expect(await screen.findByTestId('card-p1')).toBeInTheDocument();
+    expect(screen.queryByTestId('card-p25')).not.toBeInTheDocument();
+    // a consulta de retorno saiu: 2ª página (offset 24) e, depois, a 1ª (0)
+    expect(emitidos.slice(-2)).toEqual([24, 0]);
+  });
+});
+
+describe('ExternalProductCatalog — CT-28/R2-MOD-043 (favoritar em lote)', () => {
+  /** Seleciona os dois produtos da página e devolve o botão "Favoritar N". */
+  const selecionarEPreparar = () => {
+    renderCatalog();
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Sel' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Sel' })[1]);
+    return screen.getByRole('button', { name: 'Favoritar 2' });
+  };
+
+  it('só anuncia o sucesso depois de a escrita confirmar', async () => {
+    const pending: Array<(ok: boolean) => void> = [];
+    const toggle = vi.fn(() => new Promise<boolean>((resolve) => { pending.push(resolve); }));
+    mockFavorites.mockReturnValue({
+      favorites: [], favoriteIds: new Set<string>(), isFavorite: () => false,
+      isLoading: false, toggle,
+    });
+
+    fireEvent.click(selecionarEPreparar());
+
+    // Escrita ainda pendente: nada de confirmação na tela.
+    expect(toggle).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
+
+    await act(async () => { pending.forEach((resolve) => resolve(true)); });
+
+    await waitFor(() =>
+      expect(vi.mocked(toast.success)).toHaveBeenCalledWith('2 produto(s) adicionado(s) aos favoritos'),
+    );
+  });
+
+  it('avisa quando a persistência falha, em vez de confirmar', async () => {
+    const toggle = vi.fn().mockResolvedValue(false);
+    mockFavorites.mockReturnValue({
+      favorites: [], favoriteIds: new Set<string>(), isFavorite: () => false,
+      isLoading: false, toggle,
+    });
+
+    fireEvent.click(selecionarEPreparar());
+
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith('2 produto(s) não foram salvos nos favoritos. Tente novamente.'),
+    );
+    expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
   });
 });

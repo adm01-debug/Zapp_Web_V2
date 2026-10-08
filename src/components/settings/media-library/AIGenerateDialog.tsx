@@ -19,14 +19,19 @@ export function AIGenerateDialog({ open, onOpenChange, onSaved }: { open: boolea
   const [generating, setGenerating] = useState(false);
   const [genPreviewUrl, setGenPreviewUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // #409 — geração em voo: o bilhete sobe a cada fechamento do diálogo, e a resposta
+  // que chega depois disso é descartada (não cria jogador nem inicia reprodução).
+  const generationTokenRef = useRef(0);
 
   const handleGenerate = async () => {
     if (!genPrompt.trim()) return;
+    const generationToken = generationTokenRef.current;
     setGenerating(true); setGenPreviewUrl(null);
     try {
       const { data, error } = await supabase.functions.invoke('elevenlabs-sfx', { body: { prompt: genPrompt, duration: genDuration, mode: genMode } });
       if (error || data?.error) throw new Error(data?.error || 'Generation failed');
       if (!data?.audioContent) throw new Error('Resposta sem conteúdo de áudio');
+      if (generationToken !== generationTokenRef.current) return;
       const audioUrl = `data:audio/mpeg;base64,${data.audioContent}`;
       setGenPreviewUrl(audioUrl);
       audioRef.current?.pause();
@@ -60,7 +65,7 @@ export function AIGenerateDialog({ open, onOpenChange, onSaved }: { open: boolea
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) { audioRef.current?.pause(); setGenPreviewUrl(null); } }}>
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) { generationTokenRef.current += 1; audioRef.current?.pause(); setGenPreviewUrl(null); } }}>
       <DialogContent aria-describedby={undefined} className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />Gerar Áudio com IA</DialogTitle>

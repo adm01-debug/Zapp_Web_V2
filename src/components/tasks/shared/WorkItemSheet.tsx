@@ -31,27 +31,16 @@ import { Calendar } from '@/components/ui/calendar';
 import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 import { useNarrowViewport } from './pointerMedia';
+import { comporLocal, diaLocal, horaLocal, mesmoInstante } from './localDateTime';
 import type { Priority, WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 
 /** Abaixo de `md` o Sheet desce para a base (etapa 23) — mesmo corte do quadro. */
 const PRIORIDADES: Priority[] = ['low', 'medium', 'high', 'urgent'];
 
-/** `yyyy-MM-dd` de um ISO, sem sofrer com fuso. */
-function diaLocal(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function horaLocal(iso: string): string {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
-
 /** Sem hora escolhida, o prazo vale o dia inteiro (convenção do módulo). */
 function compor(dia: string | null, hora: string): string | null {
-  if (!dia) return null;
-  return `${dia}T${hora || '23:59'}:00`;
+  return dia ? comporLocal(dia, hora) : null;
 }
 
 /**
@@ -159,8 +148,8 @@ function Formulario({
       (contactId || null) !== item.contact_id ||
       status !== item.status ||
       (motivo || null) !== (item.waiting_reason ?? null) ||
-      due !== (item.due_date ?? null) ||
-      remind !== (item.remind_at ?? null)
+      !mesmoInstante(due, item.due_date) ||
+      !mesmoInstante(remind, item.remind_at)
     );
   }, [
     title, description, prioridade, contactId, status, motivo,
@@ -196,8 +185,8 @@ function Formulario({
     if (prioridade !== item.priority) patch.priority = prioridade;
     if ((contactId || null) !== item.contact_id) patch.contactId = contactId || null;
     if (motivoObrigatorio && (motivo || null) !== (item.waiting_reason ?? null)) patch.waitingReason = motivo.trim();
-    if (due !== (item.due_date ?? null)) patch.dueDate = due;
-    if (remind !== (item.remind_at ?? null)) patch.remindAt = remind;
+    if (!mesmoInstante(due, item.due_date)) patch.dueDate = due;
+    if (!mesmoInstante(remind, item.remind_at)) patch.remindAt = remind;
     if (Object.keys(patch).length > 0) onSave(item, patch);
 
     onOpenChange(false);

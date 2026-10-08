@@ -421,6 +421,9 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           interactiveSendUnavailableReason={handlers.interactiveSendUnavailableReason}
           onForwardToTargets={handlers.handleForwardToTargets} onSendLocation={handlers.handleSendLocation}
           onSetInputValue={handlers.setInputValue}
+          // R2-INB-018: Ctrl+K abre a busca global dentro do chat; selecionar um
+          // resultado tem de abrir a conversa dele (mesmo contrato do cabeçalho).
+          onSelectConversation={onSelectPinned}
         />
       </div>
 

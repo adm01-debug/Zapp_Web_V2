@@ -192,6 +192,44 @@ describe('Tarefas — componentes dos três modos', () => {
     cleanup();
   });
 
+  it('#423: no Quadro FILTRADO o onMove leva o índice já traduzido para a coluna completa', () => {
+    cleanup();
+    const onMove = vi.fn();
+    const oculto = item({ id: 'oculto', status: 'todo',  priority: 'low',    position: 0 });
+    const a      = item({ id: 'A',      status: 'todo',  priority: 'urgent', position: 1 });
+    const b      = item({ id: 'B',      status: 'todo',  priority: 'urgent', position: 2 });
+    const x      = item({ id: 'X',      status: 'doing', priority: 'urgent', position: 0 });
+
+    render(
+      <TooltipProvider>
+        <TasksBoardMode
+          // Visível: [A, B] — o `oculto` (prioridade baixa) caiu no recorte do filtro.
+          byStatus={{ ...byStatusVazio, todo: [a, b], doing: [x] }}
+          byStatusFull={{ ...byStatusVazio, todo: [oculto, a, b], doing: [x] }}
+          isLoading={false}
+          onMove={onMove}
+          onReorder={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={vi.fn()}
+          onCreate={vi.fn()}
+        />
+      </TooltipProvider>
+    );
+
+    expect(dnd.onDragEnd).toBeTypeOf('function');
+    dnd.onDragEnd?.({
+      draggableId: 'X',
+      source: { droppableId: 'doing', index: 0 },
+      // Solto ENTRE A e B: índice 1 no recorte visível.
+      destination: { droppableId: 'todo', index: 1 },
+    });
+
+    // O Quadro repassa o índice JÁ traduzido (2 = entre A e B na coluna completa),
+    // que é o que o hook usa para persistir a ordem real.
+    expect(onMove).toHaveBeenCalledWith(x, 'todo', { index: 2 });
+    cleanup();
+  });
+
   it('a ordem das colunas do Quadro e a contratada (não pode mudar em silêncio)', () => {
     cleanup();
     render(

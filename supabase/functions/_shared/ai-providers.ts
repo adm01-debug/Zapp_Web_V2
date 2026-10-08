@@ -7,11 +7,15 @@
  * autenticação são decididos pelo servidor e não podem ser sobrescritos.
  *
  * IA-040: `callLovableAI`, `callOpenAICompatible` e `callCustomWebhook` aceitam
- * `options.timeoutMs` opcional (AbortController, timer limpo no `finally`). Sem
- * `timeoutMs` nada muda para os consumidores atuais — nenhum timer é criado e
- * nenhum `signal` novo chega ao fetch. Com `timeoutMs`, o estouro vira
- * AbortError (erro de rede/abort reconhecível), nunca uma resposta de outro
- * serviço.
+ * `options.timeoutMs` opcional (AbortController). Sem `timeoutMs` nada muda
+ * para os consumidores atuais — nenhum timer é criado e nenhum `signal` novo
+ * chega ao fetch. Com `timeoutMs`, o estouro vira AbortError (erro de
+ * rede/abort reconhecível), nunca uma resposta de outro serviço.
+ *
+ * IA-TIMEOUT-001: o prazo cobre a requisição INTEIRA — headers E corpo. O
+ * timer só desarma quando a leitura do corpo termina (fim, erro ou
+ * cancelamento), porque desarmar na chegada dos headers deixava um corpo
+ * travado pendurar a chamada para sempre.
  *
  * IA-041/IA-042: `classifyFailure` diz se a falha é transitória, permanente ou
  * de estado desconhecido, e `withRetry` só retenta a transitória (5xx, 408, 429,
@@ -22,6 +26,46 @@
 
 import { filterConfigBody, filterExtraBody, filterHeaders } from "./ai-routing.ts";
 import { secureRandomFloat } from "./secure-random.ts";
+
+/**
+ * IA-TIMEOUT-001 — prazo do provedor tem de cobrir a leitura do corpo.
+ *
+ * Embrulha o corpo da resposta para que `desarmar` (o clearTimeout do prazo)
+ * só rode quando a leitura termina: no `done`, no erro ou no cancelamento.
+ * Enquanto o corpo está sendo lido, o timer continua armado — e como o abort
+ * do fetch derruba a leitura do corpo, um corpo travado estoura dentro do
+ * orçamento em vez de pendurar a requisição.
+ */
+function comPrazoAteOCorpo(response: Response, desarmar: () => void): Response {
+  const corpo = response.body;
+  // Sem corpo (204/304) nada a ler: desarma já.
+  if (corpo === null || response.status === 204 || response.status === 205 || response.status === 304) {
+    desarmar();
+    return response;
+  }
+  const leitor = corpo.getReader();
+  const embrulhado = new ReadableStream<Uint8Array>({
+    async pull(controlador) {
+      try {
+        const { done, value } = await leitor.read();
+        if (done) { desarmar(); controlador.close(); return; }
+        controlador.enqueue(value);
+      } catch (erro) {
+        desarmar();
+        controlador.error(erro);
+      }
+    },
+    async cancel(motivo) {
+      desarmar();
+      try { await leitor.cancel(motivo); } catch { /* já encerrado */ }
+    },
+  });
+  return new Response(embrulhado, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers,
+  });
+}
 
 export async function callLovableAI(params: {
   messages: Array<{ role: string; content: unknown }>;
@@ -49,7 +93,7 @@ export async function callLovableAI(params: {
     : null;
 
   try {
-    return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${params.apiKey}`,
@@ -58,8 +102,13 @@ export async function callLovableAI(params: {
       body: JSON.stringify(body),
       ...(timer !== null ? { signal: controller.signal } : {}),
     });
-  } finally {
+    // Sem `timeoutMs` não há timer nem embrulho: a resposta vai como chegou.
+    if (timer === null) return response;
+    // O prazo NÃO é desarmado aqui: quem o desarma é o fim do corpo.
+    return comPrazoAteOCorpo(response, () => { clearTimeout(timer); });
+  } catch (erro) {
     if (timer !== null) clearTimeout(timer);
+    throw erro;
   }
 }
 
@@ -105,14 +154,17 @@ export async function callOpenAICompatible(params: {
     : null;
 
   try {
-    return await fetch(params.endpoint, {
+    const response = await fetch(params.endpoint, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
       ...(timer !== null ? { signal: controller.signal } : {}),
     });
-  } finally {
+    if (timer === null) return response;
+    return comPrazoAteOCorpo(response, () => { clearTimeout(timer); });
+  } catch (erro) {
     if (timer !== null) clearTimeout(timer);
+    throw erro;
   }
 }
 
@@ -146,7 +198,7 @@ export async function callCustomWebhook(params: {
     : null;
 
   try {
-    return await fetch(params.endpoint, {
+    const response = await fetch(params.endpoint, {
       method: "POST",
       headers,
       // extra_body filtrado entra primeiro e `messages` do código por último:
@@ -157,8 +209,11 @@ export async function callCustomWebhook(params: {
       }),
       ...(timer !== null ? { signal: controller.signal } : {}),
     });
-  } finally {
+    if (timer === null) return response;
+    return comPrazoAteOCorpo(response, () => { clearTimeout(timer); });
+  } catch (erro) {
     if (timer !== null) clearTimeout(timer);
+    throw erro;
   }
 }
 

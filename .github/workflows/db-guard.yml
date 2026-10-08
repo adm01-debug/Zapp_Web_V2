@@ -302,6 +302,14 @@ jobs:
           NOTIFY_DUE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notify-due-tasks-authorization.test.sh
 
+      # Item 265 (R2-AUTH-041): a consulta de custo do painel de IA recebia fim
+      # nulo (janela aberta) e `created_at < NULL` eliminava todas as chamadas —
+      # o relatório zerava enquanto o resumo de tokens mostrava os registros.
+      - name: Simular janela aberta (fim nulo) na consulta de custo de IA (item 265)
+        env:
+          AI_USAGE_COST_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-usage-cost-window-open.test.sh
+
       # DASH-ACCEPTANCE-001: as suítes supabase/tests/*.sql rodam como
       # service_role (BYPASSRLS) — nunca provam enforcement. Aqui as RPCs do
       # Dashboard rodam sob roles reais anon/authenticated (sem BYPASSRLS) com
@@ -343,6 +351,19 @@ jobs:
         env:
           ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh
+
+      # R2-DB-009 (cartao t_94758927): no marco de mensagens (10/50/100/500/1000) o trigger de
+      # gamificacao chamava grant_agent_achievement com tipo reservado e o RAISE derrubava o
+      # enqueue inteiro (mensagem nao gravada, agent_stats revertido) para todo agente comum.
+      # O passo extrai os corpos reais de enqueue_outbound_message, grant_agent_achievement e
+      # handle_message_gamification dos arquivos versionados, executa a RPC com o JWT do agente
+      # em PostgreSQL 17 descartavel e prova: defeito antes da migration, envio + conquista
+      # depois dela, fronteira do RPC publico preservada, rotina interna fora do alcance do
+      # cliente e falha de gamificacao sem bloquear atendimento.
+      - name: Simular gamificacao de marco no enfileiramento (R2-DB-009)
+        env:
+          GAMIFICATION_MARCO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh
 
       - name: Simular vinculo de time na reacao em mensagem (#1265)
         env:
@@ -506,6 +527,16 @@ jobs:
       # runner, a prova roda contra a edge e o Singu reais.
       - name: Provar escopo da audiencia Multiplix (F24)
         run: bash scripts/db-audit/multiplix-scope.test.sh
+
+      # R2-DB-003 (cartao t_c1431127): executa multiplix_resolve_recipients de
+      # verdade em PostgreSQL 17 descartavel — a funcao e extraida verbatim do
+      # arquivo versionado em _foreign/singu e as linhas fora do escopo/
+      # inativas precisam sair so com company_id + elegibilidade (metadados
+      # NULL). Empresa elegivel sai inteira.
+      - name: Simular redacao fora do escopo do resolve Multiplix (R2-DB-003)
+        env:
+          MULTIPLIX_RESOLVE_ESCOPO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-resolve-escopo.test.sh
 
       - name: Simular estados e audiencia canônicos do Talk X
         env:
@@ -676,6 +707,17 @@ jobs:
           TALKX_MDB01_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-tick-expurgo.test.sh
 
+      # #130 (R3-DELTA-015): o expurgo LGPD do Talk X apagava ai_jobs de outros modulos.
+      # ai_jobs e a fila DURAVEL COMPARTILHADA (IA-045): a IA enfileira 'ai.generate' e o
+      # inbox (message-delivery) enfileira 'reconcile:message.send:<id>'. O passo 4 do
+      # expurgo passa a exigir o namespace do Talk X ('reconcile:talkx.%'); os jobs dos
+      # outros modulos ficam intactos e o job terminal vencido do proprio Talk X continua
+      # saindo. Harness RED→GREEN em PostgreSQL 17 descartavel (inclui rollback e ACL).
+      - name: Provar que o expurgo nao apaga ai_jobs de outros modulos (#130)
+        env:
+          TALKX_ESCOPO_AI_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-expurgo-escopo-ai-jobs.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
@@ -779,6 +821,15 @@ jobs:
         env:
           TEAM_MEMBERSHIP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-membership-bootstrap-owner.test.sh
+
+      # TC-005 / R2-AUTH-017 (item 56): o unico caminho de LEITURA do WhatsApp de departamento era
+      # service_role-only e devolvia a chave em claro; a escrita nao auditava. Bloco A prova o
+      # defeito, o bloco B prova a leitura segura (admin/supervisor, 3 colunas, sem chave), a
+      # negacao explicita ao agente e a auditoria sem segredo, e o bloco C executa o rollback real.
+      - name: Simular contrato de seguranca do WhatsApp de departamento (TC-005)
+        env:
+          TC005_WHATSAPP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh
 
       # E76 (plano MAPA Fase 7), ajuste (b) da decisao 20261002-063721: o contrato da
       # RPC `search_contacts` (8 campos de endereco, ACL sem anon/PUBLIC e trigger de

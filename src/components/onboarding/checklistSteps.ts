@@ -115,7 +115,10 @@ export const CHECKLIST_STEPS: ChecklistStep[] = [
         .select('theme')
         .eq('user_id', user.id)
         .maybeSingle();
-      return data?.theme !== null && data?.theme !== 'system';
+      // Sem configuração devolvida pela consulta (`data === null`), `data?.theme`
+      // é `undefined`: comparar só com `!== null` marcava o passo como concluído
+      // sem o usuário ter escolhido tema. Exige um tema de fato definido.
+      return !!data?.theme && data.theme !== 'system';
     }
   },
 ];

@@ -29,14 +29,14 @@
 #      spoof de p_agent por JWT não privilegiado; conciliação com verdade de
 #      base; edge cases da E44 (0 linhas, outlier p50/p90, virada de dia SP).
 #
-# GAP CONHECIDO (fora do escopo deste cartão, rastreado em
-# DASH-SQL-REGRESSION-001): a definição vigente de dashboard_contact_counts
-# (migration 20260930400000) perdeu a trava estrita de p_agent da E33 — spoof
-# retorna os dados do ALVO limitados pela RLS, em vez dos dados do próprio
-# chamador. As asserções C6-C8 provam o que a fronteira continua garantindo
-# (nada além do escopo RLS do chamador) e emitem [GAP-CONHECIDO] enquanto a
-# trava estrita não for restaurada; quem corrigir a RPC deve endurecer essas
-# asserções para o contrato estrito (spoof == próprio).
+# DASH-SQL-REGRESSION-001 CORRIGIDO (migration
+# 20261006064630_dashboard_contact_counts_restaura_trava_e33): a definição vigente
+# de dashboard_contact_counts tinha perdido a trava estrita de p_agent da E33 —
+# spoof retornava os dados do ALVO limitados pela RLS, em vez dos dados do próprio
+# chamador. A trava foi restaurada e as asserções C6/C7/C9 passaram a exigir o
+# contrato ESTRITO (spoof == próprio), o mesmo já cobrado de dashboard_kpi (C2) e
+# dashboard_hourly_volume (C5); o C8 preserva a prova do filtro `deleted_at IS NULL`.
+# Não há mais [GAP-CONHECIDO] neste arquivo.
 
 set -Eeuo pipefail
 
@@ -97,7 +97,8 @@ for f in \
   20260926100302_dashboard_revoke_public_execute_rpcs.sql \
   20260927120000_dashboard_kpi_p_since_default_null_guard.sql \
   20260930400000_dashboard_contact_counts_filter_deleted_at.sql \
-  20261003272707_reconcile_local_replay_with_canonical.sql; do
+  20261003272707_reconcile_local_replay_with_canonical.sql \
+  20261006064630_dashboard_contact_counts_restaura_trava_e33.sql; do
   [[ -f "$migrations_dir/$f" ]] || fail "migration nao encontrada: $f"
 done
 
@@ -163,7 +164,7 @@ assert_last_definer 'RPC dashboard_hourly_volume' \
   '20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.dashboard_hourly_volume|ALTER FUNCTION[^;]*public\.dashboard_hourly_volume|DROP FUNCTION[^;]*public\.dashboard_hourly_volume)'
 assert_last_definer 'RPC dashboard_contact_counts' \
-  '20260930400000_dashboard_contact_counts_filter_deleted_at.sql' \
+  '20261006064630_dashboard_contact_counts_restaura_trava_e33.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.dashboard_contact_counts|ALTER FUNCTION[^;]*public\.dashboard_contact_counts|DROP FUNCTION[^;]*public\.dashboard_contact_counts)'
 
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
@@ -411,7 +412,8 @@ for f in \
   20260925172511_dashboard_fase4_filters_e31_e32_e33.sql \
   20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql \
   20260927120000_dashboard_kpi_p_since_default_null_guard.sql \
-  20260930400000_dashboard_contact_counts_filter_deleted_at.sql; do
+  20260930400000_dashboard_contact_counts_filter_deleted_at.sql \
+  20261006064630_dashboard_contact_counts_restaura_trava_e33.sql; do
   psql_file "$migrations_dir/$f" || fail "falha ao aplicar $f"
 done
 
@@ -599,21 +601,26 @@ expect_value 'C4 hourly de agent conta só mensagens dos próprios contatos (5 h
 expect_value 'C5 trava E33 do hourly: spoof de p_agent devolve o próprio volume' 't' \
   "$(agent "SELECT coalesce(sum(message_count),0) = 8 FROM public.dashboard_hourly_volume(8, NULL, '$PERFIL_B');")"
 
-# contact_counts: a trava estrita E33 foi perdida na migration 20260930400000
-# (DASH-SQL-REGRESSION-001). O que a fronteira continua exigindo — e o que este
-# bloco prova — é que spoof de p_agent NUNCA produz contagem fora do escopo RLS
-# do chamador. Ao corrigir a RPC, endurecer para o contrato estrito
-# (resultado == chamada com o próprio perfil).
-expect_value 'C6 counts: spoof p_agent=B nunca sai do escopo RLS do chamador (só o contato compartilhado)' '1' \
-  "$(agent "SELECT (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, '$PERFIL_B') ->> 'total');")"
-expect_value 'C7 counts: spoof p_agent=C (tudo invisível) não revela nada' '0' \
-  "$(agent "SELECT (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, '$PERFIL_C') ->> 'total');")"
-expect_value 'C8 counts: total do agent reconcilia com o escopo RLS, acima do cap de 1000' '1205' \
+# contact_counts: a trava estrita E33 foi RESTAURADA pela migration
+# 20261006064630_dashboard_contact_counts_restaura_trava_e33 (DASH-SQL-REGRESSION-001).
+# O contrato agora é ESTRITO, igual ao de dashboard_kpi/dashboard_hourly_volume:
+# para chamador não privilegiado o p_agent recebido é IGNORADO (o agente efetivo é
+# resolvido por get_profile_id_for_user(auth.uid())), então o spoof devolve os dados
+# do PRÓPRIO chamador. C8/C11 continuam provando que o filtro `deleted_at IS NULL`
+# do #1371 segue valendo: A tem 1204 contatos atribuídos no escopo RLS (um deles
+# soft-deletado) e a RPC devolve 1203.
+expect_value 'C6 counts trava E33: spoof de p_agent=B devolve os dados do próprio chamador' 't' \
+  "$(agent "SELECT (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, '$PERFIL_B') ->> 'total') = (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, '$PERFIL_A') ->> 'total');")"
+expect_value 'C7 counts trava E33: spoof de p_agent=C (tudo invisível a A) devolve os dados do próprio chamador' 't' \
+  "$(agent "SELECT (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, '$PERFIL_C') ->> 'total') = (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, NULL) ->> 'total');")"
+expect_value 'C8 counts: total do agent são os contatos DELE (1204 atribuídos no escopo RLS menos 1 soft-deletado = 1203), acima do cap de 1000' '1203' \
   "$(agent "SELECT (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, NULL) ->> 'total');")"
-
-if [[ "$(psql_sql "$(agent "SELECT (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, '$PERFIL_B') ->> 'total') <> (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, '$PERFIL_A') ->> 'total');")" | tail -n1)" == 't' ]]; then
-  printf '[GAP-CONHECIDO] DASH-SQL-REGRESSION-001: dashboard_contact_counts sem a trava estrita E33 (spoof não devolve os dados do próprio chamador); escopo segue limitado por RLS — ver C6-C8.\n'
-fi
+expect_value 'C9 counts trava E33: total com spoof de p_agent=B continua sendo o do próprio chamador (1203), não o de B (1)' '1203' \
+  "$(agent "SELECT (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, '$PERFIL_B') ->> 'total');")"
+expect_value 'C10 counts: admin filtrando por p_agent=B vê os contatos de B (2: 1 em Q1 e 1 em Q2)' '2' \
+  "$(admin "SELECT (public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, '$PERFIL_B') ->> 'total');")"
+expect_value 'C11 counts: o filtro deleted_at IS NULL do #1371 segue valendo (RLS vê 1204 contatos de A; a RPC devolve 1203)' '1204' \
+  "$(agent "SELECT count(*) FROM public.contacts WHERE assigned_to = '$PERFIL_A';")"
 
 echo
 echo '── BLOCO D: edge cases E44 contra o código real (DASH-091) ───────────────────'

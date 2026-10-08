@@ -48,7 +48,7 @@ export function TalkXSuppression() {
   const qc = useQueryClient();
   const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.suppression.filters', { origin: 'all', motivo: 'all' });
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [showAdd, setShowAdd] = useState(false);
   const [removing, setRemoving] = useState<BlacklistEntry | null>(null);
   const [addContactId, setAddContactId] = useState('');
@@ -201,7 +201,7 @@ export function TalkXSuppression() {
             </div>
           )}
           </TalkXQueryBoundary>
-          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={() => {}} noun="contatos suprimidos" /></div>}
+          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="contatos suprimidos" /></div>}
         </section>
       </div>
 

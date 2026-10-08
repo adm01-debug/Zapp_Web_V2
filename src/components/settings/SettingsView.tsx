@@ -131,14 +131,14 @@ export function SettingsView() {
 
         {isStaff && (
           <TabsContent value="schedule">
-            <ScheduleSettings settings={settings} updateSettings={updateSettings} toggleWorkDay={toggleWorkDay} />
+            <ScheduleSettings />
           </TabsContent>
         )}
 
         {isStaff && (
           <TabsContent value="messages">
             <div className="space-y-6">
-              <MessagesSettings settings={settings} updateSettings={updateSettings} />
+              <MessagesSettings />
               <QuickRepliesManager compact={false} />
             </div>
           </TabsContent>
@@ -146,7 +146,7 @@ export function SettingsView() {
 
         {isStaff && (
           <TabsContent value="automation">
-            <AutomationSettings settings={settings} updateSettings={updateSettings} />
+            <AutomationSettings />
           </TabsContent>
         )}
 

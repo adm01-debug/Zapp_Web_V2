@@ -16,13 +16,14 @@ Extraídas ao vivo por `pg_get_functiondef` (sessão autorizada, somente leitura
 |---|---|---|---|
 | `multiplix_search_audience` | `multiplix_search_audience.sql` | `86fc1393286a2f0783d6bf50ec3c121e` | 4417 |
 | `multiplix_count_audience` | `multiplix_count_audience.sql` | `f123d5abf1065321692def6fb355ec22` | 2128 |
-| `multiplix_resolve_recipients` | `multiplix_resolve_recipients.sql` | `4badeb626e52a38a836aa5ead50a26c6` | 4594 |
+| `multiplix_resolve_recipients` | `multiplix_resolve_recipients.sql` | `1678f438d543a16d936f060e5d955cb1`¹ | 4967 |
 | `multiplix_list_ramos` | `multiplix_list_ramos.sql` | `133d1043dd4d96fe1a186ce66cd33788` | 439 |
 | `multiplix_list_ufs` | `multiplix_list_ufs.sql` | `b7942d122f2f34b7764e8dff3141754b` | 487 |
 
-Os 5 pares **batem** (remedida em 2026-10-01, já com a migração E014/F27 aplicada). Todas são `LANGUAGE sql`/`plpgsql`, `STABLE
+Os 5 pares **batiam** na remedida de 2026-10-01 (já com a migração E014/F27 aplicada); o `resolve` voltou a
+divergir em 05/10/2026 por decisão — corpo redige fora do escopo, aplicação no Singu pendente (nota ¹). Todas são `LANGUAGE sql`/`plpgsql`, `STABLE
 SECURITY DEFINER`, com `SET search_path TO 'public'`. A coluna `bytes` é o tamanho do arquivo; o `resolve`
-tem 4496 bytes / 4495 caracteres (o corpo tem `ó` multibyte em `-- E014: telefone da empresa só vale para B2B`).
+tem 4967 bytes / 4966 caracteres (o corpo tem `ó` multibyte em `-- E014: telefone da empresa só vale para B2B`).
 Reproduzir a conferência:
 
 ```bash
@@ -148,10 +149,34 @@ do valor nos dois lados (`sha256[0:12] = 6bbab0593c38`), sem nunca imprimir o se
 função com `SET search_path TO 'public'` o nome sem qualificar **não resolve** (`42883`) — o guard cairia em
 *toda* chamada, inclusive com assinatura correta. O teste em transação pegou isso antes de ir para produção.
 
+¹ **Aplicação no Singu PENDENTE** (05/10/2026): o md5 da linha `resolve` é o do **arquivo** — o corpo mudou
+sem mudar colunas (`CREATE OR REPLACE` puro). Até o passo (3) abaixo, o banco responde com o md5 anterior
+(`4badeb626e52a38a836aa5ead50a26c6`). Ver a seção seguinte.
+
+## Redação fora do escopo (R2-DB-003, cartão t_891763fa) — versionado 05/10/2026, Singu pendente
+
+Arquivo: `20261005103000_singu_resolve_redige_fora_escopo.sql` (neste diretório).
+
+Mudança única: `public.multiplix_resolve_recipients`. Na projeção final, quando `no_escopo` é falso **ou** a
+empresa está inativa, a RPC devolve `NULL` em `contact_id`, `company_name`, `empresa_papeis` e
+`last_interaction_at` — além do que já era `NULL` (`destino_e164`, `destino_origem`). `company_id` fica (é o
+id que o próprio chamador enviou — eco, não vazamento) e `elegibilidade` continua
+`'fora_do_escopo'`/`'destino_invalido'` para a UI dizer "fora do escopo". Antes, a linha fora do escopo
+carregava todos esses metadados até o cliente.
+
+Mesma ordem do guard HMAC: (1) arquivo versionado → (2) deploy da edge `multiplix-audience` redigindo a
+linha no ramo `resolve` → (3) aplicar este arquivo no Singu → (4) `md5` de volta na tabela acima. A ordem não
+é crítica: a assinatura de entrada e o `RETURNS TABLE` não mudam, e a edge já redige por conta própria desde
+o passo (2) — se o Singu ainda estiver na versão antiga, nada vaza.
+
+**Aplicação no Singu é passo manual do dono** (este diretório não é aplicado por gate — ver a seção
+seguinte). Rollback: reaplicar a definição de `20261001160000_singu_guard_hmac_escopo.sql`, linhas 243–351
+(a `resolve` inteira; extrair com `sed -n '243,351p'`, md5 do arquivo `e826bc7a055b71d09f94d134cae37abb`).
+
 ## Por que não há migration aplicável por gate aqui
 
 Estas funções pertencem ao Singu. O ciclo de DDL deste repositório (`arquivo → PR → merge → deploy →
 apply`) não as alcança: o `hermes-db-migrar` aponta para o banco canônico do Zapp
-(`tnnnlkbymytvtqngbbqh`), não para `pgxfvjmuubtbowutlide`. Os arquivos aqui são portanto **fonte de
+(o projeto deste repositório), não para `pgxfvjmuubtbowutlide`. Os arquivos aqui são portanto **fonte de
 revisão**, não de aplicação. Quem for alterar uma delas precisa aplicar no Singu por fora e **atualizar o
 `md5` desta tabela** no mesmo PR, senão o espelho vira mentira silenciosa.

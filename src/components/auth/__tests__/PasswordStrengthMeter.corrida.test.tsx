@@ -21,6 +21,10 @@ import { PasswordStrengthMeter } from '../PasswordStrengthMeter';
  *   D)   o veredito da senha anterior some na hora ao trocar de senha;
  *   E)   falha de rede (rejeicao) ou !ok da consulta antiga nao apaga nem
  *        troca o veredito da consulta vigente.
+ *   F)   ao voltar para a MESMA senha (A -> B -> A), a consulta original
+ *        encerrada nao sobrescreve o veredito da consulta vigente;
+ *   G)   a resposta da consulta antiga nao derruba o aviso de "verificando"
+ *        da consulta vigente nem antecipa o veredito dela.
  */
 
 function sha1Upper(value: string): string {
@@ -262,5 +266,61 @@ describe('PasswordStrengthMeter — corrida entre consultas de vazamento (R2-AUT
 
     expect(onStrengthChange.mock.lastCall?.[1]).toBe(false);
     expect(screen.getByText(TXT_COMPROMETIDA)).toBeInTheDocument();
+  });
+
+  it('nao deixa a consulta original do mesmo texto sobrescrever o veredito ao voltar para a senha (A -> B -> A)', async () => {
+    const { chamadas } = mockFetchControlado();
+    const { rerender } = render(<PasswordStrengthMeter password={SENHA_A} />);
+    await esperarFetch(chamadas, 1);
+
+    rerender(<PasswordStrengthMeter password={SENHA_B} />);
+    await esperarFetch(chamadas, 2);
+
+    // Volta para SENHA_A: a consulta vigente passa a ser a TERCEIRA, mas
+    // descreve o MESMO texto da primeira. Pelo valor nao da para distinguir as
+    // duas -- so a geracao separa a consulta encerrada da vigente.
+    rerender(<PasswordStrengthMeter password={SENHA_A} />);
+    await esperarFetch(chamadas, 3);
+
+    // A consulta vigente (indice 2) responde: nao vazada.
+    await resolver(chamadas[2], respostaOk(CORPO_LIMPO));
+    expect(await screen.findByText(TXT_LIMPA)).toBeInTheDocument();
+
+    // A consulta ORIGINAL de SENHA_A (indice 0) resolve depois dizendo
+    // "vazada": mesma senha na tela, consulta encerrada -- nao pode valer.
+    await resolver(chamadas[0], respostaOk(corpoVazada(SENHA_A)));
+
+    await waitFor(() =>
+      expect(screen.queryByText(TXT_COMPROMETIDA)).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText(TXT_LIMPA)).toBeInTheDocument();
+  });
+
+  it('resposta da consulta antiga nao derruba o carregamento da consulta vigente', async () => {
+    const { chamadas } = mockFetchControlado();
+    const { rerender } = render(<PasswordStrengthMeter password={SENHA_A} />);
+    await esperarFetch(chamadas, 1);
+
+    rerender(<PasswordStrengthMeter password={SENHA_B} />);
+    await esperarFetch(chamadas, 2);
+    // A consulta vigente (B) esta em voo: o aviso de checagem tem de estar na tela.
+    expect(
+      await screen.findByText('Verificando em bancos de vazamentos...'),
+    ).toBeInTheDocument();
+
+    // A consulta antiga (A) resolve "limpa" enquanto B ainda espera: nem o
+    // aviso de checagem da vigente cai, nem o veredito dela aparece antes da hora.
+    await resolver(chamadas[0], respostaOk(CORPO_LIMPO));
+    await assentar();
+
+    expect(
+      screen.getByText('Verificando em bancos de vazamentos...'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(TXT_LIMPA)).not.toBeInTheDocument();
+    expect(screen.queryByText(TXT_COMPROMETIDA)).not.toBeInTheDocument();
+
+    // Agora sim: a consulta vigente responde com o veredito DELA.
+    await resolver(chamadas[1], respostaOk(corpoVazada(SENHA_B)));
+    expect(await screen.findByText(TXT_COMPROMETIDA)).toBeInTheDocument();
   });
 });
