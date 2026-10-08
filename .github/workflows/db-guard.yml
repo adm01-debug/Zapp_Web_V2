@@ -822,6 +822,15 @@ jobs:
           TEAM_MEMBERSHIP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-membership-bootstrap-owner.test.sh
 
+      # TC-005 / R2-AUTH-017 (item 56): o unico caminho de LEITURA do WhatsApp de departamento era
+      # service_role-only e devolvia a chave em claro; a escrita nao auditava. Bloco A prova o
+      # defeito, o bloco B prova a leitura segura (admin/supervisor, 3 colunas, sem chave), a
+      # negacao explicita ao agente e a auditoria sem segredo, e o bloco C executa o rollback real.
+      - name: Simular contrato de seguranca do WhatsApp de departamento (TC-005)
+        env:
+          TC005_WHATSAPP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh
+
       # E76 (plano MAPA Fase 7), ajuste (b) da decisao 20261002-063721: o contrato da
       # RPC `search_contacts` (8 campos de endereco, ACL sem anon/PUBLIC e trigger de
       # auditoria) vive aqui porque este workflow tem gatilho `pull_request` (linha 17) —
