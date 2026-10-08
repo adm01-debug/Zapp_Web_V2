@@ -201,8 +201,8 @@
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
-      "bytes": 16177,
-      "sha256": "b643252d4f96e2190ba928fdae7e954d1dbe9d3a41b5cb1c6088adb2c3e94e8d"
+      "bytes": 16993,
+      "sha256": "b4e864fe3178939697a5d66815f9f72b90fab965a392a4ab6bd57f35600ee26f"
     },
     {
       "path": "supabase/functions/_shared/gmail-mime.ts",
@@ -586,8 +586,8 @@
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "bytes": 13661,
-      "sha256": "9d5ee2b1e23c94667f925ca235562da75bebf1c5d972111583854207c9c32054"
+      "bytes": 13957,
+      "sha256": "f4d93ba00838ab3f516147970735d51fdd58869650a848d5192a0ec2f049184b"
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
@@ -1445,7 +1445,7 @@
       "name": "gmail-cron-sync",
       "entrypoint": "supabase/functions/gmail-cron-sync/index.ts",
       "verify_jwt": false,
-      "source_sha256": "af27c4476b1df812436d9e0a3bbfbb812cb4494751f87c0ac492a5b01345a5c2",
+      "source_sha256": "d6cf6623ad8ffab073c4064e915b2242896b4afb268ede3195244f342397536e",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1482,7 +1482,7 @@
       "name": "gmail-sync",
       "entrypoint": "supabase/functions/gmail-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "85c0f9959667ae0b139b0cdde482de032afb8ecdb5d60eb9df2f0f32918409e3",
+      "source_sha256": "0c791697bd037e1f7eab654a8e4337ef48990e4e618f1e05caf8618f59f23c72",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1494,7 +1494,7 @@
       "name": "gmail-webhook",
       "entrypoint": "supabase/functions/gmail-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "f6ebcf4e286eb39cfeeb50021ec4174985ee4d98b3f2a52e0eefa58c3ed18e69",
+      "source_sha256": "a9b0e81da775d11823aa1f86ae82d5d6c5ae25e9d9b157775ce568784e047d1f",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1908,5 +1908,5 @@
       ]
     }
   ],
-  "manifest_sha256": "a0ac5cb1c94d455ec52703d845610305ca639688f75215b4fd363ed3925eafb3"
+  "manifest_sha256": "16e34f9c21f8addb33053f134284ad0d45228a57438042d7726b2197e893a83d"
 }
