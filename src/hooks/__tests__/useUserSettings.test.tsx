@@ -135,7 +135,21 @@ describe('useUserSettings', () => {
     expect(result.current.settings.auto_assignment_method).toBe('roundrobin');
   });
 
-  it('saveSettings não grava as preferências de som (posse do useNotificationSettings)', async () => {
+  it('saveSettings não grava os campos operacionais nem as preferências de som', async () => {
+    const operationalKeys = [
+      'business_hours_enabled',
+      'business_hours_start',
+      'business_hours_end',
+      'work_days',
+      'welcome_message',
+      'away_message',
+      'closing_message',
+      'auto_assignment_enabled',
+      'auto_assignment_method',
+      'inactivity_timeout',
+      'auto_transcription_enabled',
+    ];
+
     const { result } = renderHook(() => useUserSettings());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -153,6 +167,12 @@ describe('useUserSettings', () => {
 
     const payload = mockUpsert.mock.calls[0][0] as Record<string, unknown>;
 
+    // Estes campos operacionais não pertencem mais a user_settings:
+    // Horário/Mensagens são por conexão; Automação é global.
+    for (const key of operationalKeys) {
+      expect(payload).not.toHaveProperty(key);
+    }
+
     // Estes quatro campos pertencem ao hook canônico de notificações:
     // gravar aqui sobrescreve o que ele acabou de salvar.
     expect(payload).not.toHaveProperty('sound_enabled');
@@ -163,17 +183,6 @@ describe('useUserSettings', () => {
     // Os campos próprios deste hook continuam indo, com os valores atuais.
     expect(payload).toMatchObject({
       user_id: 'u1',
-      business_hours_enabled: true,
-      business_hours_start: '09:00',
-      business_hours_end: '18:00',
-      work_days: [1, 2, 3, 4, 5],
-      welcome_message: 'Olá!',
-      away_message: 'Fora do horário',
-      closing_message: 'Obrigado!',
-      auto_assignment_enabled: true,
-      auto_assignment_method: 'roundrobin',
-      inactivity_timeout: 30,
-      auto_transcription_enabled: true,
       browser_notifications_enabled: true,
       theme: 'dark',
       language: 'pt-BR',
