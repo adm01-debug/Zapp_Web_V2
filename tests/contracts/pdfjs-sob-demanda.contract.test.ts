@@ -42,13 +42,31 @@
  *   - `*.d.ts` (declaração: nada é emitido).
  * O e2e/ e as Edge Functions ficam fora: a D03 é sobre o bundle do navegador.
  */
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { strict as assert } from 'node:assert';
+import { readdirSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
-import ts from 'typescript';
-import { describe, expect, it } from 'vitest';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = resolve(__dirname, '../..');
+const require = createRequire(import.meta.url);
+const ts = require('typescript');
+type NoTs = {
+  [chave: string]: unknown;
+  moduleSpecifier: unknown;
+  moduleReference: { expression?: unknown };
+  expression: { text?: string };
+  arguments: Array<{ text?: string }>;
+  importClause: { isTypeOnly?: boolean; name?: unknown; namedBindings?: NamedBindingsLike };
+  isTypeOnly?: boolean;
+  exportClause?: NamedBindingsLike;
+  forEachChild: (cb: (no: NoTs) => void) => void;
+  getStart: (sourceFile: unknown) => number;
+};
+type NamedBindingsLike = { elements: Array<{ isTypeOnly: boolean }> };
+type StringLiteralLike = { text: string };
+
+const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const SRC = resolve(ROOT, 'src');
 const PACOTE = 'pdfjs-dist';
 
@@ -64,15 +82,15 @@ type Achado = { linha: number; descricao: string };
  * TS/JS (string literal). O specifier é `undefined` quando o nó não declara módulo
  * (`import x from "y"` sempre declara; `export { x }` sem `from` não).
  */
-function specifierDe(no: ts.Node): string | undefined {
+function specifierDe(no: NoTs): string | undefined {
   if (ts.isImportDeclaration(no) || ts.isExportDeclaration(no)) {
     const modulo = no.moduleSpecifier;
-    if (modulo && ts.isStringLiteral(modulo)) return modulo.text;
+    if (modulo && ts.isStringLiteral(modulo)) return (modulo as StringLiteralLike).text;
     return undefined;
   }
   if (ts.isImportEqualsDeclaration(no) && ts.isExternalModuleReference(no.moduleReference)) {
     const expressao = no.moduleReference.expression;
-    if (expressao && ts.isStringLiteral(expressao)) return expressao.text;
+    if (expressao && ts.isStringLiteral(expressao)) return (expressao as StringLiteralLike).text;
   }
   return undefined;
 }
@@ -86,7 +104,7 @@ function specifierDe(no: ts.Node): string | undefined {
  * ausência do campo `.elements` — era essa a suposição implícita que deixava o namespace passar
  * como só-tipo em qualquer refatoração futura.
  */
-function soBindingsDeTipo(named: ts.NamedImportBindings | ts.NamedExports | undefined): boolean {
+function soBindingsDeTipo(named: NamedBindingsLike | undefined): boolean {
   if (named === undefined || ts.isNamespaceImport(named)) return false;
   const elementos = named.elements;
   return elementos.length > 0 && elementos.every((elemento) => elemento.isTypeOnly);
@@ -102,11 +120,11 @@ function cargasEstaticasDePdfjs(fonte: string, nomeDoArquivo = 'arquivo.ts'): Ac
   const arquivo = ts.createSourceFile(nomeDoArquivo, fonte, ts.ScriptTarget.Latest, true, scriptKind);
   const achados: Achado[] = [];
 
-  const anotar = (no: ts.Node, descricao: string) => {
+  const anotar = (no: NoTs, descricao: string) => {
     achados.push({ linha: arquivo.getLineAndCharacterOfPosition(no.getStart(arquivo)).line + 1, descricao });
   };
 
-  const visitar = (no: ts.Node): void => {
+  const visitar = (no: NoTs): void => {
     const specifier = specifierDe(no);
     if (specifier !== undefined && ehPdfjs(specifier)) {
       // `import { type A } from 'x'` é só-tipo pelos bindings inline, mas `import padrao, { type A }`
@@ -116,7 +134,8 @@ function cargasEstaticasDePdfjs(fonte: string, nomeDoArquivo = 'arquivo.ts'): Ac
         ? no.importClause?.isTypeOnly === true ||
           (no.importClause?.name === undefined && soBindingsDeTipo(no.importClause?.namedBindings))
         : ts.isExportDeclaration(no)
-          ? no.isTypeOnly || soBindingsDeTipo(no.namedExports)
+          ? no.isTypeOnly ||
+            soBindingsDeTipo(no.exportClause && ts.isNamedExports(no.exportClause) ? no.exportClause : undefined)
           : false; // `import x = require(...)` nunca é só tipo
       if (!somenteTipo) {
         const forma = ts.isImportDeclaration(no)
@@ -131,10 +150,10 @@ function cargasEstaticasDePdfjs(fonte: string, nomeDoArquivo = 'arquivo.ts'): Ac
       ts.isIdentifier(no.expression) &&
       no.expression.text === 'require' &&
       no.arguments.length > 0 &&
-      ts.isStringLiteral(no.arguments[0]) &&
-      ehPdfjs(no.arguments[0].text)
+      ts.isStringLiteral(no.arguments[0])
     ) {
-      anotar(no, `require('${no.arguments[0].text}')`);
+      const argumento = no.arguments[0] as StringLiteralLike;
+      if (ehPdfjs(argumento.text)) anotar(no, `require('${argumento.text}')`);
     }
     no.forEachChild(visitar);
   };
@@ -162,32 +181,32 @@ function arquivosDeProducao(dir: string, acumulado: string[] = []): string[] {
 const rel = (absoluto: string) => absoluto.slice(ROOT.length + 1);
 const lerFonte = (absoluto: string) => readFileSync(absoluto, 'utf8');
 
-describe('contrato M03 — pdfjs-dist só carrega sob demanda', () => {
-  it('a varredura alcança src/** de produção (e só ele)', () => {
-    const arquivos = arquivosDeProducao(SRC);
+Deno.test('contrato M03 — a varredura alcança src/** de produção (e só ele)', () => {
+  const arquivos = arquivosDeProducao(SRC);
     // A varredura tem de ser vasta e alcançar a aba Arquivos: sem isto, uma varredura vazia
     // passaria no teste seguinte para sempre (o contrato mais frágil no momento mais importante).
-    expect(arquivos.length).toBeGreaterThan(500);
-    expect(arquivos).toContain(resolve(SRC, 'components/inbox/tabs/FileThumb.tsx'));
-    expect(arquivos.filter((arquivo) => arquivo.includes('__tests__'))).toEqual([]);
-    expect(arquivos.filter((arquivo) => /\.(test|spec)\.tsx?$/.test(basename(arquivo)))).toEqual([]);
-    for (const arquivo of arquivos) expect(arquivo.startsWith(SRC)).toBe(true);
-  });
+  assert.ok(arquivos.length > 500);
+  assert.ok(arquivos.includes(resolve(SRC, 'components/inbox/tabs/FileThumb.tsx')));
+  assert.deepEqual(arquivos.filter((arquivo) => arquivo.includes('__tests__')), []);
+  assert.deepEqual(arquivos.filter((arquivo) => /\.(test|spec)\.tsx?$/.test(basename(arquivo))), []);
+  for (const arquivo of arquivos) assert.equal(arquivo.startsWith(SRC), true);
+});
 
-  it('nenhum arquivo de produção em src/** carrega pdfjs-dist de forma estática', () => {
-    const violacoes: string[] = [];
-    for (const arquivo of arquivosDeProducao(SRC)) {
-      for (const achado of cargasEstaticasDePdfjs(lerFonte(arquivo), arquivo)) {
-        violacoes.push(`${rel(arquivo)}:${achado.linha} — ${achado.descricao}`);
-      }
+Deno.test('contrato M03 — nenhum arquivo de produção em src/** carrega pdfjs-dist de forma estática', () => {
+  const violacoes: string[] = [];
+  for (const arquivo of arquivosDeProducao(SRC)) {
+    for (const achado of cargasEstaticasDePdfjs(lerFonte(arquivo), arquivo)) {
+      violacoes.push(`${rel(arquivo)}:${achado.linha} — ${achado.descricao}`);
     }
-    expect(
-      violacoes,
-      'Use `const pdfjs = await import(\'pdfjs-dist\')` (dinâmico): um import estático puxa a biblioteca para o bundle inicial e estoura o teto de 343 KB (decisão D03).',
-    ).toEqual([]);
-  });
+  }
+  assert.deepEqual(
+    violacoes,
+    [],
+    'Use `const pdfjs = await import(\'pdfjs-dist\')` (dinâmico): um import estático puxa a biblioteca para o bundle inicial e estoura o teto de 343 KB (decisão D03).',
+  );
+});
 
-  const casos: Array<{ nome: string; codigo: string; esperado: string[] }> = [
+const casos: Array<{ nome: string; codigo: string; esperado: string[] }> = [
     {
       nome: 'import default de valor',
       codigo: "import pdfjs from 'pdfjs-dist';\n",
@@ -285,33 +304,34 @@ describe('contrato M03 — pdfjs-dist só carrega sob demanda', () => {
     },
   ];
 
-  it.each(casos)('$nome', ({ codigo, esperado }) => {
-    expect(cargasEstaticasDePdfjs(codigo).map((achado) => achado.descricao)).toEqual(esperado);
+for (const { nome, codigo, esperado } of casos) {
+  Deno.test(`contrato M03 — ${nome}`, () => {
+    assert.deepEqual(cargasEstaticasDePdfjs(codigo).map((achado) => achado.descricao), esperado);
   });
+}
 
-  it('um arquivo com import estático LIDO DO DISCO é reprovado (e a linha é a certa)', () => {
-    // Prova o caminho real do contrato (ler arquivo → julgar), num arquivo temporário: é o
-    // formato exato que o defeito teria em src/ quando alguém quebrar a D03.
-    const dir = mkdtempSync(join(tmpdir(), 'contrato-pdfjs-'));
-    try {
-      const alvo = join(dir, 'carga-estatica.tmp.ts');
-      writeFileSync(alvo, "const linha = 1;\nimport { getDocument } from 'pdfjs-dist';\n");
-      expect(
-        cargasEstaticasDePdfjs(lerFonte(alvo), alvo).map((achado) => [achado.linha, achado.descricao]),
-      ).toEqual([[2, "import estático de 'pdfjs-dist'"]]);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
+Deno.test('contrato M03 — um arquivo com import estático é reprovado (e a linha é a certa)', () => {
+  // Prova o caminho do contrato sem escrever arquivo temporário: o comando de CI deste contrato
+  // roda só com --allow-read, então a amostra precisa ser em memória e ainda preservar o nome/linha.
+  const alvo = join(tmpdir(), 'carga-estatica.tmp.ts');
+  const fonte = "const linha = 1;\nimport { getDocument } from 'pdfjs-dist';\n";
+  assert.deepEqual(
+    cargasEstaticasDePdfjs(fonte, alvo).map((achado) => [achado.linha, achado.descricao]),
+    [[2, "import estático de 'pdfjs-dist'"]],
+  );
+});
 
-  it('pdfjs-dist está em dependencies (bundle do app), nunca em devDependencies', () => {
-    const pacote = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8')) as {
-      dependencies?: Record<string, string>;
-      devDependencies?: Record<string, string>;
-    };
-    const versao = pacote.dependencies?.[PACOTE];
-    expect(versao, 'pdfjs-dist precisa estar em dependencies: é dependência de runtime da prévia de PDF.').toBeTruthy();
-    expect(versao).toMatch(/^\^?\d+\.\d+\.\d+/);
-    expect(pacote.devDependencies?.[PACOTE], 'em devDependencies a biblioteca não existe no deploy do app.').toBeUndefined();
-  });
+Deno.test('contrato M03 — pdfjs-dist está em dependencies (bundle do app), nunca em devDependencies', () => {
+  const pacote = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8')) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  const versao = pacote.dependencies?.[PACOTE];
+  assert.ok(versao, 'pdfjs-dist precisa estar em dependencies: é dependência de runtime da prévia de PDF.');
+  assert.match(versao, /^\^?\d+\.\d+\.\d+/);
+  assert.equal(
+    pacote.devDependencies?.[PACOTE],
+    undefined,
+    'em devDependencies a biblioteca não existe no deploy do app.',
+  );
 });
