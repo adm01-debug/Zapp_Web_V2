@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { ambiente } from './lib/ambiente.mjs';
 import { CHECKS_E5 } from './lib/especificacao.mjs';
 
 // Prova de PONTA a PONTA dos quatro scripts de QA da Telefonia (T81-T84), offline:
@@ -20,6 +21,23 @@ import { CHECKS_E5 } from './lib/especificacao.mjs';
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = join(AQUI, '..', '..');
 const FIXTURE = pathToFileURL(join(AQUI, 'fixtures', 'telefonia.html')).href;
+
+function comEnv(vars, fn) {
+  const antigo = {};
+  for (const k of Object.keys(vars)) antigo[k] = process.env[k];
+  try {
+    for (const [k, v] of Object.entries(vars)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+    return fn();
+  } finally {
+    for (const [k, v] of Object.entries(antigo)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  }
+}
 
 function rodar(script, mutar = '') {
   const url = mutar ? `${FIXTURE}?mutar=${mutar}` : FIXTURE;
@@ -43,12 +61,34 @@ function rodar(script, mutar = '') {
 const valorDe = (json, eixo) => json?.checks?.find((c) => c.eixo === eixo)?.valor;
 const check = (json, eixo) => json?.checks?.find((c) => c.eixo === eixo);
 
+
+
+describe('ambiente.mjs (R1 local)', () => {
+  it('aceita somente file://, localhost e 127.0.0.1', () => {
+    assert.equal(comEnv({ TEL_URL: 'file:///fixture-telefonia.html', PLAYWRIGHT_BASE_URL: undefined, TEL_MUTACAO: undefined }, () => ambiente().arquivo), true);
+    assert.equal(comEnv({ TEL_URL: 'http://localhost:5173', PLAYWRIGHT_BASE_URL: undefined, TEL_MUTACAO: undefined }, () => ambiente().base), 'http://localhost:5173');
+    assert.equal(comEnv({ TEL_URL: 'http://127.0.0.1:5173', PLAYWRIGHT_BASE_URL: undefined, TEL_MUTACAO: '1' }, () => ambiente().base), 'http://127.0.0.1:5173');
+    assert.throws(
+      () => comEnv({ TEL_URL: 'https://zapp.example.com', PLAYWRIGHT_BASE_URL: undefined, TEL_MUTACAO: undefined }, () => ambiente()),
+      /TEL_URL.*local/i,
+    );
+  });
+
+  it('recusa TEL_MUTACAO=1 fora de alvo local', () => {
+    assert.throws(
+      () => comEnv({ TEL_URL: 'https://zapp.example.com', PLAYWRIGHT_BASE_URL: undefined, TEL_MUTACAO: '1' }, () => ambiente()),
+      /TEL_MUTACAO=1.*local/i,
+    );
+  });
+});
+
 describe('measure.mjs (T81/E.2)', () => {
   it('mede a fixture conforme: 17/17 e os números que o CSS declara', () => {
     const { status, json, bruto } = rodar('measure.mjs');
     assert.ok(json, `measure.mjs não publicou JSON:\n${bruto.slice(0, 800)}`);
     assert.equal(json.fail.length, 0, `eixos reprovados: ${json.fail}`);
-    assert.equal(json.ok, 17);
+    assert.equal(json.ok + json.skipped, 17);
+    assert.equal(json.skipped, 2);
     assert.equal(json.consoleErrors, 0);
     assert.equal(status, 0, 'verde tem de sair com exit 0');
 
@@ -115,13 +155,24 @@ describe('axe.mjs (T84/E.5)', () => {
 });
 
 describe('func.mjs (T83/E.5)', () => {
-  it('publica os 20 passos do plano, na ordem, com o console limpo', () => {
+  it('publica os 20 passos do plano, na ordem, com o console limpo e skips explícitos', () => {
     const { json } = rodar('func.mjs');
     assert.ok(json);
     assert.deepEqual(json.checks.map((c) => c.eixo), [...CHECKS_E5]);
     assert.equal(json.total, 20);
     assert.equal(json.consoleErrors, 0);
     assert.equal(check(json, 'console sem error').ok, true);
+    assert.ok(json.skipped >= 1, 'passos não aplicáveis na fixture precisam sair como skip explícito');
+    assert.equal(check(json, 'periodo muda KPIs').skip, true);
+    assert.equal(check(json, 'discar -> dialing -> Cancelar -> linha cancelled').skip, true);
+  });
+
+  it('não aprova aba VoIP quando o clique não seleciona a aba', () => {
+    const { json } = rodar('func.mjs');
+    assert.ok(json);
+    const c = check(json, 'aba VoIP');
+    assert.equal(c.ok, false);
+    assert.match(c.motivo, /selecion/i);
   });
 
   it('o erro de console da fixture aparece e reprova — não passa mudo', () => {
