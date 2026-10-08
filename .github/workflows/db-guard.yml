@@ -405,6 +405,15 @@ jobs:
           TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_LIVE_PRESTATE=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
           TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_VARIANT_PRESTATE=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
 
+      # R2-DB-013 / item 298: o segundo UPDATE da RPC de template precisa
+      # casar o snapshot criado pela propria chamada. O harness usa container
+      # proprio (SKIP_DOCKER_SHIM=1) porque valida current_database() e docker logs.
+      - name: Provar snapshot do segundo UPDATE de template Talk X (#298)
+        env:
+          TALKX_SECOND_UPDATE_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-second-update-snapshot.test.sh
+
       - name: Simular correção forward-only da FK saved_by do Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
