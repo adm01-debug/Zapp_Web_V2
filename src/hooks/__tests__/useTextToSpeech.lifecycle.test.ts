@@ -96,8 +96,11 @@ function installFetchStub() {
 }
 
 function resolveFetch(index: number) {
-  const blob = new Blob(['audio-falso'], { type: 'audio/mpeg' });
-  pendingFetches[index].resolve(new Response(blob, { status: 200 }));
+  // Corpo em texto: `new Response(blob)` exige `Blob.stream()`, que o Blob do ambiente de teste do CI não tem
+  // (passava local e quebrava no GitHub). O hook só lê `response.blob()`.
+  pendingFetches[index].resolve(
+    new Response('audio-falso', { status: 200, headers: { 'Content-Type': 'audio/mpeg' } }),
+  );
 }
 
 /** Deixa os `await` internos do hook assentarem. */
