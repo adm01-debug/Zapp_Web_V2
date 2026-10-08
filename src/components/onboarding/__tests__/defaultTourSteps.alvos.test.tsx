@@ -61,6 +61,17 @@ vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
   useMyWorkItemsBadgeInfo: () => ({ count: 0, hasOverdue: false }),
 }));
 
+// U01: o selo do item Email consome `useUnreadEmailCount`, que assina realtime no
+// cliente de verdade quando a Sidebar monta. A guarda de rede do `src/test/setup.ts`
+// só troca o `fetch` (o WebSocket do realtime passa por fora), então sem este mock o
+// render da Sidebar abre um WebSocket de verdade e o temporizador de 2,5 s do segundo
+// teste dá tempo de a conexão fechar — o `dispatchEvent` do undici estoura com
+// ERR_INVALID_ARG_TYPE e derruba a suíte inteira com erro não tratado. Aqui a fonte de
+// dado entra mockada como as demais (o alvo do teste é o tour, não o selo).
+vi.mock('@/hooks/gmail/useUnreadEmailCount', () => ({
+  useUnreadEmailCount: () => ({ count: 0, status: 'ok' }),
+}));
+
 // O popover de notificações é o COMPONENTE REAL (é um dos alvos do tour); só a
 // fonte de dados dele (useAuth + supabase) entra mockada.
 vi.mock('@/hooks/system/useNotifications', () => ({
