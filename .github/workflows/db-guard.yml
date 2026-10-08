@@ -352,6 +352,19 @@ jobs:
           ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh
 
+      # R2-DB-009 (cartao t_94758927): no marco de mensagens (10/50/100/500/1000) o trigger de
+      # gamificacao chamava grant_agent_achievement com tipo reservado e o RAISE derrubava o
+      # enqueue inteiro (mensagem nao gravada, agent_stats revertido) para todo agente comum.
+      # O passo extrai os corpos reais de enqueue_outbound_message, grant_agent_achievement e
+      # handle_message_gamification dos arquivos versionados, executa a RPC com o JWT do agente
+      # em PostgreSQL 17 descartavel e prova: defeito antes da migration, envio + conquista
+      # depois dela, fronteira do RPC publico preservada, rotina interna fora do alcance do
+      # cliente e falha de gamificacao sem bloquear atendimento.
+      - name: Simular gamificacao de marco no enfileiramento (R2-DB-009)
+        env:
+          GAMIFICATION_MARCO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh
+
       - name: Simular vinculo de time na reacao em mensagem (#1265)
         env:
           TEAM_REACTION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
