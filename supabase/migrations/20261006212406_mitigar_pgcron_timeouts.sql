@@ -58,6 +58,10 @@
 --   SELECT public.apply_pg_cron_escalonamento(false);
 --   SELECT public.apply_pg_cron_anti_timeout(false);
 -- (o escalonamento repoe 2-57/5, 7-52/15 e 0-55/5; esta migration repoe os offsets finais).
+-- A aplicacao no fim do arquivo e CONDICIONAL: so roda onde o papel tem EXECUTE em
+-- cron.alter_job. Onde nao tem (medido no banco local do harness: o pg_cron 1.6.4 fecha a
+-- funcao para PUBLIC) a migration cria o contrato, AVISA e nao altera nada, em vez de
+-- morrer com 42501. Reexecutar segue idempotente e o Rollback roda nos dois ambientes.
 --
 -- Classe: contrato (CREATE OR REPLACE FUNCTION + REVOKE).
 
@@ -68,10 +72,28 @@ SECURITY DEFINER
 SET search_path = pg_catalog, public, cron
 AS $fn$
 DECLARE
-  alvo      record;
-  v_invalid text;
-  aplicados integer := 0;
+  alvo           record;
+  v_invalid      text;
+  aplicados      integer := 0;
+  v_pode_alterar boolean;
 BEGIN
+  -- PRE-VALIDACAO DO CAMINHO (08/10/2026): cron.alter_job e fechada para PUBLIC pelo proprio
+  -- pg_cron 1.6 (dona supabase_admin; medido no banco local: o papel postgres leva 42501
+  -- "permission denied for function alter_job" -- foi o vermelho que derrubou esta entrega na
+  -- fila do integrador). Sem o direito, NADA e alterado e NADA QUEBRA: avisa alto e devolve 0.
+  -- A funcao segue sendo o contrato reexecutavel onde o papel tem o direito (producao) e o
+  -- Rollback roda nos dois ambientes.
+  SELECT coalesce(bool_or(pg_catalog.has_function_privilege(current_user, p.oid, 'EXECUTE')), false)
+    INTO v_pode_alterar
+    FROM pg_catalog.pg_proc AS p
+    JOIN pg_catalog.pg_namespace AS n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'cron' AND p.proname = 'alter_job';
+
+  IF NOT v_pode_alterar THEN
+    RAISE WARNING 'apply_pg_cron_anti_timeout: papel % sem EXECUTE em cron.alter_job; NENHUM horario alterado (rode onde o papel tem o direito sobre o pg_cron)', current_user;
+    RETURN 0;
+  END IF;
+
   -- Valida TODOS os alvos antes do primeiro cron.alter_job. Assim, uma
   -- ausencia ou duplicidade em alvo posterior aborta sem deixar horarios
   -- parcialmente mitigados.
@@ -133,7 +155,8 @@ GRANT EXECUTE ON FUNCTION public.apply_pg_cron_anti_timeout(boolean) TO service_
 -- cron existe de verdade.
 DO $aplicar$
 DECLARE
-  v_invalid text;
+  v_invalid   text;
+  v_aplicados integer;
 BEGIN
   IF to_regclass('cron.job') IS NULL THEN
     RAISE WARNING 'pg_cron ausente neste banco: apply_pg_cron_anti_timeout NAO aplicado (rode onde o cron existe)';
@@ -159,6 +182,9 @@ BEGIN
     RETURN;
   END IF;
 
-  PERFORM public.apply_pg_cron_anti_timeout(false);
+  v_aplicados := public.apply_pg_cron_anti_timeout(false);
+  IF v_aplicados = 0 THEN
+    RAISE WARNING 'apply_pg_cron_anti_timeout: 0 job reagendado neste banco (ver o aviso acima); o contrato ficou criado e a mitigacao roda onde o papel tem direito sobre o pg_cron';
+  END IF;
 END;
 $aplicar$;
