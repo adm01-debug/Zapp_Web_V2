@@ -47,6 +47,7 @@ vi.mock('@/hooks/chat/useTeamChat', async (importOriginal) => {
 });
 
 import { useToggleMuteConversation } from '@/hooks/chat/useTeamChat';
+import { queryKeys } from '@/hooks/team-chat/queryKeys';
 
 describe('TC-007 — escrita do mute usa a mesma membership lida pelo painel', () => {
   beforeEach(() => {
@@ -82,6 +83,6 @@ describe('TC-007 — escrita do mute usa a mesma membership lida pelo painel', (
     expect(h.update).toHaveBeenCalledWith({ is_muted: true });
     expect(h.eq).toHaveBeenNthCalledWith(1, 'conversation_id', 'conv-a');
     expect(h.eq).toHaveBeenNthCalledWith(2, 'profile_id', 'user-1');
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['team-conversations'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.inbox() });
   });
 });

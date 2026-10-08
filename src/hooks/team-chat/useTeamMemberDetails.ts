@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import type { TeamConversation } from './teamChatTypes';
+import { queryKeys } from './queryKeys';
 
 export interface MemberProfile {
   id: string;
@@ -78,7 +79,7 @@ export function useTeamMemberDetails(
   );
 
   const { data: memberProfile, isLoading } = useQuery({
-    queryKey: ['team-member-profile', otherMemberId || conversation.id],
+    queryKey: queryKeys.memberProfile(otherMemberId || conversation.id),
     queryFn: async () => {
       if (conversation.type !== 'direct' || !otherMemberId) return null;
       const [found] = await loadConversationMembers([otherMemberId]);
@@ -88,7 +89,7 @@ export function useTeamMemberDetails(
   });
 
   const { data: groupMembers = [] } = useQuery({
-    queryKey: ['team-group-members', conversation.id, memberIds.join(',')],
+    queryKey: queryKeys.members(conversation.id, memberIds),
     queryFn: () => loadConversationMembers(memberIds),
     enabled: !!currentProfileId && conversation.type === 'group' && memberIds.length > 0,
   });

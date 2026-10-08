@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { toast } from 'sonner';
+import { queryKeys } from './queryKeys';
 
 export function useActiveTeamProfiles(enabled = true) {
   const { data = [], isLoading } = useTeamProfiles(enabled);
@@ -30,8 +31,8 @@ export function useAddConversationMembers({ conversationId, existingMemberIds, o
       return newIds.length;
     },
     onSuccess: (count) => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['team-messages', conversationId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages(conversationId) });
       toast.success(`${count ?? 0} membro(s) adicionado(s)`);
       onSuccess?.(count ?? 0);
     },

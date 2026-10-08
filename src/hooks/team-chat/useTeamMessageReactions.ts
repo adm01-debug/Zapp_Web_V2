@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import type { ReactionGroup } from '@/components/ui/message-reactions';
+import { queryKeys } from './queryKeys';
 
 interface RawReaction {
   id: string;
@@ -43,7 +44,7 @@ function aggregateReactions(rows: RawReaction[], myProfileId: string | undefined
 export function useTeamMessageReactions(conversationId: string) {
   const { profile } = useAuth();
   const qc = useQueryClient();
-  const qKey = useMemo(() => ['team-reactions', conversationId], [conversationId]);
+  const qKey = useMemo(() => queryKeys.reactions(conversationId), [conversationId]);
 
   const { data: rows = [] } = useQuery<RawReaction[]>({
     queryKey: qKey,

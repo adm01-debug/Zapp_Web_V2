@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/hooks/ui/use-toast';
+import { queryKeys } from './queryKeys';
 
 export function useSendTeamMessage() {
   const { profile } = useAuth();
@@ -33,8 +34,8 @@ export function useSendTeamMessage() {
       return data;
     },
     onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['team-messages', vars.conversationId] });
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages(vars.conversationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
     },
     onError: () => { toast({ title: 'Erro ao enviar mensagem', variant: 'destructive' }); },
   });
@@ -49,8 +50,8 @@ export function useDeleteTeamMessage() {
       return { conversationId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['team-messages', data.conversationId] });
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages(data.conversationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
     },
     onError: () => { toast({ title: 'Erro ao excluir mensagem', variant: 'destructive' }); },
   });
@@ -64,7 +65,7 @@ export function useEditTeamMessage() {
       if (error) throw error;
       return { conversationId };
     },
-    onSuccess: (data) => { queryClient.invalidateQueries({ queryKey: ['team-messages', data.conversationId] }); },
+    onSuccess: (data) => { queryClient.invalidateQueries({ queryKey: queryKeys.messages(data.conversationId) }); },
     onError: () => { toast({ title: 'Erro ao editar mensagem', variant: 'destructive' }); },
   });
 }
@@ -118,7 +119,7 @@ export function useCreateTeamConversation() {
       if (convErr) throw convErr;
       return conv;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team-conversations'] }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: queryKeys.inbox() }); },
     onError: () => { toast({ title: 'Erro ao criar conversa', variant: 'destructive' }); },
   });
 }
@@ -136,7 +137,7 @@ export function useToggleMuteConversation() {
         .eq('profile_id', profile.id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team-conversations'] }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: queryKeys.inbox() }); },
     onError: () => { toast({ title: 'Erro ao alterar silenciar', variant: 'destructive' }); },
   });
 }
@@ -153,7 +154,7 @@ export function useRenameConversation() {
       return { conversationId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       toast({ title: 'Grupo renomeado com sucesso' });
     },
     onError: () => { toast({ title: 'Erro ao renomear grupo', variant: 'destructive' }); },
@@ -173,7 +174,7 @@ export function useRemoveConversationMember() {
       return { conversationId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       toast({ title: 'Membro removido' });
     },
     onError: () => { toast({ title: 'Erro ao remover membro', variant: 'destructive' }); },
@@ -194,7 +195,7 @@ export function useLeaveConversation() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
     },
     onError: () => { toast({ title: 'Erro ao sair do grupo', variant: 'destructive' }); },
   });
@@ -213,7 +214,7 @@ export function useTransferConversation() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       toast({ title: 'Propriedade do grupo transferida com sucesso' });
     },
     onError: () => { toast({ title: 'Erro ao transferir grupo', variant: 'destructive' }); },
@@ -231,7 +232,7 @@ export function useDeleteConversation() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
     },
     onError: () => { toast({ title: 'Erro ao excluir grupo', variant: 'destructive' }); },
   });

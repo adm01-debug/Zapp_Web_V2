@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { queryKeys } from './queryKeys';
 
 export interface ParticipantStat {
   senderId: string;
@@ -11,7 +12,7 @@ export interface ParticipantStat {
 
 export function useParticipantStats(conversationId: string) {
   return useQuery<ParticipantStat[]>({
-    queryKey: ['departmentChat', 'participantStats', conversationId],
+    queryKey: queryKeys.participantStats(conversationId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('team_messages')

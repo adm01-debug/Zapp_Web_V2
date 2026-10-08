@@ -3,13 +3,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { TeamConversation, TeamMember, TeamMessage } from './teamChatTypes';
+import { queryKeys } from './queryKeys';
 
 export function useTeamConversations() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['team-conversations', profile?.id],
+    queryKey: queryKeys.inbox(profile?.id),
     queryFn: async () => {
       if (!profile) return [];
 
@@ -111,13 +112,13 @@ export function useTeamConversations() {
     const channel = supabase
       .channel('team-chat-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_conversation_members' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'team_message_receipts' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
