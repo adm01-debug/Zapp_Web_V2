@@ -1,9 +1,10 @@
 {
-  "_comment": "Baseline (ratchet) do supabase-usage-guard. Entradas aqui são violações CONHECIDAS e aceitas (ex: tabela usada via join indireto, schema divergente temporário). O guard falha em CI se houver NOVAS violações fora deste baseline. Para remover uma entrada: certifique-se que o alvo existe em schema-catalog.json, senão o guard vai acusar nova violação.",
+  "_comment": "Baseline (ratchet) do supabase-usage-guard. Entradas aqui são violações CONHECIDAS e aceitas (ex: tabela usada via join indireto, schema divergente temporário). O guard falha em CI se houver NOVAS violações fora deste baseline. Para remover uma entrada: certifique-se que o alvo existe em schema-catalog.json, senão o guard vai acusar nova violação. NOTA 2026-10-08 (#174): a chave rpc:set_default_whatsapp_connection:* é TEMPORÁRIA — a RPC existe e está APROVADA (t_ae0a55a6, migration 20261006234158_whatsapp_default_connection_rpc_atomica.sql, commits 076d3262b/96fb877ea), mas a metade de banco ainda não entrou em nenhuma branch dia/, então a projeção forward-only deste guard não a vê. REMOVER esta chave assim que a migration estiver na dia: nesse momento o alvo passa a existir, a chave fica obsoleta e o guard volta a falhar sozinho pedindo a remoção.",
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
-    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts"
+    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts",
+    "rpc:set_default_whatsapp_connection:src/hooks/inbox/useConnectionsManager.ts"
   ],
   "_resolvido": {
     "talkx-rpcs-parcial (X010/X012)": "RPCs get_talkx_cron_secret, claim/release_talkx_campaign_worker, talkx_next_recipients (PR #1522/X010) removidos do baseline — já estão no schema-catalog.json. kick_talkx_campaign (PR #1535/X012) removido no types-sync de 2026-10-02 (run 37001256206), quando o catálogo passou a incluí-la.",
