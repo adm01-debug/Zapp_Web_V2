@@ -18,6 +18,7 @@ import {
   validationErrorResponse,
 } from "../_shared/schemas.ts";
 import { parseApprovedStorageUrl } from "../_shared/ssrf.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB
@@ -117,6 +118,26 @@ Deno.serve(async (req) => {
         return errorResponse(authorized.error, authorized.status, req);
       }
       audioUrl = authorized.url;
+    }
+
+    // IA-009 — kill switch lido NO SERVIDOR ANTES de baixar o áudio e de tocar a
+    // ElevenLabs: a capacidade `ai.capability.transcribe_audio` e o provedor
+    // `ai.provider.elevenlabs` desligados param a transcrição aqui, sem chamada
+    // paga e sem custo de download. A conversa continua legível e respondível por
+    // humano — o desligamento só corta o efeito automático.
+    const killSwitch = await evaluateAiKillSwitch({
+      functionName: "ai-transcribe-audio",
+      providerType: "elevenlabs",
+    });
+    if (!killSwitch.allowed) {
+      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
+      // corpo por "Internal server error" e o consumidor perderia o código.
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+        503,
+        req,
+      );
     }
 
     log.info("Starting transcription", { messageId, languageCode });
