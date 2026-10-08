@@ -66,6 +66,42 @@ de aprovação aparece).
 
 Continuação prevista: **Bloco 06 (IA-051..IA-060)**.
 
+### Bloco 06 — estado das etapas IA-051 a IA-060
+
+Estado REAL de cada etapa do bloco na ponta de 08/10/2026 (`dia/2026-10-08`): onde há código, a
+evidência é o arquivo e o teste que o prova; onde não há, este índice diz. Nenhuma etapa entra aqui
+por projeto ou intenção. (O item de inventário que originou esta seção dizia "IA-058 só em projeto;
+IA-057/059/060 sem evidência" — esta é a evidência.)
+
+- **IA-051 — Correlacionar toda execução — IMPLEMENTADA.** `request_id`, `job_id` e `attempt` no
+  ledger de uso; migration `supabase/migrations/20261002611230_ia051_correlacao_de_execucao.sql`.
+- **IA-052 — Registrar o que foi realmente usado — IMPLEMENTADA.** Provedor, modelo efetivo,
+  finalidade e modalidade gravados a partir do que o servidor mediu, em
+  `supabase/functions/_shared/ai-usage.ts`.
+- **IA-053 — Contabilizar streaming e interrupções — IMPLEMENTADA.** Consumo desconhecido não vira
+  zero (`usage_unknown`), no mesmo `supabase/functions/_shared/ai-usage.ts`.
+- **IA-054 — Separar ação, tentativa e cobrança — IMPLEMENTADA.** Reconciliação de ação/tentativa por
+  `request_id` em `supabase/functions/_shared/ai-usage.ts`.
+- **IA-055 — Versionar a tabela de custos — IMPLEMENTADA.** Tarifa com vigência e unidade em
+  `supabase/migrations/20261003082707_ia055_tarifas_versionadas.sql`, aplicada pelo relatório
+  (`supabase/migrations/20261003102707_ia055_custo_no_relatorio.sql`) e consumida em
+  `src/hooks/analytics/useAIUsageDashboard.ts`.
+- **IA-056 — Agregar o período completo no servidor — IMPLEMENTADA.** Totais da janela vêm da RPC
+  `ai_usage_summary` (migration `supabase/migrations/20261003072707_ia056_agregacao_no_servidor.sql`),
+  sem soma no cliente.
+- **IA-057 — Corrigir indicadores de saúde — IMPLEMENTADA.** Painel
+  `src/components/settings/ai-providers/AIProviderHealthPanel.tsx`: sem observação não existe
+  indicador; amostra, janela, p50/p95, erros, disponibilidade e recuperação por fallback medidas
+  separadamente — provado por `tests/contracts/ia057-indicadores-de-saude.test.ts`.
+- **IA-058 — Alertar sobre consumo anômalo — DESIGN_ONLY.** Projeto, distinto de runtime: ver a
+  seção seguinte.
+- **IA-059 — Reduzir conteúdo sensível em logs — NÃO IMPLEMENTADA.** Não há redação de token,
+  prompt ou trecho de conversa no caminho de log de IA, nem teste de telemetria que varra segredo ou
+  dado pessoal desnecessário; a etapa depende de trilha de backend/logs, que não é deste escopo.
+- **IA-060 — Medir utilidade da assistência — NÃO IMPLEMENTADA.** Nenhum evento de aceitação, edição
+  ou retrabalho existe no repositório (`docs/ia/IA-007-reuso-infraestrutura.md` §294): é capacidade
+  nova (tipo `[N]` no plano), não correção.
+
 ### Bloco 06 — estado de IA-058: DESIGN_ONLY
 
 **IA-058 ([M] Alertar sobre consumo anômalo) não está implementada em operação.** O que existe
