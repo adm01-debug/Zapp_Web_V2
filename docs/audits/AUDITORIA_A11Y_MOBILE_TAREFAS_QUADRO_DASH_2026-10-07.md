@@ -38,6 +38,7 @@ Especialista: worker (testes)
 3. **Textos cortados**: não há verificador genérico de truncamento no harness. Por inspeção, os `truncate` do grupo têm o valor completo como texto do elemento (o corte é visual, `text-overflow: ellipsis`), então o leitor de tela lê o valor inteiro; nenhum texto desaparece do DOM. Registrado como observação, não como achado.
 4. **Widgets do Dashboard fora das 9 abas**: o Dashboard também tem variante "divulgação progressiva" (`ProgressiveDisclosureDashboard`) que **só é montada quando o backend devolve os widgets por seção**; ela foi medida nas telas em que apareceu (`aria-allowed-attr`, achado 09), mas não em todos os combos.
 5. **Cores fora do token**: os pares de cor foram lidos do axe (dois valores reais) e conferidos por cálculo a partir de `src/styles/tokens.css`; não houve medição com medidor de contraste externo.
+6. **Ordem de tabulação**: percorri **18 `Tab` por medição** e registrei se cada elemento focado tem anel visível (resultado na §4.2), mas **não** comparei a sequência obtida com uma ordem esperada de tela — o que está provado é que o foco anda e é visível em todo o grupo; não há veredito sobre a ORDEM (ex.: se um controle do rodapé recebe foco antes de um do cabeçalho). Para isso seria preciso um roteiro de ordem por tela, que este cartão não definiu.
 
 ## 2. Cobertura
 
