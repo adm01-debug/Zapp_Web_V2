@@ -910,6 +910,11 @@ async function clicarMobile(page: Page, item: ItemNav, aoAbrirMenu?: () => Promi
  * exatos, com status e corpo medidos, e não existe entrada de curinga (`*`).
  * Aqui a corrida é REMOVIDA antes de medir — e a função que não subir nem sozinha
  * REPROVA este aquecimento (mais estrito do que tolerar o 503 na varredura).
+ * A passada é REPETIDA até uma delas terminar inteira sem BOOT_ERROR (medido em
+ * 08/10: a primeira volta sobre o cache npm frio deixa ~20 funções pela metade e a
+ * segunda conclui). Repetir passada é ESTABILIZAR o conjunto, não aceitar falha: a
+ * função que não arrancar em nenhuma das passadas reprova igual, e a passada que
+ * fecha sem BOOT_ERROR é a prova de que o runtime está quente antes de medir.
  *
  * Invocado fora do wrapper `zapp-e2e-local` (sem as variáveis do conjunto local),
  * o aquecimento é pulado com aviso; o teste é do conjunto local do cartão.
@@ -928,28 +933,51 @@ async function aquecerRuntimeSemTrava(request: APIRequestContext): Promise<void>
     .map((entrada) => entrada.name)
     .sort();
 
-  const semArranque: string[] = [];
-  for (const nome of funcoes) {
-    // Uma por vez, de propósito: é a chamada SIMULTÂNEA que corrompe o cache.
-    const resposta = await request
-      .post(`${url}/functions/v1/${nome}`, {
-        headers: { apikey: chave },
-        data: {},
-        timeout: 25_000,
-        failOnStatusCode: false,
-      })
-      .catch(() => undefined); // rede/tempo esgotado: quem reprova é a varredura
-    if (!resposta) continue;
-    if (resposta.status() === 503 && (await resposta.text()).includes('BOOT_ERROR')) {
-      semArranque.push(nome);
+  // PASSADAS ATÉ CONVERGIR: a primeira volta sobre um cache npm frio deixa
+  // pacotes pela metade (`File exists (os error 17)` no log do contêiner de
+  // functions) e a volta seguinte conclui o desempacotamento. Aqui isso é
+  // enfrentado ANTES de medir, repetindo a passada até uma delas terminar sem
+  // nenhum BOOT_ERROR. Não é tolerância: a função que não arrancar em nenhuma
+  // passada continua REPROVANDO (e a varredura continua reprovando qualquer 503).
+  const MAXIMO_DE_PASSADAS = 4;
+  let semArranque: string[] = [];
+
+  for (let passada = 1; passada <= MAXIMO_DE_PASSADAS; passada += 1) {
+    semArranque = [];
+    for (const nome of funcoes) {
+      // Uma por vez, de propósito: é a chamada SIMULTÂNEA que corrompe o cache.
+      const resposta = await request
+        .post(`${url}/functions/v1/${nome}`, {
+          headers: { apikey: chave },
+          data: {},
+          timeout: 25_000,
+          failOnStatusCode: false,
+        })
+        .catch(() => undefined); // rede/tempo esgotado: conta como não arrancou
+      if (!resposta) {
+        semArranque.push(nome);
+        continue;
+      }
+      if (resposta.status() === 503 && (await resposta.text()).includes('BOOT_ERROR')) {
+        semArranque.push(nome);
+      }
     }
+
+    if (semArranque.length === 0) {
+      console.warn(
+        `[AQUECIMENTO] ${funcoes.length} funções de ponta arrancaram sem BOOT_ERROR (passada ${passada})`,
+      );
+      return;
+    }
+    console.warn(
+      `[AQUECIMENTO] passada ${passada}: ${semArranque.length} função(ões) em BOOT_ERROR — repetindo a passada inteira: ${semArranque.join(', ')}`,
+    );
   }
 
   expect(
     semArranque,
     'o runtime de Edge do conjunto local não arrancou estas funções nem em chamada isolada (BOOT_ERROR)',
   ).toEqual([]);
-  console.warn(`[AQUECIMENTO] ${funcoes.length} funções de ponta arrancaram sem BOOT_ERROR`);
 }
 
 /**
