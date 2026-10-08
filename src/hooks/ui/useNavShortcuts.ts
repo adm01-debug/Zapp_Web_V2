@@ -8,7 +8,10 @@ const SHORTCUT_TO_VIEW: Record<string, string> = {
   KeyL: 'email-chat',
   KeyO: 'contacts',
   KeyR: 'dashboard',
-  KeyP: 'pipeline',
+  // E08 (fusão Quadro→Tarefas): `KeyP: 'pipeline'` saiu daqui — a entrada
+  // "Quadro" do menu era a mesma tela de Tarefas com o modo Quadro forçado, e o
+  // atalho era uma segunda porta para ela. Alt+P fica inerte; a visão Quadro
+  // continua sendo um dos modos de Tarefas (Alt+K + teclas 1/2/3).
   // E.5/atalhos: a sidebar anuncia "Alt+K" no item Tarefas (`NavigationService`
   // carrega `shortcut: 'Alt+K'`) mas o mapa nao tinha `KeyK` — o atalho nao fazia
   // nada. (Mesma lacuna em Alt+A/Catálogo, Alt+T/Telefonia e Alt+Q/Conquistas,
