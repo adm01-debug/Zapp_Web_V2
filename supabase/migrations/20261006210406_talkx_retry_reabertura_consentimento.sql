@@ -2,10 +2,19 @@
 -- Rollback: 1) DROP FUNCTION public.retry_talkx_recipients(uuid, uuid[], boolean);
 --   2) DROP FUNCTION public.resolve_talkx_outcome_unknown(uuid, text, text, boolean, boolean);
 --   3) recriar public.enforce_talkx_campaign_mutability() com o corpo vivo de
---      20261003232707 (X032, sem o ramo da reabertura confirmada);
---   4) recriar public.retry_talkx_recipients(uuid, uuid[]) e
---      public.resolve_talkx_outcome_unknown(uuid, text, text, boolean) com os corpos vivos de
---      20261003222707 (X031) e reaplicar os REVOKE/GRANT/COMMENT de la.
+--      20261003232707 (X032, sem o ramo da reabertura confirmada). O gatilho
+--      enforce_talkx_campaign_mutability nao muda nesta migration (mesma definicao de la);
+--   4) recriar public.retry_talkx_recipients(uuid, uuid[]) com o corpo vivo de
+--      20261006193650_talkx_retry_lote_ids_inexistentes.sql (R3-DELTA-004/#123) — e o corpo
+--      aplicado imediatamente ANTES desta migration pela ordem de versao; recriar o de X031
+--      desfaria a validacao de lote que ja entrou. Recriar
+--      public.resolve_talkx_outcome_unknown(uuid, text, text, boolean) com o corpo vivo de
+--      20261003222707 (X031). O DROP zera a ACL: reaplicar os REVOKE/GRANT/COMMENT de
+--      20261003222707 nas duas assinaturas antigas.
+--      Prova executada no banco LOCAL da tarefa (transacao com ROLLBACK no fim, corpos
+--      extraidos dos arquivos de migration reais): assinaturas antigas de volta, ACL
+--      authenticated=EXECUTE / anon=sem EXECUTE, corpo do retry com a validacao de lote do
+--      #123 e sem o gate do #124, guard sem o ramo da reabertura.
 --
 -- versão 20261006210406 reservada para hermes-talkx-retry-reabertura-consentimento-261006175941ec (hermes-db-migrar --nova)
 -- r3_delta_005 (#124, item 124 do BACKLOG_VERIFICADO): Talk X — a reabertura da campanha por
