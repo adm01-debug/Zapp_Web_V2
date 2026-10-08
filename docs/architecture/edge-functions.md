@@ -1,7 +1,12 @@
 # Documentação de Edge Functions
 
+> **Status:** DESATUALIZADO — inventário parcial (42 das 74 funções listadas) e com funções que não existem mais (`sicoob-bridge`, `sicoob-bridge-reply`). A fonte de verdade é o próprio diretório `supabase/functions/`; estado do MCP read-only em [mcp-e-grafo-de-conhecimento.md](./mcp-e-grafo-de-conhecimento.md).
+> **Atualizado em:** 2026-10-08 (Hora oficial do Brasil)
+
 ## Visão Geral
-O projeto possui 40+ Edge Functions deployadas de forma **manual** pelo workflow `deploy-functions.yml` (GitHub Actions > Run workflow), a partir de `refs/heads/main`.
+O projeto possui 74 Edge Functions no diretório `supabase/functions/` (contagem de 2026-10-08),
+deployadas de forma **manual** pelo workflow `deploy-functions.yml` (GitHub Actions > Run workflow),
+a partir de `refs/heads/main`.
 
 ---
 
