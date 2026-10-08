@@ -4,12 +4,12 @@
   "legacy_unmanaged_functions": [],
   "config": {
     "path": "supabase/config.toml",
-    "sha256": "872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af"
+    "sha256": "154b26da9cbdd54ed6047da35a612eb5509531ca139c116e13ada75ecde941e0"
   },
   "summary": {
-    "function_count": 75,
-    "source_file_count": 149,
-    "verify_jwt_true": 61,
+    "function_count": 76,
+    "source_file_count": 150,
+    "verify_jwt_true": 62,
     "verify_jwt_false": 14
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
@@ -693,6 +693,11 @@
       "path": "supabase/functions/sync-call-records/index.ts",
       "bytes": 9960,
       "sha256": "49dcee2578376fdaf12de5b0fe5b84d3d1371208c4f12616904eef30b6cd986e"
+    },
+    {
+      "path": "supabase/functions/talkx-ai/index.ts",
+      "bytes": 24742,
+      "sha256": "a89bf56117016410db2eb0946a8f16fee8ef9427f1cb71a6a403ee629133ecb5"
     },
     {
       "path": "supabase/functions/talkx-link/index.ts",
@@ -1753,6 +1758,20 @@
       ]
     },
     {
+      "name": "talkx-ai",
+      "entrypoint": "supabase/functions/talkx-ai/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "f4c73ba878bab42d1dd0e86a0dd8c8d8bfaea1a3c9c835b2292ecdccbf7ebd95",
+      "source_files": [
+        "supabase/functions/_shared/ai-capabilities.ts",
+        "supabase/functions/_shared/ai-routing.ts",
+        "supabase/functions/_shared/ai-usage.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/talkx-ai/index.ts"
+      ]
+    },
+    {
       "name": "talkx-link",
       "entrypoint": "supabase/functions/talkx-link/index.ts",
       "verify_jwt": false,
@@ -1924,5 +1943,5 @@
       ]
     }
   ],
-  "manifest_sha256": "41b8a4c8b4cba9f655cc965bcdc4ae753e35a6b6c69a76f140fd2feb6777e16d"
+  "manifest_sha256": "8a819bbb9e6aa5b89a28898df778399d45027c11b712f24844725c9602124cea"
 }
