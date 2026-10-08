@@ -112,6 +112,16 @@ jobs:
       # webkit-catalog dao a paridade dos 3 browsers pedida no aceite. O spec e
       # SKIPADO enquanto E2E_CATALOG_PRODUCT_SKU_VERIFIED nao for true (pende a
       # verificacao do SKU no PromoGifts, sistema externo). NAO entram no ci.yml.
+      #
+      # chromium-telefonia-historico / firefox-telefonia-historico /
+      # webkit-telefonia-historico cobrem e2e/telefonia-historico.spec.ts (T86)
+      # nos 3 browsers (nome com sufixo -historico: chromium-telefonia ja existe
+      # para a spec Y11 do discador, acima). Mesma receita do chromium-mapa:
+      # sessao FALSA (installFakeSession) com o app shell e as RPCs da tela
+      # (search_my_calls, my_calls_kpi, set_call_agent_notes) mockados, entao NAO
+      # usam E2E_TEST_EMAIL/E2E_TEST_PASSWORD nem o storageState de
+      # e2e/.auth/user.json -- nenhum secret novo. O spec esta no testIgnore do
+      # chromium-authenticated para nao rodar sob login real.
       # E82: o e-mail do usuario de teste entra no log do Playwright (o fill() imprime o
       # valor). Mascarar ANTES de qualquer saida, para o ::add-mask:: valer o run todo.
       - name: 🔒 Mascarar o e-mail do E2E no log
@@ -127,7 +137,7 @@ jobs:
           fi
 
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog --project=chromium-telefonia-historico --project=firefox-telefonia-historico --project=webkit-telefonia-historico
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}

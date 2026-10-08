@@ -114,7 +114,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|telefonia-historico\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -289,6 +289,32 @@ export default defineConfig({
         ...devices['Desktop Safari'],
         storageState: 'e2e/.auth/user.json',
       },
+    },
+    {
+      // Telefonia (T86) no Chromium. Sessão FALSA (`installFakeSession`) com o app
+      // shell e as RPCs da tela (`search_my_calls`, `my_calls_kpi`,
+      // `set_call_agent_notes`) mockados — NÃO usa E2E_TEST_EMAIL/E2E_TEST_PASSWORD
+      // nem o storageState do projeto "setup", então entra no `e2e-logado.yml` sem
+      // arrastar o login real (mesmo padrão de `chromium-mapa`). O aceite do item
+      // pede verde nos 3 browsers: `firefox-telefonia-historico` e
+      // `webkit-telefonia-historico` abaixo. Nome com sufixo "-historico": o
+      // arquivo é `telefonia-historico.spec.ts` (ver nota de rename no topo dele) —
+      // `chromium-telefonia` já existe para a spec Y11 (discador), acima.
+      name: 'chromium-telefonia-historico',
+      testMatch: /telefonia-historico\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      // telefonia-historico.spec.ts no Firefox.
+      name: 'firefox-telefonia-historico',
+      testMatch: /telefonia-historico\.spec\.ts/,
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      // telefonia-historico.spec.ts no WebKit (Safari engine).
+      name: 'webkit-telefonia-historico',
+      testMatch: /telefonia-historico\.spec\.ts/,
+      use: { ...devices['Desktop Safari'] },
     },
   ],
   webServer: (() => {
