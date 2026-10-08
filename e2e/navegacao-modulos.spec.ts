@@ -1,5 +1,6 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 /**
@@ -42,7 +43,8 @@ import { join } from 'node:path';
  *    NÃO existe entrada de curinga (`*`) — nem para falha de arranque do runtime do
  *    conjunto: "qualquer 503" aceitaria também o que estivesse por trás dele. A corrida
  *    de cache do runtime é removida ANTES de medir, por `aquecerRuntime` (abaixo), que
- *    REPROVA a função que não subir nem em chamada isolada.
+ *    REPROVA a função que não subir nem em chamada isolada e deixa UM worker aquecer
+ *    por vez (os dois testes rodam em paralelo; aquecer junto corrompe o cache).
  *
  * 2) DEFEITO DO PRODUTO — as listas DEFEITOS_DE_PRODUTO (resposta HTTP) e
  *    NINHOS_DE_PRODUTO (HTML aninhado). É bug do app, achado por esta varredura,
@@ -891,7 +893,9 @@ async function clicarMobile(page: Page, item: ItemNav, aoAbrirMenu?: () => Promi
 
 /**
  * Aquece o runtime de Edge do conjunto local, UMA função de ponta por vez, e
- * REPROVA se alguma não arrancar nem em chamada isolada.
+ * REPROVA se alguma não arrancar nem em chamada isolada. Só é chamada com a trava
+ * do aquecedor na mão (a função `aquecerRuntime` abaixo): um worker aquece por vez
+ * em todo o conjunto.
  *
  * POR QUE EXISTE (medido em 07/10 no conjunto local): o contêiner de functions
  * nasce com o cache Deno vazio e monta o grafo de dependências de cada função na
@@ -910,7 +914,7 @@ async function clicarMobile(page: Page, item: ItemNav, aoAbrirMenu?: () => Promi
  * Invocado fora do wrapper `zapp-e2e-local` (sem as variáveis do conjunto local),
  * o aquecimento é pulado com aviso; o teste é do conjunto local do cartão.
  */
-async function aquecerRuntime(request: APIRequestContext): Promise<void> {
+async function aquecerRuntimeSemTrava(request: APIRequestContext): Promise<void> {
   const url = process.env.VITE_ZAPP_LOCAL_SUPABASE_URL;
   const chave = process.env.VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY;
   const pasta = join(process.cwd(), 'supabase', 'functions');
@@ -946,6 +950,55 @@ async function aquecerRuntime(request: APIRequestContext): Promise<void> {
     'o runtime de Edge do conjunto local não arrancou estas funções nem em chamada isolada (BOOT_ERROR)',
   ).toEqual([]);
   console.warn(`[AQUECIMENTO] ${funcoes.length} funções de ponta arrancaram sem BOOT_ERROR`);
+}
+
+/**
+ * UM AQUECEDOR POR VEZ EM TODO O CONJUNTO — a trava é o que faz o aquecimento
+ * funcionar quando os dois testes (desktop e celular) rodam em paralelo.
+ *
+ * POR QUE EXISTE (medido em 08/10 no conjunto local t-a0ace86a, rodada 1): com 2
+ * workers, os dois testes chamavam `aquecerRuntime` ao mesmo tempo e o cache Deno
+ * do contêiner de functions voltava a corromper — o desktop reprovou 1 função e o
+ * celular, 52, todas com 503 `{"code":"BOOT_ERROR"}`. Era o MESMO defeito que o
+ * aquecimento existe para remover, reintroduzido pela concorrência entre workers.
+ * A trava (um diretório, criado de forma atômica) deixa um worker aquecer sozinho
+ * enquanto o outro espera; quando o segundo entra, o cache já está quente.
+ *
+ * A trava NÃO afrouxa nada: quem não conseguir arrancar continua reprovando o
+ * aquecimento (e a varredura continua reprovando qualquer 503). Trava abandonada
+ * por worker morto (mais de 5 min) é roubada, para o conjunto não ficar travado.
+ */
+async function aquecerRuntime(request: APIRequestContext): Promise<void> {
+  const trava = join(tmpdir(), 'zapp-e2e-aquecimento.lock');
+  const inicio = Date.now();
+
+  for (;;) {
+    try {
+      mkdirSync(trava); // atômico: só um worker cria
+      break;
+    } catch {
+      let idade = 0;
+      try {
+        idade = Date.now() - statSync(trava).mtimeMs;
+      } catch {
+        continue; // a trava saiu entre a tentativa e a medição: tenta de novo
+      }
+      if (idade > 5 * 60_000) {
+        rmSync(trava, { recursive: true, force: true }); // dono morto: assume
+        continue;
+      }
+      if (Date.now() - inicio > 10 * 60_000) {
+        throw new Error('a trava do aquecimento do runtime não foi liberada pelo outro worker');
+      }
+      await new Promise((r) => setTimeout(r, 1_000));
+    }
+  }
+
+  try {
+    await aquecerRuntimeSemTrava(request);
+  } finally {
+    rmSync(trava, { recursive: true, force: true });
+  }
 }
 
 /* -------------------------------------------------------------------------- */
