@@ -33,6 +33,7 @@ const h = vi.hoisted(() => {
     messages: [],
     filteredMessages: [],
     isSearching: false,
+    searchError: null as string | null,
     isLoading: false,
     isMuted: false,
     isFetchingOlder: false,
@@ -139,6 +140,10 @@ describe('TeamChatPanel — itens existentes ligados no painel ativo (SL-082)', 
     h.panel.showSearch = false;
     h.panel.searchQuery = '';
     h.panel.isSearching = false;
+    h.panel.searchError = null;
+    h.panel.filteredMessages = [];
+    h.panel.hasOlderMessages = false;
+    h.panel.isFetchingOlder = false;
   });
 
   it('liga o botão de estatísticas no header e o slot de estatísticas no corpo', () => {
@@ -212,5 +217,52 @@ describe('TeamChatPanel — itens existentes ligados no painel ativo (SL-082)', 
 
     expect(screen.getByText(/Buscando mensagens/)).toBeInTheDocument();
     expect(screen.queryByText('Nenhuma mensagem encontrada')).not.toBeInTheDocument();
+  });
+
+  it('o spinner da busca respeita reduzir movimento (motion-safe, nunca animate-spin solto)', () => {
+    h.panel.showSearch = true;
+    h.panel.searchQuery = 'contrato';
+    h.panel.isSearching = true;
+    renderPanel();
+
+    const spinner = screen.getByText(/Buscando mensagens/).parentElement?.querySelector('svg');
+    expect(spinner).not.toBeNull();
+    const classes = (spinner?.getAttribute('class') ?? '').split(/\s+/);
+    expect(classes).toContain('motion-safe:animate-spin');
+    // `animate-spin` solto ignora quem pediu menos movimento na máquina.
+    expect(classes).not.toContain('animate-spin');
+  });
+
+  it('o spinner do "Carregar mensagens anteriores" também respeita reduzir movimento', () => {
+    h.panel.hasOlderMessages = true;
+    h.panel.isFetchingOlder = true;
+    h.panel.filteredMessages = [{
+      id: 'm-1', conversation_id: 'conv-a', sender_id: 'user-2', content: 'bom dia',
+      message_type: 'text', media_url: null, media_type: null, reply_to_id: null,
+      is_edited: false, status: 'sent', created_at: '2026-10-08T12:00:00+00:00',
+      updated_at: '2026-10-08T12:00:00+00:00',
+      sender: { id: 'user-2', name: 'Bia', avatar_url: null },
+    }] as unknown as typeof h.panel.filteredMessages;
+    renderPanel();
+
+    const spinner = screen.getByText('Carregar mensagens anteriores')
+      .closest('button')?.querySelector('svg');
+    expect(spinner).toBeTruthy();
+    const classes = (spinner?.getAttribute('class') ?? '').split(/\s+/);
+    expect(classes).toContain('motion-safe:animate-spin');
+    expect(classes).not.toContain('animate-spin');
+  });
+
+  it('falha da busca aparece como aviso de erro, não como "Nenhuma mensagem encontrada"', () => {
+    h.panel.showSearch = true;
+    h.panel.searchQuery = 'contrato';
+    h.panel.searchError = 'Não foi possível buscar as mensagens. Tente novamente.';
+    renderPanel();
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível buscar as mensagens. Tente novamente.');
+    expect(screen.queryByText('Nenhuma mensagem encontrada')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Buscando mensagens/)).not.toBeInTheDocument();
+    // O contador não anuncia "0 resultados" junto com o aviso de falha.
+    expect(screen.queryByText(/0 resultado/)).not.toBeInTheDocument();
   });
 });
