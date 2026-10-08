@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { History, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { type AnalysisData, statusConfig, sentimentConfig, departmentConfig } from './analysisConfigs';
+import { type AnalysisData, type AgentPerformance, statusConfig, sentimentConfig, departmentConfig } from './analysisConfigs';
 
 interface HistoryItem {
   id: string;
@@ -20,6 +20,11 @@ interface HistoryItem {
   created_at: string;
   department?: string;
   relationship_type?: string;
+  // IA-026 — campos opcionais também ficam guardados no histórico; sem eles,
+  // reabrir a análise perdia desempenho, risco de churn e oportunidade de venda.
+  agent_performance?: unknown;
+  churn_risk?: string | null;
+  sales_opportunity?: string | null;
 }
 
 interface HistoryTabProps {
@@ -57,6 +62,7 @@ export function HistoryTab({ analyses, historyLoading, onLoadHistory }: HistoryT
           className="cursor-pointer rounded-xl border border-border/50 bg-muted/30 p-3 transition-colors hover:bg-muted/50"
           onClick={() =>
             onLoadHistory({
+              analysisId: item.id,
               department: item.department,
               relationshipType: item.relationship_type,
               summary: item.summary,
@@ -68,6 +74,9 @@ export function HistoryTab({ analyses, historyLoading, onLoadHistory }: HistoryT
               topics: item.topics,
               urgency: item.urgency ?? undefined,
               customerSatisfaction: item.customer_satisfaction ?? undefined,
+              agentPerformance: (item.agent_performance as AgentPerformance | null | undefined) ?? null,
+              churnRisk: item.churn_risk ?? undefined,
+              salesOpportunity: item.sales_opportunity ?? undefined,
             })
           }
         >

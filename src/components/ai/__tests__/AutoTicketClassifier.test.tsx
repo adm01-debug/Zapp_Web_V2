@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AutoTicketClassifier } from '../AutoTicketClassifier';
+import { supabase } from '@/integrations/supabase/client';
 
 const mockTags = [
   { id: 't1', contact_id: 'c1', tag_name: 'suporte técnico', confidence: 0.9, source: 'ai', created_at: new Date().toISOString(), contacts: { name: 'Maria', phone: '+5511999' } },
@@ -189,6 +190,59 @@ describe('AutoTicketClassifier', () => {
       vi.mocked(vi.fn()).mockResolvedValueOnce({ data: [], error: null });
       render(<AutoTicketClassifier />);
       expect(screen.getByText(/Classificação Automática/)).toBeInTheDocument();
+    });
+  });
+
+  // ===== IA-114: categoria/prioridade exibidas são as do servidor =====
+  describe('Resultado de ai-classify-tickets aplicado (IA-114)', () => {
+    beforeEach(() => {
+      vi.mocked(supabase.functions.invoke).mockReset();
+      vi.mocked(supabase.functions.invoke).mockResolvedValue({ data: null, error: { message: 'not found' } });
+    });
+
+    it('troca categoria, prioridade e confiança locais pelas do servidor', async () => {
+      // O servidor diz "Suporte Técnico" com prioridade alta e confiança 42%; a
+      // heurística local diria "Reclamação" / "Urgente" / 95% — é essa diferença
+      // que o teste mede.
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: {
+          classified: 1,
+          results: [
+            { tagId: 't3', contactId: 'c3', tagName: 'reclamação', category: 'Suporte Técnico', priority: 'high', confidence: 0.42 },
+          ],
+        },
+        error: null,
+      });
+
+      render(<AutoTicketClassifier />);
+      await waitFor(() => expect(screen.getByText('Ana')).toBeInTheDocument());
+      // Antes do clique os valores exibidos são os locais.
+      expect(screen.getByText('Urgente')).toBeInTheDocument();
+      expect(screen.queryByText('Alta')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Classificar em Lote'));
+
+      await screen.findByText('Alta');
+      expect(screen.getByText('42%')).toBeInTheDocument();
+      expect(screen.queryByText('Urgente')).not.toBeInTheDocument();
+      expect(screen.queryByText('95%')).not.toBeInTheDocument();
+    });
+
+    it('mantém os valores locais quando o backend falha', async () => {
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: null,
+        error: { message: 'boom' },
+      });
+
+      render(<AutoTicketClassifier />);
+      await waitFor(() => expect(screen.getByText('Ana')).toBeInTheDocument());
+
+      fireEvent.click(screen.getByText('Classificar em Lote'));
+
+      await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(1));
+      expect(screen.queryByText('Alta')).not.toBeInTheDocument();
+      expect(screen.getByText('Urgente')).toBeInTheDocument();
+      expect(screen.getByText('95%')).toBeInTheDocument();
     });
   });
 });

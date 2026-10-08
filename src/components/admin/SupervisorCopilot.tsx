@@ -21,6 +21,41 @@ const QUICK_QUESTIONS = [
   'Quais são os motivos de encerramento mais comuns?',
 ];
 
+interface ManagerialMetrics {
+  queueNames: string[];
+  activeAgents: Array<{ name: string; role: string }>;
+  messagesLast24h: number;
+  now: Date;
+}
+
+/**
+ * IA-117 — janela da consulta gerencial. Fica fora do corpo do componente para não
+ * ler o relógio durante o render (regra react-hooks/purity).
+ */
+function managerialWindow(): { since: string; now: Date } {
+  const now = new Date();
+  return { since: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), now };
+}
+
+/**
+ * IA-117 — a resposta gerencial precisa ser reprodutível: o contexto declara a
+ * consulta feita, o período, a amostra e o que NÃO foi medido. Antes o prompt só
+ * mandava "responder com base nos dados reais" sem dizer quais existiam, e o
+ * copiloto respondia sobre SLA, backlog e motivos de encerramento sem base alguma.
+ */
+function buildManagerialContext({ queueNames, activeAgents, messagesLast24h, now }: ManagerialMetrics): string {
+  const periodStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  return [
+    'Consulta gerencial (base reproduzível):',
+    `- Período: últimas 24h (${periodStart} a ${now.toISOString()})`,
+    `- Amostra: ${queueNames.length} fila(s), ${activeAgents.length} agente(s) ativo(s)`,
+    `- Mensagens no período: ${messagesLast24h}`,
+    `- Filas: ${queueNames.join(', ') || 'nenhuma'}`,
+    `- Agentes ativos: ${activeAgents.map(a => `${a.name} (${a.role})`).join(', ') || 'nenhum'}`,
+    'Não medido nesta consulta: SLA, backlog por fila, tempo de espera, tempo de atendimento e motivos de encerramento.',
+  ].join('\n');
+}
+
 export function SupervisorCopilot() {
   const [question, setQuestion] = useState('');
   const [insights, setInsights] = useState<InsightResult[]>([]);
@@ -31,30 +66,30 @@ export function SupervisorCopilot() {
     if (!query.trim()) return;
     setLoading(true);
     setQuestion('');
+    const { since, now } = managerialWindow();
 
     try {
-      // Build context from real data
+      // Build context from real data — a consulta, o período e a amostra ficam
+      // explícitos no contexto para que a resposta seja reproduzível (IA-117).
       const [queueData, agentData, messageData] = await Promise.all([
         supabase.from('queues').select('id, name').limit(20),
         supabase.from('profiles').select('id, name, role, is_active').eq('is_active', true).limit(50),
         supabase.from('messages').select('id', { count: 'exact', head: true })
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+          .gte('created_at', since),
       ]);
 
-      const context = `
-Dados atuais do sistema:
-- ${queueData.data?.length || 0} filas configuradas
-- ${agentData.data?.length || 0} agentes ativos
-- ${messageData.count || 0} mensagens nas últimas 24h
-Filas: ${queueData.data?.map(q => q.name).join(', ') || 'nenhuma'}
-Agentes: ${agentData.data?.map(a => `${a.name} (${a.role})`).join(', ') || 'nenhum'}
-      `.trim();
+      const context = buildManagerialContext({
+        queueNames: (queueData.data || []).map(q => q.name),
+        activeAgents: (agentData.data || []).map(a => ({ name: a.name, role: a.role ?? 'sem papel' })),
+        messagesLast24h: messageData.count || 0,
+        now,
+      });
 
       const { data: { session } } = await supabase.auth.getSession();
       const response = await supabase.functions.invoke('ai-proxy', {
         body: {
           messages: [
-            { role: 'system', content: `Você é um copiloto de supervisor de atendimento. Responda com base nos dados reais fornecidos. Seja conciso e direto. Use bullet points. Dados:\n${context}` },
+            { role: 'system', content: `Você é um copiloto de supervisor de atendimento. Responda SOMENTE com as métricas listadas em "Consulta gerencial". Se a pergunta exigir uma métrica marcada como não medida (ou fora da amostra do período), diga explicitamente que o dado não está disponível nesta consulta — não estime nem invente números. Seja conciso e direto. Use bullet points.\n\n${context}` },
             { role: 'user', content: query },
           ],
           model: 'google/gemini-3-flash-preview',
