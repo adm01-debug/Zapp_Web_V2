@@ -5,6 +5,7 @@ import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { formatMeta } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
+import { AudioPlayButton } from './AudioPlayButton';
 
 interface FileCardProps {
   item: ContactMediaItem;
@@ -97,6 +98,8 @@ export function FileCard({
       {/* Etapa 19: Visualizar, Encaminhar (desabilitado até a Fase 7) e Mais ações.
           Sem "Copiar link"; "Baixar" vive no menu, desabilitado e com o motivo à vista. */}
       <div className="mt-auto flex items-center justify-end gap-1 px-2 pb-2">
+        {/* A02: play/pause do áudio direto no cartão, só para itens de áudio. */}
+        {item.type === 'audio' && <AudioPlayButton item={item} />}
         <button
           type="button"
           aria-label="Visualizar"

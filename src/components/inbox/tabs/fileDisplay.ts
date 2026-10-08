@@ -9,7 +9,7 @@ export function formatSize(bytes: number | null): string | null {
 }
 
 export const TYPE_LABEL: Record<ContactMediaItem['type'], string> = {
-  image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento',
+  image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento', sticker: 'Figurinha',
 };
 
 /**

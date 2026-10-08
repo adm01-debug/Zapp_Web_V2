@@ -110,15 +110,14 @@ test.describe('Sidebar "Detalhes do Contato" — 3 seções', () => {
     }
   });
 
-  test('copiar WhatsApp chama o clipboard com +E164', async ({ page, context }) => {
-    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  test('WhatsApp é texto simples: sem copiar e sem link para o wa.me', async ({ page }) => {
     const panel = page.getByTestId('contact-panel');
-    const copiar = panel.getByRole('button', { name: 'Copiar WhatsApp' });
-    // Fallback local: o contato [E2E] tem telefone, então a linha existe
-    // mesmo com a flag desligada.
-    await expect(copiar).toBeVisible();
-    await copiar.click();
-    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toMatch(/^\+\d{10,15}$/);
+    const linha = panel.getByTestId('sidebar-row-whatsapp');
+    await expect(linha).toBeVisible();
+    await expect(linha.getByRole('button', { name: 'Copiar WhatsApp' })).toHaveCount(0);
+    await expect(linha.locator('a[href^="https://wa.me"]')).toHaveCount(0);
+    // Número inteiro na linha: nada de reticências.
+    await expect(linha).not.toContainText('…');
   });
 
   test('Perfil Singu mostra seis métricas honestas quando ainda não há avaliação', async ({ page }) => {

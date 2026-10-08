@@ -240,7 +240,10 @@ export const WorkItemCard = React.memo(function WorkItemCard({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onOpenContact(); }}
-              className="absolute bottom-2 right-2 h-6 w-6 rounded-md bg-muted/80 hover:bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              // E16: nasce com `opacity-0` (sem `focus-visible:opacity-100` o Tab parava
+              // num controle invisível — o anel de foco do `button:focus-visible` some
+              // junto com o `opacity-0`, que apaga também a sombra).
+              className="absolute bottom-2 right-2 h-6 w-6 rounded-md bg-muted/80 hover:bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
               title="Abrir conversa"
               aria-label="Abrir conversa"
             >

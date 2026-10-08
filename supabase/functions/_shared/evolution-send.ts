@@ -145,17 +145,36 @@ export function extractAvatarUrl(json: unknown): string | null {
 
 // connectionState (v2): { instance: { state } } | { state } → 'open'|'close'|'connecting'
 // /instance/status (GO): { data: { Connected, LoggedIn, Name } }
+//
+// Contrato E25 (PLANO_MULTI_CONEXAO_EVOLUTION_GO): só é 'open' com sessão E socket
+// ativos. Durante uma queda de socket a GO responde {Connected:false, LoggedIn:true}
+// (estado "Reconnecting": credenciais válidas, socket fora) — devolver 'open' aí era
+// falso "conexão aberta" e o connection-health-check gravava healthy/connected com o
+// WhatsApp fora do ar (TRA-003). Regra:
+//   LoggedIn && Connected  → 'open'
+//   LoggedIn && !Connected → 'connecting'  (transitório: o caller não promove a 'connected')
+//   !LoggedIn              → 'close'
+// Sem flag de socket no payload não há evidência de queda: LoggedIn decide (comportamento
+// anterior preservado para respostas antigas/parciais da GO).
 export function extractConnectionState(json: unknown): string {
   const j = json as {
     instance?: { state?: unknown };
     state?: unknown;
-    data?: { LoggedIn?: unknown; loggedIn?: unknown; Connected?: unknown };
+    data?: {
+      LoggedIn?: unknown; loggedIn?: unknown;
+      Connected?: unknown; connected?: unknown;
+    };
   };
   const v2 = j?.instance?.state ?? j?.state;
   if (typeof v2 === 'string' && v2) return v2;
   const d = j?.data;
-  if (d && typeof d === 'object' && ('LoggedIn' in d || 'Connected' in d)) {
-    return (d.LoggedIn ?? d.loggedIn) ? 'open' : 'close';
+  if (d && typeof d === 'object'
+    && ('LoggedIn' in d || 'Connected' in d || 'loggedIn' in d || 'connected' in d)) {
+    const loggedIn = Boolean(d.LoggedIn ?? d.loggedIn);
+    if (!loggedIn) return 'close';
+    const hasConnected = 'Connected' in d || 'connected' in d;
+    if (!hasConnected) return 'open';
+    return (d.Connected ?? d.connected) ? 'open' : 'connecting';
   }
   return 'unknown';
 }

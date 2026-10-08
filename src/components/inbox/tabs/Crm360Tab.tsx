@@ -136,7 +136,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={Target} title="Etapa no funil" action={{ label: 'Ver funil →', onClick: () => navigateToView('pipeline') }}>
+        <SectionCard icon={Target} title="Etapa no funil" action={{ label: 'Ver tarefas →', onClick: () => navigateToView('tasks') }}>
           {crm360?.currentDeal ? (
             <>
               <ol className="flex items-center gap-1 overflow-x-auto">
@@ -183,8 +183,8 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
                 ))}
               </ol>
               <p className="text-sm text-muted-foreground">Nenhuma negociação aberta</p>
-              <button type="button" onClick={() => navigateToView('pipeline')} className="h-8 px-3 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25">
-                Criar negociação
+              <button type="button" onClick={() => navigateToView('tasks')} className="h-8 px-3 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25">
+                Abrir Tarefas
               </button>
             </div>
           )}
@@ -261,7 +261,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={TrendingUp} title="Pipeline comercial" tone="blue" action={{ label: 'Ver pipeline →', onClick: () => navigateToView('pipeline') }}>
+        <SectionCard icon={TrendingUp} title="Pipeline comercial" tone="blue" action={{ label: 'Ver tarefas →', onClick: () => navigateToView('tasks') }}>
           {!crm360 || pipelineTotal === 0 ? (
             <p className="text-sm text-muted-foreground">Sem negociações</p>
           ) : (

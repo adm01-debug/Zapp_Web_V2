@@ -87,18 +87,50 @@ function pushEntry(prev: NavigationState, entry: NavigationEntry): NavigationSta
 export const RESERVED_HASHES = new Set(['main-content', 'main-navigation', 'inbox-section', 'search-input']);
 
 /**
- * Compatibilidade de rota (TRA-010/#178): ids de módulos REMOVIDOS que ainda
- * podem viver em favorito, histórico ou link compartilhado. O id antigo resolve
- * para a tela vigente equivalente em vez de cair no fallback do ViewRouter.
+ * Compatibilidade de rota (TRA-010/#178 + E07 da fusão Quadro→Tarefas): ids de
+ * módulos REMOVIDOS que ainda podem viver em favorito, histórico ou link
+ * compartilhado. O id antigo resolve para a tela vigente equivalente em vez de
+ * cair no fallback do ViewRouter.
  * `tags` → `contacts` (o modelo de etiqueta vigente é `contacts.tags`).
+ * `pipeline` → `tasks` (o item "Quadro" do menu era a MESMA tela de Tarefas,
+ * forçada no modo Quadro; a visão Quadro continua existindo DENTRO de Tarefas).
  */
 export const LEGACY_VIEW_REDIRECTS: Readonly<Record<string, string>> = Object.freeze({
   tags: 'contacts',
+  pipeline: 'tasks',
 });
 
 /** Resolve um id de view legado para a tela vigente (id desconhecido passa reto). */
 export function resolveLegacyView(viewId: string): string {
   return LEGACY_VIEW_REDIRECTS[viewId] ?? viewId;
+}
+
+/** Chave de `localStorage` em que `TasksModule` lembra o modo (Lista/Quadro/Agenda). */
+const TASKS_MODE_STORAGE_KEY = 'tasks-mode';
+
+/** Id legado da porta de entrada do Quadro (item `pipeline` do menu). */
+const LEGACY_BOARD_VIEW_ID = 'pipeline';
+
+/**
+ * E07 (fusão Quadro→Tarefas): quem chega pelo link legado — `?view=pipeline` ou
+ * `#pipeline` — abre Tarefas JÁ no modo Quadro, gravando a MESMA preferência que
+ * `TasksModule` lê (`tasks-mode`). A gravação acontece só na entrada legada:
+ * entrar por `?view=tasks` não escreve nada e retoma o último modo salvo.
+ *
+ * Chamada em todo ponto que lê a view CRUA da URL (carga inicial, `popstate` e
+ * `hashchange`), sempre antes de a URL ser reescrita para `?view=tasks` — depois
+ * disso a view crua já não é a legada. Precisa ser síncrona à resolução inicial
+ * porque `TasksModule` lê a preferência no próprio `useState`, antes de qualquer
+ * efeito; um efeito aqui chegaria tarde e o primeiro render sairia em Lista.
+ */
+function rememberLegacyBoardMode(rawViewId: string | null): void {
+  if (rawViewId !== LEGACY_BOARD_VIEW_ID) return;
+  try {
+    window.localStorage.setItem(TASKS_MODE_STORAGE_KEY, 'board');
+  } catch {
+    // Sem armazenamento (aba privada/quota cheia) o redirect segue valendo;
+    // só a preferência não é lembrada.
+  }
 }
 
 /**
@@ -110,11 +142,17 @@ export function resolveLegacyView(viewId: string): string {
 function getViewFromUrl(defaultView: string): string {
   const params = new URLSearchParams(window.location.search);
   const viewParam = params.get('view');
-  if (viewParam) return resolveLegacyView(viewParam);
+  if (viewParam) {
+    rememberLegacyBoardMode(viewParam);
+    return resolveLegacyView(viewParam);
+  }
 
   // Backward compat: hash-based deep links ("#inbox") before migration
   const hash = window.location.hash.replace('#', '');
-  if (hash && !RESERVED_HASHES.has(hash)) return resolveLegacyView(hash);
+  if (hash && !RESERVED_HASHES.has(hash)) {
+    rememberLegacyBoardMode(hash);
+    return resolveLegacyView(hash);
+  }
 
   return defaultView;
 }
@@ -259,6 +297,10 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
       return;
     }
 
+    // E07: o hash legado `#pipeline` grava o modo Quadro ANTES de a URL ser
+    // reescrita para `?view=tasks` — depois disso a view crua já não é legada.
+    rememberLegacyBoardMode(hash);
+
     // Migrate the URL: replace hash with ?view= query param
     setViewParam(resolveLegacyView(hash), true);
 
@@ -268,9 +310,11 @@ export function useNavigationHistory(defaultView = 'inbox'): NavigationHistoryRe
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    // Compatibilidade de rota (TRA-010/#178): favorito/link antigo de módulo
-    // removido (?view=tags) é reescrito para a tela vigente SEM empilhar
-    // histórico — a URL fica coerente e o redirect não passa pelo fallback.
+    // Compatibilidade de rota (TRA-010/#178, E07 da fusão Quadro→Tarefas):
+    // favorito/link antigo de módulo removido (?view=tags, ?view=pipeline) é
+    // reescrito para a tela vigente SEM empilhar histórico — a URL fica coerente
+    // e o redirect não passa pelo fallback. O modo Quadro da entrada legada já
+    // foi lembrado em `getViewFromUrl`, que roda antes deste efeito.
     const rawView = params.get('view');
     if (rawView) {
       const resolved = resolveLegacyView(rawView);

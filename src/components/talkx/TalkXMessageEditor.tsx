@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import { Bold, Italic, List, Smile, Hash, Link2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { parsePlaceholderToken, parsePlaceholders } from './kit/placeholders';
 
 /**
  * V26 — editor de mensagem único do Talk X.
@@ -25,12 +26,15 @@ const TOOL_BUTTON =
 
 /** Um segmento inteiro de placeholder, para quebrar o texto no highlight. */
 const PLACEHOLDER_TOKEN = /\{\{[^}]*\}\}/;
-/** Captura o nome de qualquer `{{ ... }}` (mesma forma que `personalizePreview`). */
-const PLACEHOLDER_CAPTURE = /\{\{\s*([^}]+?)\s*\}\}/g;
 
-/** Compara variáveis sem depender de chaves, espaços ou caixa: `{{Nome}}` ≡ `nome`. */
+/**
+ * Compara variáveis pela CHAVE, sem depender de chaves, espaços, caixa ou do
+ * padrão de fallback: `{{Nome|cliente}}` ≡ `nome` (mesma gramática da prévia,
+ * `kit/placeholders`). O token inteiro NÃO é a variável — usá-lo acusava como
+ * desconhecida uma sintaxe que `personalizePreview` resolve (R2-MOD-062).
+ */
 function normalizeVariable(raw: string): string {
-  return raw.replace(/[{}]/g, '').trim().toLowerCase();
+  return parsePlaceholderToken(raw).key;
 }
 
 export interface TalkXMessageEditorHandle {
@@ -96,7 +100,7 @@ export const TalkXMessageEditor = React.forwardRef<TalkXMessageEditorHandle, Tal
 
     const usedVariables = useMemo(() => {
       const found = new Set<string>();
-      for (const match of value.matchAll(PLACEHOLDER_CAPTURE)) found.add(normalizeVariable(match[1]));
+      for (const { key } of parsePlaceholders(value)) if (key) found.add(key);
       return Array.from(found);
     }, [value]);
 

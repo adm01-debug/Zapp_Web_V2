@@ -142,8 +142,11 @@ const DEFAULT_TIMEOUT_MS_BY_CAPABILITY: Record<AiModality | AiPurpose, number> =
  * porque é ela que muda a latência real; sem ela, a FINALIDADE decide. Chave
  * desconhecida em runtime (modalidade/finalidade fora do enum) cai no
  * `DEFAULT_TIMEOUT_MS` — falha fechada no valor histórico, nunca uma chamada sem teto.
+ *
+ * Exportada (IA-202) para o worker da fila limitar o prazo da geração ao MENOR
+ * entre este default e o orçamento do lease — sem repetir o valor na mão.
  */
-function resolveDefaultTimeoutMs(purpose: unknown, modality: unknown): number {
+export function resolveDefaultTimeoutMs(purpose: unknown, modality: unknown): number {
   let key = "";
   if (typeof modality === "string" && modality !== "") {
     key = modality;

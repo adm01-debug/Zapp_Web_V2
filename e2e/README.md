@@ -259,3 +259,96 @@ da régua visual), no passo `--project=chromium-talkx-launch`.
 `getByRole('button', { name: 'Ações' })` casa também o sino "Notificações" (que
 contém "ações") e o clique abre o popover de notificações. E o
 `TalkXConfirmDialog` renderiza `role="alertdialog"`, não `dialog`.
+
+## Aba Arquivos: prova autenticada 100% local (cartão t_6c2d8281)
+
+`e2e/files-tab.spec.ts` é a prova E2E autenticada da aba Arquivos **sem sair da
+máquina**: banco local (`zapp-db-local`), Storage local, usuário sintético criado
+no banco local e rede externa bloqueada. Nada é copiado de outro ambiente — não
+há `storageState`, credencial real, fixture remota nem URL de Supabase externo.
+
+### Como rodar
+
+```bash
+# 0) env do conjunto local (portas e chaves LOCAIS)
+zapp-db-local env . <nome-do-conjunto> > .tmp/local-env.raw   # API_URL, DB_URL, ANON_KEY, SERVICE_ROLE_KEY
+#    além do env da ferramenta, o app precisa dos dois desvios locais:
+#      VITE_ZAPP_LOCAL_SUPABASE_URL=$API_URL
+#      VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY=$ANON_KEY
+
+# 1) semear o estado sintético no banco/Storage LOCAIS (idempotente)
+set -a; . ./.tmp/local-env.sh; set +a
+bun e2e/fixtures/arquivos-local/seed.ts
+
+# 2) servir o app apontando para o conjunto local
+npx vite --host 127.0.0.1 --port 5318 --strictPort
+
+# 3) rodar o spec (o projeto autenticado do repo depende de `setup`/secrets;
+#    --no-deps isola esta suíte, que faz o login real pela UI no GoTrue local)
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:5318 npx playwright test e2e/files-tab.spec.ts --no-deps
+```
+
+O seed cria **só no ambiente local** e imprime o resumo: usuário
+`e2e.arquivos@example.com` (domínio reservado RFC 2606, senha sintética que vive
+apenas no conjunto local), 3 contatos atribuídos a ele, 69 mensagens de mídia (71 mensagens contando os 2 textos) e os
+objetos privados do bucket `whatsapp-media` em `<contact_id>/<arquivo>` (o
+formato exigido pela policy "Users can read assigned whatsapp media"). Ele mesmo
+verifica o caminho de leitura: baixa um objeto por **URL assinada** e confirma que
+a rota **pública** nega.
+
+### O que a suíte prova
+
+`carrega os 4 tipos de mídia privada` · `alterna Grid/Lista/Tabela e persiste a
+preferência` · `modo seleção (item, Selecionar todos, recorte fora do filtro, Esc)`
+· `painel de detalhes` · `preview com navegação por teclado` · `ARIA (aba, chips,
+nomes acessíveis)` · `contraste numérico >= 4.5 em claro/escuro/alto contraste` ·
+`paginação real (aviso "Buscando entre 60 carregados" e Carregar tudo até o fim)` ·
+`lista vazia` · `redução de movimento`. As contagens vêm de consultas de verdade ao
+banco local (4 mídias no contato principal, 65 no de paginação > `MEDIA_PAGE_SIZE` =
+60, zero no contato só-texto) e a imagem só conta como carregada quando o `<img>`
+decodifica (`naturalWidth > 0`) a partir de `/storage/v1/object/sign/...`.
+
+### Local-only por construção
+
+O spec se declara fora de escopo quando falta o conjunto local
+(`test.skip(!CONJUNTO_LOCAL)` com `VITE_ZAPP_LOCAL_SUPABASE_URL`/`ANON_KEY`): o
+`e2e-logado.yml` do CI roda o projeto autenticado sem conjunto local e ali o spec
+não pode autenticar um usuário sintético que não existe. Sem conjunto local nada
+roda; com ele, roda tudo.
+
+### Prova negativa de segurança
+
+O spec faz `page.route('**/*')` e **aborta** toda requisição fora de
+`127.0.0.1`/`localhost`/`::1`; os únicos hosts tolerados (fontes do Google e
+Speed Insights, chamados pelo `index.html`) também são abortados — o app segue
+funcional sem eles, que é exatamente a prova de que o fluxo não depende de rede
+externa. Sobra de host fora da lista reprova o teste no `afterEach`. O login é real
+pela UI (`/auth` → `auth-login` local → GoTrue local) com `storageState` vazio, e o
+`src/config/supabase.ts` só desvia para o conjunto local com build não-PROD e URL
+em `127.0.0.1`/`localhost`.
+
+### Por que contexto compartilhado e `retries`
+
+Cada teste da suíte paga um login real + boot completo da SPA. Dez renderers novos
+em sequência derrubam o Chromium por OOM em máquina compartilhada (vários
+workspaces de teste no mesmo host), então a suíte roda `serial` sobre **uma** página
+autenticada: cada teste volta a `/` com reload completo (estado de memória zerado
+como numa visita nova) e só a preferência de layout (`zapp.inbox.files.view:*`) é
+removida entre testes — a sessão local e as demais preferências ficam, como na vida
+real. `retries` cobre o OOM residual do renderer, que é flake de infraestrutura.
+
+### Achado fora do escopo desta suíte
+
+Sob carga, o **primeiro** `Esc` real chega ao `window` e não sai do modo seleção
+(o listener do `useEffect` da aba ainda não estava registrado); o segundo sai. É
+comportamento do app (`FilesTab.tsx`, fora dos arquivos deste cartão), registrado
+no cartão t_6c2d8281 — aqui o teste prova a saída por `Esc` com tentativas reais,
+sem depender do timing do efeito.
+
+O **erro da segunda leitura** não entra nesta suíte por medição, não por escolha:
+interceptar `**/rest/v1/messages**` atinge TODA a inbox (a conversa aberta lê a
+mesma tabela), e nas duas formas testadas — `route.abort()` e `route.fulfill(500)`
+— o botão "Carregar tudo" ficou desabilitado (`isFetchingNextPage`) e a faixa
+`files-query-error` não apareceu em 20 s (com `abort`, o fetch do supabase-js entra
+em retry). Medição registrada no cartão; a faixa de erro em si tem prova unitária
+em `src/components/inbox/tabs/__tests__/FilesContent.test.tsx`.

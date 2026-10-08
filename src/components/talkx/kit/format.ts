@@ -1,6 +1,8 @@
 import { format, formatDistanceToNowStrict, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+import { parsePlaceholders } from './placeholders';
+
 /* ------------------------------------------------------------------ */
 /* Helpers                                                            */
 /* ------------------------------------------------------------------ */
@@ -34,9 +36,17 @@ export const fmtRelativeDay = (d: string | null | undefined) => {
   return `${format(date, 'd MMM', { locale: ptBR }).replace('.', '')}, ${hm}`;
 };
 
+/**
+ * Variáveis citadas no texto, normalizadas para a forma `{{chave}}` e sem
+ * repetição. Usa a MESMA gramática de `personalizePreview` (R2-MOD-062): o
+ * primeiro `|` separa chave de padrão e a chave aceita dígito/underscore — então
+ * `Oi {{nome|cliente}}` conta como `{{nome}}` e `{{custom_1}}` não desaparece.
+ */
 export function extractVariables(template: string): string[] {
   const found = new Set<string>();
-  for (const m of template.matchAll(/\{\{\s*([a-z_]+)\s*\}\}/gi)) found.add(`{{${m[1].toLowerCase()}}}`);
+  for (const { key } of parsePlaceholders(template)) {
+    if (key) found.add(`{{${key}}}`);
+  }
   return Array.from(found);
 }
 

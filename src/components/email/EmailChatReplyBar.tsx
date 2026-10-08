@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +16,12 @@ import { useGmail, type EmailMessage } from '@/hooks/integrations/useGmail';
 import { toast } from 'sonner';
 import { fileToEmailAttachment, formatEmailFileSize, validateEmailAttachments } from '@/lib/emailAttachments';
 import { invalidEmailTokens, parseEmailAddressList, prefixEmailSubject, resolveReplyRecipients } from '@/lib/emailRecipients';
+import {
+  emailDraftSessionKey,
+  readEmailDraftSession,
+  removeEmailDraftSession,
+  writeEmailDraftSession,
+} from '@/lib/emailDraftSession';
 
 import { getLogger } from '@/lib/logger';
 const log = getLogger('EmailChatReplyBar');
@@ -39,12 +45,21 @@ export function EmailChatReplyBar({
   onModeChange,
   onSent,
 }: EmailChatReplyBarProps) {
-  const { sendEmail, replyEmail } = useGmail(accountId);
+  const { sendEmail, replyEmail, activeAccount } = useGmail(accountId);
+  const resolvedAccountId = accountId || activeAccount?.id;
+  const draftStorageKey = useMemo(() => emailDraftSessionKey({
+    userId: activeAccount?.user_id,
+    accountId: resolvedAccountId,
+    mode,
+    threadId,
+  }), [activeAccount?.user_id, mode, resolvedAccountId, threadId]);
+  const [restoredDraft] = useState(() => readEmailDraftSession(draftStorageKey));
 
-  const [body, setBody] = useState('');
-  const [to, setTo] = useState('');
+  const [body, setBody] = useState(() => restoredDraft?.body ?? '');
+  const [to, setTo] = useState(() => restoredDraft?.to ?? '');
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [newSubject, setNewSubject] = useState(''); // E26
+  const [newSubject, setNewSubject] = useState(() => restoredDraft?.subject ?? ''); // E26
+  const [missingAttachmentNames, setMissingAttachmentNames] = useState<string[]>(() => restoredDraft?.attachmentNames ?? []);
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendLockRef = useRef(false);
@@ -59,6 +74,25 @@ export function EmailChatReplyBar({
     [accountEmail, lastMessage, mode],
   );
   const resolvedTo = mode === 'forward' || mode === 'new' ? to : replyRecipients.to.join(', ');
+
+  useEffect(() => {
+    if (!draftStorageKey) return;
+    const hasContent = Boolean(body.trim() || to.trim() || newSubject.trim() || attachments.length || missingAttachmentNames.length);
+    if (!hasContent) {
+      removeEmailDraftSession(draftStorageKey);
+      return;
+    }
+    writeEmailDraftSession(draftStorageKey, {
+      to,
+      cc: '',
+      bcc: '',
+      subject: newSubject,
+      body,
+      isUsingHtml: false,
+      attachmentNames: attachments.length ? attachments.map(file => file.name) : missingAttachmentNames,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [attachments, body, draftStorageKey, missingAttachmentNames, newSubject, to]);
 
   const handleAddFiles = useCallback((files: FileList | null) => {
     if (!files) return;
@@ -99,6 +133,7 @@ export function EmailChatReplyBar({
     // novo destinatário/anexo) permanece no editor, nada é descartado em silêncio.
     const sentBody = body;
     const sentTo = to;
+    const sentSubject = newSubject;
     const sentAttachments = attachments;
     try {
       // Convert attachments to base64
@@ -135,7 +170,10 @@ export function EmailChatReplyBar({
 
       setBody((prev) => (prev === sentBody ? '' : prev));
       setTo((prev) => (prev === sentTo ? '' : prev));
+      setNewSubject((prev) => (prev === sentSubject ? '' : prev));
       setAttachments((prev) => (prev === sentAttachments ? [] : prev));
+      setMissingAttachmentNames([]);
+      removeEmailDraftSession(draftStorageKey);
       onSent?.();
     } catch (err) {
       log.error('Unexpected error in EmailChatReplyBar:', err);
@@ -255,6 +293,13 @@ export function EmailChatReplyBar({
         </Button>
       </div>
       <p id="email-reply-shortcut" className="sr-only">Use Control ou Command mais Enter para enviar. Enter cria uma nova linha.</p>
+
+      {missingAttachmentNames.length > 0 && (
+        <div role="status" className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-[hsl(var(--warning-text))]">
+          O rascunho foi restaurado, mas o navegador não pode reabrir arquivos locais. Anexe novamente: {missingAttachmentNames.join(', ')}.
+          <Button type="button" variant="ghost" size="sm" className="ml-2 h-6 px-2 text-[hsl(var(--warning-text))]" onClick={() => setMissingAttachmentNames([])}>Dispensar</Button>
+        </div>
+      )}
 
       {/* Attachments preview */}
       {attachments.length > 0 && (

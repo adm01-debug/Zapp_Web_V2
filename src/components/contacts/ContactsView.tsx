@@ -4,6 +4,7 @@ import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Bat
 import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
+import { useContactsV2Flags, contactsV2AreasLigadas } from '@/hooks/contacts/useContactsV2Flags';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
@@ -22,6 +23,25 @@ import { useContactsViewState } from './useContactsViewState';
 import { canChangeSelectedContactsType, canDeleteSelectedContacts, canMergeContacts } from './contactPermissions';
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
+
+  /**
+   * CT-005 — chave `contacts.v2`, ponto ÚNICO de leitura no módulo Contatos.
+   *
+   * Cada área do módulo tem a sua sub-chave (`contacts.v2.toolbar`, `.cards`,
+   * `.detalhe`, `.empresa`, `.edicao`, `.protecao`) e a chave geral desliga todas
+   * de uma vez, sem versão nova do sistema (a infraestrutura de flags revalida a
+   * leitura sozinha). As telas v2 ainda não existem (chegam a partir de CT-006),
+   * então a leitura não troca nem tira nenhuma peça da tela: a experiência nova
+   * só entra quando a área v2 correspondente existir e o ramo dela for trocado
+   * aqui. Desligada, a tela é exatamente a atual.
+   *
+   * O elemento raiz publica quais áreas estão ligadas (`data-contacts-v2`, lista
+   * vazia = tela atual), para a liberação por partes ser conferida e revertida
+   * sem abrir o banco.
+   */
+  const contactsV2 = useContactsV2Flags();
+  const areasV2Ligadas = contactsV2AreasLigadas(contactsV2);
+
   const {
     crud, viewMode, setViewMode, gridColumns, setGridColumns,
     isMergeOpen, setIsMergeOpen,
@@ -99,7 +119,7 @@ export function ContactsView() {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="relative bg-background w-full min-w-0">
+    <div className="relative bg-background w-full min-w-0" data-contacts-v2={areasV2Ligadas.join(' ')}>
       <ScrollToTopButton
         scrollRef={layoutScrollRef}
         className="bottom-[calc(228px+env(safe-area-inset-bottom,0px))] md:bottom-[168px] md:right-8"

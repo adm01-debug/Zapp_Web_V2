@@ -26,7 +26,7 @@ const viewLabels: Record<string, string> = {
   connections: 'Conexões',
   campaigns: 'Campanhas',
   chatbot: 'Chatbot',
-  pipeline: 'Pipeline',
+  tasks: 'Tarefas',
   wallet: 'Carteira',
   catalog: 'Catálogo',
   payments: 'Pagamentos',

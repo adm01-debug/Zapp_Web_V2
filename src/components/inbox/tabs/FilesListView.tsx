@@ -5,6 +5,7 @@ import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { formatMeta } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
+import { AudioPlayButton } from './AudioPlayButton';
 
 /**
  * Lista da aba Arquivos (etapas 21-22). Cada linha segue o `ContactListItem` (h-16, px-3,
@@ -107,6 +108,8 @@ export function FilesListView({
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
+              {/* A04: play/pause do áudio na linha, só para itens de áudio. */}
+              {item.type === 'audio' && <AudioPlayButton item={item} />}
               <button type="button" aria-label="Visualizar" className={ACTION_BUTTON} onClick={() => onPreview(item)}>
                 <Eye className="w-3.5 h-3.5" />
               </button>
