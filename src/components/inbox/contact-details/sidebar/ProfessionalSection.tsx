@@ -6,8 +6,7 @@ import { SidebarSection } from './SidebarSection';
 import { SidebarRow } from './SidebarRow';
 import { SidebarEmpty } from './SidebarEmpty';
 import { buildProfessionalFallback } from './professionalFallback';
-import { cleanPhone, formatBrazilianPhone } from '@/lib/formatters';
-import { normalizeE164BR } from '@/lib/calls/phone';
+import { formatBrazilianPhone } from '@/lib/formatters';
 import type { ContactSidebarData, ContactSidebarStatus } from '@/types/contactSidebar';
 import type { ConversationContact as Contact } from '@/types/chat';
 import type { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
@@ -36,12 +35,8 @@ export function ProfessionalSection({ index, status, data, contact, enrichedData
   const whatsappRaw = fromRpc
     ? (fromRpc.whatsapp?.numero_e164 ?? fromRpc.whatsapp?.numero ?? null)
     : (fallback?.whatsapp ?? null);
-  // E.164 normalizado (BR nacional ganha +55, tronco 0 e 9º dígito tratados);
-  // números não-BR que `normalizeE164BR` não resolve mantêm os dígitos crus.
-  const whatsappE164 = whatsappRaw ? normalizeE164BR(whatsappRaw) : null;
-  const whatsappDigits = whatsappE164 ? whatsappE164.slice(1) : (whatsappRaw ? cleanPhone(whatsappRaw) : '');
+  // Linha do WhatsApp é só leitura: nada de copiar nem abrir wa.me.
   const whatsappDisplay = whatsappRaw ? formatBrazilianPhone(whatsappRaw) : null;
-  const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null;
 
   const email = fromRpc ? (fromRpc.email_corporativo?.email ?? null) : (fallback?.email ?? null);
   const emailVerified = fromRpc ? fromRpc.email_corporativo?.is_verified === true : false;
@@ -55,7 +50,7 @@ export function ProfessionalSection({ index, status, data, contact, enrichedData
   const add = () => onQuickAction('edit');
 
   return (
-    <SidebarSection index={index} value="professional" tone="blue" icon={<Briefcase />} title="Dados Profissionais" subtitle="Informações da sua vida profissional">
+    <SidebarSection index={index} value="professional" tone="blue" icon={<Briefcase />} title="Dados Profissionais">
       {status === 'loading' ? (
         <div className="space-y-2" data-testid="sidebar-professional-loading">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-7 w-full" />)}</div>
       ) : (
@@ -63,12 +58,15 @@ export function ProfessionalSection({ index, status, data, contact, enrichedData
           <div className="space-y-1">
             <SidebarRow
               icon={<MessageCircle />} label="WhatsApp" field="whatsapp"
-              value={whatsappDisplay} copyable copyValue={whatsappDigits ? `+${whatsappDigits}` : null}
-              href={whatsappHref} local={fallbackMode && whatsappDisplay !== null}
+              value={whatsappDisplay}
+              local={fallbackMode && whatsappDisplay !== null}
               onAdd={fallbackMode ? add : undefined}
+              valueNode={whatsappDisplay ? (
+                <span className="whitespace-nowrap">{whatsappDisplay}</span>
+              ) : undefined}
             />
             <SidebarRow
-              icon={<Mail />} label="E-mail corporativo" field="email"
+              icon={<Mail />} label="E-mail" field="email"
               value={email} copyable href={email ? `mailto:${email}` : null}
               local={fallbackMode && email !== null} onAdd={fallbackMode ? add : undefined}
               valueNode={email ? (
