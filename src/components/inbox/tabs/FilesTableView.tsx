@@ -7,6 +7,7 @@ import type { FilesSort } from '@/hooks/chat/useFilesViewState';
 import { formatFileDate, formatSize, TYPE_LABEL } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
+import { AudioPlayButton } from './AudioPlayButton';
 
 /**
  * Tabela da aba Arquivos (etapas 23-24). `SortableHeader` portado do `ContactsTable` com
@@ -161,6 +162,8 @@ export function FilesTableView({
                 {showSender && <TableCell className="h-14 max-w-40 truncate px-3 text-xs text-muted-foreground">{item.senderLabel ?? contactName}</TableCell>}
                 <TableCell className="h-14 px-3 text-right">
                   <div className="flex items-center justify-end gap-1">
+                    {/* A04: play/pause do áudio na tabela, só para itens de áudio. */}
+                    {item.type === 'audio' && <AudioPlayButton item={item} />}
                     <button type="button" aria-label="Visualizar" className={ACTION_BUTTON} onClick={() => onPreview(item)}>
                       <Eye className="w-3.5 h-3.5" />
                     </button>
