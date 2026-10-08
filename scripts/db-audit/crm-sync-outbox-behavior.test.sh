@@ -74,7 +74,8 @@ CREATE TABLE public.contacts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text NOT NULL, phone text,
   surname text, nickname text, email text, company text, job_title text,
   contact_type text, avatar_url text, tags text[] NOT NULL DEFAULT '{}',
-  channel_type text, ai_sentiment text, updated_at timestamptz NOT NULL DEFAULT now()
+  channel_type text, ai_sentiment text, updated_at timestamptz NOT NULL DEFAULT now(),
+  assigned_to uuid, queue_id uuid
 );
 CREATE FUNCTION public.is_contact_visible_to_user(uuid, uuid) RETURNS boolean
 LANGUAGE sql STABLE AS $$ SELECT false $$;
@@ -87,11 +88,33 @@ CREATE TABLE public.conversation_closures (
 );
 CREATE TABLE public.messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  contact_id uuid REFERENCES public.contacts(id) ON DELETE CASCADE
+  contact_id uuid REFERENCES public.contacts(id) ON DELETE CASCADE,
+  media_url text
 );
 CREATE TABLE public.contact_notes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  contact_id uuid REFERENCES public.contacts(id) ON DELETE CASCADE
+  contact_id uuid REFERENCES public.contacts(id) ON DELETE CASCADE,
+  author_id uuid, content text
+);
+-- Schema minimo exigido pela migration VIVA 20260909200000 (guard de identidade das notas),
+-- aplicada mais abaixo para provar R2-DB-016 contra a definicao de producao, nao uma copia.
+CREATE TABLE public.user_roles (user_id uuid NOT NULL, role text NOT NULL);
+CREATE TABLE public.agent_visibility_grants (
+  agent_id uuid NOT NULL REFERENCES public.profiles(id),
+  can_see_agent_id uuid NOT NULL REFERENCES public.profiles(id),
+  PRIMARY KEY (agent_id, can_see_agent_id)
+);
+CREATE TABLE public.queues (id uuid PRIMARY KEY);
+CREATE TABLE public.queue_members (
+  queue_id uuid NOT NULL REFERENCES public.queues(id),
+  profile_id uuid NOT NULL REFERENCES public.profiles(id),
+  is_active boolean NOT NULL,
+  PRIMARY KEY (queue_id, profile_id)
+);
+CREATE TABLE public.conversation_tasks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  contact_id uuid NOT NULL REFERENCES public.contacts(id),
+  status text
 );
 SQL
 
@@ -113,6 +136,46 @@ psql_test < "$repo_root/supabase/migrations/20260908220000_harden_crm_sync_outbo
 psql_test < "$repo_root/supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql" >/dev/null
 psql_test < "$repo_root/supabase/migrations/20261003151520_add_manual_email_crm_link_guard.sql" >/dev/null
 psql_test < "$repo_root/supabase/migrations/20261003160000_add_email_crm_link_permission.sql" >/dev/null
+
+# ---- R2-DB-016 (item 301): R2 do guard real de identidade das notas -------------------------
+# Aplica a migration VIVA 20260909200000 (o guard nasceu nela) para que a prova rode contra a
+# definicao de producao. O bloco RED exige que a MESMA mesclagem autorizada usada no bloco GREEN
+# seja BLOQUEADA aqui: e o defeito do item 301. Depois entra a migration desta tarefa.
+psql_test < "$repo_root/supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql" >/dev/null
+
+red_output="$(psql_test -At <<'SQL'
+INSERT INTO contacts(id,name,phone) VALUES
+  ('00000000-0000-0000-0000-000000000050','R2DB016 primary','5511999990050'),
+  ('00000000-0000-0000-0000-000000000051','R2DB016 secondary','5511999990051');
+INSERT INTO contact_notes(id,contact_id) VALUES
+  ('20000000-0000-0000-0000-000000000051','00000000-0000-0000-0000-000000000051');
+SELECT set_config('request.jwt.claim.role', 'service_role', false);
+DO $do$
+BEGIN
+  BEGIN
+    PERFORM public.merge_contacts_atomic(
+      '00000000-0000-0000-0000-000000000050',
+      ARRAY['00000000-0000-0000-0000-000000000051']::uuid[],
+      '{}'::jsonb
+    );
+    RAISE EXCEPTION 'r2db016_defect_absent';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+END;
+$do$;
+SELECT 'r2db016_defect=' || CASE WHEN
+  (SELECT count(*) FROM public.contacts WHERE id = '00000000-0000-0000-0000-000000000051') = 1
+  AND (SELECT contact_id FROM public.contact_notes WHERE id = '20000000-0000-0000-0000-000000000051')
+      = '00000000-0000-0000-0000-000000000051'::uuid
+THEN 'blocked_23514' ELSE 'unexpected' END;
+SQL
+)"
+grep -Fx 'r2db016_defect=blocked_23514' <<<"$red_output" >/dev/null \
+  || { echo 'R2-DB-016: o defeito NAO se reproduziu (mesclagem autorizada com nota nao foi bloqueada)' >&2; echo "$red_output" >&2; exit 1; }
+
+# Correcao desta tarefa: a mesclagem autorizada sinaliza a operacao e o guard dispensa so ali.
+psql_test < "$repo_root/supabase/migrations/20261006205100_contact_notes_identity_merge_bypass.sql" >/dev/null
 
 output="$(psql_test -At <<'SQL'
 INSERT INTO contacts(id,name,phone) VALUES
@@ -309,10 +372,98 @@ SELECT 'cleanup_bounded=' || CASE WHEN (SELECT deleted FROM cleanup_result)=1
   AND NOT EXISTS (SELECT 1 FROM crm_sync_outbox WHERE idempotency_key='cleanup:old-success')
   AND EXISTS (SELECT 1 FROM crm_sync_outbox WHERE idempotency_key='cleanup:recent-success')
   THEN 'ok' ELSE 'fail' END;
+
+-- R2-DB-016 (item 301): com o guard real e a correcao desta tarefa, a MESMA mesclagem do bloco
+-- RED (secundario 051 com nota) conclui; e o caminho padrao segue NEGANDO a troca de identidade.
+SELECT public.merge_contacts_atomic(
+  '00000000-0000-0000-0000-000000000050',
+  ARRAY['00000000-0000-0000-0000-000000000051']::uuid[],
+  '{}'::jsonb
+) IS NOT NULL;
+SELECT 'r2db016_fix=' || CASE WHEN
+  (SELECT count(*) FROM public.contacts WHERE id = '00000000-0000-0000-0000-000000000051') = 0
+  AND (SELECT contact_id FROM public.contact_notes WHERE id = '20000000-0000-0000-0000-000000000051')
+      = '00000000-0000-0000-0000-000000000050'::uuid
+THEN 'ok' ELSE 'fail' END;
+
+-- Negado (1): UPDATE direto da identidade da nota pelo proprio postgres, SEM o sinal do merge.
+DO $do$
+BEGIN
+  BEGIN
+    UPDATE public.contact_notes SET contact_id = '00000000-0000-0000-0000-000000000003'
+    WHERE id = '20000000-0000-0000-0000-000000000051';
+    RAISE EXCEPTION 'nota mudou de contato fora da mesclagem (postgres)';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+END;
+$do$;
+SELECT 'note_identity_postgres_blocked=' || CASE WHEN
+  (SELECT contact_id FROM public.contact_notes WHERE id = '20000000-0000-0000-0000-000000000051')
+    = '00000000-0000-0000-0000-000000000050'::uuid
+THEN 'ok' ELSE 'fail' END;
+
+-- Negado (2): UPDATE direto pela role de aplicacao `authenticated`, dona da nota e com o contato
+-- visivel (a RLS deixa a linha alcancavel): quem barra e o guard, nao a RLS.
+INSERT INTO profiles(id,user_id) VALUES
+  ('90000000-0000-0000-0000-0000000000a1','91000000-0000-0000-0000-0000000000a1');
+INSERT INTO contacts(id,name,phone,assigned_to) VALUES
+  ('00000000-0000-0000-0000-000000000054','R2DB016 actor contact','5511999990054',
+   '90000000-0000-0000-0000-0000000000a1');
+INSERT INTO contact_notes(id,contact_id,author_id) VALUES
+  ('20000000-0000-0000-0000-000000000054','00000000-0000-0000-0000-000000000054',
+   '90000000-0000-0000-0000-0000000000a1');
+DO $do$
+BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claim.sub', '91000000-0000-0000-0000-0000000000a1', true);
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+  IF NOT EXISTS (SELECT 1 FROM public.contact_notes WHERE id = '20000000-0000-0000-0000-000000000054') THEN
+    RAISE EXCEPTION 'fixture invisivel para authenticated: a prova nao estaria alcancando o guard';
+  END IF;
+  BEGIN
+    UPDATE public.contact_notes SET contact_id = '00000000-0000-0000-0000-000000000050'
+    WHERE id = '20000000-0000-0000-0000-000000000054';
+    RAISE EXCEPTION 'nota mudou de contato pelo cliente authenticated';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+END;
+$do$;
+SELECT 'note_identity_authenticated_blocked=' || CASE WHEN
+  (SELECT contact_id FROM public.contact_notes WHERE id = '20000000-0000-0000-0000-000000000054')
+    = '00000000-0000-0000-0000-000000000054'::uuid
+THEN 'ok' ELSE 'fail' END;
+
+-- Caminho autorizado que NAO e service_role: admin/supervisor autenticado (o item 301 cita os
+-- dois atores). O bypass do guard nao depende do papel, so do sinal escrito pelo merge.
+CREATE OR REPLACE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp
+AS $function$ SELECT _user_id = '91000000-0000-0000-0000-0000000000a2'::uuid $function$;
+INSERT INTO contacts(id,name,phone) VALUES
+  ('00000000-0000-0000-0000-000000000055','R2DB016 admin primary','5511999990055'),
+  ('00000000-0000-0000-0000-000000000056','R2DB016 admin secondary','5511999990056');
+INSERT INTO contact_notes(id,contact_id) VALUES
+  ('20000000-0000-0000-0000-000000000056','00000000-0000-0000-0000-000000000056');
+DO $do$
+BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claim.sub', '91000000-0000-0000-0000-0000000000a2', true);
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+  PERFORM public.merge_contacts_atomic(
+    '00000000-0000-0000-0000-000000000055',
+    ARRAY['00000000-0000-0000-0000-000000000056']::uuid[],
+    '{}'::jsonb
+  );
+END;
+$do$;
+SELECT 'r2db016_admin_merge=' || CASE WHEN
+  (SELECT count(*) FROM public.contacts WHERE id = '00000000-0000-0000-0000-000000000056') = 0
+  AND (SELECT contact_id FROM public.contact_notes WHERE id = '20000000-0000-0000-0000-000000000056')
+      = '00000000-0000-0000-0000-000000000055'::uuid
+THEN 'ok' ELSE 'fail' END;
 SQL
 )"
 
-for proof in fencing=ok max_attempts=ok first_backoff=ok terminal_error=ok invalid_phone=ok audit_survives_delete=ok health_null_claims=ok constraints_validated=ok legacy_quarantined=ok links_acl=ok atomic_merge=ok guarded_link=ok manual_link_actor_profile=ok email_link_permission_matrix=ok merge_conflict_rollback=ok cleanup_bounded=ok; do
+for proof in fencing=ok max_attempts=ok first_backoff=ok terminal_error=ok invalid_phone=ok audit_survives_delete=ok health_null_claims=ok constraints_validated=ok legacy_quarantined=ok links_acl=ok atomic_merge=ok guarded_link=ok manual_link_actor_profile=ok email_link_permission_matrix=ok merge_conflict_rollback=ok cleanup_bounded=ok r2db016_fix=ok note_identity_postgres_blocked=ok note_identity_authenticated_blocked=ok r2db016_admin_merge=ok; do
   grep -Fx "$proof" <<<"$output" >/dev/null || { echo "Missing proof: $proof" >&2; echo "$output" >&2; exit 1; }
 done
 echo "CRM outbox PostgreSQL 17 behavioral contract: PASS"
