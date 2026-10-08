@@ -102,24 +102,12 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|tarefas-quadro\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',
       },
-    },
-    {
-      // Tarefas/Quadro (Y10): a spec FAZ O PRÓPRIO LOGIN na tela com as credenciais do
-      // ambiente (E2E_TEST_EMAIL/E2E_TEST_PASSWORD) e roda contra o banco LOCAL do
-      // conjunto — não usa o `storageState` de `e2e/.auth/` nem depende do projeto
-      // "setup". Projeto dedicado (mesmo padrão de `chromium-mapa` e
-      // `chromium-talkx-launch`, que também não arrastam o login real), e o spec entra
-      // no `testIgnore` do catch-all `chromium-authenticated` acima para nunca ser
-      // coletado por ele.
-      name: 'chromium-tarefas',
-      testMatch: /tarefas-quadro\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'] },
     },
     {
       // Módulo MAPA (E71/E72 picker, E73 cadastro, E74 mapa com pino): sessão
