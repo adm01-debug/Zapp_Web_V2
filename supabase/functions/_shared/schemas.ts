@@ -600,6 +600,12 @@ export const EvolutionWebhookEnvelopeV2Schema = z.object({
   apikey: z.string().max(500).optional(),
 }).passthrough();
 
+// Status de receipt de messages.update. Tem schema separado do envelope porque
+// um status não-string no lote não pode derrubar os demais receipts.
+export const EvolutionMessagesUpdateStatusSchema = z.string()
+  .transform((status) => status.trim())
+  .pipe(z.string().min(1, 'status is required').max(100));
+
 // ─── ElevenLabs Webhook ──────────────────────────────────────
 export const ElevenLabsWebhookV1Schema = z.object({
   type: z.string().max(100).optional(),
