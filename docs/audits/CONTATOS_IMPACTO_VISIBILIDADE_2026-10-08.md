@@ -28,7 +28,8 @@ Hoje cada um enxerga quase todo o banco **pela fila** (3.098 de 3.106). Com a re
 
 ## Atenção
 - Os **318 contatos sem atribuição** passariam a ser visíveis só para admin/supervisor. É preciso decidir quem atende contato sem dono (atribuir antes de ligar a regra, ou criar o conceito de "caixa de entrada" para supervisor distribuir).
-- Os dois vendedores com 1.388 contatos cada parecem **contas de teste** (nomes "ti Promo" e "Teste Design"), assim como "E2E Teste (CI)". A base de produção ainda é pequena; o impacto real em vendedores de verdade deve ser reavaliado antes de ligar a regra, com a mesma consulta.
+- **Os contatos são reais**: chegaram pela Evolution API (WhatsApp). Conferido: 3.106 telefones distintos, nenhum repetido; os 1.388 de cada vendedor são contatos diferentes. Portanto o impacto é real: hoje ti Promo e Teste Design enxergam a carteira inteira pela fila; com a regra nova cada um enxergaria só a sua metade (1.388). O perfil "E2E Teste (CI)" (7 contatos) é de teste.
+- Antes de ligar a regra, o Joaquim precisa confirmar que a divisão atual das carteiras (1.388 / 1.388 / 318 sem dono) é a divisão desejada.
 - Mudança de RLS fica na trilha de banco: só local até o Joaquim autorizar a aplicação em produção.
 
 ## Como repetir
