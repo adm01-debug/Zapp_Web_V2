@@ -42,6 +42,11 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # E69 (08/10/2026): `test`, `security`, `e2e` e `mutation-mapa` NÃO têm `needs`
+  # do lint — eles rodam em PARALELO com o `lint-and-typecheck`, então o tempo de
+  # parede do PR passa a ser max(lint, test, security, e2e) em vez da soma. O
+  # `build` continua atrás do lint E do `test` (gate de fato antes de empacotar).
+  # Trava contra regressão: scripts/ci/workflow-contracts.unit.mjs (casos E69).
   # ===========================================
   # JOB 1: Lint & Type Check
   # ===========================================
@@ -204,7 +209,6 @@ jobs:
     name: 🧪 Unit Tests
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    needs: lint-and-typecheck
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -311,7 +315,6 @@ jobs:
     name: 🔒 Security Audit
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: lint-and-typecheck
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -361,7 +364,6 @@ jobs:
     name: 🎭 E2E Tests (Playwright)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: lint-and-typecheck
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -454,7 +456,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     continue-on-error: true
-    needs: lint-and-typecheck
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
