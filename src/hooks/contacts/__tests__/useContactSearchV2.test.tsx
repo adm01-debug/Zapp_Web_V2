@@ -66,11 +66,16 @@ function linha(sobrescreve: Record<string, unknown> = {}) {
   };
 }
 
+interface PropsBusca {
+  term: string;
+  enabled?: boolean;
+}
+
 function montarHook(termo: string, opcoes: { enabled?: boolean } = {}) {
+  const propsIniciais: PropsBusca = { term: termo, enabled: opcoes.enabled };
   return renderHook(
-    ({ term, enabled }: { term: string; enabled?: boolean }) =>
-      useContactSearchV2({ term, enabled }),
-    { initialProps: { term: termo, enabled: opcoes.enabled } },
+    ({ term, enabled }: PropsBusca) => useContactSearchV2({ term, enabled }),
+    { initialProps: propsIniciais },
   );
 }
 
