@@ -33,17 +33,22 @@ export const E2E_CATALOG_VIEW = 'catalog';
 export const E2E_CATALOG_PATH = '/?view=catalog';
 
 /**
- * PENDÊNCIA (CT-81) — SKU do produto de teste, ainda NÃO confirmado no
- * PromoGifts. Parametrizado por `E2E_CATALOG_PRODUCT_SKU` (default = o SKU
- * citado na doc do repo). Não é um id verificado.
+ * SKU do produto de teste, parametrizado por `E2E_CATALOG_PRODUCT_SKU`
+ * (default = o SKU citado na doc do repo, `PO-13153`). A verificação de
+ * 02/10/2026 está no cabeçalho deste arquivo: a busca no app (`?view=catalog`,
+ * que lê o catálogo PromoGifts pela Edge `promogifts-catalog`) devolveu 1 card
+ * e o detalhe mostrou `SKU: PO-13153`.
  */
 export const E2E_CATALOG_PRODUCT_SKU =
   process.env.E2E_CATALOG_PRODUCT_SKU ?? 'PO-13153';
 
 /**
- * Enquanto falso, nenhum assert pode depender de o produto existir/buscar no
- * catálogo externo — o spec deve pular com aviso. Virar `true` só depois de
- * confirmar o SKU no PromoGifts (env `E2E_CATALOG_PRODUCT_SKU_VERIFIED=true`).
+ * Portão do CT-82: enquanto falso, nenhum assert pode depender de o produto
+ * existir/buscar no catálogo externo — o spec pula com aviso, nunca um passe
+ * falso. O SKU já foi verificado (02/10/2026 — ver o cabeçalho deste arquivo),
+ * mas o default segue `false`: quem liga é o ambiente/CI
+ * (`E2E_CATALOG_PRODUCT_SKU_VERIFIED=true`), porque o E2E logado roda contra
+ * produção e o fluxo grava envio real (`messages`/`catalog_send_events`).
  */
 export const E2E_CATALOG_PRODUCT_SKU_VERIFIED =
   process.env.E2E_CATALOG_PRODUCT_SKU_VERIFIED === 'true';

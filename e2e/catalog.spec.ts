@@ -148,18 +148,21 @@ async function softDeleteMessagesSince(page: Page, sinceIso: string): Promise<nu
 test.describe('Catálogo — envio de produto no chat (CT-82)', () => {
   test.describe.configure({ timeout: 150_000 });
 
-  // CT-81: o SKU do produto de teste (default `PO-13153`) aparece na doc do repo
-  // mas NÃO foi confirmado no catálogo PromoGifts (sistema EXTERNO). Enquanto
-  // `E2E_CATALOG_PRODUCT_SKU_VERIFIED` for falso este spec fica SKIPADO com uma
-  // mensagem explícita — nunca um passe falso (o fluxo de envio é real e grava
-  // no banco). A verificação do SKU é de outro dono (ver o fixture).
+  // CT-81: o SKU do produto de teste (`PO-13153`) foi verificado em 02/10/2026
+  // no próprio app (`?view=catalog`, que lê o catálogo PromoGifts pela Edge
+  // `promogifts-catalog`): a busca devolve 1 card e o detalhe mostra
+  // `SKU: PO-13153` (ver o cabeçalho do fixture e o §Bloco D do plano do
+  // catálogo). Mesmo assim este spec fica SKIPADO enquanto
+  // `E2E_CATALOG_PRODUCT_SKU_VERIFIED` for falso — nunca um passe falso (o
+  // fluxo de envio é real e grava no banco); quem liga é o ambiente/CI, que
+  // roda contra produção.
   test.skip(
     !E2E_CATALOG_PRODUCT_SKU_VERIFIED || !SUPABASE_ANON_KEY,
-    `Pendência CT-81: o SKU "${E2E_CATALOG_PRODUCT_SKU}" ainda NÃO foi verificado no catálogo ` +
-      'PromoGifts (sistema externo, fora deste repo). Enquanto E2E_CATALOG_PRODUCT_SKU_VERIFIED ' +
-      'for false, este spec fica explicitamente SKIPADO. Para ligar: confirme que o SKU existe e é ' +
-      'buscável e exporte E2E_CATALOG_PRODUCT_SKU_VERIFIED=true (e, se o SKU real for outro, ' +
-      'E2E_CATALOG_PRODUCT_SKU=<sku>). ' +
+    `CT-81: o SKU "${E2E_CATALOG_PRODUCT_SKU}" foi verificado em 02/10/2026 no catálogo ` +
+      'PromoGifts (a busca no app devolveu 1 card com esse SKU). Este spec só roda com ' +
+      'E2E_CATALOG_PRODUCT_SKU_VERIFIED=true, que é do ambiente/CI — o E2E logado roda contra ' +
+      'produção e o envio é real. Enquanto ela for false, o spec fica explicitamente SKIPADO ' +
+      '(nunca um passe falso). Se o SKU real for outro, use E2E_CATALOG_PRODUCT_SKU=<sku>. ' +
       'Além disso, sem a chave pública no ambiente (VITE_SUPABASE_PUBLISHABLE_KEY ou ' +
       'E2E_SUPABASE_ANON_KEY) os asserts por API não têm como autenticar — então o spec também pula.'
   );
