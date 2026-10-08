@@ -327,7 +327,12 @@ function recipientsReadNamedResponse(error: unknown, req: Request): Response | n
     error instanceof DispatchError &&
     (error.code === MULTIPLIX_RECIPIENTS_INCOMPLETE || error.code === MULTIPLIX_RECIPIENTS_UNSTABLE)
   ) {
-    console.error(JSON.stringify({ event: 'multiplix_dispatch', code: error.code, ok: false }));
+    // SEM log proprio aqui: a resposta ja e logada de forma centralizada no
+    // `index.ts` (`console.warn(JSON.stringify({ event, action, user_id,
+    // correlation_id, duration_ms, status, ip, ok }))`), e o precedente F27
+    // (`MULTIPLIX_RESOLVE_TRUNCATED`, em `actions/audience.ts`) devolve o corpo
+    // nomeado sem log proprio. `error.cause`, `error.message` etc. NAO entram
+    // em log (payload/segredo — contrato F54 exige 0 logs diretos neste arquivo).
     return jsonResponse({ error: error.code, message: error.message }, 502, req);
   }
   return null;
