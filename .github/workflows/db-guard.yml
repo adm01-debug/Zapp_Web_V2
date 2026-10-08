@@ -519,6 +519,13 @@ jobs:
           MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-delivery-leases.test.sh
 
+      # MX04 (#48): a cota por conexão precisa contar o novo Multiplix por item,
+      # preservar o legado por destinatário e cair em default para medição inválida.
+      - name: Simular cota por conexão do Multiplix por item e legado
+        env:
+          MX04_COTA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-cota-conexao-itens.test.sh
+
       # F24 do plano do Multiplix: prova que a edge multiplix-audience deriva o
       # escopo do JWT (matriz F25) e IGNORA escopo forjado no corpo. O bloco
       # estatico roda sempre; o bloco ao vivo PULA e sai 0 sem credenciais
