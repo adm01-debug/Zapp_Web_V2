@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { createGmailOAuthState } from '@/lib/gmailOAuth';
+import { createGmailOAuthState, storeGmailOAuthReturnContext } from '@/lib/gmailOAuth';
 import { useGmailOAuth } from '../useGmailOAuth';
 
 // R2-COM-009 — retorno OAuth do Gmail só pode disparar a troca do `code`
@@ -108,5 +108,54 @@ describe('useGmailOAuth — proteção CSRF do retorno (RFC 6749 §10.12)', () =
     renderOAuthReturn();
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(supabase.functions.invoke).toHaveBeenCalledTimes(1);
+  });
+});
+
+// E10 (fusão Quadro→Tarefas): a rota `pipeline` deixou de ser uma porta de
+// entrada do menu (o Quadro vive dentro de Tarefas). Um retorno de OAuth que
+// ainda carregue `view=pipeline` no state NÃO pode reabrir a rota antiga: cai
+// na view de fallback `integrations`.
+describe('useGmailOAuth — views válidas do retorno (E10)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.sessionStorage.clear();
+    window.history.replaceState(null, '', '/');
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { access_token: 'tok' } },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    vi.mocked(supabase.functions.invoke).mockResolvedValue({ data: { success: true }, error: null } as never);
+  });
+
+  it('retorno com view=pipeline cai em integrations', async () => {
+    const state = createGmailOAuthState({ view: 'pipeline', integrationView: 'gmail' });
+    window.history.replaceState(null, '', `/?code=code-ok&state=${encodeURIComponent(state)}`);
+
+    const { setCurrentView } = renderOAuthReturn();
+
+    await waitFor(() => expect(setCurrentView).toHaveBeenCalledWith('integrations'));
+    expect(setCurrentView).not.toHaveBeenCalledWith('pipeline');
+  });
+
+  it('retorno de erro com a rota guardada em pipeline também cai em integrations', async () => {
+    // Canal do contexto guardado (sessionStorage): é a view usada quando o
+    // retorno do Google chega sem state (cancelamento). O filtro tem de valer aqui também.
+    storeGmailOAuthReturnContext('pipeline', 'gmail');
+    window.history.replaceState(null, '', '/?error=access_denied');
+
+    const { setCurrentView } = renderOAuthReturn();
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Conexão com Gmail cancelada.'));
+    expect(setCurrentView).toHaveBeenCalledWith('integrations');
+    expect(setCurrentView).not.toHaveBeenCalledWith('pipeline');
+  });
+
+  it('as demais views do retorno continuam preservadas', async () => {
+    const state = createGmailOAuthState({ view: 'omni-inbox', integrationView: 'gmail' });
+    window.history.replaceState(null, '', `/?code=code-ok&state=${encodeURIComponent(state)}`);
+
+    const { setCurrentView } = renderOAuthReturn();
+
+    await waitFor(() => expect(setCurrentView).toHaveBeenCalledWith('omni-inbox'));
   });
 });
