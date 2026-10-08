@@ -24,7 +24,11 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
     // o StoryViewer só era usado pela WhatsAppStatusSection morta). Se a
     // superfície voltar, re-entra aqui no mesmo commit.
 
-    ['chat interno da equipe', 'src/components/team-chat/TeamChatPanel.tsx'],
+    // TC-006: o shell do chat interno (TeamChatPanel) não renderiza mídia; quem
+    // renderiza `<audio>`/`<video>` e chama `useMediaElementVolume` é o
+    // `teamChatParts`. Apontar para o shell deixava o contrato verde por texto,
+    // não por ligação efetiva (mesma regra VOL-02 da gravação de chamada).
+    ['chat interno da equipe', 'src/components/team-chat/teamChatParts.tsx'],
     ['transcrições (autoplay)', 'src/components/transcriptions/TranscriptionContactGroup.tsx'],
     // VOL-02: a superfície é o player que RENDERIZA o `<audio>` (RecordingPlayer), não o
     // shell. Antes o contrato apontava para TelefoniaView e ficava verde com a ref órfã
