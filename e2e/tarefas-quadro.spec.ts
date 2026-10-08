@@ -9,12 +9,19 @@ import { expect, test, type BrowserContext, type Locator, type Page } from '@pla
  * usuário sintético do `seed.sql`. A spec FAZ O PRÓPRIO LOGIN na tela, com as
  * credenciais do ambiente (`E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` — no local o wrapper
  * `zapp-e2e-local` aponta para o usuário do seed; na ausência delas o cenário é
- * pulado em vez de falhar por motivo obscuro). Ela NÃO usa o `storageState` de
- * `e2e/.auth/` nem depende do projeto `setup`: roda no projeto DESLOGADO
- * `chromium-tarefas` do `playwright.config.ts`, que a coleta pelo `testMatch` próprio,
- * no mesmo padrão de `chromium-mapa` e `chromium-talkx-launch`. O spec também entra no
- * `testIgnore` do catch-all `chromium-authenticated`, para nunca ser pego pela sessão
- * salva de `e2e/.auth/user.json` (regra R1 do CLAUDE.md §0).
+ * pulado em vez de falhar por motivo obscuro). Ela NÃO usa `storageState` de
+ * `e2e/.auth/` nem depende do projeto `setup`: por isso precisa ser coletada por um
+ * projeto DESLOGADO (mesmo padrão de `chromium-mapa` e `chromium-talkx-launch`) e
+ * nunca pelo catch-all de sessão salva, que é o que roda autenticado no
+ * `e2e-logado.yml` (regra R1 do CLAUDE.md §0).
+ *
+ * ENTRADA DE PROJETO — PENDENTE, FORA DO DIFF DESTE CARTÃO: nenhum projeto do
+ * `playwright.config.ts` coleta este arquivo hoje (todos os `testMatch` são
+ * específicos de outro spec; o único coletor possível é o catch-all de sessão salva).
+ * Medida: `npx playwright test e2e/tarefas-quadro.spec.ts --project=chromium-theme
+ * --list` → `Error: No tests found.` Enquanto a entrada não existir, a execução local
+ * usa um config descartável em `.tmp/` (fora do git), e é o `use` sem `storageState`
+ * que este arquivo assume quando for coletado.
  *
  * PROVA (por que cada cenário falha sem a tela funcionar): as asserções leem o
  * `aria-label` do cartão ("titulo, status[, prazo <data>]"), o texto das regiões com
