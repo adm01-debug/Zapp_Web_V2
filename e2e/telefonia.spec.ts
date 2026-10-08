@@ -116,7 +116,7 @@ test.afterEach(() => {
   // Teste pulado (`test.fixme`) não monta ambiente e não é conferido aqui.
   if (!ambienteAtual) return;
   expect(ambienteAtual.registro.redeBarrada).toEqual([]);
-  expect(ambienteAtual.sockets.filter((u) => u.includes('tnnnlkbymytvtqngbbqh'))).toEqual([]);
+  expect(ambienteAtual.sockets.filter((u) => u.includes('.supabase.co'))).toEqual([]);
 });
 
 /**
@@ -139,7 +139,7 @@ async function montarAmbiente(page: Page, historico: unknown[] = []): Promise<Am
   await bloquearRedeReal(page, registro);
   // Nenhum WebSocket sai para o host do Supabase (nem o Realtime, nem o fallback de
   // long-polling de quem já abriu socket). A spec nunca fala com a produção.
-  await page.routeWebSocket(/tnnnlkbymytvtqngbbqh/, (ws) => ws.close());
+  await page.routeWebSocket(/\.supabase\.co/, (ws) => ws.close());
   await page.routeWebSocket(/supabase\.co\/realtime/, (ws) => ws.close());
 
   await mockAppShell(page, registro);
@@ -202,7 +202,7 @@ test.describe('Y11 · Telefonia', () => {
     await expect(page.getByTestId('tel-view')).toBeVisible();
 
     expect(registro.redeBarrada).toEqual([]);
-    expect(sockets.filter((u) => u.includes('tnnnlkbymytvtqngbbqh'))).toEqual([]);
+    expect(sockets.filter((u) => u.includes('.supabase.co'))).toEqual([]);
   });
 
   test('número incompleto: avisa e mantém o discar bloqueado', async ({ page }) => {
@@ -367,7 +367,7 @@ test.describe('Y11 · Telefonia', () => {
     // grava chamada nenhuma.
     expect(registro.writesApp.filter((w) => /calls|upsert_my_call/.test(w))).toEqual([]);
     expect(registro.redeBarrada).toEqual([]);
-    expect(sockets.filter((u) => u.includes('tnnnlkbymytvtqngbbqh'))).toEqual([]);
+    expect(sockets.filter((u) => u.includes('.supabase.co'))).toEqual([]);
   });
 
 });
