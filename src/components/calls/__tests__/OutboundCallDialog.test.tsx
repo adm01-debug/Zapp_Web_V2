@@ -96,6 +96,14 @@ beforeEach(() => {
 });
 
 describe('OutboundCallDialog — "Ligar" do inbox abre o cartão e disca na hora', () => {
+  it('sem CallSessionProvider, renderiza null em vez de lançar (overlay global do App)', () => {
+    // O App monta este overlay num Suspense sob ErrorBoundary passthrough:
+    // se lançar, derruba TODOS os irmãos (IncomingCallAlert, listener do
+    // Team Chat...). Sem provider não há pedido de saída a mostrar → null.
+    const { container } = render(<OutboundCallDialog />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('sem pedido de saída, nada é renderizado', () => {
     montar();
     expect(screen.queryByText('Chamando...')).toBeNull();

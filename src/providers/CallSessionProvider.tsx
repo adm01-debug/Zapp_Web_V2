@@ -574,3 +574,14 @@ export function useCallSession(): CallSessionApi {
   if (!ctx) throw new Error('useCallSession deve ser usado dentro de CallSessionProvider');
   return ctx;
 }
+
+/**
+ * Leitura tolerante do contexto: devolve `undefined` fora do provider em vez
+ * de lançar. Só para overlay GLOBAL montado no `App` (`OutboundCallDialog`),
+ * que pode renderizar em árvore sem `CallSessionProvider` (ex.: testes que
+ * dublam o `AppProviders`) — sem provider não há sessão nem pedido a mostrar.
+ * Consumidores de verdade continuam no `useCallSession()`, que lança.
+ */
+export function useCallSessionOptional(): CallSessionApi | undefined {
+  return useContext(CallSessionContext);
+}

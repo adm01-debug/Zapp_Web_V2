@@ -1,5 +1,5 @@
 import { CallDialog } from './CallDialog';
-import { useCallSession } from '@/providers/CallSessionProvider';
+import { useCallSessionOptional } from '@/providers/CallSessionProvider';
 
 /**
  * C02 — diálogo GLOBAL da chamada de SAÍDA pedida no inbox.
@@ -21,11 +21,20 @@ import { useCallSession } from '@/providers/CallSessionProvider';
  * antigo fazia (`onOpenChange={setShowCallDialog}`): a chamada em curso segue
  * controlável pela `ActiveCallBar`, que aparece assim que o motor marca a
  * linha como ocupada.
+ *
+ * Lê o contexto pelo `useCallSessionOptional` (tolerante): este overlay é
+ * montado no `App` dentro de `DeferredProviders` e, se lançasse, o
+ * `ErrorBoundary fallback={null}` daquele bloco derrubaria TODOS os outros
+ * overlays irmãos (`IncomingCallAlert`, listener do Team Chat, EasterEggs...).
+ * Sem `CallSessionProvider` não existe pedido de saída a mostrar — renderiza
+ * `null`. Com provider, o comportamento é exatamente o mesmo de antes.
  */
 export function OutboundCallDialog() {
-  const { chamadaSaida, limparChamadaSaida } = useCallSession();
+  const sessao = useCallSessionOptional();
 
-  if (!chamadaSaida) return null;
+  if (!sessao?.chamadaSaida) return null;
+
+  const { chamadaSaida, limparChamadaSaida } = sessao;
 
   return (
     <CallDialog
