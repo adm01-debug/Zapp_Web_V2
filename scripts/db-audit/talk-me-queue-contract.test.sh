@@ -7,8 +7,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930290000_talk_me_queue_claim.sql"
 hardening_migration="$repo_root/supabase/migrations/20260930310000_harden_talk_me_authorization_and_groups.sql"
-pending_migration="$repo_root/supabase/migrations/20261005213751_talk_me_list_pending_messages.sql"
-pending_origins_migration="$repo_root/supabase/migrations/20261005231504_talk_me_pending_history_origins.sql"
+pending_migration="$repo_root/supabase/migrations/20261008215248_talk_me_pending_history.sql"
 postgres_image="${TALK_ME_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-talk-me-test-$$"
 tmp_dir="$(mktemp -d)"
@@ -48,7 +47,6 @@ docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
 [[ -f "$hardening_migration" ]] || fail "migration nao encontrada: $hardening_migration"
 [[ -f "$pending_migration" ]] || fail "migration nao encontrada: $pending_migration"
-[[ -f "$pending_origins_migration" ]] || fail "migration nao encontrada: $pending_origins_migration"
 
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
 ready_checks=0
@@ -174,7 +172,6 @@ psql_file "$tmp_dir/pre.sql"
 psql_file "$migration"
 psql_file "$hardening_migration"
 psql_file "$pending_migration"
-psql_file "$pending_origins_migration"
 
 cat > "$tmp_dir/fixtures.sql" <<'SQL'
 INSERT INTO public.profiles(id,user_id) VALUES
@@ -301,6 +298,14 @@ expect_value 'F2 mensagem apagada nao entra e origens validas compoem o historic
   "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1')"
 expect_value 'F3 limite devolve as mais recentes primeiro' 'Segunda sem resposta' \
   "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT content FROM public.talk_me_list_pending_messages('$contact1',1)"
+expect_value 'F3b limite nulo usa o padrao de 50' '4' \
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1',NULL)"
+expect_value 'F3c limite negativo e travado em uma linha' '1' \
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1',-5)"
+expect_value 'F3d limite acima do teto nao amplia o bloco' '4' \
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages('$contact1',100000)"
+expect_value 'F3e contato nulo e negado por padrao' '0' \
+  "SET ROLE authenticated; SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_pending_messages(NULL)"
 expect_value 'F4 leitura do historico nao assume o atendimento' 'true|0' \
   "SET app.user_id='$agent1'; SELECT count(*) > 0 FROM public.talk_me_list_pending_messages('$contact1'); SELECT (assigned_to IS NULL)::text||'|'||(SELECT count(*) FROM public.audit_logs WHERE entity_id='$contact1') FROM public.contacts WHERE id='$contact1'"
 expect_value 'F5 funcao do historico e somente leitura (STABLE)' 's' \

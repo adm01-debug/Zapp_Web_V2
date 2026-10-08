@@ -1,19 +1,23 @@
--- talk_me_list_pending_messages: historico pendente do cliente antes do aceite.
--- Rollback: DROP FUNCTION public.talk_me_list_pending_messages(uuid, integer);
+-- talk_me_pending_history: historico do bloco pendente TALK ME antes do aceite.
+-- Rollback: DROP FUNCTION IF EXISTS public.talk_me_list_pending_messages(uuid, integer);
 --
--- A fila TALK ME so expõe a ultima mensagem; esta RPC devolve, sob demanda, o
--- bloco de mensagens do cliente ainda sem resposta (o mesmo conjunto contado em
--- pending_message_count). E leitura pura (STABLE): nao aceita o atendimento nem
--- marca mensagens como lidas.
+-- A fila TALK ME so expoe a ultima mensagem; o aceite exigia decidir sem
+-- contexto. Esta RPC devolve, sob demanda, o bloco pendente de UM contato: as
+-- mensagens do cliente ainda sem resposta, a saida imediatamente anterior como
+-- contexto e as notas internas do bloco. E leitura pura (STABLE): nao aceita o
+-- atendimento nem marca mensagens como lidas.
 --
 -- Regra de autorizacao (revalidada a cada chamada): perfil ativo, flag
 -- inbox.talk-me ligada, contato ainda elegivel (sem responsavel, aberto/
 -- aguardando, WhatsApp individual, ultima mensagem do cliente) e fila ativa que
--- o chamador opera (admin/supervisor ou membro ativo). Campanhas de saida e
--- notas internas nao entram: o bloco pendente so contem sender='contact' e
--- qualquer saida do agente encerraria a elegibilidade.
+-- o chamador opera (admin/supervisor ou membro ativo). Negado por padrao:
+-- p_contact_id nulo nao devolve nada (a consulta e SEMPRE de um contato).
+-- p_limit nulo/negativo/acima do teto e travado em [1, 200].
+--
+-- As tres origens chegam rotuladas pelo campo sender: 'agent' (saida/campanha),
+-- 'contact' (cliente) e 'system' (nota interna).
 
-CREATE FUNCTION public.talk_me_list_pending_messages(
+CREATE OR REPLACE FUNCTION public.talk_me_list_pending_messages(
   p_contact_id uuid,
   p_limit integer DEFAULT 50
 )
@@ -53,7 +57,8 @@ AS $function$
     SELECT e.contact_id
     FROM public.talk_me_eligible_waiting_contacts(NULL, p_contact_id) e
     CROSS JOIN caller x
-    WHERE x.user_id IS NOT NULL
+    WHERE p_contact_id IS NOT NULL
+      AND x.user_id IS NOT NULL
       AND x.profile_id IS NOT NULL
       AND x.feature_enabled
       AND EXISTS (
@@ -73,9 +78,9 @@ AS $function$
         )
       )
   ),
-  recent AS (
+  pending_messages AS (
     SELECT
-      m.id,
+      m.id AS message_id,
       m.sender,
       m.content,
       m.message_type,
@@ -94,11 +99,60 @@ AS $function$
           AND COALESCE(agent_message.is_deleted, false) = false
           AND (agent_message.created_at, agent_message.id) >= (m.created_at, m.id)
       )
+  ),
+  first_pending AS (
+    SELECT pm.message_id, pm.created_at
+    FROM pending_messages pm
+    ORDER BY pm.created_at ASC, pm.message_id ASC
+    LIMIT 1
+  ),
+  outbound_context AS (
+    SELECT
+      m.id AS message_id,
+      m.sender,
+      m.content,
+      m.message_type,
+      m.media_url,
+      m.caption,
+      m.created_at
+    FROM public.messages m
+    JOIN authorized_contact ac ON ac.contact_id = m.contact_id
+    CROSS JOIN first_pending fp
+    WHERE m.sender = 'agent'
+      AND COALESCE(m.is_deleted, false) = false
+      AND (m.created_at, m.id) < (fp.created_at, fp.message_id)
     ORDER BY m.created_at DESC, m.id DESC
+    LIMIT 1
+  ),
+  internal_notes AS (
+    SELECT
+      n.id AS message_id,
+      'system'::text AS sender,
+      n.content,
+      'internal_note'::text AS message_type,
+      NULL::text AS media_url,
+      NULL::text AS caption,
+      n.created_at
+    FROM public.contact_notes n
+    JOIN authorized_contact ac ON ac.contact_id = n.contact_id
+    CROSS JOIN first_pending fp
+    WHERE n.created_at >= fp.created_at
+  ),
+  history_events AS (
+    SELECT * FROM pending_messages
+    UNION ALL
+    SELECT * FROM outbound_context
+    UNION ALL
+    SELECT * FROM internal_notes
+  ),
+  recent AS (
+    SELECT event.*
+    FROM history_events event
+    ORDER BY event.created_at DESC, event.message_id DESC
     LIMIT LEAST(GREATEST(COALESCE(p_limit, 50), 1), 200)
   )
   SELECT
-    r.id,
+    r.message_id,
     r.sender,
     r.content,
     r.message_type,
@@ -106,11 +160,11 @@ AS $function$
     r.caption,
     r.created_at
   FROM recent r
-  ORDER BY r.created_at ASC, r.id ASC;
+  ORDER BY r.created_at ASC, r.message_id ASC;
 $function$;
 
 REVOKE ALL ON FUNCTION public.talk_me_list_pending_messages(uuid, integer) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.talk_me_list_pending_messages(uuid, integer) TO authenticated;
 
 COMMENT ON FUNCTION public.talk_me_list_pending_messages(uuid, integer) IS
-  'Historico pendente do cliente em atendimento TALK ME ainda nao assumido: leitura sob demanda, sem aceite nem marcacao de lida, com autorizacao revalidada.';
+  'Historico do bloco pendente TALK ME de um contato: saida anterior, mensagens do cliente e notas internas, sem aceite nem marcacao de lida, com autorizacao revalidada e negando por padrao contato nulo.';
