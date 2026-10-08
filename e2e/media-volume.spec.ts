@@ -149,6 +149,20 @@ test.describe('Volume das mídias de conversa', () => {
   // (tabela/bucket/coluna) e os riscos estão em
   // ~/evidencias/plano-volume-50/e45-e48-e2e.md. Reabilitar = `fixme` → `test` quando existir
   // fixture de áudio (ou um contato/tenant dedicado de E2E).
+  //
+  // CONFERIDO NO CARTÃO SL-074 (2026-10-08, ponta do dia): a lacuna CONTINUA e cada ponta segue
+  // igual — este é o único ponto do repositório que mede `<audio>.volume` (git grep), o setup do
+  // fixture (`e2e/fixtures/e2e-contact.ts`) insere só mensagem de texto, e a `guarda
+  // scripts/ci/volume-e2e-evidence-honesty.unit.mjs` exige exatamente um `test.fixme` com a
+  // medição dentro dele. A decisão de 2026-10-01 continua valendo e, desde 05/10, a regra R1 de
+  // E2E proíbe QUALQUER agente de rodar o projeto autenticado contra produção — ou seja, criar a
+  // mensagem de áudio aqui está fora de alcance por regra, não por falta de código.
+  //
+  // O caminho autorizado hoje é OUTRO, e ele existe desde o cartão t_6c2d8281: a suíte LOCAL
+  // (`e2e/fixtures/arquivos-local/`, consumida por `files-tab.spec.ts`) já semeia uma mensagem de
+  // áudio (`ptt`) no banco/Storage LOCAIS com usuário sintético e rede externa bloqueada. Provar
+  // a aplicação do volume ali (e decidir sobre a guarda VOL-05) depende do dono; até lá este caso
+  // permanece como está.
   test.fixme('se a conversa do fixture tiver áudio, o elemento nasce no volume escolhido', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 

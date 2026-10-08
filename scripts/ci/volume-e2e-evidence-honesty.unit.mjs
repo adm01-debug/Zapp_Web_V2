@@ -19,6 +19,13 @@ import test from 'node:test';
 //     distinção do run (38 passaram / 1 falhou, falha alheia ao volume);
 //   - o spec do E2E mantém a exceção ESTREITA: a asserção de `<audio>.volume` só pode
 //     viver dentro do `test.fixme`, nunca num caso que alega passar.
+//
+// CONFERIDO NO CARTÃO SL-074 (2026-10-08): as duas pontas seguem como acima — a medição de
+// `<audio>.volume` continua só no `test.fixme` de `e2e/media-volume.spec.ts` e a decisão do dono de
+// 2026-10-01 (não gravar fixture de áudio no banco de produção) continua valendo. Fechar o caso
+// exigiria mudar ESTA guarda (proteção: só o Joaquim autoriza) e/ou provar o volume na suíte LOCAL
+// (`e2e/fixtures/arquivos-local/`, que já tem mensagem de áudio) — decisão registrada no relato do
+// cartão.
 
 const ler = (rel) => readFile(new URL(rel, import.meta.url), 'utf8');
 
