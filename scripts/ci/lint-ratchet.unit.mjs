@@ -552,3 +552,32 @@ test("--staged nao combina com --update-baseline", (t) => {
     cleanup();
   }
 });
+
+test("avisa para baixar o baseline quando a varredura deixa divida antiga para tras", (t) => {
+  const { root, cleanup } = fixture();
+  try {
+    // A ocorrencia de src/removida.ts esta registrada mas nao existe mais: e divida JA paga, ainda
+    // contada no baseline. Sem o aviso, o baseline fica acima do codigo e uma ocorrencia que voltar
+    // no mesmo lugar continua sendo aceita em silencio.
+    const atual = result(root, "src/a.ts", "missing();\n");
+    const paga = result(root, "src/removida.ts", "missing();\n");
+    writeFileSync(
+      path.join(root, "baseline.json"),
+      JSON.stringify(createBaseline([atual, paga], root)),
+      "utf8",
+    );
+    writeFileSync(path.join(root, "report.json"), JSON.stringify([atual]), "utf8");
+    const linhas = [];
+    t.mock.method(console, "log", (...args) => {
+      linhas.push(args.join(" "));
+    });
+
+    assert.equal(main(["--root", root, "--baseline", "baseline.json", "--report", "report.json"]), 0);
+    assert.ok(
+      linhas.some((linha) => linha.includes("--update-baseline")),
+      `esperava o aviso de baixar o baseline; saida: ${linhas.join(" | ")}`,
+    );
+  } finally {
+    cleanup();
+  }
+});
