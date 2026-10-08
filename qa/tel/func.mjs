@@ -36,7 +36,13 @@ try {
     }
     try {
       const feito = await passo.executar();
-      checks.push(medir(passo.nome, feito === true ? 1 : 0, 1, 0));
+      if (feito?.skip === true) {
+        checks.push(medir(passo.nome, NaN, 1, 0, { skip: true, motivo: feito.motivo }));
+      } else if (feito?.ok === false) {
+        checks.push(medir(passo.nome, 0, 1, 0, { motivo: feito.motivo }));
+      } else {
+        checks.push(medir(passo.nome, feito === true || feito?.ok === true ? 1 : 0, 1, 0));
+      }
     } catch (erro) {
       checks.push(medir(passo.nome, 0, 1, 0, { motivo: String(erro?.message ?? erro).slice(0, 200) }));
     }

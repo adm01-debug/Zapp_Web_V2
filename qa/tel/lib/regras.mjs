@@ -61,9 +61,12 @@ export function estrutural(eixo, presente, detalhe = {}) {
  */
 export function resumo(etapa, checks, consoleErrors = []) {
   const falhas = checks.filter((c) => !c.ok).map((c) => c.eixo);
+  const skips = checks.filter((c) => c.skip === true).map((c) => c.eixo);
   return {
     etapa,
-    ok: checks.length - falhas.length,
+    ok: checks.length - falhas.length - skips.length,
+    skipped: skips.length,
+    skip: skips,
     total: checks.length,
     fail: falhas,
     consoleErrors: consoleErrors.length,

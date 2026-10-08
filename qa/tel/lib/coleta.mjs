@@ -1,6 +1,6 @@
 /**
  * Casca de coleta dos scripts de QA da Telefonia: só lê a página e devolve os
- * nú-meros crus. NENHUMA decisão OK/FALHA mora aqui — ela fica em
+ * números crus. NENHUMA decisão OK/FALHA mora aqui — ela fica em
  * `lib/especificacao.mjs` + `lib/regras.mjs`, que se provam sem browser.
  *
  * Usa a dependência que o repositório já tem (`playwright`, via @playwright/test),
@@ -225,83 +225,121 @@ export async function medirAxe(page, caminhoAxe, seletor = 'body') {
 
 /**
  * Os 20 passos do E.5 (T83). Cada passo devolve `true` quando o comportamento
- * existe. Falha de um passo NÃO derruba os outros: o erro vira o motivo daquele
- * check. Estes passos precisam da aplicação de verdade (dev server do cartão +
- * histórico com dados) — contra uma fixture só o `console sem error` e o
- * contrato do relatório têm o que medir, e o script diz isso no JSON.
+ * existe, `{ skip: true, motivo }` quando a tela/fixture não tem a capacidade
+ * necessária, ou `{ ok: false, motivo }` quando o elemento existe mas o efeito
+ * real não aconteceu. Falha de um passo NÃO derruba os outros: o erro vira o
+ * motivo daquele check.
  */
 export function passosE5(pagina) {
   const esperar = (ms) => pagina.waitForTimeout(ms);
   const corpo = () => pagina.locator('body');
+  const skip = (motivo) => ({ skip: true, motivo });
+  const falha = (motivo) => ({ ok: false, motivo });
+  const existe = async (locator) => (await locator.count()) > 0;
+  const primeiro = (selector) => pagina.locator(selector).first();
+  const valorCampo = async (locator) => {
+    try {
+      return await locator.inputValue({ timeout: 1000 });
+    } catch {
+      return (await locator.innerText({ timeout: 1000 }).catch(() => '')).trim();
+    }
+  };
 
   return [
     {
       nome: 'periodo muda KPIs',
       async executar() {
-        const antes = await pagina.locator('[data-testid="tel-kpi-value"]').allInnerTexts();
-        await pagina.locator('[data-testid="tel-top-actions"] select, [aria-label="Período"], [data-testid="tel-top-actions"] button').first().click();
-        await pagina.getByRole('option').nth(1).click();
+        const kpis = pagina.locator('[data-testid="tel-kpi-value"]');
+        if ((await kpis.count()) === 0) return skip('sem KPIs para comparar');
+        const controle = primeiro('[data-testid="tel-top-actions"] select, [aria-label="Período"], [data-testid="tel-top-actions"] button');
+        if (!(await existe(controle))) return skip('controle de período ausente');
+        const antes = await kpis.allInnerTexts();
+        await controle.click();
+        const opcoes = pagina.getByRole('option');
+        if ((await opcoes.count()) < 2) return skip('controle de período sem segunda opção');
+        await opcoes.nth(1).click();
         await esperar(800);
-        const depois = await pagina.locator('[data-testid="tel-kpi-value"]').allInnerTexts();
-        return antes.length > 0 && depois.length > 0 && JSON.stringify(antes) !== JSON.stringify(depois);
+        const depois = await kpis.allInnerTexts();
+        return antes.length > 0 && depois.length > 0 && JSON.stringify(antes) !== JSON.stringify(depois)
+          ? true
+          : falha('KPIs não mudaram após trocar o período');
       },
     },
     {
       nome: 'aba VoIP',
       async executar() {
-        const aba = pagina.locator('[data-testid="tel-channel-tab"]').first();
+        const aba = pagina.locator('[data-testid="tel-channel-tab"]').filter({ hasText: /voip/i }).first();
+        if (!(await existe(aba))) return skip('aba VoIP ausente');
         await aba.click();
         await esperar(600);
-        return true;
+        const selecionada = await aba.getAttribute('aria-selected');
+        const urlVoip = new URL(pagina.url()).searchParams.get('channel') === 'voip';
+        return selecionada === 'true' || urlVoip ? true : falha('aba VoIP não ficou selecionada');
       },
     },
     {
       nome: 'busca nome',
       async executar() {
-        const antes = await pagina.locator('[data-testid="tel-row"]').count();
-        await pagina.locator('[data-testid="tel-history-search"]').fill('a');
+        const busca = primeiro('[data-testid="tel-history-search"]');
+        if (!(await existe(busca))) return skip('campo de busca ausente');
+        const linhas = pagina.locator('[data-testid="tel-row"]');
+        const antes = await linhas.count();
+        if (antes === 0) return skip('histórico vazio: não há nomes para filtrar');
+        await busca.fill('a');
         await esperar(900);
-        const depois = await pagina.locator('[data-testid="tel-row"]').count();
-        return antes >= depois;
+        const depois = await linhas.count();
+        const valor = await busca.inputValue();
+        return valor === 'a' && antes >= depois ? true : falha('busca por nome não filtrou o histórico');
       },
     },
     {
       nome: 'busca numero',
       async executar() {
-        await pagina.locator('[data-testid="tel-history-search"]').fill('11');
+        const busca = primeiro('[data-testid="tel-history-search"]');
+        if (!(await existe(busca))) return skip('campo de busca ausente');
+        await busca.fill('11');
         await esperar(900);
-        return (await pagina.locator('[data-testid="tel-history-search"]').inputValue()) === '11';
+        return (await busca.inputValue()) === '11' ? true : falha('campo de busca não reteve o número digitado');
       },
     },
     {
       nome: 'Direcao',
       async executar() {
-        await pagina.locator('[data-testid="tel-history-direction"]').click();
-        await pagina.getByRole('option').nth(1).click();
+        const filtro = primeiro('[data-testid="tel-history-direction"]');
+        if (!(await existe(filtro))) return skip('filtro de direção ausente');
+        await filtro.click();
+        const opcoes = pagina.getByRole('option');
+        if ((await opcoes.count()) < 2) return skip('filtro de direção sem segunda opção');
+        await opcoes.nth(1).click();
         await esperar(700);
-        return new URL(pagina.url()).searchParams.get('dir') !== null;
+        return new URL(pagina.url()).searchParams.get('dir') !== null ? true : falha('direção não alterou a URL/estado');
       },
     },
     {
       nome: 'Resultado',
       async executar() {
-        await pagina.locator('[data-testid="tel-history-result"]').click();
-        await pagina.getByRole('option').nth(1).click();
+        const filtro = primeiro('[data-testid="tel-history-result"]');
+        if (!(await existe(filtro))) return skip('filtro de resultado ausente');
+        await filtro.click();
+        const opcoes = pagina.getByRole('option');
+        if ((await opcoes.count()) < 2) return skip('filtro de resultado sem segunda opção');
+        await opcoes.nth(1).click();
         await esperar(700);
-        return new URL(pagina.url()).searchParams.get('result') !== null;
+        return new URL(pagina.url()).searchParams.get('result') !== null ? true : falha('resultado não alterou a URL/estado');
       },
     },
     {
       nome: 'pagina 2/volta',
       async executar() {
         const pager = pagina.locator('[data-testid="tel-pagination"]');
-        if ((await pager.count()) === 0) return true; // página única: nada a paginar
+        if ((await pager.count()) === 0) return skip('página única: paginação ausente');
         await pager.getByRole('button').last().click();
         await esperar(900);
         const pagina2 = new URL(pagina.url()).searchParams.get('page') === '2';
         await pager.getByRole('button').first().click();
         await esperar(900);
-        return pagina2 && new URL(pagina.url()).searchParams.get('page') === '1';
+        const voltou = new URL(pagina.url()).searchParams.get('page') === '1';
+        return pagina2 && voltou ? true : falha('paginação não foi para a página 2 e voltou para a 1');
       },
     },
     {
@@ -310,73 +348,91 @@ export function passosE5(pagina) {
         const alvo = new URL(pagina.url());
         alvo.searchParams.set('call', 'nao-existe');
         await pagina.goto(alvo.toString(), { waitUntil: 'domcontentloaded' });
-        await pagina.locator('[data-testid="tel-view"]').first().waitFor({ state: 'visible', timeout: 30_000 });
-        return new URL(pagina.url()).searchParams.get('call') === 'nao-existe';
+        await pagina.locator('[data-testid="tel-view"]').first().waitFor({ state: 'visible', timeout: 30000 });
+        return new URL(pagina.url()).searchParams.get('call') === 'nao-existe' ? true : falha('deep link não preservou call na URL');
       },
     },
     {
       nome: 'selecionar/Esc',
       async executar() {
         const linha = pagina.locator('[data-testid="tel-row"]').first();
-        if ((await linha.count()) === 0) return true; // histórico vazio: nada a selecionar
+        if ((await linha.count()) === 0) return skip('histórico vazio: nada a selecionar');
         await linha.click();
         await esperar(700);
-        const abriu = (await pagina.locator('[data-testid="tel-selected-panel"]').count()) > 0;
+        const painel = pagina.locator('[data-testid="tel-selected-panel"]').first();
+        const abriu = await painel.isVisible().catch(() => false);
+        if (!abriu) return falha('seleção da linha não abriu o painel');
         await pagina.keyboard.press('Escape');
         await esperar(500);
-        return abriu;
+        const fechou = !(await painel.isVisible().catch(() => false));
+        return fechou ? true : falha('Escape não fechou o painel selecionado');
       },
     },
     {
       nome: 'picker',
       async executar() {
         const entrada = pagina.locator('[data-testid="tel-contact-picker"] input').first();
+        if (!(await existe(entrada))) return skip('picker de contato ausente');
         await entrada.fill('a');
         await esperar(700);
-        return (await pagina.locator('[data-testid="tel-contact-results"]').count()) > 0;
+        return (await pagina.locator('[data-testid="tel-contact-results"]').count()) > 0
+          ? true
+          : falha('picker não exibiu resultados após busca');
       },
     },
     {
       nome: 'teclado fisico',
       async executar() {
+        const display = primeiro('[data-testid="tel-number-display"]');
+        if (!(await existe(display))) return skip('display do número ausente');
+        const antes = await display.innerText();
         await pagina.keyboard.press('1');
         await esperar(300);
-        const display = await pagina.locator('[data-testid="tel-number-display"]').innerText();
-        return display.includes('1');
+        const depois = await display.innerText();
+        return depois.includes('1') && depois !== antes ? true : falha('teclado físico não alterou o display do número');
       },
     },
     {
       nome: 'WhatsApp desabilitado com motivo',
       async executar() {
         const botao = pagina.locator('[data-testid="tel-channel-option-whatsapp"]');
+        if (!(await existe(botao))) return skip('opção WhatsApp ausente');
         const desabilitado = await botao.isDisabled();
-        if (!desabilitado) return true; // capability ligada nesta conta: nada a provar aqui
+        if (!desabilitado) return skip('WhatsApp habilitado nesta conta: não há bloqueio a explicar');
         await botao.hover();
         await esperar(400);
-        return (await pagina.getByRole('tooltip').count()) > 0;
+        const temTooltip = (await pagina.getByRole('tooltip').count()) > 0;
+        const temMotivo = Boolean(await botao.getAttribute('title') || await botao.getAttribute('aria-describedby'));
+        return temTooltip || temMotivo ? true : falha('WhatsApp desabilitado não exibiu motivo');
       },
     },
     {
       nome: 'CTA sem numero',
       async executar() {
         const cta = pagina.locator('[data-testid="tel-dial-button"]');
-        return (await cta.isVisible()) && (await cta.isDisabled());
+        if (!(await existe(cta))) return skip('CTA de ligação ausente');
+        return (await cta.isVisible()) && (await cta.isDisabled()) ? true : falha('CTA sem número não está visível e desabilitado');
       },
     },
     {
       nome: 'discar -> dialing -> Cancelar -> linha cancelled',
-      // Escreve de verdade (linha em `calls`): só roda com `TEL_MUTACAO=1` e
-      // SEMPRE no ambiente local do cartão — nunca em produção (regra R1).
+      // Escreve de verdade (linha em `calls`): só roda com `TEL_MUTACAO=1`.
       async executar() {
-        if (process.env.TEL_MUTACAO !== '1') return true;
+        if (process.env.TEL_MUTACAO !== '1') return skip('TEL_MUTACAO!=1: passo com escrita não executado');
         const teclado = pagina.locator('[data-keypad-scope] button');
+        if ((await teclado.count()) === 0) return skip('teclado de discagem ausente');
         for (const d of ['5', '5', '1', '1', '9', '9', '9', '9', '2', '0', '4', '8']) await teclado.filter({ hasText: d }).first().click();
-        await pagina.locator('[data-testid="tel-dial-button"]').click();
+        const botaoDiscar = pagina.locator('[data-testid="tel-dial-button"]');
+        if (!(await existe(botaoDiscar))) return falha('botão de discagem ausente');
+        await botaoDiscar.click();
         await esperar(1500);
         const discando = (await pagina.locator('[data-testid="tel-active-status"], [data-testid="tel-active-bar"]').count()) > 0;
-        await pagina.locator('[data-testid="tel-hangup"]').click();
+        const desligar = pagina.locator('[data-testid="tel-hangup"]');
+        if (!(await existe(desligar))) return falha('botão Cancelar/Desligar ausente após discar');
+        await desligar.click();
         await esperar(1500);
-        return discando;
+        const cancelada = (await pagina.locator('[data-testid="tel-row"]').filter({ hasText: /cancelled|cancelad[ao]/i }).count()) > 0;
+        return discando && cancelada ? true : falha('não confirmou estado dialing seguido de linha cancelled');
       },
     },
     {
@@ -386,17 +442,28 @@ export function passosE5(pagina) {
         alvo.searchParams.set('view', 'inbox');
         await pagina.goto(alvo.toString(), { waitUntil: 'domcontentloaded' });
         await esperar(900);
-        return (await pagina.locator('[data-testid="tel-active-bar"]').count()) <= 1;
+        const view = pagina.locator('[data-testid="tel-view"]').first();
+        if (!(await existe(view))) return falha('view de telefonia ausente no inbox');
+        return (await pagina.locator('[data-testid="tel-active-bar"]').count()) <= 1 ? true : falha('ActiveCallBar duplicou no inbox');
       },
     },
     {
       nome: 'notas salvam',
       async executar() {
-        if ((await pagina.locator('[data-testid="tel-notes"]').count()) === 0) return true; // exige ligação selecionada
-        await pagina.locator('[data-testid="tel-notes"]').fill('nota de QA');
-        await pagina.locator('[data-testid="tel-save-notes"]').click();
+        const campo = pagina.locator('[data-testid="tel-notes"]').first();
+        if (!(await existe(campo))) return skip('campo de notas ausente: exige ligação selecionada');
+        const salvar = pagina.locator('[data-testid="tel-save-notes"]').first();
+        if (!(await existe(salvar))) return falha('botão de salvar notas ausente');
+        const nota = `nota de QA ${Date.now()}`;
+        await campo.fill(nota);
+        await salvar.click();
         await esperar(1200);
-        return true;
+        await pagina.reload({ waitUntil: 'domcontentloaded' });
+        await esperar(800);
+        const campoRecarregado = pagina.locator('[data-testid="tel-notes"]').first();
+        if (!(await existe(campoRecarregado))) return falha('campo de notas sumiu após recarregar');
+        const salvo = await valorCampo(campoRecarregado);
+        return salvo.includes(nota) ? true : falha('nota salva não persistiu após recarregar');
       },
     },
     {
@@ -406,7 +473,7 @@ export function passosE5(pagina) {
         try {
           await segunda.goto(pagina.url(), { waitUntil: 'domcontentloaded' });
           await esperar(1200);
-          return (await segunda.locator('[data-testid="tel-view"]').count()) > 0;
+          return (await segunda.locator('[data-testid="tel-view"]').count()) > 0 ? true : falha('segunda aba não carregou a tela');
         } finally {
           await segunda.close();
         }
@@ -416,11 +483,13 @@ export function passosE5(pagina) {
       nome: 'seletor Minhas/Todas',
       async executar() {
         const escopo = pagina.locator('[data-testid="tel-history-scope"]');
-        if ((await escopo.count()) === 0) return true;
+        if ((await escopo.count()) === 0) return skip('seletor Minhas/Todas ausente');
         await escopo.click();
-        await pagina.getByRole('option').last().click();
+        const opcoes = pagina.getByRole('option');
+        if ((await opcoes.count()) === 0) return skip('seletor Minhas/Todas sem opções');
+        await opcoes.last().click();
         await esperar(800);
-        return new URL(pagina.url()).searchParams.get('scope') !== null;
+        return new URL(pagina.url()).searchParams.get('scope') !== null ? true : falha('seletor Minhas/Todas não alterou escopo');
       },
     },
     {
@@ -434,7 +503,7 @@ export function passosE5(pagina) {
       async executar() {
         const overflow = await pagina.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         await corpo().press('End');
-        return overflow <= 0;
+        return overflow <= 0 ? true : falha(`overflow horizontal de ${overflow}px`);
       },
     },
   ];

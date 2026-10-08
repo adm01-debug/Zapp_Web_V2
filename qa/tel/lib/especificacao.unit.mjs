@@ -129,6 +129,15 @@ describe('relatório agregado', () => {
     assert.deepEqual(r.fail, []);
     assert.equal(r.consoleErrors, 1);
   });
+
+  it('skip explícito não entra na contagem de aprovados', () => {
+    const r = resumo('teste', [medir('a', 1, 1, 0), medir('b', NaN, 1, 0, { skip: true, motivo: 'não aplicável' })]);
+    assert.deepEqual(r.fail, []);
+    assert.deepEqual(r.skip, ['b']);
+    assert.equal(r.ok, 1);
+    assert.equal(r.skipped, 1);
+    assert.equal(r.total, 2);
+  });
 });
 
 describe('contrato do E.5', () => {
