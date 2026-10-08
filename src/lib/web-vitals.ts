@@ -1,10 +1,11 @@
 /**
  * Web Vitals monitoring utility
- * Tracks Core Web Vitals (LCP, FID, CLS, INP, TTFB) and reports to console/analytics
+ * Tracks Core Web Vitals (LCP, FCP, CLS, INP, TTFB) and reports to console/analytics
  *
  * Os alvos vêm de `performance-budget.json` → seção `web-vitals` (E36). Antes
  * havia aqui uma cópia dos limiares, que divergia do arquivo sem ninguém notar:
- * o JSON não era lido por nenhum código. Fonte única agora.
+ * o JSON não era lido por nenhum código. Fonte única agora. O `FCP` entrou na
+ * lista em 08/10/2026 (E34): é métrica que o campo publica e que não tinha alvo.
  */
 
 import { getLogger } from '@/lib/logger';
@@ -20,7 +21,7 @@ interface WebVitalMetric {
   id: string;
 }
 
-type VitalName = 'LCP' | 'FID' | 'CLS' | 'INP' | 'TTFB';
+type VitalName = 'LCP' | 'FCP' | 'FID' | 'CLS' | 'INP' | 'TTFB';
 
 interface VitalTarget {
   /** Limite de "good" — acima disso a métrica pede atenção. */
