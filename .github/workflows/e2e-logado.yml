@@ -76,9 +76,10 @@ jobs:
           - name: deslogado-principal
             projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth
             workers: 1
-          # Grupo 3: telefonia nos 3 browsers (sessao FALSA, sem secrets).
+          # Grupo 3: telefonia nos 3 browsers (sessao FALSA, sem secrets):
+          # discador Y11 + historico T86.
           - name: deslogado-secundario
-            projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
+            projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia --project=chromium-telefonia-historico --project=firefox-telefonia-historico --project=webkit-telefonia-historico
             workers: 1
     # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
     # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
@@ -169,6 +170,13 @@ jobs:
       # set_call_agent_notes) mockados, entao NAO usam E2E_TEST_EMAIL/E2E_TEST_PASSWORD
       # nem o storageState de e2e/.auth/user.json -- nenhum secret novo. O spec esta
       # no testIgnore do chromium-authenticated para nao rodar sob login real.
+      #
+      # chromium-telefonia-historico / firefox-telefonia-historico /
+      # webkit-telefonia-historico cobrem e2e/telefonia-historico.spec.ts (T86,
+      # historico: KPIs, paginacao, filtros, detalhe+notas) nos 3 browsers (nome com
+      # sufixo -historico: chromium-telefonia ja existe para a spec Y11 do discador,
+      # acima). Mesma receita deslogada, entao entram SO neste workflow, no grupo
+      # deslogado-secundario da matriz abaixo, nunca no `ci.yml` (PR).
       # E82: o e-mail do usuario de teste entra no log do Playwright (o fill() imprime o
       # valor). Mascarar ANTES de qualquer saida, para o ::add-mask:: valer o run todo.
       - name: 🔒 Mascarar o e-mail do E2E no log
