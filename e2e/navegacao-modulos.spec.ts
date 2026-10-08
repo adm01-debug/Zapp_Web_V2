@@ -12,25 +12,32 @@ import { test, expect, type Page } from '@playwright/test';
  * nas duas larguras.
  *
  * AUTENTICAÇÃO: o teste entra pela TELA DE LOGIN com o usuário sintético do banco
- * LOCAL (admin.local@promobrindes.com.br, semeado por ~/.local/share/zapp-local/
- * seed.sql), lendo E2E_TEST_EMAIL/E2E_TEST_PASSWORD do ambiente do conjunto
- * (zapp-e2e-local injeta os dois). Nenhuma sessão salva em disco é lida ou usada
- * (R1), e nada aqui fala com a produção.
+ * LOCAL (lido de E2E_TEST_EMAIL/E2E_TEST_PASSWORD, que o wrapper zapp-e2e-local
+ * injeta: admin.local@promobrindes.com.br, semeado por ~/.local/share/zapp-local/
+ * seed.sql). Nenhuma sessão salva em disco é lida ou usada (R1), e nada aqui fala
+ * com a produção.
  *
- * LACUNA DO CONJUNTO LOCAL — a única tolerância, e ela é MEDIDA em tempo de
- * execução, não declarada: duas edge functions dependem de segredo que só existe no
- * projeto externo/produção (R1 proíbe usá-lo), então falham aqui sempre do mesmo
- * jeito. Antes de navegar, o teste espiona as respostas desses dois endpoints e só
- * tolera a falha cujo status E CORPO casem com a assinatura medida. Medido no
- * conjunto t-8ef068bf:
- *   POST /functions/v1/get-sip-password    -> 503 {"error":"SIP não configurado",
- *                                                  "code":"SIP_NOT_CONFIGURED"}
- *   POST /functions/v1/multiplix-audience  -> 503 {"error":"Internal server error"}
- *      (a função não sobe sem a ponte Singu — EXTERNAL_SUPABASE_URL/
- *       EXTERNAL_SUPABASE_SERVICE_ROLE_KEY; docker logs ...-functions:
- *       "Multiplix audience is not configured")
- * Resposta 503 com outro corpo, 4xx/5xx de qualquer outro endpoint, erro de
- * console sem resposta tolerada por trás, exceção: tudo reprova.
+ * A VARREDURA REPROVA por padrão. Só escapam as ocorrências de DUAS listas
+ * explícitas e curtas, separadas de propósito, porque a natureza é diferente:
+ *
+ * 1) LACUNA DO CONJUNTO LOCAL — a lista LACUNAS_DO_CONJUNTO_LOCAL. São funções de
+ *    ponta que precisam de segredo que só existe no projeto externo/produção (R1 e
+ *    o HERMES-GUARD proíbem usar segredo real). Cada entrada é um endpoint EXATO com
+ *    status e CORPO medidos na própria resposta (o espião de fetch abaixo lê o corpo
+ *    real e o teste só tolera se casar com a assinatura declarada) e traz o log do
+ *    runtime que prova a configuração ausente. Não há família de endpoint, prefixo
+ *    nem regra por texto solto: endpoint novo, outro status ou outro corpo REPROVAM.
+ *
+ * 2) DEFEITO DO PRODUTO — as listas DEFEITOS_DE_PRODUTO (resposta HTTP) e
+ *    NINHOS_DE_PRODUTO (HTML aninhado). É bug do app, achado por esta varredura,
+ *    com dono em outra área. Cada defeito tem um `test.fixme` próprio no fim do
+ *    arquivo, com a reprodução de verdade (o corpo que roda vermelho hoje e passa
+ *    quando o produto for corrigido) e a causa em arquivo:linha. No teste principal
+ *    a ocorrência NÃO é engolida: sai no relatório da rodada (linha
+ *    `[DEFEITOS DE PRODUTO]`, com módulo + sintoma + nome do fixme) e a varredura
+ *    REPROVA se a assinatura não for exatamente a medida (outro status, outro corpo,
+ *    ou outro par de tags aninhadas) — e reprova qualquer outro console.error ou
+ *    resposta >= 400 que não esteja em nenhuma das listas.
  *
  * A lista de módulos e os títulos esperados são DADOS DO TESTE: vieram do cartão
  * Y09 e das entradas que a barra lateral mostra. Nada é lido do código do produto.
@@ -128,99 +135,182 @@ const MENU_CELULAR = 'Menu de navegação';
 const NAV_INFERIOR = 'Navegação principal';
 
 /* -------------------------------------------------------------------------- */
-/* Lacunas do conjunto local: medidas na própria resposta, em tempo de execução */
+/* Lista 1 — LACUNA DO CONJUNTO LOCAL (endpoint exato + status + corpo medido) */
 /* -------------------------------------------------------------------------- */
 
-interface LacunaMedida {
-  url: string;
+interface LacunaLocal {
+  /** caminho EXATO da função de ponta (sem host e sem query); '*' = falha do runtime local */
+  caminho: string;
   status: number;
-  corpo: string;
+  /** assinatura do corpo: o teste só tolera se o corpo MEDIDO contiver uma delas */
+  corpos: string[];
+  /** prova da configuração ausente (log do runtime do conjunto local) */
+  log: string;
+  /** onde a resposta é produzida no código da função */
+  fonte: string;
 }
 
 /**
- * LACUNAS DO CONJUNTO LOCAL — por que duas falhas de rede são toleradas aqui.
+ * As 4 entradas abaixo são tudo que o conjunto local não consegue servir por falta de
+ * segredo/configuração externa — e cada uma é conferível: o corpo da resposta casa a
+ * assinatura declarada e o log do runtime mostra a variável ausente.
+ * (`docker logs <container>-functions | grep -i "not configured"`)
  *
- * A R1 (e o HERMES-GUARD) proíbem usar segredo de produção: o conjunto local
- * sobe SEM os segredos externos. Consequência medida, com o log do runtime como
- * prova (`docker logs ...-functions-... | grep "not configured"`):
+ *   get-sip-password      503  {"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"}
+ *                              log: {"fn":"get-sip-password","msg":"SIP_PASSWORD is not configured"}
+ *                              (o mesmo endpoint tem um 401 de DEFEITO do produto — ver lista 2)
+ *   promogifts-catalog    503  {"error":"External DB not configured","code":"CATALOG_NOT_CONFIGURED"}
+ *                              (o banco externo do catálogo vive no projeto externo)
+ *   multiplix-audience    503  {"error":"Internal server error"}
+ *                              log: {"source":"edge","status":503,"msg":"Multiplix audience is not configured"}
+ *                              (a função não sobe sem a ponte Singu: EXTERNAL_SUPABASE_URL/
+ *                               EXTERNAL_SUPABASE_SERVICE_ROLE_KEY)
+ *   gmail-oauth           500  Internal Server Error
+ *                              log: Error: GOOGLE_CLIENT_ID is not configured
  *
- *   get-sip-password         503  {"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"}
- *                                 log: "SIP_PASSWORD is not configured"
- *   promogifts-catalog       503  {"error":"External DB not configured","code":"CATALOG_NOT_CONFIGURED"}
- *   evolution-api/-sync      503  body diz "Evolution API not configured"
- *   multiplix-audience       503  {"error":"Internal server error"}
- *                                 log: "Multiplix audience is not configured" (a função nem sobe)
- *   crm-integration          503  {"error":"Internal server error"}
- *                                 log: "CRM integration is not configured"
- *   get-mapbox-token         500  {"error":"Internal server error"}
- *                                 log: "MAPBOX_PUBLIC_TOKEN is not configured"
- *   connection-health-check  500  {"error":"Internal server error"}
- *                                 log: "EVOLUTION_API_URL is not configured"
- *   gmail-oauth              500  "Internal Server Error"
- *                                 log: "GOOGLE_CLIENT_ID is not configured"
- *   elevenlabs-scribe-token  500  {"error":"Internal server error"}
- *                                 log: "ELEVENLABS_API_KEY is not configured"
- *   ai-*                     500  {"error":"Internal server error"}
- *                                 log: "AI gateway error [503]" (não há gateway de IA no conjunto)
- *
- * Como o corpo das últimas é genérico (a falha acontece antes de a função poder
- * responder em texto próprio), a tolerância delas é pinada pelo endpoint + status
- * + CORPO MEDIDO NESTA RODADA (o espião de fetch abaixo lê o corpo da própria
- * resposta e o teste exige que ele seja idêntico ao medido). Qualquer outra
- * resposta — outro endpoint, outro status, corpo diferente, ou até um 4xx de
- * validação — REPROVA. Nada aqui é "4xx genérico".
- *
- * O único defeito do PRODUTO que este arquivo registra é o do motor SIP
- * (401 sem token no boot), pinado pelo endpoint e pelo corpo (ver test.fixme).
+ * Qualquer outra resposta — outro endpoint, outro status, corpo fora da assinatura —
+ * REPROVA. Nada aqui é "5xx de edge" nem "família de endpoints".
  */
-function motivoDaTolerancia(url: string, status: number, corpo: string): string | undefined {
-  if (status === 503 && /NOT_CONFIGURED|is not configured/i.test(corpo)) {
-    return 'conjunto local sem a configuração exigida (o segredo vive no projeto externo; R1 veda o de produção)';
-  }
+const LACUNAS_DO_CONJUNTO_LOCAL: LacunaLocal[] = [
+  {
+    caminho: '/functions/v1/get-sip-password',
+    status: 503,
+    corpos: ['"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"'],
+    log: '{"level":"error","fn":"get-sip-password","msg":"SIP_PASSWORD is not configured"}',
+    fonte: 'supabase/functions/get-sip-password/index.ts:53-58',
+  },
+  {
+    caminho: '/functions/v1/promogifts-catalog',
+    status: 503,
+    corpos: ['"error":"External DB not configured","code":"CATALOG_NOT_CONFIGURED"'],
+    log: 'o conjunto local não tem o banco externo do catálogo (external DB not configured)',
+    fonte: 'supabase/functions/promogifts-catalog/index.ts:335-336',
+  },
+  {
+    caminho: '/functions/v1/multiplix-audience',
+    status: 503,
+    corpos: ['"error":"Internal server error"'],
+    log: '{"level":"error","source":"edge","status":503,"msg":"Multiplix audience is not configured"}',
+    fonte: 'supabase/functions/multiplix-audience/index.ts:375,397',
+  },
+  {
+    caminho: '/functions/v1/gmail-oauth',
+    status: 500,
+    corpos: ['Internal Server Error'],
+    log: 'Error: GOOGLE_CLIENT_ID is not configured',
+    fonte: 'supabase/functions/gmail-oauth/index.ts:303',
+  },
+  {
+    // Falha do RUNTIME de Edge do conjunto local, não do app: o worker não conseguiu
+    // subir e o próprio runtime respondeu. Corpo fixo, produzido pelo runtime (o app
+    // nunca escreve essa mensagem), status 503.
+    caminho: '*',
+    status: 503,
+    corpos: ['"code":"BOOT_ERROR","message":"Worker failed to boot'],
+    log: "worker boot error: failed to bootstrap runtime: failed to create the graph: Failed caching npm package '@types/node@22.5.4'.: failed to unpack `node/readline/promises.d.ts` ... File exists (os error 17)",
+    fonte: 'runtime de Edge do conjunto local (cache Deno do contêiner de functions)',
+  },
+];
 
-  // Defeito do produto: o app dispara DUAS chamadas no arranque (StrictMode),
-  // uma devolve 200 e a outra estoura no INSERT e devolve 500 genérico.
-  if (
-    url.endsWith('/functions/v1/detect-new-device') &&
-    status === 500 &&
-    /Internal server error/i.test(corpo)
-  ) {
-    return 'DEFEITO CONHECIDO: detect-new-device estoura no INSERT quando o app chama duas vezes em paralelo (StrictMode do dev); log do runtime: "New device detected" -> "Error [object Object]" -> 500';
-  }
+/* -------------------------------------------------------------------------- */
+/* Lista 2 — DEFEITO DO PRODUTO (bug do app, com dono e test.fixme próprio)    */
+/* -------------------------------------------------------------------------- */
 
-  const genericas: Record<string, { status: number; log: string }> = {
-    '/functions/v1/multiplix-audience': { status: 503, log: 'Multiplix audience is not configured' },
-    '/functions/v1/crm-integration': { status: 503, log: 'CRM integration is not configured' },
-    '/functions/v1/get-mapbox-token': { status: 500, log: 'MAPBOX_PUBLIC_TOKEN is not configured' },
-    '/functions/v1/connection-health-check': { status: 500, log: 'EVOLUTION_API_URL is not configured' },
-    '/functions/v1/gmail-oauth': { status: 500, log: 'GOOGLE_CLIENT_ID is not configured' },
-    '/functions/v1/elevenlabs-scribe-token': { status: 500, log: 'ELEVENLABS_API_KEY is not configured' },
-    '/functions/v1/ai-suggest-reply': { status: 500, log: 'AI gateway error [503]' },
-  };
-  const chave = Object.keys(genericas).find((k) => url.endsWith(k));
-  if (chave && status === genericas[chave].status && /Internal server error/i.test(corpo)) {
-    return `conjunto local sem a configuração exigida (log do runtime: "${genericas[chave].log}")`;
-  }
+interface DefeitoDeProduto {
+  /** sintoma curto, com o módulo, para o relatório da rodada */
+  sintoma: string;
+  /** dono do conserto (o relatório aponta a área) */
+  area: string;
+  /** título EXATO do test.fixme que reproduz o defeito (no fim do arquivo) */
+  fixme: string;
+  /** caminho + status + assinatura de corpo medida */
+  caminho: string;
+  status: number;
+  corpos: string[];
+}
 
-  // Famílias inteiras dependem do gateway de IA / de serviços externos que não
-  // existem no conjunto local: o corpo é sempre o genérico. O status e o corpo
-  // seguem pinados (outro status ou outro corpo reprovam).
-  const familia = ['/functions/v1/ai-', '/functions/v1/elevenlabs-'].find((p) => url.includes(p));
-  if (familia && status === 500 && /Internal server error/i.test(corpo)) {
-    return 'conjunto local sem o gateway de IA/transcrição (log do runtime: "AI gateway error [503]", "ELEVENLABS_API_KEY is not configured")';
-  }
+/**
+ * Defeitos de RESPOSTA (HTTP) medidos pela varredura. Cada um tem um `test.fixme`
+ * que o reproduz com passos reais. Nenhum é tolerado em silêncio: a ocorrência sai
+ * no relatório da rodada com módulo, sintoma, área e o nome do fixme — e a varredura
+ * REPROVA se o status ou o corpo não forem exatamente os medidos aqui.
+ */
+const DEFEITOS_DE_PRODUTO: DefeitoDeProduto[] = [
+  {
+    sintoma: 'motor SIP chama get-sip-password sem credencial utilizável e recebe 401',
+    area: 'chamadas',
+    fixme: 'DEFEITO: o motor SIP chama get-sip-password sem credencial utilizável (401)',
+    caminho: '/functions/v1/get-sip-password',
+    status: 401,
+    corpos: ['"error":"Invalid or expired token"', '"code":"UNAUTHORIZED_NO_AUTH_HEADER"'],
+  },
+  {
+    sintoma: 'detect-new-device devolve 500 quando o app chama duas vezes em paralelo (StrictMode)',
+    area: 'login/segurança',
+    fixme: 'DEFEITO: detect-new-device devolve 500 quando o app chama duas vezes em paralelo',
+    caminho: '/functions/v1/detect-new-device',
+    status: 500,
+    corpos: ['"error":"Internal server error"'],
+  },
+];
 
-  if (url.endsWith('/functions/v1/get-sip-password') && status === 401 && /UNAUTHORIZED|authorization|JWT|Invalid or expired token/i.test(corpo)) {
-    return 'DEFEITO CONHECIDO: motor SIP chama a função no boot sem token (área de chamadas)';
-  }
-  return undefined;
+interface NinhoDeProduto {
+  /** tag que CONTÉM (o React acusa "X dentro de X" / "X não pode conter X") */
+  ancestral: string;
+  /** tag CONTIDA */
+  descendente: string;
+  /** onde foi medido */
+  onde: string;
+  /** dono do conserto */
+  area: string;
+  /** título EXATO do test.fixme que reproduz o defeito (no fim do arquivo) */
+  fixme: string;
+}
+
+/**
+ * Defeitos de HTML ANINHADO medidos pela varredura. O React emite o par de tags de
+ * duas formas — `In HTML, <div> cannot be a descendant of <p>.` (com a pilha de
+ * componentes) e `<p> cannot contain a nested <div>.` — e as duas trazem os dois
+ * nomes de tag; `parAninhamento` lê os DOIS formatos e só aceita o par exato
+ * declarado aqui. Par novo (outra combinação de tags) REPROVA: é defeito novo, que
+ * precisa de dono antes de virar tolerância.
+ */
+const NINHOS_DE_PRODUTO: NinhoDeProduto[] = [
+  {
+    ancestral: 'button',
+    descendente: 'button',
+    onde: 'barra lateral: botão "Adicionar aos favoritos" dentro do botão do item',
+    area: 'telas',
+    fixme: 'DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item',
+  },
+  {
+    ancestral: 'li',
+    descendente: 'li',
+    onde: 'trilha de navegação do PageHeader e view do Quadro (pipeline)',
+    area: 'telas',
+    fixme: 'DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro',
+  },
+  {
+    ancestral: 'p',
+    descendente: 'div',
+    onde: 'Documentação: selo do catálogo (<div>) dentro do <p> do subtítulo',
+    area: 'telas',
+    fixme: 'DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>',
+  },
+];
+
+interface OcorrenciaTolerada {
+  /** lista de origem: lacuna do conjunto local ou defeito do produto */
+  origem: 'lacuna' | 'defeito';
+  /** por que escapou (texto com a assinatura MEDIDA) */
+  motivo: string;
 }
 
 /** Espiona o fetch da página para ler status e corpo exatos das edge functions. */
 async function espionarLacunas(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const alvo = /\/functions\/v1\/[a-z0-9-]+(\?|$)/;
-    const janela = window as unknown as { __lacunasLocais?: LacunaMedida[] };
+    const janela = window as unknown as { __lacunasLocais?: { url: string; status: number; corpo: string }[] };
     const original = window.fetch;
     window.fetch = async (...args: Parameters<typeof window.fetch>) => {
       const resposta = await original(...args);
@@ -233,7 +323,7 @@ async function espionarLacunas(page: Page): Promise<void> {
           janela.__lacunasLocais.push({
             url: url.split('?')[0], // sem query: casa com o que o teste vê
             status: resposta.status,
-            corpo: corpo.slice(0, 200),
+            corpo: corpo.replace(/\s+/g, ' ').slice(0, 200),
           });
         }
       } catch {
@@ -244,10 +334,93 @@ async function espionarLacunas(page: Page): Promise<void> {
   });
 }
 
-async function lacunasMedidas(page: Page): Promise<LacunaMedida[]> {
+interface MedidaResposta {
+  url: string;
+  status: number;
+  corpo: string;
+}
+
+async function lacunasMedidas(page: Page): Promise<MedidaResposta[]> {
   return page.evaluate(
-    () => (window as unknown as { __lacunasLocais?: LacunaMedida[] }).__lacunasLocais ?? [],
+    () =>
+      (window as unknown as { __lacunasLocais?: { url: string; status: number; corpo: string }[] }).__lacunasLocais ??
+      [],
   );
+}
+
+/** Caminho da função de ponta (host/porta podem diferir entre app e resposta). */
+function caminhoDaFuncao(url: string): string {
+  return (url.match(/\/functions\/v1\/[^/?#]+/) ?? [url])[0];
+}
+
+/** Corpo casando alguma assinatura declarada (comparação no texto medido). */
+function corpoCasa(corpo: string, assinaturas: string[]): boolean {
+  return assinaturas.some((a) => corpo.includes(a));
+}
+
+/**
+ * Confere uma resposta >= 400 contra as duas listas. Devolve `undefined` quando ela
+ * não pertence a nenhuma — e aí ela REPROVA.
+ */
+function respostaTolerada(medida: MedidaResposta): OcorrenciaTolerada | undefined {
+  const caminho = caminhoDaFuncao(medida.url);
+
+  const lacuna = LACUNAS_DO_CONJUNTO_LOCAL.find(
+    (l) =>
+      (l.caminho === '*' || l.caminho === caminho) &&
+      l.status === medida.status &&
+      corpoCasa(medida.corpo, l.corpos),
+  );
+  if (lacuna) {
+    return {
+      origem: 'lacuna',
+      motivo: `lacuna do conjunto local (${lacuna.log}; ${lacuna.fonte}) — corpo medido: ${medida.corpo}`,
+    };
+  }
+
+  const defeito = DEFEITOS_DE_PRODUTO.find(
+    (d) => d.caminho === caminho && d.status === medida.status && corpoCasa(medida.corpo, d.corpos),
+  );
+  if (defeito) {
+    return {
+      origem: 'defeito',
+      motivo: `DEFEITO DO PRODUTO (${defeito.area}): ${defeito.sintoma} → test.fixme "${defeito.fixme}" — corpo medido: ${medida.corpo}`,
+    };
+  }
+
+  return undefined;
+}
+
+/**
+ * Lê o par de tags de um aviso de aninhamento do React nos DOIS formatos medidos:
+ *   `In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <div> p ...`
+ *   `<%s> cannot contain a nested %s.\nSee this log for the ancestor stack trace. p <div>`
+ * (o texto do console traz a mensagem de formato e, em seguida, os argumentos: a tag
+ * com colchetes é sempre a CONTIDA e a sem colchetes é a que CONTÉM.)
+ */
+function parAninhamento(texto: string): { ancestral: string; descendente: string } | undefined {
+  const descendente = texto.match(
+    /^In HTML, %s cannot be a descendant of <%s>\.\s*This will cause a hydration error\.%s <([a-z0-9]+)> ([a-z0-9]+)/i,
+  );
+  if (descendente) return { descendente: descendente[1].toLowerCase(), ancestral: descendente[2].toLowerCase() };
+
+  const contido = texto.match(
+    /^<%s> cannot contain a nested %s\.\s*See this log for the ancestor stack trace\. ([a-z0-9]+) <([a-z0-9]+)>/i,
+  );
+  if (contido) return { ancestral: contido[1].toLowerCase(), descendente: contido[2].toLowerCase() };
+
+  return undefined;
+}
+
+/**
+ * Confere um erro de console contra a lista de HTML aninhado. Devolve `undefined`
+ * quando o par de tags não é um dos medidos (inclusive quando a mensagem é de
+ * aninhamento mas o par é novo) — e aí REPROVA.
+ */
+function consoleEDefeito(texto: string): NinhoDeProduto | undefined {
+  const par = parAninhamento(texto);
+  if (!par) return undefined;
+  return NINHOS_DE_PRODUTO.find((n) => n.ancestral === par.ancestral && n.descendente === par.descendente);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -260,21 +433,8 @@ interface Ocorrencia {
   tipo: TipoRuido;
   texto: string;
   /** prova da tolerância: só entra aqui com status e corpo medidos na resposta */
-  lacuna?: string;
+  tolerada?: OcorrenciaTolerada;
 }
-
-/**
- * DEFEITOS CONHECIDOS do produto, pinados pelo TEXTO da mensagem de console.
- * Não é tolerância larga: só o que casa o padrão exato passa, sai no log e no
- * relato, e vira comentário para a área dona. Qualquer outra mensagem REPROVA.
- */
-const DEFEITOS_DE_CONSOLE: { padrao: RegExp; motivo: string }[] = [
-  {
-    padrao: /(^In HTML, .* cannot be a descendant of|cannot contain a nested)/i,
-    motivo:
-      'HTML inválido em views do app (medido no Quadro/pipeline: <li> dentro de <li>; em Sistema/Documentação: <div> dentro de <p>) — aviso do React pedindo correção; área de telas',
-  },
-];
 
 interface Trafego {
   ruido: Ocorrencia[];
@@ -302,8 +462,7 @@ function observar(page: Page): Trafego {
         .text()
         .then((corpo) =>
           process.stdout.write(
-            `[MEDIDA] ${response.status()} ${response.url().split('?')[0]} :: ${corpo.replace(/\s+/g, ' ').slice(0, 160)}
-`,
+            `[MEDIDA] ${response.status()} ${response.url().split('?')[0]} :: ${corpo.replace(/\s+/g, ' ').slice(0, 160)}\n`,
           ),
         )
         .catch(() => undefined);
@@ -342,21 +501,60 @@ function resumir(itens: { tipo?: string; texto?: string; motivo?: string; url?: 
 }
 
 /**
- * Separa o que REPROVA do que é lacuna comprovada do conjunto local. Uma resposta
- * só é tolerada quando existe, medida na própria sessão, uma resposta do mesmo
- * endpoint, com o MESMO status, cujo corpo casa a assinatura da lacuna. O erro de
- * console do navegador ("Failed to load resource ... status of N") é a sombra de
- * uma resposta já tolerada com aquele status — sem essa resposta por trás, reprova.
+ * Espera (com teto curto) a PROVA MEDIDA daquela resposta entrar na lista da página.
+ * O espião lê o corpo da resposta de forma assíncrona, então a resposta pode entrar
+ * na lista de ruído antes de o corpo estar legível — sem esta espera a tolerância
+ * dependia de sorte de tempo (flaky medido na 2ª rodada de 07/10, num 500 de
+ * gmail-oauth). Só espera o que o espião registra (funções de ponta): resposta de
+ * outro caminho não tem corpo para esperar. Sem prova depois do teto, REPROVA.
+ */
+async function esperarMedidaDaResposta(page: Page, texto: string): Promise<void> {
+  const url = ((texto.match(/https?:\/\/\S+/) ?? [''])[0]).split('?')[0];
+  const status = statusDaOcorrencia(texto);
+  if (!url || !status || !url.includes('/functions/v1/')) return;
+
+  await page
+    .waitForFunction(
+      ({ alvo, alvoStatus }: { alvo: string; alvoStatus: number }) => {
+        const lista =
+          (window as unknown as { __lacunasLocais?: { url: string; status: number; corpo: string }[] })
+            .__lacunasLocais ?? [];
+        return lista.some((m) => m.url.includes(alvo) && m.status === alvoStatus && m.corpo.length > 0);
+      },
+      { alvo: caminhoDaFuncao(url), alvoStatus: status },
+      { timeout: 5_000 },
+    )
+    .catch(() => undefined);
+}
+
+/**
+ * Separa o que REPROVA do que já está justificado nas duas listas.
+ *
+ * - resposta >= 400: só escapa com CORPO e status medidos na própria sessão, casando
+ *   uma entrada de LACUNAS_DO_CONJUNTO_LOCAL ou de DEFEITOS_DE_PRODUTO;
+ * - console.error: só escapa quando é a sombra de uma resposta já justificada com
+ *   aquele status ("Failed to load resource ... status of N") ou quando o par de tags
+ *   aninhadas casa um defeito de NINHOS_DE_PRODUTO já registrado em test.fixme;
+ * - qualquer outra coisa (exceção, erro de console sem resposta por trás, 4xx de
+ *   validação, endpoint novo, par de tags novo) entra em `reprovam`.
  */
 async function julgar(
   page: Page,
   trafego: Trafego,
   desde: number,
-): Promise<{ reprovam: Ocorrencia[]; lacunas: Ocorrencia[] }> {
-  const medidas = await lacunasMedidas(page);
+): Promise<{ reprovam: Ocorrencia[]; lacunas: Ocorrencia[]; defeitos: Ocorrencia[] }> {
   const fatia = trafego.ruido.slice(desde);
+
+  // A prova medida de cada resposta da janela precisa estar legível antes do veredito.
+  for (const ocorrencia of fatia) {
+    if (ocorrencia.tipo !== 'resposta') continue;
+    await esperarMedidaDaResposta(page, ocorrencia.texto);
+  }
+
+  const medidas = await lacunasMedidas(page);
   const lacunas: Ocorrencia[] = [];
-  const statusTolerados = new Set<number>();
+  const defeitos: Ocorrencia[] = [];
+  const statusJustificados = new Set<number>();
   const pendentes = new Set<Ocorrencia>();
 
   for (const ocorrencia of fatia) {
@@ -366,42 +564,47 @@ async function julgar(
     }
     const url = ((ocorrencia.texto.match(/https?:\/\/\S+/) ?? [''])[0]).split('?')[0];
     const status = statusDaOcorrencia(ocorrencia.texto);
-    // casa pelo CAMINHO da função (host/porta podem diferir entre o que o app
-    // chamou e o que o navegador informou na resposta)
-    const caminho = (u: string) => (u.match(/\/functions\/v1\/[^/?#]+/) ?? [u])[0];
-    const medida = medidas.find((m) => caminho(m.url) === caminho(url) && m.status === status);
-    const motivo = medida ? motivoDaTolerancia(medida.url, medida.status, medida.corpo) : undefined;
+    const medida = medidas.find((m) => caminhoDaFuncao(m.url) === caminhoDaFuncao(url) && m.status === status);
+    const tolerada = medida ? respostaTolerada(medida) : undefined;
 
-    if (medida && motivo) {
-      ocorrencia.lacuna = `${motivo} — resposta medida: ${medida.corpo}`;
-      statusTolerados.add(status);
-      lacunas.push(ocorrencia);
+    if (tolerada) {
+      ocorrencia.tolerada = tolerada;
+      statusJustificados.add(status);
+      (tolerada.origem === 'lacuna' ? lacunas : defeitos).push(ocorrencia);
     } else {
       pendentes.add(ocorrencia);
     }
   }
 
   const reprovam: Ocorrencia[] = [];
-  for (const ocorrencia of pendentes) {
+  for (const ocorrencia of Array.from(pendentes)) {
     const status = statusDaOcorrencia(ocorrencia.texto);
-    if (ocorrencia.tipo === 'console' && status && statusTolerados.has(status)) {
-      ocorrencia.lacuna = `sombra de console da resposta já medida como lacuna (status ${status})`;
+    if (ocorrencia.tipo === 'console' && status && statusJustificados.has(status)) {
+      ocorrencia.tolerada = {
+        origem: 'lacuna',
+        motivo: `sombra de console da resposta já medida (status ${status})`,
+      };
       lacunas.push(ocorrencia);
       continue;
     }
-    const defeito =
-      ocorrencia.tipo === 'console'
-        ? DEFEITOS_DE_CONSOLE.find((d) => d.padrao.test(ocorrencia.texto))
-        : undefined;
+    const defeito = ocorrencia.tipo === 'console' ? consoleEDefeito(ocorrencia.texto) : undefined;
     if (defeito) {
-      ocorrencia.lacuna = `DEFEITO CONHECIDO (fora deste cartão): ${defeito.motivo}`;
-      lacunas.push(ocorrencia);
+      ocorrencia.tolerada = {
+        origem: 'defeito',
+        motivo: `DEFEITO DO PRODUTO (${defeito.area}): HTML aninhado <${defeito.descendente}> dentro de <${defeito.ancestral}> em ${defeito.onde} → test.fixme "${defeito.fixme}"`,
+      };
+      defeitos.push(ocorrencia);
       continue;
     }
     reprovam.push(ocorrencia);
   }
 
-  return { reprovam, lacunas };
+  return { reprovam, lacunas, defeitos };
+}
+
+/** Linha de relatório por ocorrência, com o módulo onde ela apareceu. */
+function relatar(onde: string, itens: Ocorrencia[]): string[] {
+  return itens.map((i) => `${onde}: ${i.texto.replace(/\s+/g, ' ').slice(0, 180)} — ${i.tolerada?.motivo}`);
 }
 
 /**
@@ -642,36 +845,27 @@ const PASSOS: { secao?: string; item: ItemNav }[] = [
 // 30s do Playwright — este teto é do cartão, não uma espera fixa.
 test.describe.configure({ timeout: 15 * 60_000 });
 
-/**
- * DEFEITO ACHADO, COM DONO FORA DESTE CARTÃO (vai no relato e no comentário do
- * cartão): o motor SIP chama `get-sip-password` na virada de aba
- * (`useTabLeaderRole` -> `connectWithStoredCredentials`, em
- * src/hooks/communication/useSipClient.ts:81) antes de o token estar pronto. A
- * função responde 401 `{"error":"Unauthorized"}` e o app mostra o aviso "Erro ao
- * conectar ao servidor SIP. Verifique sua sessão e tente novamente."
- * (src/lib/calls/sipProvisioning.ts:31). Reprodução: entrar pelo login do conjunto
- * local e observar o POST /functions/v1/get-sip-password respondendo 401 no boot.
- */
-test.fixme('DEFEITO: o motor SIP não deveria chamar get-sip-password sem token no boot', async () => {
-  // Corpo vazio de propósito: este cartão é de navegação (Y09) e o conserto é da
-  // área de chamadas; o teste fica aqui para o defeito não sair do radar.
-});
-
-test.fixme('DEFEITO: detect-new-device devolve 500 quando o app chama duas vezes em paralelo', async () => {
-  // Medido em 07/10: no arranque o app dispara DUAS chamadas para
-  // /functions/v1/detect-new-device (StrictMode); uma responde 200 e a outra
-  // estoura no INSERT e devolve 500 {"error":"Internal server error"}.
-  // Log do runtime: "New device detected" -> "Error [object Object]" -> 500.
-  // Área de login/segurança (o certo é tratar a corrida, não devolver 500).
-});
-
-test.fixme('DEFEITO: a view do Quadro aninha <li> dentro de <li> (console.error do React)', async () => {
-  // Medido em 07/10 na varredura dos 42 módulos: ao abrir o Quadro (viewId=pipeline)
-  // o React emite, no console, "In HTML, %s cannot be a descendant of <%s> ...
-  // <li> li ... <ErrorBoundaryView viewId=\"pipeline\">". É HTML inválido
-  // (<li> filho direto de <li>); o conserto é da área de telas e o cartão está
-  // comentado no t-8ef068bf. Aqui só fica registrado para não sair do radar.
-});
+/** Relatório da rodada: lacunas e defeitos SEPARADOS (lacuna é conjunto, defeito é produto). */
+function relatarRodada(
+  onde: string,
+  lacunas: Ocorrencia[],
+  defeitos: Ocorrencia[],
+  visitados: number,
+  total: number,
+  trafego: Trafego,
+): void {
+  const semProva = canceladasSemProva(trafego);
+  console.warn(
+    `[COBERTURA] ${onde}: ${visitados}/${total} entradas do menu visitadas`,
+  );
+  console.warn(
+    `[CANCELADAS] ${onde}: ${trafego.canceladas.length} canceladas, ${semProva.length} sem resposta da mesma URL`,
+  );
+  console.warn(`[LACUNAS DO CONJUNTO LOCAL] ${onde}: ${lacunas.length}`);
+  for (const linha of relatar(onde, lacunas)) console.warn(`  ${linha}`);
+  console.warn(`[DEFEITOS DE PRODUTO] ${onde}: ${defeitos.length}`);
+  for (const linha of relatar(onde, defeitos)) console.warn(`  ${linha}`);
+}
 
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
@@ -686,7 +880,8 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     const trafego = observar(page);
     await abrirApp(page);
     let vistos = trafego.ruido.length;
-    const lacunasDoConjunto: string[] = [];
+    const lacunasDaRodada: Ocorrencia[] = [];
+    const defeitosDaRodada: Ocorrencia[] = [];
     const visitados: string[] = [];
 
     for (const { secao, item } of PASSOS) {
@@ -699,9 +894,10 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
       await clicarDesktop(page, item);
       await conferirModulo(page, item, `${onde}/${item.label}`);
 
-      const { reprovam, lacunas } = await julgar(page, trafego, vistos);
-      lacunasDoConjunto.push(...lacunas.map((l) => `${onde}/${item.label}: ${l.texto} — ${l.lacuna}`));
-      expect(resumir(reprovam), `${onde} — ${item.label} produziu ruído`).toEqual([]);
+      const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
+      lacunasDaRodada.push(...lacunas);
+      defeitosDaRodada.push(...defeitos);
+      expect(resumir(reprovam), `${onde} — ${item.label} produziu ruído não justificado`).toEqual([]);
       vistos = trafego.ruido.length;
     }
 
@@ -712,25 +908,21 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     await page.keyboard.press('Escape');
     await expect(campo, 'a busca global não fechou com Escape').toBeHidden();
 
-    const { reprovam, lacunas } = await julgar(page, trafego, vistos);
-    lacunasDoConjunto.push(...lacunas.map((l) => `desktop/Buscar: ${l.texto} — ${l.lacuna}`));
-    expect(resumir(reprovam), 'desktop — Buscar produziu ruído').toEqual([]);
+    const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
+    lacunasDaRodada.push(...lacunas);
+    defeitosDaRodada.push(...defeitos);
+    expect(resumir(reprovam), 'desktop — Buscar produziu ruído não justificado').toEqual([]);
 
     // Prova de cobertura: o número de módulos ABERTOS tem de bater com o mapa
     // da barra lateral, senão a varredura passou sem passar por tudo.
-    console.warn(`[COBERTURA] desktop: ${visitados.length}/${PASSOS.length} entradas do menu visitadas`);
     expect(
       visitados.length,
       'a varredura do desktop não visitou todas as entradas do menu',
     ).toBe(PASSOS.length);
 
-    const semProva = canceladasSemProva(trafego);
-    console.warn(
-      `[CANCELADAS] desktop: ${trafego.canceladas.length} canceladas, ${semProva.length} sem resposta da mesma URL`,
-    );
-    console.warn(`[LACUNAS DO CONJUNTO] desktop: ${lacunasDoConjunto.length}\n${lacunasDoConjunto.join('\n')}`);
+    relatarRodada('desktop', lacunasDaRodada, defeitosDaRodada, visitados.length, PASSOS.length, trafego);
     expect(
-      resumir(semProva),
+      resumir(canceladasSemProva(trafego)),
       'desktop: requisições canceladas que nunca responderam na mesma sessão',
     ).toEqual([]);
   });
@@ -746,7 +938,8 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
     const trafego = observar(page);
     await abrirApp(page);
     let vistos = trafego.ruido.length;
-    const lacunasDoConjunto: string[] = [];
+    const lacunasDaRodada: Ocorrencia[] = [];
+    const defeitosDaRodada: Ocorrencia[] = [];
     const visitados: string[] = [];
 
     for (const { secao, item } of PASSOS) {
@@ -755,9 +948,10 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
       await clicarMobile(page, item);
       await conferirModulo(page, item, `${onde}/${item.label}`);
 
-      const { reprovam, lacunas } = await julgar(page, trafego, vistos);
-      lacunasDoConjunto.push(...lacunas.map((l) => `${onde}/${item.label}: ${l.texto} — ${l.lacuna}`));
-      expect(resumir(reprovam), `${onde} — ${item.label} produziu ruído`).toEqual([]);
+      const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
+      lacunasDaRodada.push(...lacunas);
+      defeitosDaRodada.push(...defeitos);
+      expect(resumir(reprovam), `${onde} — ${item.label} produziu ruído não justificado`).toEqual([]);
       vistos = trafego.ruido.length;
     }
 
@@ -777,25 +971,131 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
     await page.keyboard.press('Escape');
     await expect(campo, 'a busca global não fechou com Escape').toBeHidden();
 
-    const { reprovam, lacunas } = await julgar(page, trafego, vistos);
-    lacunasDoConjunto.push(...lacunas.map((l) => `celular/Buscar: ${l.texto} — ${l.lacuna}`));
-    expect(resumir(reprovam), 'celular — Buscar produziu ruído').toEqual([]);
+    const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
+    lacunasDaRodada.push(...lacunas);
+    defeitosDaRodada.push(...defeitos);
+    expect(resumir(reprovam), 'celular — Buscar produziu ruído não justificado').toEqual([]);
 
     // Prova de cobertura: idem desktop, pelo menu móvel.
-    console.warn(`[COBERTURA] celular: ${visitados.length}/${PASSOS.length} entradas do menu visitadas`);
     expect(
       visitados.length,
       'a varredura do celular não visitou todas as entradas do menu',
     ).toBe(PASSOS.length);
 
-    const semProva = canceladasSemProva(trafego);
-    console.warn(
-      `[CANCELADAS] celular: ${trafego.canceladas.length} canceladas, ${semProva.length} sem resposta da mesma URL`,
-    );
-    console.warn(`[LACUNAS DO CONJUNTO] celular: ${lacunasDoConjunto.length}\n${lacunasDoConjunto.join('\n')}`);
+    relatarRodada('celular', lacunasDaRodada, defeitosDaRodada, visitados.length, PASSOS.length, trafego);
     expect(
-      resumir(semProva),
+      resumir(canceladasSemProva(trafego)),
       'celular: requisições canceladas que nunca responderam na mesma sessão',
     ).toEqual([]);
   });
+});
+
+/* -------------------------------------------------------------------------- */
+/* DEFEITOS DO PRODUTO — cada um com reprodução real, pronta para virar `test` */
+/*                                                                             */
+/* São os defeitos das listas DEFEITOS_DE_PRODUTO e NINHOS_DE_PRODUTO, que a    */
+/* varredura acima contabiliza em `[DEFEITOS DE PRODUTO]`. Os corpos abaixo são */
+/* a reprodução de verdade: hoje eles falham (é o defeito); quando o produto for */
+/* corrigido, os donos trocam `test.fixme` por `test` e a entrada sai da lista.  */
+/* -------------------------------------------------------------------------- */
+
+/** Ocorrências de console, na janela, cujo par de tags aninhadas é o pedido. */
+function aninhadosNaJanela(trafego: Trafego, desde: number, ancestral: string, descendente: string): Ocorrencia[] {
+  return trafego.ruido.slice(desde).filter((ocorrencia) => {
+    if (ocorrencia.tipo !== 'console') return false;
+    const par = parAninhamento(ocorrencia.texto);
+    return par?.ancestral === ancestral && par?.descendente === descendente;
+  });
+}
+
+/**
+ * DEFEITO (área de telas) — `src/components/layout/SidebarNavItem.tsx:83-92`:
+ * o botão "Adicionar aos favoritos" é renderizado DENTRO do `<button>` do item da
+ * barra lateral, e HTML não permite botão dentro de botão. O React avisa por
+ * `console.error` ("In HTML, <button> cannot be a descendant of <button>").
+ * MEDIDO em 07/10 no conjunto local, ao expandir qualquer seção da barra.
+ */
+test.fixme('DEFEITO: a barra lateral aninha o <button> de favoritos dentro do <button> do item', async ({ page }) => {
+  const trafego = observar(page);
+  await abrirApp(page);
+  const desde = trafego.ruido.length;
+  await abrirSecaoDesktop(page, 'Vendas & CRM');
+  const erros = aninhadosNaJanela(trafego, desde, 'button', 'button');
+  expect(resumir(erros), 'a barra lateral ainda aninha o botão de favoritos dentro do botão do item').toEqual([]);
+});
+
+/**
+ * DEFEITO (área de telas) — `src/components/ui/breadcrumb.tsx:62`: o
+ * `BreadcrumbSeparator` renderiza um `<li>` e é usado dentro do `<li>` do
+ * `BreadcrumbItem` (`src/components/layout/PageHeader.tsx:103-104`), o que o React
+ * recusa ("<li> cannot contain a nested <li>"). MEDIDO em 07/10 nas telas com
+ * trilha de navegação (Tarefas) e na view do Quadro (pipeline).
+ */
+test.fixme('DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e no Quadro', async ({ page }) => {
+  const trafego = observar(page);
+  await abrirApp(page);
+  const desde = trafego.ruido.length;
+  await clicarDesktop(page, { id: 'tasks', label: 'Tarefas' });
+  await clicarDesktop(page, { id: 'pipeline', label: 'Quadro' });
+  const erros = aninhadosNaJanela(trafego, desde, 'li', 'li');
+  expect(resumir(erros), 'a trilha do PageHeader e o Quadro ainda aninham <li> dentro de <li>').toEqual([]);
+});
+
+/**
+ * DEFEITO (área de telas) — `src/components/docs/SystemFeaturesView.tsx:41-49`: o
+ * `<Badge>` do catálogo (que é um `<div>`) é filho do `<p>` do subtítulo; o React
+ * avisa "In HTML, <div> cannot be a descendant of <p>". MEDIDO em 07/10 ao abrir
+ * Sistema > Documentação.
+ */
+test.fixme('DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>', async ({ page }) => {
+  const trafego = observar(page);
+  await abrirApp(page);
+  const desde = trafego.ruido.length;
+  await abrirSecaoDesktop(page, 'Sistema');
+  await clicarDesktop(page, { id: 'docs', label: 'Documentação' });
+  const erros = aninhadosNaJanela(trafego, desde, 'p', 'div');
+  expect(resumir(erros), 'a Documentação ainda põe o selo do catálogo (<div>) dentro de um <p>').toEqual([]);
+});
+
+/**
+ * DEFEITO (área de chamadas) — `src/hooks/communication/useSipClient.ts:80-89`: na
+ * transição de aba para líder, o hook chama `connectWithStoredCredentials` (que faz
+ * `POST /functions/v1/get-sip-password`) antes de haver credencial utilizável, e a
+ * função responde 401 (`supabase/functions/get-sip-password/index.ts:34` sem
+ * `Authorization`, `:41` com claims inválidas/expiradas).
+ * MEDIDO em 07/10: 401 `{"error":"Invalid or expired token"}` (e, em rodada
+ * anterior, 401 `{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}`) no arranque da sessão.
+ * A causa raiz (chamada cedo demais X credencial do conjunto local) é da área de
+ * chamadas: este fixme é a reprodução, não o veredito.
+ */
+test.fixme('DEFEITO: o motor SIP chama get-sip-password sem credencial utilizável (401)', async ({ page }) => {
+  const falhas: string[] = [];
+  page.on('response', (response) => {
+    if (response.url().includes('/functions/v1/get-sip-password') && response.status() >= 400) {
+      falhas.push(`${response.status()} ${response.url()}`);
+    }
+  });
+  await abrirApp(page);
+  await expect(page.getByRole('main'), 'a tela inicial não montou para observar o arranque').toBeVisible();
+  expect(resumir(falhas.map((texto) => ({ tipo: 'resposta', texto }))), 'o motor SIP ainda chama a função sem credencial').toEqual([]);
+});
+
+/**
+ * DEFEITO (área de login/segurança) — `src/hooks/ui/useDeviceDetection.ts:116`:
+ * no arranque o app dispara DUAS chamadas para `/functions/v1/detect-new-device`
+ * (StrictMode); uma responde 200 e a outra estoura no INSERT e devolve 500
+ * `{"error":"Internal server error"}` — log do runtime: "New device detected" →
+ * "Error [object Object]" → 500. MEDIDO em 07/10, com o usuário do seed local; o
+ * certo é tratar a corrida, não devolver 500.
+ */
+test.fixme('DEFEITO: detect-new-device devolve 500 quando o app chama duas vezes em paralelo', async ({ page }) => {
+  const falhas: string[] = [];
+  page.on('response', (response) => {
+    if (response.url().includes('/functions/v1/detect-new-device') && response.status() >= 400) {
+      falhas.push(`${response.status()} ${response.url()}`);
+    }
+  });
+  await abrirApp(page);
+  await expect(page.getByRole('main'), 'a tela inicial não montou para observar o arranque').toBeVisible();
+  expect(resumir(falhas.map((texto) => ({ tipo: 'resposta', texto }))), 'detect-new-device ainda devolve 500 na corrida').toEqual([]);
 });
