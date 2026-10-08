@@ -249,6 +249,45 @@ describe('ContactHeaderSection', () => {
     expect(screen.getByText('Mari')).toBeInTheDocument();
   });
 
+  // ========== SELO VIP — fonte é contacts.tags, a mesma que o botão grava (#241) ==========
+  it('mostra o selo VIP quando a tag vip está em contacts.tags (case-insensitive)', () => {
+    render(
+      <ContactHeaderSection
+        contact={{ ...baseContact, tags: ['vip'] }}
+        enrichedData={baseEnriched}
+      />
+    );
+    expect(screen.getByText('VIP')).toBeInTheDocument();
+  });
+
+  it('prop tags (tags vivas do hook) tem prioridade e também liga o selo', () => {
+    render(
+      <ContactHeaderSection
+        contact={baseContact}
+        enrichedData={baseEnriched}
+        tags={['VIP']}
+      />
+    );
+    expect(screen.getByText('VIP')).toBeInTheDocument();
+  });
+
+  it('NAO mostra o selo por relationship_score alto do CRM sem a tag (fonte antiga removida)', () => {
+    crm360DataMock = { found: true, contact: { nome_tratamento: null, apelido: null, relationship_score: 95 }, company: null };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    expect(screen.queryByText('VIP')).not.toBeInTheDocument();
+  });
+
+  it('mostra a coroa no modo compacto quando a tag VIP está presente', () => {
+    const { container } = render(
+      <ContactHeaderSection
+        contact={{ ...baseContact, tags: ['VIP'] }}
+        enrichedData={baseEnriched}
+        isCompact={true}
+      />
+    );
+    expect(container.querySelector('svg.lucide-crown')).toBeTruthy();
+  });
+
   // ========== NOME DE TRATAMENTO DO CRM x APELIDO (sem duplicar a mesma palavra) ==========
   it('nao repete a legenda do CRM quando e igual ao apelido ja exibido no titulo', () => {
     crm360DataMock = { found: true, contact: { nome_tratamento: 'Mari', apelido: null, relationship_score: 10 }, company: null };
