@@ -125,6 +125,16 @@ const ROTA_PAPEL_ERRO = {
 const ROTA_RATE = { match: "/rest/v1/rpc/ai_rate_limit_hit", body: 1 };
 const ROTA_PROVIDERS = { match: "/rest/v1/ai_providers", body: [PROVIDER_ROW] };
 const ROTA_PROFILES = { match: "/rest/v1/profiles", body: [] };
+// IA-009: o kill switch lê `feature_flags` NO SERVIDOR antes de despachar. Aqui as
+// chaves estão LIGADAS de propósito — este arquivo prova o fluxo normal do proxy, e o
+// bloqueio por flag tem teste próprio em `_shared/ai-kill-switch.test.ts`.
+const ROTA_FLAGS = {
+  match: "/rest/v1/feature_flags",
+  body: [
+    { key: "ai.capability.ai-proxy", enabled: true },
+    { key: "ai.provider.openai", enabled: true },
+  ],
+};
 // O select de cota (HEAD) lê `content-range`; o insert (POST) grava a linha.
 const ROTA_USAGE = {
   match: "/rest/v1/ai_usage_logs",
@@ -142,7 +152,7 @@ const ROTA_OPENAI = {
   },
 };
 
-const ROTAS_BASE = [ROTA_AUTH, ROTA_RATE, ROTA_PROVIDERS, ROTA_PROFILES, ROTA_USAGE, ROTA_OPENAI];
+const ROTAS_BASE = [ROTA_AUTH, ROTA_RATE, ROTA_PROVIDERS, ROTA_PROFILES, ROTA_USAGE, ROTA_OPENAI, ROTA_FLAGS];
 
 function makeRequest(body: unknown): Request {
   return new Request("https://stub.supabase.co/functions/v1/ai-proxy", {

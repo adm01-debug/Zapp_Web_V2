@@ -132,6 +132,15 @@ function instalarEspiao(): Espiao {
       }
       return json({ message: "invalid JWT" }, 401);
     }
+    // IA-009: kill switch lido NO SERVIDOR. Este arquivo prova o caminho normal do
+    // classificador, entao as chaves do desenho vem LIGADAS — o bloqueio por flag tem
+    // teste proprio em `_shared/ai-kill-switch.test.ts`.
+    if (alvo.pathname === "/rest/v1/feature_flags") {
+      return json([
+        { key: "ai.capability.classify-sticker", enabled: true },
+        { key: "ai.provider.openai", enabled: true },
+      ]);
+    }
     if (alvo.pathname === "/rest/v1/ai_providers") return json(PROVEDOR_VISAO);
     if (alvo.pathname === "/rest/v1/profiles") return json([]);
     if (alvo.pathname === "/rest/v1/ai_usage_logs") {

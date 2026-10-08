@@ -7,6 +7,7 @@ import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { ChatbotL1Output, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { normalizeSentiment, normalizeOperationalPriority } from "../_shared/ai-vocabulary.ts";
 import { parseJsonObject } from "../_shared/ai-json.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 
 export async function handleChatbotL1Request(req: Request): Promise<Response> {
   const cors = handleCors(req);
@@ -57,6 +58,17 @@ export async function handleChatbotL1Request(req: Request): Promise<Response> {
         [{ path: 'connectionId', message: 'connectionId é obrigatório', code: 'custom' }],
         req,
       );
+    }
+
+    // IA-009 §2.3 — pausa da automação DESTA conexão (`ai.bot.<connectionId>`),
+    // lida no servidor e ANTES de consultar flow/histórico/IA: a pausa é imediata
+    // (escrita em `feature_flags`, sem deploy) e não impede o atendimento — a
+    // conversa segue legível e respondível por humano, que é o aceite. Retorna
+    // `ok` com `handled:false` porque pausar não é erro: é o bot calando.
+    const pausaDoBot = await evaluateAiKillSwitch({ functionName: 'chatbot-l1', connectionId });
+    if (!pausaDoBot.allowed) {
+      log.info('automacao L1 desativada', { code: pausaDoBot.code, key: pausaDoBot.key });
+      return jsonResponse({ handled: false, reason: 'ai_disabled' }, 200, req);
     }
 
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));

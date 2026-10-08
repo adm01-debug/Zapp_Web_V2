@@ -194,6 +194,14 @@ async function abrirCenario(cenario: Cenario): Promise<CenarioVivo> {
       use_for: ["auto_reply"],
       config: {},
     }],
+    // IA-009: o kill switch passou a ler `feature_flags` NO SERVIDOR (a flag era só do
+    // cliente). Aqui as chaves estão LIGADAS: este arquivo prova o ATENDIMENTO do bot, e
+    // o bloqueio por flag tem teste próprio em `_shared/ai-kill-switch.test.ts`.
+    // `ai.bot.<conexão>` ausente = sem pausa (desenho §2.4).
+    feature_flags: [
+      { key: "ai.capability.chatbot_l1", enabled: true },
+      { key: "ai.provider.openai", enabled: true },
+    ],
     knowledge_base_articles: cenario.artigos ?? [],
     ai_usage_logs: [],
   };

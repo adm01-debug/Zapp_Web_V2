@@ -109,6 +109,15 @@ function stubFetch(estado: EstadoStub): { contadores: Contadores; restaurar: () 
     if (url.includes("/rest/v1/ai_providers")) {
       return Promise.resolve(json([PROVEDOR]));
     }
+    if (url.includes("/rest/v1/feature_flags")) {
+      // IA-009: o kill switch consulta `feature_flags` NO SERVIDOR. Este arquivo prova
+      // o CIRCUITO (IA-050), entao as chaves vem todas LIGADAS: o bloqueio por flag tem
+      // teste proprio em `ai-kill-switch.test.ts`.
+      return Promise.resolve(json([
+        { key: "ai.capability.ai-circuit-teste", enabled: true },
+        { key: "ai.provider.openai", enabled: true },
+      ]));
+    }
     if (url.includes("/rest/v1/rpc/ai_rate_limit_hit")) {
       contadores.sonda++;
       return Promise.resolve(json(estado.probeHits));
