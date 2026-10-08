@@ -1,4 +1,6 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 /**
  * Y09 — Navegação por todos os módulos sem erro de console nem requisição falha.
@@ -27,6 +29,10 @@ import { test, expect, type Page } from '@playwright/test';
  *    real e o teste só tolera se casar com a assinatura declarada) e traz o log do
  *    runtime que prova a configuração ausente. Não há família de endpoint, prefixo
  *    nem regra por texto solto: endpoint novo, outro status ou outro corpo REPROVAM.
+ *    NÃO existe entrada de curinga (`*`) — nem para falha de arranque do runtime do
+ *    conjunto: "qualquer 503" aceitaria também o que estivesse por trás dele. A corrida
+ *    de cache do runtime é removida ANTES de medir, por `aquecerRuntime` (abaixo), que
+ *    REPROVA a função que não subir nem em chamada isolada.
  *
  * 2) DEFEITO DO PRODUTO — as listas DEFEITOS_DE_PRODUTO (resposta HTTP) e
  *    NINHOS_DE_PRODUTO (HTML aninhado). É bug do app, achado por esta varredura,
@@ -139,7 +145,7 @@ const NAV_INFERIOR = 'Navegação principal';
 /* -------------------------------------------------------------------------- */
 
 interface LacunaLocal {
-  /** caminho EXATO da função de ponta (sem host e sem query); '*' = falha do runtime local */
+  /** caminho EXATO da função de ponta (sem host, sem query e sem curinga) */
   caminho: string;
   status: number;
   /** assinatura do corpo: o teste só tolera se o corpo MEDIDO contiver uma delas */
@@ -199,16 +205,6 @@ const LACUNAS_DO_CONJUNTO_LOCAL: LacunaLocal[] = [
     corpos: ['Internal Server Error'],
     log: 'Error: GOOGLE_CLIENT_ID is not configured',
     fonte: 'supabase/functions/gmail-oauth/index.ts:303',
-  },
-  {
-    // Falha do RUNTIME de Edge do conjunto local, não do app: o worker não conseguiu
-    // subir e o próprio runtime respondeu. Corpo fixo, produzido pelo runtime (o app
-    // nunca escreve essa mensagem), status 503.
-    caminho: '*',
-    status: 503,
-    corpos: ['"code":"BOOT_ERROR","message":"Worker failed to boot'],
-    log: "worker boot error: failed to bootstrap runtime: failed to create the graph: Failed caching npm package '@types/node@22.5.4'.: failed to unpack `node/readline/promises.d.ts` ... File exists (os error 17)",
-    fonte: 'runtime de Edge do conjunto local (cache Deno do contêiner de functions)',
   },
 ];
 
@@ -367,7 +363,7 @@ function respostaTolerada(medida: MedidaResposta): OcorrenciaTolerada | undefine
 
   const lacuna = LACUNAS_DO_CONJUNTO_LOCAL.find(
     (l) =>
-      (l.caminho === '*' || l.caminho === caminho) &&
+      l.caminho === caminho &&
       l.status === medida.status &&
       corpoCasa(medida.corpo, l.corpos),
   );
@@ -833,6 +829,69 @@ async function clicarMobile(page: Page, item: ItemNav): Promise<void> {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Estabilização do runtime de Edge do conjunto local                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Aquece o runtime de Edge do conjunto local, UMA função de ponta por vez, e
+ * REPROVA se alguma não arrancar nem em chamada isolada.
+ *
+ * POR QUE EXISTE (medido em 07/10 no conjunto local): o contêiner de functions
+ * nasce com o cache Deno vazio e monta o grafo de dependências de cada função na
+ * primeira chamada. Quando o app dispara VÁRIAS funções em paralelo no arranque,
+ * o desempacotamento do mesmo pacote npm (@types/node) corre duas vezes ao mesmo
+ * tempo e uma delas morre com `File exists (os error 17)`; o runtime responde
+ * 503 {"code":"BOOT_ERROR",...} para aquela chamada, sem defeito de produto
+ * nenhum por trás (log do contêiner de functions do conjunto local).
+ *
+ * ISTO NÃO É TOLERÂNCIA. A varredura abaixo continua reprovando qualquer 503 que
+ * apareça, inclusive o de arranque: a lista de lacunas do conjunto tem endpoints
+ * exatos, com status e corpo medidos, e não existe entrada de curinga (`*`).
+ * Aqui a corrida é REMOVIDA antes de medir — e a função que não subir nem sozinha
+ * REPROVA este aquecimento (mais estrito do que tolerar o 503 na varredura).
+ *
+ * Invocado fora do wrapper `zapp-e2e-local` (sem as variáveis do conjunto local),
+ * o aquecimento é pulado com aviso; o teste é do conjunto local do cartão.
+ */
+async function aquecerRuntime(request: APIRequestContext): Promise<void> {
+  const url = process.env.VITE_ZAPP_LOCAL_SUPABASE_URL;
+  const chave = process.env.VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY;
+  const pasta = join(process.cwd(), 'supabase', 'functions');
+  if (!url || !chave || !existsSync(pasta)) {
+    console.warn('[AQUECIMENTO] sem conjunto local (VITE_ZAPP_LOCAL_SUPABASE_URL/ANON_KEY): pulado');
+    return;
+  }
+
+  const funcoes = readdirSync(pasta, { withFileTypes: true })
+    .filter((entrada) => entrada.isDirectory() && !entrada.name.startsWith('_'))
+    .map((entrada) => entrada.name)
+    .sort();
+
+  const semArranque: string[] = [];
+  for (const nome of funcoes) {
+    // Uma por vez, de propósito: é a chamada SIMULTÂNEA que corrompe o cache.
+    const resposta = await request
+      .post(`${url}/functions/v1/${nome}`, {
+        headers: { apikey: chave },
+        data: {},
+        timeout: 25_000,
+        failOnStatusCode: false,
+      })
+      .catch(() => undefined); // rede/tempo esgotado: quem reprova é a varredura
+    if (!resposta) continue;
+    if (resposta.status() === 503 && (await resposta.text()).includes('BOOT_ERROR')) {
+      semArranque.push(nome);
+    }
+  }
+
+  expect(
+    semArranque,
+    'o runtime de Edge do conjunto local não arrancou estas funções nem em chamada isolada (BOOT_ERROR)',
+  ).toEqual([]);
+  console.warn(`[AQUECIMENTO] ${funcoes.length} funções de ponta arrancaram sem BOOT_ERROR`);
+}
+
+/* -------------------------------------------------------------------------- */
 /* Testes                                                                      */
 /* -------------------------------------------------------------------------- */
 
@@ -872,11 +931,15 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 
   test('abre os 42 módulos da barra lateral e a busca global sem erro de console nem requisição falha', async ({
     page,
+    request,
   }) => {
     // A varredura é longa (42 módulos + busca, cada um com espera de view e de
     // ruído): o teto padrão do Playwright (30 s) não cabe — e o teto fica no
     // próprio spec para ele rodar no config do repositório, sem config própria.
     test.setTimeout(20 * 60_000);
+    // Antes de medir: o runtime de Edge do conjunto precisa estar quente (uma vez
+    // por teste; na 2ª vez o cache já está quente e custa segundos).
+    await aquecerRuntime(request);
     const trafego = observar(page);
     await abrirApp(page);
     let vistos = trafego.ruido.length;
@@ -933,8 +996,10 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
 
   test('abre os 42 módulos pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
+    request,
   }) => {
     test.setTimeout(20 * 60_000); // mesma razão do desktop: varredura longa
+    await aquecerRuntime(request);
     const trafego = observar(page);
     await abrirApp(page);
     let vistos = trafego.ruido.length;
