@@ -60,6 +60,12 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // SL-029 (inventario S2-8): drill de restore de backup. Executa a receita de
+  // docs/BACKUP-RECOVERY-STRATEGY.md (pg_dump -F c / pg_restore -c) em PostgreSQL 17
+  // descartavel e prova que o banco restaurado reproduz esquema e dados. Nao toca banco
+  // real: prova a RECEITA, nao a restauracao do backup de PRODUCAO (acao do dono).
+  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/backup-restore-drill.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em

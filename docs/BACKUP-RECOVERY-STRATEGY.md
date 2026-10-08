@@ -210,6 +210,36 @@ SELECT * FROM contacts_restore r
 WHERE NOT EXISTS (SELECT 1 FROM contacts WHERE id = r.id);
 ```
 
+### 3.4 Drill de restore automatizado (evidência)
+
+O caminho backup → restore tem prova executada e repetível:
+`scripts/db-audit/backup-restore-drill.test.sh`. Ele sobe um PostgreSQL 17
+descartável, cria a origem (tabela `contacts` com constraint, índice, RLS e
+policy), faz o backup com `pg_dump -F c` (receita da §1.3), restaura com
+`pg_restore -c` num banco novo (receita da §3.2) e falha se o banco restaurado
+não reproduzir as linhas e o esquema exatos. Não toca banco real: o container é
+exclusivo do processo e morre no fim.
+
+```bash
+bash scripts/db-audit/backup-restore-drill.test.sh
+```
+
+Saída de referência (2026-10-08):
+
+```text
+[drill] origem: 3 linhas (esperado 3)
+[drill] backup: 3411 bytes, 9 objeto(s) no arquivo
+[drill] restaurado: 3 linhas, digest ok
+[drill] esquema ok: constraint, indice, rls=on e policy presentes
+[drill] unicidade restaurada e em vigor (duplicata recusada)
+OK: drill de restore de backup (pg_dump -F c -> pg_restore -c) reproduziu esquema e dados
+```
+
+**O que continua pendente — ação do dono:** restaurar o backup da PRODUÇÃO
+(PITR / ambiente separado). O drill acima prova a RECEITA, não a restauração da
+produção; por isso o rótulo `backups: 'NOT_VERIFIED_RESTORE_REQUIRED'` em
+`scripts/db-audit/check-runtime-config.mjs` permanece como está.
+
 ---
 
 ## 🚨 PARTE 4: Disaster Recovery
