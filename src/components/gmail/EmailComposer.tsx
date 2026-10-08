@@ -218,6 +218,14 @@ export function EmailComposer({
   const handleSend = async () => {
     if (sendLockRef.current || !to.trim()) return;
 
+    // R2-COM-008 (item 486): o botão Enviar já exige assunto, mas o atalho do editor
+    // (Ctrl/Cmd+Enter) cai neste mesmo handler. A exigência tem de valer aqui também,
+    // senão o contrato passa a depender do jeito de interagir.
+    if (!subject.trim()) {
+      toast.error('Informe o assunto do e-mail');
+      return;
+    }
+
     const invalid = [...invalidEmailTokens(to), ...invalidEmailTokens(cc), ...invalidEmailTokens(bcc)];
     if (invalid.length > 0) {
       toast.error(`Revise os destinatários inválidos: ${invalid.join(', ')}`);
