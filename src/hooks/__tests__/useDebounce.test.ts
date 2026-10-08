@@ -106,3 +106,16 @@ describe('useDebounce', () => {
     expect(callback).toHaveBeenCalledWith('third');
   });
 });
+
+describe('useDebounce — desmontagem', () => {
+  it('não dispara o callback pendente depois que o componente desmonta', () => {
+    vi.useFakeTimers();
+    const cb = vi.fn();
+    const { result, unmount } = renderHook(() => useDebounce(cb, 300));
+    result.current('x');
+    unmount();
+    vi.advanceTimersByTime(1000);
+    expect(cb).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+});
