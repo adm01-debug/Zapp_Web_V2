@@ -21,6 +21,7 @@ import {
   handleIncomingMessage, handleOutgoingWhatsAppMessage,
 } from "../_shared/evolution-webhook-messages.ts";
 import { WebhookSecurityService, timingSafeEqual } from "../_shared/hmac-validation.ts";
+import { captureSentryError } from "../_shared/sentry.ts";
 import type { EvolutionDbClient } from "../_shared/evolution-types.ts";
 
 // ---------------------------------------------------------------------------
@@ -321,6 +322,13 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
     });
   } catch (error: unknown) {
     console.error('Evolution webhook error:', error);
+    // SL-056: reporta ao Sentry quando existe DSN no ambiente da edge (sem DSN é
+    // no-op, nada sai do sistema) e segue com a MESMA resposta 500 de antes —
+    // o relato (captura) não muda este ramo de erro.
+    await captureSentryError(error, {
+      fn: 'evolution-webhook',
+      requestId: req.headers.get('x-request-id') ?? undefined,
+    });
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

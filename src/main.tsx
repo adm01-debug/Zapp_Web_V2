@@ -5,6 +5,7 @@ import "./index.css";
 import "./i18n"; // Initialize i18n 
 import { getLogger } from "./lib/logger";
 import { initWebVitals } from "./lib/web-vitals";
+import { initSentry } from "./lib/sentry";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { APP_BUILD_ID, startDeploymentUpdateMonitor } from "./lib/deployment-update";
 import { reportClientError } from "./lib/errorReporter";
@@ -15,6 +16,11 @@ if (window.performance && typeof window.performance.mark === 'function') {
 }
 log.info('Initialized', { at: new Date().toISOString(), buildId: APP_BUILD_ID.slice(0, 12) });
 startDeploymentUpdateMonitor();
+
+// SL-056: Sentry no front — só liga com VITE_SENTRY_DSN no ambiente (sem DSN é
+// no-op e nada sai do sistema). Vem antes dos handlers abaixo de propósito: o
+// cliente do Sentry instala os handlers globais dele quando liga.
+initSentry();
 
 // Global unhandled error handlers for resilience
 window.addEventListener('unhandledrejection', (event) => {

@@ -34,6 +34,11 @@ export function SentryIntegrationView() {
   // nenhum DSN é validado, nada é persistido e não há API de métricas consultada. Por isso a
   // ativação é recusada (a tela nunca assume o estado "Ativo") e esta tela não apresenta
   // estatísticas: números fixos de exemplo não podem aparecer como dados do ambiente.
+  //
+  // SL-056: o app passou a ter um cliente mínimo de Sentry por DSN de AMBIENTE
+  // (`src/lib/sentry.ts` + `initSentry()` no `main.tsx`, ligado só quando `VITE_SENTRY_DSN`
+  // existe). Isso não muda nada desta tela: continuam faltando a validação do DSN pela UI,
+  // a persistência da configuração e a API de métricas — a ativação por aqui segue recusada.
   const handleConnect = () => {
     if (!config.dsn.trim()) {
       toast.error('Informe o DSN do Sentry');
