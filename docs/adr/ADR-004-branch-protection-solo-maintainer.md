@@ -39,6 +39,12 @@ compensar com gates automáticos bloqueantes:
    não possui mais filtro de paths, portanto seu contexto existe em todo PR. O guard vivo
    passou integralmente no run `34139152947` de 07/09/2026; ele passa a ser check obrigatório
    somente depois de permanecer verde por 7 dias consecutivos, como originalmente decidido.
+5. `scripts/ci/github-settings-guard.mjs` conferindo também `required_approving_review_count`
+   contra o baseline (`scripts/ci/github-settings-baseline.json`, `= 0`). Desde 08/10/2026 o
+   campo deixou de ser apenas declarado: subir para 1 vira divergência com issue e **sem**
+   restauração automática — mudar política de aprovação é decisão humana, não rotina de guard.
+   Ponto cego declarado: o `GITHUB_TOKEN` do workflow não tem `administration: read`, então a
+   leitura efetiva da branch protection só ocorre com um token que tenha esse escopo.
 
 O PR documental que registra esta atualização também funciona como teste do caso docs-only:
 `Contrato DB offline` precisa aparecer e passar mesmo sem mudanças em `src/`, `supabase/` ou

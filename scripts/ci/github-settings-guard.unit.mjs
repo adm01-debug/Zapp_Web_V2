@@ -13,10 +13,12 @@ const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'github-settings-gu
 
 /**
  * Stub de `fetch` no mesmo formato do baseline real. `modo` escolhe a resposta:
- *   ok        — tudo conforme o baseline
- *   regressao — strict=false (a regressão que o guard existe para pegar)
- *   semEscopo — a branch protection responde 403 (o que o GITHUB_TOKEN faz hoje)
- *   injecao   — valores com \n vindos da API (jssecurity:S5145)
+ *   ok            — tudo conforme o baseline (sem bloco de review exigido)
+ *   regressao     — strict=false (a regressão que o guard existe para pegar)
+ *   semEscopo     — a branch protection responde 403 (o que o GITHUB_TOKEN faz hoje)
+ *   injecao       — valores com \n vindos da API (jssecurity:S5145)
+ *   aprovacoes    — required_approving_review_count=1 (a regressão do ADR-004)
+ *   aprovacoesZero— o bloco de review presente com 0 aprovacoes (estado do baseline)
  */
 function stub(modo) {
   const prot = {
@@ -24,6 +26,10 @@ function stub(modo) {
     regressao: "send({ required_status_checks: { strict: false, contexts: ['🔍 Lint & TypeCheck','🧪 Unit Tests','🏗️ Build','🔒 Security Audit','Contrato DB offline','🎭 E2E Tests (Playwright)'] }, enforce_admins: { enabled: true } })",
     semEscopo: "send({ message: 'Resource not accessible by integration' }, 403)",
     injecao: "send({ required_status_checks: { strict: 'false\\n::error::forged', contexts: ['ci'] }, enforce_admins: { enabled: true } })",
+    // ADR-004: o baseline exige 0 aprovacoes enquanto houver um mantenedor unico.
+    // Aqui a API devolve 1 — o que hoje passaria como "Perimetro OK".
+    aprovacoes: "send({ required_status_checks: { strict: true, contexts: ['🔍 Lint & TypeCheck','🧪 Unit Tests','🏗️ Build','🔒 Security Audit','Contrato DB offline','🎭 E2E Tests (Playwright)'] }, enforce_admins: { enabled: true }, required_pull_request_reviews: { required_approving_review_count: 1, dismiss_stale_reviews: true, require_code_owner_reviews: false } })",
+    aprovacoesZero: "send({ required_status_checks: { strict: true, contexts: ['🔍 Lint & TypeCheck','🧪 Unit Tests','🏗️ Build','🔒 Security Audit','Contrato DB offline','🎭 E2E Tests (Playwright)'] }, enforce_admins: { enabled: true }, required_pull_request_reviews: { required_approving_review_count: 0, dismiss_stale_reviews: true, require_code_owner_reviews: false } })",
   }[modo];
 
   // S3923: aqui havia `modo === 'injecao' ? A : B` com A e B IDENTICOS -- ramo morto,
@@ -125,6 +131,46 @@ describe('settings-guard: ponto cego (E95)', () => {
     assert.ok(
       r.linhas.some((l) => l.startsWith('Issue #')),
       `nenhuma issue foi aberta — era exatamente o defeito antigo:\n${r.out}`,
+    );
+  });
+});
+
+// ADR-004: enquanto houver um unico mantenedor, a main fica com
+// required_approving_review_count = 0 e o rigor vem dos checks obrigatorios (o
+// GitHub nao deixa o autor aprovar o proprio PR). O baseline declara esse campo
+// desde 03/10/2026, mas NADA o conferia: subir para 1 — a mao ou por PUT completo
+// de branch protection, que ja derrubou `strict` tres vezes — passava como
+// "Perimetro OK". O guard passa a acusar a divergencia; e NAO restaura sozinho,
+// porque mexer em politica de aprovacao e' decisao humana, nao rotina.
+describe('settings-guard: aprovacoes exigidas na main (ADR-004)', () => {
+  it('required_approving_review_count=1 e divergencia, com a politica citada', () => {
+    const r = rodarGuard('aprovacoes');
+    assert.equal(r.code, 1, `esperava exit 1, veio ${r.code}:\n${r.out}`);
+    assert.ok(
+      r.out.includes('branch_protection_main.required_approving_review_count'),
+      `nao apontou o campo de aprovacoes:\n${r.out}`,
+    );
+    assert.ok(
+      r.out.includes('ADR-004'),
+      `a divergencia precisa apontar a decisao que a explica:\n${r.out}`,
+    );
+  });
+
+  it('bloco de review presente com 0 aprovacoes nao e divergencia', () => {
+    const r = rodarGuard('aprovacoesZero');
+    assert.equal(r.code, 0, `o estado do baseline foi acusado como regressao:\n${r.out}`);
+    assert.ok(r.out.includes('Perimetro OK'), `nao confirmou o OK:\n${r.out}`);
+  });
+
+  it('nao muda politica de aprovacao sozinho: alerta e issue, sem restauracao', () => {
+    const r = rodarGuard('aprovacoes');
+    assert.ok(
+      !r.out.includes('Restaurado: branch_protection_main.required_approving_review_count'),
+      `o guard mexeu em politica de aprovacao sem decisao humana:\n${r.out}`,
+    );
+    assert.ok(
+      r.linhas.some((l) => l.startsWith('Issue #')),
+      `nenhuma issue aberta para a divergencia de aprovacoes:\n${r.out}`,
     );
   });
 });

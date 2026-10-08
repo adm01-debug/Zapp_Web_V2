@@ -4,7 +4,9 @@
  * (`github-settings-baseline.json`) e restaura o que sabe restaurar.
  *
  * Política esperada (baseline):
- *   - branch protection da main: strict=true, enforce_admins=true
+ *   - branch protection da main: strict=true, enforce_admins=true,
+ *     required_approving_review_count=0 (ADR-004: mantenedor único — o autor não
+ *     aprova o próprio PR; o rigor vem dos checks obrigatórios)
  *   - repo: allow_auto_merge=true, squash-only, delete_branch_on_merge
  *   - actions: allowed_actions=selected, sha_pinning_required=true
  *
@@ -110,6 +112,24 @@ async function checarBranchProtection() {
       esperado: esperados.join(', '),
       encontrado: contexts.join(', ') || '(nenhum)',
       restauravel: false,
+    });
+  }
+
+  // ADR-004: enquanto houver um mantenedor unico, a main exige 0 aprovacoes. O
+  // baseline declara este campo desde 03/10/2026, mas NADA o conferia: subir para
+  // 1 — a mao ou por PUT completo de branch protection, que ja derrubou `strict`
+  // tres vezes — passava como "Perimetro OK". Ausencia do bloco `required_pull_request_reviews`
+  // significa "nenhuma aprovacao exigida", ou seja o mesmo 0.
+  const aprovacoes = protection?.required_pull_request_reviews?.required_approving_review_count ?? 0;
+  if (aprovacoes !== esperado.required_approving_review_count) {
+    divergencias.push({
+      campo: 'branch_protection_main.required_approving_review_count',
+      esperado: esperado.required_approving_review_count,
+      encontrado: aprovacoes,
+      // Nao e restauravel de proposito: mudar politica de aprovacao e' decisao
+      // humana (ADR-004), nao rotina de guard.
+      restauravel: false,
+      nota: 'politica ADR-004 (mantenedor unico): subir para 1 exige 2o revisor com write — o guard nao altera aprovacao sozinho',
     });
   }
   return divergencias;
@@ -245,6 +265,7 @@ async function main() {
 
   for (const d of divergencias) {
     console.log(`divergencia: ${semQuebra(d.campo)} esperado=${semQuebra(d.esperado)} encontrado=${semQuebra(d.encontrado)}`);
+    if (d.nota) console.log(`nota: ${semQuebra(d.nota)}`);
   }
 
   if (divergencias.length === 0 && naoVerificaveis.length === 0) {
@@ -284,6 +305,17 @@ async function main() {
         (d) =>
           `| \`${semQuebra(d.campo)}\` | \`${semQuebra(d.esperado)}\` | \`${semQuebra(d.encontrado)}\` |`,
       ),
+      '',
+    );
+  }
+
+  // Campo que o guard NÃO restaura sozinho vem com o motivo, para a pessoa decidir.
+  const notas = divergencias.filter((d) => d.nota);
+  if (notas.length > 0) {
+    linhas.push(
+      '### Por que isto não foi restaurado automaticamente',
+      '',
+      ...notas.map((d) => `- \`${semQuebra(d.campo)}\`: ${semQuebra(d.nota)}`),
       '',
     );
   }
