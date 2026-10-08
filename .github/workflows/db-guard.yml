@@ -302,6 +302,14 @@ jobs:
           NOTIFY_DUE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notify-due-tasks-authorization.test.sh
 
+      # Item 265 (R2-AUTH-041): a consulta de custo do painel de IA recebia fim
+      # nulo (janela aberta) e `created_at < NULL` eliminava todas as chamadas —
+      # o relatório zerava enquanto o resumo de tokens mostrava os registros.
+      - name: Simular janela aberta (fim nulo) na consulta de custo de IA (item 265)
+        env:
+          AI_USAGE_COST_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-usage-cost-window-open.test.sh
+
       # DASH-ACCEPTANCE-001: as suítes supabase/tests/*.sql rodam como
       # service_role (BYPASSRLS) — nunca provam enforcement. Aqui as RPCs do
       # Dashboard rodam sob roles reais anon/authenticated (sem BYPASSRLS) com
