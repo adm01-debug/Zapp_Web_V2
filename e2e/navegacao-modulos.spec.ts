@@ -1030,8 +1030,13 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     for (const { secao, item } of PASSOS) {
       const onde = secao ? `desktop/${secao}` : 'desktop';
       visitados.push(item.label);
-      // Cada seção da barra lateral abre FECHADA; a visita do primeiro item abre a dela.
-      if (secao && item === SECOES.find((s) => s.label === secao)?.itens[0]) {
+      // Cada seção da barra lateral abre FECHADA: quem abre a dela é a visita do
+      // primeiro item DO MAPA daquela seção — que não é necessariamente o primeiro
+      // item da seção ('CRM 360°' é admin-only e saiu da varredura). Comparar com
+      // `itens[0]` deixava a seção fechada e o clique em 'Carteira' pendurava até o
+      // teto do teste (medido em 08/10 no conjunto t-a0ace86a).
+      const primeiroDaSecao = SECOES.find((s) => s.label === secao)?.itens.find((i) => !i.somenteAdmin);
+      if (secao && item === primeiroDaSecao) {
         await abrirSecaoDesktop(page, secao);
       }
       await clicarDesktop(page, item);
