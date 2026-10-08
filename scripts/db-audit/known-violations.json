@@ -3,7 +3,8 @@
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
-    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts"
+    "from:department_whatsapp_configs:src/hooks/team-chat/useDepartmentManagement.ts",
+    "rpc:mark_ai_job_effect_started:supabase/functions/_shared/ai-jobs.ts"
   ],
   "_resolvido": {
     "talkx-rpcs-parcial (X010/X012)": "RPCs get_talkx_cron_secret, claim/release_talkx_campaign_worker, talkx_next_recipients (PR #1522/X010) removidos do baseline — já estão no schema-catalog.json. kick_talkx_campaign (PR #1535/X012) removido no types-sync de 2026-10-02 (run 37001256206), quando o catálogo passou a incluí-la.",
