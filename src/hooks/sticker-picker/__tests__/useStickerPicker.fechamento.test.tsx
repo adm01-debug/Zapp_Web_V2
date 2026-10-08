@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import type React from 'react';
 
 /**
@@ -22,6 +22,11 @@ const mocks = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
   toastInfo: vi.fn(),
+  // #344: a lista pagina o catálogo com `.order().order().range()`. As colunas pedidas e a
+  // faixa da página ficam registradas para o teste provar que a cadeia real do hook (e não
+  // outra forma de consulta) passou pelo mock.
+  orderColumns: [] as Array<[string, unknown]>,
+  rangeCalls: [] as Array<[number, number]>,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -44,9 +49,21 @@ function fileEvent(): React.ChangeEvent<HTMLInputElement> {
   return { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
 }
 
+type StickerQueryBuilder = {
+  order: (column: string, opts?: unknown) => StickerQueryBuilder;
+  range: (from: number, to: number) => Promise<{ data: never[]; error: null }>;
+};
+
 function tableChain() {
+  // #344: a lista do catálogo pagina com `fetchAllRows` → `.select('*').order('use_count', …)
+  // .order('id').range(from, to)`. O mock precisa devolver o PRÓPRIO builder em cada `order`,
+  // senão o segundo `order` da cadeia real do hook não é função e a rejeição sobe sem dono.
+  const query: StickerQueryBuilder = {
+    order: (column: string, opts?: unknown) => { mocks.orderColumns.push([column, opts]); return query; },
+    range: (from: number, to: number) => { mocks.rangeCalls.push([from, to]); return Promise.resolve({ data: [], error: null }); },
+  };
   return {
-    select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) }),
+    select: () => query,
     insert: () => Promise.resolve({ error: null }),
     update: () => ({ eq: () => Promise.resolve({ error: null }) }),
     delete: () => ({ eq: () => Promise.resolve({ error: null }) }),
@@ -55,6 +72,8 @@ function tableChain() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.orderColumns.length = 0;
+  mocks.rangeCalls.length = 0;
   mocks.storageFrom.mockImplementation((bucket: string) => ({
     upload: (path: string, file: unknown, opts: unknown) => mocks.upload(bucket, path, file, opts),
     remove: (paths: string[]) => mocks.remove(bucket, paths),
@@ -170,5 +189,20 @@ describe('useStickerPicker — fechar/desmontar o picker desfaz o upload não co
 
     expect(mocks.remove).toHaveBeenCalledWith('stickers', [path]);
     expect(result.current.pendingUpload).toBeNull();
+  });
+
+  // Recusa do cartão anterior: o mock devolvia `{ limit }` no primeiro `order` e a cadeia real
+  // do catálogo (`fetchAllRows` → `.order('use_count').order('id').range()`) estourava
+  // `TypeError: …order(...).order is not a function` como rejeição não tratada, derrubando o
+  // arquivo inteiro mesmo com os casos passando. Este teste prende a forma da consulta.
+  it('carrega o catálogo pela cadeia paginada estável do hook: order(use_count).order(id).range()', async () => {
+    const { result } = renderHook(() => useStickerPicker(vi.fn()));
+
+    await act(async () => { result.current.setOpen(true); });
+    await waitFor(() => expect(mocks.rangeCalls.length).toBeGreaterThan(0));
+
+    expect(mocks.orderColumns.map(([column]) => column)).toEqual(['use_count', 'id']);
+    expect(mocks.orderColumns[0][1]).toEqual({ ascending: false });
+    expect(mocks.rangeCalls[0]).toEqual([0, 999]);
   });
 });
