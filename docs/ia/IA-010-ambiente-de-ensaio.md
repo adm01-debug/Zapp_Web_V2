@@ -64,5 +64,50 @@ representados (ver §3).
       sem expor valor.
 - [x] Regra de "não enviar mensagem real / não tocar dado de cliente / não usar banco-fonte" escrita
       como condição de ensaio.
-- [ ] Provisionamento — **não executado**: é escrita no banco canônico e depende de autorização
-      explícita (ver §3.1).
+- [~] Provisionamento — **artefato versionado pronto; execução pendente de autorização**. O gerador
+      `scripts/ia/ensaio-provisionamento.mjs` (cartão SL-059) produz, de forma determinística, o DML
+      aditivo, idempotente e reversível por prefixo da §2, e **não fala com banco nenhum**: a única
+      aplicação autorizada a um agente é no banco LOCAL da cópia de trabalho
+      (`bun scripts/ia/ensaio-provisionamento.mjs --sql | zapp-db-local psql <cópia> [nome]`).
+      Escrever no banco canônico continua sendo escrita em PRODUÇÃO e segue dependendo de autorização
+      explícita do Joaquim (ver §3.1 e §6).
+
+## 6. Estado do provisionamento em 08/10/2026 (ponta de dia) — cartão SL-059
+
+**Artefato:** `scripts/ia/ensaio-provisionamento.mjs` (gerador, determinístico, sem acesso a banco) e o
+contrato `tests/contracts/sl059-ia010-provisionamento.contract.test.ts` (11 conferências do plano, do
+DML e dos marcadores contra este documento, contra `supabase/schema-manifest.json` e contra a paleta
+real do sistema).
+
+**Saída medida** (`node scripts/ia/ensaio-provisionamento.mjs --plano`, 08/10/2026):
+
+| Item | Valor |
+|---|---|
+| Departamentos | 6 (Vendas, Compras, Logística, Financeiro, SAC, RH) com 1 fila cada |
+| Contatos | 36 (6 por departamento), nomes `ENSAIO-*`, e-mails `@ensaio.invalid` |
+| Conversas de texto | 18 (3 por departamento) |
+| Conversas longas | 6 (216 mensagens cada — acima das 200 da IA-063) |
+| Mensagens | 1374 |
+| Perfis | 4 especificados — **3 provisionáveis** |
+
+**O que NÃO foi provisionado (e por quê):**
+
+1. **4º perfil ("somente leitura") — PENDENTE.** O enum `public.app_role` tem só `admin`,
+   `supervisor` e `agent`; criar o papel é decisão de produto + migration, fora das regras deste
+   cartão (sem DDL/migration) e objeto do cartão **SL-058**. O gerador declara a pendência e não
+   inventa papel.
+2. **Caso de borda "outro contato com o mesmo telefone" (IA-098) — BLOQUEADO.** O schema canônico tem
+   o índice único `contacts_phone_key` em `contacts.phone`
+   (`supabase/schema-manifest.json` → `indexes.contacts.contacts_phone_key`): dois contatos com o
+   mesmo telefone não são graváveis hoje. O ensaio desse caso exige decisão sobre onde ele é
+   representado (contato, `is_lid_legacy`, ou canal) antes de virar fixture.
+3. **Aplicação no banco canônico — NÃO executada.** É escrita em produção e depende de autorização
+   explícita (§3.1). O DML está pronto para quando (e se) ela vier; enquanto isso, os ensaios rodam
+   no banco LOCAL da cópia, com os mesmos dados e as mesmas policies (regra R1 da Arquitetura V2).
+
+**Propriedades travadas pelo contrato:** todo nome/fila/contato nasce com o prefixo `ENSAIO-`; todo
+e-mail é do domínio de teste; telefone fora de faixa real; nenhum CPF/CNPJ; cores de fila restritas à
+paleta que o sistema já tem (`src/components/queues/CreateQueueDialog.tsx`); todo `insert` traz
+`on conflict`; toda remoção (`--remover`) filtra por prefixo; e o gerador recusa host de banco que não
+seja local (`conferirAlvoLocal`).
+
