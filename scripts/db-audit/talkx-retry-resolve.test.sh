@@ -344,6 +344,82 @@ psql_exec >/dev/null <<SQL
 UPDATE public.talkx_recipients SET manual_retry_count = 3 WHERE id = '$r_capped';
 SQL
 
+# ORDEM: a secao #123 roda ANTES de a migration do #124 ser aplicada — o RED precisa do
+# corpo VIVO do X031 e o GREEN do #123 prova a reabertura de 'completed' sem confirmacao,
+# comportamento que o #124 remove de proposito. Na ordem real do replay o #123
+# (20261006193650) tambem vem antes do #124 (20261006210406), e o corpo do #124 ja carrega
+# o delta de validacao de lote do #123 (provado de novo na secao '#124 8').
+# ═════════════════════════════════════════════════════════════════════════════
+# #123 (R3-DELTA-004) — retry em lote aceita IDs inexistentes e pode reabrir
+# campanha sem destinatário. O corpo vivo de X031 conta LINHAS encontradas
+# (id inexistente não entra na conta, então "0 = 0" passava) e reabre a campanha
+# 'completed' para 'sending' sem nenhum pendente para o tick enviar.
+# ═════════════════════════════════════════════════════════════════════════════
+psql_exec >/dev/null <<SQL
+INSERT INTO public.talkx_campaigns (id, name, message_template, status, created_by, failed_count)
+  VALUES
+  ('$c_ids_red',   'Retry com id inexistente (RED)',   'Oi', 'completed', '$profile_admin', 1),
+  ('$c_ids_green', 'Retry com id inexistente (GREEN)', 'Oi', 'completed', '$profile_admin', 1);
+INSERT INTO public.talkx_recipients (id, campaign_id, contact_id, status) VALUES
+  ('$r_ids_red',   '$c_ids_red',   '$contact_ok', 'failed'),
+  ('$r_ids_green', '$c_ids_green', '$contact_ok', 'failed'),
+  ('$r_ids_outra', '$c_sending',   '$contact_ok', 'failed');
+SQL
+
+# ── RED A: lote inteiramente inexistente é aceito e reabre a campanha sem pendente ──
+out_red_a="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_red', ARRAY['$id_inexistente']::uuid[])")"
+assert_has '123-RED-A: id inexistente aceito pelo corpo vivo (defeito)' 'OK|' "$out_red_a"
+red_a="$(psql_val "SELECT campaign.status || '|' || (SELECT count(*) FROM public.talkx_recipients WHERE campaign_id=campaign.id AND status='pending') || '|' || campaign.failed_count FROM public.talkx_campaigns campaign WHERE campaign.id='$c_ids_red'")"
+assert_eq '123-RED-A: campanha completed -> sending SEM pendente (defeito)' 'sending|0|1' "$red_a"
+
+# ── RED B: lote misto (1 válido + 1 inexistente) passa e retenta só a parte válida ──
+out_red_b="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_red', ARRAY['$r_ids_red','$id_inexistente']::uuid[])")"
+assert_has '123-RED-B: lote misto aceito pelo corpo vivo (defeito)' 'OK|' "$out_red_b"
+assert_has '123-RED-B: reenvio PARCIAL (count=1 de 2 ids pedidos)' '"count": 1' "$out_red_b"
+red_b="$(psql_val "SELECT status || '|' || manual_retry_count::text FROM public.talkx_recipients WHERE id='$r_ids_red'")"
+assert_eq '123-RED-B: id válido do lote misto foi retentado sem os outros' 'pending|1' "$red_b"
+
+# ── aplica a migration de correção (#123) ────────────────────────────────────
+fix_migration="$(grep -rlF 'talkx_retry_ids_inexistentes' "$repo_root/supabase/migrations" 2>/dev/null | grep -v '/_superseded/' | sort | tail -1 || true)"
+[[ -n "$fix_migration" && -f "$fix_migration" ]] || fail '#123: migration de correcao nao encontrada (marcador talkx_retry_ids_inexistentes)'
+psql_exec < "$fix_migration" >/dev/null || fail "#123: migration de correcao nao aplicou ($(basename "$fix_migration"))"
+pass "123-GREEN: migration de correcao aplicada ($(basename "$fix_migration"))"
+
+# ── GREEN 1: lote inteiramente inexistente -> recusado, campanha intacta ─────
+out_g1="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_green', ARRAY['$id_inexistente']::uuid[])")"
+assert_has '123-GREEN-1: id inexistente -> talkx_retry_recipient_not_found (P0002)' 'P0002|talkx_retry_recipient_not_found' "$out_g1"
+g1="$(psql_val "SELECT campaign.status || '|' || (SELECT count(*) FROM public.talkx_recipients WHERE campaign_id=campaign.id AND status='pending') || '|' || campaign.failed_count FROM public.talkx_campaigns campaign WHERE campaign.id='$c_ids_green'")"
+assert_eq '123-GREEN-1: campanha completed intacta, sem pendente fantasma' 'completed|0|1' "$g1"
+g1ev="$(psql_val "SELECT count(*) FROM public.talkx_campaign_events WHERE campaign_id='$c_ids_green' AND event_type='resumed'")"
+assert_eq '123-GREEN-1: nenhum evento resumed gerado' '0' "$g1ev"
+
+# ── GREEN 2: lote misto -> recusado por inteiro (tudo-ou-nada), nada retentado ──
+out_g2="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_green', ARRAY['$r_ids_green','$id_inexistente']::uuid[])")"
+assert_has '123-GREEN-2: lote misto -> recusado' 'P0002|talkx_retry_recipient_not_found' "$out_g2"
+g2="$(psql_val "SELECT status || '|' || manual_retry_count::text FROM public.talkx_recipients WHERE id='$r_ids_green'")"
+assert_eq '123-GREEN-2: destinatario valido do lote misto intacto' 'failed|0' "$g2"
+
+# ── GREEN 3: id que existe mas é de OUTRA campanha -> recusado ───────────────
+out_g3="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_green', ARRAY['$r_ids_outra']::uuid[])")"
+assert_has '123-GREEN-3: id de outra campanha -> recusado' 'P0002|talkx_retry_recipient_not_found' "$out_g3"
+g3="$(psql_val "SELECT status FROM public.talkx_recipients WHERE id='$r_ids_outra'")"
+assert_eq '123-GREEN-3: destinatario da outra campanha intacto' 'failed' "$g3"
+
+# ── GREEN 4: nulo no array não é destinatário pedido (antes passava como "0 = 0") ──
+out_g4="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_green', ARRAY[NULL]::uuid[])")"
+assert_has '123-GREEN-4: nulo no array -> invalid_talkx_retry_request (22023)' '22023|invalid_talkx_retry_request' "$out_g4"
+
+# ── GREEN 5: id válido continua reabrindo a campanha, com pendente de verdade ──
+out_g5="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_green', ARRAY['$r_ids_green']::uuid[])")"
+assert_has '123-GREEN-5: id valido continua retentavel' 'OK|' "$out_g5"
+assert_has '123-GREEN-5: count do evento = 1' '"count": 1' "$out_g5"
+g5="$(psql_val "SELECT campaign.status || '|' || recipient.status || '|' || recipient.manual_retry_count::text || '|' || campaign.failed_count FROM public.talkx_campaigns campaign JOIN public.talkx_recipients recipient ON recipient.campaign_id=campaign.id WHERE campaign.id='$c_ids_green' AND recipient.id='$r_ids_green'")"
+assert_eq '123-GREEN-5: campanha sending + 1 pendente + failed_count 0' 'sending|pending|1|0' "$g5"
+
+# ── GREEN 6: a correção é replayável ─────────────────────────────────────────
+psql_exec < "$fix_migration" >/dev/null || fail '#123: migration de correcao nao reaplicou (idempotencia)'
+pass '123-GREEN-6: migration de correcao reaplicada sem erro (idempotencia)'
+
 # ═════════════════════════════════════════════════════════════════════════════
 # RED #124 (R3-DELTA-005) — no estado vivo (X031, sem a migration #124) a reabertura
 # de campanha 'completed' acontece SEM a nova confirmacao de lancamento.
@@ -539,77 +615,6 @@ psql_exec < "$migration124" >/dev/null || fail 'migration #124 nao reaplicou (id
 pass 'migration #124 reaplicada sem erro (idempotencia)'
 assert_eq '9. assinatura antiga continua ausente apos reaplicar' '' \
   "$(psql_val "SELECT COALESCE(to_regprocedure('public.retry_talkx_recipients(uuid,uuid[])')::text,'')")"
-
-# ═════════════════════════════════════════════════════════════════════════════
-# #123 (R3-DELTA-004) — retry em lote aceita IDs inexistentes e pode reabrir
-# campanha sem destinatário. O corpo vivo de X031 conta LINHAS encontradas
-# (id inexistente não entra na conta, então "0 = 0" passava) e reabre a campanha
-# 'completed' para 'sending' sem nenhum pendente para o tick enviar.
-# ═════════════════════════════════════════════════════════════════════════════
-psql_exec >/dev/null <<SQL
-INSERT INTO public.talkx_campaigns (id, name, message_template, status, created_by, failed_count)
-  VALUES
-  ('$c_ids_red',   'Retry com id inexistente (RED)',   'Oi', 'completed', '$profile_admin', 1),
-  ('$c_ids_green', 'Retry com id inexistente (GREEN)', 'Oi', 'completed', '$profile_admin', 1);
-INSERT INTO public.talkx_recipients (id, campaign_id, contact_id, status) VALUES
-  ('$r_ids_red',   '$c_ids_red',   '$contact_ok', 'failed'),
-  ('$r_ids_green', '$c_ids_green', '$contact_ok', 'failed'),
-  ('$r_ids_outra', '$c_sending',   '$contact_ok', 'failed');
-SQL
-
-# ── RED A: lote inteiramente inexistente é aceito e reabre a campanha sem pendente ──
-out_red_a="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_red', ARRAY['$id_inexistente']::uuid[])")"
-assert_has '123-RED-A: id inexistente aceito pelo corpo vivo (defeito)' 'OK|' "$out_red_a"
-red_a="$(psql_val "SELECT campaign.status || '|' || (SELECT count(*) FROM public.talkx_recipients WHERE campaign_id=campaign.id AND status='pending') || '|' || campaign.failed_count FROM public.talkx_campaigns campaign WHERE campaign.id='$c_ids_red'")"
-assert_eq '123-RED-A: campanha completed -> sending SEM pendente (defeito)' 'sending|0|1' "$red_a"
-
-# ── RED B: lote misto (1 válido + 1 inexistente) passa e retenta só a parte válida ──
-out_red_b="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_red', ARRAY['$r_ids_red','$id_inexistente']::uuid[])")"
-assert_has '123-RED-B: lote misto aceito pelo corpo vivo (defeito)' 'OK|' "$out_red_b"
-assert_has '123-RED-B: reenvio PARCIAL (count=1 de 2 ids pedidos)' '"count": 1' "$out_red_b"
-red_b="$(psql_val "SELECT status || '|' || manual_retry_count::text FROM public.talkx_recipients WHERE id='$r_ids_red'")"
-assert_eq '123-RED-B: id válido do lote misto foi retentado sem os outros' 'pending|1' "$red_b"
-
-# ── aplica a migration de correção (#123) ────────────────────────────────────
-fix_migration="$(grep -rlF 'talkx_retry_ids_inexistentes' "$repo_root/supabase/migrations" 2>/dev/null | grep -v '/_superseded/' | sort | tail -1 || true)"
-[[ -n "$fix_migration" && -f "$fix_migration" ]] || fail '#123: migration de correcao nao encontrada (marcador talkx_retry_ids_inexistentes)'
-psql_exec < "$fix_migration" >/dev/null || fail "#123: migration de correcao nao aplicou ($(basename "$fix_migration"))"
-pass "123-GREEN: migration de correcao aplicada ($(basename "$fix_migration"))"
-
-# ── GREEN 1: lote inteiramente inexistente -> recusado, campanha intacta ─────
-out_g1="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_green', ARRAY['$id_inexistente']::uuid[])")"
-assert_has '123-GREEN-1: id inexistente -> talkx_retry_recipient_not_found (P0002)' 'P0002|talkx_retry_recipient_not_found' "$out_g1"
-g1="$(psql_val "SELECT campaign.status || '|' || (SELECT count(*) FROM public.talkx_recipients WHERE campaign_id=campaign.id AND status='pending') || '|' || campaign.failed_count FROM public.talkx_campaigns campaign WHERE campaign.id='$c_ids_green'")"
-assert_eq '123-GREEN-1: campanha completed intacta, sem pendente fantasma' 'completed|0|1' "$g1"
-g1ev="$(psql_val "SELECT count(*) FROM public.talkx_campaign_events WHERE campaign_id='$c_ids_green' AND event_type='resumed'")"
-assert_eq '123-GREEN-1: nenhum evento resumed gerado' '0' "$g1ev"
-
-# ── GREEN 2: lote misto -> recusado por inteiro (tudo-ou-nada), nada retentado ──
-out_g2="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_green', ARRAY['$r_ids_green','$id_inexistente']::uuid[])")"
-assert_has '123-GREEN-2: lote misto -> recusado' 'P0002|talkx_retry_recipient_not_found' "$out_g2"
-g2="$(psql_val "SELECT status || '|' || manual_retry_count::text FROM public.talkx_recipients WHERE id='$r_ids_green'")"
-assert_eq '123-GREEN-2: destinatario valido do lote misto intacto' 'failed|0' "$g2"
-
-# ── GREEN 3: id que existe mas é de OUTRA campanha -> recusado ───────────────
-out_g3="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_green', ARRAY['$r_ids_outra']::uuid[])")"
-assert_has '123-GREEN-3: id de outra campanha -> recusado' 'P0002|talkx_retry_recipient_not_found' "$out_g3"
-g3="$(psql_val "SELECT status FROM public.talkx_recipients WHERE id='$r_ids_outra'")"
-assert_eq '123-GREEN-3: destinatario da outra campanha intacto' 'failed' "$g3"
-
-# ── GREEN 4: nulo no array não é destinatário pedido (antes passava como "0 = 0") ──
-out_g4="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_green', ARRAY[NULL]::uuid[])")"
-assert_has '123-GREEN-4: nulo no array -> invalid_talkx_retry_request (22023)' '22023|invalid_talkx_retry_request' "$out_g4"
-
-# ── GREEN 5: id válido continua reabrindo a campanha, com pendente de verdade ──
-out_g5="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_ids_green', ARRAY['$r_ids_green']::uuid[])")"
-assert_has '123-GREEN-5: id valido continua retentavel' 'OK|' "$out_g5"
-assert_has '123-GREEN-5: count do evento = 1' '"count": 1' "$out_g5"
-g5="$(psql_val "SELECT campaign.status || '|' || recipient.status || '|' || recipient.manual_retry_count::text || '|' || campaign.failed_count FROM public.talkx_campaigns campaign JOIN public.talkx_recipients recipient ON recipient.campaign_id=campaign.id WHERE campaign.id='$c_ids_green' AND recipient.id='$r_ids_green'")"
-assert_eq '123-GREEN-5: campanha sending + 1 pendente + failed_count 0' 'sending|pending|1|0' "$g5"
-
-# ── GREEN 6: a correção é replayável ─────────────────────────────────────────
-psql_exec < "$fix_migration" >/dev/null || fail '#123: migration de correcao nao reaplicou (idempotencia)'
-pass '123-GREEN-6: migration de correcao reaplicada sem erro (idempotencia)'
 
 echo '[OK] Talk X X031: reenvio manual em lote com teto de 3, revalidacao de supressao/elegibilidade, reabertura de campanha completed, resolucao de outcome_unknown por RPC com trilha e gate de agente.'
 echo '[OK] Talk X #123 (R3-DELTA-004): retry em lote so aceita ids que existem NA campanha — lote inexistente ou misto e recusado (talkx_retry_recipient_not_found), nulo no array e invalid_talkx_retry_request, campanha completed nao e mais reaberta sem destinatario.'
