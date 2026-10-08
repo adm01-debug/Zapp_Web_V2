@@ -694,6 +694,17 @@ jobs:
           TALKX_MDB01_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-tick-expurgo.test.sh
 
+      # #130 (R3-DELTA-015): o expurgo LGPD do Talk X apagava ai_jobs de outros modulos.
+      # ai_jobs e a fila DURAVEL COMPARTILHADA (IA-045): a IA enfileira 'ai.generate' e o
+      # inbox (message-delivery) enfileira 'reconcile:message.send:<id>'. O passo 4 do
+      # expurgo passa a exigir o namespace do Talk X ('reconcile:talkx.%'); os jobs dos
+      # outros modulos ficam intactos e o job terminal vencido do proprio Talk X continua
+      # saindo. Harness RED→GREEN em PostgreSQL 17 descartavel (inclui rollback e ACL).
+      - name: Provar que o expurgo nao apaga ai_jobs de outros modulos (#130)
+        env:
+          TALKX_ESCOPO_AI_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-expurgo-escopo-ai-jobs.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
