@@ -15,7 +15,8 @@
 #               (a agregação e o canal de realtime filtram por `conversation_id`).
 #   BLOCO B — migration aplicada: o cid é derivado INCONDICIONALMENTE da mensagem (BEFORE INSERT OR UPDATE)
 #             nas duas tabelas, mensagem inexistente é recusada, as linhas divergentes são reconciliadas
-#             pelo backfill e o caminho legítimo (cid da própria conversa) segue intacto.
+#             pelo backfill, o caminho legítimo (cid da própria conversa) segue intacto e as duas
+#             funções de TRIGGER terminam sem EXECUTE para authenticated/anon/PUBLIC (B.15-B.17).
 #
 # TEAM_CID_PRESTATE=1 roda o bloco B SEM aplicar a migration — é assim que se prova o vermelho
 # (bloco A passa pelo defeito, B.1 falha). Sem a variável, o roteiro é o normal: verde.
@@ -437,5 +438,19 @@ expect_error_as 'B.13 o mesmo vale para reacao (a guarda vale para o caminho aut
 expect_value 'B.14 nada foi gravado com o cid adivinhado' '0' \
   "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_INEXISTENTE';"
 
-printf '\nPASS: item 164 / TC-009 — recibos e reacoes passam a derivar conversation_id da PROPRIA mensagem (INSERT e UPDATE), linha divergente e reconciliada pelo backfill, mensagem inexistente e recusada e o caminho legitimo (cid da conversa da mensagem) segue intacto.%s\n' \
+# Item 2 do critério de pronto (recusa do refazer): as duas são funções de TRIGGER, então nenhum
+# papel de cliente (authenticated/anon/PUBLIC) tem EXECUTE DIRETO nelas — nem herdado de PUBLIC.
+# `proacl` NULL significa "privilegio padrao do schema" (que inclui EXECUTE para PUBLIC), por isso
+# o coalesce com acldefault('f', ...): sem ele um GRANT implicito passaria batido.
+# A prova de que remover o EXECUTE NÃO quebra o disparo são os próprios B.1/B.5/B.7 acima, que
+# inserem/atualizam como `authenticated` e têm o cid derivado pelo trigger.
+expect_value 'B.15 (ACL) authenticated/anon/PUBLIC sem EXECUTE direto na funcao de trigger de recibos' '0' \
+  "SELECT count(*) FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a WHERE p.pronamespace = 'public'::regnamespace AND p.proname = 'team_receipts_fill_conversation_id' AND a.privilege_type = 'EXECUTE' AND (a.grantee = 0 OR pg_get_userbyid(a.grantee) IN ('anon','authenticated'));"
+expect_value 'B.16 (ACL) authenticated/anon/PUBLIC sem EXECUTE direto na funcao de trigger de reacoes' '0' \
+  "SELECT count(*) FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a WHERE p.pronamespace = 'public'::regnamespace AND p.proname = 'team_reactions_force_conversation_id' AND a.privilege_type = 'EXECUTE' AND (a.grantee = 0 OR pg_get_userbyid(a.grantee) IN ('anon','authenticated'));"
+# Nao-vacuidade: as duas funcoes existem e o dono continua com EXECUTE (o REVOKE nao as zerou).
+expect_value 'B.17 (ACL) as duas funcoes existem e o dono mantem EXECUTE' '2' \
+  "SELECT count(*) FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a WHERE p.pronamespace = 'public'::regnamespace AND p.proname IN ('team_receipts_fill_conversation_id','team_reactions_force_conversation_id') AND a.privilege_type = 'EXECUTE' AND pg_get_userbyid(a.grantee) = 'postgres';"
+
+printf '\nPASS: item 164 / TC-009 — recibos e reacoes passam a derivar conversation_id da PROPRIA mensagem (INSERT e UPDATE), linha divergente e reconciliada pelo backfill, mensagem inexistente e recusada, o caminho legitimo (cid da conversa da mensagem) segue intacto e as duas funcoes de trigger seguem SEM EXECUTE para authenticated/anon/PUBLIC.%s\n' \
   "$([[ "${TEAM_CID_PRESTATE:-0}" = "1" ]] && printf ' [rodado com TEAM_CID_PRESTATE=1: o trecho acima NAO e o esperado sem a migration]' || true)"
