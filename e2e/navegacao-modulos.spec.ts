@@ -13,11 +13,15 @@ import { join } from 'node:path';
  * Repete tudo no celular 390x844, pelo menu móvel. A busca global ("Buscar") entra
  * nas duas larguras.
  *
- * AUTENTICAÇÃO: o teste entra pela TELA DE LOGIN com o usuário sintético do banco
- * LOCAL (lido de E2E_TEST_EMAIL/E2E_TEST_PASSWORD, que o wrapper zapp-e2e-local
- * injeta: admin.local@promobrindes.com.br, semeado por ~/.local/share/zapp-local/
- * seed.sql). Nenhuma sessão salva em disco é lida ou usada (R1), e nada aqui fala
- * com a produção.
+ * AUTENTICAÇÃO: sempre contra o banco LOCAL do conjunto do cartão — o wrapper
+ * zapp-e2e-local entrega ao app a URL local (VITE_ZAPP_LOCAL_SUPABASE_URL) e o
+ * usuário sintético do seed local (E2E_TEST_EMAIL/E2E_TEST_PASSWORD). O projeto
+ * que executa este spec (`chromium-authenticated`) chega com a sessão do projeto
+ * `setup`, que faz login REAL contra esse mesmo banco local: se ela já estiver
+ * montada o app redireciona para o shell e a varredura segue daí; se não estiver,
+ * o teste faz o próprio login pela tela. Em nenhum caminho se lê sessão de
+ * produção, fixture real ou segredo externo (R1): o conjunto local prende o DNS
+ * da produção e o zapp-db-guard confere o ambiente antes de rodar.
  *
  * A VARREDURA REPROVA por padrão. Só escapam as ocorrências de DUAS listas
  * explícitas e curtas, separadas de propósito, porque a natureza é diferente:
@@ -672,12 +676,28 @@ function shellAutenticado(page: Page) {
     .first();
 }
 
-/** Entra pela tela de login com o usuário sintético do banco local. */
+/**
+ * Deixa a sessão do banco local montada: aproveita o shell já autenticado (sessão
+ * do projeto `setup`, que loga contra o MESMO banco local) ou faz o login pela
+ * tela, com o usuário sintético do seed.
+ */
 async function entrar(page: Page): Promise<void> {
   // Tetos explícitos: sob carga alta o dev server demora a servir o bundle e um
   // clique sem teto pendura o teste inteiro (já aconteceu com 900 s).
   await page.goto('/auth', { timeout: 90_000, waitUntil: 'domcontentloaded' });
-  if (await shellAutenticado(page).isVisible().catch(() => false)) return;
+
+  // Decide pelo DESFECHO — shell autenticado pronto OU aba "Entrar" na tela —, e
+  // não no instante do DOMContentLoaded: com a sessão do `setup` já montada o app
+  // redireciona para o shell depois do bundle carregar, e a checagem imediata
+  // enxergava a tela antes do redirect (medido em 07/10: 90 s de espera pela aba
+  // "Entrar" e a varredura vermelha no desktop e no celular).
+  const shell = shellAutenticado(page);
+  const abaEntrar = page.getByRole('tab', { name: /^entrar$/i });
+  await Promise.race([
+    shell.waitFor({ state: 'visible', timeout: 60_000 }).catch(() => undefined),
+    abaEntrar.waitFor({ state: 'visible', timeout: 60_000 }).catch(() => undefined),
+  ]);
+  if (await shell.isVisible().catch(() => false)) return;
 
   const email = process.env.E2E_TEST_EMAIL;
   const senha = process.env.E2E_TEST_PASSWORD;
@@ -694,7 +714,6 @@ async function entrar(page: Page): Promise<void> {
   await page.locator('input[type="password"]').fill(senha, teto);
   await page.getByRole('button', { name: /^entrar$/i }).click(teto);
 
-  const shell = shellAutenticado(page);
   if (!(await shell.isVisible().catch(() => false))) {
     await shell.waitFor({ state: 'visible', timeout: 45_000 }).catch(() => undefined);
   }
