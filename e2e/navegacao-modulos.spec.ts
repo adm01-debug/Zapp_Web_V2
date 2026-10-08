@@ -686,18 +686,41 @@ async function entrar(page: Page): Promise<void> {
   // clique sem teto pendura o teste inteiro (já aconteceu com 900 s).
   await page.goto('/auth', { timeout: 90_000, waitUntil: 'domcontentloaded' });
 
-  // Decide pelo DESFECHO — shell autenticado pronto OU aba "Entrar" na tela —, e
-  // não no instante do DOMContentLoaded: com a sessão do `setup` já montada o app
-  // redireciona para o shell depois do bundle carregar, e a checagem imediata
-  // enxergava a tela antes do redirect (medido em 07/10: 90 s de espera pela aba
-  // "Entrar" e a varredura vermelha no desktop e no celular).
+  // Espera o app DECIDIR a sessão, e só aceita um desfecho que se SUSTENTE.
+  // Quem já tem sessão é redirecionado de /auth para o shell, e a tela de login
+  // aparece por uma piscada antes do redirect (medido em 08/10 no conjunto
+  // t-a0ace86a: a aba "Entrar" nasce e some em ~400 ms nas duas larguras).
+  // Decidir por essa piscada levava o teste a clicar num elemento que já não
+  // existia — 90 s de espera e varredura vermelha no desktop e no celular.
+  //   shell autenticado visível  ⇒ segue sem tocar na tela de login;
+  //   tela de login visível por ESTABILIDADE_MS seguidos ⇒ é ela que vale.
   const shell = shellAutenticado(page);
-  const abaEntrar = page.getByRole('tab', { name: /^entrar$/i });
-  await Promise.race([
-    shell.waitFor({ state: 'visible', timeout: 60_000 }).catch(() => undefined),
-    abaEntrar.waitFor({ state: 'visible', timeout: 60_000 }).catch(() => undefined),
-  ]);
-  if (await shell.isVisible().catch(() => false)) return;
+  const abaEntrar = page.getByRole('tab', { name: /^entrar$/i }).first();
+  const ESTABILIDADE_MS = 1_500;
+  const limite = Date.now() + 120_000;
+  let loginDesde: number | undefined;
+  let tela: 'shell' | 'login' | undefined;
+
+  while (!tela && Date.now() < limite) {
+    if (await shell.isVisible().catch(() => false)) {
+      tela = 'shell';
+      break;
+    }
+    if (await abaEntrar.isVisible().catch(() => false)) {
+      loginDesde = loginDesde ?? Date.now();
+      if (Date.now() - loginDesde >= ESTABILIDADE_MS) tela = 'login';
+    } else {
+      loginDesde = undefined;
+    }
+    await page.waitForTimeout(200);
+  }
+
+  if (tela === 'shell') return;
+  if (tela !== 'login') {
+    throw new Error(
+      'nem o shell autenticado nem a tela de login ficaram de pé (banco local do conjunto do cartão)',
+    );
+  }
 
   const email = process.env.E2E_TEST_EMAIL;
   const senha = process.env.E2E_TEST_PASSWORD;
@@ -709,7 +732,7 @@ async function entrar(page: Page): Promise<void> {
   }
 
   const teto = { timeout: 90_000 };
-  await page.getByRole('tab', { name: /^entrar$/i }).click(teto);
+  await abaEntrar.click(teto);
   await page.getByRole('textbox', { name: /e-?mail/i }).fill(email, teto);
   await page.locator('input[type="password"]').fill(senha, teto);
   await page.getByRole('button', { name: /^entrar$/i }).click(teto);
