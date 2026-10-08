@@ -10,6 +10,10 @@ import {
   toGain,
 } from '@/lib/mediaVolumeStore';
 
+// CI com cobertura roda este arquivo ~7x mais devagar que a maquina local (20 s contra 2,7 s): a cadeia
+// getSession -> fetch -> Blob -> render estourava o 1 s padrao do findBy. Folga so de tempo, sem afrouxar nenhuma asserção.
+vi.setConfig({ testTimeout: 20_000 });
+
 const getSession = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
   SUPABASE_URL: 'https://zapp-local.supabase.co',
@@ -99,7 +103,7 @@ describe('RecordingPlayer (T67)', () => {
   it('com gravacao disponivel baixa o stream pela Edge como Blob e nunca recebe recording_url', async () => {
     const { container } = renderPlayer(<RecordingPlayer callId="c3" recordingStatus="available" />);
 
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://zapp-local.supabase.co/functions/v1/get-call-recording',
@@ -127,7 +131,7 @@ describe('RecordingPlayer (T67)', () => {
 
     renderPlayer(<RecordingPlayer callId="c404" recordingStatus="available" />);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled(), { timeout: 10_000 });
     expect(screen.queryByTestId('tel-recording-player')).toBeNull();
     expect(createObjectURL).not.toHaveBeenCalled();
   });
@@ -137,7 +141,7 @@ describe('RecordingPlayer (T67)', () => {
 
     renderPlayer(<RecordingPlayer callId="cvazio" recordingStatus="available" />);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled(), { timeout: 10_000 });
     expect(screen.queryByTestId('tel-recording-player')).toBeNull();
     // Blob vazio nunca vira object URL: nao ha audio para tocar.
     expect(createObjectURL).not.toHaveBeenCalled();
@@ -159,7 +163,7 @@ describe('RecordingPlayer (#62) — URL blob revogada nunca volta do cache', () 
     const ui = <RecordingPlayer callId="r1" recordingStatus="available" />;
 
     const primeiro = renderPlayer(ui, qc);
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
     const src1 = audioDoPlayer(primeiro.container).getAttribute('src');
     expect(src1).toMatch(/^blob:/);
 
@@ -167,7 +171,7 @@ describe('RecordingPlayer (#62) — URL blob revogada nunca volta do cache', () 
     expect(revokeObjectURL).toHaveBeenCalledWith(src1);
 
     const segundo = renderPlayer(ui, qc);
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
     const src2 = audioDoPlayer(segundo.container).getAttribute('src');
 
     // A remontagem nao pode herdar a URL revogada: nasce uma URL blob NOVA...
@@ -199,12 +203,12 @@ describe('RecordingPlayer (VOL-02) — a gravacao respeita o volume global', () 
     act(() => setVolume(40));
 
     const { container } = renderPlayer(<RecordingPlayer callId="v1" recordingStatus="available" />);
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
     const audio = audioDoPlayer(container);
     expect(audio).not.toBeNull();
 
     // Ganho perceptual aplicado pelo controle unico: (40/100)^2 = 0.16.
-    await waitFor(() => expect(audio.volume).toBeCloseTo(toGain(40), 5));
+    await waitFor(() => expect(audio.volume).toBeCloseTo(toGain(40), 5), { timeout: 10_000 });
     expect(audio.muted).toBe(false);
 
     // Muda para 70 no controle global: o mesmo elemento acompanha.
@@ -223,9 +227,9 @@ describe('RecordingPlayer (VOL-02) — a gravacao respeita o volume global', () 
     act(() => setVolume(40));
 
     const { container, unmount } = renderPlayer(<RecordingPlayer callId="v2" recordingStatus="available" />);
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
     const audio = audioDoPlayer(container);
-    await waitFor(() => expect(audio.volume).toBeCloseTo(toGain(40), 5));
+    await waitFor(() => expect(audio.volume).toBeCloseTo(toGain(40), 5), { timeout: 10_000 });
 
     unmount();
     act(() => setVolume(5));
@@ -250,13 +254,13 @@ describe('RecordingPlayer (TEL-RECORDING-001) — ciclo do endereco blob', () =>
     gravacao.atual = { disponivel: true, url: null, blob: audioDaEdge() };
 
     const { container } = renderPlayer(<RecordingPlayer callId="c4" recordingStatus="available" />);
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
 
     const audio = audioDoPlayer(container);
     const link = container.querySelector('a[download]') as HTMLAnchorElement | null;
 
     expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
-    await waitFor(() => expect(audio.getAttribute('src')).toBe('blob:gravacao-1'));
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('blob:gravacao-1'), { timeout: 10_000 });
     expect(link?.getAttribute('href')).toBe('blob:gravacao-1');
     expect(audio.getAttribute('src')).not.toMatch(/^https?:/);
     expect(link?.getAttribute('href')).not.toMatch(/^https?:/);
@@ -271,7 +275,7 @@ describe('RecordingPlayer (TEL-RECORDING-001) — ciclo do endereco blob', () =>
     const { container } = renderPlayerEstrito(
       <RecordingPlayer callId="c5" recordingStatus="available" />,
     );
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
 
     const audio = audioDoPlayer(container);
     const emUso = audio.getAttribute('src');
