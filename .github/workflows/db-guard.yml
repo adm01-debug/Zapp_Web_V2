@@ -337,6 +337,11 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/cron-secret-l5-contract.test.sh
 
+      - name: Simular remocao do cron residual de VACUUM FULL em messages (#471)
+        env:
+          CRON_REMOCAO_VACUUM_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/cron-remocao-vacuum-messages.test.sh supabase/migrations/20261006202215_remover_cron_vacuum_messages_post_expurgo.sql
+
       - name: Simular escopo das 14 policies TO public -> authenticated
         env:
           PUBLIC_POLICY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
