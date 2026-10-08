@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>fixture de QA da Telefonia (E.2/E.3/E.5)</title>
+<!--
+  Alvo de medição dos scripts de QA da Telefonia. Não é o produto: é uma página
+  com os MESMOS seletores (`data-testid` reais lidos do código) e tamanhos
+  conhecidos, para provar que `measure.mjs`, `colors.mjs`, `axe.mjs` e `func.mjs`
+  MEDEM a página em vez de carimbar OK.
+
+  Roda por `file://` — sem servidor, sem login, sem banco, sem produção (R1).
+
+  `?mutar=geometria,cor,axe,console` estraga de propósito UM eixo de cada vez,
+  para o teste ver a reprovação acontecer. Sem o parâmetro, a fixture é conforme.
+-->
+<style>
+  :root {
+    /* os mesmos tokens de src/styles/tokens.css (tema claro) */
+    --background: 221 20% 97%;
+    --foreground: 221 20% 12%;
+    --card: 0 0% 100%;
+    --success: 160 70% 27%;
+  }
+  html, body { margin: 0; padding: 0; overflow-x: hidden; }
+  body { background: hsl(var(--background)); color: hsl(var(--foreground)); font: 14px/1.4 sans-serif; }
+  #main-navigation { position: absolute; left: 0; top: 0; bottom: 0; width: 278px; background: #eee; }
+  #conteudo { margin-left: 278px; }
+  .bg-card { background: hsl(var(--card)); }
+  [data-testid="tel-view"] { width: 100%; }
+  [data-testid="tel-kpi-grid"] { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; width: 100%; }
+  [data-testid="tel-kpi-card"] { height: 78px; background: hsl(var(--card)); }
+  [data-testid="tel-kpi-value"] { color: hsl(var(--foreground)); }
+  [data-testid="tel-history-card"] { background: hsl(var(--card)); }
+  [data-testid="tel-history-card"] h2 { color: hsl(var(--foreground)); }
+  [data-testid="tel-channel-tab"] { height: 40px; width: 90px; }
+  [data-testid="tel-history-search"] { width: 240px; height: 40px; }
+  [data-testid="tel-side-panel"] { width: 408px; }
+  #opcoes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; }
+  [data-testid^="tel-channel-option-"] { height: 32px; }
+  [data-testid="tel-contact-picker"] { width: 300px; height: 40px; }
+  [data-keypad-scope] { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 280px; }
+  [data-keypad-scope] button { height: 46px; }
+  [data-testid="tel-dial-button"] { height: 56px; width: 100%; background: hsl(var(--success)); }
+</style>
+</head>
+<body>
+<nav id="main-navigation" aria-label="Navegação principal"></nav>
+<main id="conteudo">
+  <div data-testid="tel-view">
+    <div data-testid="tel-kpi-grid">
+      <div data-testid="tel-kpi-card"><span>Total</span><div data-testid="tel-kpi-tile"><span data-testid="tel-kpi-value">0</span></div></div>
+      <div data-testid="tel-kpi-card"><span>Atendidas</span><div data-testid="tel-kpi-tile"><span data-testid="tel-kpi-value">0</span></div></div>
+    </div>
+    <section data-testid="tel-history-card">
+      <h2>Histórico de ligações</h2>
+      <span data-testid="tel-history-total">0</span>
+      <div role="tablist" aria-label="Canal">
+        <button data-testid="tel-channel-tab" role="tab" aria-selected="true">Todas</button>
+        <button data-testid="tel-channel-tab" role="tab" aria-selected="false">VoIP</button>
+      </div>
+      <div data-testid="tel-history-toolbar">
+        <input data-testid="tel-history-search" aria-label="Buscar ligação" />
+      </div>
+      <p data-testid="tel-history-empty">Nenhuma ligação</p>
+    </section>
+    <aside data-testid="tel-side-panel">
+      <div data-testid="tel-new-call-panel" class="bg-card">
+        <div id="opcoes" role="radiogroup" aria-label="Canal da ligação">
+          <button data-testid="tel-channel-option-voip" role="radio" aria-checked="true" aria-label="VoIP">VoIP</button>
+          <button data-testid="tel-channel-option-whatsapp" role="radio" aria-checked="false" aria-label="WhatsApp">WhatsApp</button>
+        </div>
+        <div data-testid="tel-contact-picker"><input aria-label="Buscar contato" /></div>
+        <div data-testid="tel-number-display" aria-live="polite">Digite o número</div>
+        <div data-keypad-scope role="group" aria-label="Teclado numérico">
+          <button aria-label="1">1</button><button aria-label="2">2</button><button aria-label="3">3</button>
+        </div>
+        <button data-testid="tel-dial-button" aria-label="Ligar"></button>
+      </div>
+    </aside>
+  </div>
+</main>
+<script>
+  const mutar = (new URLSearchParams(location.search).get('mutar') || '').split(',').filter(Boolean);
+  if (mutar.includes('geometria')) {
+    document.getElementById('conteudo').style.marginLeft = '300px';
+    document.querySelector('[data-testid="tel-side-panel"]').style.width = '500px';
+  }
+  if (mutar.includes('cor')) {
+    // fora do token --success (160 70% 27%): a distância passa de ΔE 2
+    document.querySelector('[data-testid="tel-dial-button"]').style.background = 'hsl(210 90% 60%)';
+  }
+  if (mutar.includes('axe')) {
+    const semNome = document.createElement('button');
+    document.querySelector('[data-testid="tel-view"]').appendChild(semNome);
+    const baixoContraste = document.createElement('p');
+    baixoContraste.style.color = '#f2f2f2';
+    baixoContraste.style.background = '#ffffff';
+    baixoContraste.textContent = 'contraste baixo';
+    document.querySelector('[data-testid="tel-view"]').appendChild(baixoContraste);
+  }
+  if (mutar.includes('console')) console.error('erro proposital da fixture de QA');
+</script>
+</body>
+</html>
