@@ -40,20 +40,28 @@ export const RAIZES_PERMITIDAS = [RAIZ_REPO, path.resolve(os.tmpdir()), path.res
  * guarda no PATH. Lanca se nao existir: melhor falhar alto do que rodar outro
  * binario silenciosamente.
  */
+function pareceExecutavel(candidato) {
+  const stat = fs.statSync(candidato);
+  return stat.isFile() && (stat.mode & 0o111) !== 0;
+}
+
 export function resolverExecutavel(comando) {
   const diretorios = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
   for (const diretorio of diretorios) {
     const candidato = path.join(diretorio, comando);
     try {
       fs.accessSync(candidato, fs.constants.X_OK);
-      return candidato;
+      if (pareceExecutavel(candidato)) return candidato;
     } catch (erro) {
       if (erro?.name === 'NotCapable' && String(erro?.message || '').includes('Requires sys access')) {
         // Deno sem --allow-sys=uid bloqueia fs.access(X_OK/F_OK), mas permite stat
         // com --allow-read. O CI executa esta guarda via `deno test`; nesse caso,
-        // basta preservar o primeiro arquivo que existe no PATH (o shell faria a
-        // validacao de execucao ao criar o processo filho).
-        if (fs.existsSync(candidato)) return candidato;
+        // preserva apenas arquivos executaveis de verdade, mantendo a semantica de X_OK.
+        try {
+          if (pareceExecutavel(candidato)) return candidato;
+        } catch {
+          // Nao esta neste diretorio ou nao pode ser lido: segue a busca, igual ao shell.
+        }
       }
       // Nao esta neste diretorio: segue a busca, igual ao shell.
     }

@@ -1,17 +1,50 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import {
+async function importarVerificadorSemEfeito() {
+  const stdout = [];
+  const stderr = [];
+  const exits = [];
+  const originalLog = console.log;
+  const originalError = console.error;
+  const originalExit = process.exit;
+  let modulo;
+  let erroImportacao;
+
+  console.log = (...args) => { stdout.push(args); };
+  console.error = (...args) => { stderr.push(args); };
+  process.exit = (code) => {
+    exits.push(code);
+    throw new Error(`process.exit chamado durante import: ${code}`);
+  };
+
+  try {
+    modulo = await import(`./check-test-inventory.mjs?sem-cache=${Date.now()}-${Math.random()}`);
+  } catch (erro) {
+    erroImportacao = erro;
+  } finally {
+    console.log = originalLog;
+    console.error = originalError;
+    process.exit = originalExit;
+  }
+
+  assert.equal(erroImportacao, undefined, erroImportacao?.stack || String(erroImportacao));
+  assert.deepEqual(stdout, [], 'importar nao pode imprimir o relatorio do inventario em stdout');
+  assert.deepEqual(stderr, [], 'importar nao pode imprimir o relatorio do inventario em stderr');
+  assert.deepEqual(exits, [], 'importar nao pode encerrar o processo');
+  return modulo;
+}
+
+const {
   ALLOWLIST_NODE,
   RAIZ,
   casaPadrao,
   orfaosNode,
   padroesNodeDeWorkflow,
   suitesNodeOrfas,
-} from './check-test-inventory.mjs';
+} = await importarVerificadorSemEfeito();
 
 // Workflow sintetico com as tres formas de bloco `run:` do repositorio: escalar dobrado
 // (`>-`), literal (`|`) e de uma linha. Os caminhos fora de `run:` (nome da etapa, comentario
@@ -92,20 +125,6 @@ test('R2-INF-013: a ALLOWLIST_NODE nao guarda entrada morta', () => {
   }
 });
 
-test('R2-INF-013: importar o verificador nao roda o inventario (o teste importa as funcoes)', () => {
-  // Em Node, preserva a prova original por processo filho: importar nao pode
-  // imprimir relatorio nem encerrar o processo. Em Deno CI, o comando oficial da
-  // recusa nao concede --allow-run; nesse caso, a propria suite ja prova que o
-  // import acima nao executou o inventario principal (ela chegou a esta assercao).
-  const r = spawnSync(process.execPath, ['--input-type=module', '-e', "await import('./scripts/ci/check-test-inventory.mjs');"], {
-    cwd: RAIZ,
-    encoding: 'utf8',
-  });
-  if (r.status === undefined) {
-    assert.equal(typeof padroesNodeDeWorkflow, 'function');
-    assert.equal(typeof suitesNodeOrfas, 'function');
-    return;
-  }
-  assert.equal(r.status, 0, r.stderr);
-  assert.equal(r.stdout, '', 'importar nao pode imprimir o relatorio do inventario');
+test('R2-INF-013: importar o verificador nao roda o inventario (o teste importa as funcoes)', async () => {
+  await importarVerificadorSemEfeito();
 });

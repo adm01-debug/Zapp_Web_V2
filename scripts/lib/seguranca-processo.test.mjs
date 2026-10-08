@@ -27,6 +27,38 @@ test('resolverExecutavel devolve caminho absoluto existente igual ao do shell', 
   assert.equal(resolvido, doShell);
 });
 
+
+test('resolverExecutavel recusa diretorio e arquivo sem bit de execucao no PATH', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'seguranca-processo-path-'));
+  const anterior = process.env.PATH;
+  process.env.PATH = dir;
+  const comando = 'comando-falso-seguranca';
+  const candidato = path.join(dir, comando);
+  try {
+    fs.mkdirSync(candidato, { mode: 0o755 });
+    assert.throws(
+      () => resolverExecutavel(comando),
+      /comando nao encontrado no PATH: comando-falso-seguranca/,
+      'diretorio com X_OK nao pode ser aceito como executavel',
+    );
+    fs.rmdirSync(candidato);
+
+    fs.writeFileSync(candidato, `#!/bin/sh\nexit 0\n`, { mode: 0o644 });
+    assert.throws(
+      () => resolverExecutavel(comando),
+      /comando nao encontrado no PATH: comando-falso-seguranca/,
+      'arquivo sem bit executavel nao pode ser aceito como executavel',
+    );
+
+    fs.chmodSync(candidato, 0o755);
+    assert.equal(resolverExecutavel(comando), candidato);
+  } finally {
+    process.env.PATH = anterior;
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+
 test('resolverExecutavel lanca para comando inexistente', () => {
   assert.throws(
     () => resolverExecutavel('comando-que-nao-existe-xyz'),

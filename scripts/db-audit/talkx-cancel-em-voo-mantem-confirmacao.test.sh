@@ -14,6 +14,7 @@ set -euo pipefail
 #   20260912110000 harden_talkx_delivery_receipts           (fencing do recibo)
 #   20260930650000 talkx_v12_server_lifecycle_events        (CHECK 'cancelled')
 #   20261003172707 talkx_lifecycle_events_delta             (transition = ANTES, com o defeito)
+#   20261003232707 talkx_lgpd_consentimento_expurgo         (corpo vivo declara 03172707 + gate de start; ramo cancel igual)
 #   <nova migration>                                        (transition = DEPOIS, corrigida)
 #   20261001391230 talkx_engine_tick                        (sweeper, usado só no fim)
 #
@@ -42,6 +43,9 @@ declare -a migrations=(
   "$repo_root/supabase/migrations/20260930650000_talkx_v12_server_lifecycle_events.sql"
   "$repo_root/supabase/migrations/20261003172707_talkx_lifecycle_events_delta.sql"
 )
+# 20261003232707 declara `Corpo vivo: 20261003172707 (X024) + gate de consentimento no start`
+# e mantém o ramo cancel com o mesmo UPDATE amplo das linhas auditadas; por isso o RED usa
+# 03172707 como corpo ANTES sem depender dos objetos de LGPD que não participam deste defeito.
 before_migration="${migrations[${#migrations[@]}-1]}"
 engine_tick="$repo_root/supabase/migrations/20261001391230_talkx_engine_tick.sql"
 

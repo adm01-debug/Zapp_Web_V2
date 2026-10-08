@@ -45,13 +45,19 @@ function arquivosNoDisco(relDir) {
 function arquivosVersionados(relDir) {
   const executavelGit = resolverExecutavel('git');
   const resultado = spawnSync(executavelGit, ['ls-files', relDir], { cwd: root, encoding: 'utf8' });
-  if (typeof resultado.stdout === 'string') {
+  if (resultado.status === 0 && typeof resultado.stdout === 'string') {
     return resultado.stdout.split('\n').filter(Boolean);
   }
   // A suite roda no GitHub via `deno test` sem --allow-run; nesse contexto a
   // importacao do verificador nao pode depender de child process. No checkout do
   // CI, disco e git contem o mesmo conjunto relevante para o inventario.
-  return arquivosNoDisco(relDir);
+  if (resultado.error?.name === 'NotCapable') {
+    return arquivosNoDisco(relDir);
+  }
+  const detalhe = resultado.error
+    ? `${resultado.error.name}: ${resultado.error.message}`
+    : `status=${resultado.status} stderr=${String(resultado.stderr || '').trim()}`;
+  throw new Error(`git ls-files falhou para ${relDir}: ${detalhe}`);
 }
 
 // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
