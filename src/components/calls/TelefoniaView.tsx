@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,8 +33,38 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 import { dispatchStartCall } from '@/lib/calls/events';
 import { formatClock, talkSeconds } from '@/lib/calls/duration';
 import { CallsKpiGrid } from './CallsKpiGrid';
+import { CallRowMobile } from './CallRowMobile';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useTelefoniaFilters } from '@/hooks/calls/useTelefoniaFilters';
 import type { PeriodoValue } from './periodos';
+
+/**
+ * T77 — os dois cortes de largura desta tela:
+ *   · abaixo de 1280 (`xl`) o painel lateral não cabe na grade ao lado do histórico: ele
+ *     passa a ser um `Sheet`, aberto pelo botão do topRight e pela seleção de uma linha;
+ *   · abaixo de 768 (`md`) a tabela de 7 colunas vira a lista `CallRowMobile`.
+ *
+ * Ambos vêm do `matchMedia` (é o breakpoint), lido por `useSyncExternalStore` e NÃO por
+ * `useState` + efeito: a guarda da casa (`react-hooks/set-state-in-effect`) reprova
+ * `setState` no corpo do efeito — e o estado inicial `undefined` do `useIsMobile` custa um
+ * render a mais depois da montagem (que a view não precisa pagar).
+ */
+const QUERY_PAINEL_EM_SHEET = '(max-width: 1279px)';
+const QUERY_HISTORICO_EM_CARTOES = '(max-width: 767px)';
+
+function useConsultaDeLargura(consulta: string): boolean {
+  const assinar = useCallback((notificar: () => void) => {
+    const alvo = window.matchMedia(consulta);
+    alvo.addEventListener('change', notificar);
+    return () => alvo.removeEventListener('change', notificar);
+  }, [consulta]);
+
+  return useSyncExternalStore(
+    assinar,
+    () => window.matchMedia(consulta).matches,
+    () => false,
+  );
+}
 
 const DIRECTION_OPTIONS: { value: 'all' | 'inbound' | 'outbound'; label: string }[] = [
   { value: 'all', label: 'Todas' },
@@ -81,6 +111,11 @@ export function TelefoniaView() {
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
+  // T77: a largura decide o layout — abaixo de 1280 o painel é `Sheet`; abaixo de 768 o
+  // histórico vira cartões (`CallRowMobile`).
+  const painelEmSheet = useConsultaDeLargura(QUERY_PAINEL_EM_SHEET);
+  const historicoEmCartoes = useConsultaDeLargura(QUERY_HISTORICO_EM_CARTOES);
+  const [painelAberto, setPainelAberto] = useState(false);
 
   // T20: a eleição de aba líder COMEÇA aqui. Sem esta reivindicação nenhuma aba
   // assume a sessão, `isLeader()` fica falso e o portão de `connect()`
@@ -141,6 +176,10 @@ export function TelefoniaView() {
   // linha de outra pagina e o T68 (Fase 6); aqui e so a selecao visivel.
   const selectedCall = historicos.rows.find((c) => c.id === (filtros.call || selectedCallId)) ?? null;
 
+  // T77: abaixo de 1280 o painel só existe dentro do `Sheet`, então ele tem de estar
+  // aberto quando existe uma linha selecionada — inclusive via deep link (`?call=`).
+  const sheetAberto = painelEmSheet && (painelAberto || Boolean(filtros.call));
+
   useEffect(() => {
     // T16 (D7): a anotação do agente mora em `agent_notes` (T13 grava ali, via
     // RPC); `notes` é metadado do provedor — ler `notes` deixava o campo vazio
@@ -198,6 +237,16 @@ export function TelefoniaView() {
     if (salvou) await queryClient.invalidateQueries({ queryKey: ['calls-history'] });
   };
 
+  // T77: o mesmo painel (discador, chamada em andamento ou detalhe) é o conteúdo da
+  // coluna lateral (>=1280) e do Sheet (<1280). Um só lugar para os dois — nunca os dois.
+  const painel = selectedCall ? (
+    <SelectedCallPanel call={selectedCall} onClose={resetSelection} />
+  ) : sessaoAtiva ? (
+    <ActiveCallPanel segundos={sip.callDuration} />
+  ) : (
+    <NewCallPanel />
+  );
+
   return (
     <div data-testid="tel-view" className="w-full flex flex-col gap-4 min-w-0">
       {/* T34: header da tela passa a ser o PageHeader do app, na variante plain, com o icone
@@ -207,7 +256,18 @@ export function TelefoniaView() {
         icon={<Phone className="w-6 h-6 text-primary" />}
         title="Telefonia"
         subtitle="Suas ligações por VoIP e WhatsApp"
-        topRight={<TelefoniaTopActions period={period} onPeriodChange={(v) => setFilter('period', v)} />}
+        topRight={
+          <div className="flex items-center gap-2">
+            {/* T77: abaixo de 1280 o painel não tem coluna — o botão do aceite o abre. */}
+            {painelEmSheet && (
+              <Button variant="outline" size="sm" onClick={() => setPainelAberto(true)} data-testid="tel-abrir-painel">
+                <PhoneCall className="mr-2 h-4 w-4" />
+                Nova ligação
+              </Button>
+            )}
+            <TelefoniaTopActions period={period} onPeriodChange={(v) => setFilter('period', v)} />
+          </div>
+        }
       />
 
       {/* T38/T39: KPIs do periodo/canal/escopo que estao na URL. */}
@@ -245,6 +305,14 @@ export function TelefoniaView() {
               onLimparFiltros={() => limpar()}
               onNovaLigacao={() => limpar()}
             />
+          ) : historicoEmCartoes ? (
+            /* T77: 390 — a tabela de 7 colunas não cabe; cada ligação vira um cartão. */
+            <CallRowMobile
+              rows={historicos.rows}
+              selecionadaId={filtros.call || null}
+              onSelecionar={(id) => setFilter('call', id)}
+              onLigarDeVolta={ligarDeVolta}
+            />
           ) : (
             <CallHistoryTable
               rows={historicos.rows}
@@ -261,21 +329,44 @@ export function TelefoniaView() {
             onPageChange={(p) => setFilter('page', String(p))}
           />
         </CallHistoryCard>
-        {/* Painel lateral: discador ou detalhe da chamada selecionada */}
-        <div className="xl:sticky xl:top-4" data-testid="tel-side-panel">
-          <Card className="border-secondary/30">
-            <CardContent className="p-6">
-              {selectedCall ? (
-                <SelectedCallPanel call={selectedCall} onClose={resetSelection} />
-              ) : sessaoAtiva ? (
-                <ActiveCallPanel segundos={sip.callDuration} />
-              ) : (
-                <NewCallPanel />
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        {/* Painel lateral: discador ou detalhe da chamada selecionada. Acima de 1280 ele
+            fica na coluna da grade; abaixo disso quem existe é o Sheet (ver abaixo). */}
+        {!painelEmSheet && (
+          <div className="xl:sticky xl:top-4" data-testid="tel-side-panel">
+            <Card className="border-secondary/30">
+              <CardContent className="p-6">{painel}</CardContent>
+            </Card>
+          </div>
+        )}
       </div>
+
+      {/* T77: <1280 — o painel vira Sheet lateral, aberto pelo botão do topRight ou pela
+          seleção de uma linha. Fechar o Sheet limpa a seleção, como o "X" do detalhe. */}
+      {painelEmSheet && (
+        <Sheet
+          open={sheetAberto}
+          onOpenChange={(aberto) => {
+            setPainelAberto(aberto);
+            if (!aberto) resetSelection();
+          }}
+        >
+          {/* Largura padrão do Sheet (w-3/4, sm:max-w-sm): é a largura em que o painel
+              lateral já vive no desktop; aqui só o transbordo vertical é ajustado. */}
+          <SheetContent
+            side="right"
+            className="overflow-y-auto"
+            data-testid="tel-side-sheet"
+          >
+            <SheetHeader>
+              <SheetTitle className="sr-only">Painel de ligações</SheetTitle>
+              <SheetDescription className="sr-only">
+                Discador, ligação em andamento e detalhe da chamada selecionada.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-4">{painel}</div>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }
