@@ -221,11 +221,67 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
+  // SL-082 (F69) — a busca filtrava SÓ o que já estava carregado (as mensagens
+  // mais novas + as páginas abertas): um termo que existia numa mensagem antiga
+  // nunca era achado, e o contador contava só o subconjunto local. Agora o termo
+  // vai ao servidor pela RPC `search_team_messages` (que varre a conversa
+  // inteira) e a lista exibida durante a busca é o resultado dela.
+  const searchTerm = debouncedSearchQuery.trim();
+  const [serverSearch, setServerSearch] = useState<{ term: string; results: TeamMessage[] } | null>(null);
+
+  useEffect(() => {
+    if (!searchTerm) return;
+    let cancelado = false;
+    void (async () => {
+      const { data, error } = await supabase.rpc('search_team_messages', {
+        p_conversation_id: conversation.id,
+        p_query: searchTerm,
+        p_limit: 50,
+      });
+      if (cancelado) return;
+      if (error) {
+        log.error('Erro ao buscar mensagens no servidor', error);
+        setServerSearch({ term: searchTerm, results: [] });
+        return;
+      }
+      // A RPC devolve o recorte de busca (id, remetente, conteúdo, data): o
+      // TeamMessageItem compõe a linha a partir daqui, sem mídia/recibo — a
+      // mensagem de resultado é texto puro.
+      const rows = (data ?? []) as {
+        id: string; sender_id: string; content: string; created_at: string; sender_name: string | null;
+      }[];
+      setServerSearch({
+        term: searchTerm,
+        results: rows.map(row => ({
+          id: row.id,
+          conversation_id: conversation.id,
+          sender_id: row.sender_id,
+          content: row.content,
+          message_type: 'text',
+          media_url: null,
+          media_type: null,
+          reply_to_id: null,
+          is_edited: false,
+          status: null,
+          created_at: row.created_at,
+          updated_at: row.created_at,
+          sender: { id: row.sender_id, name: row.sender_name ?? 'Usuário', avatar_url: null },
+        })),
+      });
+    })();
+    return () => { cancelado = true; };
+  }, [searchTerm, conversation.id]);
+
+  const searchActive = searchTerm.length > 0;
+  // `isSearching` separa "buscando" de "nada encontrado" na tela: mostrar
+  // "Nenhuma mensagem encontrada" enquanto a resposta ainda está em voo é
+  // anunciar um resultado que ainda não existe.
+  const isSearching = searchActive && serverSearch?.term !== searchTerm;
+
   const filteredMessages = useMemo(() => {
-    if (!debouncedSearchQuery.trim()) return messages;
-    const q = debouncedSearchQuery.toLowerCase();
-    return messages.filter(m => m.content?.toLowerCase().includes(q));
-  }, [messages, debouncedSearchQuery]);
+    if (!searchActive) return messages;
+    return serverSearch && serverSearch.term === searchTerm ? serverSearch.results : [];
+  }, [messages, searchActive, searchTerm, serverSearch]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -301,6 +357,44 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const handleCopyMessage = useCallback((content: string) => {
     void navigator.clipboard.writeText(content).then(() => toast.success('Copiado!'));
   }, []);
+
+  // SL-082 (F71) — o `GroupManagementDialog` existia pronto com as mutações
+  // (renomear/remover membro/sair/excluir) criadas no hook, mas NENHUM chamador:
+  // o fluxo de gerenciar grupo era inalcançável pela tela. Estes handlers são o
+  // que o Dialog chama. O sucesso/erro já é anunciado pela própria mutação
+  // (`onSuccess`/`onError`), então aqui só registramos a falha no log — nada de
+  // "sucesso" antes da confirmação.
+  const handleRenameGroup = useCallback(async (name: string) => {
+    try {
+      await renameConvMutation.mutateAsync({ conversationId: conversation.id, name });
+    } catch (err) {
+      log.error('Erro ao renomear grupo', err);
+    }
+  }, [renameConvMutation, conversation.id]);
+
+  const handleRemoveMember = useCallback(async (profileId: string) => {
+    try {
+      await removeMemberMutation.mutateAsync({ conversationId: conversation.id, profileId });
+    } catch (err) {
+      log.error('Erro ao remover membro do grupo', err);
+    }
+  }, [removeMemberMutation, conversation.id]);
+
+  const handleLeaveGroup = useCallback(async () => {
+    try {
+      await leaveMutation.mutateAsync({ conversationId: conversation.id });
+    } catch (err) {
+      log.error('Erro ao sair do grupo', err);
+    }
+  }, [leaveMutation, conversation.id]);
+
+  const handleDeleteGroup = useCallback(async () => {
+    try {
+      await deleteConvMutation.mutateAsync({ conversationId: conversation.id });
+    } catch (err) {
+      log.error('Erro ao excluir grupo', err);
+    }
+  }, [deleteConvMutation, conversation.id]);
 
   // R2-INB-058 (#350-B): o chamador precisa saber se o áudio foi enviado.
   // `undefined` era lido como sucesso pelo TextToAudioButton, que descartava a
@@ -382,6 +476,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     profile,
     messages,
     filteredMessages,
+    isSearching,
     isLoading,
     isMuted,
     canTransfer,
@@ -422,6 +517,10 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     handleSaveEdit,
     handleCancelEdit,
     handleCopyMessage,
+    handleRenameGroup,
+    handleRemoveMember,
+    handleLeaveGroup,
+    handleDeleteGroup,
     handleAudioSend,
     handleFileSent,
     handleSendSticker,
