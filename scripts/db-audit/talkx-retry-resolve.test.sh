@@ -7,6 +7,11 @@
 #     exigia a NOVA confirmacao de lancamento. A secao #124 prova o defeito no estado vivo
 #     (reabre sem confirmacao) e o gate depois (talkx_relaunch_confirmation_required, carimbo
 #     renovado na reabertura confirmada, caminho que nao reabre intacto).
+#   #124 — contrato SQL (refazer 2): o parametro novo NAO tem DEFAULT. Cada helper de chamada usa
+#     UMA aridade fixa e REAL: os _x031_* chamam a assinatura antiga (2 argumentos em retry, 2/3/4
+#     em resolve) e os _x124_* chamam a assinatura nova com a confirmacao explicita. A secao 5
+#     EXECUTA as chamadas antigas contra o banco local e exige 42883 (undefined_function) — nao
+#     basta consultar catalogo nem contar assinatura.
 #   RED (antes da migration):
 #     - talkx_recipients.manual_retry_count NÃO existe;
 #     - public.retry_talkx_recipients NÃO existe.
@@ -311,28 +316,51 @@ assert_eq 'GREEN: coluna manual_retry_count existe' '1' "$col_exists"
 psql_exec < "$migration" >/dev/null || fail 'migration X031 nao reaplicou (idempotencia)'
 pass 'migration X031 reaplicada sem erro (idempotencia)'
 
-# stubs de captura de SQLSTATE (SECURITY INVOKER: auth.role/uid valem do SET LOCAL)
+# stubs de captura de SQLSTATE (SECURITY INVOKER: auth.role/uid valem do SET LOCAL).
+# Sem fallback por to_regprocedure: cada helper chama UMA aridade FIXA. Os _x031_* chamam a
+# assinatura ANTIGA (2 argumentos em retry, 2/3/4 em resolve) — exatamente o que um chamador
+# legado faz — e os _x124_* chamam a assinatura NOVA com a confirmacao SEMPRE explicita. Se a
+# chamada nao resolver, o SQLSTATE real (42883, undefined_function) volta no lugar do resultado.
 psql_exec >/dev/null <<'SQL'
--- Stubs de captura de SQLSTATE. Chamam a assinatura NOVA (#124) quando ela existe — e o que
--- um chamador de 2/4 argumentos faz hoje — para que a reabertura nao confirmada apareca como
--- talkx_relaunch_confirmation_required, e nao como erro de funcao inexistente.
-CREATE FUNCTION public._x031_try_retry(p_campaign uuid, p_ids uuid[], p_confirm boolean DEFAULT false) RETURNS text
+CREATE FUNCTION public._x031_try_retry(p_campaign uuid, p_ids uuid[]) RETURNS text
 LANGUAGE plpgsql AS $$
 BEGIN
-  IF to_regprocedure('public.retry_talkx_recipients(uuid,uuid[],boolean)') IS NOT NULL THEN
-    RETURN 'OK|' || public.retry_talkx_recipients(p_campaign, p_ids, p_confirm)::text;
-  END IF;
   RETURN 'OK|' || public.retry_talkx_recipients(p_campaign, p_ids)::text;
 EXCEPTION WHEN OTHERS THEN RETURN SQLSTATE || '|' || SQLERRM;
 END $$;
-CREATE FUNCTION public._x031_try_resolve(p_recipient uuid, p_resolution text, p_note text, p_confirm boolean,
-                                        p_confirm_relaunch boolean DEFAULT false) RETURNS text
+CREATE FUNCTION public._x031_try_resolve(p_recipient uuid, p_resolution text, p_note text, p_confirm boolean) RETURNS text
 LANGUAGE plpgsql AS $$
 BEGIN
-  IF to_regprocedure('public.resolve_talkx_outcome_unknown(uuid,text,text,boolean,boolean)') IS NOT NULL THEN
-    RETURN 'OK|' || public.resolve_talkx_outcome_unknown(p_recipient, p_resolution, p_note, p_confirm, p_confirm_relaunch)::text;
-  END IF;
   RETURN 'OK|' || public.resolve_talkx_outcome_unknown(p_recipient, p_resolution, p_note, p_confirm)::text;
+EXCEPTION WHEN OTHERS THEN RETURN SQLSTATE || '|' || SQLERRM;
+END $$;
+-- as duas aridades menores do chamador antigo (o DEFAULT de p_note/p_confirm_duplicate_risk era
+-- o que as fazia resolver; com o parametro novo obrigatorio, elas deixam de existir)
+CREATE FUNCTION public._x031_try_resolve2(p_recipient uuid, p_resolution text) RETURNS text
+LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN 'OK|' || public.resolve_talkx_outcome_unknown(p_recipient, p_resolution)::text;
+EXCEPTION WHEN OTHERS THEN RETURN SQLSTATE || '|' || SQLERRM;
+END $$;
+CREATE FUNCTION public._x031_try_resolve3(p_recipient uuid, p_resolution text, p_note text) RETURNS text
+LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN 'OK|' || public.resolve_talkx_outcome_unknown(p_recipient, p_resolution, p_note)::text;
+EXCEPTION WHEN OTHERS THEN RETURN SQLSTATE || '|' || SQLERRM;
+END $$;
+-- assinatura NOVA (#124): o parametro de confirmacao vai sempre explicito
+CREATE FUNCTION public._x124_try_retry(p_campaign uuid, p_ids uuid[], p_confirm_relaunch boolean) RETURNS text
+LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN 'OK|' || public.retry_talkx_recipients(p_campaign, p_ids, p_confirm_relaunch)::text;
+EXCEPTION WHEN OTHERS THEN RETURN SQLSTATE || '|' || SQLERRM;
+END $$;
+CREATE FUNCTION public._x124_try_resolve(p_recipient uuid, p_resolution text, p_note text,
+                                         p_confirm_duplicate_risk boolean, p_confirm_relaunch boolean) RETURNS text
+LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN 'OK|' || public.resolve_talkx_outcome_unknown(p_recipient, p_resolution, p_note,
+                                                       p_confirm_duplicate_risk, p_confirm_relaunch)::text;
 EXCEPTION WHEN OTHERS THEN RETURN SQLSTATE || '|' || SQLERRM;
 END $$;
 SQL
@@ -476,7 +504,7 @@ psql_exec < "$migration124" >/dev/null || fail 'migration #124 nao aplicou (GREE
 pass "migration #124 aplicada ($(basename "$migration124"))"
 
 # ── 1) reabertura SEM a confirmacao nova -> recusada, sem escrever nada ──────
-g1="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_reopen', ARRAY['$r_reopen']::uuid[])")"
+g1="$(as_user "$user_admin" "SELECT public._x124_try_retry('$c_reopen', ARRAY['$r_reopen']::uuid[], false)")"
 assert_has '#124 1. reabertura sem confirmacao nova -> erro' 'talkx_relaunch_confirmation_required' "$g1"
 assert_eq '#124 1. sem confirmacao: campanha continua completed' 'completed' \
   "$(psql_val "SELECT status FROM public.talkx_campaigns WHERE id='$c_reopen'")"
@@ -488,7 +516,7 @@ assert_eq '#124 1. sem confirmacao: nenhum evento gravado' '0' \
   "$(psql_val "SELECT count(*) FROM public.talkx_campaign_events WHERE campaign_id='$c_reopen'")"
 
 # ── 2) reabertura COM a confirmacao nova -> reabre e renova o carimbo ────────
-g2="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_reopen', ARRAY['$r_reopen']::uuid[], true)")"
+g2="$(as_user "$user_admin" "SELECT public._x124_try_retry('$c_reopen', ARRAY['$r_reopen']::uuid[], true)")"
 assert_has '#124 2. reabertura com a confirmacao -> OK' 'OK|' "$g2"
 assert_eq '#124 2. campanha completed -> sending' 'sending' \
   "$(psql_val "SELECT status FROM public.talkx_campaigns WHERE id='$c_reopen'")"
@@ -504,7 +532,7 @@ assert_eq '#124 2. evento resumed com ator' '1' \
   "$(psql_val "SELECT count(*) FROM public.talkx_campaign_events WHERE campaign_id='$c_reopen' AND event_type='resumed' AND actor_id='$profile_admin'")"
 
 # ── 3) retry que NAO reabre (campanha 'sending') segue sem confirmacao nova ──
-g3="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_sending2', ARRAY['$r_failed2']::uuid[])")"
+g3="$(as_user "$user_admin" "SELECT public._x124_try_retry('$c_sending2', ARRAY['$r_failed2']::uuid[], false)")"
 assert_has '#124 3. retry em campanha sending sem confirmacao -> OK (nao reabre)' 'OK|' "$g3"
 assert_eq '#124 3. contador e destinatario do caminho normal' '0|pending' \
   "$(psql_val "SELECT (SELECT failed_count FROM public.talkx_campaigns WHERE id='$c_sending2') || '|' || (SELECT status FROM public.talkx_recipients WHERE id='$r_failed2')")"
@@ -512,19 +540,45 @@ assert_eq '#124 3. campanha sending segue sem carimbo (nao houve novo lancamento
   "$(psql_val "SELECT COALESCE(consent_confirmed_by::text,'<nulo>') FROM public.talkx_campaigns WHERE id='$c_sending2'")"
 
 # ── 4) resolve 'retry' em campanha completed: exige as DUAS confirmacoes ─────
-g4="$(as_user "$user_admin" "SELECT public._x031_try_resolve('$r_unknown3','retry','confere',true)")"
+g4="$(as_user "$user_admin" "SELECT public._x124_try_resolve('$r_unknown3','retry','confere',true,false)")"
 assert_has '#124 4. retry de outcome_unknown sem p_confirm_relaunch -> erro' 'talkx_relaunch_confirmation_required' "$g4"
 assert_eq '#124 4. nada escrito: destinatario segue outcome_unknown e campanha completed' 'outcome_unknown|completed' \
   "$(psql_val "SELECT (SELECT status FROM public.talkx_recipients WHERE id='$r_unknown3') || '|' || (SELECT status FROM public.talkx_campaigns WHERE id='$c_reopen_unknown')")"
-g5="$(as_user "$user_admin" "SELECT public._x031_try_resolve('$r_unknown3','retry','confere',true,true)")"
+g5="$(as_user "$user_admin" "SELECT public._x124_try_resolve('$r_unknown3','retry','confere',true,true)")"
 assert_has '#124 4. com as duas confirmacoes -> OK' 'OK|' "$g5"
 assert_eq '#124 4. campanha completed -> sending com o carimbo renovado' "sending|$profile_admin" \
   "$(psql_val "SELECT (SELECT status FROM public.talkx_campaigns WHERE id='$c_reopen_unknown') || '|' || (SELECT consent_confirmed_by::text FROM public.talkx_campaigns WHERE id='$c_reopen_unknown')")"
 
-# ── 5) a assinatura antiga (sem a confirmacao) nao existe mais ───────────────
-assert_eq '#124 5. retry_talkx_recipients(uuid,uuid[]) nao existe' '' \
+# ── 5) contrato sem DEFAULT: a prova e EXECUTAR a chamada antiga (2/4 argumentos) ──
+# Nao basta consultar catalogo: a chamada antiga roda contra o banco local e tem de falhar com
+# erro de assinatura/argumentos (42883, undefined_function). Antes da correcao ela ainda resolvia
+# para a assinatura nova (parametro com DEFAULT) e passava — este bloco fica vermelho entao.
+old_retry2="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_sending2', ARRAY['$r_failed2']::uuid[])")"
+assert_has '#124 5. retry com 2 argumentos (chamada antiga) -> 42883' '42883|' "$old_retry2"
+assert_has '#124 5. a falha e de assinatura (funcao inexistente), nao de regra de negocio' 'does not exist' "$old_retry2"
+old_res2="$(as_user "$user_admin" "SELECT public._x031_try_resolve2('$r_unknown3','mark_sent')")"
+assert_has '#124 5. resolve com 2 argumentos (chamada antiga) -> 42883' '42883|' "$old_res2"
+old_res3="$(as_user "$user_admin" "SELECT public._x031_try_resolve3('$r_unknown3','mark_sent','nota')")"
+assert_has '#124 5. resolve com 3 argumentos (chamada antiga) -> 42883' '42883|' "$old_res3"
+old_res4="$(as_user "$user_admin" "SELECT public._x031_try_resolve('$r_unknown3','retry','nota',true)")"
+assert_has '#124 5. resolve com 4 argumentos (chamada antiga) -> 42883' '42883|' "$old_res4"
+assert_eq '#124 5. chamada antiga nao escreveu nada (destinatario segue pending)' 'pending' \
+  "$(psql_val "SELECT status FROM public.talkx_recipients WHERE id='$r_unknown3'")"
+assert_eq '#124 5. chamada antiga nao escreveu nada (campanha segue sending)' 'sending' \
+  "$(psql_val "SELECT status FROM public.talkx_campaigns WHERE id='$c_reopen_unknown'")"
+
+# e o catalogo APENAS corrobora o que a execucao acima ja provou
+assert_eq '#124 5. so a assinatura nova de retry existe (1 overload)' '1' \
+  "$(psql_val "SELECT count(*) FROM pg_proc WHERE proname='retry_talkx_recipients' AND pronamespace='public'::regnamespace")"
+assert_eq '#124 5. so a assinatura nova de resolve existe (1 overload)' '1' \
+  "$(psql_val "SELECT count(*) FROM pg_proc WHERE proname='resolve_talkx_outcome_unknown' AND pronamespace='public'::regnamespace")"
+assert_eq '#124 5. assinatura nova de retry sem DEFAULT' 'false' \
+  "$(psql_val "SELECT (proargdefaults IS NOT NULL)::text FROM pg_proc WHERE oid='public.retry_talkx_recipients(uuid,uuid[],boolean)'::regprocedure")"
+assert_eq '#124 5. assinatura nova de resolve sem DEFAULT' 'false' \
+  "$(psql_val "SELECT (proargdefaults IS NOT NULL)::text FROM pg_proc WHERE oid='public.resolve_talkx_outcome_unknown(uuid,text,text,boolean,boolean)'::regprocedure")"
+assert_eq '#124 5. to_regprocedure do retry (assinatura antiga) = vazio' '' \
   "$(psql_val "SELECT COALESCE(to_regprocedure('public.retry_talkx_recipients(uuid,uuid[])')::text,'')")"
-assert_eq '#124 5. resolve_talkx_outcome_unknown(uuid,text,text,boolean) nao existe' '' \
+assert_eq '#124 5. to_regprocedure do resolve (assinatura antiga) = vazio' '' \
   "$(psql_val "SELECT COALESCE(to_regprocedure('public.resolve_talkx_outcome_unknown(uuid,text,text,boolean)')::text,'')")"
 
 # ── 6) ACL e search_path das assinaturas novas ───────────────────────────────
@@ -564,15 +618,15 @@ assert_eq '#124 7. campanha continua completed apos a recusa do guard' 'complete
 # (o #123 / R3-DELTA-004 recria esta RPC com versão ANTERIOR à minha: se a minha não
 #  carregasse o delta dele, o CREATE OR REPLACE daqui desfaria a validação do lote)
 id_inexistente_124='f0000000-0000-0000-0000-0000000012ff'
-g6="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_sending2', ARRAY['$id_inexistente_124']::uuid[])")"
+g6="$(as_user "$user_admin" "SELECT public._x124_try_retry('$c_sending2', ARRAY['$id_inexistente_124']::uuid[], false)")"
 assert_has '#124 8. id inexistente -> talkx_retry_recipient_not_found (delta do #123 preservado)' 'P0002|talkx_retry_recipient_not_found' "$g6"
 assert_eq '#124 8. lote inválido vem ANTES do gate: campanha completed intacta' 'completed' \
   "$(psql_val "SELECT status FROM public.talkx_campaigns WHERE id='$c_sending2'")"
-g7="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_sending2', ARRAY[NULL]::uuid[])")"
+g7="$(as_user "$user_admin" "SELECT public._x124_try_retry('$c_sending2', ARRAY[NULL]::uuid[], false)")"
 assert_has '#124 8. nulo no array -> invalid_talkx_retry_request (delta do #123 preservado)' '22023|invalid_talkx_retry_request' "$g7"
 
 # ── 4) campanha completed reabre SO com a nova confirmacao de lancamento (#124) ──
-out4="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_completed', ARRAY['$r_done']::uuid[], true)")"
+out4="$(as_user "$user_admin" "SELECT public._x124_try_retry('$c_completed', ARRAY['$r_done']::uuid[], true)")"
 assert_has '4. retry em campanha completed com a confirmacao -> OK' 'OK|' "$out4"
 status4="$(psql_val "SELECT status FROM public.talkx_campaigns WHERE id='$c_completed'")"
 assert_eq '4. campanha completed -> sending' 'sending' "$status4"
@@ -582,7 +636,7 @@ stamp4="$(psql_val "SELECT consent_confirmed_by::text || '|' || (consent_confirm
 assert_eq '4. reabertura carimba a nova confirmacao (campanha sem carimbo antes)' "$profile_admin|true" "$stamp4"
 
 # ── 5) mark_sent move o contador ─────────────────────────────────────────────
-out5="$(as_user "$user_admin" "SELECT public._x031_try_resolve('$r_unknown','mark_sent',NULL,false)")"
+out5="$(as_user "$user_admin" "SELECT public._x124_try_resolve('$r_unknown','mark_sent',NULL,false,false)")"
 assert_has '5. resolve mark_sent -> OK' 'OK|' "$out5"
 unk5="$(psql_val "SELECT outcome_unknown_count || '|' || sent_count FROM public.talkx_campaigns WHERE id='$c_unknown'")"
 assert_eq '5. outcome_unknown_count 2->1 e sent_count 0->1' '1|1' "$unk5"
@@ -590,17 +644,17 @@ st5="$(psql_val "SELECT status FROM public.talkx_recipients WHERE id='$r_unknown
 assert_eq '5. destinatario vira sent' 'sent' "$st5"
 
 # ── 6) retry sem confirmação -> erro ─────────────────────────────────────────
-out6="$(as_user "$user_admin" "SELECT public._x031_try_resolve('$r_unknown2','retry',NULL,false)")"
+out6="$(as_user "$user_admin" "SELECT public._x124_try_resolve('$r_unknown2','retry',NULL,false,false)")"
 assert_has '6. retry sem confirmacao -> erro' 'talkx_duplicate_risk_confirmation_required' "$out6"
 
 # ── 6b) retry com confirmação reabre e move o contador ───────────────────────
-out6b="$(as_user "$user_admin" "SELECT public._x031_try_resolve('$r_unknown2','retry','confere que nao chegou',true)")"
+out6b="$(as_user "$user_admin" "SELECT public._x124_try_resolve('$r_unknown2','retry','confere que nao chegou',true,false)")"
 assert_has '6b. retry com confirmacao -> OK' 'OK|' "$out6b"
 unk6="$(psql_val "SELECT outcome_unknown_count || '|' || (SELECT status FROM public.talkx_recipients WHERE id='$r_unknown2') FROM public.talkx_campaigns WHERE id='$c_unknown'")"
 assert_eq '6b. outcome_unknown_count 1->0 e destinatario pending' '0|pending' "$unk6"
 
 # ── 7) agente -> 42501 ───────────────────────────────────────────────────────
-out7="$(as_user "$user_agent" "SELECT public._x031_try_retry('$c_sending', ARRAY['$r_failed']::uuid[])")"
+out7="$(as_user "$user_agent" "SELECT public._x124_try_retry('$c_sending', ARRAY['$r_failed']::uuid[], false)")"
 assert_has '7. agente -> SQLSTATE 42501' '42501|talkx_retry_role_required' "$out7"
 
 # ── 9) idempotência #124: reaplicar nao quebra e nao ressuscita a assinatura antiga ──
@@ -608,5 +662,10 @@ psql_exec < "$migration124" >/dev/null || fail 'migration #124 nao reaplicou (id
 pass 'migration #124 reaplicada sem erro (idempotencia)'
 assert_eq '9. assinatura antiga continua ausente apos reaplicar' '' \
   "$(psql_val "SELECT COALESCE(to_regprocedure('public.retry_talkx_recipients(uuid,uuid[])')::text,'')")"
+# o replay nao pode reintroduzir o DEFAULT (senao a chamada antiga voltaria a resolver)
+assert_eq '9. assinatura nova segue sem DEFAULT apos reaplicar' 'false' \
+  "$(psql_val "SELECT (proargdefaults IS NOT NULL)::text FROM pg_proc WHERE oid='public.retry_talkx_recipients(uuid,uuid[],boolean)'::regprocedure")"
+old_replay="$(as_user "$user_admin" "SELECT public._x031_try_retry('$c_sending', ARRAY['$r_failed']::uuid[])")"
+assert_has '9. chamada antiga de 2 argumentos segue falhando (42883) apos reaplicar' '42883|' "$old_replay"
 
-echo '[OK] Talk X X031 + #123 + #124: reenvio manual em lote preserva a validação de ids existentes NA campanha, teto de 3 e revalidação de supressão/elegibilidade; reabertura de campanha completed ocorre SOMENTE com a nova confirmação de lançamento (carimbo renovado e trilha); resolução de outcome_unknown segue com trilha e gate de agente.'
+echo '[OK] Talk X X031 + #123 + #124: reenvio manual em lote preserva a validação de ids existentes NA campanha, teto de 3 e revalidação de supressão/elegibilidade; reabertura de campanha completed ocorre SOMENTE com a nova confirmação de lançamento (carimbo renovado e trilha) e exige o parâmetro explícito — a chamada antiga de 2/4 argumentos falha (42883), provada por execução contra o banco local; resolução de outcome_unknown segue com trilha e gate de agente.'

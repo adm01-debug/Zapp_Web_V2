@@ -20,12 +20,12 @@
 -- nao exigia a nova confirmacao de lancamento do operador.
 --
 -- ENTREGA (so este problema):
---   (a) retry_talkx_recipients ganha p_confirm_relaunch boolean DEFAULT false. Reabrir campanha
+--   (a) retry_talkx_recipients ganha p_confirm_relaunch boolean SEM valor padrao. Reabrir campanha
 --       'completed' sem a confirmacao explicita -> talkx_relaunch_confirmation_required (22023),
 --       sem escrever nada. O retry em campanha 'sending'/'paused' (nao reabre) segue sem exigir
 --       confirmacao nova — nenhum comportamento existente fora da reabertura muda;
---   (b) resolve_talkx_outcome_unknown ganha p_confirm_relaunch boolean DEFAULT false com o mesmo
---       gate no ramo 'retry' quando a campanha esta 'completed' (o p_confirm_duplicate_risk
+--   (b) resolve_talkx_outcome_unknown ganha p_confirm_relaunch boolean SEM valor padrao, com o
+--       mesmo gate no ramo 'retry' quando a campanha esta 'completed' (o p_confirm_duplicate_risk
 --       continua obrigatorio — as duas confirmacoes sao pedidas juntas);
 --   (c) na reabertura confirmada, a MESMA transacao grava o carimbo da nova confirmacao
 --       (consent_confirmed_by = operador, consent_confirmed_at = agora) e a trilha ganha
@@ -33,11 +33,21 @@
 --   (d) defesa em profundidade: o guard enforce_talkx_campaign_mutability recusa a transicao
 --       'completed' -> 'sending' sob app.talkx_retry_write sem o carimbo RENOVADO na mesma
 --       transacao — um caminho futuro que reabra pelo GUC sem confirmar nao passa;
---   (e) a assinatura ANTIGA (sem a confirmacao) e DROPADA e o guard final aborta se ela
---       sobreviver: nao ha caminho que reabra sem o gate.
+--   (e) a assinatura ANTIGA (sem a confirmacao) e DROPADA, a NOVA nao tem default em nenhum
+--       parametro acrescentado e o guard final aborta se a antiga sobreviver ou se a nova ganhar
+--       default. A chamada antiga de 2/4 argumentos nao resolve para funcao nenhuma (42883,
+--       undefined_function): nao ha caminho — nem por compatibilidade silenciosa — que reabra
+--       sem o gate.
 --
--- ASSINATURA POR DEFAULT: p_confirm_relaunch tem DEFAULT false, entao a chamada antiga de 2/4
--- argumentos continua resolvendo — agora fail-closed (recusa a reabertura nao confirmada).
+-- CONTRATO SEM DEFAULT: p_confirm_relaunch NAO tem valor padrao nas duas RPCs. A assinatura so
+-- existe COM a confirmacao explicita: 3 argumentos em retry_talkx_recipients e 5 em
+-- resolve_talkx_outcome_unknown. Nesta ultima, p_note e p_confirm_duplicate_risk TAMBEM perdem o
+-- default, porque o PostgreSQL exige que todo parametro depois de um com DEFAULT tambem tenha
+-- DEFAULT ("input parameters after one with a default value must also have defaults") — manter os
+-- defaults antigos obrigaria o parametro novo a ter um, que e exatamente a compatibilidade
+-- silenciosa que este cartao fecha. Com isso, a chamada antiga de 2/4 argumentos falha com 42883
+-- (undefined_function), provado por EXECUCAO no teste contra o banco local, nao por consulta de
+-- catalogo.
 -- Nao ha chamador no repositorio (src/, supabase/functions/) para estes RPCs hoje.
 -- Contrato para quem chamar depois: para reabrir campanha concluida e preciso confirmar.
 --
@@ -58,7 +68,9 @@
 -- Idempotente/replayavel: DROP FUNCTION IF EXISTS, CREATE OR REPLACE, guard fail-closed.
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 0) A assinatura antiga (sem a confirmacao) sai: quem reabre passa pelo gate novo.
+-- 0) A assinatura antiga (sem a confirmacao) sai e a nova nasce SEM default no parametro novo:
+--    quem reabre passa pelo gate com a confirmacao explicita; a chamada antiga de 2/4 argumentos
+--    nao resolve para funcao nenhuma (42883, undefined_function).
 -- ─────────────────────────────────────────────────────────────────────────────
 DROP FUNCTION IF EXISTS public.retry_talkx_recipients(uuid, uuid[]);
 DROP FUNCTION IF EXISTS public.resolve_talkx_outcome_unknown(uuid, text, text, boolean);
@@ -258,7 +270,8 @@ CREATE TRIGGER enforce_talkx_campaign_mutability
 CREATE OR REPLACE FUNCTION public.retry_talkx_recipients(
   p_campaign_id      uuid,
   p_recipient_ids    uuid[],
-  p_confirm_relaunch boolean DEFAULT false
+  -- #124: SEM default — e o contrato. A chamada antiga de 2 argumentos nao resolve (42883).
+  p_confirm_relaunch boolean
 ) RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -459,9 +472,12 @@ COMMENT ON FUNCTION public.retry_talkx_recipients(uuid, uuid[], boolean) IS
 CREATE OR REPLACE FUNCTION public.resolve_talkx_outcome_unknown(
   p_recipient_id           uuid,
   p_resolution             text,
-  p_note                   text DEFAULT NULL,
-  p_confirm_duplicate_risk boolean DEFAULT false,
-  p_confirm_relaunch       boolean DEFAULT false
+  -- #124: SEM defaults. O parametro novo e obrigatorio e o PostgreSQL exige que todo parametro
+  -- depois de um com DEFAULT tambem tenha DEFAULT — manter os antigos reabriria a chamada de 4
+  -- argumentos. Assim a chamada antiga de 2/3/4 argumentos nao resolve (42883).
+  p_note                   text,
+  p_confirm_duplicate_risk boolean,
+  p_confirm_relaunch       boolean
 ) RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -632,8 +648,9 @@ COMMENT ON FUNCTION public.resolve_talkx_outcome_unknown(uuid, text, text, boole
   'Talk X (X031 + R3-DELTA-005/#124): resolve um destinatario outcome_unknown (admin/supervisor) com mark_sent|mark_failed|retry. retry exige p_confirm_duplicate_risk = true e, quando a campanha esta completed, tambem p_confirm_relaunch = true (novo lancamento). Move outcome_unknown_count para sent_count/failed_count e grava evento com ator.';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 4) fail-closed: sem os objetos novos — e com a assinatura antiga ainda viva — a
---    migration aborta em vez de deixar um caminho que reabre sem a confirmacao.
+-- 4) fail-closed: sem os objetos novos, com a assinatura antiga ainda viva ou com DEFAULT no
+--    parametro novo, a migration aborta em vez de deixar um caminho que reabra sem a
+--    confirmacao (ou uma compatibilidade silenciosa com a chamada antiga).
 -- ─────────────────────────────────────────────────────────────────────────────
 DO $guard$
 DECLARE
@@ -655,6 +672,18 @@ BEGIN
   IF to_regprocedure('public.retry_talkx_recipients(uuid,uuid[])') IS NOT NULL
      OR to_regprocedure('public.resolve_talkx_outcome_unknown(uuid,text,text,boolean)') IS NOT NULL THEN
     RAISE EXCEPTION 'talkx_r3delta005_assinatura_antiga_viva';
+  END IF;
+
+  -- Contrato sem DEFAULT: um valor padrao em qualquer parametro das assinaturas novas
+  -- reabriria a chamada antiga (2 argumentos em retry, 2/3/4 em resolve). Aborta em vez de
+  -- aceitar compatibilidade silenciosa.
+  IF (SELECT proc.proargdefaults IS NOT NULL
+        FROM pg_proc proc
+       WHERE proc.oid = to_regprocedure('public.retry_talkx_recipients(uuid,uuid[],boolean)'))
+     OR (SELECT proc.proargdefaults IS NOT NULL
+           FROM pg_proc proc
+          WHERE proc.oid = to_regprocedure('public.resolve_talkx_outcome_unknown(uuid,text,text,boolean,boolean)')) THEN
+    RAISE EXCEPTION 'talkx_r3delta005_parametro_novo_com_default';
   END IF;
 
   IF NOT EXISTS (
