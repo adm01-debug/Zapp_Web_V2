@@ -7,9 +7,9 @@
     "sha256": "872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af"
   },
   "summary": {
-    "function_count": 74,
-    "source_file_count": 148,
-    "verify_jwt_true": 60,
+    "function_count": 75,
+    "source_file_count": 149,
+    "verify_jwt_true": 61,
     "verify_jwt_false": 14
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
@@ -718,6 +718,11 @@
       "path": "supabase/functions/talkx-send/process-recipient.ts",
       "bytes": 28357,
       "sha256": "449fad8332bb9501ee6a01aa6c65dc055ad225ae1e1b028ff0f87e60a909136b"
+    },
+    {
+      "path": "supabase/functions/talkx-storage-purge/index.ts",
+      "bytes": 10840,
+      "sha256": "ce848c35af9d2700184892233b207f8a3db7dddf9827d601e3871db433108332"
     },
     {
       "path": "supabase/functions/voice-agent/index.ts",
@@ -1819,6 +1824,17 @@
       ]
     },
     {
+      "name": "talkx-storage-purge",
+      "entrypoint": "supabase/functions/talkx-storage-purge/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "c92ecdb3c083d954b400ce7a22ab90304cda00d8f33f5746c50bb9f29dcb53f7",
+      "source_files": [
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/talkx-storage-purge/index.ts"
+      ]
+    },
+    {
       "name": "voice-agent",
       "entrypoint": "supabase/functions/voice-agent/index.ts",
       "verify_jwt": true,
@@ -1908,5 +1924,5 @@
       ]
     }
   ],
-  "manifest_sha256": "730966afce590b00e149facceab37dcdd3e2a2161a5b152e0624e451cdff3ded"
+  "manifest_sha256": "41b8a4c8b4cba9f655cc965bcdc4ae753e35a6b6c69a76f140fd2feb6777e16d"
 }
