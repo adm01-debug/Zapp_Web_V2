@@ -22,6 +22,7 @@ import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached, extractTokenUsage, extractUserIdFromRequest, medirStream, registrarConsumoDeDiagnostico } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { callLovableAI, callOpenAICompatible, callCustomWebhook, withRetry } from "../_shared/ai-providers.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 import {
   AiRoutingError,
   resolveProvider,
@@ -650,6 +651,24 @@ export async function handleAiProxy(req: Request): Promise<Response> {
     const providerType = provider.provider_type;
     const providerName = provider.name;
 
+    // IA-009 — kill switch lido NO SERVIDOR para o provedor RESOLVIDO. Fica aqui,
+    // antes do modo teste e do fallback, porque todo caminho daqui para baixo gasta
+    // provedor (inclusive o diagnóstico): desligado não é chamado por nenhum deles.
+    // Desfecho explícito (503/AI_DISABLED), nunca resposta vazia como sucesso, e o
+    // atendimento humano segue — o proxy só devolve erro para quem pediu IA.
+    const killSwitchDaOrigem = await evaluateAiKillSwitch({
+      functionName: 'ai-proxy',
+      providerType,
+    });
+    if (!killSwitchDaOrigem.allowed) {
+      log.warn("IA desativada por flag", { code: killSwitchDaOrigem.code, key: killSwitchDaOrigem.key, provider: providerName });
+      return jsonResponse(
+        { error: { code: 'AI_DISABLED', message: killSwitchDaOrigem.message } },
+        503,
+        req,
+      );
+    }
+
     // IA-040: modo teste sai ANTES do fallback, com destino fixo. R2-API-032:
     // conteúdo/modelo/orçamento são do SERVIDOR (o cliente não escolhe o que se
     // mede) e o consumo real é registrado com finalidade própria dentro de
@@ -720,7 +739,20 @@ export async function handleAiProxy(req: Request): Promise<Response> {
       const target = rows.find((row) => row?.id === fallbackProviderId) ?? null;
       if (target === null) return null;
       // Mesma linha da origem e provedor desligado não são destinos aceitáveis.
-      if (target.id !== provider.id && target.is_active === true) return target;
+      if (target.id !== provider.id && target.is_active === true) {
+        // IA-009: destino DESLIGADO por flag não é destino. Sem candidato válido o
+        // erro REAL da origem sobe (nenhuma troca silenciosa e nenhum provedor
+        // desligado recebendo a chamada por tabela).
+        const killSwitchDoDestino = await evaluateAiKillSwitch({
+          functionName: 'ai-proxy',
+          providerType: target.provider_type,
+        });
+        if (killSwitchDoDestino.allowed) return target;
+        log.warn("Fallback recusado: provedor desativado por flag", {
+          code: killSwitchDoDestino.code, key: killSwitchDoDestino.key, provider: target.name,
+        });
+        return null;
+      }
       return null;
     };
 
