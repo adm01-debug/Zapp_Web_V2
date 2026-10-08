@@ -5,11 +5,16 @@ import { join } from 'node:path';
 /**
  * Y09 — Navegação por todos os módulos sem erro de console nem requisição falha.
  *
- * Abre CADA entrada da barra lateral — as 11 da navegação primária e os 31 itens
- * das 5 seções (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema) — e
- * prova, módulo a módulo, que a tela monta de verdade: título do documento, tela
- * própria do módulo (nunca "Acesso restrito", nunca o esqueleto de carregamento
- * preso, nunca tela em branco) e nenhum erro de console, exceção ou resposta >= 400.
+ * Abre CADA entrada que o papel do usuário sintético do conjunto local enxerga na
+ * barra lateral — as 11 da navegação primária e 30 dos 31 itens das 5 seções
+ * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema) — e prova, módulo a
+ * módulo, que a tela monta de verdade: título do documento, tela própria do módulo
+ * (nunca "Acesso restrito", nunca o esqueleto de carregamento preso, nunca tela em
+ * branco) e nenhum erro de console, exceção ou resposta >= 400.
+ * O 31º item, 'CRM 360°', é admin-only (`src/services/navigation.service.ts:70`,
+ * `roles: ADMIN_ONLY`) e o usuário do seed é supervisor: ele fica FORA da varredura
+ * e a sua AUSÊNCIA é conferida de propósito (`conferirEntradasForaDoPapel`), para o
+ * mapa de módulos não perder uma linha em silêncio.
  * Repete tudo no celular 390x844, pelo menu móvel. A busca global ("Buscar") entra
  * nas duas larguras.
  *
@@ -58,6 +63,13 @@ interface ItemNav {
   id: string;
   /** rótulo exato da entrada na barra lateral (o nome acessível do botão) */
   label: string;
+  /**
+   * Entrada que a barra lateral só mostra para ADMINISTRADOR
+   * (`src/services/navigation.service.ts:70`: `crm360` tem `roles: ADMIN_ONLY`).
+   * O usuário sintético do conjunto local é SUPERVISOR, então ela NÃO entra na
+   * varredura: entra na conferência de ausência (`conferirEntradasForaDoPapel`).
+   */
+  somenteAdmin?: boolean;
 }
 
 interface SecaoNav {
@@ -83,7 +95,7 @@ const SECOES: SecaoNav[] = [
   {
     label: 'Vendas & CRM',
     itens: [
-      { id: 'crm360', label: 'CRM 360°' },
+      { id: 'crm360', label: 'CRM 360°', somenteAdmin: true },
       { id: 'wallet', label: 'Carteira' },
       { id: 'queues', label: 'Filas' },
       { id: 'schedule', label: 'Agendamentos' },
@@ -844,7 +856,7 @@ async function clicarDesktop(page: Page, item: ItemNav): Promise<void> {
  * repetido quando um aviso da aplicação cobre o botão no meio do caminho — é o
  * comportamento do próprio app, não um defeito do teste.
  */
-async function clicarMobile(page: Page, item: ItemNav): Promise<void> {
+async function clicarMobile(page: Page, item: ItemNav, aoAbrirMenu?: () => Promise<void>): Promise<void> {
   const menu = page.getByRole('dialog', { name: MENU_CELULAR });
   const mais = page.getByRole('navigation', { name: NAV_INFERIOR }).getByRole('button', { name: 'Mais' });
   let ultimoErro: unknown;
@@ -854,6 +866,7 @@ async function clicarMobile(page: Page, item: ItemNav): Promise<void> {
       await limparAvisos(page, `celular/${item.label}`);
       await mais.click({ timeout: 10_000 });
       await expect(menu, 'o menu móvel não abriu').toBeVisible({ timeout: 10_000 });
+      if (aoAbrirMenu) await aoAbrirMenu();
       await menu.getByRole('button', { name: item.label, exact: true }).first().click({ timeout: 10_000 });
       await expect(menu, 'o menu móvel não fechou depois de escolher o módulo').toBeHidden({
         timeout: 10_000,
@@ -939,8 +952,31 @@ async function aquecerRuntime(request: APIRequestContext): Promise<void> {
 
 const PASSOS: { secao?: string; item: ItemNav }[] = [
   ...PRIMARIOS.map((item) => ({ item })),
-  ...SECOES.flatMap((secao) => secao.itens.map((item) => ({ secao: secao.label, item }))),
+  ...SECOES.flatMap((secao) =>
+    secao.itens.filter((item) => !item.somenteAdmin).map((item) => ({ secao: secao.label, item })),
+  ),
 ];
+
+/** Entradas do mapa que o papel do seed não enxerga: ausência conferida, não ignorada. */
+const FORA_DO_PAPEL_DO_SEED = SECOES.flatMap((secao) =>
+  secao.itens.filter((item) => item.somenteAdmin).map((item) => item.label),
+);
+
+/**
+ * Confere que as entradas restritas a administrador NÃO aparecem para o usuário
+ * sintético do conjunto local (supervisor). Tirar 'CRM 360°' da varredura sem esta
+ * conferência seria esconder a lacuna: aqui a expectativa fica escrita, então o
+ * dia em que o papel do seed (ou o porteiro da entrada) mudar, isto REPROVA e a
+ * lista de módulos volta a ter de ser revista.
+ */
+async function conferirEntradasForaDoPapel(page: Page, onde: string): Promise<void> {
+  for (const label of FORA_DO_PAPEL_DO_SEED) {
+    await expect(
+      page.getByRole('button', { name: label, exact: true }),
+      `${onde}: "${label}" é admin-only e não pode aparecer para o supervisor do seed local`,
+    ).toHaveCount(0);
+  }
+}
 
 // A varredura inteira (login + 42 módulos + busca) passa longe do teto padrão de
 // 30s do Playwright — este teto é do cartão, não uma espera fixa.
@@ -971,7 +1007,7 @@ function relatarRodada(
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('abre os 42 módulos da barra lateral e a busca global sem erro de console nem requisição falha', async ({
+  test('abre as 41 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
     page,
     request,
   }) => {
@@ -1018,6 +1054,11 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     defeitosDaRodada.push(...defeitos);
     expect(resumir(reprovam), 'desktop — Buscar produziu ruído não justificado').toEqual([]);
 
+    // A varredura já abriu as 5 seções da barra lateral: é agora que a ausência
+    // das entradas admin-only diz alguma coisa (com a seção fechada, o item não
+    // estaria no DOM de qualquer forma).
+    await conferirEntradasForaDoPapel(page, 'desktop');
+
     // Prova de cobertura: o número de módulos ABERTOS tem de bater com o mapa
     // da barra lateral, senão a varredura passou sem passar por tudo.
     expect(
@@ -1036,7 +1077,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 test.describe('Navegação por todos os módulos (celular 390x844)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('abre os 42 módulos pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
+  test('abre as 41 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
     request,
   }) => {
@@ -1048,11 +1089,19 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
     const lacunasDaRodada: Ocorrencia[] = [];
     const defeitosDaRodada: Ocorrencia[] = [];
     const visitados: string[] = [];
+    // O menu móvel lista os mesmos grupos da barra lateral: na primeira vez que
+    // ele abre, a ausência das entradas admin-only é conferida (uma vez basta).
+    let foraDoPapelConferido = false;
+    const conferirForaDoPapelUmaVez = async () => {
+      if (foraDoPapelConferido) return;
+      foraDoPapelConferido = true;
+      await conferirEntradasForaDoPapel(page, 'celular');
+    };
 
     for (const { secao, item } of PASSOS) {
       const onde = secao ? `celular/${secao}` : 'celular';
       visitados.push(item.label);
-      await clicarMobile(page, item);
+      await clicarMobile(page, item, conferirForaDoPapelUmaVez);
       await conferirModulo(page, item, `${onde}/${item.label}`);
 
       const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
