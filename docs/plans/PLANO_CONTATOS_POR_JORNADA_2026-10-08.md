@@ -1,11 +1,12 @@
 # Plano do módulo Contatos por jornada do vendedor (08/10/2026)
 
-> **Status:** plano completo: 120 itens em 12 blocos de 10, com um cartão para cada item (exceto 2 que o Claude executa). O plano antigo de 100 etapas foi EXCLUÍDO (local e `dia`; nunca esteve no GitHub). Gerado de `~/arquitetura-v2/gatilhos/ct_dados_*.py`: para mudar um item, mude lá e regere.
+> **Status:** plano completo: 130 itens em 13 blocos de 10, com um cartão para cada item (exceto 2 que o Claude executa). O plano antigo de 100 etapas foi EXCLUÍDO (local e `dia`; nunca esteve no GitHub). Gerado de `~/arquitetura-v2/gatilhos/ct_dados_*.py`: para mudar um item, mude lá e regere.
 
 ## Decisões fechadas com o Joaquim (Q1–Q25)
 - **Propósito:** o módulo é a ponte com o Singu: o vendedor acha o contato rápido e vê, no mesmo lugar, o que veio do Singu. "Rápido" = 3 cliques e 5 segundos da abertura até a conversa. Celular primeiro; manter o padrão visual e evoluir.
 - **Jornadas:** 1 Achar · 2 Entender quem é · 3 Agir · 4 Manter em ordem, mais a trilha transversal de Proteção e o fechamento.
 - **Acesso:** o vendedor vê só os contatos atribuídos a ele; o supervisor vê os contatos dos vendedores do MESMO DEPARTAMENTO dele e os próprios (Q26; pré-requisito: o administrador cadastrar departamentos e vincular as pessoas — hoje há 0 departamentos e 0 vínculos; supervisor sem departamento vê só os dele); o administrador vê todos; contatos SEM atribuição (318 hoje) ficam só com o administrador; a regra por fila sai. Empresa: ficha só para consulta aberta a partir do contato (o vendedor só vê dados da empresa e os contatos dela que são dele).
+- **Visibilidade por tipo de contato (decidido pelo Claude a pedido do Joaquim, 08/10):** cliente = carteira pessoal (quem é dono vê); fornecedor e transportadora = visíveis para todos por padrão, com o campo «Quem pode ver» no cadastro (Todos / Departamentos / Usuários), editável só por administrador e supervisor do departamento responsável. As CONVERSAS são uma regra à parte: o comprador vê todos os fornecedores mas só as conversas que atendeu; o coordenador (supervisor do departamento responsável) e o administrador veem todas. Hoje só existem clientes (3.106); não há tabela de conversas (a conversa é a linha do tempo do contato), por isso o bloco 13 começa com um estudo do «atendimento».
 - **Busca e filtros:** busca por nome do contato ou da empresa; filtros do Singu completos (vendedor, ramo, RFM, estado, ativado, já comprou, ativo/inativo, cargo, departamento e o mais que existir). Cargo e departamento do Singu dependem do Singu ampliar a busca (documento CT-111); a arquitetura já fica pronta.
 - **Card/lista:** nome, apelido, cargo, departamento, empresa, ativo/inativo, tempo sem comprar, último pedido, RFM (o vendedor responsável fica só como filtro). Nada saindo do card; fonte mínima 11 px.
 - **Edição:** só edição básica (nome, apelido, cargo, departamento, e-mail, telefone adicional), enviada à área provisória do Singu; só vale quando a IA (baixo risco) ou o gestor (risco) aprovar NO SINGU. O vendedor vê o valor que alterou com o aviso "sujeito a aprovação". Nada de edição em massa.
@@ -214,8 +215,26 @@ _Pedido ao Singu, testes de contrato, liberação por partes, medição final e 
 | **CT-119** Documentação do módulo | Fica escrito como o módulo funciona e como testar com os dados de teste. | vera (docs) | documento | M | 115, 117, 111 |
 | **CT-120** Limpeza final: mocks fora de produção e código morto | Garantimos que dados de teste não vão para produção e removemos o que ficou sem uso. | iris (telas) | tela | M | 117, 119, 111 |
 
+## Visibilidade por tipo de contato e por atendimento (CT-121 a CT-130)
+_Quem vê cada contato (cliente, fornecedor, transportadora...) e quem vê as conversas: comprador, coordenador, supervisor e administrador._
+
+### Bloco 13 · itens 121 a 130
+
+| # | O que muda para o vendedor | Quem | Tipo | Tam | Espera por |
+|---|---|---|---|---|---|
+| **CT-121** Estudo: de quem é cada conversa (atendimento) | Antes de mudar qualquer regra, descobrimos com precisão quem atendeu cada conversa, porque hoje a conversa não tem dono próprio. | workersql (banco) | BANCO (local) | G | 021, 115 |
+| **CT-122** Banco: quem pode ver cada contato (por tipo, departamento e usuário) | Cada contato passa a ter 'quem pode ver': cliente é carteira pessoal; fornecedor e transportadora são de todos por padrão; dá para restringir a departamentos ou a pessoas. | workersql (banco) | BANCO (local) | G | 021, 121 |
+| **CT-123** Banco: aplicar a regra nova de visibilidade na tabela de contatos | A regra de 'quem pode ver o contato' passa a valer de verdade no banco. | workerauth (segurança) | BANCO (local) | G | 122, 121 |
+| **CT-124** Banco: quem vê as conversas de um contato (por atendimento) | O comprador vê todos os fornecedores, mas só as conversas que ele atendeu; o coordenador vê todas. | workerauth (segurança) | BANCO (local) | G | 123, 121 |
+| **CT-125** Cadastro: campo 'Quem pode ver' em fornecedores e transportadoras | No cadastro do fornecedor e da transportadora o administrador escolhe quem pode ver: todos, certos departamentos ou certas pessoas. | iris (telas) | tela | G | 122, 072, 121 |
+| **CT-126** Abas por tipo: meus clientes, fornecedores, transportadoras | O vendedor encontra rápido seus clientes, todos os fornecedores e todas as transportadoras em abas separadas. | iris (telas) | tela | M | 123, 020, 121 |
+| **CT-127** Ficha e histórico mostram só as conversas que o usuário pode ver | Na ficha de um fornecedor, o comprador vê apenas o que ele conversou, com um aviso de que há outras conversas que não são dele. | hugo (lógica) | lógica | G | 124, 037, 121 |
+| **CT-128** Teste de acesso: todos os papéis × todos os tipos | Provamos, em uma matriz completa, quem vê o quê. | workertestes | teste | G | 123, 124, 125, 126, 127, 121 |
+| **CT-129** Auditoria de 'quem pode ver' e alerta de ampliação | Fica registrado quem mudou a visibilidade de um contato, e o gestor é avisado quando algo restrito vira 'todos'. | workerauth (segurança) | BANCO (local) | M | 122, 125, 121 |
+| **CT-130** Documento: quem vê o quê | Fica escrita, em linguagem simples, a regra de acesso: por papel, por tipo de contato e por conversa. | vera (docs) | documento | M | 128, 129, 121 |
+
 ## Trilha de banco e servidor (nada disso vai a produção sem o Joaquim)
-Banco (migrations LOCAIS): CT-003, CT-012, CT-021, CT-079, CT-086, CT-091, CT-095, CT-096, CT-097, CT-108.
+Banco (migrations LOCAIS): CT-003, CT-012, CT-021, CT-079, CT-086, CT-091, CT-095, CT-096, CT-097, CT-108, CT-121, CT-122, CT-123, CT-124, CT-129.
 Servidor (Edge Functions só no repositório): CT-013, CT-024, CT-042, CT-073, CT-074, CT-077.
 Para cada uma: teste em banco descartável; produção só com autorização expressa; a simulação de impacto da visibilidade (CT-022) é feita pelo Claude antes de CT-021 ir adiante.
 
