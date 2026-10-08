@@ -3,7 +3,7 @@
  *
  * O `TasksModule` não instala listener de teclado: quem lê a tecla é o registry
  * global (`useGlobalKeyboardShortcuts` + `defaultShortcuts`, escopo
- * `tasks`/`pipeline`), que avisa o módulo pelo evento `tasks-shortcut` com
+ * `tasks`), que avisa o módulo pelo evento `tasks-shortcut` com
  * `{ id: 'tasks-mode', key: '1'|'2'|'3' }`. Aqui o registry de VERDADE é montado
  * junto do módulo, então a tecla entra pelo `keydown` de janela e o teste
  * percorre o fluxo inteiro — tecla → registry → evento → módulo. (O outro
@@ -37,7 +37,6 @@ import {
 } from '@/test/mocks/tarefas';
 
 import { TasksModule } from '@/components/tasks/TasksModule';
-import type { TaskMode } from '@/components/tasks/shared/ModeSwitcher';
 import { useGlobalKeyboardShortcuts } from '@/hooks/ui/useGlobalKeyboardShortcuts';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -49,7 +48,7 @@ function Registry() {
   return null;
 }
 
-function renderModule(props: { defaultMode?: TaskMode; forceMode?: boolean } = {}) {
+function renderModule() {
   const qc = makeQueryClient();
   const Wrapper = makeWrapper(qc);
   return render(
@@ -59,7 +58,7 @@ function renderModule(props: { defaultMode?: TaskMode; forceMode?: boolean } = {
           AppProviders; o harness monta o mesmo contexto (como em taskComponents). */}
       <TooltipProvider>
         <Wrapper>
-          <TasksModule {...props} />
+          <TasksModule />
         </Wrapper>
       </TooltipProvider>
     </MemoryRouter>
@@ -79,8 +78,8 @@ function teclar(key: string) {
 }
 
 /** Monta o módulo (com o registry) e espera a primeira carga ter saído. */
-async function montar(props: { defaultMode?: TaskMode; forceMode?: boolean } = {}) {
-  renderModule(props);
+async function montar() {
+  renderModule();
   await waitFor(() => expect(h.select).toHaveBeenCalled());
   await waitFor(() => expect(modoAtual()).toBeTruthy());
 }
@@ -124,7 +123,7 @@ describe('TasksModule — E20 (atalhos 1/2/3 do modo e a preferência salva)', (
     teclar('3');
     await waitFor(() => expect(localStorage.getItem(MODE_STORAGE_KEY)).toBe('agenda'));
 
-    // remonta com o padrão Lista: quem manda é a preferência salva pela tecla
+    // remonta sem props de rota: quem manda é a preferência salva pela tecla
     cleanup();
     renderModule();
     await waitFor(() => expect(modoAtual()).toBe('agenda'));
