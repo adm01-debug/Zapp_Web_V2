@@ -318,13 +318,23 @@ Procedimento:
      FROM talkx_recipients WHERE status = 'outcome_unknown';
    ```
 2. Decidir **manualmente** por destinatário:
-   - **Reenviar** (só com certeza de que a mensagem NÃO chegou): action `retry {recipientId}`
-     da `talkx-send`, que reabre para `pending` via `retry_talkx_recipient` se
-     `attempt_count < 3` e o contato não está suprimido.
+   - **Reenviar** (só com certeza de que a mensagem NÃO chegou): RPC
+     `resolve_talkx_outcome_unknown` com `p_resolution = 'retry'` e
+     `p_confirm_duplicate_risk = true`, ou o reenvio em lote da RPC
+     `retry_talkx_recipients`.
    - **Descartar** (mensagem provavelmente chegou): manter para auditoria.
 3. O teto de 3 tentativas por destinatário é respeitado tanto pelo retry manual
-   (`retry_talkx_recipient`) quanto pelo backoff automático
-   (`reschedule_talkx_recipient`).
+   (`retry_talkx_recipient` e `retry_talkx_recipients`) quanto pelo backoff
+   automático (`reschedule_talkx_recipient`).
+
+> **Retry de `outcome_unknown` pela `talkx-send` é recusado (R2-DB-015).** A action
+> `retry {recipientId}` da edge atende **`failed`**: ela devolve o destinatário a
+> `pending` já elegível ao motor (limpa a marca de POST e o lease, ajusta
+> `failed_count` e reabre campanha `completed` para `sending`). Para
+> `outcome_unknown` — estado ambíguo, em que o POST pode ter sido aceito — a edge
+> responde `409 talkx_outcome_unknown_requires_reconciliation` e **não** toca na
+> linha: a decisão é da RPC `resolve_talkx_outcome_unknown`, com a confirmação
+> explícita do risco de mensagem em dobro.
 
 > **Sem reconciliação automática sem id do provedor (X031).** Não existe — e não
 > haverá — varredura automática que conclua sozinha um `outcome_unknown`: sem um id
